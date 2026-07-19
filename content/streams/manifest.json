@@ -1,0 +1,23 @@
+[
+  "01-java-fundamentals.js",
+  "02-data-structures.js",
+  "03-exception-handling.js",
+  "04-modern-java-mastery.js",
+  "05-build-tools-maven-gradle.js",
+  "06-git-beginner-to-master.js",
+  "07-web-development.js",
+  "08-apis-rest.js",
+  "09-spring-boot.js",
+  "10-concurrency-multithreading.js",
+  "11-time-testing-reflection-the-jvm.js",
+  "12-deploying-java-to-the-web.js",
+  "13-working-with-databases.js",
+  "14-jpms-performance-engineering.js",
+  "15-networking-sockets.js",
+  "16-security-crypto-apis.js",
+  "17-design-patterns.js",
+  "18-ci-cd-github-actions-argocd.js",
+  "19-dynamic-programming-advanced-algorithms.js",
+  "20-coding-challenges-the-tournament.js",
+  "21-real-world-projects.js"
+]

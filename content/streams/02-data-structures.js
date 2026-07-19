@@ -1,0 +1,461 @@
+STREAMS.push({icon:'🧱',title:'Data Structures',blurb:'Lists, sets, maps, sorting, stacks, queues, heaps, linked lists and hashing — the right tool, its Big-O, and building your own.',lessons:[
+{id:'ds0',title:'Lists, Sets & Maps: choosing the collection',body:`
+<p>Ninety percent of Java data handling is picking the right one of these three interfaces — each answers a different question:</p>
+<ul>
+<li><b>List</b> — "an <i>ordered sequence</i>, duplicates allowed, I care about position." <code>ArrayList</code>: backed by an array — O(1) get by index, O(1) amortized append, O(n) middle insert. <code>LinkedList</code>: O(1) ends, O(n) index. Default to <code>ArrayList</code>.</li>
+<li><b>Set</b> — "a collection of <i>unique</i> things, does X exist?" <code>HashSet</code>: O(1) add/contains, no order. <code>LinkedHashSet</code>: O(1) + insertion order. <code>TreeSet</code>: O(log n), kept sorted, supports ranges (<code>headSet</code>/<code>ceiling</code>).</li>
+<li><b>Map</b> — "<i>key → value</i> lookups." <code>HashMap</code>: O(1), no order. <code>LinkedHashMap</code>: O(1) + insertion/access order (your LRU). <code>TreeMap</code>: O(log n), sorted by key, range queries.</li>
+</ul>
+<div class="codeSample" data-hl>List&lt;String&gt; log = new ArrayList&lt;&gt;();        // ordered, indexable, dup-friendly
+Set&lt;String&gt;  seen = new HashSet&lt;&gt;();         // "have I processed this id?"
+Map&lt;String,Integer&gt; counts = new HashMap&lt;&gt;();// "how many per key?"
+
+// the decision in one breath:
+// need order/index?      -&gt; List
+// need uniqueness / membership test?  -&gt; Set
+// need lookup by key?    -&gt; Map
+// need it SORTED?        -&gt; TreeSet / TreeMap
+// need INSERTION order?  -&gt; LinkedHashSet / LinkedHashMap</div>
+<p>Golden habit: program to the <i>interface</i> (<code>List&lt;X&gt; xs = new ArrayList&lt;&gt;()</code>), so swapping the implementation is one word. And know why HashSet/HashMap are O(1): they hash the element/key to a bucket — which is why your keys must honor the equals/hashCode contract (later lesson).</p>`,
+docs:[['Collections overview — Oracle','https://docs.oracle.com/javase/tutorial/collections/intro/index.html'],['Choosing an implementation — Oracle','https://docs.oracle.com/javase/tutorial/collections/implementations/index.html']],
+exs:[
+{title:'Pick List, Set, Map',
+prompt:`Write <code>Pick</code> with three methods proving you chose the right structure: <code>static java.util.List&lt;String&gt; ordered(java.util.List&lt;String&gt; in)</code> returns a NEW ArrayList with the same items in order (duplicates kept); <code>static java.util.Set&lt;String&gt; unique(java.util.List&lt;String&gt; in)</code> returns a HashSet of the distinct items; <code>static java.util.Map&lt;String,Integer&gt; counts(java.util.List&lt;String&gt; in)</code> returns a HashMap of item→occurrences.`,
+starter:`import java.util.*;
+
+public class Pick {
+    static List<String> ordered(List<String> in) {
+        return null;
+    }
+    static Set<String> unique(List<String> in) {
+        return null;
+    }
+    static Map<String, Integer> counts(List<String> in) {
+        return null;
+    }
+}`,
+tests:[{d:'ordered returns an ArrayList copy',re:'new\\s+ArrayList<>\\s*\\(\\s*in\\s*\\)'},{d:'unique uses a HashSet',re:'new\\s+HashSet<>\\s*\\('},{d:'counts uses a HashMap',re:'new\\s+HashMap<'},{d:'counts tallies with merge/getOrDefault',re:'merge\\s*\\(|getOrDefault\\s*\\('}],
+behavior:`1. ordered([a,a,b]) == [a,a,b] (order + dupes preserved), and is a distinct object from the input. 2. unique([a,a,b]) has size 2, contains a and b. 3. counts([a,a,b]) == {a=2, b=1}. 4. Each method's choice matches its guarantee — that IS the exercise.`,
+hints:['ordered is one line: <code>return new ArrayList&lt;&gt;(in);</code>','unique is one line: <code>return new HashSet&lt;&gt;(in);</code>','counts: loop and <code>map.merge(item, 1, Integer::sum);</code>'],
+solution:`import java.util.*;
+
+public class Pick {
+    static List<String> ordered(List<String> in) {
+        return new ArrayList<>(in);
+    }
+    static Set<String> unique(List<String> in) {
+        return new HashSet<>(in);
+    }
+    static Map<String, Integer> counts(List<String> in) {
+        Map<String, Integer> m = new HashMap<>();
+        for (String s : in) m.merge(s, 1, Integer::sum);
+        return m;
+    }
+}`},
+{title:'Sorted vs insertion order',
+prompt:`Show you know the ordered variants. Write <code>Ordered</code> with: <code>static java.util.Set&lt;String&gt; sorted(java.util.Collection&lt;String&gt; in)</code> returning a <code>TreeSet</code> (sorted, unique) and <code>static java.util.Map&lt;String,Integer&gt; firstSeenOrder(java.util.List&lt;String&gt; in)</code> returning a <code>LinkedHashMap</code> counting occurrences while preserving first-seen key order.`,
+starter:`import java.util.*;
+
+public class Ordered {
+    static Set<String> sorted(Collection<String> in) {
+        return null;
+    }
+    static Map<String, Integer> firstSeenOrder(List<String> in) {
+        return null;
+    }
+}`,
+tests:[{d:'sorted uses TreeSet',re:'new\\s+TreeSet<>\\s*\\('},{d:'firstSeenOrder uses LinkedHashMap',re:'new\\s+LinkedHashMap<'},{d:'Counts occurrences',re:'merge\\s*\\(|getOrDefault\\s*\\('}],
+behavior:`1. sorted(["banana","apple","apple"]) iterates as [apple, banana] — sorted and de-duplicated. 2. firstSeenOrder(["b","a","b"]) iterates keys in order b, a (first-seen) with {b=2, a=1}. 3. Swapping TreeSet→HashSet would lose the sort; LinkedHashMap→HashMap would lose the order — the class choice is the whole point.`,
+hints:['<code>return new TreeSet&lt;&gt;(in);</code> — a TreeSet sorts and de-dupes for free.','LinkedHashMap remembers insertion order of keys; merge on a new key appends it at the end.','Everything else is the same counting loop you already know.'],
+solution:`import java.util.*;
+
+public class Ordered {
+    static Set<String> sorted(Collection<String> in) {
+        return new TreeSet<>(in);
+    }
+    static Map<String, Integer> firstSeenOrder(List<String> in) {
+        Map<String, Integer> m = new LinkedHashMap<>();
+        for (String s : in) m.merge(s, 1, Integer::sum);
+        return m;
+    }
+}`}
+]},
+{id:'ds0b',title:'Sorting, comparators & merging',body:`
+<p>Sorting is O(n log n) and built in — you rarely write the algorithm, you write the <b>ordering</b>:</p>
+<div class="codeSample" data-hl>List&lt;String&gt; xs = new ArrayList&lt;&gt;(List.of("bb", "a", "ccc"));
+Collections.sort(xs);                         // natural order (Comparable)
+xs.sort(Comparator.naturalOrder());
+xs.sort(Comparator.comparingInt(String::length));         // by a key
+xs.sort(Comparator.comparingInt(String::length)
+                  .thenComparing(Comparator.naturalOrder())); // tie-break
+xs.sort(Comparator.reverseOrder());
+
+int[] a = {3,1,2};  Arrays.sort(a);            // primitive arrays: dual-pivot quicksort
+
+// stable sort (Java's is stable for objects): equal elements keep their order —
+// which is why thenComparing chains work.
+
+record Person(String name, int age) {}
+people.sort(Comparator.comparingInt(Person::age).reversed()
+                      .thenComparing(Person::name));</div>
+<p>Under the hood: <code>Arrays.sort</code> on objects uses TimSort (stable, O(n log n)); on primitives, dual-pivot quicksort (not stable, but primitives have no identity so it doesn't matter). <b>Comparable</b> = a type's one natural order (<code>implements Comparable&lt;T&gt;</code>, define <code>compareTo</code>); <b>Comparator</b> = any number of external orders. And <b>merging</b> two sorted sequences in O(n) — the two-pointer walk — is the operation at the heart of merge sort and of combining sorted result sets.</p>`,
+docs:[['Comparator — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Comparator.html'],['Object ordering — Oracle','https://docs.oracle.com/javase/tutorial/collections/interfaces/order.html']],
+exs:[
+{title:'Multi-key comparator',
+prompt:`Given <code>record Person(String name, int age)</code>, write <code>People.sorted(java.util.List&lt;Person&gt; in)</code> returning a NEW list sorted by <b>age descending</b>, breaking ties by <b>name ascending</b> — using <code>Comparator</code> chaining (<code>comparingInt</code>, <code>reversed</code>, <code>thenComparing</code>). Do not mutate the input.`,
+starter:`import java.util.*;
+
+record Person(String name, int age) {}
+
+public class People {
+    static List<Person> sorted(List<Person> in) {
+        return null;
+    }
+}`,
+tests:[{d:'Copies before sorting (no mutation)',re:'new\\s+ArrayList<>\\s*\\(\\s*in\\s*\\)'},{d:'Sorts by age',re:'comparingInt\\s*\\(\\s*Person::age\\s*\\)'},{d:'Descending on age',re:'reversed\\s*\\(\\s*\\)'},{d:'Tie-breaks on name',re:'thenComparing\\s*\\(\\s*Person::name\\s*\\)'}],
+behavior:`1. [(Al,30),(Bo,30),(Cy,40)] → [(Cy,40),(Al,30),(Bo,30)] — 40 first, then the two 30s alphabetically. 2. The input list is unchanged (you sorted a copy). 3. Ties resolve by name ascending, deterministically.`,
+hints:['Copy first: <code>List&lt;Person&gt; out = new ArrayList&lt;&gt;(in);</code>','Build the comparator: <code>Comparator.comparingInt(Person::age).reversed().thenComparing(Person::name)</code>','out.sort(thatComparator); return out;'],
+solution:`import java.util.*;
+
+record Person(String name, int age) {}
+
+public class People {
+    static List<Person> sorted(List<Person> in) {
+        List<Person> out = new ArrayList<>(in);
+        out.sort(Comparator.comparingInt(Person::age).reversed()
+                           .thenComparing(Person::name));
+        return out;
+    }
+}`},
+{title:'Merge two sorted lists (the core of merge sort)',
+prompt:`Write <code>Merger.merge(java.util.List&lt;Integer&gt; a, java.util.List&lt;Integer&gt; b)</code> where both inputs are sorted ascending: return one sorted list via the O(n+m) <b>two-pointer merge</b> (compare heads, take the smaller, advance; then drain the remainder). No calls to <code>sort</code>.`,
+starter:`import java.util.*;
+
+public class Merger {
+    static List<Integer> merge(List<Integer> a, List<Integer> b) {
+        return null;
+    }
+}`,
+tests:[{d:'Two index cursors',re:'int\\s+i\\s*=\\s*0\\s*,\\s*j\\s*=\\s*0|i\\s*=\\s*0[\\s\\S]*?j\\s*=\\s*0'},{d:'Head comparison',re:'a\\.get\\s*\\(\\s*i\\s*\\)\\s*<=?\\s*b\\.get\\s*\\(\\s*j\\s*\\)'},{d:'Drains both remainders',re:'while\\s*\\(\\s*i\\s*<\\s*a\\.size\\s*\\(\\s*\\)\\s*\\)[\\s\\S]*?while\\s*\\(\\s*j\\s*<\\s*b\\.size\\s*\\(\\s*\\)\\s*\\)'},{d:'No sort call',re:'\\.sort\\s*\\(|Collections\\.sort',not:true}],
+behavior:`1. merge([1,3,5],[2,4]) == [1,2,3,4,5]. 2. merge([],[1]) == [1]. 3. merge([1,1],[1]) == [1,1,1] (stable, duplicates kept). 4. O(n+m): each element consumed once — the operation merge sort is built on.`,
+hints:['Cursors i and j; a result list; loop while both have elements.','Take the smaller head: <code>if (a.get(i) <= b.get(j)) out.add(a.get(i++)); else out.add(b.get(j++));</code>','Two drain loops afterward — only one runs.'],
+solution:`import java.util.*;
+
+public class Merger {
+    static List<Integer> merge(List<Integer> a, List<Integer> b) {
+        List<Integer> out = new ArrayList<>();
+        int i = 0, j = 0;
+        while (i < a.size() && j < b.size()) {
+            if (a.get(i) <= b.get(j)) out.add(a.get(i++));
+            else out.add(b.get(j++));
+        }
+        while (i < a.size()) out.add(a.get(i++));
+        while (j < b.size()) out.add(b.get(j++));
+        return out;
+    }
+}`}
+]},
+{id:'ds1',title:'Stacks: LIFO thinking',body:`
+<p>A stack is last-in-first-out: <code>push</code>, <code>pop</code>, <code>peek</code>. It models anything nested or reversible — undo history, call stacks, parsing, backtracking.</p>
+<div class="codeSample" data-hl>Deque&lt;String&gt; stack = new ArrayDeque&lt;&gt;();   // THE stack in modern Java
+stack.push("a");                             // add on top
+stack.push("b");
+stack.peek();                                // "b" — look, don't take
+stack.pop();                                 // "b" — take from top
+stack.isEmpty();
+
+// java.util.Stack exists but is LEGACY: it extends Vector (synchronized,
+// slow) and exposes index access that breaks the LIFO contract. Use ArrayDeque.</div>
+<p>All three core ops are O(1). The interview-classic and real-parser workhorse: matching brackets — push openers, pop-and-compare on closers, valid iff the stack ends empty.</p>`,
+docs:[['Deque — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Deque.html'],['ArrayDeque — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ArrayDeque.html']],
+ex:{title:'Balanced brackets',
+prompt:`Write <code>Brackets</code> with <code>static boolean balanced(String s)</code> using an <code>ArrayDeque&lt;Character&gt;</code> as a stack: push each opener <code>( [ {</code>; on each closer, the stack must be non-empty and its top must be the matching opener (pop and check); ignore all other characters; return true iff the stack is empty at the end.`,
+starter:`import java.util.*;
+
+public class Brackets {
+    static boolean balanced(String s) {
+        Deque<Character> stack = new ArrayDeque<>();
+        // push openers; pop & match closers; other chars ignored
+        return false;
+    }
+}`,
+tests:[{d:'ArrayDeque as the stack (not java.util.Stack)',re:'new\\s+ArrayDeque<'},{d:'Pushes openers',re:'\\.push\\s*\\('},{d:'Pops and compares on closers',re:'\\.pop\\s*\\(\\s*\\)'},{d:'Empty-stack guard before popping',re:'isEmpty\\s*\\(\\s*\\)'},{d:'No java.util.Stack',re:'new\\s+Stack<',not:true}],
+behavior:`1. balanced("(a[b]{c})") == true. 2. balanced("(]") == false (mismatch). 3. balanced("((") == false (leftover openers). 4. balanced(")") == false (closer on empty stack — the guard matters). 5. balanced("no brackets") == true.`,
+hints:['Loop chars: <code>for (char c : s.toCharArray())</code> — push on ( [ {, handle ) ] }, skip the rest.','On a closer: <code>if (stack.isEmpty() || stack.pop() != expectedOpener) return false;</code>','A tidy trick: when you see an opener, push its MATCHING CLOSER — then every closer just needs <code>stack.pop() != c</code> → false.'],
+solution:`import java.util.*;
+
+public class Brackets {
+    static boolean balanced(String s) {
+        Deque<Character> stack = new ArrayDeque<>();
+        for (char c : s.toCharArray()) {
+            switch (c) {
+                case '(' -> stack.push(')');
+                case '[' -> stack.push(']');
+                case '{' -> stack.push('}');
+                case ')', ']', '}' -> {
+                    if (stack.isEmpty() || stack.pop() != c) return false;
+                }
+                default -> {}
+            }
+        }
+        return stack.isEmpty();
+    }
+}`}},
+{id:'ds2',title:'Queues & deques: FIFO and sliding windows',body:`
+<p>A queue is first-in-first-out — the shape of fairness: task queues, BFS, buffering. A <b>deque</b> (double-ended queue) does both ends in O(1) and therefore impersonates stacks, queues, and sliding windows.</p>
+<div class="codeSample" data-hl>Queue&lt;Task&gt; q = new ArrayDeque&lt;&gt;();
+q.offer(task);          // enqueue (returns false when full — add() throws)
+q.peek();               // head, or null when empty (element() throws)
+q.poll();               // dequeue, or null when empty (remove() throws)
+
+// deque: both ends
+Deque&lt;Integer&gt; d = new ArrayDeque&lt;&gt;();
+d.addFirst(1); d.addLast(2); d.pollFirst(); d.pollLast();
+
+// classic pattern: keep only the last N items (bounded history)
+void record(Deque&lt;String&gt; history, String event, int max) {
+    history.addLast(event);
+    if (history.size() &gt; max) history.pollFirst();   // evict oldest
+}</div>
+<p>Note the paired APIs: <code>offer/poll/peek</code> return null/false on failure; <code>add/remove/element</code> throw. Pick one family and be consistent. (BlockingQueue from the Concurrency stream is this interface plus waiting.)</p>`,
+docs:[['Queue — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Queue.html'],['Queue implementations — Oracle tutorial','https://docs.oracle.com/javase/tutorial/collections/implementations/queue.html']],
+ex:{title:'A bounded history',
+prompt:`Write <code>History</code> with a private <code>Deque&lt;String&gt; events = new ArrayDeque&lt;&gt;()</code> and a constructor taking <code>int capacity</code>: method <code>void record(String event)</code> appends with <code>addLast</code> and evicts the oldest with <code>pollFirst</code> when size exceeds capacity; <code>java.util.List&lt;String&gt; latest()</code> returns the events oldest→newest as a new ArrayList; <code>String newest()</code> returns <code>peekLast()</code>.`,
+starter:`import java.util.*;
+
+public class History {
+    private final Deque<String> events = new ArrayDeque<>();
+    private final int capacity;
+
+    public History(int capacity) {
+        this.capacity = capacity;
+    }
+
+    void record(String event) {
+    }
+
+    List<String> latest() {
+        return null;
+    }
+
+    String newest() {
+        return null;
+    }
+}`,
+tests:[{d:'Appends at the tail',re:'addLast\\s*\\(\\s*event\\s*\\)'},{d:'Evicts oldest when over capacity',re:'size\\s*\\(\\s*\\)\\s*>\\s*capacity[\\s\\S]*?pollFirst\\s*\\(\\s*\\)'},{d:'latest copies into a List',re:'new\\s+ArrayList<>\\s*\\(\\s*events\\s*\\)'},{d:'newest peeks, does not remove',re:'peekLast\\s*\\(\\s*\\)'}],
+behavior:`1. capacity 3: record a,b,c,d → latest() == [b,c,d] (a evicted). 2. newest() == "d" and calling it twice returns "d" twice (peek ≠ poll). 3. latest() returns a copy — mutating it does not touch the history. 4. Order in latest() is oldest first (deque iteration order).`,
+hints:['record is two lines: addLast, then <code>if (events.size() > capacity) events.pollFirst();</code>','ArrayDeque iterates first→last, so <code>new ArrayList&lt;&gt;(events)</code> is already oldest→newest.','peekLast looks without removing — pollLast would eat your newest event.'],
+solution:`import java.util.*;
+
+public class History {
+    private final Deque<String> events = new ArrayDeque<>();
+    private final int capacity;
+
+    public History(int capacity) {
+        this.capacity = capacity;
+    }
+
+    void record(String event) {
+        events.addLast(event);
+        if (events.size() > capacity) {
+            events.pollFirst();
+        }
+    }
+
+    List<String> latest() {
+        return new ArrayList<>(events);
+    }
+
+    String newest() {
+        return events.peekLast();
+    }
+}`}},
+{id:'ds3',title:'PriorityQueue: heaps & top-K',body:`
+<p>A <code>PriorityQueue</code> always serves the <i>smallest</i> element first (a binary min-heap): O(log n) insert/remove, O(1) peek. It powers schedulers, Dijkstra, merge-K, and the top-K pattern below.</p>
+<div class="codeSample" data-hl>PriorityQueue&lt;Integer&gt; minHeap = new PriorityQueue&lt;&gt;();
+PriorityQueue&lt;Integer&gt; maxHeap = new PriorityQueue&lt;&gt;(Comparator.reverseOrder());
+PriorityQueue&lt;Trade&gt; byAmount =
+    new PriorityQueue&lt;&gt;(Comparator.comparingLong(Trade::amountCents));
+
+// TOP-K LARGEST of a huge stream — keep a min-heap of size k:
+PriorityQueue&lt;Integer&gt; heap = new PriorityQueue&lt;&gt;();   // min at the top
+for (int x : stream) {
+    heap.offer(x);
+    if (heap.size() &gt; k) heap.poll();   // evict the smallest survivor
+}
+// heap now holds the k largest — O(n log k), constant memory</div>
+<p>Two gotchas: iterating a PriorityQueue does NOT visit in priority order (heap array order — poll repeatedly to drain sorted), and it rejects null. Top-K inversion trips everyone once: you want the largest, so you keep a MIN-heap and evict from the bottom.</p>`,
+docs:[['PriorityQueue — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html'],['Comparator — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Comparator.html']],
+ex:{title:'Top-K trades',
+prompt:`Write <code>TopK</code> with <code>static java.util.List&lt;Long&gt; largest(java.util.List&lt;Long&gt; amounts, int k)</code>: min-heap <code>PriorityQueue&lt;Long&gt;</code>, offer each amount, <code>poll()</code> whenever size exceeds k, then drain the heap into a list and sort it <b>descending</b> before returning.`,
+starter:`import java.util.*;
+
+public class TopK {
+    static List<Long> largest(List<Long> amounts, int k) {
+        PriorityQueue<Long> heap = new PriorityQueue<>();
+        // offer + bound to k, then drain & sort desc
+        return null;
+    }
+}`,
+tests:[{d:'Min-heap (no reverseOrder on the heap itself)',re:'new\\s+PriorityQueue<>\\s*\\(\\s*\\)'},{d:'Bounds the heap to k with poll',re:'size\\s*\\(\\s*\\)\\s*>\\s*k[\\s\\S]*?\\.poll\\s*\\(\\s*\\)'},{d:'Drains the heap (poll loop or addAll)',re:'while\\s*\\(\\s*!\\s*heap\\.isEmpty\\s*\\(\\s*\\)\\s*\\)|new\\s+ArrayList<>\\s*\\(\\s*heap\\s*\\)'},{d:'Sorts result descending',re:'reverseOrder\\s*\\(\\s*\\)|\\.reversed\\s*\\(\\s*\\)'}],
+behavior:`1. largest([5,1,9,3,7], 3) == [9,7,5]. 2. largest(list, k) where k >= list size returns everything, descending. 3. Works on millions of amounts holding only k in memory — that is the point versus "sort everything". 4. The heap is a MIN-heap even though we want the largest — the eviction does the selection.`,
+hints:['The bound: after each offer, <code>if (heap.size() > k) heap.poll();</code> throws away the smallest — survivors are the big ones.','Drain: <code>List&lt;Long&gt; out = new ArrayList&lt;&gt;(heap);</code> then sort, or poll into the list.','Descending sort: <code>out.sort(Comparator.reverseOrder());</code>'],
+solution:`import java.util.*;
+
+public class TopK {
+    static List<Long> largest(List<Long> amounts, int k) {
+        PriorityQueue<Long> heap = new PriorityQueue<>();
+        for (Long a : amounts) {
+            heap.offer(a);
+            if (heap.size() > k) {
+                heap.poll();
+            }
+        }
+        List<Long> out = new ArrayList<>(heap);
+        out.sort(Comparator.reverseOrder());
+        return out;
+    }
+}`}},
+{id:'ds4',title:'Linked lists: build one, know the trade-offs',body:`
+<p><code>ArrayList</code> is a growable array: O(1) random access, O(1) amortized append, O(n) inserts in the middle (shifting). A <b>linked list</b> is nodes pointing at nodes: O(1) insert/remove <i>at a known node</i>, but O(n) to find anything and cache-hostile memory jumps. Honest guidance: <code>ArrayList</code> wins ~95% of the time; <code>ArrayDeque</code> beats <code>LinkedList</code> for both stack and queue duty. You study linked lists to master <b>references</b> — and because interviewers love them.</p>
+<div class="codeSample" data-hl>class Node {
+    int value;
+    Node next;                    // null = end of the chain
+    Node(int value) { this.value = value; }
+}
+
+// walking:  for (Node cur = head; cur != null; cur = cur.next) ...
+// insert at head: O(1)          node.next = head; head = node;
+// the classic: reverse in place by re-pointing, one node at a time
+Node prev = null, cur = head;
+while (cur != null) {
+    Node next = cur.next;         // save the rest
+    cur.next = prev;              // flip the arrow
+    prev = cur; cur = next;       // advance
+}
+head = prev;</div>`,
+docs:[['LinkedList — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/LinkedList.html'],['Collection implementation trade-offs — Oracle','https://docs.oracle.com/javase/tutorial/collections/implementations/list.html']],
+ex:{title:'Your own singly linked list',
+prompt:`Build <code>IntList</code>: inner <code>static class Node</code> (int value, Node next), field <code>Node head</code>; <code>void addFirst(int v)</code> — O(1) head insert; <code>int size()</code> — walk and count; <code>java.util.List&lt;Integer&gt; toList()</code> — walk head→tail collecting values; and <code>void reverse()</code> — the in-place three-pointer re-linking (prev/cur/next), no arrays or collections allowed inside reverse.`,
+starter:`import java.util.*;
+
+public class IntList {
+    static class Node {
+        int value;
+        Node next;
+        Node(int value) { this.value = value; }
+    }
+
+    private Node head;
+
+    void addFirst(int v) {
+    }
+
+    int size() {
+        return 0;
+    }
+
+    List<Integer> toList() {
+        return null;
+    }
+
+    void reverse() {
+    }
+}`,
+tests:[{d:'addFirst relinks the head',re:'addFirst[\\s\\S]*?\\.next\\s*=\\s*head[\\s\\S]*?head\\s*='},{d:'Walks with a cursor node',re:'for\\s*\\(\\s*Node\\s+\\w+\\s*=\\s*head\\s*;[\\s\\S]*?=\\s*\\w+\\.next\\s*\\)|while\\s*\\(\\s*\\w+\\s*!=\\s*null\\s*\\)'},{d:'reverse uses the three-pointer dance',re:'reverse[\\s\\S]*?prev[\\s\\S]*?next[\\s\\S]*?prev\\s*=\\s*\\w+'},{d:'reverse builds no collections',re:'reverse\\s*\\(\\s*\\)\\s*\\{[\\s\\S]*?new\\s+(ArrayList|LinkedList|ArrayDeque)',not:true}],
+behavior:`1. addFirst(1), addFirst(2), addFirst(3) → toList() == [3,2,1], size() == 3. 2. reverse() → toList() == [1,2,3]. 3. reverse on an empty or single-element list is a no-op that does not crash. 4. reverse allocates nothing — it only re-points existing next references.`,
+hints:['addFirst: <code>Node n = new Node(v); n.next = head; head = n;</code> — order matters, lose head last.','toList: cursor walk — <code>for (Node cur = head; cur != null; cur = cur.next) out.add(cur.value);</code>','reverse: save <code>next</code> BEFORE flipping <code>cur.next = prev</code>, else the rest of the chain is gone. End with <code>head = prev;</code>'],
+solution:`import java.util.*;
+
+public class IntList {
+    static class Node {
+        int value;
+        Node next;
+        Node(int value) { this.value = value; }
+    }
+
+    private Node head;
+
+    void addFirst(int v) {
+        Node n = new Node(v);
+        n.next = head;
+        head = n;
+    }
+
+    int size() {
+        int count = 0;
+        for (Node cur = head; cur != null; cur = cur.next) {
+            count++;
+        }
+        return count;
+    }
+
+    List<Integer> toList() {
+        List<Integer> out = new ArrayList<>();
+        for (Node cur = head; cur != null; cur = cur.next) {
+            out.add(cur.value);
+        }
+        return out;
+    }
+
+    void reverse() {
+        Node prev = null, cur = head;
+        while (cur != null) {
+            Node next = cur.next;
+            cur.next = prev;
+            prev = cur;
+            cur = next;
+        }
+        head = prev;
+    }
+}`}},
+{id:'ds5',title:'Hash structures: equals/hashCode & an LRU cache',body:`
+<p>HashMap/HashSet give O(1) average lookups by hashing keys into buckets. That performance rests on a contract YOU uphold:</p>
+<div class="codeSample" data-hl>// THE CONTRACT: equal objects MUST have equal hashCodes.
+// Override both together or hash structures silently break:
+// a key stored under one hashCode can never be found again.
+record ClientId(String tenant, String id) {}   // records do it right for free
+
+// choosing the map:
+// HashMap        — no order, fastest
+// LinkedHashMap  — insertion (or ACCESS) order preserved
+// TreeMap        — sorted by key, O(log n), range queries (headMap/tailMap)
+
+// the famous trick: LinkedHashMap in access-order = an LRU cache
+new LinkedHashMap&lt;K, V&gt;(16, 0.75f, true) {     // true = access order!
+    protected boolean removeEldestEntry(Map.Entry&lt;K, V&gt; eldest) {
+        return size() &gt; maxEntries;             // evict least-recently-used
+    }
+};</div>
+<p>Mutating a field that feeds hashCode while the object sits in a HashSet loses the object — use immutable keys (records). This LRU is real infrastructure: session caches, token caches, JWKS key caches — all this exact pattern.</p>`,
+docs:[['equals & hashCode contract — Object API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()'],['LinkedHashMap — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/LinkedHashMap.html']],
+ex:{title:'Build the LRU cache',
+prompt:`Build an <b>LRU (least-recently-used) cache</b>: it holds at most <code>maxEntries</code> entries, and inserting beyond that evicts the entry <b>accessed longest ago</b> (a get counts as an access). Write <code>LruCache&lt;K, V&gt; extends java.util.LinkedHashMap&lt;K, V&gt;</code>: field <code>int maxEntries</code>; constructor <code>LruCache(int maxEntries)</code> calling <code>super(16, 0.75f, true)</code> (the <code>true</code> = access order — the whole trick); override <code>protected boolean removeEldestEntry(java.util.Map.Entry&lt;K, V&gt; eldest)</code> returning <code>size() &gt; maxEntries</code>.`,
+starter:`import java.util.*;
+
+public class LruCache<K, V> extends LinkedHashMap<K, V> {
+    private final int maxEntries;
+
+    // constructor: super(16, 0.75f, true)
+
+    // override removeEldestEntry
+}`,
+tests:[{d:'Generic class extends LinkedHashMap',re:'class\\s+LruCache<K,\\s*V>\\s+extends\\s+LinkedHashMap<K,\\s*V>'},{d:'super with access-order true',re:'super\\s*\\(\\s*16\\s*,\\s*0\\.75f\\s*,\\s*true\\s*\\)'},{d:'Overrides removeEldestEntry',re:'protected\\s+boolean\\s+removeEldestEntry\\s*\\(\\s*Map\\.Entry<K,\\s*V>\\s+eldest\\s*\\)'},{d:'Evicts beyond maxEntries',re:'return\\s+size\\s*\\(\\s*\\)\\s*>\\s*maxEntries\\s*;'}],
+behavior:`1. Capacity 2: put(a), put(b), GET(a), put(c) → b evicted, a survives (the get refreshed a — access order in action). 2. With false instead of true it would evict by insertion order (a FIFO cache, not LRU) — the AI runner will probe this understanding. 3. removeEldestEntry is consulted by the map after each insert; returning true evicts exactly the eldest.`,
+hints:['Constructor body is two lines: the super call and <code>this.maxEntries = maxEntries;</code>','The third super argument true switches iteration to access order — every get() moves the entry to "youngest".','You never call removeEldestEntry yourself — LinkedHashMap calls it after each put.'],
+solution:`import java.util.*;
+
+public class LruCache<K, V> extends LinkedHashMap<K, V> {
+    private final int maxEntries;
+
+    public LruCache(int maxEntries) {
+        super(16, 0.75f, true);
+        this.maxEntries = maxEntries;
+    }
+
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+        return size() > maxEntries;
+    }
+}`}}
+]});

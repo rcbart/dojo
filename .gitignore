@@ -1,0 +1,21 @@
+# generated build output — run `node build.js` to recreate
+dist/
+javadojo.html
+
+# secrets & environment — never commit credentials
+.env
+.env.*
+*.pem
+*.key
+*.p12
+secrets/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# dependencies (if tooling is ever added)
+node_modules/
