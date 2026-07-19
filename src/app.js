@@ -137,6 +137,33 @@ function toast(msg){
   document.body.appendChild(t);
   setTimeout(()=>{t.classList.add('gone');setTimeout(()=>t.remove(),400)},3600);
 }
+const BELT_COLORS={'White belt':'#e2e8f0','Yellow belt':'#facc15','Orange belt':'#fb923c','Green belt':'#22c55e','Blue belt':'#3b82f6','Purple belt':'#a855f7','Brown belt':'#92400e','Black belt 🖤':'#111827'};
+function beltStrip(name){
+  return '<div class="bStrip" style="background:'+(BELT_COLORS[name]||'#94a3b8')+'"><span class="bKnot"></span></div>';
+}
+function showBeltUp(before,after,pct){
+  const old=document.getElementById('beltUpOverlay');if(old)old.remove();
+  const note=store.persistent?'':'<div class="bNote">⚠ browser storage blocked — progress lasts for this session only</div>';
+  const ov=document.createElement('div');
+  ov.id='beltUpOverlay';ov.className='beltOverlay';
+  ov.innerHTML='<div class="beltModal" role="dialog" aria-modal="true" aria-label="Belt promotion">'
+    +'<div class="bBurst">'+['🎉','🥋','✨','🎊','⭐'].map((e,i)=>'<span class="bSpark s'+i+'">'+e+'</span>').join('')+'</div>'
+    +'<h2>Belt up!</h2>'
+    +'<p class="bSub">Your training has paid off — you have been promoted.</p>'
+    +'<div class="bRow">'
+      +'<div class="bCol">'+beltStrip(before)+'<div class="bName">'+esc(before)+'</div></div>'
+      +'<div class="bArrow">→</div>'
+      +'<div class="bCol bNew">'+beltStrip(after)+'<div class="bName"><b>'+esc(after)+'</b></div></div>'
+    +'</div>'
+    +'<div class="bBar"><i style="width:'+pct+'%"></i></div>'
+    +'<div class="bPct">'+pct+'% of the path to mastery</div>'
+    +note
+    +'<button class="bBtn" onclick="document.getElementById(\'beltUpOverlay\').remove()">Continue training 🥋</button>'
+    +'</div>';
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+  document.body.appendChild(ov);
+  requestAnimationFrame(()=>ov.classList.add('show'));
+}
 function completeLesson(l){
   if(store.lesson(l.id).done)return;           // already counted
   const isProject=cur&&STREAMS[cur.si]&&STREAMS[cur.si].project;
@@ -165,7 +192,7 @@ function completeLesson(l){
   const after=beltName();
   const pct=Math.round(100*doneCount()/totalLessons());
   const note=store.persistent?'':'<br><small>⚠ browser storage blocked — progress lasts for this session only</small>';
-  if(after!==before)toast('🥋 <b>Belt up!</b> You are now <b>'+after+'</b> ('+pct+'% of the path to mastery)'+note);
+  if(after!==before)showBeltUp(before,after,pct);
   else toast('✅ Lesson complete — progress saved ('+doneCount()+'/'+totalLessons()+')'+note);
 }
 function renderNav(){
