@@ -122,6 +122,73 @@ solution:`public class Conversions {
         return a.equals(b);
     }
 }`}},
+{id:'fun2a',title:'Booleans & logical operators',body:`
+<p>Every condition your programs will ever branch on is built from a handful of operators combining <code>boolean</code> values. Master the combinators before the conditionals that use them:</p>
+<ul>
+<li><b><code>&amp;&amp;</code> — AND</b>: true only when both sides are true.</li>
+<li><b><code>||</code> — OR</b>: true when at least one side is true.</li>
+<li><b><code>!</code> — NOT</b>: flips the value.</li>
+<li><b><code>^</code> — XOR</b>: true when the sides <i>differ</i> (exactly one is true). Rarer, but the cleanest way to say "one or the other, not both".</li>
+</ul>
+<p><b>Short-circuit evaluation</b> is the behavior that makes <code>&amp;&amp;</code> and <code>||</code> more than logic: the right side is <i>not evaluated at all</i> when the left side already decides the answer. <code>false &amp;&amp; anything</code> never looks at anything; <code>true || anything</code> likewise. This is not an optimization footnote — it is the standard null-safety idiom:</p>
+<div class="codeSample">// safe: if s is null the left side is false and s.length() NEVER runs
+if (s != null &amp;&amp; s.length() &gt; 3) { ... }
+
+// crash: both sides always evaluated — &amp; and | are the non-short-circuit twins
+if (s != null &amp; s.length() &gt; 3) { ... }   // NullPointerException when s == null</div>
+<p><b>Precedence</b>: <code>!</code> binds tightest, then <code>&amp;&amp;</code>, then <code>||</code> — so <code>a || b &amp;&amp; c</code> means <code>a || (b &amp;&amp; c)</code>. When a condition needs a re-read, add the parentheses; the compiler doesn't need them, colleagues do.</p>
+<p><b>De Morgan's laws</b> — the rewrite rules for pushing <code>!</code> through: <code>!(a &amp;&amp; b) == !a || !b</code> and <code>!(a || b) == !a &amp;&amp; !b</code>. They turn "not (in range)" into "below or above" — often the version that reads like the requirement. And one style rule that separates juniors from seniors: <code>if (x) return true; else return false;</code> is just <code>return x;</code> — boolean expressions are values; return them directly.</p>`,
+docs:[['Operators — Java Tutorials','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/operators.html'],['Equality & relational operators','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/op2.html'],['JLS — conditional operators','https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.23']],
+ex:{title:'Combinator drill',
+prompt:`Write class <code>Logic</code> with five static methods, each a <b>single return of a boolean expression — no if statements anywhere</b>: (1) <code>boolean canRent(int age, boolean hasLicense)</code> — true when age is at least 21 <b>AND</b> the license is there; (2) <code>boolean isWeekend(String day)</code> — true when day equals <code>"SAT"</code> <b>OR</b> <code>"SUN"</code> (use equals, not ==); (3) <code>boolean longEnough(String s, int min)</code> — true when s is <b>not null AND</b> at least min chars — order matters: the null check must short-circuit first; (4) <code>boolean exactlyOne(boolean a, boolean b)</code> — true when exactly one of them is true (one operator does this); (5) <code>boolean outsideRange(int n, int lo, int hi)</code> — true when n is below lo <b>OR</b> above hi.`,
+starter:`public class Logic {
+
+    static boolean canRent(int age, boolean hasLicense) {
+        return false;
+    }
+
+    static boolean isWeekend(String day) {
+        return false;
+    }
+
+    static boolean longEnough(String s, int min) {
+        return false;
+    }
+
+    static boolean exactlyOne(boolean a, boolean b) {
+        return false;
+    }
+
+    static boolean outsideRange(int n, int lo, int hi) {
+        return false;
+    }
+}`,
+solution:`public class Logic {
+
+    static boolean canRent(int age, boolean hasLicense) {
+        return age >= 21 && hasLicense;
+    }
+
+    static boolean isWeekend(String day) {
+        return day.equals("SAT") || day.equals("SUN");
+    }
+
+    static boolean longEnough(String s, int min) {
+        return s != null && s.length() >= min;
+    }
+
+    static boolean exactlyOne(boolean a, boolean b) {
+        return a ^ b;
+    }
+
+    static boolean outsideRange(int n, int lo, int hi) {
+        return n < lo || n > hi;
+    }
+}`,
+tests:[{d:'canRent: AND combines age and license',re:'canRent[\\s\\S]*?return\\s+age\\s*>=\\s*21\\s*&&\\s*hasLicense'},{d:'isWeekend: OR of two equals calls',re:'isWeekend[\\s\\S]*?equals\\s*\\(\\s*"SAT"\\s*\\)\\s*\\|\\|[\\s\\S]*?equals\\s*\\(\\s*"SUN"\\s*\\)'},{d:'Strings never compared with ==',re:'day\\s*==\\s*"',not:true},{d:'longEnough: null guard FIRST, then length — short-circuit order',re:'return\\s+s\\s*!=\\s*null\\s*&&\\s*s\\.length\\s*\\(\\s*\\)\\s*>=\\s*min'},{d:'exactlyOne uses XOR',re:'return\\s+a\\s*\\^\\s*b'},{d:'outsideRange: below-or-above (De Morgan of the range check)',re:'return\\s+n\\s*<\\s*lo\\s*\\|\\|\\s*n\\s*>\\s*hi'},{d:'No if statements — booleans returned directly',re:'\\bif\\s*\\(',not:true}],
+behavior:`1. canRent(22, true) == true; canRent(22, false) == false; canRent(20, true) == false. 2. isWeekend("SAT") and isWeekend("SUN") are true, isWeekend("MON") false. 3. longEnough(null, 3) returns FALSE instead of throwing — the null check short-circuits before s.length() runs; longEnough("hello", 3) == true. 4. exactlyOne(true, false) == true, exactlyOne(true, true) == false — XOR is "the sides differ". 5. outsideRange(5, 1, 10) == false, outsideRange(0, 1, 10) == true, outsideRange(11, 1, 10) == true. 6. No method contains an if — every condition IS the return value.`,
+hints:['Every method body is one line: return <expression>; — if you typed if, you are working too hard.','longEnough is the whole lesson: swap the operands (s.length() >= min && s != null) and null crashes it — short-circuit only protects left-to-right.','outsideRange has two equally correct spellings: n < lo || n > hi, or !(n >= lo && n <= hi) — De Morgan says they are the same; the drill asks for the first (it reads better).']}},
+
 {id:'fun2b',title:'Conditionals: if/else to switch expressions',body:`
 <p>Branching, from classic to modern:</p>
 <div class="codeSample" data-hl>if (score &gt;= 90) grade = "A";
