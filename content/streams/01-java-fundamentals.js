@@ -816,7 +816,7 @@ starter:`class Employee {
 class Manager extends Employee {
     // bonus field, constructor calling super(name), overridden weeklyPay()
 }`,
-tests:[{d:'Manager extends Employee',re:'class\\s+Manager\\s+extends\\s+Employee'},{d:'Constructor calls super(name)',re:'super\\s*\\(\\s*name\\s*\\)'},{d:'Overrides weeklyPay',re:'@Override\\s*\\n?\\s*double\\s+weeklyPay'},{d:'Reuses parent pay via super',re:'super\\.weeklyPay\\s*\\(\\s*\\)\\s*\\+\\s*bonus'}],
+tests:[{d:'Manager extends Employee',re:'class\\s+Manager\\s+extends\\s+Employee'},{d:'Constructor calls super(name)',re:'super\\s*\\(\\s*name\\s*\\)'},{d:'Overrides weeklyPay',re:'@Override\\s*(?:(?:public|protected)\\s+)?double\\s+weeklyPay'},{d:'Reuses parent pay via super',re:'super\\.weeklyPay\\s*\\(\\s*\\)\\s*\\+\\s*bonus'}],
 behavior:`1. new Manager("Ada", 500).weeklyPay() == 1500.0. 2. name is inherited and set through super(name). 3. @Override is required — a typo'd signature would fail to compile with it present. 4. super.weeklyPay() reuses the base logic instead of duplicating the 1000.`,
 hints:['First line of the constructor must be <code>super(name);</code> — the parent has no no-arg constructor to fall back on.','Store bonus in a field, then override: <code>@Override double weeklyPay() { return super.weeklyPay() + bonus; }</code>','super.weeklyPay() reaches the Employee version even though Manager overrides it.'],
 solution:`class Employee {
@@ -846,7 +846,7 @@ starter:`abstract class Shape {
 class Square extends Shape {
     // side, constructor, area()
 }`,
-tests:[{d:'Shape is abstract with an abstract method',re:'abstract\\s+class\\s+Shape[\\s\\S]*?abstract\\s+double\\s+area'},{d:'Square extends Shape',re:'class\\s+Square\\s+extends\\s+Shape'},{d:'Implements the abstract area()',re:'@Override\\s*\\n?\\s*double\\s+area\\s*\\(\\s*\\)'},{d:'area returns side squared',re:'side\\s*\\*\\s*side'}],
+tests:[{d:'Shape is abstract with an abstract method',re:'abstract\\s+class\\s+Shape[\\s\\S]*?abstract\\s+double\\s+area'},{d:'Square extends Shape',re:'class\\s+Square\\s+extends\\s+Shape'},{d:'Implements the abstract area()',re:'@Override\\s*(?:(?:public|protected)\\s+)?double\\s+area\\s*\\(\\s*\\)'},{d:'area returns side squared',re:'side\\s*\\*\\s*side'}],
 behavior:`1. new Square(3).area() == 9.0 and describe() returns "area=9.0". 2. describe() is inherited and works via the overridden area() — dynamic dispatch. 3. Shape cannot be instantiated (new Shape() would not compile) — that is what abstract enforces. 4. A Square that failed to implement area() would itself have to be abstract.`,
 hints:['The abstract method has no body — just a signature ending in a semicolon.','Square must provide area() or the compiler forces Square to be abstract too.','describe() lives in the base and calls area() — at runtime that resolves to Square.area() (polymorphism).'],
 solution:`abstract class Shape {
