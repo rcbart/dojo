@@ -1,5 +1,6 @@
 STREAMS.push({icon:'🧱',title:'Data Structures',blurb:'Lists, sets, maps, sorting, stacks, queues, heaps, linked lists and hashing — the right tool, its Big-O, and building your own.',lessons:[
 {id:'ds0',title:'Lists, Sets & Maps: choosing the collection',body:`
+<p>🌱 <b>Starting from zero:</b> "data structure" sounds grand but means something homely: <i>the shape you store things in</i>. A shopping list, a guest list and a phone book are three different shapes for three different needs — and choosing the wrong one (looking up phone numbers by reading the whole book top to bottom) is where slow software comes from. This stream is about matching the shape to the need; it starts with Java\u0027s big three.</p>
 <p>Ninety percent of Java data handling is picking the right one of these three interfaces — each answers a different question:</p>
 <ul>
 <li><b>List</b> — "an <i>ordered sequence</i>, duplicates allowed, I care about position." <code>ArrayList</code>: backed by an array — O(1) get by index, O(1) amortized append, O(n) middle insert. <code>LinkedList</code>: O(1) ends, O(n) index. Default to <code>ArrayList</code>.</li>
@@ -156,6 +157,7 @@ public class Merger {
 }`}
 ]},
 {id:'ds1',title:'Stacks: LIFO thinking',body:`
+<p>🌱 <b>Starting from zero:</b> picture a stack of plates — you add to the top and take from the top, so the LAST plate added is the FIRST one back. That "last in, first out" shape appears everywhere in computing: the undo history in your editor (undo removes the most recent change), the back button, unwinding nested steps.</p>
 <p>A stack is last-in-first-out: <code>push</code>, <code>pop</code>, <code>peek</code>. It models anything nested or reversible — undo history, call stacks, parsing, backtracking.</p>
 <div class="codeSample" data-hl>Deque&lt;String&gt; stack = new ArrayDeque&lt;&gt;();   // THE stack in modern Java
 stack.push("a");                             // add on top
@@ -202,6 +204,7 @@ public class Brackets {
     }
 }`}},
 {id:'ds2',title:'Queues & deques: FIFO and sliding windows',body:`
+<p>🌱 <b>Starting from zero:</b> a queue is the line at a checkout — first come, first served. Where the plate-stack reverses order, the queue preserves it, which makes it the shape of fairness: things get handled in the order they arrived.</p>
 <p>A queue is first-in-first-out — the shape of fairness: task queues, BFS, buffering. A <b>deque</b> (double-ended queue) does both ends in O(1) and therefore impersonates stacks, queues, and sliding windows.</p>
 <div class="codeSample" data-hl>Queue&lt;Task&gt; q = new ArrayDeque&lt;&gt;();
 q.offer(task);          // enqueue (returns false when full — add() throws)
@@ -271,6 +274,7 @@ public class History {
     }
 }`}},
 {id:'ds3',title:'PriorityQueue: heaps & top-K',body:`
+<p>🌱 <b>Starting from zero:</b> an emergency room does not treat patients first-come-first-served — the most urgent case jumps the line. A <b>priority queue</b> is that triage desk as a data structure: whatever you put in, the most important item is always the one that comes out next.</p>
 <p>A <code>PriorityQueue</code> always serves the <i>smallest</i> element first (a binary min-heap): O(log n) insert/remove, O(1) peek. It powers schedulers, Dijkstra, merge-K, and the top-K pattern below.</p>
 <div class="codeSample" data-hl>PriorityQueue&lt;Integer&gt; minHeap = new PriorityQueue&lt;&gt;();
 PriorityQueue&lt;Integer&gt; maxHeap = new PriorityQueue&lt;&gt;(Comparator.reverseOrder());
@@ -317,6 +321,7 @@ public class TopK {
     }
 }`}},
 {id:'ds4',title:'Linked lists: build one, know the trade-offs',body:`
+<p>🌱 <b>Starting from zero:</b> two ways to store a sequence. Numbered shelves: finding slot #57 is instant, but inserting a new shelf in the middle means shifting everything after it. A treasure hunt of notes, each pointing to the next: inserting a note mid-chain is trivial (rewrite one pointer), but reaching item #57 means following 57 clues. That is the ArrayList-versus-LinkedList tradeoff in one image — everything below is the detail.</p>
 <p><code>ArrayList</code> is a growable array: O(1) random access, O(1) amortized append, O(n) inserts in the middle (shifting). A <b>linked list</b> is nodes pointing at nodes: O(1) insert/remove <i>at a known node</i>, but O(n) to find anything and cache-hostile memory jumps. Honest guidance: <code>ArrayList</code> wins ~95% of the time; <code>ArrayDeque</code> beats <code>LinkedList</code> for both stack and queue duty. You study linked lists to master <b>references</b> — and because interviewers love them.</p>
 <div class="codeSample" data-hl>class Node {
     int value;
@@ -410,6 +415,7 @@ public class IntList {
     }
 }`}},
 {id:'ds5',title:'Hash structures: equals/hashCode & an LRU cache',body:`
+<p>🌱 <b>Starting from zero:</b> a coat check hands you ticket #217 and puts your coat on hook 217 — returning it later takes seconds regardless of how many coats they hold, because the ticket number says exactly where to look. <b>Hashing</b> gives every object such a ticket number (its hash code), and HashMap/HashSet use it to jump straight to the right hook instead of searching. The catch: YOUR classes must issue their tickets honestly — that is the contract this lesson drills.</p>
 <p>HashMap/HashSet give O(1) average lookups by hashing keys into buckets. That performance rests on a contract YOU uphold:</p>
 <div class="codeSample" data-hl>// THE CONTRACT: equal objects MUST have equal hashCodes.
 // Override both together or hash structures silently break:

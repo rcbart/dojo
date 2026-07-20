@@ -52,6 +52,7 @@ jshell
 # 6)
 echo $JAVA_HOME`}},
 {id:'fun1',title:'Hello, JVM: your first class',body:`
+<p>🌱 <b>Starting from zero:</b> a program is nothing more than a list of instructions a computer follows, written in a language it can be taught to understand — here, Java. You write the instructions in a plain text file, a tool turns them into a form the machine can run, and then it runs them, top to bottom. That is the whole magic trick. This lesson is your first complete round trip: write the smallest possible Java program, run it, and watch it do something.</p>
 <p>Java source lives in classes. You compile <code>.java</code> to <code>.class</code> bytecode with <code>javac</code>, and the JVM runs it with <code>java</code>. Since Java 11 you can also run a single file directly: <code>java Greeter.java</code>. Execution starts at <code>public static void main(String[] args)</code>.</p>
 <div class="codeSample" data-hl>public class Greeter {
     public static void main(String[] args) {
@@ -204,7 +205,77 @@ tests:[{d:'canRent: AND combines age and license',re:'canRent[\\s\\S]*?return\\s
 behavior:`1. canRent(22, true) == true; canRent(22, false) == false; canRent(20, true) == false. 2. isWeekend("SAT") and isWeekend("SUN") are true, isWeekend("MON") false. 3. longEnough(null, 3) returns FALSE instead of throwing — the null check short-circuits before s.length() runs; longEnough("hello", 3) == true. 4. exactlyOne(true, false) == true, exactlyOne(true, true) == false — XOR is "the sides differ". 5. outsideRange(5, 1, 10) == false, outsideRange(0, 1, 10) == true, outsideRange(11, 1, 10) == true. 6. No method contains an if — every condition IS the return value.`,
 hints:['Every method body is one line: return <expression>; — if you typed if, you are working too hard.','longEnough is the whole lesson: swap the operands (s.length() >= min && s != null) and null crashes it — short-circuit only protects left-to-right.','outsideRange has two equally correct spellings: n < lo || n > hi, or !(n >= lo && n <= hi) — De Morgan says they are the same; the drill asks for the first (it reads better).']}},
 
+{id:'obj1',title:'Objects & autoboxing: the two kinds of values',body:`
+<p>🌱 <b>Starting from zero:</b> Java values come in two kinds, and telling them apart explains half the confusing things beginners hit.</p>
+<ul>
+<li><b>Primitives</b> are raw values — just a number or a true/false, nothing more. <code>int</code>, <code>double</code>, <code>boolean</code> and friends. Think of a primitive as a number written directly on a sticky note: the note IS the value.</li>
+<li><b>Objects</b> are smart bundles — data plus abilities, packaged together. A String object holds its characters AND knows how to uppercase itself (<code>name.toUpperCase()</code>). You will build your own object types soon (that is what classes are); for now the key idea is that an object <i>can do things</i>, a primitive just <i>is</i> a thing.</li>
+</ul>
+<p>One more difference matters: a variable never holds an object directly — it holds a <b>reference</b>, which works like a TV remote. The TV (the object) sits on the heap; the remote (the reference) is what you pass around, and two remotes can control the SAME TV. Copy a primitive and you get an independent copy; copy a reference and both variables now point at one shared object. This picture is why <code>==</code> on objects compares <i>remotes</i> (same object?) while <code>.equals()</code> compares <i>content</i> — the trap you met in the variables lesson, now explained.</p>
+<p><b>The bridge between the two worlds.</b> Java's containers (like <code>List</code>) and its generics labels can only hold <i>objects</i> — there is no <code>List&lt;int&gt;</code>. So every primitive has an object twin, a <b>wrapper class</b>: <code>int</code>→<code>Integer</code>, <code>double</code>→<code>Double</code>, <code>boolean</code>→<code>Boolean</code>, and so on. A wrapper is literally a small object with one primitive inside — the sticky note placed in a labeled box.</p>
+<p><b>Autoboxing</b> is Java doing the boxing and unboxing for you, silently:</p>
+<div class="codeSample" data-hl>List&lt;Integer&gt; scores = new ArrayList&lt;&gt;();
+scores.add(97);              // AUTOBOXING: int 97 → new Integer object, automatically
+int first = scores.get(0);   // UNBOXING: Integer object → raw int, automatically
+
+Integer maybe = null;        // a reference can be null ("no box at all")...
+int boom = maybe;            // ...UNBOXING null → NullPointerException!  trap #1
+
+Integer a = 1000, b = 1000;
+a == b;                      // false! — two different boxes (compares remotes)  trap #2
+a.equals(b);                 // true — compares the numbers inside the boxes</div>
+<p>The two traps deserve names. <b>Null unboxing</b>: a wrapper variable can be <code>null</code>, and unwrapping "no box" explodes — so check for null before treating a wrapper as a primitive. <b>Wrapper <code>==</code></b>: it compares references, not values (small values -128..127 are cached and can coincidentally match, which makes the bug worse — it "works" in tests and fails with real data). Rule: <b>wrappers are compared with <code>.equals()</code>, always.</b></p>
+<p>When do you choose which? Primitives for arithmetic, counters, and fields that always have a value — they are faster and can never be null. Wrappers when an object is required: inside collections and generics (<code>List&lt;Integer&gt;</code>, <code>Map&lt;String, Double&gt;</code>), or when "no value yet" is a legitimate state. Autoboxing makes the boundary almost invisible — these two traps are the only places the seam shows.</p>`,
+docs:[['Autoboxing — Oracle tutorial','https://docs.oracle.com/javase/tutorial/java/data/autoboxing.html'],['Numbers classes (wrappers) — Oracle','https://docs.oracle.com/javase/tutorial/java/data/numberclasses.html'],['Integer cache — JLS 5.1.7','https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.7']],
+ex:{title:'Boxing without the traps',
+prompt:`Write class <code>Boxing</code> with three static methods: (1) <code>int sum(java.util.List&lt;Integer&gt; nums)</code> — enhanced for over the list, accumulate into an <code>int</code> and return it (unboxing does the unwrapping for you); (2) <code>int valueOr(Integer maybe, int fallback)</code> — return <code>fallback</code> when <code>maybe == null</code>, otherwise return <code>maybe</code> (the null check is what makes the unboxing safe — trap #1 disarmed); (3) <code>boolean sameValue(Integer a, Integer b)</code> — return whether the two hold the same number: null-safe via <code>java.util.Objects.equals(a, b)</code> — and <b>never compare the wrappers with ==</b> (trap #2 disarmed).`,
+starter:`import java.util.List;
+import java.util.Objects;
+
+public class Boxing {
+
+    static int sum(List<Integer> nums) {
+        return 0;
+    }
+
+    static int valueOr(Integer maybe, int fallback) {
+        return 0;
+    }
+
+    static boolean sameValue(Integer a, Integer b) {
+        return false;
+    }
+}`,
+solution:`import java.util.List;
+import java.util.Objects;
+
+public class Boxing {
+
+    static int sum(List<Integer> nums) {
+        int total = 0;
+        for (int n : nums) {
+            total += n;
+        }
+        return total;
+    }
+
+    static int valueOr(Integer maybe, int fallback) {
+        if (maybe == null) {
+            return fallback;
+        }
+        return maybe;
+    }
+
+    static boolean sameValue(Integer a, Integer b) {
+        return Objects.equals(a, b);
+    }
+}`,
+tests:[{d:'sum walks the list with an enhanced for, unboxing as it goes',re:'for\\s*\\(\\s*int\\s+\\w+\\s*:\\s*nums\\s*\\)'},{d:'sum accumulates into a primitive int',re:'int\\s+total\\s*=\\s*0|total\\s*\\+=|int\\s+\\w+\\s*=\\s*0'},{d:'valueOr checks null BEFORE unboxing',re:'maybe\\s*==\\s*null[\\s\\S]*?return\\s+fallback'},{d:'sameValue uses null-safe Objects.equals',re:'return\\s+Objects\\.equals\\s*\\(\\s*a\\s*,\\s*b\\s*\\)'},{d:'Wrappers never compared with == (a == b forbidden)',re:'a\\s*==\\s*b',not:true}],
+behavior:`1. sum(List.of(1, 2, 3)) == 6 — each Integer silently unboxes into the running int total. 2. valueOr(null, 7) == 7 and does NOT throw — the null check runs before any unboxing; valueOr(42, 7) == 42. 3. sameValue(1000, 1000) == true even though those two boxes are different objects — Objects.equals compares contents; sameValue(null, null) == true and sameValue(null, 5) == false, no NPE anywhere. 4. Nowhere does the file compare two wrappers with == — the compiler can't catch that bug for you, so the habit has to.`,
+hints:['sum needs no boxing code at all — write it as if the list held ints; that invisible convenience IS autoboxing.','valueOr: the danger line would be returning maybe when maybe is null — the if disarms it before the unboxing happens.','Objects.equals(a, b) handles all four null/value combinations correctly in one call — the standard null-safe comparison.']}},
+
 {id:'fun2b',title:'Conditionals: if/else to switch expressions',body:`
+<p>🌱 <b>Starting from zero:</b> so far our instructions run top to bottom, every time, the same way. Real programs make <b>decisions</b>: "IF the password is right, let them in, OTHERWISE show an error." That fork in the road is called a <b>conditional</b> — the program tests a yes/no question (built with the operators from the last lesson) and picks a path. Everything on this page is just increasingly polished ways of writing "if this, then that, otherwise the other."</p>
 <p>Branching, from classic to modern:</p>
 <div class="codeSample" data-hl>if (score &gt;= 90) grade = "A";
 else if (score &gt;= 80) grade = "B";
@@ -309,6 +380,7 @@ solution:`public class Quarters {
 }`}
 ]},
 {id:'fun2c',title:'Loops: for, while, do-while',body:`
+<p>🌱 <b>Starting from zero:</b> the second superpower after deciding is <b>repeating</b>. "Wash a dish. Is the sink empty? No — wash the next one" — you loop until a condition says stop. A <b>loop</b> is exactly that: a block of instructions the program runs again and again while some yes/no test stays true. Java has three loop shapes, and the only skill is picking the one that matches how you\u0027d naturally describe the repetition out loud.</p>
 <p>The three classic loops, and when each earns its place:</p>
 <div class="codeSample" data-hl>for (int i = 0; i &lt; 10; i++) { ... }   // known count / need the index
 
@@ -419,6 +491,7 @@ solution:`public class Grid {
 }`}
 ]},
 {id:'fun2d',title:'Iterating collections: Iterator → for-each → forEach',body:`
+<p>🌱 <b>Starting from zero:</b> programs constantly work with <b>groups</b> of things — all the players, every line of a file, each item in a cart. Java calls these groups <i>collections</i> (a fuller tour comes in two lessons; for now: a List is simply an ordered bunch of values). The everyday need is to <b>visit every item and do something to it</b> — like going down a checklist. This lesson shows the three ways Java lets you walk a collection, from the old manual way to the modern one-liner.</p>
 <p>Three generations of the same job:</p>
 <div class="codeSample" data-hl>// 1) explicit Iterator — verbose, but the ONLY safe way to remove while iterating
 Iterator&lt;String&gt; it = names.iterator();
@@ -530,6 +603,7 @@ public class Modern {
 }`}
 ]},
 {id:'fun3',title:'Methods, overloading, static vs instance',body:`
+<p>🌱 <b>Starting from zero:</b> a <b>method</b> is a named recipe — a chunk of instructions you write once, give a name, and then run whenever you like by calling that name. Recipes take ingredients (<i>parameters</i>) and hand back a result (the <i>return value</i>): "greet, given a name, gives back a greeting." Naming recipes is how programs stay readable — instead of one endless scroll of instructions, you compose small named steps. This lesson covers writing them, and one Java wrinkle: whether a recipe belongs to the whole class (static) or to one particular object (instance) — a distinction that will fully click after the objects lesson.</p>
 <p><b>Static</b> members belong to the class (one shared copy, no object needed). <b>Instance</b> members belong to each object. <b>Overloading</b> = same method name, different parameter lists — resolved at compile time.</p>
 <div class="codeSample" data-hl>public class Counter {
     private int count;              // instance state
@@ -583,6 +657,7 @@ solution:`public class Temperature {
     }
 }`}},
 {id:'fun3b',title:'Constructors: every kind and when to use each',body:`
+<p>🌱 <b>Starting from zero:</b> when a new object is created (a new bank account, a new player), someone has to fill in its starting details — no account should exist without an owner. A <b>constructor</b> is the special setup recipe that runs exactly once, at the moment of creation, and its whole job is making sure the object starts life valid and complete. Java gives you several flavors of constructor for different situations; this lesson tours them.</p>
 <p>A constructor runs when <code>new</code> creates an object — its one job is to establish a valid initial state. The kinds:</p>
 <div class="codeSample" data-hl>public class Account {
     private final String owner;
@@ -746,6 +821,7 @@ class Duration2 {
 }`}
 ]},
 {id:'fun4',title:'Encapsulation: classes done right',body:`
+<p>🌱 <b>Starting from zero:</b> think of a vending machine. You interact with buttons and a coin slot; you cannot reach inside and rearrange the cans — and that restriction is exactly why the machine stays reliable. <b>Encapsulation</b> is building your objects the same way: the data inside is off-limits (private), and the only way in is through the buttons the class chooses to offer (its methods) — each of which can refuse nonsense. It is the single most important habit in object-oriented programming, and this lesson shows how Java enforces it.</p>
 <p>Encapsulation = fields are <code>private</code>; the class guards its own invariants through methods. Nobody outside can put the object into an invalid state.</p>
 <div class="codeSample" data-hl>public class BankAccount {
     private long balanceCents;   // never negative — the class enforces it
@@ -976,6 +1052,7 @@ class Geometry {
     }
 }`}},
 {id:'fun6',title:'Collections & generics',body:`
+<p>🌱 <b>Starting from zero:</b> three containers cover most of programming. A <b>List</b> is a shopping list — items in order, repeats allowed. A <b>Set</b> is a guest list — order optional, but nobody appears twice. A <b>Map</b> is a phone book — look something up by name and get its entry. Java ships all three ready-made, and the angle brackets (like <code>List&lt;String&gt;</code>) are labels declaring what the container holds. Learn to pick the right container for the job and half of everyday coding becomes filling in the other half.</p>
 <p>The core interfaces: <code>List</code> (ordered, duplicates), <code>Set</code> (unique), <code>Map</code> (key→value). Generics (<code>List&lt;String&gt;</code>) make them type-safe at compile time. Program to the interface, choose the implementation:</p>
 <div class="codeSample" data-hl>List&lt;String&gt; names = new ArrayList&lt;&gt;();      // fast random access
 Set&lt;String&gt;  seen  = new HashSet&lt;&gt;();        // O(1) contains, no order
@@ -1026,6 +1103,7 @@ public class WordStats {
 }`}}
 ,
 {id:'enm1',title:'Enums in depth: fields, methods & strategy',body:`
+<p>🌱 <b>Starting from zero:</b> some values come from a short fixed menu: days of the week, sizes S/M/L, shipping speeds. You COULD store them as free text, but then nothing stops "Tuseday" from sneaking in. An <b>enum</b> is Java\u0027s multiple-choice type: you declare the complete list of allowed values once, and the compiler guarantees no other value ever appears. Even better, each choice can carry its own data and behavior — which turns out to be quietly powerful.</p>
 <p>A Java enum is a full class with a fixed set of instances. Each constant can carry <b>fields</b> (set via a private constructor), expose <b>methods</b>, and even override methods <b>per constant</b> — which turns an enum into a strategy table with exhaustive switch support for free.</p>
 <div class="codeSample">enum Op {
     ADD("+")  { double apply(double a, double b) { return a + b; } },
@@ -1075,6 +1153,7 @@ solution:`public enum Shipping {
     }
 }`}},
 {id:'ctr1',title:'The equals / hashCode / toString contracts',body:`
+<p>🌱 <b>Starting from zero:</b> when are two things "the same"? Two printouts of the same photo are equal in content but are not one object; identical twins are equal-looking but different people. Java needs YOUR answer to this question for every class you write, because its containers ask it constantly — "is this key already in the map?", "does the set contain this?". Three small methods are how a class answers — equals (are we the same in content?), hashCode (a quick fingerprint used for fast lookup), toString (how do I describe myself in print?) — and this lesson teaches the rules that keep the answers honest.</p>
 <p>Half the collections library only works if your classes honor three contracts from <code>Object</code>. Get them wrong and HashMap "loses" your keys, HashSet holds duplicates, and lists can't find elements.</p>
 <ul>
 <li><b>equals</b> must be reflexive, symmetric, transitive, consistent, and return false for null. The signature is <code>equals(Object)</code> — overloading with your own type creates a second, unrelated method the collections never call.</li>
@@ -1196,6 +1275,7 @@ public class Invoice {
     }
 }`}},
 {id:'str1',title:'String mastery: pool, builders & formatting',body:`
+<p>🌱 <b>Starting from zero:</b> text in Java — names, messages, file contents — lives in <b>String</b> objects, and Strings have one famous personality trait: they never change. "Modifying" a String actually manufactures a brand-new one, like getting a fresh printout instead of scribbling on the original. That design makes Strings safe to share everywhere — and it means building big text by repeated gluing is wasteful, which is why Java offers a dedicated workbench (StringBuilder) for assembly. This lesson covers both, plus formatting.</p>
 <p>Strings are <b>immutable</b>: every "modification" allocates a new object. That enables the <b>string pool</b> (identical literals share one instance — which is why <code>==</code> sometimes <i>seems</i> to work and then betrays you; always <code>equals()</code>) and makes strings safe as keys and across threads.</p>
 <ul>
 <li><b>Concatenation</b>: a single expression of <code>+</code> is fine (the compiler optimizes it). Concatenating <i>in a loop</i> is O(n²) — each pass copies everything so far. Use <b>StringBuilder</b>: <code>sb.append(x)</code>, then one <code>sb.toString()</code>.</li>
@@ -1361,6 +1441,7 @@ public class Prompt {
     }
 }`}},
 {id:'dep1',title:'Files & I/O (NIO.2)',body:`
+<p>🌱 <b>Starting from zero:</b> everything your program keeps in variables evaporates the moment it exits. To make anything survive — a report, a save-game, a log — you write it to a <b>file</b> on disk, and later read it back. This lesson is Java\u0027s modern way of doing exactly that: naming a location on disk, reading what\u0027s there, writing something new.</p>
 <p>Modern file I/O lives in <code>java.nio.file</code>: <code>Path</code> addresses files, <code>Files</code> does the work. The old <code>File</code> class is legacy.</p>
 <div class="codeSample" data-hl>Path p = Path.of("reports", "q3.txt");
 

@@ -1,5 +1,6 @@
 STREAMS.push({icon:'🧯',title:'Exception Handling',blurb:'try/catch to custom exceptions, try-with-resources, and professional error-handling practice.',lessons:[
 {id:'exc1',title:'try / catch / finally & the exception hierarchy',body:`
+<p>🌱 <b>Starting from zero:</b> things go wrong while programs run — a file is missing, text that should be a number reads "abc", the network dies mid-request. An <b>exception</b> is Java\u0027s fire alarm: when an operation cannot do its job, it stops normal execution and throws an alarm object up to whoever is prepared to handle it. Code that\u0027s prepared says "try this, and if that alarm goes off, do this instead" — which is exactly what the <code>try/catch</code> syntax below reads as. This stream teaches when alarms fire, how to respond, and how to raise your own.</p>
 <p>All throwables descend from <code>Throwable</code>: <code>Error</code> (JVM-level, don't catch), and <code>Exception</code>. <b>Checked</b> exceptions (e.g. <code>IOException</code>) must be caught or declared with <code>throws</code>; <b>unchecked</b> (<code>RuntimeException</code> and subclasses like <code>NullPointerException</code>, <code>IllegalArgumentException</code>) need no declaration — they usually signal bugs or bad input.</p>
 <div class="codeSample" data-hl>try {
     int n = Integer.parseInt(input);       // throws NumberFormatException
@@ -88,6 +89,7 @@ public class Wallet {
     }
 }`}},
 {id:'exc3',title:'try-with-resources',body:`
+<p>🌱 <b>Starting from zero:</b> some things you open must be closed — files, network connections, database handles — like library books that must come back or nobody else can borrow them. The bug is that "wrong" paths (an exception mid-work) skip your closing line. Java\u0027s fix is a try block that <b>closes automatically</b>, no matter how the block exits.</p>
 <p>Anything implementing <code>AutoCloseable</code> can be opened in the try header and is closed automatically — in reverse order, even when an exception flies. This replaces fragile <code>finally { x.close(); }</code> blocks.</p>
 <div class="codeSample" data-hl>try (var reader = Files.newBufferedReader(path);
      var writer = Files.newBufferedWriter(out)) {
