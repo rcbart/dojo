@@ -354,6 +354,46 @@ const DOJO_BRIDGE = `(function(){
   }
   if (document.readyState !== 'loading') greet(); else document.addEventListener('DOMContentLoaded', greet);
 
+  // Floating account bar (the dojo app has no sign-out of its own). Built with
+  // createElement + textContent + element.style only — CSP-safe, no innerHTML.
+  function accountBar(){
+    if (document.getElementById('jd-acctbar')) return;
+    var bar = document.createElement('div');
+    bar.id = 'jd-acctbar';
+    var s = bar.style;
+    s.position='fixed'; s.top='10px'; s.right='12px'; s.zIndex='2147483647';
+    s.display='flex'; s.alignItems='center'; s.gap='8px';
+    s.background='rgba(255,255,255,.92)'; s.backdropFilter='blur(6px)';
+    s.border='1px solid #e2e8f0'; s.borderRadius='999px'; s.padding='5px 6px 5px 12px';
+    s.boxShadow='0 6px 20px rgba(15,23,42,.14)'; s.font='600 13px system-ui,-apple-system,Segoe UI,Roboto,sans-serif'; s.color='#1e293b';
+
+    var who = document.createElement('span');
+    who.textContent = id.displayName;
+    who.style.maxWidth='140px'; who.style.overflow='hidden'; who.style.textOverflow='ellipsis'; who.style.whiteSpace='nowrap';
+
+    function pill(label, bg, fg){
+      var b = document.createElement(arguments.length>3?'a':'button');
+      b.textContent = label;
+      var st=b.style; st.border='1px solid #cbd5e1'; st.borderRadius='999px'; st.padding='6px 12px';
+      st.cursor='pointer'; st.font='inherit'; st.fontWeight='700'; st.textDecoration='none';
+      st.background=bg||'#fff'; st.color=fg||'#1e293b';
+      return b;
+    }
+    var acct = pill('Account', '#fff', '#4338ca', true);
+    acct.href = '/account.html';
+    var out = pill('Sign out', '#4f46e5', '#fff');
+    out.addEventListener('click', function(){
+      out.disabled = true; out.textContent = 'Signing out…';
+      fetch('/api/logout', { method:'POST', credentials:'same-origin' })
+        .then(function(){ window.location.assign('/'); })
+        .catch(function(){ window.location.assign('/'); });
+    });
+
+    bar.appendChild(who); bar.appendChild(acct); bar.appendChild(out);
+    document.body.appendChild(bar);
+  }
+  if (document.readyState !== 'loading') accountBar(); else document.addEventListener('DOMContentLoaded', accountBar);
+
   // Progress sync. KEY is the dojo's own localStorage key.
   var KEY = 'javadojo';
   var origSet = localStorage.setItem.bind(localStorage);
