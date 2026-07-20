@@ -354,36 +354,49 @@ const DOJO_BRIDGE = `(function(){
   }
   if (document.readyState !== 'loading') greet(); else document.addEventListener('DOMContentLoaded', greet);
 
-  // Pull server progress, merge into localStorage, then push local progress up (debounced).
+  // Progress sync. KEY is the dojo's own localStorage key.
   var KEY = 'javadojo';
+  var origSet = localStorage.setItem.bind(localStorage);
   function localGet(){ try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(e){ return {}; } }
-  function localSet(o){ try { localStorage.setItem(KEY, JSON.stringify(o)); } catch(e){} }
   function merge(a, b){
-    var out = {}, k;
+    var out = {}, k, f;
     for (k in a) out[k] = a[k];
     for (k in b){
       if (!out[k]) { out[k] = b[k]; continue; }
-      var x = out[k], y = b[k];
-      out[k] = { done: x.done || y.done,
-        completedAt: Math.max(x.completedAt||0, y.completedAt||0) || undefined };
-      for (var f in y) if (out[k][f] === undefined) out[k][f] = y[f];
+      var x = out[k], y = b[k], m = {};
+      for (f in x) m[f] = x[f];             // keep ALL of local's fields
+      for (f in y) if (m[f] === undefined) m[f] = y[f];
+      m.done = !!(x.done || y.done);         // done never regresses
+      var ca = Math.max(x.completedAt||0, y.completedAt||0);
+      if (ca) m.completedAt = ca;
+      out[k] = m;
     }
     return out;
   }
-  fetch('/api/progress').then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
-    if (!d) return;
-    var merged = merge(localGet(), d.progress || {});
-    localSet(merged);
-    location.reload();
-  }).catch(function(){});
 
-  var timer = null;
+  // Push local progress up, debounced, on every change to the dojo's storage.
+  var pushTimer = null;
   function push(){
     fetch('/api/progress', { method:'PUT', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ progress: localGet() }) }).catch(function(){});
+      credentials:'same-origin', body: JSON.stringify({ progress: localGet() }) }).catch(function(){});
   }
-  var origSet = localStorage.setItem.bind(localStorage);
-  localStorage.setItem = function(k, v){ origSet(k, v); if (k === KEY){ clearTimeout(timer); timer = setTimeout(push, 1500); } };
+  localStorage.setItem = function(k, v){ origSet(k, v); if (k === KEY){ clearTimeout(pushTimer); pushTimer = setTimeout(push, 1500); } };
+
+  // Pull server progress ONCE per tab. Reload only if it genuinely adds something,
+  // and set the guard BEFORE reloading so a reload can never re-trigger the pull.
+  // (This is what prevents the infinite refresh loop.)
+  if (!sessionStorage.getItem('jd_pulled')) {
+    sessionStorage.setItem('jd_pulled', '1');
+    fetch('/api/progress', { credentials:'same-origin' }).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+      if (!d) return;
+      var before = localGet();
+      var merged = merge(before, d.progress || {});
+      if (JSON.stringify(merged) !== JSON.stringify(before)) {
+        origSet(KEY, JSON.stringify(merged)); // write directly, no push, no loop
+        location.reload();                    // one-time, so the dojo renders merged progress
+      }
+    }).catch(function(){});
+  }
 })();`;
 
 /* ------------------------------- CLI ---------------------------------- */
