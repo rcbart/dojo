@@ -1112,7 +1112,7 @@ public class Version implements Comparable<Version> {
         return 0;
     }
 }`,
-tests:[{d:'Overrides equals(Object) — not an overload',re:'boolean\\s+equals\\s*\\(\\s*Object\\s+\\w+\\s*\\)'},{d:'Fast identity path this == o',re:'this\\s*==\\s*\\w+'},{d:'instanceof check (null-safe)',re:'instanceof\\s+Version'},{d:'hashCode via Objects.hash',re:'Objects\\.hash\\s*\\('},{d:'compareTo by major then minor',re:'int\\s+compareTo\\s*\\(\\s*Version\\s+\\w+\\s*\\).*Integer\\.compare'},{d:'Uses @Override',re:'@Override'}],
+tests:[{d:'Overrides equals(Object) — not an overload',re:'boolean\\s+equals\\s*\\(\\s*Object\\s+\\w+\\s*\\)'},{d:'Fast identity path this == o',re:'this\\s*==\\s*\\w+'},{d:'instanceof check (null-safe)',re:'instanceof\\s+Version'},{d:'hashCode via Objects.hash',re:'Objects\\.hash\\s*\\('},{d:'Implements compareTo(Version)',re:'int\\s+compareTo\\s*\\(\\s*Version\\s+\\w+\\s*\\)'},{d:'Uses @Override',re:'@Override'}],
 behavior:`1. new Version(1,4).equals(new Version(1,4)) is true; equals(null) and equals("1.4") are false. 2. Equal versions produce equal hashCodes. 3. toString() of Version(1,4) is "1.4". 4. compareTo: (1,4) < (2,0), (2,1) > (2,0), and compareTo == 0 exactly when equals is true. 5. Works correctly as a HashMap key and inside TreeSet.`,
 hints:['equals skeleton: <code>if (this == o) return true; if (!(o instanceof Version v)) return false; return major == v.major &amp;&amp; minor == v.minor;</code>','hashCode is one line: <code>return Objects.hash(major, minor);</code> — always paired with equals.','compareTo: <code>int c = Integer.compare(major, o.major); return c != 0 ? c : Integer.compare(minor, o.minor);</code>'],
 solution:`import java.util.Objects;
