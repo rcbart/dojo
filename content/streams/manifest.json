@@ -22,5 +22,8 @@
   "18-ci-cd-github-actions-argocd.js",
   "19-dynamic-programming-advanced-algorithms.js",
   "20-coding-challenges-the-tournament.js",
-  "21-real-world-projects.js"
+  "21-real-world-projects.js",
+  "18b-system-design-and-tradeoffs.js",
+  "18c-failure-first-distributed-systems.js",
+  "18d-working-with-real-code.js"
 ]

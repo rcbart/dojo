@@ -150,3 +150,12 @@ kbd{background:#eceef7;border:1px solid var(--line);border-radius:4px;padding:0 
 .bNote{font-size:11.5px;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:6px 10px;margin:8px 0 0}
 .bBtn{margin-top:16px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:14.5px;font-weight:700;cursor:pointer}
 .bBtn:hover{filter:brightness(1.08)}
+
+/* dan track */
+.danBadge{font-size:10px;font-weight:800;letter-spacing:.5px;background:#111827;color:#fbbf24;border:1px solid #b8860b;border-radius:10px;padding:2px 8px;margin-left:8px;vertical-align:2px}
+.card.dan{border-color:#b8860b;background:linear-gradient(180deg,#fffdf5,#fff)}
+.navDivider.danDivider{color:#b8860b}
+.danModal h2{color:#b8860b}
+.danStrip{background:#111827;box-shadow:inset 0 -5px 0 rgba(184,134,11,.55);border-color:#b8860b}
+.danStrip .bKnot{background:#111827;border-color:#b8860b}
+.bBtn.danBtn{background:linear-gradient(90deg,#111827,#b8860b)}

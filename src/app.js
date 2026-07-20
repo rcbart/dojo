@@ -103,8 +103,8 @@ function renderExpected(b){
 }
 /* ============================== NAV / HOME ============================== */
 let cur=null; // {si, li}
-function totalLessons(){return STREAMS.reduce((a,s)=>a+((s.tournament||s.project)?0:s.lessons.length),0)}
-function doneCount(){const d=store.get();let n=0;STREAMS.forEach(s=>{if(s.tournament||s.project)return;s.lessons.forEach(l=>{if(d[l.id]&&d[l.id].done)n++})});return n}
+function totalLessons(){return STREAMS.reduce((a,s)=>a+((s.tournament||s.project||s.dan)?0:s.lessons.length),0)}
+function doneCount(){const d=store.get();let n=0;STREAMS.forEach(s=>{if(s.tournament||s.project||s.dan)return;s.lessons.forEach(l=>{if(d[l.id]&&d[l.id].done)n++})});return n}
 function streamDone(s){const d=store.get();return s.lessons.filter(l=>d[l.id]&&d[l.id].done).length}
 function beltName(){
   const pct=Math.round(100*doneCount()/totalLessons());
@@ -164,8 +164,41 @@ function showBeltUp(before,after,pct){
   document.body.appendChild(ov);
   requestAnimationFrame(()=>ov.classList.add('show'));
 }
+const DAN_NAMES=['1st Dan','2nd Dan','3rd Dan','4th Dan','5th Dan'];
+function danStreamsDone(){
+  return STREAMS.filter(s=>s.dan&&s.lessons.every(l=>store.lesson(l.id).done)).length;
+}
+function showDanUp(rank){
+  const old=document.getElementById('beltUpOverlay');if(old)old.remove();
+  const name=DAN_NAMES[rank-1]||rank+'th Dan';
+  const total=STREAMS.filter(s=>s.dan).length;
+  const ov=document.createElement('div');
+  ov.id='beltUpOverlay';ov.className='beltOverlay';
+  ov.innerHTML='<div class="beltModal danModal" role="dialog" aria-modal="true" aria-label="Dan promotion">'
+    +'<div class="bBurst">'+['⛩️','🥋','🖤','✨','🏮'].map((e,i)=>'<span class="bSpark s'+i+'">'+e+'</span>').join('')+'</div>'
+    +'<h2>'+esc(name)+' earned!</h2>'
+    +'<p class="bSub">Beyond the black belt — a full senior discipline mastered.</p>'
+    +'<div class="bRow"><div class="bCol bNew"><div class="bStrip danStrip"><span class="bKnot"></span></div>'
+    +'<div class="bName"><b>'+esc(name)+'</b> · '+rank+'/'+total+' disciplines</div></div></div>'
+    +'<button class="bBtn danBtn" onclick="document.getElementById(\'beltUpOverlay\').remove()">Continue the path ⛩️</button>'
+    +'</div>';
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+  document.body.appendChild(ov);
+  requestAnimationFrame(()=>ov.classList.add('show'));
+}
 function completeLesson(l){
   if(store.lesson(l.id).done)return;           // already counted
+  const isDan=cur&&STREAMS[cur.si]&&STREAMS[cur.si].dan;
+  if(isDan){
+    store.patch(l.id,{done:true,completedAt:Date.now()});
+    const db=document.getElementById('doneBanner');
+    if(db)db.style.display='block';
+    renderNav();
+    const st=STREAMS[cur.si];
+    if(st.lessons.every(x=>store.lesson(x.id).done))showDanUp(danStreamsDone());
+    else toast('⛩️ <b>Dan lesson complete</b> — senior discipline in progress; the rank comes with the full stream.');
+    return;
+  }
   const isProject=cur&&STREAMS[cur.si]&&STREAMS[cur.si].project;
   if(isProject){
     store.patch(l.id,{done:true,completedAt:Date.now()});
@@ -209,6 +242,11 @@ function renderNav(){
       dv.textContent='🏗️ PROJECTS — real-world builds, no belt credit';
       nav.appendChild(dv);
     }
+    if(s.dan&&!(STREAMS[si-1]&&STREAMS[si-1].dan)){
+      const dv=document.createElement('div');dv.className='navDivider danDivider';
+      dv.textContent='⛩️ DAN TRACK — senior engineering, beyond black belt';
+      nav.appendChild(dv);
+    }
     const hd=document.createElement('div');hd.className='streamHd';
     hd.innerHTML=`${s.icon} ${s.title}<span class="pct">${streamDone(s)}/${s.lessons.length}</span>`;
     const box=document.createElement('div');box.className='lessons'+((cur&&cur.si===si)?' open':'');
@@ -233,7 +271,7 @@ function renderHome(){
   <p style="font-size:12px;color:var(--muted)">System status: AI test runner ${(window.cowork&&window.cowork.askClaude)?'✅ connected':'⚠️ unavailable — completion falls back to structural checks'} · progress storage ${store.persistent?'✅ persistent':'⚠️ session-only (browser storage is blocked here; progress lasts until this view closes)'}</p>
   <div class="grid">${STREAMS.map((s,si)=>{
     const d=streamDone(s),t=s.lessons.length;
-    return `<div class="card${s.tournament?' tour':(s.project?' proj':'')}" onclick="openLesson(${si},0)">${s.icon}${s.tournament?'<span class="tourBadge">🏆 TOURNAMENT</span>':(s.project?'<span class="projBadge">🏗️ PROJECT</span>':'')}<h3>${s.title}</h3><div class="meta">${s.blurb}</div><div class="meta" style="margin-top:6px">${d}/${t} ${s.tournament?'challenges · no belt credit':(s.project?'projects · no belt credit':'lessons')}</div><div class="bar"><i style="width:${t?Math.round(100*d/t):0}%${s.tournament?';background:#d97706':(s.project?';background:#0e9f6e':'')}"></i></div></div>`;
+    return `<div class="card${s.tournament?' tour':(s.project?' proj':(s.dan?' dan':''))}" onclick="openLesson(${si},0)">${s.icon}${s.tournament?'<span class="tourBadge">🏆 TOURNAMENT</span>':(s.project?'<span class="projBadge">🏗️ PROJECT</span>':(s.dan?'<span class="danBadge">⛩️ DAN</span>':''))}<h3>${s.title}</h3><div class="meta">${s.blurb}</div><div class="meta" style="margin-top:6px">${d}/${t} ${s.tournament?'challenges · no belt credit':(s.project?'projects · no belt credit':(s.dan?'lessons · dan track':'lessons'))}</div><div class="bar"><i style="width:${t?Math.round(100*d/t):0}%${s.tournament?';background:#d97706':(s.project?';background:#0e9f6e':(s.dan?';background:linear-gradient(90deg,#111827,#b8860b)':''))}"></i></div></div>`;
   }).join('')}</div></div>`;
 }
 /* ============================== LESSON ============================== */
