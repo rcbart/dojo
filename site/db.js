@@ -16,7 +16,9 @@ try {
   process.exit(1);
 }
 
-const DATA_DIR = path.join(__dirname, 'data');
+// DATA_DIR defaults to site/data; override with JD_DATA_DIR (used by tests so
+// they never touch real user data).
+const DATA_DIR = process.env.JD_DATA_DIR ? path.resolve(process.env.JD_DATA_DIR) : path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'dojo.db');
 const LEGACY_JSON = path.join(DATA_DIR, 'users.json');
 
