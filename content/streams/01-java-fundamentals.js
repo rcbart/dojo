@@ -876,6 +876,15 @@ class Circle implements Shape {
 
 Shape s = new Circle(2);   // interface type, concrete object
 s.area();                  // runtime dispatch → Circle.area()</div>
+<p><b>Polymorphism deserves a slower look — it is the core payoff of object orientation.</b> The word means "many forms": <i>one</i> piece of code, written against <i>one</i> type, produces <i>different behavior</i> depending on which concrete object is actually there. Two types are in play in <code>Shape s = new Circle(2)</code>: the <b>declared type</b> (<code>Shape</code>) decides what you're <i>allowed to call</i> — the compiler checks against it; the <b>runtime type</b> (<code>Circle</code>) decides <i>what actually runs</i> — the JVM looks at the real object at the moment of the call and dispatches to its override. That lookup is called <b>dynamic dispatch</b>, and it happens on every non-static, non-final method call in Java.</p>
+<p>Why it matters is best seen in a loop:</p>
+<div class="codeSample" data-hl>Shape[] shapes = { new Circle(2), new Rectangle(3, 4), new Circle(1) };
+double total = 0;
+for (Shape s : shapes) {
+    total += s.area();     // SAME line of code — three different methods run
+}</div>
+<p>That loop knows nothing about circles or rectangles — and that ignorance is the feature. Add a <code>Triangle implements Shape</code> tomorrow and the loop handles it <i>without being touched</i>: behavior was extended without modifying existing code (you'll meet this again as the open/closed principle, and it's why <code>totalArea(Shape[])</code> in the exercise never needs an <code>if (s instanceof Circle)</code> chain — the dispatch IS the branching). The alternative — a switch over types — must be found and edited everywhere, every time a type is added.</p>
+<p>One disambiguation, since the word gets overloaded (pun intended): what this lesson shows is <b>subtype polymorphism</b> — the "real" one people mean by default. Java has two cousins: <b>overloading</b> (same method name, different parameter lists — resolved by the <i>compiler</i> from the declared argument types, no runtime lookup) and <b>generics</b> (<code>List&lt;T&gt;</code> — one class parameterized over many types, coming up in the generics lessons). Keeping the three apart is a classic interview question and an everyday reading skill.</p>
 <p>Prefer interfaces over concrete inheritance for flexibility. Always mark overrides with <code>@Override</code> — the compiler then catches signature typos.</p>`,
 docs:[['Interfaces — Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/createinterface.html'],['Polymorphism — Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/polymorphism.html']],
 ex:{title:'Shapes, polymorphically',
