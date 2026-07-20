@@ -236,6 +236,24 @@ tbody tr:last-child td { border-bottom: none; }
 .badge.off { background: var(--err-bg); color: var(--err); }
 .prog { font-variant-numeric: tabular-nums; color: var(--ink-2); }
 
+/* ---------- login modal ---------- */
+dialog.modal { border: none; border-radius: 20px; padding: 0; width: min(420px, calc(100vw - 32px));
+  box-shadow: var(--shadow-lg); color: var(--ink); background: #fff; }
+dialog.modal::backdrop { background: rgba(11,18,32,.5); backdrop-filter: blur(3px); }
+.modal-card { position: relative; padding: 30px clamp(22px, 5vw, 34px) 28px; }
+.modal-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 5px; border-radius: 20px 20px 0 0; background: linear-gradient(90deg, var(--brand), var(--brand-2), var(--accent)); }
+.modal-card .logo { margin-bottom: 12px; }
+.modal-card h2 { margin: 0 0 4px; font-size: 23px; }
+.modal-card .lede { font-size: 14.5px; margin-bottom: 4px; }
+.modal-x { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--line-2);
+  background: #fff; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+.modal-x:hover { background: var(--bg-soft); color: var(--ink); }
+dialog.modal[open] { animation: modal-in .18s ease; }
+dialog.modal[open]::backdrop { animation: fade-in .18s ease; }
+@keyframes modal-in { from { transform: translateY(10px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { dialog.modal[open], dialog.modal[open]::backdrop { animation: none; } }
+
 /* ---------- CTA band ---------- */
 .cta-band { margin-top: clamp(56px, 9vw, 88px); border-radius: 24px; padding: clamp(36px, 6vw, 60px) 28px; text-align: center; position: relative; overflow: hidden;
   background: linear-gradient(120deg, #4f46e5, #7c3aed 45%, #0891b2); color: #fff; box-shadow: var(--shadow-lg); }
