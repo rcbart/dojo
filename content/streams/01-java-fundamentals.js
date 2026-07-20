@@ -757,6 +757,19 @@ class Duration2 {
 
     public long balance() { return balanceCents; }
 }</div>
+<p><b>Those keywords — <code>private</code>, <code>public</code> — are access modifiers, and they deserve exact definitions</b>, because they are how a class draws the line between its inside and its outside. Java has four levels, from most to least restrictive:</p>
+<ul>
+<li><b><code>private</code></b> — visible only <i>inside this class</i>. Not subclasses, not neighbors, nobody. The default choice for every field, and for any helper method that exists only to serve the class internally.</li>
+<li><b>package-private</b> (no keyword at all) — visible to every class <i>in the same package</i>. What you get when you write no modifier. Useful for collaborating classes that ship together and for test access, invisible beyond the package boundary.</li>
+<li><b><code>protected</code></b> — package-private <i>plus subclasses anywhere</i>. You met it on <code>Account</code>'s <code>protected long cents</code> in the inheritance lesson: it invites subclasses to touch state directly. That invitation is real coupling — every subclass now depends on that field existing forever — so treat protected fields as a deliberate design decision, not a reflex.</li>
+<li><b><code>public</code></b> — visible to <i>all code everywhere</i>. This is your API.</li>
+</ul>
+<div class="codeSample">who can see it?          private   (none)pkg   protected   public
+same class                  ✓          ✓           ✓          ✓
+same package                ✗          ✓           ✓          ✓
+subclass (other package)    ✗          ✗           ✓          ✓
+everyone else               ✗          ✗           ✗          ✓</div>
+<p><b>The impact is bigger than visibility — it's changeability.</b> Everything <code>public</code> is a promise: other code may now depend on it, so renaming or removing it breaks callers — in a library, forever. Everything <code>private</code> is yours to rewrite tonight without telling anyone. That's why BankAccount above works: <code>balanceCents</code> is private, so the <i>only</i> paths to it are deposit's validation and balance's read — no external code can set it to -50, and the class could switch to a different representation tomorrow without any caller noticing. The working rule: <b>start everything private and widen only when a real caller forces you to</b> — you can always open access later; taking it back is a breaking change.</p>
 <p>Validate in constructors and mutators, keep fields <code>final</code> when they never change, and expose the minimum surface. (Money as <code>long</code> cents, never <code>double</code> — floating point can't represent 0.10 exactly.)</p>`,
 docs:[['Access Control — Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/accesscontrol.html'],['Encapsulation — Baeldung','https://www.baeldung.com/java-oop-principles']],
 ex:{title:'A safe BankAccount',
