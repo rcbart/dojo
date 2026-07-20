@@ -193,6 +193,64 @@ public class Higher {
         };
     }
 }`}},
+{id:'iface2',title:'Interfaces 2.0: default, static & private methods',body:`
+<p>Interfaces started as pure contracts: abstract methods, nothing else. Java 8 changed that for one very concrete reason: the JDK team wanted to add <code>forEach</code> to <code>Iterable</code> — but adding an abstract method to an interface <b>breaks every class that implements it</b>, and thousands of classes across the world implement Iterable. The solution: methods <i>with bodies</i> in interfaces.</p>
+<ul>
+<li><b><code>default</code> methods</b> — an instance method with an implementation. Implementors inherit it for free and may override it. This is how <code>Iterable.forEach</code>, <code>Comparator.reversed()</code>, and <code>Collection.stream()</code> were added to 20-year-old interfaces without breaking anyone — <b>interface evolution</b> is the reason the feature exists.</li>
+<li><b><code>static</code> methods</b> — belong to the interface itself, great for factories: <code>Comparator.comparing(...)</code>, <code>List.of(...)</code>. Not inherited by implementors; called as <code>InterfaceName.method()</code>.</li>
+<li><b><code>private</code> methods</b> (Java 9) — helpers that default methods share without exposing them. An interface can now have real internal structure.</li>
+</ul>
+<div class="codeSample" data-hl>interface Notifier {
+    void send(String msg);                        // classic abstract contract
+
+    default void sendUrgent(String msg) {         // inherited implementation
+        send(banner(msg));
+    }
+    private String banner(String msg) {           // shared helper, invisible outside
+        return "*** " + msg + " ***";
+    }
+    static Notifier console() {                   // factory on the interface itself
+        return msg -&gt; System.out.println(msg);
+    }
+}</div>
+<p><b>The collision rule</b>, since a class can implement many interfaces: if two interfaces provide the same default method, the class <b>must</b> override it — the compiler forces the tie-break — and inside that override it can delegate to a chosen parent with the special syntax <code>InterfaceName.super.method()</code>. And if a superclass provides the method, the <b>class always wins</b> over any interface default. Memorize as: class beats interface, and ties among interfaces are yours to break.</p>
+<p>Design guidance: default methods are for <i>behavior derivable from the contract</i> (sendUrgent is just send + decoration) — not for sneaking state or primary behavior into what should be a class. Interfaces still hold no instance fields; that boundary is what keeps them contracts.</p>`,
+docs:[['Default methods — Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html'],['Private interface methods — JEP 213','https://openjdk.org/jeps/213'],['Evolving interfaces — dev.java','https://dev.java/learn/interfaces/']],
+ex:{title:'Evolve an interface',
+prompt:`Write interface <code>Logger</code>: (1) abstract <code>void log(String msg)</code>; (2) a <b>default</b> method <code>void logAll(java.util.List&lt;String&gt; msgs)</code> that loops the list calling <code>log</code> on each (enhanced for); (3) a <b>private</b> method <code>String stamp(String msg)</code> returning <code>"[LOG] " + msg</code>; (4) a <b>default</b> method <code>void logStamped(String msg)</code> calling <code>log(stamp(msg))</code>; (5) a <b>static</b> factory <code>Logger console()</code> returning the lambda <code>msg -&gt; System.out.println(msg)</code>.`,
+starter:`import java.util.List;
+
+interface Logger {
+
+    // your code
+}`,
+solution:`import java.util.List;
+
+interface Logger {
+
+    void log(String msg);
+
+    default void logAll(List<String> msgs) {
+        for (String m : msgs) {
+            log(m);
+        }
+    }
+
+    private String stamp(String msg) {
+        return "[LOG] " + msg;
+    }
+
+    default void logStamped(String msg) {
+        log(stamp(msg));
+    }
+
+    static Logger console() {
+        return msg -> System.out.println(msg);
+    }
+}`,
+tests:[{d:'Abstract contract method log(String)',re:'void\\s+log\\s*\\(\\s*String\\s+\\w+\\s*\\)\\s*;'},{d:'default logAll loops with enhanced for',re:'default\\s+void\\s+logAll[\\s\\S]*?for\\s*\\(\\s*String\\s+\\w+\\s*:\\s*msgs\\s*\\)'},{d:'private helper stamp builds the prefix',re:'private\\s+String\\s+stamp[\\s\\S]*?"\\[LOG\\] "\\s*\\+\\s*msg'},{d:'default logStamped delegates through the helper',re:'default\\s+void\\s+logStamped[\\s\\S]*?log\\s*\\(\\s*stamp\\s*\\(\\s*msg\\s*\\)\\s*\\)'},{d:'static factory returns a lambda',re:'static\\s+Logger\\s+console[\\s\\S]*?return\\s+\\w+\\s*->\\s*System\\.out\\.println'},{d:'No instance fields — interfaces stay stateless',re:'(private|protected)\\s+(?!String\\s+stamp)\\w+\\s+\\w+\\s*;',not:true}],
+behavior:`1. Any class (or lambda) implementing just log() gets logAll and logStamped for free — that is interface evolution in miniature. 2. Logger.console().logStamped("hi") prints [LOG] hi — the private stamp ran inside the default method. 3. stamp is not callable from outside the interface (private). 4. console() is called on the interface name, not on an instance. 5. Logger qualifies as a functional interface (one abstract method) — which is why the lambda in console() works.`,
+hints:['Only the abstract method ends in a semicolon; default/private/static ones have bodies.','Because log is the single abstract method, a lambda IS a Logger — the factory returns msg -> ... directly.','If two interfaces both gave a class logStamped, the class must override and may pick: Logger.super.logStamped(msg).']}},
 {id:'mod3',title:'Streams API: filter, map, collect',body:`
 <p>A stream is a lazy pipeline: <i>source → intermediate ops → terminal op</i>. Nothing runs until the terminal operation. Streams don't mutate the source — they produce new results.</p>
 <div class="codeSample" data-hl>List&lt;String&gt; loud = names.stream()
@@ -291,6 +349,64 @@ public class Analytics {
                 .toList();
     }
 }`}},
+{id:'immut1',title:'Immutable collections & defensive copies',body:`
+<p>Most collection bugs are someone mutating a list that someone else believed was stable. Modern Java's answer: <b>make the default immutable</b>, and mutate only where mutation is the point.</p>
+<ul>
+<li><b><code>List.of</code>, <code>Set.of</code>, <code>Map.of</code></b> (Java 9) — compact, <i>truly immutable</i> collections: <code>List.of("a", "b")</code>. Any <code>add/remove/set</code> throws <code>UnsupportedOperationException</code>. Two sharp edges by design: they reject <code>null</code> elements outright, and <code>Set.of</code>/<code>Map.of</code> throw on duplicate elements/keys — at creation, loudly, instead of silently swallowing.</li>
+<li><b><code>List.copyOf(collection)</code></b> (Java 10) — an immutable <i>snapshot</i> of an existing collection. If the source was already an immutable copy, it's returned as-is — cheap.</li>
+<li><b><code>Collections.unmodifiableList(list)</code></b> — the old tool, and a trap worth understanding: it is a read-only <b>view</b>, not a copy. Whoever still holds the original can keep mutating, and the "unmodifiable" view changes underneath its holders. Prefer <code>copyOf</code> unless a live view is exactly what you want.</li>
+<li><b><code>Stream.toList()</code></b> — the list you get from a stream pipeline is unmodifiable too. Modern APIs return frozen results by default.</li>
+</ul>
+<p><b>Defensive copies</b> are the same idea applied at class boundaries. A constructor that stores a caller's list, stores a <i>shared mutable secret</i>: the caller can mutate your internals from outside, encapsulation or not. Copy on the way in, freeze on the way out:</p>
+<div class="codeSample" data-hl>public class Route {
+    private final List&lt;String&gt; stops;
+
+    Route(List&lt;String&gt; stops) {
+        this.stops = List.copyOf(stops);      // IN: snapshot — caller's later edits don't reach us
+    }
+    List&lt;String&gt; stops() {
+        return stops;                          // OUT: already immutable — safe to hand out as-is
+    }
+}</div>
+<p>Why immutability earns its keep: immutable objects are free to share between threads (no locks — the Concurrency stream cashes this in), safe as Map keys, trivially cacheable, and above all <i>legible</i> — a value that cannot change is a value you never re-check. The working default in modern Java: collections are immutable unless a mutation is the point, and every mutable input crossing a class boundary gets copied.</p>`,
+docs:[['List.of & friends — Javadoc','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html#unmodifiable'],['JEP 269: convenience factories','https://openjdk.org/jeps/269'],['Immutability — dev.java','https://dev.java/learn/records/']],
+ex:{title:'Freeze the boundaries',
+prompt:`Write class <code>Roster</code>: (1) a <code>private final List&lt;String&gt; players</code>; (2) constructor <code>Roster(List&lt;String&gt; players)</code> storing a <b>defensive immutable copy</b> via <code>List.copyOf</code>; (3) <code>List&lt;String&gt; players()</code> returning the field directly (already safe); (4) a <b>static</b> method <code>Roster demo()</code> returning <code>new Roster(List.of("Ada", "Linus", "Grace"))</code>; (5) <code>Roster with(String extra)</code> — the immutable update pattern: build a <code>new java.util.ArrayList&lt;&gt;(players)</code>, add <code>extra</code>, return a <b>new Roster</b> from it (the original is never touched).`,
+starter:`import java.util.ArrayList;
+import java.util.List;
+
+public class Roster {
+
+    // your code
+}`,
+solution:`import java.util.ArrayList;
+import java.util.List;
+
+public class Roster {
+
+    private final List<String> players;
+
+    Roster(List<String> players) {
+        this.players = List.copyOf(players);
+    }
+
+    List<String> players() {
+        return players;
+    }
+
+    static Roster demo() {
+        return new Roster(List.of("Ada", "Linus", "Grace"));
+    }
+
+    Roster with(String extra) {
+        List<String> next = new ArrayList<>(players);
+        next.add(extra);
+        return new Roster(next);
+    }
+}`,
+tests:[{d:'Field is private final',re:'private\\s+final\\s+List<String>\\s+players'},{d:'Constructor takes a defensive copy with List.copyOf',re:'this\\.players\\s*=\\s*List\\.copyOf\\s*\\(\\s*players\\s*\\)'},{d:'demo() builds from the List.of factory',re:'new\\s+Roster\\s*\\(\\s*List\\.of\\s*\\(\\s*"Ada"\\s*,\\s*"Linus"\\s*,\\s*"Grace"\\s*\\)\\s*\\)'},{d:'with() copies into a fresh ArrayList before adding',re:'new\\s+ArrayList<>\\s*\\(\\s*players\\s*\\)[\\s\\S]*?\\.add\\s*\\(\\s*extra\\s*\\)'},{d:'with() returns a NEW Roster — immutable update',re:'return\\s+new\\s+Roster\\s*\\(\\s*\\w+\\s*\\)'},{d:'getter hands out the frozen list, no re-copy needed',re:'List<String>\\s+players\\s*\\(\\s*\\)\\s*\\{\\s*return\\s+players\\s*;'}],
+behavior:`1. Roster r = demo(); r.players().add("Mallory") throws UnsupportedOperationException — the boundary is frozen. 2. Mutating the list a caller passed to the constructor afterwards does NOT change the roster — copyOf snapshotted it. 3. r.with("Karen") returns a roster of 4; r itself still has 3 — updates create values instead of editing state. 4. List.of(...) with a null player would throw NullPointerException at creation: bad data dies at the door, not downstream.`,
+hints:['The constructor line is the whole defensive-copy idiom: this.players = List.copyOf(players).','with() briefly uses a mutable ArrayList as scaffolding, then re-freezes by passing through the constructor.','This copy-add-refreeze shape is exactly how records with list components handle updates too.']}},
 {id:'mod5',title:'Modern iteration: enhanced for, forEach, Iterable',body:`
 <p>Ways to walk data, from classic to modern:</p>
 <div class="codeSample" data-hl>for (int i = 0; i &lt; list.size(); i++) { ... }   // index needed? use this
@@ -348,6 +464,62 @@ public class Countdown implements Iterable<Integer> {
         return total;
     }
 }`}},
+{id:'vtx1',title:'Varargs & text blocks',body:`
+<p>Two smaller pieces of core Java that every codebase uses and few lessons teach.</p>
+<p><b>Varargs</b> — a method that takes "any number of" arguments: <code>static int sum(int... nums)</code>. The <code>...</code> parameter <i>is an array</i> inside the method (<code>nums.length</code>, enhanced for), and callers write <code>sum(1, 2, 3)</code> or <code>sum()</code> — the compiler packs the array. You've been calling varargs all along: <code>List.of(...)</code>, <code>String.format(...)</code>, <code>Map.ofEntries(...)</code>. The rules: at most one varargs parameter, and it must be <b>last</b> — <code>greet(String name, String... titles)</code> is legal, the reverse is not. One caution: overloads like <code>f(int a)</code> vs <code>f(int... a)</code> resolve to the <i>most specific</i> match (the plain one) — keep such overloads rare, they read as ambiguity even when the compiler disagrees.</p>
+<p><b>Text blocks</b> (Java 15) — multi-line string literals that keep their shape. Triple quotes, opening delimiter on its own line:</p>
+<div class="codeSample" data-hl>String json = """
+        {
+          "name": "Ada",
+          "belt": "black"
+        }
+        """;
+
+String sql = """
+        SELECT id, title
+        FROM books
+        WHERE price_cents &lt; ?
+        ORDER BY title
+        """;</div>
+<p>No <code>\\n</code> escapes, no <code>+</code> concatenation ladders, and unescaped <code>"</code> inside — which is why JSON, SQL and HTML snippets are their natural habitat. The clever part is <b>incidental indentation</b>: the compiler measures the whitespace common to all lines (set by the closing <code>"""</code>'s position) and strips it, so your source stays indented but the string isn't. Two escapes exist just for text blocks: a trailing <code>\\</code> joins lines (no newline emitted), and <code>\\s</code> pins trailing spaces that would otherwise be stripped.</p>`,
+docs:[['Varargs — Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/arguments.html#varargs'],['Text blocks — JEP 378','https://openjdk.org/jeps/378'],['Text blocks programmer\\u2019s guide','https://docs.oracle.com/en/java/javase/21/text-blocks/index.html']],
+ex:{title:'Pack and unpack',
+prompt:`Write class <code>Report</code>: (1) <code>static int sum(int... nums)</code> — enhanced for over the varargs array, accumulate, return (sum() with no args must give 0); (2) <code>static String join(String separator, String... parts)</code> — a <code>StringBuilder</code> loop over the parts appending the separator <b>between</b> elements (classic index check <code>i &gt; 0</code>), separator first parameter because <b>varargs must come last</b>; (3) <code>static String template()</code> — return a <b>text block</b> (triple-quoted) containing exactly the two lines <code>Report for: %s</code> and <code>Total: %d</code>.`,
+starter:`public class Report {
+
+    // your code
+}`,
+solution:`public class Report {
+
+    static int sum(int... nums) {
+        int total = 0;
+        for (int n : nums) {
+            total += n;
+        }
+        return total;
+    }
+
+    static String join(String separator, String... parts) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < parts.length; i++) {
+            if (i > 0) {
+                sb.append(separator);
+            }
+            sb.append(parts[i]);
+        }
+        return sb.toString();
+    }
+
+    static String template() {
+        return """
+                Report for: %s
+                Total: %d
+                """;
+    }
+}`,
+tests:[{d:'sum takes int varargs and loops the array',re:'static\\s+int\\s+sum\\s*\\(\\s*int\\.\\.\\.\\s*\\w+\\s*\\)[\\s\\S]*?for\\s*\\('},{d:'join: varargs parameter is LAST',re:'static\\s+String\\s+join\\s*\\(\\s*String\\s+separator\\s*,\\s*String\\.\\.\\.\\s*parts\\s*\\)'},{d:'Separator only between elements (i > 0 guard)',re:'if\\s*\\(\\s*i\\s*>\\s*0\\s*\\)[\\s\\S]*?append\\s*\\(\\s*separator'},{d:'StringBuilder does the assembly',re:'new\\s+StringBuilder\\s*\\('},{d:'template() returns a text block',re:'return\\s+"""[\\s\\S]*?Report for: %s[\\s\\S]*?Total: %d[\\s\\S]*?"""'},{d:'No \\n escapes needed in the text block',re:'template[\\s\\S]*?\\\\n',not:true}],
+behavior:`1. sum() == 0, sum(5) == 5, sum(1, 2, 3) == 6 — the compiler packs each call into an int[]. 2. join(", ", "a", "b", "c") returns "a, b, c" — no leading or trailing separator; join("-") with no parts returns "". 3. template() contains two lines with real newlines and NO leading spaces — the closing triple-quote position told the compiler which indentation was incidental. 4. String.format(template(), "Ada", 42) — the text block slots straight into the formatting API.`,
+hints:['Inside sum, nums is just an int[] — length, indexing, enhanced for all work.','The i > 0 check is the classic separator idiom: append separator BEFORE every element except the first.','Open the text block with """ then a newline; align the closing """ with the content to strip all incidental indentation.']}},
 {id:'mod6',title:'Optional, records & pattern matching',body:`
 <p>Three modern pillars:</p>
 <div class="codeSample" data-hl>// Optional: an explicit "maybe" — no more null returns
