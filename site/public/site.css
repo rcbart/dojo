@@ -161,6 +161,24 @@ h3 { font-size: 18px; margin: 0 0 6px; }
 .path li:nth-child(1) { --c: #7c3aed; } .path li:nth-child(2) { --c: #2563eb; } .path li:nth-child(3) { --c: #0891b2; }
 .path li:nth-child(4) { --c: #059669; } .path li:nth-child(5) { --c: #d97706; } .path li:nth-child(6) { --c: #e11d48; }
 
+/* ---------- why / different ---------- */
+.story-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: stretch; }
+@media (max-width: 800px) { .story-grid { grid-template-columns: 1fr; } }
+.why-panel { border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(180deg, var(--bg-tint), #fff 55%); box-shadow: var(--shadow); padding: 28px; position: relative; overflow: hidden; }
+.why-panel::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: linear-gradient(90deg, var(--brand), var(--brand-2), var(--accent)); }
+.why-panel h3 { font-size: 21px; margin: 4px 0 12px; }
+.why-panel p { color: var(--ink-2); font-size: 15.5px; }
+.why-panel .signoff { color: var(--muted); font-size: 14px; font-style: italic; margin-bottom: 0; }
+.diff-panel { border: 1px solid var(--line); border-radius: var(--radius); background: #fff; box-shadow: var(--shadow); padding: 28px; }
+.diff-panel h3 { font-size: 21px; margin: 4px 0 14px; }
+.diff-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.diff-list li { display: flex; gap: 12px; align-items: flex-start; font-size: 14.5px; color: var(--ink-2); }
+.diff-list b { color: var(--ink); }
+.diff-list .tick { flex: 0 0 auto; width: 22px; height: 22px; margin-top: 2px; border-radius: 7px; display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #fff; background: var(--c, var(--brand)); box-shadow: 0 3px 8px color-mix(in srgb, var(--c, var(--brand)) 40%, transparent); }
+.diff-list li:nth-child(1) .tick { --c: #7c3aed; } .diff-list li:nth-child(2) .tick { --c: #2563eb; }
+.diff-list li:nth-child(3) .tick { --c: #0891b2; } .diff-list li:nth-child(4) .tick { --c: #059669; }
+.diff-list li:nth-child(5) .tick { --c: #d97706; } .diff-list li:nth-child(6) .tick { --c: #e11d48; }
+
 /* ---------- forms / panels ---------- */
 .panel { background: #fff; border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow-lg); padding: clamp(24px, 4vw, 38px); }
 .panel > h1:first-child, .panel > h2:first-child { margin-top: 0; }
