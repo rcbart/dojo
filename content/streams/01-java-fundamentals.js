@@ -80,7 +80,22 @@ solution:`public class Greeter {
         return "Hello, " + name + "!";
     }
 }`}},
-{id:'fun2',title:'Types, var and conversions',body:`
+{id:'fun2',title:'Variables, types, var and conversions',body:`
+<p><b>Variables deserve a slower look — everything else builds on them.</b> A variable is a <i>named piece of storage with a declared type</i>: the name is how your code refers to it, the type is the compiler-enforced promise about what it can hold. Three moments in a variable's life are worth separating: <b>declaration</b> (<code>int count;</code> — the name and type exist), <b>initialization</b> (the <i>first</i> value goes in), and <b>assignment</b> (any later value replaces the current one). <code>final</code> forbids that third step — declare-once, assign-once — and modern Java style uses it liberally: a variable that never changes is one less thing to track while reading.</p>
+<p>⚠️ <b>Always initialize your variables — ideally in the same line that declares them.</b> Java's rules here have a trap-shaped asymmetry:</p>
+<ul>
+<li><b>Local variables</b> (inside methods) have <b>no default value at all</b>. Using one before it's assigned is a <i>compile error</i> ("variable count might not have been initialized") — the compiler proves <b>definite assignment</b> on every path. Good: the mistake can't reach runtime. But don't fight the checker with a lazy <code>int count = 0;</code>-then-reassign dance when <code>int count = computeCount();</code> says it in one honest line.</li>
+<li><b>Fields</b> (class members) silently get defaults: <code>0</code>, <code>0.0</code>, <code>false</code>, and — the dangerous one — <b><code>null</code> for every reference type</b>. A field you forgot to initialize doesn't fail the build; it waits and throws <code>NullPointerException</code> the first time something calls a method on it, often far from where the real mistake lives. The habit that prevents this: initialize fields at the declaration or in the constructor — those are the only two places a reader looks.</li>
+</ul>
+<div class="codeSample" data-hl>int x;
+// System.out.println(x);     // compile error: x might not have been initialized
+int y = 42;                   // declare + initialize — the habit
+
+class Session {
+    List&lt;String&gt; events;                          // silently null — NPE waiting
+    List&lt;String&gt; safe = new ArrayList&lt;&gt;();        // initialized at declaration
+}</div>
+<p>Every variable also has a <b>scope</b> — the region of code where its name exists: the block it was declared in, and nothing more. Declare variables in the <i>smallest scope that works</i> and as close to first use as possible; a variable alive for 300 lines is 300 lines of "what's its value now?".</p>
 <p>Java has 8 primitives (<code>int</code>, <code>long</code>, <code>double</code>, <code>boolean</code>, <code>char</code>, <code>byte</code>, <code>short</code>, <code>float</code>) and reference types (objects). Primitives hold values; references point to heap objects. Each primitive has a wrapper class (<code>Integer</code>, <code>Double</code> …) and Java auto-boxes between them.</p>
 <div class="codeSample" data-hl>int a = 7;
 double d = a;          // widening: automatic
