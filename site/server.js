@@ -1,19 +1,15 @@
 #!/usr/bin/env node
 /**
- * JavaDojo site server — landing page, secure auth, admin, and the dojo app.
- * Zero dependencies: Node 18+ standard library only.
+ * JavaDojo site server — landing, secure auth, admin, progress sync, and the dojo app.
+ * Standard library + Node's built-in node:sqlite only. No third-party dependencies.
  *
  *   node site/server.js                  # http://localhost:8080
  *   PORT=3000 node site/server.js
  *   node site/server.js --create-admin <username> <password>
  *
- * Security model (see site/README.md):
- *   - passwords: scrypt, per-user 16-byte salt, timing-safe verify
- *   - sessions: 256-bit random token, HttpOnly + SameSite=Strict cookie,
- *     server-side store with 7-day expiry
- *   - login/register rate-limited per IP; Origin checked on mutations
- *   - strict security headers; CSP relaxed only for the dojo app itself
- *   - user store: site/data/users.json (gitignored), atomic writes
+ * Security: scrypt password hashing (per-user salt, timing-safe verify), HttpOnly
+ * SameSite=Strict session cookies, rate limiting, Origin checks, strict CSP + headers,
+ * allowlist input validation, parameterized SQL (site/db.js). See site/README.md.
  */
 'use strict';
 
@@ -21,68 +17,45 @@ const http = require('http');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const db = require('./db');
 
 const ROOT = __dirname;
-const DATA_DIR = path.join(ROOT, 'data');
-const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const DOJO_FILE = path.join(ROOT, '..', 'dist', 'index.html');
 const PORT = parseInt(process.env.PORT || '8080', 10);
-const SECURE_COOKIES = process.env.JD_SECURE_COOKIES === '1'; // set to 1 behind HTTPS
-const OPEN_APP = process.env.JD_OPEN_APP === '1';             // 1 = dojo without login
+const SECURE_COOKIES = process.env.JD_SECURE_COOKIES === '1';
+const OPEN_APP = process.env.JD_OPEN_APP === '1';
 
 const SESSION_TTL_MS = 7 * 24 * 3600 * 1000;
 const USERNAME_RE = /^[a-z][a-z0-9_]{2,23}$/;
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
+const PHONE_RE = /^\+?[0-9][0-9 ()-]{6,19}$/;
 const MIN_PASSWORD = 10;
-const LEVELS = ['new-to-programming', 'new-to-java', 'junior', 'mid', 'senior'];
-const GOALS = ['first-job', 'job-change', 'skill-up', 'interviews', 'curiosity'];
-
-/* ----------------------------- user store ----------------------------- */
-
-function loadUsers() {
-  try {
-    return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
-  } catch (e) {
-    return { users: [] };
-  }
-}
-function saveUsers(db) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  const tmp = USERS_FILE + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(db, null, 2), { mode: 0o600 });
-  fs.renameSync(tmp, USERS_FILE); // atomic on POSIX
-}
-function findUser(db, username) {
-  return db.users.find(u => u.username === username);
-}
+const MAX_PASSWORD = 200;
+const MAX_FIELD = 120;
+const LEVELS = ['', 'new-to-programming', 'new-to-java', 'junior', 'mid', 'senior'];
+const GOALS = ['', 'first-job', 'job-change', 'skill-up', 'interviews', 'curiosity'];
 
 /* ----------------------------- passwords ------------------------------ */
 
 function hashPassword(password, salt) {
   return crypto.scryptSync(password, salt, 64, { N: 16384, r: 8, p: 1 }).toString('hex');
 }
-function newUser(username, password, role) {
+function makeCredentials(password) {
   const salt = crypto.randomBytes(16).toString('hex');
-  return {
-    username,
-    displayName: username,
-    salt,
-    hash: hashPassword(password, salt),
-    role: role || 'user',
-    active: true,
-    created: new Date().toISOString(),
-    profile: { level: '', goal: '' },
-  };
+  return { salt, hash: hashPassword(password, salt) };
 }
 function verifyPassword(user, password) {
+  if (!user) return false;
   const candidate = Buffer.from(hashPassword(password, user.salt), 'hex');
   const stored = Buffer.from(user.hash, 'hex');
   return candidate.length === stored.length && crypto.timingSafeEqual(candidate, stored);
 }
+const DUMMY = makeCredentials(crypto.randomBytes(24).toString('hex')); // constant-time login for unknown users
 
 /* ------------------------------ sessions ------------------------------ */
 
-const sessions = new Map(); // token -> { username, expires }
+const sessions = new Map();
 setInterval(() => {
   const now = Date.now();
   for (const [t, s] of sessions) if (s.expires < now) sessions.delete(t);
@@ -101,16 +74,17 @@ function getSession(req) {
   if (!s || s.expires < Date.now()) return null;
   return { token: m[1], username: s.username };
 }
+function revokeUserSessions(username) {
+  for (const [t, s] of sessions) if (s.username === username) sessions.delete(t);
+}
 function sessionCookie(token, maxAgeSec) {
-  return 'jdsession=' + token
-    + '; HttpOnly; SameSite=Strict; Path=/'
-    + '; Max-Age=' + maxAgeSec
+  return 'jdsession=' + token + '; HttpOnly; SameSite=Strict; Path=/; Max-Age=' + maxAgeSec
     + (SECURE_COOKIES ? '; Secure' : '');
 }
 
 /* ----------------------------- rate limit ----------------------------- */
 
-const attempts = new Map(); // key -> { count, resetAt }
+const attempts = new Map();
 function rateLimited(key, max, windowMs) {
   const now = Date.now();
   let a = attempts.get(key);
@@ -131,22 +105,21 @@ function securityHeaders(res, { appPage } = {}) {
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   res.setHeader('Cache-Control', 'no-store');
-  // The dojo app is a single file with inline script/style; site pages are strict.
   res.setHeader('Content-Security-Policy', appPage
     ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"
     : "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
 }
 function json(res, code, obj) {
   const body = JSON.stringify(obj);
-  res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
   res.end(body);
 }
-function readBody(req) {
+function readBody(req, limit = 262144) {
   return new Promise((resolve, reject) => {
     let size = 0; const chunks = [];
     req.on('data', c => {
       size += c.length;
-      if (size > 10_240) { reject(new Error('body too large')); req.destroy(); return; }
+      if (size > limit) { reject(new Error('request body too large')); req.destroy(); return; }
       chunks.push(c);
     });
     req.on('end', () => {
@@ -158,9 +131,8 @@ function readBody(req) {
 }
 function originOk(req) {
   const origin = req.headers.origin;
-  if (!origin) return true; // same-origin form posts / curl
-  const host = req.headers.host;
-  try { return new URL(origin).host === host; } catch (e) { return false; }
+  if (!origin) return true;
+  try { return new URL(origin).host === req.headers.host; } catch (e) { return false; }
 }
 function clientIp(req) {
   return (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
@@ -168,55 +140,70 @@ function clientIp(req) {
 }
 function publicUser(u) {
   return {
-    username: u.username, displayName: u.displayName, role: u.role,
-    active: u.active, created: u.created, profile: u.profile,
+    username: u.username, displayName: u.displayName, email: u.email, phone: u.phone,
+    role: u.role, active: u.active, created: u.created, profile: u.profile,
+    doneCount: u.doneCount,
   };
 }
-function escHtml(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+function str(v) { return typeof v === 'string' ? v : (v == null ? '' : String(v)); }
+
+/* validation returns null on success, or an error string */
+function validateRegistration(b) {
+  const username = str(b.username).toLowerCase().trim();
+  const password = str(b.password);
+  const displayName = str(b.displayName).trim();
+  const email = str(b.email).trim().toLowerCase();
+  const phone = str(b.phone).trim();
+  if (!USERNAME_RE.test(username)) return { error: 'Username must be 3–24 characters: a lowercase letter, then letters, digits or _' };
+  if (password.length < MIN_PASSWORD) return { error: 'Password must be at least ' + MIN_PASSWORD + ' characters' };
+  if (password.length > MAX_PASSWORD) return { error: 'Password is too long' };
+  if (displayName.length > MAX_FIELD) return { error: 'Display name is too long' };
+  if (email && (email.length > MAX_FIELD || !EMAIL_RE.test(email))) return { error: 'Please enter a valid email address' };
+  if (phone && !PHONE_RE.test(phone)) return { error: 'Please enter a valid phone number' };
+  const level = str(b.level);
+  const goal = str(b.goal);
+  if (!LEVELS.includes(level)) return { error: 'Unknown experience level' };
+  if (!GOALS.includes(goal)) return { error: 'Unknown goal' };
+  return {
+    value: { username, password, displayName: displayName || username, email, phone, level, goal },
+  };
 }
 
-/* ------------------------------ routing ------------------------------- */
+const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
 
-const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml' };
+/* ------------------------------ routing ------------------------------- */
 
 async function handle(req, res) {
   const url = new URL(req.url, 'http://' + (req.headers.host || 'localhost'));
   const p = url.pathname;
   const mutating = req.method !== 'GET' && req.method !== 'HEAD';
-
   if (mutating && !originOk(req)) return json(res, 403, { error: 'cross-origin request rejected' });
 
-  /* ---------- auth API ---------- */
+  /* ---------- auth ---------- */
 
   if (p === '/api/register' && req.method === 'POST') {
-    if (rateLimited('reg:' + clientIp(req), 10, 15 * 60_000)) return json(res, 429, { error: 'too many attempts, try again later' });
+    if (rateLimited('reg:' + clientIp(req), 10, 15 * 60_000)) return json(res, 429, { error: 'Too many attempts. Please try again later.' });
     let body; try { body = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
-    const username = String(body.username || '').toLowerCase().trim();
-    const password = String(body.password || '');
-    if (!USERNAME_RE.test(username)) return json(res, 422, { error: 'username: 3-24 chars, lowercase letter first, then letters/digits/_' });
-    if (password.length < MIN_PASSWORD) return json(res, 422, { error: 'password must be at least ' + MIN_PASSWORD + ' characters' });
-    const db = loadUsers();
-    if (findUser(db, username)) return json(res, 409, { error: 'that username is taken' });
-    const u = newUser(username, password, db.users.length === 0 ? 'admin' : 'user'); // first user becomes admin
-    db.users.push(u);
-    saveUsers(db);
-    const token = createSession(username);
+    const v = validateRegistration(body);
+    if (v.error) return json(res, 422, { error: v.error });
+    const val = v.value;
+    if (db.getUser(val.username)) return json(res, 409, { error: 'That username is taken' });
+    if (val.email && db.getUserByEmail(val.email)) return json(res, 409, { error: 'That email is already registered' });
+    const { salt, hash } = makeCredentials(val.password);
+    const role = db.userCount() === 0 ? 'admin' : 'user';
+    db.createUser({ ...val, salt, hash, role, created: new Date().toISOString() });
+    const token = createSession(val.username);
     res.setHeader('Set-Cookie', sessionCookie(token, SESSION_TTL_MS / 1000));
-    return json(res, 201, { user: publicUser(u), firstUser: u.role === 'admin' });
+    return json(res, 201, { user: publicUser(db.getUser(val.username)), firstUser: role === 'admin' });
   }
 
   if (p === '/api/login' && req.method === 'POST') {
     let body; try { body = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
-    const username = String(body.username || '').toLowerCase().trim();
-    if (rateLimited('login:' + clientIp(req) + ':' + username, 10, 15 * 60_000)) return json(res, 429, { error: 'too many attempts, try again later' });
-    const db = loadUsers();
-    const u = findUser(db, username);
-    // verify against a dummy user when absent so timing does not reveal existence
-    const target = u || newUser('nobody_timing', 'x'.repeat(32));
-    const ok = verifyPassword(target, String(body.password || '')) && !!u && u.active;
-    if (!ok) return json(res, 401, { error: 'invalid username or password' });
+    const username = str(body.username).toLowerCase().trim();
+    if (rateLimited('login:' + clientIp(req) + ':' + username, 10, 15 * 60_000)) return json(res, 429, { error: 'Too many attempts. Please try again later.' });
+    const u = db.getUser(username);
+    const ok = (u ? verifyPassword(u, str(body.password)) : verifyPassword({ salt: DUMMY.salt, hash: DUMMY.hash }, str(body.password))) && !!u && u.active;
+    if (!ok) return json(res, 401, { error: 'Invalid username or password' });
     const token = createSession(username);
     res.setHeader('Set-Cookie', sessionCookie(token, SESSION_TTL_MS / 1000));
     return json(res, 200, { user: publicUser(u) });
@@ -229,108 +216,175 @@ async function handle(req, res) {
     return json(res, 200, { ok: true });
   }
 
-  /* ---------- authenticated API ---------- */
+  /* ---------- authenticated ---------- */
 
   const session = getSession(req);
-  const db = loadUsers();
-  const me = session ? findUser(db, session.username) : null;
+  const me = session ? db.getUser(session.username) : null;
   if (session && (!me || !me.active)) { sessions.delete(session.token); }
+  const authed = me && me.active;
 
   if (p === '/api/me' && req.method === 'GET') {
-    if (!me || !me.active) return json(res, 401, { error: 'not signed in' });
+    if (!authed) return json(res, 401, { error: 'not signed in' });
     return json(res, 200, { user: publicUser(me) });
   }
 
   if (p === '/api/profile' && req.method === 'PUT') {
-    if (!me || !me.active) return json(res, 401, { error: 'not signed in' });
+    if (!authed) return json(res, 401, { error: 'not signed in' });
     let body; try { body = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
-    const displayName = String(body.displayName ?? me.displayName).trim().slice(0, 40);
-    if (displayName.length < 1) return json(res, 422, { error: 'display name cannot be empty' });
-    const level = String(body.level ?? me.profile.level);
-    const goal = String(body.goal ?? me.profile.goal);
-    if (level && !LEVELS.includes(level)) return json(res, 422, { error: 'unknown level' });
-    if (goal && !GOALS.includes(goal)) return json(res, 422, { error: 'unknown goal' });
-    me.displayName = displayName;
-    me.profile = { level, goal };
-    saveUsers(db);
-    return json(res, 200, { user: publicUser(me) });
+    const displayName = str(body.displayName ?? me.displayName).trim();
+    const email = str(body.email ?? me.email).trim().toLowerCase();
+    const phone = str(body.phone ?? me.phone).trim();
+    const level = str(body.level ?? me.profile.level);
+    const goal = str(body.goal ?? me.profile.goal);
+    if (displayName.length < 1 || displayName.length > MAX_FIELD) return json(res, 422, { error: 'Display name must be 1–' + MAX_FIELD + ' characters' });
+    if (email && (email.length > MAX_FIELD || !EMAIL_RE.test(email))) return json(res, 422, { error: 'Please enter a valid email address' });
+    if (phone && !PHONE_RE.test(phone)) return json(res, 422, { error: 'Please enter a valid phone number' });
+    if (!LEVELS.includes(level)) return json(res, 422, { error: 'Unknown level' });
+    if (!GOALS.includes(goal)) return json(res, 422, { error: 'Unknown goal' });
+    if (email && email !== me.email) {
+      const other = db.getUserByEmail(email);
+      if (other && other.username !== me.username) return json(res, 409, { error: 'That email is already registered' });
+    }
+    db.updateProfile(me.username, { displayName, email, phone, level, goal });
+    return json(res, 200, { user: publicUser(db.getUser(me.username)) });
   }
 
-  /* ---------- admin API ---------- */
+  /* ---------- progress sync ---------- */
 
-  const isAdmin = me && me.active && me.role === 'admin';
+  if (p === '/api/progress' && req.method === 'GET') {
+    if (!authed) return json(res, 401, { error: 'not signed in' });
+    return json(res, 200, { progress: db.getProgress(me.username) });
+  }
+  if (p === '/api/progress' && req.method === 'PUT') {
+    if (!authed) return json(res, 401, { error: 'not signed in' });
+    let body; try { body = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+    const obj = (body && typeof body.progress === 'object' && body.progress) || {};
+    db.mergeProgress(me.username, obj);
+    return json(res, 200, { progress: db.getProgress(me.username) });
+  }
+
+  /* ---------- admin ---------- */
+
+  const isAdmin = authed && me.role === 'admin';
 
   if (p === '/api/admin/users' && req.method === 'GET') {
-    if (!isAdmin) return json(res, me ? 403 : 401, { error: 'admin only' });
-    return json(res, 200, { users: db.users.map(publicUser) });
+    if (!isAdmin) return json(res, authed ? 403 : 401, { error: 'admin only' });
+    return json(res, 200, { users: db.listUsers().map(publicUser) });
   }
 
-  const adminUserMatch = p.match(/^\/api\/admin\/users\/([a-z][a-z0-9_]{2,23})$/);
-  if (adminUserMatch && (req.method === 'PUT' || req.method === 'DELETE')) {
-    if (!isAdmin) return json(res, me ? 403 : 401, { error: 'admin only' });
-    const target = findUser(db, adminUserMatch[1]);
+  const adminMatch = p.match(/^\/api\/admin\/users\/([a-z][a-z0-9_]{2,23})$/);
+  if (adminMatch && (req.method === 'PUT' || req.method === 'DELETE')) {
+    if (!isAdmin) return json(res, authed ? 403 : 401, { error: 'admin only' });
+    const target = db.getUser(adminMatch[1]);
     if (!target) return json(res, 404, { error: 'no such user' });
-    if (target.username === me.username) return json(res, 422, { error: 'you cannot modify your own account here' });
+    if (target.username === me.username) return json(res, 422, { error: 'You cannot modify your own account here' });
     if (req.method === 'DELETE') {
-      db.users = db.users.filter(u => u.username !== target.username);
-      for (const [t, s] of sessions) if (s.username === target.username) sessions.delete(t);
-      saveUsers(db);
+      db.deleteUser(target.username);
+      revokeUserSessions(target.username);
       return json(res, 200, { ok: true });
     }
     let body; try { body = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
     if (body.role !== undefined) {
       if (!['user', 'admin'].includes(body.role)) return json(res, 422, { error: 'role must be user or admin' });
-      target.role = body.role;
+      db.setRole(target.username, body.role);
     }
     if (body.active !== undefined) {
-      target.active = !!body.active;
-      if (!target.active) for (const [t, s] of sessions) if (s.username === target.username) sessions.delete(t);
+      db.setActive(target.username, !!body.active);
+      if (!body.active) revokeUserSessions(target.username);
     }
-    saveUsers(db);
-    return json(res, 200, { user: publicUser(target) });
+    return json(res, 200, { user: publicUser(db.getUser(target.username)) });
   }
 
   /* ---------- the dojo app (auth-gated) ---------- */
 
   if (p === '/app' || p === '/app/') {
-    if (!OPEN_APP && (!me || !me.active)) {
-      res.writeHead(302, { Location: '/#login' });
-      return res.end();
-    }
+    if (!OPEN_APP && !authed) { res.writeHead(302, { Location: '/#signin' }); return res.end(); }
     let html;
     try { html = fs.readFileSync(DOJO_FILE, 'utf8'); }
     catch (e) { return json(res, 503, { error: 'dojo build missing — run: node build.js' }); }
-    if (me) {
-      const profile = JSON.stringify({ displayName: me.displayName, ...me.profile });
-      const inject = '<script>try{localStorage.setItem("javadojo_profile",' + JSON.stringify(profile) + ');'
-        + 'addEventListener("DOMContentLoaded",function(){var h=document.querySelector("h1");'
-        + 'if(h&&/Welcome to the Dojo/.test(h.textContent)){h.textContent="Welcome to the Dojo, '
-        + escHtml(me.displayName).replace(/"/g, '\\"') + ' 🥋";}});}catch(e){}</script>';
-      html = html.replace('</head>', inject + '</head>');
+    if (authed) {
+      // Pass identity as JSON via a data attribute; the dojo reads it safely (no HTML built from user input).
+      const payload = JSON.stringify({ displayName: me.displayName, level: me.profile.level, goal: me.profile.goal });
+      const tag = '<script id="jd-identity" type="application/json">'
+        + payload.replace(/</g, '\\u003c') + '</script>'
+        + '<script src="/dojo-bridge.js" defer></script>';
+      html = html.replace('</head>', tag + '</head>');
     }
     securityHeaders(res, { appPage: true });
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     return res.end(html);
   }
 
-  /* ---------- static site pages ---------- */
+  if (p === '/dojo-bridge.js') {
+    securityHeaders(res, { appPage: true });
+    res.writeHead(200, { 'Content-Type': MIME['.js'] });
+    return res.end(DOJO_BRIDGE);
+  }
+
+  /* ---------- static ---------- */
 
   if (req.method !== 'GET' && req.method !== 'HEAD') return json(res, 405, { error: 'method not allowed' });
-
-  let file = p === '/' ? '/index.html' : p;
-  file = path.normalize(file).replace(/^(\.\.[/\\])+/, '');
+  let file = p === '/' ? '/index.html' : decodeURIComponent(p);
+  file = path.normalize(file).replace(/^(\.\.(\/|\\|$))+/, '');
   const full = path.join(PUBLIC_DIR, file);
-  if (!full.startsWith(PUBLIC_DIR)) return json(res, 400, { error: 'bad path' });
+  if (!full.startsWith(PUBLIC_DIR + path.sep) && full !== path.join(PUBLIC_DIR, 'index.html')) {
+    return json(res, 400, { error: 'bad path' });
+  }
   const ext = path.extname(full);
-  if (!MIME[ext] || !fs.existsSync(full)) {
+  if (!MIME[ext] || !fs.existsSync(full) || !fs.statSync(full).isFile()) {
     securityHeaders(res);
     res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
-    return res.end('<!doctype html><html lang="en"><meta charset="utf-8"><title>Not found</title><p>Not found. <a href="/">Back to JavaDojo</a></p>');
+    return res.end('<!doctype html><html lang="en"><meta charset="utf-8"><title>Not found</title><body style="font-family:system-ui;max-width:640px;margin:80px auto;padding:0 20px"><h1>404</h1><p>Page not found. <a href="/">Back to JavaDojo</a></p>');
   }
   securityHeaders(res);
   res.writeHead(200, { 'Content-Type': MIME[ext] });
   return res.end(fs.readFileSync(full));
 }
+
+/* Injected into the dojo page: personalize safely + sync progress to the account. */
+const DOJO_BRIDGE = `(function(){
+  'use strict';
+  var el = document.getElementById('jd-identity');
+  if (!el) return;
+  var id; try { id = JSON.parse(el.textContent); } catch (e) { return; }
+  // Greet by name using textContent — never innerHTML — so any name is inert.
+  function greet(){
+    var h = document.querySelector('h1');
+    if (h && /Welcome to the Dojo/.test(h.textContent)) h.textContent = 'Welcome to the Dojo, ' + id.displayName + ' \\uD83E\\uDD4B';
+  }
+  if (document.readyState !== 'loading') greet(); else document.addEventListener('DOMContentLoaded', greet);
+
+  // Pull server progress, merge into localStorage, then push local progress up (debounced).
+  var KEY = 'javadojo';
+  function localGet(){ try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(e){ return {}; } }
+  function localSet(o){ try { localStorage.setItem(KEY, JSON.stringify(o)); } catch(e){} }
+  function merge(a, b){
+    var out = {}, k;
+    for (k in a) out[k] = a[k];
+    for (k in b){
+      if (!out[k]) { out[k] = b[k]; continue; }
+      var x = out[k], y = b[k];
+      out[k] = { done: x.done || y.done,
+        completedAt: Math.max(x.completedAt||0, y.completedAt||0) || undefined };
+      for (var f in y) if (out[k][f] === undefined) out[k][f] = y[f];
+    }
+    return out;
+  }
+  fetch('/api/progress').then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+    if (!d) return;
+    var merged = merge(localGet(), d.progress || {});
+    localSet(merged);
+    location.reload();
+  }).catch(function(){});
+
+  var timer = null;
+  function push(){
+    fetch('/api/progress', { method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ progress: localGet() }) }).catch(function(){});
+  }
+  var origSet = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function(k, v){ origSet(k, v); if (k === KEY){ clearTimeout(timer); timer = setTimeout(push, 1500); } };
+})();`;
 
 /* ------------------------------- CLI ---------------------------------- */
 
@@ -339,10 +393,9 @@ if (process.argv[2] === '--create-admin') {
   if (!username || !password) { console.error('usage: node server.js --create-admin <username> <password>'); process.exit(2); }
   if (!USERNAME_RE.test(username)) { console.error('invalid username (3-24, lowercase letter first)'); process.exit(2); }
   if (password.length < MIN_PASSWORD) { console.error('password must be at least ' + MIN_PASSWORD + ' chars'); process.exit(2); }
-  const db = loadUsers();
-  if (findUser(db, username)) { console.error('user exists'); process.exit(2); }
-  db.users.push(newUser(username, password, 'admin'));
-  saveUsers(db);
+  if (db.getUser(username)) { console.error('user exists'); process.exit(2); }
+  const { salt, hash } = makeCredentials(password);
+  db.createUser({ username, displayName: username, email: '', phone: '', salt, hash, role: 'admin', level: '', goal: '', created: new Date().toISOString() });
   console.log('admin user "' + username + '" created');
   process.exit(0);
 }

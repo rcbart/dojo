@@ -10,57 +10,68 @@
 <a class="skip" href="#main">Skip to main content</a>
 
 <header class="top">
-  <div class="brand"><a href="/" style="text-decoration:none;color:inherit"><span aria-hidden="true">🥋</span> JavaDojo</a></div>
+  <div class="brand"><a href="/"><span aria-hidden="true">🥋</span> JavaDojo</a></div>
   <nav aria-label="Main">
     <a href="/app" class="cta-small">Enter the dojo</a>
     <a href="/admin.html" id="navAdmin" hidden>Admin</a>
-    <button class="btn" id="logout">Sign out</button>
+    <button class="navbtn" id="logout">Sign out</button>
   </nav>
 </header>
 
-<main id="main" class="auth">
-  <h1>My account</h1>
-  <p>These details personalize your training — the dojo greets you by name, and your level and
-  goal will shape what we recommend first.</p>
-
-  <form id="profileForm" novalidate>
-    <label for="pf-name">Display name</label>
-    <input id="pf-name" name="displayName" required maxlength="40" autocomplete="nickname"
-           aria-describedby="pf-name-help">
-    <p id="pf-name-help" class="help">How the dojo greets you. Up to 40 characters.</p>
-
-    <label for="pf-level">Where are you starting from?</label>
-    <select id="pf-level" name="level">
-      <option value="">Prefer not to say</option>
-      <option value="new-to-programming">Completely new to programming</option>
-      <option value="new-to-java">I can code, but not in Java</option>
-      <option value="junior">Junior Java developer</option>
-      <option value="mid">Mid-level developer</option>
-      <option value="senior">Senior — here for the Dan Track</option>
-    </select>
-
-    <label for="pf-goal">What brings you to the dojo?</label>
-    <select id="pf-goal" name="goal">
-      <option value="">Prefer not to say</option>
-      <option value="first-job">Landing my first programming job</option>
-      <option value="job-change">Changing careers into software</option>
-      <option value="skill-up">Leveling up for my current job</option>
-      <option value="interviews">Preparing for interviews</option>
-      <option value="curiosity">Curiosity — learning for its own sake</option>
-    </select>
-
-    <button type="submit" class="cta">Save details</button>
-  </form>
-  <p id="profStatus" class="status" role="status" aria-live="polite"></p>
-
+<main id="main" class="narrow">
   <section aria-labelledby="acct-h">
-    <h2 id="acct-h">Account</h2>
-    <p>Signed in as <b id="acct-user">…</b> <span id="acct-role" class="badge user"></span></p>
-    <p class="help">Member since <span id="acct-since">…</span>. Your password is stored only as a
-    salted cryptographic hash — nobody, including us, can read it.</p>
+    <div class="panel">
+      <h1 id="acct-h" style="font-size:30px">My account</h1>
+      <p class="lede">These details personalize your training — the dojo greets you by name, and your level and goal shape what we recommend.</p>
+
+      <form id="profileForm" novalidate>
+        <label for="pf-name">Display name <span class="req" aria-hidden="true">*</span></label>
+        <input id="pf-name" name="displayName" required maxlength="120" autocomplete="name">
+
+        <div class="grid-2">
+          <div>
+            <label for="pf-email">Email</label>
+            <input id="pf-email" name="email" type="email" autocomplete="email" maxlength="120" spellcheck="false" autocapitalize="none">
+          </div>
+          <div>
+            <label for="pf-phone">Phone</label>
+            <input id="pf-phone" name="phone" type="tel" autocomplete="tel" maxlength="24" placeholder="+1 555 123 4567">
+          </div>
+        </div>
+
+        <label for="pf-level">Where are you starting from?</label>
+        <select id="pf-level" name="level">
+          <option value="">Prefer not to say</option>
+          <option value="new-to-programming">Completely new to programming</option>
+          <option value="new-to-java">I can code, but not in Java</option>
+          <option value="junior">Junior Java developer</option>
+          <option value="mid">Mid-level developer</option>
+          <option value="senior">Senior — here for the Dan Track</option>
+        </select>
+
+        <label for="pf-goal">What brings you to the dojo?</label>
+        <select id="pf-goal" name="goal">
+          <option value="">Prefer not to say</option>
+          <option value="first-job">Landing my first programming job</option>
+          <option value="job-change">Changing careers into software</option>
+          <option value="skill-up">Leveling up for my current job</option>
+          <option value="interviews">Preparing for interviews</option>
+          <option value="curiosity">Curiosity — learning for its own sake</option>
+        </select>
+
+        <div class="form-actions"><button type="submit" class="cta">Save details</button></div>
+        <p id="profStatus" class="status" role="status" aria-live="polite"></p>
+      </form>
+
+      <h2 style="font-size:20px;margin-top:28px">Account</h2>
+      <p>Signed in as <b id="acct-user">…</b> <span id="acct-role" class="badge user"></span></p>
+      <p class="help">Member since <span id="acct-since">…</span> · <b id="acct-progress">0</b> exercises completed.
+      Your password is stored only as a salted cryptographic hash.</p>
+    </div>
   </section>
 </main>
 
+<script src="/common.js"></script>
 <script src="/account.js"></script>
 </body>
 </html>

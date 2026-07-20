@@ -10,42 +10,45 @@
 <a class="skip" href="#main">Skip to main content</a>
 
 <header class="top">
-  <div class="brand"><a href="/" style="text-decoration:none;color:inherit"><span aria-hidden="true">🥋</span> JavaDojo</a></div>
+  <div class="brand"><a href="/"><span aria-hidden="true">🥋</span> JavaDojo</a></div>
   <nav aria-label="Main">
     <a href="/account.html">My account</a>
     <a href="/app" class="cta-small">Enter the dojo</a>
-    <button class="btn" id="logout">Sign out</button>
+    <button class="navbtn" id="logout">Sign out</button>
   </nav>
 </header>
 
 <main id="main">
   <h1>User management</h1>
-  <p>Manage dojo accounts. You cannot change or delete your own account from here —
-  that protection prevents locking yourself out.</p>
+  <p class="lede">Manage dojo accounts and see each learner's progress. You cannot change or delete your own account here — that protection prevents locking yourself out.</p>
 
   <p>
-    <label for="filter">Filter by username</label>
-    <input id="filter" type="search" style="max-width:280px" autocomplete="off">
+    <label for="filter" style="display:inline-block;margin-right:8px">Filter</label>
+    <input id="filter" type="search" style="max-width:320px;display:inline-block" autocomplete="off" placeholder="username or email">
   </p>
 
-  <table>
-    <caption>All users <span id="count" class="help"></span></caption>
-    <thead>
-      <tr>
-        <th scope="col">Username</th>
-        <th scope="col">Display name</th>
-        <th scope="col">Role</th>
-        <th scope="col">Status</th>
-        <th scope="col">Joined</th>
-        <th scope="col">Actions</th>
-      </tr>
-    </thead>
-    <tbody id="rows"></tbody>
-  </table>
-
+  <div class="tablewrap">
+    <table>
+      <caption>All users <span id="count" class="help"></span></caption>
+      <thead>
+        <tr>
+          <th scope="col">Username</th>
+          <th scope="col">Display name</th>
+          <th scope="col">Email</th>
+          <th scope="col">Role</th>
+          <th scope="col">Status</th>
+          <th scope="col">Progress</th>
+          <th scope="col">Joined</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
   <p id="adminStatus" class="status" role="status" aria-live="polite"></p>
 </main>
 
+<script src="/common.js"></script>
 <script src="/admin.js"></script>
 </body>
 </html>

@@ -1,51 +1,42 @@
 'use strict';
 (function () {
-  const $ = id => document.getElementById(id);
-  const status = $('profStatus');
-  function say(msg, ok) {
-    status.textContent = msg;
-    status.className = 'status ' + (ok ? 'ok' : 'err');
-  }
+  var $ = JD.$;
+  var status = $('profStatus');
 
-  fetch('/api/me').then(r => {
-    if (!r.ok) { location.href = '/#login'; return null; }
-    return r.json();
-  }).then(d => {
-    if (!d) return;
-    const u = d.user;
+  JD.api('/api/me').then(function (res) {
+    if (!res.ok) { location.href = '/#signin'; return; }
+    var u = res.data.user;
     $('pf-name').value = u.displayName;
+    $('pf-email').value = u.email || '';
+    $('pf-phone').value = u.phone || '';
     $('pf-level').value = u.profile.level || '';
     $('pf-goal').value = u.profile.goal || '';
     $('acct-user').textContent = u.username;
-    const role = $('acct-role');
+    var role = $('acct-role');
     role.textContent = u.role;
     role.className = 'badge ' + u.role;
     $('acct-since').textContent = new Date(u.created).toLocaleDateString();
+    $('acct-progress').textContent = u.doneCount || 0;
     if (u.role === 'admin') $('navAdmin').hidden = false;
-  }).catch(() => { location.href = '/#login'; });
-
-  $('profileForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const name = $('pf-name').value.trim();
-    if (!name) { say('Display name cannot be empty.', false); $('pf-name').focus(); return; }
-    try {
-      const r = await fetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          displayName: name,
-          level: $('pf-level').value,
-          goal: $('pf-goal').value,
-        }),
-      });
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(data.error || 'save failed');
-      say('Saved. The dojo will greet you as "' + data.user.displayName + '".', true);
-    } catch (err) { say(err.message, false); }
   });
 
-  $('logout').addEventListener('click', async () => {
-    await fetch('/api/logout', { method: 'POST' }).catch(() => {});
+  $('profileForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var f = e.target;
+    if (!f.checkValidity()) { f.reportValidity(); return; }
+    var res = await JD.api('/api/profile', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        displayName: $('pf-name').value, email: $('pf-email').value, phone: $('pf-phone').value,
+        level: $('pf-level').value, goal: $('pf-goal').value,
+      }),
+    });
+    if (!res.ok) { JD.say(status, res.data.error || 'Save failed', false); return; }
+    JD.say(status, 'Saved. The dojo will greet you as "' + res.data.user.displayName + '".', true);
+  });
+
+  $('logout').addEventListener('click', async function () {
+    await JD.api('/api/logout', { method: 'POST' });
     location.href = '/';
   });
 })();

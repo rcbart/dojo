@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create your account — JavaDojo</title>
+<meta name="description" content="Create your free JavaDojo account and start learning Java from zero.">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+
+<header class="top">
+  <div class="brand"><a href="/"><span aria-hidden="true">🥋</span> JavaDojo</a></div>
+  <nav aria-label="Main">
+    <a href="/">Home</a>
+    <a href="/#signin" class="cta-small">Sign in</a>
+  </nav>
+</header>
+
+<main id="main" class="narrow">
+  <section aria-labelledby="reg-h">
+    <div class="panel">
+      <h1 id="reg-h" style="font-size:30px">Create your account</h1>
+      <p class="lede">It's free. A few details help us personalize your training — only username and password are required.</p>
+
+      <form id="registerForm" novalidate autocomplete="on">
+        <fieldset style="border:none;padding:0;margin:0">
+          <legend style="font-weight:700;margin:8px 0 2px">Account</legend>
+
+          <label for="re-user">Username <span class="req" aria-hidden="true">*</span></label>
+          <input id="re-user" name="username" autocomplete="username" required
+                 pattern="[a-z][a-z0-9_]{2,23}" spellcheck="false" autocapitalize="none"
+                 aria-describedby="re-user-help">
+          <p id="re-user-help" class="help">3–24 characters: lowercase letters, digits and _, starting with a letter.</p>
+
+          <label for="re-pass">Password <span class="req" aria-hidden="true">*</span></label>
+          <div class="pw-wrap">
+            <input id="re-pass" name="password" type="password" autocomplete="new-password"
+                   required minlength="10" maxlength="200" aria-describedby="re-pass-help">
+            <button type="button" class="pw-toggle" data-target="re-pass" aria-pressed="false" aria-label="Show password">Show</button>
+          </div>
+          <div class="meter" id="pw-meter" aria-hidden="true"><i></i></div>
+          <p id="re-pass-help" class="help">At least 10 characters. A short memorable sentence works great.</p>
+
+          <label for="re-pass2">Confirm password <span class="req" aria-hidden="true">*</span></label>
+          <div class="pw-wrap">
+            <input id="re-pass2" name="password2" type="password" autocomplete="new-password" required minlength="10">
+            <button type="button" class="pw-toggle" data-target="re-pass2" aria-pressed="false" aria-label="Show password">Show</button>
+          </div>
+        </fieldset>
+
+        <fieldset style="border:none;padding:0;margin:22px 0 0">
+          <legend style="font-weight:700;margin:8px 0 2px">Contact <span class="help" style="font-weight:400">(optional)</span></legend>
+
+          <label for="re-name">Display name</label>
+          <input id="re-name" name="displayName" autocomplete="name" maxlength="120"
+                 aria-describedby="re-name-help">
+          <p id="re-name-help" class="help">How the dojo greets you. Defaults to your username.</p>
+
+          <div class="grid-2">
+            <div>
+              <label for="re-email">Email</label>
+              <input id="re-email" name="email" type="email" autocomplete="email" maxlength="120"
+                     inputmode="email" spellcheck="false" autocapitalize="none">
+            </div>
+            <div>
+              <label for="re-phone">Phone</label>
+              <input id="re-phone" name="phone" type="tel" autocomplete="tel" maxlength="24"
+                     inputmode="tel" placeholder="+1 555 123 4567">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset style="border:none;padding:0;margin:22px 0 0">
+          <legend style="font-weight:700;margin:8px 0 2px">Personalize <span class="help" style="font-weight:400">(optional)</span></legend>
+
+          <label for="re-level">Where are you starting from?</label>
+          <select id="re-level" name="level">
+            <option value="">Prefer not to say</option>
+            <option value="new-to-programming">Completely new to programming</option>
+            <option value="new-to-java">I can code, but not in Java</option>
+            <option value="junior">Junior Java developer</option>
+            <option value="mid">Mid-level developer</option>
+            <option value="senior">Senior — here for the Dan Track</option>
+          </select>
+
+          <label for="re-goal">What brings you to the dojo?</label>
+          <select id="re-goal" name="goal">
+            <option value="">Prefer not to say</option>
+            <option value="first-job">Landing my first programming job</option>
+            <option value="job-change">Changing careers into software</option>
+            <option value="skill-up">Leveling up for my current job</option>
+            <option value="interviews">Preparing for interviews</option>
+            <option value="curiosity">Curiosity — learning for its own sake</option>
+          </select>
+        </fieldset>
+
+        <div class="form-actions"><button type="submit" class="cta">Create account &amp; start</button></div>
+        <p id="registerStatus" class="status" role="status" aria-live="polite"></p>
+        <p class="help">Your password is stored only as a salted cryptographic hash — nobody, including us, can read it.</p>
+      </form>
+      <p class="alt">Already have an account? <a href="/#signin">Sign in →</a></p>
+    </div>
+  </section>
+</main>
+
+<script src="/register.js"></script>
+</body>
+</html>

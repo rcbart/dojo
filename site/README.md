@@ -1,75 +1,75 @@
 # JavaDojo site layer
 
-The public face of JavaDojo: landing page, accounts, and the auth-gated dojo app.
-Deliberately **separate from the learning code** — nothing in `src/` or `content/`
-knows this layer exists. Zero dependencies: Node 18+ standard library only.
+The public face of JavaDojo: landing page, accounts, a professional registration flow,
+an admin console, and the auth-gated dojo app with **progress that syncs to your account**.
+Deliberately separate from the learning code — nothing in `src/` or `content/` knows this
+layer exists. No third-party dependencies: Node's standard library + built-in SQLite only.
 
 ```
 site/
-  server.js        HTTP server: static pages, auth API, admin API, serves the dojo at /app
-  public/          landing (index.html), account.html, admin.html + their JS/CSS
-  data/users.json  user store — created at runtime, gitignored, chmod 600
+  server.js        HTTP server: static pages, auth/profile/progress/admin APIs, serves the dojo at /app
+  db.js            SQLite data access (parameterized queries) — users + progress
+  public/          index (landing+signin), register, account, admin + shared common.js / site.css
+  data/            SQLite database (dojo.db) — created at runtime, gitignored, chmod 600
 ```
 
-## Run
+## Requirements & run
+
+Needs **Node 22.5+** (built-in `node:sqlite`). Then:
 
 ```bash
-node build.js               # build the dojo first (served at /app)
-node site/server.js         # http://localhost:8080
+node build.js               # build the dojo (served at /app)
+node site/server.js         # http://localhost:8080   (PORT=3000 to change)
 ```
 
-The **first account registered becomes the admin** (or create one explicitly:
-`node site/server.js --create-admin ron <password>`).
+The **first account registered becomes the admin** (or: `node site/server.js --create-admin <username> <password>`).
+An existing `data/users.json` from the previous JSON-store version is migrated into the DB automatically on first run.
 
-| Route           | What                                            |
-|-----------------|-------------------------------------------------|
-| `/`             | landing page with sign-in / register            |
-| `/app`          | the dojo (redirects to login unless signed in)  |
-| `/account.html` | profile: display name, level, goal              |
-| `/admin.html`   | user management (admin role only)               |
+| Route            | What                                                    |
+|------------------|---------------------------------------------------------|
+| `/`              | landing page + sign-in                                  |
+| `/register.html` | full registration (username, password, email, phone, personalization) |
+| `/app`           | the dojo — redirects to sign-in unless authenticated    |
+| `/account.html`  | profile: display name, email, phone, level, goal        |
+| `/admin.html`    | user management + per-user progress (admin only)        |
 
-## Security model
+## Data model (SQLite, `site/db.js`)
 
-- **Passwords** are never stored: scrypt (N=16384) with a per-user 16-byte random
-  salt; verification is timing-safe. The store file is written `0600`, atomically.
-- **Sessions**: 256-bit random tokens in an `HttpOnly; SameSite=Strict` cookie,
-  server-side store, 7-day expiry. Set `JD_SECURE_COOKIES=1` behind HTTPS to add
-  `Secure`.
-- **Login/registration rate-limited** (10 attempts / 15 min per IP+user), and login
-  hashes a dummy password for unknown users so response timing doesn't reveal
-  whether an account exists.
-- **CSRF**: SameSite=Strict cookies plus an Origin check on every mutating request.
-- **Headers**: strict CSP (`default-src 'self'`, no inline script on site pages),
-  nosniff, DENY framing, no-referrer. The dojo app at `/app` gets a relaxed CSP
-  because it is a single self-contained file with inline script by design.
-- **Validation**: usernames `[a-z][a-z0-9_]{2,23}`, passwords ≥ 10 chars, profile
-  fields checked against allowlists, JSON bodies capped at 10 KB.
-- **Admin API** requires the admin role; admins cannot modify or delete their own
-  account (no self-lockout); disabling or deleting a user revokes their sessions.
+- `users` — username (PK), display_name, email (unique when set), phone, salt, hash, role, active, level, goal, created
+- `progress` — (username, exercise_key) PK, done, completed_at, data; `ON DELETE CASCADE` with users
 
-## Personalization
+Progress syncs both ways: on entering `/app`, the dojo pulls server progress, merges it with the
+browser's localStorage (done never regresses, latest `completedAt` wins), and pushes local changes
+back on a debounce. Deleting a user removes their progress too.
 
-Signing in and visiting `/app` injects the user's profile into
-`localStorage.javadojo_profile` and greets them by display name in the dojo
-header — without touching the learning code. Future dojo features can read that
-key for deeper personalization (recommended starting stream by level, etc.).
+## Security
+
+- **Passwords**: scrypt (N=16384) with a per-user 16-byte salt; timing-safe verification; a constant-time
+  dummy hash runs for unknown users so login timing can't reveal whether an account exists. Never stored in plaintext.
+- **Sessions**: 256-bit random tokens in an `HttpOnly; SameSite=Strict` cookie, server-side, 7-day expiry.
+  `JD_SECURE_COOKIES=1` adds `Secure` behind HTTPS. Disabling/deleting a user revokes their sessions.
+- **CSRF**: SameSite=Strict + an Origin check on every mutating request.
+- **Injection**: every SQL statement is parameterized (no string-built SQL). All user input is validated
+  against allowlists/regex before use (username, email, phone, level, goal, password length).
+- **XSS**: user-controlled values are inserted into pages via `textContent` / JSON script blocks only —
+  never `innerHTML`. The `/app` greeting reads identity from a `type="application/json"` block with
+  escaped `<`, and sets the name with `textContent`.
+- **Headers**: strict CSP (`default-src 'self'`, no inline script on site pages), nosniff, `DENY` framing,
+  no-referrer, `no-store`. The dojo at `/app` gets a relaxed CSP because it is a single self-contained
+  file with inline script by design.
+- **Limits**: request bodies capped (256 KB; progress payloads bounded per key/size), login & registration
+  rate-limited per IP/user, static serving is path-traversal-proof.
+- **Store on disk**: `data/dojo.db` is created `chmod 600` and gitignored (with `*.db*`, `*.migrated`).
 
 ## Accessibility
 
-Semantic landmarks, skip link, labelled forms with described help text, tabs with
-correct ARIA and keyboard arrows, `aria-live` status regions, WCAG AA contrast,
-visible focus rings, `prefers-reduced-motion` respected.
+Semantic landmarks + skip link, labelled fields with described help text and required markers, accessible
+password show/hide toggles (`aria-pressed`), `aria-live` status regions, a keyboard-usable admin table,
+WCAG AA contrast, visible focus rings, and `prefers-reduced-motion` respected.
 
-## Production deployment
+## Production path
 
-Run behind Caddy/nginx for TLS (see `LAUNCH_GUIDE.md`), with:
-
-```bash
-JD_SECURE_COOKIES=1 PORT=8080 node site/server.js
-```
-
-Path to production hardening beyond this MVP: move the user store to Postgres
-(the schema is already designed in `BACKEND_PLAN.md`), swap sessions to Redis if
-you scale past one process, and put registration behind email verification. The
-Spring Boot backend of LAUNCH_GUIDE Phase 2 can replace this server wholesale —
-the routes and semantics here were chosen to match it.
+Run behind Caddy/nginx for TLS with `JD_SECURE_COOKIES=1`. SQLite is fine for a single instance; to scale
+out, move to Postgres (schema already designed in `BACKEND_PLAN.md`) and sessions to Redis, add email
+verification, then optionally replace this server with the Spring Boot backend from `LAUNCH_GUIDE.md`
+Phase 2 — its routes and semantics were chosen to match this one.

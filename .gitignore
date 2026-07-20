@@ -20,5 +20,9 @@ Thumbs.db
 # dependencies (if tooling is ever added)
 node_modules/
 
-# site layer runtime data (user store — never commit)
+# site layer runtime data — user store & DB (NEVER commit)
 site/data/
+*.db
+*.db-wal
+*.db-shm
+*.migrated
