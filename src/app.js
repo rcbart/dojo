@@ -141,15 +141,36 @@ const BELT_COLORS={'White belt':'#e2e8f0','Yellow belt':'#facc15','Orange belt':
 function beltStrip(name){
   return '<div class="bStrip" style="background:'+(BELT_COLORS[name]||'#94a3b8')+'"><span class="bKnot"></span></div>';
 }
+function confettiHTML(n){
+  const cols=['#f43f5e','#f59e0b','#facc15','#22c55e','#06b6d4','#3b82f6','#8b5cf6','#ec4899'];
+  let out='';
+  for(let i=0;i<n;i++){
+    const left=Math.random()*100;
+    const delay=(Math.random()*0.5).toFixed(2);
+    const dur=(2.4+Math.random()*1.8).toFixed(2);
+    const drift=((Math.random()*2-1)*140).toFixed(0);
+    const rot=(Math.random()*720-360).toFixed(0);
+    const c=cols[i%cols.length];
+    const w=6+Math.floor(Math.random()*7);
+    const round=Math.random()<0.35?'50%':'2px';
+    out+='<span class="bConf" style="left:'+left+'%;--d:'+delay+'s;--t:'+dur+'s;--x:'+drift+'px;--r:'+rot+'deg;'
+       +'width:'+w+'px;height:'+(w+Math.floor(Math.random()*6))+'px;background:'+c+';border-radius:'+round+'"></span>';
+  }
+  return out;
+}
 function showBeltUp(before,after,pct){
   const old=document.getElementById('beltUpOverlay');if(old)old.remove();
   const note=store.persistent?'':'<div class="bNote">⚠ browser storage blocked — progress lasts for this session only</div>';
+  const black=/Black belt/.test(after);
   const ov=document.createElement('div');
-  ov.id='beltUpOverlay';ov.className='beltOverlay';
-  ov.innerHTML='<div class="beltModal" role="dialog" aria-modal="true" aria-label="Belt promotion">'
-    +'<div class="bBurst">'+['🎉','🥋','✨','🎊','⭐'].map((e,i)=>'<span class="bSpark s'+i+'">'+e+'</span>').join('')+'</div>'
-    +'<h2>Belt up!</h2>'
-    +'<p class="bSub">Your training has paid off — you have been promoted.</p>'
+  ov.id='beltUpOverlay';ov.className='beltOverlay'+(black?' finalBelt':'');
+  ov.innerHTML='<div class="bConfLayer" aria-hidden="true">'+confettiHTML(70)+'</div>'
+    +'<div class="beltModal" role="dialog" aria-modal="true" aria-label="Belt promotion">'
+    +'<div class="bRays" aria-hidden="true"></div>'
+    +'<div class="bBadge" aria-hidden="true"><div class="bBadgeStrip" style="background:'+(BELT_COLORS[after]||'#94a3b8')+'"><span class="bKnot"></span></div></div>'
+    +'<div class="bKicker">'+(black?'⚫ Ultimate rank':'🥋 Rank up')+'</div>'
+    +'<h2 class="bTitle">'+(black?'BLACK BELT!':'Belt up!')+'</h2>'
+    +'<p class="bSub">'+(black?'Mastery of the path — the dojo salutes you.':'Your training has paid off — you have been promoted.')+'</p>'
     +'<div class="bRow">'
       +'<div class="bCol">'+beltStrip(before)+'<div class="bName">'+esc(before)+'</div></div>'
       +'<div class="bArrow">→</div>'

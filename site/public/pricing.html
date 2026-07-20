@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pricing — JavaDojo</title>
+<meta name="description" content="Simple, honest pricing for JavaDojo — start free, unlock everything with a one-time purchase, or bring your team.">
+<meta name="theme-color" content="#5b4ff0">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/site.css">
+<style>
+  /* pricing-specific layout */
+  .price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; align-items: stretch; }
+  .plan { position: relative; display: flex; flex-direction: column; background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 30px 26px; box-shadow: var(--shadow); overflow: hidden; }
+  .plan::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 5px; background: var(--c, var(--brand)); }
+  .plan.featured { border-color: color-mix(in srgb, var(--brand) 45%, #fff); box-shadow: var(--shadow-lg); transform: translateY(-6px); }
+  .plan .tag { position: absolute; top: 16px; right: 16px; font-size: 11.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #fff; background: linear-gradient(120deg, var(--brand), var(--brand-2)); padding: 5px 11px; border-radius: 999px; }
+  .plan .pname { font-weight: 800; font-size: 20px; color: var(--c, var(--brand)); }
+  .plan .ptag { color: var(--muted); font-size: 14px; margin: 4px 0 18px; min-height: 40px; }
+  .plan .price { display: flex; align-items: baseline; gap: 6px; }
+  .plan .price b { font-size: 44px; letter-spacing: -.03em; }
+  .plan .price .per { color: var(--muted); font-size: 15px; }
+  .plan .note { color: var(--muted-2); font-size: 13px; margin: 6px 0 22px; }
+  .plan ul { list-style: none; margin: 0 0 26px; padding: 0; display: grid; gap: 11px; }
+  .plan li { display: flex; gap: 10px; align-items: flex-start; font-size: 14.5px; color: var(--ink-2); }
+  .plan li .tick { flex: none; width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; font-size: 12px; color: #fff; background: var(--c, var(--brand)); }
+  .plan li.muted { color: var(--muted-2); }
+  .plan li.muted .tick { background: var(--line-2); color: var(--muted); }
+  .plan .foot { margin-top: auto; }
+  .plan .foot a { width: 100%; }
+  .faq { max-width: 720px; margin: 0 auto; display: grid; gap: 12px; }
+  .faq details { border: 1px solid var(--line); border-radius: var(--radius); background: #fff; box-shadow: var(--shadow-sm); padding: 4px 18px; }
+  .faq summary { cursor: pointer; font-weight: 700; padding: 14px 0; list-style: none; }
+  .faq summary::marker { display: none; }
+  .faq summary::after { content: "+"; float: right; color: var(--muted-2); font-weight: 700; }
+  .faq details[open] summary::after { content: "−"; }
+  .faq p { color: var(--muted); font-size: 14.5px; margin: 0 0 14px; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+
+<header class="top">
+  <div class="brand"><a href="/"><img class="logo" src="/logo.svg" alt="" width="30" height="30"> JavaDojo</a></div>
+  <nav aria-label="Main">
+    <a href="/#what">What is it</a>
+    <a href="/pricing.html" aria-current="page">Pricing</a>
+    <a href="/register.html">Create account</a>
+    <a href="/#signin" class="cta-small">Sign in</a>
+  </nav>
+</header>
+
+<main id="main">
+
+<section class="hero" style="padding-bottom:0">
+  <span class="eyebrow">Pricing</span>
+  <h1>Start free.<br><span class="grad-text">Go as far as you want.</span></h1>
+  <p class="sub">The core path is free while you're learning. Unlock the senior Dan Track and pro features when you're ready — one honest price, no subscription trap.</p>
+</section>
+
+<section aria-label="Plans" style="margin-top:44px">
+  <div class="price-grid">
+
+    <!-- Free -->
+    <div class="plan" style="--c:#059669">
+      <div class="pname">Apprentice</div>
+      <p class="ptag">Everything you need to learn Java and get job-ready.</p>
+      <div class="price"><b>Free</b></div>
+      <p class="note">Free while in training — forever.</p>
+      <ul>
+        <li><span class="tick">✓</span> Foundations &amp; the full belt path</li>
+        <li><span class="tick">✓</span> 170 lessons, 280+ exercises</li>
+        <li><span class="tick">✓</span> Belts, tournaments &amp; the 4 projects</li>
+        <li><span class="tick">✓</span> Progress synced to your account</li>
+        <li class="muted"><span class="tick">–</span> Dan Track (senior engineering)</li>
+        <li class="muted"><span class="tick">–</span> Completion certificates</li>
+      </ul>
+      <div class="foot"><a class="btn-ghost" href="/register.html">Start free</a></div>
+    </div>
+
+    <!-- Black Belt (featured, one-time) -->
+    <div class="plan featured" style="--c:#5b4ff0">
+      <span class="tag">Most popular</span>
+      <div class="pname">Black Belt</div>
+      <p class="ptag">Unlock everything, forever, with a single payment.</p>
+      <div class="price"><b>$49</b><span class="per">once</span></div>
+      <p class="note">One-time purchase · lifetime access · no subscription.</p>
+      <ul>
+        <li><span class="tick">✓</span> Everything in Apprentice</li>
+        <li><span class="tick">✓</span> The full <b>Dan Track</b> — system design, distributed systems, real-world code</li>
+        <li><span class="tick">✓</span> All interview-prep tournaments</li>
+        <li><span class="tick">✓</span> Shareable completion certificates</li>
+        <li><span class="tick">✓</span> AI-verified exercise runs</li>
+        <li><span class="tick">✓</span> All future content included</li>
+      </ul>
+      <div class="foot"><a class="cta" href="/register.html">Get lifetime access</a></div>
+    </div>
+
+    <!-- Team -->
+    <div class="plan" style="--c:#0891b2">
+      <div class="pname">Team</div>
+      <p class="ptag">Onboard and level up developers together.</p>
+      <div class="price"><b>$29</b><span class="per">/ seat / year</span></div>
+      <p class="note">Volume pricing from 5 seats. Billed annually.</p>
+      <ul>
+        <li><span class="tick">✓</span> Everything in Black Belt for every seat</li>
+        <li><span class="tick">✓</span> Team dashboard &amp; progress reporting</li>
+        <li><span class="tick">✓</span> Assign streams &amp; track completion</li>
+        <li><span class="tick">✓</span> Centralized billing &amp; seat management</li>
+        <li><span class="tick">✓</span> Priority support</li>
+      </ul>
+      <div class="foot"><a class="btn-ghost" href="/register.html">Talk to us</a></div>
+    </div>
+
+  </div>
+  <p class="microcopy" style="text-align:center;margin-top:26px">Prices shown are indicative and not yet active — JavaDojo is free while in training. 30-day refund on any paid plan.</p>
+</section>
+
+<section aria-labelledby="faq-h">
+  <div class="section-head">
+    <span class="eyebrow">FAQ</span>
+    <h2 id="faq-h">Questions, answered</h2>
+  </div>
+  <div class="faq">
+    <details open>
+      <summary>Is the free plan really free?</summary>
+      <p>Yes. The entire belt path — foundations through the four deploy-to-web projects — is free while JavaDojo is in training. No card required, and your progress saves to your account.</p>
+    </details>
+    <details>
+      <summary>Why a one-time price instead of a subscription?</summary>
+      <p>The dojo is a finite, structured curriculum, not an endless feed — so a single lifetime purchase fits how it's actually used, and there's no recurring charge to forget about. Future content is included.</p>
+    </details>
+    <details>
+      <summary>What exactly does Black Belt unlock?</summary>
+      <p>The senior Dan Track (system design, failure-first distributed systems, and working with real code — drawn from real interviews at top companies), every tournament, AI-verified exercise runs, and shareable completion certificates.</p>
+    </details>
+    <details>
+      <summary>Can I expense this or buy for my team?</summary>
+      <p>Yes — the Team plan gives every seat full access plus a dashboard to assign streams and track completion, with centralized billing. Volume pricing starts at 5 seats.</p>
+    </details>
+    <details>
+      <summary>What if it's not for me?</summary>
+      <p>Any paid plan comes with a 30-day, no-questions refund.</p>
+    </details>
+  </div>
+</section>
+
+<section class="cta-band" aria-labelledby="pcta-h">
+  <h2 id="pcta-h">Begin with the very first lesson — free</h2>
+  <p>You can always upgrade later. Your progress comes with you.</p>
+  <a class="btn-white" href="/register.html">Create your free account</a>
+</section>
+
+</main>
+
+<footer>
+  <div class="foot-in">
+    <div class="foot-brand">
+      <div class="brand"><img class="logo" src="/logo.svg" alt="" width="30" height="30"> JavaDojo</div>
+      <p>An interactive path from your first line of code to real applications running on the internet.</p>
+    </div>
+    <div class="foot-cols">
+      <div class="foot-col">
+        <h4>Learn</h4>
+        <a href="/#what">What is it</a>
+        <a href="/#path">The path</a>
+        <a href="/pricing.html">Pricing</a>
+        <a href="/register.html">Create account</a>
+      </div>
+      <div class="foot-col">
+        <h4>Account</h4>
+        <a href="/#signin">Sign in</a>
+        <a href="/account.html">My account</a>
+        <a href="/app">Enter the dojo</a>
+      </div>
+    </div>
+  </div>
+  <div class="foot-bottom">JavaDojo — free while in training. Progress saves in your browser and, when signed in, to your account.</div>
+</footer>
+
+</body>
+</html>

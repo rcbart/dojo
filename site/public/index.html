@@ -5,17 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>JavaDojo — learn Java from zero to deployed</title>
 <meta name="description" content="JavaDojo is a free interactive Java curriculum: 170 lessons and 280+ hands-on exercises that take you from your first line of code to real applications running on the internet.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<meta name="theme-color" content="#5b4ff0">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/site.css">
 </head>
 <body>
 <a class="skip" href="#main">Skip to main content</a>
 
 <header class="top">
-  <div class="brand"><a href="/"><span aria-hidden="true">🥋</span> JavaDojo</a></div>
+  <div class="brand"><a href="/"><img class="logo" src="/logo.svg" alt="" width="30" height="30"> JavaDojo</a></div>
   <nav aria-label="Main">
     <a href="#what">What is it</a>
     <a href="#path">The path</a>
+    <a href="/pricing.html">Pricing</a>
     <a href="/register.html" id="navRegister">Create account</a>
     <a href="#signin" id="navSignin" class="cta-small">Sign in</a>
     <a href="/account.html" id="navAccount" hidden>My account</a>
@@ -27,42 +29,71 @@
 <main id="main">
 
 <section class="hero">
-  <span class="eyebrow">Free while in training</span>
-  <h1>Learn Java. Actually learn it.</h1>
+  <span class="eyebrow">Free while in training · No experience required</span>
+  <h1>Learn Java.<br><span class="grad-text">Actually learn it.</span></h1>
   <p class="sub">From your very first line of code to real applications running on the internet —
-  one interactive path, no experience required.</p>
+  one interactive path, built to take you the whole way.</p>
   <div class="hero-cta">
     <a class="btn-lg" href="/register.html">Start training — it's free</a>
     <a class="btn-ghost" href="#signin">I already have an account</a>
   </div>
+  <p class="microcopy">No credit card · Progress saved to your account · Learn in the browser</p>
+
   <div class="stats" aria-label="Course statistics">
-    <span><b>170</b> lessons</span>
-    <span><b>280+</b> exercises</span>
-    <span><b>27</b> streams</span>
-    <span><b>4</b> deploy-to-web projects</span>
+    <div><b>170</b><span>lessons</span></div>
+    <div><b>280+</b><span>exercises</span></div>
+    <div><b>27</b><span>streams</span></div>
+    <div><b>4</b><span>deploy-to-web projects</span></div>
+  </div>
+
+  <!-- product preview (decorative) -->
+  <div class="preview" aria-hidden="true">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="tab">JavaDojo — Fundamentals · Yellow belt</span></div>
+    <div class="body">
+      <div class="rail">
+        <div class="belt"></div><small>Yellow belt · 34%</small>
+        <ul>
+          <li class="done"><span class="chk">✓</span> Variables &amp; types</li>
+          <li class="done"><span class="chk">✓</span> Logical operators</li>
+          <li class="now"><span class="chk">▹</span> Objects &amp; autoboxing</li>
+          <li class="todo"><span class="chk">○</span> Conditionals</li>
+          <li class="todo"><span class="chk">○</span> Loops</li>
+        </ul>
+      </div>
+      <div class="code"><span class="c">// Your turn — make greet() return a greeting</span>
+<span class="k">public class</span> Greeter {
+    <span class="k">static</span> String <span class="n">greet</span>(String name) {
+        <span class="k">return</span> <span class="s">"Hello, "</span> + name + <span class="s">"!"</span>;
+    }
+}
+<span class="c">// ✓ 3 / 3 tests passed — nice work</span></div>
+    </div>
   </div>
 </section>
 
 <section id="what" aria-labelledby="what-h">
-  <h2 id="what-h" class="rule">What is JavaDojo?</h2>
-  <p class="lede">An interactive place to learn Java — and everything around it — by <b>doing</b>. Every lesson pairs a plain-language explanation with an exercise you solve right in the browser, with instant feedback. No videos, no setup before you begin.</p>
+  <div class="section-head">
+    <span class="eyebrow">What is it</span>
+    <h2>Learn by <span class="grad-text">doing</span>, from day one</h2>
+    <p class="lede">Every lesson pairs a plain-language explanation with an exercise you solve right in the browser, with instant feedback. No videos to sit through, no setup to fight before you begin.</p>
+  </div>
   <div class="cards">
-    <article class="card">
+    <article class="card c-emerald">
       <div class="ico" aria-hidden="true">🌱</div>
       <h3>Made for beginners</h3>
       <p>Lessons start from zero — real-world analogies before any jargon. Never written a line of code? The path begins exactly where you are.</p>
     </article>
-    <article class="card">
+    <article class="card c-violet">
       <div class="ico" aria-hidden="true">🥋</div>
       <h3>Belts keep you moving</h3>
       <p>Progress from white belt to black as you complete lessons. Tournaments of interview-style challenges test your sharpness.</p>
     </article>
-    <article class="card">
+    <article class="card c-cyan">
       <div class="ico" aria-hidden="true">🏗️</div>
       <h3>Ends on the internet</h3>
-      <p>Four end-to-end projects — each culminating in <i>your</i> code deployed to the public web.</p>
+      <p>Four end-to-end projects — a URL shortener, an expense tracker, a chat app, a live dashboard — each deployed to the public web.</p>
     </article>
-    <article class="card">
+    <article class="card c-amber">
       <div class="ico" aria-hidden="true">⛩️</div>
       <h3>A path beyond</h3>
       <p>After black belt, the Dan Track teaches senior skills: system design, distributed systems, and real-world engineering.</p>
@@ -71,7 +102,11 @@
 </section>
 
 <section id="path" aria-labelledby="path-h">
-  <h2 id="path-h" class="rule">The path, at a glance</h2>
+  <div class="section-head">
+    <span class="eyebrow">The journey</span>
+    <h2>The path, at a glance</h2>
+    <p class="lede">Six stages take you from complete beginner to job-ready — and past it.</p>
+  </div>
   <ol class="path">
     <li><b>Foundations</b> — variables, logic, objects, loops: programming itself, explained like you're new.</li>
     <li><b>The language</b> — classes, generics, collections, exceptions, regex, modern Java.</li>
@@ -84,8 +119,9 @@
 
 <section id="signin" aria-labelledby="signin-h" class="narrow">
   <div class="panel">
-    <h2 id="signin-h">Welcome back</h2>
-    <p class="lede">Sign in to pick up where you left off.</p>
+    <span class="eyebrow">Welcome back</span>
+    <h2 id="signin-h" style="margin-top:12px">Sign in</h2>
+    <p class="lede" style="font-size:15px">Pick up right where you left off.</p>
     <form id="signinForm" novalidate>
       <label for="si-user">Username</label>
       <input id="si-user" name="username" autocomplete="username" required
@@ -102,10 +138,36 @@
   </div>
 </section>
 
+<section class="cta-band" aria-labelledby="cta-h">
+  <h2 id="cta-h">Your first line of Java is one click away</h2>
+  <p>Join and start with the very first lesson — the dojo remembers your progress across devices.</p>
+  <a class="btn-white" href="/register.html">Create your free account</a>
+</section>
+
 </main>
 
 <footer>
-  <p>JavaDojo — free while in training. Progress saves in your browser and, when signed in, to your account.</p>
+  <div class="foot-in">
+    <div class="foot-brand">
+      <div class="brand"><img class="logo" src="/logo.svg" alt="" width="30" height="30"> JavaDojo</div>
+      <p>An interactive path from your first line of code to real applications running on the internet.</p>
+    </div>
+    <div class="foot-cols">
+      <div class="foot-col">
+        <h4>Learn</h4>
+        <a href="#what">What is it</a>
+        <a href="#path">The path</a>
+        <a href="/register.html">Create account</a>
+        <a href="#signin">Sign in</a>
+      </div>
+      <div class="foot-col">
+        <h4>Account</h4>
+        <a href="/account.html">My account</a>
+        <a href="/app">Enter the dojo</a>
+      </div>
+    </div>
+  </div>
+  <div class="foot-bottom">JavaDojo — free while in training. Progress saves in your browser and, when signed in, to your account.</div>
 </footer>
 
 <script src="/common.js"></script>
