@@ -1012,58 +1012,6 @@ public class WordStats {
     }
 }`}}
 ,
-{id:'rgx1',title:'Regular expressions: Pattern & Matcher',body:`
-<p>Regex in Java lives in <code>java.util.regex</code>. Two objects matter: <code>Pattern</code> (the compiled expression — compile once, reuse; it's thread-safe) and <code>Matcher</code> (one match attempt over one input — not thread-safe). String's own <code>matches()</code>, <code>replaceAll()</code> and <code>split()</code> recompile the pattern on every call, so hot paths should hold a <code>static final Pattern</code>.</p>
-<ul>
-<li><b>find() vs matches()</b>: <code>find()</code> searches for the pattern <i>anywhere</i>; <code>matches()</code> requires the <i>entire</i> input to match. The #1 regex bug in Java is expecting one and getting the other.</li>
-<li><b>Groups</b>: parentheses capture. <code>group(1)</code> is positional; <b>named groups</b> <code>(?&lt;level&gt;...)</code> read as <code>m.group("level")</code> and survive refactors.</li>
-<li><b>Escaping</b>: regex backslashes must be doubled in Java string literals — <code>\\d</code> in source is the regex <code>\d</code>. For matching a literal string verbatim, use <code>Pattern.quote(s)</code>.</li>
-<li><b>Common classes</b>: <code>\d \w \s</code> and negations <code>\D \W \S</code>, <code>.</code> (any, not newline unless DOTALL), quantifiers <code>* + ? {n,m}</code>, reluctant <code>*?</code>, anchors <code>^ $ \b</code>.</li>
-<li><b>Flags</b>: <code>Pattern.CASE_INSENSITIVE</code>, <code>MULTILINE</code> (^ and $ per line), <code>DOTALL</code> (. crosses newlines).</li>
-</ul>
-<div class="codeSample">private static final Pattern LOG =
-    Pattern.compile("(?&lt;date&gt;\\d{4}-\\d{2}-\\d{2}) (?&lt;level&gt;INFO|WARN|ERROR) (?&lt;msg&gt;.+)");
-
-Matcher m = LOG.matcher("2026-07-17 ERROR disk is full");
-if (m.matches()) {
-    System.out.println(m.group("level"));   // ERROR
-    System.out.println(m.group("msg"));     // disk is full
-}
-
-"a1b2c3".replaceAll("\\d", "#");            // "a#b#c#"
-Pattern.quote("price (USD)");               // matches those literal chars</div>`,
-docs:[['Pattern — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Pattern.html'],['Regex — dev.java tutorial','https://dev.java/learn/regex/'],['Matcher — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Matcher.html']],
-ex:{title:'Log-line parser',
-prompt:`Write <code>LogParser</code> with a <code>private static final Pattern</code> named <code>LINE</code> using <b>named groups</b> <code>date</code>, <code>level</code>, <code>msg</code> to parse lines like <code>2026-07-17 ERROR disk is full</code> (date <code>\\d{4}-\\d{2}-\\d{2}</code>, level one of INFO/WARN/ERROR). Add <code>static String levelOf(String line)</code> that returns the level via <code>matches()</code> + <code>group("level")</code>, or <code>"UNKNOWN"</code> when the line doesn't match.`,
-starter:`import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-public class LogParser {
-    // 1. compile LINE once, with named groups date, level, msg
-
-    static String levelOf(String line) {
-        // 2. match the whole line; return group "level" or "UNKNOWN"
-        return null;
-    }
-}`,
-tests:[{d:'Pattern compiled once as static final LINE',re:'static\\s+final\\s+Pattern\\s+LINE\\s*=\\s*Pattern\\.compile'},{d:'Uses named groups (?<level>…)',re:'\\(\\?<level>'},{d:'Date shape \\d{4}-\\d{2}-\\d{2}',re:'d\\{4\\}[^)]*d\\{2\\}[^)]*d\\{2\\}'},{d:'Full-line match with matches()',re:'\\.matches\\s*\\(\\s*\\)'},{d:'Reads the group by name',re:'group\\s*\\(\\s*"level"\\s*\\)'},{d:'Falls back to UNKNOWN',re:'"UNKNOWN"'}],
-behavior:`1. levelOf("2026-07-17 ERROR disk is full") returns "ERROR". 2. levelOf("2026-07-17 INFO started") returns "INFO". 3. levelOf("garbage") returns "UNKNOWN" — no exception. 4. The Pattern is compiled exactly once (static final), and matcher() is called per line.`,
-hints:['Skeleton: <code>private static final Pattern LINE = Pattern.compile("(?&lt;date&gt;\\\\d{4}-\\\\d{2}-\\\\d{2}) (?&lt;level&gt;INFO|WARN|ERROR) (?&lt;msg&gt;.+)");</code> — note the doubled backslashes.','In levelOf: <code>Matcher m = LINE.matcher(line);</code> then <code>if (m.matches()) return m.group("level");</code>','matches() must cover the entire line — that is why the pattern ends with <code>(?&lt;msg&gt;.+)</code>. Return "UNKNOWN" outside the if.'],
-solution:`import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-public class LogParser {
-    private static final Pattern LINE = Pattern.compile(
-        "(?<date>\\\\d{4}-\\\\d{2}-\\\\d{2}) (?<level>INFO|WARN|ERROR) (?<msg>.+)");
-
-    static String levelOf(String line) {
-        Matcher m = LINE.matcher(line);
-        if (m.matches()) {
-            return m.group("level");
-        }
-        return "UNKNOWN";
-    }
-}`}},
 {id:'enm1',title:'Enums in depth: fields, methods & strategy',body:`
 <p>A Java enum is a full class with a fixed set of instances. Each constant can carry <b>fields</b> (set via a private constructor), expose <b>methods</b>, and even override methods <b>per constant</b> — which turns an enum into a strategy table with exhaustive switch support for free.</p>
 <div class="codeSample">enum Op {
