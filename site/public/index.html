@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JavaDojo — learn Java from zero to deployed</title>
+<meta name="description" content="JavaDojo is a free interactive Java curriculum: 170 lessons and 280+ hands-on exercises that take you from your first line of code to real projects running on the internet.">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+
+<header class="top">
+  <div class="brand"><span aria-hidden="true">🥋</span> JavaDojo</div>
+  <nav aria-label="Main">
+    <a href="#what">What is it</a>
+    <a href="#path">The path</a>
+    <a href="#login" id="navLogin">Sign in</a>
+    <a href="/account.html" id="navAccount" hidden>My account</a>
+    <a href="/admin.html" id="navAdmin" hidden>Admin</a>
+    <a href="/app" id="navApp" hidden class="cta-small">Enter the dojo</a>
+  </nav>
+</header>
+
+<main id="main">
+
+<section class="hero">
+  <h1>Learn Java. Actually learn it.</h1>
+  <p class="sub">From your very first line of code to real applications running on the internet —
+  one interactive path, no experience required.</p>
+  <p><a class="cta" href="#login">Start training</a></p>
+  <p class="stats" aria-label="Course statistics">
+    <span><b>170</b> lessons</span>
+    <span><b>280+</b> hands-on exercises</span>
+    <span><b>27</b> streams</span>
+    <span><b>4</b> deploy-to-the-web projects</span>
+  </p>
+</section>
+
+<section id="what" aria-labelledby="what-h">
+  <h2 id="what-h">What is JavaDojo?</h2>
+  <p>JavaDojo is an interactive place to learn the Java programming language and everything
+  around it — by <b>doing</b>. Every lesson pairs a plain-language explanation with an exercise
+  you solve right in the browser, with instant feedback. No videos to sit through, no setup
+  to fight before you can begin.</p>
+  <div class="cards">
+    <article class="card">
+      <h3><span aria-hidden="true">🌱</span> Made for beginners</h3>
+      <p>Lessons start from zero — real-world analogies before any jargon. If you have never
+      written a line of code, the path begins exactly where you are.</p>
+    </article>
+    <article class="card">
+      <h3><span aria-hidden="true">🥋</span> Belts keep you moving</h3>
+      <p>Progress from white belt to black belt as you complete lessons. Tournaments of
+      interview-style challenges test your sharpness along the way.</p>
+    </article>
+    <article class="card">
+      <h3><span aria-hidden="true">🏗️</span> Ends on the internet</h3>
+      <p>Four end-to-end projects — a URL shortener, an expense tracker, a realtime chat, a live
+      dashboard — each culminating in <i>your</i> code deployed to the public web.</p>
+    </article>
+    <article class="card">
+      <h3><span aria-hidden="true">⛩️</span> A path beyond</h3>
+      <p>After black belt, the Dan Track teaches the senior skills: system design, distributed
+      systems, and working in real codebases — drawn from real interviews at top companies.</p>
+    </article>
+  </div>
+</section>
+
+<section id="path" aria-labelledby="path-h">
+  <h2 id="path-h">The path, at a glance</h2>
+  <ol class="path">
+    <li><b>Foundations</b> — variables, logic, objects, loops: programming itself, explained like you're new. Because you are, and that's the point.</li>
+    <li><b>The language</b> — classes, generics, collections, exceptions, regex, modern Java.</li>
+    <li><b>The ecosystem</b> — Git, Maven, databases &amp; SQL, Spring Boot, REST APIs, testing.</li>
+    <li><b>Shipping</b> — Docker, CI/CD, GitHub Actions, ArgoCD, security, deployment.</li>
+    <li><b>Real projects</b> — build four applications and put them on the internet.</li>
+    <li><b>The Dan Track</b> — senior engineering, for when the belt wall is full.</li>
+  </ol>
+</section>
+
+<section id="login" aria-labelledby="login-h" class="auth">
+  <h2 id="login-h">Enter the dojo</h2>
+  <div class="tabs" role="tablist" aria-label="Sign in or create account">
+    <button role="tab" id="tab-signin" aria-selected="true" aria-controls="panel-signin">Sign in</button>
+    <button role="tab" id="tab-register" aria-selected="false" aria-controls="panel-register">Create account</button>
+  </div>
+
+  <form id="panel-signin" role="tabpanel" aria-labelledby="tab-signin" novalidate>
+    <label for="si-user">Username</label>
+    <input id="si-user" name="username" autocomplete="username" required
+           pattern="[a-z][a-z0-9_]{2,23}" spellcheck="false">
+    <label for="si-pass">Password</label>
+    <input id="si-pass" name="password" type="password" autocomplete="current-password" required minlength="10">
+    <button type="submit" class="cta">Sign in</button>
+  </form>
+
+  <form id="panel-register" role="tabpanel" aria-labelledby="tab-register" hidden novalidate>
+    <label for="re-user">Choose a username</label>
+    <input id="re-user" name="username" autocomplete="username" required
+           pattern="[a-z][a-z0-9_]{2,23}" spellcheck="false"
+           aria-describedby="re-user-help">
+    <p id="re-user-help" class="help">3–24 characters: lowercase letters, digits and _, starting with a letter.</p>
+    <label for="re-pass">Choose a password</label>
+    <input id="re-pass" name="password" type="password" autocomplete="new-password" required minlength="10"
+           aria-describedby="re-pass-help">
+    <p id="re-pass-help" class="help">At least 10 characters. A short sentence works well.</p>
+    <button type="submit" class="cta">Create account</button>
+  </form>
+
+  <p id="authStatus" class="status" role="status" aria-live="polite"></p>
+</section>
+
+</main>
+
+<footer>
+  <p>JavaDojo — free while in training. Your progress is saved in your browser and, when signed in, to your account.</p>
+</footer>
+
+<script src="/landing.js"></script>
+</body>
+</html>

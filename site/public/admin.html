@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — JavaDojo</title>
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+
+<header class="top">
+  <div class="brand"><a href="/" style="text-decoration:none;color:inherit"><span aria-hidden="true">🥋</span> JavaDojo</a></div>
+  <nav aria-label="Main">
+    <a href="/account.html">My account</a>
+    <a href="/app" class="cta-small">Enter the dojo</a>
+    <button class="btn" id="logout">Sign out</button>
+  </nav>
+</header>
+
+<main id="main">
+  <h1>User management</h1>
+  <p>Manage dojo accounts. You cannot change or delete your own account from here —
+  that protection prevents locking yourself out.</p>
+
+  <p>
+    <label for="filter">Filter by username</label>
+    <input id="filter" type="search" style="max-width:280px" autocomplete="off">
+  </p>
+
+  <table>
+    <caption>All users <span id="count" class="help"></span></caption>
+    <thead>
+      <tr>
+        <th scope="col">Username</th>
+        <th scope="col">Display name</th>
+        <th scope="col">Role</th>
+        <th scope="col">Status</th>
+        <th scope="col">Joined</th>
+        <th scope="col">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <p id="adminStatus" class="status" role="status" aria-live="polite"></p>
+</main>
+
+<script src="/admin.js"></script>
+</body>
+</html>
