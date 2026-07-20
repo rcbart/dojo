@@ -104,9 +104,12 @@ prompt:`Write class <code>Connection implements AutoCloseable</code> with <code>
 starter:`class Connection implements AutoCloseable {
     boolean open;
 
-    // constructor → open = true
-    // String query(String sql)
-    // close() → open = false
+    // add: constructor setting open = true, and String query(String sql)
+
+    // replace this stub: set open = false
+    @Override
+    public void close() {
+    }
 }
 
 class Demo {

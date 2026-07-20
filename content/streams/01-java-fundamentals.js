@@ -872,7 +872,12 @@ starter:`abstract class Shape {
 }
 
 class Square extends Shape {
-    // side, constructor, area()
+    // add: a double side field and a constructor,
+    // then make this return the correct area (replace the 0)
+    @Override
+    double area() {
+        return 0;
+    }
 }`,
 tests:[{d:'Shape is abstract with an abstract method',re:'abstract\\s+class\\s+Shape[\\s\\S]*?abstract\\s+double\\s+area'},{d:'Square extends Shape',re:'class\\s+Square\\s+extends\\s+Shape'},{d:'Implements the abstract area()',re:'@Override\\s*(?:(?:public|protected)\\s+)?double\\s+area\\s*\\(\\s*\\)'},{d:'area returns side squared',re:'side\\s*\\*\\s*side'}],
 behavior:`1. new Square(3).area() == 9.0 and describe() returns "area=9.0". 2. describe() is inherited and works via the overridden area() — dynamic dispatch. 3. Shape cannot be instantiated (new Shape() would not compile) — that is what abstract enforces. 4. A Square that failed to implement area() would itself have to be abstract.`,
@@ -922,11 +927,19 @@ starter:`interface Shape {
 }
 
 class Circle implements Shape {
-    // radius field, constructor, area()
+    // add: a radius field + constructor, then return the circle's area (replace the 0)
+    @Override
+    public double area() {
+        return 0;
+    }
 }
 
 class Rectangle implements Shape {
-    // w/h fields, constructor, area()
+    // add: width/height fields + constructor, then return the area (replace the 0)
+    @Override
+    public double area() {
+        return 0;
+    }
 }
 
 class Geometry {
@@ -1091,7 +1104,13 @@ public class Version implements Comparable<Version> {
         this.minor = minor;
     }
 
-    // 1. equals(Object)  2. hashCode()  3. toString()  4. compareTo(Version)
+    // 1. equals(Object)   2. hashCode()   3. toString()
+
+    // 4. replace this stub: order by major first, then minor (stay consistent with equals)
+    @Override
+    public int compareTo(Version other) {
+        return 0;
+    }
 }`,
 tests:[{d:'Overrides equals(Object) — not an overload',re:'boolean\\s+equals\\s*\\(\\s*Object\\s+\\w+\\s*\\)'},{d:'Fast identity path this == o',re:'this\\s*==\\s*\\w+'},{d:'instanceof check (null-safe)',re:'instanceof\\s+Version'},{d:'hashCode via Objects.hash',re:'Objects\\.hash\\s*\\('},{d:'compareTo by major then minor',re:'int\\s+compareTo\\s*\\(\\s*Version\\s+\\w+\\s*\\).*Integer\\.compare'},{d:'Uses @Override',re:'@Override'}],
 behavior:`1. new Version(1,4).equals(new Version(1,4)) is true; equals(null) and equals("1.4") are false. 2. Equal versions produce equal hashCodes. 3. toString() of Version(1,4) is "1.4". 4. compareTo: (1,4) < (2,0), (2,1) > (2,0), and compareTo == 0 exactly when equals is true. 5. Works correctly as a HashMap key and inside TreeSet.`,
@@ -1249,10 +1268,12 @@ prompt:`Write <code>Playlist</code>: (1) a <b>static nested</b> class <code>Trac
 starter:`import java.util.Comparator;
 
 public class Playlist {
-    // 1. static nested class Track (title, seconds)
+    // 1. give this nested class a String title and int seconds (+ constructor)
+    static class Track {
+    }
 
     Comparator<Track> byLength() {
-        // 2. anonymous  new Comparator<Track>() { ... }
+        // 2. anonymous  new Comparator<Track>() { ... } comparing by seconds
         return null;
     }
 
