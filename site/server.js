@@ -347,10 +347,20 @@ if (process.argv[2] === '--create-admin') {
   process.exit(0);
 }
 
-http.createServer((req, res) => {
+const server = http.createServer((req, res) => {
   handle(req, res).catch(err => {
     console.error(err);
     try { json(res, 500, { error: 'internal error' }); } catch (e) { /* already sent */ }
   });
-}).listen(PORT, () => console.log('JavaDojo site on http://localhost:' + PORT
+});
+server.on('error', err => {
+  if (err.code === 'EADDRINUSE') {
+    console.error('Port ' + PORT + ' is already in use.');
+    console.error('  Either stop the other process:  lsof -i :' + PORT + '   then: kill <PID>');
+    console.error('  Or run on another port:         PORT=' + (PORT + 1) + ' node site/server.js');
+    process.exit(1);
+  }
+  throw err;
+});
+server.listen(PORT, () => console.log('JavaDojo site on http://localhost:' + PORT
   + (SECURE_COOKIES ? ' (secure cookies)' : ' (dev mode — set JD_SECURE_COOKIES=1 behind HTTPS)')));
