@@ -294,7 +294,7 @@ function renderNav(){
 const DOMAINS=[
   {name:'Java & the JVM',icon:'☕',titles:['Java Fundamentals','Generics from the Ground Up','Exception Handling','Regex from the Ground Up','Working with User Input','Modern Java Mastery','Concurrency & Multithreading','Time, Testing, Reflection & the JVM','JPMS & Performance Engineering']},
   {name:'Computer Science & Algorithms',icon:'🧠',titles:['Data Structures','Dynamic Programming & Advanced Algorithms']},
-  {name:'Web, APIs & Frameworks',icon:'🌐',titles:['Web Development','APIs & REST','Spring Boot']},
+  {name:'Web, APIs & Frameworks',icon:'🌐',titles:['Web Development','Front-End with React','APIs & REST','Spring Boot']},
   {name:'Data & Persistence',icon:'🗄️',titles:['Working with Databases']},
   {name:'Systems & Networking',icon:'🔌',titles:['Networking & Sockets']},
   {name:'Security & Cryptography',icon:'🔐',titles:['Security & Crypto APIs']},
@@ -1070,6 +1070,12 @@ psql postgresql://postgres:pw@localhost:5432/postgres
 # then run each command and watch exactly what changes</pre>`;
   } else if(lang==='text'){
     steps=`<p>This is a short-answer / mental-model check — there is no code to execute. Compare your reasoning against the solution, and follow the references below to go deeper.</p>`;
+  } else if(lang==='js'||lang==='jsx'){
+    steps=`<p>These run in a Node or React project. To try a React component for real:</p>
+<pre class="runbox">npm create vite@latest my-app -- --template react
+cd my-app && npm install && npm run dev
+# paste the component into src/, import and use it, then open the browser</pre>
+<p>Plain JavaScript (no React) runs straight in Node: <code>node file.js</code>. Add the React import at the top of a component file: <code>import { useState, useEffect } from "react";</code></p>`;
   } else {
     const m=(e.solution||'').match(/public\s+class\s+(\w+)/)||(e.solution||'').match(/\bclass\s+(\w+)/);
     const cls=m?m[1]:'Solution';

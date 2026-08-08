@@ -317,5 +317,49 @@ public class VFanout {
         }
         return out;
     }
-}`}}
+}`}},
+{id:'con7',title:'Diagnosing & debugging race conditions',body:`
+<p>Race conditions are the hardest bugs in the craft because they are <b>non-deterministic</b>: the outcome depends on thread timing, so the same code passes a thousand times and fails once in production. They are the classic <b>heisenbug</b> — attach a debugger or add a log line, the timing shifts, and the bug vanishes. Recognizing the symptoms is half the battle.</p>
+<p><b>Read the symptom:</b> intermittent, unreproducible failures under load usually mean a <b>race condition</b> on shared mutable state; threads frozen forever, making no progress, usually mean a <b>deadlock</b>; a total that is <i>almost</i> right but drifts under concurrency means <b>lost updates</b> from unsynchronized read-modify-write.</p>
+<p><b>Make it reproducible.</b> A bug you cannot trigger you cannot fix. Amplify the race: run the operation in a tight loop across many threads, add small random sleeps to widen the timing window, and assert an invariant (for example, launch N threads that each increment a counter and check the total equals N). If the total comes out low, you have proven a lost update.</p>
+<p><b>Reach for the right tool:</b></p>
+<ul>
+<li><b>jstack</b> (or a thread dump) — snapshots every thread's stack. The JVM even prints "Found one Java-level deadlock" and names the two threads and locks, making deadlocks the <i>easy</i> case once you capture the dump.</li>
+<li><b>jcstress</b> — the OpenJDK harness built specifically to stress-test concurrent code against the Java Memory Model and surface races real tests miss.</li>
+<li><b>AtomicInteger / atomics</b> — swapping a plain counter for an atomic both fixes lost updates and, in a test, confirms the plain version was racy.</li>
+<li>Thread-naming and structured logging so a dump or log tells you <i>which</i> thread did what.</li>
+</ul>
+<p>The durable cure is design, not detection: minimize shared mutable state, prefer <b>immutability</b> and <b>thread confinement</b>, and guard any remaining shared state with a single, consistent locking discipline (always acquire multiple locks in the same order to prevent deadlock).</p>`,
+docs:[['jstack — Oracle','https://docs.oracle.com/en/java/javase/21/docs/specs/man/jstack.html'],['jcstress — OpenJDK','https://github.com/openjdk/jcstress'],['Java Memory Model (JLS 17.4)','https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4']],
+ex:{title:'Diagnose and pick the tool',
+prompt:`Write class <code>RaceDebug</code> with two static methods. <code>String classify(String symptom)</code>: <code>"intermittent-failure"</code>→<code>"race condition"</code>, <code>"threads-stuck-forever"</code>→<code>"deadlock"</code>, <code>"lost-updates"</code>→<code>"unsynchronized shared state"</code>, else <code>"unknown"</code>. <code>String tool(String need)</code>: <code>"inspect-thread-dump"</code>→<code>"jstack"</code>, <code>"stress-test-memory-model"</code>→<code>"jcstress"</code>, <code>"safe-counter"</code>→<code>"AtomicInteger"</code>, else <code>"unknown"</code>.`,
+starter:`public class RaceDebug {
+    static String classify(String symptom) {
+        return null;
+    }
+    static String tool(String need) {
+        return null;
+    }
+}`,
+solution:`public class RaceDebug {
+    static String classify(String symptom) {
+        switch (symptom) {
+            case "intermittent-failure":  return "race condition";
+            case "threads-stuck-forever": return "deadlock";
+            case "lost-updates":          return "unsynchronized shared state";
+            default:                      return "unknown";
+        }
+    }
+    static String tool(String need) {
+        switch (need) {
+            case "inspect-thread-dump":       return "jstack";
+            case "stress-test-memory-model":  return "jcstress";
+            case "safe-counter":              return "AtomicInteger";
+            default:                          return "unknown";
+        }
+    }
+}`,
+tests:[{d:'intermittent failure is a race condition',re:'"intermittent-failure".*?"race condition"',flags:'s'},{d:'stuck-forever is a deadlock',re:'"threads-stuck-forever".*?"deadlock"',flags:'s'},{d:'lost updates come from unsynchronized shared state',re:'"lost-updates".*?"unsynchronized shared state"',flags:'s'},{d:'a thread dump is inspected with jstack',re:'"inspect-thread-dump".*?"jstack"',flags:'s'},{d:'stress-test the memory model with jcstress',re:'"stress-test-memory-model".*?"jcstress"',flags:'s'},{d:'a safe counter is an AtomicInteger',re:'"safe-counter".*?"AtomicInteger"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+behavior:`classify("intermittent-failure") is "race condition", classify("threads-stuck-forever") is "deadlock". tool("inspect-thread-dump") is "jstack", tool("safe-counter") is "AtomicInteger". The workflow: reproduce under load, capture a dump or stress test, then fix by shrinking shared mutable state.`,
+hints:['Match the symptom to the cause: intermittent = race, frozen = deadlock, drifting totals = lost updates.','jstack captures thread dumps (great for deadlocks); jcstress stress-tests the memory model.','An AtomicInteger both fixes and reveals a lost-update race on a counter.']}}
 ]});
