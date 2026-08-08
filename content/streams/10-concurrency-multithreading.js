@@ -1,4 +1,39 @@
 STREAMS.push({icon:'🧵',title:'Concurrency & Multithreading',blurb:'Threads, synchronization, executors, CompletableFuture, concurrent collections and virtual threads.',lessons:[
+{id:'con0',title:'What is a thread? Threads vs processes',body:`
+<p>Before any synchronization or thread pools, get the mental model right. When you launch a program, the operating system creates a <b>process</b>: an isolated container with its own private memory, its own file handles, and at least one <b>thread</b> of execution. A <b>thread</b> is a single sequential path through the code — the thing that actually runs your instructions one after another.</p>
+<p>The key difference is <b>memory</b>. Processes are <i>isolated</i>: one process cannot read another&#8217;s memory, which makes them safe but heavyweight, and talking between them needs deliberate inter-process communication. Threads <i>within the same process</i> are different — they <b>share the process&#8217;s heap</b> (all its objects), but each thread gets its <b>own stack</b> for its local variables and method calls. That shared heap is exactly what makes threads powerful and dangerous at once.</p>
+<div class="codeSample">Process (isolated memory)
+ ├─ Thread 1  → own stack ┐
+ ├─ Thread 2  → own stack ├─ all share the SAME heap (objects)
+ └─ Thread 3  → own stack ┘</div>
+<p><b>Why use threads?</b> Two reasons. To use more than one CPU core at a time (real parallelism — a 4-core machine can run 4 threads at once), and to stay responsive (do slow I/O on one thread while another keeps the UI alive). The operating system rapidly switches threads on and off cores (a <b>context switch</b>), so even a single core can interleave many threads.</p>
+<p>The catch — and the reason the rest of this stream exists — is the shared heap. When two threads read and write the <i>same</i> object at the same time, you get <b>race conditions</b>: results that depend on unpredictable timing. Processes rarely have this problem because their memory is separate; threads have it constantly, which is why synchronization is the heart of concurrency. In Java, the JVM itself runs as one process, your program begins on the <code>main</code> thread, and you create more threads from there.</p>`,
+docs:[['Processes and threads — Oracle','https://docs.oracle.com/javase/tutorial/essential/concurrency/procthread.html'],['Thread (computing) — Wikipedia','https://en.wikipedia.org/wiki/Thread_(computing)']],
+ex:{title:'Process vs thread memory',
+prompt:`Write class <code>Threads</code> with two static methods. <code>String memory(String unit)</code>: <code>"process"</code>→<code>"isolated"</code>, <code>"thread"</code>→<code>"shared"</code>, else <code>"unknown"</code>. <code>boolean sharedAcrossThreads(String region)</code>: threads in one process share the <code>"heap"</code> but each has its own stack — return true only for <code>"heap"</code>.`,
+starter:`public class Threads {
+    static String memory(String unit) {
+        return null;
+    }
+    static boolean sharedAcrossThreads(String region) {
+        return false;
+    }
+}`,
+solution:`public class Threads {
+    static String memory(String unit) {
+        switch (unit) {
+            case "process": return "isolated";
+            case "thread":  return "shared";
+            default:        return "unknown";
+        }
+    }
+    static boolean sharedAcrossThreads(String region) {
+        return region.equals("heap");
+    }
+}`,
+tests:[{d:'a process has isolated memory',re:'"process".*?"isolated"',flags:'s'},{d:'threads share memory',re:'"thread".*?"shared"',flags:'s'},{d:'the heap is shared across threads',re:'region\\.equals\\s*\\(\\s*"heap"\\s*\\)'},{d:'unknown default',re:'"unknown"'}],
+behavior:`memory("process") is "isolated", memory("thread") is "shared". sharedAcrossThreads("heap") is true; sharedAcrossThreads("stack") is false — each thread owns its stack. The shared heap is why race conditions exist and synchronization is needed.`,
+hints:['Processes are isolated; threads within a process share memory.','Threads share the heap (objects) but each has its own stack (locals and call frames).','Return true only for the heap in the second method.']}},
 {id:'con1',title:'Threads & Runnable',body:`
 <p>A <code>Thread</code> is an independent path of execution. You give it work as a <code>Runnable</code> (a functional interface — lambdas work), then <code>start()</code> it. Calling <code>run()</code> directly is the classic beginner bug: it executes on the <i>current</i> thread, no concurrency at all.</p>
 <div class="codeSample" data-hl>Runnable work = () -&gt; System.out.println("on " + Thread.currentThread().getName());

@@ -822,6 +822,175 @@ const GLOSS=[
      ['ACME',`The protocol behind automated certificate issuance, such as Let us Encrypt.`],
    ]},
  ]},
+ {domain:'Java & the JVM',icon:'☕',groups:[
+   {h:'Language & objects',terms:[
+     ['Class',`A blueprint that bundles state (fields) and behavior (methods).`],
+     ['Object',`A specific instance of a class, living on the heap.`],
+     ['Interface',`A contract of methods a class promises to implement; basis of polymorphism.`],
+     ['Abstract class',`A partial class that cannot be instantiated and is meant to be extended.`],
+     ['Generics',`Type parameters that let one class or method work over many types safely.`],
+     ['Enum',`A fixed set of named constant instances.`],
+     ['Record',`A concise, immutable data carrier that auto-generates constructor, accessors, equals and hashCode.`],
+     ['Autoboxing',`Automatic conversion between a primitive (int) and its wrapper object (Integer).`],
+     ['Immutability',`An object whose state cannot change after construction; inherently thread-safe.`],
+     ['Lambda',`A short anonymous function you can pass as a value.`],
+     ['Functional interface',`An interface with one abstract method, the target type of a lambda.`],
+     ['Stream',`A lazy pipeline of operations (filter, map, reduce) over a data source.`],
+     ['Optional',`A container that may or may not hold a value; an explicit alternative to null.`],
+     ['Checked exception',`An error the compiler forces you to handle or declare.`],
+     ['Unchecked exception',`A RuntimeException the compiler does not force you to handle.`],
+   ]},
+   {h:'The JVM',terms:[
+     ['JVM',`The Java Virtual Machine that executes bytecode on any platform.`],
+     ['Bytecode',`The portable instruction set javac compiles your source into.`],
+     ['JIT',`Just-In-Time compilation of hot bytecode into native machine code for speed.`],
+     ['JDK',`The Java Development Kit: compiler and tools plus the runtime.`],
+     ['JRE',`The Java Runtime Environment: just what is needed to run, not compile.`],
+     ['Heap',`The shared memory region where all objects and arrays live; managed by the garbage collector.`],
+     ['Stack',`Per-thread memory of call frames holding locals and references; automatic, no GC.`],
+     ['Metaspace',`Memory holding class metadata and method bytecode.`],
+     ['Garbage collection',`Automatic reclaiming of heap objects nothing references anymore.`],
+   ]},
+ ]},
+ {domain:'Data Structures & Algorithms',icon:'🧠',groups:[
+   {h:'Structures',terms:[
+     ['Array',`A fixed-size, index-addressable block of elements; O(1) access.`],
+     ['Linked list',`Nodes chained by pointers; O(1) insert/remove at a known node, O(n) search.`],
+     ['Stack',`A last-in first-out (LIFO) collection.`],
+     ['Queue',`A first-in first-out (FIFO) collection.`],
+     ['Deque',`A double-ended queue supporting push/pop at both ends.`],
+     ['Hash table',`Key-value store with O(1) average lookup via a hash function.`],
+     ['Tree',`Hierarchical nodes with parent-child links and no cycles.`],
+     ['Binary search tree',`A tree keeping left smaller and right larger for O(log n) search when balanced.`],
+     ['Heap',`A tree with a parent-child order giving O(1) min/max peek; powers priority queues.`],
+     ['Trie',`A prefix tree with one node per character; lookup is O(key length).`],
+     ['B-tree',`A wide, shallow tree that minimizes disk reads; the basis of database indexes.`],
+     ['Graph',`Nodes connected by edges, possibly with cycles and weights.`],
+   ]},
+   {h:'Algorithms & analysis',terms:[
+     ['BFS',`Breadth-first search: explore level by level with a queue; shortest path in unweighted graphs.`],
+     ['DFS',`Depth-first search: go deep with a stack or recursion; cycles, paths, topological sort.`],
+     ['Dijkstra',`Shortest path in a weighted graph using a priority queue; the SPF in OSPF routing.`],
+     ['Topological sort',`Ordering a DAG so every edge points forward; task and build scheduling.`],
+     ['Recursion',`A method that calls itself on a smaller subproblem until a base case.`],
+     ['Big-O',`Upper bound on how work grows with input size; the worst-case promise.`],
+     ['Theta',`A tight bound where the upper and lower bounds agree.`],
+     ['Omega',`A lower bound on how work grows.`],
+     ['Time complexity',`How runtime scales with input size, ignoring constants.`],
+     ['Space complexity',`How extra memory scales with input size.`],
+   ]},
+ ]},
+ {domain:'Web & HTTP',icon:'🌐',groups:[
+   {h:'The protocol',terms:[
+     ['HTTP',`The request/response protocol of the web; stateless by design.`],
+     ['HTTPS',`HTTP encrypted with TLS.`],
+     ['Method',`The verb of a request: GET, POST, PUT, PATCH, DELETE.`],
+     ['Status code',`A three-digit result: 2xx success, 3xx redirect, 4xx client error, 5xx server error.`],
+     ['Header',`A key-value line carrying metadata on a request or response.`],
+     ['Idempotency',`An operation that has the same effect whether done once or many times (safe to retry).`],
+     ['Statelessness',`Each request stands alone; the server keeps no per-request memory of the client.`],
+     ['CORS',`Cross-Origin Resource Sharing: browser rules for calling another origin.`],
+   ]},
+   {h:'API design',terms:[
+     ['REST',`An architectural style using HTTP verbs on resource URLs.`],
+     ['MVC',`Model-View-Controller: separates data, presentation, and request handling.`],
+     ['Pagination',`Returning a large collection in pages instead of all at once.`],
+     ['Offset pagination',`Page by position (page and size); simple but drifts and slows at depth.`],
+     ['Cursor pagination',`Page by an opaque pointer; stable and fast for large, changing data.`],
+     ['Content negotiation',`Choosing a response format based on the Accept header.`],
+     ['API versioning',`Evolving an API without breaking clients (URI, header, or media-type).`],
+     ['Rate limiting',`Capping how many requests a client may make in a window.`],
+   ]},
+ ]},
+ {domain:'Databases & SQL',icon:'🗄️',groups:[
+   {h:'Model',terms:[
+     ['Table',`A named set of rows and columns.`],
+     ['Primary key',`A column (or set) uniquely identifying each row.`],
+     ['Foreign key',`A column referencing a primary key in another table, enforcing relationships.`],
+     ['Index',`A structure that speeds lookups at the cost of extra writes and space.`],
+     ['Constraint',`A rule the data must satisfy (NOT NULL, UNIQUE, CHECK).`],
+     ['Normalization',`Organizing tables to remove redundancy.`],
+     ['Transaction',`A group of statements that commit all-or-nothing.`],
+     ['ACID',`Atomicity, Consistency, Isolation, Durability: the guarantees of a transaction.`],
+   ]},
+   {h:'Querying',terms:[
+     ['JOIN',`Combining rows from two tables on a matching condition.`],
+     ['DDL',`Data Definition Language: CREATE, ALTER, DROP, TRUNCATE.`],
+     ['DML',`Data Manipulation Language: SELECT, INSERT, UPDATE, DELETE.`],
+     ['TCL',`Transaction Control Language: BEGIN, COMMIT, ROLLBACK.`],
+     ['DCL',`Data Control Language: GRANT, REVOKE.`],
+     ['Aggregate',`A function that collapses rows into one value: COUNT, SUM, AVG.`],
+     ['Subquery',`A query nested inside another.`],
+     ['CTE',`A named temporary result (WITH ...) used like a table.`],
+     ['Window function',`A calculation across a set of rows without collapsing them.`],
+     ['N+1 problem',`Firing one query per row instead of one query for all; a common performance bug.`],
+     ['Connection pool',`A reused set of database connections to avoid per-request setup cost.`],
+   ]},
+ ]},
+ {domain:'Concurrency',icon:'🧵',groups:[
+   {h:'Core ideas',terms:[
+     ['Process',`An isolated program with its own private memory.`],
+     ['Thread',`A single path of execution within a process; threads share the heap.`],
+     ['Concurrency',`Managing many tasks in overlapping time (not necessarily at once).`],
+     ['Parallelism',`Actually running tasks at the same instant on multiple cores.`],
+     ['Context switch',`The OS swapping one thread off a core for another.`],
+     ['Race condition',`A bug where the result depends on unpredictable thread timing.`],
+     ['Deadlock',`Two threads each waiting forever for a lock the other holds.`],
+     ['Mutex',`A mutual-exclusion lock so only one thread enters a critical section.`],
+     ['Atomic',`An operation that completes indivisibly, without interleaving.`],
+     ['Volatile',`A field whose reads/writes always go to main memory (visibility across threads).`],
+   ]},
+   {h:'Tools',terms:[
+     ['Thread pool',`A reused set of worker threads that run submitted tasks.`],
+     ['Executor',`The Java service that manages a thread pool and runs tasks.`],
+     ['Future',`A handle to a result that will be available later.`],
+     ['CompletableFuture',`A composable future for building async pipelines.`],
+     ['Semaphore',`A counter that limits how many threads use a resource at once.`],
+     ['Virtual thread',`A lightweight JVM thread (Java 21) making blocking code scale cheaply.`],
+   ]},
+ ]},
+ {domain:'DevOps & Delivery',icon:'🚀',groups:[
+   {h:'Pipeline & packaging',terms:[
+     ['CI',`Continuous Integration: automatically build and test every change.`],
+     ['CD',`Continuous Delivery/Deployment: automatically ship changes to environments.`],
+     ['Pipeline',`The automated sequence of build, test, and deploy steps.`],
+     ['Artifact',`A built output (jar, image) produced by the pipeline.`],
+     ['Container',`A lightweight, isolated package of an app and its dependencies.`],
+     ['Image',`The immutable template a container is started from.`],
+     ['Kubernetes',`A system that schedules and runs containers across many machines.`],
+     ['Pod',`The smallest deployable unit in Kubernetes: one or more containers.`],
+     ['Helm',`A package manager for Kubernetes applications.`],
+     ['IaC',`Infrastructure as Code: provisioning servers from version-controlled files.`],
+   ]},
+   {h:'Release & operate',terms:[
+     ['Blue-green',`Two identical environments; switch traffic to the new one instantly.`],
+     ['Canary',`Releasing to a small slice of users first to limit blast radius.`],
+     ['Rollback',`Reverting to a previous known-good version.`],
+     ['Observability',`Understanding a system from its logs, metrics, and traces.`],
+   ]},
+ ]},
+ {domain:'Architecture & Distributed Systems',icon:'🏛️',groups:[
+   {h:'Concepts',terms:[
+     ['Latency',`How long one operation takes.`],
+     ['Throughput',`How many operations complete per unit time.`],
+     ['Scalability',`The ability to handle more load by adding resources.`],
+     ['Horizontal scaling',`Adding more machines; vertical scaling adds power to one machine.`],
+     ['Load balancer',`Distributes incoming requests across many servers.`],
+     ['Cache',`A fast store of recent results to avoid recomputing or refetching.`],
+     ['CAP theorem',`Under a partition, a distributed store trades consistency against availability.`],
+     ['Eventual consistency',`Replicas converge to the same value given enough time.`],
+   ]},
+   {h:'Resilience',terms:[
+     ['Retry with backoff',`Re-attempting a failed call after growing delays.`],
+     ['Circuit breaker',`Stops calling a failing dependency to let it recover.`],
+     ['Timeout',`A cap on how long to wait before giving up on a call.`],
+     ['Idempotency key',`A client token that makes a retried write apply only once.`],
+     ['Message queue',`A buffer that decouples producers from consumers.`],
+     ['Sharding',`Splitting data across nodes by a partition key.`],
+     ['Replication',`Keeping copies of data on multiple nodes for durability and reads.`],
+     ['SLO',`A Service Level Objective: a target for reliability or latency.`],
+   ]},
+ ]},
 ];
 /* Merge glossary terms into the keyword-popup table (KW) so click-to-explain works in lessons.
    Adds a key for any parenthetical acronym and for a single-word/acronym leading token.
@@ -837,20 +1006,46 @@ const GLOSS=[
 })();
 function renderGlossary(){
   const m=document.getElementById('main');
-  const jump=GLOSS.map((d,i)=>`<a class="glossJump" href="javascript:void(0)" onclick="document.getElementById('gd${i}').scrollIntoView({behavior:'smooth'})">${d.icon} ${esc(d.domain)}</a>`).join('');
-  const body=GLOSS.map((d,i)=>`<section id="gd${i}" class="glossDom"><h2>${d.icon} ${esc(d.domain)}</h2>${d.groups.map(g=>`<h3 class="glossGrp">${esc(g.h)}</h3><dl class="glossList">${g.terms.map(t=>`<div class="glossItem"><dt>${esc(t[0])}</dt><dd>${esc(t[1])}</dd></div>`).join('')}</dl>`).join('')}</section>`).join('');
+  const termCount=d=>d.groups.reduce((a,g)=>a+g.terms.length,0);
+  const total=GLOSS.reduce((a,d)=>a+termCount(d),0);
+  const jump=GLOSS.map((d,i)=>`<a class="glossJump" href="javascript:void(0)" onclick="glossJumpTo(${i})">${d.icon} ${esc(d.domain)} <span class="glossJumpN">${termCount(d)}</span></a>`).join('');
+  const body=GLOSS.map((d,i)=>`<details class="glossDom" id="gd${i}" open><summary class="glossSum">${d.icon} ${esc(d.domain)}<span class="glossDomN">${termCount(d)} terms</span></summary>${d.groups.map(g=>`<div class="glossGrp">${esc(g.h)}</div><dl class="glossList">${g.terms.map(t=>`<div class="glossItem"><dt>${esc(t[0])}</dt><dd>${esc(t[1])}</dd></div>`).join('')}</dl>`).join('')}</details>`).join('');
   m.innerHTML=`<div class="home glossary">
   <h1>📖 Glossary</h1>
-  <p>Every key term in DevDojo, grouped by domain and in logical reading order. In any lesson, <b>select or double-click a highlighted term</b> to see its definition inline — this page is the full reference.</p>
-  <input id="glossSearch" class="glossSearch" placeholder="Filter terms…" oninput="filterGloss(this.value)" aria-label="Filter glossary terms">
+  <p>${total} key terms across DevDojo, grouped by domain. In any lesson, <b>select or double-click a highlighted term</b> to see its definition inline — this page is the full reference. Use the filter to search, or the chips to jump to a domain.</p>
+  <div class="glossToolbar">
+    <input id="glossSearch" class="glossSearch" placeholder="Filter ${total} terms…" oninput="filterGloss(this.value)" aria-label="Filter glossary terms">
+    <button class="glossBtn" onclick="glossToggleAll(true)">Expand all</button>
+    <button class="glossBtn" onclick="glossToggleAll(false)">Collapse all</button>
+  </div>
   <div class="glossJumps">${jump}</div>
-  ${body}</div>`;
+  <div id="glossBody">${body}</div></div>`;
   m.scrollTop=0;
+}
+function glossJumpTo(i){
+  const d=document.getElementById('gd'+i);
+  if(d){d.open=true; d.scrollIntoView({behavior:'smooth',block:'start'});}
+}
+function glossToggleAll(open){
+  document.querySelectorAll('#main .glossDom').forEach(d=>{d.open=open;});
 }
 function filterGloss(q){
   q=(q||'').trim().toLowerCase();
-  document.querySelectorAll('#main .glossItem').forEach(it=>{
-    it.style.display=(!q||it.textContent.toLowerCase().includes(q))?'':'none';
+  document.querySelectorAll('#main .glossDom').forEach(dom=>{
+    let domHits=0;
+    dom.querySelectorAll('.glossList').forEach(list=>{
+      let listHits=0;
+      list.querySelectorAll('.glossItem').forEach(it=>{
+        const hit=!q||it.textContent.toLowerCase().includes(q);
+        it.style.display=hit?'':'none';
+        if(hit)listHits++;
+      });
+      list.style.display=listHits?'':'none';
+      const grp=list.previousElementSibling;
+      if(grp&&grp.classList.contains('glossGrp'))grp.style.display=(listHits&&!q)?'':(listHits?'':'none');
+      domHits+=listHits;
+    });
+    dom.style.display=domHits?'':'none';
+    if(q)dom.open=true;
   });
-  document.querySelectorAll('#main .glossGrp, #main .glossDom h2').forEach(h=>{h.style.display=q?'none':'';});
 }

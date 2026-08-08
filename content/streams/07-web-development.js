@@ -268,5 +268,79 @@ solution:`public class Http {
 }`,
 tests:[{d:'2xx maps to success',re:'<\\s*300\\s*\\)\\s*return\\s+"success"'},{d:'3xx maps to redirect',re:'<\\s*400\\s*\\)\\s*return\\s+"redirect"'},{d:'4xx maps to client error',re:'<\\s*500\\s*\\)\\s*return\\s+"client error"'},{d:'5xx maps to server error',re:'<\\s*600\\s*\\)\\s*return\\s+"server error"'},{d:'201 is Created',re:'case\\s+201\\s*:\\s*return\\s+"Created"'},{d:'401 is Unauthorized',re:'case\\s+401\\s*:\\s*return\\s+"Unauthorized"'},{d:'404 is Not Found',re:'case\\s+404\\s*:\\s*return\\s+"Not Found"'},{d:'429 is Too Many Requests',re:'case\\s+429\\s*:\\s*return\\s+"Too Many Requests"'},{d:'500 is Internal Server Error',re:'case\\s+500\\s*:\\s*return\\s+"Internal Server Error"'}],
 behavior:`category(204) is "success", category(301) is "redirect", category(404) is "client error", category(503) is "server error", category(600) is "unknown". reason(201) is "Created", reason(401) is "Unauthorized", reason(429) is "Too Many Requests". 401 means authenticate; 403 means not allowed.`,
-hints:['Category is decided by the first digit: test ranges like code >= 200 && code < 300 in order.','A switch on code maps the common numbers to their reason phrases, with default returning unknown.','Remember 401 is authentication (who are you) and 403 is authorization (you cannot), and 201 pairs with a Location header.']}}
+hints:['Category is decided by the first digit: test ranges like code >= 200 && code < 300 in order.','A switch on code maps the common numbers to their reason phrases, with default returning unknown.','Remember 401 is authentication (who are you) and 403 is authorization (you cannot), and 201 pairs with a Location header.']}},
+{id:'web9',title:'Pagination & building compliant, standardized APIs',body:`
+<p>An endpoint that returns "all the orders" works in a demo and falls over in production. Real collections are paginated. Two styles dominate:</p>
+<ul>
+<li><b>Offset / limit</b> (<code>?page=3&amp;size=20</code> or <code>?offset=40&amp;limit=20</code>) — simple and lets you jump to any page, but it gets slow at deep offsets and can skip or duplicate rows when data is inserted between requests.</li>
+<li><b>Cursor / keyset</b> (<code>?after=&lt;opaque-cursor&gt;</code>) — the server returns an opaque pointer to "where you left off." Stable under inserts and fast at any depth, which is why large, changing datasets use it. The trade-off is you cannot jump to an arbitrary page.</li>
+</ul>
+<p>Whatever the style, make it <b>discoverable and consistent</b>: return the page of data plus links to the next/previous pages. The standard mechanism is the <b>Link header</b> (RFC 8288) with <code>rel="next"</code> and <code>rel="prev"</code>, or an equivalent envelope in the body.</p>
+<p>"Compliant and standardized" means following the conventions clients already expect, so your API is predictable:</p>
+<ul>
+<li><b>Correct status codes</b> and, for errors, a standard shape — <b>RFC 7807</b> <code>application/problem+json</code> instead of ad-hoc error bodies.</li>
+<li><b>Consistent naming</b> (pick snake_case or camelCase and never mix), <b>ISO 8601</b> timestamps, and stable field names.</li>
+<li><b>Content negotiation</b> via <code>Accept</code>, <b>idempotency keys</b> for safe retries of writes, and <b>rate-limit headers</b> so clients can back off.</li>
+</ul>`,
+docs:[['Web Linking (RFC 8288)','https://www.rfc-editor.org/rfc/rfc8288'],['Problem Details (RFC 7807)','https://www.rfc-editor.org/rfc/rfc7807'],['API design guide — Google','https://cloud.google.com/apis/design']],
+ex:{title:'Pagination choice & error compliance',
+prompt:`Write class <code>Paging</code> with two static methods. <code>String style(String need)</code>: <code>"stable-large-dataset"</code>→<code>"cursor"</code>, <code>"jump-to-page"</code>→<code>"offset"</code>, else <code>"unknown"</code>. <code>boolean compliantErrors(String contentType)</code>: return true only when errors use the standard <code>"application/problem+json"</code> media type.`,
+starter:`public class Paging {
+    static String style(String need) {
+        return null;
+    }
+    static boolean compliantErrors(String contentType) {
+        return false;
+    }
+}`,
+solution:`public class Paging {
+    static String style(String need) {
+        switch (need) {
+            case "stable-large-dataset": return "cursor";
+            case "jump-to-page":         return "offset";
+            default:                     return "unknown";
+        }
+    }
+    static boolean compliantErrors(String contentType) {
+        return contentType.equals("application/problem+json");
+    }
+}`,
+tests:[{d:'large stable datasets use cursor pagination',re:'"stable-large-dataset".*?"cursor"',flags:'s'},{d:'jump-to-page uses offset pagination',re:'"jump-to-page".*?"offset"',flags:'s'},{d:'errors use RFC 7807 problem+json',re:'equals\\s*\\(\\s*"application/problem\\+json"\\s*\\)'},{d:'unknown default',re:'"unknown"'}],
+behavior:`style("stable-large-dataset") is "cursor", style("jump-to-page") is "offset". compliantErrors("application/problem+json") is true; compliantErrors("text/plain") is false. Standard error bodies and next/prev links make an API predictable.`,
+hints:['Cursor/keyset pagination is stable and fast for large, changing datasets; offset lets you jump to a page.','A compliant error body uses the application/problem+json media type (RFC 7807).','Escape nothing special — just compare the content type with equals.']}},
+{id:'web10',title:'API versioning',body:`
+<p>Once other people depend on your API, you cannot freely change it — a removed field or renamed route breaks their code overnight. <b>Versioning</b> lets you evolve the API while old clients keep working. There are three common places to put the version:</p>
+<ul>
+<li><b>URI path</b> — <code>/v1/orders</code>. The most common and most visible; trivial to route and to see in logs. Purists dislike that the "same" resource has multiple URLs.</li>
+<li><b>Header</b> — a custom header like <code>Api-Version: 1</code>. Keeps URLs clean but is invisible in a browser and easy to forget.</li>
+<li><b>Media type</b> (content negotiation) — <code>Accept: application/vnd.acme.v1+json</code>. The most "RESTful" option; also the most complex for clients.</li>
+</ul>
+<p>The discipline behind the mechanism matters more than the mechanism. Follow <b>semantic versioning</b> thinking: only a <b>breaking change</b> — removing or renaming a field, changing a type, or altering behavior clients rely on — needs a new major version. <b>Additive</b> changes (a new optional field, a new endpoint) are backward-compatible and should <i>not</i> force a version bump. When you do retire a version, announce it: the <code>Deprecation</code> and <code>Sunset</code> response headers tell clients a version is going away and by when.</p>`,
+docs:[['API versioning — Microsoft REST guidelines','https://github.com/microsoft/api-guidelines'],['Semantic Versioning','https://semver.org/'],['Sunset header (RFC 8594)','https://www.rfc-editor.org/rfc/rfc8594']],
+ex:{title:'Version placement & breaking changes',
+prompt:`Write class <code>Versioning</code> with two static methods. <code>String location(String strategy)</code>: <code>"uri"</code>→<code>"/v1/orders"</code>, <code>"header"</code>→<code>"Api-Version: 1"</code>, <code>"media-type"</code>→<code>"application/vnd.acme.v1+json"</code>, else <code>"unknown"</code>. <code>boolean breakingChange(String change)</code>: removing or renaming a field breaks clients — return true for <code>"remove-field"</code> or <code>"rename-field"</code>, false otherwise (e.g. adding a field).`,
+starter:`public class Versioning {
+    static String location(String strategy) {
+        return null;
+    }
+    static boolean breakingChange(String change) {
+        return false;
+    }
+}`,
+solution:`public class Versioning {
+    static String location(String strategy) {
+        switch (strategy) {
+            case "uri":        return "/v1/orders";
+            case "header":     return "Api-Version: 1";
+            case "media-type": return "application/vnd.acme.v1+json";
+            default:           return "unknown";
+        }
+    }
+    static boolean breakingChange(String change) {
+        return change.equals("remove-field") || change.equals("rename-field");
+    }
+}`,
+tests:[{d:'URI versioning looks like /v1/orders',re:'"uri".*?"/v1/orders"',flags:'s'},{d:'header versioning uses Api-Version',re:'"header".*?"Api-Version: 1"',flags:'s'},{d:'media-type versioning uses vnd.acme.v1+json',re:'"media-type".*?"application/vnd.acme.v1\\+json"',flags:'s'},{d:'removing a field is breaking',re:'equals\\s*\\(\\s*"remove-field"\\s*\\)'},{d:'renaming a field is breaking',re:'equals\\s*\\(\\s*"rename-field"\\s*\\)'},{d:'combined with OR',re:'\\|\\|'}],
+behavior:`location("uri") is "/v1/orders", location("header") is "Api-Version: 1", location("media-type") is "application/vnd.acme.v1+json". breakingChange("remove-field") and ("rename-field") are true; adding an optional field is not breaking, so it returns false.`,
+hints:['URI versioning is the most common and most visible; media-type versioning is the most RESTful.','Only breaking changes (remove/rename/retype) need a new major version; additive changes do not.','Combine the two breaking cases with ||.']}}
 ]});
