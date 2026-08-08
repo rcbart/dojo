@@ -22,6 +22,8 @@
   "16c-identity-foundations.js",
   "16d-oauth2-oidc-flows.js",
   "16e-saml-web-sso.js",
+  "16f-service-to-service-authz.js",
+  "16g-pki-certificate-management.js",
   "17-design-patterns.js",
   "18-ci-cd-github-actions-argocd.js",
   "19-dynamic-programming-advanced-algorithms.js",

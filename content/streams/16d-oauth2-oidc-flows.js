@@ -299,6 +299,155 @@ public class DeviceFlow {
     static boolean keepPolling(String error) {
         return "authorization_pending".equals(error) || "slow_down".equals(error);
     }
+}`}},
+
+{id:'oa8',title:'Native & mobile apps',body:`
+<p>Phone and desktop apps are <b>public clients</b> — the binary ships to users, so it can't hold a secret. The correct, secure flow is <b>Authorization Code + PKCE</b>, opened in the device's <b>system browser</b> — never an embedded WebView.</p>
+<p><b>Why the system browser (not a WebView)?</b> A WebView is controlled by the app, so it can read the user's password, defeats SSO (no shared cookies), and blocks passkeys/security keys. The system browser keeps the credentials away from the app and reuses the device's login session for true SSO.</p>
+<p><b>Getting the redirect back into the app</b> — three options, best last:</p>
+<ul>
+<li><b>Custom URI scheme</b> (<code>com.example.app:/callback</code>) — simple, but another app can register the same scheme and hijack the code. Always pair with PKCE.</li>
+<li><b>Loopback</b> (<code>http://127.0.0.1:PORT</code>) — for desktop apps; the app runs a tiny local listener.</li>
+<li><b>Claimed HTTPS redirect</b> — iOS <b>Universal Links</b> / Android <b>App Links</b>: a real <code>https://</code> URL your domain proves it owns, which the OS routes straight to your app. <b>Not hijackable — preferred.</b></li>
+</ul>
+<div class="codeSample">Native app — Authorization Code + PKCE in the system browser
+ 1. App makes a PKCE verifier + challenge, opens the SYSTEM BROWSER at /authorize
+ 2. User authenticates &amp; consents at the Authorization Server  (SSO &amp; passkeys work)
+ 3. Auth Server redirects to the app's claimed redirect (https App/Universal Link)
+ 4. The OS hands the redirect (with ?code) to YOUR app — not to any other app
+ 5. App POSTs code + code_verifier to /token   (no client secret — it is public)
+ 6. App gets access + refresh + id tokens; stores the refresh token in Keychain/Keystore
+ 7. App calls APIs with the Bearer access token; refreshes silently when it expires</div>
+<p>Use a vetted library (<b>AppAuth</b> for iOS/Android) rather than hand-rolling. Store refresh tokens in the platform secure store (Keychain / Keystore), keep access tokens short, and consider sender-constraining (DPoP) since mobile tokens live on devices you don't control.</p>`,
+docs:[['RFC 8252 — OAuth for Native Apps','https://www.rfc-editor.org/rfc/rfc8252'],['AppAuth','https://appauth.io/'],['Apple Universal Links','https://developer.apple.com/ios/universal-links/'],['Android App Links','https://developer.android.com/training/app-links']],
+ex:{title:'Build a mobile authorize URL (public client + PKCE)',
+prompt:`Write <code>MobileAuthorize</code> with <code>static String build(String base, String clientId, String appLinkRedirect, String scope, String state, String codeChallenge)</code> returning the <code>/authorize</code> URL for a native app: <code>response_type=code</code>, then URL-encoded <code>client_id</code>, <code>redirect_uri</code> (the App/Universal Link), <code>scope</code>, <code>state</code>, and <code>code_challenge</code>, plus <code>code_challenge_method=S256</code>. <b>Do not include a client_secret</b> — a mobile app is a public client. Declare <code>throws Exception</code>.`,
+starter:`import java.net.URLEncoder;
+
+public class MobileAuthorize {
+    static String build(String base, String clientId, String appLinkRedirect, String scope, String state, String codeChallenge) throws Exception {
+        return null;
+    }
+}`,
+tests:[{d:'authorization code flow',re:'response_type=code'},{d:'uses the app-link redirect',re:'&redirect_uri='},{d:'sends the PKCE challenge',re:'&code_challenge='},{d:'declares S256',re:'code_challenge_method=S256'},{d:'no client secret (public client)',re:'client_secret',not:true},{d:'URL-encodes values',re:'URLEncoder\\.encode\\s*\\('}],
+behavior:`build(...) returns "…?response_type=code&client_id=…&redirect_uri=…&scope=…&state=…&code_challenge=…&code_challenge_method=S256" with no client_secret anywhere. This is opened in the system browser; PKCE is what secures the public client, and the App Link redirect is what stops another app from stealing the code.`,
+hints:['Same shape as the web /authorize URL, plus <code>&code_challenge=</code> and <code>&code_challenge_method=S256</code>.','A native app is a PUBLIC client — never put a secret in it; PKCE replaces the secret.','The redirect should be a claimed https App/Universal Link so only your app receives the code.'],
+solution:`import java.net.URLEncoder;
+
+public class MobileAuthorize {
+    static String build(String base, String clientId, String appLinkRedirect, String scope, String state, String codeChallenge) throws Exception {
+        return base + "?response_type=code"
+                + "&client_id=" + URLEncoder.encode(clientId, "UTF-8")
+                + "&redirect_uri=" + URLEncoder.encode(appLinkRedirect, "UTF-8")
+                + "&scope=" + URLEncoder.encode(scope, "UTF-8")
+                + "&state=" + URLEncoder.encode(state, "UTF-8")
+                + "&code_challenge=" + URLEncoder.encode(codeChallenge, "UTF-8")
+                + "&code_challenge_method=S256";
+    }
+}`}},
+
+{id:'oa9',title:'Opaque vs JWT tokens & the split-token pattern',body:`
+<p>Access tokens come in two styles, and the choice has real consequences:</p>
+<ul>
+<li><b>By-value (JWT)</b> — the token <i>contains</i> the claims, signed. Any resource server verifies it <b>offline</b> (just check the signature) — fast, no call back to the issuer. Downsides: it's <b>readable</b> by anyone who holds it (base64, not secret), it's <b>bigger</b>, and it's <b>hard to revoke</b> before it expires (it's valid until <code>exp</code>).</li>
+<li><b>By-reference (opaque)</b> — the token is just a <b>random string</b> with no data in it. To use it, the resource server calls the Authorization Server's <b>introspection</b> endpoint (RFC 7662) to ask "is this active, and what are its claims?" Upsides: <b>instant revocation</b> (the AS just stops saying "active"), <b>nothing leaks</b> to the client, and it's small. Downside: a network call per validation (cache it).</li>
+</ul>
+<p><b>The split-token / phantom-token pattern</b> gives you both. The client only ever sees an <b>opaque</b> token; at the edge, the <b>API gateway</b> introspects (or exchanges) it and forwards a short-lived <b>JWT</b> to the internal microservices:</p>
+<div class="codeSample">Phantom / split-token pattern
+ Client ──(opaque token)──▶ API Gateway ──(introspect)──▶ Authorization Server
+                               │  ◀─(claims / a signed JWT)─┘
+                               └──(JWT)──▶ internal microservices  (verify offline, fast)
+
+ outward = opaque  → revocable, leaks nothing to the client
+ inward  = JWT     → self-contained, fast offline verification between services</div>
+<p><b>Benefits:</b> instant revocation and no data exposure on the public side, and JWT performance on the internal side; internal services never call the AS. This is a very common production architecture (e.g. with a gateway in front of a mesh).</p>`,
+docs:[['RFC 7662 — Token Introspection','https://www.rfc-editor.org/rfc/rfc7662'],['Phantom Token pattern','https://curity.io/resources/learn/phantom-token-pattern/'],['Split Token pattern','https://curity.io/resources/learn/split-token-pattern/']],
+ex:{title:'Introspect an opaque token',
+prompt:`Write <code>Introspect</code> with: <code>static String body(String token)</code> returning <code>"token=" + URLEncoder.encode(token, "UTF-8") + "&amp;token_type_hint=access_token"</code>; <code>static String basicAuth(String clientId, String clientSecret)</code> returning the <code>"Basic " + base64(clientId:clientSecret)</code> value (the resource server authenticates to the introspection endpoint); and <code>static boolean isActive(boolean active, long expEpoch, long now)</code> returning <code>active &amp;&amp; expEpoch &gt; now</code>. Declare <code>throws Exception</code> where needed.`,
+starter:`import java.net.URLEncoder;
+import java.util.Base64;
+
+public class Introspect {
+    static String body(String token) throws Exception {
+        return null;
+    }
+    static String basicAuth(String clientId, String clientSecret) {
+        return null;
+    }
+    static boolean isActive(boolean active, long expEpoch, long now) {
+        return false;
+    }
+}`,
+tests:[{d:'posts the token',re:'token='},{d:'URL-encodes the token',re:'URLEncoder\\.encode\\s*\\('},{d:'authenticates with Basic',re:'"Basic "\\s*\\+'},{d:'base64 client credentials',re:'Base64\\.getEncoder\\s*\\(\\s*\\)'},{d:'active AND not expired',re:'active\\s*&&\\s*expEpoch\\s*>\\s*now'}],
+behavior:`body("abc") is "token=abc&token_type_hint=access_token". basicAuth("api","secret") is "Basic YXBpOnNlY3JldA==". isActive(true, future, now) is true; isActive(false,...) or an expired token is false. Introspection is what makes opaque tokens work — and what makes instant revocation possible.`,
+hints:['The introspection request is a form POST: <code>token=…</code> (URL-encoded) plus an optional <code>token_type_hint</code>.','The caller (resource server) authenticates too — reuse the Basic auth pattern.','A token is usable only if the AS says <code>active</code> AND it has not expired.'],
+solution:`import java.net.URLEncoder;
+import java.util.Base64;
+
+public class Introspect {
+    static String body(String token) throws Exception {
+        return "token=" + URLEncoder.encode(token, "UTF-8") + "&token_type_hint=access_token";
+    }
+    static String basicAuth(String clientId, String clientSecret) {
+        String raw = clientId + ":" + clientSecret;
+        return "Basic " + Base64.getEncoder().encodeToString(raw.getBytes());
+    }
+    static boolean isActive(boolean active, long expEpoch, long now) {
+        return active && expEpoch > now;
+    }
+}`}},
+
+{id:'oa10',title:'Choosing a flow: the decision guide',body:`
+<p>Every OAuth flow exists for a specific situation. Here is the full map — <b>what each is for, and when to use it</b>:</p>
+<ul>
+<li><b>Authorization Code + PKCE</b> — <i>any app acting for a user</i>: server web apps, SPAs, and mobile/native. <b>The default for user login.</b></li>
+<li><b>Client Credentials</b> — <i>machine-to-machine</i>, no user (a backend/daemon calling an API as itself).</li>
+<li><b>Device Authorization</b> — <i>input-constrained devices</i>: TVs, CLIs, IoT (enter a code on your phone).</li>
+<li><b>Refresh Token</b> — <i>renew</i> an access token without sending the user back through login.</li>
+<li><b>Hybrid (OIDC)</b> — returns a <code>code</code> and an <code>id_token</code> together; niche, for apps that need an ID token immediately at the front channel.</li>
+<li><b>CIBA</b> (Client-Initiated Backchannel Authentication) — <i>decoupled</i> auth: the user approves on a <b>separate device</b> (e.g. a call-center agent triggers a push the customer approves on their phone).</li>
+<li><b>Token Exchange</b> (RFC 8693) — <i>swap one token for another</i>: delegation and service-to-service (the next stream), and impersonation.</li>
+<li><b>Implicit</b> — <b>deprecated</b> (SPAs once used it; use Code + PKCE).</li>
+<li><b>ROPC / password</b> — <b>deprecated</b> (the app handles the user's password; never for new systems).</li>
+</ul>
+<div class="codeSample">Pick a flow — a quick decision tree
+ Is a user involved?
+   NO  → Client Credentials         (service-to-service, machine identity)
+   YES → Can the user's device show a browser + type?
+           NO  → Device Authorization   (TV / CLI / IoT)
+           YES → Authorization Code + PKCE
+                   • server web app  → + confidential client auth
+                   • SPA / mobile    → public client, PKCE only (no secret)
+ Need auth on a SEPARATE device (push-to-approve)? → CIBA
+ Need to trade a token for another (delegation / S2S)? → Token Exchange
+ Renewing without re-login? → Refresh Token
+ Considering Implicit or ROPC? → don't — they're deprecated</div>`,
+docs:[['OAuth 2.0 grant types','https://oauth.net/2/grant-types/'],['OAuth 2.1 (consolidated best practice)','https://oauth.net/2.1/'],['RFC 9126 — CIBA / decoupled','https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html']],
+ex:{title:'Recommend the right flow',
+prompt:`Write <code>FlowChooser</code> with: <code>static String recommend(String scenario)</code> returning the grant to use — <code>"authorization_code+pkce"</code> for <code>"web-app"</code>, <code>"spa"</code>, or <code>"mobile"</code>; <code>"client_credentials"</code> for <code>"service"</code> or <code>"backend-daemon"</code>; <code>"device_code"</code> for <code>"tv"</code>, <code>"cli"</code>, or <code>"iot"</code>; and <code>"authorization_code+pkce"</code> for anything else (safe default); and <code>static boolean deprecated(String grant)</code> returning true for <code>"implicit"</code> or <code>"password"</code>.`,
+starter:`public class FlowChooser {
+    static String recommend(String scenario) {
+        return null;
+    }
+    static boolean deprecated(String grant) {
+        return false;
+    }
+}`,
+tests:[{d:'user apps → auth code + PKCE',re:'authorization_code\\+pkce'},{d:'machine to machine → client credentials',re:'client_credentials'},{d:'constrained devices → device code',re:'device_code'},{d:'flags implicit as deprecated',re:'"implicit"\\s*\\.\\s*equals|equals\\s*\\(\\s*"implicit"|"implicit"'},{d:'flags password/ROPC as deprecated',re:'"password"'}],
+behavior:`recommend("spa") and recommend("mobile") return "authorization_code+pkce"; recommend("service") returns "client_credentials"; recommend("tv") returns "device_code"; unknown scenarios default to authorization_code+pkce. deprecated("implicit") and deprecated("password") are true; deprecated("authorization_code") is false.`,
+hints:['A switch over the scenario is the clearest structure, with a default that returns authorization_code+pkce.','Group the cases: web-app/spa/mobile, service/backend-daemon, tv/cli/iot.','<code>return "implicit".equals(grant) || "password".equals(grant);</code>'],
+solution:`public class FlowChooser {
+    static String recommend(String scenario) {
+        switch (scenario) {
+            case "web-app": case "spa": case "mobile": return "authorization_code+pkce";
+            case "service": case "backend-daemon":      return "client_credentials";
+            case "tv": case "cli": case "iot":          return "device_code";
+            default:                                    return "authorization_code+pkce";
+        }
+    }
+    static boolean deprecated(String grant) {
+        return "implicit".equals(grant) || "password".equals(grant);
+    }
 }`}}
 
 ]});

@@ -9079,7 +9079,67 @@ public class Jwe {
 }`}}
 
 ]});
-STREAMS.push({icon:'🪪',title:'Identity Foundations',blurb:'The vocabulary of identity from scratch — authentication vs authorization, sessions vs tokens, SSO & federation, IdPs and clients, scopes and consent. The base every OAuth/OIDC/SAML lesson builds on.',lessons:[
+STREAMS.push({icon:'🪪',title:'Identity Foundations',blurb:'The vocabulary of identity from scratch — a glossary, then authentication vs authorization, sessions vs tokens, SSO & federation, IdPs and clients, scopes and consent. The base every OAuth/OIDC/SAML lesson builds on.',lessons:[
+
+{id:'idf0',title:'Glossary: the identity & OAuth vocabulary',body:`
+<p>Identity is drowning in jargon, and many terms mean the same thing in different protocols. Skim
+this once and refer back whenever a word trips you up — it's the decoder ring for the whole domain.</p>
+<p><b>The actors (who's who)</b> — the same roles, different names per protocol:</p>
+<ul>
+<li><b>Resource Owner</b> — the <i>user</i> who owns the data.</li>
+<li><b>Client / Relying Party (RP) / Service Provider (SP)</b> — the <i>app</i> that wants access. "Client" and "RP" are OAuth/OIDC; "SP" is SAML — all the app relying on an authority.</li>
+<li><b>Identity Provider (IdP) / Authorization Server (AS) / OpenID Provider (OP)</b> — the <i>authority</i> that authenticates users and issues tokens. "IdP" is the general/SAML term; "AS" is OAuth; "OP" is OIDC.</li>
+<li><b>Resource Server (RS)</b> — the <i>API</i> that accepts access tokens.</li>
+<li><b>Subject / Principal</b> — the specific "who" a request acts as (the <code>sub</code> claim).</li>
+</ul>
+<p><b>The tokens &amp; credentials</b>:</p>
+<ul>
+<li><b>Access token</b> — the key to call an <i>API</i> (authorization). <b>ID token</b> — proves <i>who the user is</i> to the <i>client</i> (authentication, OIDC only). <b>Refresh token</b> — renews access tokens without re-login.</li>
+<li><b>JWT</b> — JSON Web Token: a signed, self-contained token you can read/verify. <b>Opaque token</b> — a random reference with no data inside (validated by introspection).</li>
+<li><b>Assertion</b> — SAML's signed XML statement (the SAML equivalent of an ID token).</li>
+<li><b>JWS / JWE / JWK / JOSE</b> — signed token / encrypted token / a key in JSON / the umbrella family. <b>Bearer token</b> — "whoever holds it can use it." <b>SVID</b> — a SPIFFE workload identity document (S2S stream).</li>
+</ul>
+<p><b>The flows / grant types</b> (full detail in the OAuth stream): <b>Authorization Code</b> (+<b>PKCE</b>), <b>Client Credentials</b> (machine-to-machine), <b>Device</b>, <b>Refresh</b>, <b>Hybrid</b>, <b>CIBA</b> (decoupled), <b>Token Exchange</b> (swap tokens); and the deprecated <b>Implicit</b> and <b>ROPC/password</b>.</p>
+<p><b>The endpoints</b>: <code>/authorize</code> (start login), <code>/token</code> (get tokens), <code>/userinfo</code> (profile), <code>/introspect</code> (validate opaque token), <code>/revoke</code> (kill a token), <code>jwks_uri</code> (public keys), <code>/.well-known/openid-configuration</code> (discovery).</p>
+<p><b>The concepts</b>: <b>scope</b> (a requested permission), <b>claim</b> (a fact in a token), <b>consent</b> (user approval), <b>audience (aud)</b> (who a token is for), <b>issuer (iss)</b> (who minted it), <b>nonce</b> (replay protection for ID tokens), <b>state</b> (CSRF protection on the redirect), <b>front channel</b> (via the browser) vs <b>back channel</b> (server-to-server), <b>public vs confidential (private) client</b> (can it keep a secret?), <b>SSO</b> (log in once), <b>federation</b> (trust across orgs), <b>mTLS</b> (mutual TLS), and the <b>PKI</b> words <b>CA</b> (certificate authority) and <b>CSR</b> (certificate signing request).</p>
+<p><b>The deeper terms that trip people up — defined plainly:</b></p>
+<ul>
+<li><b>Delegated authorization</b> — the core idea of OAuth: you let an app do a <i>limited</i> set of things on your behalf <b>without handing it your password</b>. You delegate a slice of your access (scopes), and you can revoke it. (Contrast: <b>impersonation</b>, where the app simply becomes you.)</li>
+<li><b>CSRF (Cross-Site Request Forgery)</b> — an attack where a malicious page tricks <i>your</i> browser into making a request you didn't intend, riding on your existing session/cookies. OAuth defends the redirect with the <b>state</b> parameter (a random value the client sends and re-checks on return); web forms defend with anti-CSRF tokens.</li>
+<li><b>Replay attack</b> — an attacker captures a token or message and re-sends it to impersonate you. Defenses: short expiries, one-time <b>nonce</b> values, and sender-constrained tokens.</li>
+<li><b>Bearer vs sender-constrained (proof-of-possession)</b> — a <b>bearer</b> token works for anyone who holds it (like cash — steal it, use it). A <b>sender-constrained</b> token is cryptographically bound to a key only the real client has (mTLS-bound or <b>DPoP</b>), so a stolen copy is useless.</li>
+<li><b>Phishing-resistant authentication</b> — methods that can't be phished because the secret never leaves the device and is bound to the site's real origin (passkeys / <b>WebAuthn</b>, security keys).</li>
+<li><b>Attestation</b> — cryptographic proof of <i>what</i> something is (e.g. SPIRE attesting a workload from its node/process properties) before it's issued an identity.</li>
+<li><b>Trust / trust domain</b> — a relying party accepts tokens/assertions signed by an authority it has been configured to trust (its keys/cert); a <b>trust domain</b> is the root under which a set of identities is issued (SPIFFE).</li>
+</ul>`,
+docs:[['OAuth 2.0 roles (RFC 6749 §1.1)','https://www.rfc-editor.org/rfc/rfc6749#section-1.1'],['OIDC terminology','https://openid.net/specs/openid-connect-core-1_0.html#Terminology'],['CSRF (OWASP)','https://owasp.org/www-community/attacks/csrf']],
+ex:{title:'Expand the acronyms',
+prompt:`Write <code>Glossary</code> with <code>static String expand(String abbr)</code> that returns the full term for common identity acronyms: <code>"IdP"</code>→<code>"Identity Provider"</code>, <code>"SP"</code>→<code>"Service Provider"</code>, <code>"RP"</code>→<code>"Relying Party"</code>, <code>"AS"</code>→<code>"Authorization Server"</code>, <code>"RS"</code>→<code>"Resource Server"</code>, <code>"OIDC"</code>→<code>"OpenID Connect"</code>, <code>"PKCE"</code>→<code>"Proof Key for Code Exchange"</code>, <code>"JWT"</code>→<code>"JSON Web Token"</code>, <code>"MFA"</code>→<code>"Multi-Factor Authentication"</code>, <code>"SSO"</code>→<code>"Single Sign-On"</code>, and <code>"unknown"</code> for anything else.`,
+starter:`public class Glossary {
+    static String expand(String abbr) {
+        return null;
+    }
+}`,
+tests:[{d:'IdP → Identity Provider',re:'"IdP"\\s*:\\s*return\\s*"Identity Provider"|"IdP".*?"Identity Provider"'},{d:'RP → Relying Party',re:'"RP".*?"Relying Party"'},{d:'AS → Authorization Server',re:'"AS".*?"Authorization Server"'},{d:'OIDC → OpenID Connect',re:'"OIDC".*?"OpenID Connect"'},{d:'PKCE → Proof Key for Code Exchange',re:'"PKCE".*?"Proof Key for Code Exchange"'},{d:'unknown default',re:'"unknown"'}],
+behavior:`expand("IdP") returns "Identity Provider", expand("RP") returns "Relying Party", expand("PKCE") returns "Proof Key for Code Exchange", and expand("XYZ") returns "unknown". A quick reinforcement of the vocabulary the rest of the domain uses.`,
+hints:['A <code>switch (abbr)</code> with a <code>case</code> per acronym and a <code>default: return "unknown";</code> is the clearest.','Return the exact full-term strings from the prompt.','Anything not listed falls through to "unknown".'],
+solution:`public class Glossary {
+    static String expand(String abbr) {
+        switch (abbr) {
+            case "IdP":  return "Identity Provider";
+            case "SP":   return "Service Provider";
+            case "RP":   return "Relying Party";
+            case "AS":   return "Authorization Server";
+            case "RS":   return "Resource Server";
+            case "OIDC": return "OpenID Connect";
+            case "PKCE": return "Proof Key for Code Exchange";
+            case "JWT":  return "JSON Web Token";
+            case "MFA":  return "Multi-Factor Authentication";
+            case "SSO":  return "Single Sign-On";
+            default:     return "unknown";
+        }
+    }
+}`}},
 
 {id:'idf1',title:'Authentication vs authorization',body:`
 <p>These two words get mixed up constantly. They answer <b>different questions</b>:</p>
@@ -9638,6 +9698,155 @@ public class DeviceFlow {
     static boolean keepPolling(String error) {
         return "authorization_pending".equals(error) || "slow_down".equals(error);
     }
+}`}},
+
+{id:'oa8',title:'Native & mobile apps',body:`
+<p>Phone and desktop apps are <b>public clients</b> — the binary ships to users, so it can't hold a secret. The correct, secure flow is <b>Authorization Code + PKCE</b>, opened in the device's <b>system browser</b> — never an embedded WebView.</p>
+<p><b>Why the system browser (not a WebView)?</b> A WebView is controlled by the app, so it can read the user's password, defeats SSO (no shared cookies), and blocks passkeys/security keys. The system browser keeps the credentials away from the app and reuses the device's login session for true SSO.</p>
+<p><b>Getting the redirect back into the app</b> — three options, best last:</p>
+<ul>
+<li><b>Custom URI scheme</b> (<code>com.example.app:/callback</code>) — simple, but another app can register the same scheme and hijack the code. Always pair with PKCE.</li>
+<li><b>Loopback</b> (<code>http://127.0.0.1:PORT</code>) — for desktop apps; the app runs a tiny local listener.</li>
+<li><b>Claimed HTTPS redirect</b> — iOS <b>Universal Links</b> / Android <b>App Links</b>: a real <code>https://</code> URL your domain proves it owns, which the OS routes straight to your app. <b>Not hijackable — preferred.</b></li>
+</ul>
+<div class="codeSample">Native app — Authorization Code + PKCE in the system browser
+ 1. App makes a PKCE verifier + challenge, opens the SYSTEM BROWSER at /authorize
+ 2. User authenticates &amp; consents at the Authorization Server  (SSO &amp; passkeys work)
+ 3. Auth Server redirects to the app's claimed redirect (https App/Universal Link)
+ 4. The OS hands the redirect (with ?code) to YOUR app — not to any other app
+ 5. App POSTs code + code_verifier to /token   (no client secret — it is public)
+ 6. App gets access + refresh + id tokens; stores the refresh token in Keychain/Keystore
+ 7. App calls APIs with the Bearer access token; refreshes silently when it expires</div>
+<p>Use a vetted library (<b>AppAuth</b> for iOS/Android) rather than hand-rolling. Store refresh tokens in the platform secure store (Keychain / Keystore), keep access tokens short, and consider sender-constraining (DPoP) since mobile tokens live on devices you don't control.</p>`,
+docs:[['RFC 8252 — OAuth for Native Apps','https://www.rfc-editor.org/rfc/rfc8252'],['AppAuth','https://appauth.io/'],['Apple Universal Links','https://developer.apple.com/ios/universal-links/'],['Android App Links','https://developer.android.com/training/app-links']],
+ex:{title:'Build a mobile authorize URL (public client + PKCE)',
+prompt:`Write <code>MobileAuthorize</code> with <code>static String build(String base, String clientId, String appLinkRedirect, String scope, String state, String codeChallenge)</code> returning the <code>/authorize</code> URL for a native app: <code>response_type=code</code>, then URL-encoded <code>client_id</code>, <code>redirect_uri</code> (the App/Universal Link), <code>scope</code>, <code>state</code>, and <code>code_challenge</code>, plus <code>code_challenge_method=S256</code>. <b>Do not include a client_secret</b> — a mobile app is a public client. Declare <code>throws Exception</code>.`,
+starter:`import java.net.URLEncoder;
+
+public class MobileAuthorize {
+    static String build(String base, String clientId, String appLinkRedirect, String scope, String state, String codeChallenge) throws Exception {
+        return null;
+    }
+}`,
+tests:[{d:'authorization code flow',re:'response_type=code'},{d:'uses the app-link redirect',re:'&redirect_uri='},{d:'sends the PKCE challenge',re:'&code_challenge='},{d:'declares S256',re:'code_challenge_method=S256'},{d:'no client secret (public client)',re:'client_secret',not:true},{d:'URL-encodes values',re:'URLEncoder\\.encode\\s*\\('}],
+behavior:`build(...) returns "…?response_type=code&client_id=…&redirect_uri=…&scope=…&state=…&code_challenge=…&code_challenge_method=S256" with no client_secret anywhere. This is opened in the system browser; PKCE is what secures the public client, and the App Link redirect is what stops another app from stealing the code.`,
+hints:['Same shape as the web /authorize URL, plus <code>&code_challenge=</code> and <code>&code_challenge_method=S256</code>.','A native app is a PUBLIC client — never put a secret in it; PKCE replaces the secret.','The redirect should be a claimed https App/Universal Link so only your app receives the code.'],
+solution:`import java.net.URLEncoder;
+
+public class MobileAuthorize {
+    static String build(String base, String clientId, String appLinkRedirect, String scope, String state, String codeChallenge) throws Exception {
+        return base + "?response_type=code"
+                + "&client_id=" + URLEncoder.encode(clientId, "UTF-8")
+                + "&redirect_uri=" + URLEncoder.encode(appLinkRedirect, "UTF-8")
+                + "&scope=" + URLEncoder.encode(scope, "UTF-8")
+                + "&state=" + URLEncoder.encode(state, "UTF-8")
+                + "&code_challenge=" + URLEncoder.encode(codeChallenge, "UTF-8")
+                + "&code_challenge_method=S256";
+    }
+}`}},
+
+{id:'oa9',title:'Opaque vs JWT tokens & the split-token pattern',body:`
+<p>Access tokens come in two styles, and the choice has real consequences:</p>
+<ul>
+<li><b>By-value (JWT)</b> — the token <i>contains</i> the claims, signed. Any resource server verifies it <b>offline</b> (just check the signature) — fast, no call back to the issuer. Downsides: it's <b>readable</b> by anyone who holds it (base64, not secret), it's <b>bigger</b>, and it's <b>hard to revoke</b> before it expires (it's valid until <code>exp</code>).</li>
+<li><b>By-reference (opaque)</b> — the token is just a <b>random string</b> with no data in it. To use it, the resource server calls the Authorization Server's <b>introspection</b> endpoint (RFC 7662) to ask "is this active, and what are its claims?" Upsides: <b>instant revocation</b> (the AS just stops saying "active"), <b>nothing leaks</b> to the client, and it's small. Downside: a network call per validation (cache it).</li>
+</ul>
+<p><b>The split-token / phantom-token pattern</b> gives you both. The client only ever sees an <b>opaque</b> token; at the edge, the <b>API gateway</b> introspects (or exchanges) it and forwards a short-lived <b>JWT</b> to the internal microservices:</p>
+<div class="codeSample">Phantom / split-token pattern
+ Client ──(opaque token)──▶ API Gateway ──(introspect)──▶ Authorization Server
+                               │  ◀─(claims / a signed JWT)─┘
+                               └──(JWT)──▶ internal microservices  (verify offline, fast)
+
+ outward = opaque  → revocable, leaks nothing to the client
+ inward  = JWT     → self-contained, fast offline verification between services</div>
+<p><b>Benefits:</b> instant revocation and no data exposure on the public side, and JWT performance on the internal side; internal services never call the AS. This is a very common production architecture (e.g. with a gateway in front of a mesh).</p>`,
+docs:[['RFC 7662 — Token Introspection','https://www.rfc-editor.org/rfc/rfc7662'],['Phantom Token pattern','https://curity.io/resources/learn/phantom-token-pattern/'],['Split Token pattern','https://curity.io/resources/learn/split-token-pattern/']],
+ex:{title:'Introspect an opaque token',
+prompt:`Write <code>Introspect</code> with: <code>static String body(String token)</code> returning <code>"token=" + URLEncoder.encode(token, "UTF-8") + "&amp;token_type_hint=access_token"</code>; <code>static String basicAuth(String clientId, String clientSecret)</code> returning the <code>"Basic " + base64(clientId:clientSecret)</code> value (the resource server authenticates to the introspection endpoint); and <code>static boolean isActive(boolean active, long expEpoch, long now)</code> returning <code>active &amp;&amp; expEpoch &gt; now</code>. Declare <code>throws Exception</code> where needed.`,
+starter:`import java.net.URLEncoder;
+import java.util.Base64;
+
+public class Introspect {
+    static String body(String token) throws Exception {
+        return null;
+    }
+    static String basicAuth(String clientId, String clientSecret) {
+        return null;
+    }
+    static boolean isActive(boolean active, long expEpoch, long now) {
+        return false;
+    }
+}`,
+tests:[{d:'posts the token',re:'token='},{d:'URL-encodes the token',re:'URLEncoder\\.encode\\s*\\('},{d:'authenticates with Basic',re:'"Basic "\\s*\\+'},{d:'base64 client credentials',re:'Base64\\.getEncoder\\s*\\(\\s*\\)'},{d:'active AND not expired',re:'active\\s*&&\\s*expEpoch\\s*>\\s*now'}],
+behavior:`body("abc") is "token=abc&token_type_hint=access_token". basicAuth("api","secret") is "Basic YXBpOnNlY3JldA==". isActive(true, future, now) is true; isActive(false,...) or an expired token is false. Introspection is what makes opaque tokens work — and what makes instant revocation possible.`,
+hints:['The introspection request is a form POST: <code>token=…</code> (URL-encoded) plus an optional <code>token_type_hint</code>.','The caller (resource server) authenticates too — reuse the Basic auth pattern.','A token is usable only if the AS says <code>active</code> AND it has not expired.'],
+solution:`import java.net.URLEncoder;
+import java.util.Base64;
+
+public class Introspect {
+    static String body(String token) throws Exception {
+        return "token=" + URLEncoder.encode(token, "UTF-8") + "&token_type_hint=access_token";
+    }
+    static String basicAuth(String clientId, String clientSecret) {
+        String raw = clientId + ":" + clientSecret;
+        return "Basic " + Base64.getEncoder().encodeToString(raw.getBytes());
+    }
+    static boolean isActive(boolean active, long expEpoch, long now) {
+        return active && expEpoch > now;
+    }
+}`}},
+
+{id:'oa10',title:'Choosing a flow: the decision guide',body:`
+<p>Every OAuth flow exists for a specific situation. Here is the full map — <b>what each is for, and when to use it</b>:</p>
+<ul>
+<li><b>Authorization Code + PKCE</b> — <i>any app acting for a user</i>: server web apps, SPAs, and mobile/native. <b>The default for user login.</b></li>
+<li><b>Client Credentials</b> — <i>machine-to-machine</i>, no user (a backend/daemon calling an API as itself).</li>
+<li><b>Device Authorization</b> — <i>input-constrained devices</i>: TVs, CLIs, IoT (enter a code on your phone).</li>
+<li><b>Refresh Token</b> — <i>renew</i> an access token without sending the user back through login.</li>
+<li><b>Hybrid (OIDC)</b> — returns a <code>code</code> and an <code>id_token</code> together; niche, for apps that need an ID token immediately at the front channel.</li>
+<li><b>CIBA</b> (Client-Initiated Backchannel Authentication) — <i>decoupled</i> auth: the user approves on a <b>separate device</b> (e.g. a call-center agent triggers a push the customer approves on their phone).</li>
+<li><b>Token Exchange</b> (RFC 8693) — <i>swap one token for another</i>: delegation and service-to-service (the next stream), and impersonation.</li>
+<li><b>Implicit</b> — <b>deprecated</b> (SPAs once used it; use Code + PKCE).</li>
+<li><b>ROPC / password</b> — <b>deprecated</b> (the app handles the user's password; never for new systems).</li>
+</ul>
+<div class="codeSample">Pick a flow — a quick decision tree
+ Is a user involved?
+   NO  → Client Credentials         (service-to-service, machine identity)
+   YES → Can the user's device show a browser + type?
+           NO  → Device Authorization   (TV / CLI / IoT)
+           YES → Authorization Code + PKCE
+                   • server web app  → + confidential client auth
+                   • SPA / mobile    → public client, PKCE only (no secret)
+ Need auth on a SEPARATE device (push-to-approve)? → CIBA
+ Need to trade a token for another (delegation / S2S)? → Token Exchange
+ Renewing without re-login? → Refresh Token
+ Considering Implicit or ROPC? → don't — they're deprecated</div>`,
+docs:[['OAuth 2.0 grant types','https://oauth.net/2/grant-types/'],['OAuth 2.1 (consolidated best practice)','https://oauth.net/2.1/'],['RFC 9126 — CIBA / decoupled','https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html']],
+ex:{title:'Recommend the right flow',
+prompt:`Write <code>FlowChooser</code> with: <code>static String recommend(String scenario)</code> returning the grant to use — <code>"authorization_code+pkce"</code> for <code>"web-app"</code>, <code>"spa"</code>, or <code>"mobile"</code>; <code>"client_credentials"</code> for <code>"service"</code> or <code>"backend-daemon"</code>; <code>"device_code"</code> for <code>"tv"</code>, <code>"cli"</code>, or <code>"iot"</code>; and <code>"authorization_code+pkce"</code> for anything else (safe default); and <code>static boolean deprecated(String grant)</code> returning true for <code>"implicit"</code> or <code>"password"</code>.`,
+starter:`public class FlowChooser {
+    static String recommend(String scenario) {
+        return null;
+    }
+    static boolean deprecated(String grant) {
+        return false;
+    }
+}`,
+tests:[{d:'user apps → auth code + PKCE',re:'authorization_code\\+pkce'},{d:'machine to machine → client credentials',re:'client_credentials'},{d:'constrained devices → device code',re:'device_code'},{d:'flags implicit as deprecated',re:'"implicit"\\s*\\.\\s*equals|equals\\s*\\(\\s*"implicit"|"implicit"'},{d:'flags password/ROPC as deprecated',re:'"password"'}],
+behavior:`recommend("spa") and recommend("mobile") return "authorization_code+pkce"; recommend("service") returns "client_credentials"; recommend("tv") returns "device_code"; unknown scenarios default to authorization_code+pkce. deprecated("implicit") and deprecated("password") are true; deprecated("authorization_code") is false.`,
+hints:['A switch over the scenario is the clearest structure, with a default that returns authorization_code+pkce.','Group the cases: web-app/spa/mobile, service/backend-daemon, tv/cli/iot.','<code>return "implicit".equals(grant) || "password".equals(grant);</code>'],
+solution:`public class FlowChooser {
+    static String recommend(String scenario) {
+        switch (scenario) {
+            case "web-app": case "spa": case "mobile": return "authorization_code+pkce";
+            case "service": case "backend-daemon":      return "client_credentials";
+            case "tv": case "cli": case "iot":          return "device_code";
+            default:                                    return "authorization_code+pkce";
+        }
+    }
+    static boolean deprecated(String grant) {
+        return "implicit".equals(grant) || "password".equals(grant);
+    }
 }`}}
 
 ]});
@@ -9839,6 +10048,463 @@ solution:`public class Assertion {
         return signatureValid
                 && myEntityId.equals(audience)
                 && nowEpoch < notOnOrAfterEpoch;
+    }
+}`}}
+
+]});
+STREAMS.push({icon:'🔗',title:'Service-to-Service Authorization & SPIFFE',blurb:'How services prove who they are to each other with no human in the loop: token-based M2M (client credentials via a minting authority like Cognito), mutual TLS, OAuth token exchange, and workload identity with SPIFFE/SPIRE — the building blocks of zero trust.',lessons:[
+
+{id:'s2s1',title:'Machine identity & token-based M2M',body:`
+<p>Service-to-service (S2S / machine-to-machine, M2M) calls have <b>no user</b> — a backend calls another backend as <i>itself</i>. So "who is calling?" is answered by the <b>service's own identity</b>, not a logged-in person.</p>
+<p>The token-based approach uses the <b>Client Credentials</b> grant against a <b>token-minting authority</b> — an OAuth Authorization Server such as <b>AWS Cognito</b>, Auth0, Okta, or Keycloak. The service authenticates with its client credentials and receives a scoped access token to call the target API:</p>
+<div class="codeSample">Token-based M2M with a minting authority (e.g. Cognito)
+ 1. Service A holds client_id + client_secret (a confidential client registered at the authority)
+ 2. A → Authority /oauth2/token   grant_type=client_credentials&scope=orders/read   (HTTP Basic)
+ 3. Authority verifies A, returns a short-lived access token (a JWT) scoped to what A may do
+ 4. A → Service B   Authorization: Bearer &lt;token&gt;
+ 5. B validates the token (issuer, audience, scope, expiry) and serves the request
+ -- no user anywhere; the token's subject is the SERVICE A --</div>
+<p>Key points: it's a <b>confidential client</b> (only backends can hold the secret), there is <b>no refresh or ID token</b>, and the token is short-lived and <b>scoped</b> (least privilege — Service A gets exactly the scopes it needs, no more). With Cognito specifically, you define an app client + resource server/scopes and hit the pool's <code>/oauth2/token</code> endpoint.</p>`,
+docs:[['AWS Cognito — client credentials','https://docs.aws.amazon.com/cognito/latest/developerguide/authorization-endpoint.html'],['RFC 6749 §4.4 — Client Credentials','https://www.rfc-editor.org/rfc/rfc6749#section-4.4']],
+ex:{title:'Request an M2M token from the authority',
+prompt:`Write <code>M2mToken</code> with: <code>static String tokenRequest(String scope)</code> returning <code>"grant_type=client_credentials&amp;scope=" + java.net.URLEncoder.encode(scope, "UTF-8")</code>; and <code>static String clientAuth(String clientId, String clientSecret)</code> returning <code>"Basic " + base64(clientId:clientSecret)</code> using <code>java.util.Base64.getEncoder()</code>. Declare <code>throws Exception</code> where needed.`,
+starter:`import java.net.URLEncoder;
+import java.util.Base64;
+
+public class M2mToken {
+    static String tokenRequest(String scope) throws Exception {
+        return null;
+    }
+    static String clientAuth(String clientId, String clientSecret) {
+        return null;
+    }
+}`,
+tests:[{d:'client_credentials grant',re:'grant_type=client_credentials'},{d:'requests a scope',re:'scope='},{d:'URL-encodes the scope',re:'URLEncoder\\.encode\\s*\\('},{d:'authenticates with Basic',re:'"Basic "\\s*\\+'},{d:'base64 of id:secret',re:'Base64\\.getEncoder\\s*\\(\\s*\\)'}],
+behavior:`tokenRequest("orders/read") is "grant_type=client_credentials&scope=orders%2Fread". clientAuth("svcA","secret") is "Basic c3ZjQTpzZWNyZXQ=". Sent to the authority (e.g. Cognito) /oauth2/token, this mints a short-lived, scoped access token whose subject is the calling service — no user involved.`,
+hints:['It is the Client Credentials grant — same shape as the OAuth stream, framed for M2M.','The authority (Cognito/Auth0/Okta/Keycloak) is the token-minting authority.','Only a confidential client (a backend) can safely hold the secret used in clientAuth.'],
+solution:`import java.net.URLEncoder;
+import java.util.Base64;
+
+public class M2mToken {
+    static String tokenRequest(String scope) throws Exception {
+        return "grant_type=client_credentials&scope=" + URLEncoder.encode(scope, "UTF-8");
+    }
+    static String clientAuth(String clientId, String clientSecret) {
+        String raw = clientId + ":" + clientSecret;
+        return "Basic " + Base64.getEncoder().encodeToString(raw.getBytes());
+    }
+}`}},
+
+{id:'s2s2',title:'Mutual TLS (mTLS) as service identity',body:`
+<p>The other way services prove themselves needs no token server at all: <b>mutual TLS</b>. In ordinary TLS only the <i>server</i> presents a certificate; in <b>mTLS both sides do</b>. The caller's verified <b>client certificate is its identity</b> — the receiver trusts it because it was signed by a CA the receiver trusts (PKI, next stream).</p>
+<ul>
+<li>Each service is issued a <b>client certificate</b> (short-lived, ideally auto-rotated).</li>
+<li>On every call, TLS verifies the peer's cert against the trusted CA; the peer's <b>subject</b> (or a SAN URI) names the workload.</li>
+<li>Authorization is then "is <i>this identity</i> allowed to call me?" — an allow-list of subjects, or policy keyed on the identity.</li>
+</ul>
+<p>mTLS is the backbone of <b>service meshes</b> (Istio, Linkerd): the mesh gives every workload a cert and encrypts + authenticates every hop automatically. It pairs naturally with SPIFFE (lesson 4), where the cert's SAN is a <code>spiffe://</code> URI.</p>
+<div class="codeSample">mTLS call
+ Service A ──TLS ClientHello + A's client cert──▶ Service B
+ Service B verifies A's cert against the trusted CA, reads A's identity from the subject/SAN,
+ then checks: is A allowed to call this endpoint?   (identity-based authorization)
+ Both directions are encrypted and authenticated — a stolen bearer token alone won't get in.</div>`,
+docs:[['RFC 8705 — OAuth mTLS','https://www.rfc-editor.org/rfc/rfc8705'],['Istio mutual TLS','https://istio.io/latest/docs/concepts/security/#mutual-tls-authentication']],
+ex:{title:'Authorize by peer identity',
+prompt:`Write <code>MtlsIdentity</code> with: <code>static boolean allowed(String peerSubject, java.util.Set&lt;String&gt; allowedSubjects)</code> returning whether <code>peerSubject</code> is non-null and in <code>allowedSubjects</code>; and <code>static String spiffeFromSan(String sanUri)</code> returning <code>sanUri</code> if it is non-null and <code>startsWith("spiffe://")</code>, else <code>null</code> (the cert's SAN URI is the workload identity).`,
+starter:`import java.util.*;
+
+public class MtlsIdentity {
+    static boolean allowed(String peerSubject, Set<String> allowedSubjects) {
+        return false;
+    }
+    static String spiffeFromSan(String sanUri) {
+        return null;
+    }
+}`,
+tests:[{d:'null-checks the peer',re:'peerSubject\\s*!=\\s*null|null\\s*!=\\s*peerSubject'},{d:'authorizes by identity allow-list',re:'allowedSubjects\\s*\\.\\s*contains\\s*\\(\\s*peerSubject\\s*\\)'},{d:'recognizes a SPIFFE SAN',re:'startsWith\\s*\\(\\s*"spiffe://"\\s*\\)'}],
+behavior:`allowed("svcA", Set.of("svcA")) is true; an unknown or null subject is false. spiffeFromSan("spiffe://corp/ns/prod/sa/a") returns it; a non-spiffe or null SAN returns null. In mTLS the peer's verified certificate IS the identity — no bearer token can be replayed by a thief who lacks the private key.`,
+hints:['Authorization is an allow-list: <code>peerSubject != null &amp;&amp; allowedSubjects.contains(peerSubject)</code>.','A workload SPIFFE identity travels in the cert SAN as a <code>spiffe://</code> URI.','mTLS binds the call to the holder of the private key — that is what makes it sender-constrained.'],
+solution:`import java.util.*;
+
+public class MtlsIdentity {
+    static boolean allowed(String peerSubject, Set<String> allowedSubjects) {
+        return peerSubject != null && allowedSubjects.contains(peerSubject);
+    }
+    static String spiffeFromSan(String sanUri) {
+        return (sanUri != null && sanUri.startsWith("spiffe://")) ? sanUri : null;
+    }
+}`}},
+
+{id:'s2s3',title:'OAuth Token Exchange (on-behalf-of)',body:`
+<p>Often a request enters your system as a <b>user</b> (a user token at the gateway), then one service must call another <b>on that user's behalf</b> — but the user token is scoped/audienced for the first service, not the next. <b>Token Exchange</b> (RFC 8693) is the standard way to trade one token for another.</p>
+<ul>
+<li>A service sends its <b>subject_token</b> (the incoming token) to the authority and asks for a new token for a different <b>audience</b> / scopes.</li>
+<li>The authority returns a fresh token that carries the right audience and can preserve the <b>delegation</b> chain ("service X acting for user Y").</li>
+<li>Use cases: user → downstream API (on-behalf-of), and pure S2S (swap a service token for a narrower one). It formalizes both <b>delegation</b> and <b>impersonation</b>.</li>
+</ul>
+<div class="codeSample">Token exchange (on-behalf-of)
+ Gateway ──(user token)──▶ Service A
+ Service A → Authority /token
+     grant_type = urn:ietf:params:oauth:grant-type:token-exchange
+     subject_token = &lt;the user's token&gt;   subject_token_type = ...access_token
+     audience = service-b
+ Authority → Service A: a NEW token, audience=service-b, still tied to the user
+ Service A ──(new token)──▶ Service B    (B sees the right audience &amp; the delegated user)</div>`,
+docs:[['RFC 8693 — OAuth Token Exchange','https://www.rfc-editor.org/rfc/rfc8693']],
+ex:{title:'Build a token-exchange request',
+prompt:`Write <code>TokenExchange</code> with <code>static String body(String subjectToken, String audience)</code> returning the form body: <code>grant_type=urn:ietf:params:oauth:grant-type:token-exchange</code>, then <code>&amp;subject_token=</code> (URL-encoded), then <code>&amp;subject_token_type=urn:ietf:params:oauth:token-type:access_token</code>, then <code>&amp;audience=</code> (URL-encoded). Declare <code>throws Exception</code>.`,
+starter:`import java.net.URLEncoder;
+
+public class TokenExchange {
+    static String body(String subjectToken, String audience) throws Exception {
+        return null;
+    }
+}`,
+tests:[{d:'uses the token-exchange grant',re:'grant_type=urn:ietf:params:oauth:grant-type:token-exchange'},{d:'sends the subject token',re:'&subject_token='},{d:'declares the subject token type',re:'subject_token_type=urn:ietf:params:oauth:token-type:access_token'},{d:'targets an audience',re:'&audience='},{d:'URL-encodes dynamic values',re:'URLEncoder\\.encode\\s*\\('}],
+behavior:`body("USERTOK","service-b") returns "grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=USERTOK&subject_token_type=urn:ietf:params:oauth:token-type:access_token&audience=service-b". The authority returns a token addressed to service-b, still representing the original user — clean delegation instead of passing the user's token around.`,
+hints:['The grant type and token-type are URN constants — include them verbatim.','URL-encode only the dynamic values (subject_token, audience).','This is how you avoid replaying a user token with the wrong audience downstream.'],
+solution:`import java.net.URLEncoder;
+
+public class TokenExchange {
+    static String body(String subjectToken, String audience) throws Exception {
+        return "grant_type=urn:ietf:params:oauth:grant-type:token-exchange"
+                + "&subject_token=" + URLEncoder.encode(subjectToken, "UTF-8")
+                + "&subject_token_type=urn:ietf:params:oauth:token-type:access_token"
+                + "&audience=" + URLEncoder.encode(audience, "UTF-8");
+    }
+}`}},
+
+{id:'s2s4',title:'SPIFFE & SPIRE: universal workload identity',body:`
+<p>Client secrets are painful at scale (distribute, rotate, leak). <b>SPIFFE</b> (Secure Production Identity Framework For Everyone) gives every <b>workload</b> a cryptographic identity <b>automatically</b>, with no secrets to manage.</p>
+<ul>
+<li><b>SPIFFE ID</b> — the identity, a URI: <code>spiffe://&lt;trust-domain&gt;/&lt;path&gt;</code>, e.g. <code>spiffe://corp.com/ns/prod/sa/payments</code>. The <b>trust domain</b> is the root of trust; the path names the workload.</li>
+<li><b>SVID</b> (SPIFFE Verifiable Identity Document) — the credential proving a SPIFFE ID, in two forms: an <b>X.509-SVID</b> (a cert with the SPIFFE ID in its SAN — used for mTLS) or a <b>JWT-SVID</b> (a JWT with the SPIFFE ID as <code>sub</code> — used where mTLS isn't practical).</li>
+<li><b>SPIRE</b> — the reference implementation. It <b>attests</b> a workload (proves what it is, from the node + process properties) and issues short-lived, auto-rotated SVIDs — so there are <b>no long-lived secrets</b> anywhere.</li>
+</ul>
+<p>The payoff: two services (even across clouds/orgs sharing trust) authenticate by SVID over mTLS, identities are portable and standardized, and rotation is automatic. This is the identity layer under many service meshes.</p>
+<div class="codeSample">SPIFFE ID:  spiffe://corp.com/ns/prod/sa/payments
+             \\_______/  \\_____/  \\_______________/
+              scheme     trust      path (the specific workload)
+                         domain
+ X.509-SVID → SPIFFE ID in the cert SAN  → used for mTLS
+ JWT-SVID   → SPIFFE ID as the JWT sub   → used for token-based calls</div>`,
+docs:[['SPIFFE overview','https://spiffe.io/docs/latest/spiffe-about/overview/'],['SPIFFE ID format','https://github.com/spiffe/spiffe/blob/main/standards/SPIFFE-ID.md'],['SPIRE','https://spiffe.io/docs/latest/spire-about/']],
+ex:{title:'Parse & validate a SPIFFE ID',
+prompt:`Write <code>Spiffe</code> with: <code>static boolean isValid(String id)</code> returning true only if <code>id</code> is non-null, <code>startsWith("spiffe://")</code>, and has a path (a <code>'/'</code> after the trust domain — i.e. <code>indexOf('/', "spiffe://".length())</code> is &gt; 0); and <code>static String trustDomain(String id)</code> returning the trust domain (the text between <code>spiffe://</code> and the next <code>'/'</code>), or <code>null</code> if invalid.`,
+starter:`public class Spiffe {
+    static boolean isValid(String id) {
+        return false;
+    }
+    static String trustDomain(String id) {
+        return null;
+    }
+}`,
+tests:[{d:'requires the spiffe scheme',re:'startsWith\\s*\\(\\s*"spiffe://"\\s*\\)'},{d:'locates the trust-domain boundary',re:"indexOf\\s*\\(\\s*'/'"},{d:'extracts the trust domain',re:'substring\\s*\\('}],
+behavior:`isValid("spiffe://corp.com/ns/prod/sa/payments") is true; "spiffe://corp.com" (no path) and null are false. trustDomain("spiffe://corp.com/ns/prod/sa/payments") returns "corp.com". The trust domain is the root of trust; the path identifies the specific workload.`,
+hints:['<code>int start = "spiffe://".length();</code>, then find the next slash after the trust domain with <code>indexOf</code> from that position.','Valid = scheme present AND that slash is beyond the start (there is a path after the trust domain).','trustDomain = <code>id.substring(start, slash)</code>.'],
+solution:`public class Spiffe {
+    static boolean isValid(String id) {
+        if (id == null || !id.startsWith("spiffe://")) return false;
+        int start = "spiffe://".length();
+        return id.indexOf('/', start) > start;
+    }
+    static String trustDomain(String id) {
+        if (!isValid(id)) return null;
+        int start = "spiffe://".length();
+        int slash = id.indexOf('/', start);
+        return id.substring(start, slash);
+    }
+}`}},
+
+{id:'s2s5',title:'Workload identity in the cloud & mesh',body:`
+<p>The same idea — <b>no long-lived secrets</b>, identity from the platform — appears in every cloud and mesh:</p>
+<ul>
+<li><b>Cloud workload identity federation</b> — instead of storing a static cloud key, a workload presents a <b>platform-issued token</b> (e.g. a Kubernetes ServiceAccount JWT, or a GitHub Actions OIDC token) and the cloud <b>exchanges</b> it for short-lived cloud credentials. AWS IAM Roles (IRSA), GCP Workload Identity, and Azure Managed Identity all do this. No secret to leak.</li>
+<li><b>Service mesh mTLS</b> — Istio/Linkerd (often backed by SPIRE) give each pod an identity and do mTLS automatically; policy is written against the workload identity.</li>
+<li><b>Validation</b> — a JWT-SVID or platform token is validated like any JWT: signature, <b>issuer</b>, <b>audience</b> (must be <i>this</i> service), and <b>expiry</b> — plus the <b>trust domain</b> must be one you accept.</li>
+</ul>
+<p>The throughline: prove identity with something the platform vouches for, keep it <b>short-lived</b>, and authorize on the verified identity — never a shared password.</p>`,
+docs:[['AWS IRSA','https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html'],['GCP Workload Identity Federation','https://cloud.google.com/iam/docs/workload-identity-federation'],['SPIFFE JWT-SVID','https://github.com/spiffe/spiffe/blob/main/standards/JWT-SVID.md']],
+ex:{title:'Validate a workload token',
+prompt:`Write <code>WorkloadToken</code> with <code>static boolean valid(String audience, String subjectSpiffeId, long expEpoch, String expectedAudience, String acceptedTrustDomainPrefix, long now)</code> returning true only if <code>expectedAudience.equals(audience)</code>, <code>subjectSpiffeId</code> is non-null and <code>startsWith(acceptedTrustDomainPrefix)</code>, and it is not expired (<code>expEpoch &gt; now</code>).`,
+starter:`public class WorkloadToken {
+    static boolean valid(String audience, String subjectSpiffeId, long expEpoch,
+                         String expectedAudience, String acceptedTrustDomainPrefix, long now) {
+        return false;
+    }
+}`,
+tests:[{d:'checks the audience is this service',re:'expectedAudience\\s*\\.\\s*equals\\s*\\(\\s*audience\\s*\\)'},{d:'checks the trust domain / identity prefix',re:'startsWith\\s*\\(\\s*acceptedTrustDomainPrefix\\s*\\)'},{d:'checks expiry',re:'expEpoch\\s*>\\s*now|now\\s*<\\s*expEpoch'}],
+behavior:`valid passes only when the token is addressed to this service (audience), its subject SPIFFE ID is in an accepted trust domain, and it has not expired. A token from another trust domain, for another audience, or past expiry is rejected — the same discipline as user tokens, applied to workloads.`,
+hints:['Combine the three: <code>expectedAudience.equals(audience) &amp;&amp; subjectSpiffeId != null &amp;&amp; subjectSpiffeId.startsWith(acceptedTrustDomainPrefix) &amp;&amp; expEpoch &gt; now</code>.','Audience stops a token for service A being replayed at service B.','Accept only trust domains you federate with.'],
+solution:`public class WorkloadToken {
+    static boolean valid(String audience, String subjectSpiffeId, long expEpoch,
+                         String expectedAudience, String acceptedTrustDomainPrefix, long now) {
+        return expectedAudience.equals(audience)
+                && subjectSpiffeId != null
+                && subjectSpiffeId.startsWith(acceptedTrustDomainPrefix)
+                && expEpoch > now;
+    }
+}`}},
+
+{id:'s2s6',title:'Zero trust: choosing an S2S approach',body:`
+<p><b>Zero trust</b> means "never trust the network" — every call is authenticated and authorized on <b>identity</b>, not on being inside a perimeter. The S2S mechanisms in this stream are how you implement it. Choosing among them:</p>
+<ul>
+<li><b>mTLS + SPIFFE</b> — best <i>inside</i> a platform/mesh (Kubernetes, one or federated trust domains). Automatic, sender-constrained, no secrets. The default for internal S2S.</li>
+<li><b>OAuth Client Credentials</b> (via Cognito/Auth0/Okta) — best <i>across</i> orgs or to third-party/public APIs, and where a central authority already issues tokens.</li>
+<li><b>Token Exchange</b> — when a call must act <b>on behalf of a user</b> (or re-scope a token) as it moves between services.</li>
+<li><b>Cloud workload identity federation</b> — to get cloud credentials with no static keys.</li>
+</ul>
+<p>Whatever the mechanism, the zero-trust rules are the same: <b>short-lived credentials</b>, <b>no long-lived shared secrets</b>, <b>least privilege</b> (narrow scopes/policies), verify <b>audience</b> and identity on every hop, and rotate automatically.</p>
+<div class="codeSample">Pick an S2S mechanism
+ Internal, in a mesh / Kubernetes?          → mTLS + SPIFFE  (automatic, no secrets)
+ Cross-org / third-party / public API?      → OAuth Client Credentials (a minting authority)
+ Must act on behalf of a user downstream?   → Token Exchange
+ Need cloud creds without static keys?      → Workload identity federation
+ Always: short-lived · least privilege · check audience · never a long-lived secret</div>`,
+docs:[['NIST SP 800-207 — Zero Trust Architecture','https://csrc.nist.gov/pubs/sp/800/207/final'],['SPIFFE + service mesh','https://spiffe.io/docs/latest/microservices/']],
+ex:{title:'Choose the mechanism',
+prompt:`Write <code>ZeroTrust</code> with: <code>static String mechanism(String scenario)</code> returning <code>"mtls-spiffe"</code> for <code>"same-mesh"</code> or <code>"kubernetes"</code>, <code>"oauth-client-credentials"</code> for <code>"cross-org"</code> or <code>"third-party-api"</code>, <code>"token-exchange"</code> for <code>"on-behalf-of-user"</code>, and <code>"mtls-spiffe"</code> as the default; and <code>static boolean longLivedSecretOk(String env)</code> returning <code>false</code> (zero trust: never rely on long-lived shared secrets).`,
+starter:`public class ZeroTrust {
+    static String mechanism(String scenario) {
+        return null;
+    }
+    static boolean longLivedSecretOk(String env) {
+        return true;
+    }
+}`,
+tests:[{d:'internal mesh → mTLS + SPIFFE',re:'"mtls-spiffe"'},{d:'cross-org → client credentials',re:'"oauth-client-credentials"'},{d:'on-behalf-of → token exchange',re:'"token-exchange"'},{d:'never OK to rely on long-lived secrets',re:'return\\s+false'}],
+behavior:`mechanism("kubernetes") and mechanism("same-mesh") return "mtls-spiffe"; "cross-org"/"third-party-api" return "oauth-client-credentials"; "on-behalf-of-user" returns "token-exchange"; unknown defaults to mtls-spiffe. longLivedSecretOk always returns false — the core zero-trust stance.`,
+hints:['A switch over the scenario with a default of "mtls-spiffe".','Group same-mesh/kubernetes, and cross-org/third-party-api.','longLivedSecretOk is deliberately always false.'],
+solution:`public class ZeroTrust {
+    static String mechanism(String scenario) {
+        switch (scenario) {
+            case "same-mesh": case "kubernetes":        return "mtls-spiffe";
+            case "cross-org": case "third-party-api":   return "oauth-client-credentials";
+            case "on-behalf-of-user":                   return "token-exchange";
+            default:                                    return "mtls-spiffe";
+        }
+    }
+    static boolean longLivedSecretOk(String env) {
+        return false;
+    }
+}`}}
+
+]});
+STREAMS.push({icon:'📜',title:'PKI & Certificate Management',blurb:'The trust machinery under TLS, mTLS and signed tokens: public-key infrastructure, X.509 certificates, certificate authorities and chains of trust, CSRs and key usage, revocation (CRL/OCSP), rotation & ACME, and Java keystores/truststores.',lessons:[
+
+{id:'pki1',title:'Asymmetric keys & X.509 certificates',body:`
+<p><b>PKI</b> (Public Key Infrastructure) is the system that lets strangers trust each other's public keys. It rests on <b>asymmetric cryptography</b>: a <b>key pair</b> where the <b>private key</b> signs/decrypts and the matching <b>public key</b> verifies/encrypts.</p>
+<p>But a bare public key is anonymous — how do you know it belongs to <code>bank.com</code>? A <b>certificate</b> answers that. An <b>X.509 certificate</b> binds a public key to an identity, and is <b>signed by a Certificate Authority (CA)</b> that vouches for the binding. Its key fields:</p>
+<ul>
+<li><b>Subject</b> — who the cert is for (the identity), incl. the <b>SAN</b> (Subject Alternative Names — the DNS names/URIs it's valid for; modern TLS uses SAN, not the old CN).</li>
+<li><b>Issuer</b> — which CA signed it.</li>
+<li><b>Public key</b> — the key being vouched for.</li>
+<li><b>Validity</b> — <code>notBefore</code>/<code>notAfter</code> (expiry).</li>
+<li><b>Signature</b> — the CA's signature over all of the above.</li>
+</ul>
+<div class="codeSample">// generate a key pair with the JDK
+KeyPairGenerator g = KeyPairGenerator.getInstance("RSA");
+g.initialize(2048);
+KeyPair pair = g.generateKeyPair();   // pair.getPrivate() signs; pair.getPublic() is certified
+// a CA then issues an X.509 cert binding pair.getPublic() to your identity</div>`,
+docs:[['RFC 5280 — X.509 / PKIX','https://www.rfc-editor.org/rfc/rfc5280'],['KeyPairGenerator — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/security/KeyPairGenerator.html']],
+ex:{title:'Generate a key pair',
+prompt:`Write <code>Keys</code> with <code>static java.security.KeyPair rsa()</code> that returns a fresh <b>2048-bit RSA</b> key pair: <code>KeyPairGenerator.getInstance("RSA")</code>, <code>initialize(2048)</code>, then <code>generateKeyPair()</code>. Declare <code>throws Exception</code>.`,
+starter:`import java.security.*;
+
+public class Keys {
+    static KeyPair rsa() throws Exception {
+        return null;
+    }
+}`,
+tests:[{d:'RSA key pair generator',re:'KeyPairGenerator\\.getInstance\\s*\\(\\s*"RSA"\\s*\\)'},{d:'2048-bit key',re:'initialize\\s*\\(\\s*2048'},{d:'generates the pair',re:'generateKeyPair\\s*\\(\\s*\\)'}],
+behavior:`rsa() returns a KeyPair whose private key signs and whose public key is the one a CA would certify in an X.509 certificate. The certificate is what lets a stranger trust this public key belongs to your identity.`,
+hints:['Three lines: get the generator, initialize to 2048 bits, return generateKeyPair().','The private key stays secret; the public key goes into the certificate.','A certificate = public key + identity + CA signature.'],
+solution:`import java.security.*;
+
+public class Keys {
+    static KeyPair rsa() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("RSA");
+        g.initialize(2048);
+        return g.generateKeyPair();
+    }
+}`}},
+
+{id:'pki2',title:'Certificate Authorities & the chain of trust',body:`
+<p>You don't trust a website's certificate directly — you trust it because it chains up to a CA you already trust. That's the <b>chain of trust</b>:</p>
+<ul>
+<li><b>Root CA</b> — a self-signed cert baked into your OS/browser <b>trust store</b>. The ultimate anchor. Its private key is guarded fiercely (offline / HSM).</li>
+<li><b>Intermediate CA</b> — signed by the root; does the day-to-day issuing (so the root key stays offline).</li>
+<li><b>Leaf / end-entity</b> — your server's cert, signed by an intermediate.</li>
+</ul>
+<p>Validation walks the chain: each cert's <b>Issuer</b> must match the <b>Subject</b> of the next cert up, each signature must verify, none may be expired or revoked, and the top must be a <b>trusted root</b>. If every link holds, the leaf is trusted.</p>
+<div class="codeSample">Chain of trust
+ Root CA (self-signed, in your trust store)
+    │ signs
+    ▼
+ Intermediate CA
+    │ signs
+    ▼
+ leaf cert (bank.com)   ← trusted because the chain up to a trusted root verifies
+ Check each link: child.Issuer == parent.Subject, signature valid, not expired/revoked</div>`,
+docs:[['RFC 5280 §6 — Certification Path Validation','https://www.rfc-editor.org/rfc/rfc5280#section-6'],['CertPathValidator — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/security/cert/CertPathValidator.html']],
+ex:{title:'Check a link in the chain',
+prompt:`Write <code>Chain</code> with: <code>static boolean signedBy(String childIssuer, String parentSubject)</code> returning whether <code>childIssuer</code> is non-null and equals <code>parentSubject</code> (each cert's Issuer must match its parent's Subject); and <code>static boolean trusted(String rootSubject, java.util.Set&lt;String&gt; trustAnchors)</code> returning whether the root is in the trust store (<code>trustAnchors.contains(rootSubject)</code>).`,
+starter:`import java.util.*;
+
+public class Chain {
+    static boolean signedBy(String childIssuer, String parentSubject) {
+        return false;
+    }
+    static boolean trusted(String rootSubject, Set<String> trustAnchors) {
+        return false;
+    }
+}`,
+tests:[{d:'links child issuer to parent subject',re:'childIssuer\\s*\\.\\s*equals\\s*\\(\\s*parentSubject\\s*\\)'},{d:'null-safe',re:'childIssuer\\s*!=\\s*null|null\\s*!=\\s*childIssuer'},{d:'root must be a trusted anchor',re:'trustAnchors\\s*\\.\\s*contains\\s*\\(\\s*rootSubject\\s*\\)'}],
+behavior:`signedBy("CN=Intermediate", "CN=Intermediate") is true (the leaf's issuer matches the intermediate's subject); a mismatch is false. trusted(rootSubject, anchors) is true only if that root is in the trust store. A chain is valid only when every link connects and the top is a trusted root.`,
+hints:['<code>return childIssuer != null &amp;&amp; childIssuer.equals(parentSubject);</code>','The trust store is a set of roots you already trust — membership test.','Real code uses CertPathValidator; this drills the core rule.'],
+solution:`import java.util.*;
+
+public class Chain {
+    static boolean signedBy(String childIssuer, String parentSubject) {
+        return childIssuer != null && childIssuer.equals(parentSubject);
+    }
+    static boolean trusted(String rootSubject, Set<String> trustAnchors) {
+        return trustAnchors.contains(rootSubject);
+    }
+}`}},
+
+{id:'pki3',title:'CSRs, issuance & key usage',body:`
+<p>How do you <i>get</i> a certificate? You never send your private key anywhere. Instead you create a <b>CSR (Certificate Signing Request)</b>: it contains your <b>public key</b> and desired identity, <b>signed by your private key</b> (proving you hold it). The CA validates you, then issues a cert.</p>
+<div class="codeSample">// with keytool: make a keypair, then a CSR, then import the signed cert
+keytool -genkeypair -alias mykey -keyalg RSA -keysize 2048 -keystore ks.p12 -storetype PKCS12
+keytool -certreq  -alias mykey -file my.csr -keystore ks.p12         // → send my.csr to the CA
+keytool -importcert -alias mykey -file signed.crt -keystore ks.p12   // ← import what the CA returns</div>
+<p>A certificate also declares <b>what it may be used for</b>, and validators enforce it:</p>
+<ul>
+<li><b>Key Usage</b> — low-level operations (digitalSignature, keyEncipherment, <b>keyCertSign</b> = may sign other certs → a CA).</li>
+<li><b>Extended Key Usage (EKU)</b> — high-level purpose: <b>serverAuth</b> (TLS server), <b>clientAuth</b> (mTLS client), codeSigning, emailProtection.</li>
+<li><b>Basic Constraints</b> — <code>CA:true</code> marks a CA cert; a leaf must be <code>CA:false</code>. (A leaf with CA:true or a missing serverAuth EKU should be rejected.)</li>
+</ul>`,
+docs:[['keytool','https://docs.oracle.com/en/java/javase/21/docs/specs/man/keytool.html'],['RFC 5280 §4.2.1.12 — Extended Key Usage','https://www.rfc-editor.org/rfc/rfc5280#section-4.2.1.12']],
+ex:{title:'Enforce key usage',
+prompt:`Write <code>KeyUsage</code> with: <code>static boolean canServeTls(java.util.Set&lt;String&gt; eku)</code> returning whether the Extended Key Usage set <code>contains("serverAuth")</code>; and <code>static boolean isCa(boolean basicConstraintsCa, boolean keyCertSign)</code> returning whether <b>both</b> are true (a real CA cert has CA:true and the keyCertSign usage).`,
+starter:`import java.util.*;
+
+public class KeyUsage {
+    static boolean canServeTls(Set<String> eku) {
+        return false;
+    }
+    static boolean isCa(boolean basicConstraintsCa, boolean keyCertSign) {
+        return false;
+    }
+}`,
+tests:[{d:'TLS server needs serverAuth EKU',re:'contains\\s*\\(\\s*"serverAuth"\\s*\\)'},{d:'a CA needs CA:true AND keyCertSign',re:'basicConstraintsCa\\s*&&\\s*keyCertSign'}],
+behavior:`canServeTls(Set.of("serverAuth")) is true; a cert without serverAuth cannot terminate TLS. isCa(true,true) is true; if either basic-constraints CA or keyCertSign is missing, it is not a valid CA — so a leaf cert can't masquerade as one.`,
+hints:['<code>return eku.contains("serverAuth");</code>','A CA cert must assert both CA:true and the keyCertSign key usage.','Enforcing EKU/constraints is what stops a leaf cert from signing others.'],
+solution:`import java.util.*;
+
+public class KeyUsage {
+    static boolean canServeTls(Set<String> eku) {
+        return eku.contains("serverAuth");
+    }
+    static boolean isCa(boolean basicConstraintsCa, boolean keyCertSign) {
+        return basicConstraintsCa && keyCertSign;
+    }
+}`}},
+
+{id:'pki4',title:'TLS & mTLS: certificates in action',body:`
+<p>Certificates exist mostly to make <b>TLS</b> work. In the handshake, the server proves its identity so the client knows it's really talking to <code>bank.com</code> (and they agree on encryption keys):</p>
+<div class="codeSample">TLS handshake (server auth)
+ 1. Client → ClientHello (supported versions/ciphers)
+ 2. Server → its certificate chain (leaf + intermediates)
+ 3. Client validates: chain up to a trusted root, signatures OK, not expired/revoked,
+                      and the requested hostname matches the cert SAN
+ 4. Key exchange → both derive session keys → encrypted channel
+ -- mTLS adds: the SERVER also asks for the CLIENT's cert and validates it the same way --</div>
+<p>The client's checks are non-negotiable: <b>valid chain</b>, <b>not expired</b>, <b>not revoked</b>, and <b>hostname matches the SAN</b> (a valid cert for the <i>wrong</i> host must be rejected — that's what stops impersonation). <b>mTLS</b> simply runs the same validation in <i>both</i> directions, which is how services authenticate each other (the S2S stream).</p>`,
+docs:[['RFC 8446 — TLS 1.3','https://www.rfc-editor.org/rfc/rfc8446'],['RFC 6125 — hostname verification','https://www.rfc-editor.org/rfc/rfc6125']],
+ex:{title:'Validate a server certificate',
+prompt:`Write <code>TlsValidate</code> with <code>static boolean serverCertOk(boolean chainValid, String certHost, String requestedHost, long notAfterEpoch, long now)</code> returning true only if the chain is valid, the requested host matches the cert's host (<code>requestedHost.equals(certHost)</code>), and it is not expired (<code>now &lt; notAfterEpoch</code>).`,
+starter:`public class TlsValidate {
+    static boolean serverCertOk(boolean chainValid, String certHost, String requestedHost, long notAfterEpoch, long now) {
+        return false;
+    }
+}`,
+tests:[{d:'requires a valid chain',re:'chainValid'},{d:'hostname must match the SAN',re:'requestedHost\\s*\\.\\s*equals\\s*\\(\\s*certHost\\s*\\)'},{d:'must not be expired',re:'now\\s*<\\s*notAfterEpoch|notAfterEpoch\\s*>\\s*now'}],
+behavior:`serverCertOk passes only when the chain validates, the hostname you asked for matches the certificate, and it's within its validity window. A perfectly valid certificate for a different hostname is rejected — that host-match check is what prevents a valid-but-wrong cert from impersonating a site.`,
+hints:['One expression: <code>chainValid &amp;&amp; requestedHost.equals(certHost) &amp;&amp; now &lt; notAfterEpoch</code>.','Hostname verification is separate from chain validation — both are required.','mTLS runs this same check on the client cert too.'],
+solution:`public class TlsValidate {
+    static boolean serverCertOk(boolean chainValid, String certHost, String requestedHost, long notAfterEpoch, long now) {
+        return chainValid && requestedHost.equals(certHost) && now < notAfterEpoch;
+    }
+}`}},
+
+{id:'pki5',title:'Revocation, expiry, rotation & ACME',body:`
+<p>Certificates expire on purpose, and sometimes must be killed <i>early</i> (a private key leaks). Managing this lifecycle is most of the operational work in PKI.</p>
+<ul>
+<li><b>Expiry</b> — every cert has a hard <code>notAfter</code>. Let one lapse and clients reject it — a classic outage. The industry is moving to <b>short-lived</b> certs (days/hours) precisely so revocation matters less.</li>
+<li><b>Revocation</b> — invalidating a cert before it expires. Two mechanisms: <b>CRL</b> (Certificate Revocation List — a signed list of revoked serials the client downloads) and <b>OCSP</b> (Online Certificate Status Protocol — the client asks "is this serial still good?"). <b>OCSP stapling</b> has the <i>server</i> attach a fresh, signed OCSP response so the client needn't call the CA (faster, more private).</li>
+<li><b>Rotation</b> — replacing a cert before it expires (or a key is compromised). Automate it; overlap old+new during rollover.</li>
+<li><b>ACME</b> — the protocol (Let's Encrypt) that <b>automates</b> issuance and renewal: prove domain control, get a cert, auto-renew. This is why free, auto-rotating TLS is now the norm.</li>
+</ul>
+<div class="codeSample">A cert is usable only if:  now &lt; notAfter   AND   not revoked (per CRL/OCSP)
+ Short-lived certs + automation (ACME) &gt; long-lived certs + manual revocation.</div>`,
+docs:[['RFC 6960 — OCSP','https://www.rfc-editor.org/rfc/rfc6960'],['RFC 8555 — ACME','https://www.rfc-editor.org/rfc/rfc8555'],['Lets Encrypt','https://letsencrypt.org/how-it-works/']],
+ex:{title:'Is this certificate usable?',
+prompt:`Write <code>Revocation</code> with <code>static boolean usable(long notAfterEpoch, long now, boolean revoked)</code> returning true only if the certificate is not expired (<code>now &lt; notAfterEpoch</code>) <b>and</b> not <code>revoked</code>.`,
+starter:`public class Revocation {
+    static boolean usable(long notAfterEpoch, long now, boolean revoked) {
+        return false;
+    }
+}`,
+tests:[{d:'not expired',re:'now\\s*<\\s*notAfterEpoch|notAfterEpoch\\s*>\\s*now'},{d:'not revoked',re:'!\\s*revoked|revoked\\s*==\\s*false'}],
+behavior:`usable(future, now, false) is true; an expired cert (now past notAfter) or a revoked one is false. Both checks matter: expiry is time-based; revocation (via CRL/OCSP) kills a cert early when its key is compromised.`,
+hints:['<code>return now &lt; notAfterEpoch &amp;&amp; !revoked;</code>','Expiry alone is not enough — a stolen key must be revoked before its natural expiry.','Short-lived certs shrink the window where revocation is even needed.'],
+solution:`public class Revocation {
+    static boolean usable(long notAfterEpoch, long now, boolean revoked) {
+        return now < notAfterEpoch && !revoked;
+    }
+}`}},
+
+{id:'pki6',title:'Keystores & truststores',body:`
+<p>In Java (and most runtimes) certificates and keys live in two kinds of files — confusing until you see the split:</p>
+<ul>
+<li><b>Keystore</b> — holds <b>your own</b> private keys + their certs. It's your <i>identity</i> (what you present in TLS/mTLS). Guard it; it has secrets.</li>
+<li><b>Truststore</b> — holds the <b>CA certificates you trust</b> (public certs only, no secrets). It's your <i>list of who you believe</i>. Validation walks a presented chain up to something in here.</li>
+</ul>
+<p>Formats: <b>PKCS12</b> (<code>.p12</code>/<code>.pfx</code>) is the modern, portable standard; <b>JKS</b> is the legacy Java format. Manage both with <b>keytool</b>; load them in code with the <code>KeyStore</code> API.</p>
+<div class="codeSample">KeyStore ks = KeyStore.getInstance("PKCS12");   // your identity (private key + cert)
+ks.load(new FileInputStream("ks.p12"), password);
+// a truststore is just a KeyStore holding trusted CA certs (no private keys)
+// TLS uses your keystore to present identity, your truststore to validate the peer</div>
+<p>Rule of thumb: <b>keystore = who you are (has secrets); truststore = who you trust (public only).</b> mTLS needs both — a keystore to present your client cert, a truststore to validate the server's (and vice-versa).</p>`,
+docs:[['KeyStore — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/security/KeyStore.html'],['PKCS12','https://www.rfc-editor.org/rfc/rfc7292']],
+ex:{title:'Load a keystore, check a truststore',
+prompt:`Write <code>Stores</code> with: <code>static java.security.KeyStore loadPkcs12()</code> returning <code>KeyStore.getInstance("PKCS12")</code>; and <code>static boolean trusts(java.util.Set&lt;String&gt; truststoreAliases, String caAlias)</code> returning whether the truststore <code>contains(caAlias)</code>. Declare <code>throws Exception</code> where needed.`,
+starter:`import java.security.KeyStore;
+import java.util.*;
+
+public class Stores {
+    static KeyStore loadPkcs12() throws Exception {
+        return null;
+    }
+    static boolean trusts(Set<String> truststoreAliases, String caAlias) {
+        return false;
+    }
+}`,
+tests:[{d:'uses the modern PKCS12 format',re:'KeyStore\\.getInstance\\s*\\(\\s*"PKCS12"\\s*\\)'},{d:'truststore membership = trust',re:'truststoreAliases\\s*\\.\\s*contains\\s*\\(\\s*caAlias\\s*\\)'}],
+behavior:`loadPkcs12() returns a PKCS12 KeyStore instance (your identity store). trusts(aliases, caAlias) is true when that CA is present in the truststore. The keystore holds your private key; the truststore holds the CAs you validate peers against — mTLS needs both.`,
+hints:['<code>return KeyStore.getInstance("PKCS12");</code> — PKCS12 over the legacy JKS.','A truststore is just a KeyStore of trusted CA certs — membership means "trusted".','Keystore = secrets (your identity); truststore = public certs (who you trust).'],
+solution:`import java.security.KeyStore;
+import java.util.*;
+
+public class Stores {
+    static KeyStore loadPkcs12() throws Exception {
+        return KeyStore.getInstance("PKCS12");
+    }
+    static boolean trusts(Set<String> truststoreAliases, String caAlias) {
+        return truststoreAliases.contains(caAlias);
     }
 }`}}
 

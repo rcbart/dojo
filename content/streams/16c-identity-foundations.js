@@ -1,4 +1,64 @@
-STREAMS.push({icon:'🪪',title:'Identity Foundations',blurb:'The vocabulary of identity from scratch — authentication vs authorization, sessions vs tokens, SSO & federation, IdPs and clients, scopes and consent. The base every OAuth/OIDC/SAML lesson builds on.',lessons:[
+STREAMS.push({icon:'🪪',title:'Identity Foundations',blurb:'The vocabulary of identity from scratch — a glossary, then authentication vs authorization, sessions vs tokens, SSO & federation, IdPs and clients, scopes and consent. The base every OAuth/OIDC/SAML lesson builds on.',lessons:[
+
+{id:'idf0',title:'Glossary: the identity & OAuth vocabulary',body:`
+<p>Identity is drowning in jargon, and many terms mean the same thing in different protocols. Skim
+this once and refer back whenever a word trips you up — it's the decoder ring for the whole domain.</p>
+<p><b>The actors (who's who)</b> — the same roles, different names per protocol:</p>
+<ul>
+<li><b>Resource Owner</b> — the <i>user</i> who owns the data.</li>
+<li><b>Client / Relying Party (RP) / Service Provider (SP)</b> — the <i>app</i> that wants access. "Client" and "RP" are OAuth/OIDC; "SP" is SAML — all the app relying on an authority.</li>
+<li><b>Identity Provider (IdP) / Authorization Server (AS) / OpenID Provider (OP)</b> — the <i>authority</i> that authenticates users and issues tokens. "IdP" is the general/SAML term; "AS" is OAuth; "OP" is OIDC.</li>
+<li><b>Resource Server (RS)</b> — the <i>API</i> that accepts access tokens.</li>
+<li><b>Subject / Principal</b> — the specific "who" a request acts as (the <code>sub</code> claim).</li>
+</ul>
+<p><b>The tokens &amp; credentials</b>:</p>
+<ul>
+<li><b>Access token</b> — the key to call an <i>API</i> (authorization). <b>ID token</b> — proves <i>who the user is</i> to the <i>client</i> (authentication, OIDC only). <b>Refresh token</b> — renews access tokens without re-login.</li>
+<li><b>JWT</b> — JSON Web Token: a signed, self-contained token you can read/verify. <b>Opaque token</b> — a random reference with no data inside (validated by introspection).</li>
+<li><b>Assertion</b> — SAML's signed XML statement (the SAML equivalent of an ID token).</li>
+<li><b>JWS / JWE / JWK / JOSE</b> — signed token / encrypted token / a key in JSON / the umbrella family. <b>Bearer token</b> — "whoever holds it can use it." <b>SVID</b> — a SPIFFE workload identity document (S2S stream).</li>
+</ul>
+<p><b>The flows / grant types</b> (full detail in the OAuth stream): <b>Authorization Code</b> (+<b>PKCE</b>), <b>Client Credentials</b> (machine-to-machine), <b>Device</b>, <b>Refresh</b>, <b>Hybrid</b>, <b>CIBA</b> (decoupled), <b>Token Exchange</b> (swap tokens); and the deprecated <b>Implicit</b> and <b>ROPC/password</b>.</p>
+<p><b>The endpoints</b>: <code>/authorize</code> (start login), <code>/token</code> (get tokens), <code>/userinfo</code> (profile), <code>/introspect</code> (validate opaque token), <code>/revoke</code> (kill a token), <code>jwks_uri</code> (public keys), <code>/.well-known/openid-configuration</code> (discovery).</p>
+<p><b>The concepts</b>: <b>scope</b> (a requested permission), <b>claim</b> (a fact in a token), <b>consent</b> (user approval), <b>audience (aud)</b> (who a token is for), <b>issuer (iss)</b> (who minted it), <b>nonce</b> (replay protection for ID tokens), <b>state</b> (CSRF protection on the redirect), <b>front channel</b> (via the browser) vs <b>back channel</b> (server-to-server), <b>public vs confidential (private) client</b> (can it keep a secret?), <b>SSO</b> (log in once), <b>federation</b> (trust across orgs), <b>mTLS</b> (mutual TLS), and the <b>PKI</b> words <b>CA</b> (certificate authority) and <b>CSR</b> (certificate signing request).</p>
+<p><b>The deeper terms that trip people up — defined plainly:</b></p>
+<ul>
+<li><b>Delegated authorization</b> — the core idea of OAuth: you let an app do a <i>limited</i> set of things on your behalf <b>without handing it your password</b>. You delegate a slice of your access (scopes), and you can revoke it. (Contrast: <b>impersonation</b>, where the app simply becomes you.)</li>
+<li><b>CSRF (Cross-Site Request Forgery)</b> — an attack where a malicious page tricks <i>your</i> browser into making a request you didn't intend, riding on your existing session/cookies. OAuth defends the redirect with the <b>state</b> parameter (a random value the client sends and re-checks on return); web forms defend with anti-CSRF tokens.</li>
+<li><b>Replay attack</b> — an attacker captures a token or message and re-sends it to impersonate you. Defenses: short expiries, one-time <b>nonce</b> values, and sender-constrained tokens.</li>
+<li><b>Bearer vs sender-constrained (proof-of-possession)</b> — a <b>bearer</b> token works for anyone who holds it (like cash — steal it, use it). A <b>sender-constrained</b> token is cryptographically bound to a key only the real client has (mTLS-bound or <b>DPoP</b>), so a stolen copy is useless.</li>
+<li><b>Phishing-resistant authentication</b> — methods that can't be phished because the secret never leaves the device and is bound to the site's real origin (passkeys / <b>WebAuthn</b>, security keys).</li>
+<li><b>Attestation</b> — cryptographic proof of <i>what</i> something is (e.g. SPIRE attesting a workload from its node/process properties) before it's issued an identity.</li>
+<li><b>Trust / trust domain</b> — a relying party accepts tokens/assertions signed by an authority it has been configured to trust (its keys/cert); a <b>trust domain</b> is the root under which a set of identities is issued (SPIFFE).</li>
+</ul>`,
+docs:[['OAuth 2.0 roles (RFC 6749 §1.1)','https://www.rfc-editor.org/rfc/rfc6749#section-1.1'],['OIDC terminology','https://openid.net/specs/openid-connect-core-1_0.html#Terminology'],['CSRF (OWASP)','https://owasp.org/www-community/attacks/csrf']],
+ex:{title:'Expand the acronyms',
+prompt:`Write <code>Glossary</code> with <code>static String expand(String abbr)</code> that returns the full term for common identity acronyms: <code>"IdP"</code>→<code>"Identity Provider"</code>, <code>"SP"</code>→<code>"Service Provider"</code>, <code>"RP"</code>→<code>"Relying Party"</code>, <code>"AS"</code>→<code>"Authorization Server"</code>, <code>"RS"</code>→<code>"Resource Server"</code>, <code>"OIDC"</code>→<code>"OpenID Connect"</code>, <code>"PKCE"</code>→<code>"Proof Key for Code Exchange"</code>, <code>"JWT"</code>→<code>"JSON Web Token"</code>, <code>"MFA"</code>→<code>"Multi-Factor Authentication"</code>, <code>"SSO"</code>→<code>"Single Sign-On"</code>, and <code>"unknown"</code> for anything else.`,
+starter:`public class Glossary {
+    static String expand(String abbr) {
+        return null;
+    }
+}`,
+tests:[{d:'IdP → Identity Provider',re:'"IdP"\\s*:\\s*return\\s*"Identity Provider"|"IdP".*?"Identity Provider"'},{d:'RP → Relying Party',re:'"RP".*?"Relying Party"'},{d:'AS → Authorization Server',re:'"AS".*?"Authorization Server"'},{d:'OIDC → OpenID Connect',re:'"OIDC".*?"OpenID Connect"'},{d:'PKCE → Proof Key for Code Exchange',re:'"PKCE".*?"Proof Key for Code Exchange"'},{d:'unknown default',re:'"unknown"'}],
+behavior:`expand("IdP") returns "Identity Provider", expand("RP") returns "Relying Party", expand("PKCE") returns "Proof Key for Code Exchange", and expand("XYZ") returns "unknown". A quick reinforcement of the vocabulary the rest of the domain uses.`,
+hints:['A <code>switch (abbr)</code> with a <code>case</code> per acronym and a <code>default: return "unknown";</code> is the clearest.','Return the exact full-term strings from the prompt.','Anything not listed falls through to "unknown".'],
+solution:`public class Glossary {
+    static String expand(String abbr) {
+        switch (abbr) {
+            case "IdP":  return "Identity Provider";
+            case "SP":   return "Service Provider";
+            case "RP":   return "Relying Party";
+            case "AS":   return "Authorization Server";
+            case "RS":   return "Resource Server";
+            case "OIDC": return "OpenID Connect";
+            case "PKCE": return "Proof Key for Code Exchange";
+            case "JWT":  return "JSON Web Token";
+            case "MFA":  return "Multi-Factor Authentication";
+            case "SSO":  return "Single Sign-On";
+            default:     return "unknown";
+        }
+    }
+}`}},
 
 {id:'idf1',title:'Authentication vs authorization',body:`
 <p>These two words get mixed up constantly. They answer <b>different questions</b>:</p>
