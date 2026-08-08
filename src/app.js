@@ -252,6 +252,8 @@ function completeLesson(l){
 function renderNav(){
   const nav=document.getElementById('nav');nav.innerHTML='';
   const home=document.createElement('div');home.className='streamHd';home.innerHTML='🏠 Overview';home.onclick=()=>{cur=null;renderHome();renderNav()};nav.appendChild(home);
+  const start=document.createElement('div');start.className='streamHd';start.innerHTML='🚀 Getting started';start.onclick=()=>{cur=null;renderGettingStarted();renderNav()};nav.appendChild(start);
+  const path=document.createElement('div');path.className='streamHd';path.innerHTML='🗺️ Learning path';path.onclick=()=>{cur=null;renderPath();renderNav()};nav.appendChild(path);
   const gloss=document.createElement('div');gloss.className='streamHd';gloss.innerHTML='📖 Glossary';gloss.onclick=()=>{cur=null;renderGlossary();renderNav()};nav.appendChild(gloss);
   STREAMS.forEach((s,si)=>{
     if(s.tournament&&!(STREAMS[si-1]&&STREAMS[si-1].tournament)){
@@ -355,6 +357,7 @@ function renderHome(){
   if(extra.length){sections+=`<div class="domainHd"><span class="domainLeft">✨ More</span></div><div class="grid">${extra.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;}
   m.innerHTML=`<div class="home">
   <h1>Welcome to DevDojo 🥋</h1>
+  <div class="startBanner">New here? Start with <a href="javascript:void(0)" onclick="cur=null;renderGettingStarted();renderNav()"><b>🚀 Getting started</b></a> to set up your environment and get the full depth, then follow the <a href="javascript:void(0)" onclick="cur=null;renderPath();renderNav()"><b>🗺️ Learning path</b></a>.</div>
   <p>${STREAMS.length} training streams take you from the fundamentals to mastery across software engineering — the Java language and JVM, computer science & algorithms, web/APIs/Spring, data, networking, security & identity, DevOps & delivery, and senior-level architecture. They're grouped by domain below. Every lesson ends with an exercise you write in the built-in editor. <b>Run Tests</b> checks your code and sends it to Claude, who executes the tests mentally like a compiler + JUnit runner and reports pass/fail per test with line-referenced feedback. Stuck? <b>Next Step</b> gives a progressive hint, and <b>Show me the solution</b> is always there — no judgment.</p>
   <p><b>Tip:</b> select/double-click any Java keyword anywhere (lesson text or your own code) and a popup explains it, with a link to the official docs.</p>
   <p style="font-size:12px;color:var(--muted)">System status: AI test runner ${(window.cowork&&window.cowork.askClaude)?'✅ connected':'⚠️ unavailable — completion falls back to structural checks'} · progress storage ${store.persistent?'✅ persistent':'⚠️ session-only (browser storage is blocked here; progress lasts until this view closes)'}</p>
@@ -404,6 +407,7 @@ function openLesson(si,li,ei){
     </div>
     <div class="doneBanner" id="doneBanner">✅ Lesson complete — nice work! Pick the next lesson in the sidebar.</div>
     <div class="solution" id="solBox" hidden><div class="codeSample">${highlight(e.solution)}</div></div>
+    ${depthPanels(s,l,e)}
   </div>`:''}
   <div style="margin-top:18px;display:flex;gap:10px">
     ${li>0?`<button onclick="openLesson(${si},${li-1})">← Previous</button>`:''}
@@ -1048,4 +1052,109 @@ function filterGloss(q){
     dom.style.display=domHits?'':'none';
     if(q)dom.open=true;
   });
+}
+
+/* ============================== DEPTH: run-locally + dive-deeper ============================== */
+function localRunHtml(s,l,e){
+  const lang=e.lang||'java';
+  let steps;
+  if(lang==='sql'){
+    steps=`<p>These exercises are graded on the SQL text. To run them for real against a live database:</p>
+<pre class="runbox">docker run --rm -e POSTGRES_PASSWORD=pw -p 5432:5432 postgres:16
+psql postgresql://postgres:pw@localhost:5432/postgres
+-- create the tables named in the prompt, insert a few rows, then run your query</pre>
+<p>No Docker? Any Postgres, MySQL or even SQLite works — the syntax in these lessons is standard SQL.</p>`;
+  } else if(lang==='shell'){
+    steps=`<p>These are real commands. Try them in a throwaway directory so nothing important is at risk:</p>
+<pre class="runbox">mkdir /tmp/play && cd /tmp/play && git init
+# then run each command and watch exactly what changes</pre>`;
+  } else if(lang==='text'){
+    steps=`<p>This is a short-answer / mental-model check — there is no code to execute. Compare your reasoning against the solution, and follow the references below to go deeper.</p>`;
+  } else {
+    const m=(e.solution||'').match(/public\s+class\s+(\w+)/)||(e.solution||'').match(/\bclass\s+(\w+)/);
+    const cls=m?m[1]:'Solution';
+    const hasMain=/static\s+void\s+main/.test(e.solution||'');
+    steps=`<p>DevDojo verifies your code has the right shape and (in the app) asks Claude to run the tests. To confirm it genuinely works, run it on your own machine with a JDK (see Getting started):</p>
+<pre class="runbox">// 1) save your solution as ${esc(cls)}.java
+${hasMain?'':`// 2) add a tiny main to try it, e.g.:
+//    public static void main(String[] a) { System.out.println(/* call a method here */); }
+`}// ${hasMain?'2':'3'}) compile and run:
+javac ${esc(cls)}.java && java ${esc(cls)}
+
+// or explore interactively, no main needed:
+jshell ${esc(cls)}.java</pre>
+<p>To grade it the way DevDojo does, add <b>JUnit 5</b> and turn the "expected behavior" above into <code>assertEquals</code> checks.</p>`;
+  }
+  return `<details class="depth"><summary>🖥️ Run this on your own machine</summary><div class="depthBody">${steps}</div></details>`;
+}
+function diveDeeperHtml(s,l,e){
+  const docs=(l.docs&&l.docs.length)?`<p><b>Read the source:</b> ${l.docs.map(d=>`<a href="${d[1]}" target="_blank" rel="noopener">${esc(d[0])} ↗</a>`).join(' · ')}</p>`:'';
+  return `<details class="depth"><summary>🔬 Dive deeper</summary><div class="depthBody">
+<p><b>How this is graded.</b> The check looks for the right constructs in your code, and in the app Claude runs the tests like a compiler. That verifies structure and logic, not every runtime edge — so for real confidence, run it locally (above) and try to break it.</p>
+<p><b>Push further.</b> Change the inputs and predict the output before running. Add an edge case the prompt did not mention. Then say the idea aloud in one sentence — if you can teach it, you own it.</p>
+${docs}
+</div></details>`;
+}
+function depthPanels(s,l,e){ return `<div class="depthWrap">${localRunHtml(s,l,e)}${diveDeeperHtml(s,l,e)}</div>`; }
+
+/* ============================== GETTING STARTED ============================== */
+function renderGettingStarted(){
+  const m=document.getElementById('main');
+  m.innerHTML=`<div class="home">
+  <h1>🚀 Getting started with DevDojo</h1>
+  <p>DevDojo runs entirely in your browser and every lesson ends with a hands-on exercise. This page shows how your work is checked, what to install to get the <b>full depth</b>, and how to run any exercise in your own dev environment when you want real, compiler-verified feedback.</p>
+
+  <div class="gsCard">
+  <h2>How your work is checked (be honest with yourself)</h2>
+  <p>When you hit <b>Compile &amp; Run Tests</b>, DevDojo does two things: it checks your code contains the right constructs, and — in the app — it asks Claude to execute the tests like a compiler plus JUnit and report pass/fail per test. That is great for fast feedback and learning, but it is <b>not a real compiler</b>. It can miss a runtime edge case, and a correct solution written in an unusual way can occasionally be marked wrong.</p>
+  <p><b>The fix for real depth:</b> every exercise now has a <b>🖥️ Run this on your own machine</b> panel with the exact commands. Use it whenever you want ground truth.</p>
+  </div>
+
+  <div class="gsCard">
+  <h2>Set up your environment</h2>
+  <p>You do not need all of this on day one — install a tool when a track calls for it. Each line notes what it unlocks.</p>
+  <ul>
+    <li><b>JDK 21+</b> — the Java compiler and runtime. Unlocks running every Java exercise locally (<code>javac</code>, <code>java</code>, <code>jshell</code>). Get it from Adoptium (Temurin) or <code>sdkman</code>. <i>This is the one to install first.</i></li>
+    <li><b>An IDE</b> — IntelliJ IDEA (Community) or VS Code with the Java extensions. Real autocomplete, debugging, and JUnit runs.</li>
+    <li><b>Git</b> — to actually try the Git &amp; version-control lessons; make a throwaway repo and experiment.</li>
+    <li><b>Node.js 22+</b> — needed only to run this site with accounts/progress (<code>node site/server.js</code>) and to rebuild the app (<code>node build.js</code>).</li>
+    <li><b>Docker</b> — spins up a real Postgres for the SQL lessons, and is the backbone of the Docker / Kubernetes / Istio / Envoy courses.</li>
+    <li><b>Maven or Gradle</b> — to build the Spring Boot, API and larger Java projects for real.</li>
+  </ul>
+  </div>
+
+  <div class="gsCard">
+  <h2>What DevDojo can do in-app vs. in your own dev environment</h2>
+  <p><b>Great in the app:</b> learning the concepts, writing and checking Java/SQL/CLI exercises, the belt progression, the glossary, and click-to-explain terms.</p>
+  <p><b>Best on your own machine (the app can teach but not fully run these):</b> compiling and executing Java with a real JVM; running a live database for SQL; standing up a Spring Boot service; the concurrency lessons where real timing and multiple cores matter; the networking/sockets and deployment lessons; and the standalone <b>Docker, Kubernetes, Istio and Envoy</b> courses, which are separate hands-on labs in this repository. The Run-locally panel on each exercise bridges the gap.</p>
+  </div>
+
+  <div class="gsCard">
+  <h2>Where to go next</h2>
+  <p>New here? Follow the <a href="javascript:void(0)" onclick="cur=null;renderPath();renderNav()"><b>🗺️ Learning path</b></a> for a recommended order from white to black belt. Confused by a term? The <a href="javascript:void(0)" onclick="cur=null;renderGlossary();renderNav()"><b>📖 Glossary</b></a> defines everything, and you can select any highlighted term inside a lesson to see its definition inline.</p>
+  </div>
+  </div>`;
+  m.scrollTop=0;
+}
+
+/* ============================== LEARNING PATH ============================== */
+function renderPath(){
+  const m=document.getElementById('main');
+  const step=(n,belt,title,body)=>`<div class="pathStep"><div class="pathNum">${n}</div><div class="pathBody"><div class="pathBelt">${belt}</div><h3>${esc(title)}</h3><p>${body}</p></div></div>`;
+  m.innerHTML=`<div class="home">
+  <h1>🗺️ Learning path</h1>
+  <p>DevDojo is large on purpose, but you do not have to wander. This is a recommended route from beginner to senior. Finish the belt lessons in a domain to earn its belt; the dan sub-tracks and the Projects/Tournaments are where you cement it. Jump around once you know the basics — this is a suggestion, not a cage.</p>
+  <div class="pathWrap">
+  ${step(1,'⬜ White','Start here','Read <b>🚀 Getting started</b>, install a JDK, and skim the <b>Glossary</b>. Then begin <b>Java Fundamentals</b> — variables, control flow, objects, collections.')}
+  ${step(2,'🟡 Yellow','Core Java','Finish <b>Java Fundamentals</b> (including <i>Inside the JVM</i>), <b>Exception Handling</b>, and <b>Generics from the Ground Up</b>. This is the language spine everything else assumes.')}
+  ${step(3,'🟠 Orange','Computer science','Do <b>Data Structures &amp; Algorithms</b> — collections, Big-O, trees, and BFS/DFS/Dijkstra traversal. Interview-critical and used everywhere.')}
+  ${step(4,'🟢 Green','How programs talk','Take <b>Web &amp; HTTP</b>, <b>APIs &amp; REST</b>, and <b>Working with Databases</b> (SQL joins, the command map, complex queries). Now you can build real services.')}
+  ${step(5,'🔵 Blue','Frameworks &amp; concurrency','Add <b>Spring Boot</b>, <b>Concurrency &amp; Multithreading</b> (start with <i>threads vs processes</i>), and <b>Modern Java</b>. Run these locally — concurrency especially rewards a real JVM.')}
+  ${step(6,'🟣 Purple','Security &amp; identity','Work through <b>Identity and Access</b> end to end: foundations &amp; federation, authn/MFA, authorization models, sessions, OAuth/OIDC, tokens, SAML, PKI, and the advanced/governance sub-tracks.')}
+  ${step(7,'🟤 Brown','Ship it','Learn <b>Build Tools</b>, <b>Git</b>, <b>Deploying to the Web</b>, and <b>CI/CD</b>. Pair these with the standalone Docker &amp; Kubernetes courses in your own environment.')}
+  ${step(8,'⚫ Black','Senior craft','Enter the <b>Senior (Dan)</b> tracks — System Design, Failure-First Distributed Systems, Working with Real Code — then prove it in <b>Real-World Projects</b> and the <b>Tournament</b>.')}
+  </div>
+  <p style="margin-top:16px">Ready? <a href="javascript:void(0)" onclick="cur=null;renderHome();renderNav()"><b>Back to all tracks →</b></a></p>
+  </div>`;
+  m.scrollTop=0;
 }

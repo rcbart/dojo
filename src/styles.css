@@ -230,3 +230,34 @@ summary.glossSum::-webkit-details-marker{display:none}
 summary.glossSum::before{content:'▸';color:#8b5cf6;font-size:13px;margin-right:8px;transition:transform .15s}
 details.glossDom[open] summary.glossSum::before{transform:rotate(90deg)}
 summary.glossSum:hover{color:#8b5cf6}
+
+/* ===== Depth panels (run-locally + dive-deeper) ===== */
+.depthWrap{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+details.depth{border:1px solid var(--line);border-radius:10px;background:#fbfaff}
+details.depth>summary{cursor:pointer;list-style:none;padding:10px 14px;font-weight:700;font-size:13.5px;color:#4338ca}
+details.depth>summary::-webkit-details-marker{display:none}
+details.depth>summary::before{content:'▸';margin-right:8px;color:#8b5cf6;font-size:12px}
+details.depth[open]>summary::before{content:'▾'}
+.depthBody{padding:0 14px 12px;font-size:13.5px;color:var(--fg)}
+.depthBody p{margin:6px 0}
+.runbox{background:#0b1017;color:#e6edf3;border-radius:8px;padding:12px 14px;font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-x:auto;margin:8px 0}
+
+/* ===== Home "getting started" banner ===== */
+.startBanner{margin:10px 0 16px;padding:12px 16px;border:1px solid #ddd6fe;background:linear-gradient(90deg,#f5f3ff,#eff6ff);
+  border-radius:10px;font-size:14px;color:#3730a3}
+
+/* ===== Getting started page ===== */
+.gsCard{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0;background:#fff}
+.gsCard h2{margin:0 0 8px;font-size:17px}
+.gsCard ul{margin:8px 0 0;padding-left:20px}
+.gsCard li{margin:6px 0}
+
+/* ===== Learning path ===== */
+.pathWrap{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.pathStep{display:flex;gap:14px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fff}
+.pathNum{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#06b6d4);
+  color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+.pathBody{flex:1}
+.pathBody h3{margin:2px 0 4px;font-size:16px}
+.pathBody p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.5}
+.pathBelt{font-size:11px;font-weight:800;letter-spacing:.04em;color:#8b5cf6;text-transform:uppercase}

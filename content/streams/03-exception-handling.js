@@ -210,7 +210,7 @@ public class UserStore {
 }</div>
 <p>Two habits make custom exceptions professional. Always offer a constructor that accepts a <b>cause</b> and pass it to <code>super(message, cause)</code> so the original stack trace is not lost (exception chaining). And add fields/getters for the context a handler will want — an id, an amount, a limit — so <code>catch</code> blocks can act on facts instead of parsing strings.</p>`,
 docs:[['Creating exception classes — Oracle','https://docs.oracle.com/javase/tutorial/essential/exceptions/creating.html'],['Chained exceptions','https://docs.oracle.com/javase/tutorial/essential/exceptions/chained.html']],
-ex:{title:'Write a domain exception',
+exs:[{title:'Writing an unchecked exception',
 prompt:`Create an unchecked exception <code>InsufficientFundsException</code> that <code>extends RuntimeException</code>, holds a <code>long shortfall</code> field, has a constructor <code>(String message, long shortfall)</code> that calls <code>super(message)</code> and stores the field, and exposes <code>long getShortfall()</code>. Then in class <code>Account</code>, method <code>void withdraw(long amount, long balance)</code> must <code>throw new InsufficientFundsException(...)</code> when <code>amount &gt; balance</code>, passing the shortfall <code>amount - balance</code>.`,
 starter:`public class Account {
     void withdraw(long amount, long balance) {
@@ -243,5 +243,32 @@ class InsufficientFundsException extends RuntimeException {
 }`,
 tests:[{d:'extends RuntimeException (unchecked)',re:'class\\s+InsufficientFundsException\\s+extends\\s+RuntimeException'},{d:'carries a long shortfall field',re:'long\\s+shortfall'},{d:'constructor passes the message up with super(message)',re:'super\\s*\\(\\s*message\\s*\\)'},{d:'exposes getShortfall()',re:'getShortfall\\s*\\(\\s*\\)'},{d:'throws on amount > balance',re:'amount\\s*>\\s*balance'},{d:'throws the custom exception',re:'throw\\s+new\\s+InsufficientFundsException'}],
 behavior:`withdraw(100, 40) throws InsufficientFundsException whose getShortfall() returns 60. withdraw(30, 40) returns normally. The exception carries the shortfall as data, so a catch block can react without parsing the message.`,
-hints:['A custom exception is just a class that extends Exception or RuntimeException; use RuntimeException for unchecked.','Store extra context in a final field set by the constructor, and pass the message up with super(message).','In withdraw, guard with if (amount > balance) then throw new InsufficientFundsException with amount - balance.']}}
+hints:['A custom exception is just a class that extends Exception or RuntimeException; use RuntimeException for unchecked.','Store extra context in a final field set by the constructor, and pass the message up with super(message).','In withdraw, guard with if (amount > balance) then throw new InsufficientFundsException with amount - balance.']},
+{title:'Writing a checked exception',
+prompt:`Now make a <b>checked</b> exception. Create <code>WithdrawalLimitException</code> that <code>extends Exception</code> with a constructor <code>(String message)</code> calling <code>super(message)</code>. Then in class <code>Bank</code>, method <code>void withdraw(long amount)</code> must <b>declare</b> <code>throws WithdrawalLimitException</code> and throw it when <code>amount &gt; 1000</code>. Because it is checked, the compiler forces the method to declare it.`,
+starter:`public class Bank {
+    void withdraw(long amount) {
+        // declare "throws" and throw a checked WithdrawalLimitException when amount > 1000
+    }
+}
+
+class WithdrawalLimitException {
+    // extend the right base type; add a (String message) constructor
+}`,
+solution:`public class Bank {
+    void withdraw(long amount) throws WithdrawalLimitException {
+        if (amount > 1000) {
+            throw new WithdrawalLimitException("over the withdrawal limit");
+        }
+    }
+}
+
+class WithdrawalLimitException extends Exception {
+    WithdrawalLimitException(String message) {
+        super(message);
+    }
+}`,
+tests:[{d:'extends Exception (checked, not RuntimeException)',re:'class\\s+WithdrawalLimitException\\s+extends\\s+Exception'},{d:'the method DECLARES the checked exception',re:'void\\s+withdraw\\s*\\(\\s*long\\s+amount\\s*\\)\\s*throws\\s+WithdrawalLimitException'},{d:'throws it past the limit',re:'throw\\s+new\\s+WithdrawalLimitException'},{d:'passes the message up',re:'super\\s*\\(\\s*message\\s*\\)'},{d:'guards on amount > 1000',re:'amount\\s*>\\s*1000'}],
+behavior:`withdraw(1500) throws the checked WithdrawalLimitException, so any caller must catch it or declare throws itself; withdraw(500) returns normally. Extending Exception (not RuntimeException) is what makes it checked and forces the throws declaration.`,
+hints:['A checked exception extends Exception (not RuntimeException), so the compiler forces you to handle or declare it.','The method signature must add throws WithdrawalLimitException.','Guard with if (amount > 1000) then throw new WithdrawalLimitException with a message passed to super.']}]}
 ]});
