@@ -1,0 +1,24 @@
+# Lab 03 — HTTPS at the edge, plain HTTP to the backend.
+#
+# First:  ./gen-certs.sh        (creates cert.pem + key.pem)
+# Run:    docker compose up
+# Test:   curl -k https://localhost:10000     (-k = accept the self-signed cert)
+# Stop:   Ctrl-C, then  docker compose down
+
+services:
+  backend:
+    image: hashicorp/http-echo:latest
+    command: ["-text=hello over TLS", "-listen=:5678"]
+
+  envoy:
+    image: envoyproxy/envoy:v1.38-latest
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml:ro
+      - ./cert.pem:/etc/envoy/certs/cert.pem:ro
+      - ./key.pem:/etc/envoy/certs/key.pem:ro
+    command: ["-c", "/etc/envoy/envoy.yaml"]
+    ports:
+      - "10000:10000"
+      - "9901:9901"
+    depends_on:
+      - backend

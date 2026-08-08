@@ -283,17 +283,66 @@ function renderNav(){
     nav.appendChild(hd);nav.appendChild(box);
   });
 }
+/* Technology domains — streams are grouped into these sections on the home page.
+   Each entry lists the exact stream titles it contains, in display order. Any stream
+   not matched here falls into a "More" section so nothing is ever hidden. */
+const DOMAINS=[
+  {name:'Java & the JVM',icon:'☕',titles:['Java Fundamentals','Generics from the Ground Up','Exception Handling','Regex from the Ground Up','Working with User Input','Modern Java Mastery','Concurrency & Multithreading','Time, Testing, Reflection & the JVM','JPMS & Performance Engineering']},
+  {name:'Computer Science & Algorithms',icon:'🧠',titles:['Data Structures','Dynamic Programming & Advanced Algorithms']},
+  {name:'Web, APIs & Frameworks',icon:'🌐',titles:['Web Development','APIs & REST','Spring Boot']},
+  {name:'Data & Persistence',icon:'🗄️',titles:['Working with Databases']},
+  {name:'Systems & Networking',icon:'🔌',titles:['Networking & Sockets']},
+  {name:'Security & Cryptography',icon:'🔐',titles:['Security & Crypto APIs']},
+  {name:'Identity & Access (IAM)',icon:'🛂',titles:['Identity Foundations','OAuth 2.0 & OpenID Connect','SAML 2.0 & Web SSO','Service-to-Service Authorization & SPIFFE','PKI & Certificate Management','OAuth, JWT & JOSE (JWK · JWS · JWE)']},
+  {name:'DevOps & Delivery',icon:'🚀',titles:['Build Tools: Maven & Gradle','Git: Beginner to Master','Deploying Java to the Web','CI/CD: GitHub Actions & ArgoCD']},
+  {name:'Architecture & Design',icon:'🏛️',titles:['Design Patterns']},
+  {name:'Senior Track (Dan)',icon:'⛩️',titles:['System Design & Tradeoffs','Failure-First: Distributed Systems','Working with Real Code']},
+  {name:'Coding Challenges',icon:'🏆',titles:['Coding Challenges: The Tournament']},
+  {name:'Real-World Projects',icon:'🛠️',titles:['Real-World Projects']}
+];
+function streamCard(s,si){
+  const d=streamDone(s),t=s.lessons.length;
+  return `<div class="card${s.tournament?' tour':(s.project?' proj':(s.dan?' dan':''))}" onclick="openLesson(${si},0)">${s.icon}${s.tournament?'<span class="tourBadge">🏆 TOURNAMENT</span>':(s.project?'<span class="projBadge">🏗️ PROJECT</span>':(s.dan?'<span class="danBadge">⛩️ DAN</span>':''))}<h3>${s.title}</h3><div class="meta">${s.blurb}</div><div class="meta" style="margin-top:6px">${d}/${t} ${s.tournament?'challenges · no belt credit':(s.project?'projects · no belt credit':(s.dan?'lessons · dan track':'lessons'))}</div><div class="bar"><i style="width:${t?Math.round(100*d/t):0}%${s.tournament?';background:#d97706':(s.project?';background:#0e9f6e':(s.dan?';background:linear-gradient(90deg,#111827,#b8860b)':''))}"></i></div></div>`;
+}
+// per-domain belt: percentage of the domain's belt-eligible lessons completed
+function domainBelt(done,total){
+  if(!total) return 'White belt';
+  const pct=100*done/total;
+  const T=[[100,'Black belt 🖤'],[90,'Brown belt'],[75,'Purple belt'],[60,'Blue belt'],[45,'Green belt'],[30,'Orange belt'],[15,'Yellow belt']];
+  for(const [th,name] of T){ if(pct>=th) return name; }
+  return 'White belt';
+}
 function renderHome(){
   const m=document.getElementById('main');
+  // index streams by title, remember which have been placed into a domain
+  const byTitle={}; STREAMS.forEach((s,si)=>{byTitle[s.title]=si;});
+  const placed=new Set();
+  let sections='';
+  for(const dom of DOMAINS){
+    const idx=dom.titles.filter(t=>byTitle[t]!==undefined).map(t=>{const si=byTitle[t];placed.add(si);return si;});
+    if(!idx.length)continue;
+    const danIdx=idx.filter(si=>STREAMS[si].dan);
+    const mainIdx=idx.filter(si=>!STREAMS[si].dan);
+    const beltIdx=mainIdx.filter(si=>{const s=STREAMS[si];return !s.tournament&&!s.project;});
+    if(beltIdx.length){
+      const done=beltIdx.reduce((a,si)=>a+streamDone(STREAMS[si]),0);
+      const tot=beltIdx.reduce((a,si)=>a+STREAMS[si].lessons.length,0);
+      const bn=domainBelt(done,tot);
+      sections+=`<div class="domainHd"><span class="domainLeft">${beltStrip(bn)}${dom.icon} ${dom.name}</span><span class="domainCount">${bn} · ${done}/${tot}</span></div>`;
+    } else {
+      sections+=`<div class="domainHd"><span class="domainLeft">${dom.icon} ${dom.name}</span></div>`;
+    }
+    if(mainIdx.length) sections+=`<div class="grid">${mainIdx.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;
+    if(danIdx.length) sections+=`<div class="danTrackHd">⛩️ ${dom.name} · Dan track — advanced topics (post-black, no belt credit)</div><div class="grid">${danIdx.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;
+  }
+  const extra=STREAMS.map((s,si)=>si).filter(si=>!placed.has(si));
+  if(extra.length){sections+=`<div class="domainHd"><span class="domainLeft">✨ More</span></div><div class="grid">${extra.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;}
   m.innerHTML=`<div class="home">
-  <h1>Welcome to the Dojo 🥋</h1>
-  <p>${STREAMS.length} training streams take you from Java fundamentals to mastery: modern language features, build tools, web &amp; MVC, REST APIs, Spring Boot, and Git. Every lesson ends with an exercise you write in the built-in editor (line numbers included). <b>Run Tests</b> checks your code and sends it to Claude, who executes the tests mentally like a compiler + JUnit runner and reports pass/fail per test with line-referenced feedback. Stuck? <b>Next Step</b> gives a progressive hint, and <b>Show me the solution</b> is always there — no judgment.</p>
+  <h1>Welcome to DevDojo 🥋</h1>
+  <p>${STREAMS.length} training streams take you from the fundamentals to mastery across software engineering — the Java language and JVM, computer science & algorithms, web/APIs/Spring, data, networking, security & identity, DevOps & delivery, and senior-level architecture. They're grouped by domain below. Every lesson ends with an exercise you write in the built-in editor. <b>Run Tests</b> checks your code and sends it to Claude, who executes the tests mentally like a compiler + JUnit runner and reports pass/fail per test with line-referenced feedback. Stuck? <b>Next Step</b> gives a progressive hint, and <b>Show me the solution</b> is always there — no judgment.</p>
   <p><b>Tip:</b> select/double-click any Java keyword anywhere (lesson text or your own code) and a popup explains it, with a link to the official docs.</p>
   <p style="font-size:12px;color:var(--muted)">System status: AI test runner ${(window.cowork&&window.cowork.askClaude)?'✅ connected':'⚠️ unavailable — completion falls back to structural checks'} · progress storage ${store.persistent?'✅ persistent':'⚠️ session-only (browser storage is blocked here; progress lasts until this view closes)'}</p>
-  <div class="grid">${STREAMS.map((s,si)=>{
-    const d=streamDone(s),t=s.lessons.length;
-    return `<div class="card${s.tournament?' tour':(s.project?' proj':(s.dan?' dan':''))}" onclick="openLesson(${si},0)">${s.icon}${s.tournament?'<span class="tourBadge">🏆 TOURNAMENT</span>':(s.project?'<span class="projBadge">🏗️ PROJECT</span>':(s.dan?'<span class="danBadge">⛩️ DAN</span>':''))}<h3>${s.title}</h3><div class="meta">${s.blurb}</div><div class="meta" style="margin-top:6px">${d}/${t} ${s.tournament?'challenges · no belt credit':(s.project?'projects · no belt credit':(s.dan?'lessons · dan track':'lessons'))}</div><div class="bar"><i style="width:${t?Math.round(100*d/t):0}%${s.tournament?';background:#d97706':(s.project?';background:#0e9f6e':(s.dan?';background:linear-gradient(90deg,#111827,#b8860b)':''))}"></i></div></div>`;
-  }).join('')}</div></div>`;
+  ${sections}</div>`;
 }
 /* ============================== LESSON ============================== */
 function exSid(l,exs,i){return exs.length>1?l.id+'#'+i:l.id;}

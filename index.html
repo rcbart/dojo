@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cloud-Native Learning Path</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#141b23; --panel2:#1b2530; --ink:#e6edf3; --muted:#93a1b1;
+    --teal:#2dd4bf; --teal-dim:#155e59; --line:#26313d; --code:#0b1017; --accent:#38bdf8;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:960px;margin:0 auto;padding:56px 24px 90px}
+  header h1{font-size:30px;margin:0 0 8px;color:#fff;letter-spacing:.2px}
+  header p{color:var(--muted);font-size:16px;margin:0 0 6px;max-width:680px}
+  .hint{color:var(--muted);font-size:13px;margin-top:14px}
+  .stage{margin-top:40px}
+  .stage h2{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--teal);
+    margin:0 0 4px;font-weight:700}
+  .stage .desc{color:var(--muted);font-size:14px;margin:0 0 16px}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:720px){.cards{grid-template-columns:1fr}}
+  .card{display:block;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:20px 22px;transition:border-color .15s,transform .15s,background .15s;position:relative}
+  .card:hover{border-color:var(--teal);transform:translateY(-2px);background:var(--panel2)}
+  .card .step{position:absolute;top:16px;right:18px;width:30px;height:30px;border-radius:50%;
+    background:var(--code);border:1px solid var(--line);color:var(--teal);font-size:13px;font-weight:700;
+    display:flex;align-items:center;justify-content:center}
+  .card h3{margin:0 0 6px;font-size:19px;color:#fff}
+  .card .tag{font-size:12px;color:var(--muted);margin-bottom:10px}
+  .card p{margin:0 0 14px;font-size:14px;color:var(--ink)}
+  .card .meta{display:flex;gap:14px;align-items:center;font-size:12.5px;color:var(--muted)}
+  .card .go{color:var(--teal);font-weight:600;font-size:13.5px}
+  .pill{background:var(--code);border:1px solid var(--line);border-radius:20px;padding:3px 10px}
+  .flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 2px;color:var(--muted);font-size:13px}
+  .flow b{color:var(--ink)} .flow .arw{color:var(--teal)}
+  footer{margin-top:46px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Cloud-Native Learning Path</h1>
+    <p>Four interactive, hands-on courses that take you from your first container to running and
+    meshing services in production. Each opens in your browser — read, run the labs, and test
+    yourself with quizzes that track your progress.</p>
+    <div class="flow">
+      <b>Docker</b><span class="arw">→</span><b>Kubernetes</b><span class="arw">→</span>
+      <b>Envoy</b><span class="arw">→</span><b>Istio</b>
+    </div>
+    <p class="hint">Suggested order below. Each course is standalone, but they build on each other —
+    later ones assume the ideas from earlier ones. Progress is saved per course in your browser.</p>
+  </header>
+
+  <section class="stage">
+    <h2>Stage 1 · Containers &amp; orchestration</h2>
+    <p class="desc">Package apps into containers, then run them at scale across a cluster.</p>
+    <div class="cards">
+      <a class="card" href="./docker-crash-course/index.html">
+        <span class="step">1</span>
+        <h3>Docker</h3>
+        <div class="tag">From zero to production containers</div>
+        <p>Images &amp; layers, Dockerfiles, volumes, networking, Compose, image hardening, multi-arch
+        builds with buildx, and hands-on build challenges.</p>
+        <div class="meta"><span class="pill">16 pages</span><span class="pill">80 quizzes</span>
+          <span class="go">Start →</span></div>
+      </a>
+      <a class="card" href="./kubernetes-crash-course/index.html">
+        <span class="step">2</span>
+        <h3>Kubernetes</h3>
+        <div class="tag">From zero to CKA-ready practitioner</div>
+        <p>Pods, Deployments, Services, config &amp; storage, probes, RBAC, Helm/Kustomize, CI-CD,
+        ingress, autoscaling, operators, a capstone app, and CKA/CKAD prep.</p>
+        <div class="meta"><span class="pill">23 pages</span><span class="pill">115 quizzes</span>
+          <span class="go">Start →</span></div>
+      </a>
+    </div>
+  </section>
+
+  <section class="stage">
+    <h2>Stage 2 · Service mesh &amp; proxies</h2>
+    <p class="desc">Go deeper on the networking layer — the proxy that powers meshes, then the mesh
+    itself.</p>
+    <div class="cards">
+      <a class="card" href="./envoy-crash-course/index.html">
+        <span class="step">3</span>
+        <h3>Envoy</h3>
+        <div class="tag">The universal data-plane proxy</div>
+        <p>What a proxy is, listeners &amp; filters, routing, clusters &amp; resilience, TLS,
+        observability, dynamic config (xDS), and Envoy on Kubernetes — with runnable labs.</p>
+        <div class="meta"><span class="pill">14 pages</span><span class="pill">69 quizzes</span>
+          <span class="go">Start →</span></div>
+      </a>
+      <a class="card" href="./istio-crash-course/index.html">
+        <span class="step">4</span>
+        <h3>Istio</h3>
+        <div class="tag">The service mesh, built on Envoy</div>
+        <p>Sidecar vs ambient, traffic management, canaries, mTLS &amp; authorization, observability
+        with Kiali, the Gateway API, and debugging — the control plane over a fleet of Envoys.</p>
+        <div class="meta"><span class="pill">14 pages</span><span class="pill">70 quizzes</span>
+          <span class="go">Start →</span></div>
+      </a>
+    </div>
+  </section>
+
+  <section class="stage">
+    <h2>Check your level</h2>
+    <p class="desc">Honestly gauge where you stand across all four courses.</p>
+    <div class="cards">
+      <a class="card" href="./skills-rubric.html" style="grid-column:1 / -1">
+        <span class="step">★</span>
+        <h3>Skills rubric &amp; self-assessment</h3>
+        <div class="tag">Junior → mid → senior signals</div>
+        <p>An interactive checklist of what you can do <em>unaided</em>, from containers to the service
+        mesh. Tick honestly and get a live read of your level — and what to drill next.</p>
+        <div class="meta"><span class="pill">3 tiers</span><span class="pill">progress saved</span>
+          <span class="go">Assess me →</span></div>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    67 lessons · 334 quiz questions · all hands-on and local. Tip: bookmark this page — it links to
+    every course. Each course also has its own sidebar navigation, search, and progress tracking.
+  </footer>
+</div>
+</body>
+</html>

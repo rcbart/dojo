@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Build dist/index.html (and a root javadojo.html copy) from src/ + content/streams/.
+// Build dist/index.html (and a root devdojo.html copy) from src/ + content/streams/.
 const fs = require('fs');
 const path = require('path');
 const ROOT = __dirname;
@@ -16,5 +16,5 @@ const html = read('src/shell.html')
 
 fs.mkdirSync(path.join(ROOT, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'dist/index.html'), html);
-fs.writeFileSync(path.join(ROOT, 'javadojo.html'), html);
+fs.writeFileSync(path.join(ROOT, 'devdojo.html'), html);
 console.log('built dist/index.html (' + html.length + ' chars, ' + manifest.length + ' streams)');

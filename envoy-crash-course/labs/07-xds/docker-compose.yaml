@@ -1,0 +1,16 @@
+# Lab 07 — dynamic config from watched files (filesystem xDS).  Run: docker compose up
+# Then edit lds.yaml or cds.yaml on your host and watch Envoy hot-reload — no restart.
+services:
+  backend:
+    image: hashicorp/http-echo:latest
+    command: ["-text=hello from the backend", "-listen=:5678"]
+  envoy:
+    image: envoyproxy/envoy:v1.38-latest
+    # Mount the whole dir so the watched_directory sees edits to lds.yaml / cds.yaml.
+    volumes:
+      - ./bootstrap.yaml:/etc/envoy/bootstrap.yaml:ro
+      - ./lds.yaml:/etc/envoy/lds.yaml
+      - ./cds.yaml:/etc/envoy/cds.yaml
+    command: ["-c", "/etc/envoy/bootstrap.yaml"]
+    ports: ["10000:10000", "9901:9901"]
+    depends_on: [backend]

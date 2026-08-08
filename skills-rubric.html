@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skills Rubric &amp; Self-Assessment</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#141b23; --panel2:#1b2530; --ink:#e6edf3; --muted:#93a1b1;
+    --teal:#2dd4bf; --teal-dim:#155e59; --line:#26313d; --code:#0b1017; --accent:#38bdf8;
+    --good:#22c55e; --gold:#f5b301;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--teal);text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:860px;margin:0 auto;padding:48px 24px 90px}
+  h1{font-size:28px;margin:0 0 8px;color:#fff}
+  .lead{color:var(--muted);max-width:680px;margin:0 0 6px}
+  .rule{font-size:13.5px;color:var(--ink);background:var(--panel);border-left:3px solid var(--accent);
+    border-radius:0 8px 8px 0;padding:10px 14px;margin:18px 0 6px}
+  /* sticky verdict */
+  .verdict{position:sticky;top:0;z-index:5;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:16px 18px;margin:20px 0 26px;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+  .verdict .badge{font-size:20px;font-weight:800;color:#fff}
+  .verdict .sub{font-size:13px;color:var(--muted);margin-top:4px}
+  .bars{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+  .bar{flex:1;min-width:150px}
+  .bar .lab{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:4px}
+  .bar .track{height:8px;background:var(--code);border-radius:6px;overflow:hidden}
+  .bar .fill{height:100%;width:0;background:linear-gradient(90deg,var(--teal-dim),var(--teal));transition:width .35s}
+  .bar .n{font-size:11px;color:var(--muted);margin-top:3px}
+  section{margin:26px 0}
+  section h2{font-size:14px;text-transform:uppercase;letter-spacing:1px;margin:0 0 2px}
+  .t1 h2{color:var(--teal)} .t2 h2{color:var(--accent)} .t3 h2{color:var(--gold)}
+  section .d{color:var(--muted);font-size:13.5px;margin:0 0 12px}
+  label.item{display:flex;gap:11px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);
+    border-radius:10px;padding:11px 13px;margin:8px 0;cursor:pointer;transition:border-color .12s,background .12s}
+  label.item:hover{border-color:var(--teal)}
+  label.item.on{background:var(--panel2);border-color:var(--teal-dim)}
+  label.item input{margin-top:3px;width:17px;height:17px;accent-color:var(--teal);flex:0 0 auto}
+  label.item .txt{font-size:14.5px}
+  label.item .txt .src{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+  .controls{display:flex;gap:12px;margin:8px 0 0}
+  .controls button{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:8px;
+    padding:8px 14px;font-size:13px;cursor:pointer}
+  .controls button:hover{border-color:var(--teal);color:#fff}
+  footer{margin-top:40px;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Skills rubric &amp; self-assessment</h1>
+  <p class="lead">An honest gauge of where you stand after the Docker, Kubernetes, Envoy, and Istio
+  courses. Tick only what you could do <b>unaided, from a blank terminal</b> — not "I saw it in a
+  lesson." The verdict updates live.</p>
+  <div class="rule">The hard rule: if you'd need to copy from notes or a lesson to do it, leave it
+  unchecked. Recall isn't skill. The goal is a truthful read, useful for interviews or knowing what
+  to drill next.</div>
+
+  <div class="verdict">
+    <div class="badge" id="badge">Not started</div>
+    <div class="sub" id="sub">Tick the boxes below as you honestly self-assess.</div>
+    <div class="bars">
+      <div class="bar"><div class="lab">Foundational</div><div class="track"><div class="fill" id="f1"></div></div><div class="n" id="n1">0 / 0</div></div>
+      <div class="bar"><div class="lab">Job-ready (mid)</div><div class="track"><div class="fill" id="f2"></div></div><div class="n" id="n2">0 / 0</div></div>
+      <div class="bar"><div class="lab">Advanced signals</div><div class="track"><div class="fill" id="f3"></div></div><div class="n" id="n3">0 / 0</div></div>
+    </div>
+    <div class="controls"><button onclick="clearAll()">Reset</button>
+      <a class="controls" href="./index.html" style="align-self:center">← Back to courses</a></div>
+  </div>
+
+  <section class="t1" data-tier="1">
+    <h2>Tier 1 · Foundational</h2>
+    <p class="d">The basics. If most of these aren't checked, start (or revisit) the Docker and
+    Kubernetes fundamentals.</p>
+    <div class="items"></div>
+  </section>
+  <section class="t2" data-tier="2">
+    <h2>Tier 2 · Job-ready (mid-level)</h2>
+    <p class="d">The working practitioner toolkit. Most of these checked = genuinely employable on
+    containers/Kubernetes and CKA/CKAD-capable.</p>
+    <div class="items"></div>
+  </section>
+  <section class="t3" data-tier="3">
+    <h2>Tier 3 · Advanced signals</h2>
+    <p class="d">Depth and breadth beyond the day job. These lean toward senior — but true seniority
+    also needs real production scars a course can't give.</p>
+    <div class="items"></div>
+  </section>
+
+  <footer id="note"></footer>
+</div>
+
+<script>
+const ITEMS = {
+  1: [
+    ["Explain image vs container vs registry, and run/stop/inspect containers", "Docker 0–2"],
+    ["Write a Dockerfile with good layer ordering (deps before source)", "Docker 3"],
+    ["Persist data with a named volume; connect containers by name on a network", "Docker 4–5"],
+    ["Run a multi-service app with Docker Compose", "Docker 6"],
+    ["Create a local cluster and use kubectl get / describe / logs fluently", "K8s setup, 1"],
+    ["Deploy an app with a Deployment + Service and reach it", "K8s 2–3"],
+    ["Read pod status (Pending / CrashLoopBackOff / ImagePullBackOff) and know the next step", "K8s 8, 8b"]
+  ],
+  2: [
+    ["Build a small, non-root, multi-stage image and scan it for CVEs", "Docker 7"],
+    ["Publish a multi-architecture image with docker buildx", "Docker 8"],
+    ["Use ConfigMaps/Secrets, resource requests/limits, and liveness/readiness probes correctly", "K8s 4, 6"],
+    ["Perform a zero-downtime rolling update and an instant rollback", "K8s 2"],
+    ["Set up PV/PVC and a StatefulSet for a stateful app", "K8s 5"],
+    ["Expose apps through an Ingress with TLS", "K8s 12"],
+    ["Package an app with Helm and/or Kustomize per environment", "K8s 9–10"],
+    ["Wire a CI/CD build→push→deploy pipeline gated on rollout status", "K8s 11"],
+    ["Diagnose a Service with no endpoints, a Pending pod, and a crash loop — symptom to cause", "K8s 8, 8b"],
+    ["Enforce RBAC least-privilege and a default-deny NetworkPolicy", "K8s 7"],
+    ["Configure an HPA and observe it scale under load", "K8s 13"],
+    ["Deploy the multi-tier capstone (config, secrets, storage, probes, HPA, ingress) from scratch", "K8s 15"]
+  ],
+  3: [
+    ["Extend the API with a CRD and explain/operate the operator pattern", "K8s 14"],
+    ["Explain the proxy layer: listeners → routes → clusters, and xDS dynamic config", "Envoy"],
+    ["Terminate TLS, do canary splits, and reason about resilience at the proxy", "Envoy 3–5"],
+    ["Set up a service mesh: mTLS everywhere, canary by traffic weight, authorization", "Istio 4–6"],
+    ["Explain sidecar vs ambient mode and when to use each", "Istio 8"],
+    ["Design for HA: PodDisruptionBudgets, anti-affinity, topology spread, capacity planning", "K8s 6, 17"],
+    ["Pass CKA/CKAD-style timed tasks using kubectl --dry-run generation", "K8s 16"],
+    ["Make cost / scale / architecture trade-offs and reason about failure modes", "judgment"],
+    ["Have operated a real production cluster through incidents (the part a course can't grant)", "on the job"]
+  ]
+};
+const KEY="cloud-native-rubric-v1";
+let state={}; try{state=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){state={}}
+
+function render(){
+  document.querySelectorAll("section[data-tier]").forEach(sec=>{
+    const tier=sec.dataset.tier, box=sec.querySelector(".items");
+    box.innerHTML="";
+    ITEMS[tier].forEach((it,i)=>{
+      const id=tier+"-"+i, on=!!state[id];
+      const l=document.createElement("label");
+      l.className="item"+(on?" on":"");
+      l.innerHTML='<input type="checkbox" '+(on?"checked":"")+'><span class="txt"></span>';
+      l.querySelector(".txt").innerHTML=it[0]+'<span class="src">'+it[1]+'</span>';
+      l.querySelector("input").onchange=e=>{ state[id]=e.target.checked; save(); render(); };
+      box.appendChild(l);
+    });
+  });
+  updateVerdict();
+}
+function counts(tier){
+  const total=ITEMS[tier].length;
+  let n=0; for(let i=0;i<total;i++) if(state[tier+"-"+i]) n++;
+  return {n,total};
+}
+function updateVerdict(){
+  const c1=counts(1),c2=counts(2),c3=counts(3);
+  const set=(f,nEl,c)=>{document.getElementById(f).style.width=(100*c.n/c.total)+"%";
+    document.getElementById(nEl).textContent=c.n+" / "+c.total;};
+  set("f1","n1",c1); set("f2","n2",c2); set("f3","n3",c3);
+  const p1=c1.n/c1.total, p2=c2.n/c2.total, p3=c3.n/c3.total;
+  let badge, sub;
+  const totalChecked=c1.n+c2.n+c3.n;
+  if(totalChecked===0){ badge="Not started"; sub="Tick the boxes below as you honestly self-assess."; }
+  else if(p1<0.7){ badge="Beginner"; sub="Foundations still forming — work through the Docker and Kubernetes fundamentals and their labs."; }
+  else if(p2<0.5){ badge="Advanced beginner"; sub="Solid basics. Now drill the production toolkit in Tier 2 — probes, rollouts, Helm/Kustomize, RBAC, ingress."; }
+  else if(p2<0.85){ badge="Job-ready · junior→mid"; sub="You can build and run real workloads. Close the remaining Tier 2 gaps and you're interview-ready for most container/Kubernetes roles."; }
+  else if(p3<0.5){ badge="Solid mid-level practitioner"; sub="Strong, employable, CKA/CKAD-capable. The Tier 3 items (mesh, operators, HA design) are your growth edge."; }
+  else if(p3<0.9){ badge="Advanced · approaching senior"; sub="Broad and deep across containers, orchestration, and the mesh. Real production scars are the last mile to senior."; }
+  else { badge="Expert (course-side) · senior with real ops time"; sub="You've checked essentially everything, including production incident experience. That's the genuine article."; }
+  document.getElementById("badge").textContent=badge;
+  document.getElementById("sub").textContent=sub;
+  const note=document.getElementById("note");
+  note.textContent="Checked "+totalChecked+" of "+(c1.total+c2.total+c3.total)+
+    " skills. Reminder: a rubric is a mirror, not a certificate — the real proof is doing the challenges and capstone unaided and explaining WHY each choice was made.";
+}
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){} }
+function clearAll(){ state={}; save(); render(); }
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+# Lab 02 — two containers on one network:
+#   backend : a trivial HTTP server that echoes a fixed string
+#   envoy   : proxies :10000 → backend:5678
+#
+# Run:   docker compose up
+# Test:  curl localhost:10000
+# Stop:  Ctrl-C, then  docker compose down
+
+services:
+  backend:
+    image: hashicorp/http-echo:latest
+    command: ["-text=hello from the backend", "-listen=:5678"]
+    # no ports published — only Envoy talks to it, over the internal network
+
+  envoy:
+    image: envoyproxy/envoy:v1.38-latest
+    # mount our config read-only into the path Envoy reads by default
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml:ro
+    command: ["-c", "/etc/envoy/envoy.yaml", "-l", "info"]   # -l = log level
+    ports:
+      - "10000:10000"   # the proxy port you curl
+      - "9901:9901"     # the admin interface
+    depends_on:
+      - backend

@@ -1,0 +1,8 @@
+# build output
+target/
+out/
+oauth-trainer.jar
+
+# generated keys — NEVER commit these (private JWKs contain secret key material)
+keys/
+*.jwk.json

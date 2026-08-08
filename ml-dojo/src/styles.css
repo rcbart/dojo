@@ -1,0 +1,140 @@
+*{box-sizing:border-box}
+:root{color-scheme:light;
+  --bg:#f2fbf9; --panel:#ffffff; --ink:#0f2a2e; --muted:#5a7a7d; --line:#d6ece8;
+  --accent:#0d9488; --accent2:#10b981; --accent3:#0891b2;
+  --ok:#16a34a; --bad:#dc2626; --warn:#d97706;
+  --code-bg:#0b1f24; --code-ink:#d7f0ea;}
+html,body{margin:0;height:100%}
+body{font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column}
+a{color:var(--accent)}
+header{display:flex;align-items:center;gap:14px;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+header .logo{font-weight:800;font-size:18px}
+header .logo span{color:var(--accent)}
+header .tip{font-size:12px;color:var(--muted);max-width:640px}
+.belt{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:12px;color:var(--muted)}
+.belt .strip{width:120px;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.belt .strip i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+#layout{display:flex;flex:1;min-height:0}
+nav{width:264px;min-width:264px;background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:12px}
+.trackDivider{margin:12px 4px 6px;padding:6px 9px;font-size:10.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#0b7d72;background:#d6f2ec;border-radius:7px}
+.streamHd{font-weight:700;padding:8px;border-radius:8px;font-size:13px;display:flex;align-items:center;gap:6px}
+.lessonLink{display:flex;gap:7px;align-items:center;padding:7px 9px;margin-left:8px;border-radius:7px;cursor:pointer;font-size:12.5px;color:var(--muted)}
+.lessonLink:hover{background:#e6f6f2;color:var(--ink)}
+.lessonLink.active{background:#d6f2ec;color:var(--accent);font-weight:600}
+main{flex:1;overflow-y:auto;padding:26px 34px;max-width:920px}
+.crumb{font-size:12px;color:var(--muted);margin-bottom:4px}
+h1.lessonTitle{font-size:25px;margin:2px 0 14px;letter-spacing:-.3px}
+.lessonBody{font-size:15px;line-height:1.65}
+.lessonBody h3{margin:22px 0 6px;font-size:16px;color:var(--accent)}
+.lessonBody p{margin:10px 0}
+.lessonBody code,.prompt code{background:#e4f4f0;border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px}
+.ground{border-left:4px solid var(--accent2);background:#eafaf5;border-radius:0 10px 10px 0;padding:10px 14px;margin:12px 0}
+.ground .gTag{font-size:10.5px;font-weight:800;letter-spacing:.6px;color:var(--accent);text-transform:uppercase}
+.demystify{border:1px dashed var(--accent3);background:#e8f6fb;border-radius:10px;padding:12px 14px;margin:14px 0}
+.demystify b{color:var(--accent3)}
+.hardidea{border:1px solid #f0c36d;background:#fff8e8;border-radius:10px;padding:12px 14px;margin:14px 0}
+.figure{margin:16px 0;padding:12px;background:#fff;border:1px solid var(--line);border-radius:12px;text-align:center}
+.figure svg{max-width:100%;height:auto}
+.figCap{margin-top:8px;font-size:12.5px;color:var(--muted);line-height:1.5}
+.notebox{border:1px solid #b9a6e6;background:#f3effc;border-radius:10px;padding:12px 14px;margin:14px 0;font-size:13.5px}
+.notebox b{color:#6d4bc4}
+.notebox table{border-collapse:collapse;margin-top:8px;width:100%}
+.notebox td{padding:4px 8px;border-bottom:1px solid #e0d7f5;vertical-align:top}
+.notebox td:first-child{white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#4c3a86;font-weight:600}
+.codeSample{background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:12px 14px;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.55;margin:10px 0;white-space:pre}
+.docs{margin:16px 0;padding:10px 14px;background:#eafaf5;border:1px solid var(--line);border-radius:10px;font-size:13px}
+.docs b{color:var(--accent)}
+.quiz{margin-top:22px;border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}
+.quizHd{padding:12px 16px;background:linear-gradient(90deg,#e6f6f2,#e8f6fb);border-bottom:1px solid var(--line);font-weight:700}
+.qBlock{padding:12px 16px;border-bottom:1px solid var(--line)}
+.qBlock .qq{font-weight:600;margin-bottom:8px}
+.qOpt{display:block;padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin:6px 0;cursor:pointer;font-size:13.5px}
+.qOpt:hover{border-color:var(--accent)}
+.qOpt.sel{border-color:var(--accent);background:#e6f6f2}
+.qOpt.correct{border-color:var(--ok);background:#e7f7ec}
+.qOpt.wrong{border-color:var(--bad);background:#fdeaea}
+.qWhy{margin-top:8px;font-size:13px;color:var(--muted);display:none}
+.qWhy.show{display:block}
+.exercise{margin-top:22px;border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}
+.exHd{padding:12px 16px;background:linear-gradient(90deg,#e6f6f2,#e8f6fb);border-bottom:1px solid var(--line);font-weight:700;display:flex;align-items:center;gap:8px}
+.badge{font-size:11px;background:var(--accent);color:#fff;border-radius:10px;padding:2px 8px}
+.badge.done{background:var(--ok)}
+.badge.adv{background:#7c3aed;font-weight:600;cursor:help}
+.prompt{padding:12px 16px;font-size:14px}
+.prompt ol{margin:6px 0 0 18px;padding:0}
+.prompt li{margin:4px 0}
+.editorWrap{margin:0 16px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--code-bg)}
+.scroller{display:flex;overflow:auto;max-height:440px;background:var(--code-bg)}
+.gutter{padding:12px 8px 12px 12px;text-align:right;color:#4e7078;user-select:none;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.55;border-right:1px solid #12333b;background:#081a1f;min-width:34px}
+.gLine.cur{color:#2dd4bf;font-weight:700}
+.edStack{position:relative;flex:1;min-width:0}
+#hl{margin:0;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.55;color:#d7f0ea;white-space:pre;min-height:190px;tab-size:4}
+#hl .k{color:#7dd3fc;font-weight:600}
+#hl .b{color:#c4b5fd}
+#hl .s{color:#fbbf72}
+#hl .c{color:#6b8f97;font-style:italic}
+#hl .n{color:#86efac}
+#ed{position:absolute;inset:0;width:100%;height:100%;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.55;background:transparent;color:transparent;caret-color:#5eead4;border:none;resize:none;white-space:pre;overflow:hidden;outline:none;tab-size:4}
+#ed::selection{background:rgba(94,234,212,.25)}
+.statusBar{display:flex;justify-content:space-between;padding:6px 12px;font-size:11px;color:#6b8f97;background:#081a1f;border-top:1px solid #12333b;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px}
+button{font:inherit;padding:8px 12px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;color:var(--ink)}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button.primary:hover{background:#0b7d72;color:#fff}
+button:disabled{opacity:.5;cursor:default}
+.ioPanel{margin:0 16px 14px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ioTabs{display:flex;background:#eafaf5;border-bottom:1px solid var(--line)}
+.ioTab{padding:8px 14px;font-size:12.5px;cursor:pointer;font-weight:600;color:var(--muted)}
+.ioTab.active{background:#fff;color:var(--accent)}
+.ioBody{padding:12px 14px;font-size:13px;min-height:44px}
+.cLine{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;white-space:pre-wrap}
+.cLine.dim{color:var(--muted)}
+.cLine.err{color:var(--bad)}
+.cLine.ok{color:var(--ok)}
+.tcase{padding:6px 8px;border-radius:7px;margin:5px 0;font-size:13px}
+.tcase.ok{background:#e7f7ec;color:#166534}
+.tcase.bad{background:#fdeaea;color:#991b1b}
+.aiBox{margin-top:10px;padding:10px 12px;border-radius:9px;background:#eafaf5;border:1px solid var(--line);font-size:13px}
+.aiBox.hint{background:#fff8e8;border-color:#f0c36d}
+.solution{margin:0 16px 16px}
+.doneBanner{display:none;margin:0 16px 16px;padding:10px 14px;border-radius:9px;background:#e7f7ec;color:#166534;font-weight:600}
+.fbBar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 16px 16px;font-size:12.5px;color:var(--muted)}
+.fbBar button{padding:5px 10px;font-size:12.5px}
+.lessonNav{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:20px 0 40px;padding-top:16px;border-top:1px solid var(--line)}
+.lessonNav button{padding:10px 16px}
+.lessonNav .primary{font-weight:600;max-width:70%;text-align:right}
+.navDone{font-size:13px;color:var(--muted)}
+.homework{margin-top:22px;border:1px solid #cbb6ea;border-radius:14px;background:#faf7ff;overflow:hidden}
+.hwHd{padding:12px 16px;background:linear-gradient(90deg,#efe7fb,#e8f6fb);border-bottom:1px solid #e0d3f5;font-weight:700;color:#5a3fb0}
+.hwIntro{margin:0;padding:10px 16px;font-size:13px;color:var(--muted);border-bottom:1px solid #efe7fb}
+.hwList{margin:0;padding:8px 16px 12px 34px}
+.hwList li{margin:12px 0}
+.hwQ{font-size:14px;margin-bottom:6px}
+.hwSol{font-size:13.5px}
+.hwSol summary{cursor:pointer;color:#6d4bc4;font-weight:600;padding:4px 0}
+.hwSol summary:hover{text-decoration:underline}
+.hwBody{margin-top:8px;padding:10px 14px;background:#fff;border:1px solid #e0d3f5;border-radius:9px;line-height:1.6}
+.hwBody .codeSample{margin:8px 0}
+.hwTry{margin:10px 16px 14px;padding:10px 14px;background:#eafaf5;border:1px solid #bfe9de;border-radius:9px;font-size:13px;line-height:1.55}
+.linklike{border:none;background:none;color:var(--accent);font-weight:700;cursor:pointer;padding:0;font-size:inherit;text-decoration:underline}
+.linklike:hover{color:#0b7d72}
+.mathblock{background:#f3effc;border:1px solid #cbb6ea;border-radius:10px;padding:12px 16px;margin:12px 0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.7;color:#3a2d63;overflow-x:auto;white-space:pre}
+.mathblock b{color:#6d4bc4}
+.worked{border-left:4px solid var(--accent);background:#f0faf8;border-radius:0 10px 10px 0;padding:10px 14px;margin:14px 0;font-size:14px;line-height:1.6}
+.worked>b:first-child{color:var(--accent);display:block;margin-bottom:4px}
+.worked .mathblock{background:#fff;border-color:#bfe4dd;color:#123b38;white-space:pre}
+.pyFig{display:block;max-width:100%;margin:10px 0;border-radius:8px;background:#fff;border:1px solid var(--line)}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+#tutorFab{position:fixed;right:20px;bottom:20px;background:var(--accent);color:#fff;padding:11px 16px;border-radius:24px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(13,148,136,.35);z-index:40}
+#tutorPanel{position:fixed;right:20px;bottom:20px;width:380px;max-width:calc(100vw - 40px);height:520px;max-height:calc(100vh - 40px);background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.18);display:flex;flex-direction:column;z-index:41}
+#tutorPanel.hidden,#tutorFab.hidden{display:none}
+.tpHd{padding:12px 14px;font-weight:700;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.tpHd button{border:none;background:none;font-size:16px;padding:2px 6px}
+.tpBody{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.tMsg{padding:9px 12px;border-radius:12px;font-size:13.5px;line-height:1.5;max-width:85%;white-space:pre-wrap}
+.tBot{background:#eafaf5;align-self:flex-start}
+.tUser{background:var(--accent);color:#fff;align-self:flex-end}
+.tpInput{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.tpInput textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:9px;padding:8px;font:inherit}

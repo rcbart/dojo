@@ -1,0 +1,12 @@
+# Lab 08 — a tiny local Kubernetes cluster with a port mapped to the host,
+# so we can curl the Envoy Gateway from our laptop.
+# Create it:  kind create cluster --name envoy-lab --config kind-cluster.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  extraPortMappings:
+  # map host :8080 -> the NodePort we'll expose the gateway on (30080)
+  - containerPort: 30080
+    hostPort: 8080
+    protocol: TCP

@@ -1,0 +1,914 @@
+{
+  "primer-core-concepts": [
+    {
+      "q": "What does 'host' mean in Docker?",
+      "options": [
+        "The machine Docker runs on — your laptop or a server — where containers run",
+        "A website you visit",
+        "The container's main process",
+        "A registry that stores images"
+      ],
+      "answer": 0,
+      "why": "The host is the computer running Docker. Containers run 'on the host', and 'localhost' from your shell means this machine."
+    },
+    {
+      "q": "What is a 'node'?",
+      "options": [
+        "A generic term for one machine in a group; in Docker, a machine running containers",
+        "A single container",
+        "A line of YAML",
+        "A network port"
+      ],
+      "answer": 0,
+      "why": "A node is one machine among several. You'll use the word constantly in Kubernetes; in Docker it just means a machine that runs containers."
+    },
+    {
+      "q": "Why are containers lighter than virtual machines, in kernel terms?",
+      "options": [
+        "Containers share the host's kernel; VMs each ship their own full operating system",
+        "Containers have no files",
+        "VMs don't use CPUs",
+        "Containers run without any operating system at all"
+      ],
+      "answer": 0,
+      "why": "A VM virtualizes hardware and runs a whole OS (heavy). A container shares the host's Linux kernel, so it's just isolated processes — light and fast."
+    },
+    {
+      "q": "Inside a container, what does 'localhost' refer to?",
+      "options": [
+        "The container itself — not your laptop or another container",
+        "Always your physical machine",
+        "The Docker registry",
+        "Every container at once"
+      ],
+      "answer": 0,
+      "why": "Each container has its own network identity, so 'localhost' inside it means that container. To reach another container, use its name on a shared network."
+    },
+    {
+      "q": "Image vs container vs instance?",
+      "options": [
+        "Image = read-only blueprint; container = a running instance of an image; 'instance' = one running copy of something",
+        "They are three words for the same file",
+        "An image runs; a container is stored",
+        "An instance is a type of registry"
+      ],
+      "answer": 0,
+      "why": "You build an image once and start many containers (instances) from it — like baking many cookies from one cutter."
+    }
+  ],
+  "08-buildkit-buildx-multiplatform": [
+    {
+      "q": "What is BuildKit?",
+      "options": [
+        "Docker's modern build engine — parallel stages, better caching, build secrets, and multi-platform output; the default builder",
+        "A registry for storing images",
+        "A container orchestrator",
+        "A text editor for Dockerfiles"
+      ],
+      "answer": 0,
+      "why": "BuildKit is the backend behind docker build (default in current Docker), exposed via buildx. It's faster and far more capable than the old builder."
+    },
+    {
+      "q": "Why build multi-platform images?",
+      "options": [
+        "amd64 and arm64 are incompatible; a multi-arch image runs on both, so you publish once and run anywhere",
+        "To make images larger",
+        "Because Docker requires two images per app",
+        "To avoid using a registry"
+      ],
+      "answer": 0,
+      "why": "An image built for one CPU architecture won't run on the other. A multi-arch image bundles both, and the runtime pulls the right one."
+    },
+    {
+      "q": "Why do multi-platform builds usually go straight to a registry with --push?",
+      "options": [
+        "The local image store holds one architecture at a time; the registry stores the multi-arch manifest",
+        "Registries build the image for you",
+        "--push is faster than building locally",
+        "Local builds are not allowed"
+      ],
+      "answer": 0,
+      "why": "A single local Docker image is one architecture. The multi-arch manifest (linking both) lives in a registry, so you push it directly."
+    },
+    {
+      "q": "How do you use a credential at build time without leaking it into the image?",
+      "options": [
+        "RUN --mount=type=secret with --secret — available for that RUN only, never stored in a layer",
+        "Put it in an ENV instruction",
+        "COPY the secret file into the image",
+        "Hard-code it in the Dockerfile"
+      ],
+      "answer": 0,
+      "why": "BuildKit build secrets are mounted just for one RUN and never written to a layer, so 'docker history' won't reveal them — unlike ENV/COPY."
+    },
+    {
+      "q": "What does a 'RUN --mount=type=cache' do?",
+      "options": [
+        "Persists a directory (e.g. the package cache) across builds so dependencies aren't re-downloaded each time",
+        "Deletes the build cache",
+        "Publishes the image",
+        "Runs the container"
+      ],
+      "answer": 0,
+      "why": "A cache mount keeps something like the npm/apt cache between builds, so even when the layer rebuilds, deps aren't fetched again — big CI speedups."
+    }
+  ],
+  "11-challenges-projects": [
+    {
+      "q": "Why do build-from-a-spec challenges build skill that guided labs alone don't?",
+      "options": [
+        "You build from a spec without step-by-step guidance — the way real work and interviews test you",
+        "They are shorter than labs",
+        "They avoid using Docker",
+        "They require no thinking"
+      ],
+      "answer": 0,
+      "why": "Following steps builds recognition; producing a working result from requirements builds the transferable competence jobs actually test."
+    },
+    {
+      "q": "In the multi-stage challenge, what made the image tiny?",
+      "options": [
+        "A multi-stage build shipping only the final binary on a slim base — no build tools",
+        "Deleting the source after building in the same image",
+        "Using a bigger base image",
+        "Compressing the container at runtime"
+      ],
+      "answer": 0,
+      "why": "The build stage compiles; a clean runtime stage copies only the artifact. Build tools and source never ship, so the image is a few MB."
+    },
+    {
+      "q": "In the Compose stack challenge, what gave the database persistence and readiness?",
+      "options": [
+        "A named volume for its data and a healthcheck reporting healthy",
+        "Publishing its port to the host",
+        "Running it as root",
+        "Using the latest tag"
+      ],
+      "answer": 0,
+      "why": "A named volume keeps the data across container recreation; a healthcheck lets Compose report the DB as truly ready, not just started."
+    },
+    {
+      "q": "In the persistence challenge, why did the data survive destroying the container?",
+      "options": [
+        "It lived in a named volume mounted into the replacement container, not in the container's writable layer",
+        "Docker automatically backs up containers",
+        "The data was stored in the image",
+        "Containers never lose data"
+      ],
+      "answer": 0,
+      "why": "Mounting the same named volume into the new container reattaches the data, which lives independently of any single container."
+    },
+    {
+      "q": "In the capstone, what does a multi-arch image let you do?",
+      "options": [
+        "Publish one tag that runs on both amd64 and arm64 — publish once, run anywhere",
+        "Run two containers at once",
+        "Skip the registry",
+        "Avoid writing a Dockerfile"
+      ],
+      "answer": 0,
+      "why": "A multi-architecture image serves the correct build to each platform automatically, so the same tag works on Intel and ARM machines."
+    }
+  ],
+  "setup-local-docker": [
+    {
+      "q": "What single application do you install to use Docker locally?",
+      "options": [
+        "Docker Desktop (macOS/Windows) or Docker Engine (Linux)",
+        "Kubernetes",
+        "A virtual machine hypervisor only",
+        "A web browser extension"
+      ],
+      "answer": 0,
+      "why": "Docker Desktop bundles the engine and tools on Mac/Windows; on Linux you install Docker Engine directly. That's all you need."
+    },
+    {
+      "q": "What did 'docker run hello-world' actually do?",
+      "options": [
+        "Pulled an image from a registry, created a container from it, and ran it",
+        "Installed Docker",
+        "Started a Kubernetes cluster",
+        "Compiled your source code"
+      ],
+      "answer": 0,
+      "why": "It demonstrated the whole pipeline: fetch image → create container → run. --rm then cleaned the container up."
+    },
+    {
+      "q": "What does the flag '-p 8080:80' mean?",
+      "options": [
+        "Publish the container's port 80 to your machine's port 8080",
+        "Use 8080 MB of memory",
+        "Run 80 containers on port 8080",
+        "Pause the container for 80 seconds"
+      ],
+      "answer": 0,
+      "why": "-p HOST:CONTAINER maps a host port to a container port so you can reach the containerized service from your machine."
+    },
+    {
+      "q": "How do you get a shell inside a running container?",
+      "options": [
+        "docker exec -it <name> bash",
+        "docker run bash",
+        "docker shell <name>",
+        "docker inspect <name>"
+      ],
+      "answer": 0,
+      "why": "exec runs a new command in an already-running container; -it makes it interactive so you get a usable shell."
+    },
+    {
+      "q": "Which two commands stop and then remove a container?",
+      "options": [
+        "docker stop <name> then docker rm <name>",
+        "docker pause then docker delete",
+        "docker kill then docker build",
+        "docker down then docker clean"
+      ],
+      "answer": 0,
+      "why": "stop halts the container gracefully; rm removes the stopped container. (docker rm -f does both at once.)"
+    }
+  ],
+  "primer-what-are-containers": [
+    {
+      "q": "What problem do containers solve?",
+      "options": [
+        "They package an app with everything it needs so it runs the same everywhere",
+        "They make code run faster on the CPU",
+        "They replace the need for a programming language",
+        "They store backups of your data"
+      ],
+      "answer": 0,
+      "why": "By bundling app + runtime + libraries + settings, a container behaves identically on any machine — ending 'works on my machine.'"
+    },
+    {
+      "q": "What is the key difference between a container and a virtual machine?",
+      "options": [
+        "A VM ships a whole guest OS (heavy); a container shares the host OS kernel (light, fast)",
+        "A container ships a whole OS; a VM shares the kernel",
+        "They are the same thing",
+        "A container needs special hardware; a VM doesn't"
+      ],
+      "answer": 0,
+      "why": "VMs virtualize hardware and run full OSes (GBs, slow boot). Containers virtualize the OS, sharing the kernel — MBs, millisecond start."
+    },
+    {
+      "q": "What is the difference between an image and a container?",
+      "options": [
+        "An image is the read-only blueprint; a container is a running instance of it",
+        "An image runs; a container is just a file",
+        "They are interchangeable words",
+        "A container builds an image"
+      ],
+      "answer": 0,
+      "why": "Image = recipe/blueprint (doesn't run). Container = the blueprint brought to life. One image can spawn many containers."
+    },
+    {
+      "q": "Can you run many containers from one image?",
+      "options": [
+        "Yes — one image, many containers",
+        "No — each image runs exactly one container",
+        "Only if the image is small",
+        "Only on Linux"
+      ],
+      "answer": 0,
+      "why": "Like baking many cookies from one cutter, you can start any number of containers from a single image."
+    },
+    {
+      "q": "What is Docker, in one line?",
+      "options": [
+        "The most popular tool for building images and running containers",
+        "A cloud hosting provider",
+        "A programming language",
+        "A type of virtual machine"
+      ],
+      "answer": 0,
+      "why": "Docker gives simple commands (build, run) and the image format the industry standardized on."
+    }
+  ],
+  "00-what-is-docker": [
+    {
+      "q": "What are the three stages of the Docker lifecycle?",
+      "options": [
+        "Build an image, ship it to a registry, run it as containers",
+        "Compile, test, delete",
+        "Download, install, uninstall",
+        "Plan, design, deploy"
+      ],
+      "answer": 0,
+      "why": "Build (Dockerfile → image), Ship (push to a registry), Run (start containers). Kubernetes scales up the 'run' stage."
+    },
+    {
+      "q": "What's the difference between the Docker CLI and the daemon?",
+      "options": [
+        "The CLI is what you type; the daemon is the background engine that builds/runs and holds images",
+        "They are the same program",
+        "The CLI runs containers; the daemon is just for logging",
+        "The daemon is the command you type"
+      ],
+      "answer": 0,
+      "why": "You type `docker` (CLI), which sends requests over an API to the daemon (dockerd), which does the actual work."
+    },
+    {
+      "q": "Why do Docker images run on Kubernetes and other runtimes?",
+      "options": [
+        "They follow the open OCI standard, so any OCI-compatible runtime can run them",
+        "Kubernetes secretly installs Docker on every node",
+        "Images are rewritten for each platform",
+        "They don't — you must rebuild for Kubernetes"
+      ],
+      "answer": 0,
+      "why": "The image format and runtime are OCI standards, so images built with Docker run on containerd, CRI-O, Podman, and Kubernetes unchanged."
+    },
+    {
+      "q": "Docker vs Kubernetes, in one line each?",
+      "options": [
+        "Docker builds/runs containers on a machine; Kubernetes orchestrates many containers across many machines",
+        "Docker is for Windows; Kubernetes is for Linux",
+        "They are competing products that do the same thing",
+        "Kubernetes builds images; Docker runs them"
+      ],
+      "answer": 0,
+      "why": "You build with Docker and operate at scale with Kubernetes, which runs the very images Docker builds."
+    },
+    {
+      "q": "What file is the recipe for building an image?",
+      "options": [
+        "A Dockerfile",
+        "A compose.yaml",
+        "A registry.json",
+        "An image.lock"
+      ],
+      "answer": 0,
+      "why": "docker build runs the instructions in a Dockerfile top-to-bottom to produce an image."
+    }
+  ],
+  "01-images-and-layers": [
+    {
+      "q": "What is a layer in a Docker image?",
+      "options": [
+        "A read-only set of filesystem changes; build instructions stack into layers that combine into the image",
+        "A separate running container",
+        "A network connection between images",
+        "A backup copy of the image"
+      ],
+      "answer": 0,
+      "why": "Each instruction records only what changed, as a layer. Stacked via a union filesystem, they present as one image."
+    },
+    {
+      "q": "Give one benefit of layers.",
+      "options": [
+        "Shared/cached storage between images and fast rebuilds via layer caching",
+        "They make containers run as root",
+        "They encrypt your source code",
+        "They remove the need for a registry"
+      ],
+      "answer": 0,
+      "why": "Common base layers are stored once and shared; unchanged layers are reused on rebuild, so builds and pulls are fast."
+    },
+    {
+      "q": "Does the tag 'latest' mean 'the newest version'?",
+      "options": [
+        "No — it's just a default tag; pin a real version in production",
+        "Yes — Docker always resolves it to the newest release",
+        "Yes, but only for official images",
+        "It means the image is broken"
+      ],
+      "answer": 0,
+      "why": "'latest' is whatever was last pushed under that tag — not magically newest. Production should pin explicit version tags."
+    },
+    {
+      "q": "Tag versus digest?",
+      "options": [
+        "A tag is a movable human label; a digest is an immutable content hash of an exact image",
+        "A digest is a nickname; a tag is a hash",
+        "They are identical",
+        "A tag is for private images; a digest for public ones"
+      ],
+      "answer": 0,
+      "why": "Tags can be repointed; a @sha256 digest always identifies the exact same image — ideal for reproducible deploys."
+    },
+    {
+      "q": "What happens to an image's layers when a container writes files?",
+      "options": [
+        "The image stays read-only; the container gets a thin writable layer on top",
+        "The image's layers are modified in place",
+        "The write fails — containers can't write",
+        "A new image is automatically pushed"
+      ],
+      "answer": 0,
+      "why": "Images are read-only. A running container adds a throwaway writable layer, which is why its changes vanish when it's removed."
+    }
+  ],
+  "02-lab-run-manage-containers": [
+    {
+      "q": "What's the difference between 'docker run' and 'docker exec'?",
+      "options": [
+        "run creates a new container from an image; exec runs a command in an already-running container",
+        "They are the same",
+        "run is for images; exec is for volumes",
+        "exec creates containers; run inspects them"
+      ],
+      "answer": 0,
+      "why": "Use run to start a fresh container; use exec to execute something inside a container that's already up (e.g. a debug shell)."
+    },
+    {
+      "q": "What does '-d' do, and when do you want it?",
+      "options": [
+        "Detached/background — for long-running services",
+        "Debug mode — prints extra logs",
+        "Delete the container after exit",
+        "Download the image only"
+      ],
+      "answer": 0,
+      "why": "-d runs the container in the background and returns your prompt — right for servers you want to keep running."
+    },
+    {
+      "q": "Your first two debugging commands when a container misbehaves?",
+      "options": [
+        "docker logs and docker inspect",
+        "docker build and docker push",
+        "docker network and docker volume",
+        "docker login and docker tag"
+      ],
+      "answer": 0,
+      "why": "logs shows what the app said; inspect shows its full config, mounts, env, and last state. Start there."
+    },
+    {
+      "q": "Why did an in-container file edit survive 'start' but not 'rm'?",
+      "options": [
+        "It lived in the container's writable layer; removing the container deletes that layer",
+        "Docker only saves edits on Tuesdays",
+        "The edit was written to the image",
+        "start rebuilds the container from scratch"
+      ],
+      "answer": 0,
+      "why": "stop/start keep the same container (and its writable layer). rm destroys the container and its layer — so persist data in volumes."
+    },
+    {
+      "q": "What does 'docker system prune' do?",
+      "options": [
+        "Removes unused Docker data — stopped containers, dangling images, etc. — to reclaim disk",
+        "Deletes all your images including in-use ones with no warning",
+        "Restarts the Docker daemon",
+        "Publishes your images to a registry"
+      ],
+      "answer": 0,
+      "why": "It reclaims space by removing unused resources (it prompts first). Handy when Docker's disk usage grows."
+    }
+  ],
+  "03-dockerfiles": [
+    {
+      "q": "What does each instruction in a Dockerfile roughly produce?",
+      "options": [
+        "A layer; docker build runs the instructions top to bottom",
+        "A separate container",
+        "A new registry",
+        "A network"
+      ],
+      "answer": 0,
+      "why": "Instructions like FROM/RUN/COPY each add a layer. The build executes them in order to assemble the image."
+    },
+    {
+      "q": "Why copy package.json and install dependencies BEFORE copying the source?",
+      "options": [
+        "So the cached dependency layer is reused unless deps change; source edits don't trigger a reinstall",
+        "Because COPY must come first",
+        "To make the image larger",
+        "It makes no difference"
+      ],
+      "answer": 0,
+      "why": "Layer caching: put least-changing steps first. Dependencies rarely change, so that expensive install layer stays cached across code edits."
+    },
+    {
+      "q": "CMD versus ENTRYPOINT?",
+      "options": [
+        "CMD is an easily-overridden default command; ENTRYPOINT is a fixed executable that takes run-time args as its arguments",
+        "They are identical",
+        "ENTRYPOINT is overridden by default; CMD is fixed",
+        "CMD runs at build time; ENTRYPOINT at run time"
+      ],
+      "answer": 0,
+      "why": "docker run myapp <x> overrides CMD entirely, but is passed as arguments to an ENTRYPOINT. Use ENTRYPOINT when the image *is* a command."
+    },
+    {
+      "q": "What is a .dockerignore file for?",
+      "options": [
+        "Excluding files from the build context — faster builds and no leaked secrets/junk",
+        "Listing images to delete",
+        "Ignoring container logs",
+        "Telling Kubernetes which pods to skip"
+      ],
+      "answer": 0,
+      "why": "It keeps things like node_modules, .git, and .env out of the build context, speeding builds and preventing secret leaks into images."
+    },
+    {
+      "q": "What does '-t' do in 'docker build -t name:tag .'?",
+      "options": [
+        "Names and tags the resulting image; '.' is the build context",
+        "Runs the build in a terminal",
+        "Times the build",
+        "Tags a running container"
+      ],
+      "answer": 0,
+      "why": "-t assigns a repository:tag to the built image so you can refer to it; the trailing path is the build context sent to the daemon."
+    }
+  ],
+  "04-data-volumes": [
+    {
+      "q": "Why can't important data live in the container itself?",
+      "options": [
+        "The writable layer is deleted when the container is removed — containers are ephemeral",
+        "Containers have no disk access",
+        "Docker encrypts and hides it",
+        "The data is sent to the registry"
+      ],
+      "answer": 0,
+      "why": "A container's changes live in its throwaway writable layer. Removing the container deletes them, so persistent data must live outside."
+    },
+    {
+      "q": "Named volume versus bind mount — the core difference?",
+      "options": [
+        "A volume is Docker-managed storage referenced by name; a bind mount maps a specific host folder",
+        "A volume maps a host folder; a bind mount is Docker-managed",
+        "They are the same",
+        "A volume is read-only; a bind mount is read-write"
+      ],
+      "answer": 0,
+      "why": "Volumes are managed by Docker and portable; bind mounts point at an exact directory on your machine."
+    },
+    {
+      "q": "Which storage type do you use for a production database?",
+      "options": [
+        "A named volume",
+        "A bind mount to /tmp",
+        "The container's writable layer",
+        "None — databases don't persist"
+      ],
+      "answer": 0,
+      "why": "Named volumes are Docker-managed, portable, and survive container removal — the recommended home for app data like databases."
+    },
+    {
+      "q": "Which storage type is ideal for live-editing code during development?",
+      "options": [
+        "A bind mount",
+        "A named volume",
+        "A registry",
+        "The image itself"
+      ],
+      "answer": 0,
+      "why": "A bind mount maps your source folder into the container so edits appear instantly — no rebuild needed."
+    },
+    {
+      "q": "What does ':ro' do on a mount?",
+      "options": [
+        "Makes it read-only inside the container",
+        "Rotates the volume",
+        "Marks it as a root-owned mount",
+        "Enables remote access"
+      ],
+      "answer": 0,
+      "why": "ro = read-only; the container can read the mounted data but not modify it. Drop it for read-write."
+    }
+  ],
+  "05-networking": [
+    {
+      "q": "What does '-p 8080:80' do?",
+      "options": [
+        "Publishes container port 80 to host port 8080 so you can reach it",
+        "Connects two containers together",
+        "Limits the container to 80 MB of memory",
+        "Opens 8080 ports"
+      ],
+      "answer": 0,
+      "why": "Publishing maps a host port to a container port so traffic from your machine reaches the containerized service."
+    },
+    {
+      "q": "On a user-defined bridge network, how do containers find each other?",
+      "options": [
+        "By container name — Docker provides automatic DNS",
+        "By hard-coded IP addresses only",
+        "They can't communicate",
+        "Through the registry"
+      ],
+      "answer": 0,
+      "why": "User-defined bridge networks include DNS, so a container can reach another by its name (e.g. connect to 'db')."
+    },
+    {
+      "q": "Why create a user-defined network instead of using the default bridge?",
+      "options": [
+        "Automatic name-based DNS between containers; the default bridge lacks it",
+        "It's faster to type",
+        "The default bridge can't reach the internet",
+        "User-defined networks don't need publishing"
+      ],
+      "answer": 0,
+      "why": "Name resolution between containers only works on user-defined networks, which is why multi-container apps should use one."
+    },
+    {
+      "q": "Does a container need '-p' to reach the internet?",
+      "options": [
+        "No — outbound works by default; -p is only for inbound access",
+        "Yes — nothing works without -p",
+        "Only for HTTPS",
+        "Only on Windows"
+      ],
+      "answer": 0,
+      "why": "Containers can make outbound connections via NAT out of the box. Publishing (-p) is only needed to accept inbound traffic."
+    },
+    {
+      "q": "Should a database container usually publish its port?",
+      "options": [
+        "No — only the app needs it over the private network; publishing exposes it unnecessarily",
+        "Yes — always publish every port",
+        "Only in development",
+        "Only if it uses TLS"
+      ],
+      "answer": 0,
+      "why": "If only your app talks to the DB, keep it on the private network unpublished. Publishing exposes the database to your whole host/LAN."
+    }
+  ],
+  "06-docker-compose": [
+    {
+      "q": "What does 'docker compose up' do that saves you effort?",
+      "options": [
+        "Starts all services and auto-creates their network and volumes — no long docker run commands",
+        "Builds a Kubernetes cluster",
+        "Pushes images to a registry",
+        "Deletes unused images"
+      ],
+      "answer": 0,
+      "why": "Compose reads the whole stack from one YAML file and brings it up together, wiring networking and volumes automatically."
+    },
+    {
+      "q": "How does the 'api' service reach the database in Compose?",
+      "options": [
+        "By the service name 'db' as a hostname on the auto-created network",
+        "By the database's IP address hard-coded in the app",
+        "Through the host's localhost",
+        "Via the registry"
+      ],
+      "answer": 0,
+      "why": "Compose puts services on a shared network with DNS; the service name doubles as its hostname (e.g. db:5432)."
+    },
+    {
+      "q": "What does 'depends_on' guarantee — and not guarantee?",
+      "options": [
+        "Start order; not that the dependency is actually ready — use healthchecks for readiness",
+        "That the dependency never crashes",
+        "That services share a volume",
+        "Nothing at all"
+      ],
+      "answer": 0,
+      "why": "depends_on sequences container startup but doesn't wait for the app inside to be ready. Add healthchecks for true readiness."
+    },
+    {
+      "q": "What's the danger of 'docker compose down -v'?",
+      "options": [
+        "The -v deletes named volumes — you lose the data",
+        "It publishes your data publicly",
+        "It rebuilds all images from scratch",
+        "Nothing — it's always safe"
+      ],
+      "answer": 0,
+      "why": "Plain 'down' removes containers and the network; adding -v also removes named volumes, permanently deleting persisted data."
+    },
+    {
+      "q": "Why is Compose good preparation for Kubernetes?",
+      "options": [
+        "It's declarative — you describe the desired stack and Compose makes it so, the mindset Kubernetes uses",
+        "It is actually Kubernetes",
+        "It runs across many machines like Kubernetes",
+        "It replaces the need to learn Kubernetes"
+      ],
+      "answer": 0,
+      "why": "Compose introduces declarative, multi-service thinking. Kubernetes uses the same mindset at cluster scale with more power."
+    }
+  ],
+  "07-image-optimization-security": [
+    {
+      "q": "What does a multi-stage build achieve?",
+      "options": [
+        "Builds in one stage and ships only the final artifact in a clean stage — much smaller, no build tools",
+        "Runs the build twice for safety",
+        "Splits the app across multiple containers",
+        "Encrypts the image"
+      ],
+      "answer": 0,
+      "why": "A build stage compiles; a slim runtime stage copies only the output. Build tools and source never ship — often 80–95% smaller."
+    },
+    {
+      "q": "Why delete apt caches in the SAME RUN layer where you install?",
+      "options": [
+        "Deleting in a later layer doesn't shrink the image; the earlier layer still contains the files",
+        "It's faster to type",
+        "apt requires it",
+        "It has no effect either way"
+      ],
+      "answer": 0,
+      "why": "Each layer is immutable. Files added in one layer persist even if removed in a later one, so clean up within the same RUN."
+    },
+    {
+      "q": "Why should you never put secrets in a Dockerfile or ENV?",
+      "options": [
+        "They're baked into layers permanently and visible via docker history; pass secrets at run time",
+        "ENV variables are too slow",
+        "Docker forbids strings in ENV",
+        "It makes the image smaller but insecure"
+      ],
+      "answer": 0,
+      "why": "Anything in the image (including build-time ENV) is inspectable forever. Provide secrets at run time via env, mounts, or a secret manager."
+    },
+    {
+      "q": "Why avoid running a container as root?",
+      "options": [
+        "A container breakout would be root on the host; run as a non-root user",
+        "Root containers can't reach the network",
+        "It makes images larger",
+        "Root is not allowed by Docker"
+      ],
+      "answer": 0,
+      "why": "Containers run as root by default; adding a USER limits the blast radius if the container is compromised."
+    },
+    {
+      "q": "One command to check an image for known vulnerabilities?",
+      "options": [
+        "docker scout cves <image>",
+        "docker vuln <image>",
+        "docker inspect --security",
+        "docker scan-now"
+      ],
+      "answer": 0,
+      "why": "docker scout cves reports known CVEs in an image's packages. Smaller images with fewer packages typically have far fewer."
+    }
+  ],
+  "08-registries-distribution": [
+    {
+      "q": "What is a registry?",
+      "options": [
+        "A shared store for images that you push to and others/servers/Kubernetes pull from",
+        "A log of every container that has run",
+        "A network between containers",
+        "A type of volume"
+      ],
+      "answer": 0,
+      "why": "Registries (Docker Hub, GHCR, ECR, etc.) host named, tagged images so they can travel from your laptop to servers and clusters."
+    },
+    {
+      "q": "Decode the image name 'ghcr.io/acme/api:1.4.2'.",
+      "options": [
+        "registry ghcr.io, namespace acme, repository api, tag 1.4.2",
+        "namespace ghcr.io, registry acme, tag api, repo 1.4.2",
+        "It's all just the repository name",
+        "registry acme, tag ghcr.io"
+      ],
+      "answer": 0,
+      "why": "Fully-qualified names are registry/namespace/repository:tag. Missing parts default to docker.io and :latest."
+    },
+    {
+      "q": "Does 'docker tag' copy the image?",
+      "options": [
+        "No — it adds another name pointing at the same layers",
+        "Yes — it duplicates all layers",
+        "Only for public images",
+        "Only across registries"
+      ],
+      "answer": 0,
+      "why": "Tagging just creates an additional reference to the same image content; push then uploads only layers the registry lacks."
+    },
+    {
+      "q": "Why avoid deploying the 'latest' tag?",
+      "options": [
+        "It's ambiguous and makes rollbacks/debugging hard; deploy specific version tags",
+        "latest images are always broken",
+        "latest can't be pulled by servers",
+        "It costs more to store"
+      ],
+      "answer": 0,
+      "why": "'latest' can point at different content over time, so you can't reliably know or roll back what's deployed. Pin explicit versions."
+    },
+    {
+      "q": "Does Kubernetes build images?",
+      "options": [
+        "No — it pulls prebuilt images from a registry and runs them",
+        "Yes — it builds from your Dockerfile on each node",
+        "Only for private images",
+        "Only with Helm"
+      ],
+      "answer": 0,
+      "why": "Kubernetes runs images; it doesn't build them. Your CI builds and pushes images, and Kubernetes pulls them by name."
+    }
+  ],
+  "09-debugging-production": [
+    {
+      "q": "What does a HEALTHCHECK add over 'the container is running'?",
+      "options": [
+        "It tests the app itself, so Docker knows healthy vs unhealthy — the basis of Kubernetes probes",
+        "It restarts the host",
+        "It scans for vulnerabilities",
+        "It publishes ports automatically"
+      ],
+      "answer": 0,
+      "why": "A process can be 'running' but broken. A healthcheck probes the app so orchestrators can restart or route around it."
+    },
+    {
+      "q": "Which restart policy suits a long-running service?",
+      "options": [
+        "unless-stopped (or always)",
+        "no",
+        "on-failure:0",
+        "never"
+      ],
+      "answer": 0,
+      "why": "unless-stopped restarts the container across crashes and reboots, but respects a manual stop. 'always' is similar but ignores manual stops."
+    },
+    {
+      "q": "Where should containerized apps write their logs?",
+      "options": [
+        "To stdout/stderr — the platform captures and ships them",
+        "To a file inside the container",
+        "To the image's layers",
+        "To the registry"
+      ],
+      "answer": 0,
+      "why": "Logging to stdout/stderr lets Docker capture output (docker logs) and lets logging drivers/Kubernetes ship it centrally."
+    },
+    {
+      "q": "A container exits immediately. What's the first command to run?",
+      "options": [
+        "docker logs <c> — the crash reason is usually there (and docker ps -a shows the exit code)",
+        "docker push <c>",
+        "docker network create",
+        "reinstall Docker"
+      ],
+      "answer": 0,
+      "why": "Logs almost always contain the error. ps -a shows the exit code (e.g. 1 = app error, 137 = OOM-killed)."
+    },
+    {
+      "q": "What does exit code 137 usually mean?",
+      "options": [
+        "OOM-killed / SIGKILL — often a memory limit was exceeded",
+        "Success",
+        "The image was not found",
+        "A network timeout"
+      ],
+      "answer": 0,
+      "why": "137 = 128 + 9 (SIGKILL). It commonly means the container hit its memory limit and was killed."
+    }
+  ],
+  "10-next-steps-kubernetes": [
+    {
+      "q": "What's the fundamental limit of Docker/Compose that Kubernetes removes?",
+      "options": [
+        "They run on one machine; Kubernetes orchestrates containers across a cluster of machines",
+        "Docker can't build images",
+        "Compose can't use volumes",
+        "Docker can't run databases"
+      ],
+      "answer": 0,
+      "why": "Docker/Compose are single-host. Kubernetes schedules, scales, and self-heals containers across many machines."
+    },
+    {
+      "q": "What Kubernetes object corresponds to a running container?",
+      "options": [
+        "A Pod (one or more containers, the smallest unit)",
+        "A Service",
+        "A Node",
+        "A Namespace"
+      ],
+      "answer": 0,
+      "why": "A Pod wraps one (or a few tightly-coupled) containers and is the smallest deployable unit in Kubernetes."
+    },
+    {
+      "q": "What replaces 'docker run' for declaring desired, self-healing replicas?",
+      "options": [
+        "A Deployment",
+        "A ConfigMap",
+        "A Volume",
+        "A registry"
+      ],
+      "answer": 0,
+      "why": "A Deployment declares how many replicas of an image you want and continuously keeps that many healthy, handling rollouts."
+    },
+    {
+      "q": "What does a Kubernetes Service provide that '-p' did locally?",
+      "options": [
+        "A stable name plus load balancing across many pods",
+        "A bigger memory limit",
+        "Image scanning",
+        "A private registry"
+      ],
+      "answer": 0,
+      "why": "A Service gives a durable name/IP and spreads traffic across all matching pods, however many there are and wherever they run."
+    },
+    {
+      "q": "Name the core mindset shift going from Docker to Kubernetes.",
+      "options": [
+        "Imperative → declarative: describe desired state and let the system maintain it",
+        "Declarative → imperative: run each command by hand",
+        "From Linux to Windows",
+        "From containers back to virtual machines"
+      ],
+      "answer": 0,
+      "why": "Instead of 'run this container,' you declare 'keep 5 healthy replicas' and Kubernetes continuously reconciles reality to match."
+    }
+  ]
+}

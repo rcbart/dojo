@@ -1,0 +1,58 @@
+# Lab 05 — load balancing across two backends, with health checks, timeout & retries.
+
+admin:
+  address: { socket_address: { address: 0.0.0.0, port_value: 9901 } }
+
+static_resources:
+  listeners:
+  - name: main
+    address: { socket_address: { address: 0.0.0.0, port_value: 10000 } }
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: ingress_http
+          access_log:
+          - name: envoy.access_loggers.stdout
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: all
+              domains: ["*"]
+              routes:
+              - match: { prefix: "/" }
+                route:
+                  cluster: echo_service
+                  timeout: 2s                    # give up on a backend after 2s
+                  retry_policy:
+                    retry_on: "5xx,reset,connect-failure"
+                    num_retries: 2               # try up to 2 more endpoints on failure
+          http_filters:
+          - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  clusters:
+  - name: echo_service
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN                        # try LEAST_REQUEST or RANDOM to compare
+    # Active health checking: Envoy polls each endpoint and ejects unhealthy ones.
+    health_checks:
+    - timeout: 1s
+      interval: 2s
+      unhealthy_threshold: 2
+      healthy_threshold: 1
+      http_health_check: { path: "/" }
+    # Passive: eject an endpoint after consecutive 5xx (outlier detection).
+    outlier_detection:
+      consecutive_5xx: 3
+      base_ejection_time: 10s
+    load_assignment:
+      cluster_name: echo_service
+      endpoints:
+      - lb_endpoints:
+        - endpoint: { address: { socket_address: { address: backend_a, port_value: 5678 } } }
+        - endpoint: { address: { socket_address: { address: backend_b, port_value: 5678 } } }

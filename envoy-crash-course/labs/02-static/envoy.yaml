@@ -1,0 +1,63 @@
+# Lab 02 — the smallest useful Envoy config.
+# One listener on :10000 that parses HTTP and sends every request to one backend cluster.
+# Config uses Envoy's stable v3 API.
+
+# admin: a built-in web/management interface (stats, config dump, health).
+# Never expose this port publicly in production — it is powerful.
+admin:
+  address:
+    socket_address: { address: 0.0.0.0, port_value: 9901 }
+
+static_resources:
+
+  # ── LISTENERS: where Envoy accepts incoming (downstream) connections ──
+  listeners:
+  - name: main_listener
+    address:
+      socket_address: { address: 0.0.0.0, port_value: 10000 }   # accept HTTP here
+    filter_chains:
+    - filters:
+      # The HTTP Connection Manager (HCM): a network filter that turns the raw
+      # byte stream into HTTP requests and hosts the HTTP filter chain.
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: ingress_http          # prefixes this listener's stats
+          codec_type: AUTO                    # detect HTTP/1.1 vs HTTP/2 automatically
+          access_log:
+          - name: envoy.access_loggers.stdout
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+
+          # ── ROUTE CONFIG: which requests go where ──
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: all_hosts
+              domains: ["*"]                  # match any Host header
+              routes:
+              - match: { prefix: "/healthz" }                        # experiment 3: Envoy answers this itself
+                direct_response: { status: 200, body: { inline_string: "ok\n" } }
+              - match: { prefix: "/" }        # every path...
+                route: { cluster: echo_service }   # ...goes to this cluster
+
+          # ── HTTP FILTERS: the request pipeline. The router must be LAST. ──
+          http_filters:
+          - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  # ── CLUSTERS: the backends Envoy can send (upstream) traffic to ──
+  clusters:
+  - name: echo_service
+    type: STRICT_DNS                          # resolve the endpoint address via DNS
+    lb_policy: ROUND_ROBIN                     # spread requests across endpoints
+    load_assignment:
+      cluster_name: echo_service
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: backend               # the docker-compose service name
+                port_value: 5678

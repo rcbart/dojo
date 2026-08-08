@@ -1,0 +1,12 @@
+# Lab 04 — routing & filters.  Run: docker compose up   Test: see 04-http-routing-and-filters.md
+services:
+  backend:
+    image: hashicorp/http-echo:latest
+    command: ["-text=hello from the backend", "-listen=:5678"]
+  envoy:
+    image: envoyproxy/envoy:v1.38-latest
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml:ro
+    command: ["-c", "/etc/envoy/envoy.yaml"]
+    ports: ["10000:10000", "9901:9901"]
+    depends_on: [backend]

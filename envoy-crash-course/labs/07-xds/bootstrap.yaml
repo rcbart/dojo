@@ -1,0 +1,22 @@
+# Lab 07 — a BOOTSTRAP that keeps listeners & clusters DYNAMIC.
+# Instead of static_resources, we point LDS and CDS at files Envoy watches.
+# Edit lds.yaml or cds.yaml while Envoy runs and it hot-reloads — no restart.
+
+node:
+  id: lab07
+  cluster: crash-course
+
+admin:
+  address: { socket_address: { address: 0.0.0.0, port_value: 9901 } }
+
+dynamic_resources:
+  # LDS = Listener Discovery Service (here, from a file)
+  lds_config:
+    path_config_source:
+      path: /etc/envoy/lds.yaml
+      watched_directory: { path: /etc/envoy }
+  # CDS = Cluster Discovery Service (from a file)
+  cds_config:
+    path_config_source:
+      path: /etc/envoy/cds.yaml
+      watched_directory: { path: /etc/envoy }

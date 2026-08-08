@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLDojo — Learn Machine Learning from zero</title>
+<style>@@STYLES@@</style>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+</head>
+<body>
+<header>
+  <div class="logo" style="cursor:pointer" onclick="renderHome()">🧠 ML<span>Dojo</span></div>
+  <div class="tip">Real Python runs in your browser — no install. Grounded in what each idea is <i>for</i>, before any math.</div>
+  <div class="belt"><span id="beltName">White belt</span><div class="strip"><i id="beltFill" style="width:0%"></i></div><span id="beltPct">0%</span></div>
+</header>
+<div id="layout">
+  <nav id="nav"></nav>
+  <main id="main"></main>
+</div>
+<div id="tutorFab" title="Ask the Tutor">💬 Ask the Tutor</div>
+<div id="tutorPanel" class="hidden" role="dialog" aria-label="Ask the Tutor">
+  <div class="tpHd">💬 Ask the Tutor <button id="tutorClose" aria-label="Close">✕</button></div>
+  <div class="tpBody" id="tutorLog">
+    <div class="tMsg tBot">Ask me anything about this lesson — e.g. <i>"walk me through the dot product step by step"</i> or <i>"why is a vector useful in ML?"</i></div>
+  </div>
+  <div class="tpInput">
+    <textarea id="tutorQ" rows="2" placeholder="Type your question…"></textarea>
+    <button id="tutorSend" class="primary">Ask</button>
+  </div>
+</div>
+<script>@@SCRIPT@@</script>
+</body>
+</html>

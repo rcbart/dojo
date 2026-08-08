@@ -1,0 +1,11 @@
+# CDS resource file — a list of Cluster resources Envoy discovers dynamically.
+resources:
+- "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
+  name: echo_service
+  type: STRICT_DNS
+  lb_policy: ROUND_ROBIN
+  load_assignment:
+    cluster_name: echo_service
+    endpoints:
+    - lb_endpoints:
+      - endpoint: { address: { socket_address: { address: backend, port_value: 5678 } } }

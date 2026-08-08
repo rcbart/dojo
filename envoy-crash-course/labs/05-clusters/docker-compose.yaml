@@ -1,0 +1,15 @@
+# Lab 05 — two backends behind one cluster.  Run: docker compose up
+services:
+  backend_a:
+    image: hashicorp/http-echo:latest
+    command: ["-text=response from backend A", "-listen=:5678"]
+  backend_b:
+    image: hashicorp/http-echo:latest
+    command: ["-text=response from backend B", "-listen=:5678"]
+  envoy:
+    image: envoyproxy/envoy:v1.38-latest
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml:ro
+    command: ["-c", "/etc/envoy/envoy.yaml"]
+    ports: ["10000:10000", "9901:9901"]
+    depends_on: [backend_a, backend_b]

@@ -62,18 +62,18 @@ echo $JAVA_HOME`}},
 <p>Coming from another language, the key differences: everything lives in a class, the file name must match the public class name, every statement ends with <code>;</code>, and Java is statically typed — every variable has a declared (or inferred) type.</p>`,
 docs:[['dev.java — Getting Started','https://dev.java/learn/getting-started/'],['Oracle Tutorial — A Closer Look at main','https://docs.oracle.com/javase/tutorial/getStarted/application/index.html']],
 ex:{title:'Your first Greeter',
-prompt:`Write a class <code>Greeter</code> with: (1) a <code>main</code> method that prints exactly <code>Welcome to JavaDojo!</code>, and (2) a <code>static</code> method <code>String greet(String name)</code> that returns <code>"Hello, " + name + "!"</code>. Have main also print <code>greet("Ada")</code>.`,
+prompt:`Write a class <code>Greeter</code> with: (1) a <code>main</code> method that prints exactly <code>Welcome to DevDojo!</code>, and (2) a <code>static</code> method <code>String greet(String name)</code> that returns <code>"Hello, " + name + "!"</code>. Have main also print <code>greet("Ada")</code>.`,
 starter:`public class Greeter {
     // 1. add main here
 
     // 2. add static String greet(String name)
 }`,
-tests:[{d:'Declares public class Greeter',re:'public\\s+class\\s+Greeter'},{d:'Has a proper main method',re:'public\\s+static\\s+void\\s+main\\s*\\(\\s*String\\s*\\[\\]\\s*\\w+\\s*\\)'},{d:'Defines static String greet(String ...)',re:'static\\s+String\\s+greet\\s*\\(\\s*String\\s+\\w+\\s*\\)'},{d:'Prints the welcome line',re:'Welcome to JavaDojo!'}],
-behavior:`1. main prints "Welcome to JavaDojo!" as first line. 2. greet("Ada") returns exactly "Hello, Ada!". 3. main prints the result of greet("Ada"). 4. Code compiles (types, semicolons, braces).`,
+tests:[{d:'Declares public class Greeter',re:'public\\s+class\\s+Greeter'},{d:'Has a proper main method',re:'public\\s+static\\s+void\\s+main\\s*\\(\\s*String\\s*\\[\\]\\s*\\w+\\s*\\)'},{d:'Defines static String greet(String ...)',re:'static\\s+String\\s+greet\\s*\\(\\s*String\\s+\\w+\\s*\\)'},{d:'Prints the welcome line',re:'Welcome to DevDojo!'}],
+behavior:`1. main prints "Welcome to DevDojo!" as first line. 2. greet("Ada") returns exactly "Hello, Ada!". 3. main prints the result of greet("Ada"). 4. Code compiles (types, semicolons, braces).`,
 hints:['main has the exact signature <code>public static void main(String[] args)</code> — the JVM looks for that exact shape.','Printing is <code>System.out.println("...")</code>. Do it inside main.','greet should <code>return "Hello, " + name + "!";</code> — then call <code>System.out.println(greet("Ada"));</code> from main (works because both are static).'],
 solution:`public class Greeter {
     public static void main(String[] args) {
-        System.out.println("Welcome to JavaDojo!");
+        System.out.println("Welcome to DevDojo!");
         System.out.println(greet("Ada"));
     }
 

@@ -1,4 +1,4 @@
-# JavaDojo 🥋
+# DevDojo 🥋
 
 An interactive, single-page Java curriculum: 21 streams, 136 lessons, 214 hands-on exercises with an in-browser editor, structural checks, AI-assisted test runs, belt progression, tournaments, and four end-to-end real-world projects.
 

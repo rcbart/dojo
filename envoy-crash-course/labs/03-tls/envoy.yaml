@@ -1,0 +1,57 @@
+# Lab 03 — terminate TLS at Envoy.
+# The listener speaks HTTPS to clients (downstream), decrypts, then proxies plain HTTP
+# to the backend (upstream). This "TLS termination" is the classic edge-proxy job.
+
+admin:
+  address:
+    socket_address: { address: 0.0.0.0, port_value: 9901 }
+
+static_resources:
+  listeners:
+  - name: https_listener
+    address:
+      socket_address: { address: 0.0.0.0, port_value: 10000 }
+    filter_chains:
+    - # ── the transport_socket makes THIS listener speak TLS ──
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+          common_tls_context:
+            tls_certificates:
+            - certificate_chain: { filename: /etc/envoy/certs/cert.pem }   # the server cert
+              private_key:       { filename: /etc/envoy/certs/key.pem }    # its private key
+      # ── after decryption, the same HCM as before handles the HTTP ──
+      filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: ingress_https
+          access_log:
+          - name: envoy.access_loggers.stdout
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: all_hosts
+              domains: ["*"]
+              routes:
+              - match: { prefix: "/" }
+                route: { cluster: echo_service }
+          http_filters:
+          - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  clusters:
+  - name: echo_service
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: echo_service
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: backend, port_value: 5678 }

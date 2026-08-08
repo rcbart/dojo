@@ -1,0 +1,65 @@
+# Lab 08 — a demo app plus the Gateway API resources that tell Envoy Gateway how to route to it.
+# Apply AFTER installing Envoy Gateway (see 08-envoy-on-kubernetes.md).
+#   kubectl apply -f app-and-route.yaml
+---
+# The workload: two replicas of the echo server.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: echo } }
+  template:
+    metadata: { labels: { app: echo } }
+    spec:
+      containers:
+      - name: echo
+        image: hashicorp/http-echo:latest
+        args: ["-text=hello from kubernetes", "-listen=:5678"]
+        ports: [{ containerPort: 5678 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo
+spec:
+  selector: { app: echo }
+  ports:
+  - port: 80
+    targetPort: 5678
+---
+# GatewayClass: which controller handles our Gateways. Envoy Gateway installs this class name.
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: eg
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+---
+# Gateway: the L4/L7 entry point — "listen for HTTP on :80". Envoy Gateway spins up an Envoy for it.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: eg
+spec:
+  gatewayClassName: eg
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes: { namespaces: { from: Same } }
+---
+# HTTPRoute: the routing rules — attach to the Gateway, send / to the echo Service.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: echo
+spec:
+  parentRefs: [{ name: eg }]
+  rules:
+  - matches:
+    - path: { type: PathPrefix, value: / }
+    backendRefs:
+    - name: echo
+      port: 80

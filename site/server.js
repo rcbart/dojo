@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * JavaDojo site server — landing, secure auth, admin, progress sync, and the dojo app.
+ * DevDojo site server — landing, secure auth, admin, progress sync, and the dojo app.
  * Standard library + Node's built-in node:sqlite only. No third-party dependencies.
  *
  *   node site/server.js                  # http://localhost:8080
@@ -334,7 +334,7 @@ async function handle(req, res) {
   if (!MIME[ext] || !fs.existsSync(full) || !fs.statSync(full).isFile()) {
     securityHeaders(res);
     res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
-    return res.end('<!doctype html><html lang="en"><meta charset="utf-8"><title>Not found</title><body style="font-family:system-ui;max-width:640px;margin:80px auto;padding:0 20px"><h1>404</h1><p>Page not found. <a href="/">Back to JavaDojo</a></p>');
+    return res.end('<!doctype html><html lang="en"><meta charset="utf-8"><title>Not found</title><body style="font-family:system-ui;max-width:640px;margin:80px auto;padding:0 20px"><h1>404</h1><p>Page not found. <a href="/">Back to DevDojo</a></p>');
   }
   securityHeaders(res);
   res.writeHead(200, { 'Content-Type': MIME[ext] });
@@ -468,5 +468,5 @@ server.on('error', err => {
   }
   throw err;
 });
-server.listen(PORT, () => console.log('JavaDojo site on http://localhost:' + PORT
+server.listen(PORT, () => console.log('DevDojo site on http://localhost:' + PORT
   + (SECURE_COOKIES ? ' (secure cookies)' : ' (dev mode — set JD_SECURE_COOKIES=1 behind HTTPS)')));

@@ -1,0 +1,78 @@
+# Lab 04 — routing features + HTTP filters.
+# One listener, several route behaviors, header manipulation, and a fault-injection filter.
+
+admin:
+  address: { socket_address: { address: 0.0.0.0, port_value: 9901 } }
+
+static_resources:
+  listeners:
+  - name: main
+    address: { socket_address: { address: 0.0.0.0, port_value: 10000 } }
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: ingress_http
+          access_log:
+          - name: envoy.access_loggers.stdout
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+          route_config:
+            name: local_route
+            # headers added to EVERY response from this route config
+            response_headers_to_add:
+            - header: { key: "x-served-by", value: "envoy-crash-course" }
+            virtual_hosts:
+            - name: all
+              domains: ["*"]
+              routes:
+              # 1) exact-ish health check answered by Envoy itself, no backend
+              - match: { path: "/healthz" }
+                direct_response: { status: 200, body: { inline_string: "ok\n" } }
+              # 2) a redirect
+              - match: { prefix: "/old" }
+                redirect: { path_redirect: "/new", response_code: MOVED_PERMANENTLY }
+              # 3) header-based routing: only if header x-canary: yes
+              - match:
+                  prefix: "/"
+                  headers:
+                  - name: "x-canary"
+                    string_match: { exact: "yes" }
+                route:
+                  cluster: echo_service
+                  # add a request header the backend will echo back to us via logs
+                  request_headers_to_add:
+                  - header: { key: "x-route", value: "canary" }
+              # 4) the catch-all, with a path rewrite and a fault-injection example
+              - match: { prefix: "/api/" }
+                route:
+                  cluster: echo_service
+                  prefix_rewrite: "/"          # strip /api before sending upstream
+              - match: { prefix: "/" }
+                route: { cluster: echo_service }
+          http_filters:
+          # fault injection runs BEFORE the router; here it aborts /flaky with 503 half the time
+          - name: envoy.filters.http.fault
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.fault.v3.HTTPFault
+              abort:
+                http_status: 503
+                percentage: { numerator: 50, denominator: HUNDRED }
+              headers:
+              - name: ":path"
+                string_match: { prefix: "/flaky" }
+          - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  clusters:
+  - name: echo_service
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: echo_service
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address: { socket_address: { address: backend, port_value: 5678 } }
