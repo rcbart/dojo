@@ -1101,7 +1101,44 @@ function diveDeeperHtml(s,l,e){
 ${docs}
 </div></details>`;
 }
-function depthPanels(s,l,e){ return `<div class="depthWrap">${localRunHtml(s,l,e)}${diveDeeperHtml(s,l,e)}</div>`; }
+function depthPanels(s,l,e){ return `<div class="depthWrap">${(e.lang==='sql'&&e.data&&window.SQL_DATASETS&&window.SQL_DATASETS[e.data])?sqlRunPanel(e.data):''}${localRunHtml(s,l,e)}${diveDeeperHtml(s,l,e)}</div>`; }
+
+/* ---- live in-browser SQL runner (real execution on sample datasets) ---- */
+function sqlFmt(v){ return (v===null||v===undefined)?'NULL':String(v); }
+function sqlTableHtml(name,tbl){
+  return `<div class="sqlTblName">${esc(name)} <span class="sqlTblN">${tbl.rows.length} rows</span></div>`
+    +`<table class="sqlTbl"><thead><tr>${tbl.cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead>`
+    +`<tbody>${tbl.rows.map(r=>`<tr>${tbl.cols.map(c=>`<td>${esc(sqlFmt(r[c]))}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+function sqlResultHtml(rows){
+  if(!rows.length)return '<div class="sqlMeta">✔ ran successfully — 0 rows</div>';
+  const cols=Object.keys(rows[0]);
+  return `<table class="sqlTbl"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead>`
+    +`<tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${esc(sqlFmt(r[c]))}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+    +`<div class="sqlMeta">${rows.length} row(s)</div>`;
+}
+function sqlRunPanel(dsName){
+  const db=window.SQL_DATASETS[dsName];
+  return `<details class="depth sqlPanel" open><summary>🗄️ Sample data — run your query for real</summary><div class="depthBody">
+  <p>Your SQL runs against this live sample database, entirely in your browser (a small built-in engine — no server, works offline):</p>
+  <div class="sqlData">${Object.keys(db).map(t=>sqlTableHtml(t,db[t])).join('')}</div>
+  <button class="primary" type="button" onclick="runSqlExercise('${dsName}')">▶ Run query on sample data</button>
+  <div id="sqlResult" class="sqlResult"><div class="sqlMeta">Write a SELECT above and press Run to see real rows.</div></div>
+  </div></details>`;
+}
+function runSqlExercise(dsName){
+  const out=document.getElementById('sqlResult'); if(!out)return;
+  const db=window.SQL_DATASETS[dsName]; if(!db){out.innerHTML='<div class="sqlErr">sample data unavailable</div>';return;}
+  const src=((document.getElementById('ed')||{}).value||'').replace(/\/\*[\s\S]*?\*\//g,' ').replace(/--[^\n]*/g,' ');
+  const stmts=src.split(';').map(s=>s.trim()).filter(Boolean).filter(s=>/^select/i.test(s));
+  if(!stmts.length){out.innerHTML='<div class="sqlMeta">No SELECT found — write one (INSERT/UPDATE/DDL are not executed by the sample runner).</div>';return;}
+  let html='';
+  stmts.forEach((s,i)=>{
+    try{ const rows=window.SQLDB.run(JSON.parse(JSON.stringify(db)),s); html+=`${stmts.length>1?`<div class="sqlQ">Query ${i+1}</div>`:''}${sqlResultHtml(rows)}`; }
+    catch(err){ html+=`<div class="sqlErr">${stmts.length>1?'Query '+(i+1)+': ':''}${esc(err.message)}</div>`; }
+  });
+  out.innerHTML=html;
+}
 
 /* ============================== GETTING STARTED ============================== */
 function renderGettingStarted(){

@@ -67,7 +67,7 @@ LIMIT 10 OFFSET 20;                -- page 3 of 10-per-page</div>
 </ul>
 <p>Why <code>NULL = NULL</code> is not true: NULL means <i>unknown</i>, and "is unknown equal to unknown?" is itself unknown — three-valued logic. WHERE keeps only rows where the predicate is <i>true</i>, so unknowns silently drop. When a query "loses" rows, check for a NULL comparison first.</p>`,
 docs:[['PostgreSQL tutorial — queries','https://www.postgresql.org/docs/current/tutorial-select.html'],['SELECT reference','https://www.postgresql.org/docs/current/sql-select.html'],['Pattern matching (LIKE)','https://www.postgresql.org/docs/current/functions-matching.html']],
-ex:{title:'SELECT drill',lang:'sql',
+ex:{title:'SELECT drill',lang:'sql',data:'library',
 prompt:`Against the <code>books(id, author_id, title, price_cents, published)</code> table, one query under each numbered comment: (1) every column of all books; (2) only <code>title</code> of books cheaper than 1500 cents, sorted by title <b>ascending</b>; (3) title and price of the 5 most expensive books (<code>ORDER BY ... DESC LIMIT</code>); (4) all books whose title starts with <code>Java</code> (LIKE); (5) books that have <b>no</b> published date (NULL check); (6) the number of books and the average price, in one query (COUNT + AVG).`,
 starter:`-- 1)
 
@@ -181,7 +181,7 @@ HAVING SUM(t.amount_cents) &gt; 100000;             -- HAVING filters groups
 LEFT JOIN  -- keep left rows even with no match (NULLs fill the right side)</div>
 <p>Execution order (not writing order!): FROM → JOIN → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT. WHERE filters rows before grouping; HAVING filters after. If you remember one thing: JOIN + GROUP BY answers 80% of real reporting questions.</p>`,
 docs:[['SQL tutorial — PostgreSQL docs','https://www.postgresql.org/docs/current/tutorial-sql.html'],['SQL joins visualized — Atlassian','https://www.atlassian.com/data/sql/sql-join-types-explained-visually']],
-ex:{title:'Write the queries',lang:'sql',
+ex:{title:'Write the queries',lang:'sql',data:'shop',
 prompt:`Given tables <code>users(id, name)</code> and <code>orders(id, user_id, total_cents, created_at)</code>, write: (1) the 5 most recent orders (all columns, newest first), (2) each user's name and their order count — <b>including users with zero orders</b> (which JOIN?) — grouped and aliased <code>order_count</code>, (3) names of users whose lifetime total exceeds 50000 cents (JOIN + GROUP BY + HAVING).`,
 starter:`-- 1)
 
@@ -239,7 +239,7 @@ LEFT JOIN departments d ON d.id = e.dept_id; -- keeps employees with no dept
 <p><b>Semi-join and anti-join</b> answer "does a match exist?" without duplicating rows. A <b>semi-join</b> keeps left rows that <i>have</i> a match — written with <code>EXISTS</code> or <code>IN</code>. An <b>anti-join</b> keeps left rows with <i>no</i> match — written with <code>NOT EXISTS</code>, or the classic <code>LEFT JOIN ... WHERE right.id IS NULL</code> ("find the orphans").</p>
 <p>One caution: <b>NATURAL JOIN</b> auto-matches every column that shares a name. It reads short but breaks silently when someone adds a same-named column, so most teams avoid it and write the <code>ON</code> explicitly.</p>`,
 docs:[['JOINs visualized — Atlassian','https://www.atlassian.com/data/sql/sql-join-types-explained-visually'],['SELECT / JOIN reference','https://www.postgresql.org/docs/current/sql-select.html'],['EXISTS & subqueries','https://www.postgresql.org/docs/current/functions-subquery.html']],
-ex:{title:'Join drill',lang:'sql',
+ex:{title:'Join drill',lang:'sql',data:'org',
 prompt:`Tables: <code>employees(id, name, dept_id, manager_id)</code> and <code>departments(id, name)</code>. One query per numbered comment: (1) each employee with their department name, <b>matches only</b> (INNER); (2) <b>every</b> employee including those with no department (LEFT JOIN); (3) departments that have <b>no</b> employees — the anti-join pattern (LEFT JOIN then WHERE the employee id IS NULL); (4) every employee paired with every department (CROSS JOIN); (5) each employee alongside their manager's name — a SELF JOIN of employees to itself on <code>manager_id</code>; (6) everything from both tables, keeping unmatched rows on either side (FULL OUTER JOIN).`,
 starter:`-- 1) INNER
 

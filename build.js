@@ -9,7 +9,7 @@ const manifest = JSON.parse(read('content/streams/manifest.json'));
 const data = read('content/streams/_header.js')
   + manifest.map(f => read(path.join('content/streams', f))).join('')
   + read('content/streams/_footer.js');
-const script = read('src/app.js') + data + read('src/boot.js');
+const script = read('src/sqlengine.js') + read('src/app.js') + data + read('src/boot.js');
 const html = read('src/shell.html')
   .replace('@@STYLES@@', () => read('src/styles.css'))
   .replace('@@SCRIPT@@', () => script);

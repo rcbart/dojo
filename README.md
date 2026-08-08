@@ -10,6 +10,11 @@ computer science & algorithms, web/HTTP, front-end (React), APIs, databases & SQ
 security & cryptography, a large identity & access domain, DevOps, architecture, and a senior
 ("dan") track.
 
+**▶ Live demo:** https://rcbart.github.io/knowledge-base/ — a single, self-contained page. SQL
+exercises run against real sample data in your browser (built-in engine, no server). *(First time:
+in the repo's Settings → Pages, set Source to "GitHub Actions"; the included workflow builds and
+deploys on every push.)*
+
 ## What's inside
 
 - **Guided onboarding** — a **🚀 Getting started** page (how to set up your environment and how
@@ -28,6 +33,53 @@ security & cryptography, a large identity & access domain, DevOps, architecture,
 Exercises are graded by regex against your submitted source (Java, SQL, shell, JS/JSX) plus optional
 in-app AI execution — not a full compiler. That's fast for learning; use the Run-locally panel when
 you want ground truth.
+
+## Architecture
+
+Three decoupled layers — content is pure data, a vanilla-JS runtime renders it, and a build step
+fuses everything into one offline file. An optional Node/SQLite backend adds accounts and progress.
+
+```mermaid
+flowchart TD
+  subgraph Content["content/streams/*.js  (pure data)"]
+    M[manifest.json order] --> S["STREAMS.push · lessons · exercises · regex tests"]
+  end
+  subgraph Runtime["src/  (vanilla JS, zero deps)"]
+    A["app.js · nav · editor · highlighter · grader · glossary · onboarding"]
+    E["sqlengine.js · in-browser SQL engine + sample datasets"]
+    C["styles.css · shell.html · boot.js"]
+  end
+  V["scripts/verify.js · CI gate: parses modules, runs every test vs its solution"]
+  B["build.js · concatenate + inline"]
+  D["dist/index.html · one self-contained offline file"]
+  Site["site/ · Node + node:sqlite · scrypt auth · CSP · rate limiting"]
+  GH["GitHub Actions → GitHub Pages"]
+
+  Content --> B
+  Runtime --> B
+  Content --> V
+  V --> B
+  B --> D
+  D --> Site
+  B --> GH
+```
+
+**How grading works (honestly):** exercises are checked by regex against your source plus, in the
+app, an AI test-runner — fast and offline, but it verifies *structure*, not full runtime behavior.
+Two things close that gap: SQL exercises **actually execute** against sample datasets via the
+built-in engine (`src/sqlengine.js`), and every exercise has a **Run-locally** panel with the exact
+commands to compile/run/test it on a real toolchain.
+
+## Screenshots
+
+Add your own after opening `devdojo.html` (or the live demo): drop images in `docs/img/` and
+reference them here, e.g.
+
+```
+![Home & belts](docs/img/home.png)
+![A lesson with the live SQL runner](docs/img/sql-runner.png)
+![Glossary with click-to-explain](docs/img/glossary.png)
+```
 
 ## Repository layout
 

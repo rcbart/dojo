@@ -261,3 +261,16 @@ details.depth[open]>summary::before{content:'▾'}
 .pathBody h3{margin:2px 0 4px;font-size:16px}
 .pathBody p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.5}
 .pathBelt{font-size:11px;font-weight:800;letter-spacing:.04em;color:#8b5cf6;text-transform:uppercase}
+
+/* ===== live SQL runner ===== */
+.sqlPanel .depthBody{padding-bottom:14px}
+.sqlData{display:flex;flex-wrap:wrap;gap:16px;margin:8px 0 12px}
+.sqlTblName{font-size:12px;font-weight:800;color:#4338ca;margin:4px 0}
+.sqlTblN{font-weight:600;color:var(--muted)}
+.sqlTbl{border-collapse:collapse;font-size:12.5px;margin-bottom:6px}
+.sqlTbl th,.sqlTbl td{border:1px solid var(--line);padding:3px 8px;text-align:left}
+.sqlTbl th{background:#f5f3ff;font-weight:700}
+.sqlResult{margin-top:10px;overflow-x:auto}
+.sqlMeta{font-size:12px;color:var(--muted);margin-top:4px}
+.sqlQ{font-size:12px;font-weight:800;color:#8b5cf6;margin:8px 0 2px}
+.sqlErr{color:#b91c1c;font:12.5px/1.5 ui-monospace,Menlo,monospace;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px 10px;margin:6px 0}
