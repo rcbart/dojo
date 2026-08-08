@@ -5,7 +5,7 @@ STREAMS.push({icon:'⚛️',title:'Front-End with React',blurb:'Build user inter
 <p><b>React</b> is the most widely used of these frameworks. Its core ideas are tiny: your UI is built from <b>components</b> (reusable functions that return markup), each component has <b>props</b> (inputs passed in) and <b>state</b> (data that changes over time), and whenever state changes React <b>re-renders</b> that component and reconciles the DOM for you. This is the MVC "view" done right: data in, UI out.</p>
 <p>This stream builds from a single component up to a data-driven, secured app. It pairs with the MVC and HTTP lessons on the backend side.</p>`,
 docs:[['React — official docs','https://react.dev/learn'],['DOM introduction — MDN','https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction']],
-ex:{title:'The core vocabulary',lang:'js',
+ex:{title:'The core vocabulary',lang:'js',run:{call:'role',cases:[{args:['component'],expect:'reusable piece of UI'},{args:['props'],expect:'inputs passed to a component'},{args:['state'],expect:'data that changes over time'},{args:['render'],expect:'produce UI from current data'},{args:['zzz'],expect:'unknown'}]},
 prompt:`Write <code>function role(term)</code> that returns what each React concept is: <code>"component"</code>→<code>"reusable piece of UI"</code>, <code>"props"</code>→<code>"inputs passed to a component"</code>, <code>"state"</code>→<code>"data that changes over time"</code>, <code>"render"</code>→<code>"produce UI from current data"</code>, else <code>"unknown"</code>.`,
 starter:`function role(term) {
   return null;
@@ -152,7 +152,7 @@ hints:['Side effects like fetch belong in useEffect, not in the render body.','C
   body: JSON.stringify(user)
 });</div>`,
 docs:[['Using fetch — MDN','https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch'],['WebSocket — MDN','https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API'],['Server-sent events — MDN','https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events']],
-ex:{title:'POST JSON to the backend',lang:'js',
+ex:{title:'POST JSON to the backend',lang:'js',run:{call:'createUser',mock:'fetch',cases:[{name:'sends a JSON POST to /api/users with the user in the body',args:[{name:'Ada'}],expect:{method:'POST',url:'/api/users',contentType:'application/json',bodyIncludes:'Ada'}}]},
 prompt:`Write <code>async function createUser(user)</code> that POSTs to <code>/api/users</code> with <code>fetch</code>: method <code>"POST"</code>, header <code>"Content-Type": "application/json"</code>, body <code>JSON.stringify(user)</code>. <code>await</code> the response and return its parsed JSON.`,
 starter:`async function createUser(user) {
   // POST JSON to /api/users and return the parsed response
@@ -181,7 +181,7 @@ hints:['fetch takes a URL and an options object with method, headers, and body.'
 }</div>
 <p><b>Context</b> solves "prop drilling" — passing a value through many layers. A provider makes a value available to any descendant via <code>useContext</code>, ideal for the current user, theme, or locale. Reach for an external store (Redux, Zustand) only when context plus reducers genuinely stop scaling; most apps never need to. And lift shared state up to the nearest common parent before reaching for anything fancier.</p>`,
 docs:[['useReducer — React','https://react.dev/reference/react/useReducer'],['Passing data with context','https://react.dev/learn/passing-data-deeply-with-context']],
-ex:{title:'Write a reducer',lang:'js',
+ex:{title:'Write a reducer',lang:'js',run:{call:'reducer',cases:[{name:'inc increments count',args:[{count:0},{type:'inc'}],expect:{count:1}},{name:'dec decrements count',args:[{count:5},{type:'dec'}],expect:{count:4}},{name:'unknown action returns state unchanged',args:[{count:2},{type:'noop'}],expect:{count:2}}]},
 prompt:`Write <code>function reducer(state, action)</code> that switches on <code>action.type</code>: <code>"inc"</code> returns <code>{ count: state.count + 1 }</code>, <code>"dec"</code> returns <code>{ count: state.count - 1 }</code>, and any other action returns the unchanged <code>state</code>.`,
 starter:`function reducer(state, action) {
   // switch on action.type; default returns state unchanged

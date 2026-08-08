@@ -561,6 +561,8 @@ function localChecks(e,code){
 function cline(txt,cls,attr){return '<div class="cLine'+(cls?' '+cls:'')+'"'+(attr||'')+'>'+txt+'</div>';}
 async function runTests(l,e,sid,ei,exs){
   const code=document.getElementById('ed').value;
+  if(e.lang==='sql'&&e.data&&window.SQLDB&&window.SQL_DATASETS&&window.SQL_DATASETS[e.data])return gradeSql(l,e,sid,ei,exs,code);
+  if(e.run&&typeof Worker!=='undefined')return gradeJs(l,e,sid,ei,exs,code);
   const tests=document.getElementById('io-tests');
   const con=document.getElementById('io-console');
   const btn=document.getElementById('btnRun');btn.disabled=true;
@@ -656,6 +658,93 @@ Respond with ONLY valid JSON, no markdown fences:
     if(allLocal)completeExercise(l,sid,ei,exs);
   }
   btn.disabled=false;
+}
+/* ============================== REAL EXECUTION GRADERS ============================== */
+function sqlSelects(text){
+  return text.replace(/\/\*[\s\S]*?\*\//g,' ').replace(/--[^\n]*/g,' ')
+    .split(';').map(s=>s.trim()).filter(Boolean).filter(s=>/^select/i.test(s));
+}
+function canonRows(rows,ordered){
+  const tuples=rows.map(r=>JSON.stringify(Object.values(r)));
+  if(!ordered)tuples.sort();
+  return JSON.stringify(tuples);
+}
+/* Grade SQL by REAL execution: run the learner's and the reference solution's SELECTs
+   against the sample dataset and compare result sets (value-tuples; order matters only
+   when the reference uses ORDER BY). */
+function gradeSql(l,e,sid,ei,exs,code){
+  const btn=document.getElementById('btnRun');btn.disabled=true;
+  const tests=document.getElementById('io-tests');const con=document.getElementById('io-console');
+  const db=window.SQL_DATASETS[e.data];
+  const refQ=sqlSelects(e.solution),myQ=sqlSelects(code);
+  const results=[];let allPass=refQ.length>0;
+  const n=Math.max(refQ.length,myQ.length);
+  for(let i=0;i<n;i++){
+    const rq=refQ[i],mq=myQ[i];
+    if(!rq){results.push({pass:false,name:'Query '+(i+1),note:'unexpected extra query'});allPass=false;continue;}
+    if(!mq){results.push({pass:false,name:'Query '+(i+1),note:'missing — this exercise expects '+refQ.length+' quer'+(refQ.length>1?'ies':'y')});allPass=false;continue;}
+    let refRows=null,myRows=null,err=null;
+    try{refRows=window.SQLDB.run(JSON.parse(JSON.stringify(db)),rq);}catch(x){refRows=null;}
+    try{myRows=window.SQLDB.run(JSON.parse(JSON.stringify(db)),mq);}catch(x){err=x.message;}
+    if(err){results.push({pass:false,name:'Query '+(i+1),note:'SQL error: '+err});allPass=false;continue;}
+    const ordered=/order\s+by/i.test(rq);
+    const pass=!!refRows&&canonRows(myRows,ordered)===canonRows(refRows,ordered);
+    results.push({pass,name:'Query '+(i+1)+' returns the correct rows',
+      note:pass?'':((myRows?myRows.length:0)+' row(s) returned, expected '+(refRows?refRows.length:'?')+' — check columns, filter'+(ordered?', and order':'')) });
+    if(!pass)allPass=false;
+  }
+  tests.innerHTML='<h4 style="margin:8px 0 4px">Executed against sample data ('+esc(e.data)+')</h4>'+
+    results.map(c=>`<div class="tcase ${c.pass?'ok':'bad'}">${c.pass?'✔':'✘'} ${esc(c.name)}${c.note?' — '+esc(c.note):''}</div>`).join('')+
+    `<div class="aiBox"><h4>🗄️ Real execution</h4>Your SQL ran in the in-browser engine against the <b>${esc(e.data)}</b> dataset and its result set was compared to the reference — this is real execution, not a pattern match. Open “Sample data” below to inspect the rows.</div>`;
+  con.innerHTML=cline('$ dojo sql --dataset '+e.data,'dim')+cline(allPass?'All queries returned the expected rows.':'Some queries did not match the expected result set.',allPass?'ok':'err');
+  setTab('tests');markTab('console',allPass?'#16a34a':'#dc2626');
+  if(allPass)completeExercise(l,sid,ei,exs);
+  btn.disabled=false;
+}
+/* Grade pure-JS exercises by REAL execution in an isolated Web Worker. The exercise
+   supplies e.run = { call:'fnName', cases:[{args,expect,name?}], mock?:'fetch' }. */
+function buildWorkerSrc(code,spec){
+  const cases=JSON.stringify(spec.cases||[]);
+  const mode=spec.mock==='fetch'?'fetch':'call';
+  const callLine=mode==='fetch'
+    ? '__req=null; await '+spec.call+'.apply(null,c.args||[]); var r=checkFetch(c.expect,__req); results.push({name:c.name||("case "+(i+1)),pass:r.ok,note:r.note});'
+    : 'var got=await '+spec.call+'.apply(null,c.args||[]); var ok=deepEq(got,c.expect); results.push({name:c.name||("case "+(i+1)),pass:ok,note:ok?"":("returned "+JSON.stringify(got))});';
+  return '"use strict";\n'
+    +'function deepEq(a,b){return JSON.stringify(a)===JSON.stringify(b);}\n'
+    +'function checkFetch(x,req){if(!req)return{ok:false,note:"no fetch was called"};var o=req.opts||{};'
+    +'if(x.method&&String(o.method||"GET").toUpperCase()!==x.method.toUpperCase())return{ok:false,note:"method was "+(o.method||"GET")};'
+    +'if(x.url&&String(req.url).indexOf(x.url)<0)return{ok:false,note:"url was "+req.url};'
+    +'if(x.contentType){var h=o.headers||{};var ct=h["Content-Type"]||h["content-type"]||"";if(String(ct).indexOf(x.contentType)<0)return{ok:false,note:"content-type was "+ct};}'
+    +'if(x.bodyIncludes&&String(o.body||"").indexOf(x.bodyIncludes)<0)return{ok:false,note:"body was "+String(o.body||"")};return{ok:true,note:""};}\n'
+    +'(async function(){var results=[];var __req=null;'
+    +(mode==='fetch'?'self.fetch=function(u,o){__req={url:u,opts:o||{}};return Promise.resolve({ok:true,status:201,json:function(){return Promise.resolve({});}});};':'')
+    +'try{\n'+code+'\nvar cases='+cases+';for(var i=0;i<cases.length;i++){var c=cases[i];try{'+callLine+'}catch(err){results.push({name:c.name||("case "+(i+1)),pass:false,note:(err&&err.message)||String(err)});}}'
+    +'}catch(err){results.push({name:"loaded without error",pass:false,note:(err&&err.message)||String(err)});}'
+    +'postMessage(results);})();';
+}
+function gradeJs(l,e,sid,ei,exs,code){
+  const btn=document.getElementById('btnRun');btn.disabled=true;
+  const tests=document.getElementById('io-tests');const con=document.getElementById('io-console');
+  tests.innerHTML='<div class="aiBox"><span class="spin"></span>Running your code in a sandboxed Web Worker…</div>';setTab('tests');
+  let w=null;
+  const finish=(results,fatal)=>{
+    try{if(w)w.terminate();}catch(_){}
+    const allPass=!fatal&&results.length>0&&results.every(r=>r.pass);
+    tests.innerHTML='<h4 style="margin:8px 0 4px">Executed in a sandboxed Web Worker</h4>'+
+      (fatal?`<div class="tcase bad">✘ ${esc(fatal)}</div>`:results.map(c=>`<div class="tcase ${c.pass?'ok':'bad'}">${c.pass?'✔':'✘'} ${esc(c.name)}${c.note?' — '+esc(c.note):''}</div>`).join(''))+
+      `<div class="aiBox"><h4>▶ Real execution</h4>Your function was called with real inputs in an isolated worker and its output compared to expected values — real execution, not a pattern match.</div>`;
+    con.innerHTML=cline('$ run '+e.run.call+'()','dim')+cline(allPass?'All cases passed.':(fatal||'Failures above.'),allPass?'ok':'err');
+    markTab('console',allPass?'#16a34a':'#dc2626');
+    if(allPass)completeExercise(l,sid,ei,exs);
+    btn.disabled=false;
+  };
+  let src;try{src=buildWorkerSrc(code,e.run);}catch(x){return finish([],'could not prepare runner: '+x.message);}
+  try{
+    w=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
+    const timer=setTimeout(()=>finish([],'timed out after 3s (possible infinite loop)'),3000);
+    w.onmessage=ev=>{clearTimeout(timer);finish(ev.data,null);};
+    w.onerror=ev=>{clearTimeout(timer);finish([],(ev&&ev.message)||'worker error (check for syntax errors)');};
+  }catch(x){finish([],'worker unavailable: '+x.message);}
 }
 /* ============================== HINTS ============================== */
 async function nextStep(e,sid){
