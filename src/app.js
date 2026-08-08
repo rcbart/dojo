@@ -252,6 +252,7 @@ function completeLesson(l){
 function renderNav(){
   const nav=document.getElementById('nav');nav.innerHTML='';
   const home=document.createElement('div');home.className='streamHd';home.innerHTML='🏠 Overview';home.onclick=()=>{cur=null;renderHome();renderNav()};nav.appendChild(home);
+  const gloss=document.createElement('div');gloss.className='streamHd';gloss.innerHTML='📖 Glossary';gloss.onclick=()=>{cur=null;renderGlossary();renderNav()};nav.appendChild(gloss);
   STREAMS.forEach((s,si)=>{
     if(s.tournament&&!(STREAMS[si-1]&&STREAMS[si-1].tournament)){
       const dv=document.createElement('div');dv.className='navDivider';
@@ -661,7 +662,8 @@ const tip=document.getElementById('kwTip');
 function showTip(word,x,y){
   const k=KW[word]||KW[word.toLowerCase()];
   if(!k){tip.style.display='none';return}
-  tip.innerHTML=`<b>${esc(word)}</b> — ${k[0]} <a href="${k[1]}" target="_blank" rel="noopener">Docs ↗</a>`;
+  const link=/^https?:/.test(k[1]||'')?` <a href="${k[1]}" target="_blank" rel="noopener">Docs ↗</a>`:'';
+  tip.innerHTML=`<b>${esc(word)}</b> — ${esc(k[0])}${link}`;
   tip.style.display='block';
   tip.style.left=Math.min(x,innerWidth-360)+'px';
   tip.style.top=Math.min(y+14,innerHeight-120)+'px';
@@ -681,3 +683,159 @@ document.addEventListener('mouseup',e=>{
     else tip.style.display='none';
   },0);
 });
+
+/* ============================== GLOSSARY (domain-ordered) ============================== */
+/* Single source of truth for domain vocabulary. Rendered as its own section (renderGlossary)
+   AND merged into KW below so selecting a term in any lesson pops its definition. */
+const GLOSS=[
+ {domain:'Identity & Access (IAM)',icon:'🛂',groups:[
+   {h:'1 · The core distinction',terms:[
+     ['Authentication (authn)',`Proving who you are — the login step.`],
+     ['Authorization (authz)',`Deciding what you may do, once you are known.`],
+     ['Identity',`The account or entity behind a request — a person or a workload.`],
+     ['Principal',`The specific "who" a request acts as; in tokens, the sub (subject) claim.`],
+     ['Subject',`Same as principal — the entity a token is about (the sub claim).`],
+     ['Credential',`Whatever proves an identity: a password, a key, or a certificate.`],
+   ]},
+   {h:'2 · The actors',terms:[
+     ['Resource Owner',`The user who owns the data an app wants to reach.`],
+     ['Client',`The app requesting access. Called Relying Party in OIDC and Service Provider in SAML.`],
+     ['Relying Party (RP)',`OIDC name for the app that relies on the provider to authenticate the user.`],
+     ['Service Provider (SP)',`SAML name for the app that consumes assertions from an IdP.`],
+     ['Identity Provider (IdP)',`The authority that authenticates users and issues tokens or assertions. Called AS in OAuth, OP in OIDC.`],
+     ['Authorization Server (AS)',`OAuth name for the server that issues access tokens.`],
+     ['OpenID Provider (OP)',`OIDC name for the identity provider that issues ID tokens.`],
+     ['Resource Server (RS)',`The API that accepts and validates access tokens.`],
+   ]},
+   {h:'3 · Tokens & assertions',terms:[
+     ['Access token',`The key an app uses to call an API. Represents authorization, not identity.`],
+     ['ID token',`OIDC proof of who the user is, issued to the client. A JWT. Not for calling APIs.`],
+     ['Refresh token',`A long-lived token used to obtain new access tokens without a fresh login.`],
+     ['Assertion',`SAML signed XML statement about a user — its equivalent of an ID token.`],
+     ['JWT',`JSON Web Token — a signed, self-contained token whose claims you can read and verify.`],
+     ['Opaque token',`A random reference with no readable content; validated by calling the issuer introspection endpoint.`],
+     ['Claim',`A single fact inside a token, such as sub, email, or role.`],
+     ['Scope',`A named permission a token grants, such as read invoices.`],
+     ['Bearer token',`A token usable by anyone who holds it, like cash. Protect it in transit and at rest.`],
+     ['Sender-constrained token',`A token bound to a key only the real client has (mTLS-bound or DPoP), so a stolen copy is useless.`],
+   ]},
+   {h:'4 · Protocols & standards',terms:[
+     ['OAuth 2.0',`The delegated authorization framework: lets an app act for a user without the user password.`],
+     ['OpenID Connect (OIDC)',`An authentication layer on top of OAuth 2.0 that adds the ID token.`],
+     ['SAML 2.0',`An XML-based standard for enterprise web single sign-on.`],
+     ['SCIM',`A standard for provisioning and syncing user accounts across systems.`],
+     ['WebAuthn',`A browser standard for phishing-resistant, origin-bound login (the basis of passkeys).`],
+     ['LDAP',`A protocol for querying enterprise directories of users and groups.`],
+     ['Kerberos',`A ticket-based enterprise SSO protocol (KDC, TGT, service tickets).`],
+   ]},
+   {h:'5 · Flows / grant types',terms:[
+     ['Authorization Code flow',`The main flow for apps acting for a user: get a short code via the browser, then swap it for tokens on the back channel.`],
+     ['PKCE',`Proof Key for Code Exchange — protects the code flow for public clients so a stolen code cannot be redeemed.`],
+     ['Client Credentials flow',`Machine-to-machine flow with no user: the service authenticates as itself to get a token.`],
+     ['Device flow',`For input-limited devices such as TVs and CLIs: the user approves on a phone using a code.`],
+     ['Token Exchange',`Swapping one token for another, for example to call a downstream service on behalf of a user.`],
+     ['CIBA',`Client-Initiated Backchannel Authentication — the user approves on a separate device, no browser redirect.`],
+     ['Implicit flow',`A legacy flow that returned tokens directly in the browser. Deprecated; use code plus PKCE.`],
+     ['ROPC',`Resource Owner Password Credentials — the app collects the user password directly. Deprecated.`],
+   ]},
+   {h:'6 · Endpoints',terms:[
+     ['/authorize',`Where a login or consent flow starts (front channel, in the browser).`],
+     ['/token',`Where an app exchanges a code or credentials for tokens (back channel).`],
+     ['/userinfo',`An OIDC endpoint returning profile claims for the access token user.`],
+     ['/introspect',`Where a resource server asks the issuer whether an opaque token is valid (RFC 7662).`],
+     ['/revoke',`Where a token is proactively invalidated (RFC 7009).`],
+     ['JWKS',`The published set of public keys (jwks_uri) used to verify token signatures.`],
+     ['Discovery',`The /.well-known/openid-configuration document listing a provider endpoints and keys.`],
+   ]},
+   {h:'7 · Core concepts',terms:[
+     ['SSO',`Single Sign-On — log in once and reach many apps.`],
+     ['Federation',`Trusting an identity authority across organizational boundaries.`],
+     ['Trust',`A relying party accepting tokens or assertions signed by an authority it is configured to rely on.`],
+     ['Consent',`The user explicitly approving what an app may access.`],
+     ['Delegated authorization',`The core idea of OAuth: you let an app do a limited set of things for you without sharing your password, and you can revoke it.`],
+     ['Impersonation',`When a service simply acts as the user with no distinction — contrast with delegation.`],
+     ['Least privilege',`Granting only the access truly needed, nothing more.`],
+     ['MFA',`Multi-factor authentication — requiring two or more independent factors.`],
+     ['Step-up authentication',`Asking for stronger proof only when an action is sensitive.`],
+     ['Public client',`An app that cannot keep a secret, such as a SPA or mobile app — must use PKCE.`],
+     ['Confidential client',`An app that can keep a secret, such as a server — authenticates to the token endpoint.`],
+     ['Front channel',`Communication that passes through the user browser (redirects).`],
+     ['Back channel',`Direct server-to-server communication the browser never sees.`],
+     ['audience (aud)',`The claim naming who a token is for; a resource server must check it.`],
+     ['issuer (iss)',`The claim naming who minted a token; verified against the expected authority.`],
+     ['nonce',`A one-time value that ties an OIDC ID token to a single login, preventing replay.`],
+     ['state',`A random value the client sends on the redirect and re-checks on return, preventing CSRF.`],
+     ['Session',`Server- or cookie-tracked state that remembers a logged-in user between requests.`],
+   ]},
+   {h:'8 · Threats & defenses',terms:[
+     ['CSRF',`Cross-Site Request Forgery — a malicious page makes your browser send an unintended authenticated request. Defended with the state parameter and anti-CSRF tokens.`],
+     ['Replay attack',`Re-sending a captured token or message to impersonate someone. Defended with short expiries, nonces, and sender-constrained tokens.`],
+     ['Token theft',`Stealing a bearer token to reuse it. Defended with short lifetimes, secure storage, and proof-of-possession.`],
+     ['Phishing-resistant authentication',`Login methods that cannot be phished because the secret never leaves the device and is bound to the real site origin (passkeys and WebAuthn).`],
+     ['Open redirect',`A flaw where an app forwards users to an attacker URL; abused to steal codes or tokens.`],
+   ]},
+   {h:'9 · Governance & lifecycle',terms:[
+     ['Provisioning',`Creating and configuring user accounts and their access, often automated via SCIM.`],
+     ['Deprovisioning',`Removing access when someone leaves or changes roles.`],
+     ['JML',`Joiner, Mover, Leaver — the employee identity lifecycle.`],
+     ['JIT provisioning',`Just-in-time — creating the account automatically on first successful login.`],
+     ['RBAC',`Role-Based Access Control — permissions granted through roles.`],
+     ['ABAC',`Attribute-Based Access Control — decisions from attributes and policy rules.`],
+     ['IGA',`Identity Governance and Administration — access requests, reviews, and certification.`],
+     ['PAM',`Privileged Access Management — securing and monitoring high-power accounts.`],
+   ]},
+ ]},
+ {domain:'Service-to-Service & Zero Trust',icon:'🔗',groups:[
+   {h:'Machine identity',terms:[
+     ['SPIFFE',`A standard for giving workloads verifiable identities (SPIFFE IDs).`],
+     ['SPIRE',`The reference implementation that attests workloads and issues SVIDs.`],
+     ['SVID',`SPIFFE Verifiable Identity Document — the X.509 cert or JWT a workload uses to prove who it is.`],
+     ['mTLS',`Mutual TLS — both client and server present certificates, so each proves its identity.`],
+     ['Workload identity',`A non-human identity for a service or job, used instead of shared secrets.`],
+     ['Attestation',`Proving what a workload is, from node or process properties, before issuing it an identity.`],
+     ['Zero trust',`Never trust by network location; verify identity and authorize every request.`],
+   ]},
+ ]},
+ {domain:'PKI & Certificates',icon:'📜',groups:[
+   {h:'Public key infrastructure',terms:[
+     ['X.509',`The standard format for a public-key certificate binding a key to an identity.`],
+     ['Certificate Authority (CA)',`A trusted issuer that signs certificates.`],
+     ['Chain of trust',`A certificate is trusted because it chains up to a root CA you already trust.`],
+     ['CSR',`Certificate Signing Request — what you send a CA to get a certificate issued.`],
+     ['CRL',`Certificate Revocation List — a published list of revoked certificates.`],
+     ['OCSP',`Online Certificate Status Protocol — checks a single certificate revocation status in real time.`],
+     ['ACME',`The protocol behind automated certificate issuance, such as Let us Encrypt.`],
+   ]},
+ ]},
+];
+/* Merge glossary terms into the keyword-popup table (KW) so click-to-explain works in lessons.
+   Adds a key for any parenthetical acronym and for a single-word/acronym leading token.
+   Never overrides an existing (Java) keyword. */
+(function(){
+  GLOSS.forEach(function(d){d.groups.forEach(function(g){g.terms.forEach(function(t){
+    var term=t[0], def=t[1], keys=[];
+    var m=term.match(/\(([A-Za-z]{2,14})\)/); if(m)keys.push(m[1]);
+    var first=term.split(/[\s(]/)[0];
+    if(/^[A-Za-z]{2,14}$/.test(first))keys.push(first);
+    keys.forEach(function(k){k=k.toLowerCase(); if(!KW[k])KW[k]=[def,'#glossary'];});
+  });});});
+})();
+function renderGlossary(){
+  const m=document.getElementById('main');
+  const jump=GLOSS.map((d,i)=>`<a class="glossJump" href="javascript:void(0)" onclick="document.getElementById('gd${i}').scrollIntoView({behavior:'smooth'})">${d.icon} ${esc(d.domain)}</a>`).join('');
+  const body=GLOSS.map((d,i)=>`<section id="gd${i}" class="glossDom"><h2>${d.icon} ${esc(d.domain)}</h2>${d.groups.map(g=>`<h3 class="glossGrp">${esc(g.h)}</h3><dl class="glossList">${g.terms.map(t=>`<div class="glossItem"><dt>${esc(t[0])}</dt><dd>${esc(t[1])}</dd></div>`).join('')}</dl>`).join('')}</section>`).join('');
+  m.innerHTML=`<div class="home glossary">
+  <h1>📖 Glossary</h1>
+  <p>Every key term in DevDojo, grouped by domain and in logical reading order. In any lesson, <b>select or double-click a highlighted term</b> to see its definition inline — this page is the full reference.</p>
+  <input id="glossSearch" class="glossSearch" placeholder="Filter terms…" oninput="filterGloss(this.value)" aria-label="Filter glossary terms">
+  <div class="glossJumps">${jump}</div>
+  ${body}</div>`;
+  m.scrollTop=0;
+}
+function filterGloss(q){
+  q=(q||'').trim().toLowerCase();
+  document.querySelectorAll('#main .glossItem').forEach(it=>{
+    it.style.display=(!q||it.textContent.toLowerCase().includes(q))?'':'none';
+  });
+  document.querySelectorAll('#main .glossGrp, #main .glossDom h2').forEach(h=>{h.style.display=q?'none':'';});
+}

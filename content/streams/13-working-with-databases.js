@@ -211,6 +211,234 @@ FROM users u
 JOIN orders o ON o.user_id = u.id
 GROUP BY u.name
 HAVING SUM(total_cents) > 50000;`}},
+{id:'db1a',title:'Every JOIN type, in plain English',body:`
+<p>A JOIN stitches rows from two tables together using a matching rule (the <code>ON</code> condition). The only thing that changes between join types is <b>which unmatched rows you keep</b>. Picture two tables: <code>employees(id, name, dept_id, manager_id)</code> and <code>departments(id, name)</code>.</p>
+<div class="codeSample">-- INNER JOIN — only rows that match on BOTH sides (the overlap)
+SELECT e.name, d.name AS dept
+FROM employees e
+JOIN departments d ON d.id = e.dept_id;      -- "JOIN" alone means INNER
+
+-- LEFT [OUTER] JOIN — every LEFT row; right side is NULL when no match
+SELECT e.name, d.name AS dept
+FROM employees e
+LEFT JOIN departments d ON d.id = e.dept_id; -- keeps employees with no dept
+
+-- RIGHT [OUTER] JOIN — mirror image: every RIGHT row, left may be NULL
+-- FULL [OUTER] JOIN — every row from BOTH; NULLs fill whichever side is missing
+-- CROSS JOIN — every combination (Cartesian product): rows_left x rows_right
+-- SELF JOIN — a table joined to itself, using two aliases</div>
+<p>Simple way to remember them:</p>
+<ul>
+<li><b>INNER</b> = "matches only." Rows that exist in both tables.</li>
+<li><b>LEFT</b> = "keep everything on the left." Great for "all X, and their Y if any."</li>
+<li><b>RIGHT</b> = LEFT flipped. Most people just reorder the tables and use LEFT.</li>
+<li><b>FULL OUTER</b> = "keep everything, both sides." Nothing is dropped.</li>
+<li><b>CROSS</b> = "every pairing." No ON clause. Use on purpose (e.g. all sizes x all colors); by accident it explodes row counts.</li>
+<li><b>SELF</b> = same table twice — an employee row joined to its manager row.</li>
+</ul>
+<p><b>Semi-join and anti-join</b> answer "does a match exist?" without duplicating rows. A <b>semi-join</b> keeps left rows that <i>have</i> a match — written with <code>EXISTS</code> or <code>IN</code>. An <b>anti-join</b> keeps left rows with <i>no</i> match — written with <code>NOT EXISTS</code>, or the classic <code>LEFT JOIN ... WHERE right.id IS NULL</code> ("find the orphans").</p>
+<p>One caution: <b>NATURAL JOIN</b> auto-matches every column that shares a name. It reads short but breaks silently when someone adds a same-named column, so most teams avoid it and write the <code>ON</code> explicitly.</p>`,
+docs:[['JOINs visualized — Atlassian','https://www.atlassian.com/data/sql/sql-join-types-explained-visually'],['SELECT / JOIN reference','https://www.postgresql.org/docs/current/sql-select.html'],['EXISTS & subqueries','https://www.postgresql.org/docs/current/functions-subquery.html']],
+ex:{title:'Join drill',lang:'sql',
+prompt:`Tables: <code>employees(id, name, dept_id, manager_id)</code> and <code>departments(id, name)</code>. One query per numbered comment: (1) each employee with their department name, <b>matches only</b> (INNER); (2) <b>every</b> employee including those with no department (LEFT JOIN); (3) departments that have <b>no</b> employees — the anti-join pattern (LEFT JOIN then WHERE the employee id IS NULL); (4) every employee paired with every department (CROSS JOIN); (5) each employee alongside their manager's name — a SELF JOIN of employees to itself on <code>manager_id</code>; (6) everything from both tables, keeping unmatched rows on either side (FULL OUTER JOIN).`,
+starter:`-- 1) INNER
+
+-- 2) LEFT
+
+-- 3) anti-join (departments with no employees)
+
+-- 4) CROSS
+
+-- 5) SELF (employee + manager)
+
+-- 6) FULL OUTER
+`,
+solution:`-- 1) INNER
+SELECT e.name, d.name AS dept
+FROM employees e
+JOIN departments d ON d.id = e.dept_id;
+
+-- 2) LEFT
+SELECT e.name, d.name AS dept
+FROM employees e
+LEFT JOIN departments d ON d.id = e.dept_id;
+
+-- 3) anti-join (departments with no employees)
+SELECT d.name
+FROM departments d
+LEFT JOIN employees e ON e.dept_id = d.id
+WHERE e.id IS NULL;
+
+-- 4) CROSS
+SELECT e.name, d.name
+FROM employees e
+CROSS JOIN departments d;
+
+-- 5) SELF (employee + manager)
+SELECT e.name AS employee, m.name AS manager
+FROM employees e
+LEFT JOIN employees m ON m.id = e.manager_id;
+
+-- 6) FULL OUTER
+SELECT e.name, d.name
+FROM employees e
+FULL OUTER JOIN departments d ON d.id = e.dept_id;
+`,
+tests:[{d:'Q1: plain INNER JOIN employees to departments',re:'1\\)[\\s\\S]*?from\\s+employees\\s+e\\s+join\\s+departments',flags:'is'},{d:'Q2: LEFT JOIN keeps every employee',re:'2\\)[\\s\\S]*?left\\s+join\\s+departments',flags:'is'},{d:'Q3: anti-join = LEFT JOIN + IS NULL',re:'3\\)[\\s\\S]*?left\\s+join\\s+employees[\\s\\S]*?where\\s+e\\.id\\s+is\\s+null',flags:'is'},{d:'Q4: CROSS JOIN',re:'4\\)[\\s\\S]*?cross\\s+join\\s+departments',flags:'is'},{d:'Q5: SELF JOIN on manager_id',re:'5\\)[\\s\\S]*?join\\s+employees\\s+m\\s+on\\s+m\\.id\\s*=\\s*e\\.manager_id',flags:'is'},{d:'Q6: FULL OUTER JOIN',re:'6\\)[\\s\\S]*?full\\s+outer\\s+join\\s+departments',flags:'is'}],
+behavior:`1. Q1 drops employees with no department and departments with no employees. 2. Q2 lists all employees; dept is NULL for the unassigned. 3. Q3 returns only empty departments (the LEFT JOIN leaves employee columns NULL, and IS NULL keeps exactly those). 4. Q4 returns rows_employees x rows_departments pairings. 5. Q5 joins employees to employees; a manager-less employee shows NULL manager (LEFT). 6. Q6 keeps unmatched rows from both sides.`,
+hints:['INNER JOIN keeps only rows that match on both sides; LEFT JOIN keeps every left row and fills NULLs where the right has no match.','The anti-join pattern is LEFT JOIN then WHERE right.id IS NULL, which keeps only the left rows that had no match.','A SELF JOIN lists the same table twice with two aliases (e and m) joined on manager_id.']}},
+
+{id:'db1b',title:'The SQL command map: every command by category',body:`
+<p>SQL commands fall into four families. Knowing which family a command belongs to tells you what it does and how careful to be with it.</p>
+<div class="codeSample">-- DDL  (Data Definition) — define/change STRUCTURE
+CREATE TABLE tags (id SERIAL PRIMARY KEY, name TEXT NOT NULL);
+ALTER TABLE tags ADD COLUMN slug TEXT;   -- add/drop/modify columns, keys, indexes
+DROP TABLE tags;                          -- delete the table and all its data
+TRUNCATE tags;                            -- empty ALL rows fast, keep the table
+-- also: CREATE INDEX, CREATE VIEW, RENAME
+
+-- DML  (Data Manipulation) — read/change ROWS
+SELECT * FROM tags;                       -- read
+INSERT INTO tags (name) VALUES ('java');  -- add rows
+UPDATE tags SET slug = 'jvm' WHERE id = 1;-- change rows (WHERE!)
+DELETE FROM tags WHERE id = 1;            -- remove rows (WHERE!)
+
+-- TCL  (Transaction Control) — group changes as all-or-nothing
+BEGIN;  UPDATE tags SET slug='x' WHERE id=1;  COMMIT;   -- or ROLLBACK
+SAVEPOINT sp1;   -- a checkpoint you can ROLLBACK TO
+
+-- DCL  (Data Control) — permissions
+GRANT SELECT ON tags TO reader;   -- give a privilege
+REVOKE SELECT ON tags FROM reader;-- take it back</div>
+<p>Plain-terms cheat sheet: <b>DDL</b> = the building (create/alter/drop the tables). <b>DML</b> = the furniture (put rows in, move them, take them out). <b>TCL</b> = the "undo/commit" bracket around your DML. <b>DCL</b> = the keys to the doors (who may do what).</p>
+<p>Two safety notes worth burning in: <code>TRUNCATE</code> and <code>DROP</code> are DDL and in many databases cannot be rolled back the way DML can — treat them like a shredder. And every <code>UPDATE</code>/<code>DELETE</code> needs a <code>WHERE</code> unless you truly mean "all rows."</p>
+<p>Reading queries, you also lean on these <b>clauses</b> (parts of a SELECT, not standalone commands): <code>WHERE</code> (filter rows) → <code>GROUP BY</code> (bucket rows) → <code>HAVING</code> (filter buckets) → <code>ORDER BY</code> (sort) → <code>LIMIT/OFFSET</code> (paginate), plus <code>DISTINCT</code>, <code>JOIN</code>, and the set operators <code>UNION</code> / <code>INTERSECT</code> / <code>EXCEPT</code> that stack whole result sets.</p>`,
+docs:[['SQL commands — PostgreSQL','https://www.postgresql.org/docs/current/sql-commands.html'],['GRANT / privileges','https://www.postgresql.org/docs/current/sql-grant.html'],['Transactions','https://www.postgresql.org/docs/current/tutorial-transactions.html']],
+ex:{title:'One command from each family',lang:'sql',
+prompt:`One statement per numbered comment. (1) <b>CREATE</b> a table <code>tags</code> with <code>id SERIAL PRIMARY KEY</code> and <code>name TEXT NOT NULL</code>; (2) <b>ALTER</b> it to add a column <code>slug TEXT</code>; (3) <b>INSERT</b> a row (name and slug both <code>'java'</code>); (4) <b>GRANT</b> the <code>SELECT</code> privilege on <code>tags</code> to role <code>reader</code>; (5) wrap an <code>UPDATE</code> (set slug to <code>'jvm'</code> where name is <code>'java'</code>) inside a transaction using <code>BEGIN;</code> and <code>COMMIT;</code>; (6) <b>TRUNCATE</b> the table (empty it, keep it); (7) <b>DROP</b> the table.`,
+starter:`-- 1) CREATE (DDL)
+
+-- 2) ALTER (DDL)
+
+-- 3) INSERT (DML)
+
+-- 4) GRANT (DCL)
+
+-- 5) transaction (TCL) around an UPDATE
+
+-- 6) TRUNCATE (DDL)
+
+-- 7) DROP (DDL)
+`,
+solution:`-- 1) CREATE (DDL)
+CREATE TABLE tags (
+  id   SERIAL PRIMARY KEY,
+  name TEXT NOT NULL
+);
+
+-- 2) ALTER (DDL)
+ALTER TABLE tags ADD COLUMN slug TEXT;
+
+-- 3) INSERT (DML)
+INSERT INTO tags (name, slug) VALUES ('java', 'java');
+
+-- 4) GRANT (DCL)
+GRANT SELECT ON tags TO reader;
+
+-- 5) transaction (TCL) around an UPDATE
+BEGIN;
+UPDATE tags SET slug = 'jvm' WHERE name = 'java';
+COMMIT;
+
+-- 6) TRUNCATE (DDL)
+TRUNCATE tags;
+
+-- 7) DROP (DDL)
+DROP TABLE tags;
+`,
+tests:[{d:'Q1: CREATE TABLE tags (DDL)',re:'1\\)[\\s\\S]*?create\\s+table\\s+tags',flags:'is'},{d:'Q2: ALTER TABLE ADD COLUMN slug',re:'2\\)[\\s\\S]*?alter\\s+table\\s+tags\\s+add\\s+column\\s+slug',flags:'is'},{d:'Q3: INSERT INTO tags (DML)',re:'3\\)[\\s\\S]*?insert\\s+into\\s+tags',flags:'is'},{d:'Q4: GRANT SELECT ... TO reader (DCL)',re:'4\\)[\\s\\S]*?grant\\s+select\\s+on\\s+tags\\s+to\\s+reader',flags:'is'},{d:'Q5: BEGIN ... UPDATE ... COMMIT (TCL)',re:'5\\)[\\s\\S]*?begin\\s*;[\\s\\S]*?update\\s+tags[\\s\\S]*?commit\\s*;',flags:'is'},{d:'Q6: TRUNCATE tags (DDL)',re:'6\\)[\\s\\S]*?truncate\\s+tags',flags:'is'},{d:'Q7: DROP TABLE tags (DDL)',re:'7\\)[\\s\\S]*?drop\\s+table\\s+tags',flags:'is'}],
+behavior:`1. Q1 defines the structure (DDL). 2. Q2 changes the structure (DDL). 3. Q3 adds a row (DML). 4. Q4 grants a privilege (DCL). 5. Q5 groups the write so it commits all-or-nothing (TCL). 6. Q6 empties the table fast but leaves it defined. 7. Q7 removes the table entirely. One command from each family, in order.`,
+hints:['DDL defines structure: CREATE, ALTER, DROP, TRUNCATE. DML changes rows: INSERT, UPDATE, DELETE, SELECT.','TCL groups changes: wrap the UPDATE in BEGIN and COMMIT so it applies all-or-nothing.','DCL controls access: GRANT gives a privilege, REVOKE takes it back.']}},
+
+{id:'db1c',title:'Writing complex queries: CASE, the 1/0 tricks, CTEs & windows',body:`
+<p>Real reporting queries are built from a handful of power tools. The most useful — and most puzzling when you first meet it — is turning a <b>condition into a number</b> so you can add conditions up.</p>
+<p><b>The 1/0 idiom.</b> SQL cannot <code>SUM</code> a true/false directly, so you convert each row to 1 or 0 with <code>CASE</code>, then sum:</p>
+<div class="codeSample">-- count paid vs unpaid in ONE row (conditional aggregation)
+SELECT
+  SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) AS paid,
+  SUM(CASE WHEN status &lt;&gt; 'paid' THEN 1 ELSE 0 END) AS unpaid
+FROM orders;
+
+-- same idea with COUNT: CASE returns NULL for non-matches, COUNT ignores NULL
+SELECT COUNT(CASE WHEN status = 'paid' THEN 1 END) AS paid FROM orders;</div>
+<p>This "conditional aggregation" is how you pivot rows into columns (paid vs unpaid, by month, by region) in a single pass — far cheaper than one query per bucket.</p>
+<p><b>WHERE 1=1 and WHERE 1=0.</b> These constant conditions look odd but are idioms. <code>WHERE 1=1</code> is always true — a no-op placeholder so code that builds a query can append <code>AND ...</code> filters without worrying whether it is the first one. <code>WHERE 1=0</code> is always false — it returns <b>no rows</b>, handy for <code>CREATE TABLE copy AS SELECT * FROM orders WHERE 1=0</code> to clone just the structure, or as a safe stub while you build a statement.</p>
+<div class="codeSample">SELECT * FROM orders
+WHERE 1 = 1            -- always-true anchor
+  AND status = 'paid'  -- filters appended freely
+  AND amount_cents &gt; 1000;</div>
+<p><b>Subqueries</b> nest one query in another: a scalar subquery returns one value, <code>IN (SELECT ...)</code> / <code>EXISTS (SELECT ...)</code> test membership, and a subquery in <code>FROM</code> becomes a derived table. <b>CTEs</b> (<code>WITH name AS (...)</code>) are the readable alternative — name a result once, then use it like a table:</p>
+<div class="codeSample">WITH totals AS (
+  SELECT user_id, SUM(amount_cents) AS spent
+  FROM orders
+  GROUP BY user_id
+)
+SELECT user_id, spent FROM totals WHERE spent &gt; 100000;</div>
+<p><b>Window functions</b> compute across a set of rows <i>without</i> collapsing them (unlike GROUP BY). <code>ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC)</code> numbers each user's orders newest-first; swap in <code>SUM(...) OVER (...)</code> for running totals, or <code>RANK()</code> / <code>LAG()</code> for rankings and row-to-row comparisons.</p>
+<p>Two more everyday helpers: <code>COALESCE(x, 0)</code> substitutes a value for NULL, and <code>NULLIF(count, 0)</code> turns 0 into NULL so a division becomes NULL instead of a divide-by-zero error — the safe-average trick.</p>`,
+docs:[['CASE expression','https://www.postgresql.org/docs/current/functions-conditional.html'],['WITH / CTEs','https://www.postgresql.org/docs/current/queries-with.html'],['Window functions','https://www.postgresql.org/docs/current/tutorial-window.html']],
+ex:{title:'Complex-query drill',lang:'sql',
+prompt:`Table <code>orders(id, user_id, status, amount_cents, created_at)</code>. One query per numbered comment: (1) in one row, count paid and unpaid orders using <code>SUM(CASE WHEN ... THEN 1 ELSE 0 END)</code> aliased <code>paid</code> and <code>unpaid</code>; (2) count only paid orders using the <code>COUNT(CASE WHEN status = 'paid' THEN 1 END)</code> form; (3) select paid orders using the <code>WHERE 1 = 1 AND ...</code> dynamic-filter idiom; (4) a CTE named <code>totals</code> that sums <code>amount_cents</code> per <code>user_id</code>, then select the users whose <code>spent</code> exceeds 100000; (5) number each user's orders newest-first with <code>ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC)</code> aliased <code>rn</code>; (6) compute a safe average with <code>SUM(amount_cents) / NULLIF(COUNT(*), 0)</code>.`,
+starter:`-- 1) conditional aggregation (paid vs unpaid)
+
+-- 2) COUNT(CASE ...) form
+
+-- 3) WHERE 1 = 1 idiom
+
+-- 4) CTE: users who spent > 100000
+
+-- 5) ROW_NUMBER window
+
+-- 6) safe average with NULLIF
+`,
+solution:`-- 1) conditional aggregation (paid vs unpaid)
+SELECT
+  SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) AS paid,
+  SUM(CASE WHEN status <> 'paid' THEN 1 ELSE 0 END) AS unpaid
+FROM orders;
+
+-- 2) COUNT(CASE ...) form
+SELECT COUNT(CASE WHEN status = 'paid' THEN 1 END) AS paid
+FROM orders;
+
+-- 3) WHERE 1 = 1 idiom
+SELECT * FROM orders
+WHERE 1 = 1
+  AND status = 'paid';
+
+-- 4) CTE: users who spent > 100000
+WITH totals AS (
+  SELECT user_id, SUM(amount_cents) AS spent
+  FROM orders
+  GROUP BY user_id
+)
+SELECT user_id, spent
+FROM totals
+WHERE spent > 100000;
+
+-- 5) ROW_NUMBER window
+SELECT id, user_id,
+  ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) AS rn
+FROM orders;
+
+-- 6) safe average with NULLIF
+SELECT SUM(amount_cents) / NULLIF(COUNT(*), 0) AS avg_cents
+FROM orders;
+`,
+tests:[{d:'Q1: SUM(CASE WHEN ... THEN 1 ELSE 0 END)',re:'1\\)[\\s\\S]*?sum\\s*\\(\\s*case\\s+when[\\s\\S]*?then\\s+1\\s+else\\s+0\\s+end\\s*\\)',flags:'is'},{d:'Q2: COUNT(CASE WHEN ... THEN 1 END)',re:'2\\)[\\s\\S]*?count\\s*\\(\\s*case\\s+when[\\s\\S]*?then\\s+1[\\s\\S]*?end\\s*\\)',flags:'is'},{d:'Q3: WHERE 1 = 1 idiom',re:'3\\)[\\s\\S]*?where\\s+1\\s*=\\s*1',flags:'is'},{d:'Q4: CTE named totals',re:'4\\)[\\s\\S]*?with\\s+totals\\s+as\\s*\\(',flags:'is'},{d:'Q5: ROW_NUMBER() OVER (PARTITION BY ...)',re:'5\\)[\\s\\S]*?row_number\\s*\\(\\s*\\)\\s+over\\s*\\(\\s*partition\\s+by',flags:'is'},{d:'Q6: NULLIF(COUNT(*), 0) guards division',re:'6\\)[\\s\\S]*?nullif\\s*\\(\\s*count\\s*\\(\\s*\\*\\s*\\)\\s*,\\s*0\\s*\\)',flags:'is'}],
+behavior:`1. Q1 returns one row, two counts, in a single scan. 2. Q2 counts paid only, relying on CASE returning NULL (which COUNT skips) for the rest. 3. Q3 returns paid orders; the 1=1 anchor lets filters be appended uniformly. 4. Q4 names the per-user totals once, then filters them like a table. 5. Q5 keeps every order row but adds a per-user sequence number, newest first. 6. Q6 divides by NULLIF(count,0) so an empty table yields NULL instead of a divide-by-zero error.`,
+hints:['Turn a condition into a number: CASE WHEN cond THEN 1 ELSE 0 END, then SUM to count matches in one pass.','WHERE 1 = 1 is an always-true anchor so every real filter can be appended as AND ...; WHERE 1 = 0 returns no rows.','A CTE is WITH name AS ( ... ) followed by a SELECT that treats name like a table; window functions add OVER (PARTITION BY ... ORDER BY ...).']}},
+
 {id:'db2',title:'JDBC & PreparedStatement',body:`
 <p>JDBC is the floor everything stands on (JPA, jOOQ, Spring Data). Three objects: <code>Connection</code> → <code>PreparedStatement</code> → <code>ResultSet</code>, all AutoCloseable:</p>
 <div class="codeSample" data-hl>String sql = "SELECT id, owner FROM accounts WHERE owner = ?";

@@ -194,6 +194,25 @@ kbd{background:#eceef7;border:1px solid var(--line);border-radius:4px;padding:0 
 .danStrip{background:#111827;box-shadow:inset 0 -5px 0 rgba(184,134,11,.55);border-color:#b8860b}
 .danStrip .bKnot{background:#111827;border-color:#b8860b}
 .bBtn.danBtn{background:linear-gradient(90deg,#111827,#b8860b)}
+
+/* ============================== GLOSSARY ============================== */
+.glossary h1{margin-bottom:6px}
+.glossSearch{width:100%;max-width:420px;margin:14px 0 10px;padding:9px 12px;border:1px solid var(--line);
+  border-radius:8px;background:var(--panel,#fff);color:inherit;font-size:14px}
+.glossJumps{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 22px}
+.glossJump{display:inline-block;padding:5px 11px;border:1px solid var(--line);border-radius:999px;
+  font-size:12.5px;font-weight:600;text-decoration:none;color:var(--muted);cursor:pointer}
+.glossJump:hover{border-color:#8b5cf6;color:#8b5cf6}
+.glossDom{margin:26px 0 8px}
+.glossDom h2{font-size:19px;margin:0 0 4px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+.glossGrp{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#8b5cf6;
+  margin:18px 0 8px;font-weight:700}
+.glossList{margin:0 0 4px}
+.glossItem{display:grid;grid-template-columns:210px 1fr;gap:14px;padding:8px 0;
+  border-bottom:1px solid var(--line)}
+.glossItem dt{margin:0;font-weight:700;color:var(--fg,#111)}
+.glossItem dd{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+@media(max-width:640px){.glossItem{grid-template-columns:1fr;gap:2px}}
 </style>
 </head>
 <body>
@@ -461,6 +480,7 @@ function completeLesson(l){
 function renderNav(){
   const nav=document.getElementById('nav');nav.innerHTML='';
   const home=document.createElement('div');home.className='streamHd';home.innerHTML='🏠 Overview';home.onclick=()=>{cur=null;renderHome();renderNav()};nav.appendChild(home);
+  const gloss=document.createElement('div');gloss.className='streamHd';gloss.innerHTML='📖 Glossary';gloss.onclick=()=>{cur=null;renderGlossary();renderNav()};nav.appendChild(gloss);
   STREAMS.forEach((s,si)=>{
     if(s.tournament&&!(STREAMS[si-1]&&STREAMS[si-1].tournament)){
       const dv=document.createElement('div');dv.className='navDivider';
@@ -870,7 +890,8 @@ const tip=document.getElementById('kwTip');
 function showTip(word,x,y){
   const k=KW[word]||KW[word.toLowerCase()];
   if(!k){tip.style.display='none';return}
-  tip.innerHTML=`<b>${esc(word)}</b> — ${k[0]} <a href="${k[1]}" target="_blank" rel="noopener">Docs ↗</a>`;
+  const link=/^https?:/.test(k[1]||'')?` <a href="${k[1]}" target="_blank" rel="noopener">Docs ↗</a>`:'';
+  tip.innerHTML=`<b>${esc(word)}</b> — ${esc(k[0])}${link}`;
   tip.style.display='block';
   tip.style.left=Math.min(x,innerWidth-360)+'px';
   tip.style.top=Math.min(y+14,innerHeight-120)+'px';
@@ -890,6 +911,162 @@ document.addEventListener('mouseup',e=>{
     else tip.style.display='none';
   },0);
 });
+
+/* ============================== GLOSSARY (domain-ordered) ============================== */
+/* Single source of truth for domain vocabulary. Rendered as its own section (renderGlossary)
+   AND merged into KW below so selecting a term in any lesson pops its definition. */
+const GLOSS=[
+ {domain:'Identity & Access (IAM)',icon:'🛂',groups:[
+   {h:'1 · The core distinction',terms:[
+     ['Authentication (authn)',`Proving who you are — the login step.`],
+     ['Authorization (authz)',`Deciding what you may do, once you are known.`],
+     ['Identity',`The account or entity behind a request — a person or a workload.`],
+     ['Principal',`The specific "who" a request acts as; in tokens, the sub (subject) claim.`],
+     ['Subject',`Same as principal — the entity a token is about (the sub claim).`],
+     ['Credential',`Whatever proves an identity: a password, a key, or a certificate.`],
+   ]},
+   {h:'2 · The actors',terms:[
+     ['Resource Owner',`The user who owns the data an app wants to reach.`],
+     ['Client',`The app requesting access. Called Relying Party in OIDC and Service Provider in SAML.`],
+     ['Relying Party (RP)',`OIDC name for the app that relies on the provider to authenticate the user.`],
+     ['Service Provider (SP)',`SAML name for the app that consumes assertions from an IdP.`],
+     ['Identity Provider (IdP)',`The authority that authenticates users and issues tokens or assertions. Called AS in OAuth, OP in OIDC.`],
+     ['Authorization Server (AS)',`OAuth name for the server that issues access tokens.`],
+     ['OpenID Provider (OP)',`OIDC name for the identity provider that issues ID tokens.`],
+     ['Resource Server (RS)',`The API that accepts and validates access tokens.`],
+   ]},
+   {h:'3 · Tokens & assertions',terms:[
+     ['Access token',`The key an app uses to call an API. Represents authorization, not identity.`],
+     ['ID token',`OIDC proof of who the user is, issued to the client. A JWT. Not for calling APIs.`],
+     ['Refresh token',`A long-lived token used to obtain new access tokens without a fresh login.`],
+     ['Assertion',`SAML signed XML statement about a user — its equivalent of an ID token.`],
+     ['JWT',`JSON Web Token — a signed, self-contained token whose claims you can read and verify.`],
+     ['Opaque token',`A random reference with no readable content; validated by calling the issuer introspection endpoint.`],
+     ['Claim',`A single fact inside a token, such as sub, email, or role.`],
+     ['Scope',`A named permission a token grants, such as read invoices.`],
+     ['Bearer token',`A token usable by anyone who holds it, like cash. Protect it in transit and at rest.`],
+     ['Sender-constrained token',`A token bound to a key only the real client has (mTLS-bound or DPoP), so a stolen copy is useless.`],
+   ]},
+   {h:'4 · Protocols & standards',terms:[
+     ['OAuth 2.0',`The delegated authorization framework: lets an app act for a user without the user password.`],
+     ['OpenID Connect (OIDC)',`An authentication layer on top of OAuth 2.0 that adds the ID token.`],
+     ['SAML 2.0',`An XML-based standard for enterprise web single sign-on.`],
+     ['SCIM',`A standard for provisioning and syncing user accounts across systems.`],
+     ['WebAuthn',`A browser standard for phishing-resistant, origin-bound login (the basis of passkeys).`],
+     ['LDAP',`A protocol for querying enterprise directories of users and groups.`],
+     ['Kerberos',`A ticket-based enterprise SSO protocol (KDC, TGT, service tickets).`],
+   ]},
+   {h:'5 · Flows / grant types',terms:[
+     ['Authorization Code flow',`The main flow for apps acting for a user: get a short code via the browser, then swap it for tokens on the back channel.`],
+     ['PKCE',`Proof Key for Code Exchange — protects the code flow for public clients so a stolen code cannot be redeemed.`],
+     ['Client Credentials flow',`Machine-to-machine flow with no user: the service authenticates as itself to get a token.`],
+     ['Device flow',`For input-limited devices such as TVs and CLIs: the user approves on a phone using a code.`],
+     ['Token Exchange',`Swapping one token for another, for example to call a downstream service on behalf of a user.`],
+     ['CIBA',`Client-Initiated Backchannel Authentication — the user approves on a separate device, no browser redirect.`],
+     ['Implicit flow',`A legacy flow that returned tokens directly in the browser. Deprecated; use code plus PKCE.`],
+     ['ROPC',`Resource Owner Password Credentials — the app collects the user password directly. Deprecated.`],
+   ]},
+   {h:'6 · Endpoints',terms:[
+     ['/authorize',`Where a login or consent flow starts (front channel, in the browser).`],
+     ['/token',`Where an app exchanges a code or credentials for tokens (back channel).`],
+     ['/userinfo',`An OIDC endpoint returning profile claims for the access token user.`],
+     ['/introspect',`Where a resource server asks the issuer whether an opaque token is valid (RFC 7662).`],
+     ['/revoke',`Where a token is proactively invalidated (RFC 7009).`],
+     ['JWKS',`The published set of public keys (jwks_uri) used to verify token signatures.`],
+     ['Discovery',`The /.well-known/openid-configuration document listing a provider endpoints and keys.`],
+   ]},
+   {h:'7 · Core concepts',terms:[
+     ['SSO',`Single Sign-On — log in once and reach many apps.`],
+     ['Federation',`Trusting an identity authority across organizational boundaries.`],
+     ['Trust',`A relying party accepting tokens or assertions signed by an authority it is configured to rely on.`],
+     ['Consent',`The user explicitly approving what an app may access.`],
+     ['Delegated authorization',`The core idea of OAuth: you let an app do a limited set of things for you without sharing your password, and you can revoke it.`],
+     ['Impersonation',`When a service simply acts as the user with no distinction — contrast with delegation.`],
+     ['Least privilege',`Granting only the access truly needed, nothing more.`],
+     ['MFA',`Multi-factor authentication — requiring two or more independent factors.`],
+     ['Step-up authentication',`Asking for stronger proof only when an action is sensitive.`],
+     ['Public client',`An app that cannot keep a secret, such as a SPA or mobile app — must use PKCE.`],
+     ['Confidential client',`An app that can keep a secret, such as a server — authenticates to the token endpoint.`],
+     ['Front channel',`Communication that passes through the user browser (redirects).`],
+     ['Back channel',`Direct server-to-server communication the browser never sees.`],
+     ['audience (aud)',`The claim naming who a token is for; a resource server must check it.`],
+     ['issuer (iss)',`The claim naming who minted a token; verified against the expected authority.`],
+     ['nonce',`A one-time value that ties an OIDC ID token to a single login, preventing replay.`],
+     ['state',`A random value the client sends on the redirect and re-checks on return, preventing CSRF.`],
+     ['Session',`Server- or cookie-tracked state that remembers a logged-in user between requests.`],
+   ]},
+   {h:'8 · Threats & defenses',terms:[
+     ['CSRF',`Cross-Site Request Forgery — a malicious page makes your browser send an unintended authenticated request. Defended with the state parameter and anti-CSRF tokens.`],
+     ['Replay attack',`Re-sending a captured token or message to impersonate someone. Defended with short expiries, nonces, and sender-constrained tokens.`],
+     ['Token theft',`Stealing a bearer token to reuse it. Defended with short lifetimes, secure storage, and proof-of-possession.`],
+     ['Phishing-resistant authentication',`Login methods that cannot be phished because the secret never leaves the device and is bound to the real site origin (passkeys and WebAuthn).`],
+     ['Open redirect',`A flaw where an app forwards users to an attacker URL; abused to steal codes or tokens.`],
+   ]},
+   {h:'9 · Governance & lifecycle',terms:[
+     ['Provisioning',`Creating and configuring user accounts and their access, often automated via SCIM.`],
+     ['Deprovisioning',`Removing access when someone leaves or changes roles.`],
+     ['JML',`Joiner, Mover, Leaver — the employee identity lifecycle.`],
+     ['JIT provisioning',`Just-in-time — creating the account automatically on first successful login.`],
+     ['RBAC',`Role-Based Access Control — permissions granted through roles.`],
+     ['ABAC',`Attribute-Based Access Control — decisions from attributes and policy rules.`],
+     ['IGA',`Identity Governance and Administration — access requests, reviews, and certification.`],
+     ['PAM',`Privileged Access Management — securing and monitoring high-power accounts.`],
+   ]},
+ ]},
+ {domain:'Service-to-Service & Zero Trust',icon:'🔗',groups:[
+   {h:'Machine identity',terms:[
+     ['SPIFFE',`A standard for giving workloads verifiable identities (SPIFFE IDs).`],
+     ['SPIRE',`The reference implementation that attests workloads and issues SVIDs.`],
+     ['SVID',`SPIFFE Verifiable Identity Document — the X.509 cert or JWT a workload uses to prove who it is.`],
+     ['mTLS',`Mutual TLS — both client and server present certificates, so each proves its identity.`],
+     ['Workload identity',`A non-human identity for a service or job, used instead of shared secrets.`],
+     ['Attestation',`Proving what a workload is, from node or process properties, before issuing it an identity.`],
+     ['Zero trust',`Never trust by network location; verify identity and authorize every request.`],
+   ]},
+ ]},
+ {domain:'PKI & Certificates',icon:'📜',groups:[
+   {h:'Public key infrastructure',terms:[
+     ['X.509',`The standard format for a public-key certificate binding a key to an identity.`],
+     ['Certificate Authority (CA)',`A trusted issuer that signs certificates.`],
+     ['Chain of trust',`A certificate is trusted because it chains up to a root CA you already trust.`],
+     ['CSR',`Certificate Signing Request — what you send a CA to get a certificate issued.`],
+     ['CRL',`Certificate Revocation List — a published list of revoked certificates.`],
+     ['OCSP',`Online Certificate Status Protocol — checks a single certificate revocation status in real time.`],
+     ['ACME',`The protocol behind automated certificate issuance, such as Let us Encrypt.`],
+   ]},
+ ]},
+];
+/* Merge glossary terms into the keyword-popup table (KW) so click-to-explain works in lessons.
+   Adds a key for any parenthetical acronym and for a single-word/acronym leading token.
+   Never overrides an existing (Java) keyword. */
+(function(){
+  GLOSS.forEach(function(d){d.groups.forEach(function(g){g.terms.forEach(function(t){
+    var term=t[0], def=t[1], keys=[];
+    var m=term.match(/\(([A-Za-z]{2,14})\)/); if(m)keys.push(m[1]);
+    var first=term.split(/[\s(]/)[0];
+    if(/^[A-Za-z]{2,14}$/.test(first))keys.push(first);
+    keys.forEach(function(k){k=k.toLowerCase(); if(!KW[k])KW[k]=[def,'#glossary'];});
+  });});});
+})();
+function renderGlossary(){
+  const m=document.getElementById('main');
+  const jump=GLOSS.map((d,i)=>`<a class="glossJump" href="javascript:void(0)" onclick="document.getElementById('gd${i}').scrollIntoView({behavior:'smooth'})">${d.icon} ${esc(d.domain)}</a>`).join('');
+  const body=GLOSS.map((d,i)=>`<section id="gd${i}" class="glossDom"><h2>${d.icon} ${esc(d.domain)}</h2>${d.groups.map(g=>`<h3 class="glossGrp">${esc(g.h)}</h3><dl class="glossList">${g.terms.map(t=>`<div class="glossItem"><dt>${esc(t[0])}</dt><dd>${esc(t[1])}</dd></div>`).join('')}</dl>`).join('')}</section>`).join('');
+  m.innerHTML=`<div class="home glossary">
+  <h1>📖 Glossary</h1>
+  <p>Every key term in DevDojo, grouped by domain and in logical reading order. In any lesson, <b>select or double-click a highlighted term</b> to see its definition inline — this page is the full reference.</p>
+  <input id="glossSearch" class="glossSearch" placeholder="Filter terms…" oninput="filterGloss(this.value)" aria-label="Filter glossary terms">
+  <div class="glossJumps">${jump}</div>
+  ${body}</div>`;
+  m.scrollTop=0;
+}
+function filterGloss(q){
+  q=(q||'').trim().toLowerCase();
+  document.querySelectorAll('#main .glossItem').forEach(it=>{
+    it.style.display=(!q||it.textContent.toLowerCase().includes(q))?'':'none';
+  });
+  document.querySelectorAll('#main .glossGrp, #main .glossDom h2').forEach(h=>{h.style.display=q?'none':'';});
+}
 /* ============================== COURSE DATA ============================== */
 const STREAMS=[];
 STREAMS.push({icon:'☕',title:'Java Fundamentals',blurb:'Classes, types, methods, OOP, collections & generics, user input and file I/O — fast track for people who already code.',lessons:[
@@ -7899,6 +8076,234 @@ FROM users u
 JOIN orders o ON o.user_id = u.id
 GROUP BY u.name
 HAVING SUM(total_cents) > 50000;`}},
+{id:'db1a',title:'Every JOIN type, in plain English',body:`
+<p>A JOIN stitches rows from two tables together using a matching rule (the <code>ON</code> condition). The only thing that changes between join types is <b>which unmatched rows you keep</b>. Picture two tables: <code>employees(id, name, dept_id, manager_id)</code> and <code>departments(id, name)</code>.</p>
+<div class="codeSample">-- INNER JOIN — only rows that match on BOTH sides (the overlap)
+SELECT e.name, d.name AS dept
+FROM employees e
+JOIN departments d ON d.id = e.dept_id;      -- "JOIN" alone means INNER
+
+-- LEFT [OUTER] JOIN — every LEFT row; right side is NULL when no match
+SELECT e.name, d.name AS dept
+FROM employees e
+LEFT JOIN departments d ON d.id = e.dept_id; -- keeps employees with no dept
+
+-- RIGHT [OUTER] JOIN — mirror image: every RIGHT row, left may be NULL
+-- FULL [OUTER] JOIN — every row from BOTH; NULLs fill whichever side is missing
+-- CROSS JOIN — every combination (Cartesian product): rows_left x rows_right
+-- SELF JOIN — a table joined to itself, using two aliases</div>
+<p>Simple way to remember them:</p>
+<ul>
+<li><b>INNER</b> = "matches only." Rows that exist in both tables.</li>
+<li><b>LEFT</b> = "keep everything on the left." Great for "all X, and their Y if any."</li>
+<li><b>RIGHT</b> = LEFT flipped. Most people just reorder the tables and use LEFT.</li>
+<li><b>FULL OUTER</b> = "keep everything, both sides." Nothing is dropped.</li>
+<li><b>CROSS</b> = "every pairing." No ON clause. Use on purpose (e.g. all sizes x all colors); by accident it explodes row counts.</li>
+<li><b>SELF</b> = same table twice — an employee row joined to its manager row.</li>
+</ul>
+<p><b>Semi-join and anti-join</b> answer "does a match exist?" without duplicating rows. A <b>semi-join</b> keeps left rows that <i>have</i> a match — written with <code>EXISTS</code> or <code>IN</code>. An <b>anti-join</b> keeps left rows with <i>no</i> match — written with <code>NOT EXISTS</code>, or the classic <code>LEFT JOIN ... WHERE right.id IS NULL</code> ("find the orphans").</p>
+<p>One caution: <b>NATURAL JOIN</b> auto-matches every column that shares a name. It reads short but breaks silently when someone adds a same-named column, so most teams avoid it and write the <code>ON</code> explicitly.</p>`,
+docs:[['JOINs visualized — Atlassian','https://www.atlassian.com/data/sql/sql-join-types-explained-visually'],['SELECT / JOIN reference','https://www.postgresql.org/docs/current/sql-select.html'],['EXISTS & subqueries','https://www.postgresql.org/docs/current/functions-subquery.html']],
+ex:{title:'Join drill',lang:'sql',
+prompt:`Tables: <code>employees(id, name, dept_id, manager_id)</code> and <code>departments(id, name)</code>. One query per numbered comment: (1) each employee with their department name, <b>matches only</b> (INNER); (2) <b>every</b> employee including those with no department (LEFT JOIN); (3) departments that have <b>no</b> employees — the anti-join pattern (LEFT JOIN then WHERE the employee id IS NULL); (4) every employee paired with every department (CROSS JOIN); (5) each employee alongside their manager's name — a SELF JOIN of employees to itself on <code>manager_id</code>; (6) everything from both tables, keeping unmatched rows on either side (FULL OUTER JOIN).`,
+starter:`-- 1) INNER
+
+-- 2) LEFT
+
+-- 3) anti-join (departments with no employees)
+
+-- 4) CROSS
+
+-- 5) SELF (employee + manager)
+
+-- 6) FULL OUTER
+`,
+solution:`-- 1) INNER
+SELECT e.name, d.name AS dept
+FROM employees e
+JOIN departments d ON d.id = e.dept_id;
+
+-- 2) LEFT
+SELECT e.name, d.name AS dept
+FROM employees e
+LEFT JOIN departments d ON d.id = e.dept_id;
+
+-- 3) anti-join (departments with no employees)
+SELECT d.name
+FROM departments d
+LEFT JOIN employees e ON e.dept_id = d.id
+WHERE e.id IS NULL;
+
+-- 4) CROSS
+SELECT e.name, d.name
+FROM employees e
+CROSS JOIN departments d;
+
+-- 5) SELF (employee + manager)
+SELECT e.name AS employee, m.name AS manager
+FROM employees e
+LEFT JOIN employees m ON m.id = e.manager_id;
+
+-- 6) FULL OUTER
+SELECT e.name, d.name
+FROM employees e
+FULL OUTER JOIN departments d ON d.id = e.dept_id;
+`,
+tests:[{d:'Q1: plain INNER JOIN employees to departments',re:'1\\)[\\s\\S]*?from\\s+employees\\s+e\\s+join\\s+departments',flags:'is'},{d:'Q2: LEFT JOIN keeps every employee',re:'2\\)[\\s\\S]*?left\\s+join\\s+departments',flags:'is'},{d:'Q3: anti-join = LEFT JOIN + IS NULL',re:'3\\)[\\s\\S]*?left\\s+join\\s+employees[\\s\\S]*?where\\s+e\\.id\\s+is\\s+null',flags:'is'},{d:'Q4: CROSS JOIN',re:'4\\)[\\s\\S]*?cross\\s+join\\s+departments',flags:'is'},{d:'Q5: SELF JOIN on manager_id',re:'5\\)[\\s\\S]*?join\\s+employees\\s+m\\s+on\\s+m\\.id\\s*=\\s*e\\.manager_id',flags:'is'},{d:'Q6: FULL OUTER JOIN',re:'6\\)[\\s\\S]*?full\\s+outer\\s+join\\s+departments',flags:'is'}],
+behavior:`1. Q1 drops employees with no department and departments with no employees. 2. Q2 lists all employees; dept is NULL for the unassigned. 3. Q3 returns only empty departments (the LEFT JOIN leaves employee columns NULL, and IS NULL keeps exactly those). 4. Q4 returns rows_employees x rows_departments pairings. 5. Q5 joins employees to employees; a manager-less employee shows NULL manager (LEFT). 6. Q6 keeps unmatched rows from both sides.`,
+hints:['INNER JOIN keeps only rows that match on both sides; LEFT JOIN keeps every left row and fills NULLs where the right has no match.','The anti-join pattern is LEFT JOIN then WHERE right.id IS NULL, which keeps only the left rows that had no match.','A SELF JOIN lists the same table twice with two aliases (e and m) joined on manager_id.']}},
+
+{id:'db1b',title:'The SQL command map: every command by category',body:`
+<p>SQL commands fall into four families. Knowing which family a command belongs to tells you what it does and how careful to be with it.</p>
+<div class="codeSample">-- DDL  (Data Definition) — define/change STRUCTURE
+CREATE TABLE tags (id SERIAL PRIMARY KEY, name TEXT NOT NULL);
+ALTER TABLE tags ADD COLUMN slug TEXT;   -- add/drop/modify columns, keys, indexes
+DROP TABLE tags;                          -- delete the table and all its data
+TRUNCATE tags;                            -- empty ALL rows fast, keep the table
+-- also: CREATE INDEX, CREATE VIEW, RENAME
+
+-- DML  (Data Manipulation) — read/change ROWS
+SELECT * FROM tags;                       -- read
+INSERT INTO tags (name) VALUES ('java');  -- add rows
+UPDATE tags SET slug = 'jvm' WHERE id = 1;-- change rows (WHERE!)
+DELETE FROM tags WHERE id = 1;            -- remove rows (WHERE!)
+
+-- TCL  (Transaction Control) — group changes as all-or-nothing
+BEGIN;  UPDATE tags SET slug='x' WHERE id=1;  COMMIT;   -- or ROLLBACK
+SAVEPOINT sp1;   -- a checkpoint you can ROLLBACK TO
+
+-- DCL  (Data Control) — permissions
+GRANT SELECT ON tags TO reader;   -- give a privilege
+REVOKE SELECT ON tags FROM reader;-- take it back</div>
+<p>Plain-terms cheat sheet: <b>DDL</b> = the building (create/alter/drop the tables). <b>DML</b> = the furniture (put rows in, move them, take them out). <b>TCL</b> = the "undo/commit" bracket around your DML. <b>DCL</b> = the keys to the doors (who may do what).</p>
+<p>Two safety notes worth burning in: <code>TRUNCATE</code> and <code>DROP</code> are DDL and in many databases cannot be rolled back the way DML can — treat them like a shredder. And every <code>UPDATE</code>/<code>DELETE</code> needs a <code>WHERE</code> unless you truly mean "all rows."</p>
+<p>Reading queries, you also lean on these <b>clauses</b> (parts of a SELECT, not standalone commands): <code>WHERE</code> (filter rows) → <code>GROUP BY</code> (bucket rows) → <code>HAVING</code> (filter buckets) → <code>ORDER BY</code> (sort) → <code>LIMIT/OFFSET</code> (paginate), plus <code>DISTINCT</code>, <code>JOIN</code>, and the set operators <code>UNION</code> / <code>INTERSECT</code> / <code>EXCEPT</code> that stack whole result sets.</p>`,
+docs:[['SQL commands — PostgreSQL','https://www.postgresql.org/docs/current/sql-commands.html'],['GRANT / privileges','https://www.postgresql.org/docs/current/sql-grant.html'],['Transactions','https://www.postgresql.org/docs/current/tutorial-transactions.html']],
+ex:{title:'One command from each family',lang:'sql',
+prompt:`One statement per numbered comment. (1) <b>CREATE</b> a table <code>tags</code> with <code>id SERIAL PRIMARY KEY</code> and <code>name TEXT NOT NULL</code>; (2) <b>ALTER</b> it to add a column <code>slug TEXT</code>; (3) <b>INSERT</b> a row (name and slug both <code>'java'</code>); (4) <b>GRANT</b> the <code>SELECT</code> privilege on <code>tags</code> to role <code>reader</code>; (5) wrap an <code>UPDATE</code> (set slug to <code>'jvm'</code> where name is <code>'java'</code>) inside a transaction using <code>BEGIN;</code> and <code>COMMIT;</code>; (6) <b>TRUNCATE</b> the table (empty it, keep it); (7) <b>DROP</b> the table.`,
+starter:`-- 1) CREATE (DDL)
+
+-- 2) ALTER (DDL)
+
+-- 3) INSERT (DML)
+
+-- 4) GRANT (DCL)
+
+-- 5) transaction (TCL) around an UPDATE
+
+-- 6) TRUNCATE (DDL)
+
+-- 7) DROP (DDL)
+`,
+solution:`-- 1) CREATE (DDL)
+CREATE TABLE tags (
+  id   SERIAL PRIMARY KEY,
+  name TEXT NOT NULL
+);
+
+-- 2) ALTER (DDL)
+ALTER TABLE tags ADD COLUMN slug TEXT;
+
+-- 3) INSERT (DML)
+INSERT INTO tags (name, slug) VALUES ('java', 'java');
+
+-- 4) GRANT (DCL)
+GRANT SELECT ON tags TO reader;
+
+-- 5) transaction (TCL) around an UPDATE
+BEGIN;
+UPDATE tags SET slug = 'jvm' WHERE name = 'java';
+COMMIT;
+
+-- 6) TRUNCATE (DDL)
+TRUNCATE tags;
+
+-- 7) DROP (DDL)
+DROP TABLE tags;
+`,
+tests:[{d:'Q1: CREATE TABLE tags (DDL)',re:'1\\)[\\s\\S]*?create\\s+table\\s+tags',flags:'is'},{d:'Q2: ALTER TABLE ADD COLUMN slug',re:'2\\)[\\s\\S]*?alter\\s+table\\s+tags\\s+add\\s+column\\s+slug',flags:'is'},{d:'Q3: INSERT INTO tags (DML)',re:'3\\)[\\s\\S]*?insert\\s+into\\s+tags',flags:'is'},{d:'Q4: GRANT SELECT ... TO reader (DCL)',re:'4\\)[\\s\\S]*?grant\\s+select\\s+on\\s+tags\\s+to\\s+reader',flags:'is'},{d:'Q5: BEGIN ... UPDATE ... COMMIT (TCL)',re:'5\\)[\\s\\S]*?begin\\s*;[\\s\\S]*?update\\s+tags[\\s\\S]*?commit\\s*;',flags:'is'},{d:'Q6: TRUNCATE tags (DDL)',re:'6\\)[\\s\\S]*?truncate\\s+tags',flags:'is'},{d:'Q7: DROP TABLE tags (DDL)',re:'7\\)[\\s\\S]*?drop\\s+table\\s+tags',flags:'is'}],
+behavior:`1. Q1 defines the structure (DDL). 2. Q2 changes the structure (DDL). 3. Q3 adds a row (DML). 4. Q4 grants a privilege (DCL). 5. Q5 groups the write so it commits all-or-nothing (TCL). 6. Q6 empties the table fast but leaves it defined. 7. Q7 removes the table entirely. One command from each family, in order.`,
+hints:['DDL defines structure: CREATE, ALTER, DROP, TRUNCATE. DML changes rows: INSERT, UPDATE, DELETE, SELECT.','TCL groups changes: wrap the UPDATE in BEGIN and COMMIT so it applies all-or-nothing.','DCL controls access: GRANT gives a privilege, REVOKE takes it back.']}},
+
+{id:'db1c',title:'Writing complex queries: CASE, the 1/0 tricks, CTEs & windows',body:`
+<p>Real reporting queries are built from a handful of power tools. The most useful — and most puzzling when you first meet it — is turning a <b>condition into a number</b> so you can add conditions up.</p>
+<p><b>The 1/0 idiom.</b> SQL cannot <code>SUM</code> a true/false directly, so you convert each row to 1 or 0 with <code>CASE</code>, then sum:</p>
+<div class="codeSample">-- count paid vs unpaid in ONE row (conditional aggregation)
+SELECT
+  SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) AS paid,
+  SUM(CASE WHEN status &lt;&gt; 'paid' THEN 1 ELSE 0 END) AS unpaid
+FROM orders;
+
+-- same idea with COUNT: CASE returns NULL for non-matches, COUNT ignores NULL
+SELECT COUNT(CASE WHEN status = 'paid' THEN 1 END) AS paid FROM orders;</div>
+<p>This "conditional aggregation" is how you pivot rows into columns (paid vs unpaid, by month, by region) in a single pass — far cheaper than one query per bucket.</p>
+<p><b>WHERE 1=1 and WHERE 1=0.</b> These constant conditions look odd but are idioms. <code>WHERE 1=1</code> is always true — a no-op placeholder so code that builds a query can append <code>AND ...</code> filters without worrying whether it is the first one. <code>WHERE 1=0</code> is always false — it returns <b>no rows</b>, handy for <code>CREATE TABLE copy AS SELECT * FROM orders WHERE 1=0</code> to clone just the structure, or as a safe stub while you build a statement.</p>
+<div class="codeSample">SELECT * FROM orders
+WHERE 1 = 1            -- always-true anchor
+  AND status = 'paid'  -- filters appended freely
+  AND amount_cents &gt; 1000;</div>
+<p><b>Subqueries</b> nest one query in another: a scalar subquery returns one value, <code>IN (SELECT ...)</code> / <code>EXISTS (SELECT ...)</code> test membership, and a subquery in <code>FROM</code> becomes a derived table. <b>CTEs</b> (<code>WITH name AS (...)</code>) are the readable alternative — name a result once, then use it like a table:</p>
+<div class="codeSample">WITH totals AS (
+  SELECT user_id, SUM(amount_cents) AS spent
+  FROM orders
+  GROUP BY user_id
+)
+SELECT user_id, spent FROM totals WHERE spent &gt; 100000;</div>
+<p><b>Window functions</b> compute across a set of rows <i>without</i> collapsing them (unlike GROUP BY). <code>ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC)</code> numbers each user's orders newest-first; swap in <code>SUM(...) OVER (...)</code> for running totals, or <code>RANK()</code> / <code>LAG()</code> for rankings and row-to-row comparisons.</p>
+<p>Two more everyday helpers: <code>COALESCE(x, 0)</code> substitutes a value for NULL, and <code>NULLIF(count, 0)</code> turns 0 into NULL so a division becomes NULL instead of a divide-by-zero error — the safe-average trick.</p>`,
+docs:[['CASE expression','https://www.postgresql.org/docs/current/functions-conditional.html'],['WITH / CTEs','https://www.postgresql.org/docs/current/queries-with.html'],['Window functions','https://www.postgresql.org/docs/current/tutorial-window.html']],
+ex:{title:'Complex-query drill',lang:'sql',
+prompt:`Table <code>orders(id, user_id, status, amount_cents, created_at)</code>. One query per numbered comment: (1) in one row, count paid and unpaid orders using <code>SUM(CASE WHEN ... THEN 1 ELSE 0 END)</code> aliased <code>paid</code> and <code>unpaid</code>; (2) count only paid orders using the <code>COUNT(CASE WHEN status = 'paid' THEN 1 END)</code> form; (3) select paid orders using the <code>WHERE 1 = 1 AND ...</code> dynamic-filter idiom; (4) a CTE named <code>totals</code> that sums <code>amount_cents</code> per <code>user_id</code>, then select the users whose <code>spent</code> exceeds 100000; (5) number each user's orders newest-first with <code>ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC)</code> aliased <code>rn</code>; (6) compute a safe average with <code>SUM(amount_cents) / NULLIF(COUNT(*), 0)</code>.`,
+starter:`-- 1) conditional aggregation (paid vs unpaid)
+
+-- 2) COUNT(CASE ...) form
+
+-- 3) WHERE 1 = 1 idiom
+
+-- 4) CTE: users who spent > 100000
+
+-- 5) ROW_NUMBER window
+
+-- 6) safe average with NULLIF
+`,
+solution:`-- 1) conditional aggregation (paid vs unpaid)
+SELECT
+  SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) AS paid,
+  SUM(CASE WHEN status <> 'paid' THEN 1 ELSE 0 END) AS unpaid
+FROM orders;
+
+-- 2) COUNT(CASE ...) form
+SELECT COUNT(CASE WHEN status = 'paid' THEN 1 END) AS paid
+FROM orders;
+
+-- 3) WHERE 1 = 1 idiom
+SELECT * FROM orders
+WHERE 1 = 1
+  AND status = 'paid';
+
+-- 4) CTE: users who spent > 100000
+WITH totals AS (
+  SELECT user_id, SUM(amount_cents) AS spent
+  FROM orders
+  GROUP BY user_id
+)
+SELECT user_id, spent
+FROM totals
+WHERE spent > 100000;
+
+-- 5) ROW_NUMBER window
+SELECT id, user_id,
+  ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) AS rn
+FROM orders;
+
+-- 6) safe average with NULLIF
+SELECT SUM(amount_cents) / NULLIF(COUNT(*), 0) AS avg_cents
+FROM orders;
+`,
+tests:[{d:'Q1: SUM(CASE WHEN ... THEN 1 ELSE 0 END)',re:'1\\)[\\s\\S]*?sum\\s*\\(\\s*case\\s+when[\\s\\S]*?then\\s+1\\s+else\\s+0\\s+end\\s*\\)',flags:'is'},{d:'Q2: COUNT(CASE WHEN ... THEN 1 END)',re:'2\\)[\\s\\S]*?count\\s*\\(\\s*case\\s+when[\\s\\S]*?then\\s+1[\\s\\S]*?end\\s*\\)',flags:'is'},{d:'Q3: WHERE 1 = 1 idiom',re:'3\\)[\\s\\S]*?where\\s+1\\s*=\\s*1',flags:'is'},{d:'Q4: CTE named totals',re:'4\\)[\\s\\S]*?with\\s+totals\\s+as\\s*\\(',flags:'is'},{d:'Q5: ROW_NUMBER() OVER (PARTITION BY ...)',re:'5\\)[\\s\\S]*?row_number\\s*\\(\\s*\\)\\s+over\\s*\\(\\s*partition\\s+by',flags:'is'},{d:'Q6: NULLIF(COUNT(*), 0) guards division',re:'6\\)[\\s\\S]*?nullif\\s*\\(\\s*count\\s*\\(\\s*\\*\\s*\\)\\s*,\\s*0\\s*\\)',flags:'is'}],
+behavior:`1. Q1 returns one row, two counts, in a single scan. 2. Q2 counts paid only, relying on CASE returning NULL (which COUNT skips) for the rest. 3. Q3 returns paid orders; the 1=1 anchor lets filters be appended uniformly. 4. Q4 names the per-user totals once, then filters them like a table. 5. Q5 keeps every order row but adds a per-user sequence number, newest first. 6. Q6 divides by NULLIF(count,0) so an empty table yields NULL instead of a divide-by-zero error.`,
+hints:['Turn a condition into a number: CASE WHEN cond THEN 1 ELSE 0 END, then SUM to count matches in one pass.','WHERE 1 = 1 is an always-true anchor so every real filter can be appended as AND ...; WHERE 1 = 0 returns no rows.','A CTE is WITH name AS ( ... ) followed by a SELECT that treats name like a table; window functions add OVER (PARTITION BY ... ORDER BY ...).']}},
+
 {id:'db2',title:'JDBC & PreparedStatement',body:`
 <p>JDBC is the floor everything stands on (JPA, jOOQ, Spring Data). Three objects: <code>Connection</code> → <code>PreparedStatement</code> → <code>ResultSet</code>, all AutoCloseable:</p>
 <div class="codeSample" data-hl>String sql = "SELECT id, owner FROM accounts WHERE owner = ?";
@@ -9082,36 +9487,20 @@ public class Jwe {
 STREAMS.push({icon:'🪪',title:'Identity Foundations',blurb:'The vocabulary of identity from scratch — a glossary, then authentication vs authorization, sessions vs tokens, SSO & federation, IdPs and clients, scopes and consent. The base every OAuth/OIDC/SAML lesson builds on.',lessons:[
 
 {id:'idf0',title:'Glossary: the identity & OAuth vocabulary',body:`
-<p>Identity is drowning in jargon, and many terms mean the same thing in different protocols. Skim
-this once and refer back whenever a word trips you up — it's the decoder ring for the whole domain.</p>
-<p><b>The actors (who's who)</b> — the same roles, different names per protocol:</p>
-<ul>
-<li><b>Resource Owner</b> — the <i>user</i> who owns the data.</li>
-<li><b>Client / Relying Party (RP) / Service Provider (SP)</b> — the <i>app</i> that wants access. "Client" and "RP" are OAuth/OIDC; "SP" is SAML — all the app relying on an authority.</li>
-<li><b>Identity Provider (IdP) / Authorization Server (AS) / OpenID Provider (OP)</b> — the <i>authority</i> that authenticates users and issues tokens. "IdP" is the general/SAML term; "AS" is OAuth; "OP" is OIDC.</li>
-<li><b>Resource Server (RS)</b> — the <i>API</i> that accepts access tokens.</li>
-<li><b>Subject / Principal</b> — the specific "who" a request acts as (the <code>sub</code> claim).</li>
-</ul>
-<p><b>The tokens &amp; credentials</b>:</p>
-<ul>
-<li><b>Access token</b> — the key to call an <i>API</i> (authorization). <b>ID token</b> — proves <i>who the user is</i> to the <i>client</i> (authentication, OIDC only). <b>Refresh token</b> — renews access tokens without re-login.</li>
-<li><b>JWT</b> — JSON Web Token: a signed, self-contained token you can read/verify. <b>Opaque token</b> — a random reference with no data inside (validated by introspection).</li>
-<li><b>Assertion</b> — SAML's signed XML statement (the SAML equivalent of an ID token).</li>
-<li><b>JWS / JWE / JWK / JOSE</b> — signed token / encrypted token / a key in JSON / the umbrella family. <b>Bearer token</b> — "whoever holds it can use it." <b>SVID</b> — a SPIFFE workload identity document (S2S stream).</li>
-</ul>
-<p><b>The flows / grant types</b> (full detail in the OAuth stream): <b>Authorization Code</b> (+<b>PKCE</b>), <b>Client Credentials</b> (machine-to-machine), <b>Device</b>, <b>Refresh</b>, <b>Hybrid</b>, <b>CIBA</b> (decoupled), <b>Token Exchange</b> (swap tokens); and the deprecated <b>Implicit</b> and <b>ROPC/password</b>.</p>
-<p><b>The endpoints</b>: <code>/authorize</code> (start login), <code>/token</code> (get tokens), <code>/userinfo</code> (profile), <code>/introspect</code> (validate opaque token), <code>/revoke</code> (kill a token), <code>jwks_uri</code> (public keys), <code>/.well-known/openid-configuration</code> (discovery).</p>
-<p><b>The concepts</b>: <b>scope</b> (a requested permission), <b>claim</b> (a fact in a token), <b>consent</b> (user approval), <b>audience (aud)</b> (who a token is for), <b>issuer (iss)</b> (who minted it), <b>nonce</b> (replay protection for ID tokens), <b>state</b> (CSRF protection on the redirect), <b>front channel</b> (via the browser) vs <b>back channel</b> (server-to-server), <b>public vs confidential (private) client</b> (can it keep a secret?), <b>SSO</b> (log in once), <b>federation</b> (trust across orgs), <b>mTLS</b> (mutual TLS), and the <b>PKI</b> words <b>CA</b> (certificate authority) and <b>CSR</b> (certificate signing request).</p>
-<p><b>The deeper terms that trip people up — defined plainly:</b></p>
-<ul>
-<li><b>Delegated authorization</b> — the core idea of OAuth: you let an app do a <i>limited</i> set of things on your behalf <b>without handing it your password</b>. You delegate a slice of your access (scopes), and you can revoke it. (Contrast: <b>impersonation</b>, where the app simply becomes you.)</li>
-<li><b>CSRF (Cross-Site Request Forgery)</b> — an attack where a malicious page tricks <i>your</i> browser into making a request you didn't intend, riding on your existing session/cookies. OAuth defends the redirect with the <b>state</b> parameter (a random value the client sends and re-checks on return); web forms defend with anti-CSRF tokens.</li>
-<li><b>Replay attack</b> — an attacker captures a token or message and re-sends it to impersonate you. Defenses: short expiries, one-time <b>nonce</b> values, and sender-constrained tokens.</li>
-<li><b>Bearer vs sender-constrained (proof-of-possession)</b> — a <b>bearer</b> token works for anyone who holds it (like cash — steal it, use it). A <b>sender-constrained</b> token is cryptographically bound to a key only the real client has (mTLS-bound or <b>DPoP</b>), so a stolen copy is useless.</li>
-<li><b>Phishing-resistant authentication</b> — methods that can't be phished because the secret never leaves the device and is bound to the site's real origin (passkeys / <b>WebAuthn</b>, security keys).</li>
-<li><b>Attestation</b> — cryptographic proof of <i>what</i> something is (e.g. SPIRE attesting a workload from its node/process properties) before it's issued an identity.</li>
-<li><b>Trust / trust domain</b> — a relying party accepts tokens/assertions signed by an authority it has been configured to trust (its keys/cert); a <b>trust domain</b> is the root under which a set of identities is issued (SPIFFE).</li>
-</ul>`,
+<p>Identity is drowning in jargon, and many terms mean the same thing in different protocols. Rather
+than cram every definition here, DevDojo keeps a living <b>&#128214; Glossary</b> as its own section in
+the left sidebar, organized by domain and in logical reading order (core distinction &rarr; actors
+&rarr; tokens &rarr; protocols &rarr; flows &rarr; endpoints &rarr; concepts &rarr; threats &rarr;
+governance).</p>
+<p><b>Two ways to use it.</b> Open the Glossary section any time as a full reference. And in <i>any</i>
+lesson, <b>select or double-click a term</b> &mdash; like <code>OAuth</code>, <code>SAML</code>,
+<code>PKCE</code>, <code>JWT</code>, <code>CSRF</code>, <code>scope</code> or <code>nonce</code> &mdash;
+and a popup shows its definition on the spot. The same click-to-explain that already works for Java
+keywords now covers the whole identity vocabulary.</p>
+<p>The rest of this stream builds on that vocabulary: authentication vs authorization, sessions vs
+tokens, SSO &amp; federation, IdPs and clients, scopes and consent. Whenever a word trips you up, the
+Glossary is one click away. The quick exercise below cements the acronyms you will see most.</p>
+`,
 docs:[['OAuth 2.0 roles (RFC 6749 §1.1)','https://www.rfc-editor.org/rfc/rfc6749#section-1.1'],['OIDC terminology','https://openid.net/specs/openid-connect-core-1_0.html#Terminology'],['CSRF (OWASP)','https://owasp.org/www-community/attacks/csrf']],
 ex:{title:'Expand the acronyms',
 prompt:`Write <code>Glossary</code> with <code>static String expand(String abbr)</code> that returns the full term for common identity acronyms: <code>"IdP"</code>→<code>"Identity Provider"</code>, <code>"SP"</code>→<code>"Service Provider"</code>, <code>"RP"</code>→<code>"Relying Party"</code>, <code>"AS"</code>→<code>"Authorization Server"</code>, <code>"RS"</code>→<code>"Resource Server"</code>, <code>"OIDC"</code>→<code>"OpenID Connect"</code>, <code>"PKCE"</code>→<code>"Proof Key for Code Exchange"</code>, <code>"JWT"</code>→<code>"JSON Web Token"</code>, <code>"MFA"</code>→<code>"Multi-Factor Authentication"</code>, <code>"SSO"</code>→<code>"Single Sign-On"</code>, and <code>"unknown"</code> for anything else.`,
