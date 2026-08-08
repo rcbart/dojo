@@ -219,5 +219,54 @@ solution:`public class SessionIssuer {
             && headerValue.contains("SameSite=Lax")
             && headerValue.contains("Path=/");
     }
-}`}}
+}`}},
+{id:'web8',title:'HTTP status codes: saying what happened',body:`
+<p>The status code is your API&#8217;s one-line summary of what happened. Clients branch on it, caches and proxies obey it, and monitoring counts it — so returning the <i>right</i> code matters as much as the body. Codes come in five families, keyed by the first digit:</p>
+<ul>
+<li><b>1xx Informational</b> — rare in app code (e.g. <code>100 Continue</code>).</li>
+<li><b>2xx Success</b> — it worked. <code>200 OK</code> (general success), <code>201 Created</code> (a POST made a resource — return its <code>Location</code>), <code>202 Accepted</code> (queued, not done yet), <code>204 No Content</code> (success with nothing to return, e.g. a DELETE).</li>
+<li><b>3xx Redirection</b> — look elsewhere. <code>301 Moved Permanently</code>, <code>302 Found</code> (temporary), <code>304 Not Modified</code> (the cache/ETag matched, save bandwidth).</li>
+<li><b>4xx Client error</b> — the caller got it wrong. <code>400 Bad Request</code> (malformed), <code>401 Unauthorized</code> (not authenticated — you must log in), <code>403 Forbidden</code> (authenticated but not allowed), <code>404 Not Found</code>, <code>405 Method Not Allowed</code>, <code>409 Conflict</code> (version/duplicate clash), <code>410 Gone</code>, <code>422 Unprocessable Entity</code> (well-formed but semantically invalid), <code>429 Too Many Requests</code> (rate limited — send <code>Retry-After</code>).</li>
+<li><b>5xx Server error</b> — your side broke. <code>500 Internal Server Error</code>, <code>502 Bad Gateway</code>, <code>503 Service Unavailable</code>, <code>504 Gateway Timeout</code>.</li>
+</ul>
+<p>Two distinctions trip people up. <b>401 vs 403</b>: 401 means "I do not know who you are" (authenticate), 403 means "I know who you are and you still cannot" (authorization). <b>400 vs 422</b>: 400 is unparseable, 422 parsed fine but violates a business rule. And never hide failures behind <code>200</code> with an error in the body — clients, caches, and dashboards all trust the code, so a wrong code is a lie the whole system believes.</p>`,
+docs:[['HTTP status codes — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status'],['Status code registry — IANA','https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml']],
+ex:{title:'Classify and name codes',
+prompt:`Write class <code>Http</code> with two static methods. <code>String category(int code)</code> returns the family: <code>"informational"</code> for 100&#8211;199, <code>"success"</code> for 200&#8211;299, <code>"redirect"</code> for 300&#8211;399, <code>"client error"</code> for 400&#8211;499, <code>"server error"</code> for 500&#8211;599, else <code>"unknown"</code>. <code>String reason(int code)</code> maps common codes: 200→<code>"OK"</code>, 201→<code>"Created"</code>, 204→<code>"No Content"</code>, 400→<code>"Bad Request"</code>, 401→<code>"Unauthorized"</code>, 403→<code>"Forbidden"</code>, 404→<code>"Not Found"</code>, 409→<code>"Conflict"</code>, 429→<code>"Too Many Requests"</code>, 500→<code>"Internal Server Error"</code>, else <code>"unknown"</code>.`,
+starter:`public class Http {
+    static String category(int code) {
+        return null;
+    }
+    static String reason(int code) {
+        return null;
+    }
+}`,
+solution:`public class Http {
+    static String category(int code) {
+        if (code >= 100 && code < 200) return "informational";
+        if (code >= 200 && code < 300) return "success";
+        if (code >= 300 && code < 400) return "redirect";
+        if (code >= 400 && code < 500) return "client error";
+        if (code >= 500 && code < 600) return "server error";
+        return "unknown";
+    }
+    static String reason(int code) {
+        switch (code) {
+            case 200: return "OK";
+            case 201: return "Created";
+            case 204: return "No Content";
+            case 400: return "Bad Request";
+            case 401: return "Unauthorized";
+            case 403: return "Forbidden";
+            case 404: return "Not Found";
+            case 409: return "Conflict";
+            case 429: return "Too Many Requests";
+            case 500: return "Internal Server Error";
+            default:  return "unknown";
+        }
+    }
+}`,
+tests:[{d:'2xx maps to success',re:'<\\s*300\\s*\\)\\s*return\\s+"success"'},{d:'3xx maps to redirect',re:'<\\s*400\\s*\\)\\s*return\\s+"redirect"'},{d:'4xx maps to client error',re:'<\\s*500\\s*\\)\\s*return\\s+"client error"'},{d:'5xx maps to server error',re:'<\\s*600\\s*\\)\\s*return\\s+"server error"'},{d:'201 is Created',re:'case\\s+201\\s*:\\s*return\\s+"Created"'},{d:'401 is Unauthorized',re:'case\\s+401\\s*:\\s*return\\s+"Unauthorized"'},{d:'404 is Not Found',re:'case\\s+404\\s*:\\s*return\\s+"Not Found"'},{d:'429 is Too Many Requests',re:'case\\s+429\\s*:\\s*return\\s+"Too Many Requests"'},{d:'500 is Internal Server Error',re:'case\\s+500\\s*:\\s*return\\s+"Internal Server Error"'}],
+behavior:`category(204) is "success", category(301) is "redirect", category(404) is "client error", category(503) is "server error", category(600) is "unknown". reason(201) is "Created", reason(401) is "Unauthorized", reason(429) is "Too Many Requests". 401 means authenticate; 403 means not allowed.`,
+hints:['Category is decided by the first digit: test ranges like code >= 200 && code < 300 in order.','A switch on code maps the common numbers to their reason phrases, with default returning unknown.','Remember 401 is authentication (who are you) and 403 is authorization (you cannot), and 201 pairs with a Location header.']}}
 ]});

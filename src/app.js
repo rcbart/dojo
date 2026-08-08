@@ -273,7 +273,9 @@ function renderNav(){
     hd.innerHTML=`${s.icon} ${s.title}<span class="pct">${streamDone(s)}/${s.lessons.length}</span>`;
     const box=document.createElement('div');box.className='lessons'+((cur&&cur.si===si)?' open':'');
     hd.onclick=()=>box.classList.toggle('open');
+    let _lastSec=null;
     s.lessons.forEach((l,li)=>{
+      if(l.sec&&l.sec!==_lastSec){const sh=document.createElement('div');sh.className='subHd';sh.textContent=l.sec;box.appendChild(sh);_lastSec=l.sec;}
       const a=document.createElement('div');
       const done=store.lesson(l.id).done;
       a.className='lessonLink'+((cur&&cur.si===si&&cur.li===li)?' active':'');
@@ -294,13 +296,26 @@ const DOMAINS=[
   {name:'Data & Persistence',icon:'🗄️',titles:['Working with Databases']},
   {name:'Systems & Networking',icon:'🔌',titles:['Networking & Sockets']},
   {name:'Security & Cryptography',icon:'🔐',titles:['Security & Crypto APIs']},
-  {name:'Identity & Access (IAM)',icon:'🛂',titles:['Identity Foundations','OAuth 2.0 & OpenID Connect','SAML 2.0 & Web SSO','Service-to-Service Authorization & SPIFFE','PKI & Certificate Management','OAuth, JWT & JOSE (JWK · JWS · JWE)']},
+  {name:'Identity & Access (IAM)',icon:'🛂',titles:['Identity and Access']},
   {name:'DevOps & Delivery',icon:'🚀',titles:['Build Tools: Maven & Gradle','Git: Beginner to Master','Deploying Java to the Web','CI/CD: GitHub Actions & ArgoCD']},
   {name:'Architecture & Design',icon:'🏛️',titles:['Design Patterns']},
   {name:'Senior Track (Dan)',icon:'⛩️',titles:['System Design & Tradeoffs','Failure-First: Distributed Systems','Working with Real Code']},
   {name:'Coding Challenges',icon:'🏆',titles:['Coding Challenges: The Tournament']},
   {name:'Real-World Projects',icon:'🛠️',titles:['Real-World Projects']}
 ];
+/* Merge all identity sub-streams (flagged iam:true) into ONE "Identity and Access"
+   stream whose lessons carry a .sec sub-category label. Runs once at boot; keeps each
+   source file independently gradeable while presenting a single stream to the learner. */
+function mergeIdentity(){
+  if(STREAMS.some(s=>s.title==='Identity and Access'))return;
+  const idx=[];STREAMS.forEach((s,i)=>{if(s.iam)idx.push(i);});
+  if(idx.length<2)return;
+  const first=idx[0];const lessons=[];
+  idx.forEach(i=>{const s=STREAMS[i];(s.lessons||[]).forEach(l=>{l.sec=s.sec||s.title;lessons.push(l);});});
+  const merged={icon:'🛂',title:'Identity and Access',blurb:'The whole identity domain in one place — plain-English identity & federation, authentication & MFA, authorization models, sessions & web login, OAuth 2.0 & OIDC, tokens (JWT/JOSE), SAML, PKI, service-to-service & zero trust, enterprise directories, advanced OAuth threats, and governance. Grouped into sub-categories you graduate through from white to black belt.',lessons};
+  for(let k=idx.length-1;k>=0;k--)STREAMS.splice(idx[k],1);
+  STREAMS.splice(first,0,merged);
+}
 function streamCard(s,si){
   const d=streamDone(s),t=s.lessons.length;
   return `<div class="card${s.tournament?' tour':(s.project?' proj':(s.dan?' dan':''))}" onclick="openLesson(${si},0)">${s.icon}${s.tournament?'<span class="tourBadge">🏆 TOURNAMENT</span>':(s.project?'<span class="projBadge">🏗️ PROJECT</span>':(s.dan?'<span class="danBadge">⛩️ DAN</span>':''))}<h3>${s.title}</h3><div class="meta">${s.blurb}</div><div class="meta" style="margin-top:6px">${d}/${t} ${s.tournament?'challenges · no belt credit':(s.project?'projects · no belt credit':(s.dan?'lessons · dan track':'lessons'))}</div><div class="bar"><i style="width:${t?Math.round(100*d/t):0}%${s.tournament?';background:#d97706':(s.project?';background:#0e9f6e':(s.dan?';background:linear-gradient(90deg,#111827,#b8860b)':''))}"></i></div></div>`;
@@ -357,7 +372,7 @@ function openLesson(si,li,ei){
   const sid=e?exSid(l,exs,ei):null;
   const saved=sid?store.lesson(sid):{};
   const m=document.getElementById('main');
-  m.innerHTML=`<div class="crumb">${s.icon} ${s.title} · Lesson ${li+1} of ${s.lessons.length}</div>
+  m.innerHTML=`<div class="crumb">${s.icon} ${s.title}${l.sec?' · '+l.sec:''} · Lesson ${li+1} of ${s.lessons.length}</div>
   <h1 class="lessonTitle">${l.title}</h1>
   <div class="lessonBody">${l.body}</div>
   ${l.docs&&l.docs.length?`<div class="docs"><b>📚 References:</b><br>${l.docs.map(d=>`<a href="${d[1]}" target="_blank" rel="noopener">${d[0]} ↗</a>`).join('')}</div>`:''}

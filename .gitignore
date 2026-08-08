@@ -26,3 +26,9 @@ site/data/
 *.db-wal
 *.db-shm
 *.migrated
+
+# consolidated local secrets/PII export (pre-push sweep) — NEVER commit
+private-do-not-commit/
+*.crt
+*.cert
+*.jwk

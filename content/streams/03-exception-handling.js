@@ -196,5 +196,52 @@ public class UserStore {
             throw new StorageException("failed to load user " + id, e);
         }
     }
-}`}}
+}`}},
+{id:'exc5',title:'Designing your own exceptions',body:`
+<p>Built-in exceptions cover the basics, but real domains have real failure modes: <code>InsufficientFundsException</code>, <code>OrderAlreadyShippedException</code>, <code>InvalidCouponException</code>. A well-named custom exception turns a vague failure into a precise, catchable event — and lets you carry <b>data about the failure</b>, not just a message.</p>
+<p><b>Checked or unchecked?</b> Extend <code>Exception</code> (checked) when the caller can reasonably recover and you want the compiler to force handling. Extend <code>RuntimeException</code> (unchecked) for programming errors or failures the caller usually cannot fix. Most modern app code leans unchecked to avoid <code>throws</code> clutter, but the choice is yours to make deliberately.</p>
+<div class="codeSample" data-hl>public class OrderException extends RuntimeException {
+    private final String orderId;                 // carry failure data
+    public OrderException(String message, String orderId, Throwable cause) {
+        super(message, cause);                     // keep the original cause (chaining)
+        this.orderId = orderId;
+    }
+    public String getOrderId() { return orderId; }
+}</div>
+<p>Two habits make custom exceptions professional. Always offer a constructor that accepts a <b>cause</b> and pass it to <code>super(message, cause)</code> so the original stack trace is not lost (exception chaining). And add fields/getters for the context a handler will want — an id, an amount, a limit — so <code>catch</code> blocks can act on facts instead of parsing strings.</p>`,
+docs:[['Creating exception classes — Oracle','https://docs.oracle.com/javase/tutorial/essential/exceptions/creating.html'],['Chained exceptions','https://docs.oracle.com/javase/tutorial/essential/exceptions/chained.html']],
+ex:{title:'Write a domain exception',
+prompt:`Create an unchecked exception <code>InsufficientFundsException</code> that <code>extends RuntimeException</code>, holds a <code>long shortfall</code> field, has a constructor <code>(String message, long shortfall)</code> that calls <code>super(message)</code> and stores the field, and exposes <code>long getShortfall()</code>. Then in class <code>Account</code>, method <code>void withdraw(long amount, long balance)</code> must <code>throw new InsufficientFundsException(...)</code> when <code>amount &gt; balance</code>, passing the shortfall <code>amount - balance</code>.`,
+starter:`public class Account {
+    void withdraw(long amount, long balance) {
+        // throw when amount > balance
+    }
+}
+
+class InsufficientFundsException extends RuntimeException {
+    // field, constructor, getter
+}`,
+solution:`public class Account {
+    void withdraw(long amount, long balance) {
+        if (amount > balance) {
+            throw new InsufficientFundsException("insufficient funds", amount - balance);
+        }
+    }
+}
+
+class InsufficientFundsException extends RuntimeException {
+    private final long shortfall;
+
+    InsufficientFundsException(String message, long shortfall) {
+        super(message);
+        this.shortfall = shortfall;
+    }
+
+    long getShortfall() {
+        return shortfall;
+    }
+}`,
+tests:[{d:'extends RuntimeException (unchecked)',re:'class\\s+InsufficientFundsException\\s+extends\\s+RuntimeException'},{d:'carries a long shortfall field',re:'long\\s+shortfall'},{d:'constructor passes the message up with super(message)',re:'super\\s*\\(\\s*message\\s*\\)'},{d:'exposes getShortfall()',re:'getShortfall\\s*\\(\\s*\\)'},{d:'throws on amount > balance',re:'amount\\s*>\\s*balance'},{d:'throws the custom exception',re:'throw\\s+new\\s+InsufficientFundsException'}],
+behavior:`withdraw(100, 40) throws InsufficientFundsException whose getShortfall() returns 60. withdraw(30, 40) returns normally. The exception carries the shortfall as data, so a catch block can react without parsing the message.`,
+hints:['A custom exception is just a class that extends Exception or RuntimeException; use RuntimeException for unchecked.','Store extra context in a final field set by the constructor, and pass the message up with super(message).','In withdraw, guard with if (amount > balance) then throw new InsufficientFundsException with amount - balance.']}}
 ]});

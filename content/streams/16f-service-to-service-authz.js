@@ -1,4 +1,4 @@
-STREAMS.push({icon:'🔗',title:'Service-to-Service Authorization & SPIFFE',blurb:'How services prove who they are to each other with no human in the loop: token-based M2M (client credentials via a minting authority like Cognito), mutual TLS, OAuth token exchange, and workload identity with SPIFFE/SPIRE — the building blocks of zero trust.',lessons:[
+STREAMS.push({iam:true,sec:'Service-to-service & zero trust',icon:'🔗',title:'Service-to-Service Authorization & SPIFFE',blurb:'How services prove who they are to each other with no human in the loop: token-based M2M (client credentials via a minting authority like Cognito), mutual TLS, OAuth token exchange, and workload identity with SPIFFE/SPIRE — the building blocks of zero trust.',lessons:[
 
 {id:'s2s1',title:'Machine identity & token-based M2M',body:`
 <p>Service-to-service (S2S / machine-to-machine, M2M) calls have <b>no user</b> — a backend calls another backend as <i>itself</i>. So "who is calling?" is answered by the <b>service's own identity</b>, not a logged-in person.</p>
@@ -234,5 +234,45 @@ solution:`public class ZeroTrust {
         return false;
     }
 }`}}
-
+,
+{id:'s2s7',title:'Context propagation across services',body:`
+<p>When a request crosses many services, the <b>who</b> and the <b>trace</b> have to travel with it. That travelling bundle — the caller&#8217;s identity (their token or principal), plus correlation/trace ids — is the <b>security context</b>, and moving it correctly is <b>context propagation</b>.</p>
+<p>Miss it and two things break. Downstream services cannot make authorization decisions or write meaningful audit logs, because they no longer know who the original caller was; and you create a <b>confused deputy</b>, where a trusted middle service acts with its own high privilege on behalf of an unknown user. So each hop must forward the identity — either by passing the original token through, or by exchanging it for a scoped downstream token — alongside a <code>traceparent</code> id so the whole call chain can be stitched together.</p>
+<p>Inside a service the same context must survive thread and async boundaries: it typically rides in a <code>ThreadLocal</code> / MDC and must be <b>copied</b> onto worker threads, or it silently vanishes mid-request.</p>`,
+docs:[['W3C Trace Context','https://www.w3.org/TR/trace-context/'],['Confused deputy problem','https://en.wikipedia.org/wiki/Confused_deputy_problem']],
+ex:{title:'Forward identity and trace downstream',
+prompt:`Write class <code>Context</code> with <code>static String headers(String bearer, String traceparent)</code> that builds the downstream header string <code>authorization=&lt;bearer&gt;;traceparent=&lt;traceparent&gt;</code> — carrying both the caller identity and the trace id to the next service.`,
+starter:`public class Context {
+    static String headers(String bearer, String traceparent) {
+        return null;
+    }
+}`,
+solution:`public class Context {
+    static String headers(String bearer, String traceparent) {
+        return "authorization=" + bearer + ";traceparent=" + traceparent;
+    }
+}`,
+tests:[{d:'forwards the caller identity',re:'"authorization="\\s*\\+\\s*bearer'},{d:'forwards the trace id',re:'";traceparent="\\s*\\+\\s*traceparent'}],
+behavior:`headers("Bearer abc","00-trace-01") returns "authorization=Bearer abc;traceparent=00-trace-01". The downstream service can now identify the original caller and correlate the call in traces.`,
+hints:['Concatenate the two labelled values with +.','The separator between them is the literal ";traceparent=".','Both the identity and the trace id must be forwarded, not just one.']}},
+{id:'s2s8',title:'Impersonation vs delegation',body:`
+<p><b>Impersonation</b> means one party <i>acts as</i> another so completely that the downstream cannot tell the difference — the request now looks like it simply came from the target user. A support admin using "log in as this customer" is impersonation: the effective subject becomes the customer, and the admin&#8217;s own identity disappears from view.</p>
+<p><b>Delegation</b> is the safer cousin. The app acts <i>on behalf of</i> the user while <b>both</b> identities are preserved: the token names the user as the subject and records the acting party in an <code>act</code> (actor) claim, which OAuth <b>Token Exchange</b> produces. Auditors can then see "service X acted for user Y," which pure impersonation loses.</p>
+<p>Rule of thumb: prefer delegation so attribution survives; reserve impersonation for genuine support scenarios, and always log who impersonated whom.</p>`,
+docs:[['Token Exchange & act claim (RFC 8693)','https://www.rfc-editor.org/rfc/rfc8693'],['Delegation vs impersonation','https://docs.oasis-open.org/']],
+ex:{title:'Resolve the effective subject',
+prompt:`Write class <code>Impersonation</code> with <code>static String effectiveSubject(String actor, String target, boolean impersonating)</code> that returns the <code>target</code> when impersonating (the request appears to come from the target) and the <code>actor</code> otherwise. Use one conditional expression.`,
+starter:`public class Impersonation {
+    static String effectiveSubject(String actor, String target, boolean impersonating) {
+        return null;
+    }
+}`,
+solution:`public class Impersonation {
+    static String effectiveSubject(String actor, String target, boolean impersonating) {
+        return impersonating ? target : actor;
+    }
+}`,
+tests:[{d:'impersonation makes the target the effective subject',re:'impersonating\\s*\\?\\s*target\\s*:\\s*actor'}],
+behavior:`effectiveSubject("admin","alice",true) returns "alice" — the request now appears to be alice, and the admin identity is hidden (why delegation with an act claim is safer). effectiveSubject("admin","alice",false) returns "admin".`,
+hints:['A single ternary condition ? target : actor expresses it.','Impersonating means the target becomes the effective subject.','Otherwise the actor remains the subject.']}}
 ]});

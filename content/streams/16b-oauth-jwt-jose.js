@@ -1,4 +1,4 @@
-STREAMS.push({icon:'🔑',title:'OAuth, JWT & JOSE (JWK · JWS · JWE)',blurb:'Generate JWKs, mint and sign JWTs (RS256/ES256), verify them against a JWKS well-known endpoint, watch tampering fail, and encrypt with JWE — the token layer of OAuth/OIDC, in Java with Nimbus JOSE+JWT.',lessons:[
+STREAMS.push({iam:true,sec:'Tokens: JWT & JOSE',icon:'🔑',title:'OAuth, JWT & JOSE (JWK · JWS · JWE)',blurb:'Generate JWKs, mint and sign JWTs (RS256/ES256), verify them against a JWKS well-known endpoint, watch tampering fail, and encrypt with JWE — the token layer of OAuth/OIDC, in Java with Nimbus JOSE+JWT.',lessons:[
 
 {id:'jose1',title:'Signing keys as JWKs (RSA-2048 & EC P-256)',body:`
 <p>OAuth and OpenID Connect hand out <b>tokens</b> that a receiver must be able to <i>trust</i>. Trust comes from a <b>signature</b>, and a signature needs a <b>key pair</b>:</p>

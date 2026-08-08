@@ -118,7 +118,7 @@ tests:[{d:'Default format seeded before parsing',re:'put\\s*\\(\\s*"format"\\s*,
 behavior:`1. parse(["report.csv", "--format", "json", "--verbose"]) → {file=report.csv, format=json, verbose=true}. 2. parse(["data.csv"]) → format defaults to "text", no verbose key. 3. parse(["--verbose"]) → usage line on stderr, returns an empty Map.of() — callers check isEmpty() for failure. 4. The ++i inside the --format case is what makes an option consume its value; without it the value would be misread as the file.`,
 hints:['Seed defaults into the map BEFORE the loop — parsing then overwrites them.','args[++i] increments first, then indexes: the option eats its value in one expression.','stderr for humans, stdout for data — mixing them breaks every pipe your tool is used in.']}},
 
-{id:'inp3',title:'Validate everything: parse, don\\u0027t trust',body:`
+{id:'inp3',title:'Validate everything: parse, don\'t trust',body:`
 <p>Input has now arrived — as Strings, because input always arrives as Strings. The next discipline: <b>turn stringly-typed data into real types at the boundary, immediately, and reject garbage there</b> — never let a raw String wander into the middle of your program to explode later.</p>
 <p>The toolbox, in order of preference:</p>
 <ul>

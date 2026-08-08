@@ -1,4 +1,4 @@
-STREAMS.push({icon:'🎫',title:'SAML 2.0 & Web SSO',blurb:'The enterprise SSO workhorse: SAML assertions, SP- vs IdP-initiated flows, the HTTP bindings (Redirect/POST/Artifact), metadata & trust, signing/encryption and Single Logout — and when to choose SAML vs OIDC.',lessons:[
+STREAMS.push({iam:true,sec:'SAML & enterprise web SSO',icon:'🎫',title:'SAML 2.0 & Web SSO',blurb:'The enterprise SSO workhorse: SAML assertions, SP- vs IdP-initiated flows, the HTTP bindings (Redirect/POST/Artifact), metadata & trust, signing/encryption and Single Logout — and when to choose SAML vs OIDC.',lessons:[
 
 {id:'sml1',title:'What SAML is & the assertion',body:`
 <p><b>SAML 2.0</b> (Security Assertion Markup Language) is the older, XML-based federation standard that still runs most <b>enterprise web SSO</b>. Same idea as OIDC — an <b>IdP</b> vouches for a user to a <b>Service Provider (SP)</b> — but the message is an XML <b>assertion</b> instead of a JWT.</p>

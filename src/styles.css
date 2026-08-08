@@ -206,3 +206,9 @@ kbd{background:#eceef7;border:1px solid var(--line);border-radius:4px;padding:0 
 .glossItem dt{margin:0;font-weight:700;color:var(--fg,#111)}
 .glossItem dd{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
 @media(max-width:640px){.glossItem{grid-template-columns:1fr;gap:2px}}
+
+/* sub-category headers inside a merged stream's lesson list (Identity and Access) */
+.subHd{margin:10px 8px 4px;padding:4px 8px;font-size:11px;font-weight:800;letter-spacing:.05em;
+  text-transform:uppercase;color:#8b5cf6;border-left:3px solid #8b5cf6;background:rgba(139,92,246,.07);
+  border-radius:0 6px 6px 0}
+.subHd:first-child{margin-top:2px}

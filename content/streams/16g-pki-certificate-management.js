@@ -1,4 +1,4 @@
-STREAMS.push({icon:'📜',title:'PKI & Certificate Management',blurb:'The trust machinery under TLS, mTLS and signed tokens: public-key infrastructure, X.509 certificates, certificate authorities and chains of trust, CSRs and key usage, revocation (CRL/OCSP), rotation & ACME, and Java keystores/truststores.',lessons:[
+STREAMS.push({iam:true,sec:'PKI & certificates',icon:'📜',title:'PKI & Certificate Management',blurb:'The trust machinery under TLS, mTLS and signed tokens: public-key infrastructure, X.509 certificates, certificate authorities and chains of trust, CSRs and key usage, revocation (CRL/OCSP), rotation & ACME, and Java keystores/truststores.',lessons:[
 
 {id:'pki1',title:'Asymmetric keys & X.509 certificates',body:`
 <p><b>PKI</b> (Public Key Infrastructure) is the system that lets strangers trust each other's public keys. It rests on <b>asymmetric cryptography</b>: a <b>key pair</b> where the <b>private key</b> signs/decrypts and the matching <b>public key</b> verifies/encrypts.</p>

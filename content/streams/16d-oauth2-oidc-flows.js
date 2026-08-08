@@ -1,4 +1,4 @@
-STREAMS.push({icon:'🔓',title:'OAuth 2.0 & OpenID Connect',blurb:'Every OAuth 2.0 flow from first principles — authorization code, PKCE, client credentials, device, refresh — plus OpenID Connect on top (ID tokens, discovery, UserInfo, nonce). The protocol that issues the tokens.',lessons:[
+STREAMS.push({iam:true,sec:'OAuth 2.0 & OpenID Connect',icon:'🔓',title:'OAuth 2.0 & OpenID Connect',blurb:'Every OAuth 2.0 flow from first principles — authorization code, PKCE, client credentials, device, refresh — plus OpenID Connect on top (ID tokens, discovery, UserInfo, nonce). The protocol that issues the tokens.',lessons:[
 
 {id:'oa1',title:'The roles & the Authorization Code flow',body:`
 <p>OAuth 2.0 is a <b>delegated authorization</b> protocol: it lets an app get a <i>limited</i> access token to call an API on a user's behalf, <b>without the user's password</b>. Four roles:</p>

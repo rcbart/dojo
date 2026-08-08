@@ -1,4 +1,4 @@
-STREAMS.push({icon:'🪪',title:'Identity Foundations',blurb:'The vocabulary of identity from scratch — a glossary, then authentication vs authorization, sessions vs tokens, SSO & federation, IdPs and clients, scopes and consent. The base every OAuth/OIDC/SAML lesson builds on.',lessons:[
+STREAMS.push({iam:true,sec:'Identity & federation foundations',icon:'🪪',title:'Identity Foundations',blurb:'The vocabulary of identity from scratch — a glossary, then authentication vs authorization, sessions vs tokens, SSO & federation, IdPs and clients, scopes and consent. The base every OAuth/OIDC/SAML lesson builds on.',lessons:[
 
 {id:'idf0',title:'Glossary: the identity & OAuth vocabulary',body:`
 <p>Identity is drowning in jargon, and many terms mean the same thing in different protocols. Rather
@@ -298,5 +298,31 @@ solution:`public class TokenCheck {
         return true;
     }
 }`}}
-
+,
+{id:'idffed',title:'Identity & federation in plain English',body:`
+<p>Your <b>identity</b> is just your digital "who" — an account plus the facts attached to it (name, email, groups). <b>Authentication</b> proves you are that who; <b>authorization</b> decides what that who may do. So far, so simple.</p>
+<p>The problem: if every app keeps its own usernames and passwords, you drown in logins and each app becomes a place your password can leak. <b>Federation</b> solves this by letting apps <b>trust a shared authority</b> to say who you are, instead of each checking for themselves.</p>
+<p><b>The passport analogy.</b> Your country verifies who you are and issues a passport; other countries accept it at the border without re-investigating you, because they trust the issuer. In identity, the <b>Identity Provider (IdP)</b> is your country, the passport is a signed <b>token or assertion</b>, and each app — the <b>Service Provider / Relying Party</b> — is the border that trusts it.</p>
+<p><b>Everyday examples.</b> "Log in with Google": Google is the IdP that vouches for you, and the app relies on Google&#8217;s word rather than storing your password. Corporate SSO: an employee logs into Okta once and reaches Salesforce, Slack, and Workday — each app trusts Okta, so one login opens all of them. That is <b>federated identity</b>: your identity lives in one place and is accepted in many.</p>
+<p>The trust is set up in advance (the app is configured with the IdP&#8217;s keys/metadata), which is why a random site cannot simply claim "Google says this is you" — only the real, pre-trusted IdP&#8217;s signature is accepted.</p>`,
+docs:[['Identity federation — Wikipedia','https://en.wikipedia.org/wiki/Federated_identity'],['SSO & federation basics','https://www.cloudflare.com/learning/access-management/what-is-federated-identity/']],
+ex:{title:'Who plays which role?',
+prompt:`Write class <code>Federation</code> with <code>static String role(String party)</code>: <code>"idp"</code>→<code>"vouches for the user"</code>, <code>"sp"</code>→<code>"relies on the idp"</code>, and <code>"unknown"</code> for anything else.`,
+starter:`public class Federation {
+    static String role(String party) {
+        return null;
+    }
+}`,
+solution:`public class Federation {
+    static String role(String party) {
+        switch (party) {
+            case "idp": return "vouches for the user";
+            case "sp":  return "relies on the idp";
+            default:    return "unknown";
+        }
+    }
+}`,
+tests:[{d:'the IdP vouches for the user',re:'"idp".*?"vouches for the user"',flags:'s'},{d:'the SP relies on the IdP',re:'"sp".*?"relies on the idp"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+behavior:`role("idp") is "vouches for the user", role("sp") is "relies on the idp", role("x") is "unknown". The IdP is the trusted authority; the SP/RP is the app that accepts its word.`,
+hints:['A two-case switch plus a default covers it.','The identity provider vouches; the service provider relies.','Anything else returns unknown.']}}
 ]});

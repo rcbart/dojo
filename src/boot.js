@@ -1,5 +1,5 @@
 /* ============================== BOOT ============================== */
-renderNav();renderHome();refreshBelt();
+mergeIdentity();renderNav();renderHome();refreshBelt();
 
 /* ---- interactive JWT tamper demo (used by the OAuth/JWT/JOSE stream, lesson jose5) ---- */
 window.jwtTamper=(function(){

@@ -463,5 +463,81 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
     protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
         return size() > maxEntries;
     }
-}`}}
+}`}},
+{id:'ds6',title:'Big-O, Theta & Omega: measuring cost',body:`
+<p>Before choosing a data structure you need a way to compare algorithms that does not depend on your laptop or language. That is <b>asymptotic complexity</b>: how the work grows as the input <code>n</code> grows, ignoring constant factors and small-input noise.</p>
+<p>Three notations describe growth precisely:</p>
+<ul>
+<li><b>Big-O — O(f)</b> is an <i>upper bound</i>: "grows no faster than f." The usual worst-case promise.</li>
+<li><b>Big-Omega — &#937;(f)</b> is a <i>lower bound</i>: "grows at least as fast as f." The best case floor.</li>
+<li><b>Big-Theta — &#920;(f)</b> is a <i>tight bound</i>: O and &#937; agree, so f describes the growth exactly.</li>
+</ul>
+<p>Separately, name <b>which case</b> you mean — <b>best</b>, <b>average</b>, or <b>worst</b>. Quicksort is &#920;(n log n) on average but O(n&#178;) worst case; a hash lookup is O(1) average but O(n) worst case. When people say "O(n log n)" unqualified they almost always mean the worst (or expected) case.</p>
+<p>The growth classes you will meet daily, best to worst: <code>O(1)</code> constant, <code>O(log n)</code> logarithmic, <code>O(n)</code> linear, <code>O(n log n)</code> linearithmic, <code>O(n&#178;)</code> quadratic, <code>O(2&#8319;)</code> exponential. Two refinements matter in practice: <b>amortized</b> cost averages an occasional expensive step over many cheap ones (ArrayList add is amortized O(1) despite rare resizes), and <b>space complexity</b> measures extra memory the same way time is measured.</p>`,
+docs:[['Big-O notation — Wikipedia','https://en.wikipedia.org/wiki/Big_O_notation'],['Time complexity — Wikipedia','https://en.wikipedia.org/wiki/Time_complexity']],
+ex:{title:'Name the bound and the cost',
+prompt:`Write class <code>Complexity</code> with two static methods. <code>String bound(String kind)</code>: <code>"upper"</code>→<code>"Big-O"</code>, <code>"tight"</code>→<code>"Theta"</code>, <code>"lower"</code>→<code>"Omega"</code>, else <code>"unknown"</code>. <code>String of(String algo)</code>: <code>"hash-lookup"</code>→<code>"O(1)"</code>, <code>"binary-search"</code>→<code>"O(log n)"</code>, <code>"linear-scan"</code>→<code>"O(n)"</code>, <code>"bubble-sort"</code>→<code>"O(n^2)"</code>, else <code>"unknown"</code>.`,
+starter:`public class Complexity {
+    static String bound(String kind) {
+        return null;
+    }
+    static String of(String algo) {
+        return null;
+    }
+}`,
+solution:`public class Complexity {
+    static String bound(String kind) {
+        switch (kind) {
+            case "upper": return "Big-O";
+            case "tight": return "Theta";
+            case "lower": return "Omega";
+            default:      return "unknown";
+        }
+    }
+    static String of(String algo) {
+        switch (algo) {
+            case "hash-lookup":   return "O(1)";
+            case "binary-search": return "O(log n)";
+            case "linear-scan":   return "O(n)";
+            case "bubble-sort":   return "O(n^2)";
+            default:              return "unknown";
+        }
+    }
+}`,
+tests:[{d:'upper bound is Big-O',re:'"upper".*?"Big-O"',flags:'s'},{d:'tight bound is Theta',re:'"tight".*?"Theta"',flags:'s'},{d:'lower bound is Omega',re:'"lower".*?"Omega"',flags:'s'},{d:'binary-search is O(log n)',re:'"binary-search".*?"O\\(log n\\)"',flags:'s'},{d:'bubble-sort is O(n^2)',re:'"bubble-sort".*?"O\\(n\\^2\\)"',flags:'s'},{d:'hash-lookup is O(1)',re:'"hash-lookup".*?"O\\(1\\)"',flags:'s'},{d:'has an unknown default',re:'"unknown"'}],
+behavior:`bound("upper") is "Big-O", bound("tight") is "Theta", bound("lower") is "Omega". of("binary-search") is "O(log n)", of("bubble-sort") is "O(n^2)". Anything unrecognized is "unknown". Big-O is the upper bound, Omega the lower, Theta the tight bound when they coincide.`,
+hints:['Big-O is the upper bound, Omega the lower bound, Theta the tight bound where the two meet.','A switch per method maps each key to its answer, with default returning unknown.','Write the cost strings exactly, including the parentheses, as in O(log n) and O(n^2).']}},
+{id:'ds7',title:'Trees & search optimization',body:`
+<p>A <b>tree</b> stores data in nodes with parent-child links and no cycles. Trees turn linear scans into logarithmic ones by letting each comparison discard a whole branch — the core trick behind fast search.</p>
+<ul>
+<li><b>Binary Search Tree (BST)</b> — left child smaller, right child larger. Search/insert/delete are O(log n) <i>when balanced</i>; but insert sorted data and it degenerates into a linked list at O(n). That failure mode is why balancing exists.</li>
+<li><b>Self-balancing trees (AVL, Red-Black)</b> — rotate on insert/delete to keep height ~log n, guaranteeing O(log n). Java&#8217;s <code>TreeMap</code>/<code>TreeSet</code> are red-black trees, giving sorted keys and range queries.</li>
+<li><b>Heap</b> — a complete binary tree with a parent-vs-child order (not full sorting). O(1) peek at the min/max and O(log n) insert/remove — perfect for priority queues and top-k.</li>
+<li><b>Trie (prefix tree)</b> — one node per character; lookup is O(length of the key), independent of how many keys are stored. Ideal for autocomplete and prefix search.</li>
+<li><b>B-tree / B+ tree</b> — wide, shallow trees with many keys per node to minimize disk reads. They are the backbone of database and filesystem <b>indexes</b>.</li>
+</ul>
+<p><b>Search optimization</b> is really structure selection plus keeping the structure healthy. Match the structure to the query: exact-key lookup wants a hash table (O(1) average); sorted or range queries want a balanced BST or B-tree (O(log n)); prefix queries want a trie; repeatedly pulling the smallest/largest wants a heap. Then keep it fast: balance the tree, add the right index, and remember that an unbalanced tree or a missing index is what silently turns O(log n) back into O(n).</p>`,
+docs:[['Binary search tree — Wikipedia','https://en.wikipedia.org/wiki/Binary_search_tree'],['B-tree — Wikipedia','https://en.wikipedia.org/wiki/B-tree'],['Trie — Wikipedia','https://en.wikipedia.org/wiki/Trie']],
+ex:{title:'Pick the right tree',
+prompt:`Write class <code>Trees</code> with <code>static String pick(String need)</code> that recommends a structure: <code>"exact-key-lookup"</code>→<code>"hash table"</code>, <code>"sorted-range"</code>→<code>"balanced BST"</code>, <code>"prefix-autocomplete"</code>→<code>"trie"</code>, <code>"top-k"</code>→<code>"heap"</code>, <code>"disk-index"</code>→<code>"B-tree"</code>, and <code>"unknown"</code> for anything else.`,
+starter:`public class Trees {
+    static String pick(String need) {
+        return null;
+    }
+}`,
+solution:`public class Trees {
+    static String pick(String need) {
+        switch (need) {
+            case "exact-key-lookup":    return "hash table";
+            case "sorted-range":        return "balanced BST";
+            case "prefix-autocomplete": return "trie";
+            case "top-k":               return "heap";
+            case "disk-index":          return "B-tree";
+            default:                    return "unknown";
+        }
+    }
+}`,
+tests:[{d:'exact-key lookup picks a hash table',re:'"exact-key-lookup".*?"hash table"',flags:'s'},{d:'sorted range picks a balanced BST',re:'"sorted-range".*?"balanced BST"',flags:'s'},{d:'prefix/autocomplete picks a trie',re:'"prefix-autocomplete".*?"trie"',flags:'s'},{d:'top-k picks a heap',re:'"top-k".*?"heap"',flags:'s'},{d:'disk index picks a B-tree',re:'"disk-index".*?"B-tree"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+behavior:`pick("exact-key-lookup") is "hash table", pick("sorted-range") is "balanced BST", pick("prefix-autocomplete") is "trie", pick("top-k") is "heap", pick("disk-index") is "B-tree". Choosing the structure that matches the query is the essence of search optimization.`,
+hints:['Match the access pattern to the structure: exact key to hash, range to balanced BST, prefix to trie, smallest/largest to heap, on-disk to B-tree.','A single switch on need with one case each is all it takes.','Return the exact recommendation strings, and fall through to unknown by default.']}}
 ]});

@@ -269,5 +269,43 @@ solution:`1. git revert abc123
 `,
 tests:[{d:'shared history → revert, never reset',re:'1\\.\\s*git\\s+revert\\s+abc123',flags:'i'},{d:'soft reset uncommits, keeps work staged',re:'2\\.\\s*git\\s+reset\\s+--soft\\s+HEAD~1',flags:'i'},{d:'rebase replays onto main',re:'3\\.\\s*git\\s+rebase\\s+main\\s*$',flags:'im'},{d:'interactive rebase over 4 commits',re:'4\\.\\s*git\\s+rebase\\s+-i\\s+HEAD~4',flags:'i'},{d:'cherry-pick copies one commit',re:'5\\.\\s*git\\s+cherry-pick\\s+9f8e7d',flags:'i'},{d:'bisect session opened',re:'6\\.\\s*git\\s+bisect\\s+start',flags:'i'},{d:'current commit marked bad',re:'7\\.\\s*git\\s+bisect\\s+bad',flags:'i'}],
 behavior:`1. revert adds an inverse commit — teammates just pull it like any other. 2. --soft moves the branch pointer back one; the files sit staged, ready to be amended into a better commit. 3. Your commits are replayed on top of today's main with new hashes — do this only before pushing. 4. The -i editor lists 4 commits; changing pick to squash/fixup/reword directs the rewrite. 5. cherry-pick creates a new commit with the same change but a different hash and parent. 6-7. bisect start, then bad/good answers, binary-search the breakage — O(log n) debugging.`,
-hints:['Line 1 vs line 2 is the whole lesson: pushed → forward fix (revert); local → rewrite freely (reset/rebase).','HEAD~1 means "one commit before HEAD" — the ~N syntax counts parents backwards.','After bisect names the culprit: git bisect reset returns you to where you started.']}}
+hints:['Line 1 vs line 2 is the whole lesson: pushed → forward fix (revert); local → rewrite freely (reset/rebase).','HEAD~1 means "one commit before HEAD" — the ~N syntax counts parents backwards.','After bisect names the culprit: git bisect reset returns you to where you started.']}},
+{id:'git7',title:'Reading history: log, blame & inspection',body:`
+<p>Half of senior Git is not writing history — it is <b>reading</b> it: finding when a line changed, why, and by whom. The workhorse is <code>git log</code>, which has far more range than the default wall of text.</p>
+<ul>
+<li><b>git log --oneline --graph</b> — a compact, visual commit tree; add <code>--all</code> to see every branch at once.</li>
+<li><b>git log --stat</b> and <b>git log -p</b> — show which files changed, or the full patch (diff) per commit.</li>
+<li><b>git log --follow FILE</b> — one file&#8217;s history, tracked across renames. <b>git log --grep=word</b> searches commit messages; <b>git log --author=Ada</b> and <b>--since="2 weeks ago"</b> filter by who and when.</li>
+<li><b>git log -S text</b> (the "pickaxe") — find the commits that <i>added or removed</i> a given string. The fastest way to answer "when did this function appear or vanish?"</li>
+</ul>
+<p>Then zoom in:</p>
+<ul>
+<li><b>git blame FILE</b> — annotate every line with the commit, author and date that last touched it. <code>git blame -L 20,40 FILE</code> limits it to a range. Blame answers "who wrote this and in what change?" — then you read that commit&#8217;s message for the why.</li>
+<li><b>git show HASH</b> — the full story of one commit: message, metadata, and diff. <code>git show HASH:path</code> prints a file as it was at that commit.</li>
+<li><b>git diff A B</b> — what changed between any two commits or branches; <b>git shortlog -sn</b> — a contributor leaderboard.</li>
+<li><b>git reflog</b> — the local record of everywhere HEAD has been. After a bad reset or rebase, the "lost" commit is almost always still here — copy its hash and recover it.</li>
+</ul>
+<p>The everyday investigation flow: <code>git log -S brokenFn</code> to find the change, <code>git show</code> that hash to read it, or <code>git blame</code> the file to pin the exact line — and <code>git reflog</code> when you need to undo an undo.</p>`,
+docs:[['git log','https://git-scm.com/docs/git-log'],['git blame','https://git-scm.com/docs/git-blame'],['Viewing history — Pro Git','https://git-scm.com/book/en/v2/Git-Basics-Viewing-the-Commit-History']],
+ex:{title:'History-reading drill',lang:'shell',
+prompt:`One command per numbered line: (1) show a compact, graphical one-line history; (2) annotate every line of <code>app.js</code> with who last changed it; (3) show the full details and diff of commit <code>abc123</code>; (4) show the history of <code>app.js</code> following it across renames; (5) find the commits that added or removed the string <code>getToken</code> (pickaxe); (6) show the full patch for each commit touching <code>app.js</code>; (7) show the reflog to recover a commit lost after a bad reset.`,
+starter:`1.
+2.
+3.
+4.
+5.
+6.
+7.
+`,
+solution:`1. git log --oneline --graph
+2. git blame app.js
+3. git show abc123
+4. git log --follow app.js
+5. git log -S getToken
+6. git log -p app.js
+7. git reflog
+`,
+tests:[{d:'compact graphical log',re:'1\\.\\s*git\\s+log\\s+--oneline\\s+--graph',flags:'i'},{d:'blame annotates each line',re:'2\\.\\s*git\\s+blame\\s+app\\.js',flags:'i'},{d:'show one commit in full',re:'3\\.\\s*git\\s+show\\s+abc123',flags:'i'},{d:'follow a file across renames',re:'4\\.\\s*git\\s+log\\s+--follow\\s+app\\.js',flags:'i'},{d:'pickaxe finds add/remove of a string',re:'5\\.\\s*git\\s+log\\s+-S\\s*getToken',flags:'i'},{d:'per-commit patch for a file',re:'6\\.\\s*git\\s+log\\s+-p\\s+app\\.js',flags:'i'},{d:'reflog to recover lost commits',re:'7\\.\\s*git\\s+reflog',flags:'i'}],
+behavior:`1. A readable commit tree instead of the default log. 2. blame pins each line to its last commit, author and date. 3. show prints commit abc123 with its diff. 4. --follow keeps a file&#8217;s history intact through renames. 5. -S getToken lists exactly the commits where that string appeared or disappeared. 6. -p shows the actual changes to app.js commit by commit. 7. reflog reveals the hash of the commit a hard reset seemed to destroy.`,
+hints:['git log is a search engine: --oneline/--graph to see shape, -S to find a string, --grep to search messages, --author/--since to filter.','git blame FILE tells you who and which commit; then read that commit with git show for the why.','After a bad reset or rebase, git reflog lists every position HEAD held so you can recover the lost hash.']}}
 ]});
