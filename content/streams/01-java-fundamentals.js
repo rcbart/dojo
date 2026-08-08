@@ -1493,5 +1493,57 @@ public class FileStats {
         }
         Files.writeString(p, "lines: " + count);
     }
-}`}}
+}`}},
+{id:'jvm1',title:'Inside the JVM: heap, stack & how methods run',body:`
+<p>Java code does not run on the CPU directly. <code>javac</code> compiles your <code>.java</code> source into portable <b>bytecode</b> (<code>.class</code> files); the <b>JVM</b> then executes that bytecode — first by interpreting it, and then, for "hot" methods run many times, by <b>JIT</b>-compiling them to native machine code for speed. That two-step is what "write once, run anywhere" actually means: the same bytecode runs on any machine that has a JVM.</p>
+<p>At run time the JVM divides memory into a few <b>runtime data areas</b>:</p>
+<ul>
+<li><b>Heap</b> — one big shared region where <i>every object and array lives</i>. It is shared across all threads and managed by the <b>garbage collector</b>, which reclaims objects nothing references anymore. Modern GCs are <i>generational</i>: new objects start in a "young" space and, if they survive, are promoted to an "old" space.</li>
+<li><b>Stack</b> — <i>one per thread</i>. It is a pile of <b>frames</b>, one per in-progress method call (details below). Fast, automatic, no GC needed.</li>
+<li><b>Metaspace</b> — class metadata: the loaded class definitions, method bytecode, and the constant pool.</li>
+<li><b>PC register &amp; native stack</b> — per-thread bookkeeping for which instruction is executing and for native (non-Java) calls.</li>
+</ul>
+<p><b>How a method call works under the hood.</b> Every time you call a method, the JVM <b>pushes a new frame</b> onto the current thread&#8217;s stack. That frame holds the method&#8217;s <b>local variable array</b> (its parameters and locals) and an <b>operand stack</b> (a scratch workspace the bytecode uses to compute expressions). When the method returns, its frame is <b>popped</b> and its locals vanish instantly. This is why locals are cheap and thread-safe: each call has its own frame.</p>
+<div class="codeSample" data-hl>int total = sum(2, 3);            // pushes a frame for sum(): locals a=2, b=3
+
+static int sum(int a, int b) {    // a, b live in THIS frame — on the stack
+    int r = a + b;                // r is a local — stack
+    int[] data = new int[3];      // the variable 'data' (a reference) is on the stack,
+                                  // but the array OBJECT it points to lives on the HEAP
+    return r;                     // frame pops; 'data' is now unreachable -> GC reclaims it later
+}</div>
+<p>So the split is simple: <b>primitives and references</b> (the arrows) sit in the stack frame; <b>the objects they point to</b> sit on the heap. This also explains Java&#8217;s "pass-by-value": Java copies the <i>value</i> you pass; for an object that copied value is the reference, so caller and callee end up pointing at the <i>same</i> heap object.</p>
+<p>The two classic failure modes fall right out of this design. Recurse too deeply and you keep pushing frames until the thread&#8217;s stack is exhausted — a <b>StackOverflowError</b>. Allocate more live objects than the heap can hold and the GC cannot help — an <b>OutOfMemoryError</b>. Knowing which memory area is involved tells you immediately which one you are looking at.</p>`,
+docs:[['JVM runtime data areas — JVM spec','https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-2.html#jvms-2.5'],['How the JVM works — Oracle','https://docs.oracle.com/javase/specs/jvms/se21/html/index.html'],['Garbage collection basics','https://docs.oracle.com/en/java/javase/21/gctuning/introduction-garbage-collection-tuning.html']],
+ex:{title:'Where does it live, and what breaks?',
+prompt:`Write class <code>Jvm</code> with two static methods. <code>String location(String what)</code>: <code>"object"</code>→<code>"heap"</code>, <code>"local-primitive"</code>→<code>"stack"</code>, <code>"reference-variable"</code>→<code>"stack"</code>, <code>"class-metadata"</code>→<code>"metaspace"</code>, else <code>"unknown"</code>. <code>String error(String cause)</code>: <code>"deep-recursion"</code>→<code>"StackOverflowError"</code>, <code>"too-many-objects"</code>→<code>"OutOfMemoryError"</code>, else <code>"unknown"</code>.`,
+starter:`public class Jvm {
+    static String location(String what) {
+        return null;
+    }
+    static String error(String cause) {
+        return null;
+    }
+}`,
+solution:`public class Jvm {
+    static String location(String what) {
+        switch (what) {
+            case "object":             return "heap";
+            case "local-primitive":    return "stack";
+            case "reference-variable": return "stack";
+            case "class-metadata":     return "metaspace";
+            default:                   return "unknown";
+        }
+    }
+    static String error(String cause) {
+        switch (cause) {
+            case "deep-recursion":   return "StackOverflowError";
+            case "too-many-objects": return "OutOfMemoryError";
+            default:                 return "unknown";
+        }
+    }
+}`,
+tests:[{d:'objects live on the heap',re:'"object".*?"heap"',flags:'s'},{d:'local primitives live on the stack',re:'"local-primitive".*?"stack"',flags:'s'},{d:'a reference variable lives on the stack',re:'"reference-variable".*?"stack"',flags:'s'},{d:'class metadata lives in metaspace',re:'"class-metadata".*?"metaspace"',flags:'s'},{d:'deep recursion throws StackOverflowError',re:'"deep-recursion".*?"StackOverflowError"',flags:'s'},{d:'exhausting the heap throws OutOfMemoryError',re:'"too-many-objects".*?"OutOfMemoryError"',flags:'s'},{d:'unknown default present',re:'"unknown"'}],
+behavior:`location("object") is "heap"; location("local-primitive") and location("reference-variable") are "stack"; location("class-metadata") is "metaspace". error("deep-recursion") is "StackOverflowError"; error("too-many-objects") is "OutOfMemoryError". The object lives on the heap even though the reference to it lives on the stack.`,
+hints:['Objects and arrays always live on the heap; local primitives and the reference variables that point to objects live in the current stack frame.','Each method call pushes a stack frame with its own locals; returning pops it, and too many nested calls overflow the stack.','Class metadata lives in metaspace; running out of heap for live objects is an OutOfMemoryError.']}}
 ]});

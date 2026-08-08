@@ -105,6 +105,7 @@ function securityHeaders(res, { appPage } = {}) {
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   res.setHeader('Cache-Control', 'no-store');
+  if (SECURE_COOKIES) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   res.setHeader('Content-Security-Policy', appPage
     ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"
     : "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
@@ -134,9 +135,16 @@ function originOk(req) {
   if (!origin) return true;
   try { return new URL(origin).host === req.headers.host; } catch (e) { return false; }
 }
+// Only trust X-Forwarded-For when explicitly running behind a known reverse proxy
+// (JD_TRUST_PROXY=1). Otherwise a client could spoof the header to appear as a new
+// IP on every request and defeat the rate limiter (brute-force protection bypass).
+const TRUST_PROXY = process.env.JD_TRUST_PROXY === '1';
 function clientIp(req) {
-  return (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
-    || req.socket.remoteAddress || 'unknown';
+  if (TRUST_PROXY) {
+    const xff = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+    if (xff) return xff;
+  }
+  return req.socket.remoteAddress || 'unknown';
 }
 function publicUser(u) {
   return {
@@ -201,6 +209,9 @@ async function handle(req, res) {
     let body; try { body = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
     const username = str(body.username).toLowerCase().trim();
     if (rateLimited('login:' + clientIp(req) + ':' + username, 10, 15 * 60_000)) return json(res, 429, { error: 'Too many attempts. Please try again later.' });
+    // Defense in depth: cap attempts per account regardless of source IP, to blunt
+    // distributed / botnet brute force against a single username.
+    if (rateLimited('login-acct:' + username, 50, 15 * 60_000)) return json(res, 429, { error: 'Too many attempts. Please try again later.' });
     const u = db.getUser(username);
     const ok = (u ? verifyPassword(u, str(body.password)) : verifyPassword({ salt: DUMMY.salt, hash: DUMMY.hash }, str(body.password))) && !!u && u.active;
     if (!ok) return json(res, 401, { error: 'Invalid username or password' });

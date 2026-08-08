@@ -539,5 +539,48 @@ solution:`public class Trees {
 }`,
 tests:[{d:'exact-key lookup picks a hash table',re:'"exact-key-lookup".*?"hash table"',flags:'s'},{d:'sorted range picks a balanced BST',re:'"sorted-range".*?"balanced BST"',flags:'s'},{d:'prefix/autocomplete picks a trie',re:'"prefix-autocomplete".*?"trie"',flags:'s'},{d:'top-k picks a heap',re:'"top-k".*?"heap"',flags:'s'},{d:'disk index picks a B-tree',re:'"disk-index".*?"B-tree"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
 behavior:`pick("exact-key-lookup") is "hash table", pick("sorted-range") is "balanced BST", pick("prefix-autocomplete") is "trie", pick("top-k") is "heap", pick("disk-index") is "B-tree". Choosing the structure that matches the query is the essence of search optimization.`,
-hints:['Match the access pattern to the structure: exact key to hash, range to balanced BST, prefix to trie, smallest/largest to heap, on-disk to B-tree.','A single switch on need with one case each is all it takes.','Return the exact recommendation strings, and fall through to unknown by default.']}}
+hints:['Match the access pattern to the structure: exact key to hash, range to balanced BST, prefix to trie, smallest/largest to heap, on-disk to B-tree.','A single switch on need with one case each is all it takes.','Return the exact recommendation strings, and fall through to unknown by default.']}},
+{id:'ds8',title:'Traversal & graph search: BFS, DFS & Dijkstra',body:`
+<p>Trees and graphs are only useful if you can <b>walk</b> them. A handful of traversal algorithms cover the vast majority of real problems, and each is defined by the data structure it uses to decide "where to go next."</p>
+<ul>
+<li><b>BFS (Breadth-First Search)</b> — explore level by level, nearest first, using a <b>queue</b> (FIFO). Because it fans out evenly, BFS finds the <b>shortest path in an unweighted graph</b>. O(V+E).</li>
+<li><b>DFS (Depth-First Search)</b> — plunge as deep as possible, then backtrack, using a <b>stack</b> (or recursion, which uses the call stack). DFS powers <b>cycle detection</b>, checking whether a path exists, finding connected components, and topological sort. O(V+E). On a tree, DFS gives the three classic orders: <b>pre-order</b>, <b>in-order</b>, and <b>post-order</b>.</li>
+<li><b>Dijkstra</b> — the <b>shortest path in a weighted graph</b> (non-negative weights). It greedily expands the closest unvisited node using a <b>priority queue</b> (min-heap). This is the exact algorithm the <b>OSPF</b> routing protocol runs — its "SPF" literally stands for Shortest Path First. O(E log V).</li>
+<li><b>Topological sort</b> — order the nodes of a DAG so every edge points forward. The backbone of <b>task scheduling</b> and build-dependency resolution; built on DFS (or Kahn&#8217;s queue-based algorithm).</li>
+</ul>
+<p>Two more worth naming: <b>A*</b> is Dijkstra plus a heuristic that steers toward the goal (game and map pathfinding), and <b>Bellman-Ford</b> handles graphs with <b>negative</b> edge weights that Dijkstra cannot.</p>
+<p>The quick decision guide: unweighted shortest path is <b>BFS</b>; weighted shortest path is <b>Dijkstra</b>; "does a path or cycle exist" and orderings are <b>DFS</b>; scheduling a DAG is a <b>topological sort</b>. Choosing the right one — and the queue/stack/heap it rides on — is most of the battle.</p>`,
+docs:[['BFS — Wikipedia','https://en.wikipedia.org/wiki/Breadth-first_search'],['DFS — Wikipedia','https://en.wikipedia.org/wiki/Depth-first_search'],['Dijkstra algorithm','https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm'],['Topological sorting','https://en.wikipedia.org/wiki/Topological_sorting']],
+ex:{title:'Pick the traversal',
+prompt:`Write class <code>Traversal</code> with two static methods. <code>String dataStructure(String algo)</code> — the structure each uses: <code>"bfs"</code>→<code>"queue"</code>, <code>"dfs"</code>→<code>"stack"</code>, <code>"dijkstra"</code>→<code>"priority queue"</code>, else <code>"unknown"</code>. <code>String pick(String need)</code> — the right algorithm: <code>"shortest-unweighted"</code>→<code>"bfs"</code>, <code>"shortest-weighted"</code>→<code>"dijkstra"</code>, <code>"path-exists"</code>→<code>"dfs"</code>, <code>"task-ordering"</code>→<code>"topological sort"</code>, else <code>"unknown"</code>.`,
+starter:`public class Traversal {
+    static String dataStructure(String algo) {
+        return null;
+    }
+    static String pick(String need) {
+        return null;
+    }
+}`,
+solution:`public class Traversal {
+    static String dataStructure(String algo) {
+        switch (algo) {
+            case "bfs":      return "queue";
+            case "dfs":      return "stack";
+            case "dijkstra": return "priority queue";
+            default:         return "unknown";
+        }
+    }
+    static String pick(String need) {
+        switch (need) {
+            case "shortest-unweighted": return "bfs";
+            case "shortest-weighted":   return "dijkstra";
+            case "path-exists":         return "dfs";
+            case "task-ordering":       return "topological sort";
+            default:                    return "unknown";
+        }
+    }
+}`,
+tests:[{d:'BFS uses a queue',re:'"bfs".*?"queue"',flags:'s'},{d:'DFS uses a stack',re:'"dfs".*?"stack"',flags:'s'},{d:'Dijkstra uses a priority queue',re:'"dijkstra".*?"priority queue"',flags:'s'},{d:'unweighted shortest path is BFS',re:'"shortest-unweighted".*?"bfs"',flags:'s'},{d:'weighted shortest path is Dijkstra',re:'"shortest-weighted".*?"dijkstra"',flags:'s'},{d:'ordering a DAG is topological sort',re:'"task-ordering".*?"topological sort"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+behavior:`dataStructure("bfs") is "queue", ("dfs") is "stack", ("dijkstra") is "priority queue". pick("shortest-unweighted") is "bfs", ("shortest-weighted") is "dijkstra", ("path-exists") is "dfs", ("task-ordering") is "topological sort". BFS fans out with a queue; DFS dives with a stack; Dijkstra (the SPF in OSPF) expands the nearest node from a heap.`,
+hints:['Match each algorithm to its frontier structure: BFS a queue, DFS a stack, Dijkstra a priority queue.','Unweighted shortest path is BFS; weighted (non-negative) shortest path is Dijkstra.','Path or cycle existence is DFS; ordering a DAG of tasks is a topological sort.']}}
 ]});

@@ -2585,7 +2585,59 @@ public class FileStats {
         }
         Files.writeString(p, "lines: " + count);
     }
-}`}}
+}`}},
+{id:'jvm1',title:'Inside the JVM: heap, stack & how methods run',body:`
+<p>Java code does not run on the CPU directly. <code>javac</code> compiles your <code>.java</code> source into portable <b>bytecode</b> (<code>.class</code> files); the <b>JVM</b> then executes that bytecode — first by interpreting it, and then, for "hot" methods run many times, by <b>JIT</b>-compiling them to native machine code for speed. That two-step is what "write once, run anywhere" actually means: the same bytecode runs on any machine that has a JVM.</p>
+<p>At run time the JVM divides memory into a few <b>runtime data areas</b>:</p>
+<ul>
+<li><b>Heap</b> — one big shared region where <i>every object and array lives</i>. It is shared across all threads and managed by the <b>garbage collector</b>, which reclaims objects nothing references anymore. Modern GCs are <i>generational</i>: new objects start in a "young" space and, if they survive, are promoted to an "old" space.</li>
+<li><b>Stack</b> — <i>one per thread</i>. It is a pile of <b>frames</b>, one per in-progress method call (details below). Fast, automatic, no GC needed.</li>
+<li><b>Metaspace</b> — class metadata: the loaded class definitions, method bytecode, and the constant pool.</li>
+<li><b>PC register &amp; native stack</b> — per-thread bookkeeping for which instruction is executing and for native (non-Java) calls.</li>
+</ul>
+<p><b>How a method call works under the hood.</b> Every time you call a method, the JVM <b>pushes a new frame</b> onto the current thread&#8217;s stack. That frame holds the method&#8217;s <b>local variable array</b> (its parameters and locals) and an <b>operand stack</b> (a scratch workspace the bytecode uses to compute expressions). When the method returns, its frame is <b>popped</b> and its locals vanish instantly. This is why locals are cheap and thread-safe: each call has its own frame.</p>
+<div class="codeSample" data-hl>int total = sum(2, 3);            // pushes a frame for sum(): locals a=2, b=3
+
+static int sum(int a, int b) {    // a, b live in THIS frame — on the stack
+    int r = a + b;                // r is a local — stack
+    int[] data = new int[3];      // the variable 'data' (a reference) is on the stack,
+                                  // but the array OBJECT it points to lives on the HEAP
+    return r;                     // frame pops; 'data' is now unreachable -> GC reclaims it later
+}</div>
+<p>So the split is simple: <b>primitives and references</b> (the arrows) sit in the stack frame; <b>the objects they point to</b> sit on the heap. This also explains Java&#8217;s "pass-by-value": Java copies the <i>value</i> you pass; for an object that copied value is the reference, so caller and callee end up pointing at the <i>same</i> heap object.</p>
+<p>The two classic failure modes fall right out of this design. Recurse too deeply and you keep pushing frames until the thread&#8217;s stack is exhausted — a <b>StackOverflowError</b>. Allocate more live objects than the heap can hold and the GC cannot help — an <b>OutOfMemoryError</b>. Knowing which memory area is involved tells you immediately which one you are looking at.</p>`,
+docs:[['JVM runtime data areas — JVM spec','https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-2.html#jvms-2.5'],['How the JVM works — Oracle','https://docs.oracle.com/javase/specs/jvms/se21/html/index.html'],['Garbage collection basics','https://docs.oracle.com/en/java/javase/21/gctuning/introduction-garbage-collection-tuning.html']],
+ex:{title:'Where does it live, and what breaks?',
+prompt:`Write class <code>Jvm</code> with two static methods. <code>String location(String what)</code>: <code>"object"</code>→<code>"heap"</code>, <code>"local-primitive"</code>→<code>"stack"</code>, <code>"reference-variable"</code>→<code>"stack"</code>, <code>"class-metadata"</code>→<code>"metaspace"</code>, else <code>"unknown"</code>. <code>String error(String cause)</code>: <code>"deep-recursion"</code>→<code>"StackOverflowError"</code>, <code>"too-many-objects"</code>→<code>"OutOfMemoryError"</code>, else <code>"unknown"</code>.`,
+starter:`public class Jvm {
+    static String location(String what) {
+        return null;
+    }
+    static String error(String cause) {
+        return null;
+    }
+}`,
+solution:`public class Jvm {
+    static String location(String what) {
+        switch (what) {
+            case "object":             return "heap";
+            case "local-primitive":    return "stack";
+            case "reference-variable": return "stack";
+            case "class-metadata":     return "metaspace";
+            default:                   return "unknown";
+        }
+    }
+    static String error(String cause) {
+        switch (cause) {
+            case "deep-recursion":   return "StackOverflowError";
+            case "too-many-objects": return "OutOfMemoryError";
+            default:                 return "unknown";
+        }
+    }
+}`,
+tests:[{d:'objects live on the heap',re:'"object".*?"heap"',flags:'s'},{d:'local primitives live on the stack',re:'"local-primitive".*?"stack"',flags:'s'},{d:'a reference variable lives on the stack',re:'"reference-variable".*?"stack"',flags:'s'},{d:'class metadata lives in metaspace',re:'"class-metadata".*?"metaspace"',flags:'s'},{d:'deep recursion throws StackOverflowError',re:'"deep-recursion".*?"StackOverflowError"',flags:'s'},{d:'exhausting the heap throws OutOfMemoryError',re:'"too-many-objects".*?"OutOfMemoryError"',flags:'s'},{d:'unknown default present',re:'"unknown"'}],
+behavior:`location("object") is "heap"; location("local-primitive") and location("reference-variable") are "stack"; location("class-metadata") is "metaspace". error("deep-recursion") is "StackOverflowError"; error("too-many-objects") is "OutOfMemoryError". The object lives on the heap even though the reference to it lives on the stack.`,
+hints:['Objects and arrays always live on the heap; local primitives and the reference variables that point to objects live in the current stack frame.','Each method call pushes a stack frame with its own locals; returning pops it, and too many nested calls overflow the stack.','Class metadata lives in metaspace; running out of heap for live objects is an OutOfMemoryError.']}}
 ]});
 STREAMS.push({icon:'🧬',title:'Generics from the Ground Up',blurb:'The angle brackets, explained from zero: what generics are, why they exist, generic classes and methods, bounds, wildcards & PECS, and the truth about erasure.',lessons:[
 {id:'gnr0',title:'What generics are — from zero',body:`
@@ -3393,7 +3445,50 @@ solution:`public class Trees {
 }`,
 tests:[{d:'exact-key lookup picks a hash table',re:'"exact-key-lookup".*?"hash table"',flags:'s'},{d:'sorted range picks a balanced BST',re:'"sorted-range".*?"balanced BST"',flags:'s'},{d:'prefix/autocomplete picks a trie',re:'"prefix-autocomplete".*?"trie"',flags:'s'},{d:'top-k picks a heap',re:'"top-k".*?"heap"',flags:'s'},{d:'disk index picks a B-tree',re:'"disk-index".*?"B-tree"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
 behavior:`pick("exact-key-lookup") is "hash table", pick("sorted-range") is "balanced BST", pick("prefix-autocomplete") is "trie", pick("top-k") is "heap", pick("disk-index") is "B-tree". Choosing the structure that matches the query is the essence of search optimization.`,
-hints:['Match the access pattern to the structure: exact key to hash, range to balanced BST, prefix to trie, smallest/largest to heap, on-disk to B-tree.','A single switch on need with one case each is all it takes.','Return the exact recommendation strings, and fall through to unknown by default.']}}
+hints:['Match the access pattern to the structure: exact key to hash, range to balanced BST, prefix to trie, smallest/largest to heap, on-disk to B-tree.','A single switch on need with one case each is all it takes.','Return the exact recommendation strings, and fall through to unknown by default.']}},
+{id:'ds8',title:'Traversal & graph search: BFS, DFS & Dijkstra',body:`
+<p>Trees and graphs are only useful if you can <b>walk</b> them. A handful of traversal algorithms cover the vast majority of real problems, and each is defined by the data structure it uses to decide "where to go next."</p>
+<ul>
+<li><b>BFS (Breadth-First Search)</b> — explore level by level, nearest first, using a <b>queue</b> (FIFO). Because it fans out evenly, BFS finds the <b>shortest path in an unweighted graph</b>. O(V+E).</li>
+<li><b>DFS (Depth-First Search)</b> — plunge as deep as possible, then backtrack, using a <b>stack</b> (or recursion, which uses the call stack). DFS powers <b>cycle detection</b>, checking whether a path exists, finding connected components, and topological sort. O(V+E). On a tree, DFS gives the three classic orders: <b>pre-order</b>, <b>in-order</b>, and <b>post-order</b>.</li>
+<li><b>Dijkstra</b> — the <b>shortest path in a weighted graph</b> (non-negative weights). It greedily expands the closest unvisited node using a <b>priority queue</b> (min-heap). This is the exact algorithm the <b>OSPF</b> routing protocol runs — its "SPF" literally stands for Shortest Path First. O(E log V).</li>
+<li><b>Topological sort</b> — order the nodes of a DAG so every edge points forward. The backbone of <b>task scheduling</b> and build-dependency resolution; built on DFS (or Kahn&#8217;s queue-based algorithm).</li>
+</ul>
+<p>Two more worth naming: <b>A*</b> is Dijkstra plus a heuristic that steers toward the goal (game and map pathfinding), and <b>Bellman-Ford</b> handles graphs with <b>negative</b> edge weights that Dijkstra cannot.</p>
+<p>The quick decision guide: unweighted shortest path is <b>BFS</b>; weighted shortest path is <b>Dijkstra</b>; "does a path or cycle exist" and orderings are <b>DFS</b>; scheduling a DAG is a <b>topological sort</b>. Choosing the right one — and the queue/stack/heap it rides on — is most of the battle.</p>`,
+docs:[['BFS — Wikipedia','https://en.wikipedia.org/wiki/Breadth-first_search'],['DFS — Wikipedia','https://en.wikipedia.org/wiki/Depth-first_search'],['Dijkstra algorithm','https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm'],['Topological sorting','https://en.wikipedia.org/wiki/Topological_sorting']],
+ex:{title:'Pick the traversal',
+prompt:`Write class <code>Traversal</code> with two static methods. <code>String dataStructure(String algo)</code> — the structure each uses: <code>"bfs"</code>→<code>"queue"</code>, <code>"dfs"</code>→<code>"stack"</code>, <code>"dijkstra"</code>→<code>"priority queue"</code>, else <code>"unknown"</code>. <code>String pick(String need)</code> — the right algorithm: <code>"shortest-unweighted"</code>→<code>"bfs"</code>, <code>"shortest-weighted"</code>→<code>"dijkstra"</code>, <code>"path-exists"</code>→<code>"dfs"</code>, <code>"task-ordering"</code>→<code>"topological sort"</code>, else <code>"unknown"</code>.`,
+starter:`public class Traversal {
+    static String dataStructure(String algo) {
+        return null;
+    }
+    static String pick(String need) {
+        return null;
+    }
+}`,
+solution:`public class Traversal {
+    static String dataStructure(String algo) {
+        switch (algo) {
+            case "bfs":      return "queue";
+            case "dfs":      return "stack";
+            case "dijkstra": return "priority queue";
+            default:         return "unknown";
+        }
+    }
+    static String pick(String need) {
+        switch (need) {
+            case "shortest-unweighted": return "bfs";
+            case "shortest-weighted":   return "dijkstra";
+            case "path-exists":         return "dfs";
+            case "task-ordering":       return "topological sort";
+            default:                    return "unknown";
+        }
+    }
+}`,
+tests:[{d:'BFS uses a queue',re:'"bfs".*?"queue"',flags:'s'},{d:'DFS uses a stack',re:'"dfs".*?"stack"',flags:'s'},{d:'Dijkstra uses a priority queue',re:'"dijkstra".*?"priority queue"',flags:'s'},{d:'unweighted shortest path is BFS',re:'"shortest-unweighted".*?"bfs"',flags:'s'},{d:'weighted shortest path is Dijkstra',re:'"shortest-weighted".*?"dijkstra"',flags:'s'},{d:'ordering a DAG is topological sort',re:'"task-ordering".*?"topological sort"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+behavior:`dataStructure("bfs") is "queue", ("dfs") is "stack", ("dijkstra") is "priority queue". pick("shortest-unweighted") is "bfs", ("shortest-weighted") is "dijkstra", ("path-exists") is "dfs", ("task-ordering") is "topological sort". BFS fans out with a queue; DFS dives with a stack; Dijkstra (the SPF in OSPF) expands the nearest node from a heap.`,
+hints:['Match each algorithm to its frontier structure: BFS a queue, DFS a stack, Dijkstra a priority queue.','Unweighted shortest path is BFS; weighted (non-negative) shortest path is Dijkstra.','Path or cycle existence is DFS; ordering a DAG of tasks is a topological sort.']}}
 ]});
 STREAMS.push({icon:'🧯',title:'Exception Handling',blurb:'try/catch to custom exceptions, try-with-resources, and professional error-handling practice.',lessons:[
 {id:'exc1',title:'try / catch / finally & the exception hierarchy',body:`
