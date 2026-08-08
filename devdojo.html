@@ -9398,6 +9398,39 @@ tests:[{d:'Q1: SUM(CASE WHEN ... THEN 1 ELSE 0 END)',re:'1\\)[\\s\\S]*?sum\\s*\\
 behavior:`1. Q1 returns one row, two counts, in a single scan. 2. Q2 counts paid only, relying on CASE returning NULL (which COUNT skips) for the rest. 3. Q3 returns paid orders; the 1=1 anchor lets filters be appended uniformly. 4. Q4 names the per-user totals once, then filters them like a table. 5. Q5 keeps every order row but adds a per-user sequence number, newest first. 6. Q6 divides by NULLIF(count,0) so an empty table yields NULL instead of a divide-by-zero error.`,
 hints:['Turn a condition into a number: CASE WHEN cond THEN 1 ELSE 0 END, then SUM to count matches in one pass.','WHERE 1 = 1 is an always-true anchor so every real filter can be appended as AND ...; WHERE 1 = 0 returns no rows.','A CTE is WITH name AS ( ... ) followed by a SELECT that treats name like a table; window functions add OVER (PARTITION BY ... ORDER BY ...).']}},
 
+{id:'dbmig',title:'Migrating data between databases',body:`
+<p>A rite of passage in real jobs: move data from an old schema into a new one — during a rewrite, a merger, or when normalizing a messy legacy table. This is <b>ETL</b> in miniature: <b>Extract</b> from the source, <b>Transform</b> to fit the target, <b>Load</b> into the new tables. SQL does it in one statement with <code>INSERT ... SELECT</code>.</p>
+<p>Here is the synthetic data you will migrate. A denormalized legacy table with real-world mess — a NULL email, a duplicate, and mixed-case addresses:</p>
+<div class="codeSample">legacy_customers                                    customers  (new, empty)
+id | full_name    | email_addr        | country     id | name        | email
+---+--------------+-------------------+--------     ---+-------------+------------------
+ 1 | Ada Lovelace | ADA@example.com   | GB          (target schema; email is UNIQUE)
+ 2 | Bo Diaz      | bo@example.com    | ES
+ 3 | Cy Young     | NULL              | US          -- rows to migrate: valid emails only,
+ 4 | Di Ng        | di@example.com    | SG          --   lowercased, de-duplicated
+ 5 | Bo Diaz      | BO@example.com    | ES          -- (row 5 duplicates row 2 once lowercased)</div>
+<p>The migration has three moves: copy with a <b>transform</b> (rename columns, lowercase the email) while <b>filtering</b> out the NULL; make the load <b>idempotent</b> so re-running it will not create duplicates (Postgres <code>INSERT ... ON CONFLICT ... DO NOTHING</code>, using the target's UNIQUE email); and <b>verify</b> the row count. Idempotency matters: real migrations are run more than once (dry run, retry after a failure), and must be safe to repeat.</p>`,
+docs:[['INSERT ... SELECT','https://www.postgresql.org/docs/current/sql-insert.html'],['ON CONFLICT (upsert)','https://www.postgresql.org/docs/current/sql-insert.html#SQL-ON-CONFLICT'],['Data migration — overview','https://en.wikipedia.org/wiki/Data_migration']],
+ex:{title:'Migrate legacy_customers into customers',lang:'sql',
+prompt:`Source <code>legacy_customers(id, full_name, email_addr, country)</code>; target <code>customers(id, name, email)</code> where <code>email</code> is UNIQUE. One statement per numbered comment: (1) copy every row that <b>has</b> an email into <code>customers</code>, mapping <code>full_name</code>→<code>name</code> and <code>LOWER(email_addr)</code>→<code>email</code>, skipping NULL emails (<code>INSERT INTO ... SELECT ... FROM legacy_customers WHERE email_addr IS NOT NULL</code>); (2) make it repeatable by de-duplicating on the unique email with <code>ON CONFLICT (email) DO NOTHING</code> — add it to the same insert; (3) verify the result with <code>SELECT COUNT(*) FROM customers</code>.`,
+starter:`-- 1) transform-and-copy (rename columns, lowercase email, skip NULLs)
+--    ...with 2) ON CONFLICT (email) DO NOTHING on the same statement
+
+-- 3) verify the row count
+`,
+solution:`-- 1) + 2) transform-copy, idempotent on the unique email
+INSERT INTO customers (id, name, email)
+SELECT id, full_name, LOWER(email_addr)
+FROM legacy_customers
+WHERE email_addr IS NOT NULL
+ON CONFLICT (email) DO NOTHING;
+
+-- 3) verify
+SELECT COUNT(*) FROM customers;
+`,
+tests:[{d:'INSERT ... SELECT from the legacy table',re:'insert\\s+into\\s+customers[\\s\\S]*?select[\\s\\S]*?from\\s+legacy_customers',flags:'is'},{d:'lowercases the email during transform',re:'lower\\s*\\(\\s*email_addr\\s*\\)',flags:'is'},{d:'filters out NULL emails',re:'where\\s+email_addr\\s+is\\s+not\\s+null',flags:'is'},{d:'idempotent load via ON CONFLICT DO NOTHING',re:'on\\s+conflict\\s*\\(\\s*email\\s*\\)\\s+do\\s+nothing',flags:'is'},{d:'verifies with a COUNT',re:'select\\s+count\\s*\\(\\s*\\*\\s*\\)\\s+from\\s+customers',flags:'is'}],
+behavior:`After running, customers has 3 rows: Ada (ada@example.com), Bo (bo@example.com), Di (di@example.com). Cy is skipped (NULL email); the second Bo collides on the unique lowercased email and is dropped by ON CONFLICT. Re-running the migration changes nothing — that is idempotency, and it is why the load is safe to repeat.`,
+hints:['INSERT INTO target (cols) SELECT expr, ... FROM source WHERE ... copies and transforms in one shot.','Rename by position: the SELECT list lines up with the target column list, and LOWER() transforms the email.','ON CONFLICT (email) DO NOTHING makes the load idempotent so retries and the lowercased duplicate do not error or double-insert.']}},
 {id:'db2',title:'JDBC & PreparedStatement',body:`
 <p>JDBC is the floor everything stands on (JPA, jOOQ, Spring Data). Three objects: <code>Connection</code> → <code>PreparedStatement</code> → <code>ResultSet</code>, all AutoCloseable:</p>
 <div class="codeSample" data-hl>String sql = "SELECT id, owner FROM accounts WHERE owner = ?";
