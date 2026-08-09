@@ -210,14 +210,14 @@ solution:`public class Prototype {
 }`,
 tests:[{d:'copy() returns a NEW instance with the same fields',re:'return\\s+new\\s+Prototype\\s*\\(\\s*theme\\s*,\\s*size\\s*\\)'},{d:'does not return null',re:'return\\s+null\\s*;',not:true}],
 behavior:`copy() produces an independent Prototype with the same theme and size — cloning a preconfigured template rather than rebuilding it. A copy constructor/method is the idiomatic Java Prototype.`,
-hints:['Prototype = clone an existing object; here, construct a new one from this object\\u2019s fields.','A copy constructor or copy() method is cleaner than Cloneable.','Return new Prototype(theme, size).']}},
+hints:['Prototype = clone an existing object; here, construct a new one from this object’s fields.','A copy constructor or copy() method is cleaner than Cloneable.','Return new Prototype(theme, size).']}},
 {id:'pat5',title:'More structural: Proxy, Composite, Bridge & Flyweight',body:`
 <p>Structural patterns beyond Adapter/Decorator/Facade:</p>
 <ul>
 <li><b>Proxy</b> — a stand-in with the <i>same interface</i> as the real object that adds a behavior around access: <b>lazy loading</b>, <b>caching</b>, access control, or remoting. Spring AOP proxies and lazy JPA entities are proxies.</li>
 <li><b>Composite</b> — treat individual objects and groups uniformly through one interface, so a leaf and a tree of children are handled the same way (files and folders, UI components).</li>
 <li><b>Bridge</b> — split an abstraction from its implementation so they vary independently (a <code>Shape</code> hierarchy and a <code>Renderer</code> hierarchy that combine, instead of a class explosion).</li>
-<li><b>Flyweight</b> — share immutable intrinsic state across many objects to save memory (Java\\u2019s <code>Integer</code> cache, interned strings).</li>
+<li><b>Flyweight</b> — share immutable intrinsic state across many objects to save memory (Java’s <code>Integer</code> cache, interned strings).</li>
 </ul>
 <p>They all shape <i>how objects are composed and accessed</i> without changing what they do.</p>`,
 docs:[['Proxy pattern','https://refactoring.guru/design-patterns/proxy'],['Composite pattern','https://refactoring.guru/design-patterns/composite']],
@@ -274,7 +274,7 @@ solution:`public class TrafficLight {
 }`,
 tests:[{d:'red transitions to green',re:'"red"\\s*:\\s*state\\s*=\\s*"green"',flags:'s'},{d:'green transitions to yellow',re:'"green"\\s*:\\s*state\\s*=\\s*"yellow"',flags:'s'},{d:'wraps back to red',re:'default\\s*:\\s*state\\s*=\\s*"red"'},{d:'returns the new state',re:'return\\s+state'}],
 behavior:`Starting at "red", next() returns "green", then "yellow", then "red" again. The State pattern replaces tangled if/else with explicit transitions.`,
-hints:['State drives behavior: switch on the current state to pick the next.','red \\u2192 green \\u2192 yellow \\u2192 red, then return the updated field.','The default branch handles yellow \\u2192 red.']}},
+hints:['State drives behavior: switch on the current state to pick the next.','red → green → yellow → red, then return the updated field.','The default branch handles yellow → red.']}},
 {id:'pat7',title:'Modern & enterprise: Dependency Injection, Repository, DTO, Null Object',body:`
 <p>The patterns you meet most in day-to-day enterprise code are not all Gang-of-Four:</p>
 <ul>
