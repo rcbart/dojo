@@ -38,3 +38,6 @@ DESIGN_AND_TRADEOFFS.md
 
 # local-only personal interview prep — do NOT commit
 INTERVIEW_SENIOR_EM_GUIDE.md
+
+# separate local repo for roniam.dev architecture designs (its own git repo)
+architecture-designs/
