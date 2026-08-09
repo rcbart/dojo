@@ -47,6 +47,42 @@ public class AuthorizeUrl {
     }
 }`}},
 
+{id:'oaclient',title:'What a client is: registration, secrets & creation',body:`
+<p>In OAuth the word <b>client</b> does not mean the user or the browser — it means the <b>application</b> asking for access (a web app, a mobile app, a backend service). Before it can ask for a single token, the client must be <b>registered</b> with the authorization server (AS), which is how the AS knows it and decides how much to trust it.</p>
+<p><b>What registration produces.</b> The AS issues a <code>client_id</code> — a public identifier, not a secret — and records the client's allowed <b>redirect URIs</b> (an exact allowlist, so codes can only be sent back to URLs you pre-approved). For a <b>confidential client</b> it also issues a <code>client_secret</code>: a shared secret the client uses to prove its identity at the token endpoint. A <b>public client</b> (a SPA or mobile app) cannot keep a secret — anyone can read the bundle or decompile the app — so it gets <b>no secret</b> and relies on PKCE instead.</p>
+<div class="codeSample">Register app  ─▶  client_id: "s6BhdRkqt3"   (public)
+                  client_secret: "gX1...9f"   (confidential clients only — shown ONCE)
+                  redirect_uris: ["https://app.example.com/callback"]</div>
+<p><b>How clients are created.</b> Two ways: manually in the AS dashboard/admin console (you register the app and copy the id and secret), or programmatically via <b>Dynamic Client Registration</b> (RFC 7591), where a client is created through an API and the AS returns the credentials in the response.</p>
+<p><b>How the secret is shared — and protected.</b> The AS generates the secret at registration and displays it <b>once</b>; you store it in a secret manager or environment variable, <b>never in source control or front-end code</b>, and rotate it periodically. Stronger clients skip the shared secret entirely: <b>private_key_jwt</b> (the client signs a JWT with its private key; the AS verifies with the client's public key — no shared secret to leak) or <b>mTLS</b> client certificates. So client authentication runs from "nothing" (public + PKCE) to a shared <code>client_secret</code> to asymmetric keys, in increasing order of assurance.</p>`,
+docs:[['Client registration (RFC 6749 §2)','https://www.rfc-editor.org/rfc/rfc6749#section-2'],['Dynamic Client Registration (RFC 7591)','https://www.rfc-editor.org/rfc/rfc7591'],['Client authentication (OIDC)','https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication']],
+ex:{title:'Pick the client credential',
+prompt:`Write class <code>Client</code> with two static methods. <code>String credential(String clientType)</code>: <code>"spa"</code>→<code>"none (PKCE)"</code>, <code>"mobile"</code>→<code>"none (PKCE)"</code>, <code>"server"</code>→<code>"client_secret"</code>, <code>"backend-high-security"</code>→<code>"private_key_jwt"</code>, else <code>"unknown"</code>. <code>boolean confidential(String clientType)</code>: true only for <code>"server"</code> or <code>"backend-high-security"</code> (the clients that can keep a secret).`,
+starter:`public class Client {
+    static String credential(String clientType) {
+        return null;
+    }
+    static boolean confidential(String clientType) {
+        return false;
+    }
+}`,
+solution:`public class Client {
+    static String credential(String clientType) {
+        switch (clientType) {
+            case "spa":                   return "none (PKCE)";
+            case "mobile":                return "none (PKCE)";
+            case "server":                return "client_secret";
+            case "backend-high-security": return "private_key_jwt";
+            default:                      return "unknown";
+        }
+    }
+    static boolean confidential(String clientType) {
+        return clientType.equals("server") || clientType.equals("backend-high-security");
+    }
+}`,
+tests:[{d:'a SPA is a public client using PKCE, no secret',re:'"spa".*?"none \\(PKCE\\)"',flags:'s'},{d:'a server uses a client_secret',re:'"server".*?"client_secret"',flags:'s'},{d:'high-security backends use private_key_jwt',re:'"backend-high-security".*?"private_key_jwt"',flags:'s'},{d:'confidential = server or high-security',re:'equals\\s*\\(\\s*"server"\\s*\\)\\s*\\|\\|'},{d:'unknown default',re:'"unknown"'}],
+behavior:`credential("spa") is "none (PKCE)", credential("server") is "client_secret", credential("backend-high-security") is "private_key_jwt". confidential("server") is true; confidential("spa") is false — a public client cannot keep a secret, which is exactly why it uses PKCE.`,
+hints:['A client is the application, not the user; it is registered with the authorization server first.','Public clients (spa, mobile) hold no secret and use PKCE; confidential clients (server) authenticate with a secret or a key.','confidential() is true only for the two server-side types.']}},
 {id:'oa2',title:'PKCE — securing public clients',body:`
 <p>A <b>public client</b> (SPA, mobile app) can't keep a secret, so it can't prove it's the same app that started the flow. Without protection, an attacker who intercepts the authorization code could redeem it. <b>PKCE</b> (Proof Key for Code Exchange, "pixy") fixes this and is now recommended for <i>all</i> clients.</p>
 <p>How it works — a one-time secret the client makes up per flow:</p>
@@ -449,5 +485,36 @@ solution:`public class FlowChooser {
         return "implicit".equals(grant) || "password".equals(grant);
     }
 }`}}
-
+,
+{id:'oa3p',title:'Third-party integrations & unsolicited assertions',body:`
+<p>Most OAuth in the wild is <b>integrating with a third party</b>: "Log in with Google," a GitHub App that opens pull requests, a Slack app that posts messages, or an enterprise customer single-signing-on into your SaaS. In every case two independent organizations must establish <b>trust</b> before any token flows.</p>
+<p><b>How trust is established.</b> You register your application with the provider and receive credentials — a <code>client_id</code> and <code>client_secret</code> (OAuth/OIDC), or you exchange <b>SAML metadata</b> containing an <b>X.509 certificate</b>. The critical asymmetry: you <b>share public keys</b> (or a certificate) so each side can <i>verify</i> the other's signatures, but each side keeps its <b>private key secret</b>. The provider publishes its signing keys at a <b>JWKS</b> URL (or in SAML metadata), so your app can verify that a token or assertion genuinely came from it. For <b>webhooks</b>, trust is usually a shared signing secret used to HMAC the payload so you can confirm it was not forged.</p>
+<div class="codeSample">Your app  ──register──▶  Provider
+          ◀─client_id/secret, or exchange SAML metadata + cert──
+Later:    Provider ──signed token/assertion──▶ Your app
+          Your app verifies the signature using the provider's PUBLISHED public key (JWKS/metadata)</div>
+<p><b>Unsolicited assertions.</b> Normally your app <i>starts</i> the flow (SP-initiated), so it can match the response to its own request. An <b>unsolicited assertion</b> is the opposite: the identity provider pushes a signed assertion to your app <i>without</i> a preceding request — this is SAML <b>IdP-initiated SSO</b> (OIDC deliberately has no such flow). It is convenient (a portal launches the app for the user) but riskier: there is <b>no request to correlate to</b> (no in-response-to / state), so it is more exposed to <b>replay</b> and to an assertion being injected from elsewhere.</p>
+<p><b>Defending unsolicited assertions.</b> Accept them only from a <b>pre-configured, trusted IdP</b>; verify the <b>signature</b> against that IdP's known key; enforce the <b>audience/recipient</b> so an assertion minted for another service is rejected; enforce a short validity window (<code>NotOnOrAfter</code>) to bound replay; and <b>track assertion IDs</b> so the same one cannot be replayed. When you can, prefer SP-initiated flows — the request you send is itself a defense.</p>`,
+docs:[['SAML IdP-initiated SSO','https://en.wikipedia.org/wiki/SAML_2.0#IdP-initiated'],['OAuth 2.0 Security BCP','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['JWKS / verifying tokens','https://www.rfc-editor.org/rfc/rfc7517']],
+ex:{title:'Accept an unsolicited assertion safely',
+prompt:`Write class <code>Unsolicited</code> with <code>static boolean accept(boolean signatureValid, boolean audienceOk, boolean withinWindow, boolean notReplayed)</code> that accepts an unsolicited assertion only when <b>all four</b> checks pass, and <code>static String preferred()</code> returning <code>"SP-initiated"</code> (the safer flow to prefer when possible).`,
+starter:`public class Unsolicited {
+    static boolean accept(boolean signatureValid, boolean audienceOk, boolean withinWindow, boolean notReplayed) {
+        return false;
+    }
+    static String preferred() {
+        return null;
+    }
+}`,
+solution:`public class Unsolicited {
+    static boolean accept(boolean signatureValid, boolean audienceOk, boolean withinWindow, boolean notReplayed) {
+        return signatureValid && audienceOk && withinWindow && notReplayed;
+    }
+    static String preferred() {
+        return "SP-initiated";
+    }
+}`,
+tests:[{d:'all four checks must pass',re:'signatureValid\\s*&&\\s*audienceOk\\s*&&\\s*withinWindow\\s*&&\\s*notReplayed'},{d:'prefer the SP-initiated flow',re:'return\\s+"SP-initiated"'}],
+behavior:`accept(true,true,true,true) is true; if any check is false (bad signature, wrong audience, expired, or a replay) it is false. preferred() returns "SP-initiated" — because the request your app sends is itself a correlation and anti-replay defense that unsolicited assertions lack.`,
+hints:['Trust is set up in advance: you exchange public keys/certs and keep private keys secret.','An unsolicited assertion has no request to correlate to, so verify signature, audience, freshness, and non-replay together with &&.','Prefer SP-initiated flows whenever the integration allows it.']}}
 ]});

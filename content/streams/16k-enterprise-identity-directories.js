@@ -91,6 +91,43 @@ tests:[{d:'locates the @ sign',re:'indexOf\\s*\\(\\s*"@"\\s*\\)'},{d:'returns ev
 behavior:`realm("ada@example.com") returns "example.com". That domain is matched against configured tenants to route the user to the right IdP.`,
 hints:['indexOf("@") gives the position of the @ character.','substring from that index + 1 skips the @ and returns the domain.','No loop is needed — the two calls compose into one expression.']}},
 
+{id:'ei4b',title:'JIT provisioning: methods, security & when to use',body:`
+<p>When a federated user shows up, where does their local account come from? There are three provisioning models, and choosing well is a real design decision.</p>
+<ul>
+<li><b>Pre-provisioning (SCIM / directory sync)</b> — accounts are created <i>ahead of time</i> from an authoritative source (HR system, corporate directory). Deterministic, supports rich attributes, and — crucially — supports <b>deprovisioning</b> when someone leaves.</li>
+<li><b>Just-in-time (JIT) provisioning</b> — the account is created <i>on first successful login</i>, from the claims in the IdP's token or assertion. No pre-import, so it scales to large or unpredictable populations (customers, partners).</li>
+<li><b>Manual</b> — an admin creates each account. Fine at small scale or where every account needs explicit approval.</li>
+</ul>
+<p><b>Security considerations for JIT.</b> JIT means you create an account — and often assign roles and group memberships — <b>based on claims you did not originate</b>. That is the risk: if you over-trust the IdP's attributes, a wrong or manipulated <code>groups</code> claim could hand out admin. Defenses: verify the IdP is <b>authoritative</b> for that email domain (home-realm), map claims to roles explicitly and <b>default to least privilege</b>, and key the account on the IdP's <b>stable subject id, not the email</b> (emails get reused and reassigned, which enables account takeover).</p>
+<p><b>Implications to plan for.</b> JIT <b>creates but does not remove</b> — pair it with SCIM or periodic access reviews or you accumulate orphaned accounts after people leave. Attributes are only as fresh as the <b>last login</b>, so roles can go stale. And the first login pays a small provisioning cost.</p>
+<p><b>When to use each.</b> Workforce with an HR source of truth: <b>SCIM pre-provisioning</b> (optionally JIT as a fallback) so you also get clean deprovisioning. Large external / partner / consumer (CIAM) populations: <b>JIT</b>, because pre-importing millions of users is impractical. Small or highly regulated systems needing explicit sign-off: <b>manual</b>.</p>`,
+docs:[['JIT provisioning — Auth0','https://auth0.com/docs/authenticate/identity-providers/enterprise-identity-providers/just-in-time-provisioning'],['SCIM (RFC 7644)','https://www.rfc-editor.org/rfc/rfc7644'],['Account takeover via email reuse','https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html']],
+ex:{title:'Choose the provisioning method',
+prompt:`Write class <code>Provisioning</code> with <code>static String method(String scenario)</code>: <code>"workforce-hr-source"</code>→<code>"SCIM"</code>, <code>"large-external-users"</code>→<code>"JIT"</code>, <code>"small-regulated"</code>→<code>"manual"</code>, else <code>"unknown"</code>. Also <code>static boolean jitHandlesDeprovisioning()</code> returning <code>false</code> (JIT creates accounts but does not remove them).`,
+starter:`public class Provisioning {
+    static String method(String scenario) {
+        return null;
+    }
+    static boolean jitHandlesDeprovisioning() {
+        return false;
+    }
+}`,
+solution:`public class Provisioning {
+    static String method(String scenario) {
+        switch (scenario) {
+            case "workforce-hr-source":  return "SCIM";
+            case "large-external-users": return "JIT";
+            case "small-regulated":      return "manual";
+            default:                     return "unknown";
+        }
+    }
+    static boolean jitHandlesDeprovisioning() {
+        return false;
+    }
+}`,
+tests:[{d:'workforce with an HR source uses SCIM pre-provisioning',re:'"workforce-hr-source".*?"SCIM"',flags:'s'},{d:'large external populations use JIT',re:'"large-external-users".*?"JIT"',flags:'s'},{d:'small/regulated uses manual',re:'"small-regulated".*?"manual"',flags:'s'},{d:'JIT does NOT deprovision',re:'jitHandlesDeprovisioning[\\s\\S]*?return\\s+false',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+behavior:`method("workforce-hr-source") is "SCIM", method("large-external-users") is "JIT", method("small-regulated") is "manual". jitHandlesDeprovisioning() is false — the classic JIT gap: it creates accounts on first login but never removes them, so pair it with SCIM or access reviews.`,
+hints:['Match the scenario to the model: HR source to SCIM, large external users to JIT, small/regulated to manual.','JIT provisions on first login from the IdP claims; it does not deprovision, so return false.','Key JIT accounts on the stable subject id and default to least privilege.']}},
 {id:'ei5',title:'Social login & account linking',body:`
 <p><b>Social login</b> lets users sign in with Google, Apple, GitHub, and the like — convenient, and it offloads credential security to the provider. The catch is <b>account linking</b>: the same human might sign in with Google today and email/password tomorrow, and both must resolve to one account.</p>
 <p>The reliable key is <b>provider + the provider&#8217;s stable subject id</b> (not the email, which can change or be reused). Store that composite so a returning user is recognized regardless of which button they click, and link additional methods to the existing account rather than creating duplicates.</p>`,
