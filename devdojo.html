@@ -294,6 +294,28 @@ details.depth[open]>summary::before{content:'▾'}
 .revBtns button{border:1px solid var(--line);background:#f8fafc;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer}
 .revBtns .revAgain{color:#b45309;border-color:#fcd34d;background:#fffbeb}
 .revBtns .primary{color:#fff}
+
+/* ===== Difficulty tiers + Practice hub ===== */
+.diffDot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;flex:0 0 auto}
+.d-easy{background:#22c55e}
+.d-medium{background:#f59e0b}
+.d-hard{background:#ef4444}
+.diffBadge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#fff;border-radius:6px;padding:2px 7px;vertical-align:middle}
+.diffBadge.d-easy{background:#16a34a}
+.diffBadge.d-medium{background:#d97706}
+.diffBadge.d-hard{background:#dc2626}
+.pracTabs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 14px}
+.pracTab{border:1px solid var(--line);background:#f8fafc;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer}
+.pracTab.active{border-color:#8b5cf6;color:#8b5cf6;background:#f5f3ff}
+.pracTab .pcount{opacity:.7;font-size:11px}
+.pracList{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.pracRow{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13.5px}
+.pracRow:last-child{border-bottom:none}
+.pracRow:hover{background:#f8fafc}
+.pracDone{width:16px;flex:0 0 auto}
+.pracIcon{flex:0 0 auto}
+.pracTitle{font-weight:600;flex:0 0 auto}
+.pracLesson{color:var(--muted);margin-left:auto;font-size:12px;text-align:right}
 </style>
 </head>
 <body>
@@ -698,6 +720,7 @@ function renderNav(){
   const path=document.createElement('div');path.className='streamHd';path.innerHTML='🗺️ Learning path';path.onclick=()=>{cur=null;renderPath();renderNav()};nav.appendChild(path);
   const dueN=(typeof reviewDueCount==='function')?reviewDueCount():0;
   const rev=document.createElement('div');rev.className='streamHd';rev.innerHTML='🔁 Review'+(dueN?` <span class="dueBadge">${dueN}</span>`:'');rev.onclick=()=>{cur=null;renderReview();renderNav()};nav.appendChild(rev);
+  const prac=document.createElement('div');prac.className='streamHd';prac.innerHTML='🎯 Practice';prac.onclick=()=>{cur=null;renderPractice('all');renderNav()};nav.appendChild(prac);
   const gloss=document.createElement('div');gloss.className='streamHd';gloss.innerHTML='📖 Glossary';gloss.onclick=()=>{cur=null;renderGlossary();renderNav()};nav.appendChild(gloss);
   STREAMS.forEach((s,si)=>{
     if(s.tournament&&!(STREAMS[si-1]&&STREAMS[si-1].tournament)){
@@ -725,7 +748,7 @@ function renderNav(){
       const a=document.createElement('div');
       const done=store.lesson(l.id).done;
       a.className='lessonLink'+((cur&&cur.si===si&&cur.li===li)?' active':'');
-      a.innerHTML=`<span class="tick">${done?'✅':'○'}</span>${li+1}. ${l.title}`;
+      a.innerHTML=`<span class="diffDot d-${lessonDiff(s,l)}" title="${lessonDiff(s,l)}"></span><span class="tick">${done?'✅':'○'}</span>${li+1}. ${l.title}`;
       a.onclick=()=>openLesson(si,li);
       box.appendChild(a);
     });
@@ -825,7 +848,7 @@ function openLesson(si,li,ei){
   ${l.docs&&l.docs.length?`<div class="docs"><b>📚 References:</b><br>${l.docs.map(d=>`<a href="${d[1]}" target="_blank" rel="noopener">${d[0]} ↗</a>`).join('')}</div>`:''}
   ${e?`<div class="exercise">
     ${exs.length>1?(s.tournament?`<div class="chalBar"><button class="chalRandom" onclick="pickRandom(${si},${li})">🎲 Random challenge</button><span class="chalCount">${exs.filter((x,i)=>store.lesson(exSid(l,exs,i)).done).length}/${exs.length} solved</span><div class="chalChips">${exs.map((x,i)=>`<div class="chalChip ${i===ei?'active':''} ${store.lesson(exSid(l,exs,i)).done?'done':''}" onclick="openLesson(${si},${li},${i})" title="${esc(x.title)}">${store.lesson(exSid(l,exs,i)).done?'✓':(i+1)}</div>`).join('')}</div></div>`:`<div class="exTabs">${exs.map((x,i)=>`<div class="exTab ${i===ei?'active':''} ${store.lesson(exSid(l,exs,i)).done?'done':''}" id="extab-${i}" onclick="openLesson(${si},${li},${i})">${store.lesson(exSid(l,exs,i)).done?'✅ ':''}Exercise ${i+1}</div>`).join('')}</div>`):''}
-    <div class="exHd"><span class="badge">EXERCISE${exs.length>1?' '+(ei+1)+' OF '+exs.length:''}</span> ${e.title}${saved.done?' <span class="badge" style="background:#16a34a">✓ COMPLETED</span>':''}</div>
+    <div class="exHd"><span class="badge">EXERCISE${exs.length>1?' '+(ei+1)+' OF '+exs.length:''}</span> <span class="diffBadge d-${exDiff(e,s,l)}">${exDiff(e,s,l)}</span> ${e.title}${saved.done?' <span class="badge" style="background:#16a34a">✓ COMPLETED</span>':''}</div>
     <div class="prompt">${e.prompt}</div>${e.behavior?renderExpected(e.behavior):''}
     <div class="editorWrap">
       <div class="scroller" id="scroller">
@@ -1854,6 +1877,57 @@ function renderReview(){
   m.innerHTML=`<div class="home"><h1>🔁 Review</h1>
   <p style="color:var(--muted)">Spaced repetition resurfaces what you've learned right before you'd forget it. Cards are built automatically from the exercises you've completed and scheduled with expanding intervals (1 → 3 → 7 → 16 → 35 days…).</p>
   ${body}</div>`;
+  m.scrollTop=0;
+}
+
+/* ============================== DIFFICULTY TIERS + PRACTICE ============================== */
+/* Per-exercise difficulty: explicit e.diff override, else derived from the solution's
+   size and constructs. Deterministic, so the same exercise always rates the same. */
+function exDiff(e,s,l){
+  if(e&&e.diff&&/^(easy|medium|hard)$/.test(e.diff))return e.diff;
+  if(s&&(s.tournament||s.project))return 'hard';
+  if(e&&e.lang==='text')return 'easy';
+  const sol=(e&&e.solution)||'';
+  const lines=sol.split('\n').length;
+  let score=0;
+  if(s&&s.dan)score+=1;
+  if(lines>26)score+=2;else if(lines>14)score+=1;
+  if(/\bfor\b|\bwhile\b/.test(sol))score+=1;
+  if(/<[A-Z][\w,<>\s\[\]]*>/.test(sol))score+=1;                                   // generics
+  if(/synchronized|\bThread\b|ExecutorService|CompletableFuture|volatile|Atomic/.test(sol))score+=2;
+  if(/\binterface\b|\bimplements\b|\bextends\b/.test(sol))score+=1;
+  const cases=(sol.match(/case\s+["0-9]/g)||[]).length;
+  if(cases>=2&&/switch\s*\(/.test(sol)&&!/\bfor\b|\bwhile\b/.test(sol))score-=1;    // recall/mapping = easier
+  if(score<=0)return 'easy';
+  if(score<=2)return 'medium';
+  return 'hard';
+}
+function lessonDiff(s,l){
+  const exs=l.exs||(l.ex?[l.ex]:[]);
+  const order={easy:0,medium:1,hard:2};
+  let d='easy';
+  exs.forEach(e=>{const x=exDiff(e,s,l);if(order[x]>order[d])d=x;});
+  return exs.length?d:'medium';
+}
+function renderPractice(filter){
+  filter=filter||'all';
+  const m=document.getElementById('main');
+  const items=[];
+  STREAMS.forEach((s,si)=>{(s.lessons||[]).forEach((l,li)=>{
+    const exs=l.exs||(l.ex?[l.ex]:[]);
+    exs.forEach((e,ei)=>{
+      const sid=exs.length>1?l.id+'#'+ei:l.id;
+      items.push({si,li,ei,d:exDiff(e,s,l),title:e.title||l.title,lesson:l.title,icon:s.icon,done:!!store.lesson(sid).done});
+    });
+  });});
+  const counts={easy:0,medium:0,hard:0};items.forEach(i=>counts[i.d]++);
+  const shown=filter==='all'?items:items.filter(i=>i.d===filter);
+  const tab=(k,label,n)=>`<button class="pracTab ${filter===k?'active':''}" onclick="renderPractice('${k}')">${label} <span class="pcount">${n}</span></button>`;
+  m.innerHTML=`<div class="home"><h1>🎯 Practice by difficulty</h1>
+  <p style="color:var(--muted)">Every exercise across DevDojo, rated by difficulty. Filter to build a ramp — grind 🟢 Easy to warm up, or jump to 🔴 Hard for interview-grade problems. Ratings are auto-derived from each solution.</p>
+  <div class="pracTabs">${tab('all','All',items.length)}${tab('easy','🟢 Easy',counts.easy)}${tab('medium','🟡 Medium',counts.medium)}${tab('hard','🔴 Hard',counts.hard)}</div>
+  <div class="pracList">${shown.map(i=>`<div class="pracRow" onclick="openLesson(${i.si},${i.li},${i.ei})"><span class="diffDot d-${i.d}" title="${i.d}"></span><span class="pracDone">${i.done?'✅':'○'}</span><span class="pracIcon">${i.icon}</span><span class="pracTitle">${esc(i.title)}</span><span class="pracLesson">${esc(i.lesson)}</span></div>`).join('')}</div>
+  </div>`;
   m.scrollTop=0;
 }
 /* ============================== COURSE DATA ============================== */

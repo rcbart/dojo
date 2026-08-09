@@ -287,3 +287,25 @@ details.depth[open]>summary::before{content:'▾'}
 .revBtns button{border:1px solid var(--line);background:#f8fafc;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer}
 .revBtns .revAgain{color:#b45309;border-color:#fcd34d;background:#fffbeb}
 .revBtns .primary{color:#fff}
+
+/* ===== Difficulty tiers + Practice hub ===== */
+.diffDot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;flex:0 0 auto}
+.d-easy{background:#22c55e}
+.d-medium{background:#f59e0b}
+.d-hard{background:#ef4444}
+.diffBadge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#fff;border-radius:6px;padding:2px 7px;vertical-align:middle}
+.diffBadge.d-easy{background:#16a34a}
+.diffBadge.d-medium{background:#d97706}
+.diffBadge.d-hard{background:#dc2626}
+.pracTabs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 14px}
+.pracTab{border:1px solid var(--line);background:#f8fafc;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer}
+.pracTab.active{border-color:#8b5cf6;color:#8b5cf6;background:#f5f3ff}
+.pracTab .pcount{opacity:.7;font-size:11px}
+.pracList{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.pracRow{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13.5px}
+.pracRow:last-child{border-bottom:none}
+.pracRow:hover{background:#f8fafc}
+.pracDone{width:16px;flex:0 0 auto}
+.pracIcon{flex:0 0 auto}
+.pracTitle{font-weight:600;flex:0 0 auto}
+.pracLesson{color:var(--muted);margin-left:auto;font-size:12px;text-align:right}
