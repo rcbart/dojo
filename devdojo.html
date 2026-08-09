@@ -1606,7 +1606,10 @@ javac ${esc(cls)}.java && java ${esc(cls)}
 
 // or explore interactively, no main needed:
 jshell ${esc(cls)}.java</pre>
-<p>To grade it the way DevDojo does, add <b>JUnit 5</b> and turn the "expected behavior" above into <code>assertEquals</code> checks.</p>`;
+<p>To grade it the way DevDojo does, add <b>JUnit 5</b> and turn the "expected behavior" above into <code>assertEquals</code> checks.</p>
+<p><b>Or compile &amp; run it right here</b> — if you started the site with a local JDK and <code>JD_LOCAL_RUNNER=1</code>:</p>
+<button class="glossBtn" type="button" onclick="runJavaLocal()">▶ Compile &amp; run with local JDK</button>
+<div id="javaRun" class="sqlResult"></div>`;
   }
   return `<details class="depth"><summary>🖥️ Run this on your own machine</summary><div class="depthBody">${steps}</div></details>`;
 }
@@ -1619,6 +1622,19 @@ ${docs}
 </div></details>`;
 }
 function depthPanels(s,l,e){ return `<div class="depthWrap">${(e.lang==='sql'&&e.data&&window.SQL_DATASETS&&window.SQL_DATASETS[e.data])?sqlRunPanel(e.data):''}${localRunHtml(s,l,e)}${diveDeeperHtml(s,l,e)}</div>`; }
+/* opt-in: compile & run Java via the site's local runner endpoint (needs JD_LOCAL_RUNNER=1 + a JDK) */
+function runJavaLocal(){
+  const out=document.getElementById('javaRun'); if(!out)return;
+  const code=((document.getElementById('ed')||{}).value)||'';
+  out.innerHTML='<div class="sqlMeta"><span class="spin"></span>compiling with local JDK…</div>';
+  fetch('/api/run/java',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({code})})
+    .then(r=>r.ok?r.json():r.json().then(j=>Promise.reject(j.error||('HTTP '+r.status))))
+    .then(d=>{
+      const head=d.ok?('✔ '+(d.stage==='run'?'compiled &amp; ran':'compiled')):('✘ '+esc(d.stage||'error')+' failed');
+      out.innerHTML='<div class="sqlMeta">'+head+'</div><pre class="runbox">'+esc(d.output||'(no output)')+'</pre>';
+    })
+    .catch(err=>{ out.innerHTML='<div class="sqlMeta">Local runner unavailable — start the site with <code>JD_LOCAL_RUNNER=1 node site/server.js</code> and a JDK installed, or use the commands above. <span style="color:var(--muted)">('+esc(String(err))+')</span></div>'; });
+}
 
 /* ---- live in-browser SQL runner (real execution on sample datasets) ---- */
 function sqlFmt(v){ return (v===null||v===undefined)?'NULL':String(v); }
@@ -1667,7 +1683,7 @@ function renderGettingStarted(){
   <div class="gsCard">
   <h2>How your work is checked (be honest with yourself)</h2>
   <p>When you hit <b>Compile &amp; Run Tests</b>, DevDojo does two things: it checks your code contains the right constructs, and — in the app — it asks Claude to execute the tests like a compiler plus JUnit and report pass/fail per test. That is great for fast feedback and learning, but it is <b>not a real compiler</b>. It can miss a runtime edge case, and a correct solution written in an unusual way can occasionally be marked wrong.</p>
-  <p><b>The fix for real depth:</b> every exercise now has a <b>🖥️ Run this on your own machine</b> panel with the exact commands. Use it whenever you want ground truth.</p>
+  <p><b>The fix for real depth:</b> every exercise now has a <b>🖥️ Run this on your own machine</b> panel with the exact commands. SQL exercises execute against real sample data in your browser, and pure-JavaScript exercises run in a sandboxed Web Worker — both graded on real behavior. Java exercises can even <b>compile &amp; run in-app</b> if you start the site with a local JDK and <code>JD_LOCAL_RUNNER=1</code>.</p>
   </div>
 
   <div class="gsCard">

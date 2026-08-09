@@ -17,6 +17,8 @@ const http = require('http');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { execFile } = require('child_process');
+const os = require('os');
 const db = require('./db');
 
 const ROOT = __dirname;
@@ -24,6 +26,9 @@ const PUBLIC_DIR = path.join(ROOT, 'public');
 const DOJO_FILE = path.join(ROOT, '..', 'dist', 'index.html');
 const PORT = parseInt(process.env.PORT || '8080', 10);
 const SECURE_COOKIES = process.env.JD_SECURE_COOKIES === '1';
+// Opt-in local code runner: compiles & runs submitted Java with the host JDK.
+// OFF by default. Only enable on a machine you control (it executes user code).
+const LOCAL_RUNNER = process.env.JD_LOCAL_RUNNER === '1';
 const OPEN_APP = process.env.JD_OPEN_APP === '1';
 
 const SESSION_TTL_MS = 7 * 24 * 3600 * 1000;
@@ -181,6 +186,35 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=u
 
 /* ------------------------------ routing ------------------------------- */
 
+/* Opt-in local Java runner: write to a temp dir, compile with the host javac, and
+   (if there's a main) run it — with timeouts, an output cap, and cleanup. Never on
+   by default; executes user code, so it's for machines you control only. */
+function runJava(code) {
+  return new Promise(resolve => {
+    if (typeof code !== 'string' || !code.trim() || code.length > 20000)
+      return resolve({ ok: false, stage: 'input', output: 'No code, or code too large (20k max).' });
+    const m = code.match(/public\s+class\s+([A-Za-z_]\w*)/) || code.match(/\bclass\s+([A-Za-z_]\w*)/);
+    const cls = m ? m[1] : 'Main';
+    let dir;
+    try { dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dojo-java-')); }
+    catch (e) { return resolve({ ok: false, stage: 'io', output: String(e.message) }); }
+    const cleanup = () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch (e) {} };
+    const JAVAC = process.env.JD_JAVAC || 'javac';
+    const JAVA = process.env.JD_JAVA || 'java';
+    const opts = { timeout: 10000, cwd: dir, maxBuffer: 1 << 20 };
+    try { fs.writeFileSync(path.join(dir, cls + '.java'), code); }
+    catch (e) { cleanup(); return resolve({ ok: false, stage: 'io', output: String(e.message) }); }
+    execFile(JAVAC, [cls + '.java'], opts, (err, so, se) => {
+      if (err) { cleanup(); return resolve({ ok: false, stage: 'compile', output: String(se || err.message || '').slice(0, 8000) }); }
+      if (!/static\s+void\s+main/.test(code)) { cleanup(); return resolve({ ok: true, stage: 'compile', output: 'Compiled successfully. (No main method to run.)' }); }
+      execFile(JAVA, ['-cp', dir, cls], opts, (e2, o2, s2) => {
+        cleanup();
+        resolve({ ok: true, stage: 'run', output: (String(o2 || '') + (s2 ? '\n' + s2 : '')).slice(0, 8000) || '(no output)' });
+      });
+    });
+  });
+}
+
 async function handle(req, res) {
   const url = new URL(req.url, 'http://' + (req.headers.host || 'localhost'));
   const p = url.pathname;
@@ -225,6 +259,19 @@ async function handle(req, res) {
     if (s) sessions.delete(s.token);
     res.setHeader('Set-Cookie', sessionCookie('gone', 0));
     return json(res, 200, { ok: true });
+  }
+
+  /* ---------- opt-in local code runner ---------- */
+
+  if (p === '/api/run/health' && req.method === 'GET') {
+    return json(res, 200, { java: LOCAL_RUNNER });
+  }
+  if (p === '/api/run/java' && req.method === 'POST') {
+    if (!LOCAL_RUNNER) return json(res, 404, { error: 'Local runner is off. Start the site with JD_LOCAL_RUNNER=1 and a JDK installed.' });
+    if (rateLimited('run:' + clientIp(req), 30, 60_000)) return json(res, 429, { error: 'Too many runs — slow down.' });
+    let body; try { body = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+    const out = await runJava(str(body.code));
+    return json(res, 200, out);
   }
 
   /* ---------- authenticated ---------- */
