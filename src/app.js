@@ -374,6 +374,7 @@ function openLesson(si,li,ei){
   const exs=lessonExs(l);
   if(ei==null){ei=exs.findIndex((x,i)=>!store.lesson(exSid(l,exs,i)).done);if(ei<0)ei=0;}
   cur={si,li,ei};
+  window.__QZ=l.quiz||null;
   const e=exs[ei];
   const sid=e?exSid(l,exs,ei):null;
   const saved=sid?store.lesson(sid):{};
@@ -412,6 +413,7 @@ function openLesson(si,li,ei){
     <div class="solution" id="solBox" hidden><div class="codeSample">${highlight(e.solution)}</div></div>
     ${depthPanels(s,l,e)}
   </div>`:''}
+  ${renderQuiz(l)}
   <div style="margin-top:18px;display:flex;gap:10px">
     ${li>0?`<button onclick="openLesson(${si},${li-1})">← Previous</button>`:''}
     ${li<s.lessons.length-1?`<button class="primary" onclick="openLesson(${si},${li+1})">Next lesson →</button>`:''}
@@ -1465,4 +1467,18 @@ function renderPractice(filter){
   <div class="pracList">${shown.map(i=>`<div class="pracRow" onclick="openLesson(${i.si},${i.li},${i.ei})"><span class="diffDot d-${i.d}" title="${i.d}"></span><span class="pracDone">${i.done?'✅':'○'}</span><span class="pracIcon">${i.icon}</span><span class="pracTitle">${esc(i.title)}</span><span class="pracLesson">${esc(i.lesson)}</span></div>`).join('')}</div>
   </div>`;
   m.scrollTop=0;
+}
+
+/* ============================== QUIZ ENGINE (Quick check) ============================== */
+function renderQuiz(l){
+  const qs=l&&l.quiz; if(!qs||!qs.length)return '';
+  return `<div class="quizBox"><h3>🧠 Quick check</h3>`+qs.map((q,qi)=>
+    `<div class="quizQ"><div class="quizQt">${qi+1}. ${esc(q.q)}</div>`+
+    `<div class="quizOpts">${q.options.map((o,oi)=>`<button class="quizOpt" data-qi="${qi}" data-oi="${oi}" onclick="quizPick(${qi},${oi})">${esc(o)}</button>`).join('')}</div>`+
+    `<div class="quizWhy" id="quizWhy-${qi}" hidden></div></div>`).join('')+`</div>`;
+}
+function quizPick(qi,oi){
+  const qs=window.__QZ; if(!qs||!qs[qi])return; const ans=qs[qi].answer;
+  document.querySelectorAll('.quizOpt[data-qi="'+qi+'"]').forEach(b=>{b.disabled=true;const boi=+b.getAttribute('data-oi');if(boi===ans)b.classList.add('correct');else if(boi===oi)b.classList.add('wrong');});
+  const w=document.getElementById('quizWhy-'+qi); if(w){w.hidden=false;w.innerHTML=(oi===ans?'✔ Correct. ':'✘ Not quite. ')+esc(qs[qi].why||'');}
 }

@@ -309,3 +309,16 @@ details.depth[open]>summary::before{content:'▾'}
 .pracIcon{flex:0 0 auto}
 .pracTitle{font-weight:600;flex:0 0 auto}
 .pracLesson{color:var(--muted);margin-left:auto;font-size:12px;text-align:right}
+
+/* ===== Quick-check quiz ===== */
+.quizBox{margin-top:16px;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fbfaff}
+.quizBox h3{margin:0 0 10px;font-size:15px}
+.quizQ{margin:10px 0 14px}
+.quizQt{font-weight:600;font-size:14px;margin-bottom:8px}
+.quizOpts{display:flex;flex-direction:column;gap:6px}
+.quizOpt{text-align:left;border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 12px;font-size:13.5px;cursor:pointer;font-family:inherit}
+.quizOpt:hover:not(:disabled){border-color:#8b5cf6}
+.quizOpt:disabled{cursor:default}
+.quizOpt.correct{border-color:#16a34a;background:#f0fdf4;color:#166534;font-weight:700}
+.quizOpt.wrong{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.quizWhy{margin-top:8px;font-size:13px;color:var(--muted)}

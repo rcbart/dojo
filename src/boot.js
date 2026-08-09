@@ -2,6 +2,8 @@
 mergeIdentity();
 /* attach auto-generated executable-grading specs (opt-in Java runner) by lesson id */
 (function(){ if(!window.GRADEJAVA)return; STREAMS.forEach(function(s){(s.lessons||[]).forEach(function(l){var exs=l.exs||(l.ex?[l.ex]:[]);exs.forEach(function(e,i){var k=exs.length>1?l.id+'#'+i:l.id; if(window.GRADEJAVA[k]&&!e.gradeJava)e.gradeJava=window.GRADEJAVA[k];});});}); })();
+/* attach auto-generated quick-check quizzes by lesson id (hand-authored l.quiz wins) */
+(function(){ if(!window.QUIZZES)return; STREAMS.forEach(function(s){(s.lessons||[]).forEach(function(l){ if(!l.quiz&&window.QUIZZES[l.id])l.quiz=window.QUIZZES[l.id]; });}); })();
 renderNav();renderHome();refreshBelt();
 
 /* ---- interactive JWT tamper demo (used by the OAuth/JWT/JOSE stream, lesson jose5) ---- */
