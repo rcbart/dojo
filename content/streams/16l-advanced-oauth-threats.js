@@ -116,7 +116,6 @@ solution:`public class Defense {
 tests:[{d:'CSRF is countered by state',re:'"csrf".*?"state parameter"',flags:'s'},{d:'replay is countered by nonce',re:'"replay".*?"nonce"',flags:'s'},{d:'code interception is countered by PKCE',re:'"code-interception".*?"pkce"',flags:'s'},{d:'open redirect needs exact URI matching',re:'"open-redirect".*?"exact redirect_uri match"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
 behavior:`against("csrf") is "state parameter", against("replay") is "nonce", against("code-interception") is "pkce", against("open-redirect") is "exact redirect_uri match". Each defense binds a step to something an attacker cannot forge.`,
 hints:['A switch maps each attack name to its standard mitigation.','state stops CSRF, nonce stops replay, PKCE stops code interception, exact URI matching stops open redirects.','Anything unlisted returns unknown.']}},
-,
 {id:'ao6',title:'Refresh token rotation & reuse detection',body:`
 <p>Refresh tokens are long-lived, so a stolen one is a serious prize — it mints fresh access tokens indefinitely. Two mechanisms bound that risk.</p>
 <p><b>Rotation.</b> Every time a refresh token is used, the authorization server issues a <b>new</b> refresh token and <b>invalidates the old one</b>. A given refresh token is therefore usable exactly once.</p>

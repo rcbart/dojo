@@ -125,7 +125,6 @@ solution:`public class StepUp {
 tests:[{d:'transfer counts as sensitive',re:'equals\\s*\\(\\s*"transfer"\\s*\\)'},{d:'change-email counts as sensitive',re:'equals\\s*\\(\\s*"change-email"\\s*\\)'},{d:'requires NOT recently authenticated',re:'!\\s*recentlyAuthed'},{d:'combines sensitivity AND freshness',re:'&&'}],
 behavior:`required("transfer", false) is true; required("transfer", true) is false (a fresh auth just happened); required("view", false) is false (not sensitive). Assurance is matched to the risk of the action.`,
 hints:['Compute a sensitive flag first from the two high-risk actions joined by ||.','Step-up is needed only when sensitive is true AND recentlyAuthed is false.','Use the ! operator to express not recently authenticated.']}},
-,
 {id:'am6',title:'Identity assurance levels: IAL, AAL, FAL',body:`
 <p>How much should you trust that a user is who they claim? NIST 800-63 answers with <b>three independent scales</b>, so you can dial each to the risk of the action rather than treating "identity" as one thing.</p>
 <ul>
