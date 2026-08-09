@@ -1,4 +1,50 @@
 STREAMS.push({icon:'🧱',title:'Data Structures',blurb:'Lists, sets, maps, sorting, stacks, queues, heaps, linked lists and hashing — the right tool, its Big-O, and building your own.',lessons:[
+{id:'ds00',title:'Data structures in plain English: what, when & why',body:`
+<p>Before any code: a data structure is just <b>a way to organize data so certain operations are cheap</b>. Each one is a deliberate trade — fast at some things, slow at others. Pick the wrong one and simple features crawl; pick the right one and they fly. Here is the whole toolbox in plain terms.</p>
+<table class="dsCompare">
+<thead><tr><th>Structure</th><th>Think of it as…</th><th>Excels at</th><th>Bad at</th><th>Use when / avoid when</th></tr></thead>
+<tbody>
+<tr><td><b>Array</b></td><td>a numbered row of lockers</td><td>instant access by index; compact</td><td>inserting/removing in the middle; fixed size</td><td><b>Use</b> for fixed, index-addressed data. <b>Avoid</b> when it grows/shrinks a lot in the middle.</td></tr>
+<tr><td><b>Linked list</b></td><td>a chain, each link points to the next</td><td>cheap insert/remove at a known spot</td><td>random access (must walk from the start)</td><td><b>Use</b> for lots of insertion/removal. <b>Avoid</b> when you need "give me item #500".</td></tr>
+<tr><td><b>Stack</b></td><td>a pile of plates — Last In, First Out</td><td>undo, back button, call stack, DFS</td><td>anything needing fair/oldest-first order</td><td><b>Use</b> when the most recent item matters. <b>Avoid</b> for queues of work.</td></tr>
+<tr><td><b>Queue</b></td><td>a line at a shop — First In, First Out</td><td>task/job order, buffering, BFS</td><td>random access; priority</td><td><b>Use</b> for fair, in-order processing. <b>Avoid</b> when order does not matter or priority does.</td></tr>
+<tr><td><b>Hash map</b></td><td>a coat check: give a key, get the item</td><td>instant lookup/insert/delete by key</td><td>ordering; range queries</td><td><b>Use</b> for "look this up by id/name". <b>Avoid</b> when you need sorted or range results.</td></tr>
+<tr><td><b>Set</b></td><td>a bag that ignores duplicates</td><td>membership tests; dedup</td><td>ordering; positions</td><td><b>Use</b> for "have I seen this?" / unique items. <b>Avoid</b> when duplicates or order matter.</td></tr>
+<tr><td><b>Tree (balanced BST)</b></td><td>a family tree, sorted</td><td>sorted order + range queries in O(log n)</td><td>raw single-key speed vs a hash map</td><td><b>Use</b> for sorted data and ranges. <b>Avoid</b> when you only need exact-key lookup (use a hash map).</td></tr>
+<tr><td><b>Heap</b></td><td>a tournament bracket for the top item</td><td>always grab the min or max fast</td><td>searching for arbitrary items</td><td><b>Use</b> for priority queues / top-K. <b>Avoid</b> for general search.</td></tr>
+<tr><td><b>Trie</b></td><td>a tree of letters</td><td>prefix / autocomplete search</td><td>memory for sparse keys</td><td><b>Use</b> for prefixes and dictionaries. <b>Avoid</b> for plain key lookup.</td></tr>
+<tr><td><b>Graph</b></td><td>a map of cities and roads</td><td>relationships, networks, paths</td><td>simple linear data (overkill)</td><td><b>Use</b> for connections/dependencies. <b>Avoid</b> when a list or tree already fits.</td></tr>
+</tbody>
+</table>
+<p><b>The one-line difference</b> people ask about most: a <b>queue</b> is a fair line (first in, first out); a <b>stack</b> is a pile (last in, first out); a <b>tree</b> is a hierarchy that keeps data sorted for fast search; a <b>hash map</b> gives instant lookup by key but in no particular order. The rest of this stream builds each one; this table is the map to come back to.</p>`,
+docs:[['Choosing a data structure — overview','https://en.wikipedia.org/wiki/Data_structure'],['Java collections — Oracle','https://docs.oracle.com/javase/tutorial/collections/']],
+ex:{title:'Pick the right structure',
+prompt:`Write class <code>Pick</code> with <code>static String structure(String need)</code>: <code>"index-fast-access"</code>→<code>"array"</code>, <code>"insert-remove-ends"</code>→<code>"linked list"</code>, <code>"last-in-first-out"</code>→<code>"stack"</code>, <code>"first-in-first-out"</code>→<code>"queue"</code>, <code>"key-value-lookup"</code>→<code>"hash map"</code>, <code>"unique-items"</code>→<code>"set"</code>, <code>"sorted-range"</code>→<code>"balanced tree"</code>, <code>"always-min-max"</code>→<code>"heap"</code>, <code>"prefix-search"</code>→<code>"trie"</code>, <code>"network-relationships"</code>→<code>"graph"</code>, and <code>"unknown"</code> otherwise.`,
+starter:`public class Pick {
+    static String structure(String need) {
+        return null;
+    }
+}`,
+solution:`public class Pick {
+    static String structure(String need) {
+        switch (need) {
+            case "index-fast-access":     return "array";
+            case "insert-remove-ends":    return "linked list";
+            case "last-in-first-out":     return "stack";
+            case "first-in-first-out":    return "queue";
+            case "key-value-lookup":      return "hash map";
+            case "unique-items":          return "set";
+            case "sorted-range":          return "balanced tree";
+            case "always-min-max":        return "heap";
+            case "prefix-search":         return "trie";
+            case "network-relationships": return "graph";
+            default:                      return "unknown";
+        }
+    }
+}`,
+tests:[{d:'index access -> array',re:'"index-fast-access".*?"array"',flags:'s'},{d:'LIFO -> stack',re:'"last-in-first-out".*?"stack"',flags:'s'},{d:'FIFO -> queue',re:'"first-in-first-out".*?"queue"',flags:'s'},{d:'key lookup -> hash map',re:'"key-value-lookup".*?"hash map"',flags:'s'},{d:'sorted range -> balanced tree',re:'"sorted-range".*?"balanced tree"',flags:'s'},{d:'min/max -> heap',re:'"always-min-max".*?"heap"',flags:'s'},{d:'prefix -> trie',re:'"prefix-search".*?"trie"',flags:'s'},{d:'relationships -> graph',re:'"network-relationships".*?"graph"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+behavior:`structure("first-in-first-out") is "queue", structure("last-in-first-out") is "stack", structure("key-value-lookup") is "hash map", structure("sorted-range") is "balanced tree". Matching the need to the structure is the core skill this stream builds.`,
+hints:['FIFO is a queue (a fair line); LIFO is a stack (a pile).','Exact-key lookup wants a hash map; sorted/range wants a balanced tree.','Min/max on demand is a heap; prefixes are a trie; connections are a graph.']}},
 {id:'ds0',title:'Lists, Sets & Maps: choosing the collection',body:`
 <p>🌱 <b>Starting from zero:</b> "data structure" sounds grand but means something homely: <i>the shape you store things in</i>. A shopping list, a guest list and a phone book are three different shapes for three different needs — and choosing the wrong one (looking up phone numbers by reading the whole book top to bottom) is where slow software comes from. This stream is about matching the shape to the need; it starts with Java\u0027s big three.</p>
 <p>Ninety percent of Java data handling is picking the right one of these three interfaces — each answers a different question:</p>

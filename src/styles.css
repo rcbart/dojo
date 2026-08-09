@@ -322,3 +322,9 @@ details.depth[open]>summary::before{content:'▾'}
 .quizOpt.correct{border-color:#16a34a;background:#f0fdf4;color:#166534;font-weight:700}
 .quizOpt.wrong{border-color:#dc2626;background:#fef2f2;color:#991b1b}
 .quizWhy{margin-top:8px;font-size:13px;color:var(--muted)}
+
+/* ===== data-structure comparison table ===== */
+.dsCompare{border-collapse:collapse;font-size:13px;margin:12px 0;width:100%}
+.dsCompare th,.dsCompare td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+.dsCompare th{background:#f5f3ff;font-weight:700}
+.dsCompare tr:nth-child(even) td{background:#fafafa}
