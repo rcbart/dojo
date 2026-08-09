@@ -274,3 +274,16 @@ details.depth[open]>summary::before{content:'▾'}
 .sqlMeta{font-size:12px;color:var(--muted);margin-top:4px}
 .sqlQ{font-size:12px;font-weight:800;color:#8b5cf6;margin:8px 0 2px}
 .sqlErr{color:#b91c1c;font:12.5px/1.5 ui-monospace,Menlo,monospace;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px 10px;margin:6px 0}
+
+/* ===== Spaced-repetition Review ===== */
+.dueBadge{background:#ef4444;color:#fff;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800;margin-left:6px}
+.reviewEmpty{border:1px dashed var(--line);border-radius:10px;padding:16px;color:var(--muted);background:#fbfaff}
+.revCard{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0;background:#fff}
+.revMeta{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#8b5cf6}
+.revTitle{font-size:16px;font-weight:700;margin:2px 0 6px}
+.revPrompt{font-size:13.5px;color:var(--muted);line-height:1.5}
+.revPrompt code{font-size:12.5px}
+.revBtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.revBtns button{border:1px solid var(--line);background:#f8fafc;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.revBtns .revAgain{color:#b45309;border-color:#fcd34d;background:#fffbeb}
+.revBtns .primary{color:#fff}
