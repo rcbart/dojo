@@ -10825,7 +10825,68 @@ solution:`public class Federation {
 }`,
 tests:[{d:'the IdP vouches for the user',re:'"idp".*?"vouches for the user"',flags:'s'},{d:'the SP relies on the IdP',re:'"sp".*?"relies on the idp"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
 behavior:`role("idp") is "vouches for the user", role("sp") is "relies on the idp", role("x") is "unknown". The IdP is the trusted authority; the SP/RP is the app that accepts its word.`,
-hints:['A two-case switch plus a default covers it.','The identity provider vouches; the service provider relies.','Anything else returns unknown.']}}
+hints:['A two-case switch plus a default covers it.','The identity provider vouches; the service provider relies.','Anything else returns unknown.']}},
+{id:'idffed2',title:'Federation from the ground up: why & how',body:`
+<p>We met federation in plain English (the passport analogy). Now the ground-up version: <b>why</b> it exists and <b>how</b> it is actually built — the base every OAuth, OIDC and SAML lesson assumes.</p>
+<p><b>Why it is needed.</b> If every app stores its own passwords you get password sprawl and reuse, no single place to disable a leaver, no way for a partner or customer to bring an identity they already have, and a password honeypot in every app. Federation removes all four by letting apps <b>trust one authority</b> to authenticate the user.</p>
+<p><b>How it is implemented.</b> Three moving parts and three protocols:</p>
+<ul>
+<li><b>The authority</b> — the <b>Identity Provider (IdP)</b> authenticates the user and issues a <b>signed proof</b>: an <b>ID token</b> (a JWT) in OpenID Connect, or a signed XML <b>assertion</b> in SAML. <b>OAuth 2.0</b> underneath carries authorization (API access).</li>
+<li><b>The app</b> — the <b>Relying Party (RP) / Service Provider (SP)</b> receives that proof and <b>verifies</b> it rather than checking a password.</li>
+<li><b>The wiring</b> — <b>metadata / discovery</b> tells the RP where the IdP's endpoints and <b>public keys</b> live (a <code>jwks_uri</code> for OIDC, metadata XML for SAML), so the RP can find and check everything.</li>
+</ul>
+<p>The safe shape is <b>SP-initiated</b>: the app starts the login by redirecting to the IdP, the user authenticates, and the IdP redirects back with a proof the app verifies and turns into a session. Because the app started it, it can correlate the response to its own request — a property the trust deep-dive builds on next.</p>`,
+docs:[['Federated identity — Wikipedia','https://en.wikipedia.org/wiki/Federated_identity'],['OIDC Core','https://openid.net/specs/openid-connect-core-1_0.html'],['SAML 2.0 overview','https://docs.oasis-open.org/security/saml/v2.0/']],
+ex:{title:'Name the moving parts',
+prompt:`Write class <code>Federation</code> with <code>static String piece(String role)</code>: <code>"authority"</code>→<code>"IdP"</code>, <code>"app"</code>→<code>"relying party"</code>, <code>"proof"</code>→<code>"signed token or assertion"</code>, <code>"keys"</code>→<code>"published at JWKS or metadata"</code>, else <code>"unknown"</code>.`,
+starter:`public class Federation {
+    static String piece(String role) {
+        return null;
+    }
+}`,
+solution:`public class Federation {
+    static String piece(String role) {
+        switch (role) {
+            case "authority": return "IdP";
+            case "app":       return "relying party";
+            case "proof":     return "signed token or assertion";
+            case "keys":      return "published at JWKS or metadata";
+            default:          return "unknown";
+        }
+    }
+}`,
+tests:[{d:'the authority is the IdP',re:'"authority".*?"IdP"',flags:'s'},{d:'the app is the relying party',re:'"app".*?"relying party"',flags:'s'},{d:'the proof is a signed token or assertion',re:'"proof".*?"signed token or assertion"',flags:'s'},{d:'keys are published at JWKS/metadata',re:'"keys".*?"published at JWKS or metadata"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+behavior:`piece("authority") is "IdP", piece("app") is "relying party", piece("proof") is "signed token or assertion", piece("keys") is "published at JWKS or metadata". Those four pieces — authority, app, proof, and published keys — are all federation is.`,
+hints:['Federation removes password sprawl by making apps trust one authority.','The IdP issues a signed proof; the relying party verifies it instead of a password.','Metadata/JWKS publishes the IdP public keys and endpoints so the app can find and check them.']}},
+{id:'idftrust',title:'How trust is established: a deep dive',body:`
+<p>Federation only works if the relying party (RP) can be sure a proof really came from the identity provider (IdP), is meant for <i>this</i> app, and is fresh. That certainty is <b>trust</b>, and it is not a feeling — it is <b>configuration plus cryptography</b>. This lesson ties together the pieces you meet across the OAuth, SAML and PKI streams.</p>
+<p><b>1. Identification (set up once, out of band).</b> The RP <b>registers</b> with the IdP. In OAuth/OIDC it receives a <code>client_id</code> and, for a confidential client, a <code>client_secret</code>, and registers exact redirect URIs. In SAML the two sides exchange <b>metadata</b> containing an <b>X.509 certificate</b>. This is where the parties learn who each other are.</p>
+<p><b>2. Keys (the core asymmetry).</b> The IdP signs proofs with its <b>private</b> key and <b>publishes the matching public key</b> — at a <b>JWKS</b> endpoint (OIDC) or in SAML metadata. The RP verifies signatures with that public key. <b>Public keys are shared; private keys never leave their owner</b> — which is exactly why a forger who can read the public key still cannot mint a valid signature. For certificates, verification may walk a <b>PKI chain</b> to a trusted <b>CA</b>.</p>
+<p><b>3. How strongly the client proves itself</b> runs on a ladder: nothing (public client + PKCE) → a shared <code>client_secret</code> → <b>private_key_jwt</b> (the client signs with its own private key; no shared secret) → <b>mTLS</b>. Asymmetric methods are stronger because there is no shared secret to leak.</p>
+<p><b>4. Verification (enforced on every message).</b> A valid signature is necessary but not sufficient. The RP must also check the <b>issuer</b> (<code>iss</code> is the expected IdP), the <b>audience</b> (<code>aud</code>/recipient names this RP — so a proof minted for another app is rejected), <b>freshness</b> (<code>exp</code>/<code>NotOnOrAfter</code> and <code>nbf</code>, with small clock skew), and <b>anti-replay/correlation</b> (the <code>nonce</code> ties an ID token to this login; <code>state</code> blocks CSRF; SAML tracks assertion IDs).</p>
+<p><b>5. The sharp edges.</b> <b>Unsolicited assertions</b> (SAML IdP-initiated) have no request to correlate to, so accept them only from a trusted IdP with full validation, and prefer SP-initiated. <b>JIT provisioning</b> means you create accounts from IdP claims, so map claims to <b>least privilege</b> and key on the stable subject id. And trust is not set-and-forget: rotate keys and certificates, honor JWKS caching, and support revocation and logout.</p>`,
+docs:[['OAuth 2.0 Security BCP','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['JWT best practices (RFC 8725)','https://www.rfc-editor.org/rfc/rfc8725'],['JSON Web Key (RFC 7517)','https://www.rfc-editor.org/rfc/rfc7517']],
+ex:{title:'The trust checklist, in code',
+prompt:`Write class <code>Trust</code> with <code>static boolean valid(boolean signatureOk, boolean issuerOk, boolean audienceOk, boolean fresh, boolean notReplayed)</code> that accepts a proof only when <b>all five</b> checks pass, and <code>static String idpPublishes()</code> returning <code>"public key"</code> (never the private key).`,
+starter:`public class Trust {
+    static boolean valid(boolean signatureOk, boolean issuerOk, boolean audienceOk, boolean fresh, boolean notReplayed) {
+        return false;
+    }
+    static String idpPublishes() {
+        return null;
+    }
+}`,
+solution:`public class Trust {
+    static boolean valid(boolean signatureOk, boolean issuerOk, boolean audienceOk, boolean fresh, boolean notReplayed) {
+        return signatureOk && issuerOk && audienceOk && fresh && notReplayed;
+    }
+    static String idpPublishes() {
+        return "public key";
+    }
+}`,
+tests:[{d:'all five checks must hold (signature, issuer, audience, freshness, no replay)',re:'signatureOk\\s*&&\\s*issuerOk\\s*&&\\s*audienceOk\\s*&&\\s*fresh\\s*&&\\s*notReplayed'},{d:'the IdP publishes its PUBLIC key, never the private one',re:'return\\s+"public key"'}],
+behavior:`valid(true,true,true,true,true) is true; if any of signature, issuer, audience, freshness, or non-replay fails, it is false — the same checklist every OAuth/SAML library enforces. idpPublishes() returns "public key", capturing the core asymmetry that makes federation forgery-resistant.`,
+hints:['Trust is configuration (registration) plus cryptography (verifying a signature against a published public key).','A valid signature is not enough: also check issuer, audience, freshness, and non-replay — combine with &&.','The IdP shares only its public key; the private signing key never leaves it.']}}
 ]});
 STREAMS.push({icon:'🔑',iam:true,sec:'Authentication & MFA',title:'Authentication Methods & MFA',blurb:'How people actually prove who they are: password hashing done right, the three factor types, TOTP one-time codes, phishing-resistant passkeys (WebAuthn/FIDO2), and step-up/adaptive authentication for risky actions.',lessons:[
 
