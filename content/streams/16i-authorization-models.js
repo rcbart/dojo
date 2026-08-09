@@ -6,7 +6,7 @@ STREAMS.push({icon:'🧩',iam:true,sec:'Authorization models',title:'Authorizati
 <div class="codeSample" data-hl>// a permission check reduces to: does this user hold a role that grants it?
 boolean allowed = user.roles().contains("admin");</div>`,
 docs:[['RBAC — NIST','https://csrc.nist.gov/projects/role-based-access-control'],['Access control — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Access_Control_Cheat_Sheet.html']],
-ex:{title:'Role check',
+ex:{title:'Role check',gradeJava:{class:'Rbac',cases:[{name:'admin present -> true',call:'isAdmin',args:['java.util.Set.of("admin")'],expect:'true'},{name:'no admin -> false',call:'isAdmin',args:['java.util.Set.of("viewer")'],expect:'false'}]},
 prompt:`Write class <code>Rbac</code> with <code>static boolean isAdmin(java.util.Set&lt;String&gt; roles)</code> that returns true only when the set of roles contains <code>"admin"</code>.`,
 starter:`import java.util.Set;
 public class Rbac {

@@ -563,6 +563,7 @@ async function runTests(l,e,sid,ei,exs){
   const code=document.getElementById('ed').value;
   if(e.lang==='sql'&&e.data&&window.SQLDB&&window.SQL_DATASETS&&window.SQL_DATASETS[e.data])return gradeSql(l,e,sid,ei,exs,code);
   if(e.run&&typeof Worker!=='undefined')return gradeJs(l,e,sid,ei,exs,code);
+  if(!e.lang&&e.gradeJava&&typeof fetch!=='undefined'&&await gradeJavaViaRunner(l,e,sid,ei,exs,code))return;
   const tests=document.getElementById('io-tests');
   const con=document.getElementById('io-console');
   const btn=document.getElementById('btnRun');btn.disabled=true;
@@ -745,6 +746,52 @@ function gradeJs(l,e,sid,ei,exs,code){
     w.onmessage=ev=>{clearTimeout(timer);finish(ev.data,null);};
     w.onerror=ev=>{clearTimeout(timer);finish([],(ev&&ev.message)||'worker error (check for syntax errors)');};
   }catch(x){finish([],'worker unavailable: '+x.message);}
+}
+/* Phase 3: executable Java grading via the opt-in local runner. Builds a DojoTest
+   harness that calls the student's methods and asserts expected values, compiles it
+   with their code, runs it, and parses PASS/FAIL. Falls back (returns false) when the
+   runner is off, so everyone still gets the regex/AI path. */
+function buildJavaHarness(g){
+  const inst=g.static===false, cls=g.class, recv=inst?'_o':cls;
+  const L=['public class DojoTest {','  public static void main(String[] args){','    int p=0,t=0;','    StringBuilder sb=new StringBuilder();'];
+  if(inst)L.push('    '+cls+' _o=new '+cls+'();');
+  (g.cases||[]).forEach((c,i)=>{
+    const args=(c.args||[]).join(', ');
+    const name=String(c.name||('case '+(i+1))).replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+    L.push('    t++; try { Object got='+recv+'.'+c.call+'('+args+'); boolean ok=java.util.Objects.equals(got, '+c.expect+'); if(ok)p++; sb.append(ok?"PASS ":"FAIL ").append("'+name+'").append(ok?"":(" (got "+got+")")).append("\\n"); } catch(Throwable ex){ sb.append("FAIL "+"'+name+'"+" (threw "+ex+")\\n"); }');
+  });
+  L.push('    System.out.print(sb.toString());');
+  L.push('    System.out.println("DOJO_RESULT "+p+"/"+t);');
+  L.push('  }','}');
+  return L.join('\n');
+}
+async function gradeJavaViaRunner(l,e,sid,ei,exs,code){
+  const tests=document.getElementById('io-tests'),con=document.getElementById('io-console'),btn=document.getElementById('btnRun');
+  const prev=tests.innerHTML; if(btn)btn.disabled=true;
+  tests.innerHTML='<div class="aiBox"><span class="spin"></span>Compiling &amp; running with the local JDK…</div>';
+  let data=null;
+  try{
+    const r=await fetch('/api/run/java',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({code,harness:buildJavaHarness(e.gradeJava)})});
+    if(!r.ok){tests.innerHTML=prev;if(btn)btn.disabled=false;return false;} // runner off -> fall back
+    data=await r.json();
+  }catch(_){tests.innerHTML=prev;if(btn)btn.disabled=false;return false;}
+  const out=String(data.output||'');
+  if(data.ok===false&&data.stage==='compile'){
+    con.innerHTML=cline('$ javac *.java','dim')+out.split('\n').map(x=>cline(esc(x),'err')).join('')+cline('BUILD FAILED','err');
+    tests.innerHTML='<h4 style="margin:8px 0 4px">Compilation (local JDK)</h4><div class="tcase bad">✘ your code did not compile — see the Console tab</div>';
+    setTab('console');markTab('tests','#dc2626');if(btn)btn.disabled=false;return true;
+  }
+  const caseLines=out.split('\n').filter(x=>/^(PASS|FAIL) /.test(x));
+  const mr=out.match(/DOJO_RESULT\s+(\d+)\/(\d+)/);
+  const p=mr?parseInt(mr[1],10):0,t=mr?parseInt(mr[2],10):0,allPass=t>0&&p===t;
+  tests.innerHTML='<h4 style="margin:8px 0 4px">Executed with the local JDK — real compile &amp; run</h4>'+
+    caseLines.map(x=>{const ok=x.indexOf('PASS')===0;return '<div class="tcase '+(ok?'ok':'bad')+'">'+(ok?'✔':'✘')+' '+esc(x.replace(/^(PASS|FAIL) /,''))+'</div>';}).join('')+
+    '<div class="aiBox"><h4>▶ Real execution</h4>Compiled and ran on your machine; '+p+'/'+t+' assertions passed.</div>';
+  con.innerHTML=cline('$ javac *.java && java DojoTest','dim')+cline(esc(out),allPass?'ok':'err');
+  setTab('tests');markTab('console',allPass?'#16a34a':'#dc2626');
+  if(allPass)completeExercise(l,sid,ei,exs);
+  if(btn)btn.disabled=false;
+  return true;
 }
 /* ============================== HINTS ============================== */
 async function nextStep(e,sid){

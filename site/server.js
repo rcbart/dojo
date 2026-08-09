@@ -189,7 +189,7 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=u
 /* Opt-in local Java runner: write to a temp dir, compile with the host javac, and
    (if there's a main) run it — with timeouts, an output cap, and cleanup. Never on
    by default; executes user code, so it's for machines you control only. */
-function runJava(code) {
+function runJava(code, harness) {
   return new Promise(resolve => {
     if (typeof code !== 'string' || !code.trim() || code.length > 20000)
       return resolve({ ok: false, stage: 'input', output: 'No code, or code too large (20k max).' });
@@ -202,12 +202,21 @@ function runJava(code) {
     const JAVAC = process.env.JD_JAVAC || 'javac';
     const JAVA = process.env.JD_JAVA || 'java';
     const opts = { timeout: 10000, cwd: dir, maxBuffer: 1 << 20 };
-    try { fs.writeFileSync(path.join(dir, cls + '.java'), code); }
-    catch (e) { cleanup(); return resolve({ ok: false, stage: 'io', output: String(e.message) }); }
-    execFile(JAVAC, [cls + '.java'], opts, (err, so, se) => {
+    const files = [cls + '.java'];
+    const hasHarness = typeof harness === 'string' && harness.trim().length > 0;
+    try {
+      fs.writeFileSync(path.join(dir, cls + '.java'), code);
+      if (hasHarness) {
+        if (harness.length > 20000) { cleanup(); return resolve({ ok: false, stage: 'input', output: 'harness too large' }); }
+        fs.writeFileSync(path.join(dir, 'DojoTest.java'), harness);
+        files.push('DojoTest.java');
+      }
+    } catch (e) { cleanup(); return resolve({ ok: false, stage: 'io', output: String(e.message) }); }
+    execFile(JAVAC, files, opts, (err, so, se) => {
       if (err) { cleanup(); return resolve({ ok: false, stage: 'compile', output: String(se || err.message || '').slice(0, 8000) }); }
-      if (!/static\s+void\s+main/.test(code)) { cleanup(); return resolve({ ok: true, stage: 'compile', output: 'Compiled successfully. (No main method to run.)' }); }
-      execFile(JAVA, ['-cp', dir, cls], opts, (e2, o2, s2) => {
+      const runClass = hasHarness ? 'DojoTest' : (/static\s+void\s+main/.test(code) ? cls : null);
+      if (!runClass) { cleanup(); return resolve({ ok: true, stage: 'compile', output: 'Compiled successfully. (No main method to run.)' }); }
+      execFile(JAVA, ['-cp', dir, runClass], opts, (e2, o2, s2) => {
         cleanup();
         resolve({ ok: true, stage: 'run', output: (String(o2 || '') + (s2 ? '\n' + s2 : '')).slice(0, 8000) || '(no output)' });
       });
@@ -270,7 +279,7 @@ async function handle(req, res) {
     if (!LOCAL_RUNNER) return json(res, 404, { error: 'Local runner is off. Start the site with JD_LOCAL_RUNNER=1 and a JDK installed.' });
     if (rateLimited('run:' + clientIp(req), 30, 60_000)) return json(res, 429, { error: 'Too many runs — slow down.' });
     let body; try { body = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
-    const out = await runJava(str(body.code));
+    const out = await runJava(str(body.code), typeof body.harness === 'string' ? body.harness : null);
     return json(res, 200, out);
   }
 

@@ -39,7 +39,7 @@ hints:['A slow, memory-hard hash like argon2id is the modern default; MD5 and SH
 </ul>
 <p>Strong MFA combines factors from different categories, so stealing one (a leaked password) is not enough. Not all second factors are equal: SMS codes can be SIM-swapped or phished, app-based one-time codes are better, and phishing-resistant passkeys (next lessons) are best.</p>`,
 docs:[['MFA — NIST 800-63B','https://pages.nist.gov/800-63-3/sp800-63b.html'],['MFA overview — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Multifactor_Authentication_Cheat_Sheet.html']],
-ex:{title:'Classify the factor',
+ex:{title:'Classify the factor',gradeJava:{class:'Mfa',cases:[{name:'password -> knowledge',call:'factorType',args:['"password"'],expect:'"knowledge"'},{name:'totp -> possession',call:'factorType',args:['"totp"'],expect:'"possession"'},{name:'fingerprint -> inherence',call:'factorType',args:['"fingerprint"'],expect:'"inherence"'},{name:'unknown default',call:'factorType',args:['"zzz"'],expect:'"unknown"'}]},
 prompt:`Write class <code>Mfa</code> with <code>static String factorType(String method)</code> mapping a method to its category: <code>"password"</code>→<code>"knowledge"</code>, <code>"pin"</code>→<code>"knowledge"</code>, <code>"totp"</code>→<code>"possession"</code>, <code>"security-key"</code>→<code>"possession"</code>, <code>"fingerprint"</code>→<code>"inherence"</code>, and <code>"unknown"</code> for anything else.`,
 starter:`public class Mfa {
     static String factorType(String method) {
