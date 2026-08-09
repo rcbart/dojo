@@ -1,7 +1,20 @@
+<p align="center">
+  <img src="docs/banner.svg" alt="DevDojo — master software engineering" width="100%">
+</p>
+
+<p align="center">
+  <a href="https://rcbart.github.io/knowledge-base/"><img src="https://img.shields.io/badge/%E2%96%B6%20live%20demo-DevDojo-6a5cf5" alt="live demo"></a>
+  <img src="https://img.shields.io/badge/tracks-29-8b5cf6" alt="tracks">
+  <img src="https://img.shields.io/badge/lessons-289-8b5cf6" alt="lessons">
+  <img src="https://img.shields.io/badge/exercises-407-06b6d4" alt="exercises">
+  <img src="https://img.shields.io/badge/checks-1911%20passing-2ea44f" alt="checks">
+  <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
+</p>
+
 # DevDojo 🥋
 
 An interactive, self-contained learning platform for software engineering. **29 training tracks,
-285 lessons, and 403 hands-on exercises** run entirely in the browser — an in-editor coding
+289 lessons, and 407 hands-on exercises** run entirely in the browser — an in-editor coding
 exercise on every lesson, **real code execution where possible** (SQL, JavaScript, and opt-in Java),
 a belt progression, **spaced-repetition review**, a **difficulty-filtered practice hub**, a domain
 glossary with click-to-explain terms, tournaments, and end-to-end capstone projects.
