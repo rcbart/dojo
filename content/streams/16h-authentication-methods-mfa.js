@@ -190,5 +190,36 @@ solution:`public class Recovery {
 }`,
 tests:[{d:'reset token must be single-use, short-lived and unpredictable',re:'singleUse\\s*&&\\s*shortLived\\s*&&\\s*unpredictable'},{d:'the strongest passwordless method is a passkey',re:'return\\s+"passkey"'}],
 behavior:`acceptableResetToken(true,true,true) is true; if the token is reusable, long-lived, or guessable it is false. preferred() returns "passkey". The recovery flow must be as strong as login, or it becomes the way in.`,
-hints:['A reset token should be single-use, short-lived, and unpredictable — combine with &&.','Recovery must be at least as strong as primary login; knowledge-based questions are weak.','Passkeys are the strongest passwordless method; provide backup codes for lost devices.']}}
+hints:['A reset token should be single-use, short-lived, and unpredictable — combine with &&.','Recovery must be at least as strong as primary login; knowledge-based questions are weak.','Passkeys are the strongest passwordless method; provide backup codes for lost devices.']}},
+{id:'am8',title:'WebAuthn ceremonies in depth',body:`
+<p>Passkeys/WebAuthn run <b>two ceremonies</b>, and knowing the difference is the whole model.</p>
+<p><b>1. Registration (attestation).</b> The relying party asks the authenticator to <b>create a new key pair</b> scoped to this site. The device keeps the <b>private key</b> and returns the <b>public key</b> plus a credential id — and, optionally, an <b>attestation</b> statement that cryptographically proves what kind of authenticator it is (a YubiKey, a platform passkey). The RP stores the public key against the user.</p>
+<p><b>2. Authentication (assertion).</b> On login the RP sends a random <b>challenge</b>; the authenticator <b>signs it</b> with the stored credential's private key; the RP verifies the signature with the public key it saved at registration.</p>
+<p>Three properties make this phishing-resistant and replay-resistant: the <b>private key never leaves the device</b>; the signature is over a fresh <b>challenge</b> (so a captured response can't be replayed); and the assertion is <b>bound to the origin</b> (so a look-alike site gets a signature it can't use). A <b>user-presence/verification</b> gesture (touch or biometric) authorizes each operation. Attestation matters mainly to high-assurance RPs that must confirm a certified authenticator model; most consumer sites skip verifying it.</p>`,
+docs:[['WebAuthn ceremonies — W3C','https://www.w3.org/TR/webauthn-2/#sctn-api'],['Passkeys — FIDO Alliance','https://fidoalliance.org/passkeys/']],
+ex:{title:'Name the ceremony',
+prompt:`Write class <code>WebAuthn</code> with <code>static String ceremony(String phase)</code>: <code>"register"</code>→<code>"attestation"</code>, <code>"authenticate"</code>→<code>"assertion"</code>, else <code>"unknown"</code>. Also <code>static boolean privateKeyLeavesDevice()</code> returning <code>false</code>.`,
+starter:`public class WebAuthn {
+    static String ceremony(String phase) {
+        return null;
+    }
+    static boolean privateKeyLeavesDevice() {
+        return false;
+    }
+}`,
+solution:`public class WebAuthn {
+    static String ceremony(String phase) {
+        switch (phase) {
+            case "register":     return "attestation";
+            case "authenticate": return "assertion";
+            default:             return "unknown";
+        }
+    }
+    static boolean privateKeyLeavesDevice() {
+        return false;
+    }
+}`,
+tests:[{d:'registration is the attestation ceremony',re:'"register".*?"attestation"',flags:'s'},{d:'authentication is the assertion ceremony',re:'"authenticate".*?"assertion"',flags:'s'},{d:'the private key never leaves the device',re:'privateKeyLeavesDevice[\\s\\S]*?return\\s+false',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+behavior:`ceremony("register") is "attestation" (create a key pair), ceremony("authenticate") is "assertion" (sign a challenge). privateKeyLeavesDevice() is false — the property that makes WebAuthn phishing-resistant, since there is no shared secret to steal or relay.`,
+hints:['Registration creates the key pair and may include attestation; authentication signs a challenge (assertion).','The private key stays on the device; only the public key is stored by the RP.','The signed challenge is fresh and origin-bound, which stops replay and phishing.']}}
 ]});

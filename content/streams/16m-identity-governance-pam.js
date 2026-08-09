@@ -105,5 +105,35 @@ solution:`public class Iam {
 tests:[{d:'CIAM serves customers',re:'"ciam".*?"customers"',flags:'s'},{d:'workforce IAM serves employees',re:'"workforce".*?"employees"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
 behavior:`audience("ciam") is "customers", audience("workforce") is "employees", audience("x") is "unknown". Same protocols, different priorities: experience and scale for customers, control for employees.`,
 hints:['A two-case switch with a default covers it.','CIAM is customer-facing; workforce IAM is employee-facing.','Anything else returns unknown.']}},
-
+{id:'ig6',title:'Consent & privacy in CIAM',body:`
+<p>Consumer identity (CIAM) means holding real people's personal data, so <b>consent and privacy are first-class</b>, not an afterthought — and often legally required (GDPR, CCPA).</p>
+<ul>
+<li><b>Explicit, granular consent</b> — opt-in per purpose ("email me offers" separate from "process my order"), not one blanket checkbox. In OAuth/OIDC the consent screen is where the user approves <b>scopes</b>; record what was approved (a consent receipt).</li>
+<li><b>Data minimization</b> — collect only what you actually need. Less data is less risk and less to leak.</li>
+<li><b>Progressive profiling</b> — ask for more information over time as it's needed, instead of a giant signup form.</li>
+<li><b>Data-subject rights</b> — access, correction, and <b>erasure</b> ("right to be forgotten"), plus the ability to <b>revoke consent</b> at any time.</li>
+</ul>
+<p><b>Privacy by design</b>: default to the least data, encrypt PII, make consent revocable, and keep an auditable record of what each user agreed to and when. Consent you can't prove or revoke isn't real consent.</p>`,
+docs:[['GDPR consent','https://gdpr.eu/gdpr-consent-requirements/'],['Privacy by design','https://en.wikipedia.org/wiki/Privacy_by_design']],
+ex:{title:'Validate consent & minimization',
+prompt:`Write class <code>Consent</code> with <code>static boolean valid(boolean explicit, boolean granular, boolean revocable)</code> that is true only when consent is all three, and <code>static boolean dataMinimized(int collected, int needed)</code> returning true only when you collected no more than you needed (<code>collected &lt;= needed</code>).`,
+starter:`public class Consent {
+    static boolean valid(boolean explicit, boolean granular, boolean revocable) {
+        return false;
+    }
+    static boolean dataMinimized(int collected, int needed) {
+        return false;
+    }
+}`,
+solution:`public class Consent {
+    static boolean valid(boolean explicit, boolean granular, boolean revocable) {
+        return explicit && granular && revocable;
+    }
+    static boolean dataMinimized(int collected, int needed) {
+        return collected <= needed;
+    }
+}`,
+tests:[{d:'valid consent is explicit, granular and revocable',re:'explicit\\s*&&\\s*granular\\s*&&\\s*revocable'},{d:'data minimization: collected <= needed',re:'collected\\s*<=\\s*needed'}],
+behavior:`valid(true,true,true) is true; if consent is implicit, all-or-nothing, or cannot be revoked, it is false. dataMinimized(3,5) is true; dataMinimized(9,5) is false — you collected more than you needed. Consent must be provable and revocable to count.`,
+hints:['Real consent is explicit, granular, and revocable — combine with &&.','Data minimization means collected is at most needed.','In OIDC the consent screen approves scopes; record what was agreed.']}}
 ]});

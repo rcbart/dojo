@@ -147,5 +147,70 @@ solution:`public class Linking {
 tests:[{d:'joins provider and subject with a pipe',re:'provider\\s*\\+\\s*"\\|"\\s*\\+\\s*subject'},{d:'does not key on email',re:'email',not:true}],
 behavior:`key("google","1043") returns "google|1043". Keying on provider plus the immutable subject id keeps one human mapped to one account, even across sign-in methods.`,
 hints:['Concatenate provider, the literal "|", and subject.','The pipe is just a one-character separator string.','Use the stable subject id, never the mutable email.']}},
-
+{id:'biz',title:'B2B, B2C & B2B2C — and what they mean for identity',body:`
+<p>Who your product serves changes how you do identity more than almost any technical choice. Three business models:</p>
+<ul>
+<li><b>B2C (business-to-consumer)</b> — you serve <b>individuals</b> directly. Examples: Netflix, Spotify, a news app. Identity is <b>CIAM</b>: self-service registration, social login, password reset, huge scale, and heavy emphasis on frictionless UX plus privacy/consent.</li>
+<li><b>B2B (business-to-business)</b> — you serve <b>other companies</b>, and each user belongs to a customer <b>organization (tenant)</b>. Examples: Salesforce, Datadog, Workday. Identity is enterprise: <b>SSO</b> (SAML/OIDC) into the customer's IdP, <b>SCIM</b> provisioning, delegated admin, and roles scoped to the tenant.</li>
+<li><b>B2B2C (business-to-business-to-consumer)</b> — you serve a <b>business that serves its own consumers through you</b>. Examples: Shopify (merchants and their shoppers), Stripe (platforms and their customers), a white-label banking app. Identity has <b>two layers</b>: the business tenant <i>and</i> that tenant's end users, requiring strict <b>tenant isolation</b>, <b>delegated administration</b>, and often per-tenant branding or IdP.</li>
+</ul>
+<p><b>How it shapes authentication.</b> B2C optimizes for low-friction self-service and consent. B2B optimizes for federation and central control (the customer's IT owns the users). B2B2C must do both — isolate each tenant's users while letting each business manage its own consumers — which is why multi-tenancy (next lesson) is the defining problem for B2B and B2B2C.</p>`,
+docs:[['CIAM vs workforce IAM','https://auth0.com/blog/what-is-ciam/'],['Multi-tenancy patterns','https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/overview']],
+ex:{title:'Match the model to its identity style',
+prompt:`Write class <code>Model</code> with <code>static String identityStyle(String model)</code>: <code>"b2c"</code>→<code>"CIAM self-service"</code>, <code>"b2b"</code>→<code>"enterprise SSO and SCIM"</code>, <code>"b2b2c"</code>→<code>"tenant isolation and delegated admin"</code>, else <code>"unknown"</code>. Also <code>static boolean multiTenant(String model)</code> returning true for <code>"b2b"</code> or <code>"b2b2c"</code>.`,
+starter:`public class Model {
+    static String identityStyle(String model) {
+        return null;
+    }
+    static boolean multiTenant(String model) {
+        return false;
+    }
+}`,
+solution:`public class Model {
+    static String identityStyle(String model) {
+        switch (model) {
+            case "b2c":   return "CIAM self-service";
+            case "b2b":   return "enterprise SSO and SCIM";
+            case "b2b2c": return "tenant isolation and delegated admin";
+            default:      return "unknown";
+        }
+    }
+    static boolean multiTenant(String model) {
+        return model.equals("b2b") || model.equals("b2b2c");
+    }
+}`,
+tests:[{d:'B2C is CIAM self-service',re:'"b2c".*?"CIAM self-service"',flags:'s'},{d:'B2B is enterprise SSO + SCIM',re:'"b2b".*?"enterprise SSO and SCIM"',flags:'s'},{d:'B2B2C is tenant isolation + delegated admin',re:'"b2b2c".*?"tenant isolation and delegated admin"',flags:'s'},{d:'B2B and B2B2C are multi-tenant',re:'equals\\s*\\(\\s*"b2b"\\s*\\)\\s*\\|\\|'},{d:'unknown default',re:'"unknown"'}],
+behavior:`identityStyle("b2c") is "CIAM self-service", ("b2b") is "enterprise SSO and SCIM", ("b2b2c") is "tenant isolation and delegated admin". multiTenant("b2b") and ("b2b2c") are true; ("b2c") is false. The model dictates whether you optimize for self-service, federation, or both with isolation.`,
+hints:['B2C serves consumers (CIAM); B2B serves companies (enterprise SSO); B2B2C serves a business and its consumers.','B2B and B2B2C introduce tenants, so they are multi-tenant.','Shopify (merchants + shoppers) is the classic B2B2C example.']}},
+{id:'mt',title:'Multi-tenant identity for B2B & B2B2C',body:`
+<p>In B2B and B2B2C each customer is a <b>tenant</b>, and getting tenancy right is the defining identity problem. Four design pillars:</p>
+<ul>
+<li><b>Tenant isolation</b> — every user, resource, and role is scoped to a <code>tenant_id</code>, and one tenant must never see another's data. A cross-tenant leak is the catastrophic failure mode, so isolation is checked on every request.</li>
+<li><b>Per-tenant IdP connections</b> — Acme signs in through Okta, Beta through Microsoft Entra. You first <b>resolve the tenant</b> (by email domain or a per-tenant subdomain), then route the login to <i>that</i> tenant's identity provider.</li>
+<li><b>Delegated administration</b> — each customer's own admins manage their users, groups, and roles, without your involvement.</li>
+<li><b>Tenant-scoped roles</b> — the same person can be an admin in one tenant and a read-only member in another, so roles are always evaluated within a tenant.</li>
+</ul>
+<p>The recurring pattern: <b>resolve tenant → route to the right IdP → enforce tenant isolation on every access</b>. Home-realm discovery (mapping an email domain to a tenant and its IdP) is how the first step usually works.</p>`,
+docs:[['Multi-tenant identity — Azure','https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/considerations/identity'],['Home realm discovery','https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/home-realm-discovery-policy']],
+ex:{title:'Resolve tenant & enforce isolation',
+prompt:`Write class <code>Tenant</code> with <code>static String tenantKey(String email)</code> that returns the email domain (everything after <code>@</code>, used for home-realm discovery) and <code>static boolean sameTenant(String resourceTenant, String userTenant)</code> that allows access only when the two tenants match.`,
+starter:`public class Tenant {
+    static String tenantKey(String email) {
+        return null;
+    }
+    static boolean sameTenant(String resourceTenant, String userTenant) {
+        return false;
+    }
+}`,
+solution:`public class Tenant {
+    static String tenantKey(String email) {
+        return email.substring(email.indexOf("@") + 1);
+    }
+    static boolean sameTenant(String resourceTenant, String userTenant) {
+        return resourceTenant.equals(userTenant);
+    }
+}`,
+tests:[{d:'derives the tenant from the email domain',re:'substring\\s*\\(\\s*email\\.indexOf\\s*\\(\\s*"@"\\s*\\)\\s*\\+\\s*1\\s*\\)'},{d:'isolation: access only within the same tenant',re:'resourceTenant\\.equals\\s*\\(\\s*userTenant\\s*\\)'}],
+behavior:`tenantKey("ada@acme.com") is "acme.com" (used to find Acme's tenant and IdP). sameTenant("acme","acme") is true; sameTenant("acme","beta") is false — the isolation check that prevents cross-tenant access.`,
+hints:['Tenant discovery from an email is the substring after the @.','Isolation is an equality check: the resource tenant must equal the user tenant.','Resolve tenant first, route to its IdP, then enforce isolation on every request.']}}
 ]});
