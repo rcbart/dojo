@@ -221,5 +221,37 @@ solution:`public class WebAuthn {
 }`,
 tests:[{d:'registration is the attestation ceremony',re:'"register".*?"attestation"',flags:'s'},{d:'authentication is the assertion ceremony',re:'"authenticate".*?"assertion"',flags:'s'},{d:'the private key never leaves the device',re:'privateKeyLeavesDevice[\\s\\S]*?return\\s+false',flags:'s'},{d:'unknown default',re:'"unknown"'}],
 behavior:`ceremony("register") is "attestation" (create a key pair), ceremony("authenticate") is "assertion" (sign a challenge). privateKeyLeavesDevice() is false — the property that makes WebAuthn phishing-resistant, since there is no shared secret to steal or relay.`,
-hints:['Registration creates the key pair and may include attestation; authentication signs a challenge (assertion).','The private key stays on the device; only the public key is stored by the RP.','The signed challenge is fresh and origin-bound, which stops replay and phishing.']}}
+hints:['Registration creates the key pair and may include attestation; authentication signs a challenge (assertion).','The private key stays on the device; only the public key is stored by the RP.','The signed challenge is fresh and origin-bound, which stops replay and phishing.']}},
+{id:'am9',title:'Credential stuffing, bots & account-takeover defense',body:`
+<p>Most account breaches are not clever exploits — they are <b>credential stuffing</b>: attackers take username/password pairs leaked from <i>other</i> sites and replay them against yours, betting that people reuse passwords. It is cheap, automated, and works alarmingly often. Related threats: <b>brute force</b> (guessing one account many times), <b>bot sign-ups</b> (fake/abusive accounts), and full <b>account takeover</b> (ATO).</p>
+<p><b>Layered defenses, each aimed at a specific attack:</b></p>
+<ul>
+<li><b>Credential stuffing</b> → check new/changed passwords against <b>known-breached lists</b> (Have I Been Pwned, queried with k-anonymity so the password never leaves you) and require <b>MFA</b> — a leaked password alone then gets nowhere.</li>
+<li><b>Brute force</b> → <b>rate limiting</b> and progressive lockout, keyed by account and by real client IP.</li>
+<li><b>Bot sign-ups / automation</b> → bot detection (device and behavioral signals), and a <b>CAPTCHA</b> only as a last resort.</li>
+<li><b>Account takeover</b> → anomaly / <b>risk-based</b> signals (new device, impossible travel, odd hour) that trigger <b>step-up</b> authentication, plus alerting.</li>
+</ul>
+<p>The through-line: assume passwords are already leaked, so make a stolen password insufficient (MFA), make automation expensive (rate limits + bot detection), and watch for anomalies (risk-based auth).</p>`,
+docs:[['Credential stuffing — OWASP','https://owasp.org/www-community/attacks/Credential_stuffing'],['Have I Been Pwned — k-anonymity','https://haveibeenpwned.com/API/v3#PwnedPasswords'],['Credential stuffing prevention — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Credential_Stuffing_Prevention_Cheat_Sheet.html']],
+ex:{title:'Match the defense to the attack',
+prompt:`Write class <code>AtoDefense</code> with <code>static String against(String attack)</code>: <code>"credential-stuffing"</code>→<code>"breached-password check + MFA"</code>, <code>"brute-force"</code>→<code>"rate limit + lockout"</code>, <code>"bot-signup"</code>→<code>"bot detection"</code>, <code>"account-takeover"</code>→<code>"risk-based step-up"</code>, and <code>"unknown"</code> otherwise.`,
+starter:`public class AtoDefense {
+    static String against(String attack) {
+        return null;
+    }
+}`,
+solution:`public class AtoDefense {
+    static String against(String attack) {
+        switch (attack) {
+            case "credential-stuffing": return "breached-password check + MFA";
+            case "brute-force":         return "rate limit + lockout";
+            case "bot-signup":          return "bot detection";
+            case "account-takeover":    return "risk-based step-up";
+            default:                    return "unknown";
+        }
+    }
+}`,
+tests:[{d:'credential stuffing -> breached-password check + MFA',re:'"credential-stuffing".*?"breached-password check \\+ MFA"',flags:'s'},{d:'brute force -> rate limit + lockout',re:'"brute-force".*?"rate limit \\+ lockout"',flags:'s'},{d:'bot signup -> bot detection',re:'"bot-signup".*?"bot detection"',flags:'s'},{d:'account takeover -> risk-based step-up',re:'"account-takeover".*?"risk-based step-up"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+behavior:`against("credential-stuffing") is "breached-password check + MFA"; against("brute-force") is "rate limit + lockout". The strategy assumes passwords are already leaked, so MFA + rate limits + anomaly detection carry the load.`,
+hints:['Credential stuffing reuses leaked passwords, so block breached passwords and add MFA.','Brute force is stopped by rate limiting and lockout.','Account takeover is caught by risk-based signals that trigger step-up.']}}
 ]});

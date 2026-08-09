@@ -135,5 +135,36 @@ solution:`public class Consent {
 }`,
 tests:[{d:'valid consent is explicit, granular and revocable',re:'explicit\\s*&&\\s*granular\\s*&&\\s*revocable'},{d:'data minimization: collected <= needed',re:'collected\\s*<=\\s*needed'}],
 behavior:`valid(true,true,true) is true; if consent is implicit, all-or-nothing, or cannot be revoked, it is false. dataMinimized(3,5) is true; dataMinimized(9,5) is false — you collected more than you needed. Consent must be provable and revocable to count.`,
-hints:['Real consent is explicit, granular, and revocable — combine with &&.','Data minimization means collected is at most needed.','In OIDC the consent screen approves scopes; record what was agreed.']}}
+hints:['Real consent is explicit, granular, and revocable — combine with &&.','Data minimization means collected is at most needed.','In OIDC the consent screen approves scopes; record what was agreed.']}},
+{id:'igaudit',title:'Identity audit, logging & compliance',body:`
+<p>You cannot prove security you cannot show. Identity systems must keep an <b>audit trail</b> of the events that matter — logins and failures, MFA challenges, password and privilege changes, consent grants, and every admin action — recording <b>who did what, to whom, and when</b>. These logs should be tamper-evident and retained per policy.</p>
+<p>What the logs power:</p>
+<ul>
+<li><b>Investigations & detection</b> — feed them to a <b>SIEM</b> to alert on suspicious patterns (a burst of failed logins, a new admin, impossible travel).</li>
+<li><b>Access reviews</b> — periodic certification that people still need what they hold (IGA), evidenced by the trail.</li>
+<li><b>Compliance</b> — frameworks like <b>SOC 2</b>, ISO 27001, and <b>NIST 800-63</b> map controls to exactly these identity practices: MFA, least privilege, timely deprovisioning, and complete audit logs. The audit trail is the evidence auditors ask for.</li>
+</ul>
+<p>Design notes: log identity events as structured, append-only records; never log secrets or full tokens; correlate with a request/trace id; and make sure <b>deprovisioning</b> and access-review actions are themselves logged — the controls have to prove they ran.</p>`,
+docs:[['Logging & monitoring — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html'],['NIST SP 800-63','https://pages.nist.gov/800-63-3/'],['SOC 2 overview','https://www.aicpa-cima.com/topic/audit-assurance/audit-and-assurance-greater-than-soc-2']],
+ex:{title:'Map the requirement to the control',
+prompt:`Write class <code>Audit</code> with <code>static String control(String requirement)</code>: <code>"prove-who-did-what"</code>→<code>"immutable audit log"</code>, <code>"detect-attacks"</code>→<code>"SIEM alerting"</code>, <code>"periodic-access-review"</code>→<code>"IGA certification"</code>, <code>"remove-leaver-access"</code>→<code>"deprovisioning"</code>, and <code>"unknown"</code> otherwise.`,
+starter:`public class Audit {
+    static String control(String requirement) {
+        return null;
+    }
+}`,
+solution:`public class Audit {
+    static String control(String requirement) {
+        switch (requirement) {
+            case "prove-who-did-what":     return "immutable audit log";
+            case "detect-attacks":         return "SIEM alerting";
+            case "periodic-access-review": return "IGA certification";
+            case "remove-leaver-access":   return "deprovisioning";
+            default:                       return "unknown";
+        }
+    }
+}`,
+tests:[{d:'who-did-what -> immutable audit log',re:'"prove-who-did-what".*?"immutable audit log"',flags:'s'},{d:'detect attacks -> SIEM alerting',re:'"detect-attacks".*?"SIEM alerting"',flags:'s'},{d:'access review -> IGA certification',re:'"periodic-access-review".*?"IGA certification"',flags:'s'},{d:'remove leaver access -> deprovisioning',re:'"remove-leaver-access".*?"deprovisioning"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+behavior:`control("prove-who-did-what") is "immutable audit log", control("detect-attacks") is "SIEM alerting". Compliance frameworks (SOC 2, NIST 800-63) map their requirements onto exactly these identity controls.`,
+hints:['Proving who did what needs an immutable, append-only audit log.','Detecting attacks in real time is a SIEM job.','Access reviews are IGA certification; removing a leaver is deprovisioning.']}}
 ]});

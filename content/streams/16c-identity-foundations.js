@@ -385,5 +385,35 @@ solution:`public class Trust {
 }`,
 tests:[{d:'all five checks must hold (signature, issuer, audience, freshness, no replay)',re:'signatureOk\\s*&&\\s*issuerOk\\s*&&\\s*audienceOk\\s*&&\\s*fresh\\s*&&\\s*notReplayed'},{d:'the IdP publishes its PUBLIC key, never the private one',re:'return\\s+"public key"'}],
 behavior:`valid(true,true,true,true,true) is true; if any of signature, issuer, audience, freshness, or non-replay fails, it is false — the same checklist every OAuth/SAML library enforces. idpPublishes() returns "public key", capturing the core asymmetry that makes federation forgery-resistant.`,
-hints:['Trust is configuration (registration) plus cryptography (verifying a signature against a published public key).','A valid signature is not enough: also check issuer, audience, freshness, and non-replay — combine with &&.','The IdP shares only its public key; the private signing key never leaves it.']}}
+hints:['Trust is configuration (registration) plus cryptography (verifying a signature against a published public key).','A valid signature is not enough: also check issuer, audience, freshness, and non-replay — combine with &&.','The IdP shares only its public key; the private signing key never leaves it.']}},
+{id:'iddid',title:'Decentralized identity: DIDs & Verifiable Credentials',body:`
+<p>Everything so far assumes a central authority (an IdP) vouches for you. <b>Decentralized identity</b> — also called self-sovereign identity (SSI) — flips that: <b>you</b> hold your own credentials in a digital wallet and present them directly, with no IdP in the middle at sign-in time.</p>
+<p>Two building blocks:</p>
+<ul>
+<li><b>DID (Decentralized Identifier)</b> — an identifier you control (a URI like <code>did:example:123</code>) that resolves to a <b>DID document</b> containing your public keys. It is not issued or ownable by any one company.</li>
+<li><b>Verifiable Credential (VC)</b> — a tamper-evident, cryptographically signed claim (e.g. "over 18", "employed by Acme") <b>issued</b> by an authority, <b>held</b> by you in a wallet, and <b>presented</b> to whoever needs it.</li>
+</ul>
+<p>The model is a <b>trust triangle</b>: the <b>issuer</b> signs and gives you a credential; the <b>holder</b> (you) stores it in a wallet; the <b>verifier</b> checks the issuer signature — without calling the issuer. A powerful property is <b>selective disclosure</b> (and zero-knowledge proofs): prove you are over 18 <i>without</i> revealing your birthdate.</p>
+<p>Versus federation: there is no central login and no IdP that sees every sign-in, which improves privacy and resilience. The honest caveat: the ecosystem (wallets, revocation, standards) is still maturing, so most production identity today is still federated — but VCs are showing up in digital IDs and know-your-customer flows.</p>`,
+docs:[['Decentralized Identifiers (W3C DID)','https://www.w3.org/TR/did-core/'],['Verifiable Credentials (W3C)','https://www.w3.org/TR/vc-data-model/'],['Self-sovereign identity','https://en.wikipedia.org/wiki/Self-sovereign_identity']],
+ex:{title:'The trust triangle',
+prompt:`Write class <code>Ssi</code> with <code>static String role(String party)</code>: <code>"issuer"</code>→<code>"signs and issues the credential"</code>, <code>"holder"</code>→<code>"keeps it in a wallet"</code>, <code>"verifier"</code>→<code>"checks the issuer signature"</code>, and <code>"unknown"</code> otherwise.`,
+starter:`public class Ssi {
+    static String role(String party) {
+        return null;
+    }
+}`,
+solution:`public class Ssi {
+    static String role(String party) {
+        switch (party) {
+            case "issuer":   return "signs and issues the credential";
+            case "holder":   return "keeps it in a wallet";
+            case "verifier": return "checks the issuer signature";
+            default:         return "unknown";
+        }
+    }
+}`,
+tests:[{d:'issuer signs & issues',re:'"issuer".*?"signs and issues the credential"',flags:'s'},{d:'holder keeps it in a wallet',re:'"holder".*?"keeps it in a wallet"',flags:'s'},{d:'verifier checks the signature',re:'"verifier".*?"checks the issuer signature"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+behavior:`role("issuer") is "signs and issues the credential", role("holder") is "keeps it in a wallet", role("verifier") is "checks the issuer signature". The verifier trusts the issuer signature without contacting the issuer — that is the decentralized part.`,
+hints:['Issuer → holder → verifier is the trust triangle.','The holder stores credentials in a wallet and presents them.','The verifier checks the cryptographic signature, not a live call to the issuer.']}}
 ]});
