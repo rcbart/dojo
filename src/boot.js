@@ -1,5 +1,8 @@
 /* ============================== BOOT ============================== */
-mergeIdentity();renderNav();renderHome();refreshBelt();
+mergeIdentity();
+/* attach auto-generated executable-grading specs (opt-in Java runner) by lesson id */
+(function(){ if(!window.GRADEJAVA)return; STREAMS.forEach(function(s){(s.lessons||[]).forEach(function(l){var exs=l.exs||(l.ex?[l.ex]:[]);exs.forEach(function(e,i){var k=exs.length>1?l.id+'#'+i:l.id; if(window.GRADEJAVA[k]&&!e.gradeJava)e.gradeJava=window.GRADEJAVA[k];});});}); })();
+renderNav();renderHome();refreshBelt();
 
 /* ---- interactive JWT tamper demo (used by the OAuth/JWT/JOSE stream, lesson jose5) ---- */
 window.jwtTamper=(function(){
