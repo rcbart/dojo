@@ -116,5 +116,32 @@ solution:`public class Defense {
 tests:[{d:'CSRF is countered by state',re:'"csrf".*?"state parameter"',flags:'s'},{d:'replay is countered by nonce',re:'"replay".*?"nonce"',flags:'s'},{d:'code interception is countered by PKCE',re:'"code-interception".*?"pkce"',flags:'s'},{d:'open redirect needs exact URI matching',re:'"open-redirect".*?"exact redirect_uri match"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
 behavior:`against("csrf") is "state parameter", against("replay") is "nonce", against("code-interception") is "pkce", against("open-redirect") is "exact redirect_uri match". Each defense binds a step to something an attacker cannot forge.`,
 hints:['A switch maps each attack name to its standard mitigation.','state stops CSRF, nonce stops replay, PKCE stops code interception, exact URI matching stops open redirects.','Anything unlisted returns unknown.']}},
-
+,
+{id:'ao6',title:'Refresh token rotation & reuse detection',body:`
+<p>Refresh tokens are long-lived, so a stolen one is a serious prize — it mints fresh access tokens indefinitely. Two mechanisms bound that risk.</p>
+<p><b>Rotation.</b> Every time a refresh token is used, the authorization server issues a <b>new</b> refresh token and <b>invalidates the old one</b>. A given refresh token is therefore usable exactly once.</p>
+<p><b>Reuse detection.</b> Because each refresh token is single-use, if an <i>already-rotated</i> (old) token is presented again, something is wrong: either a replay, or the legitimate client and an attacker <b>both</b> hold a copy. The safe response is to assume compromise and <b>revoke the entire token family</b> (the whole session lineage), forcing a fresh login. This turns a stolen refresh token from an open-ended breach into a short, self-detecting one.</p>
+<p>Rotation is <b>mandatory for public clients</b> (SPAs, mobile) per the OAuth Security BCP, since they cannot protect a long-lived secret. Pair it with short access-token lifetimes and, ideally, sender-constrained tokens (DPoP or mTLS) so even a captured token cannot be replayed elsewhere.</p>`,
+docs:[['Refresh token rotation — OAuth Security BCP','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['Token revocation (RFC 7009)','https://www.rfc-editor.org/rfc/rfc7009']],
+ex:{title:'Handle a refresh-token use',
+prompt:`Write class <code>RefreshRotation</code> with <code>static String onUse(boolean isCurrent)</code> returning <code>"rotate: issue new, revoke old"</code> when the presented token is the current one, and <code>"reuse detected: revoke the family"</code> when it is an old (already-rotated) token. Also <code>static boolean rotationRequired(String clientType)</code> returning true for a <code>"public"</code> client.`,
+starter:`public class RefreshRotation {
+    static String onUse(boolean isCurrent) {
+        return null;
+    }
+    static boolean rotationRequired(String clientType) {
+        return false;
+    }
+}`,
+solution:`public class RefreshRotation {
+    static String onUse(boolean isCurrent) {
+        return isCurrent ? "rotate: issue new, revoke old" : "reuse detected: revoke the family";
+    }
+    static boolean rotationRequired(String clientType) {
+        return clientType.equals("public");
+    }
+}`,
+tests:[{d:'current token rotates; old token triggers family revocation',re:'isCurrent\\s*\\?\\s*"rotate: issue new, revoke old"\\s*:\\s*"reuse detected: revoke the family"'},{d:'rotation is required for public clients',re:'equals\\s*\\(\\s*"public"\\s*\\)'}],
+behavior:`onUse(true) returns "rotate: issue new, revoke old"; onUse(false) returns "reuse detected: revoke the family" — the self-detecting response to a replayed refresh token. rotationRequired("public") is true: SPAs and mobile apps must rotate.`,
+hints:['Each refresh token is single-use: using the current one rotates it; seeing an old one means compromise.','On reuse, revoke the whole token family to force a fresh login.','Public clients cannot protect a long-lived secret, so rotation is required for them.']}}
 ]});

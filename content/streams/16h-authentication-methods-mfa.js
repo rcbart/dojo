@@ -125,5 +125,71 @@ solution:`public class StepUp {
 tests:[{d:'transfer counts as sensitive',re:'equals\\s*\\(\\s*"transfer"\\s*\\)'},{d:'change-email counts as sensitive',re:'equals\\s*\\(\\s*"change-email"\\s*\\)'},{d:'requires NOT recently authenticated',re:'!\\s*recentlyAuthed'},{d:'combines sensitivity AND freshness',re:'&&'}],
 behavior:`required("transfer", false) is true; required("transfer", true) is false (a fresh auth just happened); required("view", false) is false (not sensitive). Assurance is matched to the risk of the action.`,
 hints:['Compute a sensitive flag first from the two high-risk actions joined by ||.','Step-up is needed only when sensitive is true AND recentlyAuthed is false.','Use the ! operator to express not recently authenticated.']}},
-
+,
+{id:'am6',title:'Identity assurance levels: IAL, AAL, FAL',body:`
+<p>How much should you trust that a user is who they claim? NIST 800-63 answers with <b>three independent scales</b>, so you can dial each to the risk of the action rather than treating "identity" as one thing.</p>
+<ul>
+<li><b>IAL — Identity Assurance Level</b> (proofing): how strongly the <i>real-world identity</i> was verified at enrollment. IAL1 = self-asserted (no proofing); IAL2 = remote or in-person evidence checked; IAL3 = in-person, supervised.</li>
+<li><b>AAL — Authenticator Assurance Level</b> (login): how strong the <i>authentication</i> is. AAL1 = single factor; AAL2 = MFA; AAL3 = hardware-based, phishing-resistant (a security key/passkey with verifier binding).</li>
+<li><b>FAL — Federation Assurance Level</b> (assertion): how strongly the <i>federated assertion</i> is protected. FAL1 = signed; FAL2 = signed and encrypted; FAL3 = holder-of-key (the assertion is bound to a key the presenter must prove).</li>
+</ul>
+<p>The point is to <b>match assurance to risk</b>: reading public docs might need only IAL1/AAL1, while moving money needs high AAL (step-up to MFA or a passkey) and, for a regulated identity, higher IAL. The three scales are independent — you can have a strongly proofed identity (high IAL) logging in weakly (low AAL), which is itself a risk to notice.</p>`,
+docs:[['NIST SP 800-63-3 (Digital Identity)','https://pages.nist.gov/800-63-3/'],['800-63B (Authenticator AALs)','https://pages.nist.gov/800-63-3/sp800-63b.html']],
+ex:{title:'Name the scale and the level',
+prompt:`Write class <code>Assurance</code> with two static methods. <code>String scale(String concern)</code>: <code>"identity-proofing"</code>→<code>"IAL"</code>, <code>"authentication-strength"</code>→<code>"AAL"</code>, <code>"federation-assertion"</code>→<code>"FAL"</code>, else <code>"unknown"</code>. <code>String aal(String method)</code>: <code>"single-factor"</code>→<code>"AAL1"</code>, <code>"mfa"</code>→<code>"AAL2"</code>, <code>"hardware-phishing-resistant"</code>→<code>"AAL3"</code>, else <code>"unknown"</code>.`,
+starter:`public class Assurance {
+    static String scale(String concern) {
+        return null;
+    }
+    static String aal(String method) {
+        return null;
+    }
+}`,
+solution:`public class Assurance {
+    static String scale(String concern) {
+        switch (concern) {
+            case "identity-proofing":       return "IAL";
+            case "authentication-strength": return "AAL";
+            case "federation-assertion":    return "FAL";
+            default:                        return "unknown";
+        }
+    }
+    static String aal(String method) {
+        switch (method) {
+            case "single-factor":               return "AAL1";
+            case "mfa":                          return "AAL2";
+            case "hardware-phishing-resistant":  return "AAL3";
+            default:                             return "unknown";
+        }
+    }
+}`,
+tests:[{d:'identity proofing is the IAL scale',re:'"identity-proofing".*?"IAL"',flags:'s'},{d:'authentication strength is the AAL scale',re:'"authentication-strength".*?"AAL"',flags:'s'},{d:'federation assertion is the FAL scale',re:'"federation-assertion".*?"FAL"',flags:'s'},{d:'MFA is AAL2',re:'"mfa".*?"AAL2"',flags:'s'},{d:'hardware phishing-resistant is AAL3',re:'"hardware-phishing-resistant".*?"AAL3"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+behavior:`scale("identity-proofing") is "IAL", scale("authentication-strength") is "AAL", scale("federation-assertion") is "FAL". aal("mfa") is "AAL2", aal("hardware-phishing-resistant") is "AAL3". Three independent dials you match to the risk of the action.`,
+hints:['IAL is about proofing the real-world identity; AAL is about login strength; FAL is about protecting the assertion.','Single factor is AAL1, MFA is AAL2, hardware phishing-resistant is AAL3.','Match each scale to the risk rather than treating identity as one number.']}},
+{id:'am7',title:'Passwordless login & account recovery',body:`
+<p><b>Passwordless</b> removes the password entirely. The common methods: <b>magic links</b> (a one-time link emailed to you), <b>one-time codes</b> (emailed or texted — SMS is the weakest, SIM-swappable), and <b>passkeys</b> (WebAuthn — the strongest, phishing-resistant). Removing the password removes the biggest attack surface.</p>
+<p><b>But account recovery becomes the soft underbelly.</b> A system is only as strong as the easiest way in — and that is usually the "forgot password" / recovery flow. If recovery is weaker than login, attackers ignore login and attack recovery. Two rules: <b>recovery must be at least as strong as primary authentication</b>, and knowledge-based questions (mother's maiden name) are <b>weak</b> — the answers are guessable or already leaked.</p>
+<p>Good recovery hygiene: reset tokens that are <b>single-use, short-lived, and unpredictable</b>; delivered over a verified channel; rate-limited; and every reset <b>notifies the user</b>. Passwordless does not remove recovery — if a device is lost you still need a way back in, so provide <b>backup passkeys or one-time recovery codes</b> rather than dropping to a weak email OTP.</p>`,
+docs:[['Passwordless — FIDO/passkeys','https://fidoalliance.org/passkeys/'],['Forgot-password / recovery — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html']],
+ex:{title:'A safe reset token & the best method',
+prompt:`Write class <code>Recovery</code> with <code>static boolean acceptableResetToken(boolean singleUse, boolean shortLived, boolean unpredictable)</code> that is true only when all three hold, and <code>static String preferred()</code> returning <code>"passkey"</code> (the strongest passwordless method).`,
+starter:`public class Recovery {
+    static boolean acceptableResetToken(boolean singleUse, boolean shortLived, boolean unpredictable) {
+        return false;
+    }
+    static String preferred() {
+        return null;
+    }
+}`,
+solution:`public class Recovery {
+    static boolean acceptableResetToken(boolean singleUse, boolean shortLived, boolean unpredictable) {
+        return singleUse && shortLived && unpredictable;
+    }
+    static String preferred() {
+        return "passkey";
+    }
+}`,
+tests:[{d:'reset token must be single-use, short-lived and unpredictable',re:'singleUse\\s*&&\\s*shortLived\\s*&&\\s*unpredictable'},{d:'the strongest passwordless method is a passkey',re:'return\\s+"passkey"'}],
+behavior:`acceptableResetToken(true,true,true) is true; if the token is reusable, long-lived, or guessable it is false. preferred() returns "passkey". The recovery flow must be as strong as login, or it becomes the way in.`,
+hints:['A reset token should be single-use, short-lived, and unpredictable — combine with &&.','Recovery must be at least as strong as primary login; knowledge-based questions are weak.','Passkeys are the strongest passwordless method; provide backup codes for lost devices.']}}
 ]});
