@@ -176,5 +176,171 @@ class PrefixPrinter implements Printer {
         this.prefix = prefix;
     }
     public void print(String msg) { delegate.print(prefix + msg); }
-}`}}
+}`}},
+{id:'pat4',title:'More creational: Prototype, Abstract Factory & Object Pool',body:`
+<p>Beyond Singleton/Factory/Builder, three more creational patterns show up in real code:</p>
+<ul>
+<li><b>Prototype</b> — create a new object by <b>copying an existing one</b> instead of building from scratch. Useful when construction is expensive or you want a preconfigured template you clone and tweak. In Java a <b>copy constructor</b> (or a <code>copy()</code> method) is the clean, modern form — usually preferable to <code>Cloneable</code>, which has sharp edges.</li>
+<li><b>Abstract Factory</b> — a factory of related factories: it produces <b>families of objects</b> that must go together (e.g. a <code>WidgetFactory</code> that makes matching buttons, menus, and dialogs for a given OS theme), so you never mix incompatible parts.</li>
+<li><b>Object Pool</b> — reuse a fixed set of expensive objects (DB connections, threads) instead of creating and destroying them. HikariCP and thread pools are object pools.</li>
+</ul>
+<p>The through-line: control <i>how</i> objects come into being — by cloning, by coordinated families, or by reuse — to cut cost or enforce consistency.</p>`,
+docs:[['Prototype pattern','https://refactoring.guru/design-patterns/prototype'],['Abstract Factory','https://refactoring.guru/design-patterns/abstract-factory']],
+ex:{title:'Implement Prototype (copy)',
+prompt:`Write class <code>Prototype</code> with a constructor <code>(String theme, int size)</code>, accessors <code>theme()</code> and <code>size()</code>, and a <code>Prototype copy()</code> method that returns a <b>new</b> instance with the same field values (the prototype clone).`,
+starter:`public class Prototype {
+    private final String theme;
+    private final int size;
+    Prototype(String theme, int size) { this.theme = theme; this.size = size; }
+    String theme() { return theme; }
+    int size() { return size; }
+    Prototype copy() {
+        return null;
+    }
+}`,
+solution:`public class Prototype {
+    private final String theme;
+    private final int size;
+    Prototype(String theme, int size) { this.theme = theme; this.size = size; }
+    String theme() { return theme; }
+    int size() { return size; }
+    Prototype copy() {
+        return new Prototype(theme, size);
+    }
+}`,
+tests:[{d:'copy() returns a NEW instance with the same fields',re:'return\\s+new\\s+Prototype\\s*\\(\\s*theme\\s*,\\s*size\\s*\\)'},{d:'does not return null',re:'return\\s+null\\s*;',not:true}],
+behavior:`copy() produces an independent Prototype with the same theme and size — cloning a preconfigured template rather than rebuilding it. A copy constructor/method is the idiomatic Java Prototype.`,
+hints:['Prototype = clone an existing object; here, construct a new one from this object\\u2019s fields.','A copy constructor or copy() method is cleaner than Cloneable.','Return new Prototype(theme, size).']}},
+{id:'pat5',title:'More structural: Proxy, Composite, Bridge & Flyweight',body:`
+<p>Structural patterns beyond Adapter/Decorator/Facade:</p>
+<ul>
+<li><b>Proxy</b> — a stand-in with the <i>same interface</i> as the real object that adds a behavior around access: <b>lazy loading</b>, <b>caching</b>, access control, or remoting. Spring AOP proxies and lazy JPA entities are proxies.</li>
+<li><b>Composite</b> — treat individual objects and groups uniformly through one interface, so a leaf and a tree of children are handled the same way (files and folders, UI components).</li>
+<li><b>Bridge</b> — split an abstraction from its implementation so they vary independently (a <code>Shape</code> hierarchy and a <code>Renderer</code> hierarchy that combine, instead of a class explosion).</li>
+<li><b>Flyweight</b> — share immutable intrinsic state across many objects to save memory (Java\\u2019s <code>Integer</code> cache, interned strings).</li>
+</ul>
+<p>They all shape <i>how objects are composed and accessed</i> without changing what they do.</p>`,
+docs:[['Proxy pattern','https://refactoring.guru/design-patterns/proxy'],['Composite pattern','https://refactoring.guru/design-patterns/composite']],
+ex:{title:'Implement a caching Proxy',
+prompt:`Write class <code>ImageProxy</code> that lazily loads and caches. It has <code>String load()</code> returning <code>"pixels"</code> (the expensive real work) and <code>String get()</code> that returns the cached value, calling <code>load()</code> only the first time (store it in a field and reuse it after).`,
+starter:`public class ImageProxy {
+    private String cached;
+    String load() { return "pixels"; }
+    String get() {
+        return null;
+    }
+}`,
+solution:`public class ImageProxy {
+    private String cached;
+    String load() { return "pixels"; }
+    String get() {
+        if (cached == null) {
+            cached = load();
+        }
+        return cached;
+    }
+}`,
+tests:[{d:'loads only when not cached yet',re:'if\\s*\\(\\s*cached\\s*==\\s*null\\s*\\)'},{d:'caches the result of load()',re:'cached\\s*=\\s*load\\s*\\(\\s*\\)'},{d:'returns the cached value',re:'return\\s+cached'}],
+behavior:`The first get() calls load() and stores "pixels"; later get() calls return the cached value without reloading. A proxy adds caching around the real object while keeping the same interface.`,
+hints:['A caching proxy stores the result of the first real call.','Guard with if (cached == null) before calling load().','Return the field, not a fresh load, on subsequent calls.']}},
+{id:'pat6',title:'More behavioral: Command, State, Chain of Responsibility',body:`
+<p>Behavioral patterns beyond Strategy/Observer/Template Method:</p>
+<ul>
+<li><b>Command</b> — wrap an action as an object so you can queue it, log it, undo it, or pass it around (menu actions, job queues, undo stacks).</li>
+<li><b>State</b> — let an object change its behavior when its internal state changes, replacing sprawling conditionals with a clean state machine (an order that is placed → paid → shipped → delivered).</li>
+<li><b>Chain of Responsibility</b> — pass a request along a chain of handlers until one handles it (middleware pipelines, servlet filters, event bubbling).</li>
+<li><b>Iterator / Mediator / Visitor</b> round out the set: iterate without exposing internals, centralize how objects interact, and add operations over a structure without changing its classes.</li>
+</ul>
+<p>These all move <i>behavior</i> into first-class, swappable pieces.</p>`,
+docs:[['State pattern','https://refactoring.guru/design-patterns/state'],['Chain of Responsibility','https://refactoring.guru/design-patterns/chain-of-responsibility'],['Command pattern','https://refactoring.guru/design-patterns/command']],
+ex:{title:'Implement a State machine',
+prompt:`Write class <code>TrafficLight</code> with a field <code>String state</code> starting at <code>"red"</code> and a <code>String next()</code> that transitions <code>red → green → yellow → red</code>, updates <code>state</code>, and returns the new state.`,
+starter:`public class TrafficLight {
+    String state = "red";
+    String next() {
+        return null;
+    }
+}`,
+solution:`public class TrafficLight {
+    String state = "red";
+    String next() {
+        switch (state) {
+            case "red":    state = "green";  break;
+            case "green":  state = "yellow"; break;
+            default:       state = "red";    break;
+        }
+        return state;
+    }
+}`,
+tests:[{d:'red transitions to green',re:'"red"\\s*:\\s*state\\s*=\\s*"green"',flags:'s'},{d:'green transitions to yellow',re:'"green"\\s*:\\s*state\\s*=\\s*"yellow"',flags:'s'},{d:'wraps back to red',re:'default\\s*:\\s*state\\s*=\\s*"red"'},{d:'returns the new state',re:'return\\s+state'}],
+behavior:`Starting at "red", next() returns "green", then "yellow", then "red" again. The State pattern replaces tangled if/else with explicit transitions.`,
+hints:['State drives behavior: switch on the current state to pick the next.','red \\u2192 green \\u2192 yellow \\u2192 red, then return the updated field.','The default branch handles yellow \\u2192 red.']}},
+{id:'pat7',title:'Modern & enterprise: Dependency Injection, Repository, DTO, Null Object',body:`
+<p>The patterns you meet most in day-to-day enterprise code are not all Gang-of-Four:</p>
+<ul>
+<li><b>Dependency Injection</b> — a class receives its collaborators from outside (usually via the <b>constructor</b>) instead of creating them itself. This is what makes code testable (inject a fake) and is the backbone of Spring. Prefer constructor injection over field injection.</li>
+<li><b>Repository / DAO</b> — put all persistence for an entity behind one interface (<code>UserRepository.findById</code>), so business code never touches SQL directly and the storage can be swapped or mocked.</li>
+<li><b>DTO (Data Transfer Object)</b> — a plain data carrier for moving data across a boundary (API request/response), decoupling your API shape from your internal domain model. Java <code>record</code>s are ideal DTOs.</li>
+<li><b>Null Object</b> — return a harmless do-nothing implementation instead of <code>null</code>, so callers skip null checks (a <code>NoOpLogger</code>).</li>
+</ul>
+<p>Together they define how modern services are wired, persisted, and communicated.</p>`,
+docs:[['Dependency Injection','https://martinfowler.com/articles/injection.html'],['Repository pattern','https://martinfowler.com/eaaCatalog/repository.html'],['DTO','https://martinfowler.com/eaaCatalog/dataTransferObject.html']],
+ex:{title:'Constructor Dependency Injection',
+prompt:`Model a repository behind an interface and inject it. Declare <code>interface Repo { String find(int id); }</code>, then class <code>Service</code> that holds a <code>private final Repo repo</code>, receives it via a <code>Service(Repo repo)</code> constructor (<code>this.repo = repo</code>), and has <code>String lookup(int id)</code> returning <code>repo.find(id)</code>. Do not create the Repo inside Service.`,
+starter:`interface Repo { String find(int id); }
+
+public class Service {
+    // inject Repo via the constructor; do not new it up here
+    String lookup(int id) {
+        return null;
+    }
+}`,
+solution:`interface Repo { String find(int id); }
+
+public class Service {
+    private final Repo repo;
+    Service(Repo repo) {
+        this.repo = repo;
+    }
+    String lookup(int id) {
+        return repo.find(id);
+    }
+}`,
+tests:[{d:'depends on the Repo interface (Repository pattern)',re:'interface\\s+Repo'},{d:'holds an injected final dependency',re:'private\\s+final\\s+Repo\\s+repo'},{d:'injects via the constructor',re:'Service\\s*\\(\\s*Repo\\s+repo\\s*\\)'},{d:'stores the injected instance',re:'this\\.repo\\s*=\\s*repo'},{d:'delegates to the repository',re:'repo\\.find\\s*\\(\\s*id\\s*\\)'},{d:'does not construct its own dependency',re:'new\\s+Repo',not:true}],
+behavior:`Service is given a Repo (real or a test fake) at construction and delegates lookup to it. Nothing inside Service knows how the data is stored — that is DI plus the Repository pattern, and it is exactly what makes the class unit-testable.`,
+hints:['Inject the dependency through the constructor and keep it in a final field.','lookup delegates straight to repo.find(id).','Never new up the dependency inside the class — that defeats DI.']}},
+{id:'pat8',title:'Anti-patterns: spot them, fix them, avoid them',body:`
+<p>An <b>anti-pattern</b> is a common "solution" that looks reasonable but reliably causes harm — the shadow side of design patterns. Recognizing them is as valuable as knowing the good patterns. The usual suspects:</p>
+<ul>
+<li><b>God Object / God Class</b> — one class that knows and does everything. <b>Spot:</b> thousands of lines, dozens of unrelated methods, every change touches it. <b>Fix:</b> split by responsibility (Single Responsibility Principle) into focused collaborators. <b>Avoid:</b> watch class size and cohesion as you go.</li>
+<li><b>Magic numbers / strings</b> — unexplained literals (<code>if (status == 3)</code>). <b>Spot:</b> literals with no name. <b>Fix:</b> extract named constants or enums. <b>Avoid:</b> name every meaningful value.</li>
+<li><b>Copy-paste programming</b> — the same logic duplicated. <b>Spot:</b> near-identical blocks. <b>Fix:</b> extract a shared method (DRY). <b>Avoid:</b> refactor the second time you copy.</li>
+<li><b>Global mutable state / Singleton abuse</b> — shared mutable globals. <b>Spot:</b> hidden dependencies, flaky tests, spooky action at a distance. <b>Fix:</b> inject dependencies instead. <b>Avoid:</b> prefer explicit parameters and DI.</li>
+<li><b>Premature optimization</b> — complexity for speed you never measured. <b>Spot:</b> clever code, no profiler data. <b>Fix:</b> revert to the simple version; measure, then optimize the real hot spot. <b>Avoid:</b> make it correct and clear first.</li>
+<li><b>Big Ball of Mud, Spaghetti, Anemic Domain Model, Golden Hammer</b> — round out the catalog: no architecture, tangled flow, logic-less data classes, and "one tool for everything."</li>
+</ul>
+<p>The meta-cure is the set of principles the patterns encode: <b>SRP/SOLID</b>, <b>DRY</b>, <b>KISS</b>, and <b>YAGNI</b> — plus the discipline to refactor continuously so smells never compound. And remember the twist: over-applying patterns is itself an anti-pattern. Use the simplest thing that works.</p>`,
+docs:[['AntiPatterns — Wikipedia','https://en.wikipedia.org/wiki/Anti-pattern'],['Code smells','https://refactoring.guru/refactoring/smells'],['SOLID principles','https://en.wikipedia.org/wiki/SOLID']],
+ex:{title:'Prescribe the remedy',
+prompt:`Write class <code>AntiPatterns</code> with <code>static String remedy(String smell)</code>: <code>"god-object"</code>→<code>"split by responsibility"</code>, <code>"magic-number"</code>→<code>"extract a named constant"</code>, <code>"copy-paste"</code>→<code>"extract a shared method"</code>, <code>"global-mutable-state"</code>→<code>"inject dependencies"</code>, <code>"premature-optimization"</code>→<code>"measure then optimize"</code>, and <code>"unknown"</code> for anything else.`,
+starter:`public class AntiPatterns {
+    static String remedy(String smell) {
+        return null;
+    }
+}`,
+solution:`public class AntiPatterns {
+    static String remedy(String smell) {
+        switch (smell) {
+            case "god-object":             return "split by responsibility";
+            case "magic-number":           return "extract a named constant";
+            case "copy-paste":             return "extract a shared method";
+            case "global-mutable-state":   return "inject dependencies";
+            case "premature-optimization": return "measure then optimize";
+            default:                       return "unknown";
+        }
+    }
+}`,
+tests:[{d:'god object -> split by responsibility',re:'"god-object".*?"split by responsibility"',flags:'s'},{d:'magic number -> named constant',re:'"magic-number".*?"extract a named constant"',flags:'s'},{d:'copy-paste -> extract a method',re:'"copy-paste".*?"extract a shared method"',flags:'s'},{d:'global mutable state -> inject dependencies',re:'"global-mutable-state".*?"inject dependencies"',flags:'s'},{d:'premature optimization -> measure first',re:'"premature-optimization".*?"measure then optimize"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+behavior:`remedy("god-object") is "split by responsibility", remedy("copy-paste") is "extract a shared method", remedy("premature-optimization") is "measure then optimize". Naming the smell points straight at the refactoring.`,
+hints:['Each smell maps to a specific refactoring or principle.','God object -> SRP; magic number -> constant; copy-paste -> DRY; global state -> DI; premature optimization -> measure first.','Anything unlisted returns unknown.']}}
 ]});
