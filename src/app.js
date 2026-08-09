@@ -361,8 +361,20 @@ function renderHome(){
   m.innerHTML=`<div class="home">
   <h1>Welcome to DevDojo 🥋</h1>
   <div class="startBanner">New here? Start with <a href="javascript:void(0)" onclick="cur=null;renderGettingStarted();renderNav()"><b>🚀 Getting started</b></a> to set up your environment and get the full depth, then follow the <a href="javascript:void(0)" onclick="cur=null;renderPath();renderNav()"><b>🗺️ Learning path</b></a>.</div>
-  <p>${STREAMS.length} training streams take you from the fundamentals to mastery across software engineering — the Java language and JVM, computer science & algorithms, web/APIs/Spring, data, networking, security & identity, DevOps & delivery, and senior-level architecture. They're grouped by domain below. Every lesson ends with an exercise you write in the built-in editor. <b>Run Tests</b> checks your code and sends it to Claude, who executes the tests mentally like a compiler + JUnit runner and reports pass/fail per test with line-referenced feedback. Stuck? <b>Next Step</b> gives a progressive hint, and <b>Show me the solution</b> is always there — no judgment.</p>
-  <p><b>Tip:</b> select/double-click any Java keyword anywhere (lesson text or your own code) and a popup explains it, with a link to the official docs.</p>
+  <p>${STREAMS.length} training tracks take you from fundamentals to mastery across software engineering — Java &amp; the JVM, computer science &amp; algorithms, web/HTTP &amp; front-end (React), APIs &amp; Spring, databases &amp; SQL, concurrency, security &amp; a large identity domain, DevOps, and senior-level architecture, all grouped by domain below. Every lesson ends with an exercise in the built-in editor. <b>Where the language allows, DevDojo runs your code for real and grades the result</b> — SQL against sample data, JavaScript in a sandbox, Java via the optional local runner; otherwise it checks structure and, when online, asks Claude to run the tests. Stuck? <b>Next Step</b> gives a progressive hint, and <b>Show me the solution</b> is always there — no judgment.</p>
+  <p><b>Tip:</b> select or double-click any keyword or term — in a lesson or your own code — and a popup explains it, drawing on 200+ Java, CS, and identity terms from the glossary.</p>
+  <div class="gsCard">
+  <h2>How to get the most out of DevDojo — learn &amp; retain</h2>
+  <ol>
+    <li><b>Follow the path, earn the belt.</b> Work a domain top-to-bottom via the <b>🗺️ Learning path</b>; the belt bar tracks your progress white → black.</li>
+    <li><b>Struggle first.</b> Try the exercise before revealing anything — use <b>💡 Next Step</b> for a nudge, and only then <b>👀 the solution</b>. The effort is what makes it stick.</li>
+    <li><b>Run it for real.</b> Use the <b>🖥️ Run-locally</b> panel or in-app execution to confirm behavior — reading a solution is not the same as making it work.</li>
+    <li><b>Check yourself.</b> Take the <b>🧠 Quick check</b> quiz on each lesson; getting one slightly wrong and seeing why is where a lot of the learning happens.</li>
+    <li><b>Come back tomorrow.</b> Do your <b>🔁 Review</b> daily — spaced repetition resurfaces cards right before you'd forget them. This is the single biggest lever for retention.</li>
+    <li><b>Ramp the difficulty.</b> Once the basics click, use <b>🎯 Practice</b> to grind Easy → Hard.</li>
+    <li><b>Teach it back.</b> After each lesson, say the idea in one plain sentence. If you can teach it, you own it.</li>
+  </ol>
+  </div>
   <p style="font-size:12px;color:var(--muted)">System status: AI test runner ${(window.cowork&&window.cowork.askClaude)?'✅ connected':'⚠️ unavailable — completion falls back to structural checks'} · progress storage ${store.persistent?'✅ persistent':'⚠️ session-only (browser storage is blocked here; progress lasts until this view closes)'}</p>
   ${sections}</div>`;
 }
@@ -1478,7 +1490,16 @@ function renderQuiz(l){
     `<div class="quizWhy" id="quizWhy-${qi}" hidden></div></div>`).join('')+`</div>`;
 }
 function quizPick(qi,oi){
-  const qs=window.__QZ; if(!qs||!qs[qi])return; const ans=qs[qi].answer;
+  const qs=window.__QZ; if(!qs||!qs[qi])return; const q=qs[qi], ans=q.answer;
   document.querySelectorAll('.quizOpt[data-qi="'+qi+'"]').forEach(b=>{b.disabled=true;const boi=+b.getAttribute('data-oi');if(boi===ans)b.classList.add('correct');else if(boi===oi)b.classList.add('wrong');});
-  const w=document.getElementById('quizWhy-'+qi); if(w){w.hidden=false;w.innerHTML=(oi===ans?'✔ Correct. ':'✘ Not quite. ')+esc(qs[qi].why||'');}
+  const w=document.getElementById('quizWhy-'+qi); if(!w)return; w.hidden=false;
+  const correct=q.options[ans];
+  if(oi===ans){
+    w.innerHTML='✔ <b>Correct.</b> '+esc(q.why||'');
+  }else{
+    const picked=q.options[oi];
+    const ww=(q.whyWrong&&q.whyWrong[oi])?q.whyWrong[oi]:('“'+picked+'” is not the best fit here.');
+    w.innerHTML='✘ <b>The correct answer is “'+esc(correct)+'.”</b> '+esc(q.why||'')
+      +'<span class="quizWrongPick">You picked “'+esc(picked)+'” — '+esc(ww)+'</span>';
+  }
 }

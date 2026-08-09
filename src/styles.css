@@ -328,3 +328,6 @@ details.depth[open]>summary::before{content:'▾'}
 .dsCompare th,.dsCompare td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
 .dsCompare th{background:#f5f3ff;font-weight:700}
 .dsCompare tr:nth-child(even) td{background:#fafafa}
+
+/* quiz: explanation of the wrong pick */
+.quizWrongPick{display:block;margin-top:6px;color:var(--muted);font-size:12.5px}
