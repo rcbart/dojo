@@ -5808,13 +5808,12 @@ public class Library {
     public void add(Book b) { books.add(b); }
 
     public Optional<Book> findByTitle(String t) {
-        return Optional.empty(); // stream().filter(...).findFirst()
+        return Optional.empty(); // TODO: stream over books, filter by title, return the first match
     }
 
     public String describe(Object o) {
         return switch (o) {
-            // case Book b -> ...
-            // case String s -> ...
+            // TODO: add a typed pattern for a Book, then one for a String
             default -> "unknown";
         };
     }

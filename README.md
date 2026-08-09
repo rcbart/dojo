@@ -1,9 +1,10 @@
 # DevDojo 🥋
 
 An interactive, self-contained learning platform for software engineering. **29 training tracks,
-266 lessons, and 379 hands-on exercises** run entirely in the browser — an in-editor coding
-exercise on every lesson, structural + AI-assisted checking, a belt progression, a domain glossary
-with click-to-explain terms, tournaments, and end-to-end projects.
+285 lessons, and 403 hands-on exercises** run entirely in the browser — an in-editor coding
+exercise on every lesson, **real code execution where possible** (SQL, JavaScript, and opt-in Java),
+a belt progression, **spaced-repetition review**, a **difficulty-filtered practice hub**, a domain
+glossary with click-to-explain terms, tournaments, and end-to-end capstone projects.
 
 It began as a Java course (JavaDojo) and now spans the full stack: the Java language and JVM,
 computer science & algorithms, web/HTTP, front-end (React), APIs, databases & SQL, concurrency,
@@ -19,20 +20,23 @@ deploys on every push.)*
 
 - **Guided onboarding** — a **🚀 Getting started** page (how to set up your environment and how
   grading really works) and a **🗺️ Learning path** (a recommended white→black-belt route).
-- **Every lesson** ends with an exercise you write in the built-in editor. **Run Tests** does a
-  structural check and, in the app, asks Claude to execute the tests like a compiler + test runner.
-- **Run it for real** — every exercise has a **🖥️ Run locally** panel with the exact commands to
-  compile/run/test it in your own dev environment (Java, JavaScript/React, SQL, shell), plus a
-  **🔬 Dive deeper** panel. This is the honest bridge for depth: the in-app checker verifies
-  structure and logic, your machine verifies runtime truth.
-- **📖 Glossary** — 10 domains / 218 terms, collapsible and searchable. Select or double-click any
-  highlighted term inside a lesson to see its definition inline.
-- **Belts** — per-domain percentage belts (white → black) plus dan sub-tracks for advanced topics.
-  Streams flagged `tournament:true` or `project:true` are practice and don't count toward belts.
-
-Exercises are graded by regex against your submitted source (Java, SQL, shell, JS/JSX) plus optional
-in-app AI execution — not a full compiler. That's fast for learning; use the Run-locally panel when
-you want ground truth.
+- **Every lesson** ends with an exercise in the built-in editor, graded by **real execution where the
+  language allows**: SQL runs against sample datasets in a built-in engine, JavaScript runs in a
+  sandboxed Web Worker, and Java compiles+runs via an opt-in local runner (with an auto-generated
+  test harness). Everything else uses fast structural + AI-assisted checks with a Run-locally fallback.
+- **Run it for real** — every exercise has a **🖥️ Run locally** panel with exact commands for your own
+  dev environment, plus a **🔬 Dive deeper** panel that states honestly how it was graded.
+- **🔁 Review** — spaced repetition builds a review deck from your completed exercises and schedules
+  them on expanding intervals; the sidebar shows what's due.
+- **🎯 Practice** — every exercise is rated easy/medium/hard and filterable, giving a difficulty ramp
+  across the whole catalog.
+- **🧠 Quick check** — auto-generated multiple-choice quizzes on the recall lessons, with instant
+  feedback and explanations.
+- **📖 Glossary** — 10 domains / 218 terms, collapsible and searchable, doubling as the in-lesson
+  click-to-explain source.
+- **Belts & capstones** — per-domain percentage belts (white → black), dan sub-tracks for advanced
+  topics, and a graded multi-step capstone (e.g. the Identity "build a secure auth service"). Streams
+  flagged `tournament:true` or `project:true` are practice and don't count toward belts.
 
 ## Architecture
 
@@ -45,8 +49,9 @@ flowchart TD
     M[manifest.json order] --> S["STREAMS.push · lessons · exercises · regex tests"]
   end
   subgraph Runtime["src/  (vanilla JS, zero deps)"]
-    A["app.js · nav · editor · highlighter · grader · glossary · onboarding"]
+    A["app.js · nav · editor · graders (SQL/JS/Java) · Review · Practice · quizzes · glossary"]
     E["sqlengine.js · in-browser SQL engine + sample datasets"]
+    G["gradejava.js · quizzes.js · auto-generated grading & quiz maps"]
     C["styles.css · shell.html · boot.js"]
   end
   V["scripts/verify.js · CI gate: parses modules, runs every test vs its solution"]
@@ -64,11 +69,14 @@ flowchart TD
   B --> GH
 ```
 
-**How grading works (honestly):** exercises are checked by regex against your source plus, in the
-app, an AI test-runner — fast and offline, but it verifies *structure*, not full runtime behavior.
-Two things close that gap: SQL exercises **actually execute** against sample datasets via the
-built-in engine (`src/sqlengine.js`), and every exercise has a **Run-locally** panel with the exact
-commands to compile/run/test it on a real toolchain.
+**How grading works (honestly):** grading uses real execution where the language allows and falls
+back to structural + AI checks otherwise. **SQL** runs in a dependency-free in-browser engine
+(`src/sqlengine.js`) and is graded by comparing your result set to the reference solution's.
+**JavaScript** runs in a sandboxed Web Worker and is graded on real return values. **Java** compiles
+and runs via an opt-in local runner (`site/` + `JD_LOCAL_RUNNER=1`) using an auto-generated
+`DojoTest` harness. For the rest, regex + an in-app AI runner check structure, and every exercise has
+a **Run-locally** panel for ground truth. `scripts/verify.js` additionally guarantees every solution
+passes its own tests and every blank starter fails at least one.
 
 ## Screenshots
 
@@ -87,8 +95,11 @@ reference them here, e.g.
 src/
   shell.html        HTML page shell (placeholders: @@STYLES@@, @@SCRIPT@@)
   styles.css        all styling
-  app.js            runtime: state, nav, editor, test runner, glossary, getting-started, learning path
-  boot.js           startup calls (incl. identity-stream merge)
+  app.js            runtime: state, nav, editor, graders, Review (SRS), Practice, quizzes, glossary
+  sqlengine.js      dependency-free in-browser SQL engine + sample datasets
+  gradejava.js      auto-generated executable-grading specs (attached by lesson id)
+  quizzes.js        auto-generated quick-check quiz bank (attached by lesson id)
+  boot.js           startup calls (identity merge, gradeJava/quiz attach)
 content/streams/    one module per stream (the course content — most edits happen here)
   manifest.json     stream order (also the sub-category order for the merged Identity stream)
   _header.js        defines the STREAMS array
@@ -100,8 +111,9 @@ build.js            assembles src/ + content/ into dist/index.html and a devdojo
 site/               optional Node server: accounts, progress sync, admin (SQLite via node:sqlite)
 ```
 
-The 12 identity modules (`16b`–`16m`) are merged at runtime into a single **Identity and Access**
-stream with named sub-categories, so the app shows 29 tracks from 40 content files.
+The 13 identity modules (`16b`–`16m` plus the `16z` capstone) are merged at runtime into a single
+**Identity and Access** stream with named sub-categories, so the app shows 29 tracks from 41 content
+files.
 
 ## Workflow
 
