@@ -18,6 +18,18 @@ STREAMS.push({icon:'🧱',title:'Data Structures',blurb:'Lists, sets, maps, sort
 </table>
 <p><b>The one-line difference</b> people ask about most: a <b>queue</b> is a fair line (first in, first out); a <b>stack</b> is a pile (last in, first out); a <b>tree</b> is a hierarchy that keeps data sorted for fast search; a <b>hash map</b> gives instant lookup by key but in no particular order. The rest of this stream builds each one; this table is the map to come back to.</p>`,
 docs:[['Choosing a data structure — overview','https://en.wikipedia.org/wiki/Data_structure'],['Java collections — Oracle','https://docs.oracle.com/javase/tutorial/collections/']],
+quiz:[
+{q:'Which data structure is First-In-First-Out (FIFO) — like a line at a shop?',options:['Queue','Stack','Array','Heap'],answer:0,why:'A queue serves the oldest item first (FIFO), like a fair line.'},
+{q:'Which is Last-In-First-Out (LIFO) — like a pile of plates?',options:['Tree','Queue','Stack','Set'],answer:2,why:'A stack returns the most recently added item first (LIFO).'},
+{q:'You need instant lookup of a value by its key. Best choice?',options:['Array','Hash map','Linked list','Heap'],answer:1,why:'A hash map gives O(1) average lookup/insert/delete by key.'},
+{q:'Best structure for autocomplete / prefix search?',options:['Hash map','Queue','Trie','Stack'],answer:2,why:'A trie stores one node per character, so prefix lookups are natural and fast.'},
+{q:'You must always grab the smallest (or largest) item quickly. Use a…',options:['Heap','Array','Set','Trie'],answer:0,why:'A heap keeps the min or max at the top for O(1) peek and O(log n) removal.'},
+{q:'Best for keeping data sorted with fast range queries (O(log n))?',options:['Hash map','Balanced tree (BST)','Stack','Array'],answer:1,why:'A balanced BST keeps keys ordered, enabling sorted iteration and range queries.'},
+{q:'You want to ignore duplicates and answer "have I seen this?" fast. Use a…',options:['Array','Set','Queue','Linked list'],answer:1,why:'A set stores unique items and answers membership in O(1) average.'},
+{q:'Modeling cities connected by roads (relationships) is best done with a…',options:['Tree','Graph','Stack','Heap'],answer:1,why:'A graph models arbitrary relationships (nodes + edges), including cycles.'},
+{q:'Cheap insert/remove in the middle, but slow to jump to item #500?',options:['Array','Linked list','Hash map','Heap'],answer:1,why:'A linked list inserts/removes at a known node cheaply but must walk from the start for random access.'},
+{q:'Instant access by index, but costly to insert in the middle?',options:['Linked list','Queue','Array','Tree'],answer:2,why:'An array is contiguous: O(1) indexed access, but inserting mid-array shifts elements.'}
+],
 ex:{title:'Pick the right structure',
 prompt:`Write class <code>Pick</code> with <code>static String structure(String need)</code>: <code>"index-fast-access"</code>→<code>"array"</code>, <code>"insert-remove-ends"</code>→<code>"linked list"</code>, <code>"last-in-first-out"</code>→<code>"stack"</code>, <code>"first-in-first-out"</code>→<code>"queue"</code>, <code>"key-value-lookup"</code>→<code>"hash map"</code>, <code>"unique-items"</code>→<code>"set"</code>, <code>"sorted-range"</code>→<code>"balanced tree"</code>, <code>"always-min-max"</code>→<code>"heap"</code>, <code>"prefix-search"</code>→<code>"trie"</code>, <code>"network-relationships"</code>→<code>"graph"</code>, and <code>"unknown"</code> otherwise.`,
 starter:`public class Pick {
