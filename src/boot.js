@@ -2,7 +2,8 @@
 mergeIdentity();
 /* attach auto-generated executable-grading specs (opt-in Java runner) by lesson id */
 (function(){ if(!window.GRADEJAVA)return; STREAMS.forEach(function(s){(s.lessons||[]).forEach(function(l){var exs=l.exs||(l.ex?[l.ex]:[]);exs.forEach(function(e,i){var k=exs.length>1?l.id+'#'+i:l.id; if(window.GRADEJAVA[k]&&!e.gradeJava)e.gradeJava=window.GRADEJAVA[k];});});}); })();
-/* attach auto-generated quick-check quizzes by lesson id (hand-authored l.quiz wins) */
+/* attach hand-authored quizzes first (they take priority), then auto-generated ones */
+(function(){ if(!window.QUIZZES_HAND)return; STREAMS.forEach(function(s){(s.lessons||[]).forEach(function(l){ if(!l.quiz&&window.QUIZZES_HAND[l.id])l.quiz=window.QUIZZES_HAND[l.id]; });}); })();
 (function(){ if(!window.QUIZZES)return; STREAMS.forEach(function(s){(s.lessons||[]).forEach(function(l){ if(!l.quiz&&window.QUIZZES[l.id])l.quiz=window.QUIZZES[l.id]; });}); })();
 renderNav();renderHome();refreshBelt();
 
