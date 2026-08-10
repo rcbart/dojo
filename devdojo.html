@@ -507,7 +507,7 @@ window.QUIZZES_HAND = {
   am2: [
     {q:'A password is which kind of authentication factor?',options:['Something you know (knowledge)','Something you have (possession)','Something you are (inherence)','Somewhere you are'],answer:0,why:'A password is knowledge — a secret you remember.',whyWrong:['','Possession is a device or key you hold.','Inherence is a biometric.','Location is a context signal, not this factor.']},
     {q:'A one-time code from an authenticator app is which factor?',options:['Something you have (possession)','Something you know','Something you are','A recovery factor'],answer:0,why:'The code comes from a device you possess.',whyWrong:['','Knowledge is a memorized secret.','Inherence is a biometric.','Recovery is a flow, not a factor category.']},
-    {q:'A fingerprint is which factor?',options:['Something you are (inherence)','Something you know','Something you have','A knowledge factor'],answer:0,why:'A biometric is inherence — something you are.',whyWrong:['','Knowledge is memorized.','Possession is a held device.','Same as option 2 — not a biometric.']},
+    {q:'A fingerprint is which factor?',options:['Something you are (inherence)','Something you know','Something you have','A knowledge factor'],answer:0,why:'A biometric is inherence — something you are.',whyWrong:['','Knowledge is memorized.','Possession is a held device.','A knowledge factor is a memorised secret, not a biometric.']},
     {q:'True MFA combines factors from…',options:['two or more different categories','two passwords','the same category twice','one strong factor'],answer:0,why:'The categories must differ, so stealing one (a password) is not enough.',whyWrong:['','Two passwords are both knowledge — still one factor type.','Same category twice is not multi-factor.','One factor, however strong, is single-factor.']}
   ],
   am6: [
@@ -991,7 +991,7 @@ function openLesson(si,li,ei){
   const exs=lessonExs(l);
   if(ei==null){ei=exs.findIndex((x,i)=>!store.lesson(exSid(l,exs,i)).done);if(ei<0)ei=0;}
   cur={si,li,ei};
-  window.__QZ=l.quiz||null;
+  window.__QZ=shuffleQuiz(l.quiz);
   const e=exs[ei];
   const sid=e?exSid(l,exs,ei):null;
   const saved=sid?store.lesson(sid):{};
@@ -2087,8 +2087,29 @@ function renderPractice(filter){
 }
 
 /* ============================== QUIZ ENGINE (Quick check) ============================== */
+/* Randomise option order so the correct answer is never predictable by position.
+   Hand-authored quizzes were written with the right answer first (answer:0), which
+   made them solvable without reading the question. Permutes options and whyWrong in
+   lockstep and remaps answer, so quizPick() stays correct with no other changes.
+   Re-shuffles on every lesson visit, so position can never be memorised.
+   Returns new question objects — the source data in l.quiz is never mutated. */
+function shuffleQuiz(qs){
+  if(!qs||!qs.length)return qs||null;
+  return qs.map(function(q){
+    const n=(q&&q.options)?q.options.length:0;
+    if(n<2)return q;
+    const idx=q.options.map(function(_,i){return i;});
+    for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=idx[i];idx[i]=idx[j];idx[j]=t;}
+    const ww=q.whyWrong;
+    return Object.assign({},q,{
+      options:idx.map(function(i){return q.options[i];}),
+      whyWrong:Array.isArray(ww)?idx.map(function(i){return ww[i]||'';}):ww,
+      answer:idx.indexOf(q.answer)
+    });
+  });
+}
 function renderQuiz(l){
-  const qs=l&&l.quiz; if(!qs||!qs.length)return '';
+  const qs=window.__QZ||(l&&l.quiz); if(!qs||!qs.length)return '';
   return `<div class="quizBox"><h3>🧠 Quick check</h3>`+qs.map((q,qi)=>
     `<div class="quizQ"><div class="quizQt">${qi+1}. ${esc(q.q)}</div>`+
     `<div class="quizOpts">${q.options.map((o,oi)=>`<button class="quizOpt" data-qi="${qi}" data-oi="${oi}" onclick="quizPick(${qi},${oi})">${esc(o)}</button>`).join('')}</div>`+

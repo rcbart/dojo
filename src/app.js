@@ -386,7 +386,7 @@ function openLesson(si,li,ei){
   const exs=lessonExs(l);
   if(ei==null){ei=exs.findIndex((x,i)=>!store.lesson(exSid(l,exs,i)).done);if(ei<0)ei=0;}
   cur={si,li,ei};
-  window.__QZ=l.quiz||null;
+  window.__QZ=shuffleQuiz(l.quiz);
   const e=exs[ei];
   const sid=e?exSid(l,exs,ei):null;
   const saved=sid?store.lesson(sid):{};
@@ -1482,8 +1482,29 @@ function renderPractice(filter){
 }
 
 /* ============================== QUIZ ENGINE (Quick check) ============================== */
+/* Randomise option order so the correct answer is never predictable by position.
+   Hand-authored quizzes were written with the right answer first (answer:0), which
+   made them solvable without reading the question. Permutes options and whyWrong in
+   lockstep and remaps answer, so quizPick() stays correct with no other changes.
+   Re-shuffles on every lesson visit, so position can never be memorised.
+   Returns new question objects — the source data in l.quiz is never mutated. */
+function shuffleQuiz(qs){
+  if(!qs||!qs.length)return qs||null;
+  return qs.map(function(q){
+    const n=(q&&q.options)?q.options.length:0;
+    if(n<2)return q;
+    const idx=q.options.map(function(_,i){return i;});
+    for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=idx[i];idx[i]=idx[j];idx[j]=t;}
+    const ww=q.whyWrong;
+    return Object.assign({},q,{
+      options:idx.map(function(i){return q.options[i];}),
+      whyWrong:Array.isArray(ww)?idx.map(function(i){return ww[i]||'';}):ww,
+      answer:idx.indexOf(q.answer)
+    });
+  });
+}
 function renderQuiz(l){
-  const qs=l&&l.quiz; if(!qs||!qs.length)return '';
+  const qs=window.__QZ||(l&&l.quiz); if(!qs||!qs.length)return '';
   return `<div class="quizBox"><h3>🧠 Quick check</h3>`+qs.map((q,qi)=>
     `<div class="quizQ"><div class="quizQt">${qi+1}. ${esc(q.q)}</div>`+
     `<div class="quizOpts">${q.options.map((o,oi)=>`<button class="quizOpt" data-qi="${qi}" data-oi="${oi}" onclick="quizPick(${qi},${oi})">${esc(o)}</button>`).join('')}</div>`+
