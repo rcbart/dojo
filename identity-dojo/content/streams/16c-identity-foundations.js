@@ -63,7 +63,63 @@ solution:`public class Glossary {
 // authorization: given the principal's roles, allow or deny the action
 if (authenticate(header)) {          // who are you?
     if (authorize(roles, "orders:write")) { ... }   // may you do this?
-}</div>`,
+}</div>
+
+<h4>The airport, in plain English</h4>
+<p>You arrive at an airport. At the check-in desk someone looks at your passport and agrees you are the
+person in the photograph. That is <b>authentication</b> — proving who you are. Nobody has yet said where
+you may go.</p>
+<p>At the gate someone looks at your boarding pass and decides whether you may board <i>this</i> flight,
+in <i>that</i> seat, through <i>that</i> door. That is <b>authorization</b> — deciding what you may do,
+now that you are known. Two different checks, two different failures, and confusing them is the source of
+an enormous amount of muddled security design.</p>
+<div class="codeSample" data-hl>AUTHENTICATION   "who are you?"      -> a subject     -> 401 if it fails
+AUTHORIZATION    "may you do this?" -> a decision    -> 403 if it fails
+
+// and the sequence never reverses. you cannot decide what someone may
+// do before you know who they are - which is why every request handler
+// authenticates first and authorizes second.</div>
+
+<h4>Why 401 and 403 are different, concretely</h4>
+<p><b>401 Unauthorized</b> is misnamed — it means <i>unauthenticated</i>. "I do not know who you are.
+Present a credential." A browser can act on it: show the login page. It must carry a
+<code>WWW-Authenticate</code> header saying which scheme to use.</p>
+<p><b>403 Forbidden</b> means "I know exactly who you are, and the answer is still no." Logging in again
+will not help. Showing a login page here is the classic confusing bug — the user signs in, lands back on
+the same page, and gets 403 again, forever.</p>
+<p>The practical test: <i>would presenting a different credential change the outcome?</i> Yes means 401.
+No means 403.</p>
+
+<h4>Where each one actually lives</h4>
+<div class="codeSample" data-hl>AUTHENTICATION happens ONCE, at the edge, and produces a token or session.
+  passwords, passkeys, MFA, SSO redirects, certificates -
+  all of it is machinery for answering one question, one time.
+
+AUTHORIZATION happens ON EVERY REQUEST, everywhere, forever.
+  "may this subject read this record?" is asked again for every
+  record, every endpoint, every service in the chain.
+
+// which is why authorization bugs vastly outnumber authentication
+// bugs in real applications: there are thousands of decisions and
+// only one login.</div>
+
+<h4>The mistake this distinction prevents</h4>
+<p>"The user is logged in, so they can see it." That sentence collapses the two, and it is how
+<b>IDOR</b> happens — an application checks that <i>somebody</i> is authenticated, then serves
+<code>/orders/1042</code> to whoever asked, without checking that this order belongs to them. Changing the
+number in the URL is then a complete data breach, and it is consistently among the most exploited web
+vulnerabilities.</p>
+<p>Authentication tells you the request has an owner. It says nothing at all about what that owner is
+entitled to see.</p>
+
+<h4>Two more words you will meet immediately</h4>
+<p><b>Identification</b> is claiming an identity — typing a username. Authentication is <i>proving</i> it.
+The username identifies; the password (or passkey) authenticates. A system that accepts an identifier as
+proof has skipped the second step, which is exactly what an unauthenticated <code>X-User-Id</code> header
+does.</p>
+<p><b>Accounting</b> (or auditing) is the third leg: recording what was decided and what happened. Together
+they are sometimes called <b>AAA</b> — authentication, authorization, accounting — and the third is the one
+teams discover they needed only after an incident.</p>`,
 docs:[['OWASP Authentication Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html'],['OWASP Authorization Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html']],
 ex:{title:'Authenticate, then authorize',
 prompt:`Write <code>Access</code> with: <code>static String[] decodeBasic(String header)</code> — the <b>authentication</b> step — given an HTTP Basic header value like <code>"Basic dXNlcjpwYXNz"</code>, take the part after the space, base64-decode it with <code>java.util.Base64.getDecoder()</code> into <code>"user:pass"</code>, and return it split into <code>{user, pass}</code> with <code>split(":", 2)</code>; and <code>static boolean authorize(java.util.Set&lt;String&gt; roles, String required)</code> — the <b>authorization</b> step — return whether <code>roles</code> <code>.contains(required)</code>.`,
@@ -555,7 +611,54 @@ revocation turns out to be.</p>
 <div class="codeSample" data-hl>// a token is presented on each request in the Authorization header
 Authorization: Bearer eyJhbGciOiJSUzI1Ni␣...  (header.payload.signature)
 // a session cookie instead carries only an opaque id the server looks up
-Cookie: session=8f3a...   // meaningless without the server's session store</div>`,
+Cookie: session=8f3a...   // meaningless without the server's session store</div>
+
+<h4>Two ways to remember someone, in plain English</h4>
+<p>HTTP forgets you between every request. Two clicks on the same site are, as far as the protocol is
+concerned, two strangers. Everything in this lesson is about how a server remembers.</p>
+<p><b>A session is a cloakroom ticket.</b> The venue keeps your coat and hands you a numbered stub. The
+stub says nothing about the coat — its only power is that the venue can look up number 47 and find what it
+stored. Lose the ticket and someone else can collect your coat; the venue can also decide, at any moment,
+that ticket 47 is void.</p>
+<p><b>A token is a festival wristband.</b> Everything needed is printed on it and it is sealed so it cannot
+be altered: which stages you may enter, and the date it stops working. Nobody has to phone the box office —
+staff read the band and decide. Which also means the box office cannot un-print it: once issued, it works
+until it expires.</p>
+
+<div class="codeSample" data-hl>SESSION (a reference)              TOKEN (self-contained)
+server stores the state            the token IS the state
+cookie holds only an id            the claims travel with the request
+revoke = delete one row  INSTANT   revoke = hard. it verifies on its own.
+every request does a lookup        no lookup: verify the signature
+scales with a shared store         scales with no shared anything
+opaque to the client               readable by anyone holding it (signed,
+                                     not secret - never put secrets in one)</div>
+
+<h4>The trade, stated once</h4>
+<p><b>Sessions buy revocation and cost a lookup. Tokens buy statelessness and cost revocation.</b> That is
+the whole decision, and everything else — refresh tokens, short lifetimes, denylists, introspection — is an
+attempt to soften whichever side you chose.</p>
+<p>The consequence people meet in production: you fire an employee at 09:00, disable the account, and their
+access token keeps working until it expires. If that window is fifteen minutes, that is a decision you made.
+If nobody knows what the window is, it is a decision that made itself.</p>
+
+<h4>Which to use</h4>
+<p><b>A session</b> when one server or one trust boundary owns the whole interaction — a traditional web
+application, an admin console, a bank's internal tooling. Immediate revocation is worth the lookup, and the
+cookie machinery (<code>HttpOnly</code>, <code>Secure</code>, <code>SameSite</code>) is mature and well
+understood.</p>
+<p><b>A token</b> when the request crosses boundaries — a mobile app calling an API, a service calling
+another service, a third party acting for your user. A session id means nothing to a system that does not
+share your store; a signed token means something to anyone holding the issuer's public key.</p>
+<p><b>Both, deliberately</b>, is the common real answer: a session cookie between the browser and your own
+backend, and tokens from that backend outward. That is the BFF pattern, and it exists precisely so the
+browser never holds a token at all.</p>
+
+<h4>The word that causes the most confusion</h4>
+<p>People say "token" for both. A session id <i>is</i> a token in the loose sense — a string that stands for
+your authenticated state. The distinction that matters is not the word but whether the value
+<b>carries</b> its meaning or <b>refers</b> to it. Ask that question about any credential and the rest of
+its behaviour follows: how it is revoked, what happens if it leaks, whether the issuer can be offline.</p>`,
 docs:[['MDN — Authorization header','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization'],['RFC 6750 — Bearer Token Usage','https://www.rfc-editor.org/rfc/rfc6750']],
 ex:{title:'Bearer header: build and parse',
 prompt:`Write <code>Bearer</code> with: <code>static String header(String token)</code> returning the header <b>value</b> <code>"Bearer " + token</code>; and <code>static String parse(String header)</code> that returns the token from a value like <code>"Bearer abc.def.ghi"</code> — return <code>null</code> if <code>header</code> is null or does not <code>startsWith("Bearer ")</code>, otherwise the substring after <code>"Bearer "</code>.`,
@@ -794,7 +897,54 @@ public class Federation {
 </ul>
 <div class="codeSample" data-hl>// confidential client: HTTP Basic client authentication
 Authorization: Basic base64(client_id ":" client_secret)
-// public client: NO secret — proves itself with a PKCE code_verifier instead</div>`,
+// public client: NO secret — proves itself with a PKCE code_verifier instead</div>
+
+<h4>The question, in plain English</h4>
+<p>Forget the vocabulary for a moment and ask one thing: <b>can this application keep a secret?</b></p>
+<p>Your backend server can. It runs on a machine you control, nobody can read its memory or its
+environment variables, and the only way to see its configuration is to break into it. That is a
+<b>confidential client</b>.</p>
+<p>A mobile app cannot. Anyone can download it from the store and decompile it. A single-page application
+cannot — its JavaScript is served to the browser and readable with one keystroke. A CLI tool distributed
+to users cannot. These are <b>public clients</b>, and the word "public" is literal: whatever secret you
+ship inside them is public the day you ship it.</p>
+<div class="codeSample" data-hl>// people ship a secret into a SPA and reason: "it is minified, and
+// nobody will look". here is what looking costs:
+//   DevTools -> Sources -> Ctrl-F "client_secret"
+// that is the entire attack. it takes four seconds.
+
+// and rotating it does not help: the new one ships the same way.</div>
+
+<h4>What the distinction actually changes</h4>
+<p>A confidential client can prove it is itself at the token endpoint, so the authorization server knows the
+code is being redeemed by the app that started the flow. A public client cannot prove anything about
+itself — so something else has to do that job, and that something is <b>PKCE</b>: a one-time secret
+generated per flow, kept in memory, never shipped, and therefore never stealable from the artifact.</p>
+<div class="codeSample" data-hl>CONFIDENTIAL          a backend web app, a service, a scheduled job
+  gets a client_secret (or better: private_key_jwt / mTLS)
+  may use the Client Credentials grant - it can act as ITSELF
+  can hold a refresh token relatively safely
+
+PUBLIC                a SPA, a mobile app, a desktop app, a CLI
+  gets NO secret. PKCE is mandatory.
+  may NOT use Client Credentials - there is no identity to prove
+  a refresh token here needs rotation or sender-constraining</div>
+
+<h4>The classification is about deployment, not technology</h4>
+<p>This is the part people get wrong. "Is React a public client?" has no answer. A React application whose
+tokens are handled by its own backend is that <i>backend</i> acting as a confidential client. The same
+React application talking directly to an authorization server from the browser is a public client. Nothing
+about the framework decides it — <b>where the credential lives</b> decides it.</p>
+<p>Which is also the way out. If you want confidential-client properties for a browser application, put a
+backend in front of it and let that backend hold the tokens; the browser then gets an ordinary session
+cookie and never sees a token at all. That is the BFF pattern, covered in the OAuth stream.</p>
+
+<h4>Registration, briefly</h4>
+<p>Whichever kind it is, a client must be <b>registered</b> before it can ask for anything. Registration
+produces a <code>client_id</code> — a public identifier, not a secret — and records the exact redirect URIs
+the authorization server will send codes to. That allowlist is doing real security work: it is what stops an
+attacker starting a flow with your <code>client_id</code> and having the code delivered to their own
+server.</p>`,
 docs:[['RFC 6749 §2.1 — Client Types','https://www.rfc-editor.org/rfc/rfc6749#section-2.1'],['OAuth 2.0 client authentication','https://oauth.net/2/client-authentication/']],
 ex:{title:'Classify the client, build its auth',
 prompt:`Write <code>ClientAuth</code> with: <code>static boolean isConfidential(String clientType)</code> returning whether <code>clientType</code> equals <code>"confidential"</code> (use <code>"confidential".equals(clientType)</code> so a null is safe); and <code>static String basicClientAuth(String clientId, String clientSecret)</code> that builds the confidential client's HTTP Basic value: base64-encode <code>clientId + ":" + clientSecret</code> with <code>java.util.Base64.getEncoder()</code> and return <code>"Basic " + encoded</code>.`,
@@ -838,7 +988,60 @@ user in support.</i></p>
 <div class="codeSample" data-hl>// token carries the granted scopes as a space-separated string
 "scope": "photos:read profile"
 // the API checks the needed scope is present before acting
-if (!granted.contains("photos:read")) throw new ForbiddenException();</div>`,
+if (!granted.contains("photos:read")) throw new ForbiddenException();</div>
+
+<h4>The valet key</h4>
+<p>Some cars come with a second key that starts the engine and opens the doors, but will not open the boot
+and limits the top speed. You hand it to a valet. You have given them <i>enough</i> to park the car and
+nothing more, you did not give them your own key, and you can ask for it back.</p>
+<p>That is delegation, and OAuth is a protocol for issuing valet keys. Three ideas do the work:</p>
+<div class="codeSample" data-hl>DELEGATION   you let an app act for you WITHOUT giving it your password.
+             the app never learns your credential; it gets its own key.
+
+CONSENT      you were asked, in terms you could understand, and agreed.
+             a grant made without informed consent is not delegation,
+             it is just access.
+
+SCOPE        the BOUNDS of the key. what it may do, and no more.
+             "read your calendar" is not "manage your account".</div>
+
+<h4>Why "never give an app your password" is the whole point</h4>
+<p>Before OAuth, a service that wanted to import your contacts asked for your email password. People typed
+it in. That gave the service <i>everything</i> — read your mail, change your password, lock you out — with
+no way to grant less, no way to see what it had done, and no way to revoke it except by changing the
+password and breaking every other integration at the same time.</p>
+<p>Delegation fixes all four: the app gets a bounded credential, you can see what it asked for, you can
+revoke that one app, and your actual password never leaves you.</p>
+
+<h4>A scope is a limit, not a permission</h4>
+<p>This is the sentence to remember. A scope says what the app is <i>allowed to ask for</i>. It does not say
+what <b>you</b> are allowed to do.</p>
+<div class="codeSample" data-hl>token has scope "invoices:write"   AND   the user is a read-only clerk
+   -> the answer is NO.
+
+// the scope narrows the app's grant. the user's own permissions still
+// apply underneath it. the effective answer is the INTERSECTION.
+// a resource server that checks only the scope has just let an app
+// escalate its user's privileges, which is a real and common bug.</div>
+<p>Say it as: the scope bounds the delegation; your entitlements bound you; the request must satisfy
+both.</p>
+
+<h4>Consent that is worth something</h4>
+<p>A consent screen listing "openid profile email offline_access https://api.example.com/.default" has not
+informed anybody. Real consent means the screen names <b>what the app will do</b> in the user's language,
+names <b>who is asking</b>, is <b>granular</b> enough to decline part of it, and is <b>revocable</b> from
+somewhere the user can find.</p>
+<p>The attack this defends against is <b>consent phishing</b>: an attacker registers a plausible-looking
+application, sends a legitimate authorization link, and the victim grants it real access — no password
+stolen, no malware, nothing for a scanner to detect. It is why every serious platform now restricts which
+applications may request sensitive scopes, and why administrators should be able to see which third-party
+apps their users have granted.</p>
+
+<h4>Ask for less</h4>
+<p>Request the narrowest scope that does the job, and ask for more only when the user is doing the thing
+that needs it. It reduces the damage when your app is compromised, it raises consent rates because the
+screen is less alarming, and it is the one habit that makes the rest of this stream easier to reason
+about.</p>`,
 docs:[['RFC 6749 §3.3 — Access Token Scope','https://www.rfc-editor.org/rfc/rfc6749#section-3.3'],['oauth.net — Scopes','https://oauth.net/2/scope/']],
 ex:{title:'Parse scopes, enforce least privilege',
 prompt:`Write <code>Scopes</code> with: <code>static java.util.Set&lt;String&gt; parse(String scope)</code> that turns a space-separated scope string into a set — <code>trim()</code> then <code>split(" ")</code>, collect into a <code>HashSet</code>; and <code>static boolean covers(java.util.Set&lt;String&gt; granted, String required)</code> returning whether <code>granted.contains(required)</code>. (Split on a single space — scopes are space-delimited.)`,
