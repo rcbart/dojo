@@ -116,6 +116,17 @@ button:disabled{opacity:.5;cursor:wait}
 .domainHd{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:28px 0 2px;padding-bottom:6px;border-bottom:1px solid var(--line);font-size:15px;font-weight:700;letter-spacing:.2px}
 .domainHd .domainLeft{display:flex;align-items:center;gap:9px}
 .domainHd .domainCount{font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
+/* collapsible domain sections: domain -> streams -> lessons */
+.domainSec{margin:0}
+.domainSec>summary.domainHd{cursor:pointer;list-style:none;user-select:none;transition:border-color .15s}
+.domainSec>summary.domainHd::-webkit-details-marker{display:none}
+.domainSec>summary.domainHd .domainLeft::before{content:'\25B8';display:inline-block;margin-right:2px;font-size:11px;color:var(--muted);transition:transform .15s}
+.domainSec[open]>summary.domainHd .domainLeft::before{transform:rotate(90deg)}
+.domainSec>summary.domainHd:hover{border-bottom-color:var(--accent)}
+.domainSec>summary.domainHd:hover .domainLeft::before{color:var(--accent)}
+.domainSec .domainMeta{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;margin-left:10px;opacity:.75}
+.domainSec[open] .domainMeta{display:none}
+.domainSec>.grid,.domainSec>.danTrackHd{margin-top:12px}
 .domainHd .bStrip{width:30px;height:15px;border-radius:3px;flex:0 0 auto}
 .danTrackHd{margin:16px 0 2px;font-size:13px;font-weight:700;color:#b8860b;letter-spacing:.3px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer}

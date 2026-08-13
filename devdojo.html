@@ -123,6 +123,17 @@ button:disabled{opacity:.5;cursor:wait}
 .domainHd{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:28px 0 2px;padding-bottom:6px;border-bottom:1px solid var(--line);font-size:15px;font-weight:700;letter-spacing:.2px}
 .domainHd .domainLeft{display:flex;align-items:center;gap:9px}
 .domainHd .domainCount{font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
+/* collapsible domain sections: domain -> streams -> lessons */
+.domainSec{margin:0}
+.domainSec>summary.domainHd{cursor:pointer;list-style:none;user-select:none;transition:border-color .15s}
+.domainSec>summary.domainHd::-webkit-details-marker{display:none}
+.domainSec>summary.domainHd .domainLeft::before{content:'\25B8';display:inline-block;margin-right:2px;font-size:11px;color:var(--muted);transition:transform .15s}
+.domainSec[open]>summary.domainHd .domainLeft::before{transform:rotate(90deg)}
+.domainSec>summary.domainHd:hover{border-bottom-color:var(--accent)}
+.domainSec>summary.domainHd:hover .domainLeft::before{color:var(--accent)}
+.domainSec .domainMeta{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;margin-left:10px;opacity:.75}
+.domainSec[open] .domainMeta{display:none}
+.domainSec>.grid,.domainSec>.danTrackHd{margin-top:12px}
 .domainHd .bStrip{width:30px;height:15px;border-radius:3px;flex:0 0 auto}
 .danTrackHd{margin:16px 0 2px;font-size:13px;font-weight:700;color:#b8860b;letter-spacing:.3px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer}
@@ -1264,23 +1275,34 @@ function renderHome(){
     const danIdx=idx.filter(si=>STREAMS[si].dan);
     const mainIdx=idx.filter(si=>!STREAMS[si].dan);
     const beltIdx=mainIdx.filter(si=>{const s=STREAMS[si];return !s.tournament&&!s.project;});
+    // lesson totals for the collapsed summary line
+    const nStreams=mainIdx.length+danIdx.length;
+    const nLessons=idx.reduce((a,si)=>a+STREAMS[si].lessons.length,0);
+    // a domain opens by default only if the learner has started it
+    const started=idx.some(si=>streamDone(STREAMS[si])>0);
+    let head;
     if(beltIdx.length){
       const done=beltIdx.reduce((a,si)=>a+streamDone(STREAMS[si]),0);
       const tot=beltIdx.reduce((a,si)=>a+STREAMS[si].lessons.length,0);
       const bn=domainBelt(done,tot);
-      sections+=`<div class="domainHd"><span class="domainLeft">${beltStrip(bn)}${dom.icon} ${dom.name}</span><span class="domainCount">${bn} · ${done}/${tot}</span></div>`;
+      head=`<span class="domainLeft">${beltStrip(bn)}${dom.icon} ${dom.name}</span><span class="domainCount">${bn} · ${done}/${tot}</span>`;
     } else {
-      sections+=`<div class="domainHd"><span class="domainLeft">${dom.icon} ${dom.name}</span></div>`;
+      head=`<span class="domainLeft">${dom.icon} ${dom.name}</span><span class="domainCount">${nStreams} streams · ${nLessons} lessons</span>`;
     }
-    if(mainIdx.length) sections+=`<div class="grid">${mainIdx.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;
-    if(danIdx.length) sections+=`<div class="danTrackHd">⛩️ ${dom.name} · Dan track — advanced topics (post-black, no belt credit)</div><div class="grid">${danIdx.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;
+    let inner='';
+    if(mainIdx.length) inner+=`<div class="grid">${mainIdx.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;
+    if(danIdx.length) inner+=`<div class="danTrackHd">⛩️ ${dom.name} · Dan track — advanced topics (post-black, no belt credit)</div><div class="grid">${danIdx.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;
+    sections+=`<details class="domainSec"${started?' open':''}><summary class="domainHd">${head}<span class="domainMeta">${nStreams} stream${nStreams===1?'':'s'} · ${nLessons} lessons</span></summary>${inner}</details>`;
   }
   const extra=STREAMS.map((s,si)=>si).filter(si=>!placed.has(si));
-  if(extra.length){sections+=`<div class="domainHd"><span class="domainLeft">✨ More</span></div><div class="grid">${extra.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;}
+  if(extra.length){
+    const n=extra.reduce((a,si)=>a+STREAMS[si].lessons.length,0);
+    sections+=`<details class="domainSec"><summary class="domainHd"><span class="domainLeft">✨ More</span><span class="domainMeta">${extra.length} streams · ${n} lessons</span></summary><div class="grid">${extra.map(si=>streamCard(STREAMS[si],si)).join('')}</div></details>`;
+  }
   m.innerHTML=`<div class="home">
   <h1>Welcome to DevDojo 🥋</h1>
   <div class="startBanner">New here? Start with <a href="javascript:void(0)" onclick="cur=null;renderGettingStarted();renderNav()"><b>🚀 Getting started</b></a> to set up your environment and get the full depth, then follow the <a href="javascript:void(0)" onclick="cur=null;renderPath();renderNav()"><b>🗺️ Learning path</b></a>.</div>
-  <p>${STREAMS.length} training tracks take you from fundamentals to mastery across software engineering — Java &amp; the JVM, computer science &amp; algorithms, web/HTTP &amp; front-end (React), APIs &amp; Spring, databases &amp; SQL, concurrency, security &amp; a large identity domain, DevOps, and senior-level architecture, all grouped by domain below. Every lesson ends with an exercise in the built-in editor. <b>Where the language allows, DevDojo runs your code for real and grades the result</b> — SQL against sample data, JavaScript in a sandbox, Java via the optional local runner; otherwise it checks structure and, when online, asks Claude to run the tests. Stuck? <b>Next Step</b> gives a progressive hint, and <b>Show me the solution</b> is always there — no judgment.</p>
+  <p>${STREAMS.length} training tracks take you from fundamentals to mastery across software engineering — Java &amp; the JVM, computer science &amp; algorithms, web/HTTP &amp; front-end (React), APIs &amp; Spring, databases &amp; SQL, concurrency, security &amp; a large identity domain, DevOps, and senior-level architecture, all grouped by domain below. Every lesson ends with an exercise in the built-in editor. <b>Most exercises are graded on the shape of your answer, not on running it</b> — regex checks that you used the right construct. SQL and JavaScript do execute for real (sample data and a sandboxed worker), and Java runs for real if you start the optional local runner. Every exercise has a <b>Run locally</b> panel with exact commands — that is the ground truth. Stuck? <b>Next Step</b> gives a progressive hint, and <b>Show me the solution</b> is always there — no judgment.</p>
   <p><b>Tip:</b> select or double-click any keyword or term — in a lesson or your own code — and a popup explains it, drawing on 200+ Java, CS, and identity terms from the glossary.</p>
   <div class="gsCard">
   <h2>How to get the most out of DevDojo — learn &amp; retain</h2>
@@ -13927,6 +13949,8 @@ byte   32      flags
                  bit 2  UV  user verified   (PIN or biometric succeeded)
                  bit 3  BE  backup eligible (this credential CAN be synced)
                  bit 4  BS  backup state    (it IS currently synced)
+                            ^ BE and BS were added in WebAuthn LEVEL 3.
+                              Level 2 (2021) defines only UP, UV, AT and ED.
                  bit 6  AT  attested credential data included
                  bit 7  ED  extension data included
 bytes  33..36  signCount    a counter, or zero if unsupported
@@ -13935,7 +13959,9 @@ then (if AT):  aaguid(16) · credIdLen(2) · credentialId · COSE public key</di
 the device — one factor. <i>User verified</i> means the authenticator checked a PIN or biometric — a
 second factor, locally. If you asked for <code>userVerification: "required"</code>, you must actually
 check the UV bit; the request is a preference, and only your verification makes it a requirement.</p>
-<p><b>BE and BS</b> are the passkey flags. BE says the credential is <i>eligible</i> to be synced across
+<p><b>BE and BS</b> are the passkey flags, and they are <b>Level 3 additions</b> — if you are reading
+the Level 2 recommendation you will not find them, which is a common source of confusion when a library
+predates synced passkeys. BE says the credential is <i>eligible</i> to be synced across
 a user's devices; BS says it currently <i>is</i>. A device-bound credential has both clear. This is how
 you tell a hardware key from a synced passkey, and if your policy needs device-bound credentials, BE is
 the bit to check — at registration, because it cannot be changed afterwards.</p>
@@ -13969,7 +13995,7 @@ public key, sign count, AAGUID and the BE flag against the user.</li>
 <p>Steps 2 and 3 are the load-bearing ones. A challenge that is not verified against server state turns
 the whole ceremony into theatre, and an origin check written as "starts with" is how
 <code>https://login.example.com.evil.com</code> gets in.</p>`,
-docs:[['W3C — Registering a new credential (verification procedure)','https://www.w3.org/TR/webauthn-2/#sctn-registering-a-new-credential'],['W3C — Authenticator data layout','https://www.w3.org/TR/webauthn-2/#sctn-authenticator-data'],['W3C — Attestation statement formats','https://www.w3.org/TR/webauthn-2/#sctn-defined-attestation-formats'],['FIDO Alliance — Metadata Service (MDS)','https://fidoalliance.org/metadata/']],
+docs:[['W3C — WebAuthn Level 3 (defines the BE and BS flags)','https://www.w3.org/TR/webauthn-3/'],['W3C — Registering a new credential (verification procedure)','https://www.w3.org/TR/webauthn-2/#sctn-registering-a-new-credential'],['W3C — Authenticator data layout','https://www.w3.org/TR/webauthn-2/#sctn-authenticator-data'],['W3C — Attestation statement formats','https://www.w3.org/TR/webauthn-2/#sctn-defined-attestation-formats'],['FIDO Alliance — Metadata Service (MDS)','https://fidoalliance.org/metadata/']],
 ex:{title:'Read the flags and verify the origin',
 prompt:`Write <code>AuthData</code> with four methods over the flags byte. <code>static boolean userPresent(int flags)</code> tests bit 0 (<code>0x01</code>). <code>static boolean userVerified(int flags)</code> tests bit 2 (<code>0x04</code>). <code>static boolean backupEligible(int flags)</code> tests bit 3 (<code>0x08</code>) — set for a syncable passkey, clear for a device-bound credential. Then <code>static boolean originAllowed(String origin, java.util.Set&lt;String&gt; allowed)</code>, which must use <b>exact</b> set membership and reject null, because a prefix comparison would accept <code>https://login.example.com.evil.com</code>.`,
 starter:`import java.util.*;

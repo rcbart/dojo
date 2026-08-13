@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/tracks-29-8b5cf6" alt="tracks">
   <img src="https://img.shields.io/badge/lessons-332-8b5cf6" alt="lessons">
   <img src="https://img.shields.io/badge/exercises-452-06b6d4" alt="exercises">
-  <img src="https://img.shields.io/badge/checks-2226%20passing-2ea44f" alt="checks">
+  <img src="https://img.shields.io/badge/content%20checks-2226-2ea44f" alt="content integrity checks">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
@@ -15,8 +15,7 @@
 
 An interactive, self-contained learning platform for software engineering. **29 training tracks,
 332 lessons, and 452 hands-on exercises** run entirely in the browser — an in-editor coding
-exercise on every lesson, **real code execution where possible** (SQL, JavaScript, and opt-in Java),
-a belt progression, **spaced-repetition review**, a **difficulty-filtered practice hub**, a domain
+exercise on every lesson, a belt progression, **spaced-repetition review**, a **difficulty-filtered practice hub**, a domain
 glossary with click-to-explain terms, tournaments, and end-to-end capstone projects.
 
 It began as a Java course (JavaDojo) and now spans the full stack: the Java language and JVM,
@@ -44,10 +43,12 @@ deploys on every push.)*
 
 - **Guided onboarding** — a **🚀 Getting started** page (how to set up your environment and how
   grading really works) and a **🗺️ Learning path** (a recommended white→black-belt route).
-- **Every lesson** ends with an exercise in the built-in editor, graded by **real execution where the
-  language allows**: SQL runs against sample datasets in a built-in engine, JavaScript runs in a
-  sandboxed Web Worker, and Java compiles+runs via an opt-in local runner (with an auto-generated
-  test harness). Everything else uses fast structural + AI-assisted checks with a Run-locally fallback.
+- **Every lesson** ends with an exercise in the built-in editor. **How grading works:** most exercises (~79%, all the Java ones) are checked by **regex against the shape of your answer** —
+  they verify you wrote the right construct, not that your code runs correctly. Real execution is
+  available where the environment allows it: **SQL** runs against sample datasets in the built-in
+  engine and **JavaScript** in a sandboxed Web Worker (~4% of exercises, graded on actual results),
+  and **Java** compiles and runs for real only if you start the optional local runner. Every exercise
+  ships a **Run locally** panel with exact commands, which is the ground truth.
 - **Run it for real** — every exercise has a **🖥️ Run locally** panel with exact commands for your own
   dev environment, plus a **🔬 Dive deeper** panel that states honestly how it was graded.
 - **🔁 Review** — spaced repetition builds a review deck from your completed exercises and schedules
@@ -95,14 +96,23 @@ flowchart TD
   B --> GH
 ```
 
-**How grading works (honestly):** grading uses real execution where the language allows and falls
-back to structural + AI checks otherwise. **SQL** runs in a dependency-free in-browser engine
-(`src/sqlengine.js`) and is graded by comparing your result set to the reference solution's.
-**JavaScript** runs in a sandboxed Web Worker and is graded on real return values. **Java** compiles
-and runs via an opt-in local runner (`site/` + `JD_LOCAL_RUNNER=1`) using an auto-generated
-`DojoTest` harness. For the rest, regex + an in-app AI runner check structure, and every exercise has
-a **Run-locally** panel for ground truth. `scripts/verify.js` additionally guarantees every solution
-passes its own tests and every blank starter fails at least one.
+**How grading works (honestly).** The headline number to be careful with is the **content checks**
+badge: `scripts/verify.js` runs 2226 assertions proving every exercise's reference solution matches its
+own regex checks and that ids are unique. That is a **content integrity gate, not a test suite for a
+running product** — it says the material is internally consistent, not that a learner's code is
+correct.
+
+Grading itself splits three ways:
+
+| Path | Share | What it actually verifies |
+|---|--:|---|
+| Regex structural checks | ~79% | That your answer contains the expected constructs. Not correctness. |
+| Real execution, in-browser | ~4% | SQL against sample data (`src/sqlengine.js`, result sets compared); JavaScript in a sandboxed Web Worker (real return values). |
+| Real execution, opt-in | Java | Compiles and runs via the local runner (`site/` + `JD_LOCAL_RUNNER=1`) with a generated `DojoTest` harness — **off by default**. |
+
+So a green check on most exercises means "this looks right", not "this works". Every exercise has a
+**Run locally** panel with exact commands, and that is the ground truth. Raising the share of real
+execution is the most valuable open improvement to the platform.
 
 ## Screenshots
 

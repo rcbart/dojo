@@ -345,23 +345,34 @@ function renderHome(){
     const danIdx=idx.filter(si=>STREAMS[si].dan);
     const mainIdx=idx.filter(si=>!STREAMS[si].dan);
     const beltIdx=mainIdx.filter(si=>{const s=STREAMS[si];return !s.tournament&&!s.project;});
+    // lesson totals for the collapsed summary line
+    const nStreams=mainIdx.length+danIdx.length;
+    const nLessons=idx.reduce((a,si)=>a+STREAMS[si].lessons.length,0);
+    // a domain opens by default only if the learner has started it
+    const started=idx.some(si=>streamDone(STREAMS[si])>0);
+    let head;
     if(beltIdx.length){
       const done=beltIdx.reduce((a,si)=>a+streamDone(STREAMS[si]),0);
       const tot=beltIdx.reduce((a,si)=>a+STREAMS[si].lessons.length,0);
       const bn=domainBelt(done,tot);
-      sections+=`<div class="domainHd"><span class="domainLeft">${beltStrip(bn)}${dom.icon} ${dom.name}</span><span class="domainCount">${bn} · ${done}/${tot}</span></div>`;
+      head=`<span class="domainLeft">${beltStrip(bn)}${dom.icon} ${dom.name}</span><span class="domainCount">${bn} · ${done}/${tot}</span>`;
     } else {
-      sections+=`<div class="domainHd"><span class="domainLeft">${dom.icon} ${dom.name}</span></div>`;
+      head=`<span class="domainLeft">${dom.icon} ${dom.name}</span><span class="domainCount">${nStreams} streams · ${nLessons} lessons</span>`;
     }
-    if(mainIdx.length) sections+=`<div class="grid">${mainIdx.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;
-    if(danIdx.length) sections+=`<div class="danTrackHd">⛩️ ${dom.name} · Dan track — advanced topics (post-black, no belt credit)</div><div class="grid">${danIdx.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;
+    let inner='';
+    if(mainIdx.length) inner+=`<div class="grid">${mainIdx.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;
+    if(danIdx.length) inner+=`<div class="danTrackHd">⛩️ ${dom.name} · Dan track — advanced topics (post-black, no belt credit)</div><div class="grid">${danIdx.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;
+    sections+=`<details class="domainSec"${started?' open':''}><summary class="domainHd">${head}<span class="domainMeta">${nStreams} stream${nStreams===1?'':'s'} · ${nLessons} lessons</span></summary>${inner}</details>`;
   }
   const extra=STREAMS.map((s,si)=>si).filter(si=>!placed.has(si));
-  if(extra.length){sections+=`<div class="domainHd"><span class="domainLeft">✨ More</span></div><div class="grid">${extra.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;}
+  if(extra.length){
+    const n=extra.reduce((a,si)=>a+STREAMS[si].lessons.length,0);
+    sections+=`<details class="domainSec"><summary class="domainHd"><span class="domainLeft">✨ More</span><span class="domainMeta">${extra.length} streams · ${n} lessons</span></summary><div class="grid">${extra.map(si=>streamCard(STREAMS[si],si)).join('')}</div></details>`;
+  }
   m.innerHTML=`<div class="home">
   <h1>Welcome to DevDojo 🥋</h1>
   <div class="startBanner">New here? Start with <a href="javascript:void(0)" onclick="cur=null;renderGettingStarted();renderNav()"><b>🚀 Getting started</b></a> to set up your environment and get the full depth, then follow the <a href="javascript:void(0)" onclick="cur=null;renderPath();renderNav()"><b>🗺️ Learning path</b></a>.</div>
-  <p>${STREAMS.length} training tracks take you from fundamentals to mastery across software engineering — Java &amp; the JVM, computer science &amp; algorithms, web/HTTP &amp; front-end (React), APIs &amp; Spring, databases &amp; SQL, concurrency, security &amp; a large identity domain, DevOps, and senior-level architecture, all grouped by domain below. Every lesson ends with an exercise in the built-in editor. <b>Where the language allows, DevDojo runs your code for real and grades the result</b> — SQL against sample data, JavaScript in a sandbox, Java via the optional local runner; otherwise it checks structure and, when online, asks Claude to run the tests. Stuck? <b>Next Step</b> gives a progressive hint, and <b>Show me the solution</b> is always there — no judgment.</p>
+  <p>${STREAMS.length} training tracks take you from fundamentals to mastery across software engineering — Java &amp; the JVM, computer science &amp; algorithms, web/HTTP &amp; front-end (React), APIs &amp; Spring, databases &amp; SQL, concurrency, security &amp; a large identity domain, DevOps, and senior-level architecture, all grouped by domain below. Every lesson ends with an exercise in the built-in editor. <b>Most exercises are graded on the shape of your answer, not on running it</b> — regex checks that you used the right construct. SQL and JavaScript do execute for real (sample data and a sandboxed worker), and Java runs for real if you start the optional local runner. Every exercise has a <b>Run locally</b> panel with exact commands — that is the ground truth. Stuck? <b>Next Step</b> gives a progressive hint, and <b>Show me the solution</b> is always there — no judgment.</p>
   <p><b>Tip:</b> select or double-click any keyword or term — in a lesson or your own code — and a popup explains it, drawing on 200+ Java, CS, and identity terms from the glossary.</p>
   <div class="gsCard">
   <h2>How to get the most out of DevDojo — learn &amp; retain</h2>

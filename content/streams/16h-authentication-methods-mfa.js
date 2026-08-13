@@ -593,6 +593,8 @@ byte   32      flags
                  bit 2  UV  user verified   (PIN or biometric succeeded)
                  bit 3  BE  backup eligible (this credential CAN be synced)
                  bit 4  BS  backup state    (it IS currently synced)
+                            ^ BE and BS were added in WebAuthn LEVEL 3.
+                              Level 2 (2021) defines only UP, UV, AT and ED.
                  bit 6  AT  attested credential data included
                  bit 7  ED  extension data included
 bytes  33..36  signCount    a counter, or zero if unsupported
@@ -601,7 +603,9 @@ then (if AT):  aaguid(16) · credIdLen(2) · credentialId · COSE public key</di
 the device — one factor. <i>User verified</i> means the authenticator checked a PIN or biometric — a
 second factor, locally. If you asked for <code>userVerification: "required"</code>, you must actually
 check the UV bit; the request is a preference, and only your verification makes it a requirement.</p>
-<p><b>BE and BS</b> are the passkey flags. BE says the credential is <i>eligible</i> to be synced across
+<p><b>BE and BS</b> are the passkey flags, and they are <b>Level 3 additions</b> — if you are reading
+the Level 2 recommendation you will not find them, which is a common source of confusion when a library
+predates synced passkeys. BE says the credential is <i>eligible</i> to be synced across
 a user's devices; BS says it currently <i>is</i>. A device-bound credential has both clear. This is how
 you tell a hardware key from a synced passkey, and if your policy needs device-bound credentials, BE is
 the bit to check — at registration, because it cannot be changed afterwards.</p>
@@ -635,7 +639,7 @@ public key, sign count, AAGUID and the BE flag against the user.</li>
 <p>Steps 2 and 3 are the load-bearing ones. A challenge that is not verified against server state turns
 the whole ceremony into theatre, and an origin check written as "starts with" is how
 <code>https://login.example.com.evil.com</code> gets in.</p>`,
-docs:[['W3C — Registering a new credential (verification procedure)','https://www.w3.org/TR/webauthn-2/#sctn-registering-a-new-credential'],['W3C — Authenticator data layout','https://www.w3.org/TR/webauthn-2/#sctn-authenticator-data'],['W3C — Attestation statement formats','https://www.w3.org/TR/webauthn-2/#sctn-defined-attestation-formats'],['FIDO Alliance — Metadata Service (MDS)','https://fidoalliance.org/metadata/']],
+docs:[['W3C — WebAuthn Level 3 (defines the BE and BS flags)','https://www.w3.org/TR/webauthn-3/'],['W3C — Registering a new credential (verification procedure)','https://www.w3.org/TR/webauthn-2/#sctn-registering-a-new-credential'],['W3C — Authenticator data layout','https://www.w3.org/TR/webauthn-2/#sctn-authenticator-data'],['W3C — Attestation statement formats','https://www.w3.org/TR/webauthn-2/#sctn-defined-attestation-formats'],['FIDO Alliance — Metadata Service (MDS)','https://fidoalliance.org/metadata/']],
 ex:{title:'Read the flags and verify the origin',
 prompt:`Write <code>AuthData</code> with four methods over the flags byte. <code>static boolean userPresent(int flags)</code> tests bit 0 (<code>0x01</code>). <code>static boolean userVerified(int flags)</code> tests bit 2 (<code>0x04</code>). <code>static boolean backupEligible(int flags)</code> tests bit 3 (<code>0x08</code>) — set for a syncable passkey, clear for a device-bound credential. Then <code>static boolean originAllowed(String origin, java.util.Set&lt;String&gt; allowed)</code>, which must use <b>exact</b> set membership and reject null, because a prefix comparison would accept <code>https://login.example.com.evil.com</code>.`,
 starter:`import java.util.*;
