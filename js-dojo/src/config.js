@@ -29,7 +29,11 @@ const DOJO_DOMAINS = [
     'Control Flow & Functions',
     'Objects, Arrays & Data']},
   {name:'How JavaScript Really Works',icon:'\u{2699}\u{FE0F}',titles:[
-    'Functions in Depth: Scope, Closures & this']},
+    'Functions in Depth: Scope, Closures & this',
+    'Prototypes, Classes & Objects in Depth']},
   {name:'Asynchronous JavaScript',icon:'\u{23F3}',titles:[
-    'The Event Loop & Asynchronous JavaScript']}
+    'The Event Loop & Asynchronous JavaScript']},
+  {name:'Errors & Debugging',icon:'\u{1F41B}',titles:[
+    'Errors, Exceptions & the Debugging Method',
+    'Debugging in the Browser']}
 ];
