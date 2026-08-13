@@ -2,7 +2,52 @@ STREAMS.push({icon:'🗝️',iam:true,sec:'Governance & privileged access',title
 
 {id:'ig1',title:'IGA: reviews & certification',body:`
 <p>Access granted is rarely access removed — over years, people accumulate entitlements they no longer need (<b>privilege creep</b>). <b>IGA</b> (Identity Governance and Administration) fixes this with periodic <b>access reviews</b>: managers or resource owners <b>certify</b> that each person still needs what they hold, and anything unconfirmed is revoked.</p>
-<p>Governance also covers access <b>requests</b> with approval workflows and an <b>audit trail</b> of who approved what — the evidence auditors and regulators ask for. The core decision in a review is simply: is this access still needed? If yes, keep it; if not, revoke it.</p>`,
+<p>Governance also covers access <b>requests</b> with approval workflows and an <b>audit trail</b> of who approved what — the evidence auditors and regulators ask for. The core decision in a review is simply: is this access still needed? If yes, keep it; if not, revoke it.</p>
+
+<h4>The problem is structural, not careless</h4>
+<p>Nobody sets out to over-permission a workforce. It happens because <b>granting access has an owner and
+removing it does not</b>. Someone asks for access to do their job; a person approves; the job gets done.
+Six months later they move teams — and the old access has no advocate for its removal. The requester is
+gone, the approver has forgotten, and the system administrator was never told anything changed.</p>
+<p>The result is the <b>mover</b> problem, and it is worse than the leaver problem. A leaver at least
+triggers an offboarding checklist. A mover triggers nothing: they simply accumulate the union of every
+role they have ever held. After five years an internal transfer can hold more access than any single job
+would ever justify — which is exactly the profile an attacker wants to phish.</p>
+
+<h4>Certification is the counterweight</h4>
+<p>Access review — also called <b>certification</b> or <b>attestation</b> — is the periodic sweep that
+supplies the missing removal pressure. A campaign takes a population of access and asks a human to say,
+for each grant, whether it is still needed. What makes it work is the default:</p>
+<div class="codeSample" data-hl>certified   -> keep
+revoked     -> remove
+NO RESPONSE -> remove      <- the load-bearing rule
+
+// if silence means "keep", the campaign measures nothing:
+// a reviewer who ignores it entirely produces the same result as one
+// who carefully confirms every line. that is theatre, not a control.</div>
+<p>Frequency follows risk, not calendar habit: privileged and financial access quarterly, ordinary
+application access annually, and <b>event-driven</b> reviews on transfer — which is the one that
+actually catches the mover problem, because it fires at the moment the access became wrong.</p>
+
+<h4>Why campaigns fail in practice</h4>
+<p><b>Rubber-stamping</b> is the dominant failure. Give a manager 400 rows of entitlements named
+<code>APP_FIN_GL_RW_PRD</code> and they will approve all of them in one click, because the alternative is
+an afternoon of guessing. The fix is not exhortation — it is making the decision answerable: show the
+plain-language description, when it was last used, and who else in the same job holds it. <b>Last-used
+data is the single highest-leverage addition to a review</b>; "not used in 180 days" converts a judgement
+call into an obvious revoke.</p>
+<p><b>Wrong reviewer</b> is the second. A line manager knows whether someone still works for them; only
+the application owner knows what a given entitlement actually permits. Serious programmes run both
+perspectives, on different populations.</p>
+<p><b>Revocations that never happen</b> is the third and most damaging. A campaign that produces a
+revoke list nobody executes is worse than no campaign, because it generates audit evidence of a control
+that does not exist. Closed-loop remediation — the decision drives the deprovisioning automatically, and
+the ticket stays open until the entitlement is gone — is what separates governance from paperwork.</p>
+
+<h4>What good looks like</h4>
+<p>The mature version reviews <b>exceptions rather than everything</b>: a role model defines what each job
+should hold, birthright access is granted automatically from HR data, and the campaign asks only about
+the deviations. That turns 400 rows into 12, and 12 rows get read.`,
 docs:[['Identity governance','https://en.wikipedia.org/wiki/Identity_governance'],['Access certification','https://www.gartner.com/en/information-technology/glossary/identity-governance-and-administration-iga']],
 ex:{title:'Certify or revoke',
 prompt:`Write class <code>Review</code> with <code>static String decision(boolean stillNeeded)</code> that returns <code>"keep"</code> when the access is still needed and <code>"revoke"</code> otherwise. Use a single conditional expression.`,
@@ -22,7 +67,57 @@ hints:['The ternary operator condition ? a : b fits in one line.','Return "keep"
 
 {id:'ig2',title:'Entitlements & separation of duties',body:`
 <p>An <b>entitlement</b> is a specific grant — membership in a group, a role, a fine-grained permission. Governance tracks entitlements so it can spot <b>toxic combinations</b>: pairs no one person should hold together. Classic example in finance: whoever can <b>create</b> a vendor invoice must not also be able to <b>pay</b> it, or a single insider could commit fraud undetected.</p>
-<p>Detecting these separation-of-duties conflicts across everyone&#8217;s entitlements is a standard governance control, checked at request time and re-checked during reviews.</p>`,
+<p>Detecting these separation-of-duties conflicts across everyone&#8217;s entitlements is a standard governance control, checked at request time and re-checked during reviews.</p>
+
+<h4>Start with the naming problem</h4>
+<p>Governance is only as good as its vocabulary, and the vocabulary here is genuinely muddled. An
+<b>entitlement</b> is the atomic unit — one specific thing a person can do in one specific system. It
+might be an AD group, a database role, a SaaS licence tier, an application permission. A <b>role</b> is a
+named bundle of entitlements. The distinction matters because reviews and conflict checks must run at
+the entitlement level: two harmless-looking roles can conflict through entitlements neither name
+reveals.</p>
+<div class="codeSample" data-hl>role "AP Clerk"      -> {ap_create, vendor_read}
+role "Treasury Ops" -> {ap_pay,    bank_read}
+
+// neither role is dangerous. holding BOTH is fraud-enabling.
+// a check that compares role NAMES misses it entirely -
+// you have to expand to entitlements and intersect there.</div>
+
+<h4>Separation of duties, and why it exists</h4>
+<p>SoD is not a security control in the usual sense — it does not stop an outsider. It is an
+<b>anti-fraud and anti-error control</b>, and it comes from accounting long before it came from IT. The
+principle: no single person should be able to complete a transaction that moves value from beginning to
+end without a second pair of eyes.</p>
+<p>The canonical conflicts recur across every organisation:</p>
+<ul>
+<li><b>Create vendor / pay vendor</b> — invent a supplier, invoice yourself, approve the payment.</li>
+<li><b>Amend payroll / approve payroll</b> — the same fraud with salaries.</li>
+<li><b>Write code / deploy to production</b> — ship an unreviewed change straight to customers.</li>
+<li><b>Grant access / use access</b> — the meta-conflict, and the one that makes every other control
+optional for whoever holds it.</li>
+<li><b>Administer logs / perform privileged actions</b> — do the thing, then erase the evidence.</li>
+</ul>
+<p>That last pair is why log retention is usually owned by a different team from the systems producing
+the logs.</p>
+
+<h4>Preventive versus detective</h4>
+<p>You can enforce SoD at two moments, and mature programmes do both. <b>Preventive</b> is a check at
+request time: the grant is blocked before it exists, which is cheap and non-negotiable. <b>Detective</b>
+is a scan across current holdings, which catches everything preventive control missed — access granted
+directly in the target system, conflicts introduced by a new rule, or a role definition that quietly
+changed underneath its members.</p>
+<p>Detective scanning is not optional, because <b>most real conflicts arrive sideways</b> rather than
+through the request path.</p>
+
+<h4>Handling the conflicts you cannot avoid</h4>
+<p>In a ten-person company one person genuinely has to do both jobs. The answer is not to pretend
+otherwise — it is a documented <b>mitigating control</b>: a compensating review by someone else, a
+transaction limit, or an alert on every action taken under the conflicting pair. An exception with an
+owner, an expiry and a compensating control is a governed risk. An exception nobody wrote down is just a
+gap you happen to know about.</p>
+<p>The practical failure mode is <b>rule sprawl</b>: hundreds of conflict rules written once, never
+tuned, firing constantly on false positives until everyone routes around them. A dozen enforced rules
+beat two hundred ignored ones.`,
 docs:[['Segregation of duties','https://en.wikipedia.org/wiki/Separation_of_duties'],['SoD controls','https://www.isaca.org/resources/isaca-journal']],
 ex:{title:'Flag a toxic combination',
 prompt:`Write class <code>Entitlements</code> with <code>static boolean conflict(java.util.Set&lt;String&gt; held)</code> that returns true when a user holds <b>both</b> <code>"ap_create"</code> and <code>"ap_pay"</code> (create and pay invoices).`,
@@ -44,7 +139,58 @@ hints:['Both entitlements must be present, so use &&.','Check each with contains
 
 {id:'ig3',title:'PAM: privileged access management',body:`
 <p>Admin, root, and break-glass accounts are the crown jewels, so they get extra controls under <b>PAM</b>. Credentials live in a <b>vault</b> rather than on laptops; sessions can be <b>recorded</b> for audit; and access is granted <b>just-in-time</b> — elevated only for a short, approved window instead of standing 24/7.</p>
-<p>The safest privileged grant therefore requires two things at once: it was <b>approved</b>, and it is <b>time-boxed</b> so it expires automatically. Standing privilege is the anti-pattern PAM exists to eliminate.</p>`,
+<p>The safest privileged grant therefore requires two things at once: it was <b>approved</b>, and it is <b>time-boxed</b> so it expires automatically. Standing privilege is the anti-pattern PAM exists to eliminate.</p>
+
+<h4>The thing PAM is really fighting</h4>
+<p>Not "admins exist" — admins have to exist. The target is <b>standing privilege</b>: an account that
+holds elevated rights continuously, whether or not anyone is using them. Standing privilege means the
+window in which a compromise is catastrophic is 100% of the time. Every phish, every reused password,
+every stolen laptop lands on a live administrator.</p>
+<p>Shrink the window and you have changed the arithmetic. If elevation exists for two hours a week
+against a specific target, an attacker who lands credentials outside that window has nothing to escalate
+with.</p>
+
+<h4>The four moves</h4>
+<p><b>Vault the credential.</b> The password or key lives in a vault, not on a laptop, not in a wiki, not
+in a shared spreadsheet. A human never needs to see it — the vault injects it into the session. That
+alone kills credential sharing, which is what makes "who did this?" unanswerable for shared root
+accounts.</p>
+<p><b>Broker the session.</b> Rather than connecting directly, the admin connects through a proxy that
+holds the real credential. That gives you one enforcement point for recording, and it means the endpoint
+being administered never receives a credential the user could scrape.</p>
+<p><b>Elevate just in time.</b> Access is requested, approved, and granted for a bounded window against a
+named target with a stated reason — and it expires without anyone remembering to remove it.</p>
+<div class="codeSample" data-hl>STANDING     admin rights, always on, all targets
+                risk window = permanent
+
+JIT          approved + time-boxed + scoped to one target
+                risk window = the 2 hours you asked for
+
+// note it takes BOTH: an approval with no expiry becomes standing
+// privilege by attrition, and an expiry with no approval is just
+// self-service admin.</div>
+<p><b>Record and review.</b> Session recording and keystroke logging exist mostly for after the fact —
+incident reconstruction and audit evidence. Their deterrent value is real but secondary; do not mistake
+recording for prevention, since nobody watches the tapes until something has already gone wrong.</p>
+
+<h4>Break-glass: the exception you must design</h4>
+<p>Every PAM system needs an escape hatch, because the day your IdP is down is precisely the day you need
+administrative access to fix it. A break-glass account is deliberately outside the normal flow: not
+federated, not dependent on MFA infrastructure that might itself be broken, credentials split and sealed,
+excluded from conditional access policies that could lock it out.</p>
+<p>What makes it safe is not obscurity but <b>noise</b>: any use fires a high-priority alert to people who
+will notice, is logged immutably, and is reviewed afterward regardless of outcome. And it is
+<b>tested</b> — an untested break-glass procedure is a comforting fiction, discovered to be broken at
+exactly the worst moment.</p>
+
+<h4>Where PAM programmes stall</h4>
+<p><b>Admins route around it.</b> If JIT elevation takes twenty minutes to approve during an outage,
+people will keep a standing account "just in case", and you have built a control that is bypassed
+precisely when it matters. Fast paths for on-call, pre-approved for defined scenarios, are not a
+weakness — they are what keeps the system in use.</p>
+<p><b>Service accounts stay standing.</b> The human admins get vaulted and the automation does not,
+leaving the highest-privilege credentials in the estate untouched. That gap is the subject of the
+non-human identity lesson later in this stream, and it is usually the larger population.</p>`,
 docs:[['Privileged access management','https://en.wikipedia.org/wiki/Privileged_access_management'],['Just-in-time access','https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-configure']],
 ex:{title:'Grant privilege safely',
 prompt:`Write class <code>Pam</code> with <code>static boolean grant(boolean approved, boolean timeBoxed)</code> that grants elevated access only when it was both approved and time-boxed.`,
@@ -64,7 +210,59 @@ hints:['Both conditions must hold, so combine them with &&.','Approved alone is 
 
 {id:'ig4',title:'Secrets management & rotation',body:`
 <p>Applications need secrets — database passwords, API keys, signing keys. Hardcoding them in code or config is how leaks happen. A <b>secrets manager</b> (HashiCorp Vault, or a cloud secret manager) stores them centrally, hands them out with access control, and audits every fetch. High-value keys live in an <b>HSM</b> (hardware security module) that never lets the raw key leave.</p>
-<p><b>Rotation</b> is the other half: secrets should be replaced on a schedule (and immediately after any suspected exposure), so a leaked credential has a short useful life. A secret is due for rotation once its age reaches the policy maximum.</p>`,
+<p><b>Rotation</b> is the other half: secrets should be replaced on a schedule (and immediately after any suspected exposure), so a leaked credential has a short useful life. A secret is due for rotation once its age reaches the policy maximum.</p>
+
+<h4>Why secrets are structurally different from passwords</h4>
+<p>A user password is typed by a human who can be prompted for MFA and who notices when something is
+wrong. A machine secret is used by software, at 3am, thousands of times an hour, with nobody watching.
+It cannot be MFA'd, it produces no signal when stolen, and it usually grants far more than any single
+human account — a database credential reads every row, not the ten rows the user was entitled to.</p>
+<p>Which is why leaked secrets are the workhorse of real breaches. They do not require a clever exploit.
+They require a repository, a CI log, an error page, a Docker image layer, or a Slack message.</p>
+
+<h4>The hierarchy, worst to best</h4>
+<div class="codeSample" data-hl>hardcoded in source     -> in git history FOREVER. rotating the secret is
+                           the only fix; deleting the commit is not.
+config file on disk     -> better, but sprawls across hosts, backups, images
+environment variable    -> the common baseline. leaks via crash dumps,
+                           /proc, child processes, and debug endpoints
+secrets manager         -> fetched at runtime, access-controlled, audited,
+                           revocable centrally
+dynamic / short-lived   -> the credential is MINTED per use and expires in
+                           minutes. nothing long-lived exists to steal
+no secret at all        -> workload identity: the platform attests what you
+                           are, and you exchange that for a token</div>
+<p>Most teams are aiming at the middle of this list when the top two rows are the interesting ones. The
+end state is not "store the secret better" — it is <b>having no long-lived secret to store</b>. A pod
+that proves its identity to the cloud provider and receives a fifteen-minute credential has removed the
+entire class of problem.</p>
+
+<h4>Rotation, honestly</h4>
+<p>Rotation limits the useful life of a credential you did not know was stolen. That is its whole
+purpose, and it is worth stating plainly because rotation is often performed as ritual: a 90-day policy
+diligently followed, with no ability to rotate <i>quickly</i> when it actually matters.</p>
+<p>The metric that counts is not the interval — it is <b>time to rotate under pressure</b>. If a leaked
+production key takes three days and a change-advisory board to replace, the schedule is irrelevant. If
+it takes four minutes and is fully automated, you can rotate on any suspicion at all, and the interval
+almost stops mattering.</p>
+<p>The mechanical trap is the <b>cutover</b>. Replacing a secret in one atomic step breaks every consumer
+that has not picked up the new value. The pattern that works is two valid credentials at once:</p>
+<div class="codeSample" data-hl>1. issue the NEW secret alongside the old   (both valid)
+2. roll consumers over to the new one       (no outage)
+3. verify nothing still uses the old        (usage metrics, not hope)
+4. revoke the old
+
+// step 3 is the one people skip, and it is why rotation gets
+// abandoned after the first self-inflicted outage.</div>
+
+<h4>Detection matters as much as storage</h4>
+<p>Assume some secret will leak anyway. Secret <b>scanning</b> in repositories and CI, distinctive
+<b>prefixes</b> on issued keys so scanners can recognise them, and push protection that rejects a commit
+before it lands, all shorten the interval between leak and response. Pair that with <b>usage
+anomaly</b> alerting — a database credential appearing from an unfamiliar network is a strong signal —
+and honeytoken credentials that exist only to be stolen and alert when used.</p>
+<p>And when a secret does leak: <b>rotate first, investigate second</b>. The investigation can take days;
+the exposure should not.</p>`,
 docs:[['Secrets management — Vault','https://developer.hashicorp.com/vault/docs/what-is-vault'],['Key management — NIST','https://csrc.nist.gov/projects/key-management']],
 ex:{title:'Is a secret due for rotation?',
 prompt:`Write class <code>Secrets</code> with <code>static boolean rotateDue(long ageDays, long maxDays)</code> that returns true when the secret&#8217;s age has reached or exceeded the maximum allowed age.`,
@@ -84,7 +282,59 @@ hints:['Reached or exceeded means the >= comparison.','Compare ageDays against m
 
 {id:'ig5',title:'CIAM vs workforce IAM',body:`
 <p>Identity comes in two flavors with different priorities. <b>Workforce IAM</b> governs employees and contractors: the emphasis is control — provisioning from HR, least privilege, access reviews, fast deprovisioning. <b>CIAM</b> (Customer IAM) governs external users: the emphasis is experience and scale — self-service registration, social login, consent and privacy, and handling millions of accounts.</p>
-<p>Both rest on the same protocols (OAuth, OIDC, SAML) and the same compliance backbone (audit, least privilege, deprovisioning), but you tune them differently for employees versus customers.</p>`,
+<p>Both rest on the same protocols (OAuth, OIDC, SAML) and the same compliance backbone (audit, least privilege, deprovisioning), but you tune them differently for employees versus customers.</p>
+
+<h4>Same protocols, opposite pressures</h4>
+<p>It is easy to read CIAM and workforce IAM as the same system pointed at different people. The
+protocols are indeed the same. The <b>forces acting on them are inverted</b>, and that is what makes the
+architectures diverge.</p>
+<div class="codeSample" data-hl>                    WORKFORCE                 CIAM
+who enrolls         HR system does it         the user does it
+population          thousands                 millions to hundreds of millions
+friction            acceptable - it is work   every step loses real revenue
+identity source     authoritative (HR)        self-asserted, unverified
+you can force       MFA, device, policy       almost nothing
+the failure mode    over-access               abandoned signup / breach of PII
+downtime cost       staff cannot work         customers cannot buy</div>
+
+<h4>What changes on the workforce side</h4>
+<p>You have an <b>authoritative source</b>. HR says a person exists, holds this job, reports to that
+manager, and left on this date. Everything downstream can be derived from it — birthright access on
+joining, recalculation on transfer, deprovisioning within minutes of termination. The whole discipline
+of governance in this stream assumes such a source exists.</p>
+<p>You also have <b>coercive power</b>. You can mandate phishing-resistant MFA, require a managed device,
+block legacy protocols, and revoke without negotiation. The user is an employee; friction is a cost of
+employment.</p>
+
+<h4>What changes on the customer side</h4>
+<p>There is no HR feed. The identity is whatever the person typed, and the account is often the only
+record they exist. That inverts the priorities:</p>
+<ul>
+<li><b>Registration is a funnel.</b> Every extra field measurably reduces completion. This is the one
+place where a security control has a directly attributable revenue cost, which is why CIAM decisions get
+argued about with marketing in the room.</li>
+<li><b>Progressive profiling</b> replaces the long form — collect the minimum at signup, ask for more when
+there is a reason the user understands.</li>
+<li><b>MFA cannot simply be mandated</b>, so it is risk-based: step up on a new device, a payment change,
+or an unusual location, rather than on every login.</li>
+<li><b>Account recovery is the real attack surface.</b> Workforce recovery routes through a helpdesk that
+can verify a human. Consumers have only email and SMS, which means the recovery path is usually weaker
+than the login path — and attackers know to go there first.</li>
+<li><b>Consent and data rights are legal obligations</b>, not features. Deletion has to actually delete,
+across every downstream system, on request.</li>
+<li><b>Scale is a design constraint</b>, not a capacity plan. Ten million users with a login spike
+during a marketing campaign is an availability problem, and identity is the front door — if it is down,
+everything is down.</li>
+</ul>
+
+<h4>The mistake in both directions</h4>
+<p>Running consumers on a workforce stack produces a login experience that hemorrhages signups and a
+consent story that does not survive a regulator's question. Running employees on a consumer stack gives
+you no HR integration, no reviews, no joiner-mover-leaver, and an audit you will fail.</p>
+<p>And a third population sits between them: <b>B2B</b> — business customers whose own administrators must
+manage their own users, bring their own IdP, and see only their own tenant. That is neither CIAM nor
+workforce, and treating it as either is a common and expensive error. It gets its own treatment in the
+multi-tenancy lesson.</p>`,
 docs:[['CIAM vs IAM','https://auth0.com/blog/what-is-ciam/'],['Workforce vs customer identity','https://www.okta.com/customer-identity/']],
 ex:{title:'Who is the audience?',
 prompt:`Write class <code>Iam</code> with <code>static String audience(String type)</code>: <code>"ciam"</code>→<code>"customers"</code>, <code>"workforce"</code>→<code>"employees"</code>, and <code>"unknown"</code> otherwise.`,
