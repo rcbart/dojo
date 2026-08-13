@@ -1118,7 +1118,15 @@ chain, and gates who is permitted to do this with <b>may_act</b> on the original
 {"sub":"ada", "aud":"ledger"}
 
 // may_act on Ada's original token: WHO is allowed to act for her
-{"sub":"ada", "may_act":{"sub":"orders-svc"}}</div>
+{"sub":"ada", "may_act":{"sub":"orders-svc"}}
+
+// RFC 8693 is strict about how to READ that chain:
+//   the OUTERMOST act is the CURRENT actor - the only one you may use
+//   in an access-control decision, alongside the top-level claims.
+//   nested act claims are the least-recent actors, and are INFORMATIONAL
+//   ONLY. authorizing on a prior actor is a spec violation, and in
+//   practice it lets an earlier, more-trusted hop launder authority
+//   through a later one.</div>
 <p><b>Default to delegation.</b> Reserve impersonation for cases where the downstream genuinely must
 not distinguish — some legacy systems cannot parse an actor — and log who impersonated whom, since the
 token no longer records it.</p>

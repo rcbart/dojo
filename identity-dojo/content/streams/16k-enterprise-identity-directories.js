@@ -219,8 +219,11 @@ in most AD estates. The defence is not detection but key strength: <b>gMSA</b> a
 <div class="codeSample" data-hl>GOLDEN TICKET   requires: the KRBTGT account's key
                 gives:    forge ANY TGT, for anyone, with any group SIDs
                           in the PAC — including Domain Admin
-                lifetime: valid until krbtgt is rotated TWICE (the KDC keeps
-                          the previous key, so one rotation does nothing)
+                lifetime: valid until krbtgt is rotated TWICE — Active
+                          Directory retains the PREVIOUS krbtgt key for
+                          continuity, so one rotation leaves forged tickets
+                          working. (This is AD behaviour, not something
+                          RFC 4120 specifies.)
 
 SILVER TICKET   requires: one SERVICE account's key
                 gives:    forge service tickets for that one service
@@ -263,7 +266,8 @@ NTLM, which is usually the real reason "Kerberos isn't working".</p>
 <li>Require pre-authentication everywhere.</li>
 <li>Eliminate unconstrained delegation; audit write access to computer objects for RBCD.</li>
 <li>Put sensitive accounts in Protected Users and mark them as not delegatable.</li>
-<li>Rotate krbtgt periodically — <b>twice</b>, with a gap, or the old key still works.</li>
+<li>Rotate krbtgt periodically — in Active Directory, <b>twice</b> with a gap between, because the
+previous key is retained for continuity and a single rotation leaves forged tickets valid.</li>
 <li>Alert on bulk service-ticket requests, RC4 requests in an AES-only estate, and tickets with
 implausible lifetimes.</li>
 </ol>`,

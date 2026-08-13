@@ -1,7 +1,38 @@
 STREAMS.push({icon:'🏆',tournament:true,title:'Coding Challenges: The Tournament',blurb:'Interview-style problems in three ranked rounds — Easy, Medium, Hard. Enter after Fundamentals; return often.',lessons:[
 {id:'ch1',title:'Easy round',body:`
 <p>Warm-up bouts. Easy problems test whether the fundamentals are automatic: hash lookups, pointer discipline, clean loops. In an interview these are the first 10 minutes — the goal is not just solving them but solving them <i>cleanly while talking</i>.</p>
-<p>Approach ritual (use it on every problem in this tournament): restate the problem in one sentence → name the brute force and its complexity → name the pattern that beats it → code → walk one example and one edge case out loud.</p>`,
+<p>Approach ritual (use it on every problem in this tournament): restate the problem in one sentence → name the brute force and its complexity → name the pattern that beats it → code → walk one example and one edge case out loud.</p>
+
+<h4>Why "easy" is misleading</h4>
+<p>Easy means the <i>pattern</i> is easy once you see it. It does not mean the interview is easy, because
+easies are where communication habits are established. An interviewer who watches you solve two-sum in
+silence has learned almost nothing about you; one who watches you say "brute force is O(n²) nested
+loops — I can trade space for time with a map of complements, O(n) time and O(n) space" has learned
+the thing they are actually there to find out.</p>
+
+<h4>The fundamentals being tested</h4>
+<div class="codeSample" data-hl>HASH LOOKUP        "have I seen X?" in O(1). the single highest-leverage
+                   structure in interviews. complement lookups, frequency
+                   counts, dedup, grouping — all the same move.
+
+POINTER DISCIPLINE two indices moving with intent: start/end converging,
+                   fast/slow for cycles, a window that grows and shrinks.
+                   the bug is almost always the loop bound or the update order.
+
+CLEAN LOOPS        one job per loop, no mutation you cannot explain, and
+                   an invariant you could state if asked. "what is true
+                   every time this loop starts?" is the question that
+                   finds off-by-one errors before the interviewer does.</div>
+
+<h4>The edge cases that come up every time</h4>
+<p>Reach for these unprompted — noticing them is worth more than speed: <b>empty</b> input,
+<b>one</b> element, <b>all identical</b> elements, <b>negative</b> numbers where you assumed positive,
+<b>duplicates</b> where you assumed uniqueness, and <b>integer overflow</b> on sums or on
+<code>(lo + hi) / 2</code>. That last one is a genuine classic: use
+<code>lo + (hi - lo) / 2</code>.</p>
+<p><b>A note on the ritual.</b> It feels artificial for an easy problem, which is exactly why it is
+worth practising here. Under pressure on a hard problem you will do what you rehearsed, and nobody
+invents structured communication for the first time in the final round.</p>`,
 docs:[['Big-O cheat sheet','https://www.bigocheatsheet.com/'],['HashMap — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/HashMap.html']],
 exs:[
 {title:'Two Sum',
@@ -201,7 +232,48 @@ solution:`public class WordCount {\n    static int wordCount(String s) {\n      
 
 ]},
 {id:'ch2',title:'Medium round',body:`
-<p>Real interview weight class. Mediums combine two ideas — a data structure plus an insight. The differentiator is <i>recognizing the pattern quickly</i>: anagram grouping is "canonical key + map buckets", rotated search is "binary search with a twist", except-self is "prefix × suffix". Say the pattern before you code it.</p>`,
+<p>The real interview weight class. Almost every medium is <b>two ideas stacked</b>: a data structure
+plus one insight that collapses the problem. Easies test whether you know the structure; mediums test
+whether you can <i>find the insight under time pressure</i>, which is a different skill and the one
+that is actually being assessed.</p>
+
+<h4>The pattern-recognition move</h4>
+<p>Strong candidates do not start coding. They spend thirty seconds naming the shape, because naming it
+correctly determines the whole solution:</p>
+<div class="codeSample" data-hl>PROBLEM SHAPE                        THE PATTERN                      COST
+"group things that are equivalent"   canonical key + map buckets      O(n k log k)
+"sorted-ish array, find something"   binary search with a twist       O(log n)
+"result[i] depends on all but i"     prefix x suffix products         O(n), no division
+"longest/shortest window with X"     two pointers, sliding window     O(n)
+"k largest / smallest so far"        heap of size k                   O(n log k)
+"count pairs summing to T"           complement lookup in a map       O(n)
+"nested structure, undo choices"     backtracking with a path stack   exponential, pruned</div>
+<p>Say the pattern out loud before writing anything. If you cannot name it, you are about to write the
+brute force — which is fine as a stated starting point, and fatal as a silent one.</p>
+
+<h4>The three in this round, and why each is instructive</h4>
+<ul>
+<li><b>Group anagrams</b> — the canonical-key idea. Anagrams are equal <i>after normalisation</i>, so
+sorting each word's characters produces a key that collides exactly when you want it to. The general
+lesson: when equality is not literal, invent a key that makes it literal. Sorting costs O(k log k) per
+word; a 26-slot character count is O(k) and faster for long words.</li>
+<li><b>Search in a rotated sorted array</b> — binary search survives a broken invariant. The array is
+not sorted, but at every split <b>one half always is</b>, and you can tell which by comparing the
+endpoints. Recognising that a weakened invariant still supports the algorithm is the transferable
+insight.</li>
+<li><b>Product of array except self</b> — the constraint (no division) is the hint. Forbidding division
+forces you to see the answer as prefix-product times suffix-product, which is one left pass and one
+right pass. When an interviewer bans the obvious tool, they are telling you the intended structure.</li>
+</ul>
+
+<h4>How mediums are actually scored</h4>
+<p>Rarely on whether you finish. The signals are: did you state the approach and its complexity before
+coding, did you notice the edge cases unprompted (empty input, single element, duplicates, integer
+overflow), and did you test your own code rather than announcing it was done. A working solution with
+no stated complexity often scores below a nearly-working one with clear reasoning.</p>
+<p><b>The recovery move.</b> When stuck, say what you know — "brute force is O(n²) because I re-scan
+for every element; I want to avoid re-scanning, so I need something that remembers what I have seen,
+which suggests a map". That sentence is the actual skill, and it frequently produces the answer.</p>`,
 docs:[['Binary search — API note on Arrays.binarySearch','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Arrays.html'],['Collectors.groupingBy — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Collectors.html']],
 exs:[
 {title:'Group anagrams',

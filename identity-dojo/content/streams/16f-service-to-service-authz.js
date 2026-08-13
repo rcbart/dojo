@@ -324,10 +324,12 @@ familiar:</p>
 <div class="codeSample" data-hl>{ "sub": "ada",                      // still the user, all the way down
   "aud": "internal-search-api",      // audience per hop, never reused
   "scope": "search:read",            // narrowed at each step, never widened
-  "act": { "sub": "research-agent",
-           "act": { "sub": "planner-agent" } } }   // the chain, preserved
+  "act": { "sub": "research-agent",       // CURRENT actor — authorize on this
+           "act": { "sub": "planner-agent" } } }   // prior actor — audit only
 
-// downstream can now answer: which user, which agent, and on whose behalf.</div>
+// downstream can now answer: which user, which agent, and on whose behalf.
+// but per RFC 8693, only the top-level claims and the OUTERMOST act may
+// inform an access decision. the nested history is for attribution.</div>
 <p><b>Narrowing must be monotonic.</b> A sub-agent may reduce scope, never expand it — if any hop can
 request more than it was given, the whole chain is only as strong as its most compromised link.</p>
 

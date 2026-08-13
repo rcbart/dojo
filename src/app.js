@@ -294,7 +294,7 @@ function renderNav(){
 /* Technology domains — streams are grouped into these sections on the home page.
    Each entry lists the exact stream titles it contains, in display order. Any stream
    not matched here falls into a "More" section so nothing is ever hidden. */
-const DOMAINS=[
+const DOMAINS=(typeof DOJO_DOMAINS!=="undefined")?DOJO_DOMAINS:[
   {name:'Java & the JVM',icon:'☕',titles:['Java Fundamentals','Generics from the Ground Up','Exception Handling','Regex from the Ground Up','Working with User Input','Modern Java Mastery','Concurrency & Multithreading','Time, Testing, Reflection & the JVM','JPMS & Performance Engineering']},
   {name:'Computer Science & Algorithms',icon:'🧠',titles:['Data Structures','Dynamic Programming & Advanced Algorithms']},
   {name:'Web, APIs & Frameworks',icon:'🌐',titles:['Web Development','Front-End with React','APIs & REST','Spring Boot']},
@@ -312,6 +312,7 @@ const DOMAINS=[
    stream whose lessons carry a .sec sub-category label. Runs once at boot; keeps each
    source file independently gradeable while presenting a single stream to the learner. */
 function mergeIdentity(){
+  if(typeof DOJO_NO_IAM_MERGE!=="undefined"&&DOJO_NO_IAM_MERGE)return;
   if(STREAMS.some(s=>s.title==='Identity and Access'))return;
   const idx=[];STREAMS.forEach((s,i)=>{if(s.iam)idx.push(i);});
   if(idx.length<2)return;
