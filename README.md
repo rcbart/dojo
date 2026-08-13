@@ -74,11 +74,13 @@ flowchart TD
   subgraph Content["content/streams/*.js  (pure data)"]
     M[manifest.json order] --> S["STREAMS.push · lessons · exercises · regex tests"]
   end
-  subgraph Runtime["src/  (vanilla JS, zero deps)"]
+  subgraph Runtime["engine/  (shared runtime, vanilla JS, zero deps)"]
     A["app.js · nav · editor · graders (SQL/JS/Java) · Review · Practice · quizzes · glossary"]
     E["sqlengine.js · in-browser SQL engine + sample datasets"]
-    G["gradejava.js · quizzes.js · auto-generated grading & quiz maps"]
     C["styles.css · shell.html · boot.js"]
+  end
+  subgraph Course["src/  (per course)"]
+    G["gradejava.js · quizzes.js · quizzes_hand.js"]
   end
   V["scripts/verify.js · CI gate: parses modules, runs every test vs its solution"]
   B["build.js · concatenate + inline"]
@@ -88,11 +90,14 @@ flowchart TD
 
   Content --> B
   Runtime --> B
+  Course --> B
   Content --> V
   V --> B
   B --> D
   D --> Site
   B --> GH
+  Runtime --> ID["identity-dojo/ · same shape, own content + build"]
+  ID --> GH
 ```
 
 **How grading works (honestly).** The headline number to be careful with is the **content checks**
@@ -106,7 +111,7 @@ Grading itself splits three ways:
 | Path | Share | What it actually verifies |
 |---|--:|---|
 | Regex structural checks | ~79% | That your answer contains the expected constructs. Not correctness. |
-| Real execution, in-browser | ~4% | SQL against sample data (`src/sqlengine.js`, result sets compared); JavaScript in a sandboxed Web Worker (real return values). |
+| Real execution, in-browser | ~4% | SQL against sample data (`engine/sqlengine.js`, result sets compared); JavaScript in a sandboxed Web Worker (real return values). |
 | Real execution, opt-in | Java | Compiles and runs via the local runner (`site/` + `JD_LOCAL_RUNNER=1`) with a generated `DojoTest` harness — **off by default**. |
 
 So a green check on most exercises means "this looks right", not "this works". Every exercise has a
@@ -128,25 +133,29 @@ graded by running it against sample data and comparing result sets.*
 ## Repository layout
 
 ```
-src/
-  shell.html        HTML page shell (placeholders: @@STYLES@@, @@SCRIPT@@)
-  styles.css        all styling
-  app.js            runtime: state, nav, editor, graders, Review (SRS), Practice, quizzes, glossary
+engine/             the SHARED RUNTIME — used by every course in this repo
+  app.js            state, nav, editor, graders, Review (SRS), Practice, quizzes, glossary
   sqlengine.js      dependency-free in-browser SQL engine + sample datasets
-  gradejava.js      auto-generated executable-grading specs (attached by lesson id)
-  quizzes.js        auto-generated quick-check quiz bank (attached by lesson id)
-  quizzes_hand.js   hand-authored plain-English quizzes; take priority over the generated bank
-  boot.js           startup calls (identity merge, gradeJava/quiz attach)
-content/streams/    one module per stream (the course content — most edits happen here)
-  manifest.json     stream order (also the sub-category order for the merged Identity stream)
-  _header.js        defines the STREAMS array
-  _footer.js        build marker
-scripts/
-  verify.js         content test suite: parses every module, runs each exercise's regex tests
-                    against its own solution, checks id uniqueness
-build.js            assembles src/ + content/ into dist/index.html and a devdojo.html copy
-site/               optional Node server: accounts, progress sync, admin (SQLite via node:sqlite)
+  boot.js           startup wiring
+  shell.html        page shell (placeholders: @@STYLES@@, @@SCRIPT@@)
+  styles.css        all styling
+src/                DevDojo's own content-derived maps (NOT the engine)
+  gradejava.js      auto-generated executable-grading specs (by lesson id)
+  quizzes.js        auto-generated quick-check bank (by lesson id)
+  quizzes_hand.js   hand-authored quizzes, where they exist
+content/streams/    one module per stream — the course content
+  manifest.json     stream order
+scripts/verify.js   content integrity gate: parses every module, runs each exercise's
+                    regex tests against its own solution, checks id uniqueness
+build.js            engine/ + src/ + content/ -> dist/index.html (+ devdojo.html)
+identity-dojo/      IdentityDojo: same shape, consumes ../engine
+site/               optional Node server: accounts, progress sync (SQLite via node:sqlite)
 ```
+
+**Why `engine/` is separate.** `src/` used to be both "DevDojo's source" and "the shared runtime",
+which meant a second course could only be added by forking 1,600 lines of `app.js`. Splitting the
+engine out makes the seam explicit: a course is content plus a build file, and lifting one into its own
+repository is a copy rather than a fork.
 
 Identity content lives in **[`identity-dojo/`](identity-dojo/README.md)** with its own manifest and
 build. It reuses this runtime (`identity-dojo/build.js` reads `../src`), so there is one engine to

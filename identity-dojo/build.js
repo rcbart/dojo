@@ -1,11 +1,17 @@
 #!/usr/bin/env node
-// Build dist/index.html for IdentityDojo. Reuses the shared runtime in ../src
-// so there is one engine to maintain; only the content, config and shell differ.
+// Build dist/index.html for IdentityDojo.
+//
+// This course owns everything under identity-dojo/ except the runtime, which
+// comes from the shared ../engine. That is the only external dependency: to
+// lift this course into its own repository, vendor or submodule engine/ and
+// change ENGINE below. Nothing else needs to move.
 const fs = require('fs');
 const path = require('path');
 const ROOT = __dirname;
+const ENGINE = path.join(ROOT, '..', 'engine');
+
 const read = p => fs.readFileSync(path.join(ROOT, p), 'utf8');
-const shared = p => fs.readFileSync(path.join(ROOT, '..', 'src', p), 'utf8');
+const engine = p => fs.readFileSync(path.join(ENGINE, p), 'utf8');
 
 const manifest = JSON.parse(read('content/streams/manifest.json'));
 const data = read('content/streams/_header.js')
@@ -13,16 +19,16 @@ const data = read('content/streams/_header.js')
   + read('content/streams/_footer.js');
 
 const script = read('src/config.js') + '\n'
-  + shared('app.js') + '\n'
-  + shared('sqlengine.js') + '\n'
-  + shared('gradejava.js') + '\n'
-  + shared('quizzes.js') + '\n'
-  + shared('quizzes_hand.js') + '\n'
-  + data + '\n'
-  + shared('boot.js');
+  + engine('sqlengine.js')
+  + read('src/gradejava.js')
+  + read('src/quizzes_hand.js')
+  + read('src/quizzes.js')
+  + engine('app.js')
+  + data
+  + engine('boot.js');
 
-const html = read('src/shell.html')
-  .replace('@@STYLES@@', () => shared('styles.css'))
+const html = engine('shell.html')
+  .replace('@@STYLES@@', () => engine('styles.css'))
   .replace('@@SCRIPT@@', () => script);
 
 fs.mkdirSync(path.join(ROOT, 'dist'), { recursive: true });

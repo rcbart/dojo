@@ -54,9 +54,13 @@ node build.js                  # produces dist/index.html
 node scripts/verify.js         # content integrity gate (target: 0 failures)
 ```
 
-Open `dist/index.html` directly in a browser, or host it on any static host. IdentityDojo **reuses the
-DevDojo runtime** in `../src` rather than forking it — only the content, the domain grouping
-(`src/config.js`) and the page shell differ, so there is one engine to maintain.
+Open `dist/index.html` directly in a browser, or host it on any static host.
+
+IdentityDojo owns everything in this directory except the runtime, which comes from the shared
+[`../engine`](../engine/README.md) — one engine, used by every course in the repo, rather than a fork
+per course. That is the course's **only** external dependency: to lift IdentityDojo into its own
+repository, vendor or submodule `engine/` and change the `ENGINE` constant at the top of `build.js`.
+Nothing else moves.
 
 ## How grading works (honestly)
 
