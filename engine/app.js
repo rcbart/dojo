@@ -752,7 +752,18 @@ function buildWorkerSrc(code,spec){
   const callLine=mode==='fetch'
     ? '__req=null; await '+spec.call+'.apply(null,c.args||[]); var r=checkFetch(c.expect,__req); results.push({name:c.name||("case "+(i+1)),pass:r.ok,note:r.note});'
     : 'var got=await '+spec.call+'.apply(null,c.args||[]); var ok=deepEq(got,c.expect); results.push({name:c.name||("case "+(i+1)),pass:ok,note:ok?"":("returned "+JSON.stringify(got))});';
-  return '"use strict";\n'
+  /* Hardening. The worker already has no DOM, no cookies, no localStorage and
+     no access to the page. What it CAN still reach by default is the network,
+     so those globals are removed before a single line of submitted code runs.
+     The page CSP (connect-src 'none') is the real control and this is defence
+     in depth: it turns a silent network attempt into an immediate TypeError. */
+  const harden = 'try{'
+    + '["importScripts","XMLHttpRequest","WebSocket","EventSource","Notification",'
+    + '"indexedDB","caches","navigator","SharedWorker","Worker","BroadcastChannel"]'
+    + '.forEach(function(k){try{delete self[k];}catch(e){self[k]=undefined;}});'
+    + (mode==='fetch'?'':'try{delete self.fetch;}catch(e){self.fetch=undefined;}')
+    + '}catch(e){}\n';
+  return '"use strict";\n'+harden
     +'function deepEq(a,b){return JSON.stringify(a)===JSON.stringify(b);}\n'
     +'function checkFetch(x,req){if(!req)return{ok:false,note:"no fetch was called"};var o=req.opts||{};'
     +'if(x.method&&String(o.method||"GET").toUpperCase()!==x.method.toUpperCase())return{ok:false,note:"method was "+(o.method||"GET")};'
@@ -783,7 +794,9 @@ function gradeJs(l,e,sid,ei,exs,code){
   };
   let src;try{src=buildWorkerSrc(code,e.run);}catch(x){return finish([],'could not prepare runner: '+x.message);}
   try{
-    w=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
+    const url=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));
+    w=new Worker(url);
+    URL.revokeObjectURL(url);   // the worker keeps running; the URL stops being resolvable
     const timer=setTimeout(()=>finish([],'timed out after 3s (possible infinite loop)'),3000);
     w.onmessage=ev=>{clearTimeout(timer);finish(ev.data,null);};
     w.onerror=ev=>{clearTimeout(timer);finish([],(ev&&ev.message)||'worker error (check for syntax errors)');};

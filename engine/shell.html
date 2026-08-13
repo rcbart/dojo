@@ -3,6 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Content Security Policy.
+     This app runs LEARNER-SUPPLIED CODE in a Web Worker, so the policy is
+     written around one goal: that code must not be able to reach the network.
+       default-src 'none'   deny everything, then allow only what is needed
+       connect-src 'none'   no fetch / XHR / WebSocket / EventSource, from the
+                            page OR from the worker, which inherits this policy.
+                            THIS is what stops submitted code exfiltrating.
+       script-src           'unsafe-inline' is unavoidable: the whole course is
+                            one offline file with no external origin to load
+                            from. No remote origin is allowed, so nothing can be
+                            pulled in. blob: permits the exercise worker only.
+       worker-src blob:     the sandboxed runner, and nothing else.
+       object/frame/base/form-action are all denied outright. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'none';
+  script-src 'unsafe-inline' blob:;
+  style-src 'unsafe-inline';
+  img-src data:;
+  font-src data:;
+  connect-src 'none';
+  worker-src blob:;
+  child-src blob:;
+  frame-src 'none';
+  frame-ancestors 'none';
+  object-src 'none';
+  base-uri 'none';
+  form-action 'none';
+">
+<meta name="referrer" content="no-referrer">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%20role%3D%22img%22%20aria-label%3D%22JavaDojo%22%3E%20%3Cdefs%3E%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236a5cf5%22%2F%3E%20%3Cstop%20offset%3D%220.55%22%20stop-color%3D%22%238b5cf6%22%2F%3E%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2306b6d4%22%2F%3E%20%3C%2FlinearGradient%3E%20%3C%2Fdefs%3E%20%3Crect%20x%3D%221%22%20y%3D%221%22%20width%3D%2230%22%20height%3D%2230%22%20rx%3D%228%22%20fill%3D%22url(%23g)%22%2F%3E%20%3C!--%20torii%20gate%20(dojo)%20--%3E%20%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%3E%20%3C!--%20top%20beam%20(kasagi)%2C%20gently%20arced%20--%3E%20%3Cpath%20d%3D%22M5%2010.5%20Q16%208%2027%2010.5%22%20stroke-width%3D%222.8%22%2F%3E%20%3C!--%20second%20beam%20(nuki)%20--%3E%20%3Cpath%20d%3D%22M7.5%2014.5%20H24.5%22%2F%3E%20%3C!--%20posts%20--%3E%20%3Cpath%20d%3D%22M10%2011%20V25%22%2F%3E%20%3Cpath%20d%3D%22M22%2011%20V25%22%2F%3E%20%3C%2Fg%3E%20%3C!--%20Java%20steam%20dot%20--%3E%20%3Ccircle%20cx%3D%2216%22%20cy%3D%2219%22%20r%3D%221.7%22%20fill%3D%22%23fff%22%2F%3E%20%3C%2Fsvg%3E">
 <title>DevDojo — Master software engineering</title>
 <style>@@STYLES@@</style>

@@ -23,32 +23,40 @@ jobs:
         with:
           node-version: '22'
 
-      # Both courses are gated on their own content-integrity check before
+      # Every course is gated on their own content-integrity check before
       # anything is published. A failure here fails the deploy.
       - name: Verify DevDojo content
         run: node scripts/verify.js
       - name: Verify IdentityDojo content
         run: node scripts/verify.js
         working-directory: identity-dojo
+      - name: Verify JSDojo content
+        run: node scripts/verify.js
+        working-directory: js-dojo
 
       - name: Build DevDojo
         run: node build.js
       - name: Build IdentityDojo
         run: node build.js
         working-directory: identity-dojo
+      - name: Build JSDojo
+        run: node build.js
+        working-directory: js-dojo
 
       # One Pages site: a landing page at / that presents both courses, and
       # one path per course. Adding a course = one build step + one copy line.
       - name: Assemble the site
         run: |
-          mkdir -p _site/dev _site/identity
+          mkdir -p _site/dev _site/identity _site/js
           cp docs/landing.html                _site/index.html
           cp dist/index.html                  _site/dev/index.html
           cp identity-dojo/dist/index.html    _site/identity/index.html
+          cp js-dojo/dist/index.html          _site/js/index.html
           test -s _site/index.html
           test -s _site/dev/index.html
           test -s _site/identity/index.html
-          ls -lh _site _site/dev _site/identity
+          test -s _site/js/index.html
+          ls -lh _site _site/dev _site/identity _site/js
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
