@@ -130,6 +130,149 @@ public class Pkce {
     }
 }`}},
 
+{id:'oa2b',title:'PKCE end to end: the attack, the flow, the pitfalls',body:`
+<p>The previous lesson gave the mechanism. This one walks the entire exchange parameter by parameter,
+names the two distinct attacks PKCE defeats, and covers the ways implementations get it wrong. PKCE is
+now required on <i>every</i> authorization code flow, so it is worth knowing completely.</p>
+
+<h4>The attack it was invented for</h4>
+<p>PKCE came from mobile. A native app cannot hold a client secret — anyone can unpack the binary — and
+it receives its authorization code through a <b>custom URL scheme</b> like
+<code>myapp://callback</code>. On mobile platforms of the time, <i>any</i> installed app could register
+that same scheme. Nothing verified ownership.</p>
+<div class="codeSample" data-hl>WITHOUT PKCE — authorization code interception
+
+ 1. real app  -> browser: /authorize?client_id=app&redirect_uri=myapp://cb
+ 2. user authenticates and consents
+ 3. AS -> browser: redirect to myapp://cb?code=XYZ
+ 4. MALICIOUS app also registered myapp:// and receives the code
+ 5. malicious app -> /token  code=XYZ, client_id=app
+ 6. AS has no way to tell the apps apart -> issues the token
+
+// there is no secret, so "which app is this?" is unanswerable.</div>
+<p>The insight behind the fix: if the app cannot prove <i>who</i> it is, let it prove that it is
+<i>the same party that started this particular flow</i>. A fresh secret per flow, committed to up
+front, and revealed only at redemption.</p>
+
+<h4>The second attack: code injection</h4>
+<p>Less discussed and the reason PKCE now applies to confidential clients too. Here the attacker does
+not steal your code — they feed you <i>theirs</i>.</p>
+<p>The attacker begins their own legitimate authorization flow and obtains a code for <i>their</i>
+account. They then inject that code into a victim's session, so the victim's client redeems it and ends
+up logged in as, or linked to, the attacker's account. Data the victim then uploads goes to the
+attacker's account. A client secret does nothing here — the client is genuine, it is the code that is
+foreign. PKCE stops it because the victim's client holds a verifier that does not match the challenge
+the attacker's code was bound to.</p>
+
+<h4>The complete flow</h4>
+<div class="codeSample" data-hl>STEP 1 — client generates, per flow, and keeps in memory
+  code_verifier = 43-128 chars from [A-Z a-z 0-9 - . _ ~]
+                  cryptographically random, e.g. base64url(32 random bytes)
+  code_challenge = base64url_nopad( SHA-256( ASCII(code_verifier) ) )
+
+STEP 2 — authorization request (front channel, through the browser)
+  GET /authorize
+    ?response_type=code
+    &client_id=app
+    &redirect_uri=https://app.example.com/cb    exact match, registered
+    &scope=openid%20orders:read
+    &state=xyz789                     CSRF: bound to the user's session
+    &code_challenge=E9Melhoa2Ow...    the HASH, safe to expose
+    &code_challenge_method=S256
+
+STEP 3 — AS stores challenge + method against the issued code, then redirects
+  302 https://app.example.com/cb?code=SplxlOB&state=xyz789
+
+STEP 4 — client checks state matches, then redeems (back channel, direct POST)
+  POST /token
+    grant_type=authorization_code
+    &code=SplxlOB
+    &redirect_uri=https://app.example.com/cb    must match step 2 exactly
+    &client_id=app
+    &code_verifier=dBjftJeZ4CVP...    the ORIGINAL, never sent before now
+
+STEP 5 — AS verifies
+    base64url_nopad(SHA-256(code_verifier)) == stored code_challenge ?
+    and the code is unused, unexpired, and issued to this client
+  -> 200 { "access_token": "...", "token_type": "Bearer", ... }</div>
+<p>The asymmetry is the whole design. The <b>challenge</b> travels through the browser, where it may be
+observed — and that is harmless, because SHA-256 cannot be reversed. The <b>verifier</b> travels only on
+the direct back-channel POST, once, at the end.</p>
+
+<h4>state and PKCE are not the same thing</h4>
+<p>They are routinely conflated because they sit next to each other in the request:</p>
+<div class="codeSample" data-hl>state           binds the RESPONSE to the user's session   -> stops CSRF
+code_challenge  binds the CODE to the client's secret       -> stops interception
+                                                               and injection
+// you need both. neither substitutes for the other.</div>
+<p>In OpenID Connect the <code>nonce</code> is a third, separate thing: it binds the <i>ID token</i> to
+this login, defeating ID token replay.</p>
+
+<h4>Four ways to get it wrong</h4>
+<ol>
+<li><b>Using <code>plain</code>.</b> The specification allows <code>code_challenge_method=plain</code>,
+where the challenge <i>is</i> the verifier. Anyone who observes the authorization request then has the
+verifier, and the protection is gone. Always <code>S256</code>; a server should reject
+<code>plain</code> outright.</li>
+<li><b>The downgrade attack.</b> If a server accepts a redemption with no <code>code_verifier</code>
+when a challenge <i>was</i> registered, an attacker simply omits it. The server must remember that a
+challenge was stored and <b>require</b> the verifier — absence is failure, not a skipped optional
+check.</li>
+<li><b>A reused or weak verifier.</b> Generate it fresh per flow from a cryptographic random source, at
+least 43 characters. A verifier derived from a timestamp, a session id or a counter is guessable, and
+then so is the flow.</li>
+<li><b>Storing the verifier where the code lands.</b> On a SPA, keeping it in
+<code>localStorage</code> hands it to any injected script alongside everything else. Memory, for the
+lifetime of the flow, is the right place.</li>
+</ol>
+
+<h4>When to use it</h4>
+<p>Always. The old guidance — "PKCE is for public clients" — is obsolete: OAuth 2.1 requires it on every
+authorization code request, because the code-injection attack applies regardless of whether the client
+holds a secret. It costs one hash, and there is no scenario where an authorization code flow is
+better off without it.</p>`,
+docs:[['RFC 7636 — Proof Key for Code Exchange','https://www.rfc-editor.org/rfc/rfc7636'],['OAuth 2.0 Security BCP — authorization code injection','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics#name-authorization-code-injection'],['RFC 8252 — OAuth 2.0 for Native Apps','https://www.rfc-editor.org/rfc/rfc8252'],['The OAuth 2.1 Authorization Framework (draft)','https://datatracker.ietf.org/doc/draft-ietf-oauth-v2-1/']],
+ex:{title:'The authorization server side of PKCE',
+prompt:`Implement the verification an authorization server performs. Write <code>PkceServer</code> with three methods. <code>static boolean methodAllowed(String method)</code> accepts only <code>"S256"</code>, rejecting <code>"plain"</code> and null. <code>static boolean verifierWellFormed(String verifier)</code> requires a non-null verifier whose length is between 43 and 128 inclusive. <code>static boolean redeem(String storedChallenge, String presentedVerifier, java.util.function.Function&lt;String,String&gt; sha256Base64Url)</code> returns true only when a challenge was stored, a well-formed verifier was presented, and hashing the verifier reproduces the stored challenge — and it must return <b>false</b> when a challenge was stored but no verifier was presented, which is the downgrade attack.`,
+starter:`import java.util.function.Function;
+
+public class PkceServer {
+    static boolean methodAllowed(String method) {
+        return false;
+    }
+    static boolean verifierWellFormed(String verifier) {
+        return false;
+    }
+    static boolean redeem(String storedChallenge, String presentedVerifier,
+                          Function<String,String> sha256Base64Url) {
+        return false;
+    }
+}`,
+tests:[{d:'only S256 is accepted',re:'"S256"\\s*\\.\\s*equals|equals\\s*\\(\\s*"S256"'},{d:'the verifier has a minimum length',re:'43'},{d:'the verifier has a maximum length',re:'128'},{d:'a null verifier is rejected',re:'verifier\\s*==\\s*null|null\\s*==\\s*verifier'},{d:'a missing verifier fails the downgrade check',re:'presentedVerifier\\s*==\\s*null|null\\s*==\\s*presentedVerifier'},{d:'the stored challenge is required',re:'storedChallenge\\s*==\\s*null|null\\s*==\\s*storedChallenge'},{d:'the presented verifier is hashed before comparison',re:'sha256Base64Url\\s*\\.\\s*apply\\s*\\('},{d:'the hash is compared to the stored challenge',re:'equals\\s*\\('}],
+behavior:`methodAllowed("S256") is true; methodAllowed("plain") is false, because with plain the challenge is the verifier and anyone who saw the authorization request already has it. verifierWellFormed of a 43-character string is true, of a 42-character one false, and of a 129-character one false. redeem returns true when the hash of the presented verifier equals the stored challenge. It returns false when presentedVerifier is null even though a challenge was stored — that is the downgrade attack, where the attacker simply omits the parameter and hopes the check is treated as optional. It also returns false when no challenge was stored at all.`,
+hints:['<code>return "S256".equals(method);</code>','Length bounds are inclusive on both ends: <code>&gt;= 43 &amp;&amp; &lt;= 128</code>.','Guard both the stored challenge and the presented verifier before hashing, then <code>storedChallenge.equals(sha256Base64Url.apply(presentedVerifier))</code>.'],
+solution:`import java.util.function.Function;
+
+public class PkceServer {
+    static boolean methodAllowed(String method) {
+        // plain leaks the verifier to anyone who saw the authorization request
+        return "S256".equals(method);
+    }
+    static boolean verifierWellFormed(String verifier) {
+        if (verifier == null) return false;
+        int n = verifier.length();
+        return n >= 43 && n <= 128;
+    }
+    static boolean redeem(String storedChallenge, String presentedVerifier,
+                          Function<String,String> sha256Base64Url) {
+        if (storedChallenge == null) return false;
+        // downgrade attack: a challenge was stored, so the verifier is REQUIRED
+        if (presentedVerifier == null) return false;
+        if (!verifierWellFormed(presentedVerifier)) return false;
+        return storedChallenge.equals(sha256Base64Url.apply(presentedVerifier));
+    }
+}`}},
+
 {id:'oa3',title:'Exchanging the code for tokens',body:`
 <p>Step 4 of the flow: the client's <b>backend</b> takes the authorization code and calls the AS <code>/token</code> endpoint over the <b>back channel</b> (a direct, private POST — never the browser). This is where the actual tokens come out.</p>
 <p>The request is a <code>application/x-www-form-urlencoded</code> body:</p>
@@ -379,6 +522,234 @@ public class MobileAuthorize {
                 + "&state=" + URLEncoder.encode(state, "UTF-8")
                 + "&code_challenge=" + URLEncoder.encode(codeChallenge, "UTF-8")
                 + "&code_challenge_method=S256";
+    }
+}`}},
+
+{id:'oa11',title:'OAuth 2.1: what the revision removes and mandates',body:`
+<p>OAuth 2.0 is from 2012, and the years since produced a long trail of security advice scattered across
+extension RFCs, best-current-practice drafts and errata. <b>OAuth 2.1</b> is the consolidation: it does
+not invent anything, it <i>folds the accumulated guidance into the base specification</i> and deletes
+the parts the community stopped recommending.</p>
+<p>That framing matters. If you have been following the Security BCP, you are already writing OAuth 2.1.
+The value of the revision is that the safe path becomes the <i>default</i> path, rather than something
+you had to know to look for.</p>
+
+<h4>What is removed</h4>
+<ul>
+<li><b>The Implicit grant</b> (<code>response_type=token</code>). It returned an access token directly
+in the URL fragment, so the token passed through browser history, referrer headers and any script on the
+page — and there was no way to authenticate the client. Authorization Code with PKCE does the same job
+without any of that.</li>
+<li><b>The Resource Owner Password Credentials grant</b> (ROPC). The app collects the user's password
+and posts it to the token endpoint: credential forwarding, with everything that implies. It cannot
+support MFA, passkeys or federation, and it teaches users to type their password into applications.</li>
+<li><b>Bearer tokens in query strings.</b> Tokens must travel in the <code>Authorization</code> header,
+not <code>?access_token=</code>, for the reasons that apply to any credential in a URL: logs, history,
+referrers.</li>
+</ul>
+
+<h4>What becomes mandatory</h4>
+<ul>
+<li><b>PKCE for every authorization code request</b> — not just public clients. Confidential clients
+benefit too, because PKCE defends against code interception and injection, which a client secret does
+not address at all. This is the single biggest change in practice.</li>
+<li><b>Exact string matching on redirect URIs.</b> No wildcards, no prefix matching, no "starts with."
+Loose redirect matching is one of the most reliable ways to steal an authorization code.</li>
+<li><b>Refresh tokens must be sender-constrained or rotated.</b> A long-lived bearer refresh token in a
+public client is the highest-value credential in the system, so it must either be bound to a key (DPoP
+or mTLS) or rotated on every use with reuse detection.</li>
+</ul>
+<div class="codeSample" data-hl>OAuth 2.0 (as commonly deployed)      OAuth 2.1
+  implicit grant available            removed
+  ROPC available                      removed
+  PKCE optional, "for mobile"         REQUIRED for all authorization code flows
+  redirect_uri matching left vague    exact string match, always
+  refresh tokens: long-lived bearer   rotate with reuse detection, or bind to a key
+  token in query string tolerated     prohibited
+
+// nothing here is new. it is the Security BCP, made the default.</div>
+
+<h4>What is unchanged</h4>
+<p>Worth stating plainly, because "2.1" sounds more disruptive than it is. Authorization Code,
+Client Credentials, Refresh, Device Authorization Grant: all still present and unchanged. Token
+formats, scopes, the endpoints, OpenID Connect on top — all the same. There is <b>no protocol
+incompatibility</b>: an OAuth 2.1 client talks to an OAuth 2.0 server perfectly well, provided that
+server supports PKCE, which essentially all of them now do.</p>
+
+<h4>What it deliberately does not solve</h4>
+<p>OAuth 2.1 tightens the flows. It does not address the problems that live above them, and it is worth
+knowing where the boundary is:</p>
+<ul>
+<li><b>It is still not authentication.</b> An access token remains a statement about authorization.
+OpenID Connect is still what you use to learn who the user is.</li>
+<li><b>Token storage in browsers</b> is out of scope — that is the browser-based apps BCP and the BFF
+pattern.</li>
+<li><b>Authorization semantics</b> — what a scope means, whether the user owns the record — remain
+entirely yours. OAuth never had an opinion on that, and still does not.</li>
+</ul>
+
+<h4>The practical checklist</h4>
+<p>To assess an existing integration against OAuth 2.1, five questions settle almost everything:</p>
+<ol>
+<li>Is every authorization code request using PKCE with <code>S256</code>? (Not <code>plain</code>.)</li>
+<li>Are redirect URIs matched by exact string comparison, with no wildcard entries registered?</li>
+<li>Are refresh tokens rotated with reuse detection, or key-bound?</li>
+<li>Is any implicit or password grant still enabled — including for that one legacy client nobody has
+migrated?</li>
+<li>Does any code path accept a token from a query parameter?</li>
+</ol>
+<p>Question four is where the real risk usually sits: the grants are removed from the specification, but
+authorization servers keep supporting them for compatibility, and an enabled-but-unused legacy grant is
+still an enabled grant.</p>`,
+docs:[['The OAuth 2.1 Authorization Framework (draft)','https://datatracker.ietf.org/doc/draft-ietf-oauth-v2-1/'],['OAuth 2.0 Security Best Current Practice','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['RFC 7636 — PKCE','https://www.rfc-editor.org/rfc/rfc7636'],['oauth.net — OAuth 2.1','https://oauth.net/2.1/']],
+ex:{title:'Audit a client configuration against OAuth 2.1',
+prompt:`Write <code>OAuth21</code> with four methods. <code>static boolean grantAllowed(String grantType)</code> returns false for <code>"implicit"</code> and <code>"password"</code> and true for <code>"authorization_code"</code>, <code>"client_credentials"</code>, <code>"refresh_token"</code> and <code>"device_code"</code>; anything else, including null, is false. <code>static boolean pkceOk(String method)</code> accepts only <code>"S256"</code> — <code>"plain"</code> and null are rejected. <code>static boolean redirectOk(String registered, String presented)</code> requires an exact match of two non-null values, and must reject any registered value containing <code>"*"</code>. <code>static boolean refreshOk(boolean rotatedWithReuseDetection, boolean senderConstrained)</code> is true when <b>either</b> protection is in place.`,
+starter:`public class OAuth21 {
+    static boolean grantAllowed(String grantType) {
+        return false;
+    }
+    static boolean pkceOk(String method) {
+        return false;
+    }
+    static boolean redirectOk(String registered, String presented) {
+        return false;
+    }
+    static boolean refreshOk(boolean rotatedWithReuseDetection, boolean senderConstrained) {
+        return false;
+    }
+}`,
+tests:[{d:'the implicit grant is removed',re:'"implicit"'},{d:'the password grant is removed',re:'"password"'},{d:'authorization code remains',re:'"authorization_code"'},{d:'only S256 is accepted for PKCE',re:'"S256"'},{d:'wildcard redirect registrations are refused',re:'contains\\s*\\(\\s*"\\*"\\s*\\)'},{d:'redirect matching is exact',re:'equals\\s*\\('},{d:'either refresh protection suffices',re:'\\|\\|'}],
+behavior:`grantAllowed("authorization_code") and grantAllowed("device_code") are true; grantAllowed("implicit"), grantAllowed("password") and grantAllowed(null) are false. pkceOk("S256") is true while pkceOk("plain") is false, because plain offers no protection against an attacker who observed the challenge. redirectOk("https://app.example.com/cb","https://app.example.com/cb") is true; a registered value of "https://app.example.com/*" is false however it is presented, and "https://app.example.com/cb2" against the registered "https://app.example.com/cb" is false. refreshOk(true,false) and refreshOk(false,true) are both true; refreshOk(false,false) is false, since a long-lived bearer refresh token in a public client is the highest-value credential in the system.`,
+hints:['A switch listing the four permitted grants, defaulting to false, handles the removed ones and null together.','<code>return "S256".equals(method);</code>','Reject the wildcard registration first, then compare with <code>equals</code>.'],
+solution:`public class OAuth21 {
+    static boolean grantAllowed(String grantType) {
+        if (grantType == null) return false;
+        switch (grantType) {
+            case "implicit":            // removed: token in the URL fragment
+            case "password":            // removed: the app collects the password
+                return false;
+            case "authorization_code":
+            case "client_credentials":
+            case "refresh_token":
+            case "device_code":
+                return true;
+            default:
+                return false;
+        }
+    }
+    static boolean pkceOk(String method) {
+        // plain gives nothing away only if nobody observed the challenge
+        return "S256".equals(method);
+    }
+    static boolean redirectOk(String registered, String presented) {
+        if (registered == null || presented == null) return false;
+        if (registered.contains("*")) return false;   // no wildcard registrations
+        return registered.equals(presented);          // exact string match, always
+    }
+    static boolean refreshOk(boolean rotatedWithReuseDetection, boolean senderConstrained) {
+        return rotatedWithReuseDetection || senderConstrained;
+    }
+}`}},
+
+{id:'oa8b',title:'Browser-based apps and the BFF pattern',body:`
+<p>A single-page app needs to call an API on the user's behalf. The obvious design — run the OAuth flow
+in JavaScript, keep the access token in the browser, attach it to fetch calls — is what most tutorials
+show, and it is no longer the recommended approach. Understanding why leads to the pattern that
+replaced it.</p>
+
+<h4>The problem is not the flow, it is the storage</h4>
+<p>Authorization Code with PKCE fixed the <i>flow</i> for public clients. What it cannot fix is that a
+browser has nowhere safe to put the result:</p>
+<ul>
+<li><b><code>localStorage</code></b> — readable by any JavaScript on the page. One compromised
+dependency, one XSS, and the token is exfiltrated. It also persists across tabs and restarts, so the
+window of exposure is long.</li>
+<li><b><code>sessionStorage</code></b> — the same exposure, with a shorter life.</li>
+<li><b>A JavaScript variable</b> — better, since nothing is persisted, but still readable by any script
+in the same context, and lost on every refresh.</li>
+</ul>
+<p>The uncomfortable summary: <b>if your app can read the token, so can any script that gets injected
+into your app.</b> No amount of care with the flow changes that, because the token has to be readable
+for the app to use it.</p>
+<p>There is a second, quieter problem. Browsers now aggressively partition and expire third-party
+cookies, which breaks the silent-renew mechanisms SPAs relied on to refresh tokens without a redirect.
+Even setting security aside, the pattern has become fragile.</p>
+
+<h4>The BFF pattern</h4>
+<p>A <b>backend-for-frontend</b> is a small server-side component that belongs to your frontend. It
+holds the tokens; the browser holds only a session cookie.</p>
+<div class="codeSample" data-hl>WITHOUT a BFF                        WITH a BFF
+browser  --token in JS-->  API       browser --cookie--> BFF --token--> API
+                                                          ^
+  token readable by any script         token never leaves the server;
+  refresh token in the browser         browser holds an HttpOnly cookie
+  CORS on every API                    same-origin calls, no CORS
+
+// the browser now has NO token at all. XSS can still make requests as
+// the user while the page is open, but it cannot steal a durable credential.</div>
+<p>The BFF is a confidential client: it has a real secret, so it can use the strongest client
+authentication, and it holds refresh tokens where they belong. The browser's session cookie should be
+<code>HttpOnly</code>, <code>Secure</code> and <code>SameSite=Lax</code> or stricter — invisible to
+JavaScript by construction.</p>
+
+<h4>What this does and does not buy</h4>
+<p>Be precise, because BFF is sometimes oversold. It <b>eliminates token theft</b>: there is no durable
+credential in the browser to exfiltrate, so an XSS that fires once cannot grant lasting access. It does
+<b>not</b> eliminate XSS damage — injected script can still call the BFF with the user's cookie and act
+as them while the page is open. The difference is between an attacker who has a token they can use from
+anywhere for an hour, and an attacker confined to a live session in the victim's browser.</p>
+<p>The costs are real: you now operate a server component, and because the browser authenticates with a
+cookie, you have reintroduced <b>CSRF</b> — which cookie-based apps have always had to handle.
+<code>SameSite</code> cookies plus a per-session CSRF token on state-changing requests is the standard
+answer.</p>
+
+<h4>Choosing</h4>
+<div class="codeSample" data-hl>BFF                        default for anything handling real data
+                           tokens server-side, cookie to the browser
+
+Token in memory + PKCE     acceptable when a backend is genuinely impossible:
+                           short-lived access token, NO refresh token in the
+                           browser, accept re-authentication on refresh
+
+localStorage               no. this is the pattern the BCP exists to discourage</div>
+<p>Note what has happened conceptually: the BFF turns your SPA back into a <b>confidential client</b>
+with a session, which is what server-rendered applications were doing all along. The industry spent a
+decade moving tokens into the browser and has spent the last few years moving them back out.</p>`,
+docs:[['OAuth 2.0 for Browser-Based Applications (BCP draft)','https://datatracker.ietf.org/doc/draft-ietf-oauth-browser-based-apps/'],['OWASP — Cross-Site Request Forgery Prevention Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html'],['MDN — Set-Cookie: HttpOnly, Secure, SameSite','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie']],
+ex:{title:'Score a browser token strategy',
+prompt:`Write <code>BrowserAuth</code> with three methods. <code>static boolean scriptReadable(String storage)</code> returns true for <code>"localStorage"</code>, <code>"sessionStorage"</code> and <code>"jsVariable"</code>, and false for <code>"httpOnlyCookie"</code> and anything else including <code>null</code>. <code>static boolean durableCredentialInBrowser(String storage, boolean refreshTokenInBrowser)</code> is true when the storage is script-readable <b>and</b> a refresh token is held there — the combination that turns one XSS into lasting access. <code>static String recommend(boolean hasBackend)</code> returns <code>"bff"</code> when a backend is available and <code>"memory-only-pkce"</code> otherwise.`,
+starter:`public class BrowserAuth {
+    static boolean scriptReadable(String storage) {
+        return false;
+    }
+    static boolean durableCredentialInBrowser(String storage, boolean refreshTokenInBrowser) {
+        return false;
+    }
+    static String recommend(boolean hasBackend) {
+        return null;
+    }
+}`,
+tests:[{d:'localStorage is script-readable',re:'"localStorage"'},{d:'an HttpOnly cookie is not script-readable',re:'"httpOnlyCookie"|default'},{d:'a JS variable is still script-readable',re:'"jsVariable"'},{d:'null storage is handled',re:'storage\\s*==\\s*null|null\\s*==\\s*storage'},{d:'durability needs both conditions',re:'&&\\s*refreshTokenInBrowser|refreshTokenInBrowser\\s*&&'},{d:'a backend means the BFF pattern',re:'"bff"'},{d:'otherwise memory-only with PKCE',re:'"memory-only-pkce"'}],
+behavior:`scriptReadable("localStorage"), ("sessionStorage") and ("jsVariable") are all true — if your code can read it, so can injected script. scriptReadable("httpOnlyCookie") and scriptReadable(null) are false. durableCredentialInBrowser("localStorage", true) is true, the worst case, because one XSS yields a refresh token usable from anywhere long after the page closes. durableCredentialInBrowser("jsVariable", false) is false: a short-lived access token in memory is exposed while the page is open but leaves nothing behind. durableCredentialInBrowser("httpOnlyCookie", true) is false, since script cannot read the cookie at all. recommend(true) is "bff"; recommend(false) is "memory-only-pkce".`,
+hints:['A switch with three true cases and <code>default: return false;</code> covers null too if you guard first.','<code>return scriptReadable(storage) &amp;&amp; refreshTokenInBrowser;</code>','A single ternary is enough for <code>recommend</code>.'],
+solution:`public class BrowserAuth {
+    static boolean scriptReadable(String storage) {
+        if (storage == null) return false;
+        switch (storage) {
+            case "localStorage":
+            case "sessionStorage":
+            case "jsVariable":
+                return true;    // if your code can read it, so can injected script
+            default:
+                return false;   // httpOnlyCookie: invisible to JavaScript
+        }
+    }
+    static boolean durableCredentialInBrowser(String storage, boolean refreshTokenInBrowser) {
+        // one XSS turning into lasting access needs BOTH of these
+        return scriptReadable(storage) && refreshTokenInBrowser;
+    }
+    static String recommend(boolean hasBackend) {
+        return hasBackend ? "bff" : "memory-only-pkce";
     }
 }`}},
 

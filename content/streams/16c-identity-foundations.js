@@ -95,8 +95,454 @@ public class Access {
     }
 }`}},
 
+{id:'idflife',title:'How a person becomes a login: the identity lifecycle',body:`
+<p>Before any protocol can run, something has to turn a <i>human being</i> into something a computer can
+check. Every later lesson assumes that has already happened. This is that missing first step — and it
+explains a pile of vocabulary that otherwise arrives unannounced.</p>
+
+<h4>Four things people call "identity" (they are not the same)</h4>
+<ul>
+<li><b>The person</b> — a real human, or a real machine. Exists whether or not any computer knows it.</li>
+<li><b>The identity</b> — the set of facts a system holds about that person. Abstract.</li>
+<li><b>The account</b> — the concrete record in one particular system. One person routinely has many
+accounts: a work account, a Google account, a customer account. Same person, different accounts.</li>
+<li><b>The identifier</b> — the string that names the account inside that system: a username, an email,
+a UUID, an employee number.</li>
+</ul>
+<p>Protocol specs say <b>subject</b> (the entity being described — the <code>sub</code> claim in a JWT)
+and <b>principal</b> (the authenticated entity a system is currently acting for). Treat them as
+"the who." The important habit: a person is not an account, and an account is not an identifier.</p>
+
+<h4>The lifecycle, start to finish</h4>
+<ol>
+<li><b>Identity proofing</b> — establishing that the person is who they claim <i>in the real world</i>.
+Checking a passport, verifying an employment record, confirming an email. This is not authentication;
+it happens once, before any account exists. Getting it wrong means you will perfectly authenticate an
+impostor forever.</li>
+<li><b>Registration / enrollment</b> — creating the account and assigning the identifier.</li>
+<li><b>Credential binding</b> — attaching a way to prove ownership of that account: setting a password,
+registering a passkey, issuing a certificate. <b>Binding</b> is the actual link between the person and
+the identifier, and it is the step attackers target — a self-service password reset with a weak email
+check is a binding vulnerability, not an authentication one.</li>
+<li><b>Authentication</b> — every subsequent login. The person presents the bound credential and the
+system confirms it matches. This is the only step most courses discuss.</li>
+<li><b>Ongoing changes ("mover")</b> — the person changes department, role, or name; entitlements must
+follow.</li>
+<li><b>Deprovisioning ("leaver")</b> — the account is disabled and access ends. The unglamorous step
+that audits actually fail on: orphaned accounts belonging to people who left years ago.</li>
+</ol>
+<p>Steps 2, 5 and 6 together are <b>provisioning</b>, and the industry shorthand for the whole arc is
+<b>joiner / mover / leaver</b>. Automating it across systems is what SCIM does, much later in the course.</p>
+
+<h4>Credential vs authenticator</h4>
+<p>These get used interchangeably and should not be. NIST is precise about it:</p>
+<ul>
+<li><b>Authenticator</b> — the <i>thing</i> that does the proving: a password, a phone running an
+authenticator app, a security key, a fingerprint sensor. Something you know, have, or are.</li>
+<li><b>Credential</b> — the <i>binding record</i> that ties an authenticator to an identifier, stored by
+the system: the row saying "account alice is proven by this password hash" or "…by this public key."</li>
+</ul>
+<p>So you <i>possess</i> an authenticator; the system <i>stores</i> a credential. When someone says
+"credentials were stolen," ask which: a stolen authenticator (a password) is a different incident from
+a stolen credential store (the hash database).</p>
+
+<h4>Where identity lives: the directory</h4>
+<p>Accounts and their facts are kept in a <b>directory</b> — historically LDAP or Active Directory,
+today just as often a cloud identity provider's user store. It holds accounts, their <b>attributes</b>
+(department, manager, email), and their group memberships. When a later lesson says "the IdP looks up
+the user," this is what it looks in.</p>
+<div class="codeSample" data-hl>PERSON            Ada, a real human being
+  |  identity proofing        (passport checked — happens once, before login)
+  v
+ACCOUNT           id=u-4817  in the corporate directory
+  |  identifier               ada@corp.example
+  |  attributes               department=Platform, manager=u-1102
+  |  credential binding       -> authenticator: passkey (public key stored)
+  v
+AUTHENTICATION    every login from now on: prove you hold the authenticator
+  |
+  v
+DEPROVISION       account disabled -> access ends everywhere at once</div>
+<p>Two payoffs from having this map. First, <b>assurance</b> — a phrase like "high assurance" is
+ambiguous until you ask <i>which step</i>: how carefully was the person proofed (IAL), or how strong is
+the login (AAL)? Those are different scales for different steps. Second, <b>revocation</b> — "remove
+access" can mean disable the account, unbind a credential, or invalidate a live session, and only the
+lifecycle view makes it obvious those are three separate actions.</p>`,
+docs:[['NIST SP 800-63-3 — Digital Identity Guidelines (overview)','https://pages.nist.gov/800-63-3/sp800-63-3.html'],['NIST SP 800-63A — Enrollment & Identity Proofing','https://pages.nist.gov/800-63-3/sp800-63a.html'],['RFC 7644 — SCIM Protocol','https://www.rfc-editor.org/rfc/rfc7644']],
+exs:[
+{title:'Sort the vocabulary: identifier, credential, authenticator, attribute',
+prompt:`Write <code>IdentityTerms</code> with <code>static String classify(String thing)</code> returning: <code>"identifier"</code> for <code>"email"</code> or <code>"username"</code>; <code>"authenticator"</code> for <code>"password"</code>, <code>"passkey"</code> or <code>"fingerprint"</code>; <code>"attribute"</code> for <code>"department"</code> or <code>"manager"</code>; and <code>"unknown"</code> for anything else, including <code>null</code>. Use a <code>switch</code> on the input. Then add <code>static boolean provesOwnership(String thing)</code> returning <code>true</code> only for authenticators — the only category that proves you own the account.`,
+starter:`public class IdentityTerms {
+    static String classify(String thing) {
+        return null;
+    }
+    static boolean provesOwnership(String thing) {
+        return false;
+    }
+}`,
+tests:[{d:'guards null before switching',re:'thing\\s*==\\s*null|null\\s*==\\s*thing'},{d:'uses a switch on the input',re:'switch\\s*\\(\\s*thing'},{d:'names an account: identifier',re:'"identifier"'},{d:'proves ownership: authenticator',re:'"authenticator"'},{d:'a stored fact: attribute',re:'"attribute"'},{d:'unrecognised input falls through',re:'"unknown"'},{d:'ownership is derived from the classification',re:'"authenticator"\\s*\\.\\s*equals|equals\\s*\\(\\s*"authenticator"'}],
+behavior:`classify("email") and classify("username") return "identifier". classify("password"), classify("passkey") and classify("fingerprint") return "authenticator". classify("department") and classify("manager") return "attribute". classify("badge-number") and classify(null) return "unknown". provesOwnership("passkey") is true; provesOwnership("email") is false, because an identifier only names the account, it never proves you hold it.`,
+hints:['Guard first: <code>if (thing == null) return "unknown";</code> — a switch on null throws.','Group the cases with fall-through: <code>case "email": case "username": return "identifier";</code>','<code>return "authenticator".equals(classify(thing));</code> — reuse the method instead of repeating the list.'],
+solution:`public class IdentityTerms {
+    static String classify(String thing) {
+        if (thing == null) return "unknown";
+        switch (thing) {
+            case "email":
+            case "username":
+                return "identifier";   // names the account
+            case "password":
+            case "passkey":
+            case "fingerprint":
+                return "authenticator"; // proves you hold the account
+            case "department":
+            case "manager":
+                return "attribute";     // a fact about the account
+            default:
+                return "unknown";
+        }
+    }
+    static boolean provesOwnership(String thing) {
+        // only an authenticator proves ownership; an identifier merely names
+        return "authenticator".equals(classify(thing));
+    }
+}`},
+{title:'Joiner, mover, leaver',
+prompt:`Write <code>Lifecycle</code> with <code>static String stage(String event)</code> returning <code>"joiner"</code> for <code>"hired"</code>, <code>"mover"</code> for <code>"transferred"</code> or <code>"promoted"</code>, <code>"leaver"</code> for <code>"terminated"</code> or <code>"resigned"</code>, and <code>"unknown"</code> otherwise (including <code>null</code>). Then <code>static boolean endsAccess(String event)</code>, returning <code>true</code> only for a leaver — the stage where deprovisioning must run, and the one organisations most often skip.`,
+starter:`public class Lifecycle {
+    static String stage(String event) {
+        return null;
+    }
+    static boolean endsAccess(String event) {
+        return false;
+    }
+}`,
+tests:[{d:'guards null input',re:'event\\s*==\\s*null|null\\s*==\\s*event'},{d:'switches on the event',re:'switch\\s*\\(\\s*event'},{d:'account created: joiner',re:'"joiner"'},{d:'entitlements change: mover',re:'"mover"'},{d:'access must end: leaver',re:'"leaver"'},{d:'unrecognised events fall through',re:'"unknown"'},{d:'deprovisioning is driven by the stage',re:'"leaver"\\s*\\.\\s*equals|equals\\s*\\(\\s*"leaver"'}],
+behavior:`stage("hired") returns "joiner". stage("transferred") and stage("promoted") return "mover". stage("terminated") and stage("resigned") return "leaver". stage("rehired") and stage(null) return "unknown". endsAccess("resigned") is true; endsAccess("promoted") is false — a mover keeps access but should have different entitlements, which is why movers quietly accumulate permissions over a career.`,
+hints:['Guard null first, then <code>switch (event)</code>.','Two events map to each of mover and leaver — use case fall-through.','<code>return "leaver".equals(stage(event));</code>'],
+solution:`public class Lifecycle {
+    static String stage(String event) {
+        if (event == null) return "unknown";
+        switch (event) {
+            case "hired":
+                return "joiner";   // provision the account
+            case "transferred":
+            case "promoted":
+                return "mover";    // entitlements must follow the person
+            case "terminated":
+            case "resigned":
+                return "leaver";   // deprovision: access ends everywhere
+            default:
+                return "unknown";
+        }
+    }
+    static boolean endsAccess(String event) {
+        return "leaver".equals(stage(event));
+    }
+}`}]},
+
+{id:'idfclaim',title:'Attributes, claims and assertions: the data model',body:`
+<p>Identity systems spend most of their time moving <i>facts about people</i> from where they are stored
+to where a decision is made. Three words describe those facts at three different moments, and they are
+used interchangeably far too often. Separating them makes the rest of the domain legible.</p>
+
+<h4>The three words</h4>
+<ul>
+<li><b>Attribute</b> — a fact <i>at rest</i>, stored in a directory. <code>department = Platform</code>
+sitting in a database row. It is just data; nobody has vouched for it in transit.</li>
+<li><b>Claim</b> — a fact <i>in transit</i>, asserted by someone. When the IdP puts
+<code>"department":"Platform"</code> into a token, the fact becomes a claim: a statement <i>by a
+specific issuer</i>. The word is deliberately humble — a claim is something asserted, and it is worth
+exactly as much as your trust in whoever asserted it.</li>
+<li><b>Assertion</b> — a <i>signed bundle</i> of claims about a subject, issued at a point in time. A
+SAML assertion is literally called that; an OIDC ID token is the same concept as a JWT.</li>
+</ul>
+<p>So the pipeline is: <b>attribute</b> (stored) &rarr; selected and asserted as a <b>claim</b> &rarr;
+packaged and signed into an <b>assertion</b> &rarr; carried inside a <b>token</b>. The token is the
+envelope; the claims are the letter.</p>
+
+<h4>Registered claims: the ones every token has</h4>
+<p>A handful of claim names are standardised, and they are about the <i>envelope</i>, not the person:</p>
+<div class="codeSample" data-hl>iss  issuer      who asserted this          "https://idp.example.com"
+sub  subject    who it is about            "u-4817"      <- the identifier
+aud  audience   who it is FOR              "orders-api"
+exp  expires    after this, worthless      1767225600
+iat  issued at  when it was minted         1767222000
+nbf  not before don't accept it before     1767222000
+jti  token id   unique, for replay defence "b7c1-...-9f"
+
+// everything else is up to the issuer — these are about the person:
+"email":"ada@corp.example", "department":"Platform", "groups":["platform","oncall"]</div>
+<p><b><code>sub</code> is the only claim you should treat as the identity.</b> Email addresses get
+reassigned and names change; a good <code>sub</code> is an immutable, issuer-scoped identifier. Keying
+your user records on email is a bug that surfaces years later when someone changes theirs.</p>
+
+<h4>Attribute release and mapping</h4>
+<p>An IdP knows far more about a person than any one app should receive. <b>Attribute release</b> is the
+per-app policy deciding which attributes become claims — an expense tool may get
+<code>department</code> and <code>manager</code>, a public forum only a nickname. This is data
+minimisation, and in a consumer context it is what a consent screen is approving.</p>
+<p><b>Attribute mapping</b> handles the fact that everyone names things differently: the directory says
+<code>sAMAccountName</code>, SAML sends <code>urn:oid:0.9.2342...</code>, OIDC says
+<code>preferred_username</code>, and your app wants <code>username</code>. Mapping is the translation
+table, and mismatched mappings are the single most common cause of a federation integration that
+authenticates fine but creates broken user records.</p>
+
+<h4>Why "claim" is the honest word</h4>
+<p>A claim carries no authority on its own. Its weight comes entirely from three things: <i>who</i>
+asserted it (<code>iss</code>), whether the signature proves they really did, and whether you had
+already decided to trust that issuer for that kind of fact. An IdP asserting
+<code>"department":"Finance"</code> is authoritative if it owns HR data — and is merely repeating
+something if it does not.</p>
+<p>This is where a real security habit comes from: <b>never trust a claim you did not verify the
+signature on, and never trust an issuer for facts it has no authority over.</b> A token from a valid
+issuer claiming <code>"role":"admin"</code> means nothing if roles are your application's concept and
+the IdP has no business asserting them.</p>`,
+docs:[['RFC 7519 §4 — JWT registered claim names','https://www.rfc-editor.org/rfc/rfc7519#section-4'],['OpenID Connect Core — Standard Claims','https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims'],['IANA — JSON Web Token Claims registry','https://www.iana.org/assignments/jwt/jwt.xhtml']],
+ex:{title:'Claim checks: registered vs custom, and the identity key',
+prompt:`Write <code>Claims</code> with three methods. <code>static boolean isRegistered(String name)</code> returns <code>true</code> for the standard envelope claims <code>iss</code>, <code>sub</code>, <code>aud</code>, <code>exp</code>, <code>iat</code>, <code>nbf</code>, <code>jti</code> and <code>false</code> otherwise (including <code>null</code>) — use <code>java.util.Set.of(...)</code> and <code>contains</code>. <code>static String identityKey()</code> returns the one claim you should key user records on. <code>static boolean expired(long exp, long now)</code> returns <code>true</code> when the token is no longer valid, remembering <code>exp</code> is an <b>expiry instant</b>, so a token is expired once <code>now</code> has reached it.`,
+starter:`import java.util.Set;
+
+public class Claims {
+    static final Set<String> REGISTERED = Set.of();
+
+    static boolean isRegistered(String name) {
+        return false;
+    }
+    static String identityKey() {
+        return null;
+    }
+    static boolean expired(long exp, long now) {
+        return false;
+    }
+}`,
+tests:[{d:'declares the registered set with Set.of',re:'Set\\s*\\.\\s*of\\s*\\('},{d:'includes the issuer claim',re:'"iss"'},{d:'includes the audience claim',re:'"aud"'},{d:'includes the token id claim',re:'"jti"'},{d:'membership test uses contains',re:'contains\\s*\\('},{d:'keys identity on sub, not email',re:'return\\s+"sub"'},{d:'expiry compares now against exp',re:'now\\s*>=\\s*exp|exp\\s*<=\\s*now'}],
+behavior:`isRegistered("iss") and isRegistered("jti") are true. isRegistered("department") and isRegistered(null) are false — a custom claim is anything the issuer invents. identityKey() returns "sub": it is immutable and issuer-scoped, whereas email and preferred_username can be reassigned to a different person. expired(100, 100) and expired(100, 101) are true; expired(100, 99) is false.`,
+hints:['<code>Set.of("iss","sub","aud","exp","iat","nbf","jti")</code> — seven registered claims.','<code>Set.of(...).contains(null)</code> throws, so guard: <code>return name != null &amp;&amp; REGISTERED.contains(name);</code>','A token is dead the instant the clock reaches <code>exp</code>: <code>return now &gt;= exp;</code>'],
+solution:`import java.util.Set;
+
+public class Claims {
+    static final Set<String> REGISTERED = Set.of("iss", "sub", "aud", "exp", "iat", "nbf", "jti");
+
+    static boolean isRegistered(String name) {
+        // Set.of is null-hostile, so check before asking
+        return name != null && REGISTERED.contains(name);
+    }
+    static String identityKey() {
+        // sub is immutable and issuer-scoped; email can be reassigned
+        return "sub";
+    }
+    static boolean expired(long exp, long now) {
+        return now >= exp;
+    }
+}`}},
+
+{id:'idftok',title:'What a token actually is (and how it differs from a JWT)',body:`
+<p>Every lesson from here on says <b>token</b> constantly. Before that word can carry any weight, you
+need to know what one physically <i>is</i>: what it looks like on the wire, who makes it, what is
+inside it, and how the receiver decides to believe it. This lesson is that foundation.</p>
+
+<h4>The one-sentence definition</h4>
+<p>A token is <b>a string that stands for a verified fact, issued by an authority, that the holder
+presents later instead of proving themselves again</b>.</p>
+<p>That is the whole idea. You prove who you are <i>once</i> — password, passkey, MFA — and in exchange
+you get a small piece of text. On every later request you hand over that text rather than your password.
+A cinema ticket is the perfect analogy: you paid at the desk (authentication), you got a stub (the token),
+and the usher at the door checks the stub, not your credit card. The stub is worth something precisely
+because the usher trusts whoever printed it.</p>
+
+<h4>The one distinction that explains everything: opaque vs structured</h4>
+<p>There are exactly two ways to build a token, and almost every question you will ever have about
+tokens resolves to which of these you are holding.</p>
+<ul>
+<li><b>Opaque (reference) token.</b> A long random string with <i>no meaning</i>. It is a lookup key —
+a claim-check ticket. The issuer wrote the real data in its own database and gave you the row id.
+To learn anything about it, you must ask the issuer. Nothing leaks, and it can be revoked instantly by
+deleting the row. The cost is a network call on every check.</li>
+<li><b>Structured (self-contained / value) token.</b> The data <i>travels inside the token</i>, with a
+cryptographic signature wrapped around it. Anyone holding the issuer's public key can read it and
+confirm nobody edited it — no database, no network call. The cost is that it is readable by anyone who
+gets it, and it stays valid until it expires, because there is nothing central to delete.</li>
+</ul>
+<p><b>The trade-off in one line:</b> opaque tokens are private and instantly revocable but need a
+lookup; structured tokens are fast and offline-verifiable but public and hard to revoke.</p>
+
+<h4>What they actually look like</h4>
+<div class="codeSample" data-hl>// 1. OPAQUE — random bytes, base64/hex. Means nothing. Must be looked up.
+2YotnFZFEjr1zCsicMWpAA
+
+// 2. JWT (JSON Web Token) — three base64url chunks joined by dots
+eyJhbGciOiJSUzI1NiIsImtpZCI6ImsxIn0.eyJzdWIiOiJhbGljZSIsImV4cCI6MTc2NzIyNTYwMH0.SflKxwRJSMeKKF2QT4f
+
+// 3. SAML assertion — the same idea, but signed XML (much larger)
+&lt;saml:Assertion&gt;&lt;saml:Subject&gt;alice&lt;/saml:Subject&gt;&lt;ds:Signature&gt;...&lt;/ds:Signature&gt;&lt;/saml:Assertion&gt;
+
+// 4. Session cookie id — an opaque token that happens to ride in a cookie
+Cookie: session=8f3a91c07b2e4d15
+
+// 5. API key — a long-lived opaque token identifying an application, not a person
+X-Api-Key: sk_live_51H7qYbK9mNp2</div>
+<p>Look at #1 and #4: <b>the same kind of token</b>, differing only in which HTTP header carries it.
+Look at #2 and #3: the same kind of token, differing only in JSON vs XML. Format and transport are
+separate questions from what the token fundamentally is.</p>
+
+<h4>Inside a JWT</h4>
+<p>A JWT is the dominant structured format, so learn to read one on sight. Three parts, separated by
+dots, each <b>base64url</b>-encoded (base64 with <code>+/</code> swapped for <code>-_</code> and the
+<code>=</code> padding dropped, so it survives being put in a URL):</p>
+<div class="codeSample" data-hl>header . payload . signature
+
+// header — what algorithm signed this, and which key
+{"alg":"RS256","kid":"k1","typ":"JWT"}
+
+// payload — the "claims", just a JSON object of facts
+{"iss":"https://idp.example.com",  // issuer: who minted it
+ "sub":"alice",                    // subject: who it is about
+ "aud":"orders-api",               // audience: who it is FOR
+ "exp":1767225600,                 // expires at (unix seconds)
+ "iat":1767222000,                 // issued at
+ "scope":"orders:read"}            // what it permits
+
+// signature — issuer signs base64url(header) + "." + base64url(payload)</div>
+<p><b>Base64url is encoding, not encryption.</b> This is the single most misunderstood point about
+JWTs. Anyone who intercepts the token can paste the middle chunk into a decoder and read every claim.
+The signature stops <i>tampering</i>, not <i>reading</i>. Never put a password, a national id, or
+anything private in a JWT payload. If you truly need the contents hidden, that is a different
+format — <b>JWE</b>, which encrypts rather than merely signs.</p>
+
+<h4>How one is created</h4>
+<p>Minting a structured token is four mechanical steps, and nothing more:</p>
+<ol>
+<li>The issuer authenticates the user and decides what is true about them.</li>
+<li>It writes those facts as a JSON <b>claims</b> object and base64url-encodes it, along with a header
+naming the algorithm.</li>
+<li>It <b>signs</b> the joined string with a private key it alone holds, and appends the signature.</li>
+<li>It hands the result to the client, which stores it and attaches it to later requests.</li>
+</ol>
+
+<h4>How one is interpreted</h4>
+<p>Receiving a token is not the same as trusting it. A verifier must, in order:</p>
+<ol>
+<li><b>Check the signature</b> against the issuer's public key — fetched from the issuer's <b>JWKS</b>
+endpoint and matched by the <code>kid</code> in the header. If this fails, stop.</li>
+<li><b>Pin the algorithm.</b> Decide in advance that you accept <code>RS256</code> and reject whatever
+the header asks for otherwise. A verifier that obeys the token's own <code>alg</code> field can be
+handed <code>alg:none</code> and talked out of checking at all.</li>
+<li><b>Check <code>iss</code></b> — is this from the issuer I trust?</li>
+<li><b>Check <code>aud</code></b> — is this token meant for <i>me</i>? A valid token for a different
+API is not a valid token for yours. Skipping this is how a token gets replayed across services.</li>
+<li><b>Check <code>exp</code></b> (and <code>nbf</code> if present) against the clock.</li>
+<li><i>Only then</i> read the claims and make an authorization decision.</li>
+</ol>
+<p>For an <b>opaque</b> token there is nothing to verify locally, so the verifier instead calls the
+issuer's <b>introspection</b> endpoint (RFC 7662), which answers <code>{"active":true,...}</code> plus
+the same claims. Same questions, different place to get the answers.</p>
+
+<h4>Token <i>type</i> and token <i>format</i> are different questions</h4>
+<p>This is the confusion the rest of the identity streams depend on you not having. "Access token" is a
+<b>role</b> — a job the token does. "JWT" is a <b>format</b> — how the bytes are arranged. They vary
+independently: an access token may be a JWT or may be opaque, and you cannot tell from the name.</p>
+<div class="codeSample" data-hl>ROLES (what the token is FOR)          FORMATS (how it is BUILT)
+  Access token   -> call an API         Opaque    -> random string + lookup
+  ID token       -> describe the user   JWT/JWS   -> signed JSON, readable
+  Refresh token  -> get a new access    JWE       -> encrypted JSON, unreadable
+  Authz code     -> one-time, swap it   SAML      -> signed XML assertion
+                                        PASETO    -> signed, no alg negotiation
+                                        Macaroon  -> signed + narrowable by holder
+                                        CWT       -> CBOR, tiny, for IoT
+                                        Kerberos  -> encrypted ticket, intranet
+
+// Any role can wear almost any format. The one near-universal rule:
+// an OIDC ID token is ALWAYS a JWT, because the spec says so.</div>
+<p>Two role notes worth fixing now. An <b>ID token</b> is proof of <i>who the user is</i>, meant for
+your app to read — it is not an API key, and sending it to an API is a common bug. An <b>access
+token</b> is the opposite: meant for the API, and your app should treat it as an opaque blob to
+forward, even when it happens to be a readable JWT.</p>
+
+<h4>Why not always JWT?</h4>
+<p>JWTs won on tooling, not on merit. The honest scorecard:</p>
+<ul>
+<li><b>Revocation.</b> A structured token cannot be un-issued. Log a user out and their JWT keeps
+working until <code>exp</code>. The industry's answer is short lifetimes (5&ndash;15 minutes) plus a
+refresh token, which is a patch, not a fix.</li>
+<li><b>Size.</b> A JWT is often 800&ndash;2000 bytes on every single request; an opaque token is ~30.
+SAML assertions are larger still, which is why they ride in POST bodies rather than URLs.</li>
+<li><b>Crypto agility.</b> The <code>alg</code> header was a design mistake — it let attackers propose
+the algorithm. <b>PASETO</b> exists specifically to remove that choice.</li>
+<li><b>Privacy.</b> Readable by anyone who holds it, including the browser and any log that captured it.</li>
+</ul>
+<p><b>The rule of thumb in practice:</b> use structured tokens between <i>services</i>, where offline
+verification is the whole point; use opaque tokens in <i>browsers</i>, where leakage is likely and
+instant revocation matters. Many large providers do both — issuing an opaque token to the browser and
+swapping it for a JWT at the API gateway.</p>
+<p>Now that <b>token</b> means something concrete, the next lesson can compare carrying identity in a
+session against carrying it in a token — and the choice will read as a real engineering trade-off
+rather than jargon.</p>`,
+docs:[['RFC 7519 — JSON Web Token (JWT)','https://www.rfc-editor.org/rfc/rfc7519'],['RFC 6750 — Bearer Token Usage','https://www.rfc-editor.org/rfc/rfc6750'],['RFC 7662 — OAuth 2.0 Token Introspection','https://www.rfc-editor.org/rfc/rfc7662'],['RFC 9068 — JWT Profile for OAuth 2.0 Access Tokens','https://www.rfc-editor.org/rfc/rfc9068'],['jwt.io — paste a JWT and see it decoded','https://jwt.io/']],
+exs:[
+{title:'Read a JWT: split it and decode the claims',
+prompt:`A JWT is three base64url chunks joined by dots. Write <code>TokenReader</code> with: <code>static String[] parts(String jwt)</code> returning the three pieces — return <code>null</code> if <code>jwt</code> is null or does not split into exactly 3 parts (use <code>split("\\\\.")</code>); and <code>static String claims(String jwt)</code> returning the <b>decoded payload</b> (the middle part) as a String, or <code>null</code> if <code>parts</code> returned null. Decode with <code>java.util.Base64.getUrlDecoder()</code> — note it is the <b>URL</b> decoder, because JWTs use base64url, not plain base64.`,
+starter:`import java.util.Base64;
+
+public class TokenReader {
+    static String[] parts(String jwt) {
+        return null;
+    }
+    static String claims(String jwt) {
+        return null;
+    }
+}`,
+tests:[{d:'splits on the literal dot separator',re:'split\\s*\\(\\s*"\\\\\\\\."'},{d:'rejects anything that is not exactly 3 parts',re:'length\\s*!=\\s*3|length\\s*==\\s*3'},{d:'null-safe on the input',re:'jwt\\s*==\\s*null|null\\s*==\\s*jwt'},{d:'uses the base64URL decoder, not the plain one',re:'getUrlDecoder\\s*\\(\\s*\\)'},{d:'decodes the middle part (index 1), not the header',re:'\\[\\s*1\\s*\\]'},{d:'turns the decoded bytes back into a String',re:'new\\s+String\\s*\\('}],
+behavior:`parts("a.b.c") returns a 3-element array {"a","b","c"}. parts("a.b"), parts("a.b.c.d") and parts(null) all return null. claims of a JWT whose middle chunk is eyJzdWIiOiJhbGljZSJ9 returns the text {"sub":"alice"}. claims(null) returns null. Decoding never verifies anything — reading a token and trusting a token are separate steps.`,
+hints:['<code>split(".")</code> silently returns nothing, because <code>.</code> is a regex wildcard. You need the escaped form <code>split("\\\\.")</code>.','Guard first: <code>if (jwt == null) return null;</code> then split and <code>if (p.length != 3) return null;</code>','<code>byte[] b = Base64.getUrlDecoder().decode(p[1]); return new String(b);</code> — index 1 is the payload; index 0 is the header.'],
+solution:`import java.util.Base64;
+
+public class TokenReader {
+    static String[] parts(String jwt) {
+        if (jwt == null) return null;
+        String[] p = jwt.split("\\\\.");
+        if (p.length != 3) return null;
+        return p;
+    }
+    static String claims(String jwt) {
+        String[] p = parts(jwt);
+        if (p == null) return null;
+        // base64URL, not plain base64: JWTs must survive being placed in a URL
+        byte[] decoded = Base64.getUrlDecoder().decode(p[1]);
+        return new String(decoded);
+    }
+}`},
+{title:'Classify a token: opaque or structured?',
+prompt:`Given only the string, you can tell the two families apart by shape. Write <code>TokenShape</code> with <code>static String classify(String token)</code> that returns <code>"none"</code> if <code>token</code> is null or empty; <code>"jwt"</code> if it splits into exactly 3 dot-separated parts; <code>"jwe"</code> if it splits into exactly 5; and <code>"opaque"</code> for anything else. Then write <code>static boolean needsIntrospection(String token)</code> returning <code>true</code> only when <code>classify</code> says <code>"opaque"</code> — because an opaque token carries no readable claims, so the only way to learn anything about it is to ask the issuer.`,
+starter:`public class TokenShape {
+    static String classify(String token) {
+        return null;
+    }
+    static boolean needsIntrospection(String token) {
+        return false;
+    }
+}`,
+tests:[{d:'handles null and empty up front',re:'==\\s*null|isEmpty\\s*\\(\\s*\\)'},{d:'splits on the escaped dot',re:'split\\s*\\(\\s*"\\\\\\\\."'},{d:'recognises the 3-part JWS compact form',re:'3'},{d:'recognises the 5-part JWE compact form',re:'5'},{d:'falls through to opaque',re:'"opaque"'},{d:'introspection is driven by the classification',re:'"opaque"\\s*\\.\\s*equals|equals\\s*\\(\\s*"opaque"'}],
+behavior:`classify("a.b.c") returns "jwt". classify("a.b.c.d.e") returns "jwe" (the JWE compact form has five parts). classify("2YotnFZFEjr1zCsicMWpAA") returns "opaque". classify(null) and classify("") return "none". needsIntrospection is true only for the opaque case: a JWT can be verified offline with the issuer public key, whereas an opaque token means nothing without a call to the issuer.`,
+hints:['Guard first: <code>if (token == null || token.isEmpty()) return "none";</code>','<code>int n = token.split("\\\\.").length;</code> then return based on <code>n == 3</code> and <code>n == 5</code>.','<code>return "opaque".equals(classify(token));</code> — reuse the method rather than repeating the shape logic.'],
+solution:`public class TokenShape {
+    static String classify(String token) {
+        if (token == null || token.isEmpty()) return "none";
+        int n = token.split("\\\\.").length;
+        if (n == 3) return "jwt";   // JWS compact: header.payload.signature
+        if (n == 5) return "jwe";   // JWE compact: adds encrypted key + IV + tag
+        return "opaque";            // no structure to read: ask the issuer
+    }
+    static boolean needsIntrospection(String token) {
+        // structured tokens verify offline; opaque ones must be looked up
+        return "opaque".equals(classify(token));
+    }
+}`}]},
+
 {id:'idf2',title:'How identity is carried: sessions vs tokens',body:`
-<p>Once you're authenticated, how does the <i>next</i> request prove it's still you? Two models:</p>
+<p>You now know what a token <i>is</i> (previous lesson) and what claims travel inside it. The remaining
+question is architectural: once you're authenticated, how does the <i>next</i> request prove it's still
+you? There are two answers, and the choice shapes everything downstream — scaling, logout, and how hard
+revocation turns out to be.</p>
 <ul>
 <li><b>Server-side sessions (stateful).</b> The server stores your login in memory/DB and hands you a <b>session cookie</b> holding only an opaque id. Every request sends the cookie; the server looks it up. Simple, easy to revoke — but the server must remember every session (state), which is awkward across many servers.</li>
 <li><b>Tokens (stateless).</b> The server hands you a signed <b>token</b> (often a JWT) that <i>contains</i> the claims. Later requests send it in the <code>Authorization: Bearer &lt;token&gt;</code> header; any server verifies the signature and trusts the contents without a lookup. Scales horizontally; the trade-off is revocation is harder (the token is valid until it expires).</li>
@@ -134,18 +580,178 @@ solution:`public class Bearer {
     }
 }`}},
 
-{id:'idf3',title:'SSO & federation: IdPs, SPs and trust',body:`
-<p><b>Single Sign-On (SSO)</b> is logging in once and getting into many apps without re-entering credentials. <b>Federation</b> is what makes it possible across organizational boundaries: apps <i>delegate</i> authentication to a central authority they <b>trust</b>.</p>
-<p>The cast of characters (the same idea, different words per protocol):</p>
+{id:'idfcast',title:'The cast: one set of actors, four sets of names',body:`
+<p>Identity has four or five actors, and every protocol renamed all of them. Most of the difficulty in
+reading OAuth, OIDC and SAML side by side is not conceptual — it is that <i>the same box has four
+names</i>. Learn the boxes once here and the protocol streams become translation exercises.</p>
+
+<h4>The boxes</h4>
 <ul>
-<li><b>Identity Provider (IdP)</b> — the authority that authenticates users and vouches for them (Okta, Entra ID, Google, Keycloak). In OAuth/OIDC this is the <b>Authorization Server</b>.</li>
-<li><b>Service Provider (SP)</b> — the app that <i>relies</i> on the IdP. In SAML it's the "SP"; in OIDC it's the <b>Relying Party (RP)</b> / client.</li>
-<li><b>Assertion / Token</b> — the signed statement the IdP issues saying "this user authenticated, here are their attributes." SAML calls it an <b>assertion</b> (XML); OIDC calls it an <b>ID token</b> (JWT).</li>
-<li><b>Trust</b> — the SP is configured to accept assertions/tokens signed by that IdP (via the IdP's certificate or its published <b>JWKS</b> keys). Trust is what turns "a signed blob" into "a login I believe."</li>
+<li><b>The subject</b> — the human (or workload) the whole exchange is about. In OAuth, when the
+subject is also the one granting permission, the spec calls them the <b>resource owner</b>: the person
+who <i>owns</i> the data an app wants and is therefore the only one who can authorise access to it.</li>
+<li><b>The app the user is using</b> — wants to log the user in, or to call an API for them. OAuth and
+OIDC call it the <b>client</b>; OIDC also calls it the <b>relying party (RP)</b> because it relies on
+someone else's authentication; SAML calls it the <b>service provider (SP)</b>.</li>
+<li><b>The authority</b> — holds the accounts, authenticates people, and issues signed statements.
+SAML calls it the <b>identity provider (IdP)</b>; OAuth calls it the <b>authorization server (AS)</b>.
+Real products are usually both at once: Okta, Entra ID, Keycloak, Auth0, Google.</li>
+<li><b>The API being protected</b> — OAuth calls it the <b>resource server</b>. It holds the data,
+accepts access tokens, and enforces scopes. SAML has no equivalent, because SAML is about logging into
+applications, not about calling APIs.</li>
+<li><b>The signed statement</b> — SAML says <b>assertion</b> (XML), OIDC says <b>ID token</b> (a JWT),
+OAuth says <b>access token</b>. Same idea, different envelope and different job.</li>
 </ul>
-<p>Why federate? One place to enforce MFA and policy, instant deprovisioning (disable the account at the IdP and access ends everywhere), and users keep one identity. The SP never sees the password — only a signed proof of authentication.</p>
-<p><b>How an SP finds an IdP's keys:</b> modern IdPs publish a <b>discovery document</b> (OIDC: <code>/.well-known/openid-configuration</code>) that points to the signing keys (<code>jwks_uri</code>). The SP fetches and caches those keys to verify tokens.</p>`,
-docs:[['OIDC Discovery','https://openid.net/specs/openid-connect-discovery-1_0.html'],['Okta — What is federated identity?','https://www.okta.com/identity-101/what-is-federated-identity/']],
+
+<h4>The translation table</h4>
+<div class="codeSample" data-hl>ROLE                     SAML 2.0            OIDC                 OAuth 2.0
+-----------------------  ------------------  -------------------  ------------------
+the person               Subject / Principal Subject (end-user)   Resource Owner
+the app                  Service Provider    Relying Party        Client
+the authority            Identity Provider   OpenID Provider      Authorization Server
+the API                  (n/a)               (n/a)                Resource Server
+the signed statement     Assertion (XML)     ID Token (JWT)       Access Token
+where trust config lives Metadata XML        Discovery document   (client registration)</div>
+
+<h4>Two distinctions worth burning in now</h4>
+<p><b>The client is not the user.</b> A client is a <i>registered application</i> with its own identity,
+its own id, and sometimes its own secret. When you see "authenticate the client," that means proving
+which <i>app</i> is calling, which is a completely separate question from which <i>person</i> is using
+it. Both happen in a single OAuth flow, and confusing them is the root of most flow confusion.</p>
+<p><b>The authority is not the API.</b> The authorization server <i>issues</i> tokens; the resource
+server <i>consumes</i> them. They are often run by different teams and sometimes different companies.
+A resource server never authenticates a user — by the time a request arrives, that already happened
+somewhere else, and all the API gets is a token to verify.</p>
+
+<h4>How the boxes find each other</h4>
+<p>An app cannot verify anything from an authority it has never heard of, so the two are wired together
+in advance. Two halves:</p>
+<ul>
+<li><b>Client registration</b> — the app is registered <i>at</i> the authority, receiving a
+<code>client_id</code>, possibly a secret, and a list of allowed redirect URIs. This is the authority
+learning about the app.</li>
+<li><b>Discovery / metadata</b> — the app learns about the authority. OIDC publishes a discovery
+document at <code>/.well-known/openid-configuration</code> listing every endpoint plus a
+<code>jwks_uri</code> holding the public signing keys; SAML publishes an equivalent metadata XML file
+containing the IdP's certificate.</li>
+</ul>
+<p>Those public keys are the concrete thing that makes verification possible — which is exactly what
+the trust lessons build on. Wherever a later lesson says "the RP verifies the token," it means: fetch
+the keys from that published location, and check the signature against them.</p>`,
+docs:[['RFC 6749 §1.1 — OAuth 2.0 roles','https://www.rfc-editor.org/rfc/rfc6749#section-1.1'],['OpenID Connect Core — Terminology','https://openid.net/specs/openid-connect-core-1_0.html#Terminology'],['OIDC Discovery','https://openid.net/specs/openid-connect-discovery-1_0.html']],
+ex:{title:'Translate the cast between protocols',
+prompt:`Write <code>Actors</code> with <code>static String oauthName(String samlName)</code> translating SAML vocabulary to OAuth/OIDC: <code>"IdentityProvider"</code> becomes <code>"AuthorizationServer"</code>, <code>"ServiceProvider"</code> becomes <code>"Client"</code>, <code>"Assertion"</code> becomes <code>"IDToken"</code>, <code>"Principal"</code> becomes <code>"ResourceOwner"</code>, and anything else (including <code>null</code>) returns <code>"unmapped"</code>. Then <code>static boolean issuesTokens(String role)</code>, true only for <code>"AuthorizationServer"</code> — exactly one actor mints tokens, and everyone else only verifies or presents them.`,
+starter:`public class Actors {
+    static String oauthName(String samlName) {
+        return null;
+    }
+    static boolean issuesTokens(String role) {
+        return false;
+    }
+}`,
+tests:[{d:'guards null before switching',re:'samlName\\s*==\\s*null|null\\s*==\\s*samlName'},{d:'switches on the SAML name',re:'switch\\s*\\(\\s*samlName'},{d:'IdP maps to the authorization server',re:'"AuthorizationServer"'},{d:'SP maps to the client',re:'"Client"'},{d:'assertion maps to the ID token',re:'"IDToken"'},{d:'principal maps to the resource owner',re:'"ResourceOwner"'},{d:'unknown vocabulary falls through',re:'"unmapped"'},{d:'only the authority mints tokens',re:'"AuthorizationServer"\\s*\\.\\s*equals|equals\\s*\\(\\s*"AuthorizationServer"'}],
+behavior:`oauthName("IdentityProvider") returns "AuthorizationServer"; oauthName("ServiceProvider") returns "Client"; oauthName("Assertion") returns "IDToken"; oauthName("Principal") returns "ResourceOwner"; oauthName("Binding") and oauthName(null) return "unmapped". issuesTokens("AuthorizationServer") is true; issuesTokens("Client") and issuesTokens("ResourceServer") are false — a client presents tokens and a resource server verifies them, but neither can create one.`,
+hints:['Guard null first — a switch on null throws.','One case per SAML term, each returning the OAuth equivalent, with <code>default: return "unmapped";</code>','<code>return "AuthorizationServer".equals(role);</code>'],
+solution:`public class Actors {
+    static String oauthName(String samlName) {
+        if (samlName == null) return "unmapped";
+        switch (samlName) {
+            case "IdentityProvider": return "AuthorizationServer"; // the authority
+            case "ServiceProvider":  return "Client";              // the app
+            case "Assertion":        return "IDToken";             // the signed statement
+            case "Principal":        return "ResourceOwner";       // the person
+            default:                 return "unmapped";
+        }
+    }
+    static boolean issuesTokens(String role) {
+        // exactly one actor mints tokens; the rest present or verify them
+        return "AuthorizationServer".equals(role);
+    }
+}`}},
+
+{id:'idf3',title:'SSO vs federation vs delegation: experience, trust, permission',body:`
+<p>These three words get used as if they were interchangeable, and they describe completely different
+kinds of thing. Getting them apart is probably the highest-leverage clarification in the whole domain,
+because almost every muddled identity conversation is really a collision between them.</p>
+<div class="codeSample" data-hl>SSO         is an EXPERIENCE   — what the user feels: "I only logged in once"
+Federation  is an ARCHITECTURE — who is trusted to authenticate, across a boundary
+Delegation  is a PERMISSION    — an app acting on your behalf, with limits you set</div>
+<p>One is an outcome. One is a trust relationship. One is an authorization mechanism. They frequently
+appear together, which is exactly why they get conflated — but each can exist without the others.</p>
+
+<h4>SSO is a user experience, not a technology</h4>
+<p><b>Single Sign-On</b> means: authenticate once, then reach many applications without being asked
+again. Notice that this describes only what the <i>person perceives</i>. It names no protocol, no
+message, no actor. You cannot "implement SSO" the way you implement OAuth — you produce SSO as a
+<i>result</i>, and there is more than one way to produce it:</p>
+<ul>
+<li><b>Same-domain session sharing.</b> Several apps under <code>*.corp.example</code> share one session
+cookie, or sit behind one gateway that holds the session. Log in at one, you are logged in at all.
+This is genuine SSO, and it involves <b>no federation, no IdP and no tokens</b> — just a cookie with a
+carefully scoped domain.</li>
+<li><b>Federated SSO.</b> Apps in different domains or different organisations each redirect to a
+shared authority. The authority already has a session with you, so it answers immediately without
+prompting — and you experience SSO. This is the version that needs SAML or OIDC.</li>
+<li><b>Desktop/integrated SSO.</b> Kerberos on a corporate network: your workstation login yields a
+ticket that gets you into intranet apps silently.</li>
+</ul>
+<p><b>So SSO does not require federation.</b> That single fact dissolves a lot of confusion. When a
+stakeholder says "we need SSO," the useful reply is: <i>across what boundary?</i> Within one domain it
+may be a cookie configuration. Across organisations it is a federation project.</p>
+<p>The mirror image is <b>Single Logout (SLO)</b>, and it is notoriously unreliable for exactly this
+reason: the pleasant illusion of "one login" is really N separate application sessions created behind
+your back. Ending one does not end the rest, and there is no reliable way to reach into every app and
+close them.</p>
+
+<h4>Federation is a trust architecture</h4>
+<p><b>Federation</b> means an application stops authenticating users itself and instead accepts a signed
+statement from an authority it has agreed in advance to trust — typically across an organisational
+boundary. The app never sees a password. Trust is configured beforehand, by exchanging the authority's
+public keys or certificate.</p>
+<p><b>Federation does not require SSO either.</b> An organisation with exactly one federated
+application gets no "sign on once" benefit at all — yet federation is still worth it, because the real
+wins are structural:</p>
+<ul>
+<li>MFA and login policy are enforced in <b>one</b> place instead of per app.</li>
+<li>Disabling the account at the authority ends access <b>everywhere at once</b> — the deprovisioning
+problem from the lifecycle lesson, solved.</li>
+<li>No application ever stores a password, which removes a whole class of breach.</li>
+<li>Audit of who logged in where lands in one log.</li>
+</ul>
+<p>SSO is the <i>pleasant side effect</i> that shows up once you federate more than one app. The
+architecture is the point; the experience is the bonus.</p>
+
+<h4>Delegation is about permission, not login</h4>
+<p><b>Delegation</b> is a different axis entirely: you authorise an <i>application</i> to act on your
+behalf against an API, with a limited slice of your access, without giving it your password. This is
+what OAuth 2.0 was invented for. It answers <i>"may this app do this thing for me?"</i> — not
+<i>"who are you?"</i></p>
+<p>Hence the most consequential misconception in the field: <b>OAuth is not a login protocol.</b> An
+access token says an app may call an API; it says nothing reliable about who the user is, and treating
+it as proof of identity is a real vulnerability. <b>OpenID Connect</b> exists precisely to fix that,
+adding an ID token — an authentication statement — on top of OAuth's delegation.</p>
+<p>And delegation has a dangerous neighbour. In <b>delegation</b> the token records both identities:
+"app X, acting for user Y." In <b>impersonation</b> the app simply becomes user Y and the API cannot
+tell the difference. Impersonation is more powerful, harder to audit, and should be a deliberate
+choice.</p>
+
+<h4>Putting it together</h4>
+<div class="codeSample" data-hl>QUESTION IT ANSWERS                       CONCEPT      TYPICAL MECHANISM
+"How many times must I log in?"           SSO          session cookie / IdP session
+"Who is trusted to authenticate?"         Federation   SAML, OIDC
+"May this app act for me, and how far?"   Delegation   OAuth 2.0 scopes + consent
+
+// they compose, but they are independent:
+same-domain cookie SSO   -> SSO, no federation, no delegation
+one federated app        -> federation, no SSO benefit, no delegation
+a CLI calling your API   -> delegation, no SSO, no federation
+corporate Google login   -> all three at once, which is why they blur</div>
+<p><b>Phrases to correct on sight.</b> "We'll use OAuth to log users in" — you mean OIDC. "SAML is
+SSO" — SAML is a protocol that implements federation, which <i>delivers</i> SSO. "SSO means one
+password" — SSO means one <i>login event</i>; the credential could be a passkey and there may be no
+password anywhere. "Federation gives users one identity" — it gives them one <i>authority</i>; they
+still have an account at each app, now populated from that authority.</p>`,
+docs:[['OIDC Discovery','https://openid.net/specs/openid-connect-discovery-1_0.html'],['RFC 6749 §1 — OAuth 2.0 is delegated authorization','https://www.rfc-editor.org/rfc/rfc6749#section-1'],['RFC 8693 — OAuth 2.0 Token Exchange (delegation vs impersonation)','https://www.rfc-editor.org/rfc/rfc8693#section-1.1'],['Okta — What is federated identity?','https://www.okta.com/identity-101/what-is-federated-identity/']],
 ex:{title:'Trust an issuer, find its keys',
 prompt:`Write <code>Federation</code> with: <code>static boolean issuerTrusted(String iss, java.util.Set&lt;String&gt; trustedIssuers)</code> returning whether <code>iss</code> is non-null and in <code>trustedIssuers</code>; and <code>static String jwksUri(String issuer)</code> returning the issuer's discovery keys URL — the <code>issuer</code> with any trailing <code>"/"</code> removed, then <code>"/.well-known/jwks.json"</code> appended (e.g. <code>"https://idp.example.com"</code> → <code>"https://idp.example.com/.well-known/jwks.json"</code>).`,
 starter:`import java.util.*;
@@ -215,6 +821,9 @@ solution:`public class ClientAuth {
 
 {id:'idf5',title:'Delegation, consent & scopes',body:`
 <p>The reason OAuth exists: let an app act <b>on your behalf</b> against an API <b>without giving it your password</b>. That is <b>delegated authorization</b> — you delegate a <i>limited</i> slice of your access to the app.</p>
+<p><i>This lesson introduces the vocabulary. The next four take it apart properly: delegated
+authentication versus delegated authorization, then acting for a user across services, and acting as a
+user in support.</i></p>
 <ul>
 <li><b>Scope</b> — a named permission the app requests, e.g. <code>photos:read</code> or <code>calendar:write</code>. Scopes are a <b>space-separated</b> list. They bound what the resulting token can do (least privilege).</li>
 <li><b>Consent</b> — the authorization server shows you what the app is asking for ("Acme wants to read your photos") and you approve. Consent is why delegation is safe: <i>you</i> decide.</li>
@@ -254,6 +863,862 @@ public class Scopes {
     }
     static boolean covers(Set<String> granted, String required) {
         return granted.contains(required);
+    }
+}`}},
+
+{id:'idfdauthn',title:'Delegated authentication: who gets to see the password',body:`
+<p>An application has to answer "is this really Ada?" — but it does not have to answer it <i>itself</i>.
+Handing that question to someone else is <b>delegated authentication</b>, and there are two very
+different ways to do it. The difference is not academic: it decides whether your application ever
+touches a user's password.</p>
+
+<h4>The question being delegated</h4>
+<p>Note carefully what is delegated here: the <b>act of verifying a credential</b>. That is a different
+thing from the delegated <i>authorization</i> of the next lesson, where what gets delegated is
+<i>permission to act on someone's behalf</i>. Same word, different objects:</p>
+<div class="codeSample" data-hl>Delegated AUTHENTICATION  "Someone else, please tell me WHO this is."
+Delegated AUTHORIZATION   "User, please let this app DO something for you."</div>
+
+<h4>Style 1: credential forwarding (the classic meaning)</h4>
+<p>Your app shows its own login form, collects the username and password, and then asks a backend
+system to check them. The app is a middleman holding plaintext credentials:</p>
+<ul>
+<li><b>LDAP bind.</b> The app attempts to bind to the directory <i>as the user</i> with the password it
+just collected. Bind succeeds, the password was right. Ubiquitous in enterprise Java.</li>
+<li><b>RADIUS.</b> The same pattern for network gear and VPNs.</li>
+<li><b>A password-verification API.</b> Some internal service exposing "here is a username and
+password, is it valid?"</li>
+<li><b>OAuth's ROPC grant.</b> The deprecated password grant: the app collects the password and posts
+it to the token endpoint. Deprecated <i>precisely</i> because of everything below.</li>
+</ul>
+<p><b>What this buys you:</b> one place to store passwords and enforce password policy, and a login
+screen you fully control.</p>
+<p><b>What it costs you.</b> The application sits inside the credential blast radius. It can log the
+password by accident. Its memory contains it. A compromise of the app is a compromise of every
+password typed into it. It cannot support MFA or passkeys without reinventing them, because the
+authority never talks to the user — only to your app. And it cannot support SSO at all: nothing exists
+for a second app to reuse.</p>
+
+<h4>Style 2: redirect the user (federated authentication)</h4>
+<p>The app sends the user's browser to the authority, the user authenticates <i>there</i>, and the app
+receives a signed statement saying it happened. The app never sees a credential, and is never asked to
+be trustworthy with one.</p>
+<div class="codeSample" data-hl>CREDENTIAL FORWARDING            REDIRECT (federated)
+user -> [ APP ] -> directory     user -> [ APP ] --redirect--> [ IdP ]
+        ^^^^^                                                     |
+   app holds the password        user types password AT the IdP --+
+                                 app gets back a signed assertion
+
+app sees:  username + password   app sees:  a signed token. never a credential
+MFA:       app must build it     MFA:       IdP handles it, app unchanged
+passkeys:  effectively no        passkeys:  work immediately
+SSO:       impossible            SSO:       falls out for free
+breach:    passwords exposed     breach:    no passwords to expose</div>
+<p>This is why "we delegate authentication to Okta" almost always means <i>federation</i>, not
+credential forwarding. Both are delegated authentication in the literal sense; only one keeps your app
+out of the blast radius.</p>
+
+<h4>How to tell them apart in a design review</h4>
+<p>One question settles it: <b>where does the user type their password?</b> If the answer is "a form
+our application renders," you are forwarding credentials, whatever the diagram calls it. If the answer
+is "on the identity provider's own page," you are federating.</p>
+<p>This is also the test for a phishing-style integration. An app that renders a page <i>looking</i>
+like the IdP's login and forwards what it captures is doing credential forwarding with extra steps.
+That is precisely why users are taught to check the address bar before typing a password, and why
+mobile apps must use a system browser rather than an embedded webview.</p>
+
+<h4>When forwarding is still the right answer</h4>
+<p>It is not always wrong, and pretending otherwise is unhelpful. Legacy protocols that cannot redirect
+(IMAP, SMTP, LDAP clients, database logins) have no browser to send anywhere. The standard mitigations
+are worth knowing: issue <b>app-specific passwords</b> so the real credential is never used, or move
+the protocol onto <b>OAuth with SASL</b>, which is how modern mail clients escaped the problem.</p>
+<p><b>The default:</b> redirect. Reach for credential forwarding only when there is genuinely no
+browser in the flow, and then treat the credential path as high-risk code.</p>`,
+docs:[['RFC 6749 §4.3 — Resource Owner Password Credentials (and its warnings)','https://www.rfc-editor.org/rfc/rfc6749#section-4.3'],['OAuth 2.0 Security BCP — why ROPC is deprecated','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics#name-resource-owner-password-cre'],['RFC 8252 — OAuth for Native Apps (use a system browser, not a webview)','https://www.rfc-editor.org/rfc/rfc8252'],['RFC 4513 — LDAP Authentication Methods (bind)','https://www.rfc-editor.org/rfc/rfc4513']],
+ex:{title:'Which style is this integration?',
+prompt:`Write <code>AuthDelegation</code> with <code>static String style(String method)</code> returning <code>"forwarding"</code> for <code>"ldap-bind"</code>, <code>"radius"</code> and <code>"ropc"</code>; <code>"redirect"</code> for <code>"saml"</code> and <code>"oidc"</code>; and <code>"unknown"</code> otherwise, including <code>null</code>. Then <code>static boolean appSeesPassword(String method)</code>, true only for the forwarding style — the single question that decides whether your application is inside the credential blast radius.`,
+starter:`public class AuthDelegation {
+    static String style(String method) {
+        return null;
+    }
+    static boolean appSeesPassword(String method) {
+        return false;
+    }
+}`,
+tests:[{d:'guards null before switching',re:'method\\s*==\\s*null|null\\s*==\\s*method'},{d:'switches on the method',re:'switch\\s*\\(\\s*method'},{d:'classifies credential forwarding',re:'"forwarding"'},{d:'classifies the redirect style',re:'"redirect"'},{d:'unrecognised methods fall through',re:'"unknown"'},{d:'password exposure follows from the style',re:'"forwarding"\\s*\\.\\s*equals|equals\\s*\\(\\s*"forwarding"'}],
+behavior:`style("ldap-bind"), style("radius") and style("ropc") return "forwarding". style("saml") and style("oidc") return "redirect". style("kerberos") and style(null) return "unknown". appSeesPassword("ldap-bind") is true and appSeesPassword("oidc") is false — under a redirect the user types the password on the IdP page, so the application never holds it, which is why MFA and passkeys work without the app changing at all.`,
+hints:['Guard null first, then <code>switch (method)</code> with case fall-through for the three forwarding methods.','Two cases return "redirect"; everything else hits <code>default: return "unknown";</code>','<code>return "forwarding".equals(style(method));</code>'],
+solution:`public class AuthDelegation {
+    static String style(String method) {
+        if (method == null) return "unknown";
+        switch (method) {
+            case "ldap-bind":
+            case "radius":
+            case "ropc":
+                return "forwarding";  // the app collects and relays the password
+            case "saml":
+            case "oidc":
+                return "redirect";    // the user authenticates at the IdP itself
+            default:
+                return "unknown";
+        }
+    }
+    static boolean appSeesPassword(String method) {
+        // only credential forwarding puts the app inside the blast radius
+        return "forwarding".equals(style(method));
+    }
+}`}},
+
+{id:'idfdauthz',title:'Delegated authorization: permission without the password',body:`
+<p>The other delegation. Here the user is not asking someone to vouch for them — they are granting an
+<i>application</i> a bounded slice of their own access, so it can act for them against an API. This is
+the problem OAuth 2.0 was invented to solve, and it is worth seeing the problem before the solution.</p>
+
+<h4>The problem it replaced</h4>
+<p>A photo-printing site wants the photos in your cloud album. Before OAuth, the only way was to type
+your cloud password into the printing site. That is catastrophic in four separate ways, and naming
+them explains every design decision that follows:</p>
+<ul>
+<li>The site gets <b>everything</b>, not just photos — mail, contacts, the ability to change your
+password.</li>
+<li>It lasts <b>forever</b>; there is no expiry on a password.</li>
+<li>You cannot <b>revoke</b> it without changing your password, which breaks every other app you did
+the same thing to.</li>
+<li>There is no <b>audit trail</b> — the cloud provider sees your login, not the printing site's.</li>
+</ul>
+<p>Delegated authorization fixes all four. The user authenticates at the authority, approves a specific
+request, and the application receives a token instead of a credential.</p>
+<div class="codeSample" data-hl>THE ANTI-PATTERN               DELEGATED AUTHORIZATION
+give app your password         app gets a token, never the password
+  full account access            only the approved scopes    -> photos:read
+  forever                        expires in minutes           -> exp
+  revoke = change password       revoke this app alone        -> /revoke
+  no record of who did what      calls attributed to the app  -> client_id</div>
+
+<h4>The three moving parts</h4>
+<ul>
+<li><b>Scope</b> — the named bound on what the resulting token may do:
+<code>photos:read</code>, <code>calendar:write</code>. The app <i>requests</i> scopes; the authority
+decides what to <i>grant</i>, and the two can differ. Least privilege lives here: a printing service
+asks for <code>photos:read</code>, never <code>photos:write</code>.</li>
+<li><b>Consent</b> — the authority shows the user what is being requested and the user approves. This
+is the step that makes the whole thing legitimate: the user, not the app, decides. It is also why
+consent screens must name the app and list the scopes in language a human can evaluate.</li>
+<li><b>The grant</b> — the recorded fact that user Y approved app X for scopes Z. It persists after the
+token expires, which is what lets a refresh token get a new access token silently, and what the user is
+deleting when they hit "remove access."</li>
+</ul>
+<p>The distinction between the <b>grant</b> and the <b>token</b> catches people out. Revoking a token
+kills one credential; revoking the <i>grant</i> withdraws the permission entirely, so refreshes stop
+working too. "Remove this app's access" means the second one.</p>
+
+<h4>The enforcement side</h4>
+<p>Scopes are worthless unless the API checks them. A resource server reads the token's
+<code>scope</code> claim and confirms the required scope is present before doing any work — and it
+must <b>fail closed</b>: an absent or unreadable scope claim means denied, never allowed.</p>
+<div class="codeSample" data-hl>// the token carries granted scopes as a space-separated string
+"scope": "photos:read profile"
+
+// the API checks before acting — and denies when unsure
+if (!granted.contains("photos:read")) throw new ForbiddenException();</div>
+<p>A subtlety worth internalising: <b>a scope is not a permission.</b> A scope bounds what the
+<i>application</i> may attempt on the user's behalf; the user's own rights still apply underneath.
+A token with <code>photos:read</code> does not grant access to someone else's photos. Both checks
+must pass — what the app was allowed to ask for, and what the user is actually allowed to see. Treating
+a scope as the whole authorization decision is a real and common vulnerability.</p>
+
+<h4>The line back to the previous lesson</h4>
+<p>Delegated authentication answers <i>who is this?</i> Delegated authorization answers <i>may this app
+do this for them?</i> They are so routinely bundled — one redirect, one consent screen, tokens for
+both — that people assume one implies the other. It does not, and the failure mode is specific:</p>
+<p><b>An access token is not proof of identity.</b> It says an app was authorised to call an API. It
+carries no reliable statement about who the user is, was minted for a different audience, and may be a
+token the app obtained for an entirely different user. Applications that "log the user in" by accepting
+an access token are exploitable. <b>OpenID Connect</b> exists to close exactly this gap by adding an
+ID token — an authentication statement — alongside OAuth's authorization.</p>`,
+docs:[['RFC 6749 §1 — OAuth 2.0: delegated authorization','https://www.rfc-editor.org/rfc/rfc6749#section-1'],['RFC 6749 §3.3 — Access token scope','https://www.rfc-editor.org/rfc/rfc6749#section-3.3'],['RFC 7009 — OAuth 2.0 Token Revocation','https://www.rfc-editor.org/rfc/rfc7009'],['OAuth 2.0 Security BCP','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics']],
+ex:{title:'Enforce a scope, and fail closed',
+prompt:`Write <code>Delegation</code> with three methods. <code>static java.util.Set&lt;String&gt; granted(String scope)</code> splits a space-separated scope string into a set, returning an <b>empty set</b> when <code>scope</code> is null or blank — never null, so callers cannot forget to check. <code>static boolean allowed(String scope, String required)</code> returns whether the required scope is present. <code>static boolean canAct(String scope, String required, boolean userOwnsResource)</code> returns true only when <b>both</b> the scope is granted <b>and</b> the user actually owns the resource — a scope bounds the app, it does not grant the user new rights.`,
+starter:`import java.util.*;
+
+public class Delegation {
+    static Set<String> granted(String scope) {
+        return null;
+    }
+    static boolean allowed(String scope, String required) {
+        return false;
+    }
+    static boolean canAct(String scope, String required, boolean userOwnsResource) {
+        return false;
+    }
+}`,
+tests:[{d:'missing scope yields an empty set, not null',re:'Set\\s*\\.\\s*of\\s*\\(\\s*\\)|emptySet\\s*\\(\\s*\\)|new\\s+HashSet\\s*<\\s*>\\s*\\(\\s*\\)'},{d:'null or blank input is handled',re:'==\\s*null|isBlank\\s*\\(\\s*\\)|isEmpty\\s*\\(\\s*\\)'},{d:'splits the space-separated scope string',re:'split\\s*\\('},{d:'membership decides the scope check',re:'contains\\s*\\('},{d:'ownership is required as well as scope',re:'&&\\s*userOwnsResource|userOwnsResource\\s*&&'}],
+behavior:`granted("photos:read profile") contains both scopes; granted(null) and granted("") return an empty set rather than null, so a missing scope claim fails closed. allowed("photos:read", "photos:read") is true; allowed(null, "photos:read") is false. canAct("photos:read", "photos:read", true) is true, but canAct("photos:read", "photos:read", false) is false — the app was authorised to read photos, not to read somebody else's photos.`,
+hints:['Return an empty set for missing input: <code>if (scope == null || scope.isBlank()) return Set.of();</code>','<code>return new HashSet&lt;&gt;(Arrays.asList(scope.trim().split(" ")));</code>','Both conditions must hold: <code>return allowed(scope, required) &amp;&amp; userOwnsResource;</code>'],
+solution:`import java.util.*;
+
+public class Delegation {
+    static Set<String> granted(String scope) {
+        // fail closed: no scope claim means no permissions, never null
+        if (scope == null || scope.isBlank()) return Set.of();
+        return new HashSet<>(Arrays.asList(scope.trim().split(" ")));
+    }
+    static boolean allowed(String scope, String required) {
+        return granted(scope).contains(required);
+    }
+    static boolean canAct(String scope, String required, boolean userOwnsResource) {
+        // a scope bounds the APP; the user's own rights still apply underneath
+        return allowed(scope, required) && userOwnsResource;
+    }
+}`}},
+
+{id:'idfobo',title:'On-behalf-of: carrying "who asked" across services',body:`
+<p>A request arrives from Ada at your gateway. The gateway calls the orders service, which calls the
+billing service, which calls the ledger. Four hops in, something has to decide whether <i>Ada</i> may
+do this. How does her identity survive the journey — and who is accountable for what happens at the
+end? That is the <b>on-behalf-of</b> problem.</p>
+
+<h4>Four ways to answer it, from worst to best</h4>
+<ol>
+<li><b>Trust the network.</b> The downstream service assumes anything reaching it is legitimate,
+because it is "inside." One foothold anywhere and an attacker can call anything. This is the model zero
+trust exists to kill.</li>
+<li><b>Forward the original token unchanged.</b> Tempting and wrong. The token's <code>aud</code> names
+the first service; every later service must ignore the audience check to accept it, and now a token
+minted for one service works everywhere. You have built a universal key.</li>
+<li><b>Drop the user entirely and call as the service.</b> The downstream sees "orders-service," which
+is honest about the caller but loses the user completely. The ledger cannot enforce Ada's own limits,
+and the audit log says a service did it — true, useless.</li>
+<li><b>Exchange the token, preserving both identities.</b> The service asks the authority for a
+<i>new</i> token, correctly audienced for the next hop, that still names Ada as the subject and records
+who is acting. Both facts survive.</li>
+</ol>
+<div class="codeSample" data-hl>Ada --> [ Gateway ] --> [ Orders ] --> [ Billing ] --> [ Ledger ]
+           aud=gateway    aud=orders    aud=billing    aud=ledger
+           sub=ada        sub=ada       sub=ada        sub=ada
+                          act=gateway   act=orders     act=billing
+
+// each hop gets a token FOR IT, still about Ada, naming who is acting</div>
+
+<h4>Delegation vs impersonation, precisely</h4>
+<p>Two shapes, and the difference is whether the acting party is visible downstream:</p>
+<ul>
+<li><b>Delegation</b> — the token says "Ada, being acted for by orders-service." Both identities
+present. The API can apply Ada's rights <i>and</i> know a service did it. Attribution survives.</li>
+<li><b>Impersonation</b> — the token simply says "Ada." The downstream cannot tell a service is
+involved. More powerful, and the audit trail now claims Ada did something she never touched.</li>
+</ul>
+<p>OAuth Token Exchange encodes delegation with an <b>act</b> claim, which nests to record the whole
+chain, and gates who is permitted to do this with <b>may_act</b> on the original token:</p>
+<div class="codeSample" data-hl>// delegation — both identities, chain preserved
+{"sub":"ada", "aud":"ledger",
+ "act":{"sub":"billing-svc", "act":{"sub":"orders-svc"}}}
+
+// impersonation — the acting party has vanished
+{"sub":"ada", "aud":"ledger"}
+
+// may_act on Ada's original token: WHO is allowed to act for her
+{"sub":"ada", "may_act":{"sub":"orders-svc"}}</div>
+<p><b>Default to delegation.</b> Reserve impersonation for cases where the downstream genuinely must
+not distinguish — some legacy systems cannot parse an actor — and log who impersonated whom, since the
+token no longer records it.</p>
+
+<p>The human version of impersonation — a support agent choosing "view as this customer" — has enough
+operational and legal weight to need its own treatment, and gets it in the next lesson.</p>
+
+<h4>Why you cannot just pass a user id</h4>
+<p>The obvious shortcut is a header: <code>X-User-Id: ada</code>. It fails for one decisive reason —
+<b>it is unauthenticated</b>. Any service that can reach the endpoint can claim to be acting for
+anyone, so the security of every downstream now rests on perfect network isolation. A token is the
+alternative because it is <i>signed</i>: the downstream verifies the claim rather than trusting the
+caller. If you find yourself adding a shared secret header to make the id trustworthy, you are building
+a worse token.</p>
+<p>The mechanics — the token-exchange grant, request parameters and response — are covered in the
+service-to-service stream. What matters here is the shape of the problem: <b>every hop needs its own
+audience, the subject must survive, and the acting party must be recorded.</b></p>`,
+docs:[['RFC 8693 — OAuth 2.0 Token Exchange','https://www.rfc-editor.org/rfc/rfc8693'],['RFC 8693 §4.1 — the act (actor) claim','https://www.rfc-editor.org/rfc/rfc8693#section-4.1'],['RFC 8693 §4.4 — the may_act claim','https://www.rfc-editor.org/rfc/rfc8693#section-4.4'],['NIST SP 800-207 — Zero Trust Architecture','https://csrc.nist.gov/pubs/sp/800/207/final']],
+ex:{title:'Delegation or impersonation? And may the actor act?',
+prompt:`Model the two shapes. Write <code>OnBehalfOf</code> with: <code>static String mode(String subject, String actor)</code> returning <code>"invalid"</code> if <code>subject</code> is null, <code>"impersonation"</code> if <code>actor</code> is null (nobody recorded as acting), and <code>"delegation"</code> otherwise. <code>static boolean mayAct(String allowedActor, String actor)</code> returns true only when both are non-null and equal — the may_act check, which must fail closed. <code>static String auditLine(String subject, String actor)</code> returns <code>subject + " (via " + actor + ")"</code> for delegation, or just <code>subject</code> when there is no actor to record.`,
+starter:`public class OnBehalfOf {
+    static String mode(String subject, String actor) {
+        return null;
+    }
+    static boolean mayAct(String allowedActor, String actor) {
+        return false;
+    }
+    static String auditLine(String subject, String actor) {
+        return null;
+    }
+}`,
+tests:[{d:'a missing subject is invalid',re:'"invalid"'},{d:'no recorded actor means impersonation',re:'"impersonation"'},{d:'both identities present means delegation',re:'"delegation"'},{d:'may_act requires a configured actor',re:'allowedActor\\s*!=\\s*null|null\\s*!=\\s*allowedActor'},{d:'may_act compares by value, not reference',re:'equals\\s*\\('},{d:'the audit line records who acted',re:'"\\s*\\(via\\s*"|\\(via'}],
+behavior:`mode("ada","orders-svc") returns "delegation"; mode("ada",null) returns "impersonation"; mode(null,"orders-svc") returns "invalid". mayAct("orders-svc","orders-svc") is true, while mayAct(null,"orders-svc") and mayAct("orders-svc","billing-svc") are false — an unset may_act must never mean "anyone may act." auditLine("ada","orders-svc") returns ada (via orders-svc); auditLine("ada",null) returns ada, which is exactly the attribution that impersonation loses.`,
+hints:['Check subject first, then actor: two guards before the delegation case.','Fail closed: <code>return allowedActor != null &amp;&amp; allowedActor.equals(actor);</code>','<code>return actor == null ? subject : subject + " (via " + actor + ")";</code>'],
+solution:`public class OnBehalfOf {
+    static String mode(String subject, String actor) {
+        if (subject == null) return "invalid";
+        // no act claim: the acting party is invisible downstream
+        if (actor == null) return "impersonation";
+        return "delegation";
+    }
+    static boolean mayAct(String allowedActor, String actor) {
+        // an absent may_act must never mean "anyone may act"
+        return allowedActor != null && allowedActor.equals(actor);
+    }
+    static String auditLine(String subject, String actor) {
+        if (actor == null) return subject;   // attribution is lost
+        return subject + " (via " + actor + ")";
+    }
+}`}},
+
+{id:'idfactas',title:'Acting as a user: support access done safely',body:`
+<p>Every serious product eventually needs it. A customer reports a bug nobody can reproduce, and a
+support engineer needs to see what <i>they</i> see. So you build "view as this user" — and quietly
+create the most dangerous feature in the system, because it lets one human wear another human's
+identity.</p>
+<p>It is worth being blunt about the stakes: this feature is a self-service privilege escalation
+mechanism unless it is deliberately constrained. It reads customer data by design, so it is regulated
+data access, and regulators treat it that way.</p>
+
+<h4>The two subjects</h4>
+<p>Everything good here follows from one modelling decision: <b>keep two identities, always</b>.</p>
+<ul>
+<li><b>Authenticated subject</b> — who actually logged in and holds the session. The support engineer.
+Never changes during the session.</li>
+<li><b>Effective subject</b> — whose data is being viewed and whose permissions apply. The customer.</li>
+</ul>
+<p>The naive implementation collapses these into one: mint the <i>customer</i> a session and hand it to
+the engineer. It is a few lines of code and it destroys everything downstream. The audit log now says
+the customer deleted their own account. Rate limits, notifications and security alerts all fire as the
+customer. If the engineer's session is stolen, the thief is the customer. And you have no way to answer
+the only question that matters after an incident: <i>which employee did this?</i></p>
+<div class="codeSample" data-hl>WRONG — one subject                RIGHT — two subjects
+session { user: "cust-91" }        session { auth: "eng-14",
+                                             effective: "cust-91",
+                                             reason: "TKT-8823",
+                                             expires: 14:32,
+                                             readOnly: true }
+
+audit: "cust-91 deleted account"   audit: "eng-14 acting as cust-91: viewed order"</div>
+
+<h4>Permissions: intersect, never inherit</h4>
+<p>The rule that prevents the worst outcome: <b>the acting session gets the intersection of what the
+engineer is allowed to do and what the customer can do — and usually less.</b> Not the union, and not
+the customer's rights alone.</p>
+<p>Why it matters: if acting-as simply adopted the target's permissions, then acting as an
+<i>administrator</i> would hand the engineer administrator rights. Support staff would be one click
+from full control, and an attacker who phished a support account would be too. So privileged targets
+must be excluded outright, and destructive operations denied regardless of what either party could
+normally do.</p>
+<ul>
+<li><b>Read-only by default.</b> The overwhelming majority of support sessions only need to look.
+Writing should be a separate, rarer, more-approved capability.</li>
+<li><b>Deny the dangerous set always</b> — changing passwords or email, adding MFA factors, deleting the
+account, exporting all data, viewing full payment details. Each is an account-takeover primitive.</li>
+<li><b>Never act as a privileged account.</b> Admins, other support staff, service accounts: excluded,
+or the feature becomes a ladder.</li>
+</ul>
+
+<h4>The controls that make it defensible</h4>
+<ol>
+<li><b>Authorised explicitly.</b> A specific role, and a recorded reason — usually a ticket id. "Because
+I could" is not an authorisation.</li>
+<li><b>Time-boxed.</b> Thirty minutes, not a session that lives until logout. Sessions that never end
+are how this becomes routine surveillance.</li>
+<li><b>Visible.</b> A persistent banner in the UI. Engineers forget which window they are in, and act
+on production data believing it is their own account.</li>
+<li><b>Attributed.</b> Every log line, every write, every downstream call carries both identities. This
+is the <code>act</code> claim from the previous lesson doing real work.</li>
+<li><b>Notified.</b> In consumer and regulated products, tell the user their account was accessed, who
+did it and why. Under GDPR this is personal-data access; under HIPAA it is disclosure.</li>
+<li><b>Reviewed.</b> Someone reads the acting-as log. A control nobody inspects is decoration —
+this is the log that catches an employee browsing a celebrity's account.</li>
+</ol>
+
+<h4>Prefer the weaker tool</h4>
+<p>Most "I need to act as them" requests are really "I need to see what they see," and there is a ladder
+of options with steadily lower blast radius. Take the lowest rung that solves the problem:</p>
+<div class="codeSample" data-hl>LOWEST RISK   diagnostics view  — their config and flags, none of their content
+              redacted view    — their screens, sensitive fields masked
+              read-only act-as — full view, no writes, banner, time-boxed
+HIGHEST RISK  write act-as     — separate approval, narrow allowlist, notify</div>
+<p>And one alternative that beats all of them when it fits: <b>ask the user to share their session</b>
+— a screen share, or a support link they generate themselves. Consent given directly by the person,
+in the moment, is stronger than any control you can build on your side.</p>`,
+docs:[['RFC 8693 §4.1 — the act (actor) claim','https://www.rfc-editor.org/rfc/rfc8693#section-4.1'],['OWASP — Logging & audit cheat sheet','https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html'],['NIST SP 800-53 AC-6 — Least Privilege','https://csrc.nist.gov/projects/risk-management/sp800-53-controls/release-search#!/control?version=5.1&number=AC-6']],
+ex:{title:'A safe acting-as session',
+prompt:`Write <code>ActAs</code> with three methods. <code>static boolean permitted(String actorRole, boolean targetIsPrivileged)</code> returns true only when <code>actorRole</code> is <code>"support"</code> and the target is <b>not</b> privileged — you must never act as an admin. <code>static boolean canDo(String action, boolean writeApproved)</code> returns false for the always-denied actions <code>"change-password"</code>, <code>"change-email"</code>, <code>"delete-account"</code> and <code>"export-data"</code>; for anything else it returns <code>writeApproved</code> when the action starts with <code>"write:"</code>, and <code>true</code> otherwise (reads are allowed). <code>static String audit(String authSubject, String effectiveSubject, String action)</code> returns <code>authSubject + " acting as " + effectiveSubject + ": " + action</code>, so both identities survive in the log.`,
+starter:`public class ActAs {
+    static boolean permitted(String actorRole, boolean targetIsPrivileged) {
+        return false;
+    }
+    static boolean canDo(String action, boolean writeApproved) {
+        return false;
+    }
+    static String audit(String authSubject, String effectiveSubject, String action) {
+        return null;
+    }
+}`,
+tests:[{d:'only the support role may act as anyone',re:'"support"\\s*\\.\\s*equals|equals\\s*\\(\\s*"support"'},{d:'privileged targets are excluded',re:'!\\s*targetIsPrivileged|targetIsPrivileged\\s*==\\s*false'},{d:'account-takeover actions are always denied',re:'"change-password"'},{d:'data export is always denied',re:'"export-data"'},{d:'writes need separate approval',re:'startsWith\\s*\\(\\s*"write:"'},{d:'the audit line keeps the acting identity',re:'"\\s*acting as\\s*"|acting as'},{d:'the audit line keeps the effective identity',re:'effectiveSubject'}],
+behavior:`permitted("support", false) is true; permitted("support", true) is false because acting as a privileged account would escalate the engineer; permitted("engineer", false) is false. canDo("change-password", true) is false — always-denied actions stay denied no matter what was approved. canDo("write:note", false) is false but canDo("write:note", true) is true. canDo("view-orders", false) is true, since reads are the normal case. audit("eng-14","cust-91","viewed order") returns eng-14 acting as cust-91: viewed order, which is the line that answers "which employee did this?"`,
+hints:['<code>return "support".equals(actorRole) &amp;&amp; !targetIsPrivileged;</code>','Check the denied list first and return false, before considering the write prefix.','<code>if (action.startsWith("write:")) return writeApproved; return true;</code>'],
+solution:`public class ActAs {
+    static boolean permitted(String actorRole, boolean targetIsPrivileged) {
+        // never act as an admin: that turns support into a privilege ladder
+        return "support".equals(actorRole) && !targetIsPrivileged;
+    }
+    static boolean canDo(String action, boolean writeApproved) {
+        if (action == null) return false;
+        switch (action) {
+            case "change-password":
+            case "change-email":
+            case "delete-account":
+            case "export-data":
+                return false;   // account-takeover primitives, denied always
+            default:
+                break;
+        }
+        if (action.startsWith("write:")) return writeApproved;
+        return true;            // reads are the normal, expected case
+    }
+    static String audit(String authSubject, String effectiveSubject, String action) {
+        // both subjects, always: the whole point of not collapsing them
+        return authSubject + " acting as " + effectiveSubject + ": " + action;
+    }
+}`}},
+
+{id:'idfzt',title:'Zero trust: identity as the perimeter',body:`
+<p>Everything so far — tokens with audiences, verifying every signature, delegation that names the
+acting party — points at one architectural idea. Zero trust is the name for it, and it is best
+understood as a reaction to the model it replaced.</p>
+
+<h4>The model that failed</h4>
+<p>The old design was a <b>perimeter</b>: a hard boundary with a firewall and a VPN, and inside it, a
+soft interior where services trusted each other because they were "on the network." Authentication
+happened once, at the edge. Being inside <i>was</i> the authorization.</p>
+<p>It failed for reasons that all arrived at once:</p>
+<ul>
+<li><b>There is no inside any more.</b> Work moved to laptops in homes and cafés, and workloads moved
+to cloud accounts you do not own.</li>
+<li><b>SaaS lives outside it.</b> Your most sensitive data sits in applications the firewall never
+sees.</li>
+<li><b>Lateral movement.</b> One phished laptop lands the attacker <i>inside</i>, where nothing checks
+anything. The perimeter is excellent at stopping outsiders and useless the moment it is crossed.</li>
+<li><b>Supply chain.</b> A compromised dependency runs inside your network by definition.</li>
+</ul>
+<p>The recurring pattern in breach reports is not a defeated firewall. It is a modest initial foothold
+followed by months of unchallenged movement, because nothing behind the wall asked a second question.</p>
+
+<h4>The principle</h4>
+<div class="codeSample" data-hl>PERIMETER MODEL                    ZERO TRUST
+"where are you connecting from?"   "who are you, and may you do THIS, right now?"
+trust = network location           trust = verified identity + policy, per request
+authenticate once at the edge      authenticate and authorize every request
+flat interior, free movement       every hop is a checkpoint
+breach = total access              breach = one narrow, short-lived credential</div>
+<p><b>Never trust, always verify</b> — and note the word <i>always</i>. Not once at login; not once per
+session. Every request re-establishes who is asking and whether they may. That sounds expensive, and it
+is exactly what a signed, audience-scoped, short-lived token makes cheap: verification is a local
+signature check, not a database lookup.</p>
+
+<h4>What it means concretely</h4>
+<ol>
+<li><b>Every request carries a verifiable identity.</b> A user token, or a workload certificate for a
+service. Never an unauthenticated header, and never an IP address — an IP is a routing detail that can
+be spoofed, reassigned, or shared by thousands of people.</li>
+<li><b>Authorize per request, not per session.</b> The decision is made at a policy point each time, so
+revoked access takes effect in seconds rather than whenever the session expires.</li>
+<li><b>Least privilege, expressed narrowly.</b> Tokens audienced for one service, scoped to one job,
+valid for minutes. This is why audience checks matter so much: a token that works everywhere has
+recreated the flat interior inside your token format.</li>
+<li><b>Assume breach.</b> Design so that a stolen credential yields the smallest, shortest-lived
+capability you can arrange — and so the damage is visible in a log.</li>
+<li><b>Use context as a signal.</b> Device posture, location, time, behavioural anomalies feed the
+decision, and can trigger step-up authentication. Context is <i>evidence</i>, never identity: "on the
+corporate network" is one input to a decision, not a reason to skip it.</li>
+</ol>
+
+<h4>The decision point</h4>
+<p>Zero trust needs somewhere the answer is computed. Two roles recur under many product names:</p>
+<div class="codeSample" data-hl>request ──▶ [ PEP ]  policy ENFORCEMENT point — sidecar, gateway, middleware
+               │     intercepts, then obeys the verdict
+               ▼
+            [ PDP ]  policy DECISION point — evaluates identity + resource
+               │              + action + context against policy
+               ▼
+            permit / deny  ── and it must DENY when it cannot decide</div>
+<p><b>Fail closed.</b> A policy engine that is unreachable, a signature that cannot be verified, a claim
+that will not parse: all deny. A system that fails open under load is a system an attacker will
+deliberately overload.</p>
+
+<h4>What zero trust is not</h4>
+<ul>
+<li><b>Not a product.</b> Nothing you buy makes you zero trust; vendors selling "a zero trust solution"
+are selling one component of an architecture.</li>
+<li><b>Not "MFA everywhere."</b> Strong authentication is necessary and nowhere near sufficient — MFA at
+the edge with a flat interior behind it is still the perimeter model.</li>
+<li><b>Not "no trust."</b> The name is unhelpful. Trust is granted constantly — it is just explicit,
+narrow, evidenced and short-lived, rather than implied by a network cable.</li>
+<li><b>Not all-or-nothing.</b> Real adoption is incremental: identity-aware access to one application,
+mTLS between two services, removing one flat network segment.</li>
+</ul>
+<p>The service-to-service stream covers the machinery — mTLS, SPIFFE workload identity, mesh policy.
+The idea to carry there is this one: <b>identity replaced the network as the thing access decisions are
+made on.</b></p>`,
+docs:[['NIST SP 800-207 — Zero Trust Architecture','https://csrc.nist.gov/pubs/sp/800/207/final'],['NIST SP 800-207 §2 — the seven tenets','https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-207.pdf'],['CISA — Zero Trust Maturity Model','https://www.cisa.gov/zero-trust-maturity-model'],['Google BeyondCorp','https://cloud.google.com/beyondcorp']],
+ex:{title:'A policy decision point that fails closed',
+prompt:`Write <code>ZeroTrust</code> with <code>static boolean permit(String subject, String requiredScope, java.util.Set&lt;String&gt; grantedScopes, boolean policyEngineReachable)</code> returning <code>true</code> only when <b>all</b> of these hold: the policy engine is reachable, <code>subject</code> is non-null (an unauthenticated request is never permitted), <code>grantedScopes</code> is non-null, and it contains <code>requiredScope</code>. Anything else denies. Then <code>static boolean trustNetwork(String sourceIp)</code> — return <code>false</code> unconditionally, whatever the address, because network location is never identity.`,
+starter:`import java.util.*;
+
+public class ZeroTrust {
+    static boolean permit(String subject, String requiredScope, Set<String> grantedScopes, boolean policyEngineReachable) {
+        return false;
+    }
+    static boolean trustNetwork(String sourceIp) {
+        return false;
+    }
+}`,
+tests:[{d:'an unreachable policy engine denies',re:'policyEngineReachable'},{d:'an unauthenticated request denies',re:'subject\\s*!=\\s*null|null\\s*!=\\s*subject'},{d:'a missing scope set denies rather than throwing',re:'grantedScopes\\s*!=\\s*null|null\\s*!=\\s*grantedScopes'},{d:'the required scope must be present',re:'contains\\s*\\(\\s*requiredScope\\s*\\)'},{d:'every condition must hold',re:'&&'},{d:'network location is never trusted',re:'return\\s+false'}],
+behavior:`permit("ada","orders:read",Set.of("orders:read"),true) is true. Each of these is false: policyEngineReachable false (fail closed — an attacker who can overload your policy engine must not thereby be allowed in), subject null (no verified identity, no access), grantedScopes null (a missing scope claim denies instead of throwing), or the required scope absent. trustNetwork returns false for "10.0.0.5" and for any other address: an internal IP is a routing detail, it can be spoofed or reassigned, and treating it as identity is the perimeter model that zero trust exists to replace.`,
+hints:['One expression, all conditions joined with &amp;&amp;, starting with the reachability check.','Check <code>grantedScopes != null</code> before calling <code>contains</code>, so a missing claim denies rather than throwing.','<code>trustNetwork</code> genuinely just returns false — that is the lesson, not a placeholder.'],
+solution:`import java.util.*;
+
+public class ZeroTrust {
+    static boolean permit(String subject, String requiredScope, Set<String> grantedScopes, boolean policyEngineReachable) {
+        // fail closed on every axis: no decision, no identity, no claim -> deny
+        return policyEngineReachable
+            && subject != null
+            && grantedScopes != null
+            && grantedScopes.contains(requiredScope);
+    }
+    static boolean trustNetwork(String sourceIp) {
+        // never. an IP is a routing detail, not an identity
+        return false;
+    }
+}`}},
+
+{id:'idfapikey',title:'API keys: the pattern everyone uses and nobody teaches',body:`
+<p>Look at any real system and you will find API keys everywhere — far more common than OAuth. They
+survive because they are the least effort that works: one string, one header, done. It is worth being
+precise about what you give up for that convenience, because most of the damage is avoidable.</p>
+
+<h4>What an API key actually is</h4>
+<p>An API key is a <b>long-lived, opaque bearer token identifying an application rather than a
+person</b>. Every word there is load-bearing:</p>
+<ul>
+<li><b>Long-lived</b> — typically no expiry at all. Unlike an access token measured in minutes, a key
+issued in 2019 is probably still valid.</li>
+<li><b>Opaque</b> — a random string that must be looked up. No claims, no signature, nothing to verify
+offline.</li>
+<li><b>Bearer</b> — whoever holds it can use it. There is no proof of possession, no audience, no
+binding to a caller.</li>
+<li><b>Identifies an application</b> — there is no user in the picture, so "who did this?" can only
+ever be answered as "whichever integration holds this key."</li>
+</ul>
+<p>Compare it honestly against an OAuth access token and the trade is clear: keys win on simplicity and
+lose on everything else.</p>
+<div class="codeSample" data-hl>                 API KEY                    OAUTH ACCESS TOKEN
+lifetime         forever (usually)          minutes
+scope            often all-or-nothing       explicit scopes
+subject          an application             a user, or a service
+audience         none — works anywhere      one API (aud)
+revocation       delete the row (instant)   hard: valid until exp
+verification     lookup on every call       offline signature check
+setup cost       ten minutes                a real integration</div>
+<p>Note that keys are genuinely <i>better</i> at revocation, because they are opaque: deleting the row
+kills them immediately. The problem is never the mechanism — it is the lifetime and the sprawl.</p>
+
+<h4>How they leak</h4>
+<p>Keys leak in a small number of very predictable ways, and knowing the list is most of the defence:</p>
+<ul>
+<li><b>Committed to git.</b> The classic. Rewriting history does not help — assume anything pushed is
+public forever and rotate.</li>
+<li><b>Put in a URL query string.</b> URLs land in server logs, proxy logs, browser history and
+<code>Referer</code> headers sent to third parties. Keys belong in a header, never a query parameter.</li>
+<li><b>Shipped in a mobile app or SPA bundle.</b> Anything downloaded to a device is public; the key is
+extractable in minutes.</li>
+<li><b>Shared between environments and teams.</b> One key used by six integrations cannot be rotated
+without breaking five of them, so it never gets rotated.</li>
+<li><b>Logged accidentally</b> by a middleware that dumps request headers on error.</li>
+</ul>
+
+<h4>Doing them properly</h4>
+<p>If you are issuing keys, a handful of choices make the difference between a manageable credential and
+an incident:</p>
+<ol>
+<li><b>Give every key an identifiable prefix</b> — <code>sk_live_</code>, <code>ghp_</code>. It costs
+nothing and lets secret scanners spot the key in a public repo and alert you before an attacker
+notices. It also tells an engineer at a glance what they are holding.</li>
+<li><b>Store only a hash.</b> Treat keys like passwords: hash at rest, compare on lookup. Your database
+should not contain a usable credential. Show the plaintext once, at creation, and never again.</li>
+<li><b>One key per integration.</b> Separate keys mean you can revoke one without an outage, and the
+audit log can say <i>which</i> integration did something.</li>
+<li><b>Scope them.</b> Read-only keys for read-only integrations. Most keys are handed full account
+power because scoping was never offered.</li>
+<li><b>Record last-used and support rotation with overlap.</b> "Last used" tells you which keys are
+dead and safe to delete. Allowing two live keys at once is what makes rotation possible without
+downtime.</li>
+<li><b>Compare in constant time</b> and rate-limit by key, so lookup timing and brute force are both
+closed off.</li>
+</ol>
+
+<h4>When to use one</h4>
+<p>Keys are the right answer for server-to-server integrations where a human sets them up once — a
+webhook receiver, a CI job, an internal script. They are the wrong answer whenever a <i>user</i> is
+involved, because a key cannot represent one, and whenever the code runs somewhere the user can read
+it, because then it is not a secret at all.</p>
+<p>The modern replacement for the long-lived key in cloud and CI is <b>workload identity federation</b>:
+the workload proves what it is and exchanges that for a short-lived token, so no static credential
+exists to leak. That is the next lesson but one.</p>`,
+docs:[['OWASP — Secrets Management Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html'],['GitHub — Secret scanning partner program','https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning'],['RFC 6750 §2.3 — why credentials do not belong in URIs','https://www.rfc-editor.org/rfc/rfc6750#section-2.3']],
+ex:{title:'Issue and check an API key safely',
+prompt:`Write <code>ApiKeys</code> with three methods. <code>static boolean looksLikeOurKey(String key)</code> returns true only when <code>key</code> is non-null and starts with the prefix <code>"sk_live_"</code> — the prefix that lets secret scanners find leaked keys. <code>static boolean validPlacement(String header, String queryParam)</code> returns true only when the key arrived in the <code>header</code> (non-null) and <code>queryParam</code> is null, because a key in a URL leaks through logs and Referer headers. <code>static boolean matches(String presentedHash, String storedHash)</code> compares two hashes, returning false if either is null — you store a hash, never the key itself.`,
+starter:`public class ApiKeys {
+    static final String PREFIX = "sk_live_";
+
+    static boolean looksLikeOurKey(String key) {
+        return false;
+    }
+    static boolean validPlacement(String header, String queryParam) {
+        return false;
+    }
+    static boolean matches(String presentedHash, String storedHash) {
+        return false;
+    }
+}`,
+tests:[{d:'keys carry a scannable prefix',re:'"sk_live_"'},{d:'null keys are rejected before inspection',re:'key\\s*!=\\s*null|null\\s*!=\\s*key'},{d:'the prefix is checked',re:'startsWith\\s*\\('},{d:'the key must arrive in a header',re:'header\\s*!=\\s*null|null\\s*!=\\s*header'},{d:'a key in the query string is refused',re:'queryParam\\s*==\\s*null|null\\s*==\\s*queryParam'},{d:'hashes are compared, and nulls rejected',re:'storedHash\\s*[=!]=\\s*null|null\\s*[=!]=\\s*storedHash'},{d:'comparison is by value',re:'equals\\s*\\('}],
+behavior:`looksLikeOurKey("sk_live_abc123") is true; looksLikeOurKey("abc123") and looksLikeOurKey(null) are false. validPlacement("sk_live_abc", null) is true, but validPlacement(null, "sk_live_abc") and validPlacement("sk_live_abc", "sk_live_abc") are both false — once the key is in the URL it is already in your access logs, so accepting it there at all trains callers to leak. matches("h1","h1") is true; matches(null,"h1") and matches("h1",null) are false, so an unknown key can never accidentally match a missing stored value.`,
+hints:['<code>return key != null &amp;&amp; key.startsWith(PREFIX);</code>','Both conditions matter: a header present <i>and</i> no query parameter at all.','Guard both arguments before <code>equals</code>, so null never equals null here.'],
+solution:`public class ApiKeys {
+    static final String PREFIX = "sk_live_";
+
+    static boolean looksLikeOurKey(String key) {
+        // the prefix is what lets secret scanners catch a leaked key
+        return key != null && key.startsWith(PREFIX);
+    }
+    static boolean validPlacement(String header, String queryParam) {
+        // a key in the query string is already in logs, history and Referer
+        return header != null && queryParam == null;
+    }
+    static boolean matches(String presentedHash, String storedHash) {
+        // we store a hash, never the key: nothing usable sits in the database
+        if (presentedHash == null || storedHash == null) return false;
+        return presentedHash.equals(storedHash);
+    }
+}`}},
+
+{id:'idfcapurl',title:'Capability URLs: when the link is the credential',body:`
+<p>You have used dozens of these today. A password-reset email, a "anyone with this link can view"
+document, a presigned download that works without logging in. In each case there is no session and no
+token header — <b>the URL itself is the credential</b>. Holding the link <i>is</i> the authorization.</p>
+<p>The pattern has a name, <b>capability URL</b>, and it is genuinely useful: it works in email, it
+works for people without accounts, and it needs no login. It also fails in ways that ordinary
+credentials do not, because URLs are handled by software that assumes they are not secret.</p>
+
+<h4>The three properties that define one</h4>
+<ul>
+<li><b>Unguessable.</b> The secret is the only protection, so it must have real entropy — a
+cryptographically random 128 bits or more, never a sequential id, a timestamp, or a hash of the user's
+email.</li>
+<li><b>Self-contained.</b> No other authentication is required. That is the feature and the risk.</li>
+<li><b>Bounded.</b> A capability grants one specific thing — view <i>this</i> document, reset
+<i>this</i> password — and should expire.</li>
+</ul>
+
+<h4>Why URLs leak in ways headers do not</h4>
+<p>This is the part that surprises people. A token in an <code>Authorization</code> header travels
+through a narrow, well-understood path. A URL travels through an enormous amount of software that
+treats it as public metadata:</p>
+<div class="codeSample" data-hl>a capability URL passes through, and is often retained by:
+
+  server access logs         every proxy, load balancer and CDN in the path
+  browser history            and it syncs across the user's devices
+  the Referer header         sent to any third party the page links to or loads
+  email scanners             corporate security gateways FETCH links to check them
+  chat and ticket systems    pasted "so you can see what I mean"
+  analytics and error trackers  full URL captured with the page view</div>
+<p>Two of these deserve emphasis. <b>Referer leakage</b>: if the page at a capability URL loads an
+external script or has an outbound link, the full URL can be handed to that third party. Set
+<code>Referrer-Policy: no-referrer</code> on those pages. And <b>link prefetching by scanners</b>:
+corporate mail gateways visit links to check them for malware, which means a single-use link can be
+consumed before the human ever clicks it — a real and confusing bug in password-reset flows.</p>
+
+<h4>The rules</h4>
+<ol>
+<li><b>Short expiry.</b> Minutes for a password reset, hours or days for a share link. An eternal
+capability URL is a permanent unauthenticated back door.</li>
+<li><b>Single use where the action is sensitive.</b> Consume the token on use, so a leaked reset link
+in an inbox is already spent. Handle the scanner problem by requiring a POST — a GET from a scanner
+then does not consume it.</li>
+<li><b>Bind to the action, not just the resource.</b> A reset token should be valid for resetting one
+account's password, and nothing else.</li>
+<li><b>Put nothing sensitive in the path.</b> No email addresses, no names, no account numbers. All of
+that is going into logs and history.</li>
+<li><b>Re-authenticate before anything irreversible.</b> Deleting an account or changing an email
+should require a real login, not just possession of a link.</li>
+<li><b>Make them revocable and visible.</b> Users should be able to see active share links and kill
+them.</li>
+<li><b>Log the use, not the URL.</b> Record that capability <code>abc123</code> was used; never write
+the full secret to a log.</li>
+</ol>
+
+<h4>Two flavours worth distinguishing</h4>
+<p><b>Stored capabilities</b> — a random token in a database row recording what it grants and when it
+expires. Instantly revocable, requires a lookup. This is what password resets should be.</p>
+<p><b>Signed capabilities</b> — the parameters are in the URL along with an HMAC signature, so the
+server verifies without storing anything. Cloud presigned URLs work this way. Stateless and scalable,
+but <i>not revocable</i> before expiry, which is exactly the structured-versus-opaque trade-off from the
+token lesson showing up again in a URL.</p>
+<div class="codeSample" data-hl>// stored: the token means nothing without the row
+https://app.example.com/reset?t=9f3a7c1e5b8d4a2f6c0e9b7d3a5f1c8e
+
+// signed: the URL carries its own terms, verified by HMAC
+https://files.example.com/report.pdf
+    ?expires=1767225600&amp;scope=read&amp;sig=b41c9e...
+// change any parameter and the signature no longer matches</div>
+<p>Pick stored when you need revocation and an audit trail; pick signed when you need scale and can
+live with "valid until it expires."</p>`,
+docs:[['W3C TAG — Good Practices for Capability URLs','https://www.w3.org/TR/capability-urls/'],['MDN — Referrer-Policy','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy'],['OWASP — Forgot Password Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html']],
+ex:{title:'Validate a capability token',
+prompt:`Write <code>Capability</code> with three methods. <code>static boolean strongEnough(String token)</code> returns true only when <code>token</code> is non-null and at least 32 characters — the secret is the only protection, so it must be unguessable. <code>static boolean usable(String token, long expiresAt, long now, boolean alreadyUsed)</code> returns true only when the token is strong enough, <b>not</b> already used, and <code>now</code> is strictly before <code>expiresAt</code>. <code>static String safeLog(String token)</code> returns <code>"cap:"</code> plus the <b>first 6 characters</b> of the token, so logs identify which capability was used without recording a working credential — return <code>"cap:unknown"</code> if the token is null or shorter than 6 characters.`,
+starter:`public class Capability {
+    static boolean strongEnough(String token) {
+        return false;
+    }
+    static boolean usable(String token, long expiresAt, long now, boolean alreadyUsed) {
+        return false;
+    }
+    static String safeLog(String token) {
+        return null;
+    }
+}`,
+tests:[{d:'rejects a null token',re:'token\\s*!=\\s*null|null\\s*!=\\s*token'},{d:'requires real entropy in the token',re:'length\\s*\\(\\s*\\)\\s*>=\\s*32|32\\s*<=\\s*token'},{d:'a consumed token cannot be reused',re:'!\\s*alreadyUsed|alreadyUsed\\s*==\\s*false'},{d:'expiry is enforced',re:'now\\s*<\\s*expiresAt|expiresAt\\s*>\\s*now'},{d:'every condition must hold',re:'&&'},{d:'logs record only a prefix',re:'substring\\s*\\(\\s*0\\s*,\\s*6\\s*\\)'},{d:'unusable tokens log as unknown',re:'"cap:unknown"'}],
+behavior:`strongEnough of a 32-character random string is true; a 10-character token or null is false. usable(strongToken, 100, 99, false) is true. It is false when alreadyUsed is true (single use means a leaked link sitting in an inbox is already spent), and false when now equals or exceeds expiresAt. safeLog("9f3a7c1e5b8d...") returns cap:9f3a7c, which is enough to correlate the use in an audit trail while leaving the log useless to anyone who reads it. safeLog(null) and safeLog("abc") return cap:unknown.`,
+hints:['<code>return token != null &amp;&amp; token.length() &gt;= 32;</code>','Join all three conditions: strong, not used, and <code>now &lt; expiresAt</code>.','Guard the length before slicing: <code>if (token == null || token.length() &lt; 6) return "cap:unknown";</code>'],
+solution:`public class Capability {
+    static boolean strongEnough(String token) {
+        // the secret is the only protection, so it needs real entropy
+        return token != null && token.length() >= 32;
+    }
+    static boolean usable(String token, long expiresAt, long now, boolean alreadyUsed) {
+        return strongEnough(token) && !alreadyUsed && now < expiresAt;
+    }
+    static String safeLog(String token) {
+        // never write the whole capability: the log would become a credential store
+        if (token == null || token.length() < 6) return "cap:unknown";
+        return "cap:" + token.substring(0, 6);
+    }
+}`}},
+
+{id:'idfassume',title:'Assuming a role: short-lived credentials across accounts',body:`
+<p>A deployment job needs to write to a production bucket in another cloud account. The lazy answer is
+a long-lived access key pasted into the CI system. The pattern that replaced it is <b>role
+assumption</b>: prove who you are, then exchange that for a temporary credential scoped to a specific
+role — with nothing durable to steal.</p>
+<p>This is the same delegation idea as token exchange, applied to infrastructure, and it is worth seeing
+as identity rather than as cloud trivia.</p>
+
+<h4>The mechanics</h4>
+<p>A <b>role</b> is a named bundle of permissions that nobody owns. It has two policies, and confusing
+them causes most of the pain:</p>
+<ul>
+<li><b>The trust policy</b> — <i>who is allowed to assume this role.</i> An identity question.</li>
+<li><b>The permission policy</b> — <i>what the role can do once assumed.</i> An authorization
+question.</li>
+</ul>
+<p>Assuming the role returns a temporary credential — typically valid for an hour — and the caller's
+effective permissions are the <b>intersection</b> of what the role grants and what any session policy
+allows. Narrowing on assumption is a real capability worth using: assume the role with less than it
+offers when the task needs less.</p>
+<div class="codeSample" data-hl>Account A (CI)                        Account B (production)
+  identity: ci-runner                   role: deploy-role
+       |                                  trust policy:  who may assume me
+       |  1. "I am ci-runner"             perm policy:   what I can do
+       +--- assume-role -----------------------> checks the TRUST policy
+                                                        |
+       <---- temporary credential (1 hour) --------------+
+       |
+       +--- writes to the bucket, using the ROLE's permissions
+            audit log records: ci-runner assumed deploy-role</div>
+<p>Notice the audit line: like the <code>act</code> claim, a good implementation records both the
+original identity and the role, so "who did this?" survives the hop.</p>
+
+<h4>The confused deputy, and why external ids exist</h4>
+<p>This is the subtlety that catches everyone. Suppose you are a SaaS vendor and your customers grant
+your account permission to read their buckets. Your account is now a <b>deputy</b> holding access to
+many customers.</p>
+<p>Customer A configures a trust policy saying "vendor's account may assume my role." So can customer
+B. Now, if customer B can persuade your service to make a call with <i>A's</i> role name — for example
+by typing A's role identifier into their own configuration form — your service will happily assume it,
+because your account genuinely is trusted by A. You have been used as a deputy to reach data you were
+never meant to touch on that customer's behalf.</p>
+<p>The fix is the <b>external id</b>: a secret value the customer puts in their trust policy, which the
+vendor must supply on assumption. Because customer B does not know A's external id, B cannot make the
+deputy act against A.</p>
+<div class="codeSample" data-hl>// customer A's trust policy
+allow assume-role by vendor-account
+  ONLY IF externalId == "a7f3-c19e-..."   // A's secret, unique per customer
+
+// the vendor must present it, and B cannot guess it
+assumeRole(roleArn = A's role, externalId = "a7f3-c19e-...")</div>
+<p>The general principle outlives any one cloud: <b>when you are trusted by many principals, something
+must bind each request to the principal it is really for.</b> Otherwise being trusted by everyone means
+anyone can aim you.</p>
+
+<h4>Killing the last static credential</h4>
+<p>Role assumption still needs an initial identity, and for years that was a long-lived key — the exact
+thing the pattern was meant to remove. <b>Workload identity federation</b> closes the loop: the
+workload already has a verifiable identity from its platform, so it exchanges that directly for a
+role.</p>
+<p>A CI job is the clearest example. The CI platform issues the job a short-lived OIDC token describing
+it — which repository, which branch, which workflow. The cloud is configured to trust that issuer, and
+to accept only tokens whose claims match. No secret is stored anywhere.</p>
+<div class="codeSample" data-hl>// trust policy conditions on the OIDC token's own claims
+issuer:  https://token.actions.githubusercontent.com
+require: sub == "repo:acme/api:ref:refs/heads/main"
+         aud == "sts.amazonaws.com"
+
+// the danger: a loose condition trusts far too much
+require: sub startsWith "repo:acme/"     // ANY repo in the org
+require: nothing at all                  // ANY repo on GitHub, anywhere</div>
+<p>That last line is not hypothetical — a trust policy naming the issuer but not constraining
+<code>sub</code> lets any repository on the platform assume your role. The lesson generalises: with
+federated trust, <b>the issuer check tells you the token is real; the subject check tells you it is
+the right one.</b> You need both, exactly as with <code>iss</code> and <code>aud</code> on any other
+token.</p>`,
+docs:[['AWS — The confused deputy problem and external IDs','https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html'],['AWS — Configuring OpenID Connect for CI providers','https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html'],['GitHub — Security hardening with OpenID Connect','https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect'],['RFC 8693 — OAuth 2.0 Token Exchange','https://www.rfc-editor.org/rfc/rfc8693']],
+ex:{title:'Guard a role assumption',
+prompt:`Write <code>RoleAssumption</code> with three methods. <code>static boolean trusted(String callerId, java.util.Set&lt;String&gt; allowedCallers)</code> is the trust-policy check: true only when both arguments are non-null and the set contains the caller. <code>static boolean externalIdOk(String expected, String presented)</code> is the confused-deputy guard: true only when <code>expected</code> is non-null and equals <code>presented</code> — an unset expectation must never mean "anyone." <code>static boolean subjectAllowed(String requiredSub, String tokenSub)</code> requires an <b>exact</b> match of the federated token's subject, and returns false if either is null, so a trust policy that names only the issuer cannot let every repository in.`,
+starter:`import java.util.*;
+
+public class RoleAssumption {
+    static boolean trusted(String callerId, Set<String> allowedCallers) {
+        return false;
+    }
+    static boolean externalIdOk(String expected, String presented) {
+        return false;
+    }
+    static boolean subjectAllowed(String requiredSub, String tokenSub) {
+        return false;
+    }
+}`,
+tests:[{d:'the trust policy is an allow-list',re:'contains\\s*\\('},{d:'a null caller or missing policy denies',re:'callerId\\s*!=\\s*null|allowedCallers\\s*!=\\s*null'},{d:'an unset external id never means anyone',re:'expected\\s*!=\\s*null|null\\s*!=\\s*expected'},{d:'the external id is compared by value',re:'expected\\s*\\.\\s*equals|equals\\s*\\(\\s*presented'},{d:'the federated subject must be present',re:'requiredSub\\s*[=!]=\\s*null|tokenSub\\s*[=!]=\\s*null'},{d:'the subject is matched exactly, not by prefix',re:'requiredSub\\s*\\.\\s*equals|equals\\s*\\(\\s*tokenSub'},{d:'no prefix matching on the subject',re:'startsWith',not:true}],
+behavior:`trusted("ci-runner", Set.of("ci-runner")) is true; an unknown caller, a null caller or a null policy set are all false. externalIdOk("a7f3","a7f3") is true, while externalIdOk(null,"a7f3") is false — that is the whole confused-deputy defence, since a vendor trusted by many customers must bind each call to the customer it is for. subjectAllowed("repo:acme/api:ref:refs/heads/main", same) is true, but a different branch or repository is false, and prefix matching is deliberately not used because "repo:acme/" would admit every repository in the organisation.`,
+hints:['Guard both arguments, then <code>allowedCallers.contains(callerId)</code>.','<code>return expected != null &amp;&amp; expected.equals(presented);</code>','Exact equality only — reaching for <code>startsWith</code> here is the bug the test checks for.'],
+solution:`import java.util.*;
+
+public class RoleAssumption {
+    static boolean trusted(String callerId, Set<String> allowedCallers) {
+        // the trust policy answers "who may assume me" — an allow-list, nothing else
+        return callerId != null && allowedCallers != null && allowedCallers.contains(callerId);
+    }
+    static boolean externalIdOk(String expected, String presented) {
+        // confused-deputy guard: an unset expectation must not mean "anyone"
+        return expected != null && expected.equals(presented);
+    }
+    static boolean subjectAllowed(String requiredSub, String tokenSub) {
+        // exact match: a prefix would admit every repo in the organisation
+        if (requiredSub == null || tokenSub == null) return false;
+        return requiredSub.equals(tokenSub);
     }
 }`}},
 
@@ -361,6 +1826,8 @@ hints:['Federation removes password sprawl by making apps trust one authority.',
 <p>Federation only works if the relying party (RP) can be sure a proof really came from the identity provider (IdP), is meant for <i>this</i> app, and is fresh. That certainty is <b>trust</b>, and it is not a feeling — it is <b>configuration plus cryptography</b>. This lesson ties together the pieces you meet across the OAuth, SAML and PKI streams.</p>
 <p><b>1. Identification (set up once, out of band).</b> The RP <b>registers</b> with the IdP. In OAuth/OIDC it receives a <code>client_id</code> and, for a confidential client, a <code>client_secret</code>, and registers exact redirect URIs. In SAML the two sides exchange <b>metadata</b> containing an <b>X.509 certificate</b>. This is where the parties learn who each other are.</p>
 <p><b>2. Keys (the core asymmetry).</b> The IdP signs proofs with its <b>private</b> key and <b>publishes the matching public key</b> — at a <b>JWKS</b> endpoint (OIDC) or in SAML metadata. The RP verifies signatures with that public key. <b>Public keys are shared; private keys never leave their owner</b> — which is exactly why a forger who can read the public key still cannot mint a valid signature. For certificates, verification may walk a <b>PKI chain</b> to a trusted <b>CA</b>.</p>
+<p><b>2b. The trust anchor — where the regress stops.</b> Verification is a chain of "I believe this because of that," and every chain has to terminate somewhere in a thing you believe <i>because you decided to</i>. That terminus is the <b>trust anchor</b>: a key or certificate accepted as authoritative by configuration rather than by proof. It is the one link nothing else vouches for.</p>
+<p>The same idea wears different clothes in each stream: in OIDC the anchor is the <b>issuer URL plus its JWKS keys</b> you configured; in SAML it is the <b>IdP certificate in the metadata</b> you loaded; in PKI it is a <b>root CA certificate</b> in your truststore, self-signed by definition — a root is trusted <i>because it is in the store</i>, not because its signature proves anything. This is why "just fetch the keys from whatever URL the token names" is fatal: it lets the token choose its own anchor, and an attacker will happily point you at keys they control. <b>The anchor must be pinned by you, in advance, out of band.</b> Everything downstream is only as trustworthy as that one deliberate decision.</p>
 <p><b>3. How strongly the client proves itself</b> runs on a ladder: nothing (public client + PKCE) → a shared <code>client_secret</code> → <b>private_key_jwt</b> (the client signs with its own private key; no shared secret) → <b>mTLS</b>. Asymmetric methods are stronger because there is no shared secret to leak.</p>
 <p><b>4. Verification (enforced on every message).</b> A valid signature is necessary but not sufficient. The RP must also check the <b>issuer</b> (<code>iss</code> is the expected IdP), the <b>audience</b> (<code>aud</code>/recipient names this RP — so a proof minted for another app is rejected), <b>freshness</b> (<code>exp</code>/<code>NotOnOrAfter</code> and <code>nbf</code>, with small clock skew), and <b>anti-replay/correlation</b> (the <code>nonce</code> ties an ID token to this login; <code>state</code> blocks CSRF; SAML tracks assertion IDs).</p>
 <p><b>5. The sharp edges.</b> <b>Unsolicited assertions</b> (SAML IdP-initiated) have no request to correlate to, so accept them only from a trusted IdP with full validation, and prefer SP-initiated. <b>JIT provisioning</b> means you create accounts from IdP claims, so map claims to <b>least privilege</b> and key on the stable subject id. And trust is not set-and-forget: rotate keys and certificates, honor JWKS caching, and support revocation and logout.</p>`,

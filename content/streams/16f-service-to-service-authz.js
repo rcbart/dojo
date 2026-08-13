@@ -82,6 +82,8 @@ public class MtlsIdentity {
 }`}},
 
 {id:'s2s3',title:'OAuth Token Exchange (on-behalf-of)',body:`
+<p><i>The shape of this problem — audience per hop, subject survives, acting party recorded — is covered
+by the on-behalf-of lesson in Identity Foundations. This lesson is the mechanism.</i></p>
 <p>Often a request enters your system as a <b>user</b> (a user token at the gateway), then one service must call another <b>on that user's behalf</b> — but the user token is scoped/audienced for the first service, not the next. <b>Token Exchange</b> (RFC 8693) is the standard way to trade one token for another.</p>
 <ul>
 <li>A service sends its <b>subject_token</b> (the incoming token) to the authority and asks for a new token for a different <b>audience</b> / scopes.</li>
@@ -193,6 +195,8 @@ solution:`public class WorkloadToken {
 }`}},
 
 {id:'s2s6',title:'Zero trust: choosing an S2S approach',body:`
+<p><i>The principle and its history are in the zero trust lesson in Identity Foundations. Here it is
+applied: picking a service-to-service approach.</i></p>
 <p><b>Zero trust</b> means "never trust the network" — every call is authenticated and authorized on <b>identity</b>, not on being inside a perimeter. The S2S mechanisms in this stream are how you implement it. Choosing among them:</p>
 <ul>
 <li><b>mTLS + SPIFFE</b> — best <i>inside</i> a platform/mesh (Kubernetes, one or federated trust domains). Automatic, sender-constrained, no secrets. The default for internal S2S.</li>
@@ -256,6 +260,8 @@ tests:[{d:'forwards the caller identity',re:'"authorization="\\s*\\+\\s*bearer'}
 behavior:`headers("Bearer abc","00-trace-01") returns "authorization=Bearer abc;traceparent=00-trace-01". The downstream service can now identify the original caller and correlate the call in traces.`,
 hints:['Concatenate the two labelled values with +.','The separator between them is the literal ";traceparent=".','Both the identity and the trace id must be forwarded, not just one.']}},
 {id:'s2s8',title:'Impersonation vs delegation',body:`
+<p><i>The human side of this — support engineers acting as customers, and the controls that make it
+defensible — is the acting-as-a-user lesson in Identity Foundations.</i></p>
 <p><b>Impersonation</b> means one party <i>acts as</i> another so completely that the downstream cannot tell the difference — the request now looks like it simply came from the target user. A support admin using "log in as this customer" is impersonation: the effective subject becomes the customer, and the admin&#8217;s own identity disappears from view.</p>
 <p><b>Delegation</b> is the safer cousin. The app acts <i>on behalf of</i> the user while <b>both</b> identities are preserved: the token names the user as the subject and records the acting party in an <code>act</code> (actor) claim, which OAuth <b>Token Exchange</b> produces. Auditors can then see "service X acted for user Y," which pure impersonation loses.</p>
 <p>Rule of thumb: prefer delegation so attribution survives; reserve impersonation for genuine support scenarios, and always log who impersonated whom.</p>`,

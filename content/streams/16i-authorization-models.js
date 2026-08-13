@@ -113,4 +113,294 @@ tests:[{d:'checks for the maker role',re:'contains\\s*\\(\\s*"maker"\\s*\\)'},{d
 behavior:`violates(Set.of("maker","checker")) is true; violates(Set.of("maker")) is false. Holding both halves of a create-and-approve pair breaks separation of duties.`,
 hints:['A conflict exists only when both roles are present, so use &&.','Check membership of each role with contains.','One role alone is fine; it is the combination that violates the rule.']}},
 
+{id:'az6',title:'Data-level authorization: the check that actually matters',body:`
+<p>RBAC, ABAC and ReBAC all answer the same shape of question: <i>may this user perform this kind of
+action?</i> Every one of them will happily approve a request that then returns somebody else's data,
+because none of them looked at <i>which</i> record was being fetched. That gap is where most real
+authorization bugs live.</p>
+
+<h4>Two questions, and only one usually gets asked</h4>
+<div class="codeSample" data-hl>ENDPOINT authorization   "may this user call GET /invoices/{id}?"   <- role check
+OBJECT   authorization   "is invoice 4417 theirs to see?"          <- often missing
+
+// the bug, in its most common form:
+@RequiresRole("customer")
+Invoice get(long id) {
+    return repo.findById(id);   // any customer, any invoice
+}</div>
+<p>Change the <code>4417</code> in the URL to <code>4418</code> and you are reading another customer's
+invoice. This is <b>IDOR</b> — insecure direct object reference — known in the API world as <b>broken
+object-level authorization</b>, and it sits at the top of the OWASP API Security Top 10 for a simple
+reason: the role check passed, the test suite passed, and nothing looked wrong.</p>
+<p>It is worth being clear about why it is so persistent. The endpoint check is <i>visible</i> — it is
+an annotation, it is in the design doc, a reviewer notices when it is missing. The object check is
+invisible: its absence looks exactly like working code.</p>
+
+<h4>Guessable ids are not the problem</h4>
+<p>The usual first reaction is to replace sequential ids with UUIDs. That is worth doing — it stops
+casual enumeration and it keeps your customer count out of your URLs — but it is <b>not an
+authorization control</b>. It only makes the reference harder to guess, and references leak constantly:
+in shared links, referral logs, exports, support tickets, and to any former employee who saw them.
+<b>An unguessable identifier is obscurity; an ownership check is security.</b> Do both, and never let
+the first substitute for the second.</p>
+
+<h4>Filter in the query, do not check after</h4>
+<p>There are two places to enforce ownership, and only one of them scales:</p>
+<div class="codeSample" data-hl>// FRAGILE — fetch first, check after. Every new call site must remember.
+Invoice inv = repo.findById(id);
+if (inv.tenantId != currentTenant) throw new Forbidden();
+
+// ROBUST — the constraint is part of the query. Wrong tenant simply finds nothing.
+Invoice inv = repo.findByIdAndTenantId(id, currentTenant);
+
+// and for lists, the filter must be in the WHERE clause, never applied afterwards
+SELECT * FROM invoices WHERE tenant_id = ? AND status = ?</div>
+<p>The check-after style fails the moment someone adds a new query, and someone always does. Pushing
+the constraint into the data access layer makes the safe path the default one: a repository that
+<i>cannot</i> fetch across tenants cannot leak across tenants.</p>
+<p>Two extra failure modes worth naming. <b>Lists and search</b> are frequently forgotten while the
+detail endpoint is carefully guarded — and a search that ignores the tenant filter leaks in bulk.
+And <b>counts and aggregates</b> leak too: telling a user that a search matched 4,000 records reveals
+information even if it returns none of them.</p>
+
+<h4>Field-level: not every column is equally visible</h4>
+<p>Object-level is only half of it. Two users may both be entitled to a record and entitled to see
+<i>different parts</i> of it. A support agent reads the order but not the full card number; a manager
+sees a direct report's salary while a peer does not.</p>
+<p>The dangerous habit is serialising the whole entity and trusting the UI to hide things. The UI is
+not an authorization boundary — the JSON already contains the field, and anyone can open developer
+tools. <b>Mask or omit at the point of serialisation</b>, driven by the caller's permissions. The same
+applies in reverse for writes: accepting a whole object and copying it onto an entity lets a caller set
+fields they should never control, which is how <code>"role":"admin"</code> ends up in a profile
+update.</p>
+
+<h4>Where the check belongs</h4>
+<p>A gateway can enforce endpoint authorization, because it can see the route and the token. It cannot
+enforce object authorization, because it does not know who owns record 4417 — only the service holding
+the data does. So the split is structural, not stylistic: <b>coarse checks at the edge, ownership
+checks next to the data.</b> Any design that pushes all authorization to the perimeter has, by
+construction, no answer to IDOR.</p>`,
+docs:[['OWASP API Security Top 10 — API1:2023 Broken Object Level Authorization','https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/'],['OWASP — Insecure Direct Object Reference Prevention Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html'],['PostgreSQL — Row Security Policies','https://www.postgresql.org/docs/current/ddl-rowsecurity.html']],
+ex:{title:'Ownership checks and field masking',
+prompt:`Write <code>DataAuthz</code> with three methods. <code>static boolean canRead(String callerTenant, String recordTenant)</code> returns true only when both are non-null and equal — the ownership check that role-based rules never perform. <code>static String scopedQuery(String base)</code> returns <code>base + " AND tenant_id = ?"</code>, putting the constraint in the query rather than checking after the fetch. <code>static String maskCard(String pan, boolean fullAccess)</code> returns <code>pan</code> unchanged when <code>fullAccess</code> is true; otherwise it returns <code>"****"</code> plus the <b>last 4 characters</b>. Return <code>"****"</code> if <code>pan</code> is null or shorter than 4.`,
+starter:`public class DataAuthz {
+    static boolean canRead(String callerTenant, String recordTenant) {
+        return false;
+    }
+    static String scopedQuery(String base) {
+        return null;
+    }
+    static String maskCard(String pan, boolean fullAccess) {
+        return null;
+    }
+}`,
+tests:[{d:'ownership requires a caller tenant',re:'callerTenant\\s*[=!]=\\s*null|null\\s*[=!]=\\s*callerTenant'},{d:'the two tenants are compared by value',re:'equals\\s*\\('},{d:'the tenant filter is part of the query',re:'AND\\s+tenant_id\\s*=\\s*\\?'},{d:'full access returns the unmasked value',re:'fullAccess'},{d:'masked output hides all but the last digits',re:'"\\*\\*\\*\\*"'},{d:'the last four characters are kept',re:'length\\s*\\(\\s*\\)\\s*-\\s*4'}],
+behavior:`canRead("t1","t1") is true; canRead("t1","t2"), canRead(null,"t1") and canRead("t1",null) are all false — this is the check that stops changing 4417 to 4418 in the URL from returning someone else's record. scopedQuery("SELECT * FROM invoices WHERE status = ?") appends AND tenant_id = ?, so a wrong tenant finds nothing rather than being caught afterwards by a check somebody might forget to write. maskCard("4111111111111234", true) returns the full value; with false it returns ****1234; maskCard(null, false) and maskCard("12", false) return ****.`,
+hints:['<code>return callerTenant != null &amp;&amp; callerTenant.equals(recordTenant);</code>','Simple concatenation: <code>return base + " AND tenant_id = ?";</code>','Guard the length before slicing: <code>pan.substring(pan.length() - 4)</code>.'],
+solution:`public class DataAuthz {
+    static boolean canRead(String callerTenant, String recordTenant) {
+        // the object-level check a role annotation never performs
+        return callerTenant != null && callerTenant.equals(recordTenant);
+    }
+    static String scopedQuery(String base) {
+        // constraint in the query: the wrong tenant simply finds nothing
+        return base + " AND tenant_id = ?";
+    }
+    static String maskCard(String pan, boolean fullAccess) {
+        if (fullAccess) return pan;
+        // mask at serialisation: the UI is not an authorization boundary
+        if (pan == null || pan.length() < 4) return "****";
+        return "****" + pan.substring(pan.length() - 4);
+    }
+}`}},
+
+{id:'az7',title:'Groups: how membership becomes permission',body:`
+<p>Roles are how authorization is <i>modelled</i>. Groups are how it is <i>administered</i>. Every
+enterprise directory hands out access by putting people in groups, and the gap between the tidy diagram
+and what an organisation's group tree actually looks like after five years is where the interesting
+problems are.</p>
+
+<h4>The chain</h4>
+<div class="codeSample" data-hl>user  ->  group  ->  role  ->  permission  ->  resource
+Ada       Platform   Deploy    deploy:write    the production cluster
+
+// why the indirection is worth it: nobody grants Ada anything directly.
+// she joins Platform on day one and inherits whatever Platform holds.</div>
+<p>The payoff is administrative. Access follows the org chart, joiners get the right access by being
+put in the right group, and leavers lose it by removal in one place. The cost is that <b>nobody can
+easily say what Ada can actually do</b> — her access is the union of every group she is in, transitively,
+which no single screen shows.</p>
+
+<h4>Nesting, and the two things it breaks</h4>
+<p>Groups contain groups. <code>All-Engineering</code> contains <code>Platform</code> contains
+<code>Platform-Oncall</code>, so membership is <b>transitive</b>: you must walk the whole graph, not
+just direct membership.</p>
+<p>Two consequences. First, <b>cycles</b>. Nothing stops A containing B while B contains A, and a naive
+recursive walk hangs forever. Any real implementation tracks visited nodes — which is a graph traversal
+problem, not an authorization one, and it is exactly where hand-rolled code fails.</p>
+<p>Second, <b>surprise inheritance</b>. Adding a group to a widely-used parent silently grants its
+access to everyone above it in the tree. Most accidental over-permissioning happens this way: nobody
+granted anything to anybody, someone just nested a group.</p>
+<div class="codeSample" data-hl>All-Employees
+  └── Engineering
+        └── Platform
+              └── Platform-Oncall  ── has: prod-database-write
+
+// putting Platform-Oncall under a broader parent by mistake would hand
+// prod-database-write to everyone above it. no permission was ever granted.</div>
+
+<h4>Two problems that show up at scale</h4>
+<p><b>Group explosion.</b> Fine-grained access without a modelling discipline produces
+<code>Finance-EU-ReadOnly-Q3</code> and thousands of siblings. Symptoms: nobody knows which group to
+request, so people ask for the one a colleague has; access reviews become unreadable; and the same
+effective permission exists under five names. The countermeasure is to derive membership from
+<i>attributes</i> where you can — dynamic groups whose membership is a rule over department and
+location — so the group is computed rather than curated.</p>
+<p><b>Token bloat.</b> The instinct is to put every group in the token as a claim. Users in hundreds of
+groups then produce headers that exceed proxy limits, and things fail in ways that look nothing like an
+authorization problem — truncated headers, 431 responses, intermittent failures for exactly the
+long-tenured employees with the most access. The fixes: emit only the groups relevant to the audience,
+send group ids rather than distinguished names, or send none and have the API look them up.</p>
+
+<h4>Groups are not roles, even when they are named like them</h4>
+<p>A <b>group</b> is a collection of people; a <b>role</b> is a collection of permissions. The
+distinction gets muddy because a directory group is often mapped directly onto a role, but it matters
+in review: "who is in Finance?" is an HR question, and "what may Finance do?" is a security question.
+Collapsing them means every org-chart change becomes a permissions change nobody reviewed.</p>
+<p>And in reviews, the number that matters is <b>effective permissions</b> — the flattened union across
+every group, nested or direct. If your system cannot produce that for one person on demand, you cannot
+answer the only question an auditor will ask.</p>`,
+docs:[['Microsoft Entra — Dynamic membership rules','https://learn.microsoft.com/en-us/entra/identity/users/groups-dynamic-membership'],['Microsoft Entra — Configure group claims (and the token size problem)','https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/how-to-connect-fed-group-claims'],['NIST SP 800-53 AC-2 — Account Management','https://csrc.nist.gov/projects/risk-management/sp800-53-controls/release-search#!/control?version=5.1&number=AC-2']],
+ex:{title:'Flatten nested groups without hanging on a cycle',
+prompt:`Write <code>Groups</code> with <code>static java.util.Set&lt;String&gt; effective(String group, java.util.Map&lt;String, java.util.List&lt;String&gt;&gt; children)</code> returning the group plus every group reachable through nesting. Walk iteratively with a stack or queue, and keep a <b>visited</b> set so a cycle terminates instead of looping forever. Return an empty set if <code>group</code> is null. Then <code>static boolean memberOf(String group, String target, java.util.Map&lt;String, java.util.List&lt;String&gt;&gt; children)</code>, true when <code>target</code> is in the effective set — the transitive check a direct-membership lookup misses.`,
+starter:`import java.util.*;
+
+public class Groups {
+    static Set<String> effective(String group, Map<String, List<String>> children) {
+        return null;
+    }
+    static boolean memberOf(String group, String target, Map<String, List<String>> children) {
+        return false;
+    }
+}`,
+tests:[{d:'a null group yields an empty set',re:'group\\s*==\\s*null|null\\s*==\\s*group'},{d:'tracks visited groups so cycles terminate',re:'seen|visited'},{d:'walks the nesting with a stack or queue',re:'ArrayDeque|Stack|LinkedList|Queue'},{d:'loops until the frontier is empty',re:'while\\s*\\('},{d:'looks up the children of each group',re:'children\\s*\\.\\s*get(OrDefault)?\\s*\\('},{d:'handles a group with no children',re:'getOrDefault|!=\\s*null'},{d:'transitive membership reuses the flatten',re:'effective\\s*\\('}],
+behavior:`With children = {"A":["B"], "B":["C"]}, effective("A") returns {A, B, C} — nesting is transitive, so a direct-membership check on A would wrongly miss C. effective(null) returns an empty set. With a cycle, children = {"A":["B"], "B":["A"]}, effective("A") returns {A, B} and terminates rather than recursing forever, which is the failure mode of hand-rolled traversals. memberOf("A","C",children) is true; memberOf("C","A",children) is false, because nesting has a direction.`,
+hints:['Seed a stack with the starting group and a <code>seen</code> set, then loop while the stack is non-empty.','Add to <code>seen</code> as you pop; skip anything already there — that is what makes a cycle terminate.','<code>children.getOrDefault(g, List.of())</code> avoids a null check for leaf groups.'],
+solution:`import java.util.*;
+
+public class Groups {
+    static Set<String> effective(String group, Map<String, List<String>> children) {
+        Set<String> seen = new LinkedHashSet<>();
+        if (group == null) return seen;
+        Deque<String> stack = new ArrayDeque<>();
+        stack.push(group);
+        while (!stack.isEmpty()) {
+            String g = stack.pop();
+            if (!seen.add(g)) continue;          // already expanded: cycles terminate here
+            for (String child : children.getOrDefault(g, List.of())) {
+                if (!seen.contains(child)) stack.push(child);
+            }
+        }
+        return seen;
+    }
+    static boolean memberOf(String group, String target, Map<String, List<String>> children) {
+        // membership is transitive; a direct lookup would miss nested groups
+        return effective(group, children).contains(target);
+    }
+}`}},
+
+{id:'az8',title:'When policies collide: combining rules',body:`
+<p>One policy is easy. Real systems evaluate many at once — an organisation-wide rule, a team rule, a
+resource rule, something a compliance team added last year — and several will apply to the same
+request, sometimes disagreeing. What the system does then is a design decision, and leaving it
+implicit is how "we definitely blocked that" turns out to be false.</p>
+
+<h4>The combining algorithms</h4>
+<ul>
+<li><b>Deny-overrides.</b> If any policy says deny, the answer is deny, whatever else permits. The
+safe default and the right choice almost always: a prohibition should not be defeatable by adding
+another rule somewhere else.</li>
+<li><b>Permit-overrides.</b> Any permit wins. Occasionally justified — a break-glass rule that must cut
+through everything — but as a general setting it means one careless broad grant silently undoes every
+restriction you have.</li>
+<li><b>First-applicable.</b> Evaluate in order; the first policy that matches decides. Predictable and
+easy to debug, but the outcome now depends on ordering, so inserting a rule in the wrong place changes
+unrelated decisions.</li>
+<li><b>Specificity wins.</b> The most specific matching rule decides — a rule about one document beats
+a rule about the folder. Intuitive for humans, and the hardest to implement, because "more specific"
+must be defined precisely and total.</li>
+</ul>
+<div class="codeSample" data-hl>request: Ada wants to read document 4417
+
+  org policy      permit   employees may read internal documents
+  project policy  permit   project members may read project documents
+  legal hold      DENY     documents under legal hold are read-only to counsel
+
+deny-overrides   -> DENY    (one prohibition is enough)
+permit-overrides -> permit  (the legal hold is silently defeated)
+first-applicable -> depends entirely on evaluation order</div>
+
+<h4>The default when nothing matches</h4>
+<p>Separate from combining, and just as important: what happens when <i>no</i> policy applies? The
+answer must be <b>deny</b>. Default-permit means every resource anyone forgets to write a rule for is
+public, and that is a mistake you discover from the outside.</p>
+<p>So a well-behaved decision has three possible outcomes, not two — <b>permit</b>, <b>deny</b>, and
+<b>not-applicable</b> — and the last collapses to deny at the enforcement point. Keeping them distinct
+in the engine is what lets you tell "a rule deliberately blocked this" apart from "no rule covered
+this," which are very different bugs.</p>
+
+<h4>Explicit deny versus absence of permit</h4>
+<p>These feel similar and behave differently under composition. An <b>explicit deny</b> is a statement:
+under deny-overrides it cannot be overridden by any later grant. An <b>absence of permit</b> is merely
+a gap, and a gap can be filled by anyone who adds a policy.</p>
+<p>That is why explicit denies are the right tool for things that must never happen regardless of who
+gets creative later — contractors must never read payroll, nobody reads a legal hold. Use them
+sparingly, though: a large body of denies interacting with a large body of permits becomes impossible
+to reason about, and the resulting system fails in the direction of blocking legitimate work.</p>
+
+<h4>Make the decision explainable</h4>
+<p>The single most valuable feature of a policy engine is not the decision — it is <b>which policy
+decided</b>. Without it, debugging is guesswork, and the standard response to an unexplained denial is
+to add a broad permit until it works, which is how policy sets rot.</p>
+<div class="codeSample" data-hl>{ "decision": "DENY",
+  "decidedBy": "legal-hold-2024",
+  "evaluated": ["org-baseline: permit",
+                "project-members: permit",
+                "legal-hold-2024: DENY"],
+  "algorithm": "deny-overrides" }</div>
+<p>And test the combinations, not the rules. Each policy in isolation is usually obviously correct; the
+defects live in the interactions, so the cases worth writing down are the ones where two rules
+disagree.</p>`,
+docs:[['XACML 3.0 — rule-combining algorithms','https://docs.oasis-open.org/xacml/3.0/xacml-3.0-core-spec-os-en.html#_Toc325047267'],['AWS — Policy evaluation logic (explicit deny always wins)','https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html'],['Open Policy Agent — Policy language','https://www.openpolicyagent.org/docs/latest/policy-language/']],
+ex:{title:'Combine decisions, deny-overrides, default deny',
+prompt:`Model a decision as one of the strings <code>"PERMIT"</code>, <code>"DENY"</code> or <code>"NA"</code> (not applicable). Write <code>PolicyCombiner</code> with <code>static String denyOverrides(java.util.List&lt;String&gt; decisions)</code>: return <code>"DENY"</code> if any decision is DENY; otherwise <code>"PERMIT"</code> if any is PERMIT; otherwise <code>"NA"</code>, including when the list is null or empty. Then <code>static boolean enforce(String decision)</code>, which permits <b>only</b> on <code>"PERMIT"</code> — so NA collapses to denied at the enforcement point.`,
+starter:`import java.util.*;
+
+public class PolicyCombiner {
+    static String denyOverrides(List<String> decisions) {
+        return null;
+    }
+    static boolean enforce(String decision) {
+        return false;
+    }
+}`,
+tests:[{d:'a null or empty policy set is not applicable',re:'decisions\\s*==\\s*null|isEmpty\\s*\\(\\s*\\)'},{d:'any deny wins',re:'"DENY"'},{d:'otherwise a permit is honoured',re:'"PERMIT"'},{d:'no applicable policy returns NA',re:'"NA"'},{d:'deny is checked before permit',re:'contains\\s*\\(\\s*"DENY"\\s*\\)|equals\\s*\\(\\s*"DENY"'},{d:'enforcement permits only on an explicit permit',re:'"PERMIT"\\s*\\.\\s*equals|equals\\s*\\(\\s*"PERMIT"'}],
+behavior:`denyOverrides(List.of("PERMIT","PERMIT","DENY")) returns DENY — a single prohibition cannot be outvoted, which is why this is the safe default. denyOverrides(List.of("NA","PERMIT")) returns PERMIT. denyOverrides(List.of("NA","NA")), denyOverrides(List.of()) and denyOverrides(null) all return NA, keeping "a rule blocked this" distinguishable from "no rule covered this". enforce("PERMIT") is true; enforce("DENY") and enforce("NA") are both false, so a resource nobody wrote a policy for is closed rather than public.`,
+hints:['Handle null and empty first, returning "NA".','<code>if (decisions.contains("DENY")) return "DENY";</code> then the same for "PERMIT".','<code>return "PERMIT".equals(decision);</code> — anything else, including NA, denies.'],
+solution:`import java.util.*;
+
+public class PolicyCombiner {
+    static String denyOverrides(List<String> decisions) {
+        if (decisions == null || decisions.isEmpty()) return "NA";
+        // an explicit deny cannot be outvoted by any number of permits
+        if (decisions.contains("DENY")) return "DENY";
+        if (decisions.contains("PERMIT")) return "PERMIT";
+        return "NA";   // no policy applied: distinct from a deliberate deny
+    }
+    static boolean enforce(String decision) {
+        // NA collapses to denied here: default deny, so gaps are closed
+        return "PERMIT".equals(decision);
+    }
+}`}},
+
 ]});

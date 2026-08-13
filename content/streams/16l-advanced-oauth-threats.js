@@ -85,6 +85,153 @@ tests:[{d:'plain bearer tokens are accepted',re:'!\\s*senderConstrained'},{d:'se
 behavior:`accept(false,false) is true (plain bearer); accept(true,true) is true (proof valid); accept(true,false) is false (constrained but no proof). A stolen sender-constrained token cannot be replayed without the key.`,
 hints:['Not sender-constrained OR the proof is valid.','Use ! for the not-sender-constrained case.','Join the two conditions with ||.']}},
 
+{id:'ao4b',title:'DPoP in depth: proving you hold the key',body:`
+<p>Every bearer token shares one weakness: possession is the whole of the entitlement. Steal it from a
+log, a proxy, a browser or a crash dump, and you are indistinguishable from the legitimate client.
+<b>DPoP</b> — Demonstrating Proof-of-Possession, RFC 9449 — removes that property, and it does so
+without requiring the client certificates that kept mTLS out of reach for most applications.</p>
+
+<h4>The idea in one line</h4>
+<p>The client generates a key pair, tells the authorization server about the public key when it asks
+for a token, and thereafter <b>signs every API request with the private key</b>. The token records a
+thumbprint of that key, so a resource server can check that whoever presents the token also holds the
+key. A stolen token, without the key, is inert.</p>
+
+<h4>The proof JWT</h4>
+<p>Each request carries an extra header, <code>DPoP</code>, whose value is a small JWT the client mints
+on the spot:</p>
+<div class="codeSample" data-hl>// header — carries the PUBLIC key, so the server needs no prior registration
+{ "typ": "dpop+jwt", "alg": "ES256",
+  "jwk": { "kty":"EC", "crv":"P-256", "x":"...", "y":"..." } }
+
+// payload — binds this proof to THIS request
+{ "htm": "POST",                                  // the HTTP method
+  "htu": "https://api.example.com/orders",        // the URI, no query or fragment
+  "iat": 1767222000,                              // when it was minted
+  "jti": "b7c1-9f2e-...",                         // unique: for the replay cache
+  "ath": "fUHyO2r2Z3..." }                        // SHA-256 of the access token
+
+// and the request itself
+POST /orders
+Authorization: DPoP eyJhbGciOi...     <- note the scheme is DPoP, not Bearer
+DPoP: eyJ0eXAiOiJkcG9wK2p3dCI...</div>
+<p><code>htm</code> and <code>htu</code> are what stop a captured proof being reused against a
+different endpoint. <code>ath</code> ties the proof to one specific access token, so a proof captured
+alongside one token cannot be paired with another. And <code>jti</code> exists so the server can
+remember it.</p>
+
+<h4>The cnf claim: where the binding actually lives</h4>
+<p>The access token itself must record which key it is bound to, or a resource server has nothing to
+compare against. That is the <b>confirmation claim</b>, <code>cnf</code>, holding <code>jkt</code> — the
+base64url SHA-256 thumbprint of the client's public JWK:</p>
+<div class="codeSample" data-hl>// inside the access token, issued by the authorization server
+{ "sub": "ada", "aud": "orders-api", "exp": 1767225600,
+  "cnf": { "jkt": "0ZcOCORZNYy-DWpqq30jZyJGHTN0d2HglBV3uiguA4I" } }
+
+// the resource server's check:
+//   thumbprint( proof.header.jwk )  ==  token.cnf.jkt   ?
+// if not, the presenter does not hold the key this token was issued to.</div>
+<p>The same <code>cnf</code> mechanism carries mTLS binding too, using <code>x5t#S256</code> instead —
+so "sender-constrained" is one concept with two key types, not two unrelated features.</p>
+
+<h4>What the resource server must do</h4>
+<ol>
+<li>Parse the <code>DPoP</code> header; confirm <code>typ</code> is <code>dpop+jwt</code> and the
+algorithm is one you accept — never <code>none</code>, never a symmetric algorithm.</li>
+<li>Verify the proof's signature <b>using the JWK in its own header</b>. This feels circular and is
+not: it proves the sender holds that private key. Trust comes from step 4.</li>
+<li>Check <code>htm</code> and <code>htu</code> match the request you are actually serving.</li>
+<li><b>Compute the thumbprint of that JWK and compare it to <code>cnf.jkt</code> in the access
+token.</b> This is the step that matters — without it the proof proves only that someone owns some key.</li>
+<li>Check <code>ath</code> equals the hash of the presented access token.</li>
+<li>Check <code>iat</code> is recent, and that <code>jti</code> has not been seen before.</li>
+</ol>
+<p>Step 4 is the one implementations get wrong, and omitting it is silently catastrophic: everything
+still works, and the token is still effectively a bearer token.</p>
+
+<h4>Replay, clocks, and the nonce</h4>
+<p>A proof is valid for a short window, so an attacker who captures one has a brief chance to replay it
+against the same endpoint. Two defences, used together:</p>
+<ul>
+<li><b>A replay cache.</b> Store each <code>jti</code> for the acceptance window and reject repeats.
+Cheap for one server, awkward across a fleet — it needs shared state, which is precisely what
+stateless tokens were meant to avoid.</li>
+<li><b>Server-provided nonces.</b> The server returns <code>DPoP-Nonce</code> and a
+<code>use_dpop_nonce</code> error; the client retries including that nonce in the proof. Now the server
+chooses the value, so a proof cannot be minted in advance or replayed after the nonce rotates — and no
+per-request storage is needed.</li>
+</ul>
+<p>Clock skew is the practical operational issue: proofs are short-lived by design, so a client whose
+clock is minutes out fails everything. Allow a small, bounded window and log rejections clearly.</p>
+
+<h4>Binding the refresh token too</h4>
+<p>Constraining access tokens while leaving the refresh token bearer would be pointless — a stolen
+refresh token simply mints new access tokens. For a public client, DPoP binds the refresh token as
+well, and the same key must be proven at the token endpoint. Rotating the key means re-authenticating.</p>
+
+<h4>DPoP or mTLS?</h4>
+<div class="codeSample" data-hl>                      DPoP                        mTLS-bound (RFC 8705)
+key material          app-generated, in memory    an X.509 client certificate
+infrastructure        none — ordinary HTTPS       PKI, and TLS terminated where
+                                                  the cert is still visible
+works in a browser    yes                         effectively no
+proxies / CDN         transparent                 client certs often break
+strength              key can be extracted from   hardware-backed, harder to steal
+                      a compromised process
+typical use           SPAs, mobile, public        service-to-service, FAPI,
+                      clients                     regulated environments</div>
+<p><b>Neither is a substitute for the basics.</b> Sender constraint reduces the value of a stolen token;
+it does not fix a missing audience check, an unvalidated redirect URI, or a token logged in plaintext.
+Treat it as the last layer, not the first.</p>`,
+docs:[['RFC 9449 — OAuth 2.0 Demonstrating Proof of Possession (DPoP)','https://www.rfc-editor.org/rfc/rfc9449'],['RFC 7638 — JSON Web Key (JWK) Thumbprint','https://www.rfc-editor.org/rfc/rfc7638'],['RFC 8705 — OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens','https://www.rfc-editor.org/rfc/rfc8705'],['RFC 7800 — Proof-of-Possession Key Semantics for JWTs (the cnf claim)','https://www.rfc-editor.org/rfc/rfc7800']],
+ex:{title:'Verify a DPoP proof against the token binding',
+prompt:`Write <code>Dpop</code> with four methods. <code>static boolean bindingMatches(String jwkThumbprint, String cnfJkt)</code> returns true only when both are non-null and equal — the step that ties the proof to the token, and the one implementations forget. <code>static boolean requestMatches(String htm, String htu, String method, String uri)</code> requires all four non-null, with <code>htm</code> equal to <code>method</code> and <code>htu</code> equal to <code>uri</code>. <code>static boolean fresh(long iat, long now, long windowSeconds)</code> is true when <code>now - iat</code> is between <code>0</code> and <code>windowSeconds</code> inclusive. <code>static boolean accept(String jwkThumbprint, String cnfJkt, String htm, String htu, String method, String uri, long iat, long now, java.util.Set&lt;String&gt; seenJtis, String jti)</code> requires all of the above plus a <code>jti</code> not already in <code>seenJtis</code>, using a 60-second window.`,
+starter:`import java.util.*;
+
+public class Dpop {
+    static boolean bindingMatches(String jwkThumbprint, String cnfJkt) {
+        return false;
+    }
+    static boolean requestMatches(String htm, String htu, String method, String uri) {
+        return false;
+    }
+    static boolean fresh(long iat, long now, long windowSeconds) {
+        return false;
+    }
+    static boolean accept(String jwkThumbprint, String cnfJkt, String htm, String htu,
+                          String method, String uri, long iat, long now,
+                          Set<String> seenJtis, String jti) {
+        return false;
+    }
+}`,
+tests:[{d:'the thumbprint must be present',re:'jwkThumbprint\\s*!=\\s*null|null\\s*!=\\s*jwkThumbprint'},{d:'thumbprint is compared to the cnf claim',re:'equals\\s*\\(\\s*cnfJkt|cnfJkt\\s*\\.\\s*equals'},{d:'the proof is bound to the HTTP method',re:'htm\\s*\\.\\s*equals\\s*\\(\\s*method|method\\s*\\.\\s*equals\\s*\\(\\s*htm'},{d:'the proof is bound to the URI',re:'htu\\s*\\.\\s*equals\\s*\\(\\s*uri|uri\\s*\\.\\s*equals\\s*\\(\\s*htu'},{d:'a proof from the future is rejected',re:'age\\s*>=\\s*0|now\\s*-\\s*iat\\s*>=\\s*0|iat\\s*<=\\s*now'},{d:'the freshness window is bounded',re:'<=\\s*windowSeconds|windowSeconds\\s*>='},{d:'replayed jtis are rejected',re:'contains\\s*\\(\\s*jti\\s*\\)'},{d:'acceptance requires every check',re:'bindingMatches\\s*\\('}],
+behavior:`bindingMatches("abc","abc") is true; bindingMatches("abc","xyz") and either being null are false. Skipping this comparison is the classic DPoP implementation bug: every other check still passes, so the integration appears to work while the token remains an ordinary bearer token. requestMatches("POST","https://api/x","POST","https://api/x") is true, but a mismatched method or URI is false, which is what stops a captured proof being replayed against a different endpoint. fresh(100,130,60) is true; fresh(100,200,60) is false as too old, and fresh(100,90,60) is false because a proof cannot be minted in the future. accept passes only when the binding, the request, the freshness and an unseen jti all hold.`,
+hints:['Guard nulls in every comparison; a null thumbprint must never match a null cnf.','Freshness has two sides: <code>now - iat &gt;= 0 &amp;&amp; now - iat &lt;= windowSeconds</code>.','Compose <code>accept</code> from the other three plus <code>!seenJtis.contains(jti)</code>.'],
+solution:`import java.util.*;
+
+public class Dpop {
+    static boolean bindingMatches(String jwkThumbprint, String cnfJkt) {
+        // the step that actually makes the token sender-constrained
+        return jwkThumbprint != null && jwkThumbprint.equals(cnfJkt);
+    }
+    static boolean requestMatches(String htm, String htu, String method, String uri) {
+        if (htm == null || htu == null || method == null || uri == null) return false;
+        return htm.equals(method) && htu.equals(uri);
+    }
+    static boolean fresh(long iat, long now, long windowSeconds) {
+        long age = now - iat;
+        return age >= 0 && age <= windowSeconds;   // not from the future, not stale
+    }
+    static boolean accept(String jwkThumbprint, String cnfJkt, String htm, String htu,
+                          String method, String uri, long iat, long now,
+                          Set<String> seenJtis, String jti) {
+        if (jti == null || seenJtis == null || seenJtis.contains(jti)) return false;  // replay
+        return bindingMatches(jwkThumbprint, cnfJkt)
+            && requestMatches(htm, htu, method, uri)
+            && fresh(iat, now, 60);
+    }
+}`}},
+
 {id:'ao5',title:'Attack catalog & defenses',body:`
 <p>The OAuth 2.0 Security Best Current Practice catalogs the attacks worth knowing — and each has a standard defense:</p>
 <ul>
