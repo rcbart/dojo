@@ -97,7 +97,61 @@ by the on-behalf-of lesson in Identity Foundations. This lesson is the mechanism
      subject_token = &lt;the user's token&gt;   subject_token_type = ...access_token
      audience = service-b
  Authority → Service A: a NEW token, audience=service-b, still tied to the user
- Service A ──(new token)──▶ Service B    (B sees the right audience &amp; the delegated user)</div>`,
+ Service A ──(new token)──▶ Service B    (B sees the right audience &amp; the delegated user)</div>
+
+<h4>The exchange, parameter by parameter</h4>
+<p>The Identity Foundations stream established <i>why</i> on-behalf-of exists: a token minted for service A
+must not be replayed against service B, and the user's identity must survive the hop anyway. RFC 8693 is
+the protocol that does both. It is one call to the ordinary token endpoint with a different grant type.</p>
+<div class="codeSample" data-hl>POST /token
+grant_type=urn:ietf:params:oauth:grant-type:token-exchange
+&amp;subject_token=&lt;the token you were given&gt;      // WHO the work is for
+&amp;subject_token_type=urn:ietf:params:oauth:token-type:access_token
+&amp;actor_token=&lt;your OWN service token&gt;           // WHO is asking (optional)
+&amp;actor_token_type=urn:ietf:params:oauth:token-type:access_token
+&amp;audience=https://billing.internal                // WHO the new token is FOR
+&amp;scope=invoices:read                              // NARROWED, not inherited
+
+// the response looks like any token response, plus one field:
+{ "access_token": "...", "issued_token_type": "...:access_token",
+  "token_type": "Bearer", "expires_in": 300, "scope": "invoices:read" }</div>
+<p>Two parameters carry the whole design. <b><code>audience</code></b> is what makes the new token useless
+anywhere else — this is the confused-deputy fix. <b><code>scope</code></b> is where you narrow: a token
+for the next hop should ask for less than you hold, never more, and the authorization server enforces that
+it cannot exceed the original grant.</p>
+
+<h4>Delegation or impersonation — the exchange decides</h4>
+<div class="codeSample" data-hl>DELEGATION    subject_token + actor_token
+  the result names BOTH: sub is the user, and act records you.
+  { "sub": "user-42", "aud": "billing", "act": { "sub": "orders-svc" } }
+  -> the audit trail answers "which service acted for which user?"
+
+IMPERSONATION  subject_token only
+  the result names ONLY the user. you have vanished from the record.
+  { "sub": "user-42", "aud": "billing" }
+  -> billing cannot tell this apart from the user calling directly.
+
+// prefer delegation. impersonation is occasionally necessary and always
+// costs you the ability to answer "who actually did this?" afterwards.</div>
+
+<h4>Chains, and the rule people miss</h4>
+<p>Hop three exchanges hop two's token, so <code>act</code> nests: the outermost <code>act</code> is the
+<i>most recent</i> actor, and older ones sit inside it. RFC 8693 §4.1 is explicit that <b>only the
+top-level claims and the outermost <code>act</code> may inform an access decision</b> — nested actors are
+informational, for audit. Writing authorization logic that walks the nested chain is a spec violation and
+a real vulnerability, because an earlier hop controls what it put there.</p>
+
+<h4>What it costs</h4>
+<p>Every hop is a network call to the authorization server, in the request path. That is real latency and
+a real dependency — so cache exchanged tokens for their (short) lifetime, keyed by subject <i>and</i>
+audience, and make sure an authorization-server outage degrades in a way you have decided on rather than
+discovered. And note that the AS must be configured to permit each exchange: which client may exchange
+for which audience is policy, not something the caller asserts.</p>
+
+<h4>When not to reach for it</h4>
+<p>If the downstream service is acting purely on its own behalf — a nightly reconciliation, a cache warm —
+Client Credentials is correct and simpler. Token exchange is for when the <b>user's identity has to survive
+the hop</b>, and using it where there is no user adds a round trip to carry nothing.</p>`,
 docs:[['RFC 8693 — OAuth Token Exchange','https://www.rfc-editor.org/rfc/rfc8693']],
 ex:{title:'Build a token-exchange request',
 prompt:`Write <code>TokenExchange</code> with <code>static String body(String subjectToken, String audience)</code> returning the form body: <code>grant_type=urn:ietf:params:oauth:grant-type:token-exchange</code>, then <code>&amp;subject_token=</code> (URL-encoded), then <code>&amp;subject_token_type=urn:ietf:params:oauth:token-type:access_token</code>, then <code>&amp;audience=</code> (URL-encoded). Declare <code>throws Exception</code>.`,
@@ -242,7 +296,53 @@ solution:`public class ZeroTrust {
 {id:'s2s7',title:'Context propagation across services',body:`
 <p>When a request crosses many services, the <b>who</b> and the <b>trace</b> have to travel with it. That travelling bundle — the caller&#8217;s identity (their token or principal), plus correlation/trace ids — is the <b>security context</b>, and moving it correctly is <b>context propagation</b>.</p>
 <p>Miss it and two things break. Downstream services cannot make authorization decisions or write meaningful audit logs, because they no longer know who the original caller was; and you create a <b>confused deputy</b>, where a trusted middle service acts with its own high privilege on behalf of an unknown user. So each hop must forward the identity — either by passing the original token through, or by exchanging it for a scoped downstream token — alongside a <code>traceparent</code> id so the whole call chain can be stitched together.</p>
-<p>Inside a service the same context must survive thread and async boundaries: it typically rides in a <code>ThreadLocal</code> / MDC and must be <b>copied</b> onto worker threads, or it silently vanishes mid-request.</p>`,
+<p>Inside a service the same context must survive thread and async boundaries: it typically rides in a <code>ThreadLocal</code> / MDC and must be <b>copied</b> onto worker threads, or it silently vanishes mid-request.</p>
+
+<h4>Two kinds of context, and only one of them is trustworthy</h4>
+<p>A request crossing five services carries two very different things, and conflating them is the bug this
+lesson exists to prevent.</p>
+<div class="codeSample" data-hl>SECURITY CONTEXT   who this is, and what they may do.
+  Authorization: Bearer &lt;token&gt;
+  SIGNED. verified independently by every hop. cannot be forged.
+
+DIAGNOSTIC CONTEXT  how to correlate the logs afterwards.
+  traceparent: 00-4bf92f...-00f067aa0ba902b7-01     (W3C Trace Context)
+  baggage: tenant=acme,plan=pro
+  UNSIGNED. anyone on the path can set it. useful, never authoritative.
+
+// the failure: reading tenant from baggage and using it to scope a
+// database query. that is an authorization decision made from an
+// attacker-controllable header.</div>
+
+<h4>The rule</h4>
+<p><b>Authorization comes from the token; correlation comes from the headers.</b> If a piece of context
+affects what a caller is allowed to see, it belongs in a claim the authorization server signed — not in
+baggage, not in <code>X-User-Id</code>, not in a body field. If it only affects logging and tracing, an
+unsigned header is exactly right and signing it would be waste.</p>
+
+<h4>Propagating correctly</h4>
+<p><code>traceparent</code> carries the trace id, the parent span id and flags; each service creates a new
+span and passes a <i>new</i> parent id down, keeping the trace id constant. That constant id is what lets
+one request be reassembled from a thousand interleaved log lines — the same argument as the request id in
+a single service, extended across a fleet.</p>
+<div class="codeSample" data-hl>// what every hop should do, in order:
+1. verify the incoming token   (iss, aud, exp, signature)
+2. start a span from traceparent, or START A TRACE if there is none
+3. log with { trace_id, span_id, sub } on every line
+4. when calling onward: exchange the token for the NEXT audience,
+   and send a NEW traceparent with the same trace id
+
+// and what it must NOT do: forward the incoming Authorization header
+// unchanged. that is how a token minted for you reaches a service it
+// was never meant for.</div>
+
+<h4>Baggage, and why it needs a budget</h4>
+<p>W3C Baggage propagates arbitrary key/value pairs to every downstream hop. It is genuinely useful — a
+tenant name or a plan tier makes dashboards far more legible — and it has two hazards. It is
+<b>unbounded</b>: every pair is copied onto every outbound request forever, so a large baggage header
+costs bandwidth on every call in the graph. And it <b>leaks</b>: it crosses service boundaries you may not
+control, including third parties, so personal data does not belong in it. Cap it, allowlist the keys, and
+strip it at the edge of your trust boundary.</p>`,
 docs:[['W3C Trace Context','https://www.w3.org/TR/trace-context/'],['Confused deputy problem','https://en.wikipedia.org/wiki/Confused_deputy_problem']],
 ex:{title:'Forward identity and trace downstream',
 prompt:`Write class <code>Context</code> with <code>static String headers(String bearer, String traceparent)</code> that builds the downstream header string <code>authorization=&lt;bearer&gt;;traceparent=&lt;traceparent&gt;</code> — carrying both the caller identity and the trace id to the next service.`,
@@ -264,7 +364,57 @@ hints:['Concatenate the two labelled values with +.','The separator between them
 defensible — is the acting-as-a-user lesson in Identity Foundations.</i></p>
 <p><b>Impersonation</b> means one party <i>acts as</i> another so completely that the downstream cannot tell the difference — the request now looks like it simply came from the target user. A support admin using "log in as this customer" is impersonation: the effective subject becomes the customer, and the admin&#8217;s own identity disappears from view.</p>
 <p><b>Delegation</b> is the safer cousin. The app acts <i>on behalf of</i> the user while <b>both</b> identities are preserved: the token names the user as the subject and records the acting party in an <code>act</code> (actor) claim, which OAuth <b>Token Exchange</b> produces. Auditors can then see "service X acted for user Y," which pure impersonation loses.</p>
-<p>Rule of thumb: prefer delegation so attribution survives; reserve impersonation for genuine support scenarios, and always log who impersonated whom.</p>`,
+<p>Rule of thumb: prefer delegation so attribution survives; reserve impersonation for genuine support scenarios, and always log who impersonated whom.</p>
+
+<h4>The distinction, stated precisely</h4>
+<p>Both let a service act for a user. They differ in <b>what the resulting token says</b>, and therefore in
+what anyone can reconstruct afterwards.</p>
+<div class="codeSample" data-hl>DELEGATION      "orders-svc is acting FOR user-42"
+  { "sub": "user-42", "act": { "sub": "orders-svc" } }
+  both identities survive. the audit trail is complete.
+
+IMPERSONATION   "I AM user-42"
+  { "sub": "user-42" }
+  the acting service has disappeared from the record.
+
+// the test: after the fact, can you answer "which service, or which
+// employee, actually performed this action?" delegation can. the other
+// cannot, and no amount of logging elsewhere reconstructs it reliably.</div>
+
+<h4>Why impersonation persists despite that</h4>
+<p>It is simpler, and downstream services need no changes: they see an ordinary user token and behave
+exactly as if the user called them. That is genuinely convenient, and it is why so many internal platforms
+end up there — usually not by decision but by nobody having asked the question.</p>
+<p>The cost arrives later, in three places. <b>Incidents</b>: "who exported that data?" has no answer.
+<b>Compliance</b>: an auditor asking how support access is evidenced gets a shrug. <b>Blast radius</b>: an
+impersonation token is indistinguishable from a real user token, so a leaked one cannot be filtered out by
+anything downstream.</p>
+
+<h4>The permission rule that goes with it</h4>
+<p>Whichever you choose, the effective permissions are the <b>intersection</b> of what the actor may do and
+what the subject may do — never the union, and never simply the subject's. A support engineer acting for
+an administrator must not inherit administrative rights; that turns a support tool into a privilege
+ladder, which is the failure mode the acting-as lesson in Foundations covers in full.</p>
+
+<h4>Choosing</h4>
+<div class="codeSample" data-hl>USE DELEGATION when a human or a service is acting for a user and you
+  will one day need to explain who did what. which is: nearly always.
+  cost: downstream services must understand the act claim.
+
+USE IMPERSONATION only when a system genuinely cannot be changed to
+  understand delegation, AND you have a compensating control -
+  a separate audit record written at the point of impersonation,
+  with an owner, that is actually reviewed.
+
+// "we'll add the audit later" is how the compensating control never
+// gets written. if it is not there on the day you ship, assume it
+// will not be.</div>
+
+<h4>The claim to reach for</h4>
+<p><code>may_act</code> is the other half: placed in a user's token, it names the parties permitted to act
+for them. It turns "this service happens to hold a token" into "this service was authorised to act for
+this subject", which is a policy statement the authorization server can enforce rather than a convention
+each service implements differently.</p>`,
 docs:[['Token Exchange & act claim (RFC 8693)','https://www.rfc-editor.org/rfc/rfc8693'],['Delegation vs impersonation','https://docs.oasis-open.org/']],
 ex:{title:'Whose identity is this really?',lang:'js',
 run:{call:'effectiveSubject',cases:[{name:'impersonating: the target subject is used',args:['svc-support','cust-91',true],expect:'cust-91'},{name:'not impersonating: the actor is the subject',args:['svc-support','cust-91',false],expect:'svc-support'},{name:'no target while impersonating falls back to the actor',args:['svc-support','',true],expect:'svc-support'}]},

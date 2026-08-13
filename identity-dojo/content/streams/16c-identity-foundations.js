@@ -1283,6 +1283,124 @@ tests:[{d:'only the support role may act as anyone',re:'"support"'},{d:'privileg
 behavior:`The denied list is checked with writeApproved set to true in every case, so an implementation that lets approval override the always-denied actions fails four named tests. permitted("support",true) is false because acting as a privileged account would escalate the engineer, and audit() keeps both subjects — the line that answers "which employee did this?"`,
 hints:['<code>return actorRole === "support" &amp;&amp; !targetIsPrivileged;</code>','Check the denied list first and return false, before considering the write prefix.','<code>if (action.indexOf("write:") === 0) return writeApproved; return true;</code>']}},
 
+{id:'idfciam',title:'CIAM vs workforce IAM: two disciplines, one vocabulary',body:`
+<p>Almost every identity conversation inside an organisation is really two conversations, and treating them
+as one produces decisions that are wrong for both populations. This lesson separates them <b>before</b> the
+protocol streams, because the protocols are identical and the answers are not.</p>
+
+<h4>The same word, two different jobs</h4>
+<p><b>Workforce IAM</b> governs the people your organisation employs — staff, contractors, and the systems
+they use. <b>CIAM</b> (Customer Identity and Access Management) governs the people your organisation
+<i>sells to</i>. Both authenticate humans. Both use OAuth, OIDC and SAML. Everything else differs, because
+the forces acting on them are inverted.</p>
+<div class="codeSample" data-hl>                     WORKFORCE                  CIAM
+who creates it       HR does, from a hire       the person does, unprompted
+identity source      AUTHORITATIVE (the HR      SELF-ASSERTED and unverified
+                     system says they exist)
+population           hundreds to thousands      millions to hundreds of millions
+growth               predictable, budgeted      spiky, campaign-driven
+friction             a cost of employment       a directly measurable revenue loss
+you can mandate      MFA, devices, policy       almost nothing
+the failure mode     over-access accumulating   abandoned signup, or a PII breach
+downtime means       staff cannot work          customers cannot buy
+who owns it          IT / security              usually product and marketing
+regulated by         SOX, internal audit        GDPR, CCPA, consumer law</div>
+
+<h4>What follows from an authoritative source</h4>
+<p>Workforce identity has something CIAM will never have: <b>a system of record that decides who exists</b>.
+HR says a person was hired, holds this job, reports to that manager, and left on this date. Every
+downstream behaviour derives from it — birthright access on joining, recalculation on transfer,
+deprovisioning within minutes of termination.</p>
+<p>That single fact is what makes governance possible. Access reviews, joiner-mover-leaver, entitlement
+certification and separation of duties all assume you can enumerate your people and ask an authority
+whether each one still belongs. <b>None of that machinery transfers to CIAM</b>, because there is no HR
+system for your customers and nobody to certify that a shopper still needs their account.</p>
+
+<h4>What follows from having no coercive power</h4>
+<p>You can require an employee to enrol a security key. You cannot require a customer to do anything —
+they will simply leave. So the CIAM toolkit is different in kind:</p>
+<ul>
+<li><b>Registration is a funnel.</b> Every additional field measurably reduces completion. This is the one
+place where a security control has an attributable revenue cost, which is why CIAM decisions get argued
+about with marketing in the room and workforce decisions do not.</li>
+<li><b>Progressive profiling</b> replaces the long form — collect the minimum at signup and ask for more
+when the customer understands why.</li>
+<li><b>MFA is offered and risk-triggered</b>, not mandated: step up on a new device, a payment change, an
+unusual location.</li>
+<li><b>Account recovery is the real attack surface.</b> Workforce recovery routes through a helpdesk that
+can verify a human; consumers have only email and SMS, so the recovery path is usually weaker than the
+login path — and attackers go there first.</li>
+<li><b>Consent and data rights are legal obligations.</b> Deletion must actually delete, across every
+downstream system, on request.</li>
+<li><b>Scale is a design constraint</b>, not a capacity plan. Identity is the front door: if it is down,
+everything is down.</li>
+</ul>
+
+<h4>How an organisation should actually run them</h4>
+<p><b>Separate the tenants, always.</b> Customers and employees must not share a user store, even when the
+same product could serve both. One breach then reaches one population, an employee cannot accidentally be
+granted a customer entitlement, and the two can be governed under the regimes that actually apply to
+them.</p>
+<p><b>Separate the ownership, and say so.</b> Workforce identity belongs with IT and security, measured on
+control: time to deprovision, review completion, standing privilege. CIAM belongs with product, measured
+on experience: signup completion, login success rate, recovery success, support contacts per thousand
+users. Trying to run both against one set of metrics produces a CIAM that is hostile to use, or a
+workforce estate that no auditor will accept.</p>
+<p><b>Share what genuinely is shared.</b> The protocols, the token-validation library, the incident
+response process, the logging pipeline, and the expertise. Duplicating those is how the customer-facing
+system quietly ends up with weaker practices than the internal one.</p>
+<p><b>Name the third population.</b> <b>B2B</b> — business customers whose own administrators manage their
+own users, bring their own IdP, and see only their own tenant — is neither. It needs delegated
+administration, per-tenant federation and tenant isolation, and forcing it into either model is a common
+and expensive error. The multi-tenancy lesson takes it properly.</p>
+
+<h4>The question to ask first</h4>
+<p>Before any identity decision, ask <b>which population</b> it is for. "Should we require MFA?" has no
+answer until you know. For workforce the answer is yes, phishing-resistant, mandated. For consumers it is
+"offer it, incentivise it, trigger it on risk, and never let it block a purchase". Same question, same
+protocols, opposite conclusions.</p>`,
+docs:[['Gartner — CIAM','https://www.gartner.com/en/information-technology/glossary/customer-identity-and-access-management-ciam'],['NIST SP 800-63 — digital identity guidelines','https://pages.nist.gov/800-63-3/'],['GDPR — Art. 17 right to erasure','https://gdpr-info.eu/art-17-gdpr/']],
+ex:{title:'Which discipline governs this decision?',lang:'js',
+run:{call:'population',cases:[
+ {name:'deprovisioning within minutes of termination',args:['deprovision-on-termination'],expect:'workforce'},
+ {name:'quarterly access certification',args:['access-review'],expect:'workforce'},
+ {name:'mandating phishing-resistant MFA',args:['mandate-mfa'],expect:'workforce'},
+ {name:'reducing signup form fields',args:['signup-funnel'],expect:'ciam'},
+ {name:'honouring a deletion request',args:['right-to-erasure'],expect:'ciam'},
+ {name:'self-service account recovery by email',args:['self-service-recovery'],expect:'ciam'},
+ {name:'a customer admin managing their own users',args:['delegated-admin'],expect:'b2b'},
+ {name:'a customer bringing their own IdP',args:['bring-your-own-idp'],expect:'b2b'},
+ {name:'validating a token audience',args:['validate-audience'],expect:'shared'},
+ {name:'the incident response process',args:['incident-response'],expect:'shared'},
+ {name:'anything unrecognised',args:['zzz'],expect:'ask which population first'}]},
+prompt:`Write <code>function population(decision)</code> returning which discipline owns it. <b>workforce:</b> <code>"deprovision-on-termination"</code>, <code>"access-review"</code>, <code>"mandate-mfa"</code>. <b>ciam:</b> <code>"signup-funnel"</code>, <code>"right-to-erasure"</code>, <code>"self-service-recovery"</code>. <b>b2b:</b> <code>"delegated-admin"</code>, <code>"bring-your-own-idp"</code>. <b>shared:</b> <code>"validate-audience"</code>, <code>"incident-response"</code>. Anything else returns <code>"ask which population first"</code>.`,
+starter:`function population(decision) {
+  return null;
+}`,
+solution:`function population(decision) {
+  switch (decision) {
+    case "deprovision-on-termination":
+    case "access-review":
+    case "mandate-mfa":
+      return "workforce";      // needs an authoritative source and coercive power
+    case "signup-funnel":
+    case "right-to-erasure":
+    case "self-service-recovery":
+      return "ciam";           // self-asserted identity, revenue-sensitive friction
+    case "delegated-admin":
+    case "bring-your-own-idp":
+      return "b2b";            // the third population, neither of the above
+    case "validate-audience":
+    case "incident-response":
+      return "shared";         // protocols and process are common to all
+    default:
+      return "ask which population first";
+  }
+}`,
+tests:[{d:'deprovisioning is a workforce control',re:'"deprovision-on-termination"'},{d:'the signup funnel is a CIAM concern',re:'"signup-funnel"'},{d:'delegated administration is B2B',re:'"delegated-admin"'},{d:'protocol mechanics are shared',re:'"shared"'},{d:'the default pushes the question back',re:'ask which population first'}],
+behavior:`Eleven cases execute. Two groups carry the lesson. The <b>b2b</b> answers exist because forcing a business customer into either model is a common and expensive error — delegated administration is not a workforce feature and not a consumer one. And the <b>default</b> is deliberate advice rather than a fallback: an identity decision made without naming the population is how an organisation ends up mandating security keys for shoppers, or letting employees self-register.`,
+hints:['Group the cases by population and let them fall through to a shared return.','B2B is a third population, not a variant of the other two.','The default should push the question back rather than guess.']}},
+
 {id:'idfzt',title:'Zero trust: identity as the perimeter',body:`
 <p>Everything so far — tokens with audiences, verifying every signature, delegation that names the
 acting party — points at one architectural idea. Zero trust is the name for it, and it is best
