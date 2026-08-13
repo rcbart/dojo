@@ -1749,7 +1749,43 @@ public class RoleAssumption {
 if (!expectedIss.equals(iss))    return false;   // trusted issuer?
 if (!expectedAud.equals(aud))    return false;   // token meant for US?
 if (expEpoch <= nowEpoch)        return false;   // not expired?
-return true;                                       // (then check scope/roles)</div>`,
+return true;                                       // (then check scope/roles)</div>
+
+<h4>Why validation is the whole game</h4>
+<p>It is tempting to read the token as a message from the user. It is not. It is a message from the
+<b>issuer</b>, handed to you by whoever is calling — and that party may not be the person the token
+describes. Everything a resource server does rests on one judgement: <i>is this a statement my issuer
+made, to me, that is still true?</i></p>
+<p>Split that sentence and you have the checks, in order, and the attack each one stops:</p>
+<div class="codeSample" data-hl>"a statement my issuer made"   -> signature + iss   stops FORGED tokens
+"...to me"                     -> aud              stops REPLAYED tokens
+"...that is still true"        -> exp / nbf        stops EXPIRED tokens
+"...permitting this action"    -> scope / roles    stops OVER-REACH</div>
+<p>None of these are optional, and none substitutes for another. A perfectly signed, unexpired token
+issued for a different API is still not yours to accept.</p>
+
+<h4>The audience check is the one people skip</h4>
+<p>Signature and expiry are obvious. Audience is not, because a token that verifies feels valid — and it
+<i>is</i> valid, just not for you.</p>
+<p>Picture an internal platform where five services all trust the same issuer. The billing service holds
+a token its caller gave it. If it forwards that token to the admin API, and the admin API checks only
+the signature, then <b>any service holding any token can call any other service</b>. One compromised
+low-value service becomes access to everything. That is a confused deputy, and <code>aud</code> is the
+single line of code that prevents it.</p>
+
+<h4>Validate at the edge of trust, not at the edge of the network</h4>
+<p>A gateway that validates tokens is useful, but it is not sufficient — it only proves the request
+entered through the front door. Anything that can reach the service directly bypasses it. Each service
+validates for itself; the gateway is defence in depth, not the check.</p>
+<p>Two related habits: <b>fail closed</b> (an issuer you cannot reach, a key you cannot fetch, a claim you
+cannot parse are all rejections, never "allow and log"), and <b>never trust the token to tell you where
+to verify it</b> — the issuer list is your configuration, not something read out of the token you are
+about to validate.</p>
+
+<h4>And then: is the holder the rightful one?</h4>
+<p>Every check above answers "is this token good?". None answers "is the party presenting it the party it
+was issued to?" — because a bearer token has no answer to give. That is the gap sender-constraining
+closes, and the Advanced OAuth stream takes it apart in detail.`,
 docs:[['RFC 9068 — JWT access tokens','https://www.rfc-editor.org/rfc/rfc9068'],['RFC 8705 — mTLS-bound tokens','https://www.rfc-editor.org/rfc/rfc8705'],['RFC 9449 — DPoP','https://www.rfc-editor.org/rfc/rfc9449']],
 ex:{title:'The token validation checklist',
 prompt:`Write <code>TokenCheck</code> with <code>static boolean valid(String iss, String aud, long expEpoch, String expectedIss, String expectedAud, long nowEpoch)</code> that returns <code>true</code> only if: <code>expectedIss.equals(iss)</code>, <b>and</b> <code>expectedAud.equals(aud)</code>, <b>and</b> the token is not expired (<code>expEpoch &gt; nowEpoch</code>). Return <code>false</code> as soon as any check fails.`,

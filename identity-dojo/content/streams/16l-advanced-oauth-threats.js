@@ -164,7 +164,54 @@ hints:['A switch mapping each acronym to its one-line purpose works well.','PAR 
 
 {id:'ao4',title:'DPoP & sender-constrained tokens',body:`
 <p>A plain <b>bearer</b> token is like cash: whoever holds it can spend it, so a stolen token is game over. <b>Sender-constrained</b> tokens fix this by binding the token to a key only the legitimate client holds. Two mechanisms: <b>mTLS-bound</b> tokens (tied to the client&#8217;s TLS certificate) and <b>DPoP</b> (the client signs each request with a key referenced by the token).</p>
-<p>The acceptance rule follows directly: a bearer token is fine on its own, but a sender-constrained token must be accompanied by a valid proof of possession. If the proof is missing or wrong, a stolen copy is worthless.</p>`,
+<p>The acceptance rule follows directly: a bearer token is fine on its own, but a sender-constrained token must be accompanied by a valid proof of possession. If the proof is missing or wrong, a stolen copy is worthless.</p>
+
+<h4>Start with what "bearer" actually means</h4>
+<p>The word is doing real work. A <b>bearer</b> instrument belongs to whoever is holding it — like cash,
+or a cinema ticket. Nobody checks that the holder is the person it was issued to, because the instrument
+carries no notion of an owner. That is the entire security model of an ordinary access token.</p>
+<p>Which means the question a resource server asks is embarrassingly weak:</p>
+<div class="codeSample" data-hl>BEARER                "do you have a valid token?"
+                      -> anyone who obtained it, however they obtained it, passes
+
+PROOF OF POSSESSION   "do you have a valid token AND can you prove you are
+                       the party it was issued to?"
+                      -> a copied token, on its own, is worthless</div>
+<p>Tokens leak in unglamorous ways: a URL in a log, a proxy that records headers, a crash dump, a
+browser extension, a debug endpoint. None of those require breaking cryptography. With bearer semantics,
+each one is a full account compromise until the token expires.</p>
+
+<h4>The idea: tie the token to a key</h4>
+<p>Sender-constraining adds one requirement. When the token is issued, it records <b>which key its
+rightful holder controls</b>. From then on, presenting the token is not enough — you must also
+demonstrate you hold that key.</p>
+<p>The mechanism is the same one used everywhere else in this course: <b>you prove possession of a
+private key by signing something with it</b>. The verifier compares the key you signed with against the
+key recorded in the token. Match, and you are the intended holder. No match, and you are holding
+somebody else's ticket.</p>
+<div class="codeSample" data-hl>// the token records the key it belongs to, in a "confirmation" claim
+{ "sub": "ada", "aud": "orders-api", "exp": ...,
+  "cnf": { "jkt": "0ZcOCORZ..." } }      <- a fingerprint of the holder's public key
+
+// and every request carries a fresh proof, signed by the matching private key
+// steal the token without the key, and you have a ticket you cannot use</div>
+
+<h4>Two ways to hold that key</h4>
+<p><b>mTLS</b> uses the client's TLS certificate — the key already proven during the handshake. Strong
+and hardware-friendly, but it needs a PKI, and client certificates fail in browsers and through most
+proxies.</p>
+<p><b>DPoP</b> has the application generate its own key pair and sign a small proof per request. No PKI,
+no infrastructure, works anywhere ordinary HTTPS works — which is why it is the practical option for
+SPAs, mobile apps and public clients generally.</p>
+
+<h4>What this does and does not buy</h4>
+<p>It shrinks the value of a <i>stolen</i> token to nearly nothing. It does not help if the attacker took
+the key as well — a compromised process holds both. And it does nothing about a token that was correctly
+issued to a party who then misuses it, or about a missing audience check.</p>
+<p><b>Treat it as the last layer, not the first.</b> Short lifetimes, audience restriction and not
+logging tokens come first; sender-constraining is what remains after those, and it is the difference
+between "a leaked token is a breach" and "a leaked token is an inert string". The next lesson is the
+mechanics.</p>`,
 docs:[['DPoP (RFC 9449)','https://www.rfc-editor.org/rfc/rfc9449'],['mTLS-bound tokens (RFC 8705)','https://www.rfc-editor.org/rfc/rfc8705']],
 ex:{title:'Accept only with valid proof',
 prompt:`Write class <code>Dpop</code> with <code>static boolean accept(boolean senderConstrained, boolean keyProofValid)</code>: a token is accepted if it is <b>not</b> sender-constrained (a plain bearer) <b>or</b> its key proof is valid.`,
@@ -417,7 +464,45 @@ hints:['A switch maps each attack name to its standard mitigation.','state stops
 <p>Refresh tokens are long-lived, so a stolen one is a serious prize — it mints fresh access tokens indefinitely. Two mechanisms bound that risk.</p>
 <p><b>Rotation.</b> Every time a refresh token is used, the authorization server issues a <b>new</b> refresh token and <b>invalidates the old one</b>. A given refresh token is therefore usable exactly once.</p>
 <p><b>Reuse detection.</b> Because each refresh token is single-use, if an <i>already-rotated</i> (old) token is presented again, something is wrong: either a replay, or the legitimate client and an attacker <b>both</b> hold a copy. The safe response is to assume compromise and <b>revoke the entire token family</b> (the whole session lineage), forcing a fresh login. This turns a stolen refresh token from an open-ended breach into a short, self-detecting one.</p>
-<p>Rotation is <b>mandatory for public clients</b> (SPAs, mobile) per the OAuth Security BCP, since they cannot protect a long-lived secret. Pair it with short access-token lifetimes and, ideally, sender-constrained tokens (DPoP or mTLS) so even a captured token cannot be replayed elsewhere.</p>`,
+<p>Rotation is <b>mandatory for public clients</b> (SPAs, mobile) per the OAuth Security BCP, since they cannot protect a long-lived secret. Pair it with short access-token lifetimes and, ideally, sender-constrained tokens (DPoP or mTLS) so even a captured token cannot be replayed elsewhere.</p>
+
+<h4>Why refresh tokens are the crown jewels</h4>
+<p>Access tokens expire in minutes, which is what makes them survivable when leaked. A refresh token is
+the opposite: it is long-lived by design, and its whole purpose is to mint new access tokens without
+the user present. Steal one and you have durable, silent access — no login, no MFA prompt, nothing in
+the authentication logs.</p>
+<p>That leaves an awkward problem. A public client — a SPA or a mobile app — cannot keep a secret, so it
+cannot prove it is the rightful holder. Two tokens, one stolen, and the server sees identical requests
+from both.</p>
+
+<h4>Rotation, and the insight behind it</h4>
+<p>Rotation means <b>each refresh token can be used exactly once</b>; redeeming it returns a new access
+token <i>and</i> a new refresh token, and retires the old one.</p>
+<p>On its own that is only mildly useful. The insight is what a <b>reuse</b> means:</p>
+<div class="codeSample" data-hl>normal:   RT1 -> (AT1, RT2) -> (AT2, RT3) -> ...     each used once, then dead
+
+theft:    attacker steals RT2 and redeems it   -> gets AT2, RT3
+          the real client later redeems RT2    -> ALREADY USED
+
+// the server cannot tell which party is the thief. it does not need to:
+// a reused token means SOMEONE is replaying, so revoke the WHOLE FAMILY -
+// RT1, RT2, RT3 and every access token issued from them.
+// the legitimate user is logged out. the attacker is too. that is the trade.</div>
+<p>This turns an undetectable compromise into a detectable one. Without rotation, a stolen refresh token
+works quietly for as long as it lives. With rotation, the two parties inevitably collide, and the
+collision is the alarm.</p>
+
+<h4>The practical wrinkles</h4>
+<p><b>Race conditions.</b> A page that fires three requests at once may refresh three times concurrently,
+and naive reuse detection will read that as theft and log the user out. Real implementations allow a
+short grace window where the immediately-previous token still works, and serialise refreshes in the
+client.</p>
+<p><b>Lost writes.</b> If the client redeems a token but the response never arrives, it now holds a dead
+token and has no way back. Handle the failure explicitly, or the user's session simply stops working.</p>
+<p><b>Rotation is the fallback, not the goal.</b> If you can sender-constrain the refresh token with
+DPoP or mTLS, do that instead — a bound token cannot be replayed at all, so there is no collision to
+detect. OAuth 2.1 requires one or the other precisely because a bare bearer refresh token in a public
+client is the highest-value credential in the system.</p>`,
 docs:[['Refresh token rotation — OAuth Security BCP','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['Token revocation (RFC 7009)','https://www.rfc-editor.org/rfc/rfc7009']],
 ex:{title:'Handle a refresh-token use',
 prompt:`Write class <code>RefreshRotation</code> with <code>static String onUse(boolean isCurrent)</code> returning <code>"rotate: issue new, revoke old"</code> when the presented token is the current one, and <code>"reuse detected: revoke the family"</code> when it is an old (already-rotated) token. Also <code>static boolean rotationRequired(String clientType)</code> returning true for a <code>"public"</code> client.`,

@@ -4,7 +4,36 @@ STREAMS.push({icon:'🏢',iam:true,sec:'Enterprise identity & directories',title
 <p>Enterprises keep users, groups, and computers in a <b>directory</b> — a hierarchical database queried over <b>LDAP</b> (Lightweight Directory Access Protocol). Microsoft&#8217;s <b>Active Directory</b> is the dominant implementation. Entries are named by a <b>Distinguished Name</b> (DN), a path from the specific entry up to the domain root.</p>
 <div class="codeSample">cn=Ada Lovelace,ou=Engineering,dc=example,dc=com
 | the entry     | org unit      | the domain parts |</div>
-<p>Apps authenticate a user by <b>binding</b> to the directory with their DN and password, then read group memberships to make authorization decisions. LDAP is read-heavy and fast, which is why it underpins so much enterprise login.</p>`,
+<p>Apps authenticate a user by <b>binding</b> to the directory with their DN and password, then read group memberships to make authorization decisions. LDAP is read-heavy and fast, which is why it underpins so much enterprise login.</p>
+
+<h4>The tree, and why it shapes everything</h4>
+<div class="codeSample" data-hl>dc=example,dc=com                     the domain root
+ +-- ou=Engineering                   organizational unit - a container
+ |    +-- cn=Ada Lovelace             the entry, addressed by its full DN
+ +-- ou=Groups
+      +-- cn=platform-admins          members listed as DNs, not names
+
+DN   cn=Ada Lovelace,ou=Engineering,dc=example,dc=com   the full path (unique)
+RDN  cn=Ada Lovelace                                     the leaf part
+UID / sAMAccountName / userPrincipalName    the login name, which is NOT the DN</div>
+<p>The trap: a DN encodes <i>where the entry sits</i>, so moving someone between OUs changes their DN.
+Anything that stored the DN as a foreign key now points at nothing. Key on an immutable attribute —
+<code>objectGUID</code> in AD, <code>entryUUID</code> in OpenLDAP — never the DN and never the email.</p>
+
+<h4>Bind is authentication; search is everything else</h4>
+<p>A <b>bind</b> is a login: present a DN and a password, and the directory says yes or no. Most apps do
+it in two steps — bind as a service account, <i>search</i> for the user by their login name to find the
+DN, then bind again as that user with their password. That second bind is the actual credential check,
+and it is why the app holds the plaintext password: the credential-forwarding pattern from Foundations.</p>
+<p>Two operational realities. An <b>anonymous bind</b> may be allowed and often exposes more of the tree
+than anyone intended. And LDAP without TLS sends the password in clear text — <code>ldaps://</code> or
+StartTLS is not optional.</p>
+
+<h4>Reading groups</h4>
+<p>Group membership is stored as a list of member DNs on the group, not as a list of groups on the user,
+so "what groups is Ada in?" is a search across groups rather than a field lookup. AD offers
+<code>memberOf</code> as a convenience, and nested groups still require a recursive query — which is the
+transitive-membership problem the groups lesson covers.</p>`,
 docs:[['LDAP — Wikipedia','https://en.wikipedia.org/wiki/Lightweight_Directory_Access_Protocol'],['Active Directory','https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/get-started/virtual-dc/active-directory-domain-services-overview']],
 ex:{title:'Build a Distinguished Name',
 prompt:`Write class <code>Ldap</code> with <code>static String dn(String cn, String dc)</code> that returns a simple DN of the form <code>cn=&lt;cn&gt;,dc=&lt;dc&gt;</code>.`,
@@ -155,7 +184,39 @@ solution:`public class AdSecurity {
 
 {id:'ei2',title:'Kerberos: tickets, not passwords',body:`
 <p><b>Kerberos</b> is the ticket-based SSO at the heart of Active Directory. Instead of sending your password to each service, you prove yourself once to a central <b>KDC</b> (Key Distribution Center) and receive tickets.</p>
-<p>The flow: the <b>Authentication Service</b> (AS) verifies you and issues a <b>Ticket-Granting Ticket</b> (TGT). To reach a specific service, you present the TGT to the <b>Ticket-Granting Service</b> (TGS), which issues a <b>service ticket</b> for just that service. Passwords never travel to the services, and everything is time-limited to resist replay.</p>`,
+<p>The flow: the <b>Authentication Service</b> (AS) verifies you and issues a <b>Ticket-Granting Ticket</b> (TGT). To reach a specific service, you present the TGT to the <b>Ticket-Granting Service</b> (TGS), which issues a <b>service ticket</b> for just that service. Passwords never travel to the services, and everything is time-limited to resist replay.</p>
+
+<h4>Why tickets, rather than sending the password</h4>
+<p>Kerberos was designed on the assumption that <b>the network is hostile and eavesdropping is free</b>.
+So the password never travels — it is used locally as a key to decrypt something only the real user
+could decrypt. Every later design in this course inherits that idea; Kerberos got there in the 1980s.</p>
+<div class="codeSample" data-hl>ONCE per session
+  you  -> KDC   "I am ada"  + timestamp encrypted with ada's key (pre-auth)
+  KDC  -> you   TGT, encrypted with the KRBTGT key (you cannot read it)
+              + a session key, encrypted with YOUR key (you can)
+
+PER SERVICE
+  you  -> KDC   TGT + "I want cifs/fs01"
+  KDC  -> you   a service ticket encrypted with FS01's OWN key
+
+TO THE SERVICE
+  you  -> fs01  the service ticket
+  fs01 decrypts it with its own key. no call to the KDC. no password anywhere.</div>
+
+<h4>The three properties that follow</h4>
+<p><b>Single sign-on</b> — one password entry yields a TGT, and every service ticket after that is
+silent. <b>Mutual authentication</b> — the service can prove itself back, so you know the file server is
+the real one. And <b>offline validation</b>: a service verifies a ticket with its own key, contacting
+nobody, which is why Kerberos scales inside a network.</p>
+
+<h4>Time is part of the protocol</h4>
+<p>Pre-authentication encrypts a <b>timestamp</b>, and tickets carry validity windows, so Kerberos fails
+when clocks drift — five minutes by default. This produces authentication errors that look random and
+are trivially explained once you think to check, and it is why domain members sync time from the domain
+controller.</p>
+<p>It is also <b>name-sensitive</b>: the client asks for a ticket by service principal name, so reaching
+a server by an alias or a raw IP finds no SPN and silently falls back to NTLM. That is usually the real
+answer to "why isn't Kerberos working?"</p>`,
 docs:[['Kerberos — MIT','https://web.mit.edu/kerberos/'],['Kerberos explained','https://learn.microsoft.com/en-us/windows-server/security/kerberos/kerberos-authentication-overview']],
 ex:{title:'What each stage issues',
 prompt:`Write class <code>Kerberos</code> with <code>static String issues(String phase)</code>: <code>"as"</code>→<code>"TGT"</code>, <code>"tgs"</code>→<code>"service ticket"</code>, and <code>"unknown"</code> otherwise.`,
@@ -314,7 +375,37 @@ solution:`public class Kerberos {
 
 {id:'ei3',title:'SCIM & the joiner/mover/leaver lifecycle',body:`
 <p>People join, change roles, and leave — and their accounts must follow. <b>SCIM</b> (System for Cross-domain Identity Management) is the standard API for <b>provisioning</b>: an HR or identity system pushes create/update/deactivate operations to every connected app so accounts stay in sync automatically.</p>
-<p>The lifecycle is often called <b>JML</b> — <b>Joiner</b> (create the account and grant baseline access), <b>Mover</b> (update access when the role changes), <b>Leaver</b> (deactivate/delete on exit). Automating leaver deprovisioning is the single biggest win: orphaned accounts after someone departs are a top breach cause.</p>`,
+<p>The lifecycle is often called <b>JML</b> — <b>Joiner</b> (create the account and grant baseline access), <b>Mover</b> (update access when the role changes), <b>Leaver</b> (deactivate/delete on exit). Automating leaver deprovisioning is the single biggest win: orphaned accounts after someone departs are a top breach cause.</p>
+
+<h4>What SCIM actually standardises</h4>
+<p>Before SCIM every SaaS vendor had a bespoke user API, so connecting fifty applications meant fifty
+integrations. SCIM fixes the <i>shape</i>: a standard schema for User and Group, over ordinary REST.</p>
+<div class="codeSample" data-hl>POST   /scim/v2/Users        create        (Joiner)
+PATCH  /scim/v2/Users/{id}   update        (Mover - department, manager, groups)
+PATCH  /scim/v2/Users/{id}   active:false  (Leaver - DEACTIVATE, not delete)
+GET    /scim/v2/Users?filter=userName eq "ada@corp.example"
+PATCH  /scim/v2/Groups/{id}  add/remove members
+
+{ "schemas":["urn:ietf:params:scim:schemas:core:2.0:User"],
+  "userName":"ada@corp.example",
+  "externalId":"u-4817",        <- YOUR stable id. this is the join key.
+  "active":true }</div>
+
+<h4>The three things that go wrong</h4>
+<p><b>Deactivate, do not delete.</b> Setting <code>active:false</code> ends access while preserving the
+record, its audit history and anything owned by it. A hard delete orphans documents and destroys the
+trail — and if the person returns, a new account cannot inherit what the old one owned.</p>
+<p><b>Key on <code>externalId</code>.</b> Matching on email or username breaks the day someone marries,
+changes department, or an address is reassigned. This is the same "key on <code>sub</code>" rule from
+the claims lesson, one layer down.</p>
+<p><b>Movers are the hard case.</b> Joiners and leavers are events with a clear trigger. A mover keeps
+working throughout, and the failure is silent: they gain the new team's access and keep the old team's.
+Repeat over a career and you get the privilege accumulation that access reviews exist to catch.</p>
+
+<h4>Why it is worth the effort</h4>
+<p>Federation ends access at the IdP but leaves the account behind in every app. SCIM is what makes
+deprovisioning real rather than theoretical, and time-to-deprovision is the metric audits actually
+fail on.</p>`,
 docs:[['SCIM','https://scim.cloud/'],['SCIM (RFC 7644)','https://www.rfc-editor.org/rfc/rfc7644']],
 ex:{title:'Map the lifecycle event to an operation',
 prompt:`Write class <code>Scim</code> with <code>static String op(String event)</code>: <code>"joiner"</code>→<code>"create"</code>, <code>"mover"</code>→<code>"update"</code>, <code>"leaver"</code>→<code>"delete"</code>, and <code>"unknown"</code> otherwise.`,
@@ -339,7 +430,38 @@ hints:['One switch, three cases plus a default.','Joiner creates, mover updates,
 
 {id:'ei4',title:'JIT provisioning & home-realm discovery',body:`
 <p>Two conveniences smooth federated login. <b>Just-in-time (JIT) provisioning</b> creates the local account automatically the first time a federated user logs in — no pre-import needed; the identity provider&#8217;s assertion supplies the profile.</p>
-<p><b>Home-realm discovery</b> answers "which identity provider should authenticate this person?" A multi-tenant app often decides from the <b>email domain</b>: a user typing <code>ada@example.com</code> is routed to example.com&#8217;s IdP. Extracting that domain is the first step of the routing.</p>`,
+<p><b>Home-realm discovery</b> answers "which identity provider should authenticate this person?" A multi-tenant app often decides from the <b>email domain</b>: a user typing <code>ada@example.com</code> is routed to example.com&#8217;s IdP. Extracting that domain is the first step of the routing.</p>
+
+<h4>JIT provisioning: the account is created by the login</h4>
+<p>Instead of pushing accounts ahead of time with SCIM, the app creates the account <i>the first time the
+person successfully authenticates</i>, from the claims in the assertion. No pre-provisioning, no sync
+job — the first login is the provisioning event.</p>
+<div class="codeSample" data-hl>SCIM (push)              JIT (pull, on first login)
++ account exists early   + zero setup, works for any federated user
++ DEPROVISIONS           - creates accounts only; NOTHING removes them
++ full attribute sync    - attributes only as fresh as the last login
+- an integration per app - roles come from claims you must trust
+
+// the common shape: JIT to create, SCIM to deprovision.
+// JIT alone means leavers keep app-side accounts forever.</div>
+<p>That last line is the trap. JIT feels complete because logins work, and it has <b>no leaver story at
+all</b> — the IdP account is disabled, so they cannot log in, but the app-side account, its data and its
+entitlements remain indefinitely.</p>
+<p>Two more cautions. Grant <b>least privilege on creation</b>: a JIT rule that maps a claim to an admin
+role means whoever controls that claim controls your admin access. And key the new account on the stable
+<code>sub</code>, or a returning user with a changed email silently becomes a second account.</p>
+
+<h4>Home-realm discovery: which IdP is this person's?</h4>
+<p>A multi-tenant app federating with hundreds of customer IdPs must route each login to the right one,
+before knowing who the user is. Four common approaches:</p>
+<div class="codeSample" data-hl>email domain     ada@acme.com -> Acme's IdP.  most common. leaks nothing
+                 much, but tells an attacker which domains are customers
+tenant in URL    acme.app.example / app.example?tenant=acme.  unambiguous
+IdP picker       a list of logos. simple, and unusable past ~10 tenants
+remembered       a cookie from last time - a shortcut, never the only path</div>
+<p>The subtle failure is the <b>shared domain</b>: contractors on gmail.com, or two customers who both
+use a generic domain. Domain-based routing then sends people to the wrong realm, and the fallback has to
+be an explicit choice rather than a guess.</p>`,
 docs:[['JIT provisioning','https://auth0.com/docs/authenticate/identity-providers/enterprise-identity-providers/just-in-time-provisioning'],['Home realm discovery','https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/home-realm-discovery-policy']],
 ex:{title:'Extract the email domain (the realm)',
 prompt:`Write class <code>Broker</code> with <code>static String realm(String email)</code> that returns the part after the <code>@</code> — the domain used to pick the identity provider. Use <code>substring</code> and <code>indexOf("@")</code>.`,
@@ -396,7 +518,39 @@ behavior:`method("workforce-hr-source") is "SCIM", method("large-external-users"
 hints:['Match the scenario to the model: HR source to SCIM, large external users to JIT, small/regulated to manual.','JIT provisions on first login from the IdP claims; it does not deprovision, so return false.','Key JIT accounts on the stable subject id and default to least privilege.']}},
 {id:'ei5',title:'Social login & account linking',body:`
 <p><b>Social login</b> lets users sign in with Google, Apple, GitHub, and the like — convenient, and it offloads credential security to the provider. The catch is <b>account linking</b>: the same human might sign in with Google today and email/password tomorrow, and both must resolve to one account.</p>
-<p>The reliable key is <b>provider + the provider&#8217;s stable subject id</b> (not the email, which can change or be reused). Store that composite so a returning user is recognized regardless of which button they click, and link additional methods to the existing account rather than creating duplicates.</p>`,
+<p>The reliable key is <b>provider + the provider&#8217;s stable subject id</b> (not the email, which can change or be reused). Store that composite so a returning user is recognized regardless of which button they click, and link additional methods to the existing account rather than creating duplicates.</p>
+
+<h4>Why account linking is where the bugs are</h4>
+<p>Social login itself is ordinary OIDC. The hard part is what happens when the same human arrives twice
+by different routes — Google today, GitHub next month, a password account last year — and you must
+decide whether they are one person.</p>
+<div class="codeSample" data-hl>// THE classic vulnerability: linking on email alone
+provider says: { sub: "google|123", email: "ada@corp.example" }
+your app:      "I have a user with that email - same person, link them."
+
+// an attacker signs up at a provider that does NOT verify email addresses,
+// claims ada@corp.example, and is handed Ada's existing account.
+
+// the rules that close it:
+//   1. require email_verified == true, and only from providers you trust
+//      to verify it - do NOT take the claim's word for it universally
+//   2. NEVER auto-link. make the user prove the existing account first.
+//   3. key the identity on provider + sub, not on email.</div>
+
+<h4>The identity key, again</h4>
+<p>The reliable key is <b>provider + that provider's stable subject id</b>. Emails get changed and
+reassigned; usernames get released. A <code>sub</code> is scoped to the issuer, so
+<code>google|123</code> and <code>github|123</code> are different people and always will be.</p>
+
+<h4>The consequences people forget</h4>
+<ul>
+<li><b>Account recovery inherits the provider's security.</b> "Sign in with X" means your account is as
+strong as the X account, and X's recovery flow is now yours.</li>
+<li><b>Unlinking needs a rule.</b> Removing the last login method locks the user out permanently — require
+at least one remaining, or force a password to be set first.</li>
+<li><b>Providers disappear or change ids.</b> Keep your own internal user id as the primary key and treat
+every provider identity as an attached credential, not as the user.</li>
+</ul>`,
 docs:[['Account linking — Auth0','https://auth0.com/docs/manage-users/user-accounts/user-account-linking'],['Sign in with Google','https://developers.google.com/identity']],
 ex:{title:'Build a stable linking key',
 prompt:`Write class <code>Linking</code> with <code>static String key(String provider, String subject)</code> that returns a composite identity key of the form <code>provider|subject</code> (provider, a pipe, then the provider&#8217;s subject id).`,
