@@ -7,5 +7,6 @@
   "06-async-event-loop.js",
   "07-errors-debugging-method.js",
   "08-debugging-in-the-browser.js",
-  "09-modules-packages-tooling.js"
+  "09-modules-packages-tooling.js",
+  "11-node-runtime.js"
 ]
