@@ -5,6 +5,7 @@
   <img src="https://img.shields.io/badge/exercises-91-06b6d4" alt="exercises">
   <img src="https://img.shields.io/badge/executed%20cases-531-2ea44f" alt="executed test cases">
   <img src="https://img.shields.io/badge/real%20execution-100%25-06b6d4" alt="exercises graded by real execution">
+  <img src="https://img.shields.io/badge/quiz%20questions-159-8b5cf6" alt="hand-authored quiz questions">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
@@ -75,6 +76,13 @@ filter:
 
 The hard tier is written so that a plausible-looking implementation fails a **named** case, and the
 `behavior` note says which assumption broke.
+
+## Quizzes
+
+Every one of the 53 lessons carries **at least 3 hand-authored questions — 159 in total**, ordered within
+each lesson from recall to reasoning to judgement. Each one explains why the right answer is right *and*
+why every distractor is wrong, and options are shuffled per visit so the answer position cannot be
+memorised.
 
 ## Build & run
 
