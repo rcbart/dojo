@@ -341,6 +341,7 @@ function renderHome(){
   // index streams by title, remember which have been placed into a domain
   const byTitle={}; STREAMS.forEach((s,si)=>{byTitle[s.title]=si;});
   const placed=new Set();
+  const anyProgress=STREAMS.some(st=>streamDone(st)>0);
   let sections='';
   for(const dom of DOMAINS){
     const idx=dom.titles.filter(t=>byTitle[t]!==undefined).map(t=>{const si=byTitle[t];placed.add(si);return si;});
@@ -351,8 +352,10 @@ function renderHome(){
     // lesson totals for the collapsed summary line
     const nStreams=mainIdx.length+danIdx.length;
     const nLessons=idx.reduce((a,si)=>a+STREAMS[si].lessons.length,0);
-    // a domain opens by default only if the learner has started it
-    const started=idx.some(si=>streamDone(STREAMS[si])>0);
+    // A first-time visitor should see the course, not eight closed rows: with no
+    // progress anywhere, open everything. Once there IS progress, open only what
+    // they have started, so returning lands them on their own work.
+    const started=anyProgress ? idx.some(si=>streamDone(STREAMS[si])>0) : true;
     let head;
     if(beltIdx.length){
       const done=beltIdx.reduce((a,si)=>a+streamDone(STREAMS[si]),0);
@@ -396,6 +399,7 @@ function renderHome(){
     <li><b>Teach it back.</b> After each lesson, say the idea in one plain sentence. If you can teach it, you own it.</li>
   </ol>
   </div>
+  <div class="scaleBar">${STREAMS.length} streams · ${STREAMS.reduce((a,s)=>a+s.lessons.length,0)} lessons · ${STREAMS.reduce((a,s)=>a+s.lessons.reduce((b,l)=>b+((l.exs||(l.ex?[l.ex]:[])).length),0),0)} hands-on exercises</div>
   <p style="font-size:12px;color:var(--muted)">System status: AI test runner ${(window.cowork&&window.cowork.askClaude)?'✅ connected':'⚠️ unavailable — completion falls back to structural checks'} · progress storage ${store.persistent?'✅ persistent':'⚠️ session-only (browser storage is blocked here; progress lasts until this view closes)'}</p>
   ${sections}</div>`;
 }
