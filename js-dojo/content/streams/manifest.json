@@ -10,5 +10,6 @@
   "09-modules-packages-tooling.js",
   "11-node-runtime.js",
   "12-node-files-streams.js",
-  "13-node-http-server.js"
+  "13-node-http-server.js",
+  "14-node-debugging-testing-perf.js"
 ]

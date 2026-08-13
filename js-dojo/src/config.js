@@ -41,5 +41,6 @@ const DOJO_DOMAINS = [
   {name:'Node.js',icon:'\u{1F7E9}',titles:[
     'The Node Runtime',
     'Files, Streams & the Node Standard Library',
-    'Building an HTTP Server']}
+    'Building an HTTP Server',
+    'Debugging, Testing & Profiling Node']}
 ];
