@@ -1,3 +1,7 @@
 [
-  "01-js-foundations.js"
+  "01-js-foundations.js",
+  "02-control-flow-functions.js",
+  "03-objects-arrays-data.js",
+  "04-functions-in-depth.js",
+  "06-async-event-loop.js"
 ]
