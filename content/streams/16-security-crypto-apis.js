@@ -147,7 +147,48 @@ Signature verifier = Signature.getInstance("SHA256withECDSA");
 verifier.initVerify(pair.getPublic());
 verifier.update(message);
 boolean ok = verifier.verify(sig);</div>
-<p>This is your day job in miniature: an IdP signs JWTs with its private key; every API validates with the public key from the JWKS endpoint — which is why resource servers never hold signing secrets, and why HS256 between many parties is a smell (shared secret = anyone can mint tokens). ES256 = SHA256withECDSA, RS256 = SHA256withRSA.</p>`,
+<p>This is your day job in miniature: an IdP signs JWTs with its private key; every API validates with the public key from the JWKS endpoint — which is why resource servers never hold signing secrets, and why HS256 between many parties is a smell (shared secret = anyone can mint tokens). ES256 = SHA256withECDSA, RS256 = SHA256withRSA.</p>
+<h4>The distinction that decides your architecture</h4>
+<p>Both mechanisms answer "did this message come from someone holding the key, unmodified?" — but the
+consequences of that word "the" differ completely.</p>
+<div class="codeSample" data-hl>HMAC        one secret. verifying REQUIRES the same secret that signs.
+            -> anyone who can check a token can also MINT one.
+            -> symmetric trust. fine between two parties who already
+               trust each other equally.
+
+SIGNATURE   a key pair. sign with PRIVATE, verify with PUBLIC.
+            -> verifiers can check but CANNOT forge.
+            -> asymmetric trust. this is what makes federation possible.</div>
+<p>That is why an IdP signs with RS256 or ES256: it can distribute the public key to a hundred resource
+servers, publish it at a JWKS endpoint, and rotate it — and none of those servers can issue a token. Use
+HS256 across organisational boundaries and every party that validates tokens can also create them, so a
+breach of the least careful one compromises the whole system.</p>
+<p>HS256 is not wrong everywhere — it is fine and faster when one service signs and the same service
+verifies, such as a stateless session cookie. The question is always <b>who needs to verify</b>.</p>
+
+<h4>Two implementation details that break real systems</h4>
+<p><b>Compare in constant time.</b> A byte-by-byte comparison that returns early leaks, through timing,
+how many bytes matched — enough to forge a tag one byte at a time given enough attempts.
+<code>MessageDigest.isEqual</code> is the constant-time comparison; <code>Arrays.equals</code> and
+<code>String.equals</code> are not.</p>
+<p><b>Never let the token choose the algorithm.</b> The <code>alg</code> header is attacker-controlled
+input. Two classic attacks follow from trusting it: <code>alg: none</code>, where a library helpfully
+accepts an unsigned token; and the RS256→HS256 confusion, where the attacker signs with the <i>public</i>
+key as an HMAC secret and a naive verifier — which picks its method from the header — accepts it. The
+defence is to decide the expected algorithm from your configuration and reject anything else.</p>
+
+<h4>Sizing and choosing</h4>
+<p>An HMAC secret must have real entropy — at least as many bits as the hash output, from a
+<code>SecureRandom</code>, never a password or a memorable string. ES256 keys are far smaller than RSA for
+equivalent strength, which makes tokens and JWKS documents smaller; RS256 remains ubiquitous for
+compatibility. And key <b>rotation</b> is what the <code>kid</code> header exists for: publish both keys
+during a rollover so tokens signed by either verify, then retire the old one.</p>
+
+<h4>The check nobody sees in the code above</h4>
+<p>A valid signature proves origin and integrity. It says nothing about whether the token is <b>for
+you</b>, whether it has <b>expired</b>, or whether it permits the action. Verifying the signature and
+stopping there is the most common JWT vulnerability in production, and it is why the identity course
+spends a whole lesson on the claim checklist.</p>`,
 docs:[['Signature — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/security/Signature.html'],['Mac — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/crypto/Mac.html'],['JWT signing algorithms — RFC 7518','https://www.rfc-editor.org/rfc/rfc7518']],
 ex:{title:'Sign, verify, tag',
 prompt:`Write <code>Signing</code> with three methods: <code>static byte[] hmac(byte[] secret, byte[] msg)</code> using <code>HmacSHA256</code>; <code>static byte[] sign(java.security.PrivateKey priv, byte[] msg)</code> and <code>static boolean verify(java.security.PublicKey pub, byte[] msg, byte[] sig)</code> both using <code>SHA256withECDSA</code>. Declare <code>throws Exception</code>. Bonus rigor: nothing in this class may compare byte arrays with <code>Arrays.equals</code>.`,

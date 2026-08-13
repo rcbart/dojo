@@ -157,7 +157,53 @@ mvn -Dtest=WalletTest test     # a single test class
 mvn dependency:tree            # who pulls in what (conflict hunting!)
 mvn clean package -DskipTests  # build the jar, skip tests
 mvn versions:display-dependency-updates</div>
-<p>Transitive conflicts are resolved "nearest wins" — <code>dependency:tree</code> is your debugger.</p>`,
+<p>Transitive conflicts are resolved "nearest wins" — <code>dependency:tree</code> is your debugger.</p>
+<h4>The idea behind the rigid lifecycle</h4>
+<p>Maven's fixed phase order looks limiting until you notice what it buys: <b>every Maven project builds
+the same way</b>. A developer joining a project they have never seen runs <code>mvn verify</code> and it
+works, because the build is described by convention rather than by a script only its author understands.
+That is convention over configuration applied to builds, and it is why Maven survived tools that were
+technically more capable.</p>
+<p>The corollary: fighting the conventions is expensive. Moving source directories or inventing phases
+costs you the thing you came for.</p>
+
+<h4>Scopes, and the one people get wrong</h4>
+<div class="codeSample" data-hl>compile   (default) main + test classpath, and PACKAGED into your artifact
+provided  compile + test, NOT packaged - the container supplies it at runtime
+runtime   not needed to compile, needed to run  (JDBC drivers, SLF4J bindings)
+test      tests only, never shipped
+import    only in dependencyManagement, to pull in another project's BOM
+
+// "provided" is the one that surprises people: it works locally in your
+// IDE and NoClassDefFoundError's in production, because nothing supplied
+// it after all. use it only when something genuinely will.</div>
+
+<h4>Transitive resolution: nearest wins, not newest</h4>
+<p>This is the single most useful mechanic to understand, because it explains almost every mysterious
+<code>NoSuchMethodError</code>. When two paths in your dependency graph pull different versions of the
+same library, Maven does <b>not</b> pick the newest — it picks the one with the <i>shortest path</i> from
+your POM, and ties break in declaration order.</p>
+<p>So a direct dependency always beats anything transitive, and an old direct declaration will quietly
+downgrade a library that something else needed at a newer version. The class is found, the method is
+missing, and the stack trace points at innocent code.</p>
+<div class="codeSample" data-hl>mvn dependency:tree -Dverbose -Dincludes=com.fasterxml.jackson.core
+   # -Dverbose SHOWS the omitted/conflicting nodes, which is the whole point
+
+# the fix, in order of preference:
+#  1. &lt;dependencyManagement&gt; - pin the version for the whole project
+#  2. import a BOM the ecosystem publishes (Spring Boot does this for you)
+#  3. &lt;exclusions&gt; on the offending dependency - a last resort, and it
+#     rots silently when the dependency's own graph changes</div>
+<p>The <b>maven-enforcer-plugin</b> with <code>dependencyConvergence</code> turns this from a debugging
+exercise into a build failure, which is where you want it.</p>
+
+<h4>Commands worth having in your fingers</h4>
+<p><code>mvn verify</code> rather than <code>package</code> — it runs integration tests and the checks
+that gate quality; <code>package</code> only produces a jar. <code>-o</code> for offline builds,
+<code>-T 1C</code> to build modules in parallel across your cores, <code>-pl module -am</code> to build one
+module and only what it needs, and <code>-X</code> when you genuinely need to see which plugin decided
+what. Note that <code>mvn install</code> writes to a shared local repository — convenient locally, and a
+source of "works on my machine" when a stale artifact sits there; CI should not rely on it.</p>`,
 docs:[['Build Lifecycle','https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html'],['Dependency Mechanism & scopes','https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html']],
 ex:{title:'Lifecycle quiz — in commands',lang:'shell',
 prompt:`Write, one per line, the Maven commands to: (1) delete previous build output and run the full test suite, (2) run only the class <code>AuthTokenTest</code>, (3) print the dependency tree, (4) build the jar while skipping tests.`,
@@ -203,7 +249,55 @@ dependencies {
 test { useJUnitPlatform() }
 
 application { mainClass = 'com.example.dojo.Main' }</div>
-<p><code>implementation</code> ≈ Maven compile (but hidden from consumers' compile classpath), <code>testImplementation</code> ≈ test scope, <code>api</code> leaks to consumers (library projects only). Run: <code>./gradlew build</code>, <code>./gradlew test</code>, <code>./gradlew run</code>, <code>./gradlew tasks</code>.</p>`,
+<p><code>implementation</code> ≈ Maven compile (but hidden from consumers' compile classpath), <code>testImplementation</code> ≈ test scope, <code>api</code> leaks to consumers (library projects only). Run: <code>./gradlew build</code>, <code>./gradlew test</code>, <code>./gradlew run</code>, <code>./gradlew tasks</code>.</p>
+<h4>The trade Gradle makes</h4>
+<p>Maven describes a build declaratively and runs a fixed lifecycle. Gradle builds a <b>task graph</b> and
+lets you program it — which is genuinely more powerful and genuinely easier to make a mess of. A Gradle
+build can do anything, and "anything" includes becoming a bespoke program that only its author
+understands.</p>
+<p>The discipline that keeps it good: use plugins and conventions for everything you can, and treat
+imperative logic in the build file as a smell. The Kotlin DSL (<code>build.gradle.kts</code>) helps
+materially here because it is statically typed — you get completion and compile errors instead of
+discovering a typo three minutes into a build.</p>
+
+<h4>Why Gradle is fast, and what to do when it is not</h4>
+<div class="codeSample" data-hl>incremental  a task is UP-TO-DATE if its declared inputs and outputs
+             are unchanged. it is simply skipped.
+build cache  a task whose inputs match a PREVIOUS run (even on another
+             machine, even on CI) restores the outputs instead of running
+daemon       a warm JVM between builds - no startup, JIT already hot
+config cache serialises the configuration phase itself
+
+# when caching is not working, this tells you exactly why, per task:
+./gradlew build --scan
+./gradlew build --info | grep -i "not up-to-date"</div>
+<p>The usual cause of a build that never caches is a task with undeclared or non-deterministic inputs — a
+timestamp in the output, an absolute path, a file read that Gradle was not told about. Correct input and
+output declarations are what make the whole model work.</p>
+
+<h4><code>api</code> vs <code>implementation</code>, which is the real lesson here</h4>
+<p>This distinction is Gradle's most valuable feature and has no clean Maven equivalent.
+<code>implementation</code> keeps a dependency off your consumers' compile classpath;
+<code>api</code> exposes it.</p>
+<div class="codeSample" data-hl>implementation  "I use this internally."
+                consumers cannot see it -> you can change or drop it freely
+                -> and a change here recompiles only THIS module
+
+api             "this appears in my public signatures."
+                (a parameter type, return type, or extended class)
+                consumers compile against it -> changing it breaks them
+                -> and a change recompiles every consumer</div>
+<p>The compile-avoidance effect is why large Gradle builds are fast: with <code>implementation</code>,
+editing a module recompiles its dependents only when its <i>public API</i> actually changed. Declaring
+everything <code>api</code> — the instinct when something fails to resolve — throws that away and
+recreates Maven's leaky transitive classpath.</p>
+
+<h4>Two conveniences worth adopting immediately</h4>
+<p><b>Version catalogs</b> (<code>gradle/libs.versions.toml</code>) put every dependency coordinate and
+version in one typed file, so upgrades are one edit and there is no drift between modules. And
+<b>toolchains</b> (<code>java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }</code>) make
+the build download and use a specific JDK rather than whatever the machine happens to have — the same
+reproducibility argument as the wrapper, one level deeper.</p>`,
 docs:[['Gradle User Manual','https://docs.gradle.org/current/userguide/userguide.html'],['Java plugin & dependency configurations','https://docs.gradle.org/current/userguide/java_plugin.html']],
 ex:{title:'Write a build.gradle',lang:'groovy',
 prompt:`Write a <code>build.gradle</code> that: applies the <code>java</code> plugin, uses <code>mavenCentral()</code>, declares <code>com.google.code.gson:gson:2.11.0</code> as <code>implementation</code> and <code>org.junit.jupiter:junit-jupiter:5.10.2</code> as <code>testImplementation</code>, and configures the test task with <code>useJUnitPlatform()</code>.`,
@@ -247,7 +341,48 @@ test {
 <li><b>Gradle</b>: programmable, faster (incremental + cache + daemon), first-class for Android/Kotlin; complexity can grow unchecked.</li>
 <li>Both: wrapper scripts commit the build tool version into the repo (<code>mvnw</code>, <code>gradlew</code>) — always use the wrapper in CI.</li>
 </ul>
-<p>Multi-module: a parent POM (<code>&lt;packaging&gt;pom&lt;/packaging&gt;</code>, <code>&lt;modules&gt;</code>) or Gradle <code>settings.gradle</code> with <code>include 'api', 'core'</code>. Share versions centrally: Maven <code>&lt;dependencyManagement&gt;</code>, Gradle version catalogs (<code>libs.versions.toml</code>). A Spring Boot project typically inherits <code>spring-boot-starter-parent</code> precisely to get managed versions.</p>`,
+<p>Multi-module: a parent POM (<code>&lt;packaging&gt;pom&lt;/packaging&gt;</code>, <code>&lt;modules&gt;</code>) or Gradle <code>settings.gradle</code> with <code>include 'api', 'core'</code>. Share versions centrally: Maven <code>&lt;dependencyManagement&gt;</code>, Gradle version catalogs (<code>libs.versions.toml</code>). A Spring Boot project typically inherits <code>spring-boot-starter-parent</code> precisely to get managed versions.</p>
+<h4>How to actually make the choice</h4>
+<p>For a typical Spring Boot service, the honest answer is that it rarely matters — both work, and the
+build is not where your project succeeds or fails. What tips it:</p>
+<div class="codeSample" data-hl>choose MAVEN when
+  the team is mixed-experience or rotates (nobody has to learn your build)
+  you are in the Spring/Jakarta mainstream (every doc and answer is Maven)
+  you want the build to be boring, and boring is a feature
+
+choose GRADLE when
+  the repo is large and build TIME is a real cost (incremental + cache)
+  you are on Android or Kotlin (first-class, effectively mandatory)
+  you genuinely need custom build logic - and someone will own it
+
+// the losing move is picking Gradle for speed on a three-module project
+// and paying its complexity forever to save eight seconds.</div>
+
+<h4>Multi-module: what it is for, and the trap</h4>
+<p>Splitting a repository into modules buys enforced boundaries — <code>core</code> cannot accidentally
+depend on <code>web</code> if the build does not allow it — plus faster incremental builds and independent
+reuse. That first benefit is the real one: module boundaries are the only architectural constraint that
+the compiler will actually enforce.</p>
+<p>The trap is splitting by <i>layer</i> (<code>controllers</code>, <code>services</code>,
+<code>repositories</code>), which produces modules that all change together on every feature and therefore
+buy nothing. Split by <b>domain</b> instead — <code>orders</code>, <code>billing</code>,
+<code>identity</code> — so a change is usually contained in one module. If almost every commit touches
+every module, the split is wrong.</p>
+
+<h4>Version management is the part that decays</h4>
+<p>Left alone, modules drift onto different versions of the same library and you get the nearest-wins
+resolution problems from earlier, now multiplied. Centralise deliberately: Maven's
+<code>&lt;dependencyManagement&gt;</code> in the parent (or an imported BOM), Gradle's version catalog and
+platform. Declare versions in exactly one place, and let modules declare only <i>what</i> they need, never
+<i>which version</i>.</p>
+<p>Inheriting <code>spring-boot-starter-parent</code> is precisely this: not for the plugins, but for a
+tested, mutually-compatible set of versions across a hundred libraries — the same reason starters exist.</p>
+
+<h4>The rules that apply whichever you choose</h4>
+<p>Always use the wrapper, in CI too, so the build tool version is part of the repository. Commit the
+lockfile if your tool has one. Keep the build reproducible — no reliance on what is installed on the
+machine, no network calls that can return different answers on different days. And keep it fast: a build
+people avoid running is a build that stops catching things.</p>`,
 docs:[['Maven multi-module','https://maven.apache.org/guides/mini/guide-multiple-modules.html'],['Gradle version catalogs','https://docs.gradle.org/current/userguide/version_catalogs.html']],
 ex:{title:'Wrapper & structure drill',lang:'shell',
 prompt:`One per line: (1) the command to run tests using the <b>Maven wrapper</b>, (2) the command to run tests using the <b>Gradle wrapper</b>, (3) the settings.gradle line that includes modules <code>api</code> and <code>core</code>, (4) the Maven packaging value a parent aggregator POM must declare (write it as the full XML tag).`,

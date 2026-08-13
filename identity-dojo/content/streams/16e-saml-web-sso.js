@@ -2,12 +2,12 @@ STREAMS.push({iam:true,sec:'SAML & enterprise web SSO',icon:'🎫',title:'SAML 2
 
 {id:'sml1',title:'What SAML is & the assertion',body:`
 <p><b>SAML 2.0</b> (Security Assertion Markup Language) is the older, XML-based federation standard that still runs most <b>enterprise web SSO</b>. Same idea as OIDC — an <b>IdP</b> vouches for a user to a <b>Service Provider (SP)</b> — but the message is an XML <b>assertion</b> instead of a JWT.</p>
-<p>The three statement types inside an assertion, and the parts that matter:</p>
+<p>SAML 2.0 Core defines exactly <b>three statement types</b> — <code>AuthnStatement</code>, <code>AttributeStatement</code> and <code>AuthzDecisionStatement</code> (the last is rarely used and deprecated in practice). An assertion also carries elements that are <i>not</i> statements but matter just as much. Both, together:</p>
 <ul>
 <li><b>Authentication statement</b> — "this subject authenticated at this time, using this method."</li>
 <li><b>Attribute statement</b> — user attributes (email, groups, department) the SP uses.</li>
-<li><b>NameID</b> — the subject identifier (the "who"), like OIDC's <code>sub</code>.</li>
-<li><b>Conditions</b> — validity window (<code>NotBefore</code>/<code>NotOnOrAfter</code>) and <b>Audience</b> (which SP it's for) — the SAML equivalents of <code>exp</code>/<code>aud</code>.</li>
+<li><b>NameID</b> <i>(not a statement — it sits in <code>&lt;Subject&gt;</code>)</i> — the subject identifier (the "who"), like OIDC's <code>sub</code>.</li>
+<li><b>Conditions</b> <i>(not a statement — a sibling of them)</i> — validity window (<code>NotBefore</code>/<code>NotOnOrAfter</code>) and <b>Audience</b> (which SP it's for) — the SAML equivalents of <code>exp</code>/<code>aud</code>.</li>
 </ul>
 <p>The assertion is <b>signed by the IdP</b> (XML Signature) so the SP can trust it. SAML vs OIDC in one line: <b>SAML = XML assertions over browser POST/redirect, enterprise SSO; OIDC = JSON/JWT over OAuth, modern apps &amp; APIs.</b></p>
 <div class="codeSample" data-hl>&lt;saml:Assertion&gt;
@@ -17,7 +17,7 @@ STREAMS.push({iam:true,sec:'SAML & enterprise web SSO',icon:'🎫',title:'SAML 2
   &lt;/saml:Conditions&gt;
   &lt;saml:AttributeStatement&gt; ... groups, email ... &lt;/saml:AttributeStatement&gt;
 &lt;/saml:Assertion&gt;   &lt;!-- signed by the IdP --&gt;</div>`,
-docs:[['SAML 2.0 (OASIS)','http://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['Okta — What is SAML?','https://www.okta.com/integrate/documentation/saml/'],['SAML vs OIDC','https://www.okta.com/identity-101/saml-vs-oidc/']],
+docs:[['SAML 2.0 Core &sect;2.7 - statement types','http://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['SAML 2.0 (OASIS)','http://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['Okta — What is SAML?','https://www.okta.com/integrate/documentation/saml/'],['SAML vs OIDC','https://www.okta.com/identity-101/saml-vs-oidc/']],
 ex:{title:'Read the NameID from an assertion',
 prompt:`Write <code>Saml</code> with <code>static String nameId(String xml)</code> that returns the text inside the first <code>&lt;saml:NameID&gt;...&lt;/saml:NameID&gt;</code> element, or <code>null</code> if absent. Find the open tag with <code>indexOf("&lt;saml:NameID&gt;")</code>, the close tag with <code>indexOf("&lt;/saml:NameID&gt;")</code>, and return the <code>substring</code> between them (return null if either is missing).`,
 starter:`public class Saml {
@@ -177,8 +177,66 @@ solution:`public class SamlTrust {
 <div class="codeSample" data-hl>// the SP's non-negotiable checks on a received assertion:
 // 1) XML Signature verifies against the IdP metadata cert
 // 2) Conditions NotOnOrAfter is in the future   (not expired)
-// 3) AudienceRestriction Audience == this SP's entityID</div>`,
-docs:[['XML Signature / Encryption in SAML','http://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['SAML vs OIDC (Auth0)','https://auth0.com/intro-to-iam/saml-vs-oidc']],
+// 3) AudienceRestriction Audience == this SP's entityID</div>
+
+<h4>"The signature verified" is not the same as "the assertion is valid"</h4>
+<p>This is the single most important thing to understand about SAML security, and it is where real
+implementations have repeatedly failed. XML Signature does not sign a document — it signs a
+<b>reference to an element</b>, identified by ID. Verification therefore answers "was <i>some</i>
+element in this document signed by the IdP?", not "is the element I am about to read the signed
+one?".</p>
+<p><b>XML Signature Wrapping (XSW)</b> exploits exactly that gap. The attacker takes a legitimately
+signed assertion, wraps it somewhere the parser will ignore, and inserts a forged assertion where the
+application will look:</p>
+<div class="codeSample" data-hl>&lt;Response&gt;
+  &lt;Extensions&gt;
+    &lt;Assertion ID="_abc"&gt;              &lt;-- the REAL, signed one, moved out of the way
+      &lt;Subject&gt;jane@corp.com&lt;/Subject&gt;
+      &lt;Signature URI="#_abc"/&gt;         &lt;-- still verifies perfectly
+    &lt;/Assertion&gt;
+  &lt;/Extensions&gt;
+  &lt;Assertion ID="_evil"&gt;               &lt;-- FORGED, unsigned
+    &lt;Subject&gt;admin@corp.com&lt;/Subject&gt;  &lt;-- what the app actually reads
+  &lt;/Assertion&gt;
+&lt;/Response&gt;
+
+// the signature library says VALID (it found and checked #_abc)
+// the application says "welcome, admin"
+// two components, two different answers to "which assertion?" - that is the bug</div>
+<p>The 2018 Duo Labs research found this class of flaw in multiple mainstream SAML libraries at once,
+which tells you it is a design trap rather than a series of careless mistakes. The defences: verify the
+signature and read the claims from <b>the same node reference</b>, reject documents containing more than
+one assertion, resolve IDs strictly, disable DTD processing and entity expansion, and never re-parse the
+document after validating it.</p>
+
+<h4>Replay, and what <code>InResponseTo</code> is for</h4>
+<p>A signed assertion stays cryptographically valid until <code>NotOnOrAfter</code> passes. If the SP does
+nothing else, anyone who captures one can present it again inside that window. Three checks close
+this:</p>
+<ul>
+<li><b><code>InResponseTo</code></b> must equal the <code>ID</code> of the <code>AuthnRequest</code> this
+SP actually sent, and that request must be one this session is waiting on. This is what
+SP-initiated flow buys you and what IdP-initiated flow gives up — an unsolicited assertion has no
+request to correlate against, which is the concrete reason it is discouraged.</li>
+<li><b>Replay cache.</b> Record each assertion <code>ID</code> until its <code>NotOnOrAfter</code> passes
+and reject any repeat. The validity window should be minutes, not hours.</li>
+<li><b>Recipient / Destination</b> must match this SP's ACS URL, so an assertion minted for another
+endpoint cannot be redirected here.</li>
+</ul>
+
+<h4>Golden SAML</h4>
+<p>One structural weakness has no protocol fix. The IdP's <b>signing private key</b> can mint an assertion
+for any user, for any SP, with any attributes — and the SPs will accept it, because that is precisely
+what they were configured to trust. An attacker who steals that key (the ADFS token-signing certificate
+being the classic target, as seen in the SolarWinds intrusions) can impersonate anyone, indefinitely,
+<b>without touching the IdP again</b> — so there is nothing in the IdP's logs and disabling the account
+does not help.</p>
+<p>That is why the signing key belongs in an HSM, why access to it is a PAM-grade control, and why key
+rotation is a genuine incident-response step rather than hygiene. It also explains the shape of the
+mitigations that do exist: short assertion lifetimes, monitoring SP-side authentications that have no
+corresponding IdP login event, and not treating "the signature verified" as the end of the
+conversation.`,
+docs:[['Duo Labs - SAML XML signature wrapping','https://duo.com/blog/duo-finds-saml-vulnerabilities-affecting-multiple-implementations'],['CISA AA21-008A - Golden SAML / token-signing key abuse','https://www.cisa.gov/news-events/cybersecurity-advisories/aa21-008a'],['XML Signature / Encryption in SAML','http://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['SAML vs OIDC (Auth0)','https://auth0.com/intro-to-iam/saml-vs-oidc']],
 ex:{title:'Validate the assertion conditions',
 prompt:`Write <code>Assertion</code> with <code>static boolean acceptable(boolean signatureValid, String audience, long notOnOrAfterEpoch, String myEntityId, long nowEpoch)</code> that returns <code>true</code> only if the signature is valid, <code>myEntityId.equals(audience)</code>, and it is not expired (<code>nowEpoch &lt; notOnOrAfterEpoch</code>).`,
 starter:`public class Assertion {

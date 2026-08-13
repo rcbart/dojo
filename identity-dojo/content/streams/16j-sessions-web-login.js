@@ -198,25 +198,69 @@ is open; localStorage means XSS <i>walks away with</i> a credential usable from 
 expires. Same vulnerability, very different blast radius — which is the entire argument for the BFF
 pattern.</p>`,
 docs:[['Session fixation — OWASP','https://owasp.org/www-community/attacks/Session_fixation'],['Token storage — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html#local-storage']],
-ex:{title:'Choose safe token storage',
-prompt:`Write class <code>Storage</code> with <code>static boolean safe(String place)</code> that returns true only for <code>"httponly-cookie"</code>, and false for browser-readable stores like <code>"localstorage"</code> or <code>"sessionstorage"</code>.`,
-starter:`public class Storage {
-    static boolean safe(String place) {
-        return false;
-    }
+ex:{title:'Choose safe token storage',lang:'js',
+run:{call:'safe',cases:[{args:['httponly-cookie'],expect:true},{args:['localstorage'],expect:false},{args:['sessionstorage'],expect:false},{name:'a plain variable is still script-readable',args:['jsvariable'],expect:false}]},
+prompt:`Write <code>function safe(place)</code> returning <code>true</code> only for <code>"httponly-cookie"</code>, and <code>false</code> for browser-readable stores like <code>"localstorage"</code>, <code>"sessionstorage"</code> or <code>"jsvariable"</code>.`,
+starter:`function safe(place) {
+  return false;
 }`,
-solution:`public class Storage {
-    static boolean safe(String place) {
-        return place.equals("httponly-cookie");
-    }
+solution:`function safe(place) {
+  return place === "httponly-cookie";
 }`,
-tests:[{d:'an HttpOnly cookie is safe',re:'equals\\s*\\(\\s*"httponly-cookie"\\s*\\)'},{d:'does not bless localStorage',re:'"localstorage"',not:true}],
-behavior:`safe("httponly-cookie") is true; safe("localstorage") and safe("sessionstorage") are false. Anything JavaScript can read is exposed to XSS, so an HttpOnly cookie wins.`,
-hints:['Only one storage location is acceptable here.','Compare place with equals to the single safe value.','Everything not explicitly safe returns false.']}},
+tests:[{d:'an HttpOnly cookie is safe',re:'"httponly-cookie"'},{d:'does not bless localStorage',re:'"localstorage"',not:true}],
+behavior:`Anything JavaScript can read is exposed to XSS, so only the HttpOnly cookie passes. Note the trade this makes: a cookie is sent automatically, so you now need CSRF protection — safety here is a swap of one problem for a better-understood one.`,
+hints:['Only one storage location is acceptable here.','Use === to compare against the single safe value.','Everything not explicitly safe returns false.']}},
 
 {id:'ss5',title:'Logout & session revocation',body:`
 <p>Logging out must actually <b>end</b> the session server-side, not just delete the cookie — a stolen id is worthless only once the server forgets it. Remove the session from the store (or add its token to a denylist) so any further use is rejected.</p>
-<p>In SSO the picture is bigger. <b>Front-channel logout</b> uses the browser to notify each app (hidden iframes/redirects) that the shared session ended; <b>back-channel logout</b> has the identity provider call each app server-to-server, which is more reliable because it does not depend on the browser being open. Either way, the goal is the same: one logout invalidates the sessions everywhere.</p>`,
+<p>In SSO the picture is bigger. <b>Front-channel logout</b> uses the browser to notify each app (hidden iframes/redirects) that the shared session ended; <b>back-channel logout</b> has the identity provider call each app server-to-server, which is more reliable because it does not depend on the browser being open. Either way, the goal is the same: one logout invalidates the sessions everywhere.</p>
+
+<h4>Logout is three different operations wearing one word</h4>
+<p>Most logout bugs come from a vocabulary problem. When a user clicks "log out" they might mean any of
+these, and a system that implements only the first while implying the third is actively misleading:</p>
+<div class="codeSample" data-hl>1. clear the LOCAL session   cookie gone from this browser
+2. revoke the CREDENTIAL     the session/token is dead server-side,
+                             so a copy of it stops working too
+3. end the SSO SESSION       the IdP forgets you, so the next app does
+                             not silently sign you back in
+
+// implementing 1 only is the classic bug: the user "logs out",
+// clicks the app again, and is instantly logged back in via SSO -
+// which looks broken, and worse, was never actually a logout.</div>
+
+<h4>Why deleting the cookie is not enough</h4>
+<p>The cookie is a <i>copy</i> of a reference, not the session. Anything that captured it — an XSS
+payload, a proxy log, a shared machine's history — still holds a working credential, and the server will
+keep honouring it until it expires. <b>Logout has to change server state</b>: delete the session record,
+or add the token to a denylist keyed by its <code>jti</code> until its own <code>exp</code> passes.</p>
+<p>This is where stateless JWTs bite. A self-contained access token is valid because it verifies, not
+because a server says so, and there is no record to delete. The options are all compromises: keep access
+tokens short (minutes) and accept a revocation lag; maintain a denylist (which reintroduces the state
+JWTs were meant to remove); or check a revocation list at the gateway only. Choose deliberately —
+"logout" that leaves a valid token alive for an hour is a decision, and it should be one you made on
+purpose.</p>
+
+<h4>The distributed problem</h4>
+<p>In SSO the session is not one thing. There is the IdP's session, plus one per application, and they
+have no common lifetime. Killing the IdP session stops <i>new</i> logins; it does nothing to the six
+applications already holding their own.</p>
+<p><b>Front-channel logout</b> drives the browser through hidden iframes to each app's logout URL. It is
+simple and it is dying: third-party cookie blocking means those iframes increasingly load without the
+app's cookies, so the logout silently does nothing — and it fails silently, which is the worst property a
+security control can have.</p>
+<p><b>Back-channel logout</b> has the IdP POST a signed <b>logout token</b> to each app server-to-server.
+No browser involvement, works when the tab is closed, and delivery is observable — but every app must
+expose an endpoint, validate the token (including that it carries the <code>events</code> claim and
+<b>no</b> <code>nonce</code>), map <code>sid</code> or <code>sub</code> to its own sessions, and be
+reachable at that moment.</p>
+
+<h4>What to do instead of chasing perfect SLO</h4>
+<p>Complete single logout is rarely achieved, because it requires every participant to be correct and
+available simultaneously. The pragmatic posture: short application sessions so failures self-heal,
+back-channel logout where it matters, <b>and a separate, reliable "revoke everything" path</b> for the
+case that actually counts — a compromised account. That path is not the logout button; it is an
+administrative action that invalidates the sessions, revokes the refresh tokens, and forces
+re-authentication everywhere, and it should be tested.</p>`,
 docs:[['Logout — OIDC','https://openid.net/specs/openid-connect-rpinitiated-1_0.html'],['Back-channel logout — OIDC','https://openid.net/specs/openid-connect-backchannel-1_0.html']],
 ex:{title:'Revoke a session',
 prompt:`Write class <code>Logout</code> with <code>static boolean revoke(java.util.Set&lt;String&gt; active, String sid)</code> that removes <code>sid</code> from the set of active sessions and returns true when the session is no longer active afterward.`,

@@ -208,7 +208,50 @@ class Demo {
     return repository.load(id);
 } catch (IOException | SQLException e) {
     throw new DataAccessException("could not load user " + id, e); // cause chained!
-}</div>`,
+}</div>
+<h4>Why swallowing is worse than crashing</h4>
+<p>An empty <code>catch</code> does not remove the problem — it removes the <b>evidence</b>. The program
+continues with a broken assumption, and the failure surfaces later, somewhere unrelated, as corrupt data or
+a null that cannot be explained. A crash tells you what went wrong and where; a swallowed exception
+guarantees an expensive investigation from a symptom that points at innocent code.</p>
+<div class="codeSample" data-hl>catch (Exception e) { }                     // evidence destroyed
+catch (Exception e) { e.printStackTrace(); } // goes to stderr, unstructured,
+                                             // invisible in aggregated logs
+catch (Exception e) { log.error("saving user {}", id, e); throw ...; }
+                                             // context + the exception + a
+                                             // decision about what happens next</div>
+<p>Note the shape of that last line: the exception is passed as the <b>last argument</b>, not concatenated
+into the message, so the logging framework records the full stack. And every catch block should end in a
+decision — recover, translate and rethrow, or let it go — never in silence.</p>
+
+<h4>The rule that stops double-logging</h4>
+<p><b>Log or rethrow, not both.</b> If every layer logs and rethrows, one failure produces five stack
+traces of the same event and the log becomes unreadable during the incident when you need it most. Handle
+it where you can actually do something; elsewhere, add context and pass it on.</p>
+
+<h4>Wrapping, and why the cause matters so much</h4>
+<p>Letting <code>SQLException</code> escape a repository means every caller now depends on the storage
+technology — swap to a document store and the signatures change everywhere. Translating at the boundary
+keeps the abstraction intact.</p>
+<p>But translation without the cause is worse than no translation: you have replaced a precise error with a
+vague one and thrown away the line that would have told you what happened. Always pass the original as the
+<code>cause</code>, and know that <code>getCause()</code> is what you unwrap when a framework has wrapped
+your exception several times over.</p>
+
+<h4>Fail fast, and where</h4>
+<p><code>Objects.requireNonNull(x, "clock")</code> in a constructor turns a null that would surface three
+calls later into an immediate, named failure at the point of the mistake. Validate arguments at public
+entry points and at construction; do not re-validate deep inside where the check merely obscures the
+logic.</p>
+
+<h4>Two details that catch people</h4>
+<p><b>try-with-resources over <code>finally</code>.</b> Closing in a <code>finally</code> has a real bug in
+it: if the body throws and <code>close()</code> also throws, the close exception replaces the original and
+you lose the actual cause. try-with-resources closes in reverse order and attaches the secondary as a
+<b>suppressed</b> exception, so nothing is lost.</p>
+<p><b>Never catch and ignore <code>InterruptedException</code>.</b> Catching it clears the interrupt flag,
+which destroys a cancellation signal the rest of the system is relying on. Restore it with
+<code>Thread.currentThread().interrupt()</code> or let it propagate.</p>`,
 docs:[['Multi-catch — Oracle','https://docs.oracle.com/javase/tutorial/essential/exceptions/catch.html'],['Exception chaining — Baeldung','https://www.baeldung.com/java-chained-exceptions']],
 ex:{title:'Wrap and translate',
 prompt:`Create unchecked <code>StorageException extends RuntimeException</code> with a <code>(String message, Throwable cause)</code> constructor. Write <code>class UserStore</code> with <code>String load(String id)</code> that calls the provided <code>raw(id)</code> helper inside a try, and uses <b>multi-catch</b> for <code>java.io.IOException | InterruptedException</code> to wrap either into a <code>StorageException</code> that keeps the cause. Do not swallow anything.`,

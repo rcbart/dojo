@@ -1405,7 +1405,46 @@ int age = sc.nextInt();
 sc.nextLine();                        // eat the leftover newline (classic trap)
 
 System.out.printf("Hello %s, age %d (%.1f in dog years)%n", name, age, age / 7.0);</div>
-<p>The two traps everyone hits: (1) <code>nextInt()</code> leaves the newline in the buffer, so a following <code>nextLine()</code> returns "" — consume it; (2) on invalid input you must <code>next()</code> to discard the bad token or the validation loop spins forever. Command-line arguments arrive in <code>main</code>'s <code>String[] args</code>. Don't close a Scanner wrapping System.in — that closes the stream for the whole JVM.</p>`,
+<p>The two traps everyone hits: (1) <code>nextInt()</code> leaves the newline in the buffer, so a following <code>nextLine()</code> returns "" — consume it; (2) on invalid input you must <code>next()</code> to discard the bad token or the validation loop spins forever. Command-line arguments arrive in <code>main</code>'s <code>String[] args</code>. Don't close a Scanner wrapping System.in — that closes the stream for the whole JVM.</p>
+<h4>Why <code>Scanner</code> confuses everyone once</h4>
+<p>The trouble is that <code>Scanner</code> has two different reading models and mixes them freely.
+Token-based methods (<code>nextInt</code>, <code>next</code>, <code>nextDouble</code>) read a value and
+<b>stop</b>, leaving everything after it — including the newline you pressed — sitting in the buffer.
+Line-based <code>nextLine</code> reads to the next newline and consumes it.</p>
+<div class="codeSample" data-hl>// input typed:  "42\nAda\n"
+int n = sc.nextInt();     // reads 42, leaves "\nAda\n"
+String s = sc.nextLine(); // reads to the FIRST newline -> returns ""  !!
+                          // the name was never read
+
+sc.nextInt(); sc.nextLine();   // the fix: discard the rest of the line
+String s2 = sc.nextLine();     // now this reads "Ada"</div>
+<p>Once you see it as "tokens leave the newline behind, lines consume it", the rule writes itself:
+<b>after any token-based read, call <code>nextLine()</code> before reading a line.</b></p>
+
+<h4>Validation, and why <code>next()</code> is required</h4>
+<p><code>hasNextInt()</code> only <i>looks</i> — it does not consume. So a loop that checks and prints a
+message without discarding the offending token examines the same bad input forever. <code>sc.next()</code>
+is what throws it away.</p>
+<p>The alternative shape, which scales better to real programs, is to read the whole line and parse it
+yourself in a <code>try</code>/<code>catch</code> around
+<code>Integer.parseInt</code> — you get the raw input for the error message, and there is no buffer state
+to reason about.</p>
+
+<h4>Do not close a <code>Scanner</code> over <code>System.in</code></h4>
+<p>Closing it closes the underlying stream, and <code>System.in</code> is process-wide — so every later
+read anywhere in the JVM fails with <code>NoSuchElementException</code>. This is one of the rare cases
+where try-with-resources is the wrong instinct: <code>System.in</code> is not yours to close, and the OS
+reclaims it when the process ends.</p>
+
+<h4><code>printf</code>, and where console I/O stops</h4>
+<p><code>printf</code> is worth learning properly — <code>%s</code>, <code>%d</code>, <code>%.2f</code> for
+fixed decimals, <code>%-10s</code> to left-pad a column, and <code>%n</code> rather than <code>\n</code>
+because it emits the correct line separator for the platform.</p>
+<p>And the boundary: this is how you learn and prototype, not how programs take input in production. Real
+ones read arguments (<code>args</code>, and a library like picocli once there are more than two),
+environment variables for configuration, and files or network for data — largely because none of those
+require a human to be present. Do notice that <code>args</code> is empty, not null, when nothing was
+passed, so <code>args.length</code> is the check.</p>`,
 docs:[['Scanner — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Scanner.html'],['Formatting output — Oracle','https://docs.oracle.com/javase/tutorial/java/data/numberformat.html']],
 ex:{title:'A robust prompt',
 prompt:`Write <code>Prompt</code> with two static methods taking a <code>java.util.Scanner</code> parameter (passing it in keeps them testable): <code>static int askAge(java.util.Scanner sc)</code> — loop with <code>hasNextInt()</code>, discarding invalid tokens with <code>sc.next()</code>, then return <code>nextInt()</code>; and <code>static String welcome(java.util.Scanner sc)</code> — read a full name with <code>nextLine()</code> and return it formatted via <code>String.format("Welcome, %s!", name)</code>.`,
@@ -1457,7 +1496,52 @@ Files.exists(p);  Files.createDirectories(p.getParent());
 try (Stream&lt;Path&gt; tree = Files.walk(Path.of("src"))) {    // recursive listing
     tree.filter(f -&gt; f.toString().endsWith(".java")).forEach(System.out::println);
 }</div>
-<p><code>Files.lines</code> and <code>Files.walk</code> hold OS resources — always try-with-resources. Everything throws <code>IOException</code> (checked).</p>`,
+<p><code>Files.lines</code> and <code>Files.walk</code> hold OS resources — always try-with-resources. Everything throws <code>IOException</code> (checked).</p>
+<h4><code>Path</code> and <code>Files</code>: why the split</h4>
+<p>The old <code>File</code> class tried to be both the name of a file and the operations on it, and did
+both poorly — failures returned <code>false</code> with no reason, symbolic links were invisible, and there
+was no way to ask the filesystem anything interesting. NIO.2 separates the two: a <b>Path</b> is a name
+(it need not exist; constructing one touches no disk), and <b>Files</b> is where every operation lives.</p>
+<p>The practical gain is error reporting. <code>file.delete()</code> returning <code>false</code> tells you
+nothing; <code>Files.delete(p)</code> throws <code>NoSuchFileException</code> or
+<code>DirectoryNotEmptyException</code> or <code>AccessDeniedException</code> — the actual reason.</p>
+
+<h4>Choosing a read method by file size</h4>
+<div class="codeSample" data-hl>Files.readString(p)      loads the WHOLE file into memory. fine for
+Files.readAllLines(p)    config and small data. an OutOfMemoryError
+                         waiting for the day someone hands you a 4GB log.
+
+Files.lines(p)           lazy: one line at a time, constant memory.
+                         holds an open file handle -> try-with-resources.
+
+Files.newBufferedReader  explicit control, when you want the loop.</div>
+<p><code>Files.lines</code> and <code>Files.walk</code> return streams backed by an open handle, and a
+stream is not closed by consuming it. Leak enough and you hit the process limit on open files, which
+manifests as unrelated code failing to open anything at all.</p>
+
+<h4>Two silent correctness traps</h4>
+<p><b>Charset.</b> <code>readString</code> and <code>writeString</code> default to UTF-8, which is right.
+The older <code>FileReader</code>/<code>FileWriter</code> default to the <i>platform</i> charset, so a file
+written on one machine can be read as mojibake on another. Always be explicit, or use the
+<code>Files</code> methods that default correctly.</p>
+<p><b>Partial writes.</b> A crash mid-write leaves a truncated file, and for anything that matters — a
+config, a saved document, a data file — that is corruption. The safe pattern is to write a temporary file
+in the same directory and then move it into place atomically:</p>
+<div class="codeSample" data-hl>Path tmp = Files.createTempFile(target.getParent(), "w", ".tmp");
+Files.writeString(tmp, content);
+Files.move(tmp, target, StandardCopyOption.ATOMIC_MOVE,
+                        StandardCopyOption.REPLACE_EXISTING);
+// readers see either the OLD file or the NEW one. never half of either.
+// same directory matters: ATOMIC_MOVE is only guaranteed within one
+// filesystem.</div>
+
+<h4>Portability and paths from users</h4>
+<p>Build paths with <code>Path.of("a", "b")</code> or <code>resolve</code> rather than concatenating with
+<code>/</code>, and use <code>Path.getFileName()</code> rather than string splitting. And treat any path
+containing user input as hostile: <code>../../etc/passwd</code> is <b>path traversal</b>, the file-system
+equivalent of SQL injection. Resolve against a known base directory, call
+<code>normalize()</code>, and then verify the result still <code>startsWith</code> the base — checking for
+".." in the string is not sufficient.</p>`,
 docs:[['File I/O (NIO.2) — Oracle','https://docs.oracle.com/javase/tutorial/essential/io/fileio.html'],['Files — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Files.html']],
 ex:{title:'Line counter',
 prompt:`Write <code>FileStats</code> with <code>static long nonBlankLines(java.nio.file.Path p) throws java.io.IOException</code> using <code>Files.lines</code> in a <b>try-with-resources</b>, filtering out blank lines and counting; and <code>static void saveReport(java.nio.file.Path p, long count) throws java.io.IOException</code> that ensures the parent directory exists (<code>createDirectories</code>) and writes <code>"lines: " + count</code> with <code>writeString</code>.`,

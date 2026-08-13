@@ -124,7 +124,61 @@ String s = b.get();                   // no cast — the compiler knows
 static &lt;T&gt; T firstNonNull(T a, T b) {
     return a != null ? a : b;
 }</div>
-<p>Conventions: <code>T</code> type, <code>E</code> element, <code>K,V</code> key/value, <code>R</code> result. Multiple parameters: <code>Pair&lt;A, B&gt;</code>. Primitives can't be type arguments — use wrappers (<code>Box&lt;Integer&gt;</code>, not <code>Box&lt;int&gt;</code>).</p>`,
+<p>Conventions: <code>T</code> type, <code>E</code> element, <code>K,V</code> key/value, <code>R</code> result. Multiple parameters: <code>Pair&lt;A, B&gt;</code>. Primitives can't be type arguments — use wrappers (<code>Box&lt;Integer&gt;</code>, not <code>Box&lt;int&gt;</code>).</p>
+<h4>The problem generics solve</h4>
+<p>Before them, a collection held <code>Object</code> and every read needed a cast — which meant the
+compiler could not help you, and a wrong assumption surfaced as a
+<code>ClassCastException</code> at runtime, usually far from the mistake.</p>
+<div class="codeSample" data-hl>List raw = new ArrayList();     // pre-generics, and still legal today
+raw.add("hello");
+raw.add(42);                    // nothing stops this
+String s = (String) raw.get(1); // compiles. explodes at runtime.
+
+List&lt;String&gt; typed = new ArrayList&lt;&gt;();
+typed.add(42);                  // COMPILE ERROR. found before it ran.
+String s2 = typed.get(0);       // no cast needed</div>
+<p>That is the whole value proposition: <b>move an entire class of error from runtime to compile time</b>,
+and delete the casts while you are there. Generics exist for the compiler's benefit, which is worth
+remembering when you meet erasure below.</p>
+
+<h4>Generic class versus generic method</h4>
+<p>A generic <b>class</b> binds its parameter when you create an instance — <code>Box&lt;String&gt;</code>
+is a box of strings for its whole life. A generic <b>method</b> binds its parameter per call, which is why
+it declares its own <code>&lt;T&gt;</code> <i>before</i> the return type, and why a static method must be
+generic in its own right (a static member cannot see the class's type parameter — there is no
+instance).</p>
+<p>Inference does almost all the work: the diamond <code>&lt;&gt;</code> reads the target type, and a
+generic method infers from its arguments. You will rarely need to write
+<code>Collections.&lt;String&gt;emptyList()</code> explicitly, but knowing you can helps when inference
+picks something surprising.</p>
+
+<h4>Erasure — the thing that explains every strange limitation</h4>
+<p>Generics were added to Java without changing the JVM, so the compiler checks types and then <b>erases
+them</b>. At runtime, <code>List&lt;String&gt;</code> and <code>List&lt;Integer&gt;</code> are the same
+class. Everything odd follows from that one fact:</p>
+<div class="codeSample" data-hl>new T()                    // no. T does not exist at runtime.
+new T[10]                  // no.
+list instanceof List&lt;String&gt;   // no. only  instanceof List
+class A implements Cmp&lt;X&gt;, Cmp&lt;Y&gt;   // no. same erased interface.
+void f(List&lt;String&gt;) / void f(List&lt;Integer&gt;)  // no. same signature.
+
+// and the runtime hole this leaves:
+List&lt;String&gt; l = new ArrayList&lt;&gt;();
+((List) l).add(42);        // unchecked, compiles with a warning
+String s = l.get(0);       // ClassCastException, thrown HERE, not there
+// generics are a compile-time guarantee only. never ignore an
+// unchecked warning - it is the compiler telling you it stopped
+// being able to help.</div>
+
+<h4>Conventions and the primitive limitation</h4>
+<p><code>T</code> for type, <code>E</code> for element, <code>K</code>/<code>V</code> for key and value,
+<code>R</code> for result — meaningless to the compiler and worth following anyway, since a reader knows
+instantly which is which.</p>
+<p>Primitives cannot be type arguments, because erasure needs everything to be an <code>Object</code>. So
+<code>List&lt;Integer&gt;</code>, with autoboxing hiding the conversion — and hiding its cost, which is why
+a list of a million boxed integers uses several times the memory of an <code>int[]</code> and why
+<code>IntStream</code> exists as a separate type. (Project Valhalla is the long-running effort to remove
+this compromise.)</p>`,
 docs:[['Generics — dev.java','https://dev.java/learn/generics/'],['Generic types — Oracle','https://docs.oracle.com/javase/tutorial/java/generics/types.html']],
 ex:{title:'Build a Pair',
 prompt:`Write a generic class <code>Pair&lt;A, B&gt;</code> with private final fields <code>first</code>/<code>second</code>, a constructor, accessors <code>A first()</code> and <code>B second()</code>, and a method <code>Pair&lt;B, A&gt; swap()</code> returning a new reversed pair. Then a generic <b>static method</b> in the same class: <code>static &lt;T&gt; Pair&lt;T, T&gt; twin(T value)</code> returning a pair holding the value twice.`,

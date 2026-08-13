@@ -96,7 +96,52 @@ public class HelloServlet extends HttpServlet {
         resp.getWriter().println("&lt;h1&gt;Hello " + name + "&lt;/h1&gt;");
     }
 }</div>
-<p>One servlet instance serves all requests on multiple threads — instance fields are shared state, so keep servlets stateless. Lifecycle: <code>init()</code> once → <code>service()</code> per request (dispatches to doGet/doPost) → <code>destroy()</code>.</p>`,
+<p>One servlet instance serves all requests on multiple threads — instance fields are shared state, so keep servlets stateless. Lifecycle: <code>init()</code> once → <code>service()</code> per request (dispatches to doGet/doPost) → <code>destroy()</code>.</p>
+<h4>The contract, and why it shapes everything above it</h4>
+<p>A servlet container owns the socket, the thread pool and the HTTP parsing. Your code is a callback it
+invokes with two objects: one you read the request from, one you write the response to. Every Java web
+framework — Spring MVC included — is ultimately a servlet that dispatches to your code, which is why the
+servlet model's assumptions leak upward into frameworks that seem to have nothing to do with it.</p>
+<div class="codeSample" data-hl>request arrives
+  -> container takes a THREAD from its pool
+  -> finds the servlet by URL mapping
+  -> calls service(), which dispatches to doGet / doPost / ...
+  -> you write the response
+  -> thread RETURNS TO THE POOL
+
+// two consequences that explain most classic Java web behaviour:
+// 1. one servlet INSTANCE serves every request concurrently
+// 2. the thread is occupied for the whole request, including the time
+//    spent waiting on a database - which is why pool exhaustion, not
+//    CPU, is the usual failure mode under load</div>
+
+<h4>Statelessness is not advice, it is a requirement</h4>
+<p>Because there is one instance, an instance field is shared by every concurrent request. Storing the
+current user in a field means two simultaneous requests can see each other's data — a data-leak bug that
+never appears in local testing, appears intermittently in production, and cannot be reproduced on
+demand.</p>
+<p>Keep per-request data in local variables or request attributes. If you truly need per-request state
+reachable from deep in the call stack, that is what <code>ThreadLocal</code> is for — and it must be
+cleared in a <code>finally</code>, because the thread goes back to the pool and the next request inherits
+whatever you left behind.</p>
+
+<h4>Filters: the part you will actually use</h4>
+<p>You will rarely write a raw servlet, but you will write filters. A filter wraps the chain and sees
+every request before and after the handler, which is where authentication, logging, correlation ids,
+compression and CORS live. It is exactly the model Spring Security is built on — its "filter chain" is
+literally a chain of servlet filters — so understanding the shape here makes that framework legible.</p>
+<div class="codeSample" data-hl>public void doFilter(req, resp, chain) {
+    long start = System.nanoTime();
+    try { chain.doFilter(req, resp); }          // NOT calling this ends
+    finally { log(req, System.nanoTime()-start); }  // the request here
+}</div>
+
+<h4>The security point in the code above</h4>
+<p>That example concatenates a request parameter straight into HTML. It is reflected <b>XSS</b>: a crafted
+<code>?name=</code> injects script that runs in the victim's browser with their session. It is included
+here deliberately, because raw servlet code makes it easy and templating engines make it hard — they
+escape by default, which is a large part of why you should use one. Set the content type with a charset,
+escape all output, and prefer a template over string concatenation.</p>`,
 docs:[['Jakarta Servlet spec','https://jakarta.ee/specifications/servlet/'],['Intro to Servlets — Baeldung','https://www.baeldung.com/intro-to-servlets']],
 ex:{title:'A greeting servlet',
 prompt:`Write <code>GreetServlet extends HttpServlet</code> mapped with <code>@WebServlet("/greet")</code>. In <code>doGet</code>: read parameter <code>name</code>; if it's null or blank respond with status <code>400</code> and text <code>missing name</code>; otherwise status <code>200</code>, content type <code>text/plain</code>, body <code>Hello, &lt;name&gt;!</code>.`,
@@ -155,7 +200,44 @@ class ProductController {
             .orElse("not-found");
     }
 }</div>
-<p>The test of good MVC: the model compiles without any web imports, and the controller has no business logic to unit-test. Fat controllers are the most common web anti-pattern.</p>`,
+<p>The test of good MVC: the model compiles without any web imports, and the controller has no business logic to unit-test. Fat controllers are the most common web anti-pattern.</p>
+<h4>What the separation is actually protecting</h4>
+<p>MVC is easy to recite and easy to implement in name only. The point is not three folders; it is that
+<b>the part of your system that encodes business rules should not know it is on the web</b>.</p>
+<p>When it does not, three things become possible: you can unit-test the rules without HTTP, you can expose
+the same logic through a second entry point (a CLI, a queue consumer, a scheduled job) without touching
+it, and you can change the web layer — REST to GraphQL, one framework to another — without risking the
+rules. When the rules live in controllers, none of that is available, and the framework becomes something
+you can never leave.</p>
+<div class="codeSample" data-hl>// the test, and it is a real one you can run:
+// does the model package compile with ZERO web imports?
+//   no HttpServletRequest, no @RequestMapping, no ResponseEntity,
+//   no Jackson annotations, no HTTP status codes
+
+// if a domain class needs to know about 404, the layers have merged.</div>
+
+<h4>The anti-pattern, and why it happens</h4>
+<p>Fat controllers are not carelessness — they are the path of least resistance. The request object is
+right there, the data is right there, and one <code>if</code> is quicker than a new class. It accumulates:
+a validation here, a calculation there, a database call, and eventually the controller <i>is</i> the
+application, untestable without a web context and unreusable anywhere else.</p>
+<p>The counter-heuristic: a controller method should read as <b>parse, delegate, respond</b>. If there is
+a branch on business meaning rather than on the outcome of a call, it belongs one layer down.</p>
+
+<h4>Where the layers meet</h4>
+<p>Two boundaries are worth being deliberate about. <b>Do not let domain objects be your API contract</b> —
+serialising an entity straight to JSON means every internal rename is a breaking API change, and every
+new field is accidentally public. Map to a DTO at the edge.</p>
+<p>And <b>translate errors at the boundary</b>: the domain throws meaningful exceptions
+(<code>InsufficientFunds</code>), and the web layer decides that becomes a 409. The domain should not know
+what a status code is, and the controller should not be inventing business meaning.</p>
+
+<h4>MVC's shape in modern applications</h4>
+<p>With a JSON API and a JavaScript front end, the View has moved to the browser and the server's "view" is
+the serialised response — but the split survives intact, and the naming in Spring reflects it directly:
+<code>@Controller</code>/<code>@RestController</code> for the traffic cop, <code>@Service</code> for the
+model's behaviour, <code>@Repository</code> for its persistence. Those annotations are the pattern with
+labels attached; using them without the separation is decoration.</p>`,
 docs:[['MVC — MDN glossary','https://developer.mozilla.org/en-US/docs/Glossary/MVC'],['Spring MVC explained — spring.io','https://docs.spring.io/spring-framework/reference/web/webmvc.html']],
 ex:{title:'Untangle to MVC',
 prompt:`Build a tiny MVC triple for a todo app: (1) Model — <code>record Todo(String id, String text, boolean done)</code> and class <code>TodoService</code> with a private list, <code>void add(Todo t)</code> and <code>java.util.List&lt;Todo&gt; open()</code> returning only not-done todos (stream, no HTTP imports anywhere). (2) View — class <code>TodoView</code> with <code>String render(java.util.List&lt;Todo&gt; todos)</code> returning one line per todo formatted <code>[ ] text</code>. (3) Controller — class <code>TodoController</code> that takes both in its constructor and has <code>String openTodosPage()</code> = render(service.open()).`,
@@ -234,7 +316,55 @@ c.setPath("/");
 resp.addCookie(c);
 // or the modern header form:
 resp.setHeader("Set-Cookie",
-    "SESSION=" + id + "; HttpOnly; Secure; SameSite=Lax; Path=/");</div>`,
+    "SESSION=" + id + "; HttpOnly; Secure; SameSite=Lax; Path=/");</div>
+<h4>Why cookies exist and what that costs</h4>
+<p>HTTP has no memory: every request is independent, and the server cannot tell that two of them came from
+the same person. A cookie solves that by having the browser attach a value to every request to the
+domain — <b>automatically</b>, which is both the feature and the entire source of the attacks below.</p>
+<p>That single word explains CSRF completely. A malicious page cannot read your cookies, but it can cause
+your browser to <i>send</i> them, because the browser attaches them to any request to that domain
+regardless of which page triggered it.</p>
+
+<h4>The flags, and what each one actually stops</h4>
+<div class="codeSample" data-hl>HttpOnly   JavaScript cannot read document.cookie for this cookie.
+           -> an XSS payload cannot exfiltrate the session id.
+           -> it CAN still make authenticated requests from the page.
+              XSS is not "mitigated" by HttpOnly, only made less
+              immediately profitable.
+
+Secure     never sent over plain HTTP. stops passive network capture.
+
+SameSite   Lax    not sent on cross-site POSTs / iframes / XHR
+                  (sent on top-level GET navigation - so a GET that
+                   changes state is still exposed. never do that.)
+           Strict not sent on ANY cross-site request, including a normal
+                  link from another site - which logs users out visibly
+           None   sent everywhere; REQUIRES Secure. only for deliberate
+                  cross-site use, and third-party cookie blocking is
+                  removing even that
+
+__Host-    prefix: browser enforces Secure, Path=/, and no Domain.
+           free defence against a subdomain overwriting your cookie</div>
+
+<h4>The three attacks, stated as one sentence each</h4>
+<p><b>XSS</b> — your page executes attacker-supplied script, so the attacker runs as the user. The defence
+is output encoding, contextual and everywhere, plus a Content-Security-Policy as the second line. Note
+that escaping is context-dependent: what is safe inside HTML text is not safe inside an attribute, a URL
+or a <code>&lt;script&gt;</code> block.</p>
+<p><b>CSRF</b> — the attacker's page causes the browser to send an authenticated request the user did not
+intend. The defence is a token the attacker cannot read (synchroniser or double-submit) and
+<code>SameSite</code> cookies. APIs authenticated by an <code>Authorization</code> header are not
+vulnerable, because that header is not attached automatically — which is why disabling CSRF protection is
+correct for a stateless API and wrong the moment anything authenticates by cookie.</p>
+<p><b>Session fixation</b> — the attacker plants a session id, waits for the victim to authenticate into
+it, and then uses it. The defence is one line: <b>issue a new session id at login</b>, and again on any
+privilege change.</p>
+
+<h4>What the flags cannot do</h4>
+<p>None of this ends a session. Logging out has to change server state — delete the session record or
+denylist the token — because deleting the cookie leaves any captured copy working until it expires.
+Rotate on privilege change, cap absolute session lifetime independently of activity, and make sure there
+is a tested path to revoke every session for a compromised account.</p>`,
 docs:[['HTTP cookies — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies'],['OWASP Session Management Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html'],['OWASP XSS Prevention','https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html']],
 ex:{title:'Harden the cookie',
 prompt:`Write class <code>SessionIssuer</code> with <code>static String issue(String sessionId)</code> returning a complete <code>Set-Cookie</code> header <b>value</b> for cookie <code>SESSION</code> that is: HttpOnly, Secure, SameSite=Lax, Path=/ . Also add <code>static boolean looksSafe(String headerValue)</code> that returns true only if the value contains all four protections (use contains checks).`,

@@ -12,7 +12,44 @@ public class DojoApplication {
         SpringApplication.run(DojoApplication.class, args);
     }
 }</div>
-<p>Start any project at <a href="https://start.spring.io" target="_blank" rel="noopener">start.spring.io</a>. Component scanning finds your annotated classes in the same package and below — the #1 beginner bug is putting classes outside that package tree.</p>`,
+<p>Start any project at <a href="https://start.spring.io" target="_blank" rel="noopener">start.spring.io</a>. Component scanning finds your annotated classes in the same package and below — the #1 beginner bug is putting classes outside that package tree.</p>
+<h4>The problem Boot solved</h4>
+<p>Spring before Boot was powerful and miserable to start. A web application meant hand-picking a dozen
+mutually-compatible library versions, writing XML or Java configuration for the DispatcherServlet, the
+view resolver, the data source and the transaction manager, then packaging a WAR and deploying it into a
+Tomcat someone had installed and configured separately. Days of work before a single line of business
+logic.</p>
+<p>Boot's insight was that <b>almost every application makes the same choices</b>, so those choices should
+be defaults rather than decisions. Nothing is taken away — you can override any of it — but you only pay
+for the parts you actually want to change.</p>
+
+<h4>How auto-configuration really works</h4>
+<p>It is worth demystifying, because it feels like magic until you see the mechanism, and then it is
+obvious. Auto-configuration classes are ordinary <code>@Configuration</code> classes listed in a file
+Boot reads at startup. Each one is guarded by conditions:</p>
+<div class="codeSample" data-hl>@ConditionalOnClass(DataSource.class)        // is this on the classpath?
+@ConditionalOnMissingBean(DataSource.class)  // did the USER already define one?
+@ConditionalOnProperty("spring.datasource.url")
+
+// that second condition is the important one: every auto-configuration
+// backs off the moment you declare your own bean. "convention over
+// configuration" is implemented as "yours wins, always".</div>
+<p>Which means the debugging tool you need is <code>--debug</code> at startup: Boot prints a
+<b>condition evaluation report</b> listing every auto-configuration that matched, every one that did not,
+and precisely which condition failed. Nearly every "why isn't Boot configuring this?" question is
+answered there in seconds.</p>
+
+<h4>The failure modes worth knowing early</h4>
+<p><b>Package placement.</b> <code>@ComponentScan</code> starts at the package of your
+<code>@SpringBootApplication</code> class and goes downward only. A class in a sibling package is
+invisible, and the symptom is a confusing "no qualifying bean" error rather than anything pointing at
+packages. Keep the main class in the root package of your project.</p>
+<p><b>Fighting the defaults.</b> When Boot configures something you did not want, the fix is usually a
+property or a bean of your own — not <code>exclude</code> on the auto-configuration, which tends to
+remove more than you intended and breaks silently on upgrade.</p>
+<p><b>Starter version drift.</b> The starters work because the parent POM or BOM pins a tested set of
+versions. Overriding one library's version individually is how you reintroduce exactly the dependency
+hell starters exist to prevent.</p>`,
 docs:[['Spring Boot reference','https://docs.spring.io/spring-boot/index.html'],['Spring Initializr','https://start.spring.io'],['Building an Application with Spring Boot — guide','https://spring.io/guides/gs/spring-boot']],
 ex:{title:'Boot entry point',
 prompt:`Write the main class <code>DojoApplication</code> for a Boot app in package <code>com.example.dojo</code>: package declaration, the right annotation, and a main method that launches the application context.`,
@@ -138,7 +175,51 @@ public class TokenService {
 class TimeConfig {
     @Bean Clock clock() { return Clock.systemUTC(); }   // manual bean
 }</div>
-<p>Stereotypes: <code>@Component</code> (generic), <code>@Service</code>, <code>@Repository</code>, <code>@Controller</code>/<code>@RestController</code> — all become beans via scanning. <b>Prefer constructor injection with final fields</b> over field <code>@Autowired</code>: immutable, explicit, unit-testable with plain <code>new</code>.</p>`,
+<p>Stereotypes: <code>@Component</code> (generic), <code>@Service</code>, <code>@Repository</code>, <code>@Controller</code>/<code>@RestController</code> — all become beans via scanning. <b>Prefer constructor injection with final fields</b> over field <code>@Autowired</code>: immutable, explicit, unit-testable with plain <code>new</code>.</p>
+<h4>Why inversion of control is worth the indirection</h4>
+<p>The argument is easy to state and easy to miss. When a class constructs its own dependencies, it has
+also decided which implementation to use, when it is created, and how long it lives — permanently, in
+code, at every call site. Swapping the implementation means editing every class that names it, and
+testing means somehow preventing a real database connection from being opened inside a constructor.</p>
+<p>Injection moves those three decisions out of the class and into one place. The class states
+<i>what it needs</i>; something else decides <i>what it gets</i>. That is the whole idea, and everything
+else — scanning, annotations, contexts — is machinery serving it.</p>
+
+<h4>Constructor injection, and why it is not just a style preference</h4>
+<div class="codeSample" data-hl>// field injection - what it costs you
+@Service class OrderService {
+    @Autowired private PaymentClient payments;   // not final: mutable
+                                                 // invisible: the API hides it
+}
+new OrderService();       // compiles. object is BROKEN - payments is null.
+
+// constructor injection
+@Service class OrderService {
+    private final PaymentClient payments;        // final: cannot change
+    OrderService(PaymentClient payments) { this.payments = payments; }
+}
+new OrderService(fake);   // the ONLY way to build it is correctly.</div>
+<p>Three concrete consequences. The object is <b>never in an invalid state</b> — there is no window
+between construction and injection. The dependencies are <b>visible in the signature</b>, so a
+constructor with nine parameters tells you honestly that the class does too much, where nine
+<code>@Autowired</code> fields hide it. And tests use plain <code>new</code>, with no Spring context and
+no reflection.</p>
+
+<h4>Scopes and the trap inside them</h4>
+<p>Beans are <b>singletons</b> by default — one instance shared by every caller — which means a singleton
+must be stateless or thread-safe. A mutable field on a <code>@Service</code> is shared across every
+concurrent request, and the resulting bug is intermittent, load-dependent and unpleasant to
+reproduce.</p>
+<p>The subtler version is injecting a shorter-lived bean into a longer-lived one: a request-scoped bean
+injected into a singleton is resolved once, at startup, and then stays. Spring offers scoped proxies for
+this, but the better instinct is usually to pass the short-lived thing as a method parameter instead.</p>
+
+<h4>Circular dependencies are a design signal</h4>
+<p>If A needs B and B needs A, constructor injection cannot build either, and Boot fails at startup — which
+is the correct behaviour, not an obstacle. The cycle is telling you the responsibility split is wrong.
+The fix is to extract the shared concern into a third component, or to invert one direction with an event.
+Reaching for <code>@Lazy</code> or setter injection makes the failure go away and leaves the design
+problem in place.</p>`,
 docs:[['Spring IoC container — reference','https://docs.spring.io/spring-framework/reference/core/beans.html'],['Constructor injection — Baeldung','https://www.baeldung.com/constructor-injection-in-spring']],
 ex:{title:'Wire it the right way',
 prompt:`Create <code>@Service class AuditService</code> with method <code>void log(String event)</code> (print it), and <code>@Service class TransferService</code> that depends on AuditService via <b>constructor injection into a final field</b> (no field @Autowired). TransferService has <code>void transfer(String from, String to, long cents)</code> that calls <code>audit.log(...)</code> with a message containing the three arguments.`,
@@ -264,7 +345,46 @@ class AuditAspect {
         return pjp.proceed();
     }
 }</div>
-<p>Pattern 1 needs no code — Spring reads meta-annotations recursively. Pattern 2 is the full framework move: exactly how <code>@Transactional</code>, <code>@Cacheable</code> and <code>@PreAuthorize</code> are built. In your domain this is how you'd add <code>@RequiresMfa</code> or <code>@RateLimited</code> to endpoints declaratively.</p>`,
+<p>Pattern 1 needs no code — Spring reads meta-annotations recursively. Pattern 2 is the full framework move: exactly how <code>@Transactional</code>, <code>@Cacheable</code> and <code>@PreAuthorize</code> are built. In your domain this is how you'd add <code>@RequiresMfa</code> or <code>@RateLimited</code> to endpoints declaratively.</p>
+<h4>Why this is the technique that separates users from builders</h4>
+<p>Everything in Spring that feels magical — <code>@Transactional</code>, <code>@Cacheable</code>,
+<code>@PreAuthorize</code>, <code>@Retryable</code> — is built from the two patterns above. There is no
+privileged framework mechanism they use that is unavailable to you. Recognising that changes how you
+approach cross-cutting requirements: instead of repeating the same six lines in forty methods, you
+declare the intent once and implement it once.</p>
+
+<h4>When each pattern is the right one</h4>
+<p><b>Composed annotations</b> are pure naming: you are giving a recurring combination a domain name.
+The win is that the meaning lives in one place — change what <code>@TransactionalService</code> implies
+and every class using it follows. Spring resolves meta-annotations recursively, so there is nothing to
+implement and nothing to go wrong.</p>
+<p><b>Behaviour annotations</b> are for genuine cross-cutting concerns: auditing, rate limiting, metrics,
+authorization checks. The test for whether one is justified: the concern must be <i>orthogonal</i> to the
+business logic. Auditing is — it applies to payments, users and reports identically. If the behaviour
+needs to know what the method actually does, an aspect is the wrong tool and you are hiding logic where
+nobody will find it.</p>
+
+<h4>The proxy limits that will bite you</h4>
+<p>Spring AOP works by wrapping your bean in a proxy. Calls that never leave the object never pass
+through it:</p>
+<div class="codeSample" data-hl>@Service class ReportService {
+    @Audited("run") public void run() { helper(); }
+    @Audited("help") public void helper() { }     // NEVER fires when called
+}                                                 // from run() - the call is
+                                                  // this.helper(), not proxy.helper()
+
+// same reason @Transactional does not apply to self-invocation.
+// same reason it does nothing on private, static or final methods.
+// the fix is structural: move the annotated method to another bean.</div>
+<p>This is the single most common source of "my annotation does nothing" — and because it fails silently,
+it is worth <b>testing that the aspect actually fires</b> rather than assuming it does.</p>
+
+<h4>Doing it responsibly</h4>
+<p>Aspects are invisible at the call site, which is exactly their value and exactly their risk. Keep the
+pointcut narrow — <code>@annotation(...)</code> rather than a broad package expression, so the behaviour
+applies only where someone opted in. Make sure exceptions from the aspect cannot silently swallow the
+business call. And document the annotation itself, because a reader who finds <code>@RequiresMfa</code>
+on a method has no other way to learn what it does.</p>`,
 docs:[['Meta-annotations & composed annotations — Spring','https://docs.spring.io/spring-framework/reference/core/beans/classpath-scanning.html#beans-meta-annotations'],['@annotation pointcut — Spring AOP','https://docs.spring.io/spring-framework/reference/core/aop/ataspectj/pointcuts.html']],
 ex:{title:'Build @Audited end to end',
 prompt:`(1) Declare <code>@interface Audited</code>: <code>@Target(ElementType.METHOD)</code>, <code>@Retention(RetentionPolicy.RUNTIME)</code>, element <code>String value()</code>. (2) Declare a composed <code>@interface TransactionalService</code>: TYPE target, RUNTIME retention, meta-annotated with <code>@Service</code> and <code>@Transactional</code>. (3) Write <code>@Aspect @Component class AuditAspect</code> with <code>@Around("@annotation(audited)")</code> advice <code>Object audit(ProceedingJoinPoint pjp, Audited audited)</code> that prints <code>"[AUDIT] " + audited.value()</code> then proceeds.`,
@@ -454,7 +574,50 @@ public class AccountService {
         a.setBalanceCents(a.getBalanceCents() + cents);   // dirty-checked & flushed
     }
 }</div>
-<p>Method names become queries: <code>findBy</code> + property + operators (<code>GreaterThan</code>, <code>Containing</code>, <code>OrderBy…Desc</code>). Business operations that touch multiple rows belong in <code>@Transactional</code> service methods.</p>`,
+<p>Method names become queries: <code>findBy</code> + property + operators (<code>GreaterThan</code>, <code>Containing</code>, <code>OrderBy…Desc</code>). Business operations that touch multiple rows belong in <code>@Transactional</code> service methods.</p>
+<h4>The abstraction, and what it is hiding</h4>
+<p>Spring Data generates the implementation of that interface at runtime by parsing the method name. It
+is a genuine productivity win and it is also the source of most JPA pain, because <b>the SQL still
+exists — you just cannot see it</b>. The single most valuable thing you can do when learning this is turn
+the SQL on:</p>
+<div class="codeSample" data-hl>spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+logging.level.org.hibernate.orm.jdbc.bind=TRACE   # see the parameter values too
+
+# better still in tests: assert the QUERY COUNT.
+# datasource-proxy or Hypersistence Utils will fail a test that suddenly
+# issues 47 queries where it used to issue 2.</div>
+
+<h4>N+1: the bug this abstraction manufactures</h4>
+<p>It is worth understanding once, because it accounts for a large share of slow Spring applications.
+Load 100 accounts, then touch a lazy association on each one, and you have issued 1 query for the list
+plus 100 more — one per account — without writing anything that looks like a loop over the database.</p>
+<p>The fixes are all about telling JPA your intent up front: a <code>JOIN FETCH</code> in an explicit
+<code>@Query</code>, an <code>@EntityGraph</code> on the repository method, or batch fetching. What does
+<i>not</i> work is switching associations to <code>EAGER</code> — that trades one problem for a worse one,
+where every load of the entity drags its whole object graph along whether you needed it or not.</p>
+
+<h4>The persistence context, briefly</h4>
+<p>Inside a transaction, JPA keeps a first-level cache of the entities it has loaded and tracks changes to
+them. That is why <code>credit()</code> above works without a <code>save()</code>: the entity is
+<b>managed</b>, so the modification is detected at flush time and written automatically. It is elegant
+and it surprises people in both directions — modifications you did not intend to persist get persisted,
+and modifications to a <b>detached</b> entity (loaded outside the transaction) silently do not.</p>
+<p>Related: <code>LazyInitializationException</code> means you touched an association after the
+transaction ended. Loading it eagerly is one answer; the better one is usually to map to a DTO inside the
+transaction and return that, which also stops entities leaking into your API contract.</p>
+
+<h4>Where <code>@Transactional</code> belongs, and its sharp edges</h4>
+<p>On the <b>service</b> method that represents one business operation, so the whole operation commits or
+rolls back together — not on the repository, where each call is its own transaction and a multi-step
+operation can half-succeed.</p>
+<p>Two behaviours that catch people out. It rolls back on unchecked exceptions only: a checked exception
+commits unless you say <code>rollbackFor</code>. And it is proxy-based, so calling one
+<code>@Transactional</code> method from another method in the same class does nothing at all.</p>
+<p>Finally, derived query names have a ceiling. When the method name starts encoding three conditions and
+an ordering, it has stopped being readable — write the JPQL in <code>@Query</code>, or drop to a native
+query. Spring Data is at its best for the simple 80% and should be abandoned without guilt for the
+rest.</p>`,
 docs:[['Accessing Data with JPA — guide','https://spring.io/guides/gs/accessing-data-jpa'],['Spring Data JPA — query methods','https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html']],
 ex:{title:'Derive the queries',
 prompt:`Write interface <code>TradeRepository extends JpaRepository&lt;Trade, Long&gt;</code> with three <b>derived query methods</b> (signatures only, no bodies — it's an interface): find all trades by <code>symbol</code>, find trades with <code>amountCents</code> greater than a value, and find trades by symbol ordered by <code>executedAt</code> descending. Assume entity <code>Trade</code> has those properties. Then a <code>@Service TradeService</code> with constructor-injected repository and a <code>@Transactional</code> method <code>void reprice(Long id, long newAmount)</code> that loads via <code>findById(...).orElseThrow()</code> and sets the amount.`,
@@ -610,7 +773,46 @@ class ApiErrors {
         return ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
     }
 }</div>
-<p>One advice class gives every controller the same error shape — API-platform gold. Common annotations: <code>@NotNull</code>, <code>@NotBlank</code>, <code>@Size</code>, <code>@Min/@Max</code>, <code>@Email</code>, <code>@Pattern</code>.</p>`,
+<p>One advice class gives every controller the same error shape — API-platform gold. Common annotations: <code>@NotNull</code>, <code>@NotBlank</code>, <code>@Size</code>, <code>@Min/@Max</code>, <code>@Email</code>, <code>@Pattern</code>.</p>
+<h4>Validate at the boundary, and only at the boundary</h4>
+<p>The reason validation belongs on the request object rather than scattered through the service is that
+the boundary is <b>the only place where you know the data is untrusted</b>. Past it, everything should be
+able to assume the object is well-formed. Checks repeated deeper down are either redundant or evidence
+that the boundary check is not trusted — and both are worth fixing.</p>
+<p>Which also means being precise about what this is. Bean Validation checks <b>shape</b>: present,
+well-formed, within range. It cannot check <b>state</b> — that the email is not already registered, that
+the account has funds, that the user may perform this action. Those are business rules, they need the
+database or the security context, and they belong in the service. Conflating the two produces annotations
+that quietly do database lookups, which is a bad place for them.</p>
+
+<h4>Getting the status code right</h4>
+<div class="codeSample" data-hl>malformed JSON, wrong type        -> 400 Bad Request
+well-formed but fails a rule      -> 422 Unprocessable Content
+not authenticated                 -> 401     (WWW-Authenticate header required)
+authenticated, not permitted      -> 403
+conflicts with current state      -> 409     (duplicate email, version clash)
+
+// the 400/422 distinction: 400 means "I could not parse this",
+// 422 means "I understood you perfectly and the answer is no".
+// clients can act on the second and not the first.</div>
+
+<h4>Why one advice class is worth the effort</h4>
+<p>Without it, error shapes are decided ad hoc by whoever wrote each endpoint, and clients end up parsing
+three formats from the same API. A single <code>@RestControllerAdvice</code> makes the error contract a
+deliberate part of the design rather than an accident — and RFC 9457's <code>ProblemDetail</code> gives
+you a standard shape (<code>type</code>, <code>title</code>, <code>status</code>, <code>detail</code>,
+<code>instance</code>) so clients need no bespoke parsing at all.</p>
+<p>Two rules for what goes in it. <b>Never leak internals</b> — stack traces, SQL fragments and class
+names are reconnaissance; log them with a correlation id and return the id, not the detail. And
+<b>always include something the client can act on</b>: which field, what was wrong with it, and where to
+look. An error that says only "Validation failed" has told the caller nothing.</p>
+
+<h4>The extension that pays for itself</h4>
+<p>Field-level messages are fine until you need a rule spanning two fields — a date range where the end
+must follow the start, a password confirmation. Those need a class-level constraint with a custom
+<code>ConstraintValidator</code>, which is roughly twenty lines and keeps the rule declarative rather than
+buried in a controller. Adding a correlation id to every <code>ProblemDetail</code> is the other
+high-value addition: it turns "the API returned an error" into a single log query.</p>`,
 docs:[['Spring validation','https://docs.spring.io/spring-framework/reference/core/validation/beanvalidation.html'],['ProblemDetail in Spring','https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-ann-rest-exceptions.html']],
 ex:{title:'Validate and translate',
 prompt:`(1) Write <code>record OpenAccount(@NotBlank String owner, @Min(0) long initialCents)</code>. (2) Write <code>@RestControllerAdvice class ApiErrors</code> with an <code>@ExceptionHandler(MethodArgumentNotValidException.class)</code> method returning a <code>ProblemDetail</code> with status <code>UNPROCESSABLE_ENTITY</code> and title <code>"Validation failed"</code>, and a second handler mapping <code>NoSuchElementException</code> to a 404 ProblemDetail.`,
@@ -669,7 +871,49 @@ class SecurityConfig {
         return http.build();
     }
 }</div>
-<p>As a JWT <b>resource server</b>, Spring validates the token signature against your IdP's JWKS endpoint (<code>spring.security.oauth2.resourceserver.jwt.issuer-uri=...</code>) — exactly the CIAM architecture you run: auth server issues tokens, every API validates them statelessly. Method-level rules: <code>@PreAuthorize("hasRole('ADMIN')")</code>. Order matters in the matcher list: first match wins.</p>`,
+<p>As a JWT <b>resource server</b>, Spring validates the token signature against your IdP's JWKS endpoint (<code>spring.security.oauth2.resourceserver.jwt.issuer-uri=...</code>) — exactly the CIAM architecture you run: auth server issues tokens, every API validates them statelessly. Method-level rules: <code>@PreAuthorize("hasRole('ADMIN')")</code>. Order matters in the matcher list: first match wins.</p>
+<h4>The mental model: a chain, not a check</h4>
+<p>Spring Security is not a library you call — it is a chain of servlet filters that runs
+<b>before</b> your controller and can end the request without it ever being reached. Almost every
+confusing behaviour makes sense once you hold that picture: a 401 with no log line from your code, CORS
+failing before your handler, a <code>@PreAuthorize</code> that never fires because the filter chain
+rejected the request first.</p>
+<p>Two distinct layers matter, and they are often confused. The <b>filter chain</b> makes coarse,
+URL-based decisions and establishes who the caller is. <b>Method security</b>
+(<code>@PreAuthorize</code>) makes fine-grained decisions with the domain objects in hand. Use the chain
+for "this whole area needs authentication" and method security for "this action needs this permission on
+this object" — trying to express the second as URL patterns produces rules that drift out of sync with
+the code the moment someone adds an endpoint.</p>
+
+<h4>What "resource server" actually means here</h4>
+<p>Setting <code>issuer-uri</code> does more than it appears. On startup Spring fetches
+<code>/.well-known/openid-configuration</code> from that issuer, learns the <code>jwks_uri</code>, and
+from then on validates incoming tokens against the published keys — caching them, and re-fetching when it
+sees an unknown <code>kid</code>. That is what makes key rotation a non-event.</p>
+<div class="codeSample" data-hl>// what Spring validates by default: signature, iss, exp, nbf
+// what it does NOT validate unless you ask: AUDIENCE
+
+@Bean JwtDecoder jwtDecoder(OAuth2ResourceServerProperties p) {
+    NimbusJwtDecoder d = JwtDecoders.fromIssuerLocation(p.getJwt().getIssuerUri());
+    d.setJwtValidator(new DelegatingOAuth2TokenValidator&lt;&gt;(
+        JwtValidators.createDefaultWithIssuer(p.getJwt().getIssuerUri()),
+        new JwtClaimValidator&lt;List&lt;String&gt;&gt;("aud", a -&gt; a != null &amp;&amp; a.contains("orders-api"))));
+    return d;                     // without this, a token minted for ANOTHER
+}                                 // service by the same issuer is accepted here</div>
+<p>That gap is the single most common misconfiguration in Spring resource servers, and it is exactly the
+confused-deputy problem from the identity course showing up in a framework default.</p>
+
+<h4>The other two defaults worth understanding</h4>
+<p><b>Disabling CSRF is only correct if you are actually stateless.</b> The reason CSRF protection exists
+is that browsers attach cookies automatically; a token in an <code>Authorization</code> header is not sent
+automatically, so there is nothing to forge. The moment any part of the app authenticates by cookie —
+a server-rendered admin page, a session for the BFF — CSRF protection must come back for those paths.</p>
+<p><b>Scopes are not roles.</b> Spring maps <code>scope</code> claims to authorities prefixed
+<code>SCOPE_</code> and roles to <code>ROLE_</code>, so <code>hasRole('ADMIN')</code> silently fails
+against a token carrying scopes. Decide which claim carries authorization for your system and configure a
+<code>JwtAuthenticationConverter</code> to match — do not leave it to coincidence.</p>
+<p>And <b>order matters</b>: matchers are evaluated top down, first match wins, so a broad
+<code>anyRequest()</code> placed early makes everything below it dead configuration.</p>`,
 docs:[['Spring Security reference','https://docs.spring.io/spring-security/reference/index.html'],['OAuth2 Resource Server / JWT','https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/jwt.html']],
 ex:{title:'Lock down the API',
 prompt:`Write <code>SecurityConfig</code> (@Configuration + @EnableWebSecurity) with a <code>SecurityFilterChain</code> bean: disable CSRF, permit <code>/actuator/health</code> to all, require role <code>ADMIN</code> for <code>/api/admin/**</code>, authenticate <code>anyRequest</code>, enable JWT resource-server support, and set session policy <code>STATELESS</code>.`,
@@ -737,7 +981,48 @@ class LoginService {
 
     void onLogin() { logins.increment(); }
 }</div>
-<p>The production checklist: <code>/actuator/health</code> wired to probes (last stream), <code>/actuator/prometheus</code> scraped for dashboards/alerts, JSON logs to stdout, <b>graceful shutdown</b> so in-flight requests finish, and custom Micrometer metrics for the numbers your dashboards actually need (login success rate, token issuance latency — your CIAM SLOs live here). Info endpoint + build info (<code>spring-boot-maven-plugin build-info</code> goal) tells you exactly which commit is running.</p>`,
+<p>The production checklist: <code>/actuator/health</code> wired to probes (last stream), <code>/actuator/prometheus</code> scraped for dashboards/alerts, JSON logs to stdout, <b>graceful shutdown</b> so in-flight requests finish, and custom Micrometer metrics for the numbers your dashboards actually need (login success rate, token issuance latency — your CIAM SLOs live here). Info endpoint + build info (<code>spring-boot-maven-plugin build-info</code> goal) tells you exactly which commit is running.</p>
+<h4>The distinction that makes health checks useful</h4>
+<p>Actuator's most valuable feature is the one people configure last. A single <code>/health</code>
+endpoint answers the wrong question, because orchestrators ask two different ones:</p>
+<div class="codeSample" data-hl>/actuator/health/liveness    "is this process broken beyond recovery?"
+   -> if it fails, KILL AND RESTART the container
+   -> must NOT check the database. a DB outage does not become better
+      by restarting every pod - it becomes a restart storm.
+
+/actuator/health/readiness   "can this instance serve traffic right now?"
+   -> if it fails, REMOVE FROM THE LOAD BALANCER, do not restart
+   -> here you DO check dependencies, because serving without them fails</div>
+<p>Wiring both to the same check is a real outage pattern: a brief database blip fails liveness, every
+instance restarts simultaneously, the cold caches and reconnect storm make the blip permanent.</p>
+
+<h4>Metrics that are worth having</h4>
+<p>The default Micrometer metrics tell you about the JVM and the HTTP layer. What they cannot tell you is
+whether the <i>product</i> is working — and that is the gap custom metrics fill. The discipline is to
+instrument <b>outcomes rather than actions</b>: not "logins attempted" but logins tagged by result, so
+one query gives you the success rate.</p>
+<p>Two rules that matter more than they sound. <b>Never tag with unbounded values</b> — a user id or a raw
+URL path as a tag creates a new time series per value and will take down your metrics backend before it
+tells you anything. And <b>prefer timers to counters</b> for anything with a duration: a timer gives you
+count, total and distribution together, and percentiles are what SLOs are written against. An average
+latency hides exactly the tail you are being paged about.</p>
+
+<h4>Shutting down without dropping requests</h4>
+<p><code>server.shutdown=graceful</code> stops accepting new connections and lets in-flight requests
+finish within the timeout. It is one line and it removes a whole class of deploy-time errors — but only
+if the timeout exceeds your slowest request, and only if the platform's termination grace period exceeds
+the timeout. Get that ordering wrong and the platform kills the process mid-drain anyway.</p>
+
+<h4>Configuration and exposure</h4>
+<p>Profiles let one artifact behave correctly in every environment, which is what makes "build once,
+promote the same binary" possible. Keep environment differences in properties, not in code branches, and
+keep secrets out of both — they come from the environment or a secret manager at runtime.</p>
+<p>On exposure: Actuator endpoints are operational surface area. <code>health</code> and
+<code>info</code> are fine to expose; <code>env</code>, <code>heapdump</code>, <code>threaddump</code> and
+<code>loggers</code> are not, since they leak configuration or allow live changes. Put management on a
+separate port that only your cluster can reach, and let <code>show-details=when-authorized</code> do what
+it says. Adding build info via the <code>build-info</code> goal is the small touch that turns "which
+commit is running?" into a single HTTP call during an incident.</p>`,
 docs:[['Actuator endpoints','https://docs.spring.io/spring-boot/reference/actuator/endpoints.html'],['Micrometer','https://micrometer.io/docs'],['Graceful shutdown','https://docs.spring.io/spring-boot/reference/web/graceful-shutdown.html']],
 ex:{title:'Instrument a service',
 prompt:`Write <code>@Service class TokenService</code> that takes a <code>MeterRegistry</code> by constructor injection and creates two counters in the constructor: <code>issued</code> from <code>registry.counter("ciam.tokens.issued")</code> and <code>rejected</code> from <code>registry.counter("ciam.tokens.rejected")</code>. Method <code>String issue(String userId)</code>: if userId is null or blank, increment rejected and throw <code>IllegalArgumentException</code>; otherwise increment issued and return <code>"tok-" + userId</code>.`,

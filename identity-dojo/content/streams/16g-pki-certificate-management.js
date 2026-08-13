@@ -157,23 +157,46 @@ solution:`public class TlsValidate {
 <li><b>ACME</b> — the protocol (Let's Encrypt) that <b>automates</b> issuance and renewal: prove domain control, get a cert, auto-renew. This is why free, auto-rotating TLS is now the norm.</li>
 </ul>
 <div class="codeSample">A cert is usable only if:  now &lt; notAfter   AND   not revoked (per CRL/OCSP)
- Short-lived certs + automation (ACME) &gt; long-lived certs + manual revocation.</div>`,
-docs:[['RFC 6960 — OCSP','https://www.rfc-editor.org/rfc/rfc6960'],['RFC 8555 — ACME','https://www.rfc-editor.org/rfc/rfc8555'],['Lets Encrypt','https://letsencrypt.org/how-it-works/']],
-ex:{title:'Is this certificate usable?',
-prompt:`Write <code>Revocation</code> with <code>static boolean usable(long notAfterEpoch, long now, boolean revoked)</code> returning true only if the certificate is not expired (<code>now &lt; notAfterEpoch</code>) <b>and</b> not <code>revoked</code>.`,
-starter:`public class Revocation {
-    static boolean usable(long notAfterEpoch, long now, boolean revoked) {
-        return false;
-    }
+ Short-lived certs + automation (ACME) &gt; long-lived certs + manual revocation.</div>
+
+<h4>Update: OCSP is being retired</h4>
+<p>The two-mechanism picture above is how revocation was taught for twenty years, and it is now out of
+date in one important respect: <b>OCSP is going away</b>. The reason is privacy — an OCSP responder
+learns which site a given IP address is visiting, in real time, every time. In August 2023 the
+CA/Browser Forum passed a ballot making OCSP <b>optional</b> for publicly trusted CAs (effective March
+2024), and Let's Encrypt — the largest CA in the world by certificate count — shut its OCSP responders
+down for good on <b>6 August 2025</b>, after adding CRL support in 2022 and removing OCSP URLs from
+issued certificates in May 2025.</p>
+<p>What replaced it is not classic CRL downloading either, which never scaled to the browser. Browsers
+now aggregate revocation centrally and push a compressed summary to clients — <b>CRLite</b> in Firefox,
+<b>CRLSets</b> in Chrome — so the client checks locally with no network call and no privacy leak. The
+CA publishes CRLs; the browser vendor does the aggregation.</p>
+<div class="codeSample" data-hl>then                          now
+  client -> OCSP responder      CA -> publishes CRL
+  ("is serial 0x4f2 ok?")       browser vendor -> aggregates + compresses
+  privacy leak, latency,        client -> checks a LOCAL structure
+  soft-fail on timeout          no call, no leak, no soft-fail
+
+// and underneath both: SHORT-LIVED CERTIFICATES.
+// a 6-day certificate barely needs revocation - expiry does the job.
+// this is why the CA/B Forum is ratcheting maximum lifetimes down.</div>
+<p>The practical lesson has not changed, it has hardened: <b>revocation has never worked reliably</b>
+(soft-fail means an attacker who can block the check simply wins), so the industry solved it by making
+certificates short enough that revocation matters less. Automate issuance with ACME, keep lifetimes
+short, and treat revocation as a backstop rather than a control you can depend on.`,
+docs:[['Let&#39;s Encrypt - OCSP service end of life (Aug 2025)','https://letsencrypt.org/2025/08/06/ocsp-service-has-reached-end-of-life'],['Mozilla CRLite','https://blog.mozilla.org/security/2020/01/09/crlite-part-1-all-web-pki-revocations-compressed/'],['RFC 6960 — OCSP','https://www.rfc-editor.org/rfc/rfc6960'],['RFC 8555 — ACME','https://www.rfc-editor.org/rfc/rfc8555'],['Lets Encrypt','https://letsencrypt.org/how-it-works/']],
+ex:{title:'Is this certificate usable?',lang:'js',
+run:{call:'usable',cases:[{name:'valid and not revoked',args:[2000,1000,false],expect:true},{name:'expired',args:[900,1000,false],expect:false},{name:'revoked',args:[2000,1000,true],expect:false},{name:'expiring exactly now is unusable',args:[1000,1000,false],expect:false},{name:'expired and revoked',args:[900,1000,true],expect:false}]},
+prompt:`Write <code>function usable(notAfterEpoch, now, revoked)</code> returning <code>true</code> only when the certificate has not expired (<code>notAfterEpoch &gt; now</code>) <b>and</b> has not been revoked.`,
+starter:`function usable(notAfterEpoch, now, revoked) {
+  return false;
 }`,
-tests:[{d:'not expired',re:'now\\s*<\\s*notAfterEpoch|notAfterEpoch\\s*>\\s*now'},{d:'not revoked',re:'!\\s*revoked|revoked\\s*==\\s*false'}],
-behavior:`usable(future, now, false) is true; an expired cert (now past notAfter) or a revoked one is false. Both checks matter: expiry is time-based; revocation (via CRL/OCSP) kills a cert early when its key is compromised.`,
-hints:['<code>return now &lt; notAfterEpoch &amp;&amp; !revoked;</code>','Expiry alone is not enough — a stolen key must be revoked before its natural expiry.','Short-lived certs shrink the window where revocation is even needed.'],
-solution:`public class Revocation {
-    static boolean usable(long notAfterEpoch, long now, boolean revoked) {
-        return now < notAfterEpoch && !revoked;
-    }
-}`}},
+solution:`function usable(notAfterEpoch, now, revoked) {
+  return notAfterEpoch > now && !revoked;
+}`,
+tests:[{d:'must not be expired',re:'notAfterEpoch\\s*>\\s*now'},{d:'must not be revoked',re:'!\\s*revoked'}],
+behavior:`Both failure modes are executed independently. In practice expiry is the reliable check and revocation is the unreliable one — soft-fail means an attacker who can block the revocation lookup simply wins, which is why the industry answer became short-lived certificates plus ACME automation rather than better revocation.`,
+hints:['Two conditions joined with &&.','Expiry is strict: notAfterEpoch must be greater than now.','Use ! for "not revoked".']}},
 
 {id:'pki6',title:'Keystores & truststores',body:`
 <p>In Java (and most runtimes) certificates and keys live in two kinds of files — confusing until you see the split:</p>

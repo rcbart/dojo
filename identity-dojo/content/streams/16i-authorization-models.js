@@ -202,7 +202,51 @@ hints:['Ownership is an equals check between user and owner.','A shared relation
 
 {id:'az5',title:'PDP/PEP, least privilege & separation of duties',body:`
 <p>Two architectural terms show up everywhere in authorization. The <b>PDP</b> (Policy Decision Point) is the brain that answers "allow or deny"; the <b>PEP</b> (Policy Enforcement Point) is the gate in front of the resource that <i>asks</i> the PDP and enforces the answer. Separating them means one consistent decision engine guards many enforcement points.</p>
-<p>Two principles govern good policy. <b>Least privilege</b>: grant the minimum access needed, for the shortest time. <b>Separation of duties</b> (SoD): no single person should hold a conflicting combination — the one who <i>creates</i> a payment must not also <i>approve</i> it. SoD is a cornerstone of fraud prevention and audit.</p>`,
+<p>Two principles govern good policy. <b>Least privilege</b>: grant the minimum access needed, for the shortest time. <b>Separation of duties</b> (SoD): no single person should hold a conflicting combination — the one who <i>creates</i> a payment must not also <i>approve</i> it. SoD is a cornerstone of fraud prevention and audit.</p>
+
+<h4>Why splitting the decision from the enforcement matters</h4>
+<p>Left alone, authorization logic grows where the code is: an <code>if</code> in a controller, a check in
+a template, a filter in a query, a rule in a background job. Each is correct in isolation. Collectively
+they are a policy nobody can state, spread across a codebase nobody can audit — and the question "who
+can approve a refund?" becomes a code search rather than a lookup.</p>
+<p>PDP/PEP is the response. <b>One place decides</b> (the Policy Decision Point) and <b>many places
+enforce</b> (Policy Enforcement Points). That single move buys three things you cannot get otherwise:
+consistency across entry points, a policy you can read without reading code, and an audit trail of
+decisions rather than of outcomes.</p>
+<div class="codeSample" data-hl>PEP  the gate in front of the resource. asks, then OBEYS.
+     ("can user U do action A on resource R, in context C?")
+PDP  the brain. evaluates policy, returns permit/deny.
+PIP  policy INFORMATION point - where the PDP fetches facts it was not given
+     (group membership, resource owner, device posture)
+PAP  policy ADMINISTRATION point - where humans author and version policy
+
+// the PEP must fail CLOSED: if the PDP is unreachable, DENY.
+// a PEP that allows on error has inverted the entire control.</div>
+
+<h4>The trade you are making</h4>
+<p>Centralising the decision introduces a dependency in the request path of everything. If the PDP is
+slow, all of it is slow; if the PDP is down, all of it is down. That is why real deployments embed the
+PDP as a library or sidecar rather than a remote service, distribute policy as data, and cache decisions
+carefully — noting that a cached <i>permit</i> is a revocation you have not honoured yet.</p>
+
+<h4>Least privilege, stated precisely</h4>
+<p>"Grant the minimum needed" is true but unactionable, because nobody knows what is needed. The version
+you can implement has three parts: <b>minimum scope</b> (this resource, not the class of resources),
+<b>minimum duration</b> (elevate for the task, expire automatically), and <b>minimum blast radius</b>
+(read where read suffices; separate production from everything else).</p>
+<p>The practical technique is to start from denial and let usage data pull the grant open: deny by
+default, log what was refused, and grant against evidence. Working the other way — grant broadly, trim
+later — never converges, because nothing forces the trim.</p>
+
+<h4>Separation of duties, and its two enforcement moments</h4>
+<p>SoD says no single person should hold both halves of a value-moving transaction: create and approve a
+payment, amend and approve payroll, write and deploy code, grant and use access. It is an anti-fraud
+control inherited from accounting, not a defence against outsiders.</p>
+<p>Enforce it <b>preventively</b> at request time — block the grant that would create the conflict — and
+<b>detectively</b> by scanning existing holdings, because most real conflicts arrive sideways: access
+granted directly in a system, or a role definition that quietly changed under its members. Where the
+conflict is unavoidable (small teams), the answer is a documented mitigating control with an owner and an
+expiry, not silence.</p>`,
 docs:[['PDP/PEP (XACML)','https://en.wikipedia.org/wiki/XACML'],['Separation of duties','https://csrc.nist.gov/glossary/term/separation_of_duty']],
 ex:{title:'Detect a separation-of-duties conflict',
 prompt:`Write class <code>Sod</code> with <code>static boolean violates(java.util.Set&lt;String&gt; roles)</code> that returns true when a user holds <b>both</b> conflicting roles <code>"maker"</code> and <code>"checker"</code> at once.`,

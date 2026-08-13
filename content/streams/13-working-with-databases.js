@@ -179,7 +179,48 @@ GROUP  BY a.owner
 HAVING SUM(t.amount_cents) &gt; 100000;             -- HAVING filters groups
 
 LEFT JOIN  -- keep left rows even with no match (NULLs fill the right side)</div>
-<p>Execution order (not writing order!): FROM → JOIN → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT. WHERE filters rows before grouping; HAVING filters after. If you remember one thing: JOIN + GROUP BY answers 80% of real reporting questions.</p>`,
+<p>Execution order (not writing order!): FROM → JOIN → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT. WHERE filters rows before grouping; HAVING filters after. If you remember one thing: JOIN + GROUP BY answers 80% of real reporting questions.</p>
+<h4>The mental shift: describe the result, not the steps</h4>
+<p>SQL is declarative. You state what you want the answer to look like and the database's planner decides
+how to get it — which index to use, which table to scan, in what order to join. That is why the same
+query can be instant on one dataset and catastrophic on another, and why <b>reading a query plan</b>
+(<code>EXPLAIN</code>) is the actual skill. The syntax is a week's work; understanding what the planner
+will do with it is the career.</p>
+
+<h4>Why execution order matters in practice</h4>
+<p>The clause order you write is not the order the engine evaluates. Internalising the real order explains
+most beginner errors at a stroke:</p>
+<div class="codeSample" data-hl>FROM -> JOIN -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY -> LIMIT
+
+-- WHERE runs BEFORE grouping, so it cannot see SUM()  -> use HAVING
+-- SELECT runs AFTER grouping, so a column alias defined there is not
+--   visible to WHERE (but IS visible to ORDER BY, which runs later)
+-- and this is why you cannot SELECT a column that is neither grouped
+--   nor aggregated: there would be many values and one row to put them in</div>
+<p>Filter as early as the semantics allow. <code>WHERE</code> discards rows before the expensive grouping;
+<code>HAVING</code> discards them after the work is already done.</p>
+
+<h4>The join distinction that silently changes answers</h4>
+<p><code>INNER JOIN</code> keeps only matching rows, so an account with no transactions vanishes from the
+report entirely. <code>LEFT JOIN</code> keeps it with <code>NULL</code>s on the right — and then
+<code>COUNT(t.id)</code> correctly returns 0 while <code>COUNT(*)</code> wrongly returns 1, because it
+counts the row that exists.</p>
+<p>The related trap: putting a condition on the right-hand table in <code>WHERE</code> rather than in the
+<code>ON</code> clause quietly converts your <code>LEFT JOIN</code> back into an inner one, because
+<code>NULL &gt;= '2026-01-01'</code> is not true. Conditions on the outer table belong in
+<code>ON</code>.</p>
+
+<h4>NULL is not a value</h4>
+<p>It means "unknown", and it propagates. <code>NULL = NULL</code> is not true, it is unknown — so
+comparisons need <code>IS NULL</code>. Aggregates skip it (<code>AVG</code> over 10 rows with 3 nulls
+divides by 7, which may or may not be what you wanted). And <code>NOT IN</code> against a subquery
+containing a single NULL returns no rows at all, which is a genuinely nasty silent bug.</p>
+
+<h4>Two habits worth forming now</h4>
+<p><b>Qualify your columns</b> (<code>a.id</code>, not <code>id</code>) in anything with a join — it is
+self-documenting and it stops a query breaking when someone adds a column with the same name to the other
+table. And <b>never <code>SELECT *</code> in application code</b>: it fetches data you do not need over
+the wire, breaks when the schema changes, and prevents the index-only scans that make queries fast.</p>`,
 docs:[['SQL tutorial — PostgreSQL docs','https://www.postgresql.org/docs/current/tutorial-sql.html'],['SQL joins visualized — Atlassian','https://www.atlassian.com/data/sql/sql-join-types-explained-visually']],
 ex:{title:'Write the queries',lang:'sql',data:'shop',
 prompt:`Given tables <code>users(id, name)</code> and <code>orders(id, user_id, total_cents, created_at)</code>, write: (1) the 5 most recent orders (all columns, newest first), (2) each user's name and their order count — <b>including users with zero orders</b> (which JOIN?) — grouped and aliased <code>order_count</code>, (3) names of users whose lifetime total exceeds 50000 cents (JOIN + GROUP BY + HAVING).`,
@@ -489,7 +530,49 @@ try (Connection con = dataSource.getConnection();
 
 // writes: executeUpdate returns affected row count
 int rows = ps.executeUpdate();</div>
-<p><b>Never concatenate user input into SQL</b> — <code>"WHERE owner = '" + name + "'"</code> is SQL injection, the #1 web vulnerability for two decades. PreparedStatement sends parameters separately from the query text, making injection structurally impossible. In real apps the Connection comes from a pool (HikariCP — Spring Boot's default).</p>`,
+<p><b>Never concatenate user input into SQL</b> — <code>"WHERE owner = '" + name + "'"</code> is SQL injection, the #1 web vulnerability for two decades. PreparedStatement sends parameters separately from the query text, making injection structurally impossible. In real apps the Connection comes from a pool (HikariCP — Spring Boot's default).</p>
+<h4>Why parameters are not string escaping</h4>
+<p>The usual explanation — "it escapes quotes for you" — undersells it and leads people to think a careful
+escaping function is equivalent. It is not. A prepared statement sends the <b>query text</b> and the
+<b>parameter values</b> to the database as separate things. The parser sees the SQL <i>before</i> any
+value exists, so the structure of the statement is fixed and no value can alter it.</p>
+<div class="codeSample" data-hl>-- concatenated: the input BECOMES SQL
+"... WHERE owner = '" + name + "'"     name = "x' OR '1'='1"
+   -> WHERE owner = 'x' OR '1'='1'     <- the parser sees new logic
+
+-- parameterised: the input is only ever a VALUE
+"... WHERE owner = ?"                  name = "x' OR '1'='1"
+   -> looks for a customer literally named  x' OR '1'='1
+   -> finds none. there is no injection to prevent - it is not possible.</div>
+<p>The limit worth knowing: only <i>values</i> can be parameters. A table name, a column name or the
+direction of an <code>ORDER BY</code> cannot be — so dynamic sorting must be validated against an
+allowlist you control, never interpolated.</p>
+
+<h4>The rest of what <code>PreparedStatement</code> buys</h4>
+<p>The database can parse and plan the statement once and reuse it for every set of parameters, which
+matters in a hot loop. And for bulk work, batching turns N round trips into one:</p>
+<div class="codeSample" data-hl>for (var row : rows) { ps.setString(1, row.name()); ps.addBatch(); }
+int[] counts = ps.executeBatch();     // one network round trip
+
+// executeUpdate returns the AFFECTED ROW COUNT - check it.
+// 0 rows updated usually means your WHERE matched nothing, which is
+// a silent failure if you assume success.</div>
+
+<h4>Resources, and why try-with-resources is not optional</h4>
+<p><code>Connection</code>, <code>PreparedStatement</code> and <code>ResultSet</code> all hold resources
+outside the JVM's control — a socket, a server-side cursor, a slot in the pool. A leaked connection is not
+collected by the garbage collector in any useful sense; it is simply gone from the pool, and the
+application dies later with "unable to acquire connection" pointing at innocent code. Nest the
+try-with-resources blocks as shown and the problem cannot occur.</p>
+
+<h4>Pooling, in one paragraph</h4>
+<p>Opening a connection means a TCP handshake, authentication and session setup — tens of milliseconds,
+which is often more than the query. A pool keeps them open and hands them out, so
+<code>getConnection()</code> is a borrow and <code>close()</code> is a return, not a real close. The
+counter-intuitive part is sizing: <b>bigger pools are usually slower</b>, because the database has a
+finite number of cores and disks, and queueing at the pool is cheaper than thrashing at the server. Start
+small (roughly a couple of connections per core), measure, and be suspicious of any pool sized in the
+hundreds.</p>`,
 docs:[['JDBC basics — Oracle','https://docs.oracle.com/javase/tutorial/jdbc/basics/index.html'],['SQL injection — OWASP','https://owasp.org/www-community/attacks/SQL_Injection']],
 ex:{title:'Query safely',
 prompt:`Write <code>AccountDao</code> with a constructor-injected <code>javax.sql.DataSource</code> and method <code>java.util.List&lt;String&gt; ownersWithBalanceOver(long cents) throws java.sql.SQLException</code>: SQL <code>SELECT owner FROM accounts WHERE balance_cents &gt; ?</code>, everything in try-with-resources, parameter bound with <code>setLong</code>, results collected from the ResultSet. No string concatenation into SQL anywhere.`,
@@ -550,7 +633,50 @@ public class AccountDao {
         throw e;
     }
 }</div>
-<p>In Spring, <code>@Transactional</code> wraps this via a proxy — with famous pitfalls: it only works on <b>public methods called from another bean</b> (self-invocation bypasses the proxy), and by default rolls back on unchecked exceptions only. Isolation levels trade correctness for concurrency: READ_COMMITTED (common default) → REPEATABLE_READ → SERIALIZABLE; know that lost updates need locking (<code>SELECT ... FOR UPDATE</code>) or optimistic versioning (<code>@Version</code> in JPA).</p>`,
+<p>In Spring, <code>@Transactional</code> wraps this via a proxy — with famous pitfalls: it only works on <b>public methods called from another bean</b> (self-invocation bypasses the proxy), and by default rolls back on unchecked exceptions only. Isolation levels trade correctness for concurrency: READ_COMMITTED (common default) → REPEATABLE_READ → SERIALIZABLE; know that lost updates need locking (<code>SELECT ... FOR UPDATE</code>) or optimistic versioning (<code>@Version</code> in JPA).</p>
+<h4>ACID, one letter at a time</h4>
+<p>The acronym gets recited more than understood, and the useful part is knowing which letter the database
+gives you for free and which you have to ask for.</p>
+<div class="codeSample" data-hl>Atomic       all statements commit or none do.        <- given
+Consistent   constraints hold before and after.       <- given (if you
+                                                          declare them)
+Isolated     concurrent transactions do not corrupt   <- PARTIAL. this is
+             each other's view                            the dial you set
+Durable      once committed, it survives a crash      <- given</div>
+<p>Isolation is the interesting one because it is the only one you trade. Full isolation is correct and
+slow; every database therefore defaults to something weaker, and the anomalies that leak through are your
+responsibility to know about.</p>
+
+<h4>What each level actually permits</h4>
+<p><b>READ COMMITTED</b> (the common default) stops you reading uncommitted data, but two identical
+queries in the same transaction can return different results because someone committed in between — a
+<i>non-repeatable read</i>. <b>REPEATABLE READ</b> fixes that for rows you have read, but new rows
+matching your condition can still appear (<i>phantoms</i>). <b>SERIALIZABLE</b> makes concurrent
+transactions behave as if they ran one at a time, at the cost of blocking or aborting more of them.</p>
+<p>The practical consequence, and the reason this matters even at low traffic:</p>
+<div class="codeSample" data-hl>-- LOST UPDATE, at READ COMMITTED, with no protection:
+T1: SELECT balance -> 100        T2: SELECT balance -> 100
+T1: UPDATE balance = 100 - 30    T2: UPDATE balance = 100 - 50
+T1: COMMIT  (70)                 T2: COMMIT  (50)   <- T1's debit vanished
+
+-- fix 1, pessimistic:  SELECT ... FOR UPDATE   (lock the row, others wait)
+-- fix 2, optimistic:   UPDATE ... WHERE version = 7   (JPA @Version)
+--                      0 rows affected => someone else won => retry
+-- fix 3, best when it applies: do the arithmetic IN the database
+--                      UPDATE accounts SET balance = balance - 30 ...</div>
+<p>Optimistic locking suits low-contention paths and web requests, where holding a lock across a user's
+think-time is unacceptable. Pessimistic suits short, hot, high-contention updates.</p>
+
+<h4>Keeping transactions small</h4>
+<p>A transaction holds locks and an undo history for its entire life, so its duration is a direct cost to
+every other writer. The rules follow from that: <b>never do I/O inside one</b> — no HTTP calls, no waiting
+on a queue, certainly no waiting on a human — and open it as late and close it as early as the work
+allows. A transaction that spans a call to a payment provider will, on the day that provider is slow, take
+your database down.</p>
+<p>Which also raises the question this design cannot answer: if the payment succeeds and the commit then
+fails, the database and the provider disagree. Distributed transactions are largely a dead end; the
+practical answers are idempotency keys, an outbox table written in the same transaction, and reconciling
+afterwards.</p>`,
 docs:[['JDBC transactions — Oracle','https://docs.oracle.com/javase/tutorial/jdbc/basics/transactions.html'],['Spring @Transactional','https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative.html']],
 ex:{title:'Atomic transfer',
 prompt:`Write <code>TransferDao</code> with <code>void transfer(javax.sql.DataSource ds, long fromId, long toId, long cents) throws java.sql.SQLException</code>: get a connection in try-with-resources, <code>setAutoCommit(false)</code>, run two <code>PreparedStatement</code> updates (debit: <code>UPDATE accounts SET balance_cents = balance_cents - ? WHERE id = ?</code>, credit: same with +), <code>commit()</code> on success, and in a catch block <code>rollback()</code> then rethrow.`,
@@ -603,7 +729,46 @@ public class TransferDao {
 <div class="codeSample">-- V2__add_status_to_accounts.sql
 ALTER TABLE accounts
   ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE';</div>
-<p>Rules that keep production safe: <b>never edit an applied migration</b> (checksums are verified — write a new V-script instead), naming is <code>V&lt;version&gt;__&lt;description&gt;.sql</code> (two underscores), and destructive changes deploy in phases (add column → backfill → switch reads → drop old) so old and new app versions coexist during a rolling deploy — the zero-downtime discipline from the deployment stream applied to data.</p>`,
+<p>Rules that keep production safe: <b>never edit an applied migration</b> (checksums are verified — write a new V-script instead), naming is <code>V&lt;version&gt;__&lt;description&gt;.sql</code> (two underscores), and destructive changes deploy in phases (add column → backfill → switch reads → drop old) so old and new app versions coexist during a rolling deploy — the zero-downtime discipline from the deployment stream applied to data.</p>
+<h4>Why migrations exist at all</h4>
+<p>Application code is versioned, reviewed and deployed identically everywhere. Schemas, historically, were
+not — someone ran a statement against production, wrote it in a wiki, and the staging database drifted
+until nobody could say what any environment actually contained. Migrations apply the same discipline to
+the schema: <b>every change is a file, in the repository, reviewed, applied in order, and recorded</b>.</p>
+<p>The history table is what makes that work. On startup Flyway compares the scripts on the classpath
+against what it has already applied, runs what is new, and <b>verifies the checksum of what is not</b> —
+which is why editing an applied migration fails the build. That check is a feature: it is the difference
+between a versioned schema and a folder of SQL.</p>
+
+<h4>The one that actually causes outages: expand and contract</h4>
+<p>During any rolling deploy, old and new application code run <b>at the same time</b>, against
+<b>one</b> database. So the real constraint is not "does this migration work?" but "is this schema valid
+for both versions of the code simultaneously?" — and that rules out most single-step changes.</p>
+<div class="codeSample" data-hl>-- renaming a column, done safely, over three releases:
+R1  ADD the new column, nullable. code WRITES BOTH, READS the old.
+    backfill existing rows in batches.
+R2  code READS the new column. still writes both.
+R3  DROP the old column.   <- only now, when nothing references it
+
+-- what NOT to do:
+ALTER TABLE accounts RENAME COLUMN owner TO owner_name;
+-- every instance of the old code breaks the instant this runs.
+-- this is the single most common self-inflicted deployment outage.</div>
+<p>The same shape applies to dropping a column, tightening a constraint, or changing a type: add, migrate,
+switch, remove — each step deployable and reversible on its own.</p>
+
+<h4>The operations people learn the hard way</h4>
+<p><b>Locking.</b> Some statements take a lock that blocks all writes for the duration. Adding a column
+with a default rewrote the whole table on older PostgreSQL and MySQL versions; adding an index without
+<code>CONCURRENTLY</code> blocks writes until it completes. On a large table that is an outage
+announced as a schema change. Know what your engine and version do before running it against production
+volumes.</p>
+<p><b>Backfills belong outside the migration.</b> A single <code>UPDATE</code> touching ten million rows
+holds one enormous transaction, bloats the undo log and may never finish. Backfill in batches, from a job
+you can stop and resume.</p>
+<p><b>Rollback is mostly a myth.</b> A down-script cannot restore data a drop destroyed. Design forward:
+make changes additive, keep the old path alive until the new one is proven, and treat "revert the code"
+rather than "revert the schema" as the recovery plan.</p>`,
 docs:[['Flyway documentation','https://documentation.red-gate.com/flyway'],['Spring Boot + Flyway','https://docs.spring.io/spring-boot/how-to/data-initialization.html#howto.data-initialization.migration-tool.flyway']],
 ex:{title:'Write the migrations',lang:'sql',
 prompt:`(1) On the first line, write the correct <b>filename</b> for migration number 4 that creates an audit_log table. (2) Below it, write its SQL: <code>CREATE TABLE audit_log</code> with columns <code>id BIGSERIAL PRIMARY KEY</code>, <code>actor VARCHAR(100) NOT NULL</code>, <code>action VARCHAR(50) NOT NULL</code>, <code>created_at TIMESTAMP NOT NULL DEFAULT now()</code>. (3) Then add an index on <code>actor</code> named <code>idx_audit_actor</code>.`,

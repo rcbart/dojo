@@ -36,21 +36,18 @@ until <code>exp</code>. And revoking one token is not the same as revoking the <
 latter stops future refreshes. "Remove this app's access" means the grant. This is the same gap CAE
 exists to close.</p>`,
 docs:[['Token introspection (RFC 7662)','https://www.rfc-editor.org/rfc/rfc7662'],['Token revocation (RFC 7009)','https://www.rfc-editor.org/rfc/rfc7009']],
-ex:{title:'Decide if a token is active',
-prompt:`Write class <code>Introspect</code> with <code>static boolean active(boolean found, boolean expired)</code> that returns true only when the token is <b>found</b> (known and not revoked) <b>and</b> not <b>expired</b>.`,
-starter:`public class Introspect {
-    static boolean active(boolean found, boolean expired) {
-        return false;
-    }
+ex:{title:'Interpret an introspection response',lang:'js',
+run:{call:'active',cases:[{name:'found and not expired',args:[true,false],expect:true},{name:'found but expired',args:[true,true],expect:false},{name:'not found',args:[false,false],expect:false},{name:'not found and expired',args:[false,true],expect:false}]},
+prompt:`Write <code>function active(found, expired)</code> returning <code>true</code> only when the token was found in the authorization server's store <b>and</b> has not expired. Everything else is <code>active: false</code> — introspection deliberately reveals nothing more.`,
+starter:`function active(found, expired) {
+  return false;
 }`,
-solution:`public class Introspect {
-    static boolean active(boolean found, boolean expired) {
-        return found && !expired;
-    }
+solution:`function active(found, expired) {
+  return found && !expired;
 }`,
-tests:[{d:'the token must be found (not revoked)',re:'found\\s*&&'},{d:'and must not be expired',re:'!\\s*expired'}],
-behavior:`active(true,false) is true; active(true,true) is false (expired); active(false,false) is false (revoked/unknown). Expiry alone is insufficient — revocation is why the server is asked.`,
-hints:['Combine the two booleans: found AND not expired.','Negate expired with the ! operator.','A revoked token is simply not found by introspection.']}},
+tests:[{d:'the token must exist',re:'found\\s*&&'},{d:'and must not be expired',re:'!\\s*expired'}],
+behavior:`All four combinations are executed. Note what the response does NOT do: a revoked, unknown or malformed token all return the same flat active:false, so an attacker learns nothing from probing.`,
+hints:['Two conditions: it exists, and it has not expired.','Use ! for "not expired".','Anything else is inactive — one answer for every failure mode.']}},
 
 {id:'ao2',title:'The JWT validation checklist',body:`
 <p>A self-contained JWT access token is only trustworthy if you check it properly. Verifying the signature is necessary but <b>not sufficient</b>. The core checklist: the signature verifies against the issuer&#8217;s key; the <code>iss</code> (issuer) is exactly who you expect; the <code>aud</code> (audience) names <i>your</i> API; and the token is <b>within its lifetime</b> (<code>exp</code> in the future, <code>nbf</code> in the past).</p>
@@ -88,21 +85,20 @@ it</i> and <i>who it is for</i> — not that the issuer had authority over the c
 owns the record being requested. Signature validity is authentication of the token; it is not
 authorization.</p>`,
 docs:[['JWT best practices (RFC 8725)','https://www.rfc-editor.org/rfc/rfc8725'],['JWT access tokens (RFC 9068)','https://www.rfc-editor.org/rfc/rfc9068']],
-ex:{title:'Validate the claims',
-prompt:`Write class <code>Validate</code> with <code>static boolean ok(String iss, String aud, long exp, long now)</code> that returns true only when <code>iss</code> equals <code>"https://issuer"</code>, <code>aud</code> equals <code>"api"</code>, and <code>exp</code> is strictly greater than <code>now</code> (not expired).`,
-starter:`public class Validate {
-    static boolean ok(String iss, String aud, long exp, long now) {
-        return false;
-    }
+ex:{title:'Validate a token offline',lang:'js',
+run:{call:'ok',cases:[{name:'right issuer, right audience, unexpired',args:['https://as.example.com','orders-api',2000,1000],expect:true},{name:'wrong issuer',args:['https://evil.example','orders-api',2000,1000],expect:false},{name:'token for another service',args:['https://as.example.com','billing-api',2000,1000],expect:false},{name:'expired',args:['https://as.example.com','orders-api',900,1000],expect:false},{name:'expiring exactly now is expired',args:['https://as.example.com','orders-api',1000,1000],expect:false}]},
+prompt:`Write <code>function ok(iss, aud, exp, now)</code> that accepts a token only when the issuer is exactly <code>"https://as.example.com"</code>, the audience is exactly <code>"orders-api"</code>, and <code>exp &gt; now</code>. A token that expires exactly now is expired.`,
+starter:`function ok(iss, aud, exp, now) {
+  return false;
 }`,
-solution:`public class Validate {
-    static boolean ok(String iss, String aud, long exp, long now) {
-        return iss.equals("https://issuer") && aud.equals("api") && exp > now;
-    }
+solution:`function ok(iss, aud, exp, now) {
+  return iss === "https://as.example.com"
+      && aud === "orders-api"
+      && exp > now;
 }`,
-tests:[{d:'checks the issuer',re:'iss\\.equals\\s*\\(\\s*"https://issuer"\\s*\\)'},{d:'checks the audience is this API',re:'aud\\.equals\\s*\\(\\s*"api"\\s*\\)'},{d:'checks the token is not expired',re:'exp\\s*>\\s*now'}],
-behavior:`ok("https://issuer","api",100,50) is true; ok("https://issuer","other",100,50) is false (wrong audience); ok("https://issuer","api",40,50) is false (expired). Signature-valid but wrong-audience tokens must be rejected.`,
-hints:['Three conditions joined by && must all hold.','Use equals for the string claims iss and aud.','Not-expired means exp is still in the future: exp > now.']}},
+tests:[{d:'issuer must match exactly',re:'"https://as\\.example\\.com"'},{d:'audience must be this API',re:'"orders-api"'},{d:'must not be expired',re:'exp\\s*>\\s*now'}],
+behavior:`The third case is the one that matters: a perfectly valid token minted by the same issuer for billing-api is rejected here. Skipping the audience check is how one compromised service becomes access to every service — and here it fails a named test rather than a pattern match.`,
+hints:['Three conditions joined with &&.','Compare strings with === in JavaScript.','Expiry is strict: exp must be greater than now, not equal.']}},
 
 {id:'ao3',title:'PAR, JAR/JARM & RAR',body:`
 <p>Newer OAuth extensions harden the request itself. <b>PAR</b> (Pushed Authorization Requests) sends the request parameters to the server <i>first</i>, over a back channel, so nothing sensitive rides in the browser URL. <b>JAR/JARM</b> sign the request and response objects so they cannot be tampered with. <b>RAR</b> (Rich Authorization Requests) replaces coarse scopes with structured <b>authorization details</b> — "transfer up to 500 EUR from account X" instead of a blunt <code>payments</code> scope.</p>
@@ -213,21 +209,18 @@ logging tokens come first; sender-constraining is what remains after those, and 
 between "a leaked token is a breach" and "a leaked token is an inert string". The next lesson is the
 mechanics.</p>`,
 docs:[['DPoP (RFC 9449)','https://www.rfc-editor.org/rfc/rfc9449'],['mTLS-bound tokens (RFC 8705)','https://www.rfc-editor.org/rfc/rfc8705']],
-ex:{title:'Accept only with valid proof',
-prompt:`Write class <code>Dpop</code> with <code>static boolean accept(boolean senderConstrained, boolean keyProofValid)</code>: a token is accepted if it is <b>not</b> sender-constrained (a plain bearer) <b>or</b> its key proof is valid.`,
-starter:`public class Dpop {
-    static boolean accept(boolean senderConstrained, boolean keyProofValid) {
-        return false;
-    }
+ex:{title:'Accept only a proven sender',lang:'js',
+run:{call:'accept',cases:[{name:'sender-constrained with a valid proof',args:[true,true],expect:true},{name:'sender-constrained, proof missing or invalid',args:[true,false],expect:false},{name:'plain bearer token',args:[false,true],expect:false},{name:'neither',args:[false,false],expect:false}]},
+prompt:`Write <code>function accept(senderConstrained, keyProofValid)</code> that accepts a request only when the token is sender-constrained <b>and</b> the caller proved possession of the bound key. A bearer token with a great-looking proof is still a bearer token.`,
+starter:`function accept(senderConstrained, keyProofValid) {
+  return false;
 }`,
-solution:`public class Dpop {
-    static boolean accept(boolean senderConstrained, boolean keyProofValid) {
-        return !senderConstrained || keyProofValid;
-    }
+solution:`function accept(senderConstrained, keyProofValid) {
+  return senderConstrained && keyProofValid;
 }`,
-tests:[{d:'plain bearer tokens are accepted',re:'!\\s*senderConstrained'},{d:'sender-constrained needs a valid proof',re:'\\|\\|\\s*keyProofValid'}],
-behavior:`accept(false,false) is true (plain bearer); accept(true,true) is true (proof valid); accept(true,false) is false (constrained but no proof). A stolen sender-constrained token cannot be replayed without the key.`,
-hints:['Not sender-constrained OR the proof is valid.','Use ! for the not-sender-constrained case.','Join the two conditions with ||.']}},
+tests:[{d:'the token must be sender-constrained',re:'senderConstrained\\s*&&'},{d:'and the key proof must verify',re:'keyProofValid'}],
+behavior:`The third case is the trap: a plain bearer token accompanied by a valid-looking proof must still be refused, because nothing binds that proof to the token. Constraint and proof are two halves of one check.`,
+hints:['Both halves are required, so use &&.','A proof means nothing if the token is not bound to a key.','A bound token with no proof is equally unusable.']}},
 
 {id:'ao4b',title:'DPoP in depth: proving you hold the key',body:`
 <p>Every bearer token shares one weakness: possession is the whole of the entitlement. Steal it from a

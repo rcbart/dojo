@@ -80,7 +80,56 @@ Duration dur = Duration.ofMinutes(90);                       // time-based
 DateTimeFormatter f = DateTimeFormatter.ofPattern("dd MMM yyyy");
 String s = d.format(f);
 LocalDate parsed = LocalDate.parse("2026-07-16");  // ISO by default</div>
-<p>Rules: store <code>Instant</code> (UTC) in databases, apply zones only at display; <code>Period</code> for calendar amounts, <code>Duration</code> for exact time; never forget the return value — <code>d.plusDays(1)</code> without assignment is a no-op bug.</p>`,
+<p>Rules: store <code>Instant</code> (UTC) in databases, apply zones only at display; <code>Period</code> for calendar amounts, <code>Duration</code> for exact time; never forget the return value — <code>d.plusDays(1)</code> without assignment is a no-op bug.</p>
+<h4>Why the old API had to be replaced</h4>
+<p>It is worth knowing what was wrong, because the fixes explain the new design. <code>Date</code> was
+<b>mutable</b>, so passing one to a method meant that method could change it under you — and it was shared
+across threads with no safety. <code>Calendar</code> had months numbered from zero, so December was 11 and
+off-by-one errors were the norm. <code>SimpleDateFormat</code> was not thread-safe, and being stateless in
+appearance, it was routinely stored in a static field, which produced corrupted dates under load and
+nowhere else.</p>
+<p><code>java.time</code> answers all three: everything is <b>immutable</b>, therefore thread-safe;
+formatters are immutable and safe to share; and the type you choose states what you mean.</p>
+
+<h4>Choosing the right type is the whole skill</h4>
+<div class="codeSample" data-hl>LocalDate       a calendar date. no time, NO ZONE.
+                a birthday. a contract date. "2026-07-16" as a human means it.
+
+LocalDateTime   date + time, still NO ZONE. it is NOT a moment in time -
+                it is "9am", which is a different instant in every country.
+                the most misused type in the API.
+
+Instant         an exact point on the timeline, UTC. what a machine means
+                by "when". store THIS.
+
+ZonedDateTime   an instant plus the rules of a place. use at the edges,
+                for display and for scheduling in local terms.
+
+Duration        exact elapsed time (seconds/nanos).  "90 minutes"
+Period          calendar amount (years/months/days). "1 month"
+                -> and these are NOT interchangeable, see below</div>
+
+<h4>The traps that produce real bugs</h4>
+<p><b>Forgetting the return value.</b> Every method returns a new object; <code>d.plusDays(1);</code> as a
+statement does nothing at all and compiles cleanly. It is the most common java.time bug and the easiest to
+miss in review.</p>
+<p><b>Period and Duration disagree, correctly.</b> Adding one month to 31 January gives 28 February —
+month lengths vary. Adding 30 days gives 2 March. Both are right; only one is what you meant. And across a
+daylight-saving boundary, adding <code>Period.ofDays(1)</code> keeps the wall-clock time while
+<code>Duration.ofHours(24)</code> shifts it by an hour.</p>
+<p><b>Storing local times.</b> A meeting stored as an <code>Instant</code> is wrong if the government moves
+the clocks after you scheduled it — the user meant "9am on the 3rd in Berlin", so store the local time and
+the zone id, and resolve to an instant at use. Conversely, an event that already happened is an
+<code>Instant</code>, always.</p>
+<p><b>Zone ids, not offsets.</b> <code>ZoneId.of("Europe/Berlin")</code> carries the DST rules;
+<code>+01:00</code> is a fixed offset that will be wrong for half the year. And those rules change by
+political decision, so keep the tzdata in your JDK and containers current.</p>
+
+<h4>The one change that makes time testable</h4>
+<p>Inject a <code>Clock</code> rather than calling <code>now()</code> directly. Every
+<code>now()</code> method accepts one, so production passes <code>Clock.systemUTC()</code> and tests pass
+<code>Clock.fixed(...)</code>. That single habit removes an entire category of untestable code — expiry
+windows, rate limits, scheduling — and it costs one constructor parameter.</p>`,
 docs:[['java.time — dev.java','https://dev.java/learn/date-time/'],['DateTimeFormatter — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/format/DateTimeFormatter.html']],
 ex:{title:'Dates done right',
 prompt:`Write <code>Dates</code> with: <code>static int ageYears(java.time.LocalDate birth)</code> using <code>Period.between</code> to now; <code>static java.time.LocalDate paymentDue(java.time.LocalDate invoice)</code> returning invoice date + 30 days; and <code>static String pretty(java.time.LocalDate d)</code> formatting with pattern <code>"dd MMM yyyy"</code>.`,
@@ -238,7 +287,46 @@ for (Method m : Service.class.getDeclaredMethods()) {
     Audited a = m.getAnnotation(Audited.class);
     if (a != null) System.out.println(m.getName() + " audited as " + a.value());
 }</div>
-<p>Without <code>RUNTIME</code> retention, <code>getAnnotation</code> returns null — the single most common custom-annotation bug. Reflection is powerful but slow and unchecked: frameworks cache it; application code should rarely need it.</p>`,
+<p>Without <code>RUNTIME</code> retention, <code>getAnnotation</code> returns null — the single most common custom-annotation bug. Reflection is powerful but slow and unchecked: frameworks cache it; application code should rarely need it.</p>
+<h4>Why the two are always discussed together</h4>
+<p>Separately they are unremarkable: an annotation is inert metadata, and reflection is a slow way to do
+what a normal method call does better. Together they are the mechanism behind every framework you have
+used in this course — <b>you declare intent, and something else discovers it and supplies behaviour</b>.
+JUnit finds your <code>@Test</code> methods this way. Spring finds beans and transactional methods. Jackson
+finds property names.</p>
+<p>Seeing that once removes the magic permanently: no framework has access to a mechanism you do not. What
+they have is the discipline to cache the reflection and a lot of edge-case handling.</p>
+
+<h4>Retention is the setting that decides whether any of it works</h4>
+<div class="codeSample" data-hl>SOURCE   discarded by the compiler.        @Override, @SuppressWarnings
+         visible only to annotation processors (Lombok, MapStruct)
+CLASS    in the .class file, NOT loaded.  (the default - almost never
+         what you want)
+RUNTIME  in the class file AND readable via reflection. what frameworks
+         need.
+
+// no @Retention at all => CLASS => getAnnotation() returns null,
+// your aspect never fires, and nothing anywhere reports an error.
+// this is the bug, and it costs everyone an afternoon exactly once.</div>
+<p><code>@Target</code> is the other half: it makes misuse a <b>compile error</b> rather than an annotation
+that silently does nothing where it was put.</p>
+
+<h4>The costs, honestly</h4>
+<p>Reflection is slower than direct invocation — lookups are expensive, and while modern JITs optimise
+repeated calls well, the discovery phase is not free. It also <b>defeats the compiler</b>: a field renamed
+by a refactoring tool leaves a string somewhere that no longer matches, and you find out at runtime. And
+it can breach encapsulation, which is why the module system (later in this course) restricts deep
+reflection by default and why <code>setAccessible(true)</code> increasingly needs an explicit
+<code>--add-opens</code>.</p>
+<p>So: frameworks scan once at startup and cache the result; application code should reach for an interface
+or a functional parameter first. If you find yourself reflecting to call one of your own methods, there is
+usually a design that does not need to.</p>
+
+<h4>The modern alternatives</h4>
+<p>Two directions have replaced a lot of runtime reflection. <b>Annotation processors</b> read the same
+annotations at compile time and generate real code — fast, checked, debuggable, and the basis of MapStruct
+and Micronaut. And <b>method handles</b> / <code>VarHandle</code> give reflective flexibility at close to
+direct-call speed. Worth knowing they exist before you write a reflection-heavy library.</p>`,
 docs:[['Annotations — dev.java','https://dev.java/learn/annotations/'],['Reflection API — Oracle','https://docs.oracle.com/javase/tutorial/reflect/index.html']],
 ex:{title:'Build @Audited',
 prompt:`(1) Declare annotation <code>@interface Audited</code> with <code>@Retention(RetentionPolicy.RUNTIME)</code>, <code>@Target(ElementType.METHOD)</code> and a <code>String value()</code> element. (2) Write <code>class AuditScanner</code> with <code>static java.util.List&lt;String&gt; auditedMethods(Class&lt;?&gt; c)</code> that loops <code>getDeclaredMethods()</code>, and for each method carrying the annotation adds <code>method.getName() + ":" + annotation.value()</code> to the result.`,
@@ -297,7 +385,50 @@ class AuditScanner {
 @Role("admin") @Role("auditor")
 class Backoffice {}
 
-Role[] roles = Backoffice.class.getAnnotationsByType(Role.class);  // both!</div>`,
+Role[] roles = Backoffice.class.getAnnotationsByType(Role.class);  // both!</div>
+<h4>The move that turns annotations into a design tool</h4>
+<p>Everything above is machinery; the reason to learn it is that it lets you express a policy <b>once</b>
+and apply it declaratively. Instead of six lines of audit code repeated in forty methods — which someone
+will eventually forget — there is one annotation and one implementation, and the omission is visible
+because the annotation is missing.</p>
+<p>The composed-annotation pattern is worth internalising because it is exactly how the frameworks are
+built, all the way down:</p>
+<div class="codeSample" data-hl>@RestController  IS  @Controller + @ResponseBody
+@SpringBootApplication  IS  @Configuration + @EnableAutoConfiguration
+                            + @ComponentScan
+
+// so your own:
+@Retention(RUNTIME) @Target(TYPE)
+@RestController
+@PreAuthorize("hasRole('ADMIN')")
+@RequestMapping("/api/admin")
+public @interface AdminEndpoint {}
+
+// one annotation now carries a routing convention AND a security policy.
+// change the policy in one place and every admin endpoint follows.</div>
+<p>Spring resolves meta-annotations recursively, so this needs no code at all. Note that plain Java does
+<b>not</b> — <code>getAnnotation()</code> looks only at what is directly present, so outside a framework
+you must walk the annotations on the annotation yourself.</p>
+
+<h4><code>@Inherited</code>, and why it disappoints</h4>
+<p>It sounds like "subclasses see this" and is much narrower: it applies only to <b>class-level</b>
+annotations, only for <code>getAnnotation</code> (not <code>getDeclaredAnnotation</code>), and
+<b>never</b> to methods or interfaces. An annotation on an interface is not inherited by implementing
+classes under any circumstances. Frameworks work around this by searching the hierarchy themselves, which
+is why Spring's <code>AnnotatedElementUtils</code> exists and finds things plain reflection will not.</p>
+
+<h4>What annotations cannot do</h4>
+<p>The element types are restricted — primitives, <code>String</code>, <code>Class</code>, enums, other
+annotations, and arrays of those. No arbitrary objects, and <b>no nulls</b>, so an "absent" value has to be
+signalled by a default like <code>""</code>. Values must be compile-time constants, which is why you see
+<code>Class</code> literals and string expressions (like Spring's SpEL) rather than lambdas.</p>
+
+<h4>When not to reach for one</h4>
+<p>Annotations move behaviour away from the code it affects. That is their value and their cost: a reader
+looking at the method cannot see what else happens to it, and a typo in an annotation-driven behaviour
+fails silently. Use them for genuinely cross-cutting, orthogonal concerns — auditing, transactions,
+security, serialisation — and not as a way to configure business logic, where an ordinary parameter is
+clearer and the compiler is on your side.</p>`,
 docs:[['Annotations in depth — dev.java','https://dev.java/learn/annotations/'],['Repeating annotations — Oracle','https://docs.oracle.com/javase/tutorial/java/annotations/repeating.html'],['Spring composed annotations','https://docs.spring.io/spring-framework/reference/core/beans/classpath-scanning.html#beans-meta-annotations']],
 ex:{title:'Build a mini validation framework',
 prompt:`Create field annotation <code>@interface Required</code> (RUNTIME retention, <code>ElementType.FIELD</code> target) with element <code>String message() default "is required"</code>. Then write <code>class MiniValidator</code> with <code>static java.util.List&lt;String&gt; validate(Object o) throws IllegalAccessException</code>: loop <code>o.getClass().getDeclaredFields()</code>, for each field carrying @Required call <code>setAccessible(true)</code>, read its value via <code>field.get(o)</code>, and if null add <code>field.getName() + " " + annotation.message()</code> to the violations list.`,
@@ -352,7 +483,53 @@ class MiniValidator {
 <div class="codeSample">jps                    # JVM processes
 jstack &lt;pid&gt;           # thread dump — find deadlocks
 jmap -heap &lt;pid&gt;       # heap summary
-jcmd &lt;pid&gt; GC.heap_info</div>`,
+jcmd &lt;pid&gt; GC.heap_info</div>
+<h4>Why "compiled and interpreted" is the interesting part</h4>
+<p>Java's odd-sounding hybrid is what makes it fast in long-running processes. Bytecode starts interpreted,
+which is slow but requires no analysis. Meanwhile the JVM <b>profiles</b> — which branches are taken, which
+types actually appear at each call site — and once a method is hot, the JIT compiles it to native code
+using that evidence.</p>
+<p>The result is optimisation a static compiler cannot perform: an interface call that has only ever seen
+one implementation is compiled as a direct call and inlined; branches never taken are compiled away. If the
+assumption later proves wrong, the JVM <b>deoptimises</b> and recompiles. This is why Java frequently beats
+naively-written C++ in long-running services, and why the first thousand requests are slower than the rest
+— the "warm-up" everyone mentions.</p>
+<div class="codeSample" data-hl>// two practical consequences:
+// 1. BENCHMARKS. timing a loop in main() measures the interpreter and
+//    a half-optimised JIT. use JMH, which warms up properly. hand-rolled
+//    microbenchmarks in Java are wrong more often than they are right.
+// 2. STARTUP. this is why serverless and CLI workloads consider AOT
+//    (GraalVM native-image): no warm-up, no JIT, lower peak throughput.</div>
+
+<h4>Memory: what the two regions really mean</h4>
+<p><b>Heap</b> holds objects and is shared by every thread; it is what the garbage collector manages and
+what <code>-Xmx</code> sizes. <b>Stack</b> is per-thread, holds frames with locals and references, and is
+freed automatically as calls return. So <code>StackOverflowError</code> is a runaway recursion and
+<code>OutOfMemoryError: Java heap space</code> is either a genuine capacity problem or a leak.</p>
+<p>And "leak" in Java means <b>an unintended reference</b>, not forgotten frees. The usual culprits are a
+static collection that only grows, a cache with no eviction, a listener never unregistered, and a
+<code>ThreadLocal</code> not cleared on a pooled thread. The tool is a heap dump — take it with
+<code>-XX:+HeapDumpOnOutOfMemoryError</code> and open it in Eclipse MAT, which will name the retaining
+path.</p>
+<p>Also worth knowing that the heap is not all of it: metaspace, thread stacks, code cache and direct byte
+buffers live <b>outside</b> it, which is why a container with <code>-Xmx</code> set to the memory limit
+gets OOM-killed by the kernel with nothing in the application log.</p>
+
+<h4>GC, and the only tuning advice that survives contact</h4>
+<p>Generational collection exploits one empirical fact: <b>most objects die young</b>. New objects go in
+eden, survivors are copied a few times, and the persistent minority are promoted to the old generation —
+so the common case is collecting a small region where almost everything is garbage, which is cheap.</p>
+<p>The practical guidance is short. Do not call <code>System.gc()</code>. Do not copy JVM flags from a blog.
+Choose a collector by requirement — <b>G1</b> is a good default, <b>ZGC</b> when pause time matters more
+than throughput, <b>Parallel</b> for batch throughput — then <b>measure before changing anything else</b>.
+Most "GC problems" are allocation problems, and the fix is in your code.</p>
+
+<h4>The tools to reach for at 3am</h4>
+<p><code>jcmd &lt;pid&gt; help</code> lists everything a live JVM will tell you. <code>jstack</code> for a
+thread dump when things are hung — take three, thirty seconds apart, and look for threads stuck in the same
+place. <b>JFR</b> (<code>jcmd &lt;pid&gt; JFR.start</code>) is the one worth learning properly: continuous,
+low-overhead profiling you can leave running in production and inspect afterwards in JDK Mission
+Control.</p>`,
 docs:[['JVM architecture — Baeldung','https://www.baeldung.com/jvm-vs-jre-vs-jdk'],['HotSpot GC tuning guide','https://docs.oracle.com/en/java/javase/21/gctuning/introduction-garbage-collection-tuning.html']],
 ex:{title:'JVM drill',lang:'text',
 prompt:`Answer on the numbered lines: (1) the error thrown by infinite recursion, (2) the error when the heap is exhausted, (3) the flag setting max heap to 2 GB, (4) where objects are allocated (one word), (5) where each thread's method frames live (one word), (6) the CLI tool that prints a thread dump for a pid, (7) the flag that writes a heap dump when the heap blows up.`,

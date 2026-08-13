@@ -1253,46 +1253,35 @@ HIGHEST RISK  write act-as     — separate approval, narrow allowlist, notify</
 — a screen share, or a support link they generate themselves. Consent given directly by the person,
 in the moment, is stronger than any control you can build on your side.</p>`,
 docs:[['RFC 8693 §4.1 — the act (actor) claim','https://www.rfc-editor.org/rfc/rfc8693#section-4.1'],['OWASP — Logging & audit cheat sheet','https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html'],['NIST SP 800-53 AC-6 — Least Privilege','https://csrc.nist.gov/projects/risk-management/sp800-53-controls/release-search#!/control?version=5.1&number=AC-6']],
-ex:{title:'A safe acting-as session',
-prompt:`Write <code>ActAs</code> with three methods. <code>static boolean permitted(String actorRole, boolean targetIsPrivileged)</code> returns true only when <code>actorRole</code> is <code>"support"</code> and the target is <b>not</b> privileged — you must never act as an admin. <code>static boolean canDo(String action, boolean writeApproved)</code> returns false for the always-denied actions <code>"change-password"</code>, <code>"change-email"</code>, <code>"delete-account"</code> and <code>"export-data"</code>; for anything else it returns <code>writeApproved</code> when the action starts with <code>"write:"</code>, and <code>true</code> otherwise (reads are allowed). <code>static String audit(String authSubject, String effectiveSubject, String action)</code> returns <code>authSubject + " acting as " + effectiveSubject + ": " + action</code>, so both identities survive in the log.`,
-starter:`public class ActAs {
-    static boolean permitted(String actorRole, boolean targetIsPrivileged) {
-        return false;
-    }
-    static boolean canDo(String action, boolean writeApproved) {
-        return false;
-    }
-    static String audit(String authSubject, String effectiveSubject, String action) {
-        return null;
-    }
+ex:{title:'A safe acting-as session',lang:'js',
+run:{call:'canDo',cases:[{name:'password change is always denied',args:['change-password',true],expect:false},{name:'email change is always denied',args:['change-email',true],expect:false},{name:'account deletion is always denied',args:['delete-account',true],expect:false},{name:'data export is always denied',args:['export-data',true],expect:false},{name:'an unapproved write is refused',args:['write:note',false],expect:false},{name:'an approved write is allowed',args:['write:note',true],expect:true},{name:'reads are the normal case',args:['view-orders',false],expect:true}]},
+prompt:`Write three functions. <code>permitted(actorRole, targetIsPrivileged)</code> returns <code>true</code> only when <code>actorRole</code> is <code>"support"</code> and the target is <b>not</b> privileged. <code>canDo(action, writeApproved)</code> returns <code>false</code> for the always-denied actions <code>"change-password"</code>, <code>"change-email"</code>, <code>"delete-account"</code> and <code>"export-data"</code>; otherwise it returns <code>writeApproved</code> when the action starts with <code>"write:"</code>, and <code>true</code> for anything else. <code>audit(authSubject, effectiveSubject, action)</code> returns <code>authSubject + " acting as " + effectiveSubject + ": " + action</code>.`,
+starter:`function permitted(actorRole, targetIsPrivileged) {
+  return false;
+}
+function canDo(action, writeApproved) {
+  return false;
+}
+function audit(authSubject, effectiveSubject, action) {
+  return null;
 }`,
-tests:[{d:'only the support role may act as anyone',re:'"support"\\s*\\.\\s*equals|equals\\s*\\(\\s*"support"'},{d:'privileged targets are excluded',re:'!\\s*targetIsPrivileged|targetIsPrivileged\\s*==\\s*false'},{d:'account-takeover actions are always denied',re:'"change-password"'},{d:'data export is always denied',re:'"export-data"'},{d:'writes need separate approval',re:'startsWith\\s*\\(\\s*"write:"'},{d:'the audit line keeps the acting identity',re:'"\\s*acting as\\s*"|acting as'},{d:'the audit line keeps the effective identity',re:'effectiveSubject'}],
-behavior:`permitted("support", false) is true; permitted("support", true) is false because acting as a privileged account would escalate the engineer; permitted("engineer", false) is false. canDo("change-password", true) is false — always-denied actions stay denied no matter what was approved. canDo("write:note", false) is false but canDo("write:note", true) is true. canDo("view-orders", false) is true, since reads are the normal case. audit("eng-14","cust-91","viewed order") returns eng-14 acting as cust-91: viewed order, which is the line that answers "which employee did this?"`,
-hints:['<code>return "support".equals(actorRole) &amp;&amp; !targetIsPrivileged;</code>','Check the denied list first and return false, before considering the write prefix.','<code>if (action.startsWith("write:")) return writeApproved; return true;</code>'],
-solution:`public class ActAs {
-    static boolean permitted(String actorRole, boolean targetIsPrivileged) {
-        // never act as an admin: that turns support into a privilege ladder
-        return "support".equals(actorRole) && !targetIsPrivileged;
-    }
-    static boolean canDo(String action, boolean writeApproved) {
-        if (action == null) return false;
-        switch (action) {
-            case "change-password":
-            case "change-email":
-            case "delete-account":
-            case "export-data":
-                return false;   // account-takeover primitives, denied always
-            default:
-                break;
-        }
-        if (action.startsWith("write:")) return writeApproved;
-        return true;            // reads are the normal, expected case
-    }
-    static String audit(String authSubject, String effectiveSubject, String action) {
-        // both subjects, always: the whole point of not collapsing them
-        return authSubject + " acting as " + effectiveSubject + ": " + action;
-    }
-}`}},
+solution:`function permitted(actorRole, targetIsPrivileged) {
+  // never act as an admin: that turns support into a privilege ladder
+  return actorRole === "support" && !targetIsPrivileged;
+}
+function canDo(action, writeApproved) {
+  const denied = ["change-password", "change-email", "delete-account", "export-data"];
+  if (denied.indexOf(action) >= 0) return false;   // takeover primitives
+  if (action.indexOf("write:") === 0) return writeApproved;
+  return true;                                     // reads are normal
+}
+function audit(authSubject, effectiveSubject, action) {
+  // both subjects, always: the whole point of not collapsing them
+  return authSubject + " acting as " + effectiveSubject + ": " + action;
+}`,
+tests:[{d:'only the support role may act as anyone',re:'"support"'},{d:'privileged targets are excluded',re:'!\\s*targetIsPrivileged'},{d:'account-takeover actions are always denied',re:'"change-password"'},{d:'data export is always denied',re:'"export-data"'},{d:'writes need separate approval',re:'"write:"'},{d:'the audit line keeps the acting identity',re:'acting as'},{d:'the audit line keeps the effective identity',re:'effectiveSubject'}],
+behavior:`The denied list is checked with writeApproved set to true in every case, so an implementation that lets approval override the always-denied actions fails four named tests. permitted("support",true) is false because acting as a privileged account would escalate the engineer, and audit() keeps both subjects — the line that answers "which employee did this?"`,
+hints:['<code>return actorRole === "support" &amp;&amp; !targetIsPrivileged;</code>','Check the denied list first and return false, before considering the write prefix.','<code>if (action.indexOf("write:") === 0) return writeApproved; return true;</code>']}},
 
 {id:'idfzt',title:'Zero trust: identity as the perimeter',body:`
 <p>Everything so far — tokens with audiences, verifying every signature, delegation that names the
@@ -1586,36 +1575,18 @@ https://files.example.com/report.pdf
 <p>Pick stored when you need revocation and an audit trail; pick signed when you need scale and can
 live with "valid until it expires."</p>`,
 docs:[['W3C TAG — Good Practices for Capability URLs','https://www.w3.org/TR/capability-urls/'],['MDN — Referrer-Policy','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy'],['OWASP — Forgot Password Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html']],
-ex:{title:'Validate a capability token',
-prompt:`Write <code>Capability</code> with three methods. <code>static boolean strongEnough(String token)</code> returns true only when <code>token</code> is non-null and at least 32 characters — the secret is the only protection, so it must be unguessable. <code>static boolean usable(String token, long expiresAt, long now, boolean alreadyUsed)</code> returns true only when the token is strong enough, <b>not</b> already used, and <code>now</code> is strictly before <code>expiresAt</code>. <code>static String safeLog(String token)</code> returns <code>"cap:"</code> plus the <b>first 6 characters</b> of the token, so logs identify which capability was used without recording a working credential — return <code>"cap:unknown"</code> if the token is null or shorter than 6 characters.`,
-starter:`public class Capability {
-    static boolean strongEnough(String token) {
-        return false;
-    }
-    static boolean usable(String token, long expiresAt, long now, boolean alreadyUsed) {
-        return false;
-    }
-    static String safeLog(String token) {
-        return null;
-    }
+ex:{title:'Is this capability token strong enough?',lang:'js',
+run:{call:'strongEnough',cases:[{name:'128 bits of base64url-ish entropy',args:['a'.repeat(22)],expect:true},{name:'a short guessable token',args:['abc123'],expect:false},{name:'an empty token',args:[''],expect:false},{name:'a sequential id is not a capability',args:['1042'],expect:false}]},
+prompt:`Write <code>function strongEnough(token)</code> that returns <code>true</code> only when the token is at least <b>22 characters</b> — roughly 128 bits once base64url-encoded. In a capability URL the link <i>is</i> the credential, so anything guessable is an open door.`,
+starter:`function strongEnough(token) {
+  return false;
 }`,
-tests:[{d:'rejects a null token',re:'token\\s*!=\\s*null|null\\s*!=\\s*token'},{d:'requires real entropy in the token',re:'length\\s*\\(\\s*\\)\\s*>=\\s*32|32\\s*<=\\s*token'},{d:'a consumed token cannot be reused',re:'!\\s*alreadyUsed|alreadyUsed\\s*==\\s*false'},{d:'expiry is enforced',re:'now\\s*<\\s*expiresAt|expiresAt\\s*>\\s*now'},{d:'every condition must hold',re:'&&'},{d:'logs record only a prefix',re:'substring\\s*\\(\\s*0\\s*,\\s*6\\s*\\)'},{d:'unusable tokens log as unknown',re:'"cap:unknown"'}],
-behavior:`strongEnough of a 32-character random string is true; a 10-character token or null is false. usable(strongToken, 100, 99, false) is true. It is false when alreadyUsed is true (single use means a leaked link sitting in an inbox is already spent), and false when now equals or exceeds expiresAt. safeLog("9f3a7c1e5b8d...") returns cap:9f3a7c, which is enough to correlate the use in an audit trail while leaving the log useless to anyone who reads it. safeLog(null) and safeLog("abc") return cap:unknown.`,
-hints:['<code>return token != null &amp;&amp; token.length() &gt;= 32;</code>','Join all three conditions: strong, not used, and <code>now &lt; expiresAt</code>.','Guard the length before slicing: <code>if (token == null || token.length() &lt; 6) return "cap:unknown";</code>'],
-solution:`public class Capability {
-    static boolean strongEnough(String token) {
-        // the secret is the only protection, so it needs real entropy
-        return token != null && token.length() >= 32;
-    }
-    static boolean usable(String token, long expiresAt, long now, boolean alreadyUsed) {
-        return strongEnough(token) && !alreadyUsed && now < expiresAt;
-    }
-    static String safeLog(String token) {
-        // never write the whole capability: the log would become a credential store
-        if (token == null || token.length() < 6) return "cap:unknown";
-        return "cap:" + token.substring(0, 6);
-    }
-}`}},
+solution:`function strongEnough(token) {
+  return token.length >= 22;
+}`,
+tests:[{d:'requires at least 22 characters of entropy',re:'token\\.length\\s*>=\\s*22'},{d:'does not hardcode a result',re:'return\\s+(true|false)\\s*;',not:true}],
+behavior:`A sequential id is executed as its own case, because that is the real-world mistake: a URL containing a database id is not a capability, it is an invitation to enumerate. Remember the rest of the lesson too — a strong token still leaks through Referer headers, mail scanners that follow links, and browser history.`,
+hints:['One comparison on the length is enough.','22 base64url characters is about 128 bits.','Anything shorter is guessable at scale.']}},
 
 {id:'idfassume',title:'Assuming a role: short-lived credentials across accounts',body:`
 <p>A deployment job needs to write to a production bucket in another cloud account. The lazy answer is
@@ -1876,26 +1847,23 @@ hints:['Federation removes password sprawl by making apps trust one authority.',
 <p><b>4. Verification (enforced on every message).</b> A valid signature is necessary but not sufficient. The RP must also check the <b>issuer</b> (<code>iss</code> is the expected IdP), the <b>audience</b> (<code>aud</code>/recipient names this RP — so a proof minted for another app is rejected), <b>freshness</b> (<code>exp</code>/<code>NotOnOrAfter</code> and <code>nbf</code>, with small clock skew), and <b>anti-replay/correlation</b> (the <code>nonce</code> ties an ID token to this login; <code>state</code> blocks CSRF; SAML tracks assertion IDs).</p>
 <p><b>5. The sharp edges.</b> <b>Unsolicited assertions</b> (SAML IdP-initiated) have no request to correlate to, so accept them only from a trusted IdP with full validation, and prefer SP-initiated. <b>JIT provisioning</b> means you create accounts from IdP claims, so map claims to <b>least privilege</b> and key on the stable subject id. And trust is not set-and-forget: rotate keys and certificates, honor JWKS caching, and support revocation and logout.</p>`,
 docs:[['OAuth 2.0 Security BCP','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['JWT best practices (RFC 8725)','https://www.rfc-editor.org/rfc/rfc8725'],['JSON Web Key (RFC 7517)','https://www.rfc-editor.org/rfc/rfc7517']],
-ex:{title:'The trust checklist, in code',
-prompt:`Write class <code>Trust</code> with <code>static boolean valid(boolean signatureOk, boolean issuerOk, boolean audienceOk, boolean fresh, boolean notReplayed)</code> that accepts a proof only when <b>all five</b> checks pass, and <code>static String idpPublishes()</code> returning <code>"public key"</code> (never the private key).`,
-starter:`public class Trust {
-    static boolean valid(boolean signatureOk, boolean issuerOk, boolean audienceOk, boolean fresh, boolean notReplayed) {
-        return false;
-    }
-    static String idpPublishes() {
-        return null;
-    }
+ex:{title:'The trust checklist, in code',lang:'js',
+run:{call:'valid',cases:[{name:'all five checks pass',args:[true,true,true,true,true],expect:true},{name:'bad signature',args:[false,true,true,true,true],expect:false},{name:'wrong issuer',args:[true,false,true,true,true],expect:false},{name:'wrong audience',args:[true,true,false,true,true],expect:false},{name:'stale',args:[true,true,true,false,true],expect:false},{name:'replayed',args:[true,true,true,true,false],expect:false}]},
+prompt:`Write <code>function valid(signatureOk, issuerOk, audienceOk, fresh, notReplayed)</code> that accepts a proof only when <b>all five</b> checks pass, and <code>function idpPublishes()</code> returning <code>"public key"</code> (never the private key).`,
+starter:`function valid(signatureOk, issuerOk, audienceOk, fresh, notReplayed) {
+  return false;
+}
+function idpPublishes() {
+  return null;
 }`,
-solution:`public class Trust {
-    static boolean valid(boolean signatureOk, boolean issuerOk, boolean audienceOk, boolean fresh, boolean notReplayed) {
-        return signatureOk && issuerOk && audienceOk && fresh && notReplayed;
-    }
-    static String idpPublishes() {
-        return "public key";
-    }
+solution:`function valid(signatureOk, issuerOk, audienceOk, fresh, notReplayed) {
+  return signatureOk && issuerOk && audienceOk && fresh && notReplayed;
+}
+function idpPublishes() {
+  return "public key";
 }`,
 tests:[{d:'all five checks must hold (signature, issuer, audience, freshness, no replay)',re:'signatureOk\\s*&&\\s*issuerOk\\s*&&\\s*audienceOk\\s*&&\\s*fresh\\s*&&\\s*notReplayed'},{d:'the IdP publishes its PUBLIC key, never the private one',re:'return\\s+"public key"'}],
-behavior:`valid(true,true,true,true,true) is true; if any of signature, issuer, audience, freshness, or non-replay fails, it is false — the same checklist every OAuth/SAML library enforces. idpPublishes() returns "public key", capturing the core asymmetry that makes federation forgery-resistant.`,
+behavior:`Each of the five failure modes is executed as its own case, so omitting any single check fails a named test rather than passing a pattern match. idpPublishes() returns "public key" — the asymmetry that makes federation forgery-resistant.`,
 hints:['Trust is configuration (registration) plus cryptography (verifying a signature against a published public key).','A valid signature is not enough: also check issuer, audience, freshness, and non-replay — combine with &&.','The IdP shares only its public key; the private signing key never leaves it.']}},
 {id:'iddid',title:'Decentralized identity: DIDs & Verifiable Credentials',body:`
 <p>Everything so far assumes a central authority (an IdP) vouches for you. <b>Decentralized identity</b> — also called self-sovereign identity (SSI) — flips that: <b>you</b> hold your own credentials in a digital wallet and present them directly, with no IdP in the middle at sign-in time.</p>

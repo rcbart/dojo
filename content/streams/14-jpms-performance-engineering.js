@@ -49,7 +49,53 @@ module com.dojo.api {
 }</div>
 <div class="codeSample">jlink --module-path out --add-modules com.dojo.app --output myruntime
 myruntime/bin/java -m com.dojo.app/...        # custom runtime: ~40MB, only YOUR modules</div>
-<p><code>exports</code> = compile-time visibility; <code>opens</code> = deep reflection at runtime (an <i>open module</i> opens everything). <code>jlink</code> assembles a trimmed runtime image from just the modules you use — the JPMS payoff for containers.</p>`,
+<p><code>exports</code> = compile-time visibility; <code>opens</code> = deep reflection at runtime (an <i>open module</i> opens everything). <code>jlink</code> assembles a trimmed runtime image from just the modules you use — the JPMS payoff for containers.</p>
+<h4>Why services are the interesting part</h4>
+<p><code>requires</code> creates a hard, compile-time dependency — useful, and the opposite of a plugin
+architecture. Services invert it: the consumer depends only on the <b>interface</b> module, and providers
+are discovered at runtime from whatever happens to be on the module path.</p>
+<div class="codeSample" data-hl>app --requires--&gt; spi  &lt;--requires-- provider
+        uses                        provides ... with ...
+
+// the app has NO reference to the provider. add a provider module to
+// the module path and ServiceLoader finds it; remove it and nothing
+// breaks at compile time. that is a plugin system with no framework.</div>
+<p>The improvement over the old <code>META-INF/services</code> mechanism is that the module system
+<b>verifies it</b>: the compiler checks that the class named in <code>provides ... with ...</code> exists
+and actually implements the interface. The classpath version failed at runtime, on a typo, with a
+confusing error.</p>
+<p><code>ServiceLoader</code> is lazy — it instantiates on iteration — so treat a missing provider as a
+real case and decide what an empty result means. Ordering is not guaranteed either, which matters if you
+were hoping for a priority chain.</p>
+
+<h4><code>exports</code> versus <code>opens</code>: the distinction that causes every migration error</h4>
+<div class="codeSample" data-hl>exports com.acme.api;         compile-time access to PUBLIC types.
+                              reflection into private members still fails.
+
+opens com.acme.dto;           deep reflection at RUNTIME - setAccessible
+                              works. no compile-time access granted.
+
+opens com.acme.dto to com.fasterxml.jackson.databind;   qualified: only
+                              that module. this is the right default.
+
+open module com.acme { }      every package open. the pragmatic escape
+                              hatch when migrating a large codebase.</div>
+<p>This is why frameworks fail with <code>InaccessibleObjectException</code> on a modular application:
+Jackson needs to reflect into your DTO's private fields, and <code>exports</code> does not grant that.
+Strong encapsulation is the feature — the JDK's own internals became genuinely inaccessible, which is what
+allowed the platform to evolve — and the <code>--add-opens</code> flags you have seen in start-up scripts
+are the same thing being pried open from outside.</p>
+
+<h4><code>jlink</code>, and the honest position on JPMS</h4>
+<p><code>jlink</code> is the concrete payoff: a runtime image containing only the modules you actually use.
+A hello-world image is around 40MB against a full JDK's 300MB, which matters for container size and cold
+start. It works only if the whole graph is modular, which is why <code>jdeps</code> exists to find what is
+missing.</p>
+<p>And the honest assessment worth having: <b>JPMS did not win in application code.</b> The JDK itself is
+modular and benefits enormously, but most Spring Boot services ship a fat jar on the classpath and use
+Docker for the packaging problem JPMS was partly aimed at. Learn it because you will meet
+<code>--add-opens</code>, because the JDK's structure now depends on it, and because <code>jlink</code> is
+genuinely useful — not because your next service will have a <code>module-info.java</code>.</p>`,
 docs:[['ServiceLoader — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ServiceLoader.html'],['jlink — Oracle','https://docs.oracle.com/en/java/javase/21/docs/specs/man/jlink.html']],
 ex:{title:'Wire a service',
 prompt:`Write two module descriptors in one editor (Java allows one per file — for this drill, stack them): (1) module <code>com.dojo.provider</code>: requires <code>com.dojo.spi</code>, and <code>provides com.dojo.spi.TokenSigner with com.dojo.provider.HmacSigner</code>. (2) module <code>com.dojo.app</code>: requires <code>com.dojo.spi</code>, declares <code>uses com.dojo.spi.TokenSigner</code>, and <code>opens com.dojo.app.dto to com.fasterxml.jackson.databind</code>.`,
@@ -85,7 +131,55 @@ jcmd &lt;pid&gt; JFR.stop  name=probe
 
 jfr print --events jdk.GCPhasePause probe.jfr    # CLI peek without JMC
 jfr summary probe.jfr</div>
-<p>Reading it in JMC: start with <b>Automated Analysis</b> (it names suspects), then Method Profiling (hot methods), Memory (allocation pressure → GC pain), and Lock Instances (contention). Rule one of performance work: <b>measure before you optimize</b> — the bottleneck is almost never where intuition points.</p>`,
+<p>Reading it in JMC: start with <b>Automated Analysis</b> (it names suspects), then Method Profiling (hot methods), Memory (allocation pressure → GC pain), and Lock Instances (contention). Rule one of performance work: <b>measure before you optimize</b> — the bottleneck is almost never where intuition points.</p>
+<h4>Why "safe in production" changes everything</h4>
+<p>Most profilers are honest tools for a laboratory: they slow the process enough that you must reproduce
+the problem in a test environment first. But the interesting performance problems <b>only exist in
+production</b> — they need real traffic patterns, real data volumes, real concurrency and the one customer
+whose account has 400,000 rows. A profiler you cannot run there is a profiler that cannot see them.</p>
+<p>JFR's roughly 1% overhead is the whole point. It is built into the JDK, it can run continuously, and you
+can attach to a process that is misbehaving <i>right now</i> rather than trying to recreate it
+afterwards.</p>
+
+<h4>The two ways in</h4>
+<div class="codeSample" data-hl># always-on, with a ring buffer you can dump when something happens
+-XX:StartFlightRecording=settings=profile,maxsize=200m,maxage=6h,
+                         dumponexit=true,filename=/var/log/app.jfr
+
+# attach to a running process - the 3am move
+jcmd &lt;pid&gt; JFR.start name=probe settings=profile
+jcmd &lt;pid&gt; JFR.dump  name=probe filename=/tmp/probe.jfr
+jcmd &lt;pid&gt; JFR.stop  name=probe
+
+# two settings ship by default:
+#   default = ~1% overhead, safe to leave on forever
+#   profile = ~2%, more allocation and method sampling detail</div>
+<p><code>maxage</code> is the underrated one: with a rolling buffer, when an incident happens you dump the
+<i>last six hours</i> — including the period before anyone noticed. That is the difference between
+investigating the event and investigating its aftermath.</p>
+
+<h4>Reading a recording without getting lost</h4>
+<p>A recording contains thousands of event types, which is overwhelming if you browse. Go in with a
+question and a route:</p>
+<p><b>Automated Analysis</b> first — JMC names its suspects and is right often enough to save an hour.
+<b>Method Profiling</b> for "where is CPU going", remembering these are samples: a method appearing in 40%
+of them is where the time is, but rare-and-slow will not show. <b>Memory</b> for allocation pressure, which
+is the usual real cause of "GC problems" — the fix is allocating less, not tuning the collector.
+<b>Lock Instances</b> for contention, where a single hot <code>synchronized</code> block explains a
+throughput ceiling that CPU graphs do not. And <b>Exceptions</b>, because a swallowed exception thrown a
+million times a minute is startlingly expensive and invisible everywhere else.</p>
+
+<h4>Beyond the built-in events</h4>
+<p>You can define your own — extend <code>jdk.jfr.Event</code>, annotate it, and emit around a business
+operation. Now "token issuance latency" is in the same timeline as GC pauses and lock contention, and
+correlating a business-level symptom with a JVM-level cause becomes reading one chart rather than joining
+two systems.</p>
+
+<h4>The rule this lesson exists to enforce</h4>
+<p><b>Measure first.</b> Intuition about performance is wrong at a rate that should be embarrassing —
+the bottleneck is regularly an N+1 query, a misconfigured pool, a serialisation cost or a log statement,
+and almost never the algorithm someone was about to rewrite. Optimising without a profile is guessing with
+extra steps, and it usually makes the code worse while leaving the problem in place.</p>`,
 docs:[['JFR — Oracle docs','https://docs.oracle.com/en/java/javase/21/jfapi/why-use-jfr-api.html'],['JDK Mission Control','https://openjdk.org/projects/jmc/'],['jfr tool — reference','https://docs.oracle.com/en/java/javase/21/docs/specs/man/jfr.html']],
 ex:{title:'Flight recorder drill',lang:'shell',
 prompt:`One per numbered line: (1) launch <code>app.jar</code> with a 60-second recording written to <code>rec.jfr</code>, (2) start a named recording (<code>name=probe</code>, <code>settings=profile</code>) on running pid 4242, (3) dump it to <code>probe.jfr</code>, (4) stop it, (5) print a summary of the file with the <code>jfr</code> CLI tool.`,

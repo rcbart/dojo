@@ -44,7 +44,53 @@ t.join();           // wait for it to finish
 
 Thread.sleep(100);  // pause current thread (throws InterruptedException)
 t.isAlive();        // still running?</div>
-<p><code>join()</code> blocks until the thread dies — the simplest coordination tool. Daemon threads (<code>setDaemon(true)</code> before start) don't keep the JVM alive. Interruption is cooperative: <code>t.interrupt()</code> sets a flag; blocking calls throw <code>InterruptedException</code>, which you must handle honestly (restore the flag or exit).</p>`,
+<p><code>join()</code> blocks until the thread dies — the simplest coordination tool. Daemon threads (<code>setDaemon(true)</code> before start) don't keep the JVM alive. Interruption is cooperative: <code>t.interrupt()</code> sets a flag; blocking calls throw <code>InterruptedException</code>, which you must handle honestly (restore the flag or exit).</p>
+<h4>What a thread costs, and why that shapes everything</h4>
+<p>A platform thread is a thin wrapper over an <b>operating system</b> thread. Creating one is a system
+call; each carries a stack reserved in megabytes, not kilobytes; and switching between them means the
+kernel saving and restoring register state. That is why "just make a thread per request" was bad advice
+for twenty years, and why thread <i>pools</i> exist — not because threads are conceptually hard, but
+because they are expensive objects you want to reuse.</p>
+<p>Hold that number in mind: a few thousand platform threads is a lot. It explains pool sizing, it
+explains why blocking a thread felt wasteful enough to justify all of reactive programming, and it
+explains why virtual threads (later in this stream) changed the advice rather than the language.</p>
+
+<h4><code>start()</code> versus <code>run()</code>, precisely</h4>
+<div class="codeSample" data-hl>t.run();     // an ordinary method call on an ordinary object.
+             // executes HERE, on the calling thread, synchronously.
+             // compiles, runs, and is completely wrong.
+
+t.start();   // asks the JVM to create an OS thread whose entry point
+             // is run(). returns IMMEDIATELY - the work has not
+             // necessarily begun when the next line executes.
+
+t.start();   // again -> IllegalThreadStateException. a Thread object
+             // is single-use; it cannot be restarted.</div>
+<p>The second point matters more than it looks: after <code>start()</code> returns, you know nothing about
+what the new thread has done. Every coordination tool in this stream exists to replace assumptions with
+guarantees.</p>
+
+<h4>Interruption is a request, not a command</h4>
+<p>There is no safe way to stop a thread from outside — <code>Thread.stop()</code> existed, could leave
+objects half-modified with locks released, and was deprecated for exactly that reason. So Java uses
+cooperation: <code>interrupt()</code> sets a flag, and the target decides what to do about it.</p>
+<div class="codeSample" data-hl>while (!Thread.currentThread().isInterrupted()) { doWork(); }   // polling
+
+try { Thread.sleep(1000); }
+catch (InterruptedException e) {
+    Thread.currentThread().interrupt();   // RESTORE the flag - catching
+    return;                               // the exception CLEARED it
+}
+// swallowing InterruptedException without restoring is the classic bug:
+// the cancellation signal is destroyed, and callers up the stack never
+// learn the thread was asked to stop.</div>
+
+<h4>Where to actually go from here</h4>
+<p>Knowing <code>Thread</code> is knowing the substrate, not the tool you should reach for. Application
+code should use <code>ExecutorService</code> to decouple <i>what work exists</i> from <i>what runs it</i>,
+and the concurrent collections and synchronizers in <code>java.util.concurrent</code> rather than
+hand-rolled coordination. The rest of this stream builds up to that; this lesson is the layer underneath
+so the abstractions are not mysterious.</p>`,
 docs:[['Concurrency — dev.java','https://dev.java/learn/multithreading/'],['Thread — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html']],
 ex:{title:'Two workers, one wait',
 prompt:`Write class <code>Workers</code> with <code>static java.util.List&lt;String&gt; runBoth() throws InterruptedException</code>: create a thread-safe list (use <code>java.util.Collections.synchronizedList</code> over an ArrayList), create <b>two</b> threads from <b>Runnable lambdas</b> that each add their thread's name to the list, <code>start()</code> both, <code>join()</code> both, then return the list (it must contain 2 entries).`,
@@ -87,7 +133,55 @@ public class Workers {
 synchronized (lockObject) { shared.update(); }
 
 private volatile boolean running = true;   // visibility, NOT atomicity</div>
-<p><code>synchronized</code> gives <i>mutual exclusion</i> + <i>visibility</i> (happens-before). <code>volatile</code> gives only visibility — right for a stop flag, wrong for a counter. Deadlock rule: if you must hold two locks, always acquire them in the same global order.</p>`,
+<p><code>synchronized</code> gives <i>mutual exclusion</i> + <i>visibility</i> (happens-before). <code>volatile</code> gives only visibility — right for a stop flag, wrong for a counter. Deadlock rule: if you must hold two locks, always acquire them in the same global order.</p>
+<h4>Why <code>count++</code> is three operations</h4>
+<p>The source says one thing; the machine does three. There is no instruction that reads, increments and
+writes a memory location atomically, so two threads can interleave and one increment simply
+disappears:</p>
+<div class="codeSample" data-hl>thread A          thread B          count
+read  -> 5                          5
+                  read  -> 5        5
+add   -> 6                          5
+                  add   -> 6        5
+write    6                          6
+                  write    6        6     <- two increments, one result</div>
+<p>This is not rare or exotic. It is what happens by default, and it is invisible in testing because the
+window is nanoseconds wide — which is precisely what makes concurrency bugs expensive: they appear under
+production load, on a different machine, and cannot be reproduced on demand.</p>
+
+<h4>The second problem, which is stranger: visibility</h4>
+<p>Atomicity is only half of it. Even a write that completes may never be <i>seen</i> by another thread,
+because the JVM and the CPU are permitted to keep values in registers and caches and to reorder
+instructions, as long as the result looks correct <b>to the thread doing it</b>. A loop reading a plain
+<code>boolean</code> flag can legally be optimised into an infinite loop, because nothing in that thread
+ever changes it.</p>
+<p>That is what the Java Memory Model governs, and its central concept is <b>happens-before</b>: unless
+you establish such a relationship, one thread's writes are not guaranteed visible to another, ever.
+<code>synchronized</code> and <code>volatile</code> are how you create one.</p>
+<div class="codeSample" data-hl>volatile      visibility + ordering.  NOT atomicity.
+              right for: a stop flag, a published reference
+              wrong for: count++, check-then-act
+
+synchronized  mutual exclusion + visibility.
+              reads need it TOO - a synchronized write with an
+              unsynchronized read gives you no guarantee at all
+
+AtomicInteger lock-free atomic read-modify-write (CAS)
+              incrementAndGet() is the correct counter</div>
+
+<h4>The rules that keep this manageable</h4>
+<p><b>Prefer not sharing.</b> The cheapest concurrency bug is the one that cannot exist: immutable objects
+need no synchronization, confined state needs none, and a queue between threads beats shared mutable
+state.</p>
+<p><b>Lock the right granularity.</b> Synchronizing an entire method is easy and serialises everything;
+locking too little leaves gaps. Guard a coherent unit of state with one lock, and document which lock
+guards what.</p>
+<p><b>Never call unknown code holding a lock.</b> A callback, a listener or an overridden method invoked
+inside a <code>synchronized</code> block can acquire another lock and deadlock you, and you will not find
+it by reading your own class.</p>
+<p><b>Order your locks globally.</b> Deadlock needs two threads taking the same two locks in opposite
+order. A fixed acquisition order across the codebase makes it structurally impossible — and if you cannot
+state that order, that is the finding.</p>`,
 docs:[['Synchronization — Oracle','https://docs.oracle.com/javase/tutorial/essential/concurrency/sync.html'],['Java Memory Model — Baeldung','https://www.baeldung.com/java-volatile']],
 ex:{title:'Fix the racy counter',
 prompt:`Write <code>SafeCounter</code> with a private <code>int count</code>, <b>synchronized</b> methods <code>void increment()</code> and <code>int get()</code>, plus a <b>volatile boolean</b> field <code>running</code> (initially true) with method <code>void stop()</code> setting it false and <code>boolean isRunning()</code>. In a comment, state why volatile alone would not fix increment().`,
@@ -231,7 +325,51 @@ CompletableFuture&lt;String&gt; page = user
     .exceptionally(ex -&gt; "fallback page");        // recover from failure
 
 String result = page.join();   // block only at the very edge</div>
-<p>Key verbs: <code>supplyAsync</code> (start work), <code>thenApply</code> (map), <code>thenCompose</code> (flatMap — next async step), <code>thenCombine</code> (zip two), <code>exceptionally</code>/<code>handle</code> (recover), <code>allOf</code> (fan-in). This is the JDK's answer to async/await — in your API-platform world, it's how you fan out to services without blocking threads.</p>`,
+<p>Key verbs: <code>supplyAsync</code> (start work), <code>thenApply</code> (map), <code>thenCompose</code> (flatMap — next async step), <code>thenCombine</code> (zip two), <code>exceptionally</code>/<code>handle</code> (recover), <code>allOf</code> (fan-in). This is the JDK's answer to async/await — in your API-platform world, it's how you fan out to services without blocking threads.</p>
+<h4>The problem it solves: blocking wastes a whole thread</h4>
+<p>A thread waiting on a network call is doing nothing while holding a megabytes-sized stack and a slot in
+your pool. Fan out to three services sequentially and you have paid three latencies end to end when the
+work could have overlapped. <code>CompletableFuture</code> lets you describe the <i>dependency graph</i>
+between pieces of work and let the runtime schedule it, rather than writing the coordination by hand with
+latches and futures you have to poll.</p>
+
+<h4>The verb you must get right: <code>thenApply</code> vs <code>thenCompose</code></h4>
+<div class="codeSample" data-hl>// thenApply = map.        fn returns a VALUE
+cf.thenApply(user -&gt; user.name())            // CF&lt;String&gt;
+
+// thenCompose = flatMap.  fn returns ANOTHER CompletableFuture
+cf.thenCompose(user -&gt; fetchOrdersAsync(user))   // CF&lt;List&lt;Order&gt;&gt;
+
+// using thenApply where you needed thenCompose:
+cf.thenApply(user -&gt; fetchOrdersAsync(user))     // CF&lt;CF&lt;List&lt;Order&gt;&gt;&gt;  <-- nested
+// it compiles. it type-checks. it is the single most common mistake here.</div>
+<p>The <code>...Async</code> suffix is the other thing to understand: <code>thenApply</code> may run the
+callback on whichever thread completed the previous stage — including, in the worst case, the caller's
+thread. <code>thenApplyAsync</code> forces it onto an executor. If a callback does anything slow, use the
+async variant <b>and pass your own executor</b>, because the default is the common ForkJoinPool, which is
+sized for CPU-bound work and shared with parallel streams across the entire JVM.</p>
+
+<h4>Failure is where this gets subtle</h4>
+<p>An exception does not propagate — it <i>completes the future exceptionally</i>, and every downstream
+stage is skipped until something handles it. Which means an unhandled failure is silent unless you
+consume the result: no stack trace, no log line, just a value that never arrives.</p>
+<div class="codeSample" data-hl>.exceptionally(ex -&gt; fallback)   // recover; only runs on failure
+.handle((v, ex) -&gt; ...)          // sees BOTH outcomes; always runs
+.whenComplete((v, ex) -&gt; ...)    // observe without changing the result
+
+// note: the exception you receive is wrapped in CompletionException.
+// unwrap with ex.getCause() or your instanceof checks will never match.</div>
+<p>And the two ways to wait differ: <code>get()</code> throws checked exceptions,
+<code>join()</code> throws unchecked. Both <b>block</b>, so they belong at the edge of your program — one
+<code>join()</code> in the middle of a pipeline undoes the point of building it.</p>
+
+<h4>What it does not give you</h4>
+<p>There is no cancellation that propagates to work already running, no timeout before Java 9's
+<code>orTimeout</code>, and no structural relationship between a task and its subtasks — an orphaned
+branch of the graph can keep running after you have stopped caring. Java 21's <b>structured concurrency</b>
+and virtual threads address exactly that, and for straightforward fan-out on a virtual thread, ordinary
+blocking calls are now both simpler and easier to debug. Reach for
+<code>CompletableFuture</code> when the composition itself is the point.</p>`,
 docs:[['CompletableFuture — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html'],['CompletableFuture guide — Baeldung','https://www.baeldung.com/java-completablefuture']],
 ex:{title:'Fan out, then combine',
 prompt:`Write <code>Async</code> with <code>static String profile(String id)</code>: start two async suppliers with <code>supplyAsync</code> — one returning <code>"user:" + id</code>, one returning <code>"roles:admin"</code> — combine them with <code>thenCombine</code> joining with <code>" | "</code>, add <code>exceptionally</code> returning <code>"profile unavailable"</code>, and return the result via <code>join()</code>.`,
@@ -376,7 +514,50 @@ try (var exec = Executors.newVirtualThreadPerTaskExecutor()) {
         exec.submit(() -&gt; handle(req));   // blocking I/O inside is fine!
     }
 }   // AutoCloseable: waits for tasks</div>
-<p>Rules of thumb: virtual threads for I/O-bound fan-out (API calls, DB queries); fixed platform pools still fine for CPU-bound work; don't pool virtual threads (create per task); avoid long <code>synchronized</code> blocks around blocking calls (pinning — use ReentrantLock if needed). Spring Boot 3.2+: <code>spring.threads.virtual.enabled=true</code>.</p>`,
+<p>Rules of thumb: virtual threads for I/O-bound fan-out (API calls, DB queries); fixed platform pools still fine for CPU-bound work; don't pool virtual threads (create per task); avoid long <code>synchronized</code> blocks around blocking calls (pinning — use ReentrantLock if needed). Spring Boot 3.2+: <code>spring.threads.virtual.enabled=true</code>.</p>
+<h4>Why this changes the advice rather than the language</h4>
+<p>For two decades Java had one bad choice to make. <b>Thread-per-request</b> is the model everyone can
+read and debug — a stack trace shows the whole request, a debugger steps through it, a profiler attributes
+work to it — but it caps concurrency at a few thousand because each request pins an OS thread.
+<b>Asynchronous</b> code lifted that cap and cost you all of it: control flow shredded across callbacks,
+stack traces that say nothing, and a context that has to be threaded manually.</p>
+<p>Virtual threads remove the trade. The JVM schedules many virtual threads onto few carrier threads, and
+when one blocks, the JVM <b>unmounts</b> it — stack and all — and reuses the carrier for someone else. The
+blocking call still blocks that virtual thread; it no longer blocks anything expensive.</p>
+<div class="codeSample" data-hl>platform thread   ~1 MB stack, created by the OS, thousands max
+virtual thread    stack on the heap, grows as needed, MILLIONS
+
+// so the old optimisation inverts:
+POOLING a virtual thread is pointless - creation is nearly free, and a
+pool exists to limit an expensive resource. create one per task.
+
+// and blocking stops being a sin:
+try (var exec = Executors.newVirtualThreadPerTaskExecutor()) {
+    exec.submit(() -&gt; { var u = http.send(...); return db.query(u); });
+}   // straightforward, blocking, readable - and it scales</div>
+
+<h4>The catch: pinning</h4>
+<p>A virtual thread cannot always be unmounted. If it blocks inside a <code>synchronized</code> block or a
+native frame, it is <b>pinned</b> to its carrier — and if enough of them pin at once, you have starved the
+carrier pool and reinvented the thread limit you were escaping. The fix is to replace
+<code>synchronized</code> around blocking I/O with <code>ReentrantLock</code>, which the JVM understands.
+Diagnose it with <code>-Djdk.tracePinnedThreads=full</code>. (JDK 24 removed most pinning for
+<code>synchronized</code>; on earlier runtimes, treat it as real.)</p>
+
+<h4>What virtual threads do not fix</h4>
+<p><b>They are not faster for CPU-bound work.</b> You still have the cores you have; a fixed platform pool
+sized to them remains correct.</p>
+<p><b>They remove your accidental rate limit.</b> A 200-thread pool was also, quietly, a cap of 200
+concurrent calls to the downstream service. Replace it with unbounded virtual threads and you will
+discover that cap was load-bearing — the database connection pool is now the bottleneck, or you are
+DDoSing a partner. Add explicit limits (a <code>Semaphore</code>, a bulkhead) where the pool used to
+imply them.</p>
+<p><b>ThreadLocal becomes a liability.</b> It was cheap when threads were pooled and few; with millions of
+threads, per-thread copies are memory you did not budget for. <b>Scoped values</b> are the modern
+replacement for passing context.</p>
+<p>Then <b>structured concurrency</b> completes the picture: subtasks forked in a scope are guaranteed to
+finish or be cancelled before the scope exits, so a failed fan-out cannot leave orphaned work running —
+the last piece of async that thread-per-request never handled well.</p>`,
 docs:[['Virtual threads — dev.java','https://dev.java/learn/new-features/virtual-threads/'],['JEP 444 — Virtual Threads','https://openjdk.org/jeps/444']],
 ex:{title:'Fan out on virtual threads',
 prompt:`Write <code>VFanout</code> with <code>static java.util.List&lt;String&gt; fetchAll(java.util.List&lt;String&gt; ids) throws Exception</code>: open <code>Executors.newVirtualThreadPerTaskExecutor()</code> in a <b>try-with-resources</b>, submit one <code>Callable</code> per id returning <code>"data-" + id</code>, collect Futures, then build and return the results list via <code>get()</code>.`,

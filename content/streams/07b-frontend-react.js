@@ -30,7 +30,50 @@ hints:['A switch on term maps each concept to its one-line meaning.','Props flow
 }
 
 // used elsewhere as:  &lt;Greeting name="Ada" /&gt;</div>
-<p>Two JSX rules trip up beginners: a component must return a <b>single root element</b> (wrap siblings in a parent or a <code>&lt;&gt;...&lt;/&gt;</code> fragment), and HTML attributes are camelCased — <code>class</code> becomes <code>className</code>, <code>onclick</code> becomes <code>onClick</code>. <b>Props</b> are the inputs a parent passes down; a component should treat them as read-only.</p>`,
+<p>Two JSX rules trip up beginners: a component must return a <b>single root element</b> (wrap siblings in a parent or a <code>&lt;&gt;...&lt;/&gt;</code> fragment), and HTML attributes are camelCased — <code>class</code> becomes <code>className</code>, <code>onclick</code> becomes <code>onClick</code>. <b>Props</b> are the inputs a parent passes down; a component should treat them as read-only.</p>
+<h4>What JSX actually is</h4>
+<p>It is not a template language and there is no HTML anywhere. JSX is syntax sugar that the build step
+compiles into ordinary function calls:</p>
+<div class="codeSample" data-hl>&lt;h1 className="title"&gt;Hello, {name}&lt;/h1&gt;
+
+// compiles to roughly:
+React.createElement("h1", { className: "title" }, "Hello, ", name)
+
+// which RETURNS AN OBJECT describing what you want on screen:
+{ type: "h1", props: { className: "title", children: [...] } }</div>
+<p>Once you see that, the rules stop being arbitrary. <b>One root element</b>, because a function returns
+one value. <b>camelCase attributes</b>, because they are JavaScript object keys, and
+<code>class</code> is a reserved word. <b>Capitalised component names</b>, because the compiler uses the
+case to decide between the string <code>"div"</code> and the variable <code>Greeting</code> — a
+lowercase component silently becomes an unknown HTML tag that renders nothing.</p>
+
+<h4>Expressions, not statements</h4>
+<p>The braces take an <i>expression</i> — something with a value. So <code>if</code> and <code>for</code>
+do not work inside them, and the idioms you see everywhere are the expression equivalents:</p>
+<div class="codeSample" data-hl>{isLoggedIn ? &lt;Dashboard /&gt; : &lt;Login /&gt;}      // ternary for either/or
+{error && &lt;Alert msg={error} /&gt;}              // && for "render if"
+{items.map(i =&gt; &lt;Item key={i.id} {...i} /&gt;)}  // map for lists
+
+// the && gotcha that WILL catch you:
+{items.length && &lt;List /&gt;}    // when length is 0, renders the literal "0"
+{items.length > 0 && &lt;List /&gt;}  // coerce to a boolean. always.</div>
+<p><code>false</code>, <code>null</code> and <code>undefined</code> render nothing — but <code>0</code> is
+a perfectly good thing to display, so React displays it.</p>
+
+<h4>Why props are read-only</h4>
+<p>This is not a style rule, it is what makes the model work. Data flows one way: parents pass down,
+children read. If a child could edit its props, a value could change in a place the parent knows nothing
+about, and "where did this come from?" would become unanswerable. A child that needs to cause a change
+receives a <b>function</b> to call instead, so the parent still owns the decision.</p>
+<p>Treat a component as what it looks like: a pure function of its props. Same props in, same markup out.
+That is what makes components testable in isolation, safely reusable, and easy to reason about — and it is
+the property the rest of React depends on.</p>
+
+<h4>The <code>key</code> prop, since it appears in every list</h4>
+<p>When a list re-renders, React needs to know which item is which. <code>key</code> tells it. Use a
+stable id from the data — <b>not the array index</b>, which changes when items are inserted or removed and
+causes React to reuse the wrong DOM node, producing the classic bug where input text follows the wrong
+row.</p>`,
 docs:[['Your first component — React','https://react.dev/learn/your-first-component'],['Writing markup with JSX','https://react.dev/learn/writing-markup-with-jsx']],
 ex:{title:'Write a component',lang:'jsx',
 prompt:`Write a function component <code>Greeting</code> that takes <code>props</code> and returns an <code>&lt;h1&gt;</code> containing the text <code>Hello, </code> followed by <code>{props.name}</code>.`,
@@ -50,7 +93,48 @@ hints:['A component is a capitalized function that returns JSX.','Put the dynami
   const [count, setCount] = useState(0);          // [value, setter]
   return &lt;button onClick={() =&gt; setCount(count + 1)}&gt;{count}&lt;/button&gt;;
 }</div>
-<p>The golden rule: <b>never mutate state directly</b> (<code>count++</code> or pushing into an array in place). Always call the setter with a new value, so React knows something changed and re-renders. Hooks must be called at the top level of the component, never inside loops or conditions.</p>`,
+<p>The golden rule: <b>never mutate state directly</b> (<code>count++</code> or pushing into an array in place). Always call the setter with a new value, so React knows something changed and re-renders. Hooks must be called at the top level of the component, never inside loops or conditions.</p>
+<h4>The model: state changes, React re-renders, you never touch the DOM</h4>
+<p>Coming from jQuery-style code, the instinct is to find an element and change it. React inverts that:
+you change data, and React works out what the DOM should look like now, compares it with what is
+currently there, and applies the difference. Your job is to describe <i>what the UI is</i> for a given
+state, never <i>what to update</i>.</p>
+<p>That is why mutation breaks it. React decides whether to re-render by comparing the new value with the
+old one by reference. Mutating an array in place gives it the same reference, so nothing appears to have
+changed and nothing re-renders — the data is correct and the screen is stale.</p>
+<div class="codeSample" data-hl>items.push(newItem); setItems(items);       // same reference. NO re-render.
+setItems([...items, newItem]);              // new array. renders.
+
+setUser(u =&gt; ({ ...u, name: "Ada" }));      // objects: copy, then override
+setItems(items.map(i =&gt; i.id === id ? {...i, done: true} : i));</div>
+
+<h4>Updates are asynchronous and batched</h4>
+<p>The setter does not change the variable — <code>count</code> is a <code>const</code> captured by this
+render and it will hold the same value for the whole render. What the setter does is schedule a new
+render. So this does not do what it looks like:</p>
+<div class="codeSample" data-hl>setCount(count + 1);
+setCount(count + 1);     // count is still 0 in BOTH lines -> result is 1
+
+setCount(c =&gt; c + 1);
+setCount(c =&gt; c + 1);    // functional form: each gets the latest -> 2</div>
+<p><b>Use the functional form whenever the new value depends on the old one.</b> It is the difference
+between reading a stale snapshot and reading the current value, and it matters in event handlers,
+timers and async callbacks alike.</p>
+
+<h4>Why hooks must be called unconditionally</h4>
+<p>React does not know your variable names. It tracks hooks <b>by call order</b> — first
+<code>useState</code> in this component is slot 0, second is slot 1, every render. Put one inside an
+<code>if</code> and the slots shift on the render where the condition flips, so your state values swap
+places. Hence the rule: top level of the component only, never in a loop, condition, or nested function.</p>
+
+<h4>Choosing what belongs in state</h4>
+<p>The most common design mistake is storing things that can be calculated. If you keep
+<code>items</code> and also <code>itemCount</code>, they will disagree eventually — derive it during
+render instead. Keep the <b>minimum</b> that cannot be computed from props and other state.</p>
+<p>And place it deliberately: state belongs in the closest component that needs it. When two siblings need
+the same value, <b>lift it</b> to their nearest common parent and pass it down with a setter — that is
+the standard shape of a React application, and reaching for a global store before you have tried it
+usually adds machinery you do not need.</p>`,
 docs:[['State: a component memory','https://react.dev/learn/state-a-components-memory'],['useState — React','https://react.dev/reference/react/useState']],
 ex:{title:'A counter with state',lang:'jsx',
 prompt:`Write a <code>Counter</code> component that holds a number in state starting at <code>0</code> using <code>useState</code>, and renders a <code>&lt;button&gt;</code> whose <code>onClick</code> increments it with the setter (<code>setCount(count + 1)</code>) and whose label shows the count.`,
@@ -133,7 +217,52 @@ hints:['Turn data into elements with props.items.map(item => ...).','Each mapped
   const [name, setName] = useState("");
   return &lt;input value={name} onChange={e =&gt; setName(e.target.value)} /&gt;;
 }</div>
-<p>For a whole form, keep each field in state and handle <code>onSubmit</code> on the <code>&lt;form&gt;</code>, calling <code>e.preventDefault()</code> so the browser does not do a full page reload. Controlled inputs make validation trivial: you always have the current values in state.</p>`,
+<p>For a whole form, keep each field in state and handle <code>onSubmit</code> on the <code>&lt;form&gt;</code>, calling <code>e.preventDefault()</code> so the browser does not do a full page reload. Controlled inputs make validation trivial: you always have the current values in state.</p>
+<h4>Why React wants to own the input</h4>
+<p>An uncontrolled <code>&lt;input&gt;</code> keeps its value in the DOM, which means the truth about your
+form lives somewhere React cannot see. Reading it requires reaching into the DOM, and any state you keep
+alongside it can drift out of sync.</p>
+<p>Controlled inputs remove the second source of truth. The value <i>is</i> your state, rendered; the
+change handler is the only way it moves. The loop is worth stating explicitly because it looks circular
+until it clicks:</p>
+<div class="codeSample" data-hl>state ──renders──▶ input's value
+  ▲                    │
+  └──setState──── onChange (user types)
+
+// consequences that fall straight out of this:
+// - the field cannot show anything your state does not contain
+// - value={name} with NO onChange = a permanently read-only field
+//   (React's classic "you provided a value prop without onChange" warning)
+// - value={undefined} makes it uncontrolled, and switching between the
+//   two mid-life warns loudly. initialise to "" not null.</div>
+
+<h4>Events are not quite DOM events</h4>
+<p>React wraps native events in a <b>SyntheticEvent</b> with a consistent API across browsers, attached at
+the root rather than to each node. Two practical consequences: <code>onChange</code> fires on every
+keystroke (unlike the DOM's <code>change</code>, which waits for blur), and you pass a <b>function</b>,
+not a call — <code>onClick={handleClick}</code>, because <code>onClick={handleClick()}</code> runs it
+during render and passes the return value.</p>
+<p>On forms, <code>e.preventDefault()</code> in <code>onSubmit</code> is what stops the browser doing a
+full page navigation. Keep the handler on the <code>&lt;form&gt;</code> rather than the button, so the
+Enter key works — which is an accessibility requirement, not a nicety.</p>
+
+<h4>Scaling past three fields</h4>
+<p>One <code>useState</code> per field stops being pleasant quickly. A single object keyed by field name
+collapses it, provided every input has a <code>name</code>:</p>
+<div class="codeSample" data-hl>const [form, setForm] = useState({ name: "", email: "" });
+const onChange = e =&gt;
+  setForm(f =&gt; ({ ...f, [e.target.name]: e.target.value }));   // computed key
+
+&lt;input name="email" value={form.email} onChange={onChange} /&gt;</div>
+
+<h4>Validation timing, which is a UX decision</h4>
+<p>Validating on every keystroke means telling someone their email is invalid while they are still typing
+the third character. The pattern that feels right to users: validate on <b>blur</b> first, then on every
+change <i>once the field has been touched</i>, and always on submit. Track a <code>touched</code> set
+alongside the values.</p>
+<p>Two more things worth doing properly: <b>disable the submit button while the request is in flight</b>,
+or users will double-submit; and associate every input with a <code>&lt;label htmlFor&gt;</code>, which
+gives screen readers the field name and makes the label clickable for everyone else.</p>`,
 docs:[['Responding to events','https://react.dev/learn/responding-to-events'],['Controlled inputs — React','https://react.dev/reference/react-dom/components/input']],
 ex:{title:'A controlled input',lang:'jsx',
 prompt:`Write a <code>NameField</code> component with a string state initialized to <code>""</code>. Render an <code>&lt;input&gt;</code> whose <code>value</code> is bound to that state (<code>value={name}</code>) and whose <code>onChange</code> updates it with <code>setName(e.target.value)</code>.`,
@@ -157,7 +286,53 @@ hints:['Controlled means value={state} plus an onChange that writes back to stat
   }, []);                                   // [] = run once, after first render
   return &lt;ul&gt;{users.map(u =&gt; &lt;li key={u.id}&gt;{u.name}&lt;/li&gt;)}&lt;/ul&gt;;
 }</div>
-<p>The second argument is the <b>dependency array</b>: <code>[]</code> runs the effect once; listing values runs it again whenever they change; omitting it runs after <i>every</i> render (usually a bug). Return a cleanup function to cancel subscriptions or timers when the component unmounts.</p>`,
+<p>The second argument is the <b>dependency array</b>: <code>[]</code> runs the effect once; listing values runs it again whenever they change; omitting it runs after <i>every</i> render (usually a bug). Return a cleanup function to cancel subscriptions or timers when the component unmounts.</p>
+<h4>What an effect is for — and what it is not for</h4>
+<p><code>useEffect</code> exists to <b>synchronise your component with something outside React</b>: the
+network, a timer, a subscription, the document title, a non-React widget. That framing is more useful than
+"run code after render", because it tells you when <i>not</i> to use one.</p>
+<p>The most common misuse is computing a value: storing a filtered list in state and recalculating it in
+an effect. That is a second render for no reason, plus a window where the two disagree. Just compute it
+during render. Similarly, an effect that only responds to a user action belongs in the event handler,
+where the cause is visible.</p>
+
+<h4>The dependency array is a correctness contract</h4>
+<div class="codeSample" data-hl>useEffect(fn)              // after EVERY render - usually a bug, often a loop
+useEffect(fn, [])          // once, after the first render
+useEffect(fn, [userId])    // whenever userId changes (compared by ===)
+
+// the loop everyone writes once:
+useEffect(() =&gt; { setCount(count + 1); });   // render -> effect -> state
+                                              // -> render -> effect ...</div>
+<p>Every reactive value the effect reads — props, state, functions defined in the component — belongs in
+the array. Omitting one does not simplify the code; it makes the effect read a stale value from an old
+render, which is a bug that only appears in the second scenario anyone tests. Let the lint rule fill the
+array in, and when it demands something inconvenient, treat that as a signal the effect is doing too
+much.</p>
+
+<h4>Cleanup, and the race you have not noticed</h4>
+<p>The returned function runs before the next effect and on unmount. Timers and subscriptions obviously
+need it. Fetches do too, for a reason that is easy to miss: if <code>userId</code> changes quickly, two
+requests are in flight and <b>they can resolve out of order</b>, leaving the first response overwriting
+the second. The user sees the wrong data with no error anywhere.</p>
+<div class="codeSample" data-hl>useEffect(() =&gt; {
+  const ac = new AbortController();
+  fetch("/api/users/" + userId, { signal: ac.signal })
+    .then(r =&gt; r.json()).then(setUser)
+    .catch(e =&gt; { if (e.name !== "AbortError") setError(e); });
+  return () =&gt; ac.abort();        // cancel the previous request
+}, [userId]);</div>
+<p>In development, React 18's Strict Mode deliberately mounts, unmounts and remounts every component to
+surface exactly this class of bug. If something breaks or double-fires only in development, that is not
+noise — it is Strict Mode telling you the cleanup is missing.</p>
+
+<h4>The three states every fetch has</h4>
+<p>Loading, error, and data — and a component that renders only the third will flash empty and then fail
+silently when the request does. Handle all three from the start.</p>
+<p>Worth knowing where this goes: fetching in <code>useEffect</code> means data loads only after the
+component renders, and every component does its own caching, deduplication and revalidation badly. That is
+why production applications use a data library (TanStack Query, SWR) or a framework's loader. Learn the
+effect first so the library is not magic — then stop hand-rolling this.</p>`,
 docs:[['Synchronizing with effects','https://react.dev/learn/synchronizing-with-effects'],['Fetching data — React','https://react.dev/learn/you-might-not-need-an-effect#fetching-data']],
 ex:{title:'Fetch on mount',lang:'jsx',
 prompt:`Write a <code>Users</code> component with an array state starting <code>[]</code>. In a <code>useEffect</code> with an empty dependency array, <code>fetch("/api/users")</code>, parse the JSON, and store it with the setter. Render the users as a keyed list.`,

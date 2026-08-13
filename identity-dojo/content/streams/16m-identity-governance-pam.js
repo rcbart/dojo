@@ -49,20 +49,17 @@ the ticket stays open until the entitlement is gone — is what separates govern
 should hold, birthright access is granted automatically from HR data, and the campaign asks only about
 the deviations. That turns 400 rows into 12, and 12 rows get read.`,
 docs:[['Identity governance','https://en.wikipedia.org/wiki/Identity_governance'],['Access certification','https://www.gartner.com/en/information-technology/glossary/identity-governance-and-administration-iga']],
-ex:{title:'Certify or revoke',
-prompt:`Write class <code>Review</code> with <code>static String decision(boolean stillNeeded)</code> that returns <code>"keep"</code> when the access is still needed and <code>"revoke"</code> otherwise. Use a single conditional expression.`,
-starter:`public class Review {
-    static String decision(boolean stillNeeded) {
-        return null;
-    }
+ex:{title:'Certify or revoke',lang:'js',
+run:{call:'decision',cases:[{name:'certified access is kept',args:[true],expect:'keep'},{name:'uncertified access is revoked',args:[false],expect:'revoke'}]},
+prompt:`Write <code>function decision(stillNeeded)</code> that returns <code>"keep"</code> when the access is still needed and <code>"revoke"</code> otherwise. Use a single conditional expression.`,
+starter:`function decision(stillNeeded) {
+  return null;
 }`,
-solution:`public class Review {
-    static String decision(boolean stillNeeded) {
-        return stillNeeded ? "keep" : "revoke";
-    }
+solution:`function decision(stillNeeded) {
+  return stillNeeded ? "keep" : "revoke";
 }`,
 tests:[{d:'keeps needed access, revokes the rest',re:'stillNeeded\\s*\\?\\s*"keep"\\s*:\\s*"revoke"'}],
-behavior:`decision(true) is "keep", decision(false) is "revoke". Unconfirmed access defaults to revoked, which is how reviews reverse privilege creep.`,
+behavior:`decision(true) is "keep", decision(false) is "revoke". Unconfirmed access defaults to revoked, which is how reviews reverse privilege creep. Your function is called with both inputs and its return value compared for real.`,
 hints:['The ternary operator condition ? a : b fits in one line.','Return "keep" for true and "revoke" for false.','Default-deny: anything not certified should be revoked.']}},
 
 {id:'ig2',title:'Entitlements & separation of duties',body:`
@@ -192,20 +189,17 @@ weakness — they are what keeps the system in use.</p>
 leaving the highest-privilege credentials in the estate untouched. That gap is the subject of the
 non-human identity lesson later in this stream, and it is usually the larger population.</p>`,
 docs:[['Privileged access management','https://en.wikipedia.org/wiki/Privileged_access_management'],['Just-in-time access','https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-configure']],
-ex:{title:'Grant privilege safely',
-prompt:`Write class <code>Pam</code> with <code>static boolean grant(boolean approved, boolean timeBoxed)</code> that grants elevated access only when it was both approved and time-boxed.`,
-starter:`public class Pam {
-    static boolean grant(boolean approved, boolean timeBoxed) {
-        return false;
-    }
+ex:{title:'Grant privilege safely',lang:'js',
+run:{call:'grant',cases:[{name:'approved and time-boxed is granted',args:[true,true],expect:true},{name:'approved but standing is refused',args:[true,false],expect:false},{name:'time-boxed but unapproved is refused',args:[false,true],expect:false},{name:'neither is refused',args:[false,false],expect:false}]},
+prompt:`Write <code>function grant(approved, timeBoxed)</code> that grants elevated access only when it was <b>both</b> approved and time-boxed.`,
+starter:`function grant(approved, timeBoxed) {
+  return false;
 }`,
-solution:`public class Pam {
-    static boolean grant(boolean approved, boolean timeBoxed) {
-        return approved && timeBoxed;
-    }
+solution:`function grant(approved, timeBoxed) {
+  return approved && timeBoxed;
 }`,
 tests:[{d:'must be approved',re:'approved\\s*&&'},{d:'must be time-boxed',re:'&&\\s*timeBoxed'}],
-behavior:`grant(true,true) is true; grant(true,false) is false (standing privilege is refused); grant(false,true) is false. JIT elevation that expires is the goal.`,
+behavior:`grant(true,true) is true; grant(true,false) is false (standing privilege is refused); grant(false,true) is false. All four combinations are executed against your function.`,
 hints:['Both conditions must hold, so combine them with &&.','Approved alone is not enough without a time box.','Standing (non-time-boxed) privilege must be refused.']}},
 
 {id:'ig4',title:'Secrets management & rotation',body:`
@@ -264,20 +258,17 @@ and honeytoken credentials that exist only to be stolen and alert when used.</p>
 <p>And when a secret does leak: <b>rotate first, investigate second</b>. The investigation can take days;
 the exposure should not.</p>`,
 docs:[['Secrets management — Vault','https://developer.hashicorp.com/vault/docs/what-is-vault'],['Key management — NIST','https://csrc.nist.gov/projects/key-management']],
-ex:{title:'Is a secret due for rotation?',
-prompt:`Write class <code>Secrets</code> with <code>static boolean rotateDue(long ageDays, long maxDays)</code> that returns true when the secret&#8217;s age has reached or exceeded the maximum allowed age.`,
-starter:`public class Secrets {
-    static boolean rotateDue(long ageDays, long maxDays) {
-        return false;
-    }
+ex:{title:'Is a secret due for rotation?',lang:'js',
+run:{call:'rotateDue',cases:[{name:'due exactly at the maximum age',args:[90,90],expect:true},{name:'due past the maximum age',args:[91,90],expect:true},{name:'not yet due',args:[30,90],expect:false},{name:'brand new secret',args:[0,1],expect:false}]},
+prompt:`Write <code>function rotateDue(ageDays, maxDays)</code> that returns <code>true</code> when the secret&#8217;s age has <b>reached or exceeded</b> the maximum allowed age.`,
+starter:`function rotateDue(ageDays, maxDays) {
+  return false;
 }`,
-solution:`public class Secrets {
-    static boolean rotateDue(long ageDays, long maxDays) {
-        return ageDays >= maxDays;
-    }
+solution:`function rotateDue(ageDays, maxDays) {
+  return ageDays >= maxDays;
 }`,
 tests:[{d:'due once age reaches the maximum',re:'ageDays\\s*>=\\s*maxDays'},{d:'does not hardcode a result',re:'return\\s+(true|false)\\s*;',not:true}],
-behavior:`rotateDue(90,90) is true, rotateDue(91,90) is true, rotateDue(30,90) is false. Rotating on schedule shrinks the window a leaked secret is useful.`,
+behavior:`rotateDue(90,90) is true, rotateDue(91,90) is true, rotateDue(30,90) is false. The boundary case is the one that matters and it is executed for real, so an off-by-one here actually fails.`,
 hints:['Reached or exceeded means the >= comparison.','Compare ageDays against maxDays directly.','Return the boolean result of the comparison.']}},
 
 {id:'ig5',title:'CIAM vs workforce IAM',body:`
@@ -336,24 +327,21 @@ manage their own users, bring their own IdP, and see only their own tenant. That
 workforce, and treating it as either is a common and expensive error. It gets its own treatment in the
 multi-tenancy lesson.</p>`,
 docs:[['CIAM vs IAM','https://auth0.com/blog/what-is-ciam/'],['Workforce vs customer identity','https://www.okta.com/customer-identity/']],
-ex:{title:'Who is the audience?',
-prompt:`Write class <code>Iam</code> with <code>static String audience(String type)</code>: <code>"ciam"</code>→<code>"customers"</code>, <code>"workforce"</code>→<code>"employees"</code>, and <code>"unknown"</code> otherwise.`,
-starter:`public class Iam {
-    static String audience(String type) {
-        return null;
-    }
+ex:{title:'Who is the audience?',lang:'js',
+run:{call:'audience',cases:[{args:['ciam'],expect:'customers'},{args:['workforce'],expect:'employees'},{name:'anything else is unknown',args:['b2b'],expect:'unknown'},{args:[''],expect:'unknown'}]},
+prompt:`Write <code>function audience(type)</code>: <code>"ciam"</code>&rarr;<code>"customers"</code>, <code>"workforce"</code>&rarr;<code>"employees"</code>, and <code>"unknown"</code> for anything else.`,
+starter:`function audience(type) {
+  return null;
 }`,
-solution:`public class Iam {
-    static String audience(String type) {
-        switch (type) {
-            case "ciam":      return "customers";
-            case "workforce": return "employees";
-            default:          return "unknown";
-        }
-    }
+solution:`function audience(type) {
+  switch (type) {
+    case "ciam":      return "customers";
+    case "workforce": return "employees";
+    default:          return "unknown";
+  }
 }`,
-tests:[{d:'CIAM serves customers',re:'"ciam".*?"customers"',flags:'s'},{d:'workforce IAM serves employees',re:'"workforce".*?"employees"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
-behavior:`audience("ciam") is "customers", audience("workforce") is "employees", audience("x") is "unknown". Same protocols, different priorities: experience and scale for customers, control for employees.`,
+tests:[{d:'CIAM serves customers',re:'"ciam"[\\s\\S]*?"customers"'},{d:'workforce IAM serves employees',re:'"workforce"[\\s\\S]*?"employees"'},{d:'unknown default',re:'"unknown"'}],
+behavior:`audience("ciam") is "customers", audience("workforce") is "employees", audience("b2b") is "unknown" — and B2B really is the third population that fits neither, as the lesson explains.`,
 hints:['A two-case switch with a default covers it.','CIAM is customer-facing; workforce IAM is employee-facing.','Anything else returns unknown.']}},
 {id:'ig6',title:'Consent & privacy in CIAM',body:`
 <p>Consumer identity (CIAM) means holding real people's personal data, so <b>consent and privacy are first-class</b>, not an afterthought — and often legally required (GDPR, CCPA).</p>
@@ -365,27 +353,18 @@ hints:['A two-case switch with a default covers it.','CIAM is customer-facing; w
 </ul>
 <p><b>Privacy by design</b>: default to the least data, encrypt PII, make consent revocable, and keep an auditable record of what each user agreed to and when. Consent you can't prove or revoke isn't real consent.</p>`,
 docs:[['GDPR consent','https://gdpr.eu/gdpr-consent-requirements/'],['Privacy by design','https://en.wikipedia.org/wiki/Privacy_by_design']],
-ex:{title:'Validate consent & minimization',
-prompt:`Write class <code>Consent</code> with <code>static boolean valid(boolean explicit, boolean granular, boolean revocable)</code> that is true only when consent is all three, and <code>static boolean dataMinimized(int collected, int needed)</code> returning true only when you collected no more than you needed (<code>collected &lt;= needed</code>).`,
-starter:`public class Consent {
-    static boolean valid(boolean explicit, boolean granular, boolean revocable) {
-        return false;
-    }
-    static boolean dataMinimized(int collected, int needed) {
-        return false;
-    }
+ex:{title:'Is this consent valid?',lang:'js',
+run:{call:'valid',cases:[{name:'explicit, granular and revocable',args:[true,true,true],expect:true},{name:'not explicit',args:[false,true,true],expect:false},{name:'not granular',args:[true,false,true],expect:false},{name:'not revocable',args:[true,true,false],expect:false}]},
+prompt:`Write <code>function valid(explicit, granular, revocable)</code> that returns <code>true</code> only when consent is <b>all three</b>: explicitly given, granular per purpose, and revocable.`,
+starter:`function valid(explicit, granular, revocable) {
+  return false;
 }`,
-solution:`public class Consent {
-    static boolean valid(boolean explicit, boolean granular, boolean revocable) {
-        return explicit && granular && revocable;
-    }
-    static boolean dataMinimized(int collected, int needed) {
-        return collected <= needed;
-    }
+solution:`function valid(explicit, granular, revocable) {
+  return explicit && granular && revocable;
 }`,
-tests:[{d:'valid consent is explicit, granular and revocable',re:'explicit\\s*&&\\s*granular\\s*&&\\s*revocable'},{d:'data minimization: collected <= needed',re:'collected\\s*<=\\s*needed'}],
-behavior:`valid(true,true,true) is true; if consent is implicit, all-or-nothing, or cannot be revoked, it is false. dataMinimized(3,5) is true; dataMinimized(9,5) is false — you collected more than you needed. Consent must be provable and revocable to count.`,
-hints:['Real consent is explicit, granular, and revocable — combine with &&.','Data minimization means collected is at most needed.','In OIDC the consent screen approves scopes; record what was agreed.']}},
+tests:[{d:'consent must be explicit',re:'explicit\\s*&&'},{d:'consent must be granular',re:'granular'},{d:'consent must be revocable',re:'revocable'}],
+behavior:`valid(true,true,true) is true; dropping any one makes it false. Pre-ticked boxes are not explicit, all-or-nothing is not granular, and consent you cannot withdraw is not consent — each is executed as its own case.`,
+hints:['Three conditions joined with &&.','A pre-ticked box is not explicit consent.','If it cannot be withdrawn, it is not consent.']}},
 {id:'igaudit',title:'Identity audit, logging & compliance',body:`
 <p>You cannot prove security you cannot show. Identity systems must keep an <b>audit trail</b> of the events that matter — logins and failures, MFA challenges, password and privilege changes, consent grants, and every admin action — recording <b>who did what, to whom, and when</b>. These logs should be tamper-evident and retained per policy.</p>
 <p>What the logs power:</p>
@@ -483,35 +462,17 @@ user authority. Every problem above applies, faster, and with the added property
 authority may be exercised in response to content it read. The governance answer is the same and more
 important: short-lived, narrowly scoped, owned, attributable, and expiring by default.</p>`,
 docs:[['OWASP — Non-Human Identities Top 10','https://owasp.org/www-project-non-human-identities-top-10/'],['NIST SP 800-53 AC-2 — Account Management','https://csrc.nist.gov/projects/risk-management/sp800-53-controls/release-search#!/control?version=5.1&number=AC-2'],['SPIFFE — workload identity','https://spiffe.io/docs/latest/spiffe-about/overview/'],['OWASP — Secrets Management Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html']],
-ex:{title:'Govern a non-human identity',
-prompt:`Write <code>NonHumanIdentity</code> with three methods. <code>static boolean governable(String owner, boolean ownerStillEmployed, long expiresAt, long now)</code> requires a non-null owner who is still employed, and an expiry in the future — an identity with no current owner cannot be governed. <code>static boolean staleCandidate(long lastUsedDaysAgo, int thresholdDays)</code> is true when it has not been used within the threshold. <code>static String strongestOption(boolean federationPossible, boolean secretManagerAvailable)</code> returns <code>"workload-federation"</code> when federation is possible, else <code>"managed-secret"</code> when a manager is available, else <code>"static-secret"</code>.`,
-starter:`public class NonHumanIdentity {
-    static boolean governable(String owner, boolean ownerStillEmployed, long expiresAt, long now) {
-        return false;
-    }
-    static boolean staleCandidate(long lastUsedDaysAgo, int thresholdDays) {
-        return false;
-    }
-    static String strongestOption(boolean federationPossible, boolean secretManagerAvailable) {
-        return null;
-    }
+ex:{title:'Can this non-human identity be governed?',lang:'js',
+run:{call:'governable',cases:[{name:'named owner, still employed, not expired',args:['ada',true,2000,1000],expect:true},{name:'no owner',args:['',true,2000,1000],expect:false},{name:'owner has left',args:['ada',false,2000,1000],expect:false},{name:'credential already expired',args:['ada',true,900,1000],expect:false}]},
+prompt:`Write <code>function governable(owner, ownerStillEmployed, expiresAt, now)</code> returning <code>true</code> only when the identity has a <b>non-empty named owner</b>, that owner <b>still works here</b>, and the credential <b>has not expired</b> (<code>expiresAt &gt; now</code>).`,
+starter:`function governable(owner, ownerStillEmployed, expiresAt, now) {
+  return false;
 }`,
-tests:[{d:'an owner is required',re:'owner\\s*!=\\s*null|null\\s*!=\\s*owner'},{d:'the owner must still be employed',re:'ownerStillEmployed'},{d:'the expiry must be in the future',re:'expiresAt\\s*>\\s*now|now\\s*<\\s*expiresAt'},{d:'staleness is measured against a threshold',re:'lastUsedDaysAgo\\s*>=?\\s*thresholdDays'},{d:'federation is the strongest option',re:'"workload-federation"'},{d:'a managed secret is second best',re:'"managed-secret"'},{d:'a static secret is the fallback',re:'"static-secret"'}],
-behavior:`governable("ada", true, 200, 100) is true. It is false when the owner is null, when the owner has left — the single most common real finding, since an identity nobody owns is one nobody will ever dare disable — and when the expiry has already passed. staleCandidate(120, 90) is true and staleCandidate(30, 90) is false; last-used is the easiest governance win available, because an identity unused for ninety days can usually be removed with no argument. strongestOption(true, true) is workload-federation: the strongest control is having no static credential at all, so there is nothing to leak, rotate or find in a repository. strongestOption(false, true) is managed-secret and strongestOption(false, false) is static-secret.`,
-hints:['Three conditions joined with &amp;&amp;, including a future expiry.','One comparison for staleness.','A short if-chain, ordered strongest first.'],
-solution:`public class NonHumanIdentity {
-    static boolean governable(String owner, boolean ownerStillEmployed, long expiresAt, long now) {
-        // no current owner means nobody will ever dare disable it
-        return owner != null && ownerStillEmployed && expiresAt > now;
-    }
-    static boolean staleCandidate(long lastUsedDaysAgo, int thresholdDays) {
-        return lastUsedDaysAgo >= thresholdDays;
-    }
-    static String strongestOption(boolean federationPossible, boolean secretManagerAvailable) {
-        // best of all is no static credential to leak, rotate or lose
-        if (federationPossible) return "workload-federation";
-        if (secretManagerAvailable) return "managed-secret";
-        return "static-secret";
-    }
-}`}}
+solution:`function governable(owner, ownerStillEmployed, expiresAt, now) {
+  // an unowned or orphaned credential cannot be reviewed by anyone
+  return owner !== "" && ownerStillEmployed && expiresAt > now;
+}`,
+tests:[{d:'requires a named owner',re:'owner\\s*!==?\\s*""'},{d:'the owner must still be employed',re:'ownerStillEmployed'},{d:'the credential must not have expired',re:'expiresAt\\s*>\\s*now'}],
+behavior:`governable("ada",true,2000,1000) is true. An empty owner, a departed owner, or a lapsed expiry each make it false — the three ways service accounts become the ungoverned majority.`,
+hints:['Three conditions joined with &&.','An empty string is not a named owner.','Expiry is in the future when expiresAt > now.']}}
 ]});

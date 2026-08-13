@@ -55,9 +55,10 @@ both courses on every push and fails the deploy if either content check fails.)*
   across the whole catalog.
 - **🧠 Quick check** — multiple-choice questions with instant feedback: not just "wrong", but which
   answer was right, why it is right, and why the option you picked is not. **Options are shuffled per
-  lesson visit**, so the answer position can never be memorised. Coverage is thin in DevDojo (41
-  questions, auto-generated from the exercise specs) — the hand-authored bank largely went to
-  IdentityDojo, and broadening it here is an open item.
+  lesson visit**, so the answer position can never be memorised. DevDojo now carries **140 hand-authored
+  questions across 47 lessons** — each with a written explanation of why the right answer is right and
+  why every distractor is wrong — plus 41 auto-generated from the exercise specs. IdentityDojo carries a
+  further 297. Extending the hand-authored bank to the remaining lessons is an open item.
 - **📖 Glossary** — 10 domains / 272 terms, collapsible and searchable, doubling as the in-lesson
   click-to-explain source.
 - **Belts & capstones** — per-domain percentage belts (white → black), dan sub-tracks for advanced

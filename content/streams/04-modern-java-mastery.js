@@ -107,7 +107,49 @@ Predicate&lt;String&gt; nonNull  = s -&gt; s != null;
 Predicate&lt;String&gt; nonEmpty = s -&gt; !s.isEmpty();
 Predicate&lt;String&gt; valid    = nonNull.and(nonEmpty);
 Predicate&lt;String&gt; invalid  = valid.negate();</div>
-<p>You can also define your own functional interface — any interface with exactly one abstract method, ideally marked <code>@FunctionalInterface</code> so the compiler enforces it. Default methods let you give it combinators too. One rule to remember: lambdas capture local variables only if they are <b>effectively final</b> — assigned once, never changed.</p>`,
+<p>You can also define your own functional interface — any interface with exactly one abstract method, ideally marked <code>@FunctionalInterface</code> so the compiler enforces it. Default methods let you give it combinators too. One rule to remember: lambdas capture local variables only if they are <b>effectively final</b> — assigned once, never changed.</p>
+<h4>Why composition rather than one big lambda</h4>
+<p>You could always write <code>n -&gt; (n + 3) * 2</code>. What composition buys is that each piece is
+<b>named, tested and reusable</b> — and, more importantly, that pieces can be <i>chosen at runtime</i>. A
+validation rule built by <code>and</code>-ing predicates selected from configuration is not something a
+hand-written expression can do.</p>
+<div class="codeSample" data-hl>// rules assembled from data, not hardcoded
+Predicate&lt;Order&gt; rule = enabledRules.stream()
+    .map(RULES::get)
+    .reduce(o -&gt; true, Predicate::and);     // identity = "always passes"
+
+// note the identity element: for and() it is TRUE, for or() it is FALSE.
+// getting that backwards makes an empty rule set reject everything.</div>
+
+<h4><code>andThen</code> versus <code>compose</code>, and how to never confuse them again</h4>
+<p>Read <code>andThen</code> left to right — "do me, <i>and then</i> the other" — and
+<code>compose</code> right to left, matching the mathematical notation f∘g where g runs first.
+<code>andThen</code> is the one you want almost always; <code>compose</code> exists because the maths
+convention does.</p>
+<p>One asymmetry worth knowing: <code>Consumer.andThen</code> runs both consumers on the <i>same</i> input
+rather than chaining outputs, because a consumer has nothing to pass on.</p>
+
+<h4>Effectively final, explained</h4>
+<p>A lambda captures the <b>value</b> of a local variable, not the variable itself — the local lives on the
+stack of a method that may have returned by the time the lambda runs, so there is nothing to reference.
+Java therefore requires captured locals to be effectively final, making the copy unambiguous.</p>
+<p>Fields are different: a lambda in an instance method captures <code>this</code>, so it sees field
+changes. That asymmetry is the source of the common workaround — wrapping a counter in an array to mutate
+it from a lambda — which does compile and is a warning sign in concurrent code, since nothing about it is
+thread-safe.</p>
+
+<h4>Writing your own functional interface</h4>
+<p>Reach for one when the JDK's names would misrepresent the intent. <code>Function&lt;Order, Boolean&gt;</code>
+technically works; <code>OrderRule</code> with a method called <code>permits</code> says what it means, can
+carry default combinators of its own, and can declare a checked exception — which none of the standard
+interfaces allow, and which is why lambdas that do I/O are so awkward.</p>
+<p>Mark it <code>@FunctionalInterface</code>. It changes nothing at runtime and makes the compiler reject a
+second abstract method, so nobody breaks every caller by accident.</p>
+
+<h4>Where composition stops being clearer</h4>
+<p>Three or four combinators read beautifully. Twelve, with nested <code>compose</code> calls, read worse
+than the imperative version and debug far worse — a stack trace through composed lambdas names none of the
+steps. Compose when the pieces are meaningful on their own; write a method when they are not.</p>`,
 docs:[['Combining lambdas — dev.java','https://dev.java/learn/lambdas/combining-chaining-composing/'],['Function.andThen / compose — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html']],
 ex:{title:'Compose and invent',
 prompt:`(1) In class <code>Combo</code>, define <code>Function&lt;Integer,Integer&gt; PLUS3</code> (adds 3) and <code>TIMES2</code> (doubles) as lambdas, and <code>PIPELINE</code> as PLUS3 <b>andThen</b> TIMES2 — PLUS3 runs first, then TIMES2, so <code>PIPELINE.apply(1) == 8</code>. (2) Define your own <code>@FunctionalInterface Validator&lt;T&gt;</code> with abstract <code>boolean check(T t)</code> and a <b>default method</b> <code>Validator&lt;T&gt; and(Validator&lt;T&gt; other)</code> returning a validator that passes only when <b>both</b> this and other pass. (3) In Combo, define <code>Validator&lt;String&gt; STRONG</code> that requires (length ≥ 8) <b>and</b> (contains a digit, use a lambda with <code>chars().anyMatch(Character::isDigit)</code>).`,
@@ -493,7 +535,53 @@ list.forEach(System.out::println);               // internal iteration
 for (var e : map.entrySet())                     // maps: iterate entries
     use(e.getKey(), e.getValue());
 IntStream.range(0, 5).forEach(i -&gt; ...);         // index as a stream</div>
-<p>The enhanced for works on anything implementing <code>Iterable&lt;T&gt;</code> — implement it (return an <code>Iterator</code>) and your own classes work in for-each too. Never mutate a collection while enhanced-for-ing it (<code>ConcurrentModificationException</code>); use <code>removeIf</code> or an explicit <code>Iterator.remove()</code>.</p>`,
+<p>The enhanced for works on anything implementing <code>Iterable&lt;T&gt;</code> — implement it (return an <code>Iterator</code>) and your own classes work in for-each too. Never mutate a collection while enhanced-for-ing it (<code>ConcurrentModificationException</code>); use <code>removeIf</code> or an explicit <code>Iterator.remove()</code>.</p>
+<h4>External versus internal iteration</h4>
+<p>The distinction underneath all of these is who controls the loop. With a <code>for</code> loop
+<b>you</b> do: you can <code>break</code>, <code>continue</code>, keep an index, or mutate as you go. With
+<code>forEach</code> and streams the <b>library</b> does, and you supply what to do with each element —
+which is what allows it to reorder, parallelise or short-circuit internally.</p>
+<p>That is the real trade, and it explains why <code>forEach</code> has no <code>break</code>: you gave up
+control of the loop. Wanting one is a signal to use <code>anyMatch</code>, <code>findFirst</code> or
+<code>takeWhile</code>, which express the intent directly, or to go back to a plain loop.</p>
+
+<h4>Choosing between them</h4>
+<div class="codeSample" data-hl>indexed for       you need the index, or to modify the list in place
+enhanced for      the default. readable, debuggable, breakable.
+forEach           one short action per element - especially a method ref
+stream            you are TRANSFORMING: filter/map/collect
+IntStream.range   an index without the ceremony
+
+// and the one nobody defends:
+// list.stream().forEach(...)  is a slower enhanced-for with a worse
+// stack trace. if there is no intermediate operation, use the loop.</div>
+
+<h4><code>ConcurrentModificationException</code>, properly understood</h4>
+<p>It is not a concurrency error despite the name — a single thread triggers it. Collections keep a
+modification counter; the iterator records it at creation and checks it on every step, so structural change
+during iteration is detected and fails fast rather than silently skipping elements.</p>
+<div class="codeSample" data-hl>for (String s : list) if (s.isBlank()) list.remove(s);   // CME
+
+list.removeIf(String::isBlank);                          // the answer
+// or, when the logic is more than a predicate:
+for (var it = list.iterator(); it.hasNext(); )
+    if (test(it.next())) it.remove();     // the iterator's own remove
+
+// note: "structural" means adding or removing. SETTING an existing
+// element is fine. and the check is best-effort - never write code
+// that depends on the exception being thrown.</div>
+
+<h4>Making your own types work in a for-each</h4>
+<p>Implement <code>Iterable&lt;T&gt;</code> and return an iterator — one method, and your type participates
+in the language construct. Worth doing for anything that is conceptually a sequence, because callers then
+need no special API. If you also want streams, <code>StreamSupport.stream(spliterator(), false)</code>
+bridges the two.</p>
+
+<h4>Iterating maps without the extra lookup</h4>
+<p><code>for (var k : map.keySet()) map.get(k)</code> does two lookups per entry and reads worse.
+<code>entrySet()</code> gives you both at once, and <code>map.forEach((k, v) -&gt; ...)</code> is cleaner
+still. Where order matters, remember <code>HashMap</code> gives you none — that is
+<code>LinkedHashMap</code> (insertion order) or <code>TreeMap</code> (sorted).</p>`,
 docs:[['The for statement — Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/for.html'],['Iterable — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html']],
 ex:{title:'Make it Iterable',
 prompt:`Write class <code>Countdown implements Iterable&lt;Integer&gt;</code>: constructor takes <code>int from</code>, and iteration yields <code>from, from-1, … 1</code>. Implement <code>iterator()</code> returning an anonymous or inner <code>Iterator&lt;Integer&gt;</code> with proper <code>hasNext()</code>/<code>next()</code>. Then <code>static int sum(Countdown c)</code> must total the values using an <b>enhanced for</b> loop.`,

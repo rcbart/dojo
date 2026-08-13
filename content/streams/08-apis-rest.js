@@ -8,7 +8,52 @@ PUT    /accounts/42         → replace (200)
 PATCH  /accounts/42         → partial update (200)
 DELETE /accounts/42         → delete (204)
 GET    /accounts/42/holdings → nested resource</div>
-<p>Rules of thumb: plural nouns, never verbs in paths (<code>/getAccount</code> ✗); GET is safe &amp; cacheable; PUT and DELETE are <b>idempotent</b> (same call twice = same result); statelessness — each request carries its own auth.</p>`,
+<p>Rules of thumb: plural nouns, never verbs in paths (<code>/getAccount</code> ✗); GET is safe &amp; cacheable; PUT and DELETE are <b>idempotent</b> (same call twice = same result); statelessness — each request carries its own auth.</p>
+<h4>The idea behind the constraint</h4>
+<p>REST's value is not the verbs — it is that <b>the interface is uniform across every API that follows
+it</b>. A developer who has never seen your service can guess that <code>GET /accounts/42</code> reads an
+account and that <code>DELETE</code> on the same URL removes it. That predictability is the entire return
+on the discipline, which is why the rules are worth following even where a bespoke design would be
+marginally more convenient.</p>
+<p>The mental shift is from <b>procedures to resources</b>. Not "what operations does my service offer?"
+but "what things does it manage, and what are their addresses?" — the verbs are already decided.</p>
+
+<h4>The three properties that make HTTP work</h4>
+<div class="codeSample" data-hl>SAFE        does not change anything.        GET, HEAD, OPTIONS
+            -> so crawlers, prefetchers and proxies may call it freely.
+            -> a GET that mutates WILL be triggered by something you did
+               not expect. this is not theoretical.
+
+IDEMPOTENT  same call N times == same call once.  GET, PUT, DELETE
+            -> the client can RETRY safely after a timeout.
+            -> POST is not, which is why retries need an idempotency key.
+
+CACHEABLE   the response may be stored and reused.  GET mostly
+            -> ETag / If-None-Match turns a repeat read into a 304.</div>
+<p>Note what idempotent does not mean: it is about the <i>resulting state</i>, not the response. Two
+<code>DELETE</code>s leave the resource equally gone — the second may return 404, and that is fine.</p>
+
+<h4>PUT vs PATCH, which people get wrong constantly</h4>
+<p><code>PUT</code> <b>replaces</b> the resource with the body you sent — so a field you omitted is a field
+you deleted. That is the semantics, and clients that send partial bodies to <code>PUT</code> are silently
+wiping data. <code>PATCH</code> applies a partial change, and because "partial" needs a format, the honest
+version specifies one (JSON Merge Patch, RFC 7396, is the pragmatic choice).</p>
+
+<h4>Status codes as part of the contract</h4>
+<p>They are not decoration; clients branch on them. <code>201</code> with a <code>Location</code> header
+tells the caller where the new thing lives. <code>204</code> means success with nothing to say.
+<code>202</code> means accepted for later processing, which is honest for async work.
+<code>409</code> means a conflict with current state, <code>422</code> means understood but unprocessable,
+and <code>4xx</code> versus <code>5xx</code> tells the caller whether retrying could possibly help.</p>
+<p>The cardinal sin is <code>200</code> with an error inside the body: it breaks every client's error
+handling, every monitor, and every cache.</p>
+
+<h4>Where the purity stops being useful</h4>
+<p>Some operations are genuinely not CRUD on a noun. "Cancel this order" is a real business action with
+rules, and contorting it into <code>PATCH /orders/42 {"status":"cancelled"}</code> hides the fact that
+cancelling is not the same as setting a field. Modelling it as a sub-resource —
+<code>POST /orders/42/cancellations</code> — keeps the interface honest. And HATEOAS, the level of REST
+almost nobody implements, is worth knowing about so you can say clearly that you have chosen not to.</p>`,
 docs:[['REST — MDN glossary','https://developer.mozilla.org/en-US/docs/Glossary/REST'],['HTTP methods — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods']],
 ex:{title:'Design the endpoints',lang:'http',
 prompt:`Design endpoints for a <b>portfolio</b> API (a portfolio has many <b>positions</b>). One per numbered line, format <code>VERB /path → status</code>: (1) list portfolios, (2) create a portfolio, (3) fetch portfolio <code>p1</code>, (4) replace portfolio <code>p1</code> entirely, (5) delete position <code>x9</code> inside portfolio <code>p1</code>, (6) the status for fetching a portfolio that doesn't exist.`,
@@ -264,7 +309,50 @@ Content-Type: application/problem+json
   "detail": "Balance 30.00 is below requested 100.00",
   "instance": "/accounts/42/withdrawals"
 }</div>
-<p>Never leak stack traces; never return 200 with <code>{"error": ...}</code> inside; use 400 for malformed syntax vs 422 for valid-but-unprocessable semantics.</p>`,
+<p>Never leak stack traces; never return 200 with <code>{"error": ...}</code> inside; use 400 for malformed syntax vs 422 for valid-but-unprocessable semantics.</p>
+<h4>Why idempotency is a networking problem, not a preference</h4>
+<p>The scenario is unavoidable: a client sends a payment request, and the response never arrives. The
+client cannot distinguish "the request never landed" from "it succeeded and the response was lost". Both
+look identical. So it must either retry — and risk charging twice — or not retry, and risk losing a
+payment that never happened.</p>
+<p>An idempotency key resolves it. The client generates a unique key per <i>logical operation</i> and sends
+it with every attempt; the server records the key with the result and returns the stored result for any
+repeat.</p>
+<div class="codeSample" data-hl>POST /charges
+Idempotency-Key: 9f2c1a...        &lt;- generated by the CLIENT, once,
+                                     and REUSED for every retry
+// server:
+//   key unseen        -> process, store (key -> response), return it
+//   key seen, done    -> return the STORED response. do not process.
+//   key seen, running -> 409, tell the client to retry shortly
+
+// the subtlety that bites: store the key IN THE SAME TRANSACTION as
+// the work. record it afterwards and a crash in between gives you a
+// charge with no key - so the retry charges again.
+
+// and hash the request body against the key: same key with a DIFFERENT
+// body is a client bug, and should be a 422, not a silent wrong answer.</div>
+
+<h4>The error contract, and why consistency beats cleverness</h4>
+<p>Without a standard shape, each endpoint invents its own and clients end up with a parser per route. RFC
+9457's <code>application/problem+json</code> gives one shape everywhere:
+<code>type</code> (a URI identifying the error class — the field clients should branch on),
+<code>title</code>, <code>status</code>, <code>detail</code> (human-readable, and safe to change), and
+<code>instance</code>.</p>
+<p>Three rules for what goes in it. <b>Machine-readable first</b>: clients branch on
+<code>type</code> and status, never on the prose in <code>detail</code>. <b>Actionable</b>: say which
+field, and what was wrong with it — add an <code>errors</code> array for validation, since one 422 per
+form field is a poor experience. <b>Nothing internal</b>: stack traces, SQL fragments and class names are
+reconnaissance. Log them against a correlation id and return the id instead — which also turns a customer
+support ticket into a single log query.</p>
+
+<h4>The rest of what separates a professional API</h4>
+<p><b>Versioning</b> decided before launch, not after the first breaking change. <b>Pagination on every
+collection</b> — an unpaginated list endpoint is an outage waiting for the customer with 50,000 records,
+and cursor pagination beats offset once the data is large or changing. <b>Rate limits that are visible</b>
+via <code>RateLimit</code> headers and a <code>Retry-After</code> on 429, so clients can back off properly
+instead of hammering you. And <b>documentation generated from the code</b> (OpenAPI), because
+hand-maintained docs are wrong within a month.</p>`,
 docs:[['RFC 9457 Problem Details','https://www.rfc-editor.org/rfc/rfc9457.html'],['Idempotency — Stripe docs','https://docs.stripe.com/api/idempotent_requests']],
 ex:{title:'An error contract in Java',
 prompt:`Write <code>record ProblemDetail(String type, String title, int status, String detail)</code> and class <code>Errors</code> with two factories: <code>static ProblemDetail notFound(String resource, String id)</code> → status 404, title "Not found", detail "&lt;resource&gt; &lt;id&gt; does not exist", type "https://api.dojo.dev/errors/not-found"; and <code>static ProblemDetail validation(String field, String issue)</code> → status 422, title "Validation failed", detail "&lt;field&gt;: &lt;issue&gt;", type ".../validation".`,

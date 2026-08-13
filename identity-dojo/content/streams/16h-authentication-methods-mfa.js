@@ -37,7 +37,43 @@ hints:['A slow, memory-hard hash like argon2id is the modern default; MD5 and SH
 <li><b>Possession</b> — something you have: a phone running an authenticator app, a hardware security key.</li>
 <li><b>Inherence</b> — something you are: a fingerprint, a face scan.</li>
 </ul>
-<p>Strong MFA combines factors from different categories, so stealing one (a leaked password) is not enough. Not all second factors are equal: SMS codes can be SIM-swapped or phished, app-based one-time codes are better, and phishing-resistant passkeys (next lessons) are best.</p>`,
+<p>Strong MFA combines factors from different categories, so stealing one (a leaked password) is not enough. Not all second factors are equal: SMS codes can be SIM-swapped or phished, app-based one-time codes are better, and phishing-resistant passkeys (next lessons) are best.</p>
+
+<h4>Why "independent" is the load-bearing word</h4>
+<p>The point of a second factor is not extra effort — it is that <b>one attack should not get both</b>.
+A password and a security question are both knowledge, so a single phishing page harvests them
+together. A password and an SMS code sound independent, until you notice both arrive on the same phone,
+where a single compromised device yields both.</p>
+<p>So the question to ask of any MFA design is not "how many factors?" but <b>"what single event defeats
+this?"</b>:</p>
+<div class="codeSample" data-hl>password + security question   -> one phishing page          NOT MFA
+password + SMS to phone        -> SIM swap, or phone theft   weak
+password + TOTP app on phone   -> phishing relay in real time  medium
+password + security key        -> nothing short of physical theft + PIN
+passkey alone                  -> device possession + biometric/PIN  = already two</div>
+
+<h4>The property that actually matters now</h4>
+<p>Factor categories are a useful taxonomy but they are no longer the sharpest distinction. The dividing
+line that predicts real-world outcomes is <b>phishing resistance</b>: can an attacker who has put a
+convincing fake site in front of the user relay the credential to the real site in real time?</p>
+<p>For everything a human reads and retypes — a password, a 6-digit code, a push approval — the answer is
+yes, and modern phishing kits automate it. For anything cryptographically bound to the origin, the answer
+is no, because the browser will not produce a signature for the wrong domain no matter how convincing the
+page looks.</p>
+<p>That reframes the categories: <b>knowledge and most possession factors are relay-able; only
+origin-bound possession is not</b>. It is why a passkey on its own is generally stronger than password
+plus TOTP, despite "looking like" fewer factors — the device is possession and the biometric or PIN that
+unlocks it is inherence or knowledge, and neither travels.</p>
+
+<h4>Where MFA programmes fail</h4>
+<p><b>The downgrade path.</b> Deploying security keys means nothing if SMS remains enabled as a fallback —
+the attacker simply chooses SMS. The strength of your MFA is the strength of its <i>weakest enabled</i>
+method, not its best.</p>
+<p><b>Recovery.</b> Account recovery bypasses authentication by design. If losing a key drops the user to
+an emailed link, then email is your real second factor and everything above it is decoration. Enrolling
+<b>two</b> authenticators up front is what makes strong recovery possible.</p>
+<p><b>Enrollment.</b> An attacker who reaches an account before the legitimate user enrolls simply
+enrolls their own device. First-factor-only enrollment is a standing takeover path.</p>`,
 docs:[['MFA — NIST 800-63B','https://pages.nist.gov/800-63-3/sp800-63b.html'],['MFA overview — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Multifactor_Authentication_Cheat_Sheet.html']],
 ex:{title:'Classify the factor',gradeJava:{class:'Mfa',cases:[{name:'password -> knowledge',call:'factorType',args:['"password"'],expect:'"knowledge"'},{name:'totp -> possession',call:'factorType',args:['"totp"'],expect:'"possession"'},{name:'fingerprint -> inherence',call:'factorType',args:['"fingerprint"'],expect:'"inherence"'},{name:'unknown default',call:'factorType',args:['"zzz"'],expect:'"unknown"'}]},
 prompt:`Write class <code>Mfa</code> with <code>static String factorType(String method)</code> mapping a method to its category: <code>"password"</code>→<code>"knowledge"</code>, <code>"pin"</code>→<code>"knowledge"</code>, <code>"totp"</code>→<code>"possession"</code>, <code>"security-key"</code>→<code>"possession"</code>, <code>"fingerprint"</code>→<code>"inherence"</code>, and <code>"unknown"</code> for anything else.`,
@@ -67,43 +103,126 @@ hints:['A switch on method with one case per method reads cleanly.','Group passw
 <p>HOTP moves the number by an explicit counter that increments each use. TOTP derives the number from the clock: <code>counter = currentUnixSeconds / stepSeconds</code> (step is usually 30). Because both sides compute the same counter from the same clock, they land on the same code without ever sending the secret — and to tolerate clock skew, servers accept the code from the adjacent time step too.</p>
 <div class="codeSample" data-hl>// TOTP in one line of intuition:
 long counter = epochSeconds / 30;              // same on client and server
-String code  = truncate6(hmacSha1(secret, counter));</div>`,
+String code  = truncate6(hmacSha1(secret, counter));</div>
+
+<h4>The problem OTPs were invented to solve</h4>
+<p>A password is a <b>static</b> secret: observe it once and you can use it forever. One-time passwords
+break that by making the secret <b>change every time</b>, so an observation has almost no value. Note what
+this does and does not fix — it defeats replay of a captured code, and it does not defeat someone
+relaying a code the moment you type it.</p>
+
+<h4>How the two sides agree without ever talking</h4>
+<p>The elegant part is that nothing is transmitted. At enrollment the server and the authenticator share
+one secret — that is the QR code you scan, which is just a URI carrying a base32 secret. From then on
+both sides independently compute the same value from that secret plus a moving number, and compare
+results.</p>
+<div class="codeSample" data-hl>HOTP (RFC 4226)   moving number = a COUNTER, incremented on each use
+TOTP (RFC 6238)   moving number = TIME:  floor(unixSeconds / 30)
+
+code = truncate6( HMAC-SHA1( sharedSecret, movingNumber ) )
+
+// "truncate" is dynamic truncation: take the low 4 bits of the last byte
+// as an OFFSET, read 4 bytes from there, mask the sign bit, mod 10^6.
+// fiddly, but it is why every authenticator app agrees on the digits.</div>
+<p>HMAC is what makes this safe: it is one-way, so seeing a stream of codes tells an attacker nothing
+about the secret.</p>
+
+<h4>The trade the two variants make</h4>
+<p><b>HOTP drifts.</b> If the token generates a code the user never submits, the counters diverge. Servers
+compensate with a <i>look-ahead window</i> — try the next N counters — which is why HOTP hardware tokens
+have a resync procedure and why the window cannot be large without weakening the code.</p>
+<p><b>TOTP needs clocks to agree.</b> There is no state to drift, but if the device clock is wrong, every
+code fails. Servers accept the adjacent step or two, which is also why a stolen code stays valid slightly
+longer than the 30 seconds the UI implies.</p>
+
+<h4>The parts implementations get wrong</h4>
+<ul>
+<li><b>Not consuming the code.</b> A code valid for its whole window can be submitted repeatedly — if a
+relay is fast enough, twice. Record used (user, counter) pairs and reject repeats.</li>
+<li><b>No rate limit.</b> Six digits is a million possibilities; unlimited attempts against a 90-second
+window is a feasible attack, not a theoretical one.</li>
+<li><b>Storing the shared secret in plaintext.</b> It is symmetric — a database leak lets the attacker
+generate valid codes indefinitely, and unlike a password hash there is nothing to slow them down.</li>
+<li><b>Treating the QR code as ephemeral.</b> It is the secret in visual form; a screenshot in a support
+ticket is a permanent compromise.</li>
+</ul>
+<p>And the ceiling: TOTP is <b>not phishing-resistant</b>. The user reads six digits and types them
+wherever they are asked to. NIST SP 800-63B classifies it as AAL2, and the AAL3 tier requires a
+hardware-backed, phishing-resistant authenticator instead.</p>`,
 docs:[['TOTP (RFC 6238)','https://www.rfc-editor.org/rfc/rfc6238'],['HOTP (RFC 4226)','https://www.rfc-editor.org/rfc/rfc4226']],
-ex:{title:'Compute the TOTP counter',
-prompt:`Write class <code>Totp</code> with <code>static long counter(long epochSeconds, long stepSeconds)</code> that returns the time-step counter — <code>epochSeconds</code> divided by <code>stepSeconds</code> (integer division). This is the moving number both sides hash.`,
-starter:`public class Totp {
-    static long counter(long epochSeconds, long stepSeconds) {
-        return 0;
-    }
+ex:{title:'Compute the TOTP counter',lang:'js',
+run:{call:'counter',cases:[{name:'the epoch itself is window 0',args:[0,30],expect:0},{name:'59 seconds is still window 1',args:[59,30],expect:1},{name:'60 seconds starts window 2',args:[60,30],expect:2},{name:'a 60-second step halves the counter',args:[600,60],expect:10}]},
+prompt:`Write <code>function counter(epochSeconds, stepSeconds)</code> returning the time-step counter — <code>epochSeconds</code> divided by <code>stepSeconds</code>, <b>floored</b>. This is the moving number both sides hash. (JavaScript division produces a float, so floor it.)`,
+starter:`function counter(epochSeconds, stepSeconds) {
+  return 0;
 }`,
-solution:`public class Totp {
-    static long counter(long epochSeconds, long stepSeconds) {
-        return epochSeconds / stepSeconds;
-    }
+solution:`function counter(epochSeconds, stepSeconds) {
+  return Math.floor(epochSeconds / stepSeconds);
 }`,
-tests:[{d:'returns epochSeconds / stepSeconds',re:'return\\s+epochSeconds\\s*/\\s*stepSeconds'},{d:'does not return the constant 0',re:'return\\s+0\\s*;',not:true}],
-behavior:`counter(0, 30) is 0, counter(59, 30) is 1, counter(60, 30) is 2. Integer division floors to the current 30-second window, which both client and server compute identically from the shared clock.`,
-hints:['Integer division of two longs floors automatically, which is exactly the time window you want.','The whole method body is a single return of epochSeconds / stepSeconds.','A step of 30 means the counter increments twice per minute.']}},
+tests:[{d:'divides the clock by the step',re:'epochSeconds\\s*/\\s*stepSeconds'},{d:'floors to a whole window',re:'Math\\.floor'}],
+behavior:`counter(0,30) is 0, counter(59,30) is 1, counter(60,30) is 2. Flooring to the current window is what lets client and server land on the same code without exchanging anything — and here the floor is executed, so forgetting it actually fails.`,
+hints:['Divide the clock by the step size.','JavaScript division yields a float; Math.floor gives you the window.','A step of 30 means the counter increments twice per minute.']}},
 
 {id:'am4',title:'Passkeys: WebAuthn & FIDO2',body:`
 <p>Passwords and even one-time codes can be <b>phished</b>: a fake site relays whatever you type. Passkeys close that hole. Built on <b>WebAuthn</b> and <b>FIDO2</b>, a passkey is a public/private key pair created per site. Your device keeps the private key (in secure hardware or synced through your platform) and only ever signs a challenge; the site stores the matching public key.</p>
-<p>Two properties make passkeys <b>phishing-resistant</b>. First, the signature is <b>origin-bound</b> — the browser ties it to the real site, so a look-alike domain gets a signature it cannot use. Second, the secret <b>never leaves the device</b> and is never typed, so there is nothing to relay or paste into a fake form. A security key (a FIDO2 hardware token) works the same way.</p>`,
+<p>Two properties make passkeys <b>phishing-resistant</b>. First, the signature is <b>origin-bound</b> — the browser ties it to the real site, so a look-alike domain gets a signature it cannot use. Second, the secret <b>never leaves the device</b> and is never typed, so there is nothing to relay or paste into a fake form. A security key (a FIDO2 hardware token) works the same way.</p>
+
+<h4>Start from what goes wrong with everything else</h4>
+<p>Every authentication method covered so far shares one structural flaw: <b>the user hands a secret to
+whatever asked for it</b>. The user is the transport, and the user cannot reliably tell a real site from
+a convincing copy. Passwords, TOTP codes, push approvals — all of them are relayed by a proxy sitting
+between the user and the real site, and modern phishing kits do this automatically.</p>
+<p>You cannot train your way out of it. The fix has to remove the human's ability to give the credential
+to the wrong party at all.</p>
+
+<h4>The two moves that achieve it</h4>
+<p><b>Nothing shared is ever secret.</b> Registration creates a key pair; the site stores only the
+<i>public</i> key. There is no shared secret in the database, so a breach of the site yields nothing an
+attacker can authenticate with — and there is nothing for the user to type, screenshot, or be talked
+into reading aloud.</p>
+<p><b>The browser, not the user, decides who is asking.</b> This is the part that actually kills phishing.
+The signature covers the origin the browser observed, and the authenticator will only use a credential
+registered to that origin. A look-alike domain gets no signature at all.</p>
+<div class="codeSample" data-hl>user visits  bank-secure-login.com  (the phishing site)
+   |
+   +- site asks the browser for the credential for  bank.com
+   |     -> browser REFUSES. wrong origin. no prompt, no choice, no signature.
+   |
+   +- site asks for a credential for  bank-secure-login.com
+         -> the authenticator has none. nothing to steal.
+
+// contrast: a TOTP code does not know what site asked for it.
+// the origin check is done by software that cannot be fooled by pixels.</div>
+
+<h4>What "passkey" actually means</h4>
+<p>The vocabulary is genuinely confusing, so: <b>WebAuthn</b> is the browser API, <b>CTAP2</b> is how the
+browser talks to an external authenticator, and <b>FIDO2</b> is the pair of them together. A
+<b>passkey</b> is the consumer-facing name for a <i>discoverable</i> WebAuthn credential — one the
+authenticator can find without being told a username, which is what makes usernameless login possible.</p>
+<p>The other axis is where it lives. A <b>synced</b> passkey replicates through a platform keychain, so
+losing a phone does not lose the account — that is what made passkeys viable for consumers, and it is
+also what makes the security model depend on the platform account. A <b>device-bound</b> credential on a
+hardware key never leaves that key: stronger, and it is on you to enroll a second one.</p>
+
+<h4>The honest limits</h4>
+<p>Passkeys do not protect a session after login — a token stolen from the browser is still a token.
+They do not fix account recovery, which remains the weakest path in most deployments. And they shift
+trust onto the platform account that syncs them. What they do eliminate, completely, is credential
+phishing — which is the entry point for most real-world account compromise. The next lessons take the
+registration and assertion ceremonies apart field by field.`,
 docs:[['WebAuthn — W3C','https://www.w3.org/TR/webauthn-2/'],['Passkeys — FIDO Alliance','https://fidoalliance.org/passkeys/']],
-ex:{title:'Which methods resist phishing?',
-prompt:`Write class <code>Passkey</code> with <code>static boolean phishingResistant(String method)</code> that returns true only for origin-bound, hardware-backed methods — <code>"passkey"</code> and <code>"security-key"</code> — and false for everything else (like <code>"password"</code>, <code>"sms"</code>, or <code>"totp"</code>).`,
-starter:`public class Passkey {
-    static boolean phishingResistant(String method) {
-        return false;
-    }
+ex:{title:'Which methods resist phishing?',lang:'js',
+run:{call:'phishingResistant',cases:[{args:['passkey'],expect:true},{args:['security-key'],expect:true},{args:['sms'],expect:false},{args:['totp'],expect:false},{args:['password'],expect:false},{name:'push approval is relayable',args:['push'],expect:false}]},
+prompt:`Write <code>function phishingResistant(method)</code> that returns <code>true</code> only for origin-bound methods — <code>"passkey"</code> and <code>"security-key"</code> — and <code>false</code> for everything else, including <code>"password"</code>, <code>"sms"</code>, <code>"totp"</code> and <code>"push"</code>.`,
+starter:`function phishingResistant(method) {
+  return false;
 }`,
-solution:`public class Passkey {
-    static boolean phishingResistant(String method) {
-        return method.equals("passkey") || method.equals("security-key");
-    }
+solution:`function phishingResistant(method) {
+  return method === "passkey" || method === "security-key";
 }`,
-tests:[{d:'passkey is phishing-resistant',re:'equals\\s*\\(\\s*"passkey"\\s*\\)'},{d:'security-key is phishing-resistant',re:'equals\\s*\\(\\s*"security-key"\\s*\\)'},{d:'combines the two with OR',re:'\\|\\|'},{d:'does not mark sms as resistant',re:'"sms"',not:true}],
-behavior:`phishingResistant("passkey") and phishingResistant("security-key") are true; phishingResistant("sms"), ("totp"), and ("password") are false. The winning trait is that the secret is origin-bound and never typed.`,
-hints:['Two allowed values joined by || is enough.','Call method.equals("passkey") and method.equals("security-key").','Everything not explicitly allowed should return false.']}},
+tests:[{d:'passkey is phishing-resistant',re:'"passkey"'},{d:'security-key is phishing-resistant',re:'"security-key"'},{d:'combines the two with OR',re:'\\|\\|'},{d:'does not mark sms as resistant',re:'"sms"',not:true}],
+behavior:`Every relayable method is executed as its own case. The winning trait is that the secret is origin-bound and never typed — anything a human reads and retypes can be relayed in real time by a proxy.`,
+hints:['Two allowed values joined by || is enough.','Use === for string comparison in JavaScript.','Everything not explicitly allowed should return false.']}},
 
 {id:'am4c',title:'FIDO2 architecture: WebAuthn, CTAP and who does what',body:`
 <p>"FIDO2", "WebAuthn" and "passkey" get used as synonyms and are three different things. FIDO2 is an
@@ -424,23 +543,64 @@ solution:`public class MfaPolicy {
 
 {id:'am5',title:'Step-up & adaptive authentication',body:`
 <p>Not every action deserves the same friction. <b>Step-up authentication</b> lets a user in with one factor for ordinary work, then demands stronger or fresh proof right before a sensitive action — moving money, changing an email, deleting an account.</p>
-<p><b>Adaptive (risk-based)</b> auth decides <i>when</i> to step up by scoring signals: a new device, a new country, an impossible-travel jump, an unusual hour. Low risk stays frictionless; high risk triggers re-authentication or MFA. The rule of thumb: match the assurance to the value and risk of the action, and treat a recent successful auth as a short-lived pass that expires.</p>`,
+<p><b>Adaptive (risk-based)</b> auth decides <i>when</i> to step up by scoring signals: a new device, a new country, an impossible-travel jump, an unusual hour. Low risk stays frictionless; high risk triggers re-authentication or MFA. The rule of thumb: match the assurance to the value and risk of the action, and treat a recent successful auth as a short-lived pass that expires.</p>
+
+<h4>The problem with authenticating once</h4>
+<p>Classic login treats authentication as a gate: pass it, and you have a session that grants everything
+for hours. But the assurance that gate produced <b>decays</b> — the person who authenticated at 9am may
+not be the person holding the laptop at 3pm, and nothing in the session records the difference.</p>
+<p>Meanwhile the actions inside that session are wildly unequal. Reading a dashboard and wiring
+£50,000 carry the same credential. Step-up exists to break that equivalence: <b>assurance should be
+proportional to what is being done, and it should be recent.</b></p>
+
+<h4>Two questions, not one</h4>
+<div class="codeSample" data-hl>STEP-UP     "this ACTION needs more than the session currently proves"
+              -> driven by the sensitivity of the operation
+              -> deterministic: changing the recovery email ALWAYS re-auths
+
+ADAPTIVE    "this CONTEXT looks unlike the user's normal behaviour"
+              -> driven by risk signals, probabilistic
+              -> a familiar device at home may never see a prompt
+
+// they compose: adaptive decides WHETHER, step-up decides WHAT IS REQUIRED.
+// most failures come from implementing one and calling it the other.</div>
+
+<h4>Making it real: the freshness check</h4>
+<p>The mechanism is simpler than it sounds. Record when the user last authenticated and how strongly;
+before a sensitive action, compare that against what the action demands. In OIDC this is standardised:
+<code>max_age</code> asks the provider to re-authenticate if the session is older than N seconds,
+<code>acr_values</code> asks for a specific assurance level, and the returned <code>auth_time</code> and
+<code>acr</code> claims tell you what you actually got.</p>
+<p>Two rules that are easy to get wrong. <b>Verify what came back</b> — asking for a stronger
+<code>acr</code> means nothing if you do not check the response contains it; a provider that cannot
+satisfy the request may simply return the session it already had. And <b>bind the result to the
+action</b> — a fresh authentication should authorise the specific operation that triggered it, not open a
+window in which any sensitive action passes.</p>
+
+<h4>Risk signals, and their limits</h4>
+<p>The useful signals are unremarkable: new device, new network, impossible travel, an unusual time,
+velocity, a known-bad IP reputation, behavioural drift. Each is weak alone; together they are decent at
+ranking sessions.</p>
+<p>What they are not is <b>evidence</b>. Every signal has a benign explanation — people travel, use VPNs,
+get new phones, and work odd hours. Tuned too tightly, adaptive auth prompts constantly, users learn to
+approve reflexively, and you have manufactured the exact habit that MFA fatigue attacks exploit. Tuned
+too loosely it never fires.</p>
+<p>Which is why the load should sit on step-up rather than adaptive: <b>the sensitivity of an action is a
+fact you know for certain, and risk is a guess.</b> Use the certainty for the hard rules and the guess
+for the extras.</p>`,
 docs:[['Step-up authentication — Auth0','https://auth0.com/docs/secure/multi-factor-authentication/step-up-authentication'],['Risk-based auth — NIST 800-63B','https://pages.nist.gov/800-63-3/sp800-63b.html']],
-ex:{title:'Decide when to step up',
-prompt:`Write class <code>StepUp</code> with <code>static boolean required(String action, boolean recentlyAuthed)</code> that returns true when the action is sensitive — <code>"transfer"</code> or <code>"change-email"</code> — <b>and</b> the user has not recently authenticated. Ordinary actions, or sensitive ones right after a fresh auth, do not require step-up.`,
-starter:`public class StepUp {
-    static boolean required(String action, boolean recentlyAuthed) {
-        return false;
-    }
+ex:{title:'Decide when to step up',lang:'js',
+run:{call:'required',cases:[{name:'sensitive action, stale auth',args:['transfer',false],expect:true},{name:'sensitive action, fresh auth',args:['transfer',true],expect:false},{name:'other sensitive action',args:['change-email',false],expect:true},{name:'ordinary action',args:['view',false],expect:false}]},
+prompt:`Write <code>function required(action, recentlyAuthed)</code> returning <code>true</code> when the action is sensitive — <code>"transfer"</code> or <code>"change-email"</code> — <b>and</b> the user has not recently authenticated.`,
+starter:`function required(action, recentlyAuthed) {
+  return false;
 }`,
-solution:`public class StepUp {
-    static boolean required(String action, boolean recentlyAuthed) {
-        boolean sensitive = action.equals("transfer") || action.equals("change-email");
-        return sensitive && !recentlyAuthed;
-    }
+solution:`function required(action, recentlyAuthed) {
+  const sensitive = action === "transfer" || action === "change-email";
+  return sensitive && !recentlyAuthed;
 }`,
-tests:[{d:'transfer counts as sensitive',re:'equals\\s*\\(\\s*"transfer"\\s*\\)'},{d:'change-email counts as sensitive',re:'equals\\s*\\(\\s*"change-email"\\s*\\)'},{d:'requires NOT recently authenticated',re:'!\\s*recentlyAuthed'},{d:'combines sensitivity AND freshness',re:'&&'}],
-behavior:`required("transfer", false) is true; required("transfer", true) is false (a fresh auth just happened); required("view", false) is false (not sensitive). Assurance is matched to the risk of the action.`,
+tests:[{d:'transfer counts as sensitive',re:'"transfer"'},{d:'change-email counts as sensitive',re:'"change-email"'},{d:'requires NOT recently authenticated',re:'!\\s*recentlyAuthed'},{d:'combines sensitivity AND freshness',re:'&&'}],
+behavior:`required("transfer",false) is true; required("transfer",true) is false because a fresh authentication already happened; required("view",false) is false. The sensitivity of an action is a fact you know for certain — which is why it, not a risk score, carries the hard rules.`,
 hints:['Compute a sensitive flag first from the two high-risk actions joined by ||.','Step-up is needed only when sensitive is true AND recentlyAuthed is false.','Use the ! operator to express not recently authenticated.']}},
 {id:'am6',title:'Identity assurance levels: IAL, AAL, FAL',body:`
 <p>How much should you trust that a user is who they claim? NIST 800-63 answers with <b>three independent scales</b>, so you can dial each to the risk of the action rather than treating "identity" as one thing.</p>
@@ -487,26 +647,23 @@ hints:['IAL is about proofing the real-world identity; AAL is about login streng
 <p><b>But account recovery becomes the soft underbelly.</b> A system is only as strong as the easiest way in — and that is usually the "forgot password" / recovery flow. If recovery is weaker than login, attackers ignore login and attack recovery. Two rules: <b>recovery must be at least as strong as primary authentication</b>, and knowledge-based questions (mother's maiden name) are <b>weak</b> — the answers are guessable or already leaked.</p>
 <p>Good recovery hygiene: reset tokens that are <b>single-use, short-lived, and unpredictable</b>; delivered over a verified channel; rate-limited; and every reset <b>notifies the user</b>. Passwordless does not remove recovery — if a device is lost you still need a way back in, so provide <b>backup passkeys or one-time recovery codes</b> rather than dropping to a weak email OTP.</p>`,
 docs:[['Passwordless — FIDO/passkeys','https://fidoalliance.org/passkeys/'],['Forgot-password / recovery — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html']],
-ex:{title:'A safe reset token & the best method',
-prompt:`Write class <code>Recovery</code> with <code>static boolean acceptableResetToken(boolean singleUse, boolean shortLived, boolean unpredictable)</code> that is true only when all three hold, and <code>static String preferred()</code> returning <code>"passkey"</code> (the strongest passwordless method).`,
-starter:`public class Recovery {
-    static boolean acceptableResetToken(boolean singleUse, boolean shortLived, boolean unpredictable) {
-        return false;
-    }
-    static String preferred() {
-        return null;
-    }
+ex:{title:'A safe reset token & the best method',lang:'js',
+run:{call:'acceptableResetToken',cases:[{name:'single-use, short-lived, unpredictable',args:[true,true,true],expect:true},{name:'reusable',args:[false,true,true],expect:false},{name:'long-lived',args:[true,false,true],expect:false},{name:'guessable',args:[true,true,false],expect:false}]},
+prompt:`Write <code>function acceptableResetToken(singleUse, shortLived, unpredictable)</code> that is <code>true</code> only when all three hold, and <code>function preferred()</code> returning <code>"passkey"</code>.`,
+starter:`function acceptableResetToken(singleUse, shortLived, unpredictable) {
+  return false;
+}
+function preferred() {
+  return null;
 }`,
-solution:`public class Recovery {
-    static boolean acceptableResetToken(boolean singleUse, boolean shortLived, boolean unpredictable) {
-        return singleUse && shortLived && unpredictable;
-    }
-    static String preferred() {
-        return "passkey";
-    }
+solution:`function acceptableResetToken(singleUse, shortLived, unpredictable) {
+  return singleUse && shortLived && unpredictable;
+}
+function preferred() {
+  return "passkey";
 }`,
 tests:[{d:'reset token must be single-use, short-lived and unpredictable',re:'singleUse\\s*&&\\s*shortLived\\s*&&\\s*unpredictable'},{d:'the strongest passwordless method is a passkey',re:'return\\s+"passkey"'}],
-behavior:`acceptableResetToken(true,true,true) is true; if the token is reusable, long-lived, or guessable it is false. preferred() returns "passkey". The recovery flow must be as strong as login, or it becomes the way in.`,
+behavior:`Each weakness is executed separately. Recovery bypasses authentication by design, so it must be as strong as login — otherwise it is your real second factor and everything above it is decoration.`,
 hints:['A reset token should be single-use, short-lived, and unpredictable — combine with &&.','Recovery must be at least as strong as primary login; knowledge-based questions are weak.','Passkeys are the strongest passwordless method; provide backup codes for lost devices.']}},
 {id:'am8',title:'WebAuthn ceremonies in depth',body:`
 <p>Passkeys/WebAuthn run <b>two ceremonies</b>, and knowing the difference is the whole model.</p>

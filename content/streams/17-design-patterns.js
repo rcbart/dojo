@@ -219,7 +219,54 @@ hints:['Prototype = clone an existing object; here, construct a new one from thi
 <li><b>Bridge</b> — split an abstraction from its implementation so they vary independently (a <code>Shape</code> hierarchy and a <code>Renderer</code> hierarchy that combine, instead of a class explosion).</li>
 <li><b>Flyweight</b> — share immutable intrinsic state across many objects to save memory (Java’s <code>Integer</code> cache, interned strings).</li>
 </ul>
-<p>They all shape <i>how objects are composed and accessed</i> without changing what they do.</p>`,
+<p>They all shape <i>how objects are composed and accessed</i> without changing what they do.</p>
+<h4>Reading each one as a problem, not a shape</h4>
+<p>Patterns are only useful if you can recognise the situation that calls for one. Each of these answers a
+different question about how objects are put together.</p>
+
+<h4>Proxy — "I need something to happen around access"</h4>
+<p>Same interface, different object. The caller cannot tell, which is the point: you add caching, lazy
+loading, access control, retries or remoting <b>without touching either side</b>.</p>
+<div class="codeSample" data-hl>interface Report { byte[] render(); }
+
+class CachingReport implements Report {          // same interface
+    private final Report real; private byte[] cached;
+    public byte[] render() {
+        if (cached == null) cached = real.render();
+        return cached;                            // caller is unaware
+    }
+}
+
+// this is exactly Spring: @Transactional works because your bean is
+// replaced by a proxy that opens a transaction and calls through.
+// which is ALSO why self-invocation skips it - an internal call never
+// leaves the object, so it never passes through the proxy.</div>
+<p><b>Proxy vs Decorator</b>: identical structurally, different intent. A decorator <i>adds features</i>
+and you usually stack several deliberately; a proxy <i>controls access</i> to one specific object and is
+often invisible to the caller.</p>
+
+<h4>Composite — "a group should behave like one item"</h4>
+<p>When a client has to ask "is this a single thing or a collection?" before every operation, the
+conditionals spread everywhere. Composite gives leaf and container the same interface, so
+<code>size()</code> on a file and on a folder are both just <code>size()</code>, and the recursion lives
+in the container rather than in every caller. Directory trees, UI component hierarchies, nested
+permission groups and org charts all take this shape.</p>
+
+<h4>Bridge — "I have two things varying at once"</h4>
+<p>The signal is a <b>class explosion</b>: three shapes times three renderers becomes nine classes, and a
+fourth of either makes it twelve. Bridge separates the two hierarchies and composes them, so each varies
+independently and you add one class instead of a row. In practice you meet it as JDBC — one
+<code>Connection</code> API, many drivers — and as SLF4J over multiple logging backends.</p>
+
+<h4>Flyweight — "I have millions of nearly identical objects"</h4>
+<p>Split state into <b>intrinsic</b> (shared, immutable, e.g. the character 'a' and its font) and
+<b>extrinsic</b> (per-use, passed in, e.g. its position). Share the first, pass the second. Java does this
+for you with the <code>Integer</code> cache for −128..127 and with interned string literals.</p>
+<p>That cache is also the reason <code>Integer a = 127, b = 127; a == b</code> is true while the same code
+with 128 is false — a genuinely confusing result that is Flyweight leaking through. Use
+<code>equals()</code>, always.</p>
+<p><b>When to reach for it:</b> only when you have measured a memory problem caused by object count. It
+requires immutability and it makes the code harder; applied speculatively it is pure cost.</p>`,
 docs:[['Proxy pattern','https://refactoring.guru/design-patterns/proxy'],['Composite pattern','https://refactoring.guru/design-patterns/composite']],
 ex:{title:'Implement a caching Proxy',
 prompt:`Write class <code>ImageProxy</code> that lazily loads and caches. It has <code>String load()</code> returning <code>"pixels"</code> (the expensive real work) and <code>String get()</code> that returns the cached value, calling <code>load()</code> only the first time (store it in a field and reuse it after).`,
@@ -251,7 +298,52 @@ hints:['A caching proxy stores the result of the first real call.','Guard with i
 <li><b>Chain of Responsibility</b> — pass a request along a chain of handlers until one handles it (middleware pipelines, servlet filters, event bubbling).</li>
 <li><b>Iterator / Mediator / Visitor</b> round out the set: iterate without exposing internals, centralize how objects interact, and add operations over a structure without changing its classes.</li>
 </ul>
-<p>These all move <i>behavior</i> into first-class, swappable pieces.</p>`,
+<p>These all move <i>behavior</i> into first-class, swappable pieces.</p>
+<h4>The common thread: turn a decision into an object</h4>
+<p>All three of these replace control flow with something you can name, store, pass around and test. That
+is the payoff to look for — if the pattern does not make something first-class that used to be buried in a
+conditional, it is not earning its complexity.</p>
+
+<h4>Command — "an action I can hold onto"</h4>
+<p>Once an action is an object rather than a method call, you can do things a call cannot: put it on a
+queue, retry it, log it, schedule it, and — the classic — undo it, by giving the command an inverse.</p>
+<div class="codeSample" data-hl>interface Command { void execute(); void undo(); }
+
+class Transfer implements Command {
+    public void execute() { move(from, to, amount); }
+    public void undo()    { move(to, from, amount); }
+}
+// a Deque&lt;Command&gt; is now an undo stack. a queue of them is a job
+// system. a log of them is an audit trail - and if you keep the log
+// rather than the state, you have arrived at event sourcing.</div>
+<p>In modern Java a <code>Runnable</code> or a lambda <i>is</i> a command; the pattern earns its keep when
+you need the extra operations (undo, describe, serialise) that a bare lambda cannot offer.</p>
+
+<h4>State — "the object behaves differently depending on where it is"</h4>
+<p>The smell is the same <code>switch (status)</code> appearing in five methods. Every new status means
+editing all five, and forgetting one is a silent bug. State moves the behaviour into a class per state, so
+a new state is a new class and the compiler tells you what it must implement.</p>
+<p>The genuine benefit is that <b>illegal transitions become impossible rather than merely wrong</b>: if
+<code>Delivered</code> has no <code>cancel()</code> path, no code can cancel a delivered order. In Java,
+sealed interfaces plus pattern matching give you this with exhaustiveness checked at compile time. For
+simple cases an enum with per-constant method bodies is often enough — do not build a state machine
+framework for three states.</p>
+
+<h4>Chain of Responsibility — "someone in this line will handle it"</h4>
+<p>A request passes along handlers until one deals with it. The value is that the sender does not know
+which handler will respond, and handlers can be reordered, added or removed independently — which is why
+it underpins every middleware pipeline you have used: servlet filters, Spring Security's filter chain,
+Express middleware, logging handlers.</p>
+<p>The failure mode is worth naming: <b>if nobody handles it, the request vanishes silently</b>. Always
+terminate the chain with a handler that either handles or fails loudly. And keep the chain short and its
+order explicit, because "which handler ran?" is otherwise a debugging exercise.</p>
+
+<h4>The rest of the set, briefly</h4>
+<p><b>Iterator</b> traverses without exposing internals — built into Java as <code>Iterable</code>.
+<b>Mediator</b> centralises interaction so N components talk to one hub instead of each other, which is
+what a message bus does. <b>Visitor</b> adds operations to a stable class hierarchy without editing it;
+it is powerful for ASTs and awkward everywhere else, and Java's pattern matching for switch has largely
+replaced it.</p>`,
 docs:[['State pattern','https://refactoring.guru/design-patterns/state'],['Chain of Responsibility','https://refactoring.guru/design-patterns/chain-of-responsibility'],['Command pattern','https://refactoring.guru/design-patterns/command']],
 ex:{title:'Implement a State machine',
 prompt:`Write class <code>TrafficLight</code> with a field <code>String state</code> starting at <code>"red"</code> and a <code>String next()</code> that transitions <code>red → green → yellow → red</code>, updates <code>state</code>, and returns the new state.`,
@@ -283,7 +375,51 @@ hints:['State drives behavior: switch on the current state to pick the next.','r
 <li><b>DTO (Data Transfer Object)</b> — a plain data carrier for moving data across a boundary (API request/response), decoupling your API shape from your internal domain model. Java <code>record</code>s are ideal DTOs.</li>
 <li><b>Null Object</b> — return a harmless do-nothing implementation instead of <code>null</code>, so callers skip null checks (a <code>NoOpLogger</code>).</li>
 </ul>
-<p>Together they define how modern services are wired, persisted, and communicated.</p>`,
+<p>Together they define how modern services are wired, persisted, and communicated.</p>
+<h4>Why these matter more than most of the Gang of Four</h4>
+<p>The original catalogue was written for 1994's problems, when frameworks were rare and inheritance was
+the main tool. The four below are what you will meet in a service written this year — and three of them
+exist because <b>a boundary needs protecting</b>.</p>
+
+<h4>Dependency Injection — the enabler for everything else</h4>
+<p>A class that constructs its own collaborators has hardcoded which implementation, when it is created and
+how long it lives. Receiving them instead moves all three decisions outward, and the practical result is
+that the class can be tested with fakes and reused in another context.</p>
+<p>Constructor injection specifically, because it makes the invalid state unreachable: the object cannot
+exist without its dependencies, the fields can be <code>final</code>, and the constructor signature is an
+honest list of what the class depends on. A constructor with nine parameters is telling you the class does
+too much — field injection hides that same fact behind nine annotations.</p>
+
+<h4>Repository — a boundary, not a wrapper</h4>
+<p>The point is that business code expresses intent in domain terms and never learns how storage works. Done
+right, the interface is defined <b>by the domain</b> and implemented by the persistence layer — so the
+dependency arrow points inward and the database is a detail.</p>
+<div class="codeSample" data-hl>// leaky - the domain now knows about SQL and pagination mechanics
+List&lt;User&gt; query(String whereClause, int offset, int limit);
+
+// a real boundary - stated in the language of the business
+Optional&lt;User&gt; findByEmail(Email email);
+List&lt;User&gt; findActiveSince(LocalDate date);
+
+// and the test: could you back this with an in-memory map, a REST
+// call, or a different database WITHOUT changing any caller?
+// if not, it is a thin wrapper over your ORM, not a repository.</div>
+
+<h4>DTO — decoupling your API from your model</h4>
+<p>Serialising a domain object straight to JSON quietly makes your internal model a public contract. Every
+rename becomes a breaking change; every new field is accidentally exposed; and adding a JSON annotation to
+a domain class drags web concerns into the core. A DTO costs a mapping and buys you the freedom to change
+either side alone. Java <code>record</code>s make it nearly free — and the mapping is worth writing rather
+than generating reflectively when the two shapes genuinely differ.</p>
+
+<h4>Null Object — and when it is wrong</h4>
+<p>Returning a harmless do-nothing implementation removes null checks from every caller. It is excellent
+for genuinely optional collaborators — a <code>NoOpMetrics</code>, a <code>NoOpLogger</code> — where doing
+nothing is a valid behaviour.</p>
+<p>It is a poor choice when absence is <b>meaningful</b>. A <code>NullUser</code> returned from a lookup
+that found nothing will silently propagate through the system and surface as a wrong answer somewhere
+distant. Use <code>Optional</code> there, which forces the caller to acknowledge the case, and reserve
+Null Object for behaviour rather than data.</p>`,
 docs:[['Dependency Injection','https://martinfowler.com/articles/injection.html'],['Repository pattern','https://martinfowler.com/eaaCatalog/repository.html'],['DTO','https://martinfowler.com/eaaCatalog/dataTransferObject.html']],
 ex:{title:'Constructor Dependency Injection',
 prompt:`Model a repository behind an interface and inject it. Declare <code>interface Repo { String find(int id); }</code>, then class <code>Service</code> that holds a <code>private final Repo repo</code>, receives it via a <code>Service(Repo repo)</code> constructor (<code>this.repo = repo</code>), and has <code>String lookup(int id)</code> returning <code>repo.find(id)</code>. Do not create the Repo inside Service.`,

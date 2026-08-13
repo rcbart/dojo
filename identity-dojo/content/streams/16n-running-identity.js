@@ -281,36 +281,20 @@ SSO? Can you extend session lifetimes without a deploy? Does verification surviv
 was break-glass last tested, and by whom? If any answer is unknown, that is the work — and it is
 cheaper to find out now than at 3am, when nobody can log in to look it up.</p>`,
 docs:[['Google SRE — Managing Critical State','https://sre.google/sre-book/managing-critical-state/'],['Microsoft — Manage emergency access accounts','https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/security-emergency-access'],['RFC 7517 — JSON Web Key Set','https://www.rfc-editor.org/rfc/rfc7517']],
-ex:{title:'Degrade gracefully when the IdP is unreachable',
-prompt:`Write <code>Resilience</code> with three methods. <code>static boolean verifyWithCache(boolean jwksReachable, boolean haveCachedKeys, boolean signatureValid)</code> returns <code>signatureValid</code> whenever cached keys are available — reachable or not — and <code>false</code> only when JWKS is unreachable and nothing is cached. <code>static boolean breakGlassUsable(boolean dependsOnIdp, boolean phishingResistant, boolean storedOffline)</code> is true only when it does <b>not</b> depend on the IdP and both other conditions hold. <code>static boolean shouldAlert(boolean breakGlassUsed)</code> simply returns <code>breakGlassUsed</code> — every use is an alert, with no exceptions.`,
-starter:`public class Resilience {
-    static boolean verifyWithCache(boolean jwksReachable, boolean haveCachedKeys, boolean signatureValid) {
-        return false;
-    }
-    static boolean breakGlassUsable(boolean dependsOnIdp, boolean phishingResistant, boolean storedOffline) {
-        return false;
-    }
-    static boolean shouldAlert(boolean breakGlassUsed) {
-        return false;
-    }
+ex:{title:'Survive a JWKS outage',lang:'js',
+run:{call:'verifyWithCache',cases:[{name:'JWKS reachable and signature valid',args:[true,true,true],expect:true},{name:'JWKS down but keys cached',args:[false,true,true],expect:true},{name:'JWKS down and no cache',args:[false,false,true],expect:false},{name:'cached keys but bad signature',args:[false,true,false],expect:false},{name:'reachable but bad signature',args:[true,true,false],expect:false}]},
+prompt:`Write <code>function verifyWithCache(jwksReachable, haveCachedKeys, signatureValid)</code> that returns <code>true</code> only when the signature is valid <b>and</b> you have keys to check it with — either freshly fetched or cached. A JWKS outage must not take your API down, but it must never make you accept an unverified token either.`,
+starter:`function verifyWithCache(jwksReachable, haveCachedKeys, signatureValid) {
+  return false;
 }`,
-tests:[{d:'cached keys keep verification working',re:'haveCachedKeys'},{d:'the signature still decides the outcome',re:'signatureValid'},{d:'no keys at all means failure',re:'return\\s+false'},{d:'break-glass must not depend on the IdP',re:'!\\s*dependsOnIdp|dependsOnIdp\\s*==\\s*false'},{d:'break-glass must be phishing-resistant',re:'phishingResistant'},{d:'break-glass must be stored offline',re:'storedOffline'},{d:'every break-glass use alerts',re:'return\\s+breakGlassUsed'}],
-behavior:`verifyWithCache(false, true, true) is true — an unreachable JWKS endpoint must not break token verification, or one IdP blip becomes a total outage of every API. verifyWithCache(false, false, true) is false, since with no keys at all there is nothing to verify against. verifyWithCache(true, true, false) is false because the signature still has to be valid. breakGlassUsable(false, true, true) is true; breakGlassUsable(true, true, true) is false, which is the recursive failure to design out - emergency credentials must not live behind the thing they exist to bypass. shouldAlert(true) is true, always.`,
-hints:['If cached keys exist, the signature decides; otherwise reachability decides.','Three conditions in breakGlassUsable, and the first is a negation.','shouldAlert is one line, and the point is that there is no exception to it.'],
-solution:`public class Resilience {
-    static boolean verifyWithCache(boolean jwksReachable, boolean haveCachedKeys, boolean signatureValid) {
-        // serve stale keys rather than hard-failing every API call
-        if (haveCachedKeys) return signatureValid;
-        return false;   // unreachable and uncached: nothing to verify against
-    }
-    static boolean breakGlassUsable(boolean dependsOnIdp, boolean phishingResistant, boolean storedOffline) {
-        // must not live behind the system it exists to bypass
-        return !dependsOnIdp && phishingResistant && storedOffline;
-    }
-    static boolean shouldAlert(boolean breakGlassUsed) {
-        return breakGlassUsed;   // no exceptions
-    }
-}`}},
+solution:`function verifyWithCache(jwksReachable, haveCachedKeys, signatureValid) {
+  // keys from either source are fine; NO keys means fail closed
+  const haveKeys = jwksReachable || haveCachedKeys;
+  return haveKeys && signatureValid;
+}`,
+tests:[{d:'cached keys are an acceptable source',re:'jwksReachable\\s*\\|\\|\\s*haveCachedKeys'},{d:'the signature must still verify',re:'signatureValid'},{d:'combines availability AND validity',re:'&&'}],
+behavior:`The middle case is the whole lesson: JWKS down, keys cached, signature good — still true, so a provider outage does not become your outage. The last two cases prove the failure stays closed: no keys, or a bad signature, is a rejection. Caching keys with a long TTL and refreshing on an unknown kid is the single highest-value availability fix in a resource server.`,
+hints:['Availability of keys is an OR; correctness is an AND.','A cached key set is a legitimate source — that is the point of caching it.','Never return true when signatureValid is false, whatever the outage.']}},
 
 {id:'run4',title:'What to measure, what to log, what never to log',body:`
 <p>Identity is unusually measurable and unusually badly measured. Most teams watch uptime and nothing
@@ -738,37 +722,21 @@ this five minutes shorter?</b> For identity the answer is almost always the same
 that would have shown it sooner, an expiry alert, a runbook not behind SSO, or a rehearsed key
 rotation. Those are the actions. "Be more careful" is not.</p>`,
 docs:[['Google SRE — Managing Incidents','https://sre.google/sre-book/managing-incidents/'],['Google SRE — Postmortem Culture','https://sre.google/sre-book/postmortem-culture/'],['NIST SP 800-61 — Incident Handling','https://csrc.nist.gov/pubs/sp/800/61/r2/final']],
-ex:{title:'First-ten-minutes triage',
-prompt:`Write <code>Paged</code> with three methods. <code>static String posture(boolean uniformFailure, boolean newArtifactsCreated)</code> returns <code>"attack"</code> whenever new artifacts were created (clients, keys, factors, trusts), otherwise <code>"outage"</code> when the failure is uniform, otherwise <code>"attack"</code> — an unexplained non-uniform failure is treated as an attack until shown otherwise. <code>static String scope(boolean allApps, boolean existingSessionsWork)</code> returns <code>"authorization"</code> when existing sessions still work and only one app is affected, <code>"token-issuance"</code> when existing sessions work and all apps are affected, and <code>"total"</code> when existing sessions are broken too. <code>static boolean safeToRestart(String posture)</code> is false for <code>"attack"</code> — restarting clears the evidence along with the foothold.`,
-starter:`public class Paged {
-    static String posture(boolean uniformFailure, boolean newArtifactsCreated) {
-        return null;
-    }
-    static String scope(boolean allApps, boolean existingSessionsWork) {
-        return null;
-    }
-    static boolean safeToRestart(String posture) {
-        return false;
-    }
+ex:{title:'Compromise or outage?',lang:'js',
+run:{call:'posture',cases:[{name:'everyone failing, nothing created',args:[true,false],expect:'outage'},{name:'new artifacts appearing',args:[false,true],expect:'compromise'},{name:'uniform failure AND new artifacts still means compromise',args:[true,true],expect:'compromise'},{name:'neither signal',args:[false,false],expect:'investigate'}]},
+prompt:`Write <code>function posture(uniformFailure, newArtifactsCreated)</code> that returns <code>"compromise"</code> whenever new artifacts are appearing (new clients, keys, federation trusts) — <b>even if</b> everything is also failing uniformly — <code>"outage"</code> when the failure is uniform and nothing is being created, and <code>"investigate"</code> otherwise.`,
+starter:`function posture(uniformFailure, newArtifactsCreated) {
+  return null;
 }`,
-tests:[{d:'created artifacts mean an attack',re:'newArtifactsCreated'},{d:'a uniform failure suggests an outage',re:'"outage"'},{d:'ambiguity defaults to attack',re:'"attack"'},{d:'surviving sessions on one app is authorization',re:'"authorization"'},{d:'surviving sessions across all apps is issuance',re:'"token-issuance"'},{d:'broken sessions mean a total failure',re:'"total"'},{d:'restarting is unsafe during an attack',re:'"attack"\\s*\\.\\s*equals|equals\\s*\\(\\s*"attack"'}],
-behavior:`posture(true,false) is outage; posture(true,true) is attack, because a new client, key, factor or federated trust appearing is not something an outage does; posture(false,false) is attack, since an unexplained non-uniform failure is treated as an attack for the first ten minutes - that stance is cheap to relax and evidence is impossible to un-destroy. scope(false,true) is authorization: the user authenticated fine and then could not see something, which is the most commonly misdiagnosed identity symptom. scope(true,true) is token-issuance and scope(true,false) is total. safeToRestart("outage") is true; safeToRestart("attack") is false, because a rolling restart clears in-memory session state and the attacker's foothold together with your ability to see what they did.`,
-hints:['Check newArtifactsCreated first — it overrides everything.','In scope, branch on existingSessionsWork first, then on allApps.','<code>return !"attack".equals(posture);</code>'],
-solution:`public class Paged {
-    static String posture(boolean uniformFailure, boolean newArtifactsCreated) {
-        if (newArtifactsCreated) return "attack";   // outages do not create clients or keys
-        if (uniformFailure) return "outage";
-        return "attack";                            // unexplained: assume the worse one
-    }
-    static String scope(boolean allApps, boolean existingSessionsWork) {
-        if (!existingSessionsWork) return "total";
-        return allApps ? "token-issuance" : "authorization";
-    }
-    static boolean safeToRestart(String posture) {
-        // a restart destroys the foothold and the evidence together
-        return !"attack".equals(posture);
-    }
-}`}},
+solution:`function posture(uniformFailure, newArtifactsCreated) {
+  // creation wins: an attacker establishing persistence may also break things
+  if (newArtifactsCreated) return "compromise";
+  if (uniformFailure) return "outage";
+  return "investigate";
+}`,
+tests:[{d:'new artifacts mean compromise',re:'"compromise"'},{d:'uniform failure with no creation is an outage',re:'"outage"'},{d:'anything else needs investigation',re:'"investigate"'}],
+behavior:`The third case is the whole point and it is executed: an attacker establishing persistence often breaks things on the way, so "everything is down" does not rule out a compromise. Order your checks so creation is evaluated first — an outage response (restart, roll back, restore) destroys exactly the evidence an intrusion investigation needs.`,
+hints:['Check the compromise signal first so it cannot be masked.','Uniform failure alone, with nothing being created, points at an outage.','Everything else stays open as "investigate" rather than guessing.']}},
 
 {id:'run8',title:'Changing identity safely: rollout, rollback and continuity',body:`
 <p>Identity changes are uniquely unforgiving. A bad deploy in most systems degrades a feature; a bad
@@ -969,44 +937,37 @@ exit requires, the tail of applications that will not federate, and the headcoun
 assumes. A recommendation that hides these is not saving anyone trouble — it is deferring it to the
 person who inherits the decision.</p>`,
 docs:[['NIST SP 800-63-3 — Digital Identity Guidelines (requirements framing)','https://pages.nist.gov/800-63-3/sp800-63-3.html'],['OpenID Foundation — certification (verifying vendor claims)','https://openid.net/certification/'],['RFC 7644 — SCIM Protocol (provisioning interoperability)','https://www.rfc-editor.org/rfc/rfc7644']],
-ex:{title:'Gate first, then score',
-prompt:`Write <code>VendorEval</code> with three methods. <code>static boolean passesGates(boolean handlesLegacyTail, boolean meetsResidency, boolean producesAuditEvidence, boolean phishingResistantMfa)</code> requires <b>all four</b> — a gate is not scored, it is pass or fail. <code>static int score(int migrationEffortInverse, int operationalEase, int costEase, int governance, int devExperience)</code> returns the weighted total <code>3*migrationEffortInverse + 3*operationalEase + 2*costEase + 2*governance + devExperience</code>. <code>static int evaluate(boolean gates, int weightedScore)</code> returns the score when the gates pass and <code>-1</code> otherwise, so a failed gate can never be averaged away by a strong showing elsewhere.`,
-starter:`public class VendorEval {
-    static boolean passesGates(boolean handlesLegacyTail, boolean meetsResidency,
-                               boolean producesAuditEvidence, boolean phishingResistantMfa) {
-        return false;
-    }
-    static int score(int migrationEffortInverse, int operationalEase, int costEase,
-                     int governance, int devExperience) {
-        return 0;
-    }
-    static int evaluate(boolean gates, int weightedScore) {
-        return 0;
-    }
+ex:{title:'Gate first, then score',lang:'js',
+run:{call:'evaluate',cases:[{name:'all gates pass, score is returned',args:[true,55],expect:55},{name:'a failed gate disqualifies',args:[false,55],expect:-1},{name:'a failed gate still disqualifies a perfect score',args:[false,100],expect:-1}]},
+prompt:`Write three functions. <code>passesGates(handlesLegacyTail, meetsResidency, producesAuditEvidence, phishingResistantMfa)</code> requires <b>all four</b> — a gate is not scored, it is pass or fail. <code>score(migrationEffortInverse, operationalEase, costEase, governance, devExperience)</code> returns <code>3*migrationEffortInverse + 3*operationalEase + 2*costEase + 2*governance + devExperience</code>. <code>evaluate(gates, weightedScore)</code> returns the score when the gates pass and <code>-1</code> otherwise, so a failed gate can never be averaged away.`,
+starter:`function passesGates(handlesLegacyTail, meetsResidency, producesAuditEvidence, phishingResistantMfa) {
+  return false;
+}
+function score(migrationEffortInverse, operationalEase, costEase, governance, devExperience) {
+  return 0;
+}
+function evaluate(gates, weightedScore) {
+  return 0;
 }`,
-tests:[{d:'every gate must pass',re:'handlesLegacyTail\\s*&&'},{d:'residency is a gate',re:'meetsResidency'},{d:'audit evidence is a gate',re:'producesAuditEvidence'},{d:'phishing-resistant MFA is a gate',re:'phishingResistantMfa'},{d:'migration effort carries the heaviest weight',re:'3\\s*\\*\\s*migrationEffortInverse'},{d:'operational burden is weighted equally',re:'3\\s*\\*\\s*operationalEase'},{d:'a failed gate disqualifies rather than scores',re:'return\\s+-1|-1\\s*;'}],
-behavior:`passesGates(true,true,true,true) is true; flipping any one argument to false makes it false, because a gate is pass-or-fail and cannot be compensated for. score(5,5,5,5,5) is 55 — migration effort and operational burden carry triple weight because they are the largest real costs and the most consistently underestimated, while licence price and developer experience dominate most evaluations for no good reason. evaluate(true, 55) is 55, while evaluate(false, 55) is -1: a vendor that cannot handle your legacy tail is out regardless of how well it scores elsewhere, and returning a number there would let a spreadsheet quietly hide the dealbreaker.`,
-hints:['Four conditions joined with &&, no scoring involved.','Write the weighted sum literally so the weights are visible in the code.','<code>return gates ? weightedScore : -1;</code>'],
-solution:`public class VendorEval {
-    static boolean passesGates(boolean handlesLegacyTail, boolean meetsResidency,
-                               boolean producesAuditEvidence, boolean phishingResistantMfa) {
-        // gates are pass/fail: they are never traded off against a score
-        return handlesLegacyTail && meetsResidency
-            && producesAuditEvidence && phishingResistantMfa;
-    }
-    static int score(int migrationEffortInverse, int operationalEase, int costEase,
-                     int governance, int devExperience) {
-        // migration and operations dominate: they are the real, recurring costs
-        return 3 * migrationEffortInverse
-             + 3 * operationalEase
-             + 2 * costEase
-             + 2 * governance
-             + devExperience;
-    }
-    static int evaluate(boolean gates, int weightedScore) {
-        // -1, not a low score: a dealbreaker must not be averageable
-        return gates ? weightedScore : -1;
-    }
-}`}}
+solution:`function passesGates(handlesLegacyTail, meetsResidency, producesAuditEvidence, phishingResistantMfa) {
+  // gates are pass/fail: they are never traded off against a score
+  return handlesLegacyTail && meetsResidency
+      && producesAuditEvidence && phishingResistantMfa;
+}
+function score(migrationEffortInverse, operationalEase, costEase, governance, devExperience) {
+  // migration and operations dominate: they are the real, recurring costs
+  return 3 * migrationEffortInverse
+       + 3 * operationalEase
+       + 2 * costEase
+       + 2 * governance
+       + devExperience;
+}
+function evaluate(gates, weightedScore) {
+  // -1, not a low score: a dealbreaker must not be averageable
+  return gates ? weightedScore : -1;
+}`,
+tests:[{d:'every gate must pass',re:'handlesLegacyTail\\s*&&'},{d:'residency is a gate',re:'meetsResidency'},{d:'audit evidence is a gate',re:'producesAuditEvidence'},{d:'phishing-resistant MFA is a gate',re:'phishingResistantMfa'},{d:'migration effort carries the heaviest weight',re:'3\\s*\\*\\s*migrationEffortInverse'},{d:'operational burden is weighted equally',re:'3\\s*\\*\\s*operationalEase'},{d:'a failed gate disqualifies rather than scores',re:'-1'}],
+behavior:`evaluate(true,55) is 55 and evaluate(false,55) is -1 — executed for real, so returning a low score instead of -1 actually fails. score(5,5,5,5,5) is 55: migration effort and operational burden carry triple weight because they are the largest real costs and the most consistently underestimated, while licence price and developer experience dominate most evaluations for no good reason.`,
+hints:['Four conditions joined with &&, no scoring involved.','Write the weighted sum literally so the weights are visible in the code.','<code>return gates ? weightedScore : -1;</code>']}}
 
 ]});

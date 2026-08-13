@@ -2,7 +2,8 @@
   <img src="https://img.shields.io/badge/streams-14-8b5cf6" alt="streams">
   <img src="https://img.shields.io/badge/lessons-132-8b5cf6" alt="lessons">
   <img src="https://img.shields.io/badge/exercises-139-06b6d4" alt="exercises">
-  <img src="https://img.shields.io/badge/content%20checks-660-2ea44f" alt="content integrity checks">
+  <img src="https://img.shields.io/badge/content%20checks-648-2ea44f" alt="content integrity checks">
+  <img src="https://img.shields.io/badge/real%20execution-19%25-06b6d4" alt="exercises graded by real execution">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
@@ -68,10 +69,16 @@ The **content checks** badge counts assertions in `scripts/verify.js` proving ev
 matches its own regex checks and that ids are unique. That is a **content integrity gate, not a test
 suite** — it says the material is internally consistent, not that a learner's code is correct.
 
-Exercises here are Java, graded by **regex structural checks**: they verify you wrote the expected
-construct, not that your code runs. Every exercise ships a **Run locally** panel with exact commands,
-and that is the ground truth. Raising the share of real execution is the most valuable open
-improvement.
+Grading splits two ways. **27 of 139 exercises (19%) are graded by real execution**: they are pure-logic
+problems written in JavaScript, and your function is called with real inputs in a sandboxed Web Worker
+with its return value compared against expected values — 119 executed cases in total. Every failure mode
+is its own named case, so an implementation that skips the audience check or fails open on an unknown
+input fails a test rather than slipping past a pattern match.
+
+The remaining **112 exercises are Java, graded by regex structural checks**: they verify you wrote the
+expected construct, not that your code runs. Every one ships a **Run locally** panel with the exact
+commands, and that is the ground truth. Raising the share of real execution further is the most valuable
+open improvement — the candidates are the ~40 remaining exercises whose logic is not Java-specific.
 
 ## Accuracy
 

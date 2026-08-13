@@ -266,21 +266,21 @@ defensible — is the acting-as-a-user lesson in Identity Foundations.</i></p>
 <p><b>Delegation</b> is the safer cousin. The app acts <i>on behalf of</i> the user while <b>both</b> identities are preserved: the token names the user as the subject and records the acting party in an <code>act</code> (actor) claim, which OAuth <b>Token Exchange</b> produces. Auditors can then see "service X acted for user Y," which pure impersonation loses.</p>
 <p>Rule of thumb: prefer delegation so attribution survives; reserve impersonation for genuine support scenarios, and always log who impersonated whom.</p>`,
 docs:[['Token Exchange & act claim (RFC 8693)','https://www.rfc-editor.org/rfc/rfc8693'],['Delegation vs impersonation','https://docs.oasis-open.org/']],
-ex:{title:'Resolve the effective subject',
-prompt:`Write class <code>Impersonation</code> with <code>static String effectiveSubject(String actor, String target, boolean impersonating)</code> that returns the <code>target</code> when impersonating (the request appears to come from the target) and the <code>actor</code> otherwise. Use one conditional expression.`,
-starter:`public class Impersonation {
-    static String effectiveSubject(String actor, String target, boolean impersonating) {
-        return null;
-    }
+ex:{title:'Whose identity is this really?',lang:'js',
+run:{call:'effectiveSubject',cases:[{name:'impersonating: the target subject is used',args:['svc-support','cust-91',true],expect:'cust-91'},{name:'not impersonating: the actor is the subject',args:['svc-support','cust-91',false],expect:'svc-support'},{name:'no target while impersonating falls back to the actor',args:['svc-support','',true],expect:'svc-support'}]},
+prompt:`Write <code>function effectiveSubject(actor, target, impersonating)</code> that returns the subject an access decision should be made against: the <code>target</code> when impersonating and a non-empty target was supplied, and the <code>actor</code> otherwise. The actor is never lost — it belongs in the <code>act</code> claim and in the audit line.`,
+starter:`function effectiveSubject(actor, target, impersonating) {
+  return null;
 }`,
-solution:`public class Impersonation {
-    static String effectiveSubject(String actor, String target, boolean impersonating) {
-        return impersonating ? target : actor;
-    }
+solution:`function effectiveSubject(actor, target, impersonating) {
+  // fall back to the actor rather than an empty subject: an unnamed
+  // subject is how an authorization check silently passes on nothing
+  if (impersonating && target !== "") return target;
+  return actor;
 }`,
-tests:[{d:'impersonation makes the target the effective subject',re:'impersonating\\s*\\?\\s*target\\s*:\\s*actor'}],
-behavior:`effectiveSubject("admin","alice",true) returns "alice" — the request now appears to be alice, and the admin identity is hidden (why delegation with an act claim is safer). effectiveSubject("admin","alice",false) returns "admin".`,
-hints:['A single ternary condition ? target : actor expresses it.','Impersonating means the target becomes the effective subject.','Otherwise the actor remains the subject.']}},
+tests:[{d:'impersonation uses the target subject',re:'impersonating\\s*&&'},{d:'an empty target is not a subject',re:'target\\s*!==?\\s*""'},{d:'otherwise the actor is the subject',re:'return\\s+actor'}],
+behavior:`The third case is the one worth executing: impersonating with an empty target must fall back to the actor rather than returning an empty subject, because an unnamed subject is how an authorization check quietly passes on nothing at all.`,
+hints:['Two conditions must both hold before you use the target.','An empty string is not a valid subject.','Every other path returns the actor.']}},
 
 {id:'s2s9',title:'Identity for AI agents: acting for a user, autonomously',body:`
 <p>An agent is software that acts on a user's behalf without the user watching. That breaks an

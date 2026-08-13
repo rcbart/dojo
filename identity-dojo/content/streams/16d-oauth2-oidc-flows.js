@@ -15,14 +15,22 @@ STREAMS.push({iam:true,sec:'OAuth 2.0 & OpenID Connect',icon:'🔓',title:'OAuth
 <li><b>3.</b> The AS redirects back to the client's <code>redirect_uri</code> with a short-lived <b>authorization code</b> (front channel — the code is useless alone).</li>
 <li><b>4.</b> The client's backend exchanges that code for tokens at <code>/token</code> (back channel — private). Tokens never travel through the browser.</li>
 </ul>
-<p>The <code>state</code> parameter is mandatory: a random value the client sends and checks on return, to prevent <b>CSRF</b> on the redirect.</p>
+<p><b>CSRF protection on the redirect is mandatory — but <code>state</code> is no longer the only way to
+get it.</b> RFC 9700 (the OAuth 2.0 Security BCP) says clients MUST prevent CSRF at the redirection
+endpoint, and gives three acceptable mechanisms: a client using <b>PKCE</b> MAY rely on the protection
+PKCE already provides; in OpenID Connect flows the <b>nonce</b> provides it; <i>otherwise</i> a one-time
+CSRF token carried in <code>state</code> and bound to the user agent MUST be used.</p>
+<p>So the modern reading is: PKCE is the CSRF defence, and <code>state</code> is how you carry
+application state — where to send the user back to — rather than a security parameter you must always
+populate. It is still shown below because plenty of deployments use it exactly that way, and because a
+client that cannot rely on PKCE (the AS does not support it) still needs it.</p>
 <div class="codeSample" data-hl>GET https://as.example.com/authorize
   ?response_type=code            // "code" = Authorization Code flow
   &client_id=app123
   &redirect_uri=https://app.example.com/callback
   &scope=openid%20profile        // space-separated, URL-encoded
   &state=xyzRANDOM               // CSRF protection, verified on return</div>`,
-docs:[['RFC 6749 — OAuth 2.0','https://www.rfc-editor.org/rfc/rfc6749'],['oauth.net — Authorization Code','https://oauth.net/2/grant-types/authorization-code/'],['RFC 9700 — OAuth security BCP','https://www.rfc-editor.org/rfc/rfc9700']],
+docs:[['RFC 9700 &sect;2.1 - CSRF: PKCE, nonce or state','https://www.rfc-editor.org/rfc/rfc9700#section-2.1'],['RFC 6749 — OAuth 2.0','https://www.rfc-editor.org/rfc/rfc6749'],['oauth.net — Authorization Code','https://oauth.net/2/grant-types/authorization-code/'],['RFC 9700 — OAuth security BCP','https://www.rfc-editor.org/rfc/rfc9700']],
 ex:{title:'Build the /authorize request',
 prompt:`Write <code>AuthorizeUrl</code> with <code>static String build(String base, String clientId, String redirectUri, String scope, String state)</code> that returns the authorization request URL: <code>base + "?response_type=code"</code> then <code>&amp;client_id=</code>, <code>&amp;redirect_uri=</code>, <code>&amp;scope=</code>, <code>&amp;state=</code>, each value passed through <code>java.net.URLEncoder.encode(value, "UTF-8")</code>. Include <code>response_type=code</code> and all four params. Declare <code>throws Exception</code>.`,
 starter:`import java.net.URLEncoder;
@@ -291,7 +299,59 @@ public class PkceServer {
 <div class="codeSample" data-hl>POST /token   (back channel)
 Content-Type: application/x-www-form-urlencoded
 
-grant_type=authorization_code&code=AUTH_CODE&redirect_uri=https%3A%2F%2Fapp%2Fcb&client_id=app123&code_verifier=ORIGINAL_VERIFIER</div>`,
+grant_type=authorization_code&code=AUTH_CODE&redirect_uri=https%3A%2F%2Fapp%2Fcb&client_id=app123&code_verifier=ORIGINAL_VERIFIER</div>
+
+<h4>What the exchange is really for</h4>
+<p>It is worth asking why this step exists at all — why not have the authorization server return tokens
+directly to the browser and skip a round trip? That was the Implicit flow, and it is deprecated, because
+of what the two channels can and cannot protect.</p>
+<div class="codeSample" data-hl>FRONT CHANNEL (via the browser redirect)
+  visible in URLs, history, Referer headers, server logs, extensions
+  -> carries the CODE: single-use, short-lived, useless on its own
+
+BACK CHANNEL (client backend -> AS, direct TLS)
+  no browser, no intermediaries, client can authenticate itself
+  -> carries the TOKENS: long-lived, powerful, must never be exposed
+
+// the code exchange exists precisely to move value from the leaky
+// channel to the private one. that is the whole design.</div>
+<p>The code is deliberately a <b>voucher, not a credential</b>: it is worth nothing unless redeemed by the
+party that started the flow, which is what client authentication (confidential clients) or PKCE (public
+clients) proves.</p>
+
+<h4>The checks the AS runs, and what each stops</h4>
+<ul>
+<li><b>Is the code known, unexpired, and unused?</b> Codes are single-use and short-lived — the spec
+recommends a maximum of ten minutes. A second redemption must not only fail; RFC 9700 says the AS SHOULD
+revoke every token already issued from that code, because a replay means someone else has it.</li>
+<li><b>Was it issued to <i>this</i> client?</b> Otherwise a malicious client could redeem a code intended
+for another.</li>
+<li><b>Does <code>redirect_uri</code> match the one used at <code>/authorize</code>?</b> This binds the
+redemption to the original request.</li>
+<li><b>Does the <code>code_verifier</code> hash to the stored challenge?</b> The proof that the redeeming
+party is the one that started the flow.</li>
+</ul>
+
+<h4>Reading the response properly</h4>
+<p>The response is JSON, and <code>Cache-Control: no-store</code> matters — these are credentials, and
+caching them anywhere is a leak. Beyond the tokens themselves:</p>
+<div class="codeSample" data-hl>{ "access_token": "...", "token_type": "Bearer", "expires_in": 300,
+  "refresh_token": "...", "id_token": "...", "scope": "orders:read" }
+
+// "scope" may be NARROWER than you asked for. the AS is allowed to
+// grant less. a client that assumes it got what it requested will
+// fail at the resource server instead, confusingly.
+
+// "expires_in" is SECONDS FROM NOW, not a timestamp. treat it as a
+// hint and handle a 401 anyway - clocks drift and tokens get revoked.</div>
+
+<h4>Two mistakes worth naming</h4>
+<p><b>Reading the access token.</b> It is opaque <i>to the client</i> by contract, even when it happens to
+be a decodable JWT. Its format and audience belong to the resource server, and clients that parse it
+break the day the AS changes it. If you need to know who the user is, that is the ID token's job.</p>
+<p><b>Treating the ID token as an API credential.</b> It is issued to the client, audience-restricted to
+the client, and proves an authentication event. Sending it to an API is a category error the API should
+reject.</p>`,
 docs:[['RFC 6749 §4.1.3 — Token Request','https://www.rfc-editor.org/rfc/rfc6749#section-4.1.3'],['oauth.net — Access Tokens','https://oauth.net/2/access-tokens/']],
 ex:{title:'Build the token request body',
 prompt:`Write <code>TokenRequest</code> with <code>static String body(String code, String redirectUri, String clientId, String codeVerifier)</code> returning the form-encoded body: <code>"grant_type=authorization_code"</code> then <code>&amp;code=</code>, <code>&amp;redirect_uri=</code>, <code>&amp;client_id=</code>, and <code>&amp;code_verifier=</code>, each value passed through <code>java.net.URLEncoder.encode(value, "UTF-8")</code>. Declare <code>throws Exception</code>.`,
@@ -329,7 +389,57 @@ public class TokenRequest {
 Authorization: Basic base64(client_id ":" client_secret)   // client auth
 Content-Type: application/x-www-form-urlencoded
 
-grant_type=client_credentials&scope=orders%3Aread</div>`,
+grant_type=client_credentials&scope=orders%3Aread</div>
+
+<h4>The conceptual shift: no user in the picture</h4>
+<p>Every flow so far has had a user at the centre — someone to authenticate, someone to consent, someone
+whose data is being reached. Client Credentials removes all three. There is no resource owner because the
+<b>client is the resource owner</b>: it is asking for access to something it owns, on its own behalf.</p>
+<p>Which is why the pieces you are used to disappear. No redirect, because there is no browser and nobody
+to look at a consent screen. No ID token, because there is no authentication event to describe. No
+refresh token, because the client can simply authenticate again whenever it likes — RFC 6749 says a
+refresh token SHOULD NOT be issued here, and a client asking for one has usually misunderstood the
+grant.</p>
+<div class="codeSample" data-hl>authorization code:  "this USER lets this APP read their orders"
+                       sub = the user, and the app is a delegate
+
+client credentials:  "this SERVICE may read orders"
+                       sub = the service. no delegation, no user.
+
+// this is the distinction that trips people: if a request is
+// ultimately on behalf of a person, client credentials is the
+// WRONG grant, even when a service makes the call.</div>
+
+<h4>The mistake this grant invites</h4>
+<p>A background job legitimately acts as itself. But teams reach for Client Credentials for the wrong
+reason too: a service needs to call another service <i>during a user's request</i>, and passing user
+context is awkward, so it uses its own service token instead.</p>
+<p>The consequence is that the downstream service sees only "orders-service called me" and has lost the
+information it needs to authorize properly. The user's identity, their permissions, and any consent are
+gone — so the downstream must either trust the caller completely, or accept an unauthenticated user-id
+header, which is not authorization at all. The correct tool is <b>token exchange</b> (RFC 8693), covered
+in the service-to-service stream, which produces a token for the downstream audience that still carries
+the subject.</p>
+
+<h4>Authenticating as a machine</h4>
+<p>The security of this grant reduces entirely to how the client proves itself, and the options run in
+increasing order of assurance:</p>
+<ul>
+<li><b>client_secret_basic / _post</b> — a shared secret. Simple, ubiquitous, and it is a long-lived
+credential that must be stored, distributed, rotated, and kept out of logs.</li>
+<li><b><code>private_key_jwt</code></b> — the client signs a short-lived JWT assertion with its private
+key. Nothing shared, so nothing to leak from the server side.</li>
+<li><b>mTLS</b> — the TLS certificate is the credential, and the issued token can be
+<i>certificate-bound</i> (RFC 8705), so a stolen token cannot be used without the key.</li>
+<li><b>Workload identity federation</b> — the platform attests what the workload is, and that attestation
+is exchanged for a token. No stored secret at all, which is the end state worth aiming at.</li>
+</ul>
+
+<h4>And the operational trap</h4>
+<p>These tokens are fetched by code, in a loop. <b>Cache them until shortly before expiry.</b> A service
+that requests a fresh token per outbound call will hammer the authorization server, get rate-limited, and
+take an outage caused entirely by its own token acquisition — a genuinely common production failure. Add
+jitter, so a fleet restarting together does not stampede.</p>`,
 docs:[['RFC 6749 §4.4 — Client Credentials','https://www.rfc-editor.org/rfc/rfc6749#section-4.4'],['oauth.net — Client Credentials','https://oauth.net/2/grant-types/client-credentials/']],
 ex:{title:'Client credentials request',
 prompt:`Write <code>ClientCreds</code> with: <code>static String body(String scope)</code> returning <code>"grant_type=client_credentials&amp;scope=" + java.net.URLEncoder.encode(scope, "UTF-8")</code>; and <code>static String basicAuth(String clientId, String clientSecret)</code> returning <code>"Basic " + Base64.getEncoder().encodeToString((clientId + ":" + clientSecret).getBytes())</code>. Declare <code>throws Exception</code> where needed.`,
@@ -602,54 +712,49 @@ migrated?</li>
 authorization servers keep supporting them for compatibility, and an enabled-but-unused legacy grant is
 still an enabled grant.</p>`,
 docs:[['The OAuth 2.1 Authorization Framework (draft)','https://datatracker.ietf.org/doc/draft-ietf-oauth-v2-1/'],['OAuth 2.0 Security Best Current Practice','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['RFC 7636 — PKCE','https://www.rfc-editor.org/rfc/rfc7636'],['oauth.net — OAuth 2.1','https://oauth.net/2.1/']],
-ex:{title:'Audit a client configuration against OAuth 2.1',
-prompt:`Write <code>OAuth21</code> with four methods. <code>static boolean grantAllowed(String grantType)</code> returns false for <code>"implicit"</code> and <code>"password"</code> and true for <code>"authorization_code"</code>, <code>"client_credentials"</code>, <code>"refresh_token"</code> and <code>"device_code"</code>; anything else, including null, is false. <code>static boolean pkceOk(String method)</code> accepts only <code>"S256"</code> — <code>"plain"</code> and null are rejected. <code>static boolean redirectOk(String registered, String presented)</code> requires an exact match of two non-null values, and must reject any registered value containing <code>"*"</code>. <code>static boolean refreshOk(boolean rotatedWithReuseDetection, boolean senderConstrained)</code> is true when <b>either</b> protection is in place.`,
-starter:`public class OAuth21 {
-    static boolean grantAllowed(String grantType) {
-        return false;
-    }
-    static boolean pkceOk(String method) {
-        return false;
-    }
-    static boolean redirectOk(String registered, String presented) {
-        return false;
-    }
-    static boolean refreshOk(boolean rotatedWithReuseDetection, boolean senderConstrained) {
-        return false;
-    }
+ex:{title:'Audit a client configuration against OAuth 2.1',lang:'js',
+run:{call:'grantAllowed',cases:[{name:'authorization code remains',args:['authorization_code'],expect:true},{name:'client credentials remains',args:['client_credentials'],expect:true},{name:'refresh token remains',args:['refresh_token'],expect:true},{name:'device code remains',args:['device_code'],expect:true},{name:'implicit is removed',args:['implicit'],expect:false},{name:'password (ROPC) is removed',args:['password'],expect:false},{name:'an unknown grant is refused',args:['magic'],expect:false},{name:'null is refused',args:[null],expect:false}]},
+prompt:`Write four functions. <code>grantAllowed(grantType)</code> returns <code>false</code> for <code>"implicit"</code> and <code>"password"</code>, <code>true</code> for <code>"authorization_code"</code>, <code>"client_credentials"</code>, <code>"refresh_token"</code> and <code>"device_code"</code>, and <code>false</code> for anything else including <code>null</code>. <code>pkceOk(method)</code> accepts only <code>"S256"</code>. <code>redirectOk(registered, presented)</code> requires an exact match of two non-null values and must reject any registered value containing <code>"*"</code>. <code>refreshOk(rotatedWithReuseDetection, senderConstrained)</code> is <code>true</code> when <b>either</b> protection is in place.`,
+starter:`function grantAllowed(grantType) {
+  return false;
+}
+function pkceOk(method) {
+  return false;
+}
+function redirectOk(registered, presented) {
+  return false;
+}
+function refreshOk(rotatedWithReuseDetection, senderConstrained) {
+  return false;
 }`,
-tests:[{d:'the implicit grant is removed',re:'"implicit"'},{d:'the password grant is removed',re:'"password"'},{d:'authorization code remains',re:'"authorization_code"'},{d:'only S256 is accepted for PKCE',re:'"S256"'},{d:'wildcard redirect registrations are refused',re:'contains\\s*\\(\\s*"\\*"\\s*\\)'},{d:'redirect matching is exact',re:'equals\\s*\\('},{d:'either refresh protection suffices',re:'\\|\\|'}],
-behavior:`grantAllowed("authorization_code") and grantAllowed("device_code") are true; grantAllowed("implicit"), grantAllowed("password") and grantAllowed(null) are false. pkceOk("S256") is true while pkceOk("plain") is false, because plain offers no protection against an attacker who observed the challenge. redirectOk("https://app.example.com/cb","https://app.example.com/cb") is true; a registered value of "https://app.example.com/*" is false however it is presented, and "https://app.example.com/cb2" against the registered "https://app.example.com/cb" is false. refreshOk(true,false) and refreshOk(false,true) are both true; refreshOk(false,false) is false, since a long-lived bearer refresh token in a public client is the highest-value credential in the system.`,
-hints:['A switch listing the four permitted grants, defaulting to false, handles the removed ones and null together.','<code>return "S256".equals(method);</code>','Reject the wildcard registration first, then compare with <code>equals</code>.'],
-solution:`public class OAuth21 {
-    static boolean grantAllowed(String grantType) {
-        if (grantType == null) return false;
-        switch (grantType) {
-            case "implicit":            // removed: token in the URL fragment
-            case "password":            // removed: the app collects the password
-                return false;
-            case "authorization_code":
-            case "client_credentials":
-            case "refresh_token":
-            case "device_code":
-                return true;
-            default:
-                return false;
-        }
-    }
-    static boolean pkceOk(String method) {
-        // plain gives nothing away only if nobody observed the challenge
-        return "S256".equals(method);
-    }
-    static boolean redirectOk(String registered, String presented) {
-        if (registered == null || presented == null) return false;
-        if (registered.contains("*")) return false;   // no wildcard registrations
-        return registered.equals(presented);          // exact string match, always
-    }
-    static boolean refreshOk(boolean rotatedWithReuseDetection, boolean senderConstrained) {
-        return rotatedWithReuseDetection || senderConstrained;
-    }
-}`}},
+solution:`function grantAllowed(grantType) {
+  switch (grantType) {
+    case "implicit":            // removed: token in the URL fragment
+    case "password":            // removed: the app collects the password
+      return false;
+    case "authorization_code":
+    case "client_credentials":
+    case "refresh_token":
+    case "device_code":
+      return true;
+    default:
+      return false;            // unknown grants and null fail closed
+  }
+}
+function pkceOk(method) {
+  return method === "S256";     // plain protects nothing once observed
+}
+function redirectOk(registered, presented) {
+  if (registered == null || presented == null) return false;
+  if (registered.indexOf("*") >= 0) return false;   // no wildcards
+  return registered === presented;                  // exact match, always
+}
+function refreshOk(rotatedWithReuseDetection, senderConstrained) {
+  return rotatedWithReuseDetection || senderConstrained;
+}`,
+tests:[{d:'the implicit grant is removed',re:'"implicit"'},{d:'the password grant is removed',re:'"password"'},{d:'authorization code remains',re:'"authorization_code"'},{d:'only S256 is accepted for PKCE',re:'"S256"'},{d:'wildcard redirect registrations are refused',re:'indexOf\\s*\\(\\s*"\\*"\\s*\\)'},{d:'redirect matching is exact',re:'registered\\s*===\\s*presented'},{d:'either refresh protection suffices',re:'\\|\\|'}],
+behavior:`Eight grant types are executed, including an unknown value and null — so a default that fails open is caught rather than merely unmatched by a regex. pkceOk("plain") is false because plain offers no protection against an attacker who observed the challenge, and a registered redirect of "https://app.example.com/*" is rejected however it is presented.`,
+hints:['A switch listing the four permitted grants, defaulting to false, handles the removed ones and null together.','<code>return method === "S256";</code>','Reject the wildcard registration first, then compare with ===.']}},
 
 {id:'oa8b',title:'Browser-based apps and the BFF pattern',body:`
 <p>A single-page app needs to call an API on the user's behalf. The obvious design — run the OAuth flow
@@ -716,42 +821,33 @@ localStorage               no. this is the pattern the BCP exists to discourage<
 with a session, which is what server-rendered applications were doing all along. The industry spent a
 decade moving tokens into the browser and has spent the last few years moving them back out.</p>`,
 docs:[['OAuth 2.0 for Browser-Based Applications (BCP draft)','https://datatracker.ietf.org/doc/draft-ietf-oauth-browser-based-apps/'],['OWASP — Cross-Site Request Forgery Prevention Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html'],['MDN — Set-Cookie: HttpOnly, Secure, SameSite','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie']],
-ex:{title:'Score a browser token strategy',
-prompt:`Write <code>BrowserAuth</code> with three methods. <code>static boolean scriptReadable(String storage)</code> returns true for <code>"localStorage"</code>, <code>"sessionStorage"</code> and <code>"jsVariable"</code>, and false for <code>"httpOnlyCookie"</code> and anything else including <code>null</code>. <code>static boolean durableCredentialInBrowser(String storage, boolean refreshTokenInBrowser)</code> is true when the storage is script-readable <b>and</b> a refresh token is held there — the combination that turns one XSS into lasting access. <code>static String recommend(boolean hasBackend)</code> returns <code>"bff"</code> when a backend is available and <code>"memory-only-pkce"</code> otherwise.`,
-starter:`public class BrowserAuth {
-    static boolean scriptReadable(String storage) {
-        return false;
-    }
-    static boolean durableCredentialInBrowser(String storage, boolean refreshTokenInBrowser) {
-        return false;
-    }
-    static String recommend(boolean hasBackend) {
-        return null;
-    }
+ex:{title:'Score a browser token strategy',lang:'js',
+run:{call:'durableCredentialInBrowser',cases:[{name:'refresh token in localStorage: one XSS becomes lasting access',args:['localStorage',true],expect:true},{name:'refresh token in an HttpOnly cookie is not script-readable',args:['httpOnlyCookie',true],expect:false},{name:'script-readable storage with no refresh token',args:['localStorage',false],expect:false},{name:'sessionStorage is equally readable',args:['sessionStorage',true],expect:true},{name:'a plain variable is readable too',args:['jsVariable',true],expect:true}]},
+prompt:`Write three functions. <code>scriptReadable(storage)</code> returns <code>true</code> for <code>"localStorage"</code>, <code>"sessionStorage"</code> and <code>"jsVariable"</code>, and <code>false</code> for <code>"httpOnlyCookie"</code> and anything else including <code>null</code>. <code>durableCredentialInBrowser(storage, refreshTokenInBrowser)</code> is <code>true</code> when the storage is script-readable <b>and</b> a refresh token is held there. <code>recommend(hasBackend)</code> returns <code>"bff"</code> when a backend is available and <code>"memory-only-pkce"</code> otherwise.`,
+starter:`function scriptReadable(storage) {
+  return false;
+}
+function durableCredentialInBrowser(storage, refreshTokenInBrowser) {
+  return false;
+}
+function recommend(hasBackend) {
+  return null;
 }`,
-tests:[{d:'localStorage is script-readable',re:'"localStorage"'},{d:'an HttpOnly cookie is not script-readable',re:'"httpOnlyCookie"|default'},{d:'a JS variable is still script-readable',re:'"jsVariable"'},{d:'null storage is handled',re:'storage\\s*==\\s*null|null\\s*==\\s*storage'},{d:'durability needs both conditions',re:'&&\\s*refreshTokenInBrowser|refreshTokenInBrowser\\s*&&'},{d:'a backend means the BFF pattern',re:'"bff"'},{d:'otherwise memory-only with PKCE',re:'"memory-only-pkce"'}],
-behavior:`scriptReadable("localStorage"), ("sessionStorage") and ("jsVariable") are all true — if your code can read it, so can injected script. scriptReadable("httpOnlyCookie") and scriptReadable(null) are false. durableCredentialInBrowser("localStorage", true) is true, the worst case, because one XSS yields a refresh token usable from anywhere long after the page closes. durableCredentialInBrowser("jsVariable", false) is false: a short-lived access token in memory is exposed while the page is open but leaves nothing behind. durableCredentialInBrowser("httpOnlyCookie", true) is false, since script cannot read the cookie at all. recommend(true) is "bff"; recommend(false) is "memory-only-pkce".`,
-hints:['A switch with three true cases and <code>default: return false;</code> covers null too if you guard first.','<code>return scriptReadable(storage) &amp;&amp; refreshTokenInBrowser;</code>','A single ternary is enough for <code>recommend</code>.'],
-solution:`public class BrowserAuth {
-    static boolean scriptReadable(String storage) {
-        if (storage == null) return false;
-        switch (storage) {
-            case "localStorage":
-            case "sessionStorage":
-            case "jsVariable":
-                return true;    // if your code can read it, so can injected script
-            default:
-                return false;   // httpOnlyCookie: invisible to JavaScript
-        }
-    }
-    static boolean durableCredentialInBrowser(String storage, boolean refreshTokenInBrowser) {
-        // one XSS turning into lasting access needs BOTH of these
-        return scriptReadable(storage) && refreshTokenInBrowser;
-    }
-    static String recommend(boolean hasBackend) {
-        return hasBackend ? "bff" : "memory-only-pkce";
-    }
-}`}},
+solution:`function scriptReadable(storage) {
+  return storage === "localStorage"
+      || storage === "sessionStorage"
+      || storage === "jsVariable";
+}
+function durableCredentialInBrowser(storage, refreshTokenInBrowser) {
+  // script-readable is survivable; script-readable AND long-lived is not
+  return scriptReadable(storage) && refreshTokenInBrowser;
+}
+function recommend(hasBackend) {
+  return hasBackend ? "bff" : "memory-only-pkce";
+}`,
+tests:[{d:'localStorage is script-readable',re:'"localStorage"'},{d:'sessionStorage is script-readable',re:'"sessionStorage"'},{d:'an HttpOnly cookie is not',re:'scriptReadable\\s*\\(\\s*storage\\s*\\)'},{d:'the danger is readable storage plus a refresh token',re:'refreshTokenInBrowser'},{d:'a backend means the BFF pattern',re:'"bff"'},{d:'otherwise keep tokens in memory with PKCE',re:'"memory-only-pkce"'}],
+behavior:`Your scriptReadable is called through durableCredentialInBrowser, so both must be right. The distinction being executed is the useful one: a short-lived access token in memory is a bounded loss, while a refresh token in script-readable storage turns a single XSS into indefinite access that survives the tab closing.`,
+hints:['Three readable stores joined by ||, everything else false.','The dangerous combination is readable storage AND a long-lived credential.','With a backend, keep the tokens on the server and use a cookie-based session.']}},
 
 {id:'oa9',title:'Opaque vs JWT tokens & the split-token pattern',body:`
 <p>Access tokens come in two styles, and the choice has real consequences:</p>
@@ -867,27 +963,18 @@ Later:    Provider ──signed token/assertion──▶ Your app
 <p><b>Unsolicited assertions.</b> Normally your app <i>starts</i> the flow (SP-initiated), so it can match the response to its own request. An <b>unsolicited assertion</b> is the opposite: the identity provider pushes a signed assertion to your app <i>without</i> a preceding request — this is SAML <b>IdP-initiated SSO</b> (OIDC deliberately has no such flow). It is convenient (a portal launches the app for the user) but riskier: there is <b>no request to correlate to</b> (no in-response-to / state), so it is more exposed to <b>replay</b> and to an assertion being injected from elsewhere.</p>
 <p><b>Defending unsolicited assertions.</b> Accept them only from a <b>pre-configured, trusted IdP</b>; verify the <b>signature</b> against that IdP's known key; enforce the <b>audience/recipient</b> so an assertion minted for another service is rejected; enforce a short validity window (<code>NotOnOrAfter</code>) to bound replay; and <b>track assertion IDs</b> so the same one cannot be replayed. When you can, prefer SP-initiated flows — the request you send is itself a defense.</p>`,
 docs:[['SAML IdP-initiated SSO','https://en.wikipedia.org/wiki/SAML_2.0#IdP-initiated'],['OAuth 2.0 Security BCP','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['JWKS / verifying tokens','https://www.rfc-editor.org/rfc/rfc7517']],
-ex:{title:'Accept an unsolicited assertion safely',
-prompt:`Write class <code>Unsolicited</code> with <code>static boolean accept(boolean signatureValid, boolean audienceOk, boolean withinWindow, boolean notReplayed)</code> that accepts an unsolicited assertion only when <b>all four</b> checks pass, and <code>static String preferred()</code> returning <code>"SP-initiated"</code> (the safer flow to prefer when possible).`,
-starter:`public class Unsolicited {
-    static boolean accept(boolean signatureValid, boolean audienceOk, boolean withinWindow, boolean notReplayed) {
-        return false;
-    }
-    static String preferred() {
-        return null;
-    }
+ex:{title:'Accept a third-party assertion',lang:'js',
+run:{call:'accept',cases:[{name:'everything checks out',args:[true,true,true,true],expect:true},{name:'bad signature',args:[false,true,true,true],expect:false},{name:'wrong audience',args:[true,false,true,true],expect:false},{name:'outside the validity window',args:[true,true,false,true],expect:false},{name:'replayed',args:[true,true,true,false],expect:false}]},
+prompt:`Write <code>function accept(signatureValid, audienceOk, withinWindow, notReplayed)</code> that accepts an incoming assertion only when <b>all four</b> hold.`,
+starter:`function accept(signatureValid, audienceOk, withinWindow, notReplayed) {
+  return false;
 }`,
-solution:`public class Unsolicited {
-    static boolean accept(boolean signatureValid, boolean audienceOk, boolean withinWindow, boolean notReplayed) {
-        return signatureValid && audienceOk && withinWindow && notReplayed;
-    }
-    static String preferred() {
-        return "SP-initiated";
-    }
+solution:`function accept(signatureValid, audienceOk, withinWindow, notReplayed) {
+  return signatureValid && audienceOk && withinWindow && notReplayed;
 }`,
-tests:[{d:'all four checks must pass',re:'signatureValid\\s*&&\\s*audienceOk\\s*&&\\s*withinWindow\\s*&&\\s*notReplayed'},{d:'prefer the SP-initiated flow',re:'return\\s+"SP-initiated"'}],
-behavior:`accept(true,true,true,true) is true; if any check is false (bad signature, wrong audience, expired, or a replay) it is false. preferred() returns "SP-initiated" — because the request your app sends is itself a correlation and anti-replay defense that unsolicited assertions lack.`,
-hints:['Trust is set up in advance: you exchange public keys/certs and keep private keys secret.','An unsolicited assertion has no request to correlate to, so verify signature, audience, freshness, and non-replay together with &&.','Prefer SP-initiated flows whenever the integration allows it.']}},
+tests:[{d:'the signature must verify',re:'signatureValid\\s*&&'},{d:'the audience must be you',re:'audienceOk'},{d:'it must be within its validity window',re:'withinWindow'},{d:'and it must not be a replay',re:'notReplayed'}],
+behavior:`Each of the four is executed as its own failing case. "The signature verified" is the one people stop at, and it is the weakest of the four on its own — a correctly signed assertion for another party, or one you have already seen, is not yours to accept.`,
+hints:['Four conditions joined with &&.','A valid signature alone proves origin, not that the assertion is for you.','Replay protection means remembering the assertion id until it expires.']}},
 
 {id:'oa12',title:'OpenID Federation: trust at ecosystem scale',body:`
 <p>Everything so far assumes <b>bilateral</b> trust: for each app-to-IdP pair, somebody registers a
