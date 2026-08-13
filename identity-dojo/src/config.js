@@ -25,3 +25,11 @@ const DOJO_DOMAINS = [
   {name:'Advanced & Operations',icon:'🚨',titles:['Advanced OAuth 2.0 & OIDC Threats','Running Identity']},
   {name:'Capstone',icon:'⛩️',titles:['Identity Capstone']}
 ];
+
+/* Glossary scope: IdentityDojo shows only the vocabulary it teaches. Without this the
+   shared glossary would also list Java collections, SQL and React terms. */
+const DOJO_GLOSS_DOMAINS = [
+  'Identity & Access (IAM)',
+  'Service-to-Service & Zero Trust',
+  'PKI & Certificates'
+];

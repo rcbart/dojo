@@ -1429,7 +1429,7 @@ document.addEventListener('mouseup',e=>{
 /* ============================== GLOSSARY (domain-ordered) ============================== */
 /* Single source of truth for domain vocabulary. Rendered as its own section (renderGlossary)
    AND merged into KW below so selecting a term in any lesson pops its definition. */
-const GLOSS=[
+const GLOSS_ALL=[
  {domain:'Identity & Access (IAM)',icon:'🛂',groups:[
    {h:'1 · The core distinction',terms:[
      ['Authentication (authn)',`Proving who you are — the login step.`],
@@ -1771,8 +1771,53 @@ const GLOSS=[
      ['Replication',`Keeping copies of data on multiple nodes for durability and reads.`],
      ['SLO',`A Service Level Objective: a target for reliability or latency.`],
    ]},
- ]},
+ ]},,
+ {domain:'JavaScript & Node',icon:'\u{1F7E8}',groups:[
+   {h:'1 \u00b7 Values and types',terms:[
+     ['Primitive',`One of the seven immutable single values: number, string, boolean, undefined, null, bigint, symbol. Everything else is an object.`],
+     ['Coercion',`Automatic conversion between types. + concatenates if either side is a string; every other arithmetic operator converts to number.`],
+     ['Truthy / falsy',`Exactly eight values are falsy: false, 0, -0, 0n, "", null, undefined and NaN. Everything else — including "0", [] and {} — is truthy.`],
+     ['NaN',`"Not a number" — the failure value of a numeric operation. The only value not equal to itself; test with Number.isNaN.`],
+     ['Nullish coalescing (??)',`Falls back only on null and undefined, unlike || which falls back on any falsy value including 0 and "".`],
+     ['Optional chaining (?.)',`Short-circuits to undefined instead of throwing when a link in a property path is null or undefined.`]]},
+   {h:'2 \u00b7 Scope and functions',terms:[
+     ['Hoisting',`Declarations are processed before the code runs. var yields undefined; let and const throw until initialised.`],
+     ['Temporal dead zone',`The region between a let/const declaration being hoisted and initialised, where reading it is a ReferenceError.`],
+     ['Lexical scope',`A name resolves according to where the function is WRITTEN, not where it is called. The opposite of how this is decided.`],
+     ['Closure',`A function together with the scope it was created in. It captures the binding, not a copy of the value.`],
+     ['this',`Decided at call time by how the function was called: new, explicit binding, the object left of the dot, or nothing. Arrows have none of their own.`],
+     ['Pure function',`Same input gives same output, and it touches nothing outside itself. Needs no mocks to test.`]]},
+   {h:'3 \u00b7 Objects and prototypes',terms:[
+     ['Prototype chain',`Property lookup follows a hidden link from object to object until it reaches null. Reading searches upward; writing always lands on the object itself.`],
+     ['Structural typing',`If the shape fits, it fits — nothing declares that it implements an interface. How TypeScript compares types.`],
+     ['Shallow copy',`Spread and Object.assign copy only top-level properties; nested objects remain shared references. structuredClone copies deeply.`],
+     ['Prototype pollution',`Merging untrusted data can set __proto__ and thereby add a property to every object in the program. Use Object.create(null) or a Map for untrusted keys.`],
+     ['Iterable protocol',`An object with a [Symbol.iterator] method works with for...of, spread and destructuring.`]]},
+   {h:'4 \u00b7 Asynchrony',terms:[
+     ['Event loop',`When the call stack is empty, take the next callback from a queue and run it. The host does the waiting; nothing in your code runs in parallel.`],
+     ['Microtask',`A promise callback. The entire microtask queue drains after each macrotask, so promises always run before the next timer.`],
+     ['Macrotask',`A timer or I/O callback. setTimeout(fn, 0) is a minimum delay, not an immediate call.`],
+     ['Unhandled rejection',`A rejected promise nobody awaited or caught. Since Node 15 it terminates the process.`],
+     ['Backpressure',`A slow writer signalling a fast reader to pause, so unwritten data does not pile up in memory. pipeline handles it for you.`],
+     ['Event loop lag',`The gap between when a timer should have fired and when it did. The single most useful health metric a Node service can emit.`]]},
+   {h:'5 \u00b7 Modules, tooling and types',terms:[
+     ['ESM',`ES modules: import/export, statically resolved before execution — which is what makes tree-shaking possible.`],
+     ['CommonJS',`Node\u2019s original module system: require/module.exports, resolved dynamically at the moment of the call.`],
+     ['Tree-shaking',`Dropping unused exports from a bundle. Only possible because ESM\u2019s dependency graph is known without running the code.`],
+     ['Semver',`MAJOR.MINOR.PATCH. ^ allows minor and patch but never crosses a major — except below 1.0, where it treats the minor as breaking.`],
+     ['Lockfile',`Records the exact version of every package in the tree. npm ci installs from it; npm install rewrites it.`],
+     ['Type erasure',`TypeScript annotations are removed before the code runs, so there are no runtime type checks and every boundary still needs validation.`],
+     ['Source map',`A file mapping bundled, minified positions back to your original source, so a stack trace names real files and variables.`]]}]}
 ];
+
+/* Per-course glossary. A course sets DOJO_GLOSS_DOMAINS in its config to name the
+   domains it actually teaches; without it, every domain is shown (DevDojo's case).
+   This is why IdentityDojo does not list Java collections and JSDojo does not list
+   Kerberos — one shared vocabulary file, filtered per course. */
+const GLOSS=(typeof DOJO_GLOSS_DOMAINS!=="undefined"&&Array.isArray(DOJO_GLOSS_DOMAINS))
+  ? GLOSS_ALL.filter(function(d){return DOJO_GLOSS_DOMAINS.indexOf(d.domain)>=0;})
+  : GLOSS_ALL;
+
 /* Merge glossary terms into the keyword-popup table (KW) so click-to-explain works in lessons.
    Adds a key for any parenthetical acronym and for a single-word/acronym leading token.
    Never overrides an existing (Java) keyword. */

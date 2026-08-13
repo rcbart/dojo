@@ -47,3 +47,12 @@ const DOJO_DOMAINS = [
   {name:'Capstone',icon:'\u{26E9}\u{FE0F}',titles:[
     'JavaScript Capstone']}
 ];
+
+/* Glossary scope: JSDojo shows its own vocabulary plus the two shared domains its
+   lessons genuinely draw on — HTTP semantics in the server stream, and the identity
+   terms used when tracing an OAuth flow in the browser-debugging stream. */
+const DOJO_GLOSS_DOMAINS = [
+  'JavaScript & Node',
+  'Web & HTTP',
+  'Identity & Access (IAM)'
+];
