@@ -8,8 +8,10 @@
   "07-errors-debugging-method.js",
   "08-debugging-in-the-browser.js",
   "09-modules-packages-tooling.js",
+  "10-typescript.js",
   "11-node-runtime.js",
   "12-node-files-streams.js",
   "13-node-http-server.js",
-  "14-node-debugging-testing-perf.js"
+  "14-node-debugging-testing-perf.js",
+  "15-js-capstone.js"
 ]

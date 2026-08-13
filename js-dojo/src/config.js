@@ -37,10 +37,13 @@ const DOJO_DOMAINS = [
     'Errors, Exceptions & the Debugging Method',
     'Debugging in the Browser']},
   {name:'Code at Scale',icon:'\u{1F4E6}',titles:[
-    'Modules, Packages & Tooling']},
+    'Modules, Packages & Tooling',
+    'TypeScript: Types for JavaScript']},
   {name:'Node.js',icon:'\u{1F7E9}',titles:[
     'The Node Runtime',
     'Files, Streams & the Node Standard Library',
     'Building an HTTP Server',
-    'Debugging, Testing & Profiling Node']}
+    'Debugging, Testing & Profiling Node']},
+  {name:'Capstone',icon:'\u{26E9}\u{FE0F}',titles:[
+    'JavaScript Capstone']}
 ];
