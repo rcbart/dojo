@@ -1,7 +1,7 @@
 # Identity & Access Management — complete topic map
 
 The IAM domain, organized by sub-category in reading order, with the concepts each lesson covers.
-All 14 sub-categories are built: **126 lessons, 133 exercises, 619 checks**. ⬜ marks topics
+All 14 sub-categories are built: **132 lessons, 139 exercises, 660 checks**. ⬜ marks topics
 identified but not yet written.
 
 The 14 content modules (`16b`–`16n` plus the `16z` capstone) merge at runtime into a single
@@ -18,7 +18,7 @@ under three sets of names. Everything after Foundations can then be read as mech
 
 ---
 
-## ✅ Identity & federation foundations *(23 lessons)*
+## ✅ Identity & federation foundations *(24 lessons)*
 
 **The base layer — what every later lesson assumes.**
 
@@ -55,6 +55,8 @@ under three sets of names. Everything after Foundations can then be read as mech
 - Federation in plain English, and from the ground up
 - **Trust** — how it is established; **trust anchors** and why the chain must stop somewhere you chose
 - Decentralized identity: DIDs & Verifiable Credentials
+- **Wallets in practice** — OID4VCI issuance, OID4VP presentation, the mDL and ISO 18013-5, asking for
+  a predicate rather than the data, age assurance honestly, and what is still unsettled
 
 ## ✅ Authentication & MFA *(13 lessons)*
 
@@ -72,7 +74,7 @@ under three sets of names. Everything after Foundations can then be read as mech
 - Step-up & adaptive authentication; IAL/AAL/FAL; passwordless & account recovery
 - Credential stuffing, bots & account-takeover defense
 
-## ✅ Authorization models *(8 lessons)*
+## ✅ Authorization models *(9 lessons)*
 
 - ACLs → RBAC; RBAC in depth; ABAC; ReBAC & policy engines (Zanzibar/OpenFGA, OPA, Cedar)
 - PDP/PEP, least privilege, separation of duties
@@ -82,6 +84,8 @@ under three sets of names. Everything after Foundations can then be read as mech
   permissions
 - **Combining policies** — deny-overrides, permit-overrides, first-applicable, specificity; default
   deny; explicit deny vs absence of permit; explainable decisions
+- **Authorization at scale** — Zanzibar relation tuples, leopard indexes, the new-enemy problem and
+  zookies, the centralisation trade, and when you genuinely do not need any of it
 
 ## ✅ Sessions, cookies & web login *(6 lessons)*
 
@@ -91,7 +95,7 @@ under three sets of names. Everything after Foundations can then be read as mech
   front-channel logout and why third-party cookie blocking is ending it; back-channel logout and the
   logout token; why full SLO rarely works and what to do instead
 
-## ✅ OAuth 2.0 & OpenID Connect *(15 lessons)*
+## ✅ OAuth 2.0 & OpenID Connect *(16 lessons)*
 
 - Roles & the Authorization Code flow; what a client is; code→token exchange
 - **PKCE**, and **PKCE end to end** — code interception on mobile, code injection, the complete
@@ -100,6 +104,8 @@ under three sets of names. Everything after Foundations can then be read as mech
 - Native & mobile apps; **browser-based apps and the BFF pattern**
 - Opaque vs JWT tokens & the split-token pattern; choosing a flow; third-party integrations
 - **OAuth 2.1** — what is removed, what becomes mandatory, what is unchanged, and the audit checklist
+- **OpenID Federation** — trust chains and entity statements, metadata policy that can only narrow,
+  automatic registration, and why the anchor is absolute
 
 ## ✅ Tokens: JWT & JOSE *(7 lessons)*
 
@@ -116,11 +122,13 @@ under three sets of names. Everything after Foundations can then be read as mech
 - Asymmetric keys & X.509; CAs & chains of trust; CSRs & key usage; TLS & mTLS; revocation, rotation
   and ACME; keystores & truststores
 
-## ✅ Service-to-service & zero trust *(8 lessons)*
+## ✅ Service-to-service & zero trust *(9 lessons)*
 
 - Machine identity & token-based M2M; mTLS as service identity; OAuth Token Exchange
 - SPIFFE/SPIRE and SVIDs; cloud & mesh workload identity; zero-trust decision guide
 - Context propagation; impersonation vs delegation
+- **Identity for AI agents** — three identities not one, consent granted in advance and bounded,
+  monotonic narrowing down the delegation chain, and why prompt injection is an authorization problem
 
 ## ✅ Enterprise identity & directories *(10 lessons)*
 
@@ -134,7 +142,7 @@ under three sets of names. Everything after Foundations can then be read as mech
   rotation, unconstrained / constrained / resource-based delegation and S4U, clock and name
   sensitivity, and the defensive checklist
 
-## ✅ Advanced OAuth & threats *(8 lessons)*
+## ✅ Advanced OAuth & threats *(9 lessons)*
 
 - Introspection & revocation; the JWT validation checklist; PAR, JAR/JARM, RAR
 - Sender-constrained tokens, and **DPoP in depth** — the proof JWT (`htm`/`htu`/`jti`/`ath`), the
@@ -142,11 +150,15 @@ under three sets of names. Everything after Foundations can then be read as mech
 - Attack catalog & defenses; refresh token rotation & reuse detection
 - **FAPI** — what a hardened profile is, each requirement mapped to the attack it answers, the two
   levels, certification, and what it still does not tell you
+- **Continuous Access Evaluation** — pushed security event tokens, what the receiver must do, and the
+  honest cost: the resource server becomes stateful
 
-## ✅ Governance & privileged access *(7 lessons)*
+## ✅ Governance & privileged access *(8 lessons)*
 
 - IGA reviews & certification; entitlements & separation of duties; PAM; secrets management &
   rotation; CIAM vs workforce IAM; consent & privacy; identity audit, logging & compliance
+- **Non-human identity** — why joiner-mover-leaver has no equivalent trigger, the four failure modes,
+  ownership and expiry as the base controls, and why reviewers rubber-stamp NHI campaigns
 
 ## ✅ Running identity in production *(9 lessons)*
 
@@ -178,12 +190,11 @@ under three sets of names. Everything after Foundations can then be read as mech
 
 ## ⬜ Identified, not yet written
 
-- **Continuous Access Evaluation (CAE)** — near-real-time revocation propagation; currently touched
-  only as a principle in the zero-trust lesson
+- **BBS+ / zero-knowledge credentials** and **credential status lists** — named in the SD-JWT and
+  wallet lessons as open problems, not covered in their own right
+
 - **Dynamic client registration** (RFC 7591) and software statements
 - **Grant management** (the OIDC grant management API)
-- **BBS+ / zero-knowledge credentials** — the unlinkability SD-JWT deliberately does not provide
-- **Credential status lists** — revocation for verifiable credentials
 - **Anonymous and progressive identity** — guest access that later becomes an account
 - **Hands-on lab against a real IdP** — the biggest gap versus vendor training; every exercise here
   is self-contained by design

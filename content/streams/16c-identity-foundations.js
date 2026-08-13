@@ -1882,5 +1882,115 @@ solution:`public class Ssi {
 }`,
 tests:[{d:'issuer signs & issues',re:'"issuer".*?"signs and issues the credential"',flags:'s'},{d:'holder keeps it in a wallet',re:'"holder".*?"keeps it in a wallet"',flags:'s'},{d:'verifier checks the signature',re:'"verifier".*?"checks the issuer signature"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
 behavior:`role("issuer") is "signs and issues the credential", role("holder") is "keeps it in a wallet", role("verifier") is "checks the issuer signature". The verifier trusts the issuer signature without contacting the issuer — that is the decentralized part.`,
-hints:['Issuer → holder → verifier is the trust triangle.','The holder stores credentials in a wallet and presents them.','The verifier checks the cryptographic signature, not a live call to the issuer.']}}
+hints:['Issuer → holder → verifier is the trust triangle.','The holder stores credentials in a wallet and presents them.','The verifier checks the cryptographic signature, not a live call to the issuer.']}},
+
+{id:'iddid2',title:'Wallets in practice: OID4VC, OID4VP and the mDL',body:`
+<p>The previous lesson covered DIDs and verifiable credentials as concepts, and the JOSE stream covered
+SD-JWT as the format. What has been missing is the <b>protocols that move credentials</b> — how one is
+issued into a wallet, and how a verifier asks for one. That is OID4VC and OID4VP, and they are
+deliberately built on OAuth so that the ecosystem does not have to learn a new stack.</p>
+
+<h4>The three-party model</h4>
+<div class="codeSample" data-hl>  [ ISSUER ]  --OID4VCI-->  [ WALLET ]  --OID4VP-->  [ VERIFIER ]
+   the DMV                    on the                    the bar,
+                              user's phone              the landlord
+
+// note what is ABSENT: the verifier never contacts the issuer. that is the
+// whole point — the DMV does not learn where you proved your age.
+// contrast federation, where the IdP sees every login.</div>
+<p>That absence is the substantive difference from everything else in this domain. In federation the
+authority is <i>online</i> at the moment of use and therefore sees it. Here the credential is issued
+once and presented many times without the issuer's involvement, which removes a surveillance surface
+that federation cannot.</p>
+
+<h4>Issuance (OID4VCI)</h4>
+<p>An OAuth flow with a different prize at the end: instead of an access token for an API, you receive a
+credential to keep. The wallet authenticates the user at the issuer, obtains an access token, and calls
+a <b>credential endpoint</b> — presenting a proof that it holds the key the credential will be bound
+to, so the credential cannot be replayed into a different wallet.</p>
+
+<h4>Presentation (OID4VP)</h4>
+<p>The verifier sends a <b>presentation definition</b> — a machine-readable description of what it
+needs, not which credential to use. The wallet decides which credential satisfies it and which claims
+to disclose, using the SD-JWT selective-disclosure mechanism plus a key-binding proof naming this
+verifier and its nonce.</p>
+<div class="codeSample" data-hl>verifier asks:   "a government ID credential, proving age_over_18"
+wallet returns:  the SD-JWT + the age_over_18 disclosure + a KB-JWT
+                 -> the date of birth is NEVER sent
+                 -> the name and address are never sent
+                 -> the verifier learns exactly one fact</div>
+<p><b>Ask for the predicate, not the data.</b> A credential can carry a pre-computed
+<code>age_over_18</code> claim, so proving eligibility never requires disclosing a birthdate. This is
+the single most useful design habit in the whole area, and it applies well beyond wallets: most systems
+that store dates of birth only ever needed a boolean.</p>
+
+<h4>The mDL and why standards collided</h4>
+<p>Mobile driving licences arrived from a different direction — ISO/IEC 18013-5, written by standards
+bodies serving physical documents, using CBOR and designed to work offline over NFC or Bluetooth at a
+roadside stop with no connectivity. OID4VP came from the web. Both are real, both are deployed, and
+convergence is partial: OID4VP can carry mdoc credentials, so the transport and the format are
+increasingly separable. Expect to meet both.</p>
+
+<h4>Age assurance: the honest version</h4>
+<p>Regulators increasingly require age checks, and wallets are the mechanism most often proposed.
+Verifiable presentation genuinely solves the technical problem — prove over-18 without revealing
+identity or birthdate, unlinkably enough for most purposes. What it does not solve is that <b>somebody
+must still have verified the underlying fact</b>, and that requires an issuer who saw a real document.
+The privacy question therefore moves rather than disappearing: from "what does this site learn" to "who
+issued this, and what did they retain".</p>
+
+<h4>What is still unsettled</h4>
+<ul>
+<li><b>Revocation.</b> Status lists exist, but checking one can reintroduce a call that tells someone
+you are being verified — the privacy problem returning through the back door.</li>
+<li><b>Unlinkability.</b> SD-JWT's issuer signature is identical across presentations, so colluding
+verifiers can correlate. BBS+ fixes it and is not yet widely deployed.</li>
+<li><b>Recovery.</b> Losing the phone means losing the credentials, and the recovery story is
+per-ecosystem and mostly immature.</li>
+<li><b>Trust.</b> A verifier must know which issuers to accept — which is exactly the trust-anchor and
+federation problem, now at ecosystem scale.</li>
+</ul>
+<p>Worth watching rather than adopting for most systems today. The habit to take away regardless is the
+predicate one: <b>ask for the narrowest fact that answers your question.</b></p>`,
+docs:[['OpenID for Verifiable Credential Issuance (OID4VCI)','https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html'],['OpenID for Verifiable Presentations (OID4VP)','https://openid.net/specs/openid-4-verifiable-presentations-1_0.html'],['ISO/IEC 18013-5 — mobile driving licence (mDL)','https://www.iso.org/standard/69084.html'],['W3C — Verifiable Credentials Data Model 2.0','https://www.w3.org/TR/vc-data-model-2.0/']],
+ex:{title:'Ask for the predicate, not the data',
+prompt:`Write <code>Wallet</code> with three methods. <code>static String minimalClaim(String question)</code> returns the narrowest claim that answers it: <code>"age_over_18"</code> for <code>"is-adult"</code>, <code>"country"</code> for <code>"is-resident"</code>, <code>"has_licence"</code> for <code>"may-drive"</code>, and <code>"unknown"</code> otherwise including null — never <code>"birthdate"</code>. <code>static boolean disclosureMinimal(java.util.Set&lt;String&gt; disclosed, String required)</code> is true only when exactly the required claim was disclosed and nothing else. <code>static boolean presentationBound(String kbAud, String verifier, String kbNonce, String expectedNonce)</code> requires both to match, rejecting nulls.`,
+starter:`import java.util.*;
+
+public class Wallet {
+    static String minimalClaim(String question) {
+        return null;
+    }
+    static boolean disclosureMinimal(Set<String> disclosed, String required) {
+        return false;
+    }
+    static boolean presentationBound(String kbAud, String verifier, String kbNonce, String expectedNonce) {
+        return false;
+    }
+}`,
+tests:[{d:'adulthood is a predicate, not a birthdate',re:'"age_over_18"'},{d:'residency asks for country only',re:'"country"'},{d:'driving eligibility is a boolean claim',re:'"has_licence"'},{d:'unknown questions fall through',re:'"unknown"'},{d:'exactly one claim may be disclosed',re:'size\\s*\\(\\s*\\)\\s*==\\s*1'},{d:'and it must be the required one',re:'contains\\s*\\(\\s*required\\s*\\)'},{d:'the presentation names this verifier',re:'kbAud\\s*\\.\\s*equals|equals\\s*\\(\\s*verifier'},{d:'and this nonce',re:'kbNonce\\s*\\.\\s*equals|equals\\s*\\(\\s*expectedNonce'}],
+behavior:`minimalClaim("is-adult") returns age_over_18, never birthdate — a credential can carry the pre-computed predicate so proving eligibility never discloses a date, and most systems that store dates of birth only ever needed a boolean. minimalClaim("unknown-question") returns unknown. disclosureMinimal(Set.of("age_over_18"), "age_over_18") is true, while disclosing the required claim plus a name is false, because over-disclosure defeats the point even when the extra claim seems harmless. presentationBound("https://bar","https://bar","n1","n1") is true; a mismatched audience or nonce is false, which is what stops a verifier replaying your presentation somewhere else.`,
+hints:['A switch mapping each question to its narrowest claim, defaulting to "unknown".','Minimal means exactly one element, and that element is the required one.','Guard both strings, then compare both pairs.'],
+solution:`import java.util.*;
+
+public class Wallet {
+    static String minimalClaim(String question) {
+        if (question == null) return "unknown";
+        switch (question) {
+            case "is-adult":    return "age_over_18";  // the predicate, not the date
+            case "is-resident": return "country";
+            case "may-drive":   return "has_licence";
+            default:            return "unknown";
+        }
+    }
+    static boolean disclosureMinimal(Set<String> disclosed, String required) {
+        if (disclosed == null || required == null) return false;
+        // exactly one: over-disclosure defeats the purpose
+        return disclosed.size() == 1 && disclosed.contains(required);
+    }
+    static boolean presentationBound(String kbAud, String verifier, String kbNonce, String expectedNonce) {
+        if (kbAud == null || kbNonce == null) return false;
+        return kbAud.equals(verifier) && kbNonce.equals(expectedNonce);
+    }
+}`}}
 ]});

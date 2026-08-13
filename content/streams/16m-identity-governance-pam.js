@@ -166,5 +166,102 @@ solution:`public class Audit {
 }`,
 tests:[{d:'who-did-what -> immutable audit log',re:'"prove-who-did-what".*?"immutable audit log"',flags:'s'},{d:'detect attacks -> SIEM alerting',re:'"detect-attacks".*?"SIEM alerting"',flags:'s'},{d:'access review -> IGA certification',re:'"periodic-access-review".*?"IGA certification"',flags:'s'},{d:'remove leaver access -> deprovisioning',re:'"remove-leaver-access".*?"deprovisioning"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
 behavior:`control("prove-who-did-what") is "immutable audit log", control("detect-attacks") is "SIEM alerting". Compliance frameworks (SOC 2, NIST 800-63) map their requirements onto exactly these identity controls.`,
-hints:['Proving who did what needs an immutable, append-only audit log.','Detecting attacks in real time is a SIEM job.','Access reviews are IGA certification; removing a leaver is deprovisioning.']}}
+hints:['Proving who did what needs an immutable, append-only audit log.','Detecting attacks in real time is a SIEM job.','Access reviews are IGA certification; removing a leaver is deprovisioning.']}},
+
+{id:'ig7',title:'Non-human identity: the majority nobody governs',body:`
+<p>Count the identities in a typical estate and the humans are a minority. Service accounts, CI
+runners, scripts, integrations, API keys, workload certificates, bots and now agents outnumber
+employees by a wide margin — commonly quoted at ten to one or more. Almost every governance control in
+this stream was designed for the humans.</p>
+<p>The consequence is predictable: <b>non-human identities are more numerous, more privileged and less
+governed than human ones</b>, and they are increasingly the way in.</p>
+
+<h4>Why the human controls do not transfer</h4>
+<div class="codeSample" data-hl>HUMAN IDENTITY                    NON-HUMAN IDENTITY
+joins via HR, leaves via HR       created ad hoc by whoever needed it
+has a manager                     has an owner who left in 2021
+MFA                               a static secret in a config file
+password expires                  the credential never expires
+access reviewed quarterly         never reviewed — reviewers do not know
+                                    what it does or dare disable it
+one person, one account           shared across teams and environments
+leaves when the person leaves     outlives every person who touched it</div>
+<p>The joiner-mover-leaver lifecycle has no equivalent trigger here. Nothing tells you a service account
+is finished, so nothing ever removes it. Estates accumulate them monotonically.</p>
+
+<h4>The four failure modes</h4>
+<ol>
+<li><b>No owner.</b> The single most common finding. Nobody knows what it does, so nobody will disable
+it, so it stays forever with whatever rights it was given. An identity without a named, current owner
+is ungovernable by definition.</li>
+<li><b>Over-privilege.</b> Granted broad rights during setup "to get it working", never narrowed.
+Service accounts are frequently the most privileged principals in the estate.</li>
+<li><b>Static long-lived credentials.</b> A secret in a config file, a repo, a CI variable, a wiki page.
+It does not rotate because rotation risks an outage nobody wants to own.</li>
+<li><b>Sprawl and sharing.</b> One account used by six systems cannot be rotated without breaking five,
+and its logs cannot attribute anything to anyone.</li>
+</ol>
+
+<h4>What good looks like</h4>
+<ul>
+<li><b>Every NHI has a named human owner and an expiry.</b> Both mandatory at creation, and both
+re-confirmed periodically. An expiry that must be renewed converts "forever" into a decision someone
+takes deliberately.</li>
+<li><b>One identity per workload</b>, never shared across systems or environments — so it can be
+rotated, revoked and attributed independently.</li>
+<li><b>Prefer no credential at all.</b> The strongest control is workload identity federation: the
+workload proves what it is (mTLS, SPIFFE, a platform OIDC token) and exchanges that for short-lived
+access. There is then no static secret to leak, rotate or find in a repository.</li>
+<li><b>Where a secret is unavoidable</b>, keep it in a manager, rotate automatically, and record
+last-used so dead credentials are visible.</li>
+<li><b>Review them like humans, with different questions.</b> Not "should this person have access" but
+"does this still run, does it still need this, and who owns it now?" Instrument last-used first: an
+NHI unused for ninety days is a candidate for removal and the easiest win available.</li>
+</ul>
+
+<h4>The reviewer's problem, and how to fix it</h4>
+<p>Human access reviews work because a manager recognises their reports. Nobody recognises
+<code>svc-etl-prod-3</code>. Reviewers therefore approve everything, and the review becomes a
+compliance artefact with no security value.</p>
+<p>The fix is not more reviews but <b>better evidence</b>: show the reviewer what the identity did, when
+it last ran, what it accessed and who owns it. Given that, a reviewer can make a real decision. Given a
+list of names, they cannot — and asking anyway trains people that reviews are theatre.</p>
+
+<h4>Where agents make this urgent</h4>
+<p>Agents are non-human identities created at high velocity, often per-task, frequently with delegated
+user authority. Every problem above applies, faster, and with the added property that an agent's
+authority may be exercised in response to content it read. The governance answer is the same and more
+important: short-lived, narrowly scoped, owned, attributable, and expiring by default.</p>`,
+docs:[['OWASP — Non-Human Identities Top 10','https://owasp.org/www-project-non-human-identities-top-10/'],['NIST SP 800-53 AC-2 — Account Management','https://csrc.nist.gov/projects/risk-management/sp800-53-controls/release-search#!/control?version=5.1&number=AC-2'],['SPIFFE — workload identity','https://spiffe.io/docs/latest/spiffe-about/overview/'],['OWASP — Secrets Management Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html']],
+ex:{title:'Govern a non-human identity',
+prompt:`Write <code>NonHumanIdentity</code> with three methods. <code>static boolean governable(String owner, boolean ownerStillEmployed, long expiresAt, long now)</code> requires a non-null owner who is still employed, and an expiry in the future — an identity with no current owner cannot be governed. <code>static boolean staleCandidate(long lastUsedDaysAgo, int thresholdDays)</code> is true when it has not been used within the threshold. <code>static String strongestOption(boolean federationPossible, boolean secretManagerAvailable)</code> returns <code>"workload-federation"</code> when federation is possible, else <code>"managed-secret"</code> when a manager is available, else <code>"static-secret"</code>.`,
+starter:`public class NonHumanIdentity {
+    static boolean governable(String owner, boolean ownerStillEmployed, long expiresAt, long now) {
+        return false;
+    }
+    static boolean staleCandidate(long lastUsedDaysAgo, int thresholdDays) {
+        return false;
+    }
+    static String strongestOption(boolean federationPossible, boolean secretManagerAvailable) {
+        return null;
+    }
+}`,
+tests:[{d:'an owner is required',re:'owner\\s*!=\\s*null|null\\s*!=\\s*owner'},{d:'the owner must still be employed',re:'ownerStillEmployed'},{d:'the expiry must be in the future',re:'expiresAt\\s*>\\s*now|now\\s*<\\s*expiresAt'},{d:'staleness is measured against a threshold',re:'lastUsedDaysAgo\\s*>=?\\s*thresholdDays'},{d:'federation is the strongest option',re:'"workload-federation"'},{d:'a managed secret is second best',re:'"managed-secret"'},{d:'a static secret is the fallback',re:'"static-secret"'}],
+behavior:`governable("ada", true, 200, 100) is true. It is false when the owner is null, when the owner has left — the single most common real finding, since an identity nobody owns is one nobody will ever dare disable — and when the expiry has already passed. staleCandidate(120, 90) is true and staleCandidate(30, 90) is false; last-used is the easiest governance win available, because an identity unused for ninety days can usually be removed with no argument. strongestOption(true, true) is workload-federation: the strongest control is having no static credential at all, so there is nothing to leak, rotate or find in a repository. strongestOption(false, true) is managed-secret and strongestOption(false, false) is static-secret.`,
+hints:['Three conditions joined with &amp;&amp;, including a future expiry.','One comparison for staleness.','A short if-chain, ordered strongest first.'],
+solution:`public class NonHumanIdentity {
+    static boolean governable(String owner, boolean ownerStillEmployed, long expiresAt, long now) {
+        // no current owner means nobody will ever dare disable it
+        return owner != null && ownerStillEmployed && expiresAt > now;
+    }
+    static boolean staleCandidate(long lastUsedDaysAgo, int thresholdDays) {
+        return lastUsedDaysAgo >= thresholdDays;
+    }
+    static String strongestOption(boolean federationPossible, boolean secretManagerAvailable) {
+        // best of all is no static credential to leak, rotate or lose
+        if (federationPossible) return "workload-federation";
+        if (secretManagerAvailable) return "managed-secret";
+        return "static-secret";
+    }
+}`}}
 ]});

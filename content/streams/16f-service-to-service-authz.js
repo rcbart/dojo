@@ -280,5 +280,121 @@ solution:`public class Impersonation {
 }`,
 tests:[{d:'impersonation makes the target the effective subject',re:'impersonating\\s*\\?\\s*target\\s*:\\s*actor'}],
 behavior:`effectiveSubject("admin","alice",true) returns "alice" — the request now appears to be alice, and the admin identity is hidden (why delegation with an act claim is safer). effectiveSubject("admin","alice",false) returns "admin".`,
-hints:['A single ternary condition ? target : actor expresses it.','Impersonating means the target becomes the effective subject.','Otherwise the actor remains the subject.']}}
+hints:['A single ternary condition ? target : actor expresses it.','Impersonating means the target becomes the effective subject.','Otherwise the actor remains the subject.']}},
+
+{id:'s2s9',title:'Identity for AI agents: acting for a user, autonomously',body:`
+<p>An agent is software that acts on a user's behalf without the user watching. That breaks an
+assumption running quietly through every protocol so far: <b>that a human is present at the moment of
+authorization</b>. Consent screens, step-up prompts and re-authentication all assume someone is there
+to respond. An agent working through a task at 2am is not.</p>
+<p>Most of what agents need already exists — this is a composition problem far more than a new-protocol
+problem — but the composition has sharp edges worth naming.</p>
+
+<h4>Three identities, not one</h4>
+<div class="codeSample" data-hl>THE USER      whose data and permissions are at stake
+THE AGENT     a workload with its own identity — it is not the user
+THE TOOL      the API being called, with its own audience and scopes
+
+// the request must carry the first two. an agent that presents only the
+// user's identity is impersonation, and nothing downstream can tell that
+// software rather than a person made the decision.</div>
+<p>This is the on-behalf-of pattern with a new actor, and the right shape is the familiar one: the
+subject stays the user, the agent is recorded as the acting party, and every hop gets its own audience.
+The temptation to hand the agent the user's token and let it act as them is the same temptation as
+impersonation, with the same consequence — the audit trail says the user did it.</p>
+
+<h4>Consent when nobody is watching</h4>
+<p>Interactive OAuth asks at the moment of use. An agent needs authority granted <i>in advance</i> and
+bounded tightly enough that advance consent is defensible:</p>
+<ul>
+<li><b>Grant narrowly.</b> Not "read your email" but "read messages in this thread". This is exactly
+what Rich Authorization Requests exist for — scopes are usually too coarse to describe what an agent
+should be allowed to do.</li>
+<li><b>Bound the time.</b> An agent's authority should expire with the task, not persist indefinitely.</li>
+<li><b>Bound the value.</b> Spending limits, record counts, rate caps — the analogue of a purchase
+limit on a corporate card.</li>
+<li><b>Escalate for the irreversible.</b> Reads and reversible writes proceed; sending money, deleting
+data or emailing a customer should return to a human. Design the interrupt before it is needed.</li>
+</ul>
+
+<h4>The delegation chain gets long</h4>
+<p>Agents call agents. A planner delegates to a researcher which calls a search tool which calls an
+internal API, and the user is four hops back. Two rules keep this tractable, and both are already
+familiar:</p>
+<div class="codeSample" data-hl>{ "sub": "ada",                      // still the user, all the way down
+  "aud": "internal-search-api",      // audience per hop, never reused
+  "scope": "search:read",            // narrowed at each step, never widened
+  "act": { "sub": "research-agent",
+           "act": { "sub": "planner-agent" } } }   // the chain, preserved
+
+// downstream can now answer: which user, which agent, and on whose behalf.</div>
+<p><b>Narrowing must be monotonic.</b> A sub-agent may reduce scope, never expand it — if any hop can
+request more than it was given, the whole chain is only as strong as its most compromised link.</p>
+
+<h4>The new-ish problems</h4>
+<ul>
+<li><b>Prompt injection is an authorization problem.</b> Content the agent reads can contain
+instructions. If the agent holds a token that permits an action, hostile text may cause it to take that
+action. <b>You cannot fix this in the model; you fix it by not granting the authority.</b> The token is
+the control, not the prompt. This is the single most important consequence of agents for identity
+work.</li>
+<li><b>Confused deputy, again.</b> An agent serving many users, holding broad credentials, must bind
+every call to the user it is acting for — exactly the problem external ids solve in role assumption.</li>
+<li><b>Attribution.</b> When an agent does something wrong, the log must distinguish "the user asked
+for this", "the agent decided this", and "content the agent read told it to". Without the act chain,
+all three look identical.</li>
+<li><b>Non-human lifecycle.</b> Agents are created constantly and rarely retired, so they inherit every
+service-account governance problem at higher velocity.</li>
+</ul>
+
+<h4>What to reuse</h4>
+<p>Nothing here needs inventing. The agent authenticates as a workload (mTLS, SPIFFE, or workload
+identity federation); it obtains user-scoped authority through token exchange with the act claim;
+audience and scope narrow at each hop; tokens are short-lived and ideally sender-constrained; and every
+call is logged with the full chain. The discipline that makes it safe is the oldest one in the domain:
+<b>grant the least authority that completes the task, and assume the holder may be turned against
+you.</b></p>`,
+docs:[['RFC 8693 — OAuth 2.0 Token Exchange (the act claim)','https://www.rfc-editor.org/rfc/rfc8693'],['RFC 9396 — Rich Authorization Requests','https://www.rfc-editor.org/rfc/rfc9396'],['OWASP — Top 10 for LLM Applications','https://owasp.org/www-project-top-10-for-large-language-model-applications/'],['NIST SP 800-207 — Zero Trust Architecture','https://csrc.nist.gov/pubs/sp/800/207/final']],
+ex:{title:'Bound an agent',
+prompt:`Write <code>AgentAuthz</code> with three methods. <code>static boolean chainValid(String subject, java.util.List&lt;String&gt; actors)</code> requires a non-null subject and a non-empty actor chain — an agent call with no recorded actor is impersonation. <code>static boolean narrowingOk(java.util.Set&lt;String&gt; granted, java.util.Set&lt;String&gt; requested)</code> is true only when every requested scope is already in <code>granted</code>: a sub-agent may reduce, never expand. <code>static boolean requiresHuman(String action, boolean reversible)</code> returns true when the action is not reversible, or when it is one of <code>"send-money"</code>, <code>"delete-data"</code> or <code>"email-customer"</code>.`,
+starter:`import java.util.*;
+
+public class AgentAuthz {
+    static boolean chainValid(String subject, List<String> actors) {
+        return false;
+    }
+    static boolean narrowingOk(Set<String> granted, Set<String> requested) {
+        return false;
+    }
+    static boolean requiresHuman(String action, boolean reversible) {
+        return false;
+    }
+}`,
+tests:[{d:'the subject must be the user',re:'subject\\s*!=\\s*null|null\\s*!=\\s*subject'},{d:'an actor chain must be present',re:'isEmpty\\s*\\(\\s*\\)'},{d:'narrowing is checked against the grant',re:'containsAll\\s*\\(|contains\\s*\\('},{d:'irreversible actions escalate',re:'!\\s*reversible|reversible\\s*==\\s*false'},{d:'moving money escalates',re:'"send-money"'},{d:'deleting data escalates',re:'"delete-data"'},{d:'contacting a customer escalates',re:'"email-customer"'}],
+behavior:`chainValid("ada", List.of("research-agent")) is true; chainValid("ada", List.of()) and chainValid(null, List.of("a")) are false, because a call with no recorded actor is indistinguishable from the user acting personally. narrowingOk(Set.of("search:read","mail:read"), Set.of("search:read")) is true, while requesting a scope that was never granted is false — narrowing must be monotonic, or the chain is only as strong as its most compromised link. requiresHuman("send-money", true) is true even though the caller claims it is reversible, and requiresHuman("read-thread", false) is true because anything irreversible escalates regardless of what it is.`,
+hints:['Guard the subject and require a non-empty actor list.','<code>granted.containsAll(requested)</code> expresses "reduce, never expand" directly.','Two independent reasons to escalate: irreversibility, or membership of the sensitive set.'],
+solution:`import java.util.*;
+
+public class AgentAuthz {
+    static boolean chainValid(String subject, List<String> actors) {
+        // no recorded actor means impersonation: nobody downstream can tell
+        return subject != null && actors != null && !actors.isEmpty();
+    }
+    static boolean narrowingOk(Set<String> granted, Set<String> requested) {
+        if (granted == null || requested == null) return false;
+        return granted.containsAll(requested);   // reduce, never expand
+    }
+    static boolean requiresHuman(String action, boolean reversible) {
+        if (!reversible) return true;            // irreversible always escalates
+        if (action == null) return true;
+        switch (action) {
+            case "send-money":
+            case "delete-data":
+            case "email-customer":
+                return true;
+            default:
+                return false;
+        }
+    }
+}`}}
 ]});

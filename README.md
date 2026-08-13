@@ -5,16 +5,16 @@
 <p align="center">
   <a href="https://rcbart.github.io/knowledge-base/"><img src="https://img.shields.io/badge/%E2%96%B6%20live%20demo-DevDojo-6a5cf5" alt="live demo"></a>
   <img src="https://img.shields.io/badge/tracks-29-8b5cf6" alt="tracks">
-  <img src="https://img.shields.io/badge/lessons-326-8b5cf6" alt="lessons">
-  <img src="https://img.shields.io/badge/exercises-446-06b6d4" alt="exercises">
-  <img src="https://img.shields.io/badge/checks-2185%20passing-2ea44f" alt="checks">
+  <img src="https://img.shields.io/badge/lessons-332-8b5cf6" alt="lessons">
+  <img src="https://img.shields.io/badge/exercises-452-06b6d4" alt="exercises">
+  <img src="https://img.shields.io/badge/checks-2226%20passing-2ea44f" alt="checks">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
 # DevDojo 🥋
 
 An interactive, self-contained learning platform for software engineering. **29 training tracks,
-326 lessons, and 446 hands-on exercises** run entirely in the browser — an in-editor coding
+332 lessons, and 452 hands-on exercises** run entirely in the browser — an in-editor coding
 exercise on every lesson, **real code execution where possible** (SQL, JavaScript, and opt-in Java),
 a belt progression, **spaced-repetition review**, a **difficulty-filtered practice hub**, a domain
 glossary with click-to-explain terms, tournaments, and end-to-end capstone projects.
@@ -24,7 +24,7 @@ computer science & algorithms, web/HTTP, front-end (React), APIs, databases & SQ
 security & cryptography, a large identity & access domain, DevOps, architecture, and a senior
 ("dan") track.
 
-**Identity & access is the deepest domain** — 126 lessons across 14 sub-categories, built to teach the
+**Identity & access is the deepest domain** — 132 lessons across 14 sub-categories, built to teach the
 concepts *before* the protocols that assume them: what a token actually is and how a role differs from
 a format, the identity lifecycle from proofing to deprovisioning, and why SSO is a user experience
 while federation and delegation are the mechanisms underneath. From there into OAuth 2.0/2.1 and PKCE
@@ -54,11 +54,11 @@ deploys on every push.)*
   them on expanding intervals; the sidebar shows what's due.
 - **🎯 Practice** — every exercise is rated easy/medium/hard and filterable, giving a difficulty ramp
   across the whole catalog.
-- **🧠 Quick check** — 308 multiple-choice questions with instant feedback: not just "wrong", but which
+- **🧠 Quick check** — 338 multiple-choice questions with instant feedback: not just "wrong", but which
   answer was right, why it is right, and why the option you picked is not. The concept-heavy lessons
   carry hand-authored questions in plain English; the rest are auto-generated from the exercise specs.
   **Options are shuffled per lesson visit**, so the answer position can never be memorised.
-- **📖 Glossary** — 10 domains / 259 terms, collapsible and searchable, doubling as the in-lesson
+- **📖 Glossary** — 10 domains / 272 terms, collapsible and searchable, doubling as the in-lesson
   click-to-explain source.
 - **Belts & capstones** — per-domain percentage belts (white → black), dan sub-tracks for advanced
   topics, and a graded multi-step capstone (e.g. the Identity "build a secure auth service"). Streams
@@ -145,11 +145,11 @@ files. Those sub-categories, in reading order:
 
 | Sub-category | Lessons | Sub-category | Lessons |
 |---|--:|---|--:|
-| Identity & federation foundations | 23 | PKI & certificates | 6 |
-| Authentication & MFA | 13 | Service-to-service & zero trust | 8 |
-| Authorization models | 8 | Enterprise identity & directories | 10 |
-| Sessions, cookies & web login | 6 | Advanced OAuth & threats | 8 |
-| OAuth 2.0 & OpenID Connect | 15 | Governance & privileged access | 7 |
+| Identity & federation foundations | 24 | PKI & certificates | 6 |
+| Authentication & MFA | 13 | Service-to-service & zero trust | 9 |
+| Authorization models | 9 | Enterprise identity & directories | 10 |
+| Sessions, cookies & web login | 6 | Advanced OAuth & threats | 9 |
+| OAuth 2.0 & OpenID Connect | 16 | Governance & privileged access | 8 |
 | Tokens: JWT & JOSE | 7 | **Running identity in production** | 9 |
 | SAML & enterprise web SSO | 5 | Capstone project | 1 |
 

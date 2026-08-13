@@ -408,5 +408,116 @@ solution:`public class Fapi {
             && tokenBindingOk(tokenBinding)
             && exactRedirect;
     }
+}`}},
+
+{id:'ao8',title:'Continuous Access Evaluation: revocation that arrives in seconds',body:`
+<p>The token lesson left an unresolved tension. Self-contained tokens verify offline, which is why they
+scale — and it is also why you cannot revoke one. The standard mitigation is a short lifetime, so the
+industry settled on "your access ends within fifteen minutes". For a user who was just fired, or a
+device that just failed a compliance check, fifteen minutes is a long time.</p>
+<p><b>Continuous Access Evaluation</b> is the answer that does not require giving up offline
+verification: instead of shortening the token, the resource server is <i>told</i> when something
+changes.</p>
+
+<h4>The shift: polling to events</h4>
+<div class="codeSample" data-hl>SHORT LIFETIMES (the old trade)
+  token lives 5-15 min -> revocation lands within 5-15 min
+  cost: constant refresh traffic, and you still cannot act faster
+
+INTROSPECTION (the other old option)
+  ask the issuer on every call -> instant, and you have rebuilt the
+  network round trip that self-contained tokens existed to remove
+
+CAE
+  keep long-lived tokens AND offline verification, and have the issuer
+  PUSH an event when something changes:
+     user disabled · password reset · session revoked · risk detected
+     · device fell out of compliance · network location changed
+  the resource server then rejects the affected token immediately.</div>
+<p>The token has not changed and is still cryptographically valid. What changed is that the verifier now
+holds a fact that overrides it — the same shape as a certificate revocation list, arriving by push
+rather than poll.</p>
+
+<h4>How the event gets there</h4>
+<p>The delivery mechanism is standardised as <b>Shared Signals</b>: a <b>Security Event Token</b> (a JWT
+carrying an event rather than an identity) delivered over a subscription. Two profiles matter — CAEP
+for access changes, and RISC for account-level compromise signals shared between providers.</p>
+<div class="codeSample" data-hl>// a Security Event Token: a JWT whose payload is an EVENT
+{ "iss": "https://idp.example.com",
+  "aud": "orders-api",
+  "iat": 1767222000,
+  "jti": "evt-91c",
+  "events": {
+    "https://schemas.openid.net/secevent/caep/event-type/session-revoked": {
+      "subject": { "format": "iss_sub", "sub": "u-4817" },
+      "event_timestamp": 1767221990
+    } } }
+
+// verify it exactly like any other token: signature, iss, aud, replay.
+// an unauthenticated "revoke this user" endpoint is a denial-of-service tool.</div>
+
+<h4>What the receiver has to do</h4>
+<ol>
+<li><b>Verify the event</b> as rigorously as a token. It changes access, so it is security-relevant
+input.</li>
+<li><b>Maintain state.</b> This is the real cost: the resource server must keep a revocation list
+keyed by subject or session and consult it during authorization. A purely stateless verifier cannot
+participate in CAE at all.</li>
+<li><b>Handle missed events.</b> Push delivery fails. Without a fallback the system degrades silently
+into "no revocation", which is the worst failure because it looks fine. Periodic reconciliation, or a
+token lifetime short enough to bound the gap, is still required.</li>
+<li><b>Decide the fail mode.</b> If the event stream is down, do you keep honouring tokens or start
+rejecting? Both are defensible; not having chosen is not.</li>
+</ol>
+
+<h4>The honest assessment</h4>
+<p>CAE narrows the revocation window from minutes to seconds, and for high-value sessions that is worth
+real effort. But notice what it costs: <b>the resource server becomes stateful</b>, which is precisely
+the property self-contained tokens were adopted to avoid. It is not a free win but a considered trade —
+you accept some state in exchange for near-real-time control.</p>
+<p>So the sensible posture is layered rather than either/or: short lifetimes as the floor that works
+everywhere, CAE on top for the sessions and events where seconds matter, and grant revocation as the
+thing that actually stops continued access. And it remains true that no mechanism recalls a token
+already in flight — CAE shortens the window; it does not close it.</p>`,
+docs:[['OpenID — Continuous Access Evaluation Profile (CAEP)','https://openid.net/specs/openid-caep-specification-1_0.html'],['RFC 8417 — Security Event Token (SET)','https://www.rfc-editor.org/rfc/rfc8417'],['OpenID — Shared Signals Framework','https://openid.net/specs/openid-sharedsignals-framework-1_0.html'],['RFC 8935 — Push-Based Delivery of Security Event Tokens','https://www.rfc-editor.org/rfc/rfc8935']],
+ex:{title:'Apply a revocation event',
+prompt:`Write <code>Caep</code> with three methods. <code>static boolean eventTrusted(String iss, String expectedIss, String aud, String selfId, java.util.Set&lt;String&gt; seenJtis, String jti)</code> requires a matching issuer and audience and an unseen <code>jti</code> — an unauthenticated revocation endpoint is a denial-of-service tool. <code>static boolean stillValid(boolean signatureValid, boolean notExpired, java.util.Set&lt;String&gt; revokedSubjects, String sub)</code> returns true only when the token verifies, has not expired, and the subject is <b>not</b> in the revocation set. <code>static boolean canParticipate(boolean keepsRevocationState)</code> returns that flag: a purely stateless verifier cannot do CAE at all.`,
+starter:`import java.util.*;
+
+public class Caep {
+    static boolean eventTrusted(String iss, String expectedIss, String aud, String selfId,
+                                Set<String> seenJtis, String jti) {
+        return false;
+    }
+    static boolean stillValid(boolean signatureValid, boolean notExpired,
+                              Set<String> revokedSubjects, String sub) {
+        return false;
+    }
+    static boolean canParticipate(boolean keepsRevocationState) {
+        return false;
+    }
+}`,
+tests:[{d:'the event issuer must match',re:'iss\\s*!=\\s*null|expectedIss'},{d:'the event audience must be this service',re:'selfId'},{d:'replayed events are rejected',re:'contains\\s*\\(\\s*jti\\s*\\)'},{d:'the signature still has to verify',re:'signatureValid'},{d:'expiry still applies',re:'notExpired'},{d:'a revoked subject is rejected',re:'revokedSubjects'},{d:'participation requires keeping state',re:'return\\s+keepsRevocationState'}],
+behavior:`eventTrusted("https://idp","https://idp","orders-api","orders-api", new HashSet<>(), "evt-1") is true; a mismatched issuer or audience, or a jti already seen, is false — a revocation event changes access, so it must be verified as rigorously as a token or it becomes a way for anyone to sign your users out. stillValid(true, true, Set.of(), "u-1") is true, while stillValid(true, true, Set.of("u-1"), "u-1") is false: the token is still cryptographically valid and still unexpired, and the verifier now holds a fact that overrides it. canParticipate(false) is false, which is the real cost of CAE — the resource server becomes stateful, the very property self-contained tokens were adopted to avoid.`,
+hints:['Four conditions in eventTrusted: issuer, audience, non-null jti, and not already seen.','stillValid needs all three: signature, expiry, and absence from the revocation set.','The last method genuinely just returns its argument — that is the point being made.'],
+solution:`import java.util.*;
+
+public class Caep {
+    static boolean eventTrusted(String iss, String expectedIss, String aud, String selfId,
+                                Set<String> seenJtis, String jti) {
+        if (iss == null || aud == null || jti == null || seenJtis == null) return false;
+        if (seenJtis.contains(jti)) return false;          // replay
+        return iss.equals(expectedIss) && aud.equals(selfId);
+    }
+    static boolean stillValid(boolean signatureValid, boolean notExpired,
+                              Set<String> revokedSubjects, String sub) {
+        if (!signatureValid || !notExpired) return false;
+        // the token verifies; the received event overrides it
+        return revokedSubjects == null || !revokedSubjects.contains(sub);
+    }
+    static boolean canParticipate(boolean keepsRevocationState) {
+        // a stateless verifier has nowhere to record the revocation
+        return keepsRevocationState;
+    }
 }`}}
 ]});

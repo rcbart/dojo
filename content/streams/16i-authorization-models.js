@@ -403,4 +403,97 @@ public class PolicyCombiner {
     }
 }`}},
 
+{id:'az9',title:'Authorization at scale: what Zanzibar actually solves',body:`
+<p>ReBAC is easy to describe and hard to run. "Ada can view this document because she is a member of a
+group that was granted access to the folder it lives in" is a graph traversal. Doing that for every
+request, across billions of relationships, in single-digit milliseconds, and never once showing someone
+a document they should not see, is a genuinely difficult systems problem. Google's Zanzibar paper is the
+reference answer, and the reasoning generalises to any centralised authorization service.</p>
+
+<h4>The data model</h4>
+<p>Everything is a <b>relation tuple</b> — a subject, a relation, and an object. Nothing else:</p>
+<div class="codeSample" data-hl>doc:readme#viewer@user:ada              ada can view the readme
+doc:readme#parent@folder:eng           the readme lives in the eng folder
+group:eng#member@user:bob              bob is in the eng group
+folder:eng#viewer@group:eng#member     eng members can view the eng folder
+
+// so: can bob view the readme? not stated anywhere. it is DERIVED by
+// walking parent -> folder viewer -> group member -> bob.</div>
+<p>Permissions are computed, not stored, which is what makes the model expressive — and what makes
+every check a traversal.</p>
+
+<h4>The three hard problems</h4>
+<p><b>1. Latency.</b> A check may fan out across many tuples and many shards. The answer is aggressive
+caching plus a trick worth knowing: <b>leopard indexes</b>, which precompute the transitive closure of
+slow-changing sets such as group membership, so a deep nesting chain collapses into one lookup.</p>
+<p><b>2. Consistency — the "new enemy" problem.</b> This is the one that makes the design interesting.
+Authorization has a failure mode ordinary caches do not:</p>
+<div class="codeSample" data-hl>t1  Ada removes Bob from the group
+t2  Ada adds a confidential document to the group's folder
+t3  Bob's check hits a replica that has t2 but NOT t1
+
+    -> Bob sees the document. Each write was correct. The ORDER was lost.
+
+// the reverse also matters: revoking access must not be overtaken by a
+// stale cache that still says "permitted".</div>
+<p>Eventual consistency is unacceptable here, and full strong consistency everywhere is too slow. The
+resolution is a <b>consistency token</b> — Zanzibar calls it a <i>zookie</i> — handed back when content
+is written and presented with the later check. It means "evaluate against a snapshot at least this
+recent". The client does not need a global clock; it just carries a token forward, and the system
+guarantees it will not answer from an older state.</p>
+<p><b>3. Ordering across the system.</b> Underneath, this needs globally ordered timestamps, which is
+why Zanzibar sits on Spanner. Reimplementations substitute their own ordering mechanism, and that
+substitution is where correctness is usually lost.</p>
+
+<h4>The centralisation trade</h4>
+<p>A central authorization service buys consistent policy, one audit trail, and one place to answer
+"who can see this?" — a question most estates genuinely cannot answer. It costs you a <b>hard runtime
+dependency on the critical path of every request</b>. That is the trade to weigh honestly, and the
+mitigations are the familiar ones: aggressive caching, and a deliberate decision about what happens
+when the service is unreachable. Fail closed, and an authorization outage is a total outage.</p>
+
+<h4>When you need this, and when you do not</h4>
+<div class="codeSample" data-hl>YOU PROBABLY DO NOT                 YOU PROBABLY DO
+roles map cleanly to permissions    sharing is user-driven and arbitrary
+authorization is per-endpoint       "shared with me", nested folders, links
+one service owns the data           many services must agree on one answer
+"who can see this?" is answerable   the answer is currently unknowable</div>
+<p>The honest default: <b>most applications do not need Zanzibar</b>, and a tenant-scoped query with an
+ownership check is the right answer. Reach for a relationship graph when users themselves grant access
+to each other in patterns you cannot enumerate in advance — which is exactly the case document sharing,
+repositories and collaboration tools have.</p>
+<p>And if you do build on this model, the property to protect is not expressiveness but <b>the
+guarantee that a revocation is never overtaken by a stale read</b>. Everything else is optimisation.</p>`,
+docs:[['Google — Zanzibar: Consistent, Global Authorization System','https://research.google/pubs/pub48190/'],['OpenFGA — Modeling guides','https://openfga.dev/docs/modeling'],['SpiceDB — Consistency and zookies','https://authzed.com/docs/spicedb/concepts/consistency']],
+ex:{title:'Zookies and the new-enemy problem',
+prompt:`Write <code>Zanzibar</code> with three methods. <code>static boolean freshEnough(long snapshotAt, long zookieAt)</code> is true only when the replica's snapshot is at or after the token's timestamp. <code>static boolean check(boolean tupleGrantsAccess, long snapshotAt, long zookieAt)</code> returns false whenever the snapshot is too old — <b>even if the tuple currently says access is granted</b>, because a stale replica may not yet know about a revocation. <code>static boolean needsRelationshipGraph(boolean userDrivenSharing, boolean rolesMapCleanly)</code> is true only when sharing is user-driven and roles do not map cleanly.`,
+starter:`public class Zanzibar {
+    static boolean freshEnough(long snapshotAt, long zookieAt) {
+        return false;
+    }
+    static boolean check(boolean tupleGrantsAccess, long snapshotAt, long zookieAt) {
+        return false;
+    }
+    static boolean needsRelationshipGraph(boolean userDrivenSharing, boolean rolesMapCleanly) {
+        return false;
+    }
+}`,
+tests:[{d:'the snapshot must be at least as recent as the token',re:'snapshotAt\\s*>=\\s*zookieAt|zookieAt\\s*<=\\s*snapshotAt'},{d:'a stale snapshot denies regardless of the tuple',re:'freshEnough\\s*\\('},{d:'the tuple still has to grant access',re:'tupleGrantsAccess'},{d:'user-driven sharing is required',re:'userDrivenSharing'},{d:'clean role mapping means you do not need this',re:'!\\s*rolesMapCleanly|rolesMapCleanly\\s*==\\s*false'}],
+behavior:`freshEnough(100, 100) and freshEnough(101, 100) are true; freshEnough(99, 100) is false. check(true, 99, 100) is false — this is the whole point: the replica says access is granted, but it is older than the write the client already observed, so it may not yet know Bob was removed from the group. Answering from it is the new-enemy problem, where each write was correct and only the order was lost. check(true, 100, 100) is true, and check(false, 100, 100) is false. needsRelationshipGraph(true, false) is true, while needsRelationshipGraph(true, true) and needsRelationshipGraph(false, false) are false: most applications do not need this, and a tenant-scoped query with an ownership check is the right answer.`,
+hints:['One comparison for freshness; note it is &gt;=, not &gt;.','In check, test freshness first and deny before even looking at the tuple.','Two conditions, the second negated.'],
+solution:`public class Zanzibar {
+    static boolean freshEnough(long snapshotAt, long zookieAt) {
+        return snapshotAt >= zookieAt;
+    }
+    static boolean check(boolean tupleGrantsAccess, long snapshotAt, long zookieAt) {
+        // a stale replica may not know about a revocation yet: deny first
+        if (!freshEnough(snapshotAt, zookieAt)) return false;
+        return tupleGrantsAccess;
+    }
+    static boolean needsRelationshipGraph(boolean userDrivenSharing, boolean rolesMapCleanly) {
+        // arbitrary user-driven sharing is the case roles cannot enumerate
+        return userDrivenSharing && !rolesMapCleanly;
+    }
+}`}}
+
 ]});

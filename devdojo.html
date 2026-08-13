@@ -872,6 +872,48 @@ window.QUIZZES_HAND = {
     {q:'What makes a silver ticket stealthier than a golden ticket?',options:['It is smaller','The KDC is never contacted, so there is no ticket request to log','It uses stronger encryption','It never expires'],answer:1,why:'A service validates a ticket entirely offline with its own key, so forging one leaves no trace at the KDC.',whyWrong:['Size is irrelevant.','','Encryption is the same.','It expires normally.']},
     {q:'Why is unconstrained delegation so dangerous?',options:['It is slow','The user entire TGT is cached on the service, so any admin there can become that user anywhere','It uses RC4','It bypasses MFA'],answer:1,why:'Worse still, coercing a domain controller to authenticate to such a host yields the DC TGT. Treat any such host as Tier 0.',whyWrong:['Performance is not the issue.','','Encryption type is a separate concern.','MFA is not part of the Kerberos exchange.']},
     {q:'Why is resource-based constrained delegation a common escalation path?',options:['It is enabled by default','The attribute lives on the target computer object, so anyone who can write to it can grant themselves delegation','It cannot be audited','It has no time limit'],answer:1,why:'A permissions problem rather than a protocol flaw — which is why write access to computer objects deserves auditing.',whyWrong:['It must be configured.','','It is auditable.','Tickets still expire.']}
+  ],
+  s2s9: [
+    {q:'What assumption do AI agents break that every protocol so far relied on?',options:['That tokens expire','That a human is present at the moment of authorization','That TLS is available','That scopes exist'],answer:1,why:'Consent screens, step-up prompts and re-authentication all assume someone is there to respond. An agent working at 2am is not.',whyWrong:['Expiry still works normally.','','Transport is unchanged.','Scopes still apply, just too coarsely.']},
+    {q:'How many identities should an agent call carry?',options:['One — the user','Two — the user as subject, and the agent as the acting party','One — the agent','Three, including the tool'],answer:1,why:'Presenting only the user identity is impersonation, and nothing downstream can tell that software rather than a person decided.',whyWrong:['That loses the fact that an agent acted.','','That loses whose data is at stake.','The tool is the audience, not an identity in the chain.']},
+    {q:'A sub-agent requests a scope its parent was never granted. What should happen?',options:['Allow it if the user consented once','Deny — narrowing must be monotonic','Allow, sub-agents are trusted','Escalate to the user'],answer:1,why:'If any hop can request more than it was given, the whole chain is only as strong as its most compromised link.',whyWrong:['Consent was for the original grant, not an expansion.','','Trust does not travel upward in privilege.','The correct answer is to refuse, not to ask.']},
+    {q:'Why is prompt injection an authorization problem rather than a model problem?',options:['Models cannot be improved','Hostile content can only cause actions the agent token already permits, so the fix is not granting the authority','It is a network issue','Prompts are unauthenticated'],answer:1,why:'The token is the control, not the prompt. This is the most important consequence of agents for identity work.',whyWrong:['Models improve, and it does not close this.','','Nothing to do with the network.','True but not the mechanism that limits damage.']},
+    {q:'Which action should return to a human even when the agent is authorized?',options:['Reading a document','Sending money','Listing records','Searching an index'],answer:1,why:'Reads and reversible writes proceed; irreversible or externally-visible actions escalate. Design the interrupt before it is needed.',whyWrong:['Reversible and low risk.','','Reversible and low risk.','Reversible and low risk.']}
+  ],
+  az9: [
+    {q:'In Zanzibar, how are permissions stored?',options:['As a permission list per user','They are not stored — they are derived by walking relation tuples','As roles','As an access control matrix'],answer:1,why:'Everything is a subject-relation-object tuple, and a check is a graph traversal. That is what makes the model expressive and every check a traversal.',whyWrong:['No such list exists.','','Roles are one thing you can model with tuples.','A matrix would not express nesting.']},
+    {q:'What is the "new enemy" problem?',options:['A new attacker class','A stale replica applies a later write without an earlier one, so a removed user sees newly added content','A denial-of-service attack','A caching bug in clients'],answer:1,why:'Each write was correct; the order was lost. This is why eventual consistency is unacceptable for authorization.',whyWrong:['Not about attacker taxonomy.','','Availability is a separate concern.','It is a distributed-systems ordering problem, not a client bug.']},
+    {q:'What does a zookie do?',options:['Caches the decision','Tells the system to evaluate against a snapshot at least as recent as an observed write','Identifies the user','Signs the request'],answer:1,why:'The client carries a token forward rather than needing a global clock, and the system guarantees it will not answer from an older state.',whyWrong:['It constrains freshness rather than caching.','','It carries no identity.','It is not a signature.']},
+    {q:'What does a central authorization service cost you?',options:['Nothing, it is purely a win','A hard runtime dependency on the critical path of every request','Storage only','Compatibility with OAuth'],answer:1,why:'Weigh it honestly, and decide deliberately what happens when the service is unreachable — fail closed and an authorization outage is a total outage.',whyWrong:['There is a real trade.','','Storage is the minor cost.','It composes fine with OAuth.']},
+    {q:'When do you probably NOT need a relationship graph?',options:['When users share arbitrarily with each other','When roles map cleanly to permissions and authorization is per-endpoint','When you have nested folders','When many services must agree'],answer:1,why:'Most applications do not need Zanzibar; a tenant-scoped query with an ownership check is the right answer.',whyWrong:['That is exactly when you do need it.','','Nesting is the case it exists for.','Shared answers are a reason to centralise.']}
+  ],
+  oa12: [
+    {q:'What problem does OpenID Federation solve?',options:['Token expiry','Bilateral trust scaling quadratically — everyone configuring everyone','Weak signatures','Slow logins'],answer:1,why:'Ten parties need forty-five relationships. Ecosystems with thousands of participants need trust proven on demand instead.',whyWrong:['Unrelated to expiry.','','Signatures are unchanged.','It adds resolution work rather than removing it.']},
+    {q:'How does a relying party trust an OP it has never been configured with?',options:['It trusts all OPs','By walking a signed chain of entity statements to a trust anchor it holds','By checking DNS','Through a shared secret'],answer:1,why:'Trust is transitive through the anchor rather than pairwise, which is what makes onboarding a registration rather than N integrations.',whyWrong:['That would be no trust model at all.','','DNS proves nothing about policy.','No secret is shared.']},
+    {q:'An entity declares client_secret_basic but the anchor policy allows only private_key_jwt and mTLS. What happens?',options:['It is accepted, entities declare their own metadata','It is rejected — policies compose downward and can only narrow','The anchor is updated','It falls back to a default'],answer:1,why:'This is how an ecosystem enforces a security baseline on participants it does not operate, without relying on their honesty.',whyWrong:['Self-declaration is exactly what policy constrains.','','Members do not amend the anchor.','There is no widening fallback.']},
+    {q:'What is the greatest risk in a federation of this kind?',options:['Chain length','Trust anchor compromise — it takes the entire ecosystem with it','Metadata size','Slow DNS'],answer:1,why:'Anchor keys belong offline with a rehearsed rotation. It is the trust-anchor lesson at maximum stakes.',whyWrong:['Length affects performance, not integrity.','','Size is an engineering detail.','Not a trust concern.']},
+    {q:'When is bilateral registration still the better choice?',options:['Always','For a handful of integrations that rarely change','For national ecosystems','For wallet verifiers'],answer:1,why:'The crossover is somewhere in the tens of participants, or wherever participants change often.',whyWrong:['Not at ecosystem scale.','','Those are the federation case.','Verifiers must accept issuers they never contacted.']}
+  ],
+  ao8: [
+    {q:'What does CAE change about token handling?',options:['Tokens become opaque','The issuer pushes an event when something changes, so long-lived tokens can be rejected immediately','Tokens are encrypted','Tokens are validated by the issuer on every call'],answer:1,why:'The token is unchanged and still cryptographically valid; the verifier now holds a fact that overrides it.',whyWrong:['The format is unchanged.','','Encryption is unrelated.','That is introspection, which reintroduces the round trip.']},
+    {q:'What is a Security Event Token?',options:['An access token with extra scopes','A JWT whose payload is an event rather than an identity','An encrypted session cookie','A refresh token'],answer:1,why:'It must be verified exactly like any other token — an unauthenticated revocation endpoint is a denial-of-service tool.',whyWrong:['It grants no access.','','Not a cookie.','Not a credential at all.']},
+    {q:'What is the real cost of participating in CAE?',options:['Licence fees','The resource server becomes stateful — it must keep a revocation list and consult it','Larger tokens','Slower signatures'],answer:1,why:'That is precisely the property self-contained tokens were adopted to avoid, so it is a considered trade rather than a free win.',whyWrong:['Not a commercial matter.','','Token size is unchanged.','Verification cost is unchanged.']},
+    {q:'Push delivery of an event fails and nobody notices. What is the danger?',options:['Duplicate events','The system degrades silently into no revocation, which looks fine','Tokens expire early','Events arrive out of order'],answer:1,why:'The worst failure mode is the one that looks healthy. Periodic reconciliation, or a short enough lifetime, is still required.',whyWrong:['Handled by jti replay checks.','','Expiry is unaffected.','A real concern, but silent loss is worse.']},
+    {q:'Does CAE make token revocation instant?',options:['Yes, completely','No — it narrows the window from minutes to seconds, but a token already in flight is still honoured','Yes, if tokens are opaque','Only for refresh tokens'],answer:1,why:'No mechanism recalls a token already in flight. Layer it: short lifetimes as the floor, CAE where seconds matter, grant revocation to stop continued access.',whyWrong:['Nothing is instant across a network.','','Opaque tokens use introspection instead.','It applies to access tokens too.']}
+  ],
+  iddid2: [
+    {q:'In the wallet model, who does the verifier contact?',options:['The issuer, to validate the credential','Nobody — the credential is verified from its signature, so the issuer never learns where it was used','The wallet vendor','A central registry'],answer:1,why:'That absence is the substantive difference from federation, where the IdP is online at the moment of use and therefore sees every login.',whyWrong:['Contacting the issuer would recreate the surveillance surface.','','The vendor is not in the loop.','Registries help find issuers, not to verify each use.']},
+    {q:'A bar needs to check you are over 18. What should it ask for?',options:['Your date of birth','An age_over_18 predicate claim','Your full credential','Your name and address'],answer:1,why:'Ask for the predicate, not the data. Most systems that store dates of birth only ever needed a boolean.',whyWrong:['More than the question requires.','','Maximal over-disclosure.','Entirely unnecessary.']},
+    {q:'What is the mDL, and why does it differ from OID4VP?',options:['A competing wallet app','An ISO standard for mobile driving licences, using CBOR and designed to work offline over NFC or Bluetooth','A credential format only used in the EU','An older version of OID4VP'],answer:1,why:'It came from standards bodies serving physical documents rather than from the web. Both are deployed, and convergence is partial.',whyWrong:['It is a standard, not an app.','','Adoption is wider than one region.','They developed in parallel, not in sequence.']},
+    {q:'Why is credential revocation awkward in this model?',options:['Credentials never expire','Checking a status list can reintroduce a call that reveals you are being verified','Wallets cannot be updated','Issuers refuse to support it'],answer:1,why:'The privacy problem returns through the back door, which is why revocation remains one of the unsettled areas.',whyWrong:['They do expire.','','Wallets update normally.','Issuers do support status mechanisms.']},
+    {q:'What does verifiable presentation NOT solve about age assurance?',options:['Disclosing a birthdate','That somebody must still have verified the underlying fact against a real document','Proving the claim cryptographically','Working offline'],answer:1,why:'The privacy question moves rather than disappearing: from what the site learns to who issued this and what they retained.',whyWrong:['Selective disclosure solves exactly that.','','The cryptography works.','mDL works offline by design.']}
+  ],
+  ig7: [
+    {q:'Roughly how do non-human identities compare in number to human ones?',options:['Far fewer','They outnumber humans substantially, commonly ten to one or more','About equal','It varies with no pattern'],answer:1,why:'And almost every governance control in the domain was designed for the humans, which is why NHIs are more numerous, more privileged and less governed.',whyWrong:['The opposite is true.','','Not close to equal in most estates.','The pattern is consistent.']},
+    {q:'Why does joiner-mover-leaver not work for service accounts?',options:['They have no manager','Nothing signals that a service account is finished, so nothing ever removes it','They cannot be disabled','HR does not track them'],answer:1,why:'Estates accumulate them monotonically. An expiry that must be renewed converts "forever" into a deliberate decision.',whyWrong:['True, and the ownership gap is downstream of the lifecycle gap.','','They can be disabled; nobody dares.','A symptom rather than the mechanism.']},
+    {q:'What is the single most common finding about non-human identities?',options:['Weak passwords','No current owner — nobody knows what it does, so nobody will disable it','Wrong naming','Missing tags'],answer:1,why:'An identity without a named, current owner is ungovernable by definition.',whyWrong:['Common, but downstream of ownership.','','Cosmetic, and not what makes it ungovernable.','Cosmetic, and not what makes it ungovernable.']},
+    {q:'What is the strongest control for a workload credential?',options:['A longer secret','Workload identity federation — no static credential exists at all','Quarterly rotation','Storing it encrypted'],answer:1,why:'There is then nothing to leak, rotate, or find in a repository.',whyWrong:['Length does not prevent leakage.','','Better than nothing, and still a secret.','It must be decrypted to be used.']},
+    {q:'Why do reviewers rubber-stamp non-human access reviews?',options:['They are lazy','Nobody recognises svc-etl-prod-3, so without evidence of what it does they cannot make a real decision','Reviews are too frequent','The tooling is slow'],answer:1,why:'The fix is better evidence — last run, what it accessed, who owns it — not more reviews. Asking anyway trains people that reviews are theatre.',whyWrong:['They are given an impossible task.','','Frequency is not the barrier.','Tooling speed is not the barrier.']}
   ]
 };
 window.QUIZZES={"jvm1":[{"q":"location(\"object\") returns which value?","options":["heap","metaspace","stack"],"answer":0,"why":"location maps \"object\" to \"heap\".","whyWrong":["","That is what a different input maps to, not \"object\".","That is what a different input maps to, not \"object\"."]},{"q":"location(\"local-primitive\") returns which value?","options":["heap","metaspace","stack"],"answer":2,"why":"location maps \"local-primitive\" to \"stack\".","whyWrong":["That is what a different input maps to, not \"local-primitive\".","That is what a different input maps to, not \"local-primitive\".",""]},{"q":"location(\"reference-variable\") returns which value?","options":["heap","metaspace","stack"],"answer":2,"why":"location maps \"reference-variable\" to \"stack\".","whyWrong":["That is what a different input maps to, not \"reference-variable\".","That is what a different input maps to, not \"reference-variable\".",""]},{"q":"location(\"class-metadata\") returns which value?","options":["heap","metaspace","stack"],"answer":1,"why":"location maps \"class-metadata\" to \"metaspace\".","whyWrong":["That is what a different input maps to, not \"class-metadata\".","","That is what a different input maps to, not \"class-metadata\"."]},{"q":"error(\"deep-recursion\") returns which value?","options":["OutOfMemoryError","StackOverflowError"],"answer":1,"why":"error maps \"deep-recursion\" to \"StackOverflowError\".","whyWrong":["That is what a different input maps to, not \"deep-recursion\".",""]},{"q":"error(\"too-many-objects\") returns which value?","options":["OutOfMemoryError","StackOverflowError"],"answer":0,"why":"error maps \"too-many-objects\" to \"OutOfMemoryError\".","whyWrong":["","That is what a different input maps to, not \"too-many-objects\"."]}],"ds6":[{"q":"bound(\"upper\") returns which value?","options":["Big-O","Omega","Theta"],"answer":0,"why":"bound maps \"upper\" to \"Big-O\".","whyWrong":["","That is what a different input maps to, not \"upper\".","That is what a different input maps to, not \"upper\"."]},{"q":"bound(\"tight\") returns which value?","options":["Big-O","Omega","Theta"],"answer":2,"why":"bound maps \"tight\" to \"Theta\".","whyWrong":["That is what a different input maps to, not \"tight\".","That is what a different input maps to, not \"tight\".",""]},{"q":"bound(\"lower\") returns which value?","options":["Big-O","Omega","Theta"],"answer":1,"why":"bound maps \"lower\" to \"Omega\".","whyWrong":["That is what a different input maps to, not \"lower\".","","That is what a different input maps to, not \"lower\"."]},{"q":"of(\"hash-lookup\") returns which value?","options":["O(1)","O(log n)","O(n)","O(n^2)"],"answer":0,"why":"of maps \"hash-lookup\" to \"O(1)\".","whyWrong":["","That is what a different input maps to, not \"hash-lookup\".","That is what a different input maps to, not \"hash-lookup\".","That is what a different input maps to, not \"hash-lookup\"."]},{"q":"of(\"binary-search\") returns which value?","options":["O(1)","O(log n)","O(n)","O(n^2)"],"answer":1,"why":"of maps \"binary-search\" to \"O(log n)\".","whyWrong":["That is what a different input maps to, not \"binary-search\".","","That is what a different input maps to, not \"binary-search\".","That is what a different input maps to, not \"binary-search\"."]},{"q":"of(\"linear-scan\") returns which value?","options":["O(1)","O(log n)","O(n)","O(n^2)"],"answer":2,"why":"of maps \"linear-scan\" to \"O(n)\".","whyWrong":["That is what a different input maps to, not \"linear-scan\".","That is what a different input maps to, not \"linear-scan\".","","That is what a different input maps to, not \"linear-scan\"."]}],"ds7":[{"q":"pick(\"exact-key-lookup\") returns which value?","options":["balanced BST","hash table","heap","trie"],"answer":1,"why":"pick maps \"exact-key-lookup\" to \"hash table\".","whyWrong":["That is what a different input maps to, not \"exact-key-lookup\".","","That is what a different input maps to, not \"exact-key-lookup\".","That is what a different input maps to, not \"exact-key-lookup\"."]},{"q":"pick(\"sorted-range\") returns which value?","options":["balanced BST","hash table","heap","trie"],"answer":0,"why":"pick maps \"sorted-range\" to \"balanced BST\".","whyWrong":["","That is what a different input maps to, not \"sorted-range\".","That is what a different input maps to, not \"sorted-range\".","That is what a different input maps to, not \"sorted-range\"."]},{"q":"pick(\"prefix-autocomplete\") returns which value?","options":["balanced BST","hash table","heap","trie"],"answer":3,"why":"pick maps \"prefix-autocomplete\" to \"trie\".","whyWrong":["That is what a different input maps to, not \"prefix-autocomplete\".","That is what a different input maps to, not \"prefix-autocomplete\".","That is what a different input maps to, not \"prefix-autocomplete\".",""]},{"q":"pick(\"top-k\") returns which value?","options":["balanced BST","hash table","heap","trie"],"answer":2,"why":"pick maps \"top-k\" to \"heap\".","whyWrong":["That is what a different input maps to, not \"top-k\".","That is what a different input maps to, not \"top-k\".","","That is what a different input maps to, not \"top-k\"."]},{"q":"pick(\"disk-index\") returns which value?","options":["B-tree","balanced BST","hash table","trie"],"answer":0,"why":"pick maps \"disk-index\" to \"B-tree\".","whyWrong":["","That is what a different input maps to, not \"disk-index\".","That is what a different input maps to, not \"disk-index\".","That is what a different input maps to, not \"disk-index\"."]}],"ds8":[{"q":"dataStructure(\"bfs\") returns which value?","options":["priority queue","queue","stack"],"answer":1,"why":"dataStructure maps \"bfs\" to \"queue\".","whyWrong":["That is what a different input maps to, not \"bfs\".","","That is what a different input maps to, not \"bfs\"."]},{"q":"dataStructure(\"dfs\") returns which value?","options":["priority queue","queue","stack"],"answer":2,"why":"dataStructure maps \"dfs\" to \"stack\".","whyWrong":["That is what a different input maps to, not \"dfs\".","That is what a different input maps to, not \"dfs\".",""]},{"q":"dataStructure(\"dijkstra\") returns which value?","options":["priority queue","queue","stack"],"answer":0,"why":"dataStructure maps \"dijkstra\" to \"priority queue\".","whyWrong":["","That is what a different input maps to, not \"dijkstra\".","That is what a different input maps to, not \"dijkstra\"."]},{"q":"pick(\"shortest-unweighted\") returns which value?","options":["bfs","dfs","dijkstra","topological sort"],"answer":0,"why":"pick maps \"shortest-unweighted\" to \"bfs\".","whyWrong":["","That is what a different input maps to, not \"shortest-unweighted\".","That is what a different input maps to, not \"shortest-unweighted\".","That is what a different input maps to, not \"shortest-unweighted\"."]},{"q":"pick(\"shortest-weighted\") returns which value?","options":["bfs","dfs","dijkstra","topological sort"],"answer":2,"why":"pick maps \"shortest-weighted\" to \"dijkstra\".","whyWrong":["That is what a different input maps to, not \"shortest-weighted\".","That is what a different input maps to, not \"shortest-weighted\".","","That is what a different input maps to, not \"shortest-weighted\"."]},{"q":"pick(\"path-exists\") returns which value?","options":["bfs","dfs","dijkstra","topological sort"],"answer":1,"why":"pick maps \"path-exists\" to \"dfs\".","whyWrong":["That is what a different input maps to, not \"path-exists\".","","That is what a different input maps to, not \"path-exists\".","That is what a different input maps to, not \"path-exists\"."]}],"web9":[{"q":"style(\"stable-large-dataset\") returns which value?","options":["cursor","offset"],"answer":0,"why":"style maps \"stable-large-dataset\" to \"cursor\".","whyWrong":["","That is what a different input maps to, not \"stable-large-dataset\"."]},{"q":"style(\"jump-to-page\") returns which value?","options":["cursor","offset"],"answer":1,"why":"style maps \"jump-to-page\" to \"offset\".","whyWrong":["That is what a different input maps to, not \"jump-to-page\".",""]}],"web10":[{"q":"location(\"uri\") returns which value?","options":["/v1/orders","Api-Version: 1","application/vnd.acme.v1+json"],"answer":0,"why":"location maps \"uri\" to \"/v1/orders\".","whyWrong":["","That is what a different input maps to, not \"uri\".","That is what a different input maps to, not \"uri\"."]},{"q":"location(\"header\") returns which value?","options":["/v1/orders","Api-Version: 1","application/vnd.acme.v1+json"],"answer":1,"why":"location maps \"header\" to \"Api-Version: 1\".","whyWrong":["That is what a different input maps to, not \"header\".","","That is what a different input maps to, not \"header\"."]},{"q":"location(\"media-type\") returns which value?","options":["/v1/orders","Api-Version: 1","application/vnd.acme.v1+json"],"answer":2,"why":"location maps \"media-type\" to \"application/vnd.acme.v1+json\".","whyWrong":["That is what a different input maps to, not \"media-type\".","That is what a different input maps to, not \"media-type\".",""]}],"con0":[{"q":"memory(\"process\") returns which value?","options":["isolated","shared"],"answer":0,"why":"memory maps \"process\" to \"isolated\".","whyWrong":["","That is what a different input maps to, not \"process\"."]},{"q":"memory(\"thread\") returns which value?","options":["isolated","shared"],"answer":1,"why":"memory maps \"thread\" to \"shared\".","whyWrong":["That is what a different input maps to, not \"thread\".",""]}],"con7":[{"q":"classify(\"intermittent-failure\") returns which value?","options":["deadlock","race condition","unsynchronized shared state"],"answer":1,"why":"classify maps \"intermittent-failure\" to \"race condition\".","whyWrong":["That is what a different input maps to, not \"intermittent-failure\".","","That is what a different input maps to, not \"intermittent-failure\"."]},{"q":"classify(\"threads-stuck-forever\") returns which value?","options":["deadlock","race condition","unsynchronized shared state"],"answer":0,"why":"classify maps \"threads-stuck-forever\" to \"deadlock\".","whyWrong":["","That is what a different input maps to, not \"threads-stuck-forever\".","That is what a different input maps to, not \"threads-stuck-forever\"."]},{"q":"classify(\"lost-updates\") returns which value?","options":["deadlock","race condition","unsynchronized shared state"],"answer":2,"why":"classify maps \"lost-updates\" to \"unsynchronized shared state\".","whyWrong":["That is what a different input maps to, not \"lost-updates\".","That is what a different input maps to, not \"lost-updates\".",""]},{"q":"tool(\"inspect-thread-dump\") returns which value?","options":["AtomicInteger","jcstress","jstack"],"answer":2,"why":"tool maps \"inspect-thread-dump\" to \"jstack\".","whyWrong":["That is what a different input maps to, not \"inspect-thread-dump\".","That is what a different input maps to, not \"inspect-thread-dump\".",""]},{"q":"tool(\"stress-test-memory-model\") returns which value?","options":["AtomicInteger","jcstress","jstack"],"answer":1,"why":"tool maps \"stress-test-memory-model\" to \"jcstress\".","whyWrong":["That is what a different input maps to, not \"stress-test-memory-model\".","","That is what a different input maps to, not \"stress-test-memory-model\"."]},{"q":"tool(\"safe-counter\") returns which value?","options":["AtomicInteger","jcstress","jstack"],"answer":0,"why":"tool maps \"safe-counter\" to \"AtomicInteger\".","whyWrong":["","That is what a different input maps to, not \"safe-counter\".","That is what a different input maps to, not \"safe-counter\"."]}],"pat8":[{"q":"remedy(\"god-object\") returns which value?","options":["extract a named constant","extract a shared method","inject dependencies","split by responsibility"],"answer":3,"why":"remedy maps \"god-object\" to \"split by responsibility\".","whyWrong":["That is what a different input maps to, not \"god-object\".","That is what a different input maps to, not \"god-object\".","That is what a different input maps to, not \"god-object\".",""]},{"q":"remedy(\"magic-number\") returns which value?","options":["extract a named constant","extract a shared method","inject dependencies","split by responsibility"],"answer":0,"why":"remedy maps \"magic-number\" to \"extract a named constant\".","whyWrong":["","That is what a different input maps to, not \"magic-number\".","That is what a different input maps to, not \"magic-number\".","That is what a different input maps to, not \"magic-number\"."]},{"q":"remedy(\"copy-paste\") returns which value?","options":["extract a named constant","extract a shared method","inject dependencies","split by responsibility"],"answer":1,"why":"remedy maps \"copy-paste\" to \"extract a shared method\".","whyWrong":["That is what a different input maps to, not \"copy-paste\".","","That is what a different input maps to, not \"copy-paste\".","That is what a different input maps to, not \"copy-paste\"."]},{"q":"remedy(\"global-mutable-state\") returns which value?","options":["extract a named constant","extract a shared method","inject dependencies","split by responsibility"],"answer":2,"why":"remedy maps \"global-mutable-state\" to \"inject dependencies\".","whyWrong":["That is what a different input maps to, not \"global-mutable-state\".","That is what a different input maps to, not \"global-mutable-state\".","","That is what a different input maps to, not \"global-mutable-state\"."]},{"q":"remedy(\"premature-optimization\") returns which value?","options":["extract a named constant","extract a shared method","measure then optimize","split by responsibility"],"answer":2,"why":"remedy maps \"premature-optimization\" to \"measure then optimize\".","whyWrong":["That is what a different input maps to, not \"premature-optimization\".","That is what a different input maps to, not \"premature-optimization\".","","That is what a different input maps to, not \"premature-optimization\"."]}]};
@@ -1843,6 +1885,19 @@ const GLOSS=[
 ['Number matching',`Requiring the user to type digits shown on the login screen into the push prompt, defeating blind approval and MFA fatigue.`],
 ['OAuth 2.1',`A consolidation of OAuth 2.0 plus the Security BCP: implicit and password grants removed, PKCE required for all authorization code flows, exact redirect URI matching.`],
 ['Confused deputy',`Abusing a party trusted by many principals to act against one of them. External ids in role assumption exist to prevent it.`],
+['Relation tuple',`Zanzibar's unit of authorization data: subject, relation, object. Permissions are derived by traversal, not stored.`],
+['Zookie',`A consistency token returned on write and presented with a later check, meaning "evaluate against a snapshot at least this recent".`],
+['New enemy problem',`A stale replica applies a later write without an earlier one, so a removed user sees newly added content. Each write was correct; the order was lost.`],
+['CAE',`Continuous Access Evaluation — the issuer pushes an event when access changes, so a long-lived token can be rejected in seconds instead of at expiry.`],
+['Security Event Token (SET)',`A JWT whose payload is an event rather than an identity (RFC 8417). Verify it as rigorously as a token — it changes access.`],
+['OpenID Federation',`Trust proven on demand by a signed chain of entity statements up to a trust anchor, replacing pairwise registration in large ecosystems.`],
+['Entity statement',`A signed statement a federation participant publishes about itself, and that its authority publishes about it. Chains of these are resolved to an anchor.`],
+['Metadata policy',`Constraints an authority places on what a subordinate may declare about itself. Composes downward and can only narrow.`],
+['OID4VCI / OID4VP',`OpenID protocols for issuing a verifiable credential into a wallet, and for a verifier requesting a presentation from it.`],
+['Presentation definition',`A verifier's machine-readable description of what it needs. The wallet chooses which credential satisfies it and which claims to disclose.`],
+['mDL',`Mobile driving licence (ISO/IEC 18013-5) — a CBOR credential format designed to work offline over NFC or Bluetooth.`],
+['Non-human identity (NHI)',`Service accounts, workloads, CI runners, bots and agents. They outnumber humans in most estates and inherit none of the joiner-mover-leaver lifecycle.`],
+['Agent identity',`An autonomous caller acting for a user: the subject stays the user, the agent is recorded as the acting party, and authority is granted in advance and bounded.`],
      ['Impersonation',`When a service simply acts as the user with no distinction — contrast with delegation.`],
      ['Least privilege',`Granting only the access truly needed, nothing more.`],
      ['MFA',`Multi-factor authentication — requiring two or more independent factors.`],
@@ -13165,7 +13220,117 @@ solution:`public class Ssi {
 }`,
 tests:[{d:'issuer signs & issues',re:'"issuer".*?"signs and issues the credential"',flags:'s'},{d:'holder keeps it in a wallet',re:'"holder".*?"keeps it in a wallet"',flags:'s'},{d:'verifier checks the signature',re:'"verifier".*?"checks the issuer signature"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
 behavior:`role("issuer") is "signs and issues the credential", role("holder") is "keeps it in a wallet", role("verifier") is "checks the issuer signature". The verifier trusts the issuer signature without contacting the issuer — that is the decentralized part.`,
-hints:['Issuer → holder → verifier is the trust triangle.','The holder stores credentials in a wallet and presents them.','The verifier checks the cryptographic signature, not a live call to the issuer.']}}
+hints:['Issuer → holder → verifier is the trust triangle.','The holder stores credentials in a wallet and presents them.','The verifier checks the cryptographic signature, not a live call to the issuer.']}},
+
+{id:'iddid2',title:'Wallets in practice: OID4VC, OID4VP and the mDL',body:`
+<p>The previous lesson covered DIDs and verifiable credentials as concepts, and the JOSE stream covered
+SD-JWT as the format. What has been missing is the <b>protocols that move credentials</b> — how one is
+issued into a wallet, and how a verifier asks for one. That is OID4VC and OID4VP, and they are
+deliberately built on OAuth so that the ecosystem does not have to learn a new stack.</p>
+
+<h4>The three-party model</h4>
+<div class="codeSample" data-hl>  [ ISSUER ]  --OID4VCI-->  [ WALLET ]  --OID4VP-->  [ VERIFIER ]
+   the DMV                    on the                    the bar,
+                              user's phone              the landlord
+
+// note what is ABSENT: the verifier never contacts the issuer. that is the
+// whole point — the DMV does not learn where you proved your age.
+// contrast federation, where the IdP sees every login.</div>
+<p>That absence is the substantive difference from everything else in this domain. In federation the
+authority is <i>online</i> at the moment of use and therefore sees it. Here the credential is issued
+once and presented many times without the issuer's involvement, which removes a surveillance surface
+that federation cannot.</p>
+
+<h4>Issuance (OID4VCI)</h4>
+<p>An OAuth flow with a different prize at the end: instead of an access token for an API, you receive a
+credential to keep. The wallet authenticates the user at the issuer, obtains an access token, and calls
+a <b>credential endpoint</b> — presenting a proof that it holds the key the credential will be bound
+to, so the credential cannot be replayed into a different wallet.</p>
+
+<h4>Presentation (OID4VP)</h4>
+<p>The verifier sends a <b>presentation definition</b> — a machine-readable description of what it
+needs, not which credential to use. The wallet decides which credential satisfies it and which claims
+to disclose, using the SD-JWT selective-disclosure mechanism plus a key-binding proof naming this
+verifier and its nonce.</p>
+<div class="codeSample" data-hl>verifier asks:   "a government ID credential, proving age_over_18"
+wallet returns:  the SD-JWT + the age_over_18 disclosure + a KB-JWT
+                 -> the date of birth is NEVER sent
+                 -> the name and address are never sent
+                 -> the verifier learns exactly one fact</div>
+<p><b>Ask for the predicate, not the data.</b> A credential can carry a pre-computed
+<code>age_over_18</code> claim, so proving eligibility never requires disclosing a birthdate. This is
+the single most useful design habit in the whole area, and it applies well beyond wallets: most systems
+that store dates of birth only ever needed a boolean.</p>
+
+<h4>The mDL and why standards collided</h4>
+<p>Mobile driving licences arrived from a different direction — ISO/IEC 18013-5, written by standards
+bodies serving physical documents, using CBOR and designed to work offline over NFC or Bluetooth at a
+roadside stop with no connectivity. OID4VP came from the web. Both are real, both are deployed, and
+convergence is partial: OID4VP can carry mdoc credentials, so the transport and the format are
+increasingly separable. Expect to meet both.</p>
+
+<h4>Age assurance: the honest version</h4>
+<p>Regulators increasingly require age checks, and wallets are the mechanism most often proposed.
+Verifiable presentation genuinely solves the technical problem — prove over-18 without revealing
+identity or birthdate, unlinkably enough for most purposes. What it does not solve is that <b>somebody
+must still have verified the underlying fact</b>, and that requires an issuer who saw a real document.
+The privacy question therefore moves rather than disappearing: from "what does this site learn" to "who
+issued this, and what did they retain".</p>
+
+<h4>What is still unsettled</h4>
+<ul>
+<li><b>Revocation.</b> Status lists exist, but checking one can reintroduce a call that tells someone
+you are being verified — the privacy problem returning through the back door.</li>
+<li><b>Unlinkability.</b> SD-JWT's issuer signature is identical across presentations, so colluding
+verifiers can correlate. BBS+ fixes it and is not yet widely deployed.</li>
+<li><b>Recovery.</b> Losing the phone means losing the credentials, and the recovery story is
+per-ecosystem and mostly immature.</li>
+<li><b>Trust.</b> A verifier must know which issuers to accept — which is exactly the trust-anchor and
+federation problem, now at ecosystem scale.</li>
+</ul>
+<p>Worth watching rather than adopting for most systems today. The habit to take away regardless is the
+predicate one: <b>ask for the narrowest fact that answers your question.</b></p>`,
+docs:[['OpenID for Verifiable Credential Issuance (OID4VCI)','https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html'],['OpenID for Verifiable Presentations (OID4VP)','https://openid.net/specs/openid-4-verifiable-presentations-1_0.html'],['ISO/IEC 18013-5 — mobile driving licence (mDL)','https://www.iso.org/standard/69084.html'],['W3C — Verifiable Credentials Data Model 2.0','https://www.w3.org/TR/vc-data-model-2.0/']],
+ex:{title:'Ask for the predicate, not the data',
+prompt:`Write <code>Wallet</code> with three methods. <code>static String minimalClaim(String question)</code> returns the narrowest claim that answers it: <code>"age_over_18"</code> for <code>"is-adult"</code>, <code>"country"</code> for <code>"is-resident"</code>, <code>"has_licence"</code> for <code>"may-drive"</code>, and <code>"unknown"</code> otherwise including null — never <code>"birthdate"</code>. <code>static boolean disclosureMinimal(java.util.Set&lt;String&gt; disclosed, String required)</code> is true only when exactly the required claim was disclosed and nothing else. <code>static boolean presentationBound(String kbAud, String verifier, String kbNonce, String expectedNonce)</code> requires both to match, rejecting nulls.`,
+starter:`import java.util.*;
+
+public class Wallet {
+    static String minimalClaim(String question) {
+        return null;
+    }
+    static boolean disclosureMinimal(Set<String> disclosed, String required) {
+        return false;
+    }
+    static boolean presentationBound(String kbAud, String verifier, String kbNonce, String expectedNonce) {
+        return false;
+    }
+}`,
+tests:[{d:'adulthood is a predicate, not a birthdate',re:'"age_over_18"'},{d:'residency asks for country only',re:'"country"'},{d:'driving eligibility is a boolean claim',re:'"has_licence"'},{d:'unknown questions fall through',re:'"unknown"'},{d:'exactly one claim may be disclosed',re:'size\\s*\\(\\s*\\)\\s*==\\s*1'},{d:'and it must be the required one',re:'contains\\s*\\(\\s*required\\s*\\)'},{d:'the presentation names this verifier',re:'kbAud\\s*\\.\\s*equals|equals\\s*\\(\\s*verifier'},{d:'and this nonce',re:'kbNonce\\s*\\.\\s*equals|equals\\s*\\(\\s*expectedNonce'}],
+behavior:`minimalClaim("is-adult") returns age_over_18, never birthdate — a credential can carry the pre-computed predicate so proving eligibility never discloses a date, and most systems that store dates of birth only ever needed a boolean. minimalClaim("unknown-question") returns unknown. disclosureMinimal(Set.of("age_over_18"), "age_over_18") is true, while disclosing the required claim plus a name is false, because over-disclosure defeats the point even when the extra claim seems harmless. presentationBound("https://bar","https://bar","n1","n1") is true; a mismatched audience or nonce is false, which is what stops a verifier replaying your presentation somewhere else.`,
+hints:['A switch mapping each question to its narrowest claim, defaulting to "unknown".','Minimal means exactly one element, and that element is the required one.','Guard both strings, then compare both pairs.'],
+solution:`import java.util.*;
+
+public class Wallet {
+    static String minimalClaim(String question) {
+        if (question == null) return "unknown";
+        switch (question) {
+            case "is-adult":    return "age_over_18";  // the predicate, not the date
+            case "is-resident": return "country";
+            case "may-drive":   return "has_licence";
+            default:            return "unknown";
+        }
+    }
+    static boolean disclosureMinimal(Set<String> disclosed, String required) {
+        if (disclosed == null || required == null) return false;
+        // exactly one: over-disclosure defeats the purpose
+        return disclosed.size() == 1 && disclosed.contains(required);
+    }
+    static boolean presentationBound(String kbAud, String verifier, String kbNonce, String expectedNonce) {
+        if (kbAud == null || kbNonce == null) return false;
+        return kbAud.equals(verifier) && kbNonce.equals(expectedNonce);
+    }
+}`}}
 ]});
 STREAMS.push({icon:'🔑',iam:true,sec:'Authentication & MFA',title:'Authentication Methods & MFA',blurb:'How people actually prove who they are: password hashing done right, the three factor types, TOTP one-time codes, phishing-resistant passkeys (WebAuthn/FIDO2), and step-up/adaptive authentication for risky actions.',lessons:[
 
@@ -14401,6 +14566,99 @@ public class PolicyCombiner {
     }
 }`}},
 
+{id:'az9',title:'Authorization at scale: what Zanzibar actually solves',body:`
+<p>ReBAC is easy to describe and hard to run. "Ada can view this document because she is a member of a
+group that was granted access to the folder it lives in" is a graph traversal. Doing that for every
+request, across billions of relationships, in single-digit milliseconds, and never once showing someone
+a document they should not see, is a genuinely difficult systems problem. Google's Zanzibar paper is the
+reference answer, and the reasoning generalises to any centralised authorization service.</p>
+
+<h4>The data model</h4>
+<p>Everything is a <b>relation tuple</b> — a subject, a relation, and an object. Nothing else:</p>
+<div class="codeSample" data-hl>doc:readme#viewer@user:ada              ada can view the readme
+doc:readme#parent@folder:eng           the readme lives in the eng folder
+group:eng#member@user:bob              bob is in the eng group
+folder:eng#viewer@group:eng#member     eng members can view the eng folder
+
+// so: can bob view the readme? not stated anywhere. it is DERIVED by
+// walking parent -> folder viewer -> group member -> bob.</div>
+<p>Permissions are computed, not stored, which is what makes the model expressive — and what makes
+every check a traversal.</p>
+
+<h4>The three hard problems</h4>
+<p><b>1. Latency.</b> A check may fan out across many tuples and many shards. The answer is aggressive
+caching plus a trick worth knowing: <b>leopard indexes</b>, which precompute the transitive closure of
+slow-changing sets such as group membership, so a deep nesting chain collapses into one lookup.</p>
+<p><b>2. Consistency — the "new enemy" problem.</b> This is the one that makes the design interesting.
+Authorization has a failure mode ordinary caches do not:</p>
+<div class="codeSample" data-hl>t1  Ada removes Bob from the group
+t2  Ada adds a confidential document to the group's folder
+t3  Bob's check hits a replica that has t2 but NOT t1
+
+    -> Bob sees the document. Each write was correct. The ORDER was lost.
+
+// the reverse also matters: revoking access must not be overtaken by a
+// stale cache that still says "permitted".</div>
+<p>Eventual consistency is unacceptable here, and full strong consistency everywhere is too slow. The
+resolution is a <b>consistency token</b> — Zanzibar calls it a <i>zookie</i> — handed back when content
+is written and presented with the later check. It means "evaluate against a snapshot at least this
+recent". The client does not need a global clock; it just carries a token forward, and the system
+guarantees it will not answer from an older state.</p>
+<p><b>3. Ordering across the system.</b> Underneath, this needs globally ordered timestamps, which is
+why Zanzibar sits on Spanner. Reimplementations substitute their own ordering mechanism, and that
+substitution is where correctness is usually lost.</p>
+
+<h4>The centralisation trade</h4>
+<p>A central authorization service buys consistent policy, one audit trail, and one place to answer
+"who can see this?" — a question most estates genuinely cannot answer. It costs you a <b>hard runtime
+dependency on the critical path of every request</b>. That is the trade to weigh honestly, and the
+mitigations are the familiar ones: aggressive caching, and a deliberate decision about what happens
+when the service is unreachable. Fail closed, and an authorization outage is a total outage.</p>
+
+<h4>When you need this, and when you do not</h4>
+<div class="codeSample" data-hl>YOU PROBABLY DO NOT                 YOU PROBABLY DO
+roles map cleanly to permissions    sharing is user-driven and arbitrary
+authorization is per-endpoint       "shared with me", nested folders, links
+one service owns the data           many services must agree on one answer
+"who can see this?" is answerable   the answer is currently unknowable</div>
+<p>The honest default: <b>most applications do not need Zanzibar</b>, and a tenant-scoped query with an
+ownership check is the right answer. Reach for a relationship graph when users themselves grant access
+to each other in patterns you cannot enumerate in advance — which is exactly the case document sharing,
+repositories and collaboration tools have.</p>
+<p>And if you do build on this model, the property to protect is not expressiveness but <b>the
+guarantee that a revocation is never overtaken by a stale read</b>. Everything else is optimisation.</p>`,
+docs:[['Google — Zanzibar: Consistent, Global Authorization System','https://research.google/pubs/pub48190/'],['OpenFGA — Modeling guides','https://openfga.dev/docs/modeling'],['SpiceDB — Consistency and zookies','https://authzed.com/docs/spicedb/concepts/consistency']],
+ex:{title:'Zookies and the new-enemy problem',
+prompt:`Write <code>Zanzibar</code> with three methods. <code>static boolean freshEnough(long snapshotAt, long zookieAt)</code> is true only when the replica's snapshot is at or after the token's timestamp. <code>static boolean check(boolean tupleGrantsAccess, long snapshotAt, long zookieAt)</code> returns false whenever the snapshot is too old — <b>even if the tuple currently says access is granted</b>, because a stale replica may not yet know about a revocation. <code>static boolean needsRelationshipGraph(boolean userDrivenSharing, boolean rolesMapCleanly)</code> is true only when sharing is user-driven and roles do not map cleanly.`,
+starter:`public class Zanzibar {
+    static boolean freshEnough(long snapshotAt, long zookieAt) {
+        return false;
+    }
+    static boolean check(boolean tupleGrantsAccess, long snapshotAt, long zookieAt) {
+        return false;
+    }
+    static boolean needsRelationshipGraph(boolean userDrivenSharing, boolean rolesMapCleanly) {
+        return false;
+    }
+}`,
+tests:[{d:'the snapshot must be at least as recent as the token',re:'snapshotAt\\s*>=\\s*zookieAt|zookieAt\\s*<=\\s*snapshotAt'},{d:'a stale snapshot denies regardless of the tuple',re:'freshEnough\\s*\\('},{d:'the tuple still has to grant access',re:'tupleGrantsAccess'},{d:'user-driven sharing is required',re:'userDrivenSharing'},{d:'clean role mapping means you do not need this',re:'!\\s*rolesMapCleanly|rolesMapCleanly\\s*==\\s*false'}],
+behavior:`freshEnough(100, 100) and freshEnough(101, 100) are true; freshEnough(99, 100) is false. check(true, 99, 100) is false — this is the whole point: the replica says access is granted, but it is older than the write the client already observed, so it may not yet know Bob was removed from the group. Answering from it is the new-enemy problem, where each write was correct and only the order was lost. check(true, 100, 100) is true, and check(false, 100, 100) is false. needsRelationshipGraph(true, false) is true, while needsRelationshipGraph(true, true) and needsRelationshipGraph(false, false) are false: most applications do not need this, and a tenant-scoped query with an ownership check is the right answer.`,
+hints:['One comparison for freshness; note it is &gt;=, not &gt;.','In check, test freshness first and deny before even looking at the tuple.','Two conditions, the second negated.'],
+solution:`public class Zanzibar {
+    static boolean freshEnough(long snapshotAt, long zookieAt) {
+        return snapshotAt >= zookieAt;
+    }
+    static boolean check(boolean tupleGrantsAccess, long snapshotAt, long zookieAt) {
+        // a stale replica may not know about a revocation yet: deny first
+        if (!freshEnough(snapshotAt, zookieAt)) return false;
+        return tupleGrantsAccess;
+    }
+    static boolean needsRelationshipGraph(boolean userDrivenSharing, boolean rolesMapCleanly) {
+        // arbitrary user-driven sharing is the case roles cannot enumerate
+        return userDrivenSharing && !rolesMapCleanly;
+    }
+}`}}
+
 ]});
 STREAMS.push({icon:'🍪',iam:true,sec:'Sessions, cookies & web login',title:'Sessions, Cookies & Web Login Security',blurb:'How a browser stays logged in — and how that gets attacked. Cookies and their security flags, CSRF defenses, session fixation, where NOT to store tokens, and logout done properly (front- vs back-channel, revocation).',lessons:[
 
@@ -15550,7 +15808,109 @@ solution:`public class Unsolicited {
 }`,
 tests:[{d:'all four checks must pass',re:'signatureValid\\s*&&\\s*audienceOk\\s*&&\\s*withinWindow\\s*&&\\s*notReplayed'},{d:'prefer the SP-initiated flow',re:'return\\s+"SP-initiated"'}],
 behavior:`accept(true,true,true,true) is true; if any check is false (bad signature, wrong audience, expired, or a replay) it is false. preferred() returns "SP-initiated" — because the request your app sends is itself a correlation and anti-replay defense that unsolicited assertions lack.`,
-hints:['Trust is set up in advance: you exchange public keys/certs and keep private keys secret.','An unsolicited assertion has no request to correlate to, so verify signature, audience, freshness, and non-replay together with &&.','Prefer SP-initiated flows whenever the integration allows it.']}}
+hints:['Trust is set up in advance: you exchange public keys/certs and keep private keys secret.','An unsolicited assertion has no request to correlate to, so verify signature, audience, freshness, and non-replay together with &&.','Prefer SP-initiated flows whenever the integration allows it.']}},
+
+{id:'oa12',title:'OpenID Federation: trust at ecosystem scale',body:`
+<p>Everything so far assumes <b>bilateral</b> trust: for each app-to-IdP pair, somebody registers a
+client and exchanges keys. That works, and it scales quadratically. Ten parties need forty-five
+relationships; a national health network or a university ecosystem with thousands of participants needs
+a different mechanism entirely.</p>
+<p><b>OpenID Federation</b> replaces "everyone configures everyone" with "everyone trusts an
+authority, and proves membership on demand".</p>
+
+<h4>The trust chain</h4>
+<p>Each participant publishes a signed <b>entity statement</b> about itself. Its authority publishes a
+signed statement about <i>it</i>. That authority's authority signs in turn, up to a <b>trust
+anchor</b> the verifier already has. A party proves it belongs by presenting the chain:</p>
+<div class="codeSample" data-hl>            [ TRUST ANCHOR ]        configured out of band. the one thing
+                  |                you decided to believe.
+                  | signs
+          [ INTERMEDIATE ]         e.g. a national body, a sector authority
+                  | signs
+            [ THE ENTITY ]         the RP or OP you have never seen before
+
+// verification: walk the chain to an anchor you hold, checking each
+// signature. this is the PKI chain-of-trust idea, applied to federation
+// metadata rather than to certificates.</div>
+<p>The consequence worth internalising: <b>an RP can accept an OP it has never been configured with</b>,
+because trust is transitive through the anchor rather than pairwise. Onboarding a new participant
+becomes a registration with the authority, not N integrations.</p>
+
+<h4>Metadata policy: authorities constrain, they do not just vouch</h4>
+<p>Vouching alone would be weak — it would say a participant is real, not that it behaves. So each
+statement in the chain can carry a <b>metadata policy</b> that constrains what the subordinate is
+allowed to declare about itself, and policies <b>compose downward and can only narrow</b>:</p>
+<div class="codeSample" data-hl>anchor policy      token_endpoint_auth_methods_supported:
+                     subset_of ["private_key_jwt", "tls_client_auth"]
+                   id_token_signed_response_alg: one_of ["ES256","RS256"]
+
+entity declares    token_endpoint_auth_method: "client_secret_basic"
+                   -> REJECTED. the entity cannot widen what the anchor allowed.</div>
+<p>This is how an ecosystem enforces a security baseline — the FAPI requirements from the threats
+stream, for example — on participants it does not operate. A member cannot opt into weaker client
+authentication, because the policy is applied during chain resolution, not by the member's own honesty.</p>
+
+<h4>Automatic registration</h4>
+<p>Because the chain proves who a client is and what it is permitted to declare, an OP can accept a
+client it has never registered — the client presents its entity identifier, the OP resolves the chain,
+applies policy, and proceeds. That removes the manual onboarding step that makes large ecosystems
+impractical, and it is the practical reason the specification exists.</p>
+
+<h4>The trade-offs, honestly</h4>
+<ul>
+<li><b>The anchor is absolute.</b> Compromise it and the entire ecosystem is compromised — the trust
+anchor lesson's point at maximum stakes. Anchor keys belong offline, with a rehearsed rotation.</li>
+<li><b>Resolution costs.</b> Chains must be fetched, verified and cached, and stale caches mean an
+expelled participant is still accepted. Cache TTL is again a security parameter.</li>
+<li><b>Governance is the hard part.</b> Who admits members, on what evidence, and how is one expelled
+in minutes rather than at the next cache expiry? These are organisational questions the protocol does
+not answer.</li>
+<li><b>It is not for two parties.</b> For a handful of integrations, bilateral registration is simpler
+and better. The crossover is somewhere in the tens of participants, or wherever participants change
+often.</li>
+</ul>
+<p>Where you will meet it: research and education federations, national health and government
+ecosystems, open banking schemes, and increasingly the digital wallet ecosystem, where a verifier must
+accept credentials from issuers it has never contacted. It is also worth recognising the shape — SAML
+solved the same problem with metadata aggregates and eduGAIN, less elegantly and rather earlier.</p>`,
+docs:[['OpenID Federation 1.0','https://openid.net/specs/openid-federation-1_0.html'],['OpenID Federation — entity statements and trust chains','https://openid.net/specs/openid-federation-1_0.html#name-trust-chain'],['GEANT / eduGAIN — interfederation','https://edugain.org/']],
+ex:{title:'Resolve a trust chain and apply policy',
+prompt:`Write <code>Federation</code> with three methods. <code>static boolean chainTrusted(java.util.List&lt;String&gt; chainIssuers, java.util.Set&lt;String&gt; anchors)</code> is true only when the chain is non-empty and its <b>last</b> element is an anchor you hold. <code>static boolean policyAllows(java.util.Set&lt;String&gt; allowedByPolicy, String declared)</code> requires the declared value to be within the policy set — an entity may not widen what the authority permitted. <code>static boolean acceptEntity(java.util.List&lt;String&gt; chainIssuers, java.util.Set&lt;String&gt; anchors, java.util.Set&lt;String&gt; allowedByPolicy, String declaredAuthMethod)</code> requires both.`,
+starter:`import java.util.*;
+
+public class Federation {
+    static boolean chainTrusted(List<String> chainIssuers, Set<String> anchors) {
+        return false;
+    }
+    static boolean policyAllows(Set<String> allowedByPolicy, String declared) {
+        return false;
+    }
+    static boolean acceptEntity(List<String> chainIssuers, Set<String> anchors,
+                                Set<String> allowedByPolicy, String declaredAuthMethod) {
+        return false;
+    }
+}`,
+tests:[{d:'an empty chain is rejected',re:'isEmpty\\s*\\(\\s*\\)'},{d:'the chain must terminate at an anchor',re:'anchors\\s*\\.\\s*contains\\s*\\('},{d:'the last element is the anchor',re:'size\\s*\\(\\s*\\)\\s*-\\s*1'},{d:'policy membership is checked',re:'allowedByPolicy\\s*\\.\\s*contains\\s*\\('},{d:'a null declaration is rejected',re:'declared\\s*!=\\s*null|declared\\s*==\\s*null'},{d:'acceptance requires both checks',re:'chainTrusted\\s*\\('},{d:'and the policy check',re:'policyAllows\\s*\\('}],
+behavior:`chainTrusted(List.of("entity","intermediate","anchor-a"), Set.of("anchor-a")) is true, and the same chain against Set.of("anchor-b") is false — the chain must terminate somewhere you decided to believe out of band, which is why an anchor compromise takes the whole ecosystem with it. An empty chain is false. policyAllows(Set.of("private_key_jwt","tls_client_auth"), "client_secret_basic") is false: policies compose downward and can only narrow, so a member cannot opt into weaker client authentication by declaring it. acceptEntity requires both, which is what lets an OP accept a client it has never registered.`,
+hints:['The anchor is the last element: <code>chainIssuers.get(chainIssuers.size() - 1)</code>.','Guard the declared value before calling contains.','Compose the third method from the first two.'],
+solution:`import java.util.*;
+
+public class Federation {
+    static boolean chainTrusted(List<String> chainIssuers, Set<String> anchors) {
+        if (chainIssuers == null || chainIssuers.isEmpty() || anchors == null) return false;
+        // the chain must terminate at something you configured out of band
+        return anchors.contains(chainIssuers.get(chainIssuers.size() - 1));
+    }
+    static boolean policyAllows(Set<String> allowedByPolicy, String declared) {
+        if (allowedByPolicy == null || declared == null) return false;
+        return allowedByPolicy.contains(declared);   // narrow only, never widen
+    }
+    static boolean acceptEntity(List<String> chainIssuers, Set<String> anchors,
+                                Set<String> allowedByPolicy, String declaredAuthMethod) {
+        return chainTrusted(chainIssuers, anchors)
+            && policyAllows(allowedByPolicy, declaredAuthMethod);
+    }
+}`}}
 ]});
 STREAMS.push({iam:true,sec:'Tokens: JWT & JOSE',icon:'🔑',title:'OAuth, JWT & JOSE (JWK · JWS · JWE)',blurb:'Generate JWKs, mint and sign JWTs (RS256/ES256), verify them against a JWKS well-known endpoint, watch tampering fail, and encrypt with JWE — the token layer of OAuth/OIDC, in Java with Nimbus JOSE+JWT.',lessons:[
 
@@ -16754,7 +17114,123 @@ solution:`public class Impersonation {
 }`,
 tests:[{d:'impersonation makes the target the effective subject',re:'impersonating\\s*\\?\\s*target\\s*:\\s*actor'}],
 behavior:`effectiveSubject("admin","alice",true) returns "alice" — the request now appears to be alice, and the admin identity is hidden (why delegation with an act claim is safer). effectiveSubject("admin","alice",false) returns "admin".`,
-hints:['A single ternary condition ? target : actor expresses it.','Impersonating means the target becomes the effective subject.','Otherwise the actor remains the subject.']}}
+hints:['A single ternary condition ? target : actor expresses it.','Impersonating means the target becomes the effective subject.','Otherwise the actor remains the subject.']}},
+
+{id:'s2s9',title:'Identity for AI agents: acting for a user, autonomously',body:`
+<p>An agent is software that acts on a user's behalf without the user watching. That breaks an
+assumption running quietly through every protocol so far: <b>that a human is present at the moment of
+authorization</b>. Consent screens, step-up prompts and re-authentication all assume someone is there
+to respond. An agent working through a task at 2am is not.</p>
+<p>Most of what agents need already exists — this is a composition problem far more than a new-protocol
+problem — but the composition has sharp edges worth naming.</p>
+
+<h4>Three identities, not one</h4>
+<div class="codeSample" data-hl>THE USER      whose data and permissions are at stake
+THE AGENT     a workload with its own identity — it is not the user
+THE TOOL      the API being called, with its own audience and scopes
+
+// the request must carry the first two. an agent that presents only the
+// user's identity is impersonation, and nothing downstream can tell that
+// software rather than a person made the decision.</div>
+<p>This is the on-behalf-of pattern with a new actor, and the right shape is the familiar one: the
+subject stays the user, the agent is recorded as the acting party, and every hop gets its own audience.
+The temptation to hand the agent the user's token and let it act as them is the same temptation as
+impersonation, with the same consequence — the audit trail says the user did it.</p>
+
+<h4>Consent when nobody is watching</h4>
+<p>Interactive OAuth asks at the moment of use. An agent needs authority granted <i>in advance</i> and
+bounded tightly enough that advance consent is defensible:</p>
+<ul>
+<li><b>Grant narrowly.</b> Not "read your email" but "read messages in this thread". This is exactly
+what Rich Authorization Requests exist for — scopes are usually too coarse to describe what an agent
+should be allowed to do.</li>
+<li><b>Bound the time.</b> An agent's authority should expire with the task, not persist indefinitely.</li>
+<li><b>Bound the value.</b> Spending limits, record counts, rate caps — the analogue of a purchase
+limit on a corporate card.</li>
+<li><b>Escalate for the irreversible.</b> Reads and reversible writes proceed; sending money, deleting
+data or emailing a customer should return to a human. Design the interrupt before it is needed.</li>
+</ul>
+
+<h4>The delegation chain gets long</h4>
+<p>Agents call agents. A planner delegates to a researcher which calls a search tool which calls an
+internal API, and the user is four hops back. Two rules keep this tractable, and both are already
+familiar:</p>
+<div class="codeSample" data-hl>{ "sub": "ada",                      // still the user, all the way down
+  "aud": "internal-search-api",      // audience per hop, never reused
+  "scope": "search:read",            // narrowed at each step, never widened
+  "act": { "sub": "research-agent",
+           "act": { "sub": "planner-agent" } } }   // the chain, preserved
+
+// downstream can now answer: which user, which agent, and on whose behalf.</div>
+<p><b>Narrowing must be monotonic.</b> A sub-agent may reduce scope, never expand it — if any hop can
+request more than it was given, the whole chain is only as strong as its most compromised link.</p>
+
+<h4>The new-ish problems</h4>
+<ul>
+<li><b>Prompt injection is an authorization problem.</b> Content the agent reads can contain
+instructions. If the agent holds a token that permits an action, hostile text may cause it to take that
+action. <b>You cannot fix this in the model; you fix it by not granting the authority.</b> The token is
+the control, not the prompt. This is the single most important consequence of agents for identity
+work.</li>
+<li><b>Confused deputy, again.</b> An agent serving many users, holding broad credentials, must bind
+every call to the user it is acting for — exactly the problem external ids solve in role assumption.</li>
+<li><b>Attribution.</b> When an agent does something wrong, the log must distinguish "the user asked
+for this", "the agent decided this", and "content the agent read told it to". Without the act chain,
+all three look identical.</li>
+<li><b>Non-human lifecycle.</b> Agents are created constantly and rarely retired, so they inherit every
+service-account governance problem at higher velocity.</li>
+</ul>
+
+<h4>What to reuse</h4>
+<p>Nothing here needs inventing. The agent authenticates as a workload (mTLS, SPIFFE, or workload
+identity federation); it obtains user-scoped authority through token exchange with the act claim;
+audience and scope narrow at each hop; tokens are short-lived and ideally sender-constrained; and every
+call is logged with the full chain. The discipline that makes it safe is the oldest one in the domain:
+<b>grant the least authority that completes the task, and assume the holder may be turned against
+you.</b></p>`,
+docs:[['RFC 8693 — OAuth 2.0 Token Exchange (the act claim)','https://www.rfc-editor.org/rfc/rfc8693'],['RFC 9396 — Rich Authorization Requests','https://www.rfc-editor.org/rfc/rfc9396'],['OWASP — Top 10 for LLM Applications','https://owasp.org/www-project-top-10-for-large-language-model-applications/'],['NIST SP 800-207 — Zero Trust Architecture','https://csrc.nist.gov/pubs/sp/800/207/final']],
+ex:{title:'Bound an agent',
+prompt:`Write <code>AgentAuthz</code> with three methods. <code>static boolean chainValid(String subject, java.util.List&lt;String&gt; actors)</code> requires a non-null subject and a non-empty actor chain — an agent call with no recorded actor is impersonation. <code>static boolean narrowingOk(java.util.Set&lt;String&gt; granted, java.util.Set&lt;String&gt; requested)</code> is true only when every requested scope is already in <code>granted</code>: a sub-agent may reduce, never expand. <code>static boolean requiresHuman(String action, boolean reversible)</code> returns true when the action is not reversible, or when it is one of <code>"send-money"</code>, <code>"delete-data"</code> or <code>"email-customer"</code>.`,
+starter:`import java.util.*;
+
+public class AgentAuthz {
+    static boolean chainValid(String subject, List<String> actors) {
+        return false;
+    }
+    static boolean narrowingOk(Set<String> granted, Set<String> requested) {
+        return false;
+    }
+    static boolean requiresHuman(String action, boolean reversible) {
+        return false;
+    }
+}`,
+tests:[{d:'the subject must be the user',re:'subject\\s*!=\\s*null|null\\s*!=\\s*subject'},{d:'an actor chain must be present',re:'isEmpty\\s*\\(\\s*\\)'},{d:'narrowing is checked against the grant',re:'containsAll\\s*\\(|contains\\s*\\('},{d:'irreversible actions escalate',re:'!\\s*reversible|reversible\\s*==\\s*false'},{d:'moving money escalates',re:'"send-money"'},{d:'deleting data escalates',re:'"delete-data"'},{d:'contacting a customer escalates',re:'"email-customer"'}],
+behavior:`chainValid("ada", List.of("research-agent")) is true; chainValid("ada", List.of()) and chainValid(null, List.of("a")) are false, because a call with no recorded actor is indistinguishable from the user acting personally. narrowingOk(Set.of("search:read","mail:read"), Set.of("search:read")) is true, while requesting a scope that was never granted is false — narrowing must be monotonic, or the chain is only as strong as its most compromised link. requiresHuman("send-money", true) is true even though the caller claims it is reversible, and requiresHuman("read-thread", false) is true because anything irreversible escalates regardless of what it is.`,
+hints:['Guard the subject and require a non-empty actor list.','<code>granted.containsAll(requested)</code> expresses "reduce, never expand" directly.','Two independent reasons to escalate: irreversibility, or membership of the sensitive set.'],
+solution:`import java.util.*;
+
+public class AgentAuthz {
+    static boolean chainValid(String subject, List<String> actors) {
+        // no recorded actor means impersonation: nobody downstream can tell
+        return subject != null && actors != null && !actors.isEmpty();
+    }
+    static boolean narrowingOk(Set<String> granted, Set<String> requested) {
+        if (granted == null || requested == null) return false;
+        return granted.containsAll(requested);   // reduce, never expand
+    }
+    static boolean requiresHuman(String action, boolean reversible) {
+        if (!reversible) return true;            // irreversible always escalates
+        if (action == null) return true;
+        switch (action) {
+            case "send-money":
+            case "delete-data":
+            case "email-customer":
+                return true;
+            default:
+                return false;
+        }
+    }
+}`}}
 ]});
 STREAMS.push({icon:'🏢',iam:true,sec:'Enterprise identity & directories',title:'Enterprise Identity & Directories',blurb:'The systems that run identity inside companies: LDAP & Active Directory, Kerberos tickets, SCIM provisioning and the joiner/mover/leaver lifecycle, just-in-time provisioning, home-realm discovery, and social login with account linking.',lessons:[
 
@@ -17644,6 +18120,117 @@ solution:`public class Fapi {
             && tokenBindingOk(tokenBinding)
             && exactRedirect;
     }
+}`}},
+
+{id:'ao8',title:'Continuous Access Evaluation: revocation that arrives in seconds',body:`
+<p>The token lesson left an unresolved tension. Self-contained tokens verify offline, which is why they
+scale — and it is also why you cannot revoke one. The standard mitigation is a short lifetime, so the
+industry settled on "your access ends within fifteen minutes". For a user who was just fired, or a
+device that just failed a compliance check, fifteen minutes is a long time.</p>
+<p><b>Continuous Access Evaluation</b> is the answer that does not require giving up offline
+verification: instead of shortening the token, the resource server is <i>told</i> when something
+changes.</p>
+
+<h4>The shift: polling to events</h4>
+<div class="codeSample" data-hl>SHORT LIFETIMES (the old trade)
+  token lives 5-15 min -> revocation lands within 5-15 min
+  cost: constant refresh traffic, and you still cannot act faster
+
+INTROSPECTION (the other old option)
+  ask the issuer on every call -> instant, and you have rebuilt the
+  network round trip that self-contained tokens existed to remove
+
+CAE
+  keep long-lived tokens AND offline verification, and have the issuer
+  PUSH an event when something changes:
+     user disabled · password reset · session revoked · risk detected
+     · device fell out of compliance · network location changed
+  the resource server then rejects the affected token immediately.</div>
+<p>The token has not changed and is still cryptographically valid. What changed is that the verifier now
+holds a fact that overrides it — the same shape as a certificate revocation list, arriving by push
+rather than poll.</p>
+
+<h4>How the event gets there</h4>
+<p>The delivery mechanism is standardised as <b>Shared Signals</b>: a <b>Security Event Token</b> (a JWT
+carrying an event rather than an identity) delivered over a subscription. Two profiles matter — CAEP
+for access changes, and RISC for account-level compromise signals shared between providers.</p>
+<div class="codeSample" data-hl>// a Security Event Token: a JWT whose payload is an EVENT
+{ "iss": "https://idp.example.com",
+  "aud": "orders-api",
+  "iat": 1767222000,
+  "jti": "evt-91c",
+  "events": {
+    "https://schemas.openid.net/secevent/caep/event-type/session-revoked": {
+      "subject": { "format": "iss_sub", "sub": "u-4817" },
+      "event_timestamp": 1767221990
+    } } }
+
+// verify it exactly like any other token: signature, iss, aud, replay.
+// an unauthenticated "revoke this user" endpoint is a denial-of-service tool.</div>
+
+<h4>What the receiver has to do</h4>
+<ol>
+<li><b>Verify the event</b> as rigorously as a token. It changes access, so it is security-relevant
+input.</li>
+<li><b>Maintain state.</b> This is the real cost: the resource server must keep a revocation list
+keyed by subject or session and consult it during authorization. A purely stateless verifier cannot
+participate in CAE at all.</li>
+<li><b>Handle missed events.</b> Push delivery fails. Without a fallback the system degrades silently
+into "no revocation", which is the worst failure because it looks fine. Periodic reconciliation, or a
+token lifetime short enough to bound the gap, is still required.</li>
+<li><b>Decide the fail mode.</b> If the event stream is down, do you keep honouring tokens or start
+rejecting? Both are defensible; not having chosen is not.</li>
+</ol>
+
+<h4>The honest assessment</h4>
+<p>CAE narrows the revocation window from minutes to seconds, and for high-value sessions that is worth
+real effort. But notice what it costs: <b>the resource server becomes stateful</b>, which is precisely
+the property self-contained tokens were adopted to avoid. It is not a free win but a considered trade —
+you accept some state in exchange for near-real-time control.</p>
+<p>So the sensible posture is layered rather than either/or: short lifetimes as the floor that works
+everywhere, CAE on top for the sessions and events where seconds matter, and grant revocation as the
+thing that actually stops continued access. And it remains true that no mechanism recalls a token
+already in flight — CAE shortens the window; it does not close it.</p>`,
+docs:[['OpenID — Continuous Access Evaluation Profile (CAEP)','https://openid.net/specs/openid-caep-specification-1_0.html'],['RFC 8417 — Security Event Token (SET)','https://www.rfc-editor.org/rfc/rfc8417'],['OpenID — Shared Signals Framework','https://openid.net/specs/openid-sharedsignals-framework-1_0.html'],['RFC 8935 — Push-Based Delivery of Security Event Tokens','https://www.rfc-editor.org/rfc/rfc8935']],
+ex:{title:'Apply a revocation event',
+prompt:`Write <code>Caep</code> with three methods. <code>static boolean eventTrusted(String iss, String expectedIss, String aud, String selfId, java.util.Set&lt;String&gt; seenJtis, String jti)</code> requires a matching issuer and audience and an unseen <code>jti</code> — an unauthenticated revocation endpoint is a denial-of-service tool. <code>static boolean stillValid(boolean signatureValid, boolean notExpired, java.util.Set&lt;String&gt; revokedSubjects, String sub)</code> returns true only when the token verifies, has not expired, and the subject is <b>not</b> in the revocation set. <code>static boolean canParticipate(boolean keepsRevocationState)</code> returns that flag: a purely stateless verifier cannot do CAE at all.`,
+starter:`import java.util.*;
+
+public class Caep {
+    static boolean eventTrusted(String iss, String expectedIss, String aud, String selfId,
+                                Set<String> seenJtis, String jti) {
+        return false;
+    }
+    static boolean stillValid(boolean signatureValid, boolean notExpired,
+                              Set<String> revokedSubjects, String sub) {
+        return false;
+    }
+    static boolean canParticipate(boolean keepsRevocationState) {
+        return false;
+    }
+}`,
+tests:[{d:'the event issuer must match',re:'iss\\s*!=\\s*null|expectedIss'},{d:'the event audience must be this service',re:'selfId'},{d:'replayed events are rejected',re:'contains\\s*\\(\\s*jti\\s*\\)'},{d:'the signature still has to verify',re:'signatureValid'},{d:'expiry still applies',re:'notExpired'},{d:'a revoked subject is rejected',re:'revokedSubjects'},{d:'participation requires keeping state',re:'return\\s+keepsRevocationState'}],
+behavior:`eventTrusted("https://idp","https://idp","orders-api","orders-api", new HashSet<>(), "evt-1") is true; a mismatched issuer or audience, or a jti already seen, is false — a revocation event changes access, so it must be verified as rigorously as a token or it becomes a way for anyone to sign your users out. stillValid(true, true, Set.of(), "u-1") is true, while stillValid(true, true, Set.of("u-1"), "u-1") is false: the token is still cryptographically valid and still unexpired, and the verifier now holds a fact that overrides it. canParticipate(false) is false, which is the real cost of CAE — the resource server becomes stateful, the very property self-contained tokens were adopted to avoid.`,
+hints:['Four conditions in eventTrusted: issuer, audience, non-null jti, and not already seen.','stillValid needs all three: signature, expiry, and absence from the revocation set.','The last method genuinely just returns its argument — that is the point being made.'],
+solution:`import java.util.*;
+
+public class Caep {
+    static boolean eventTrusted(String iss, String expectedIss, String aud, String selfId,
+                                Set<String> seenJtis, String jti) {
+        if (iss == null || aud == null || jti == null || seenJtis == null) return false;
+        if (seenJtis.contains(jti)) return false;          // replay
+        return iss.equals(expectedIss) && aud.equals(selfId);
+    }
+    static boolean stillValid(boolean signatureValid, boolean notExpired,
+                              Set<String> revokedSubjects, String sub) {
+        if (!signatureValid || !notExpired) return false;
+        // the token verifies; the received event overrides it
+        return revokedSubjects == null || !revokedSubjects.contains(sub);
+    }
+    static boolean canParticipate(boolean keepsRevocationState) {
+        // a stateless verifier has nowhere to record the revocation
+        return keepsRevocationState;
+    }
 }`}}
 ]});
 STREAMS.push({icon:'🗝️',iam:true,sec:'Governance & privileged access',title:'Identity Governance & Privileged Access',blurb:'Keeping access correct over time: identity governance (access reviews, certification, separation of duties), privileged access management (vaulting, just-in-time elevation), secrets management and rotation, and CIAM vs workforce IAM.',lessons:[
@@ -17814,7 +18401,104 @@ solution:`public class Audit {
 }`,
 tests:[{d:'who-did-what -> immutable audit log',re:'"prove-who-did-what".*?"immutable audit log"',flags:'s'},{d:'detect attacks -> SIEM alerting',re:'"detect-attacks".*?"SIEM alerting"',flags:'s'},{d:'access review -> IGA certification',re:'"periodic-access-review".*?"IGA certification"',flags:'s'},{d:'remove leaver access -> deprovisioning',re:'"remove-leaver-access".*?"deprovisioning"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
 behavior:`control("prove-who-did-what") is "immutable audit log", control("detect-attacks") is "SIEM alerting". Compliance frameworks (SOC 2, NIST 800-63) map their requirements onto exactly these identity controls.`,
-hints:['Proving who did what needs an immutable, append-only audit log.','Detecting attacks in real time is a SIEM job.','Access reviews are IGA certification; removing a leaver is deprovisioning.']}}
+hints:['Proving who did what needs an immutable, append-only audit log.','Detecting attacks in real time is a SIEM job.','Access reviews are IGA certification; removing a leaver is deprovisioning.']}},
+
+{id:'ig7',title:'Non-human identity: the majority nobody governs',body:`
+<p>Count the identities in a typical estate and the humans are a minority. Service accounts, CI
+runners, scripts, integrations, API keys, workload certificates, bots and now agents outnumber
+employees by a wide margin — commonly quoted at ten to one or more. Almost every governance control in
+this stream was designed for the humans.</p>
+<p>The consequence is predictable: <b>non-human identities are more numerous, more privileged and less
+governed than human ones</b>, and they are increasingly the way in.</p>
+
+<h4>Why the human controls do not transfer</h4>
+<div class="codeSample" data-hl>HUMAN IDENTITY                    NON-HUMAN IDENTITY
+joins via HR, leaves via HR       created ad hoc by whoever needed it
+has a manager                     has an owner who left in 2021
+MFA                               a static secret in a config file
+password expires                  the credential never expires
+access reviewed quarterly         never reviewed — reviewers do not know
+                                    what it does or dare disable it
+one person, one account           shared across teams and environments
+leaves when the person leaves     outlives every person who touched it</div>
+<p>The joiner-mover-leaver lifecycle has no equivalent trigger here. Nothing tells you a service account
+is finished, so nothing ever removes it. Estates accumulate them monotonically.</p>
+
+<h4>The four failure modes</h4>
+<ol>
+<li><b>No owner.</b> The single most common finding. Nobody knows what it does, so nobody will disable
+it, so it stays forever with whatever rights it was given. An identity without a named, current owner
+is ungovernable by definition.</li>
+<li><b>Over-privilege.</b> Granted broad rights during setup "to get it working", never narrowed.
+Service accounts are frequently the most privileged principals in the estate.</li>
+<li><b>Static long-lived credentials.</b> A secret in a config file, a repo, a CI variable, a wiki page.
+It does not rotate because rotation risks an outage nobody wants to own.</li>
+<li><b>Sprawl and sharing.</b> One account used by six systems cannot be rotated without breaking five,
+and its logs cannot attribute anything to anyone.</li>
+</ol>
+
+<h4>What good looks like</h4>
+<ul>
+<li><b>Every NHI has a named human owner and an expiry.</b> Both mandatory at creation, and both
+re-confirmed periodically. An expiry that must be renewed converts "forever" into a decision someone
+takes deliberately.</li>
+<li><b>One identity per workload</b>, never shared across systems or environments — so it can be
+rotated, revoked and attributed independently.</li>
+<li><b>Prefer no credential at all.</b> The strongest control is workload identity federation: the
+workload proves what it is (mTLS, SPIFFE, a platform OIDC token) and exchanges that for short-lived
+access. There is then no static secret to leak, rotate or find in a repository.</li>
+<li><b>Where a secret is unavoidable</b>, keep it in a manager, rotate automatically, and record
+last-used so dead credentials are visible.</li>
+<li><b>Review them like humans, with different questions.</b> Not "should this person have access" but
+"does this still run, does it still need this, and who owns it now?" Instrument last-used first: an
+NHI unused for ninety days is a candidate for removal and the easiest win available.</li>
+</ul>
+
+<h4>The reviewer's problem, and how to fix it</h4>
+<p>Human access reviews work because a manager recognises their reports. Nobody recognises
+<code>svc-etl-prod-3</code>. Reviewers therefore approve everything, and the review becomes a
+compliance artefact with no security value.</p>
+<p>The fix is not more reviews but <b>better evidence</b>: show the reviewer what the identity did, when
+it last ran, what it accessed and who owns it. Given that, a reviewer can make a real decision. Given a
+list of names, they cannot — and asking anyway trains people that reviews are theatre.</p>
+
+<h4>Where agents make this urgent</h4>
+<p>Agents are non-human identities created at high velocity, often per-task, frequently with delegated
+user authority. Every problem above applies, faster, and with the added property that an agent's
+authority may be exercised in response to content it read. The governance answer is the same and more
+important: short-lived, narrowly scoped, owned, attributable, and expiring by default.</p>`,
+docs:[['OWASP — Non-Human Identities Top 10','https://owasp.org/www-project-non-human-identities-top-10/'],['NIST SP 800-53 AC-2 — Account Management','https://csrc.nist.gov/projects/risk-management/sp800-53-controls/release-search#!/control?version=5.1&number=AC-2'],['SPIFFE — workload identity','https://spiffe.io/docs/latest/spiffe-about/overview/'],['OWASP — Secrets Management Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html']],
+ex:{title:'Govern a non-human identity',
+prompt:`Write <code>NonHumanIdentity</code> with three methods. <code>static boolean governable(String owner, boolean ownerStillEmployed, long expiresAt, long now)</code> requires a non-null owner who is still employed, and an expiry in the future — an identity with no current owner cannot be governed. <code>static boolean staleCandidate(long lastUsedDaysAgo, int thresholdDays)</code> is true when it has not been used within the threshold. <code>static String strongestOption(boolean federationPossible, boolean secretManagerAvailable)</code> returns <code>"workload-federation"</code> when federation is possible, else <code>"managed-secret"</code> when a manager is available, else <code>"static-secret"</code>.`,
+starter:`public class NonHumanIdentity {
+    static boolean governable(String owner, boolean ownerStillEmployed, long expiresAt, long now) {
+        return false;
+    }
+    static boolean staleCandidate(long lastUsedDaysAgo, int thresholdDays) {
+        return false;
+    }
+    static String strongestOption(boolean federationPossible, boolean secretManagerAvailable) {
+        return null;
+    }
+}`,
+tests:[{d:'an owner is required',re:'owner\\s*!=\\s*null|null\\s*!=\\s*owner'},{d:'the owner must still be employed',re:'ownerStillEmployed'},{d:'the expiry must be in the future',re:'expiresAt\\s*>\\s*now|now\\s*<\\s*expiresAt'},{d:'staleness is measured against a threshold',re:'lastUsedDaysAgo\\s*>=?\\s*thresholdDays'},{d:'federation is the strongest option',re:'"workload-federation"'},{d:'a managed secret is second best',re:'"managed-secret"'},{d:'a static secret is the fallback',re:'"static-secret"'}],
+behavior:`governable("ada", true, 200, 100) is true. It is false when the owner is null, when the owner has left — the single most common real finding, since an identity nobody owns is one nobody will ever dare disable — and when the expiry has already passed. staleCandidate(120, 90) is true and staleCandidate(30, 90) is false; last-used is the easiest governance win available, because an identity unused for ninety days can usually be removed with no argument. strongestOption(true, true) is workload-federation: the strongest control is having no static credential at all, so there is nothing to leak, rotate or find in a repository. strongestOption(false, true) is managed-secret and strongestOption(false, false) is static-secret.`,
+hints:['Three conditions joined with &amp;&amp;, including a future expiry.','One comparison for staleness.','A short if-chain, ordered strongest first.'],
+solution:`public class NonHumanIdentity {
+    static boolean governable(String owner, boolean ownerStillEmployed, long expiresAt, long now) {
+        // no current owner means nobody will ever dare disable it
+        return owner != null && ownerStillEmployed && expiresAt > now;
+    }
+    static boolean staleCandidate(long lastUsedDaysAgo, int thresholdDays) {
+        return lastUsedDaysAgo >= thresholdDays;
+    }
+    static String strongestOption(boolean federationPossible, boolean secretManagerAvailable) {
+        // best of all is no static credential to leak, rotate or lose
+        if (federationPossible) return "workload-federation";
+        if (secretManagerAvailable) return "managed-secret";
+        return "static-secret";
+    }
+}`}}
 ]});
 STREAMS.push({iam:true,sec:'Running identity in production',icon:'🚨',title:'Running Identity',blurb:'The half of identity that is not a protocol: what to do when credentials are compromised, how to migrate an estate without an outage, why the IdP is the blast radius for everything, what to measure, and how to test any of it. The lessons an on-call rotation teaches.',lessons:[
 

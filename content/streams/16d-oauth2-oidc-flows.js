@@ -887,5 +887,107 @@ solution:`public class Unsolicited {
 }`,
 tests:[{d:'all four checks must pass',re:'signatureValid\\s*&&\\s*audienceOk\\s*&&\\s*withinWindow\\s*&&\\s*notReplayed'},{d:'prefer the SP-initiated flow',re:'return\\s+"SP-initiated"'}],
 behavior:`accept(true,true,true,true) is true; if any check is false (bad signature, wrong audience, expired, or a replay) it is false. preferred() returns "SP-initiated" — because the request your app sends is itself a correlation and anti-replay defense that unsolicited assertions lack.`,
-hints:['Trust is set up in advance: you exchange public keys/certs and keep private keys secret.','An unsolicited assertion has no request to correlate to, so verify signature, audience, freshness, and non-replay together with &&.','Prefer SP-initiated flows whenever the integration allows it.']}}
+hints:['Trust is set up in advance: you exchange public keys/certs and keep private keys secret.','An unsolicited assertion has no request to correlate to, so verify signature, audience, freshness, and non-replay together with &&.','Prefer SP-initiated flows whenever the integration allows it.']}},
+
+{id:'oa12',title:'OpenID Federation: trust at ecosystem scale',body:`
+<p>Everything so far assumes <b>bilateral</b> trust: for each app-to-IdP pair, somebody registers a
+client and exchanges keys. That works, and it scales quadratically. Ten parties need forty-five
+relationships; a national health network or a university ecosystem with thousands of participants needs
+a different mechanism entirely.</p>
+<p><b>OpenID Federation</b> replaces "everyone configures everyone" with "everyone trusts an
+authority, and proves membership on demand".</p>
+
+<h4>The trust chain</h4>
+<p>Each participant publishes a signed <b>entity statement</b> about itself. Its authority publishes a
+signed statement about <i>it</i>. That authority's authority signs in turn, up to a <b>trust
+anchor</b> the verifier already has. A party proves it belongs by presenting the chain:</p>
+<div class="codeSample" data-hl>            [ TRUST ANCHOR ]        configured out of band. the one thing
+                  |                you decided to believe.
+                  | signs
+          [ INTERMEDIATE ]         e.g. a national body, a sector authority
+                  | signs
+            [ THE ENTITY ]         the RP or OP you have never seen before
+
+// verification: walk the chain to an anchor you hold, checking each
+// signature. this is the PKI chain-of-trust idea, applied to federation
+// metadata rather than to certificates.</div>
+<p>The consequence worth internalising: <b>an RP can accept an OP it has never been configured with</b>,
+because trust is transitive through the anchor rather than pairwise. Onboarding a new participant
+becomes a registration with the authority, not N integrations.</p>
+
+<h4>Metadata policy: authorities constrain, they do not just vouch</h4>
+<p>Vouching alone would be weak — it would say a participant is real, not that it behaves. So each
+statement in the chain can carry a <b>metadata policy</b> that constrains what the subordinate is
+allowed to declare about itself, and policies <b>compose downward and can only narrow</b>:</p>
+<div class="codeSample" data-hl>anchor policy      token_endpoint_auth_methods_supported:
+                     subset_of ["private_key_jwt", "tls_client_auth"]
+                   id_token_signed_response_alg: one_of ["ES256","RS256"]
+
+entity declares    token_endpoint_auth_method: "client_secret_basic"
+                   -> REJECTED. the entity cannot widen what the anchor allowed.</div>
+<p>This is how an ecosystem enforces a security baseline — the FAPI requirements from the threats
+stream, for example — on participants it does not operate. A member cannot opt into weaker client
+authentication, because the policy is applied during chain resolution, not by the member's own honesty.</p>
+
+<h4>Automatic registration</h4>
+<p>Because the chain proves who a client is and what it is permitted to declare, an OP can accept a
+client it has never registered — the client presents its entity identifier, the OP resolves the chain,
+applies policy, and proceeds. That removes the manual onboarding step that makes large ecosystems
+impractical, and it is the practical reason the specification exists.</p>
+
+<h4>The trade-offs, honestly</h4>
+<ul>
+<li><b>The anchor is absolute.</b> Compromise it and the entire ecosystem is compromised — the trust
+anchor lesson's point at maximum stakes. Anchor keys belong offline, with a rehearsed rotation.</li>
+<li><b>Resolution costs.</b> Chains must be fetched, verified and cached, and stale caches mean an
+expelled participant is still accepted. Cache TTL is again a security parameter.</li>
+<li><b>Governance is the hard part.</b> Who admits members, on what evidence, and how is one expelled
+in minutes rather than at the next cache expiry? These are organisational questions the protocol does
+not answer.</li>
+<li><b>It is not for two parties.</b> For a handful of integrations, bilateral registration is simpler
+and better. The crossover is somewhere in the tens of participants, or wherever participants change
+often.</li>
+</ul>
+<p>Where you will meet it: research and education federations, national health and government
+ecosystems, open banking schemes, and increasingly the digital wallet ecosystem, where a verifier must
+accept credentials from issuers it has never contacted. It is also worth recognising the shape — SAML
+solved the same problem with metadata aggregates and eduGAIN, less elegantly and rather earlier.</p>`,
+docs:[['OpenID Federation 1.0','https://openid.net/specs/openid-federation-1_0.html'],['OpenID Federation — entity statements and trust chains','https://openid.net/specs/openid-federation-1_0.html#name-trust-chain'],['GEANT / eduGAIN — interfederation','https://edugain.org/']],
+ex:{title:'Resolve a trust chain and apply policy',
+prompt:`Write <code>Federation</code> with three methods. <code>static boolean chainTrusted(java.util.List&lt;String&gt; chainIssuers, java.util.Set&lt;String&gt; anchors)</code> is true only when the chain is non-empty and its <b>last</b> element is an anchor you hold. <code>static boolean policyAllows(java.util.Set&lt;String&gt; allowedByPolicy, String declared)</code> requires the declared value to be within the policy set — an entity may not widen what the authority permitted. <code>static boolean acceptEntity(java.util.List&lt;String&gt; chainIssuers, java.util.Set&lt;String&gt; anchors, java.util.Set&lt;String&gt; allowedByPolicy, String declaredAuthMethod)</code> requires both.`,
+starter:`import java.util.*;
+
+public class Federation {
+    static boolean chainTrusted(List<String> chainIssuers, Set<String> anchors) {
+        return false;
+    }
+    static boolean policyAllows(Set<String> allowedByPolicy, String declared) {
+        return false;
+    }
+    static boolean acceptEntity(List<String> chainIssuers, Set<String> anchors,
+                                Set<String> allowedByPolicy, String declaredAuthMethod) {
+        return false;
+    }
+}`,
+tests:[{d:'an empty chain is rejected',re:'isEmpty\\s*\\(\\s*\\)'},{d:'the chain must terminate at an anchor',re:'anchors\\s*\\.\\s*contains\\s*\\('},{d:'the last element is the anchor',re:'size\\s*\\(\\s*\\)\\s*-\\s*1'},{d:'policy membership is checked',re:'allowedByPolicy\\s*\\.\\s*contains\\s*\\('},{d:'a null declaration is rejected',re:'declared\\s*!=\\s*null|declared\\s*==\\s*null'},{d:'acceptance requires both checks',re:'chainTrusted\\s*\\('},{d:'and the policy check',re:'policyAllows\\s*\\('}],
+behavior:`chainTrusted(List.of("entity","intermediate","anchor-a"), Set.of("anchor-a")) is true, and the same chain against Set.of("anchor-b") is false — the chain must terminate somewhere you decided to believe out of band, which is why an anchor compromise takes the whole ecosystem with it. An empty chain is false. policyAllows(Set.of("private_key_jwt","tls_client_auth"), "client_secret_basic") is false: policies compose downward and can only narrow, so a member cannot opt into weaker client authentication by declaring it. acceptEntity requires both, which is what lets an OP accept a client it has never registered.`,
+hints:['The anchor is the last element: <code>chainIssuers.get(chainIssuers.size() - 1)</code>.','Guard the declared value before calling contains.','Compose the third method from the first two.'],
+solution:`import java.util.*;
+
+public class Federation {
+    static boolean chainTrusted(List<String> chainIssuers, Set<String> anchors) {
+        if (chainIssuers == null || chainIssuers.isEmpty() || anchors == null) return false;
+        // the chain must terminate at something you configured out of band
+        return anchors.contains(chainIssuers.get(chainIssuers.size() - 1));
+    }
+    static boolean policyAllows(Set<String> allowedByPolicy, String declared) {
+        if (allowedByPolicy == null || declared == null) return false;
+        return allowedByPolicy.contains(declared);   // narrow only, never widen
+    }
+    static boolean acceptEntity(List<String> chainIssuers, Set<String> anchors,
+                                Set<String> allowedByPolicy, String declaredAuthMethod) {
+        return chainTrusted(chainIssuers, anchors)
+            && policyAllows(allowedByPolicy, declaredAuthMethod);
+    }
+}`}}
 ]});
