@@ -4,7 +4,34 @@ STREAMS.push({icon:'🍪',iam:true,sec:'Sessions, cookies & web login',title:'Se
 <p>HTTP is stateless — each request stands alone. A <b>session</b> bridges requests: on login the server creates a session and hands the browser a <b>cookie</b> holding an opaque session id. The browser returns that cookie on every request, and the server looks up who you are. (Token-based auth stores a signed token instead, but the cookie mechanics are the same.)</p>
 <div class="codeSample">Set-Cookie: session=abc123        &lt;- server issues it on login
 Cookie: session=abc123            &lt;- browser sends it back automatically</div>
-<p>The session id must be long, random, and unguessable — it is the only thing standing between an attacker and your account. The next lessons harden the cookie that carries it.</p>`,
+<p>The session id must be long, random, and unguessable — it is the only thing standing between an attacker and your account. The next lessons harden the cookie that carries it.</p>
+
+<h4>What the server has to keep</h4>
+<div class="codeSample" data-hl>SERVER-SIDE SESSION            the cookie holds only an opaque id
+  session:8f3a -> { sub:"ada", authAt:..., amr:["pwd","otp"], csrf:"..." }
+  + instant revocation, small cookie, claims never leave the server
+  - the server must remember every session (state, and shared state at scale)
+
+CLIENT-SIDE SESSION            the cookie holds the SIGNED claims themselves
+  + no server storage, any node can serve any request
+  - cannot revoke before expiry; every claim is readable by the user;
+    a 4KB cookie limit arrives sooner than you expect</div>
+<p>This is the sessions-versus-tokens trade from Foundations, appearing again one level down. The
+practical middle ground most teams land on: a server-side session for the browser, short-lived, with the
+store in something shared and fast.</p>
+
+<h4>The properties that make a session id safe</h4>
+<p><b>Entropy</b> — at least 128 bits from a cryptographic RNG, never a counter, a hash of the username,
+or anything derived from time. <b>Opacity</b> — it should mean nothing; if an attacker can infer
+structure they can hunt for valid ids. And <b>rotation on privilege change</b>: issue a new id at login
+and at any elevation, which is what defeats fixation in the next lesson.</p>
+
+<h4>Two lifetimes, not one</h4>
+<p>An <b>idle timeout</b> ends a session after inactivity; an <b>absolute lifetime</b> ends it regardless.
+You want both — idle alone means a session kept warm by a background tab lives forever. And record
+<code>authAt</code>: knowing <i>when</i> the user last actually authenticated is what lets you demand
+re-authentication before something irreversible, rather than trusting a session that began nine hours
+ago.</p>`,
 docs:[['HTTP cookies — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies'],['Session management — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html']],
 ex:{title:'Build a Set-Cookie value',
 prompt:`Write class <code>Cookie</code> with <code>static String header(String name, String value)</code> that returns the cookie in the form <code>name=value</code> (name, then an equals sign, then value).`,
@@ -29,7 +56,44 @@ hints:['String concatenation with + builds the value.','The literal in the middl
 <li><b>Secure</b> — the cookie is sent only over HTTPS, never in cleartext.</li>
 <li><b>SameSite</b> — controls whether the cookie rides along on cross-site requests. <code>Lax</code> is a sensible default; <code>Strict</code> is tightest; <code>None</code> (which requires Secure) is only for deliberate cross-site use. SameSite is a strong CSRF defense.</li>
 </ul>
-<div class="codeSample">Set-Cookie: session=abc123; HttpOnly; Secure; SameSite=Lax</div>`,
+<div class="codeSample">Set-Cookie: session=abc123; HttpOnly; Secure; SameSite=Lax</div>
+
+<h4>What each flag actually stops</h4>
+<div class="codeSample" data-hl>HttpOnly     JavaScript cannot read document.cookie for it.
+             stops XSS from EXFILTRATING the session. does NOT stop XSS
+             from USING it - injected script can still make requests.
+
+Secure       never sent over plain http. without it, one http request on a
+             cafe network hands over the session in cleartext.
+
+SameSite     controls whether the cookie rides along on CROSS-SITE requests.
+  Lax        (default in modern browsers) sent on top-level GET navigation,
+             not on cross-site POST or subresource requests
+  Strict     never sent cross-site - even following a link from your own
+             email, so the user arrives logged OUT
+  None       always sent - REQUIRES Secure. needed for genuine cross-site
+             embedding, and it is the setting that reopens CSRF
+
+Path/Domain  scope. Domain=example.com shares the cookie with EVERY
+             subdomain, including one a colleague spun up. widen deliberately.
+
+Max-Age      absent = session cookie, dies with the browser process.
+__Host-      a name PREFIX the browser enforces: Secure, Path=/, no Domain.
+             the strongest binding available, and free.</div>
+
+<h4>The judgement calls</h4>
+<p><b>Lax versus Strict</b> is a real trade, not a "more secure is better" choice. Strict breaks the
+ordinary case of arriving from an external link and finding yourself logged out — which pushes users
+toward "remember me forever" settings that are worse. Lax is the sensible default; use Strict for
+genuinely sensitive apps where the friction is acceptable.</p>
+<p><b>SameSite is not a complete CSRF defence.</b> It is a strong mitigation that arrived recently, is
+enforced by the browser rather than your server, and does nothing for same-site attacks. Keep the
+synchronizer token as well — defence in depth, and the next lesson covers why.</p>
+<p><b>Domain is the flag that quietly widens blast radius.</b> Setting <code>Domain=example.com</code>
+to share a session between <code>app.</code> and <code>www.</code> also shares it with
+<code>staging.</code>, <code>legacy.</code> and anything else on the domain. An XSS on the least
+important subdomain then reaches the most important session. Prefer host-only cookies and
+<code>__Host-</code> unless sharing is a deliberate requirement.</p>`,
 docs:[['SameSite cookies — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'],['Secure cookie attributes — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html#cookies']],
 ex:{title:'Harden the cookie',
 prompt:`Write class <code>SecureCookie</code> with <code>static String build(String sid)</code> that returns <code>session=&lt;sid&gt;; HttpOnly; Secure; SameSite=Lax</code> — the session cookie with all three protective flags.`,
@@ -49,7 +113,43 @@ hints:['Concatenate the flags after the session value, separated by "; ".','The 
 
 {id:'ss3',title:'CSRF: the confused-deputy attack',body:`
 <p><b>CSRF</b> (Cross-Site Request Forgery) abuses the fact that browsers attach your cookies automatically. A malicious page can make <i>your</i> browser POST to your bank — and the bank sees a fully authenticated request it cannot tell apart from a real one. Your browser is the confused deputy.</p>
-<p>Two defenses, best used together. <b>SameSite</b> cookies stop the cookie from being sent on cross-site requests. The <b>synchronizer token</b> pattern adds a secret, per-session token to each state-changing form; the server accepts the request only if the submitted token matches the one tied to the session. An attacker&#8217;s page cannot read that token, so it cannot forge a valid request.</p>`,
+<p>Two defenses, best used together. <b>SameSite</b> cookies stop the cookie from being sent on cross-site requests. The <b>synchronizer token</b> pattern adds a secret, per-session token to each state-changing form; the server accepts the request only if the submitted token matches the one tied to the session. An attacker&#8217;s page cannot read that token, so it cannot forge a valid request.</p>
+
+<h4>Why it works at all</h4>
+<p>The mechanism people miss: the browser attaches your cookies to a request <b>based on where the
+request is going, not where it came from</b>. So a form on <code>evil.example</code> that posts to
+<code>bank.example/transfer</code> arrives fully authenticated. The attacker never sees the response and
+never needs to — the side effect is the attack.</p>
+<div class="codeSample" data-hl>&lt;!-- on evil.example, auto-submitted --&gt;
+&lt;form action="https://bank.example/transfer" method="POST"&gt;
+  &lt;input name="to" value="attacker"&gt;&lt;input name="amount" value="5000"&gt;
+&lt;/form&gt;
+
+the browser: "a POST to bank.example? here are bank.example's cookies."
+the server:  "valid session, valid user."   <- authenticated, not authorised BY the user</div>
+<p>That is why it is the <b>confused deputy</b>: your server is the deputy, correctly acting on
+credentials it holds, tricked into acting for someone else's intent.</p>
+
+<h4>The defences, and what each assumes</h4>
+<ul>
+<li><b>Synchronizer token.</b> A random value in the form and in the session; the server compares them.
+Works because an attacker's page <i>cannot read</i> your token — the same-origin policy forbids it.</li>
+<li><b>Double-submit cookie.</b> Same token in a cookie and a form field, compared without server state.
+Convenient, and weaker: a subdomain you do not control can set cookies on the parent domain.</li>
+<li><b>SameSite.</b> Browser-enforced, and the reason CSRF has receded. But it is a browser default, not
+a guarantee you control.</li>
+<li><b>Origin / Referer check.</b> Cheap and effective for JSON APIs.</li>
+</ul>
+
+<h4>Three things that are not defences</h4>
+<p><b>Requiring POST.</b> A form posts. <b>Checking Content-Type alone.</b> Forms can send
+<code>text/plain</code>. <b>A secret in the URL.</b> It leaks through referrers and history.</p>
+
+<h4>When it does not apply</h4>
+<p>CSRF is an attack on <b>ambient credentials</b> — anything the browser attaches automatically. An API
+that authenticates with an <code>Authorization: Bearer</code> header is not vulnerable, because nothing
+attaches that header for you. This is precisely the trade the BFF pattern makes: moving tokens out of
+the browser removes token theft and reintroduces CSRF, because you are back on cookies.</p>`,
 docs:[['CSRF — OWASP','https://owasp.org/www-community/attacks/csrf'],['CSRF prevention — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html']],
 ex:{title:'Validate a CSRF token',
 prompt:`Write class <code>Csrf</code> with <code>static boolean valid(String cookieToken, String formToken)</code> that returns true only when both tokens are non-null and equal (the synchronizer-token check).`,
@@ -69,7 +169,34 @@ hints:['Check for null before calling equals to avoid a NullPointerException.','
 
 {id:'ss4',title:'Session fixation & token storage',body:`
 <p>Two classic mistakes. <b>Session fixation</b>: an attacker plants a known session id in your browser before you log in, and if the server keeps that id after authentication, the attacker now shares your session. The fix is one line of discipline — <b>regenerate the session id at login</b> (and at privilege changes), so the pre-login id becomes useless.</p>
-<p><b>Token storage in browsers</b>: it is tempting to keep an access token in <code>localStorage</code>, but anything JavaScript can read, an XSS bug can steal. The safer home for a session credential is an <b>HttpOnly cookie</b>, which script cannot touch. Rule of thumb: never put a bearer token where page JavaScript can read it.</p>`,
+<p><b>Token storage in browsers</b>: it is tempting to keep an access token in <code>localStorage</code>, but anything JavaScript can read, an XSS bug can steal. The safer home for a session credential is an <b>HttpOnly cookie</b>, which script cannot touch. Rule of thumb: never put a bearer token where page JavaScript can read it.</p>
+
+<h4>Fixation, precisely</h4>
+<p>The attacker does not steal a session — they <b>supply</b> one. They obtain a valid session id, plant
+it in the victim's browser (a link with the id, a subdomain setting the cookie, an XSS), and wait for the
+victim to log in. If the server keeps the same id across the login, the attacker's pre-known id is now an
+authenticated session.</p>
+<div class="codeSample" data-hl>// the entire fix, and it is one line in the right place
+onLogin(user) {
+    session.invalidate();          // discard whatever id arrived
+    session = newSession();        // fresh, unguessable id
+    session.user = user;
+}
+// rotate again on ANY privilege elevation: step-up auth, entering admin mode,
+// switching tenant. the id must never outlive the trust level it was issued at.</div>
+
+<h4>Storage, ranked</h4>
+<div class="codeSample" data-hl>HttpOnly cookie     script cannot read it. best available in a browser.
+in-memory variable  gone on refresh; readable by injected script while open
+sessionStorage      readable by any script; survives reload
+localStorage        readable by any script; survives restarts. the worst.</div>
+<p>The rule underneath: <b>if your code can read it, injected script can read it.</b> No amount of
+obfuscation changes that, and no framework "secure storage" helper in a browser is meaningfully more
+private than the others.</p>
+<p>The honest ranking of outcomes: an HttpOnly cookie means XSS can <i>act</i> as the user while the page
+is open; localStorage means XSS <i>walks away with</i> a credential usable from anywhere until it
+expires. Same vulnerability, very different blast radius — which is the entire argument for the BFF
+pattern.</p>`,
 docs:[['Session fixation — OWASP','https://owasp.org/www-community/attacks/Session_fixation'],['Token storage — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html#local-storage']],
 ex:{title:'Choose safe token storage',
 prompt:`Write class <code>Storage</code> with <code>static boolean safe(String place)</code> that returns true only for <code>"httponly-cookie"</code>, and false for browser-readable stores like <code>"localstorage"</code> or <code>"sessionstorage"</code>.`,

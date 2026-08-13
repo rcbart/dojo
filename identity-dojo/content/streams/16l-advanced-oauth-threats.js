@@ -2,7 +2,39 @@ STREAMS.push({icon:'🛡️',iam:true,sec:'Advanced OAuth & threats',title:'Adva
 
 {id:'ao1',title:'Introspection & revocation',body:`
 <p>Opaque access tokens carry no data, so a resource server validates them by calling the authorization server&#8217;s <b>introspection</b> endpoint (RFC 7662), which replies with <code>active: true/false</code> plus metadata. <b>Revocation</b> (RFC 7009) lets a client proactively kill a token or refresh token — on logout, or when a device is lost.</p>
-<p>A token should be treated as usable only when the server both <b>knows it</b> and it has <b>not expired</b> or been revoked. That is the whole point of introspection: expiry alone is not enough, because a token can be revoked before it expires.</p>`,
+<p>A token should be treated as usable only when the server both <b>knows it</b> and it has <b>not expired</b> or been revoked. That is the whole point of introspection: expiry alone is not enough, because a token can be revoked before it expires.</p>
+
+<h4>The endpoints, and who may call them</h4>
+<div class="codeSample" data-hl>POST /introspect            RFC 7662 - "is this token still good, and what does it mean?"
+  token=...&token_type_hint=access_token
+  -> { "active": true, "scope": "orders:read", "sub": "ada",
+       "aud": "orders-api", "exp": 1767225600, "client_id": "web" }
+
+POST /revoke                RFC 7009 - "stop honouring this"
+  token=...&token_type_hint=refresh_token
+  -> 200, ALWAYS. even for an unknown token.</div>
+<p>Two details people get wrong. <b>Introspection endpoints must be authenticated</b> — an open one is
+an oracle that lets anyone test stolen tokens for validity, and leaks scopes and subjects. And
+<b>revocation returns 200 even for a token it has never seen</b>, deliberately: distinguishing "revoked"
+from "unknown" would turn the endpoint into a token-existence oracle.</p>
+
+<h4>The single field that matters</h4>
+<p><code>active</code> is the answer. It is not merely "unexpired" — it is the server asserting the token
+is currently honoured: issued by it, not expired, not revoked, and the grant behind it still standing.
+A response of <code>{"active": false}</code> carries no other claims, on purpose, so a rejected token
+reveals nothing.</p>
+
+<h4>The cost, and the pattern that avoids it</h4>
+<p>Introspection is a network call on every request, which is exactly what self-contained tokens exist to
+avoid. The common resolution is the <b>split-token</b> (or phantom-token) pattern: hand the browser an
+<i>opaque</i> token, and have the gateway introspect it once and forward a short-lived JWT inward. The
+outside world gets revocability; the inside gets offline verification.</p>
+
+<h4>What revocation does not do</h4>
+<p>Revoking a refresh token does not invalidate access tokens already issued from it — those remain valid
+until <code>exp</code>. And revoking one token is not the same as revoking the <b>grant</b>; only the
+latter stops future refreshes. "Remove this app's access" means the grant. This is the same gap CAE
+exists to close.</p>`,
 docs:[['Token introspection (RFC 7662)','https://www.rfc-editor.org/rfc/rfc7662'],['Token revocation (RFC 7009)','https://www.rfc-editor.org/rfc/rfc7009']],
 ex:{title:'Decide if a token is active',
 prompt:`Write class <code>Introspect</code> with <code>static boolean active(boolean found, boolean expired)</code> that returns true only when the token is <b>found</b> (known and not revoked) <b>and</b> not <b>expired</b>.`,
@@ -22,7 +54,39 @@ hints:['Combine the two booleans: found AND not expired.','Negate expired with t
 
 {id:'ao2',title:'The JWT validation checklist',body:`
 <p>A self-contained JWT access token is only trustworthy if you check it properly. Verifying the signature is necessary but <b>not sufficient</b>. The core checklist: the signature verifies against the issuer&#8217;s key; the <code>iss</code> (issuer) is exactly who you expect; the <code>aud</code> (audience) names <i>your</i> API; and the token is <b>within its lifetime</b> (<code>exp</code> in the future, <code>nbf</code> in the past).</p>
-<p>Skipping the audience check is a classic bug: a token minted for another service will still have a valid signature, so without <code>aud</code> you would accept a token that was never meant for you.</p>`,
+<p>Skipping the audience check is a classic bug: a token minted for another service will still have a valid signature, so without <code>aud</code> you would accept a token that was never meant for you.</p>
+
+<h4>The checklist, in the order that fails fastest</h4>
+<div class="codeSample" data-hl>1  alg      PINNED BY YOU, not read from the header. never accept "none",
+            never let an RS256 verifier be handed an HMAC token.
+2  kid      look up the key in the JWKS you fetched from the issuer you
+            configured. NEVER fetch keys from a URL inside the token.
+3  sig      verify. if this fails, stop - everything below is attacker text.
+4  iss      exact string match against the issuer you expect.
+5  aud      does this token name ME? a valid token for another API is not
+            a valid token for mine.
+6  exp      expired? with a small, bounded clock skew (60s, not 300).
+7  nbf/iat  not yet valid? implausibly old?
+8  jti      seen before? (only if you keep a replay cache)
+9  scope/claims  only NOW do the claims mean anything.</div>
+<p>The ordering is not cosmetic. Steps 1&ndash;3 establish that the payload is <i>authentic</i>; every
+step after that is reading data you have proven came from the issuer. Reading claims before verifying
+the signature — even to decide which key to use — is how <code>alg:none</code> and key-confusion
+attacks land.</p>
+
+<h4>The two that are almost always wrong</h4>
+<p><b>Trusting the header.</b> The header is attacker-controlled input. Pin the algorithm, and resolve
+<code>kid</code> only within keys you already trust. A verifier that fetches a <code>jku</code> from the
+token is fetching keys chosen by the attacker.</p>
+<p><b>Clock skew.</b> Everyone allows some; many allow far too much. Five minutes of skew is five extra
+minutes of life for every stolen token. Sixty seconds is usually plenty, and if it is not, fix the
+clocks rather than the validator.</p>
+
+<h4>What the checklist cannot tell you</h4>
+<p>A token can pass all nine checks and still be the wrong basis for a decision. It proves <i>who issued
+it</i> and <i>who it is for</i> — not that the issuer had authority over the claim, nor that the subject
+owns the record being requested. Signature validity is authentication of the token; it is not
+authorization.</p>`,
 docs:[['JWT best practices (RFC 8725)','https://www.rfc-editor.org/rfc/rfc8725'],['JWT access tokens (RFC 9068)','https://www.rfc-editor.org/rfc/rfc9068']],
 ex:{title:'Validate the claims',
 prompt:`Write class <code>Validate</code> with <code>static boolean ok(String iss, String aud, long exp, long now)</code> that returns true only when <code>iss</code> equals <code>"https://issuer"</code>, <code>aud</code> equals <code>"api"</code>, and <code>exp</code> is strictly greater than <code>now</code> (not expired).`,
@@ -42,7 +106,40 @@ hints:['Three conditions joined by && must all hold.','Use equals for the string
 
 {id:'ao3',title:'PAR, JAR/JARM & RAR',body:`
 <p>Newer OAuth extensions harden the request itself. <b>PAR</b> (Pushed Authorization Requests) sends the request parameters to the server <i>first</i>, over a back channel, so nothing sensitive rides in the browser URL. <b>JAR/JARM</b> sign the request and response objects so they cannot be tampered with. <b>RAR</b> (Rich Authorization Requests) replaces coarse scopes with structured <b>authorization details</b> — "transfer up to 500 EUR from account X" instead of a blunt <code>payments</code> scope.</p>
-<p>Together they push OAuth toward fine-grained, tamper-resistant authorization — the direction profiles like FAPI (financial-grade) require.</p>`,
+<p>Together they push OAuth toward fine-grained, tamper-resistant authorization — the direction profiles like FAPI (financial-grade) require.</p>
+
+<h4>What each one moves, and why</h4>
+<p>All three exist because the classic authorization request travels <b>through the browser as a query
+string</b> — visible, loggable, and modifiable by anyone who can influence the URL.</p>
+<div class="codeSample" data-hl>PAR   (RFC 9126)  push the parameters to the AS over the BACK channel first,
+                  get a request_uri handle, send only that through the browser.
+  POST /par  client_id=..&scope=..&redirect_uri=..  ->  {"request_uri":"urn:...:6esc"}
+  GET /authorize?client_id=..&request_uri=urn:...:6esc
+  -> nothing sensitive in the URL; nothing for the user or a proxy to tamper with
+
+JAR   (RFC 9101)  SIGN the request object, so the AS can prove the client
+                  authored these parameters - not an attacker who rewrote them.
+
+JARM              sign the RESPONSE too, closing the mirror attack where the
+                  response is tampered with on the way back.
+
+RAR   (RFC 9396)  replace coarse scopes with a structured authorization_details
+                  object: not "payments", but "transfer EUR 50 to IBAN x on date y".</div>
+
+<h4>Why RAR matters more than it looks</h4>
+<p>Scopes are a flat list of strings, so they can only express <i>categories</i> of permission. The
+moment consent needs to name an amount, a recipient or a single document, scopes run out —
+and the usual workaround is to invent scope strings like <code>payment:50:GB29NWBK</code>, which is a
+structured object badly encoded. RAR makes the structure explicit, which in turn makes the consent
+screen able to say what the user is actually approving.</p>
+<p>That is the real thread through all four: <b>the user should consent to a specific thing, and nothing
+between the client and the authorization server should be able to change what that thing is.</b></p>
+
+<h4>When you need them</h4>
+<p>For an ordinary web app with read scopes, PKCE and exact redirect matching are enough. Reach for these
+when the request parameters are sensitive, when a regulator requires non-repudiation, or when consent
+must be fine-grained — which in practice means payments, health data, and anything under an open
+banking regime.`,
 docs:[['PAR (RFC 9126)','https://www.rfc-editor.org/rfc/rfc9126'],['RAR (RFC 9396)','https://www.rfc-editor.org/rfc/rfc9396']],
 ex:{title:'What each extension is for',
 prompt:`Write class <code>Advanced</code> with <code>static String purpose(String feature)</code>: <code>"PAR"</code>→<code>"push the request server-side"</code>, <code>"RAR"</code>→<code>"fine-grained authorization details"</code>, <code>"DPoP"</code>→<code>"sender-constrained tokens"</code>, and <code>"unknown"</code> otherwise.`,
@@ -240,7 +337,60 @@ public class Dpop {
 <li><b>Authorization-code interception</b> (public clients) → <b>PKCE</b>.</li>
 <li><b>Open redirect / mix-up</b> → register and match <b>exact</b> <code>redirect_uri</code> values, never wildcards.</li>
 </ul>
-<p>The through-line: bind each step to something the attacker cannot forge or reuse, and never trust a redirect target you did not pre-register.</p>`,
+<p>The through-line: bind each step to something the attacker cannot forge or reuse, and never trust a redirect target you did not pre-register.</p>
+
+<h4>The catalog, and what each one actually exploits</h4>
+<p><b>1. Open redirect.</b> Your app has an endpoint that forwards to a URL from a parameter. An
+attacker registers <code>https://you.example/go?to=https://evil.example</code> as the target, and the
+authorization code lands on their server. The fix is not validation-by-blocklist: it is an
+<b>allow-list of exact redirect URIs</b>, and never reflecting a user-supplied URL into a redirect.</p>
+
+<p><b>2. Mix-up attack.</b> An app that supports several IdPs is tricked into sending the code from
+IdP&nbsp;A to IdP&nbsp;B's token endpoint — where B, being honest, has no idea it did not issue it, but
+an <i>attacker-controlled</i> IdP happily keeps it. Defence: track which IdP each authorization request
+went to, and check the <code>iss</code> returned in the response matches. This is why RFC 9207 added an
+explicit <code>iss</code> parameter to the authorization response.</p>
+
+<p><b>3. CSRF on the callback.</b> Without <code>state</code>, an attacker completes their own
+authorization, then feeds <i>their</i> code to your callback in the victim's browser. The victim's
+session is now linked to the attacker's account, and anything they upload goes to the attacker. Defence:
+<code>state</code>, bound to the user's session, checked on return.</p>
+
+<p><b>4. Authorization code injection.</b> Distinct from CSRF: the attacker injects a code obtained
+elsewhere into a legitimate flow. A client secret does not help — the client is genuine. <b>PKCE</b> is
+the defence, because the victim's client holds a verifier that does not match the challenge the
+attacker's code was bound to.</p>
+
+<p><b>5. Token replay and theft.</b> Bearer tokens leak through logs, referrers, proxies and browser
+storage. Defence in layers: short lifetimes, audience restriction, and sender-constraining with DPoP or
+mTLS so possession of the token alone is not enough.</p>
+
+<p><b>6. Refresh token reuse.</b> A stolen refresh token is the most valuable credential in the system.
+Defence: <b>rotation with reuse detection</b> — if an old token is presented again, assume theft and
+revoke the whole family, since either the legitimate client or the attacker is replaying.</p>
+
+<p><b>7. Consent phishing.</b> No protocol flaw at all: the attacker registers a plausible app, sends a
+genuine consent link, and the user grants real scopes to a malicious client. Defence is
+organisational — app allow-listing, publisher verification, scope review, and admin consent for
+sensitive scopes. <b>This is now a leading enterprise attack, and no amount of protocol hardening
+addresses it.</b></p>
+
+<p><b>8. alg confusion and key confusion.</b> Accepting the token's own <code>alg</code> lets an
+attacker propose <code>none</code>, or hand an RSA public key to an HMAC verifier as the shared secret.
+Defence: pin the algorithm, and pin where keys come from.</p>
+
+<div class="codeSample" data-hl>ATTACK                    BOUND BY WHAT
+open redirect             exact pre-registered redirect_uri
+mix-up                    iss checked against the request (RFC 9207)
+callback CSRF             state, bound to the session
+code injection            PKCE verifier
+token replay              short exp + aud + DPoP/mTLS
+refresh reuse             rotation with reuse detection
+consent phishing          nothing in the protocol - governance
+alg confusion             algorithm pinned by the verifier</div>
+<p>Notice the shape of the table: <b>every protocol defence is a binding</b> — of the response to the
+request, the code to the client, the token to a key. The one row with no protocol answer is the one
+that attacks the human, and it is the one growing fastest.</p>`,
 docs:[['OAuth 2.0 Security BCP','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['Redirect URI validation','https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2']],
 ex:{title:'Match the defense to the attack',
 prompt:`Write class <code>Defense</code> with <code>static String against(String attack)</code>: <code>"csrf"</code>→<code>"state parameter"</code>, <code>"replay"</code>→<code>"nonce"</code>, <code>"code-interception"</code>→<code>"pkce"</code>, <code>"open-redirect"</code>→<code>"exact redirect_uri match"</code>, and <code>"unknown"</code> otherwise.`,

@@ -4,7 +4,32 @@ STREAMS.push({icon:'🧩',iam:true,sec:'Authorization models',title:'Authorizati
 <p>The simplest model is an <b>Access Control List</b> (ACL): each resource keeps a list of who may do what. It is precise but explodes — thousands of users times thousands of resources becomes unmanageable.</p>
 <p><b>RBAC</b> (Role-Based Access Control) adds a layer of indirection: users get <b>roles</b> (admin, editor, viewer), and roles carry <b>permissions</b>. You manage a handful of roles instead of millions of user-resource pairs, and onboarding is just "assign a role." It is the default model in most enterprises for good reason.</p>
 <div class="codeSample" data-hl>// a permission check reduces to: does this user hold a role that grants it?
-boolean allowed = user.roles().contains("admin");</div>`,
+boolean allowed = user.roles().contains("admin");</div>
+
+<h4>Why ACLs stop scaling</h4>
+<p>An ACL attaches permissions to the <i>object</i>: this file lists who may read it. That is precise and
+it is O(users x objects) to administer. Onboarding one person means touching every object they need;
+offboarding means finding every object that mentions them, and missing one is a permanent orphaned
+grant.</p>
+<p>RBAC inserts a level of indirection — <b>users get roles, roles carry permissions</b> — which turns
+onboarding into a single assignment. That is the whole gain, and the whole cost: you can no longer
+answer "who can read this file?" by looking at the file.</p>
+<div class="codeSample" data-hl>ACL          alice: read, bob: write        on EACH object
+             precise, no indirection, and unmanageable past a few hundred
+
+RBAC         alice -> "editor" -> {read, write}
+             one assignment per person; permissions defined once per role
+             but "who can see X?" now requires walking the model backwards
+
+// ACLs did not disappear. filesystems, S3 and object sharing still use them,
+// because per-object precision is exactly what those need.</div>
+
+<h4>The distinction to keep straight</h4>
+<p>A <b>permission</b> is a verb on a resource — <code>invoice:read</code>. A <b>role</b> is a named
+bundle of permissions. A <b>group</b> is a collection of people. Roles and groups get used
+interchangeably and should not be: "who is in Finance?" is an HR question, "what may Finance do?" is a
+security question, and collapsing them means every org-chart change silently becomes a permissions
+change nobody reviewed.</p>`,
 docs:[['RBAC — NIST','https://csrc.nist.gov/projects/role-based-access-control'],['Access control — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Access_Control_Cheat_Sheet.html']],
 ex:{title:'Role check',gradeJava:{class:'Rbac',cases:[{name:'admin present -> true',call:'isAdmin',args:['java.util.Set.of("admin")'],expect:'true'},{name:'no admin -> false',call:'isAdmin',args:['java.util.Set.of("viewer")'],expect:'false'}]},
 prompt:`Write class <code>Rbac</code> with <code>static boolean isAdmin(java.util.Set&lt;String&gt; roles)</code> that returns true only when the set of roles contains <code>"admin"</code>.`,
@@ -26,7 +51,30 @@ hints:['A Java Set has a contains method that returns a boolean.','Return the re
 
 {id:'az2',title:'RBAC in depth: roles to permissions',body:`
 <p>Roles are only useful if they map to concrete <b>permissions</b>. A viewer can read; an editor can read and write; an admin can read, write, and delete. Keeping that mapping in one place means a policy change is one edit, not a hunt across the codebase.</p>
-<p>Design tips: prefer a few broad roles over hundreds of narrow ones (role explosion is RBAC&#8217;s failure mode), and grant the <b>least privilege</b> each role truly needs. When roles alone cannot express a rule ("only the owner", "only during business hours"), that is the signal to reach for ABAC in the next lesson.</p>`,
+<p>Design tips: prefer a few broad roles over hundreds of narrow ones (role explosion is RBAC&#8217;s failure mode), and grant the <b>least privilege</b> each role truly needs. When roles alone cannot express a rule ("only the owner", "only during business hours"), that is the signal to reach for ABAC in the next lesson.</p>
+
+<h4>Role explosion, and the two forces causing it</h4>
+<p>RBAC decays in a predictable way. Someone needs a permission slightly different from an existing role,
+so a new role is created rather than the model revisited. Repeat for five years and you have
+<code>Finance-EU-ReadOnly-Q3</code> and eight hundred siblings, several of which are functionally
+identical under different names.</p>
+<p>Two forces drive it: <b>exceptions</b> (one person needs one extra thing) and <b>dimensions</b>
+(region, environment, business unit, seniority — each multiplying the count). The fix for the first is a
+separate exception mechanism with an expiry, not a new permanent role. The fix for the second is
+recognising that <b>a dimension is an attribute, not a role</b> — which is exactly the argument for ABAC
+in the next lesson.</p>
+
+<h4>Hierarchy, and where it misleads</h4>
+<p>Role hierarchies let senior roles inherit junior ones, which models many organisations neatly and then
+fails on the case that matters: an auditor needs broad <i>read</i> and no <i>write</i>, so they are not
+"above" or "below" an editor. Hierarchies also make effective permissions harder to see, since a grant
+three levels up appears nowhere near the role you are inspecting.</p>
+
+<h4>The number that matters</h4>
+<p>For any person, the reviewable figure is <b>effective permissions</b> — the flattened union across
+every role and group, direct and inherited. If your system cannot produce that for one user on demand,
+you cannot answer the only question an auditor will ask, and your access reviews are people approving
+names they do not understand.</p>`,
 docs:[['RBAC roles & permissions','https://auth0.com/docs/manage-users/access-control/rbac'],['Least privilege','https://csrc.nist.gov/glossary/term/least_privilege']],
 ex:{title:'Map roles to permissions',
 prompt:`Write class <code>Roles</code> with <code>static String permissions(String role)</code>: <code>"viewer"</code>→<code>"read"</code>, <code>"editor"</code>→<code>"read,write"</code>, <code>"admin"</code>→<code>"read,write,delete"</code>, and <code>""</code> (empty string) for any unknown role.`,
@@ -51,7 +99,39 @@ hints:['A switch on role keeps the whole mapping in one readable place.','Higher
 
 {id:'az3',title:'ABAC: attributes & policy',body:`
 <p><b>ABAC</b> (Attribute-Based Access Control) decides using <i>attributes</i> of the user, the resource, the action, and the context — not just a role. "An employee may view a record <b>in their own department</b>," "a manager may approve amounts <b>under their limit</b>," "access only <b>during business hours</b>." Rules like these are impossible to express as roles alone.</p>
-<p>ABAC is more expressive than RBAC but harder to reason about, so teams often combine them: RBAC for the coarse "can this kind of user do this kind of thing," ABAC for the fine "on this specific resource, right now." The rule is written as a boolean policy over the attributes.</p>`,
+<p>ABAC is more expressive than RBAC but harder to reason about, so teams often combine them: RBAC for the coarse "can this kind of user do this kind of thing," ABAC for the fine "on this specific resource, right now." The rule is written as a boolean policy over the attributes.</p>
+
+<h4>The four attribute categories</h4>
+<div class="codeSample" data-hl>SUBJECT      who is asking      department, clearance, employment status, manager
+RESOURCE     what is touched    classification, owner, tenant, project, age
+ACTION       what they want     read, write, approve, export
+ENVIRONMENT  the context        time of day, network, device posture, location
+
+// a policy is a boolean over those four:
+permit if subject.department == resource.department
+       and subject.clearance >= resource.classification
+       and action == "read"
+       and environment.network == "corporate"</div>
+<p>The expressive gain is real: this policy covers every department without enumerating any of them, and
+adding a department requires no policy change at all. That is the thing RBAC cannot do — it would need a
+role per department, per action.</p>
+
+<h4>What you pay for it</h4>
+<ul>
+<li><b>You cannot enumerate access.</b> "Who can read this document?" is no longer a lookup; it is a
+question about every possible subject against a predicate. Auditors ask this question.</li>
+<li><b>Attributes must be trustworthy and fresh.</b> The policy is only as good as
+<code>subject.clearance</code>, which comes from a directory that may be stale — and if attributes
+arrive in a token, they are as old as the token.</li>
+<li><b>Debugging is harder.</b> A denial has no single cause; it has a failing conjunct, and finding it
+requires the engine to tell you which one.</li>
+</ul>
+
+<h4>The hybrid that most estates actually run</h4>
+<p>RBAC for the coarse gate — may this <i>kind</i> of user reach this endpoint at all — and ABAC for the
+fine one, where ownership, tenant and context decide. That maps neatly onto the split in the data-level
+lesson: roles at the edge, attributes next to the data. It also keeps the enumerable part enumerable,
+which is what keeps reviews possible.`,
 docs:[['ABAC — NIST 800-162','https://csrc.nist.gov/publications/detail/sp/800-162/final'],['ABAC vs RBAC','https://auth0.com/blog/what-is-abac-attribute-based-access-control/']],
 ex:{title:'Write an attribute policy',
 prompt:`Write class <code>Abac</code> with <code>static boolean permit(String userDept, String resourceDept, boolean isOwner)</code> that allows access when the user is in the same department as the resource <b>or</b> the user owns the resource.`,
@@ -71,7 +151,36 @@ hints:['Compare the two department strings with equals.','Combine the department
 
 {id:'az4',title:'ReBAC & policy engines',body:`
 <p>Some questions are about <b>relationships</b>: "can this user view this document?" depends on whether the document was <i>shared with</i> them, who <i>owns</i> it, and which <i>group</i> they belong to. <b>ReBAC</b> (Relationship-Based Access Control) models permissions as a graph of relations — the approach behind Google&#8217;s Zanzibar and open-source <b>OpenFGA</b>.</p>
-<p>To keep policy out of scattered <code>if</code> statements, teams externalize it to a <b>policy engine</b>: the app asks "is this allowed?" and the engine answers from declarative rules. <b>OPA</b> (with the Rego language) and <b>AWS Cedar</b> are the common choices. This is <b>PBAC</b> — Policy-Based Access Control — and it lets security rules evolve without redeploying the app.</p>`,
+<p>To keep policy out of scattered <code>if</code> statements, teams externalize it to a <b>policy engine</b>: the app asks "is this allowed?" and the engine answers from declarative rules. <b>OPA</b> (with the Rego language) and <b>AWS Cedar</b> are the common choices. This is <b>PBAC</b> — Policy-Based Access Control — and it lets security rules evolve without redeploying the app.</p>
+
+<h4>Why relationships, not attributes</h4>
+<p>ReBAC answers a question the other models cannot phrase: access that exists <i>because of a link
+between two objects</i>. "Ada can edit this document because she is an editor of the folder that contains
+it" is not a role and not an attribute — it is a path through a graph.</p>
+<div class="codeSample" data-hl>RBAC   is the user in a role?                      set membership
+ABAC   do the attributes satisfy a predicate?     boolean over fields
+ReBAC  is there a PATH from user to object?       graph traversal
+
+doc:readme#parent@folder:eng          the readme lives in eng
+folder:eng#viewer@group:eng#member    eng members can view eng
+group:eng#member@user:ada             ada is in eng
+-> ada can view the readme. stated nowhere; derived by walking.</div>
+<p>This is the model behind every "share with", nested folder and inherited-permission feature you have
+used. It is why document and repository products converge on it, and why an ordinary line-of-business
+app usually should not.</p>
+
+<h4>Externalising policy: what you gain and lose</h4>
+<p><b>Gain:</b> policy stops being scattered <code>if</code> statements across services that drift apart.
+It becomes reviewable, testable, versioned, and consistent — and one place can answer "why was this
+denied?"</p>
+<p><b>Lose:</b> a runtime dependency on the critical path of every request. That forces a decision you
+must make deliberately: what happens when the engine is unreachable? Fail closed and an authorization
+outage becomes a total outage; fail open and you have no authorization at all. Aggressive caching plus
+fail-closed is the usual answer, and the caching brings back the staleness problem the scale lesson
+covers.</p>
+<p><b>OPA</b> (Rego, general-purpose policy), <b>Cedar</b> (AWS, verification-friendly) and
+<b>OpenFGA/SpiceDB</b> (Zanzibar-style relationship graphs) are the common engines. Pick on the shape of
+your question: predicate over attributes, or path through a graph.`,
 docs:[['Google Zanzibar','https://research.google/pubs/pub48190/'],['OpenFGA','https://openfga.dev/'],['Open Policy Agent','https://www.openpolicyagent.org/']],
 ex:{title:'A relationship check',
 prompt:`Write class <code>Rebac</code> with <code>static boolean canView(String user, String owner, java.util.Set&lt;String&gt; sharedWith)</code> that returns true when the user is the owner <b>or</b> the document was shared with them.`,
