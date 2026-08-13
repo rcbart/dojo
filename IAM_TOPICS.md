@@ -1,94 +1,169 @@
 # Identity & Access Management — complete topic map
 
-A comprehensive checklist of IAM topics, organized into streams, with the concepts each lesson
-covers. ✅ = built and live in DevDojo; ⬜ = planned next. The belt track is white→black; the dan
-track is advanced/expert.
+The IAM domain, organized by sub-category in reading order, with the concepts each lesson covers.
+All 13 sub-categories are built: **115 lessons, 122 exercises, 537 checks**. ⬜ marks topics
+identified but not yet written.
+
+The 13 content modules (`16b`–`16m` plus the `16z` capstone) merge at runtime into a single
+**Identity and Access** stream with named sub-categories. Order is set by `content/streams/manifest.json`.
 
 ---
 
-## BELT TRACK (white → black)
+## The design principle
 
-### ✅ Identity Foundations  *(built — 7 lessons)*
-- Glossary of the whole domain (actors, tokens, flows, endpoints, concepts) + deep terms:
-  **delegated authorization, CSRF, replay, bearer vs sender-constrained, phishing-resistance,
-  attestation, trust domain**
-- Authentication vs authorization; identity, principal/subject, credentials, factors/MFA
+The domain is sequenced so that **concepts are grounded before the protocols that assume them**. A
+reader meets "token" as a defined thing before any lesson uses one, learns that SSO is an outcome
+before learning the protocols that produce it, and sees the actor cast once rather than three times
+under three sets of names. Everything after Foundations can then be read as mechanism.
+
+---
+
+## ✅ Identity & federation foundations *(23 lessons)*
+
+**The base layer — what every later lesson assumes.**
+
+- Glossary of the whole domain, and authentication vs authorization
+- **The identity lifecycle** — person / identity / account / identifier; identity proofing;
+  enrollment; credential binding; credential vs authenticator; joiner-mover-leaver; deprovisioning
+- **Attributes, claims and assertions** — fact at rest → fact asserted → signed bundle; registered
+  claims; attribute release and mapping; why `sub` is the only safe identity key
+- **What a token actually is** — opaque vs structured; the concrete shapes (opaque, JWT, SAML
+  assertion, session cookie, API key); how one is minted and validated; token **role** vs token
+  **format**
 - Sessions vs tokens; bearer tokens; front-channel vs back-channel
-- SSO & federation; IdP / SP / RP / AS; trust; discovery
-- Public vs confidential (private) clients; client authentication (secret, private_key_jwt, mTLS)
-- Delegation, consent, scopes; delegation vs impersonation; least privilege
-- Token validation checklist (iss/aud/exp); bearer vs sender-constrained (mTLS-bound, DPoP)
+- **The cast** — subject / resource owner, client / RP / SP, IdP / authorization server, resource
+  server, mapped across SAML, OIDC and OAuth; client registration and discovery
+- **SSO vs federation vs delegation** — SSO is a user experience (same-domain cookie sharing is SSO
+  with no federation); federation is a cross-boundary trust architecture; delegation is an
+  authorization mechanism. Why OAuth is not a login protocol
+- Public vs confidential clients; client authentication (secret, `private_key_jwt`, mTLS)
+- **Delegated authentication** — credential forwarding (LDAP bind, RADIUS, ROPC) vs redirect; who
+  touches the password; when forwarding is still defensible
+- **Delegated authorization** — the grant vs the token; scopes as bounds; consent; fail-closed
+  enforcement; why a scope is not a permission
+- **On-behalf-of** — audience per hop, subject survives, acting party recorded; `act` and `may_act`;
+  why an unauthenticated user-id header is not a substitute
+- **Acting as a user** — authenticated vs effective subject; intersect-never-inherit permissions;
+  the controls that make support access defensible
+- **Zero trust** — identity as the perimeter; PDP/PEP; fail closed; what zero trust is not
+- **API keys** — how they leak; prefixes for secret scanning, hashing at rest, one per integration
+- **Capability URLs** — the link is the credential; Referer leakage; mail scanners consuming
+  single-use links; stored vs signed capabilities
+- **Role assumption** — trust policy vs permission policy; the confused deputy and external ids;
+  workload identity federation replacing static keys
+- Token validation checklist; sender-constrained tokens
+- Federation in plain English, and from the ground up
+- **Trust** — how it is established; **trust anchors** and why the chain must stop somewhere you chose
+- Decentralized identity: DIDs & Verifiable Credentials
 
-### ✅ OAuth 2.0 & OpenID Connect  *(built — 10 lessons)*
-- Roles & endpoints; Authorization Code flow; **flow diagrams**
-- PKCE (public clients); code→token exchange; Client Credentials; Refresh & lifecycle
-- OIDC (ID token, nonce, UserInfo, discovery); Device flow; legacy Implicit/ROPC
-- **Native & mobile apps** (system browser, App/Universal Links, PKCE, secure storage)
-- **Opaque vs JWT tokens; introspection; the split/phantom-token pattern**
-- **Choosing a flow** — decision guide covering every grant (incl. Hybrid, CIBA, Token Exchange)
+## ✅ Authentication & MFA *(13 lessons)*
 
-### ✅ JWT & JOSE (JWK · JWS · JWE)  *(built — 6 lessons, in this domain)*
-- JWK key generation; JWT claims; RS256/ES256 signing; JWKS verification; tampering; JWE encryption
+- Passwords done right; the three factors; TOTP/HOTP
+- Passkeys: WebAuthn & FIDO2 (phishing-resistant, origin-bound)
+- **Every MFA method compared** — SMS, voice, email, TOTP, HOTP, hardware OTP, push, number-matched
+  push, security keys, passkeys, smart cards, biometrics, backup codes: pros, cons and best practice
+  for each, ranked by phishing resistance. Plus no-downgrade, recovery, enrollment, enroll-two
+- **FIDO2 architecture** — WebAuthn vs CTAP2; U2F/UAF history; platform vs roaming authenticators;
+  discoverable credentials; the RP ID rules
+- **WebAuthn registration** — creation options, user handle, `clientDataJSON`, `attestationObject`,
+  `authData` flags (UP/UV/BE/BS), attestation formats and AAGUIDs, the verification procedure
+- **WebAuthn authentication** — assertion verification, the signature counter and why `0/0` must not
+  lock out synced passkeys, usernameless login, conditional UI, the failure modes that survive
+- Step-up & adaptive authentication; IAL/AAL/FAL; passwordless & account recovery
+- Credential stuffing, bots & account-takeover defense
 
-### ✅ SAML 2.0 & Web SSO  *(built — 5 lessons)*
-- Assertions; SP- vs IdP-initiated; bindings (Redirect/POST/Artifact); metadata & trust;
-  signing/encryption, Single Logout; SAML vs OIDC
+## ✅ Authorization models *(8 lessons)*
 
-### ⬜ Authentication Methods & MFA
-- Passwords & storage recap (Argon2/bcrypt/PBKDF2); credential stuffing & breach lists
-- MFA/2FA; TOTP/HOTP; push & magic links; SMS pitfalls
-- **WebAuthn / FIDO2 / passkeys** (phishing-resistant, origin-bound); security keys
-- Step-up authentication; adaptive / risk-based auth; account recovery
+- ACLs → RBAC; RBAC in depth; ABAC; ReBAC & policy engines (Zanzibar/OpenFGA, OPA, Cedar)
+- PDP/PEP, least privilege, separation of duties
+- **Data-level authorization** — endpoint authz vs object authz; IDOR/BOLA; filter in the query
+  rather than checking after; field masking. UUIDs are obscurity, not authorization
+- **Groups** — transitive and nested membership, cycles, group explosion, token bloat, effective
+  permissions
+- **Combining policies** — deny-overrides, permit-overrides, first-applicable, specificity; default
+  deny; explicit deny vs absence of permit; explainable decisions
 
-### ⬜ Authorization Models
-- ACLs; **RBAC** (roles/permissions); **ABAC** (attributes/policies)
-- **ReBAC** (relationship-based — Google Zanzibar / OpenFGA)
-- **PBAC & policy engines** (OPA/Rego, AWS Cedar); scopes vs roles vs permissions
-- Least privilege, separation of duties, policy decision vs enforcement point (PDP/PEP)
+## ✅ Sessions, cookies & web login *(6 lessons)*
 
-### ⬜ Sessions, Cookies & Web Login Security
-- Cookie flags (HttpOnly/Secure/SameSite); session fixation; CSRF defenses
-- SSO session vs app session; token storage in browsers (why not localStorage)
-- Logout: front-channel vs back-channel; session revocation
+- Sessions & cookies; cookie security flags; CSRF; session fixation & token storage; logout &
+  session revocation
+- **Single Logout** — the three things called logout; RP-initiated logout and `id_token_hint`;
+  front-channel logout and why third-party cookie blocking is ending it; back-channel logout and the
+  logout token; why full SLO rarely works and what to do instead
 
-### ✅ PKI & Certificate Management  *(built — 6 lessons)*
-- Asymmetric keys & X.509; CAs & chains of trust; CSRs & key usage/EKU
-- TLS & mTLS handshake; revocation (CRL/OCSP/stapling), rotation, ACME; keystores/truststores
+## ✅ OAuth 2.0 & OpenID Connect *(15 lessons)*
+
+- Roles & the Authorization Code flow; what a client is; code→token exchange
+- **PKCE**, and **PKCE end to end** — code interception on mobile, code injection, the complete
+  parameter-by-parameter flow, `state` vs `code_challenge` vs `nonce`, and the downgrade attack
+- Client Credentials; refresh tokens & lifecycle; OIDC; device flow & legacy grants
+- Native & mobile apps; **browser-based apps and the BFF pattern**
+- Opaque vs JWT tokens & the split-token pattern; choosing a flow; third-party integrations
+- **OAuth 2.1** — what is removed, what becomes mandatory, what is unchanged, and the audit checklist
+
+## ✅ Tokens: JWT & JOSE *(7 lessons)*
+
+- JWK generation; JWT claims; RS256 vs ES256; JWKS verification; tampering; JWE encryption
+- **SD-JWT** — selective disclosure via salted digests; why the salt is load-bearing; key binding
+  with `cnf` and `kb+jwt`; the unlinkability it deliberately gives up
+
+## ✅ SAML & enterprise web SSO *(5 lessons)*
+
+- Assertions; SP- vs IdP-initiated; bindings; metadata & trust; signing, encryption, SLO, SAML vs OIDC
+
+## ✅ PKI & certificates *(6 lessons)*
+
+- Asymmetric keys & X.509; CAs & chains of trust; CSRs & key usage; TLS & mTLS; revocation, rotation
+  and ACME; keystores & truststores
+
+## ✅ Service-to-service & zero trust *(8 lessons)*
+
+- Machine identity & token-based M2M; mTLS as service identity; OAuth Token Exchange
+- SPIFFE/SPIRE and SVIDs; cloud & mesh workload identity; zero-trust decision guide
+- Context propagation; impersonation vs delegation
+
+## ✅ Enterprise identity & directories *(8 lessons)*
+
+- LDAP & Active Directory; Kerberos; SCIM & joiner/mover/leaver; JIT provisioning & home-realm
+  discovery; social login & account linking; B2B/B2C/B2B2C; multi-tenant identity
+
+## ✅ Advanced OAuth & threats *(8 lessons)*
+
+- Introspection & revocation; the JWT validation checklist; PAR, JAR/JARM, RAR
+- Sender-constrained tokens, and **DPoP in depth** — the proof JWT (`htm`/`htu`/`jti`/`ath`), the
+  `cnf`/`jkt` binding implementations forget, nonces vs replay caches, refresh binding, DPoP vs mTLS
+- Attack catalog & defenses; refresh token rotation & reuse detection
+- **FAPI** — what a hardened profile is, each requirement mapped to the attack it answers, the two
+  levels, certification, and what it still does not tell you
+
+## ✅ Governance & privileged access *(7 lessons)*
+
+- IGA reviews & certification; entitlements & separation of duties; PAM; secrets management &
+  rotation; CIAM vs workforce IAM; consent & privacy; identity audit, logging & compliance
+
+## ✅ Capstone *(1 lesson)*
+
+- Build a secure auth service, graded end to end
 
 ---
 
-## DAN TRACK (advanced / expert)
+## ⬜ Identified, not yet written
 
-### ✅ Service-to-Service Authorization & SPIFFE  *(built — 6 lessons)*
-- Machine identity & token-based M2M (**Cognito** as the minting authority, client credentials)
-- mTLS as service identity; **OAuth Token Exchange** (on-behalf-of)
-- **SPIFFE/SPIRE**, SVIDs (X.509 & JWT), attestation; cloud workload identity federation &
-  service-mesh mTLS; zero-trust decision guide
-
-### ⬜ Enterprise Identity & Directories
-- **LDAP** & **Active Directory**; **Kerberos** (KDC, tickets, TGT/TGS); RADIUS
-- **SCIM** provisioning; JML (joiner/mover/leaver) lifecycle; just-in-time provisioning
-- Identity brokering & home-realm discovery; social login & account linking
-
-### ⬜ Advanced OAuth/OIDC & Threats
-- Token introspection & revocation (RFC 7009/7662); JWT access tokens (RFC 9068)
-- PAR, JAR/JARM, RAR (rich authorization requests); **DPoP** & mTLS-bound tokens; FAPI
-- Dynamic client registration; OIDC session management & logout
-- Attack catalog: mix-up, CSRF/state, open redirect, token replay, PKCE downgrade, consent
-  phishing — and the defenses (OAuth 2.0 Security BCP)
-
-### ⬜ Identity Governance & Privileged Access
-- **IGA** — access requests, reviews/certification, segregation-of-duties, entitlements
-- **PAM** — privileged accounts, vaulting, session recording, just-in-time privilege
-- Secrets management (Vault, cloud secret managers); key management & HSMs
-- CIAM vs workforce IAM; compliance (audit, least privilege, deprovisioning)
+- **Continuous Access Evaluation (CAE)** — near-real-time revocation propagation; currently touched
+  only as a principle in the zero-trust lesson
+- **Dynamic client registration** (RFC 7591) and software statements
+- **Grant management** (the OIDC grant management API)
+- **BBS+ / zero-knowledge credentials** — the unlinkability SD-JWT deliberately does not provide
+- **Credential status lists** — revocation for verifiable credentials
+- **Anonymous and progressive identity** — guest access that later becomes an account
+- **Hands-on lab against a real IdP** — the biggest gap versus vendor training; every exercise here
+  is self-contained by design
 
 ---
 
-## Status
+## Known limitation
 
-Built so far: **6 IAM streams** (Identity Foundations, OAuth 2.0 & OIDC, JWT/JOSE, SAML, PKI,
-Service-to-Service & SPIFFE) — ~40 lessons, each with a hands-on exercise. Remaining to reach the
-full map: **6 more streams** (Authentication Methods, Authorization Models, Sessions & Web Login
-Security, Enterprise Identity & Directories, Advanced OAuth/OIDC & Threats, Identity Governance &
-PAM). These are the next build batches.
+Exercises are graded by **regex structural checks** (except SQL, JavaScript and opt-in Java, which
+execute for real). They verify you wrote the right shape, not that your code runs correctly. Every
+exercise ships a **Run locally** panel with exact commands for ground truth, and `scripts/verify.js`
+guarantees each solution passes its own checks.

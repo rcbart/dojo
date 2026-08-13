@@ -5,16 +5,16 @@
 <p align="center">
   <a href="https://rcbart.github.io/knowledge-base/"><img src="https://img.shields.io/badge/%E2%96%B6%20live%20demo-DevDojo-6a5cf5" alt="live demo"></a>
   <img src="https://img.shields.io/badge/tracks-29-8b5cf6" alt="tracks">
-  <img src="https://img.shields.io/badge/lessons-289-8b5cf6" alt="lessons">
-  <img src="https://img.shields.io/badge/exercises-407-06b6d4" alt="exercises">
-  <img src="https://img.shields.io/badge/checks-1911%20passing-2ea44f" alt="checks">
+  <img src="https://img.shields.io/badge/lessons-315-8b5cf6" alt="lessons">
+  <img src="https://img.shields.io/badge/exercises-435-06b6d4" alt="exercises">
+  <img src="https://img.shields.io/badge/checks-2103%20passing-2ea44f" alt="checks">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
 # DevDojo 🥋
 
 An interactive, self-contained learning platform for software engineering. **29 training tracks,
-289 lessons, and 407 hands-on exercises** run entirely in the browser — an in-editor coding
+315 lessons, and 435 hands-on exercises** run entirely in the browser — an in-editor coding
 exercise on every lesson, **real code execution where possible** (SQL, JavaScript, and opt-in Java),
 a belt progression, **spaced-repetition review**, a **difficulty-filtered practice hub**, a domain
 glossary with click-to-explain terms, tournaments, and end-to-end capstone projects.
@@ -23,6 +23,15 @@ It began as a Java course (JavaDojo) and now spans the full stack: the Java lang
 computer science & algorithms, web/HTTP, front-end (React), APIs, databases & SQL, concurrency,
 security & cryptography, a large identity & access domain, DevOps, architecture, and a senior
 ("dan") track.
+
+**Identity & access is the deepest domain** — 115 lessons across 13 sub-categories, built to teach the
+concepts *before* the protocols that assume them: what a token actually is and how a role differs from
+a format, the identity lifecycle from proofing to deprovisioning, and why SSO is a user experience
+while federation and delegation are the mechanisms underneath. From there into OAuth 2.0/2.1 and PKCE
+end to end, OIDC, SAML, WebAuthn/FIDO2 internals, DPoP and sender-constrained tokens, SD-JWT selective
+disclosure, zero trust, data-level authorization and IDOR, on-behalf-of chains, and the patterns most
+courses skip entirely — API keys, capability URLs, cross-account role assumption, and support
+"act as user" access.
 
 **▶ Live demo:** https://rcbart.github.io/knowledge-base/ — a single, self-contained page. SQL
 exercises run against real sample data in your browser (built-in engine, no server). *(First time:
@@ -43,9 +52,11 @@ deploys on every push.)*
   them on expanding intervals; the sidebar shows what's due.
 - **🎯 Practice** — every exercise is rated easy/medium/hard and filterable, giving a difficulty ramp
   across the whole catalog.
-- **🧠 Quick check** — auto-generated multiple-choice quizzes on the recall lessons, with instant
-  feedback and explanations.
-- **📖 Glossary** — 10 domains / 218 terms, collapsible and searchable, doubling as the in-lesson
+- **🧠 Quick check** — 250 multiple-choice questions with instant feedback: not just "wrong", but which
+  answer was right, why it is right, and why the option you picked is not. The concept-heavy lessons
+  carry hand-authored questions in plain English; the rest are auto-generated from the exercise specs.
+  **Options are shuffled per lesson visit**, so the answer position can never be memorised.
+- **📖 Glossary** — 10 domains / 259 terms, collapsible and searchable, doubling as the in-lesson
   click-to-explain source.
 - **Belts & capstones** — per-domain percentage belts (white → black), dan sub-tracks for advanced
   topics, and a graded multi-step capstone (e.g. the Identity "build a secure auth service"). Streams
@@ -93,14 +104,15 @@ passes its own tests and every blank starter fails at least one.
 
 ## Screenshots
 
-Add your own after opening `devdojo.html` (or the live demo): drop images in `docs/img/` and
-reference them here, e.g.
-
-```
 ![Home & belts](docs/img/home.png)
+*The home page: belt progression per domain, and the "how to learn & retain" guide.*
+
 ![A lesson with the live SQL runner](docs/img/sql-runner.png)
+*A SQL lesson — the in-editor exercise, "What your code must do", and the Compile & Run panel. SQL is
+graded by running it against sample data and comparing result sets.*
+
 ![Glossary with click-to-explain](docs/img/glossary.png)
-```
+*The domain-grouped glossary. Every term here is also click-to-explain inside any lesson.*
 
 ## Repository layout
 
@@ -112,6 +124,7 @@ src/
   sqlengine.js      dependency-free in-browser SQL engine + sample datasets
   gradejava.js      auto-generated executable-grading specs (attached by lesson id)
   quizzes.js        auto-generated quick-check quiz bank (attached by lesson id)
+  quizzes_hand.js   hand-authored plain-English quizzes; take priority over the generated bank
   boot.js           startup calls (identity merge, gradeJava/quiz attach)
 content/streams/    one module per stream (the course content — most edits happen here)
   manifest.json     stream order (also the sub-category order for the merged Identity stream)
@@ -126,7 +139,17 @@ site/               optional Node server: accounts, progress sync, admin (SQLite
 
 The 13 identity modules (`16b`–`16m` plus the `16z` capstone) are merged at runtime into a single
 **Identity and Access** stream with named sub-categories, so the app shows 29 tracks from 41 content
-files.
+files. Those sub-categories, in reading order:
+
+| Sub-category | Lessons | Sub-category | Lessons |
+|---|--:|---|--:|
+| Identity & federation foundations | 23 | SAML & enterprise web SSO | 5 |
+| Authentication & MFA | 13 | PKI & certificates | 6 |
+| Authorization models | 8 | Service-to-service & zero trust | 8 |
+| Sessions, cookies & web login | 6 | Enterprise identity & directories | 8 |
+| OAuth 2.0 & OpenID Connect | 15 | Advanced OAuth & threats | 8 |
+| Tokens: JWT & JOSE | 7 | Governance & privileged access | 7 |
+| | | Capstone project | 1 |
 
 ## Workflow
 

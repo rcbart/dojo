@@ -94,6 +94,15 @@ track. Proposed streams (✅ = built):
 
 That's a genuine beginner→expert IAM domain (7 belt streams + 4 dan streams, ~60 lessons).
 
+> **Status update — this section is complete and then some.** All 13 IAM sub-categories are built:
+> **115 lessons, 122 exercises, 537 checks**, well past the ~60 originally planned. The extra depth
+> went into a much larger foundations layer (23 lessons) that grounds tokens, the identity lifecycle,
+> the claims data model, the actor cast, and the SSO / federation / delegation distinction *before*
+> the protocol streams use them — plus patterns the original map never listed: API keys, capability
+> URLs, cross-account role assumption, data-level authorization and IDOR, acting-as-a-user, OAuth
+> 2.1, the BFF pattern, DPoP in depth, SD-JWT, and FAPI. See `IAM_TOPICS.md` for the current map and
+> the short list of topics still open.
+
 ## 4. The rest of the app
 
 To realize "white→black in *every* domain, each with a dan track," the other domains need the same
@@ -103,10 +112,24 @@ Design) need more belt lessons to make black belt meaningful. This is a phased e
 
 ## 5. Recommended sequencing
 
-1. **Engine: per-domain belts + per-domain dan rendering** (small, foundational — everything else
-   hangs off it).
-2. **Finish the IAM belt track** (streams 3–7 above) + **IAM dan track** (the 4 advanced streams).
+1. ~~**Engine: per-domain belts + per-domain dan rendering**~~ — done; belts are percentage-based
+   per domain.
+2. ~~**Finish the IAM belt track + IAM dan track**~~ — done, and extended well beyond the original
+   map (see the status note in section 3).
 3. **Roll dan tracks + fill gaps across the other domains**, domain by domain, until each is a full
-   white→black + dan journey.
+   white→black + dan journey. ← *current focus*
 
 Each step ends green (`verify.js` 0 failures) and rebuilt.
+
+## 6. Where the other domains stand
+
+IAM is now by far the deepest domain at 115 lessons; the rest of the course is 200. The gap is the
+work remaining. Rough shape of it, from the current content:
+
+- **Deep enough for a meaningful black belt** — Java & the JVM, data structures & algorithms,
+  concurrency, web/HTTP & APIs, DevOps & delivery.
+- **Thinner, needs belt lessons** — data & persistence, systems & networking, architecture & design.
+- **Missing a dedicated dan track** — most domains outside IAM and the three existing dan streams.
+
+The IAM build is a useful template for the others: ground the vocabulary first in a foundations
+sub-category, then let each protocol or tool stream assume it.
