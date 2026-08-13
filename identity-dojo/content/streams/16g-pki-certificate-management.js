@@ -14,7 +14,50 @@ STREAMS.push({iam:true,sec:'PKI & certificates',icon:'📜',title:'PKI & Certifi
 KeyPairGenerator g = KeyPairGenerator.getInstance("RSA");
 g.initialize(2048);
 KeyPair pair = g.generateKeyPair();   // pair.getPrivate() signs; pair.getPublic() is certified
-// a CA then issues an X.509 cert binding pair.getPublic() to your identity</div>`,
+// a CA then issues an X.509 cert binding pair.getPublic() to your identity</div>
+
+<h4>The problem PKI exists to solve, in plain English</h4>
+<p>You want to talk privately to your bank. Encryption is not the hard part — the hard part is knowing
+that the public key you just received belongs to the bank and not to whoever is sitting between you and
+it. A key on its own is <b>anonymous</b>: it is a long number, and numbers do not have names.</p>
+<p>Think of a passport. Anyone can print a card with their photograph on it. What makes a passport worth
+anything is that a government you already trust <i>vouches for the binding</i> between the photograph and
+the name, and did so in a way you can check. A certificate is that, for keys: a public key, an identity,
+and a signature from an authority attesting that the two belong together.</p>
+
+<h4>Reading a certificate</h4>
+<div class="codeSample" data-hl>Subject:      CN=bank.com
+Subject Alternative Name (SAN):  DNS:bank.com, DNS:www.bank.com
+              // THE SAN is what browsers actually check. the old CN
+              // fallback was removed years ago - a certificate with only
+              // a CN and no SAN is rejected outright.
+Issuer:       CN=Example CA R3          // who vouched for this
+Public Key:   ECDSA P-256               // the key being vouched for
+Validity:     notBefore / notAfter      // and for how long
+Extensions:   Key Usage, Extended Key Usage, Basic Constraints
+Signature:    the ISSUER's signature over everything above</div>
+<p>The signature covers the whole document, so nothing in it can be altered without invalidating it. That
+is the entire security property: you are not trusting the certificate, you are trusting whoever signed
+it.</p>
+
+<h4>Why asymmetric keys are what make this possible</h4>
+<p>A symmetric secret has to be shared before it is useful, and anyone who can verify with it can also
+forge with it. A key <b>pair</b> breaks that symmetry: the private key signs and decrypts, the public key
+verifies and encrypts, and publishing the public one gives nothing away.</p>
+<p>That asymmetry is what lets a stranger verify your identity without you having first met them — the
+same property that makes federation possible in the identity streams, and the reason RS256 and ES256 are
+preferred over HS256 across organisational boundaries.</p>
+
+<h4>Two things worth knowing early</h4>
+<p><b>A certificate is public.</b> It is meant to be handed to anyone who connects. There is nothing
+secret in it. The private key is the secret, it never leaves the machine, and it is the only thing whose
+loss actually matters.</p>
+<p><b>The formats will confuse you once.</b> <b>PEM</b> is the base64 text with
+<code>-----BEGIN CERTIFICATE-----</code> around it; <b>DER</b> is the same content in binary;
+<b>PKCS#12</b> (<code>.p12</code>/<code>.pfx</code>) is an encrypted bundle holding a private key
+<i>and</i> its certificate chain. When a tool rejects your file, the answer is nearly always that it
+wanted a different container for the same bytes — <code>openssl x509 -in cert.pem -text -noout</code>
+tells you what you actually have.</p>`,
 docs:[['RFC 5280 — X.509 / PKIX','https://www.rfc-editor.org/rfc/rfc5280'],['KeyPairGenerator — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/security/KeyPairGenerator.html']],
 ex:{title:'Generate a key pair',
 prompt:`Write <code>Keys</code> with <code>static java.security.KeyPair rsa()</code> that returns a fresh <b>2048-bit RSA</b> key pair: <code>KeyPairGenerator.getInstance("RSA")</code>, <code>initialize(2048)</code>, then <code>generateKeyPair()</code>. Declare <code>throws Exception</code>.`,
@@ -54,7 +97,53 @@ public class Keys {
     │ signs
     ▼
  leaf cert (bank.com)   ← trusted because the chain up to a trusted root verifies
- Check each link: child.Issuer == parent.Subject, signature valid, not expired/revoked</div>`,
+ Check each link: child.Issuer == parent.Subject, signature valid, not expired/revoked</div>
+
+<h4>Why the chain exists at all</h4>
+<p>Your browser cannot know every website in the world. What it can do is know a few hundred
+<b>root CAs</b>, shipped with the operating system or the browser, and accept anything they vouch for —
+directly or through an intermediate.</p>
+<p>That is delegation of trust, and the reason for the middle layer is entirely practical: <b>the root's
+private key is the most valuable key in the system</b>. If it leaks, every certificate it ever signed
+becomes suspect and the root has to be removed from every trust store on earth. So roots are kept offline,
+in hardware, in a safe, and are brought out rarely to sign an intermediate. The intermediate does the daily
+work and can be replaced without touching the root.</p>
+
+<h4>What validation actually checks, in order</h4>
+<div class="codeSample" data-hl>for each link, from the leaf upward:
+  1. does child.Issuer match parent.Subject?
+  2. does the parent's key verify the child's signature?
+  3. is the child within its validity window?      (clocks matter here)
+  4. is the parent allowed to sign?  Basic Constraints CA:true
+                                     Key Usage keyCertSign
+  5. is the child revoked?           (see the revocation lesson)
+and finally:
+  6. is the top of the chain a root ALREADY IN YOUR TRUST STORE?
+  7. for TLS: does the hostname match a SAN on the LEAF?
+
+// step 6 is the one that matters. a chain that verifies perfectly but
+// ends at a root you do not trust is worth nothing - which is exactly
+// what a self-signed certificate is.</div>
+
+<h4>The failures you will actually meet</h4>
+<p><b>"Unable to get local issuer certificate."</b> The server sent the leaf but not the intermediates, so
+the client cannot build a path to a root it trusts. Browsers often paper over this by fetching the missing
+link; <code>curl</code>, Java and Go do not. <b>The server must send the full chain</b> — leaf first, then
+intermediates, never the root.</p>
+<p><b>"Certificate has expired"</b> when it plainly has not. Check the client's clock. A container with a
+badly skewed clock rejects perfectly valid certificates, and the error names the certificate rather than the
+real cause.</p>
+<p><b>A self-signed certificate</b> is its own issuer. It is not weaker cryptographically — it is simply
+unvouched-for, which is why every client refuses it unless you explicitly add it to a trust store.</p>
+
+<h4>Private CAs, and the honest trade</h4>
+<p>Inside your own estate you can run a CA and put its root in your own trust stores. That is how service
+meshes and internal mTLS work, and it is legitimate. The cost is that <b>you now operate a CA</b>: you own
+the root key's protection, the issuance policy, the rotation schedule, and the trust-store distribution to
+every workload. Cloud-managed private CAs exist precisely because that list is longer than it looks.</p>
+<p>And the warning that follows from all of this: <b>never add a CA to a trust store casually</b>. Whoever
+holds that CA's key can now impersonate <i>any</i> site to that machine — which is exactly how corporate
+TLS-inspection proxies work, and exactly why one is a serious decision rather than a networking detail.</p>`,
 docs:[['RFC 5280 §6 — Certification Path Validation','https://www.rfc-editor.org/rfc/rfc5280#section-6'],['CertPathValidator — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/security/cert/CertPathValidator.html']],
 ex:{title:'Check a link in the chain',
 prompt:`Write <code>Chain</code> with: <code>static boolean signedBy(String childIssuer, String parentSubject)</code> returning whether <code>childIssuer</code> is non-null and equals <code>parentSubject</code> (each cert's Issuer must match its parent's Subject); and <code>static boolean trusted(String rootSubject, java.util.Set&lt;String&gt; trustAnchors)</code> returning whether the root is in the trust store (<code>trustAnchors.contains(rootSubject)</code>).`,
@@ -93,7 +182,60 @@ keytool -importcert -alias mykey -file signed.crt -keystore ks.p12   // ← impo
 <li><b>Key Usage</b> — low-level operations (digitalSignature, keyEncipherment, <b>keyCertSign</b> = may sign other certs → a CA).</li>
 <li><b>Extended Key Usage (EKU)</b> — high-level purpose: <b>serverAuth</b> (TLS server), <b>clientAuth</b> (mTLS client), codeSigning, emailProtection.</li>
 <li><b>Basic Constraints</b> — <code>CA:true</code> marks a CA cert; a leaf must be <code>CA:false</code>. (A leaf with CA:true or a missing serverAuth EKU should be rejected.)</li>
-</ul>`,
+</ul>
+
+<h4>Why a CSR rather than just asking</h4>
+<p>The CA has to be sure of two separate things: that you are entitled to the name you are claiming, and
+that you actually hold the private key for the public key you sent. A CSR proves the second on its own —
+<b>it is signed with the private key it is asking to have certified</b>, so a CA that verifies the CSR's
+own signature knows the requester holds the matching key.</p>
+<p>The first — do you control <code>bank.com</code>? — is the CA's job to check, and it is where the real
+security of the public web lives. For a public certificate that means <b>domain validation</b>: put a
+specific token at a URL on the domain, or a specific TXT record in its DNS. ACME automates exactly this,
+which is why free automated certificates became possible at all.</p>
+<div class="codeSample" data-hl># what actually leaves your machine
+openssl req -new -key server.key -out server.csr -subj "/CN=api.example.com" \
+  -addext "subjectAltName=DNS:api.example.com,DNS:www.example.com"
+
+# the CSR contains: your PUBLIC key, the requested names, and a signature
+# made with your PRIVATE key.
+# the private key never appears in it and never leaves the machine.
+# any process that asks you to upload a private key is doing it wrong.</div>
+
+<h4>The extensions that decide what a certificate may do</h4>
+<div class="codeSample" data-hl>Basic Constraints   CA:true   -> may sign other certificates
+                    CA:false  -> a leaf. MUST NOT sign anything.
+                    also carries pathLen: how many CAs may sit below it
+
+Key Usage           digitalSignature   sign data / TLS handshakes
+                    keyEncipherment    encrypt a key to this cert
+                    keyCertSign        sign certificates  <- CA only
+                    cRLSign            sign revocation lists
+
+Extended Key Usage  serverAuth    a TLS server
+                    clientAuth    an mTLS client
+                    codeSigning / emailProtection / timeStamping</div>
+<p>These are not documentation — <b>validators enforce them</b>. A leaf certificate presented as a CA, or a
+certificate without <code>serverAuth</code> presented for TLS, must be rejected. That enforcement is what
+stops an ordinary leaf certificate being used to mint certificates for other names, which is the single
+worst thing that can go wrong in a PKI.</p>
+<p>It is also why <b>one certificate should not do two jobs</b>. A certificate with both
+<code>serverAuth</code> and <code>clientAuth</code> is common and usually harmless; a certificate with
+<code>keyCertSign</code> on anything that is not a CA is a finding.</p>
+
+<h4>Naming, and the trap in it</h4>
+<p>Put every name the service answers to in the SAN, and remember that a <b>wildcard</b> such as
+<code>*.example.com</code> matches exactly one label — it covers <code>api.example.com</code> but not
+<code>a.b.example.com</code>, and not the bare <code>example.com</code>. Wildcards also concentrate risk:
+one private key that can impersonate every subdomain you have. Prefer specific names where automation makes
+it cheap, which ACME does.</p>
+
+<h4>Where the private key should live</h4>
+<p><b>Generated on the machine that will use it, and never moved.</b> If a key exists in two places you have
+doubled the ways it can leak and lost the ability to say which copy was compromised. For anything
+high-value — a CA key, a token-signing key — that means an <b>HSM</b> or a cloud KMS, where the key is
+generated inside the device and the raw material never comes out at all. You send data in and get a
+signature back; the key cannot be exfiltrated because it cannot be read.</p>`,
 docs:[['keytool','https://docs.oracle.com/en/java/javase/21/docs/specs/man/keytool.html'],['RFC 5280 §4.2.1.12 — Extended Key Usage','https://www.rfc-editor.org/rfc/rfc5280#section-4.2.1.12']],
 ex:{title:'Enforce key usage',
 prompt:`Write <code>KeyUsage</code> with: <code>static boolean canServeTls(java.util.Set&lt;String&gt; eku)</code> returning whether the Extended Key Usage set <code>contains("serverAuth")</code>; and <code>static boolean isCa(boolean basicConstraintsCa, boolean keyCertSign)</code> returning whether <b>both</b> are true (a real CA cert has CA:true and the keyCertSign usage).`,
@@ -130,7 +272,53 @@ public class KeyUsage {
                       and the requested hostname matches the cert SAN
  4. Key exchange → both derive session keys → encrypted channel
  -- mTLS adds: the SERVER also asks for the CLIENT's cert and validates it the same way --</div>
-<p>The client's checks are non-negotiable: <b>valid chain</b>, <b>not expired</b>, <b>not revoked</b>, and <b>hostname matches the SAN</b> (a valid cert for the <i>wrong</i> host must be rejected — that's what stops impersonation). <b>mTLS</b> simply runs the same validation in <i>both</i> directions, which is how services authenticate each other (the S2S stream).</p>`,
+<p>The client's checks are non-negotiable: <b>valid chain</b>, <b>not expired</b>, <b>not revoked</b>, and <b>hostname matches the SAN</b> (a valid cert for the <i>wrong</i> host must be rejected — that's what stops impersonation). <b>mTLS</b> simply runs the same validation in <i>both</i> directions, which is how services authenticate each other (the S2S stream).</p>
+
+<h4>What the handshake is really doing</h4>
+<p>Two things at once, and it helps to keep them separate. <b>Authentication</b> — proving the server is who
+the name says — and <b>key agreement</b>, arriving at a shared symmetric key for the actual conversation.
+The certificate serves the first; the second uses ephemeral keys and is why a captured recording cannot be
+decrypted later even if the server's key is stolen afterwards. That property is called <b>forward
+secrecy</b> and it is the default in TLS 1.3.</p>
+<div class="codeSample" data-hl>1. ClientHello    versions, ciphers, and the SNI - the hostname the
+                  client WANTS, sent before any certificate exists.
+                  (SNI is how one IP serves many sites, and it is also
+                   why the requested hostname is visible on the network.)
+2. Server sends   its certificate CHAIN: leaf first, then intermediates.
+3. Client checks  chain to a trusted root, signatures, validity, revocation
+                  AND that the hostname matches a SAN on the leaf.
+4. Key agreement  ephemeral keys -> a shared session key
+5. Encrypted      everything after this point, in both directions
+
+// mTLS inserts one step: the server ALSO requests a certificate from the
+// client, and runs the same validation in the other direction.</div>
+
+<h4>The hostname check is the one that matters</h4>
+<p>A certificate can be perfectly valid — signed by a trusted CA, unexpired, unrevoked — and still be the
+wrong certificate. Without the hostname check, an attacker who holds any valid certificate for any domain
+could present it for yours, and the chain would verify happily.</p>
+<p>This is the check that <b>library defaults get wrong</b>. Browsers always perform it. Hand-rolled HTTP
+clients, and any code that disables verification to make a self-signed certificate work in development,
+frequently do not — and that setting has a long history of reaching production. If a client needs to trust a
+private CA, <b>add the CA to its trust store</b>; never disable verification.</p>
+
+<h4>What mTLS adds, and what it does not</h4>
+<p>It adds a verified caller identity at the transport layer, before a single byte of your application code
+runs. It does not add authorization: as the service-to-service stream put it, every service in the mesh has
+a valid certificate, so a successful handshake tells you the caller is <i>somebody</i>. Which somebody, and
+whether they may call this endpoint, is still yours to decide from the certificate's subject or SAN.</p>
+
+<h4>Debugging it</h4>
+<div class="codeSample" data-hl>openssl s_client -connect api.example.com:443 -servername api.example.com
+  # shows the chain the server ACTUALLY sends, in order.
+  # "unable to get local issuer certificate" here usually means the
+  # server omitted its intermediates - a server misconfiguration, even
+  # though browsers may hide it.
+
+openssl x509 -in cert.pem -noout -dates -ext subjectAltName
+  # the two things you check most: when it expires, and which names.</div>
+<p>The lesson from the failure modes: <b>most TLS problems are configuration, not cryptography</b> — a
+missing intermediate, a skewed clock, a name not in the SAN, or a certificate nobody renewed.</p>`,
 docs:[['RFC 8446 — TLS 1.3','https://www.rfc-editor.org/rfc/rfc8446'],['RFC 6125 — hostname verification','https://www.rfc-editor.org/rfc/rfc6125']],
 ex:{title:'Validate a server certificate',
 prompt:`Write <code>TlsValidate</code> with <code>static boolean serverCertOk(boolean chainValid, String certHost, String requestedHost, long notAfterEpoch, long now)</code> returning true only if the chain is valid, the requested host matches the cert's host (<code>requestedHost.equals(certHost)</code>), and it is not expired (<code>now &lt; notAfterEpoch</code>).`,
@@ -209,7 +397,61 @@ hints:['Two conditions joined with &&.','Expiry is strict: notAfterEpoch must be
 ks.load(new FileInputStream("ks.p12"), password);
 // a truststore is just a KeyStore holding trusted CA certs (no private keys)
 // TLS uses your keystore to present identity, your truststore to validate the peer</div>
-<p>Rule of thumb: <b>keystore = who you are (has secrets); truststore = who you trust (public only).</b> mTLS needs both — a keystore to present your client cert, a truststore to validate the server's (and vice-versa).</p>`,
+<p>Rule of thumb: <b>keystore = who you are (has secrets); truststore = who you trust (public only).</b> mTLS needs both — a keystore to present your client cert, a truststore to validate the server's (and vice-versa).</p>
+
+<h4>The distinction, and why it is worth being pedantic about</h4>
+<p>Two files, two completely different risk profiles, and mixing them up is the source of most Java TLS
+misery.</p>
+<div class="codeSample" data-hl>KEYSTORE    WHO YOU ARE.
+            holds YOUR private key + its certificate chain.
+            CONTAINS SECRETS. leaking it means someone can impersonate you.
+            used to PRESENT identity: a TLS server, or an mTLS client.
+
+TRUSTSTORE  WHO YOU BELIEVE.
+            holds CA certificates. public documents, no secrets.
+            leaking it is harmless. ADDING to it is the dangerous act -
+            whoever holds that CA's key can now impersonate anything to you.
+            used to VALIDATE the peer.
+
+// a plain TLS client needs only a truststore.
+// a TLS server needs only a keystore.
+// mTLS needs BOTH, at BOTH ends.</div>
+
+<h4>Where the trust actually comes from</h4>
+<p>If you never configure a truststore, the JVM falls back to <code>$JAVA_HOME/lib/security/cacerts</code>
+— a bundle of public root CAs shipped with the JDK. That is why calling a public HTTPS API works with no
+configuration, and it is also the thing that surprises people: <b>configure a custom truststore and you
+replace that bundle rather than adding to it</b>, so every public CA disappears and unrelated calls start
+failing. If you need both, import your private CA <i>into</i> a copy of <code>cacerts</code>, or configure
+both stores explicitly.</p>
+
+<h4>Formats, briefly</h4>
+<p><b>PKCS#12</b> (<code>.p12</code>, <code>.pfx</code>) is the modern, portable standard and has been the
+JDK default since Java 9. <b>JKS</b> is the legacy Java-only format; you will still meet it in older
+systems, and <code>keytool -importkeystore</code> converts one to the other. Neither format changes what is
+inside — the same distinction above applies to both.</p>
+<div class="codeSample" data-hl># what is actually in this file?
+keytool -list -v -keystore store.p12 -storetype PKCS12
+
+# entry types tell you which kind of store you are looking at:
+#   PrivateKeyEntry        -> a keystore. there is a secret in here.
+#   trustedCertEntry       -> a truststore. public certificates only.
+
+# and the flags that point Java at them:
+-Djavax.net.ssl.keyStore=/path/id.p12   -Djavax.net.ssl.keyStorePassword=...
+-Djavax.net.ssl.trustStore=/path/ca.p12 -Djavax.net.ssl.trustStorePassword=...</div>
+
+<h4>Operating them</h4>
+<p><b>Treat a keystore as a secret.</b> Not in the image, not in the repository, not in a wiki. It belongs
+in a secret manager or mounted at runtime, with the same rotation story as any other credential — which is
+the argument the secrets lesson in the governance stream makes in full.</p>
+<p><b>Truststores need rotating too</b>, and this is the one teams forget. Root CAs expire, and public roots
+are occasionally distrusted outright after an incident. A truststore assembled once and never revisited
+becomes the reason an integration breaks on a date nobody has in a calendar.</p>
+<p><b>Prefer the platform's stores where you can.</b> In a service mesh the sidecar handles all of this and
+rotates certificates hourly; in a cloud runtime the managed identity does. Hand-managed keystores are worth
+avoiding not because they are hard but because they are <b>quiet</b> — nothing reminds you they exist until
+something expires.`,
 docs:[['KeyStore — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/security/KeyStore.html'],['PKCS12','https://www.rfc-editor.org/rfc/rfc7292']],
 ex:{title:'Load a keystore, check a truststore',
 prompt:`Write <code>Stores</code> with: <code>static java.security.KeyStore loadPkcs12()</code> returning <code>KeyStore.getInstance("PKCS12")</code>; and <code>static boolean trusts(java.util.Set&lt;String&gt; truststoreAliases, String caAlias)</code> returning whether the truststore <code>contains(caAlias)</code>. Declare <code>throws Exception</code> where needed.`,
