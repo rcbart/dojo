@@ -10,7 +10,56 @@ STREAMS.push({iam:true,sec:'Service-to-service & zero trust',icon:'🔗',title:'
  4. A → Service B   Authorization: Bearer &lt;token&gt;
  5. B validates the token (issuer, audience, scope, expiry) and serves the request
  -- no user anywhere; the token's subject is the SERVICE A --</div>
-<p>Key points: it's a <b>confidential client</b> (only backends can hold the secret), there is <b>no refresh or ID token</b>, and the token is short-lived and <b>scoped</b> (least privilege — Service A gets exactly the scopes it needs, no more). With Cognito specifically, you define an app client + resource server/scopes and hit the pool's <code>/oauth2/token</code> endpoint.</p>`,
+<p>Key points: it's a <b>confidential client</b> (only backends can hold the secret), there is <b>no refresh or ID token</b>, and the token is short-lived and <b>scoped</b> (least privilege — Service A gets exactly the scopes it needs, no more). With Cognito specifically, you define an app client + resource server/scopes and hit the pool's <code>/oauth2/token</code> endpoint.</p>
+
+<h4>Why machine identity is the harder problem</h4>
+<p>A human logs in once a day and can be asked for a second factor. A service authenticates thousands of
+times an hour, at 3am, with nobody watching — so it cannot be challenged, it produces no signal when its
+credential is stolen, and it usually holds far more access than any single person. A database credential
+reads every row; a human reads the ten they were entitled to.</p>
+<p>Machine identities also <b>outnumber human ones by a wide margin</b> in any modern estate, and they are
+the population nobody reviews. That is the whole reason this stream exists, and the reason the governance
+stream has a lesson on non-human identity.</p>
+
+<h4>What the token actually says</h4>
+<div class="codeSample" data-hl>{
+  "iss": "https://auth.corp.com",       // who minted it
+  "sub": "orders-service",              // THE SERVICE - there is no user here
+  "aud": "https://billing.internal",    // who may accept it
+  "scope": "invoices:read",             // what it may do there
+  "exp": 1767225600                     // and for how long
+}
+
+// note what is ABSENT: no user, no email, no name. this token cannot
+// answer "on whose behalf?" - which is exactly why token exchange
+// exists, and why using client credentials for a user's request loses
+// the information the downstream service needs to authorize properly.</div>
+
+<h4>The operational details that decide whether it works</h4>
+<p><b>Cache the token.</b> These are fetched by code, in a loop. A service that requests a fresh token per
+outbound call will hammer the authorization server, get rate-limited, and take an outage caused entirely by
+its own token acquisition — a genuinely common production failure. Cache until shortly before expiry, and
+add jitter so a fleet restarting together does not stampede.</p>
+<p><b>Decide what happens when the authority is down.</b> A cached token keeps working until it expires;
+after that, every call fails. Whether that is a graceful degradation or a total outage is a decision, and
+it should be one you made rather than discovered.</p>
+<p><b>The audience check is not optional on the receiving side.</b> Five services trusting one issuer, with
+nobody checking <code>aud</code>, means any service holding any token can call any other. That is the
+confused deputy, and it is the single most common misconfiguration in internal platforms.</p>
+
+<h4>The credential ladder</h4>
+<div class="codeSample" data-hl>client_secret_basic     a shared secret. simple, ubiquitous, and it is a
+                        long-lived credential to store, ship and rotate.
+private_key_jwt         the client signs a short-lived assertion with its
+                        private key. nothing shared, so nothing to leak
+                        from the server side.
+mTLS                    the certificate IS the credential, and the token can
+                        be certificate-bound so a stolen one is unusable.
+workload identity       the platform attests what the workload is, and that
+                        attestation is exchanged for a token.
+                        NO STORED SECRET AT ALL - the end state to aim for.</div>
+<p>Most teams start at the top of that ladder and stay there. The rest of this stream is about the
+climb.</p>`,
 docs:[['AWS Cognito — client credentials','https://docs.aws.amazon.com/cognito/latest/developerguide/authorization-endpoint.html'],['RFC 6749 §4.4 — Client Credentials','https://www.rfc-editor.org/rfc/rfc6749#section-4.4']],
 ex:{title:'Request an M2M token from the authority',
 prompt:`Write <code>M2mToken</code> with: <code>static String tokenRequest(String scope)</code> returning <code>"grant_type=client_credentials&amp;scope=" + java.net.URLEncoder.encode(scope, "UTF-8")</code>; and <code>static String clientAuth(String clientId, String clientSecret)</code> returning <code>"Basic " + base64(clientId:clientSecret)</code> using <code>java.util.Base64.getEncoder()</code>. Declare <code>throws Exception</code> where needed.`,
@@ -53,7 +102,47 @@ public class M2mToken {
  Service A ──TLS ClientHello + A's client cert──▶ Service B
  Service B verifies A's cert against the trusted CA, reads A's identity from the subject/SAN,
  then checks: is A allowed to call this endpoint?   (identity-based authorization)
- Both directions are encrypted and authenticated — a stolen bearer token alone won't get in.</div>`,
+ Both directions are encrypted and authenticated — a stolen bearer token alone won't get in.</div>
+
+<h4>The property that makes mTLS different</h4>
+<p>A bearer token is a thing you <i>hold</i>. Steal it and you are the caller. An mTLS identity is a thing
+you <i>prove</i>: the client demonstrates possession of a private key during the handshake, and that key
+never crosses the wire. Copy the certificate and you have copied a public document — without the key it
+authenticates nothing.</p>
+<p>That is the same sender-constraining idea as DPoP, achieved at the transport layer instead of the
+application layer, and it is why mTLS is the strongest of the mechanisms in this stream.</p>
+
+<h4>What you get for free, and what you still have to do</h4>
+<div class="codeSample" data-hl>THE HANDSHAKE GIVES YOU        YOU STILL HAVE TO
+authentication                 authorization
+  "this is payments-svc"         "may payments-svc call THIS endpoint?"
+encryption in both directions  revocation
+  no plaintext on the wire       a valid cert stays valid until it expires
+proof of key possession        identity mapping
+  not just possession of a doc   cert subject -> the policy you wrote</div>
+<p>The second column is where the work is. A common mistake is treating a successful handshake as
+permission: <b>every service in the mesh has a valid certificate</b>, so "the TLS connection succeeded" only
+tells you the caller is <i>somebody</i>. Which somebody, and whether they may do this, is a policy decision
+you still have to make.</p>
+
+<h4>The operational reality</h4>
+<p><b>Certificate lifetime is the revocation story.</b> There is no practical way to revoke an mTLS
+identity mid-flight — CRLs and OCSP do not work well internally either. The answer the industry settled on
+is <b>very short-lived certificates</b>, rotated automatically: an hour, or minutes. A compromised workload
+then loses access when its certificate expires rather than when someone remembers to revoke it.</p>
+<p><b>Rotation must be automatic or it will not happen.</b> Hand-managed certificates expire at 2am on a
+public holiday. This is precisely the problem SPIFFE/SPIRE and service meshes exist to solve, and it is why
+they appear two lessons from here.</p>
+<p><b>Where TLS terminates matters.</b> If a load balancer terminates TLS, your service sees the balancer's
+identity, not the caller's — and any client-certificate information arrives in a header the balancer added,
+which is only trustworthy if nothing else can reach your service directly. In a mesh the sidecar terminates
+it inside the pod, which is why the guarantee holds there.</p>
+
+<h4>Where it does not fit</h4>
+<p>Browsers handle client certificates badly, most proxies and CDNs strip them, mobile platforms make
+storage awkward, and third parties will not want to manage a certificate you issued. mTLS is excellent
+<b>inside</b> a platform you control and a poor fit at its public edge — which is the split the choosing
+lesson later in this stream makes explicit.</p>`,
 docs:[['RFC 8705 — OAuth mTLS','https://www.rfc-editor.org/rfc/rfc8705'],['Istio mutual TLS','https://istio.io/latest/docs/concepts/security/#mutual-tls-authentication']],
 ex:{title:'Authorize by peer identity',
 prompt:`Write <code>MtlsIdentity</code> with: <code>static boolean allowed(String peerSubject, java.util.Set&lt;String&gt; allowedSubjects)</code> returning whether <code>peerSubject</code> is non-null and in <code>allowedSubjects</code>; and <code>static String spiffeFromSan(String sanUri)</code> returning <code>sanUri</code> if it is non-null and <code>startsWith("spiffe://")</code>, else <code>null</code> (the cert's SAN URI is the workload identity).`,
@@ -189,7 +278,65 @@ public class TokenExchange {
               scheme     trust      path (the specific workload)
                          domain
  X.509-SVID → SPIFFE ID in the cert SAN  → used for mTLS
- JWT-SVID   → SPIFFE ID as the JWT sub   → used for token-based calls</div>`,
+ JWT-SVID   → SPIFFE ID as the JWT sub   → used for token-based calls</div>
+
+<h4>The problem it removes, in plain terms</h4>
+<p>Every mechanism so far starts with a question nobody has a good answer to: <b>how does the very first
+credential get onto the machine?</b> You give a service a client secret — but how? Baked into the image
+(now it is in every registry pull), injected by CI (now CI holds every secret in the estate), fetched from
+a vault (which needs a credential to open, so you have moved the problem rather than solved it).</p>
+<p>This is the <b>secret zero</b> problem, and SPIFFE's answer is to stop shipping a secret at all. The
+platform already knows things about a workload that an attacker cannot easily forge — which node it is on,
+which Kubernetes service account it runs under, what its process looks like. <b>Attestation</b> turns those
+facts into an identity, and the workload receives a freshly minted, short-lived credential it never had to
+be given in advance.</p>
+
+<h4>Reading a SPIFFE ID</h4>
+<div class="codeSample" data-hl>spiffe://corp.com/ns/prod/sa/payments
+         \________/ \________________/
+         trust domain   the workload path
+
+// the TRUST DOMAIN is the security boundary. two workloads in different
+// trust domains do not trust each other unless the domains have been
+// explicitly federated - which is what makes this work across clouds
+// and across organisations.
+
+// the PATH is a naming convention, not a rule. mirroring your platform
+// (namespace, service account) is what makes policy readable, and it is
+// what lets an operator tell at a glance which workload a policy names.</div>
+
+<h4>Two credential shapes, two jobs</h4>
+<p>An <b>X.509-SVID</b> is a certificate carrying the SPIFFE ID in its SAN. It is what mTLS consumes, so
+the connection itself is authenticated — and being a certificate, possession of the key is proven rather
+than asserted.</p>
+<p>A <b>JWT-SVID</b> carries the SPIFFE ID as its <code>sub</code>. It is a bearer token, so it is weaker,
+and it exists for the cases mTLS cannot reach — through a load balancer that terminates TLS, across an
+event queue, into a system that speaks only HTTP headers. <b>Prefer the X.509 form</b>, and reach for the
+JWT one knowingly, with a short lifetime and an audience check.</p>
+
+<h4>What SPIRE actually does</h4>
+<div class="codeSample" data-hl>1. NODE ATTESTATION     the agent proves which machine it is, using
+                        something the platform vouches for - an AWS
+                        instance identity document, a GCP metadata token,
+                        a Kubernetes node token.
+2. WORKLOAD ATTESTATION a process asks the local agent for an identity.
+                        the agent inspects it through the kernel - uid,
+                        the container it is in, its service account - and
+                        decides which SPIFFE ID it qualifies for.
+3. ISSUANCE + ROTATION  a short-lived SVID is handed over a unix socket
+                        and refreshed automatically before it expires.
+
+// the workload never presents a credential to get one. it asks a local
+// socket, and the platform's own knowledge of it is the proof.</div>
+
+<h4>The honest trade</h4>
+<p>SPIRE is real infrastructure: a server, agents on every node, a registration entry per workload, and a
+trust domain to operate and back up. That is a meaningful cost, and for a handful of services a client
+secret in a secret manager is the proportionate answer.</p>
+<p>It earns its keep when the estate is large enough that secret distribution and rotation have become a
+standing burden, when workloads are ephemeral, or when identity must cross clouds or organisations. Most
+teams meet it not directly but through a service mesh, which uses it underneath — which is the next
+lesson.</p>`,
 docs:[['SPIFFE overview','https://spiffe.io/docs/latest/spiffe-about/overview/'],['SPIFFE ID format','https://github.com/spiffe/spiffe/blob/main/standards/SPIFFE-ID.md'],['SPIRE','https://spiffe.io/docs/latest/spire-about/']],
 ex:{title:'Parse & validate a SPIFFE ID',
 prompt:`Write <code>Spiffe</code> with: <code>static boolean isValid(String id)</code> returning true only if <code>id</code> is non-null, <code>startsWith("spiffe://")</code>, and has a path (a <code>'/'</code> after the trust domain — i.e. <code>indexOf('/', "spiffe://".length())</code> is &gt; 0); and <code>static String trustDomain(String id)</code> returning the trust domain (the text between <code>spiffe://</code> and the next <code>'/'</code>), or <code>null</code> if invalid.`,
@@ -225,7 +372,55 @@ solution:`public class Spiffe {
 <li><b>Service mesh mTLS</b> — Istio/Linkerd (often backed by SPIRE) give each pod an identity and do mTLS automatically; policy is written against the workload identity.</li>
 <li><b>Validation</b> — a JWT-SVID or platform token is validated like any JWT: signature, <b>issuer</b>, <b>audience</b> (must be <i>this</i> service), and <b>expiry</b> — plus the <b>trust domain</b> must be one you accept.</li>
 </ul>
-<p>The throughline: prove identity with something the platform vouches for, keep it <b>short-lived</b>, and authorize on the verified identity — never a shared password.</p>`,
+<p>The throughline: prove identity with something the platform vouches for, keep it <b>short-lived</b>, and authorize on the verified identity — never a shared password.</p>
+
+<h4>Federation, without a secret anywhere</h4>
+<p>Every major platform now offers the same trade, under four different names. Your workload already holds
+a token that says what it is — a Kubernetes service-account JWT, a GitHub Actions OIDC token, an instance
+identity document. The cloud provider is willing to <b>trust that issuer</b> and exchange the token for
+short-lived credentials of its own.</p>
+<div class="codeSample" data-hl>THE OLD WAY                    THE FEDERATED WAY
+a long-lived cloud key         the platform-issued token you already have
+  stored in CI, in an image,     ↓ exchanged, over TLS, at call time
+  in a repo, in a Slack message  ↓
+  and rotated approximately      short-lived cloud credentials
+  never                          expiring in minutes
+
+// this is the single highest-value change most teams can make. the
+// static cloud key in CI is, empirically, one of the most commonly
+// leaked credentials in existence.</div>
+<p>The names to recognise: <b>IRSA</b> (AWS, for Kubernetes), <b>Workload Identity</b> (GCP),
+<b>Managed Identity</b> (Azure), and OIDC federation for CI systems. They differ in configuration and not
+in idea.</p>
+
+<h4>The part people get wrong: the trust policy</h4>
+<p>Configuring federation means telling the cloud provider which external identities may assume which role.
+Get that condition too loose and you have published the role to the internet.</p>
+<div class="codeSample" data-hl>// a GitHub Actions trust policy, done badly:
+"sub": "repo:acme/*"              // ANY repo in the org. including one
+                                  // a contractor can open a PR against.
+"sub": "repo:*"                   // ANY repository on GitHub. anyone.
+
+// done properly - pin the repo, AND the ref or environment:
+"sub": "repo:acme/payments:ref:refs/heads/main"
+"sub": "repo:acme/payments:environment:production"
+// and always constrain the audience, or a token minted for another
+// service can be replayed at yours.</div>
+<p>This is the same lesson as role assumption in Foundations: the trust policy decides <i>who may become
+you</i>, and it is a far more consequential document than the permission policy attached to it.</p>
+
+<h4>Validating a platform token on the receiving side</h4>
+<p>Whether it is a JWT-SVID, a Kubernetes token or a CI token, the checks are the ones from the token
+validation lesson, plus one: <b>signature</b> against the issuer's published keys, <b>iss</b> against an
+issuer you configured (never one read out of the token), <b>aud</b> equal to <i>this</i> service,
+<b>exp</b>, and the <b>trust domain</b> must be one you accept. Skipping the last two is how a token minted
+for a neighbouring service, or from a federated domain you never intended to trust, is accepted.</p>
+
+<h4>The throughline</h4>
+<p>Every mechanism in this stream is the same move: <b>prove identity with something the platform vouches
+for, keep it short-lived, and authorize on the verified identity</b> — never on a shared password, never on
+being inside the network. Which mechanism you pick is the next lesson; that principle does not change
+between them.</p>`,
 docs:[['AWS IRSA','https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html'],['GCP Workload Identity Federation','https://cloud.google.com/iam/docs/workload-identity-federation'],['SPIFFE JWT-SVID','https://github.com/spiffe/spiffe/blob/main/standards/JWT-SVID.md']],
 ex:{title:'Validate a workload token',
 prompt:`Write <code>WorkloadToken</code> with <code>static boolean valid(String audience, String subjectSpiffeId, long expEpoch, String expectedAudience, String acceptedTrustDomainPrefix, long now)</code> returning true only if <code>expectedAudience.equals(audience)</code>, <code>subjectSpiffeId</code> is non-null and <code>startsWith(acceptedTrustDomainPrefix)</code>, and it is not expired (<code>expEpoch &gt; now</code>).`,
@@ -264,7 +459,59 @@ applied: picking a service-to-service approach.</i></p>
  Cross-org / third-party / public API?      → OAuth Client Credentials (a minting authority)
  Must act on behalf of a user downstream?   → Token Exchange
  Need cloud creds without static keys?      → Workload identity federation
- Always: short-lived · least privilege · check audience · never a long-lived secret</div>`,
+ Always: short-lived · least privilege · check audience · never a long-lived secret</div>
+
+<h4>Ask the questions in this order</h4>
+<p>The table above is the shape of the decision. The order matters, because the first two questions
+eliminate most of the options before you have to weigh anything.</p>
+<div class="codeSample" data-hl>1. DOES A USER'S IDENTITY NEED TO SURVIVE THIS HOP?
+     yes -> token exchange. nothing else carries the subject, and using
+            client credentials here silently loses the information the
+            downstream service needs to authorize properly.
+     no  -> continue.
+
+2. IS THE CALLER INSIDE A PLATFORM YOU CONTROL?
+     yes -> mTLS with SPIFFE/mesh identity. no secrets, sender-constrained,
+            rotation is automatic. this is the default for internal calls.
+     no  -> continue.
+
+3. IS THE TARGET A CLOUD PROVIDER'S OWN API?
+     yes -> workload identity federation. never a static key.
+     no  -> OAuth client credentials, with the strongest client auth the
+            other side supports: mTLS > private_key_jwt > shared secret.</div>
+<p>Note what the order rules out. A team that starts at question 3 reaches for client credentials for
+everything, ends up distributing secrets internally, and then builds tooling to manage the problem it
+created. Starting at question 1 prevents the more expensive mistake: choosing a mechanism that cannot
+carry the user, and discovering it only when the downstream service needs to authorize.</p>
+
+<h4>What "never trust the network" costs</h4>
+<p>Zero trust is right, and it is not free. Every hop now verifies a signature or completes a handshake, so
+there is real latency and real CPU. Every service needs the identity infrastructure available, so an
+outage in the authority or the mesh control plane becomes an outage in everything. And policy that used to
+live in one firewall rule now lives in dozens of services.</p>
+<p>The mitigations are the ones this stream has already named: cache verification keys with a long TTL and
+refresh on an unknown <code>kid</code>; cache exchanged tokens for their lifetime; keep the policy decision
+local (a sidecar or a library, not a network call per request); and decide in advance whether a control-plane
+outage fails open or closed. <b>Fail closed</b> is the correct default, and it means an availability plan is
+part of adopting zero trust rather than something you discover afterwards.</p>
+
+<h4>What does not change, whichever you choose</h4>
+<div class="codeSample" data-hl>SHORT-LIVED       minutes, not months. expiry is your revocation.
+LEAST PRIVILEGE   narrow scopes, narrow audiences, one identity per service.
+                  never one shared credential for a whole platform.
+AUDIENCE CHECKED  on every hop, by the receiver. this is the confused
+                  deputy fix and it is the most commonly skipped check.
+ROTATED           automatically. a rotation that needs a human will not
+                  happen at 2am on a public holiday.
+NO SHARED SECRET  and where one is unavoidable, in a secret manager with
+                  an audit trail - never in an image, a repo or CI config.</div>
+
+<h4>A note for whoever is choosing</h4>
+<p>Do not run all four mechanisms because each is locally optimal. Every one is infrastructure to operate,
+document and debug at 3am. <b>Pick one internal mechanism and one external mechanism</b>, use token exchange
+where the user must survive a hop, and treat anything else as an exception with a written reason. A platform
+with two well-understood paths is more secure in practice than one with five correct ones nobody fully
+knows.</p>`,
 docs:[['NIST SP 800-207 — Zero Trust Architecture','https://csrc.nist.gov/pubs/sp/800/207/final'],['SPIFFE + service mesh','https://spiffe.io/docs/latest/microservices/']],
 ex:{title:'Choose the mechanism',
 prompt:`Write <code>ZeroTrust</code> with: <code>static String mechanism(String scenario)</code> returning <code>"mtls-spiffe"</code> for <code>"same-mesh"</code> or <code>"kubernetes"</code>, <code>"oauth-client-credentials"</code> for <code>"cross-org"</code> or <code>"third-party-api"</code>, <code>"token-exchange"</code> for <code>"on-behalf-of-user"</code>, and <code>"mtls-spiffe"</code> as the default; and <code>static boolean longLivedSecretOk(String env)</code> returning <code>false</code> (zero trust: never rely on long-lived shared secrets).`,
