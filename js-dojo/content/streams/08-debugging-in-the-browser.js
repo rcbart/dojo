@@ -66,7 +66,7 @@ A breakpoint answers <b>every</b> question about that moment — including ones 
 are looking — and lets you walk the call stack to see how you got there. Logging is still useful for
 things you cannot pause on: production, timing-sensitive code, or a bug you can only reproduce once.</p>`,
 docs:[['Chrome DevTools — debug JavaScript','https://developer.chrome.com/docs/devtools/javascript'],['Chrome DevTools — breakpoints','https://developer.chrome.com/docs/devtools/javascript/breakpoints'],['MDN — Firefox Debugger','https://firefox-source-docs.mozilla.org/devtools-user/debugger/']],
-ex:{title:'Choose the right breakpoint',lang:'js',
+ex:{title:'Choose the right breakpoint',diff:'easy',lang:'js',
 run:{call:'breakpointFor',cases:[
  {name:'a bug on one specific record out of thousands',args:['one-record-in-a-loop'],expect:'conditional'},
  {name:'you want a value logged without editing the file',args:['log-without-editing'],expect:'logpoint'},
@@ -155,7 +155,7 @@ version of a file DevTools serves in place of the real one, so you can test a fi
 without deploying. <b>Workspaces</b> map served files to a folder on disk, so edits in the Sources panel
 write straight to your source. Both are enormous time-savers and almost unknown.</p>`,
 docs:[['Chrome DevTools — ignore list','https://developer.chrome.com/docs/devtools/settings/ignore-list'],['Chrome DevTools — local overrides','https://developer.chrome.com/docs/devtools/overrides'],['MDN — Source maps','https://developer.mozilla.org/en-US/docs/Glossary/Source_map']],
-ex:{title:'Diagnose a breakpoint that will not bind',lang:'js',
+ex:{title:'Diagnose a breakpoint that will not bind',diff:'easy',lang:'js',
 run:{call:'diagnoseSourceMap',cases:[
  {name:'single-letter variables mean no map is applied',args:[false,true,true],expect:'source map not applied'},
  {name:'the map is referenced but missing',args:[true,false,true],expect:'map file not reachable'},
@@ -239,7 +239,7 @@ terminal or hand to a backend engineer. It removes every "works for me" argument
 number of bugs are a stale token, a missing header, or a URL built from an undefined variable that
 stringified into the path.</p>`,
 docs:[['Chrome DevTools — Network','https://developer.chrome.com/docs/devtools/network'],['MDN — CORS','https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS'],['MDN — HTTP status codes','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status']],
-ex:{title:'Triage from the Network panel',lang:'js',
+ex:{title:'Triage from the Network panel',diff:'easy',lang:'js',
 run:{call:'triage',cases:[
  {name:'never reached the server',args:['failed'],expect:'network, DNS, TLS or blocked by CSP'},
  {name:'blocked by the browser after a response',args:['cors'],expect:'server must send the CORS headers'},
@@ -336,7 +336,7 @@ website, does not hand a live credential to a third party. Check <code>iss</code
 a live credential, and you have just given it away.</p>`,
 docs:[['Chrome DevTools — Application panel','https://developer.chrome.com/docs/devtools/storage/localstorage'],['MDN — Set-Cookie','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie'],['RFC 6749 — OAuth 2.0','https://www.rfc-editor.org/rfc/rfc6749'],['RFC 7636 — PKCE','https://www.rfc-editor.org/rfc/rfc7636']],
 exs:[
-{title:'Locate the OAuth failure',lang:'js',
+{title:'Locate the OAuth failure',diff:'easy',lang:'js',
 run:{call:'whereToLook',cases:[
  {name:'redirect_uri_mismatch is an authorize-request problem',args:['redirect_uri_mismatch'],expect:'compare the sent redirect_uri with the registered one'},
  {name:'invalid_grant is a token-exchange problem',args:['invalid_grant'],expect:'the code was reused, expired, or the verifier does not match'},
@@ -367,7 +367,7 @@ solution:`function whereToLook(symptom) {
 tests:[{d:'redirect_uri_mismatch',re:'"redirect_uri_mismatch"'},{d:'invalid_grant',re:'"invalid_grant"'},{d:'state_mismatch',re:'"state_mismatch"'},{d:'api_401',re:'"api_401"'},{d:'login_loop',re:'"login_loop"'}],
 behavior:`Six symptoms execute. The default is the real lesson: when you do not recognise the symptom, turn on Preserve log and walk the chain from /authorize to the API call, because every one of these is visible in the Network panel if the panel is still holding the earlier hops.`,
 hints:['One case per symptom, with a default that describes the general method.','invalid_grant is always at the token exchange, never at authorize.','The default should describe what to do when you do not recognise the error.']},
-{title:'Decode a JWT payload safely',lang:'js',
+{title:'Decode a JWT payload safely',diff:'medium',lang:'js',
 run:{call:'decodePayload',cases:[
  {name:'decodes the middle segment',args:['aaa.eyJzdWIiOiJhZGEifQ.sig'],expect:{sub:'ada'}},
  {name:'decodes several claims',args:['h.eyJpc3MiOiJhcyIsImF1ZCI6ImFwaSJ9.s'],expect:{iss:'as',aud:'api'}},

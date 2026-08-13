@@ -1,9 +1,9 @@
 <p align="center">
   <img src="https://img.shields.io/badge/status-in%20progress-f59e0b" alt="status">
-  <img src="https://img.shields.io/badge/streams-8%20of%2015-eab308" alt="streams built">
-  <img src="https://img.shields.io/badge/lessons-33-eab308" alt="lessons">
-  <img src="https://img.shields.io/badge/exercises-49-06b6d4" alt="exercises">
-  <img src="https://img.shields.io/badge/executed%20cases-269-2ea44f" alt="executed test cases">
+  <img src="https://img.shields.io/badge/streams-9%20of%2015-eab308" alt="streams built">
+  <img src="https://img.shields.io/badge/lessons-37-eab308" alt="lessons">
+  <img src="https://img.shields.io/badge/exercises-60-06b6d4" alt="exercises">
+  <img src="https://img.shields.io/badge/executed%20cases-328-2ea44f" alt="executed test cases">
   <img src="https://img.shields.io/badge/real%20execution-100%25-06b6d4" alt="exercises graded by real execution">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
@@ -14,10 +14,10 @@ JavaScript and Node from the ground up, **assuming nothing**, in a single offlin
 course in this repository, built on the same [shared engine](../engine/README.md) as
 [DevDojo](../README.md) and [IdentityDojo](../identity-dojo/README.md).
 
-> **Status: in progress — 8 of 15 streams built.** Streams 1–8 are written, verifying and executing:
-> **33 lessons, 49 exercises, 269 executed cases, 0 failures**. Every exercise runs for real. The whole
-> language core, both debugging streams and the OAuth-flow walkthrough are done; streams 9–15 (modules,
-> TypeScript and Node) are outlined below. The badges count what exists.
+> **Status: in progress — 9 of 15 streams built.** Streams 1–9 are written, verifying and executing:
+> **37 lessons, 60 exercises, 328 executed cases, 0 failures**. Every exercise runs for real. The whole
+> language core, both debugging streams, the OAuth-flow walkthrough and modules/npm are done; streams
+> 10–15 (TypeScript and Node) are outlined below. The badges count what exists.
 
 ## Why this course exists
 
@@ -52,13 +52,29 @@ hand-waved as "just how JavaScript is".
 | 6 | **The Event Loop & Async** ✅ | callbacks, promises, `async`/`await`, microtasks vs macrotasks, concurrency, cancellation |
 | 7 | **Errors & the Debugging Method** ✅ | `Error` types, `try`/`catch`/`finally`, custom errors, reading stack traces, async errors, bisect/reproduce/isolate |
 | 8 | **Debugging in the Browser** ✅ | DevTools Sources, breakpoints (conditional, logpoint, DOM, XHR), the scope pane, blackboxing, source maps, the Network panel, cookies and storage, **tracing an OAuth/OIDC redirect flow end to end** |
-| 9 | Modules, Packages & Tooling | ESM vs CommonJS, `package.json`, npm, semver, lockfiles, bundlers, linting and formatting |
+| 9 | **Modules, Packages & Tooling** ✅ | ESM vs CommonJS, `package.json`, npm, semver, lockfiles, bundlers, linting and formatting |
 | 10 | TypeScript | why types, structural typing, generics, narrowing, `unknown` vs `any`, migrating JS |
 | 11 | The Node Runtime | what Node is, its event loop and phases, `process`, env and CLI args, globals |
 | 12 | Files, Streams & the Standard Library | `fs`, `path`, buffers, streams, backpressure, `worker_threads` |
 | 13 | Building an HTTP Server | the `http` module, routing, middleware, REST, validation, auth, security headers |
 | 14 | Debugging, Testing & Profiling Node | `node --inspect`, breakpoints in server code, `node:test`, heap snapshots, CPU profiles, event-loop blocking |
 | 15 | Capstone | build and debug a real application end to end |
+
+## How the exercises are pitched
+
+Every lesson averages ~460 words with worked, concrete examples rather than definitions, and its exercises
+**ramp in difficulty** — each one is tagged `easy`, `medium` or `hard`, which drives the built-in Practice
+filter:
+
+- **easy** — one idea, applied directly. Classify a value, pick the right construct.
+- **medium** — two or three ideas combined, with a case that punishes the obvious shortcut.
+- **hard** — a small realistic problem: normalise a form submission where `Number("")` is `0` and a
+  legitimate `0` must survive; memoise with a closure where a cached `0` breaks a truthy cache check;
+  plan a retry with exponential backoff and get the off-by-one right; build a bounded queue with private
+  fields; compare two semver strings where `"1.10.0"` must outrank `"1.9.0"`.
+
+The hard tier is written so that a plausible-looking implementation fails a **named** case, and the
+`behavior` note says which assumption broke.
 
 ## Build & run
 

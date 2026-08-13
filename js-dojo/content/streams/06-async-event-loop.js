@@ -57,7 +57,7 @@ timers completely.</p>
 queued, it runs later — and browsers clamp nested timeouts to about 4ms. Never use a timer for
 correctness; use it to yield.</p>`,
 docs:[['MDN — The event loop','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model'],['MDN — Microtask guide','https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide'],['Node — the event loop','https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick']],
-ex:{title:'Predict the output order',lang:'js',
+ex:{title:'Predict the output order',diff:'easy',lang:'js',
 run:{call:'order',cases:[
  {name:'synchronous first, then microtask, then macrotask',args:[['sync','timeout','promise']],expect:['sync','promise','timeout']},
  {name:'microtasks drain before any timer',args:[['timeout','promise']],expect:['promise','timeout']},
@@ -132,7 +132,7 @@ callbacks are <i>always</i> asynchronous, which removes the whole class.</p>
 <i>one</i> future value, so it is the wrong shape for a click handler. The rule: one-shot work becomes a
 promise, repeated work stays a callback.</p>`,
 docs:[['MDN — Callback function','https://developer.mozilla.org/en-US/docs/Glossary/Callback_function'],['Node — asynchronous flow control','https://nodejs.org/en/learn/asynchronous-work/javascript-asynchronous-programming-and-callbacks']],
-ex:{title:'Handle the error-first convention',lang:'js',
+ex:{title:'Handle the error-first convention',diff:'easy',lang:'js',
 run:{call:'settle',cases:[
  {name:'an error is reported',args:[{message:'nope'},null],expect:'error: nope'},
  {name:'a result is used',args:[null,'data'],expect:'ok: data'},
@@ -210,7 +210,7 @@ unhandled rejection is a warning in browsers and, since Node 15, <b>crashes the 
 you neither return nor catch is a silent failure waiting to happen.</p>`,
 docs:[['MDN — Using promises','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises'],['MDN — Promise','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise'],['MDN — Promise.allSettled','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled']],
 exs:[
-{title:'Choose the right combinator',lang:'js',
+{title:'Choose the right combinator',diff:'easy',lang:'js',
 run:{call:'combinator',cases:[
  {name:'every result needed, any failure fatal',args:['need-all-fail-fast'],expect:'Promise.all'},
  {name:'partial success is useful',args:['need-partial-results'],expect:'Promise.allSettled'},
@@ -233,7 +233,7 @@ solution:`function combinator(intent) {
 tests:[{d:'all for fail-fast',re:'"Promise\\.all"'},{d:'allSettled for partial results',re:'"Promise\\.allSettled"'},{d:'race for first to settle',re:'"Promise\\.race"'},{d:'any for first success',re:'"Promise\\.any"'}],
 behavior:`The distinction that matters in practice is the first two: Promise.all rejects the moment anything fails, so one dead widget takes out a whole dashboard, while allSettled gives you five results and one recorded failure.`,
 hints:['One case per combinator, with a default.','race settles on the first outcome of ANY kind; any waits for the first success.','allSettled never rejects.']},
-{title:'Await a real promise',lang:'js',
+{title:'Await a real promise',diff:'medium',lang:'js',
 run:{call:'doubleLater',cases:[
  {name:'resolves to double the value',args:[5],expect:10},
  {name:'zero',args:[0],expect:0},
@@ -329,7 +329,7 @@ await fetch(url, { signal: ac.signal });    // rejects with AbortError
 await Promise.race([work(), rejectAfter(5000)]);   // useful, but leaky</div>`,
 docs:[['MDN — async function','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function'],['MDN — await','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await'],['MDN — AbortController','https://developer.mozilla.org/en-US/docs/Web/API/AbortController']],
 exs:[
-{title:'Sequential or concurrent?',lang:'js',
+{title:'Sequential or concurrent?',diff:'easy',lang:'js',
 run:{call:'strategy',cases:[
  {name:'step two needs step one',args:[true,false],expect:'sequential'},
  {name:'independent steps run together',args:[false,false],expect:'concurrent'},
@@ -347,7 +347,7 @@ solution:`function strategy(dependsOnPrevious, rateLimited) {
 tests:[{d:'a dependency forces sequencing',re:'dependsOnPrevious'},{d:'a rate limit means batching',re:'rateLimited'},{d:'otherwise run concurrently',re:'"concurrent"'}],
 behavior:`The last case executes the precedence: a dependency wins even when a rate limit is also present, because correctness constrains ordering and a rate limit only constrains throughput. Checking the rate limit first would pass three cases and fail that one.`,
 hints:['Check the dependency first — it is the stronger constraint.','Guard clauses in priority order.','Independent and unlimited is the fast path.']},
-{title:'Run work concurrently',lang:'js',
+{title:'Run work concurrently',diff:'medium',lang:'js',
 run:{call:'totalOf',cases:[
  {name:'sums the resolved values',args:[[1,2,3]],expect:6},
  {name:'a single value',args:[[5]],expect:5},
@@ -363,6 +363,34 @@ solution:`async function totalOf(values) {
 }`,
 tests:[{d:'is async',re:'async'},{d:'awaits all of them together',re:'Promise\\.all'},{d:'maps values to promises',re:'\\.map\\('},{d:'sums with an initial accumulator',re:'\\.reduce\\('}],
 behavior:`Promise.all on an empty array resolves immediately to [], and reduce's initial 0 turns that into 0 rather than a TypeError. Awaiting inside a loop instead would produce the same answer here but would serialise the work — correct, and needlessly slow.`,
-hints:['map each value to a promise, then hand the array to Promise.all.','await the whole thing at once rather than one at a time.','reduce needs its initial value for the empty case.']}]}
+hints:['map each value to a promise, then hand the array to Promise.all.','await the whole thing at once rather than one at a time.','reduce needs its initial value for the empty case.']},
+{title:'Retry with exponential backoff',diff:'hard',lang:'js',
+run:{call:'attemptPlan',cases:[
+ {name:'succeeds first time: one attempt, no waiting',args:[1,3,100],expect:{attempts:1,delays:[]}},
+ {name:'succeeds on the third: two waits, doubling',args:[3,5,100],expect:{attempts:3,delays:[100,200]}},
+ {name:'never succeeds: stops at the limit',args:[99,4,100],expect:{attempts:4,delays:[100,200,400]}},
+ {name:'a single allowed attempt never waits',args:[99,1,100],expect:{attempts:1,delays:[]}},
+ {name:'a different base delay doubles from there',args:[3,3,50],expect:{attempts:3,delays:[50,100]}},
+ {name:'succeeding on the last allowed attempt',args:[4,4,10],expect:{attempts:4,delays:[10,20,40]}}]},
+prompt:`Write <code>function attemptPlan(succeedOnAttempt, maxAttempts, baseDelay)</code> that works out a retry plan without actually waiting. Return <code>{ attempts, delays }</code>: <code>attempts</code> is how many calls were made, and <code>delays</code> lists the wait before each <b>retry</b>, doubling each time (<code>baseDelay</code>, then double, then double again). Stop as soon as the attempt numbered <code>succeedOnAttempt</code> is reached, or when <code>maxAttempts</code> is used up. There is never a wait after the final attempt.`,
+starter:`function attemptPlan(succeedOnAttempt, maxAttempts, baseDelay) {
+  return { attempts: 0, delays: [] };
+}`,
+solution:`function attemptPlan(succeedOnAttempt, maxAttempts, baseDelay) {
+  const delays = [];
+  let delay = baseDelay;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    if (attempt === succeedOnAttempt) return { attempts: attempt, delays };
+    if (attempt < maxAttempts) {      // no wait after the LAST attempt
+      delays.push(delay);
+      delay *= 2;                     // exponential: each wait doubles
+    }
+  }
+  return { attempts: maxAttempts, delays };   // gave up
+}`,
+tests:[{d:'loops up to the attempt limit',re:'maxAttempts'},{d:'stops on success',re:'succeedOnAttempt'},{d:'doubles the delay',re:'\\*=\\s*2|\\*\\s*2'},{d:'collects the waits',re:'delays\\.push'}],
+behavior:`Six cases execute and three of them catch off-by-one errors. There are always exactly one fewer delays than attempts, because you never wait after the last one — the first case proves it (one attempt, no delays) and the third pins the give-up path (4 attempts, 3 delays). Real retry code adds jitter to these numbers so a fleet of clients does not retry in lockstep and stampede the service they are waiting for.`,
+hints:['Count attempts from 1 so the comparison with succeedOnAttempt reads naturally.','Push a delay only when another attempt will follow.','Double the delay after pushing it, not before.']}]}
 
 ]});

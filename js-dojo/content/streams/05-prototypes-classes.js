@@ -65,7 +65,7 @@ in the program, including every library's, and breaks the day the language adds 
 <code>__proto__</code> and thereby add a property to <i>every</i> object in the program. Use
 <code>Object.create(null)</code> for lookup tables built from user input, or a <code>Map</code>.</p>`,
 docs:[['MDN — Inheritance and the prototype chain','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Inheritance_and_the_prototype_chain'],['MDN — Object.create','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create'],['OWASP — prototype pollution','https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/11-Client-side_Testing/13-Testing_for_Prototype_Pollution']],
-ex:{title:'Own or inherited?',lang:'js',
+ex:{title:'Own or inherited?',diff:'easy',lang:'js',
 run:{call:'lookup',cases:[
  {name:'found as an own property',args:[['name'],['speak'],'name'],expect:'own'},
  {name:'found on the prototype',args:[['name'],['speak'],'speak'],expect:'inherited'},
@@ -151,7 +151,7 @@ setTimeout(a.deposit.bind(a), 100);        // or bind it</div>
 write to the global object — but the rule is unchanged: <code>this</code> comes from the call.</p>`,
 docs:[['MDN — Classes','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes'],['MDN — Private properties','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_properties'],['MDN — static','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/static']],
 exs:[
-{title:'A class with private state',lang:'js',
+{title:'A class with private state',diff:'easy',lang:'js',
 run:{call:'runAccount',cases:[
  {name:'deposits accumulate',args:[[10,20,30]],expect:60},
  {name:'a single deposit',args:[[5]],expect:5},
@@ -179,7 +179,7 @@ function runAccount(amounts) {
 tests:[{d:'uses a private field',re:'#balance'},{d:'declares a getter',re:'get\\s+balance'},{d:'guards against non-positive deposits',re:'amount\\s*>\\s*0'},{d:'creates an instance',re:'new\\s+Account'}],
 behavior:`Your class is exercised through runAccount, so the field, the guard and the getter all have to work. The negative case executes the guard, and the empty case relies on the field initialiser rather than a constructor.`,
 hints:['A field declared with # is private to the class body.','The getter is read as a.balance with no call parentheses.','Return this from deposit so calls can chain.']},
-{title:'Static members belong to the class',lang:'js',
+{title:'Static members belong to the class',diff:'medium',lang:'js',
 run:{call:'countInstances',cases:[
  {name:'counts three',args:[3],expect:3},
  {name:'counts one',args:[1],expect:1},
@@ -204,7 +204,53 @@ function countInstances(n) {
 }`,
 tests:[{d:'declares a static field',re:'static\\s+count'},{d:'increments it in the constructor',re:'Widget\\.count\\+\\+|Widget\\.count\\s*\\+='},{d:'reads the count from the class',re:'return\\s+Widget\\.count'}],
 behavior:`The zero case executes an important detail: the static field must be reset inside countInstances, because a static lives on the class for the lifetime of the program and would otherwise carry over between cases. Writing this.count++ instead would create a per-instance property and always report 0.`,
-hints:['A static field is written on the class, so increment Widget.count.','this.count would be a per-instance property, which is not what you want.','Reset the counter at the start so each call is independent.']}]},
+hints:['A static field is written on the class, so increment Widget.count.','this.count would be a per-instance property, which is not what you want.','Reset the counter at the start so each call is independent.']},
+{title:'A queue that enforces its own rules',diff:'hard',lang:'js',
+run:{call:'runQueue',cases:[
+ {name:'items come out in the order they went in',args:[[['add','a'],['add','b'],['take'],['take']],10],expect:{out:['a','b'],size:0,dropped:0}},
+ {name:'a full queue drops new items rather than growing',args:[[['add','a'],['add','b'],['add','c']],2],expect:{out:[],size:2,dropped:1}},
+ {name:'taking from an empty queue yields null',args:[[['take']],5],expect:{out:[null],size:0,dropped:0}},
+ {name:'space freed by taking can be reused',args:[[['add','a'],['add','b'],['take'],['add','c']],2],expect:{out:['a'],size:2,dropped:0}},
+ {name:'a capacity of zero drops everything',args:[[['add','a'],['add','b']],0],expect:{out:[],size:0,dropped:2}},
+ {name:'no operations at all',args:[[],3],expect:{out:[],size:0,dropped:0}}]},
+prompt:`Write <code>class BoundedQueue</code> with a private items array and a private capacity set in the constructor. <code>add(item)</code> appends and returns <code>true</code>, or returns <code>false</code> without adding when the queue is full. <code>take()</code> removes and returns the oldest item, or <code>null</code> when empty. A <code>size</code> getter reports the current count. Then write <code>function runQueue(ops, capacity)</code> that creates one queue, applies each operation — <code>["add", value]</code> or <code>["take"]</code> — and returns <code>{ out, size, dropped }</code>, where <code>out</code> collects every value returned by <code>take</code> and <code>dropped</code> counts the refused adds.`,
+starter:`class BoundedQueue {
+}
+function runQueue(ops, capacity) {
+  return { out: [], size: 0, dropped: 0 };
+}`,
+solution:`class BoundedQueue {
+  #items = [];
+  #capacity;
+  constructor(capacity) { this.#capacity = capacity; }
+
+  add(item) {
+    if (this.#items.length >= this.#capacity) return false;   // refuse, do not grow
+    this.#items.push(item);
+    return true;
+  }
+  take() {
+    return this.#items.length === 0 ? null : this.#items.shift();   // oldest first
+  }
+  get size() { return this.#items.length; }
+}
+
+function runQueue(ops, capacity) {
+  const q = new BoundedQueue(capacity);
+  const out = [];
+  let dropped = 0;
+  for (const [op, value] of ops) {
+    if (op === "add") {
+      if (!q.add(value)) dropped++;      // add() reports refusal; count it
+    } else {
+      out.push(q.take());                // null is a real result and is kept
+    }
+  }
+  return { out, size: q.size, dropped };
+}`,
+tests:[{d:'holds the items privately',re:'#items'},{d:'holds the capacity privately',re:'#capacity'},{d:'refuses when full',re:'>=\\s*this\\.#capacity|length\\s*>='},{d:'takes from the front',re:'shift\\(\\)'},{d:'exposes a size getter',re:'get\\s+size'}],
+behavior:`Six scenarios execute your class through runQueue, so the private fields, the capacity check, the empty case and the getter all have to work together. Two cases are deliberately awkward: a capacity of 0 must refuse every add rather than dividing by anything or throwing, and taking from an empty queue must return null, which runQueue then stores — so treating null as "nothing happened" and skipping it fails the third case. Note that shift() removes from the front, which is what makes this a queue rather than a stack.`,
+hints:['Both the items array and the capacity should be private fields.','add() returns a boolean so the caller can count refusals; it should not throw.','take() uses shift() for first-in-first-out, and returns null rather than undefined when empty.']}]},
 
 {id:'js24',title:'Inheritance, and when not to use it',body:`
 <p><code>extends</code> links one class's prototype to another's, so instances inherit through the chain
@@ -273,7 +319,7 @@ come from you.</p>
 <code>this.name</code> yourself, because the default is inherited and your subclass will otherwise
 identify itself as <code>"Error"</code> in logs. The errors stream covers this properly.</p>`,
 docs:[['MDN — extends','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/extends'],['MDN — super','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/super'],['MDN — instanceof','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof']],
-ex:{title:'Inherit or compose?',lang:'js',
+ex:{title:'Inherit or compose?',diff:'easy',lang:'js',
 run:{call:'decide',cases:[
  {name:'a genuine is-a with substitution holding',args:[true,true,false],expect:'inherit'},
  {name:'is-a claimed but substitution breaks',args:[true,false,false],expect:'compose'},
@@ -351,7 +397,7 @@ for (const [k, v] of Object.entries(obj)) { }
 // or add [Symbol.iterator] to your own class when there IS one obvious
 // sequence, e.g. a Playlist iterating its tracks.</div>`,
 docs:[['MDN — Iteration protocols','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols'],['MDN — Symbol','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol'],['MDN — Generators','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*']],
-ex:{title:'Implement the iterable protocol',lang:'js',
+ex:{title:'Implement the iterable protocol',diff:'easy',lang:'js',
 run:{call:'collect',cases:[
  {name:'an ascending range',args:[1,3],expect:[1,2,3]},
  {name:'a single value',args:[5,5],expect:[5]},

@@ -35,5 +35,7 @@ const DOJO_DOMAINS = [
     'The Event Loop & Asynchronous JavaScript']},
   {name:'Errors & Debugging',icon:'\u{1F41B}',titles:[
     'Errors, Exceptions & the Debugging Method',
-    'Debugging in the Browser']}
+    'Debugging in the Browser']},
+  {name:'Code at Scale',icon:'\u{1F4E6}',titles:[
+    'Modules, Packages & Tooling']}
 ];

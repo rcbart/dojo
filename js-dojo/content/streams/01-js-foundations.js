@@ -68,7 +68,7 @@ semicolons.</p>
 cannot state is the reason it does it that way, and that is the thing the next reader — usually you, in
 six months — actually needs.</p>`,
 docs:[['MDN — What is JavaScript?','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Introduction'],['Node.js — introduction','https://nodejs.org/en/learn/getting-started/introduction-to-nodejs'],['TC39 — the ECMAScript standard','https://tc39.es/ecma262/']],
-ex:{title:'Language, browser, or Node?',lang:'js',
+ex:{title:'Language, browser, or Node?',diff:'easy',lang:'js',
 run:{call:'provides',cases:[
  {name:'document belongs to the browser',args:['document'],expect:'browser'},
  {name:'window belongs to the browser',args:['window'],expect:'browser'},
@@ -175,7 +175,7 @@ typeof function(){}  // "function"   <- special-cased, though it IS an object
 
 Array.isArray([])    // true - the correct way to detect an array</div>`,
 docs:[['MDN — JavaScript data types','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Data_structures'],['MDN — typeof','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof'],['Why 0.1 + 0.2 !== 0.3','https://floating-point-gui.de/']],
-ex:{title:'Classify a value',lang:'js',
+ex:{title:'Classify a value',diff:'easy',lang:'js',
 run:{call:'describe',cases:[
  {name:'a number',args:[42],expect:'number'},
  {name:'a string',args:['hi'],expect:'string'},
@@ -263,7 +263,7 @@ Convention is <code>camelCase</code> for variables and functions, <code>PascalCa
 <code>UPPER_SNAKE_CASE</code> for genuine constants. Names are the cheapest documentation available —
 <code>d</code> tells the next reader nothing, and <code>daysUntilExpiry</code> tells them everything.</p>`,
 docs:[['MDN — let','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let'],['MDN — const','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const'],['MDN — Hoisting','https://developer.mozilla.org/en-US/docs/Glossary/Hoisting']],
-ex:{title:'What does const actually prevent?',lang:'js',
+ex:{title:'What does const actually prevent?',diff:'easy',lang:'js',
 run:{call:'allowed',cases:[
  {name:'reassigning a const binding is not allowed',args:['reassign-binding'],expect:false},
  {name:'mutating a const object property is allowed',args:['mutate-property'],expect:true},
@@ -363,7 +363,7 @@ user.getName?.()        // calls it only if it exists</div>
 a legitimate value — which is most of the time.</p>`,
 docs:[['MDN — Equality comparisons','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Equality_comparisons_and_sameness'],['MDN — Falsy','https://developer.mozilla.org/en-US/docs/Glossary/Falsy'],['MDN — Nullish coalescing','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing']],
 exs:[
-{title:'Which values are falsy?',lang:'js',
+{title:'Which values are falsy?',diff:'easy',lang:'js',
 run:{call:'isFalsy',cases:[
  {name:'zero is falsy',args:[0],expect:true},
  {name:'the empty string is falsy',args:[''],expect:true},
@@ -383,7 +383,7 @@ solution:`function isFalsy(value) {
 tests:[{d:'uses coercion rather than a hardcoded list',re:'!\\s*value'},{d:'does not hardcode a result',re:'return\\s+(true|false)\\s*;',not:true}],
 behavior:`All eight cases run, including the three that catch people out: "0", [] and {} are all truthy, because only the eight listed values are falsy and none of them is a non-empty string or an object.`,
 hints:['A single ! both coerces to boolean and inverts.','Do not enumerate the falsy values — the language already knows them.','!!value gives you the truthiness; !value gives you its opposite.']},
-{title:'Default only when genuinely absent',lang:'js',
+{title:'Default only when genuinely absent',diff:'medium',lang:'js',
 run:{call:'withDefault',cases:[
  {name:'undefined falls back',args:[undefined,3000],expect:3000},
  {name:'null falls back',args:[null,3000],expect:3000},
@@ -400,7 +400,35 @@ solution:`function withDefault(value, fallback) {
 }`,
 tests:[{d:'uses nullish coalescing rather than ||',re:'\\?\\?'},{d:'does not use the falsy-based fallback',re:'\\|\\|',not:true}],
 behavior:`The three middle cases are the whole lesson and they are executed: writing value || fallback passes the first two tests and fails on 0, "" and false — a bug that appears the day someone legitimately configures a port of 0 or an empty prefix.`,
-hints:['|| falls back on any falsy value; ?? falls back only on null and undefined.','The whole body is a single return.','0 and "" must survive.']}]},
+hints:['|| falls back on any falsy value; ?? falls back only on null and undefined.','The whole body is a single return.','0 and "" must survive.']},
+{title:'Normalise a form submission',diff:'hard',lang:'js',
+run:{call:'normalise',cases:[
+ {name:'trims and converts a numeric field',args:[{name:'  Ada  ',age:'36'}],expect:{name:'Ada',age:36}},
+ {name:'a legitimate zero survives',args:[{name:'Ada',age:'0'}],expect:{name:'Ada',age:0}},
+ {name:'a non-numeric age becomes null',args:[{name:'Ada',age:'abc'}],expect:{name:'Ada',age:null}},
+ {name:'an empty age becomes null, not zero',args:[{name:'Ada',age:''}],expect:{name:'Ada',age:null}},
+ {name:'an empty name becomes null too',args:[{name:'   ',age:'1'}],expect:{name:null,age:1}},
+ {name:'missing fields are null',args:[{}],expect:{name:null,age:null}},
+ {name:'a negative age is still a number',args:[{name:'x',age:'-3'}],expect:{name:'x',age:-3}}]},
+prompt:`Every value from an HTML form arrives as a <b>string</b>. Write <code>function normalise(form)</code> returning <code>{ name, age }</code> where <code>name</code> is the trimmed string or <code>null</code> when blank or missing, and <code>age</code> is a real number or <code>null</code> when blank, missing or not numeric. An age of <code>"0"</code> must become the number <code>0</code>, not <code>null</code> — this is the trap the whole lesson has been building to.`,
+starter:`function normalise(form) {
+  return { name: null, age: null };
+}`,
+solution:`function normalise(form) {
+  const rawName = (form.name ?? "").trim();       // ?? handles a missing key
+  const name = rawName === "" ? null : rawName;
+
+  const rawAge = (form.age ?? "").trim();
+  let age = null;
+  if (rawAge !== "") {                             // guard FIRST: Number("") is 0
+    const n = Number(rawAge);
+    if (Number.isFinite(n)) age = n;               // rejects NaN and Infinity
+  }
+  return { name, age };
+}`,
+tests:[{d:'trims the name',re:'\\.trim\\(\\)'},{d:'guards the empty string before converting',re:'!==\\s*""|===\\s*""'},{d:'converts with Number',re:'Number\\s*\\('},{d:'rejects NaN and Infinity',re:'Number\\.isFinite'}],
+behavior:`Seven cases execute and three of them fail a naive implementation. Number("") is 0, so without the empty guard a blank age silently becomes zero. A truthiness check on the converted value would throw away a legitimate 0. And "abc" converts to NaN, which is a number by typeof and useless by every other measure — Number.isFinite is what catches it.`,
+hints:['Handle the missing key with ?? before calling trim.','Check for the empty string BEFORE converting, because Number("") is 0.','Number.isFinite rejects NaN and Infinity in one test, and 0 passes it.']}]},
 
 {id:'js5',title:'Strings and numbers in practice',body:`
 <p>Text and arithmetic are most of what programs do. This lesson is the working knowledge: the methods you
@@ -469,7 +497,7 @@ function toNumber(text) {
 // why the conversion happens first, on its own line.</div>`,
 docs:[['MDN — String','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String'],['MDN — Number','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number'],['MDN — Template literals','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals']],
 exs:[
-{title:'Parse user input safely',lang:'js',
+{title:'Parse user input safely',diff:'easy',lang:'js',
 run:{call:'toNumber',cases:[
  {name:'a normal number',args:['42'],expect:42},
  {name:'a decimal',args:['3.5'],expect:3.5},
@@ -492,7 +520,7 @@ solution:`function toNumber(text) {
 tests:[{d:'the empty string is rejected before conversion',re:'trim\\(\\)\\s*===\\s*""'},{d:'uses strict Number conversion',re:'Number\\s*\\(\\s*text\\s*\\)'},{d:'rejects NaN and Infinity',re:'Number\\.isFinite'}],
 behavior:`Nine cases run. Two are the point: Number("") is 0, so an empty form field would silently become zero without the explicit guard; and Number("Infinity") is a finite-looking success that Number.isFinite correctly rejects. parseInt would also wrongly accept "42abc".`,
 hints:['Handle the empty/whitespace case first — Number("") is 0.','Number() is strict where parseInt is lenient; you want strict here.','Number.isFinite rejects both NaN and Infinity in one check.']},
-{title:'Format a name safely',lang:'js',
+{title:'Format a name safely',diff:'medium',lang:'js',
 run:{call:'greet',cases:[
  {name:'a normal name',args:['Ada'],expect:'Hello, Ada!'},
  {name:'whitespace is trimmed',args:['  Ada  '],expect:'Hello, Ada!'},

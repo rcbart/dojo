@@ -74,7 +74,7 @@ const field = "email";
 const patch = { [field]: "a@b.c" }; // computed key -> { email: "a@b.c" }</div>`,
 docs:[['MDN — Working with objects','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Working_with_objects'],['MDN — Optional chaining','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining'],['MDN — structuredClone','https://developer.mozilla.org/en-US/docs/Web/API/Window/structuredClone']],
 exs:[
-{title:'Read safely through a nested object',lang:'js',
+{title:'Read safely through a nested object',diff:'easy',lang:'js',
 run:{call:'cityOf',cases:[
  {name:'a full object',args:[{address:{city:'London'}}],expect:'London'},
  {name:'address present but no city',args:[{address:{}}],expect:'unknown'},
@@ -92,7 +92,7 @@ solution:`function cityOf(user) {
 tests:[{d:'uses optional chaining',re:'\\?\\.'},{d:'falls back to unknown',re:'"unknown"'}],
 behavior:`Five cases execute, including a null user that would throw without optional chaining. Note the last one: an empty city string must also fall back, which is why a truthiness check is right here and ?? would be wrong — the opposite of the earlier lesson, because here "" is not a value you want to keep.`,
 hints:['?. after each step stops the chain at the first null or undefined.','A null user needs the ?. on the very first access.','An empty string is falsy, so a plain truthiness test handles it.']},
-{title:'Copy without sharing',lang:'js',
+{title:'Copy without sharing',diff:'medium',lang:'js',
 run:{call:'renameCopy',cases:[
  {name:'the copy has the new name',args:[{name:'Ada',tags:['x']},'Grace'],expect:{name:'Grace',tags:['x']}},
  {name:'other fields survive',args:[{name:'Ada',age:36},'Grace'],expect:{name:'Grace',age:36}},
@@ -172,7 +172,7 @@ use <code>some</code>, <code>find</code> or a <code>for...of</code>. And array "
 them.</p>`,
 docs:[['MDN — Array','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array'],['MDN — Array.prototype.reduce','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce'],['MDN — Array.prototype.sort','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort']],
 exs:[
-{title:'Transform with map, filter and reduce',lang:'js',
+{title:'Transform with map, filter and reduce',diff:'easy',lang:'js',
 run:{call:'activeTotal',cases:[
  {name:'sums only the active items',args:[[{active:true,price:10},{active:false,price:99},{active:true,price:5}]],expect:15},
  {name:'nothing active',args:[[{active:false,price:99}]],expect:0},
@@ -190,7 +190,7 @@ solution:`function activeTotal(items) {
 tests:[{d:'filters to the active items',re:'\\.filter\\('},{d:'reduces to a single total',re:'\\.reduce\\('},{d:'passes an initial accumulator of 0',re:',\\s*0\\s*\\)\\s*;'}],
 behavior:`The empty and nothing-active cases both execute, and both depend on the initial accumulator: without the trailing 0, reduce on an empty array throws a TypeError rather than returning 0. That is the argument for always supplying it.`,
 hints:['filter first to narrow, then reduce to collapse.','reduce takes (accumulator, item) and an initial value.','The initial value is the second argument to reduce, after the callback.']},
-{title:'Sort numbers without surprises',lang:'js',
+{title:'Sort numbers without surprises',diff:'medium',lang:'js',
 run:{call:'topThree',cases:[
  {name:'sorts numerically, not lexicographically',args:[[10,9,1,100]],expect:[100,10,9]},
  {name:'fewer than three items',args:[[2,1]],expect:[2,1]},
@@ -208,7 +208,29 @@ solution:`function topThree(numbers) {
 }`,
 tests:[{d:'copies before sorting',re:'\\[\\s*\\.\\.\\.\\s*numbers\\s*\\]|toSorted'},{d:'sorts numerically',re:'b\\s*-\\s*a'},{d:'takes the first three',re:'slice\\s*\\(\\s*0\\s*,\\s*3\\s*\\)'}],
 behavior:`The first case fails outright with a bare sort(): as strings, 100 sorts before 9 because "1" < "9". slice handles short arrays without a length check, and the spread copy is what stops the caller's array being reordered underneath them.`,
-hints:['Spread into a new array first, or use toSorted().','A numeric comparator subtracts: b - a for descending.','slice(0, 3) is safe even when there are fewer than three items.']}]},
+hints:['Spread into a new array first, or use toSorted().','A numeric comparator subtracts: b - a for descending.','slice(0, 3) is safe even when there are fewer than three items.']},
+{title:'Group and summarise',diff:'hard',lang:'js',
+run:{call:'summarise',cases:[
+ {name:'groups by category and totals each',args:[[{cat:'a',price:10},{cat:'b',price:5},{cat:'a',price:2}]],expect:[['a',12],['b',5]]},
+ {name:'sorts by total, highest first',args:[[{cat:'a',price:1},{cat:'b',price:50}]],expect:[['b',50],['a',1]]},
+ {name:'a single category',args:[[{cat:'a',price:7}]],expect:[['a',7]]},
+ {name:'an empty list',args:[[]],expect:[]},
+ {name:'ties keep first-seen order',args:[[{cat:'a',price:5},{cat:'b',price:5}]],expect:[['a',5],['b',5]]},
+ {name:'handles many categories',args:[[{cat:'x',price:1},{cat:'y',price:3},{cat:'x',price:1},{cat:'z',price:2}]],expect:[['y',3],['x',2],['z',2]]}]},
+prompt:`Write <code>function summarise(items)</code> that groups items by <code>cat</code>, sums each group's <code>price</code>, and returns <code>[category, total]</code> pairs sorted by total <b>descending</b>. On a tie, the category seen first must come first. An empty list returns <code>[]</code>.`,
+starter:`function summarise(items) {
+  return [];
+}`,
+solution:`function summarise(items) {
+  const totals = new Map();                    // Map preserves insertion order
+  for (const item of items) {
+    totals.set(item.cat, (totals.get(item.cat) ?? 0) + item.price);
+  }
+  return [...totals].sort((a, b) => b[1] - a[1]);   // stable, so ties hold
+}`,
+tests:[{d:'accumulates per category',re:'\\.set\\('},{d:'reads the running total',re:'\\.get\\('},{d:'sorts by the total',re:'b\\[1\\]\\s*-\\s*a\\[1\\]|sort'},{d:'returns pairs',re:'\\[\\s*\\.\\.\\.'}],
+behavior:`Six cases execute and two of them decide the implementation. The tie case only passes because Map keeps insertion order and Array.prototype.sort is stable — a plain object would give you no ordering guarantee for the keys. The empty case falls out with no special branch.`,
+hints:['A Map accumulates the totals and remembers first-seen order.','Default the running total to 0 with ?? before adding.','Spread the Map into pairs, then sort by the second element descending.']}]},
 
 {id:'js12',title:'Destructuring, spread and rest',body:`
 <p>Three pieces of syntax that appear in almost every modern JavaScript file. They are not new
@@ -264,7 +286,7 @@ nested objects are still the same references — so mutating <code>copy.address.
 original. For a true deep copy use <code>structuredClone</code>.</p>`,
 docs:[['MDN — Destructuring assignment','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment'],['MDN — Spread syntax','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax'],['MDN — Rest parameters','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters']],
 exs:[
-{title:'Strip a field without mutating',lang:'js',
+{title:'Strip a field without mutating',diff:'easy',lang:'js',
 run:{call:'withoutPassword',cases:[
  {name:'removes the password',args:[{id:1,name:'Ada',password:'secret'}],expect:{id:1,name:'Ada'}},
  {name:'an object with no password is unchanged',args:[{id:1,name:'Ada'}],expect:{id:1,name:'Ada'}},
@@ -281,7 +303,7 @@ solution:`function withoutPassword(user) {
 tests:[{d:'uses rest destructuring',re:'\\.\\.\\.\\s*safe|\\.\\.\\.\\s*rest'},{d:'names the field being removed',re:'password'},{d:'does not delete from the original',re:'delete\\s+user',not:true}],
 behavior:`Four cases execute, including one where the field is absent — rest destructuring handles that without a guard. Note the last case: only password is removed, so a token still passes through. Using delete would have mutated the caller's object instead of returning a new one.`,
 hints:['Destructure the unwanted key by name, then collect the rest.','The rest variable is the object you return.','delete would work but mutates what you were given.']},
-{title:'Merge configuration correctly',lang:'js',
+{title:'Merge configuration correctly',diff:'medium',lang:'js',
 run:{call:'resolve',cases:[
  {name:'options override defaults',args:[{port:80,host:'a'},{port:8080}],expect:{port:8080,host:'a'}},
  {name:'defaults fill the gaps',args:[{port:80,host:'a'},{}],expect:{port:80,host:'a'}},
@@ -358,7 +380,7 @@ from a network response, a file, or user input needs a <code>try</code>/<code>ca
 errors stream takes properly.</p>`,
 docs:[['MDN — Map','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map'],['MDN — Set','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set'],['MDN — JSON','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON']],
 exs:[
-{title:'Count occurrences with a Map',lang:'js',
+{title:'Count occurrences with a Map',diff:'easy',lang:'js',
 run:{call:'countWords',cases:[
  {name:'counts repeats',args:[['a','b','a']],expect:[['a',2],['b',1]]},
  {name:'preserves insertion order',args:[['z','a','z']],expect:[['z',2],['a',1]]},
@@ -378,7 +400,7 @@ solution:`function countWords(words) {
 tests:[{d:'uses a Map',re:'new\\s+Map'},{d:'reads the current count',re:'\\.get\\('},{d:'writes the incremented count',re:'\\.set\\('},{d:'spreads the map into entries',re:'\\[\\s*\\.\\.\\.'}],
 behavior:`Insertion order is executed as its own case: a Map iterates in the order keys were first added, so 'z' comes before 'a'. The ?? 0 handles the first sighting of a word, where get() returns undefined and undefined + 1 would be NaN.`,
 hints:['get() returns undefined for a key you have not seen; default it to 0.','set() overwrites, so read-then-write is the pattern.','Spreading a Map gives you [key, value] pairs directly.']},
-{title:'Parse JSON without crashing',lang:'js',
+{title:'Parse JSON without crashing',diff:'medium',lang:'js',
 run:{call:'safeParse',cases:[
  {name:'valid JSON object',args:['{"a":1}'],expect:{a:1}},
  {name:'valid JSON array',args:['[1,2]'],expect:[1,2]},

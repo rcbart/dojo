@@ -63,7 +63,7 @@ isValid() && save()      // save() only if isValid() is true
 
 // and why ?? exists: || falls back on 0 and "", ?? only on null/undefined</div>`,
 docs:[['MDN — if...else','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/if...else'],['MDN — switch','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/switch'],['MDN — Logical AND','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND']],
-ex:{title:'Classify an HTTP method',lang:'js',
+ex:{title:'Classify an HTTP method',diff:'easy',lang:'js',
 run:{call:'classify',cases:[
  {name:'GET is safe',args:['GET'],expect:'safe'},
  {name:'HEAD is safe',args:['HEAD'],expect:'safe'},
@@ -154,7 +154,7 @@ side effects, the array methods in the next stream (<code>map</code>, <code>filt
 <code>reduce</code>) usually say it better than any loop.</p>`,
 docs:[['MDN — Loops and iteration','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Loops_and_iteration'],['MDN — for...of','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...of'],['MDN — for...in','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...in']],
 exs:[
-{title:'Sum with a loop',lang:'js',
+{title:'Sum with a loop',diff:'easy',lang:'js',
 run:{call:'sumPositive',cases:[
  {name:'mixed signs',args:[[1,-2,3,-4,5]],expect:9},
  {name:'all negative',args:[[-1,-2]],expect:0},
@@ -176,7 +176,7 @@ solution:`function sumPositive(numbers) {
 tests:[{d:'iterates the values',re:'for\\s*\\('},{d:'accumulates into a total',re:'\\+='},{d:'starts from zero',re:'let\\s+total\\s*=\\s*0'}],
 behavior:`sumPositive([1,-2,3,-4,5]) is 9 and sumPositive([]) is 0. The accumulator must start at 0 rather than at the first element, which is what makes the empty case work without a special branch.`,
 hints:['Declare the accumulator before the loop and return it after.','for...of gives you values directly, with no index to manage.','continue skips an iteration; 0 is not greater than 0.']},
-{title:'Find the first match',lang:'js',
+{title:'Find the first match',diff:'medium',lang:'js',
 run:{call:'firstLongerThan',cases:[
  {name:'finds the first long word',args:[['hi','there','everyone'],3],expect:'there'},
  {name:'nothing qualifies',args:[['a','b'],3],expect:null},
@@ -274,7 +274,7 @@ function fixed() {
 }</div>`,
 docs:[['MDN — Functions','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions'],['MDN — Arrow functions','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions'],['MDN — Default parameters','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters']],
 exs:[
-{title:'Defaults apply to undefined only',lang:'js',
+{title:'Defaults apply to undefined only',diff:'easy',lang:'js',
 run:{call:'welcome',cases:[
  {name:'both arguments supplied',args:['Ada','Hi'],expect:'Hi, Ada'},
  {name:'the default is used when omitted',args:['Ada'],expect:'Hello, Ada'},
@@ -291,7 +291,7 @@ solution:`function welcome(name, greeting = "Hello") {
 tests:[{d:'uses a default parameter',re:'greeting\\s*=\\s*"Hello"'},{d:'uses a template literal',re:'\`'},{d:'does not hand-roll a fallback',re:'\\|\\||\\?\\?',not:true}],
 behavior:`The last two cases are the lesson and they execute: null and "" are real values, so the default does not apply and you get "null, Ada" and ", Ada". A hand-rolled || fallback would wrongly rewrite both — which is precisely the bug default parameters avoid.`,
 hints:['Put the default in the parameter list, not in the body.','Template literals use backticks and ${ }.','Do not add || or ?? — they would change the null and "" behaviour.']},
-{title:'Collect any number of arguments',lang:'js',
+{title:'Collect any number of arguments',diff:'medium',lang:'js',
 run:{call:'longest',cases:[
  {name:'picks the longest',args:['hi','there','you'],expect:'there'},
  {name:'the first wins a tie',args:['abc','xyz'],expect:'abc'},
@@ -373,7 +373,7 @@ A pure function needs no mocks, no setup and no teardown to test.</p>
 Silently modifying an object the caller passed in is the source of bugs that appear far from their
 cause — the caller's data changed and nothing at the call site suggests it could have.</p>`,
 docs:[['MDN — Functions guide','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions'],['Refactoring: guard clauses','https://refactoring.com/catalog/replaceNestedConditionalWithGuardClauses.html']],
-ex:{title:'Rewrite with guard clauses',lang:'js',
+ex:{title:'Rewrite with guard clauses',diff:'easy',lang:'js',
 run:{call:'pay',cases:[
  {name:'missing user',args:[null,10],expect:'no user'},
  {name:'inactive user',args:[{active:false,balance:100},10],expect:'inactive'},

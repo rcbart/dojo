@@ -66,7 +66,7 @@ function bad() { leaked = 1; }   // creates a GLOBAL in sloppy mode
 // "use strict" (and every module) makes this a ReferenceError instead,
 // which is why modern code never hits it.</div>`,
 docs:[['MDN — Scope','https://developer.mozilla.org/en-US/docs/Glossary/Scope'],['MDN — Call stack','https://developer.mozilla.org/en-US/docs/Glossary/Call_stack'],['MDN — Strict mode','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode']],
-ex:{title:'Trace the scope chain',lang:'js',
+ex:{title:'Trace the scope chain',diff:'easy',lang:'js',
 run:{call:'lookUp',cases:[
  {name:'found in the innermost scope',args:[['x'],['x','y'],['x','y','z'],'x'],expect:'inner'},
  {name:'found one level out',args:[['g'],['o'],['i'],'o'],expect:'middle'},
@@ -145,7 +145,7 @@ is registered on a long-lived event emitter, keeps that array reachable forever.
 unregister the handler, or to extract only what you need before creating the closure.</p>`,
 docs:[['MDN — Closures','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures'],['MDN — let and per-iteration bindings','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let']],
 exs:[
-{title:'Build a counter with private state',lang:'js',
+{title:'Build a counter with private state',diff:'easy',lang:'js',
 run:{call:'runCounter',cases:[
  {name:'counts up from 1',args:[3],expect:[1,2,3]},
  {name:'a single call',args:[1],expect:[1]},
@@ -174,7 +174,7 @@ function runCounter(n) {
 tests:[{d:'keeps the count outside the returned function',re:'let\\s+count\\s*=\\s*0'},{d:'returns a function',re:'return\\s+function|=>'},{d:'creates one counter and calls it repeatedly',re:'makeCounter\\(\\)'}],
 behavior:`Your makeCounter is called through runCounter, so both must be right. The state has to live in the enclosing scope: declaring count inside the returned function would reset it to 0 on every call and produce [1,1,1].`,
 hints:['Declare the counter variable in makeCounter, before the returned function.','The inner function increments and returns it.','runCounter should call makeCounter ONCE, then call the result n times.']},
-{title:'Capture per iteration, not per loop',lang:'js',
+{title:'Capture per iteration, not per loop',diff:'medium',lang:'js',
 run:{call:'makeAdders',cases:[
  {name:'each function adds its own index',args:[3,10],expect:[10,11,12]},
  {name:'a single adder',args:[1,0],expect:[0]},
@@ -193,7 +193,42 @@ solution:`function makeAdders(n, base) {
 }`,
 tests:[{d:'uses let for the per-iteration binding',re:'for\\s*\\(\\s*let\\s+i'},{d:'creates a closure per iteration',re:'push\\('},{d:'does not use var',re:'var\\s+i',not:true}],
 behavior:`The last case is the classic bug executed as a test: with var, all four closures share one i and return [4,4,4,4] because the loop finished before any of them ran. With let, each captured a distinct binding and you get [0,1,2,3].`,
-hints:['let in the for header gives each iteration its own binding.','Build the array of functions first, then call them.','If every result is the same, you captured one shared variable.']}]},
+hints:['let in the for header gives each iteration its own binding.','Build the array of functions first, then call them.','If every result is the same, you captured one shared variable.']},
+{title:'Memoise with a closure',diff:'hard',lang:'js',
+run:{call:'runMemo',cases:[
+ {name:'repeated calls return the same answers',args:[[2,3,2,3]],expect:{results:[4,9,4,9],computed:2}},
+ {name:'every call is distinct, so all are computed',args:[[1,2,3]],expect:{results:[1,4,9],computed:3}},
+ {name:'one value repeated many times computes once',args:[[5,5,5,5]],expect:{results:[25,25,25,25],computed:1}},
+ {name:'no calls at all',args:[[]],expect:{results:[],computed:0}},
+ {name:'zero is cached like any other key',args:[[0,0]],expect:{results:[0,0],computed:1}}]},
+prompt:`Write <code>function makeSquarer()</code> returning an object <code>{ square, computed }</code> where <code>square(n)</code> returns <code>n * n</code> but only does the multiplication <b>once per distinct input</b> — later calls with the same number come from a cache held in a closure. <code>computed()</code> returns how many multiplications actually happened. Then write <code>function runMemo(inputs)</code> that creates one squarer, calls <code>square</code> on each input, and returns <code>{ results, computed }</code>.`,
+starter:`function makeSquarer() {
+  return { square: null, computed: null };
+}
+function runMemo(inputs) {
+  return { results: [], computed: 0 };
+}`,
+solution:`function makeSquarer() {
+  const cache = new Map();      // private to the closure - nothing else can
+  let count = 0;                // see or corrupt it
+
+  function square(n) {
+    if (cache.has(n)) return cache.get(n);   // has(), not a truthy check:
+    count++;                                  // a cached 0 is a real answer
+    const value = n * n;
+    cache.set(n, value);
+    return value;
+  }
+  return { square, computed: () => count };
+}
+function runMemo(inputs) {
+  const s = makeSquarer();
+  const results = inputs.map(n => s.square(n));
+  return { results, computed: s.computed() };
+}`,
+tests:[{d:'holds a cache in the closure',re:'new\\s+Map|\\{\\s*\\}'},{d:'checks the cache before computing',re:'\\.has\\(|in\\s+cache'},{d:'counts only real computations',re:'count\\+\\+|count\\s*\\+='},{d:'creates one squarer',re:'makeSquarer\\(\\)'}],
+behavior:`The last case is the one that separates a correct memoiser from a plausible one: 0 * 0 is 0, which is falsy, so a cache check written as "if (cache.get(n)) return ..." recomputes it every time and reports 2 instead of 1. Use has() to ask whether a key exists rather than whether its value is truthy. The cache and the counter both live in the closure, so nothing outside can reach or reset them.`,
+hints:['Declare the cache and the counter in makeSquarer, before the inner function.','Use Map.has to test for presence — a cached value of 0 is falsy.','Increment the counter only on the path that actually multiplies.']}]},
 
 {id:'js16',title:'this: five rules, in order',body:`
 <p><code>this</code> is decided <b>at call time</b>, by <i>how</i> the function was called — not where it
@@ -256,7 +291,7 @@ fn.bind(thisArg, a)         // returns a NEW function, permanently bound.
 <code>apply</code> and arrows have largely replaced <code>bind</code> — but <code>bind</code> remains the
 right tool when a method must be detached from its object and keep working.</p>`,
 docs:[['MDN — this','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this'],['MDN — Function.prototype.bind','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind'],['MDN — Arrow functions and this','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions#cannot_be_used_as_methods']],
-ex:{title:'Which rule applies?',lang:'js',
+ex:{title:'Which rule applies?',diff:'easy',lang:'js',
 run:{call:'thisIs',cases:[
  {name:'new wins over everything',args:['new'],expect:'the new object'},
  {name:'explicit binding',args:['bind'],expect:'the bound object'},
@@ -343,7 +378,7 @@ version with an explicit array as the stack.</p>
 }</div>`,
 docs:[['MDN — Recursion','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions#recursion'],['MDN — RangeError','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError']],
 exs:[
-{title:'Sum a nested structure',lang:'js',
+{title:'Sum a nested structure',diff:'easy',lang:'js',
 run:{call:'deepSum',cases:[
  {name:'a flat array',args:[[1,2,3]],expect:6},
  {name:'one level of nesting',args:[[1,[2,3]]],expect:6},
@@ -365,7 +400,7 @@ solution:`function deepSum(items) {
 tests:[{d:'detects nested arrays',re:'Array\\.isArray'},{d:'calls itself',re:'deepSum\\s*\\('},{d:'accumulates a total',re:'\\+='}],
 behavior:`Six cases execute, including empty arrays at several depths — the base case here is implicit: an empty array runs no iterations and returns the initial 0, so no explicit guard is needed. Array.isArray is what decides recurse-or-add, since typeof would report "object" for both.`,
 hints:['Array.isArray tells you whether to recurse.','The empty array is the base case, and it works for free.','Accumulate into a total declared before the loop.']},
-{title:'Convert recursion to iteration',lang:'js',
+{title:'Convert recursion to iteration',diff:'medium',lang:'js',
 run:{call:'depth',cases:[
  {name:'a flat array is depth 1',args:[[1,2]],expect:1},
  {name:'one nesting level',args:[[1,[2]]],expect:2},

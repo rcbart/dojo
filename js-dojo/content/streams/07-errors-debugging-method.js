@@ -57,7 +57,7 @@ catch (e) {
 strings, which break the moment someone improves the wording. Set <code>name</code> explicitly:
 it is inherited, so without that line your subclass reports itself as <code>"Error"</code> in every log.</p>`,
 docs:[['MDN — Error','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error'],['MDN — Error.cause','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause'],['MDN — Error types','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors']],
-ex:{title:'Diagnose from the error type',lang:'js',
+ex:{title:'Diagnose from the error type',diff:'easy',lang:'js',
 run:{call:'diagnose',cases:[
  {name:'a TypeError points at a wrong assumption',args:['TypeError'],expect:'something you assumed existed did not'},
  {name:'a ReferenceError points at a name',args:['ReferenceError'],expect:'a name is misspelt or not yet initialised'},
@@ -138,7 +138,7 @@ throw, and JavaScript has no checked exceptions. So document it, or return a val
 the reader) can see.</p>`,
 docs:[['MDN — try...catch','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch'],['MDN — throw','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/throw']],
 exs:[
-{title:'Catch only what you understand',lang:'js',
+{title:'Catch only what you understand',diff:'easy',lang:'js',
 run:{call:'parseOrRethrow',cases:[
  {name:'valid JSON parses',args:['{"a":1}','SyntaxError'],expect:'{"a":1}'},
  {name:'a syntax error becomes null',args:['bad','SyntaxError'],expect:null},
@@ -156,7 +156,7 @@ solution:`function parseOrRethrow(text, errorName) {
 tests:[{d:'handles the success path',re:'text\\s*!==\\s*"bad"'},{d:'recognises the error it can handle',re:'"SyntaxError"'},{d:'passes everything else on',re:'"rethrown"'}],
 behavior:`Two different unexpected error types execute the same re-throw path. That is the discipline this models: swallowing every error would turn a TypeError in your own parsing code into a silent null, and you would spend an afternoon looking for data that was never malformed.`,
 hints:['Handle the success case first and return early.','Only the specific error type you understand becomes null.','Everything else is passed on rather than swallowed.']},
-{title:'Cleanup that always runs',lang:'js',
+{title:'Cleanup that always runs',diff:'medium',lang:'js',
 run:{call:'withCleanup',cases:[
  {name:'success still runs cleanup',args:[false],expect:'ok|cleaned'},
  {name:'failure runs cleanup and reports the error',args:[true],expect:'failed|cleaned'},
@@ -250,7 +250,7 @@ program's state is unknown; continuing risks corrupting data in ways far worse t
 crosses the boundary. Callback-based code does not — which is one more practical reason to convert old
 APIs to promises rather than living with them.</p>`,
 docs:[['MDN — Using promises: error handling','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises#error_handling'],['Node — unhandledRejection','https://nodejs.org/api/process.html#event-unhandledrejection'],['V8 — async stack traces','https://v8.dev/blog/fast-async']],
-ex:{title:'Will this error be caught?',lang:'js',
+ex:{title:'Will this error be caught?',diff:'easy',lang:'js',
 run:{call:'caught',cases:[
  {name:'a synchronous throw inside try',args:['sync-throw'],expect:true},
  {name:'a throw inside setTimeout',args:['timeout-throw'],expect:false},
@@ -339,7 +339,7 @@ console.log(\`user: \${user}\`);    // "user: [object Object]" - useless</div>
 next stream.</p>`,
 docs:[['MDN — Console API','https://developer.mozilla.org/en-US/docs/Web/API/console'],['MDN — Error.prototype.stack','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/Stack'],['git bisect','https://git-scm.com/docs/git-bisect']],
 exs:[
-{title:'Find the failing frame',lang:'js',
+{title:'Find the failing frame',diff:'easy',lang:'js',
 run:{call:'firstOwnFrame',cases:[
  {name:'skips library frames',args:[['at map (node_modules/lodash/lodash.js:1:1)','at formatUser (src/profile.js:42:31)','at main (src/app.js:11:3)'],'node_modules'],expect:'at formatUser (src/profile.js:42:31)'},
  {name:'the first frame is already yours',args:[['at formatUser (src/profile.js:42:31)','at main (src/app.js:11:3)'],'node_modules'],expect:'at formatUser (src/profile.js:42:31)'},
@@ -358,7 +358,7 @@ solution:`function firstOwnFrame(frames, libraryMarker) {
 tests:[{d:'scans the frames in order',re:'for\\s*\\('},{d:'skips library frames',re:'includes\\s*\\(\\s*libraryMarker'},{d:'reports when there is none',re:'"no application frame"'}],
 behavior:`Order is executed: the frames must be scanned top-down, because the first application frame is the one to open. This is exactly what DevTools blackboxing automates — hiding library frames so the top of the trace is your own code.`,
 hints:['Scan in order and return the first non-library frame.','includes() tests whether a frame is from a library.','Falling through the loop means every frame was a library frame.']},
-{title:'Bisect a range',lang:'js',
+{title:'Bisect a range',diff:'medium',lang:'js',
 run:{call:'bisectSteps',cases:[
  {name:'a single candidate needs no steps',args:[1],expect:0},
  {name:'two candidates take one step',args:[2],expect:1},
