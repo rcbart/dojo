@@ -793,6 +793,8 @@ function renderNav(){
 /* Technology domains — streams are grouped into these sections on the home page.
    Each entry lists the exact stream titles it contains, in display order. Any stream
    not matched here falls into a "More" section so nothing is ever hidden. */
+/* The course name, used in shared UI copy. A sibling dojo sets DOJO_HOME.name. */
+const DOJO_NAME=(typeof DOJO_HOME!=="undefined"&&DOJO_HOME.name)?DOJO_HOME.name:'DevDojo';
 const DOMAINS=(typeof DOJO_DOMAINS!=="undefined")?DOJO_DOMAINS:[
   {name:'Java & the JVM',icon:'☕',titles:['Java Fundamentals','Generics from the Ground Up','Exception Handling','Regex from the Ground Up','Working with User Input','Modern Java Mastery','Concurrency & Multithreading','Time, Testing, Reflection & the JVM','JPMS & Performance Engineering']},
   {name:'Computer Science & Algorithms',icon:'🧠',titles:['Data Structures','Dynamic Programming & Advanced Algorithms']},
@@ -869,13 +871,20 @@ function renderHome(){
     const n=extra.reduce((a,si)=>a+STREAMS[si].lessons.length,0);
     sections+=`<details class="domainSec"><summary class="domainHd"><span class="domainLeft">✨ More</span><span class="domainMeta">${extra.length} streams · ${n} lessons</span></summary><div class="grid">${extra.map(si=>streamCard(STREAMS[si],si)).join('')}</div></details>`;
   }
+  // Per-course home copy. A sibling dojo overrides this via DOJO_HOME in its
+  // config; the defaults below are DevDojo's.
+  const HOME=(typeof DOJO_HOME!=="undefined")?DOJO_HOME:{
+    name:'DevDojo',
+    title:'Welcome to DevDojo 🥋',
+    intro:STREAMS.length+' training tracks take you from fundamentals to mastery across software engineering — Java &amp; the JVM, computer science &amp; algorithms, web/HTTP &amp; front-end (React), APIs &amp; Spring, databases &amp; SQL, concurrency, security, DevOps, and senior-level architecture, all grouped by domain below.'
+  };
   m.innerHTML=`<div class="home">
-  <h1>Welcome to DevDojo 🥋</h1>
+  <h1>${HOME.title}</h1>
   <div class="startBanner">New here? Start with <a href="javascript:void(0)" onclick="cur=null;renderGettingStarted();renderNav()"><b>🚀 Getting started</b></a> to set up your environment and get the full depth, then follow the <a href="javascript:void(0)" onclick="cur=null;renderPath();renderNav()"><b>🗺️ Learning path</b></a>.</div>
-  <p>${STREAMS.length} training tracks take you from fundamentals to mastery across software engineering — Java &amp; the JVM, computer science &amp; algorithms, web/HTTP &amp; front-end (React), APIs &amp; Spring, databases &amp; SQL, concurrency, security &amp; a large identity domain, DevOps, and senior-level architecture, all grouped by domain below. Every lesson ends with an exercise in the built-in editor. <b>Most exercises are graded on the shape of your answer, not on running it</b> — regex checks that you used the right construct. SQL and JavaScript do execute for real (sample data and a sandboxed worker), and Java runs for real if you start the optional local runner. Every exercise has a <b>Run locally</b> panel with exact commands — that is the ground truth. Stuck? <b>Next Step</b> gives a progressive hint, and <b>Show me the solution</b> is always there — no judgment.</p>
-  <p><b>Tip:</b> select or double-click any keyword or term — in a lesson or your own code — and a popup explains it, drawing on 200+ Java, CS, and identity terms from the glossary.</p>
+  <p>${HOME.intro} Every lesson ends with an exercise in the built-in editor. <b>Most exercises are graded on the shape of your answer, not on running it</b> — regex checks that you used the right construct. SQL and JavaScript do execute for real; Java runs for real if you start the optional local runner. Every exercise has a <b>Run locally</b> panel with exact commands — that is the ground truth. Stuck? <b>Next Step</b> gives a progressive hint, and <b>Show me the solution</b> is always there — no judgment.</p>
+  <p><b>Tip:</b> select or double-click any keyword or term — in a lesson or your own code — and a popup explains it, drawing on the ${GLOSS.reduce((a,d)=>a+d.groups.reduce((b,g)=>b+g.terms.length,0),0)} terms in the glossary.</p>
   <div class="gsCard">
-  <h2>How to get the most out of DevDojo — learn &amp; retain</h2>
+  <h2>How to get the most out of ${HOME.name} — learn &amp; retain</h2>
   <ol>
     <li><b>Follow the path, earn the belt.</b> Work a domain top-to-bottom via the <b>🗺️ Learning path</b>; the belt bar tracks your progress white → black.</li>
     <li><b>Struggle first.</b> Try the exercise before revealing anything — use <b>💡 Next Step</b> for a nudge, and only then <b>👀 the solution</b>. The effort is what makes it stick.</li>
@@ -1104,7 +1113,7 @@ async function runTests(l,e,sid,ei,exs){
     `<div class="aiBox" id="aiOut"><span class="spin"></span>Compile & test run in progress…</div>`;
   setTab('console');
   const numbered=code.split('\n').map((ln,i)=>String(i+1).padStart(3)+' | '+ln).join('\n');
-  const prompt=`You are JavaDojo's build and test runner. Act as a strict ${isJava?'Java compiler (javac) and JUnit-style test executor':(e.lang+' validator')}. First check the code compiles/is well-formed; report every compile/syntax error with its line number from the numbered listing. Only if it compiles, mentally execute the behavior tests. Be precise and cite line numbers.
+  const prompt=`You are ${DOJO_NAME}'s build and test runner. Act as a strict ${isJava?'Java compiler (javac) and JUnit-style test executor':(e.lang+' validator')}. First check the code compiles/is well-formed; report every compile/syntax error with its line number from the numbered listing. Only if it compiles, mentally execute the behavior tests. Be precise and cite line numbers.
 
 EXERCISE: ${stripTags(e.prompt)}
 
@@ -1734,7 +1743,7 @@ function renderGlossary(){
   const body=GLOSS.map((d,i)=>`<details class="glossDom" id="gd${i}" open><summary class="glossSum">${d.icon} ${esc(d.domain)}<span class="glossDomN">${termCount(d)} terms</span></summary>${d.groups.map(g=>`<div class="glossGrp">${esc(g.h)}</div><dl class="glossList">${g.terms.map(t=>`<div class="glossItem"><dt>${esc(t[0])}</dt><dd>${esc(t[1])}</dd></div>`).join('')}</dl>`).join('')}</details>`).join('');
   m.innerHTML=`<div class="home glossary">
   <h1>📖 Glossary</h1>
-  <p>${total} key terms across DevDojo, grouped by domain. In any lesson, <b>select or double-click a highlighted term</b> to see its definition inline — this page is the full reference. Use the filter to search, or the chips to jump to a domain.</p>
+  <p>${total} key terms across ${DOJO_NAME}, grouped by domain. In any lesson, <b>select or double-click a highlighted term</b> to see its definition inline — this page is the full reference. Use the filter to search, or the chips to jump to a domain.</p>
   <div class="glossToolbar">
     <input id="glossSearch" class="glossSearch" placeholder="Filter ${total} terms…" oninput="filterGloss(this.value)" aria-label="Filter glossary terms">
     <button class="glossBtn" onclick="glossToggleAll(true)">Expand all</button>
@@ -1798,7 +1807,7 @@ cd my-app && npm install && npm run dev
     const m=(e.solution||'').match(/public\s+class\s+(\w+)/)||(e.solution||'').match(/\bclass\s+(\w+)/);
     const cls=m?m[1]:'Solution';
     const hasMain=/static\s+void\s+main/.test(e.solution||'');
-    steps=`<p>DevDojo verifies your code has the right shape and (in the app) asks Claude to run the tests. To confirm it genuinely works, run it on your own machine with a JDK (see Getting started):</p>
+    steps=`<p>${DOJO_NAME} verifies your code has the right shape and (in the app) asks Claude to run the tests. To confirm it genuinely works, run it on your own machine with a JDK (see Getting started):</p>
 <pre class="runbox">// 1) save your solution as ${esc(cls)}.java
 ${hasMain?'':`// 2) add a tiny main to try it, e.g.:
 //    public static void main(String[] a) { System.out.println(/* call a method here */); }
@@ -1807,7 +1816,7 @@ javac ${esc(cls)}.java && java ${esc(cls)}
 
 // or explore interactively, no main needed:
 jshell ${esc(cls)}.java</pre>
-<p>To grade it the way DevDojo does, add <b>JUnit 5</b> and turn the "expected behavior" above into <code>assertEquals</code> checks.</p>
+<p>To grade it the way ${DOJO_NAME} does, add <b>JUnit 5</b> and turn the "expected behavior" above into <code>assertEquals</code> checks.</p>
 <p><b>Or compile &amp; run it right here</b> — if you started the site with a local JDK and <code>JD_LOCAL_RUNNER=1</code>:</p>
 <button class="glossBtn" type="button" onclick="runJavaLocal()">▶ Compile &amp; run with local JDK</button>
 <div id="javaRun" class="sqlResult"></div>`;
@@ -1878,12 +1887,12 @@ function runSqlExercise(dsName){
 function renderGettingStarted(){
   const m=document.getElementById('main');
   m.innerHTML=`<div class="home">
-  <h1>🚀 Getting started with DevDojo</h1>
-  <p>DevDojo runs entirely in your browser and every lesson ends with a hands-on exercise. This page shows how your work is checked, what to install to get the <b>full depth</b>, and how to run any exercise in your own dev environment when you want real, compiler-verified feedback.</p>
+  <h1>🚀 Getting started with ${DOJO_NAME}</h1>
+  <p>${DOJO_NAME} runs entirely in your browser and every lesson ends with a hands-on exercise. This page shows how your work is checked, what to install to get the <b>full depth</b>, and how to run any exercise in your own dev environment when you want real, compiler-verified feedback.</p>
 
   <div class="gsCard">
   <h2>How your work is checked (be honest with yourself)</h2>
-  <p>When you hit <b>Compile &amp; Run Tests</b>, DevDojo does two things: it checks your code contains the right constructs, and — in the app — it asks Claude to execute the tests like a compiler plus JUnit and report pass/fail per test. That is great for fast feedback and learning, but it is <b>not a real compiler</b>. It can miss a runtime edge case, and a correct solution written in an unusual way can occasionally be marked wrong.</p>
+  <p>When you hit <b>Compile &amp; Run Tests</b>, ${DOJO_NAME} does two things: it checks your code contains the right constructs, and — in the app — it asks Claude to execute the tests like a compiler plus JUnit and report pass/fail per test. That is great for fast feedback and learning, but it is <b>not a real compiler</b>. It can miss a runtime edge case, and a correct solution written in an unusual way can occasionally be marked wrong.</p>
   <p><b>The fix for real depth:</b> every exercise now has a <b>🖥️ Run this on your own machine</b> panel with the exact commands. SQL exercises execute against real sample data in your browser, and pure-JavaScript exercises run in a sandboxed Web Worker — both graded on real behavior. Java exercises can even <b>compile &amp; run in-app</b> if you start the site with a local JDK and <code>JD_LOCAL_RUNNER=1</code>.</p>
   </div>
 
@@ -1901,7 +1910,7 @@ function renderGettingStarted(){
   </div>
 
   <div class="gsCard">
-  <h2>What DevDojo can do in-app vs. in your own dev environment</h2>
+  <h2>What ${DOJO_NAME} can do in-app vs. in your own dev environment</h2>
   <p><b>Great in the app:</b> learning the concepts, writing and checking Java/SQL/CLI exercises, the belt progression, the glossary, and click-to-explain terms.</p>
   <p><b>Best on your own machine (the app can teach but not fully run these):</b> compiling and executing Java with a real JVM; running a live database for SQL; standing up a Spring Boot service; the concurrency lessons where real timing and multiple cores matter; the networking/sockets and deployment lessons; and the standalone <b>Docker, Kubernetes, Istio and Envoy</b> courses, which are separate hands-on labs in this repository. The Run-locally panel on each exercise bridges the gap.</p>
   </div>
@@ -1920,7 +1929,7 @@ function renderPath(){
   const step=(n,belt,title,body)=>`<div class="pathStep"><div class="pathNum">${n}</div><div class="pathBody"><div class="pathBelt">${belt}</div><h3>${esc(title)}</h3><p>${body}</p></div></div>`;
   m.innerHTML=`<div class="home">
   <h1>🗺️ Learning path</h1>
-  <p>DevDojo is large on purpose, but you do not have to wander. This is a recommended route from beginner to senior. Finish the belt lessons in a domain to earn its belt; the dan sub-tracks and the Projects/Tournaments are where you cement it. Jump around once you know the basics — this is a suggestion, not a cage.</p>
+  <p>${DOJO_NAME} is large on purpose, but you do not have to wander. This is a recommended route from beginner to senior. Finish the belt lessons in a domain to earn its belt; the dan sub-tracks and the Projects/Tournaments are where you cement it. Jump around once you know the basics — this is a suggestion, not a cage.</p>
   <div class="pathWrap">
   ${step(1,'⬜ White','Start here','Read <b>🚀 Getting started</b>, install a JDK, and skim the <b>Glossary</b>. Then begin <b>Java Fundamentals</b> — variables, control flow, objects, collections.')}
   ${step(2,'🟡 Yellow','Core Java','Finish <b>Java Fundamentals</b> (including <i>Inside the JVM</i>), <b>Exception Handling</b>, and <b>Generics from the Ground Up</b>. This is the language spine everything else assumes.')}
@@ -2039,7 +2048,7 @@ function renderPractice(filter){
   const shown=filter==='all'?items:items.filter(i=>i.d===filter);
   const tab=(k,label,n)=>`<button class="pracTab ${filter===k?'active':''}" onclick="renderPractice('${k}')">${label} <span class="pcount">${n}</span></button>`;
   m.innerHTML=`<div class="home"><h1>🎯 Practice by difficulty</h1>
-  <p style="color:var(--muted)">Every exercise across DevDojo, rated by difficulty. Filter to build a ramp — grind 🟢 Easy to warm up, or jump to 🔴 Hard for interview-grade problems. Ratings are auto-derived from each solution.</p>
+  <p style="color:var(--muted)">Every exercise across ${DOJO_NAME}, rated by difficulty. Filter to build a ramp — grind 🟢 Easy to warm up, or jump to 🔴 Hard for interview-grade problems. Ratings are auto-derived from each solution.</p>
   <div class="pracTabs">${tab('all','All',items.length)}${tab('easy','🟢 Easy',counts.easy)}${tab('medium','🟡 Medium',counts.medium)}${tab('hard','🔴 Hard',counts.hard)}</div>
   <div class="pracList">${shown.map(i=>`<div class="pracRow" onclick="openLesson(${i.si},${i.li},${i.ei})"><span class="diffDot d-${i.d}" title="${i.d}"></span><span class="pracDone">${i.done?'✅':'○'}</span><span class="pracIcon">${i.icon}</span><span class="pracTitle">${esc(i.title)}</span><span class="pracLesson">${esc(i.lesson)}</span></div>`).join('')}</div>
   </div>`;
