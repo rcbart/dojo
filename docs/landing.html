@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dojo — interactive courses in software engineering &amp; identity</title>
+<meta name="description" content="Self-contained, dependency-free interactive courses: DevDojo (software engineering) and IdentityDojo (identity &amp; access management).">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236a5cf5%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2306b6d4%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20x%3D%221%22%20y%3D%221%22%20width%3D%2230%22%20height%3D%2230%22%20rx%3D%228%22%20fill%3D%22url(%23g)%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M5%2010.5%20Q16%208%2027%2010.5%22%20stroke-width%3D%222.8%22%2F%3E%3Cpath%20d%3D%22M7.5%2014.5%20H24.5%22%2F%3E%3Cpath%20d%3D%22M10%2011%20V25%22%2F%3E%3Cpath%20d%3D%22M22%2011%20V25%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E">
+<style>
+  :root{--bg:#0b0f19;--card:#121829;--line:#222b45;--fg:#e8ecf6;--muted:#9aa7c2;
+        --accent:#8b5cf6;--accent2:#06b6d4;--ok:#2ea44f}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:64px 24px 80px}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:18px;letter-spacing:.3px}
+  .logo{width:34px;height:34px;border-radius:9px;
+        background:linear-gradient(135deg,#6a5cf5,#8b5cf6 55%,#06b6d4)}
+  h1{font-size:clamp(30px,5vw,46px);line-height:1.15;margin:34px 0 14px;letter-spacing:-.5px}
+  .grad{background:linear-gradient(135deg,#a78bfa,#22d3ee);-webkit-background-clip:text;
+        background-clip:text;color:transparent}
+  .lede{font-size:18px;color:var(--muted);max-width:70ch;margin:0 0 10px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin:44px 0 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px;
+        display:flex;flex-direction:column;transition:border-color .15s,transform .15s}
+  .card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .card h2{margin:0 0 6px;font-size:22px}
+  .icon{font-size:26px}
+  .card p{color:var(--muted);margin:8px 0 16px;flex:1}
+  .stats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+  .stat{font-size:12px;font-weight:700;padding:4px 9px;border-radius:999px;
+        background:#1b233c;color:#b9c6e4;border:1px solid var(--line)}
+  .go{display:inline-block;text-decoration:none;font-weight:700;padding:11px 18px;border-radius:9px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0b0f19;text-align:center}
+  .go.alt{background:transparent;color:var(--fg);border:1px solid var(--line)}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  h3{margin:56px 0 12px;font-size:15px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted)}
+  .note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent2);
+        border-radius:10px;padding:18px 20px;color:var(--muted);font-size:15px}
+  .note b{color:var(--fg)}
+  .more{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .more a{text-decoration:none;color:var(--fg);background:var(--card);border:1px solid var(--line);
+          border-radius:10px;padding:14px 16px;font-size:14px;font-weight:600;transition:border-color .15s}
+  .more a:hover{border-color:var(--accent)}
+  .more span{display:block;color:var(--muted);font-weight:400;font-size:13px;margin-top:3px}
+  footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--line);
+         color:var(--muted);font-size:14px}
+  footer a{color:var(--accent2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand"><div class="logo"></div> Dojo</div>
+
+  <h1>Learn by <span class="grad">doing</span>, in a single HTML file.</h1>
+  <p class="lede">Two interactive courses that run entirely in your browser — no install, no build,
+  no dependencies. Every lesson ends with an exercise in a built-in editor.</p>
+
+  <div class="grid">
+
+    <div class="card">
+      <div class="icon">🥋</div>
+      <h2>DevDojo</h2>
+      <div class="stats">
+        <span class="stat">28 tracks</span><span class="stat">200 lessons</span>
+        <span class="stat">313 exercises</span>
+      </div>
+      <p>Software engineering end to end: Java &amp; the JVM, data structures &amp; algorithms,
+      web &amp; HTTP, React, APIs, Spring, databases &amp; SQL, concurrency, DevOps, and a
+      senior-level architecture track. SQL exercises run against real sample data in a
+      from-scratch in-browser engine.</p>
+      <div class="row">
+        <a class="go" href="./dev/">Open DevDojo</a>
+        <a class="go alt" href="https://github.com/rcbart/knowledge-base">Source</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="icon">🛂</div>
+      <h2>IdentityDojo</h2>
+      <div class="stats">
+        <span class="stat">14 streams</span><span class="stat">132 lessons</span>
+        <span class="stat">139 exercises</span>
+      </div>
+      <p>Identity &amp; access management, sequenced so concepts are grounded <em>before</em> the
+      protocols that assume them. OAuth 2.0/2.1, OIDC, SAML, WebAuthn/FIDO2 internals, Active
+      Directory and Kerberos, zero trust — plus a Running Identity stream on incident response,
+      migration and the 3am page.</p>
+      <div class="row">
+        <a class="go" href="./identity/">Open IdentityDojo</a>
+        <a class="go alt" href="https://github.com/rcbart/knowledge-base/tree/main/identity-dojo">Source</a>
+      </div>
+    </div>
+
+  </div>
+
+  <h3>Also in this repository</h3>
+  <div class="more">
+    <a href="https://github.com/rcbart/knowledge-base/tree/main/kubernetes-crash-course">Kubernetes crash course<span>Pods to operators, with labs</span></a>
+    <a href="https://github.com/rcbart/knowledge-base/tree/main/docker-crash-course">Docker crash course<span>Images, layers, Compose</span></a>
+    <a href="https://github.com/rcbart/knowledge-base/tree/main/istio-crash-course">Istio crash course<span>Mesh, mTLS, ambient mode</span></a>
+    <a href="https://github.com/rcbart/knowledge-base/tree/main/envoy-crash-course">Envoy crash course<span>Listeners, filters, xDS</span></a>
+  </div>
+
+  <h3>How grading works</h3>
+  <p class="note"><b>Worth being straight about this.</b> Most exercises are checked by
+  <b>regex against the shape of your answer</b> — they verify you wrote the right construct, not that
+  your code runs correctly. SQL and JavaScript genuinely execute (sample data and a sandboxed worker),
+  and Java compiles and runs for real if you start the optional local runner. Every exercise ships a
+  <b>Run locally</b> panel with exact commands, and that is the ground truth.</p>
+
+  <footer>
+    Built with zero runtime dependencies — no framework, no bundler, no CDN. Each course builds to one
+    self-contained HTML file you can open offline.
+    <br>Source on <a href="https://github.com/rcbart/knowledge-base">GitHub</a>.
+  </footer>
+
+</div>
+</body>
+</html>

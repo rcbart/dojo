@@ -3,7 +3,8 @@
 </p>
 
 <p align="center">
-  <a href="https://rcbart.github.io/knowledge-base/"><img src="https://img.shields.io/badge/%E2%96%B6%20live%20demo-DevDojo-6a5cf5" alt="live demo"></a>
+  <a href="https://rcbart.github.io/knowledge-base/dev/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-DevDojo-6a5cf5" alt="DevDojo live"></a>
+  <a href="https://rcbart.github.io/knowledge-base/identity/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-IdentityDojo-8b5cf6" alt="IdentityDojo live"></a>
   <img src="https://img.shields.io/badge/tracks-28-8b5cf6" alt="tracks">
   <img src="https://img.shields.io/badge/lessons-200-8b5cf6" alt="lessons">
   <img src="https://img.shields.io/badge/exercises-313-06b6d4" alt="exercises">
@@ -29,10 +30,12 @@ unbalanced a course meant to cover software engineering broadly. It is now
 and OIDC, SAML, WebAuthn/FIDO2 internals, Active Directory and Kerberos, zero trust, and a Running
 Identity stream on incident response, migration and operations. Same engine, separate build.
 
-**▶ Live demo:** https://rcbart.github.io/knowledge-base/ — a single, self-contained page. SQL
-exercises run against real sample data in your browser (built-in engine, no server). *(First time:
-in the repo's Settings → Pages, set Source to "GitHub Actions"; the included workflow builds and
-deploys on every push.)*
+**▶ Live:** https://rcbart.github.io/knowledge-base/ — a landing page for both courses.
+[**DevDojo**](https://rcbart.github.io/knowledge-base/dev/) ·
+[**IdentityDojo**](https://rcbart.github.io/knowledge-base/identity/). Each is a single,
+self-contained page; SQL exercises run against real sample data in your browser with no server.
+*(First time: in Settings → Pages, set Source to "GitHub Actions"; the workflow verifies and builds
+both courses on every push and fails the deploy if either content check fails.)*
 
 ## What's inside
 
@@ -186,7 +189,8 @@ apostrophes and `\u` sequences. Always run `node scripts/verify.js` after editin
 Separate hands-on courses, each a self-contained interactive site:
 
 - `docker-crash-course/`, `kubernetes-crash-course/`, `istio-crash-course/`, `envoy-crash-course/`
-- `ml-dojo/` — a fork of the engine for a machine-learning curriculum (Python via Pyodide)
+- `ml-dojo` — a machine-learning curriculum (Python via Pyodide). It forked the engine and shares
+  nothing with this repo, so it now lives in its own repository: https://github.com/rcbart/ml-dojo
 - `oauth-trainer/` — a small Maven CLI for generating and signing JWKs
 
 ## Companion docs
