@@ -132,7 +132,52 @@ try {
     pool.shutdown();                   // stop accepting; finish queued work
     pool.awaitTermination(10, TimeUnit.SECONDS);
 }</div>
-<p><code>Callable&lt;V&gt;</code> is Runnable that returns a value and may throw. Always shut pools down (or use try-with-resources — ExecutorService is AutoCloseable since Java 19). Forgetting shutdown() is why "my main never exits."</p>`,
+<p><code>Callable&lt;V&gt;</code> is Runnable that returns a value and may throw. Always shut pools down (or use try-with-resources — ExecutorService is AutoCloseable since Java 19). Forgetting shutdown() is why "my main never exits."</p>
+
+<h4>Choosing a pool, and why the default is often wrong</h4>
+<div class="codeSample" data-hl>newFixedThreadPool(n)     bounded threads, UNBOUNDED queue
+                          -&gt; work piles up in memory rather than being refused
+newCachedThreadPool()     UNBOUNDED threads, no queue
+                          -&gt; a burst can create thousands of threads
+newSingleThreadExecutor() serialised, ordering guaranteed
+newVirtualThreadPerTaskExecutor()  Java 21+: a thread per task, cheaply
+                          -&gt; the right default for blocking I/O work
+
+// production pools are usually built explicitly, because the interesting
+// decisions are the queue bound and what happens when it is full:
+new ThreadPoolExecutor(core, max, keepAlive, SECONDS,
+    new ArrayBlockingQueue&lt;&gt;(1000),          // BOUNDED. this is the point.
+    new ThreadPoolExecutor.CallerRunsPolicy() // back-pressure, not silent drop
+);</div>
+<p>The sizing heuristic: <b>CPU-bound</b> work wants roughly the number of cores, because more threads
+only add context switching. <b>I/O-bound</b> work wants many more, because threads spend their time
+blocked — and on Java 21+ that is exactly the case virtual threads solve, letting you stop tuning pool
+sizes for blocking work altogether.</p>
+
+<h4>Exceptions vanish unless you look</h4>
+<p>This is the behaviour that most often surprises people. A task submitted with
+<code>submit()</code> that throws does <b>not</b> print anything — the exception is captured in the
+<code>Future</code> and only surfaces when you call <code>get()</code>. Fire-and-forget
+<code>submit()</code> with an ignored return value silently discards failures.</p>
+<div class="codeSample" data-hl>pool.submit(task);        // throws? you will never know.
+pool.execute(task);       // throws? goes to the thread's uncaught handler
+Future&lt;?&gt; f = pool.submit(task);
+f.get();                  // NOW the exception arrives, wrapped in ExecutionException</div>
+<p><code>get()</code> also <b>blocks indefinitely</b> by default. Prefer the timeout overload; a hung
+task otherwise hangs the caller too.</p>
+
+<h4>Shutting down properly</h4>
+<p><code>shutdown()</code> stops accepting new work and lets running tasks finish.
+<code>shutdownNow()</code> additionally interrupts them and returns the queued tasks that never ran.
+Neither <i>waits</i> — that is <code>awaitTermination()</code>, and the usual correct sequence is
+shutdown, await a bounded time, then <code>shutdownNow()</code> if it has not drained.</p>
+<p>The reason "my main never exits" is that pool threads are <b>non-daemon</b> by default, so the JVM
+keeps running for them. Try-with-resources on Java 19+ handles this correctly and is the simplest fix.</p>
+
+<h4>The deadlock worth naming</h4>
+<p>Submitting a task to a pool and then <code>get()</code>-ing on a task that must run in that
+<i>same</i> pool will deadlock once the pool is saturated: the waiting task holds a thread the pending
+task needs. Keep dependent work off the pool it depends on.</p>`,
 docs:[['Executors — Oracle','https://docs.oracle.com/javase/tutorial/essential/concurrency/executors.html'],['ExecutorService — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html']],
 ex:{title:'Pool the work',
 prompt:`Write <code>Pool</code> with <code>static int sumSquares(int n) throws Exception</code>: create a fixed pool of 4 threads, submit <b>n</b> <code>Callable</code> tasks where task i returns i*i (for i = 1..n), collect the <code>Future</code>s in a list, sum all <code>get()</code> results, <b>shutdown</b> the pool in a finally block, and return the sum.`,
@@ -230,7 +275,54 @@ Task t = queue.take(); // consumer blocks when empty — no polling!
 
 CountDownLatch ready = new CountDownLatch(3);
 // each worker: ready.countDown();  main: ready.await();</div>
-<p><code>ConcurrentHashMap</code> beats <code>Collections.synchronizedMap</code> (striped, and compound ops like merge/compute are atomic). <code>AtomicInteger/Long</code> for counters, <code>LongAdder</code> under heavy contention. <code>CountDownLatch</code> = one-shot "wait for N events"; <code>Semaphore</code> = permits; <code>CyclicBarrier</code> = reusable meeting point.</p>`,
+<p><code>ConcurrentHashMap</code> beats <code>Collections.synchronizedMap</code> (striped, and compound ops like merge/compute are atomic). <code>AtomicInteger/Long</code> for counters, <code>LongAdder</code> under heavy contention. <code>CountDownLatch</code> = one-shot "wait for N events"; <code>Semaphore</code> = permits; <code>CyclicBarrier</code> = reusable meeting point.</p>
+
+<h4>Thread-safe collection, unsafe usage</h4>
+<p>The mistake that survives every code review: each <i>operation</i> on a concurrent collection is
+atomic, but a <i>sequence</i> of them is not. Check-then-act is a race no matter how thread-safe the
+map is.</p>
+<div class="codeSample" data-hl>// BROKEN — two threads can both see absent and both put
+if (!map.containsKey(k)) map.put(k, expensive(k));
+
+// CORRECT — one atomic operation
+map.computeIfAbsent(k, this::expensive);
+
+// counters
+map.merge(k, 1L, Long::sum);          // atomic increment-or-insert
+
+// and the same trap with the "synchronized" wrappers:
+List&lt;String&gt; l = Collections.synchronizedList(new ArrayList&lt;&gt;());
+for (String s : l) { ... }            // NOT safe — iteration needs the lock</div>
+<p><code>ConcurrentHashMap</code> beats <code>synchronizedMap</code> not merely on speed but because it
+<i>offers</i> the atomic compound operations — <code>computeIfAbsent</code>, <code>merge</code>,
+<code>putIfAbsent</code>, <code>compute</code> — that make correct code expressible. Keep the mapping
+function short and side-effect free; it runs while holding a lock on that bin, and calling back into
+the same map from inside it can deadlock.</p>
+
+<h4>Atomics, and when they stop being enough</h4>
+<p><code>AtomicInteger</code> and friends give you lock-free compare-and-swap. Under heavy contention
+CAS starts failing and retrying, which is why <b><code>LongAdder</code> outperforms
+<code>AtomicLong</code> for hot counters</b>: it spreads updates across cells and sums them only when
+read. Use <code>AtomicLong</code> when you read the value constantly, <code>LongAdder</code> when you
+mostly write.</p>
+<p>Atomics cover a <i>single</i> variable. Two variables that must change together need a lock — or a
+single immutable object swapped atomically via <code>AtomicReference</code>.</p>
+
+<h4>Picking the right coordinator</h4>
+<div class="codeSample" data-hl>CountDownLatch   one-shot gate. count only goes DOWN, never resets.
+                 "wait until N services have started"
+CyclicBarrier    reusable rendezvous. all N wait for each other, then all
+                 proceed; resets automatically. simulation rounds.
+Semaphore        N permits — a bounded resource. acquire/release, and
+                 RELEASE IN A FINALLY BLOCK or you leak permits until
+                 everything blocks forever.
+Phaser           barrier with a variable number of parties.</div>
+<p>The distinction that matters: a latch cannot be reset, so "wait for startup" is a latch and "wait for
+everyone each round" is a barrier. Using a latch where you needed a barrier produces code that works
+exactly once.</p>
+<p><b>Prefer structure to primitives.</b> Most code that reaches for a latch actually wants
+<code>invokeAll</code> on an executor, or <code>CompletableFuture.allOf</code>. Reach for these when
+the higher-level tools genuinely do not fit.</p>`,
 docs:[['Concurrent collections — Oracle','https://docs.oracle.com/javase/tutorial/essential/concurrency/collections.html'],['java.util.concurrent — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/package-summary.html']],
 ex:{title:'Thread-safe hit tracker',
 prompt:`Write <code>HitTracker</code> with an <code>AtomicLong total</code>, a <code>ConcurrentHashMap&lt;String, Long&gt; perPath</code>, method <code>void hit(String path)</code> that atomically increments both (use <code>merge</code> for the map), <code>long total()</code>, and <code>static void awaitAll(CountDownLatch latch) throws InterruptedException</code> that just awaits the latch (shows you know the primitive). No synchronized keyword anywhere.`,

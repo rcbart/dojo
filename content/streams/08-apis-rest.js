@@ -64,7 +64,53 @@ if (response.statusCode() == 200) {
 // async variant returns CompletableFuture:
 client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
       .thenApply(HttpResponse::body);</div>
-<p>POST bodies use <code>.POST(HttpRequest.BodyPublishers.ofString(json))</code>. Always check <code>statusCode()</code> — the client does not throw on 4xx/5xx.</p>`,
+<p>POST bodies use <code>.POST(HttpRequest.BodyPublishers.ofString(json))</code>. Always check <code>statusCode()</code> — the client does not throw on 4xx/5xx.</p>
+
+<h4>That last point is the one that bites</h4>
+<p>A 404 or a 500 is a <b>successful HTTP exchange</b> as far as the client is concerned — you asked, the
+server answered. <code>send()</code> throws only for transport-level failures: connection refused,
+DNS failure, timeout, TLS problems. So code that never inspects <code>statusCode()</code> will happily
+parse an error page as if it were data, and the bug surfaces much later as a confusing
+deserialization failure rather than "the API returned 503".</p>
+
+<h4>Reuse the client, always</h4>
+<p><code>HttpClient</code> is immutable, thread-safe, and holds the connection pool. Creating one per
+request throws away connection reuse and leaks threads under load. <b>Build one and share it</b> —
+typically a single instance for the lifetime of the application.</p>
+<div class="codeSample" data-hl>private static final HttpClient CLIENT = HttpClient.newBuilder()
+        .connectTimeout(Duration.ofSeconds(5))       // connect only
+        .followRedirects(HttpClient.Redirect.NORMAL) // default is NEVER
+        .build();
+
+HttpRequest req = HttpRequest.newBuilder()
+        .uri(URI.create(url))
+        .timeout(Duration.ofSeconds(10))   // the WHOLE request. set it.
+        .header("Accept", "application/json")
+        .build();</div>
+<p>Two defaults worth knowing. There is <b>no request timeout unless you set one</b>, so a hung server
+hangs your thread indefinitely — a leading cause of thread-pool exhaustion. And redirects are
+<b>not</b> followed by default, which surprises people migrating from other clients.</p>
+
+<h4>Timeouts are two different things</h4>
+<p><code>connectTimeout</code> on the client caps establishing the connection.
+<code>timeout</code> on the request caps the entire exchange including the response body. You want
+both: a server that accepts your connection and then trickles bytes forever defeats a connect timeout
+entirely.</p>
+
+<h4>Sync, async, and back-pressure</h4>
+<p><code>send()</code> blocks. <code>sendAsync()</code> returns a <code>CompletableFuture</code> and is
+the right choice for fan-out — fetching thirty resources concurrently without thirty blocked threads.
+The discipline it demands is <b>bounding the concurrency</b>: firing a thousand async requests at once
+will exhaust the pool or the remote service. Batch them.</p>
+<p><code>BodyHandlers</code> decide how the response is materialised. <code>ofString()</code> is
+convenient and reads everything into memory — fine for JSON, wrong for a large download, where
+<code>ofFile()</code> or <code>ofInputStream()</code> streams instead.</p>
+
+<h4>What the JDK client deliberately does not do</h4>
+<p>No retries, no circuit breaking, no automatic JSON binding, no rate limiting. Those are your job or a
+library's. Retrying is the one people most often need and most often get wrong: retry only idempotent
+requests (GET, PUT, DELETE — never a bare POST), use exponential backoff with jitter, cap the attempts,
+and honour <code>Retry-After</code> when the server sends it.</p>`,
 docs:[['HttpClient — API docs','https://docs.oracle.com/en/java/javase/21/docs/api/java.net.http/java/net/http/HttpClient.html'],['Java HTTP Client — Baeldung','https://www.baeldung.com/java-9-http-client']],
 ex:{title:'Call an API',
 prompt:`Write <code>ApiCaller</code> with <code>static String fetchUser(String id) throws Exception</code>: GET <code>https://api.dojo.dev/users/&lt;id&gt;</code> with header <code>Accept: application/json</code>; return the body on status 200, otherwise throw <code>RuntimeException</code> including the status code in the message.`,
@@ -119,7 +165,46 @@ List&lt;UserDto&gt; users = mapper.readValue(json,
 
 // unknown fields shouldn't break you:
 mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);</div>
-<p>Field-name mismatches are handled with <code>@JsonProperty("user_name")</code>. In Spring Boot, an ObjectMapper is auto-configured and used behind every <code>@RequestBody</code>/<code>@ResponseBody</code>.</p>`,
+<p>Field-name mismatches are handled with <code>@JsonProperty("user_name")</code>. In Spring Boot, an ObjectMapper is auto-configured and used behind every <code>@RequestBody</code>/<code>@ResponseBody</code>.</p>
+
+<h4>Reuse the ObjectMapper</h4>
+<p>It is thread-safe once configured, and constructing one is expensive — it builds and caches
+serializers per type. Creating a mapper per request throws that cache away every time. <b>One shared
+instance</b>, configured at startup.</p>
+
+<h4>The setting that prevents most breakage</h4>
+<div class="codeSample" data-hl>// default: an unknown field in the JSON throws.
+// so the day the API adds a field, your client breaks.
+mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL); // omit nulls
+mapper.registerModule(new JavaTimeModule());  // or Instant/LocalDate FAIL
+mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // ISO-8601</div>
+<p>Tolerating unknown fields is the <b>robustness principle</b> applied to APIs: be liberal in what you
+accept. A provider adding an optional field is a backward-compatible change on their side, and it
+should not be a breaking one on yours.</p>
+<p>The <code>JavaTimeModule</code> omission is the other classic: without it, Jackson cannot handle
+<code>Instant</code> or <code>LocalDate</code> at all, and the failure message rarely points at the
+missing module.</p>
+
+<h4>Records, and why constructors matter</h4>
+<p>Jackson historically needed a no-arg constructor plus setters, which pushed people toward mutable
+DTOs. Modern Jackson deserialises <b>records</b> and other immutable types directly by using the
+canonical constructor, so your DTOs can be immutable — which is what you want for objects crossing a
+boundary. If parameter names are stripped at compile time, you may still need
+<code>@JsonProperty</code> on the components or the <code>-parameters</code> compiler flag.</p>
+
+<h4>Treat the DTO as a boundary, not your model</h4>
+<p>Binding JSON straight onto your domain entity couples your internal model to someone else's wire
+format, and the coupling runs both ways: their rename becomes your refactor, and your private field
+becomes their public API. A separate DTO plus an explicit mapping step costs a little code and buys
+independent evolution.</p>
+<p>It also closes a security hole. Deserialising an arbitrary payload onto a domain object lets a caller
+set fields you never intended to expose — the <b>mass assignment</b> problem. If the JSON contains
+<code>"role":"admin"</code> and your entity has a <code>role</code> field, Jackson will happily set it.
+Use <code>@JsonIgnore</code>, or better, a DTO that simply has no such field.</p>
+<p><b>And never enable default typing</b> (<code>enableDefaultTyping()</code>). Letting the payload
+declare its own Java types is a well-known remote-code-execution vector.</p>`,
 docs:[['Jackson databind — GitHub','https://github.com/FasterXML/jackson-databind'],['Jackson ObjectMapper — Baeldung','https://www.baeldung.com/jackson-object-mapper-tutorial']],
 ex:{title:'Round-trip a record',
 prompt:`Define <code>record Position(String symbol, int quantity, double price)</code>. Write class <code>Json</code> with an ObjectMapper field, <code>Position parse(String json)</code> using <code>readValue</code>, <code>String write(Position p)</code> using <code>writeValueAsString</code>, and <code>double marketValue(String json)</code> that parses and returns quantity × price.`,
@@ -227,7 +312,40 @@ HTTP/1.1 200 OK
 X-RateLimit-Remaining: 4998
 ETag: "33a64df5"
 
-{"items":[...],"next_cursor":"eyJpZCI6MTk5In0"}</div>`,
+{"items":[...],"next_cursor":"eyJpZCI6MTk5In0"}</div>
+
+<h4>Why cursors beat offsets</h4>
+<p><code>?page=5&amp;size=20</code> is easy and quietly wrong at scale, for two reasons. It is
+<b>unstable</b>: if a row is inserted while a client pages through, every subsequent page shifts and an
+item is silently skipped or repeated. And it is <b>slow</b>: <code>OFFSET 100000</code> makes the
+database walk and discard a hundred thousand rows on every request.</p>
+<p>A cursor encodes <i>where you stopped</i> — typically the last id or sort key — so the next query is
+an indexed range scan of constant cost, and inserts elsewhere cannot shift your window. The trade is
+that you lose "jump to page 47", which most APIs never genuinely needed. Keep the cursor opaque
+(base64 an internal structure) so you can change what is inside it without breaking clients.</p>
+
+<h4>Versioning: pick one and mean it</h4>
+<div class="codeSample" data-hl>/v1/orders                        URI  — visible, cacheable, easy to route.
+                                       the pragmatic default.
+Accept: application/vnd.acme.v2+json   media type — "purer", far more awkward
+                                       in browsers, proxies and curl
+?version=2                        query — easy, but caches and logs treat it
+                                       as a different resource inconsistently</div>
+<p>The more important discipline is <b>not needing a new version</b>. Adding an optional field, adding
+an endpoint, adding an enum value a client can ignore — all backward compatible. Removing a field,
+renaming one, tightening validation or changing a default — all breaking. Version when you break, and
+run the old version until the clients you care about have moved, with usage metrics telling you when
+that is.</p>
+
+<h4>Rate limits should be legible</h4>
+<p>Return <b>429</b> with <code>Retry-After</code>, and expose the budget continuously rather than only
+at the moment of failure — <code>RateLimit-Limit</code>, <code>RateLimit-Remaining</code>,
+<code>RateLimit-Reset</code>. A client that can see its remaining budget can slow down; one that only
+learns at rejection can only retry and make it worse.</p>
+<p>Limit per <i>credential</i>, not per IP: many legitimate users share an IP, and one abusive client
+should not take out a corporate NAT. And prefer a token bucket to a fixed window — a fixed window lets
+a caller spend the whole quota in the last second of one window and again in the first second of the
+next, producing exactly the burst you were trying to prevent.</p>`,
 docs:[['API versioning — Postman guide','https://www.postman.com/api-platform/api-versioning/'],['RFC 6585 — 429 status','https://www.rfc-editor.org/rfc/rfc6585'],['HTTP caching & ETag — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag']],
 ex:{title:'Platform design drill',lang:'http',
 prompt:`One per numbered line: (1) a URL-versioned request line listing v2 trades with <b>cursor</b> pagination (cursor <code>abc</code>, limit 50), (2) the status line a rate-limited client gets, (3) the response header telling them when to retry (60s), (4) the conditional request header a client sends to revalidate a cached ETag <code>"x1"</code>, (5) the status line when that cache is still fresh.`,

@@ -45,7 +45,59 @@ public void withdraw(long cents) throws InsufficientFundsException {
     if (cents &gt; balance)
         throw new InsufficientFundsException("need " + cents + ", have " + balance);
 }</div>
-<p>Extend <code>Exception</code> for recoverable, caller-must-decide situations; extend <code>RuntimeException</code> for programming errors. Always pass a useful message (and cause, when wrapping).</p>`,
+<p>Extend <code>Exception</code> for recoverable, caller-must-decide situations; extend <code>RuntimeException</code> for programming errors. Always pass a useful message (and cause, when wrapping).</p>
+
+<h4>The real question: can the caller do something about it?</h4>
+<p>That single test decides checked versus unchecked better than any rule about categories. If a
+reasonable caller could <i>recover</i> — retry, fall back, ask the user again — a checked exception
+forces them to confront it. If the only sane response is to fix the code, make it unchecked; there is
+no point compelling every caller to handle a bug.</p>
+<div class="codeSample" data-hl>CHECKED    the caller has a real choice
+  InsufficientFundsException   -&gt; offer a smaller amount
+  FileNotFoundException        -&gt; prompt for another path
+
+UNCHECKED  the caller can only have written better code
+  IllegalArgumentException     -&gt; you passed a negative quantity
+  IllegalStateException        -&gt; you called close() twice
+  NullPointerException         -&gt; a bug, always</div>
+
+<h4>Throwing well</h4>
+<p>The message is read by someone at 3am with no context, so <b>include the values</b>. "Invalid
+quantity" wastes the opportunity; <code>"quantity must be &gt; 0, was -3"</code> ends the
+investigation. State what was expected, what arrived, and — where it helps — which input caused it.</p>
+<p>Never include secrets. Exception messages reach logs, error trackers and sometimes HTTP responses,
+so a message quoting a password or a token has just published it.</p>
+
+<h4>Wrapping: always pass the cause</h4>
+<div class="codeSample" data-hl>// throws away the evidence — the stack trace stops here
+catch (SQLException e) { throw new DataAccessException("query failed"); }
+
+// preserves the chain: "Caused by: SQLException: ..." survives
+catch (SQLException e) { throw new DataAccessException("loading user " + id, e); }</div>
+<p>Dropping the cause is the single most damaging mistake in this area: the original stack trace, the
+line number and the driver's own message all disappear, and the person debugging is left with your
+summary of a problem you did not understand.</p>
+
+<h4>What <code>throws</code> is really declaring</h4>
+<p>It is part of your <b>API contract</b>, not an implementation detail. Declaring <code>throws
+SQLException</code> on a repository method leaks the fact that you use a database into every caller —
+and the day you switch to an HTTP service, every signature changes. Wrap it in an exception that
+belongs to your layer.</p>
+<p>Two related rules that follow from the contract framing. Overriding methods may narrow but never
+widen the checked exceptions they declare, because callers were promised the parent's list. And
+<code>throws Exception</code> is nearly always a mistake — it declares everything and therefore tells
+the caller nothing.</p>
+
+<h4>The anti-patterns, briefly</h4>
+<ul>
+<li><b>Swallowing</b> — <code>catch (Exception e) {}</code>. The failure still happened; you have only
+made it invisible. If it truly is ignorable, say so in a comment and log at debug.</li>
+<li><b>Catching to log and rethrow</b> — produces the same error logged three times at three layers.
+Log where you handle it, not where you pass it on.</li>
+<li><b>Exceptions as control flow</b> — they are expensive to construct (the stack trace) and obscure
+the normal path. A lookup that legitimately finds nothing should return <code>Optional</code>, not
+throw.</li>
+</ul>`,
 docs:[['Throwing exceptions — Oracle','https://docs.oracle.com/javase/tutorial/essential/exceptions/throwing.html'],['Custom exceptions — Baeldung','https://www.baeldung.com/java-new-custom-exception']],
 ex:{title:'Domain exception',
 prompt:`Create a <b>checked</b> exception <code>InsufficientFundsException extends Exception</code> with a message constructor. Then write class <code>Wallet</code> with private <code>long cents</code>, <code>void add(long amount)</code>, and <code>void spend(long amount) throws InsufficientFundsException</code> that throws it (with an informative message) when amount exceeds the balance.`,

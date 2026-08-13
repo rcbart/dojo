@@ -145,6 +145,44 @@ AuditService audit = mock(AuditService.class);
 TransferService svc = new TransferService(audit);
 svc.transfer("a", "b", 100);
 verify(audit).log(contains("100"));</div>
+<p><b>What makes a test worth having.</b> A good test fails for exactly one reason, names that reason in
+its title, and does not change when you refactor the implementation. That last property is the one most
+often lost: a test that asserts on internal calls rather than observable behaviour breaks every time you
+improve the code, and a suite that punishes refactoring gets deleted or ignored.</p>
+
+<h4>Mock the boundary, not your own logic</h4>
+<div class="codeSample" data-hl>// GOOD — mock what you do not control
+when(paymentGateway.charge(any())).thenReturn(Receipt.ok("r-1"));
+
+// BAD — mocking your own domain means you are testing the mock
+when(orderCalculator.total(any())).thenReturn(new Money(100));
+
+// verify BEHAVIOUR that matters, not every interaction
+verify(paymentGateway).charge(argThat(c -&gt; c.amount().equals(expected)));
+verifyNoMoreInteractions(paymentGateway);   // use sparingly: it is brittle</div>
+<p>The rule of thumb: mock things that are slow, non-deterministic, or outside your process — clocks,
+networks, payment providers, the filesystem. Mocking your own value objects and calculators produces
+tests that pass while the system is broken.</p>
+
+<h4>Determinism: the two usual culprits</h4>
+<p><b>Time</b> and <b>randomness</b> make tests flaky, and both are fixable by injection. Take a
+<code>Clock</code> rather than calling <code>Instant.now()</code>, and a <code>Random</code> with a
+fixed seed. <code>Clock.fixed(...)</code> in a test turns "expires tomorrow" from a guess into an
+assertion — and it lets you test the boundary, which is where date bugs live.</p>
+
+<h4>JUnit 5 features worth using</h4>
+<div class="codeSample" data-hl>@ParameterizedTest                  // one test, many cases — beats copy-paste
+@CsvSource({"1,I", "4,IV", "9,IX"})
+void converts(int n, String expected) { ... }
+
+@Nested class WhenAccountIsClosed { ... }   // group by scenario, share setup
+assertThrows(InsufficientFunds.class, () -&gt; account.withdraw(500));
+assertAll(() -&gt; assertEquals(...), () -&gt; assertEquals(...));  // report ALL
+                                                               // failures, not
+                                                               // just the first</div>
+<p><code>@ParameterizedTest</code> is the highest-value habit here: it turns five near-identical tests
+into one with five rows, and adding a case becomes a line rather than a method.</p>
+
 <p>Structure every test as Arrange-Act-Assert. Name tests after behavior, not methods. Constructor injection (which you learned in the Spring stream) is exactly what makes mocking possible.</p>`,
 docs:[['JUnit 5 User Guide','https://junit.org/junit5/docs/current/user-guide/'],['Mockito','https://site.mockito.org/']],
 ex:{title:'Test the BankAccount',

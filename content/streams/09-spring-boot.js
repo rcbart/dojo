@@ -333,7 +333,59 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)           // 201
     UserDto create(@RequestBody @Valid UserDto dto) { return users.save(dto); }
 }</div>
-<p>Parameter annotations: <code>@PathVariable</code> (from the URL), <code>@RequestParam</code> (?query=), <code>@RequestBody</code> (JSON body). <code>ResponseEntity</code> gives full control of status and headers.</p>`,
+<p>Parameter annotations: <code>@PathVariable</code> (from the URL), <code>@RequestParam</code> (?query=), <code>@RequestBody</code> (JSON body). <code>ResponseEntity</code> gives full control of status and headers.</p>
+
+<h4>Return the right status, not just 200</h4>
+<p>The default for a successful method is 200, and that is wrong often enough to matter. A creation
+should answer <b>201 Created</b> with a <code>Location</code> header pointing at the new resource; a
+delete that returns nothing should answer <b>204 No Content</b>; a lookup that finds nothing is
+<b>404</b>, not 200 with a null body.</p>
+<div class="codeSample" data-hl>@PostMapping
+ResponseEntity&lt;OrderDto&gt; create(@Valid @RequestBody CreateOrder cmd) {
+    Order saved = service.create(cmd);
+    return ResponseEntity
+        .created(URI.create("/orders/" + saved.id()))   // 201 + Location
+        .body(OrderDto.from(saved));
+}
+
+@GetMapping("/{id}")
+ResponseEntity&lt;OrderDto&gt; get(@PathVariable long id) {
+    return service.find(id)
+        .map(OrderDto::from)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -&gt; ResponseEntity.notFound().build());   // 404, not null
+}</div>
+
+<h4>Validate at the edge</h4>
+<p><code>@Valid</code> on a <code>@RequestBody</code> triggers Bean Validation
+(<code>@NotBlank</code>, <code>@Positive</code>, <code>@Email</code>) before your method runs, so
+invalid input never reaches your service layer. Without it the annotations on the DTO are decoration —
+a very common bug, because the code looks validated.</p>
+
+<h4>Handle errors in one place</h4>
+<p>Try/catch in every controller method produces inconsistent error shapes and a lot of noise. A
+<code>@RestControllerAdvice</code> centralises it, so every error leaves the application in the same
+format:</p>
+<div class="codeSample" data-hl>@RestControllerAdvice
+class ApiErrors {
+    @ExceptionHandler(NotFoundException.class)
+    ResponseEntity&lt;Problem&gt; notFound(NotFoundException e) {
+        return ResponseEntity.status(404).body(Problem.of(e.getMessage()));
+    }
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    ResponseEntity&lt;Problem&gt; invalid(MethodArgumentNotValidException e) { ... }
+}</div>
+<p>Two rules for the payload: use a consistent structure (RFC 9457 <i>problem details</i> is the
+standard one), and <b>never return the raw exception message or stack trace</b> — it leaks internals
+and sometimes data.</p>
+
+<h4>Keep controllers thin</h4>
+<p>A controller's job is HTTP: bind, validate, delegate, map the result to a status. Business logic
+belongs in a service, where it can be tested without a web layer. The tell that a controller has grown
+too much is a test that needs <code>MockMvc</code> to verify a business rule.</p>
+<p>And return <b>DTOs, not entities</b>. Serialising a JPA entity exposes your schema, drags lazy
+associations into the response (or throws when the session has closed), and turns a database rename
+into a breaking API change.</p>`,
 docs:[['Building a RESTful Web Service — guide','https://spring.io/guides/gs/rest-service'],['Spring MVC annotated controllers','https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller.html']],
 ex:{title:'A Positions API',
 prompt:`Write <code>PositionController</code>: <code>@RestController</code> mapped to <code>/api/positions</code>, with an in-memory <code>Map&lt;String, String&gt;</code>. Endpoints: <code>GET /{id}</code> returning <code>ResponseEntity&lt;String&gt;</code> — 200 with the value or 404 if absent; and <code>POST</code> taking <code>@RequestParam String id, @RequestParam String symbol</code>, storing it and returning the created value with status <code>201</code> via <code>@ResponseStatus</code>.`,
@@ -473,6 +525,23 @@ class PositionControllerTest {
            .andExpect(status().isNotFound());
     }
 }</div>
+<p>Configuration is a contract, not a pile of strings. <code>@Value</code> scatters keys across the
+codebase, so nothing tells you what the application needs and a typo fails at runtime on the first
+request that touches it. A properties record is <b>typed, validated and discoverable</b>: wrong type,
+missing value or failed constraint and the application fails to <i>start</i>, not at 2am.</p>
+<p><b>Profiles have a trap.</b> Putting behaviour behind <code>@Profile("prod")</code> means the code
+you tested is not the code you run. Keep profiles for configuration — endpoints, pool sizes,
+credentials — and keep behaviour identical everywhere; where it genuinely must differ, a feature flag
+you can flip without redeploying is the better tool. Precedence runs defaults → profile files →
+environment variables, which is what makes twelve-factor deployment work and why secrets arrive from
+the environment rather than a committed file.</p>
+<p><b>Slice tests are the difference between a fast suite and an abandoned one.</b>
+<code>@SpringBootTest</code> in every class is the biggest cause of slow Spring builds; slices start a
+fraction of the context. Spring also caches contexts <i>by configuration</i> across a run, so every
+distinct combination of annotations, properties and mock beans builds another one — keeping test
+configuration uniform is often a bigger win than any single optimisation. And test against the real
+database: H2 accepts SQL that Postgres rejects, so a green suite on H2 still fails in production.
+Testcontainers removes that whole class of surprise.</p>
 <p>Prefer <code>@ConfigurationProperties</code> records over scattered <code>@Value</code>; prefer slice tests (<code>@WebMvcTest</code>, <code>@DataJpaTest</code>) — they run in milliseconds, keeping the full <code>@SpringBootTest</code> for wiring smoke tests.</p>`,
 docs:[['Externalized configuration','https://docs.spring.io/spring-boot/reference/features/external-config.html'],['Testing Spring Boot apps','https://docs.spring.io/spring-boot/reference/testing/index.html']],
 ex:{title:'Type-safe config + a slice test',

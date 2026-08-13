@@ -479,7 +479,54 @@ solution:`import java.util.*;\n\npublic class SetZeroes {\n    static void setZe
 
 ]},
 {id:'ch3',title:'Hard round',body:`
-<p>The final bracket. Hards stack multiple insights or demand a data structure built from parts. Interviewers rarely expect a flawless solve — they expect structured thinking under pressure: brute force stated, invariants named, code that stays clean while the problem fights back. Take these slowly; use Next Step without shame; a hard solved after two hints teaches more than an easy solved in silence.</p>`,
+<p>The final bracket. Hards stack multiple insights, or demand a data structure assembled from parts.
+Interviewers rarely expect a flawless solve — they expect <b>structured thinking under pressure</b>:
+brute force stated, invariants named, code that stays clean while the problem fights back. Take these
+slowly, use Next Step without shame; a hard solved after two hints teaches more than an easy solved in
+silence.</p>
+
+<h4>What makes a problem hard</h4>
+<p>Usually one of four things, and naming which one tells you where to push:</p>
+<div class="codeSample" data-hl>STACKED INSIGHTS      two or three mediums composed. sliding window PLUS a
+                      frequency map PLUS a shrink condition. each part is
+                      familiar; the composition is not.
+
+BUILT DATA STRUCTURE  no library type fits, so you assemble one — LRU cache is
+                      a hash map plus a doubly linked list; a median stream is
+                      two heaps facing each other.
+
+NON-OBVIOUS STATE     the thing to track is not the thing being asked for.
+                      "longest valid parentheses" tracks INDICES, not counts.
+
+HIDDEN CONSTRAINT     "O(1) space" or "no extra array" is the whole puzzle,
+                      forcing in-place tricks: index-as-hash, sign marking,
+                      pointer reversal, cycle detection.</div>
+
+<h4>The invariant habit</h4>
+<p>Hards are where sloppy loops fall apart, and the cure is stating the invariant before writing the
+loop. "Everything left of <code>i</code> is already in final position." "The window always contains at
+most k distinct characters." "The two heaps differ in size by at most one." An invariant you can say
+out loud makes the loop body almost write itself, and it converts debugging from guessing into
+checking which line broke the promise.</p>
+
+<h4>How to fail well</h4>
+<p>Not finishing a hard is normal and is not automatically a bad outcome. What distinguishes a strong
+partial from a weak one:</p>
+<ul>
+<li><b>Get the brute force on the board first.</b> A stated O(n²) with correct logic beats an
+unfinished O(n) with none, and it gives you something to optimise from rather than a blank page.</li>
+<li><b>Say what you are trading.</b> "I can make this O(n) with O(n) extra space" is a design decision,
+not a concession — interviewers want to hear the axis you are moving along.</li>
+<li><b>Test on the smallest failing case.</b> When output is wrong, shrink the input until it fits in
+your head. Two elements, then three. Debugging a ten-element trace by eye is how the remaining time
+disappears.</li>
+<li><b>Keep talking.</b> Silence reads as being stuck even when you are thinking productively. "I am
+trying to see whether the window can ever shrink past the left bound" tells the interviewer where you
+are and often earns exactly the nudge you needed.</li>
+</ul>
+<p><b>The one habit worth taking from this round:</b> when a hard defeats you, do not just read the
+solution. Identify which of the four categories above it was, and what the single unlocking insight
+was. That is what transfers — the specific problem almost never reappears, and the category does.</p>`,
 docs:[['PriorityQueue — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html'],['Invariant-based reasoning — CP-Algorithms','https://cp-algorithms.com/']],
 exs:[
 {title:'Trapping rain water',

@@ -40,7 +40,37 @@ Supplier&lt;ArrayList&lt;String&gt;&gt; make = ArrayList::new;    // constructor
 
 names.forEach(System.out::println);
 names.sort(String::compareToIgnoreCase);</div>
-<p>Rule of thumb: if your lambda reads <code>x -> something.method(x)</code> or <code>x -> x.method()</code>, a reference exists for it.</p>`,
+<p>Rule of thumb: if your lambda reads <code>x -> something.method(x)</code> or <code>x -> x.method()</code>, a reference exists for it.</p>
+
+<h4>The confusing pair</h4>
+<p>Two of the four forms look almost identical and behave differently, and this is where most confusion
+lives:</p>
+<div class="codeSample" data-hl>String::length          // UNBOUND: the receiver is the parameter
+                        // equivalent to  s -&gt; s.length()
+
+"java"::equals          // BOUND: the receiver is captured NOW
+                        // equivalent to  s -&gt; "java".equals(s)
+
+// same shape, opposite argument roles. and the capture is immediate:
+String prefix = "a";
+Predicate&lt;String&gt; p = prefix::equals;   // captures the CURRENT value
+prefix = "b";                            // p still tests against "a"</div>
+<p>That last point matters in loops: a bound reference captures the object at the moment it is created,
+so creating references inside a loop captures each iteration's value, not the final one.</p>
+
+<h4>Where they genuinely help — and where they hurt</h4>
+<p>Method references win when the lambda is <i>pure delegation</i>: <code>map(String::trim)</code>,
+<code>sorted(Comparator.comparing(Employee::name))</code>, <code>collect(toMap(User::id,
+Function.identity()))</code>. The name of the method becomes the documentation.</p>
+<p>They lose when the reader has to reconstruct the argument order. <code>Integer::compare</code> is
+fine; <code>this::handle</code> in a long pipeline often is not, because the reader must go and find
+what <code>handle</code> takes. <b>A lambda with named parameters is sometimes the clearer choice</b>,
+and "shorter" is not the same as "clearer".</p>
+<p><b>Two practical notes.</b> <code>ArrayList::new</code> as a <code>Supplier</code> takes no
+arguments, but as a <code>Function&lt;Integer,List&gt;</code> it resolves to the capacity constructor —
+the compiler picks the overload from the target type, which is elegant and occasionally surprising.
+And a bound reference on a null receiver throws immediately at creation, not later at use, which is
+usually the more helpful moment to fail.</p>`,
 docs:[['Method References — dev.java','https://dev.java/learn/lambdas/method-references/'],['Method References — Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html']],
 ex:{title:'Refactor to references',
 prompt:`Write class <code>Refs</code> with static fields using <b>method references only</b> (no <code>-&gt;</code> anywhere): <code>Function&lt;String,Integer&gt; PARSE</code> (parses decimal text to its int value: "7" → 7), <code>Function&lt;String,String&gt; UPPER</code> (returns the string uppercased), <code>Supplier&lt;java.util.ArrayList&lt;String&gt;&gt; NEW_LIST</code> (returns a <b>new empty list on every call</b>), and <code>Consumer&lt;Object&gt; PRINT</code> (prints its argument to stdout).`,
@@ -295,7 +325,9 @@ public class Pipeline {
     }
 }`}},
 {id:'mod4',title:'Advanced streams: flatMap, groupingBy, reduce',body:`
-<p>The heavy machinery:</p>
+<p>Three operations do most of the real work in stream pipelines, and each answers a different shape of
+question: <b>flatMap</b> flattens nesting, <b>groupingBy</b> builds an index, and <b>reduce</b> folds
+many values into one.</p>
 <div class="codeSample" data-hl>// flatMap: stream of collections → one flat stream
 List&lt;String&gt; allTags = posts.stream()
     .flatMap(p -&gt; p.tags().stream())
@@ -311,7 +343,51 @@ Map&lt;String, Long&gt; countByDept = staff.stream()
 // reduce: fold everything into one value
 int total = nums.stream().reduce(0, Integer::sum);
 // primitive streams avoid boxing:
-double avg = staff.stream().mapToDouble(Employee::salary).average().orElse(0);</div>`,
+double avg = staff.stream().mapToDouble(Employee::salary).average().orElse(0);</div>
+
+<h4>flatMap: one level of nesting, removed</h4>
+<p>The distinction that trips people up is <code>map</code> versus <code>flatMap</code>. If your mapper
+returns a single value, use <code>map</code>. If it returns a <i>collection or stream</i>, use
+<code>flatMap</code> — otherwise you end up with a <code>Stream&lt;List&lt;String&gt;&gt;</code>, a
+stream of lists rather than a stream of items, and every downstream operation is working on the wrong
+type. <b>It flattens exactly one level</b>, so a list of lists of lists needs two calls.</p>
+
+<h4>groupingBy: building an index</h4>
+<p>Its real power is the <b>downstream collector</b>, the second argument. Grouping into lists is only
+the default; you rarely want the whole bucket:</p>
+<div class="codeSample" data-hl>groupingBy(Employee::dept)                          -&gt; Map&lt;String, List&lt;Employee&gt;&gt;
+groupingBy(Employee::dept, counting())              -&gt; Map&lt;String, Long&gt;
+groupingBy(Employee::dept, summingDouble(Employee::salary))
+groupingBy(Employee::dept, mapping(Employee::name, toList()))   // names only
+groupingBy(Employee::dept, TreeMap::new, toList())  // sorted keys
+
+partitioningBy(e -&gt; e.salary() &gt; 100_000)           // exactly TWO buckets,
+                                                     // and BOTH keys always
+                                                     // exist, even if empty</div>
+<p><code>partitioningBy</code> is worth knowing precisely because of that last property: with
+<code>groupingBy</code> a bucket that matched nothing is simply absent from the map, so
+<code>get()</code> returns null. With <code>partitioningBy</code> both <code>true</code> and
+<code>false</code> keys are always present.</p>
+
+<h4>reduce: and when not to use it</h4>
+<p><code>reduce</code> folds a stream into one value, and it comes in three forms — with an identity,
+without one (returning <code>Optional</code>, because an empty stream has no answer), and a three-arg
+version for parallel streams. The rule that keeps it correct: <b>the operation must be associative</b>,
+and the identity must genuinely be neutral. Subtraction is not associative, so reducing with it gives
+different answers depending on how the work is split.</p>
+<p>In practice reach for a purpose-built collector first — <code>counting()</code>,
+<code>summingInt()</code>, <code>joining(", ")</code>, <code>averagingDouble()</code> — which are
+clearer and often faster. Save <code>reduce</code> for folds those do not cover.</p>
+
+<h4>Primitive streams, and why boxing matters</h4>
+<p><code>mapToInt</code>, <code>mapToDouble</code> and <code>mapToLong</code> exist because a
+<code>Stream&lt;Integer&gt;</code> allocates an object per element. On a large stream that is real cost
+and real garbage. They also unlock methods the object stream does not have —
+<code>sum()</code>, <code>average()</code>, <code>summaryStatistics()</code> — the last of which gives
+count, sum, min, max and average in a single pass.</p>
+<p><b>One trap:</b> <code>average()</code> returns an <code>OptionalDouble</code>, not a
+<code>double</code>, because an empty stream has no average. <code>orElse(0)</code> is the usual
+answer, but be deliberate — for an empty payroll, zero and "no data" mean quite different things.</p>`,
 docs:[['Reducing & collecting — dev.java','https://dev.java/learn/api/streams/reducing/'],['Collectors — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Collectors.html']],
 ex:{title:'Order analytics',
 prompt:`Given <code>record Order(String customer, List&lt;String&gt; items, double total)</code>, write <code>Analytics</code> with: <code>static Map&lt;String, Double&gt; revenueByCustomer(List&lt;Order&gt; orders)</code> using <code>groupingBy</code> + <code>summingDouble</code>, and <code>static List&lt;String&gt; allItems(List&lt;Order&gt; orders)</code> returning every item across all orders, <b>distinct</b>, via <code>flatMap</code>.`,

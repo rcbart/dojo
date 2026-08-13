@@ -5028,7 +5028,59 @@ public void withdraw(long cents) throws InsufficientFundsException {
     if (cents &gt; balance)
         throw new InsufficientFundsException("need " + cents + ", have " + balance);
 }</div>
-<p>Extend <code>Exception</code> for recoverable, caller-must-decide situations; extend <code>RuntimeException</code> for programming errors. Always pass a useful message (and cause, when wrapping).</p>`,
+<p>Extend <code>Exception</code> for recoverable, caller-must-decide situations; extend <code>RuntimeException</code> for programming errors. Always pass a useful message (and cause, when wrapping).</p>
+
+<h4>The real question: can the caller do something about it?</h4>
+<p>That single test decides checked versus unchecked better than any rule about categories. If a
+reasonable caller could <i>recover</i> — retry, fall back, ask the user again — a checked exception
+forces them to confront it. If the only sane response is to fix the code, make it unchecked; there is
+no point compelling every caller to handle a bug.</p>
+<div class="codeSample" data-hl>CHECKED    the caller has a real choice
+  InsufficientFundsException   -&gt; offer a smaller amount
+  FileNotFoundException        -&gt; prompt for another path
+
+UNCHECKED  the caller can only have written better code
+  IllegalArgumentException     -&gt; you passed a negative quantity
+  IllegalStateException        -&gt; you called close() twice
+  NullPointerException         -&gt; a bug, always</div>
+
+<h4>Throwing well</h4>
+<p>The message is read by someone at 3am with no context, so <b>include the values</b>. "Invalid
+quantity" wastes the opportunity; <code>"quantity must be &gt; 0, was -3"</code> ends the
+investigation. State what was expected, what arrived, and — where it helps — which input caused it.</p>
+<p>Never include secrets. Exception messages reach logs, error trackers and sometimes HTTP responses,
+so a message quoting a password or a token has just published it.</p>
+
+<h4>Wrapping: always pass the cause</h4>
+<div class="codeSample" data-hl>// throws away the evidence — the stack trace stops here
+catch (SQLException e) { throw new DataAccessException("query failed"); }
+
+// preserves the chain: "Caused by: SQLException: ..." survives
+catch (SQLException e) { throw new DataAccessException("loading user " + id, e); }</div>
+<p>Dropping the cause is the single most damaging mistake in this area: the original stack trace, the
+line number and the driver's own message all disappear, and the person debugging is left with your
+summary of a problem you did not understand.</p>
+
+<h4>What <code>throws</code> is really declaring</h4>
+<p>It is part of your <b>API contract</b>, not an implementation detail. Declaring <code>throws
+SQLException</code> on a repository method leaks the fact that you use a database into every caller —
+and the day you switch to an HTTP service, every signature changes. Wrap it in an exception that
+belongs to your layer.</p>
+<p>Two related rules that follow from the contract framing. Overriding methods may narrow but never
+widen the checked exceptions they declare, because callers were promised the parent's list. And
+<code>throws Exception</code> is nearly always a mistake — it declares everything and therefore tells
+the caller nothing.</p>
+
+<h4>The anti-patterns, briefly</h4>
+<ul>
+<li><b>Swallowing</b> — <code>catch (Exception e) {}</code>. The failure still happened; you have only
+made it invisible. If it truly is ignorable, say so in a comment and log at debug.</li>
+<li><b>Catching to log and rethrow</b> — produces the same error logged three times at three layers.
+Log where you handle it, not where you pass it on.</li>
+<li><b>Exceptions as control flow</b> — they are expensive to construct (the stack trace) and obscure
+the normal path. A lookup that legitimately finds nothing should return <code>Optional</code>, not
+throw.</li>
+</ul>`,
 docs:[['Throwing exceptions — Oracle','https://docs.oracle.com/javase/tutorial/essential/exceptions/throwing.html'],['Custom exceptions — Baeldung','https://www.baeldung.com/java-new-custom-exception']],
 ex:{title:'Domain exception',
 prompt:`Create a <b>checked</b> exception <code>InsufficientFundsException extends Exception</code> with a message constructor. Then write class <code>Wallet</code> with private <code>long cents</code>, <code>void add(long amount)</code>, and <code>void spend(long amount) throws InsufficientFundsException</code> that throws it (with an informative message) when amount exceeds the balance.`,
@@ -5913,7 +5965,37 @@ Supplier&lt;ArrayList&lt;String&gt;&gt; make = ArrayList::new;    // constructor
 
 names.forEach(System.out::println);
 names.sort(String::compareToIgnoreCase);</div>
-<p>Rule of thumb: if your lambda reads <code>x -> something.method(x)</code> or <code>x -> x.method()</code>, a reference exists for it.</p>`,
+<p>Rule of thumb: if your lambda reads <code>x -> something.method(x)</code> or <code>x -> x.method()</code>, a reference exists for it.</p>
+
+<h4>The confusing pair</h4>
+<p>Two of the four forms look almost identical and behave differently, and this is where most confusion
+lives:</p>
+<div class="codeSample" data-hl>String::length          // UNBOUND: the receiver is the parameter
+                        // equivalent to  s -&gt; s.length()
+
+"java"::equals          // BOUND: the receiver is captured NOW
+                        // equivalent to  s -&gt; "java".equals(s)
+
+// same shape, opposite argument roles. and the capture is immediate:
+String prefix = "a";
+Predicate&lt;String&gt; p = prefix::equals;   // captures the CURRENT value
+prefix = "b";                            // p still tests against "a"</div>
+<p>That last point matters in loops: a bound reference captures the object at the moment it is created,
+so creating references inside a loop captures each iteration's value, not the final one.</p>
+
+<h4>Where they genuinely help — and where they hurt</h4>
+<p>Method references win when the lambda is <i>pure delegation</i>: <code>map(String::trim)</code>,
+<code>sorted(Comparator.comparing(Employee::name))</code>, <code>collect(toMap(User::id,
+Function.identity()))</code>. The name of the method becomes the documentation.</p>
+<p>They lose when the reader has to reconstruct the argument order. <code>Integer::compare</code> is
+fine; <code>this::handle</code> in a long pipeline often is not, because the reader must go and find
+what <code>handle</code> takes. <b>A lambda with named parameters is sometimes the clearer choice</b>,
+and "shorter" is not the same as "clearer".</p>
+<p><b>Two practical notes.</b> <code>ArrayList::new</code> as a <code>Supplier</code> takes no
+arguments, but as a <code>Function&lt;Integer,List&gt;</code> it resolves to the capacity constructor —
+the compiler picks the overload from the target type, which is elegant and occasionally surprising.
+And a bound reference on a null receiver throws immediately at creation, not later at use, which is
+usually the more helpful moment to fail.</p>`,
 docs:[['Method References — dev.java','https://dev.java/learn/lambdas/method-references/'],['Method References — Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html']],
 ex:{title:'Refactor to references',
 prompt:`Write class <code>Refs</code> with static fields using <b>method references only</b> (no <code>-&gt;</code> anywhere): <code>Function&lt;String,Integer&gt; PARSE</code> (parses decimal text to its int value: "7" → 7), <code>Function&lt;String,String&gt; UPPER</code> (returns the string uppercased), <code>Supplier&lt;java.util.ArrayList&lt;String&gt;&gt; NEW_LIST</code> (returns a <b>new empty list on every call</b>), and <code>Consumer&lt;Object&gt; PRINT</code> (prints its argument to stdout).`,
@@ -6168,7 +6250,9 @@ public class Pipeline {
     }
 }`}},
 {id:'mod4',title:'Advanced streams: flatMap, groupingBy, reduce',body:`
-<p>The heavy machinery:</p>
+<p>Three operations do most of the real work in stream pipelines, and each answers a different shape of
+question: <b>flatMap</b> flattens nesting, <b>groupingBy</b> builds an index, and <b>reduce</b> folds
+many values into one.</p>
 <div class="codeSample" data-hl>// flatMap: stream of collections → one flat stream
 List&lt;String&gt; allTags = posts.stream()
     .flatMap(p -&gt; p.tags().stream())
@@ -6184,7 +6268,51 @@ Map&lt;String, Long&gt; countByDept = staff.stream()
 // reduce: fold everything into one value
 int total = nums.stream().reduce(0, Integer::sum);
 // primitive streams avoid boxing:
-double avg = staff.stream().mapToDouble(Employee::salary).average().orElse(0);</div>`,
+double avg = staff.stream().mapToDouble(Employee::salary).average().orElse(0);</div>
+
+<h4>flatMap: one level of nesting, removed</h4>
+<p>The distinction that trips people up is <code>map</code> versus <code>flatMap</code>. If your mapper
+returns a single value, use <code>map</code>. If it returns a <i>collection or stream</i>, use
+<code>flatMap</code> — otherwise you end up with a <code>Stream&lt;List&lt;String&gt;&gt;</code>, a
+stream of lists rather than a stream of items, and every downstream operation is working on the wrong
+type. <b>It flattens exactly one level</b>, so a list of lists of lists needs two calls.</p>
+
+<h4>groupingBy: building an index</h4>
+<p>Its real power is the <b>downstream collector</b>, the second argument. Grouping into lists is only
+the default; you rarely want the whole bucket:</p>
+<div class="codeSample" data-hl>groupingBy(Employee::dept)                          -&gt; Map&lt;String, List&lt;Employee&gt;&gt;
+groupingBy(Employee::dept, counting())              -&gt; Map&lt;String, Long&gt;
+groupingBy(Employee::dept, summingDouble(Employee::salary))
+groupingBy(Employee::dept, mapping(Employee::name, toList()))   // names only
+groupingBy(Employee::dept, TreeMap::new, toList())  // sorted keys
+
+partitioningBy(e -&gt; e.salary() &gt; 100_000)           // exactly TWO buckets,
+                                                     // and BOTH keys always
+                                                     // exist, even if empty</div>
+<p><code>partitioningBy</code> is worth knowing precisely because of that last property: with
+<code>groupingBy</code> a bucket that matched nothing is simply absent from the map, so
+<code>get()</code> returns null. With <code>partitioningBy</code> both <code>true</code> and
+<code>false</code> keys are always present.</p>
+
+<h4>reduce: and when not to use it</h4>
+<p><code>reduce</code> folds a stream into one value, and it comes in three forms — with an identity,
+without one (returning <code>Optional</code>, because an empty stream has no answer), and a three-arg
+version for parallel streams. The rule that keeps it correct: <b>the operation must be associative</b>,
+and the identity must genuinely be neutral. Subtraction is not associative, so reducing with it gives
+different answers depending on how the work is split.</p>
+<p>In practice reach for a purpose-built collector first — <code>counting()</code>,
+<code>summingInt()</code>, <code>joining(", ")</code>, <code>averagingDouble()</code> — which are
+clearer and often faster. Save <code>reduce</code> for folds those do not cover.</p>
+
+<h4>Primitive streams, and why boxing matters</h4>
+<p><code>mapToInt</code>, <code>mapToDouble</code> and <code>mapToLong</code> exist because a
+<code>Stream&lt;Integer&gt;</code> allocates an object per element. On a large stream that is real cost
+and real garbage. They also unlock methods the object stream does not have —
+<code>sum()</code>, <code>average()</code>, <code>summaryStatistics()</code> — the last of which gives
+count, sum, min, max and average in a single pass.</p>
+<p><b>One trap:</b> <code>average()</code> returns an <code>OptionalDouble</code>, not a
+<code>double</code>, because an empty stream has no average. <code>orElse(0)</code> is the usual
+answer, but be deliberate — for an empty payroll, zero and "no data" mean quite different things.</p>`,
 docs:[['Reducing & collecting — dev.java','https://dev.java/learn/api/streams/reducing/'],['Collectors — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Collectors.html']],
 ex:{title:'Order analytics',
 prompt:`Given <code>record Order(String customer, List&lt;String&gt; items, double total)</code>, write <code>Analytics</code> with: <code>static Map&lt;String, Double&gt; revenueByCustomer(List&lt;Order&gt; orders)</code> using <code>groupingBy</code> + <code>summingDouble</code>, and <code>static List&lt;String&gt; allItems(List&lt;Order&gt; orders)</code> returning every item across all orders, <b>distinct</b>, via <code>flatMap</code>.`,
@@ -6592,7 +6720,48 @@ Transitive dependencies`}},
     &lt;/dependency&gt;
   &lt;/dependencies&gt;
 &lt;/project&gt;</div>
-<p>Key commands: <code>mvn compile</code>, <code>mvn test</code>, <code>mvn package</code> (jar in <code>target/</code>), <code>mvn clean install</code>.</p>`,
+<p>Key commands: <code>mvn compile</code>, <code>mvn test</code>, <code>mvn package</code> (jar in <code>target/</code>), <code>mvn clean install</code>.</p>
+
+<h4>Coordinates: how Maven finds anything</h4>
+<p>Every artifact in the world is addressed by <b>groupId : artifactId : version</b>, and that triple is
+the whole naming system. <code>groupId</code> is a reverse-domain namespace you control,
+<code>artifactId</code> the module name, <code>version</code> the release. A <code>-SNAPSHOT</code>
+suffix means "unreleased and mutable" — Maven re-checks it periodically, whereas a release version is
+cached forever on the assumption it can never change.</p>
+
+<h4>Scopes decide what ends up where</h4>
+<div class="codeSample" data-hl>compile   (default) needed to build AND at runtime; ships with your app
+provided  needed to compile, supplied by the environment at runtime
+          (servlet API, and anything the container already has)
+runtime   not needed to compile, required to run — JDBC drivers
+test      test code only; never packaged
+import    only in dependencyManagement, to pull in a BOM</div>
+<p>Getting a scope wrong produces a specific, recognisable failure: <code>provided</code> where you
+needed <code>compile</code> compiles fine and throws <code>NoClassDefFoundError</code> at runtime,
+which is why that error so often means "a scope is wrong", not "a dependency is missing".</p>
+
+<h4>Transitive dependencies and the nearest-wins rule</h4>
+<p>Your dependencies have dependencies. Maven resolves the graph automatically, and when two paths
+demand different versions of the same library it does <b>not</b> pick the newest — it picks the one
+<i>nearest to your POM</i> in the tree, breaking ties by declaration order. This surprises people
+regularly, and it is why <code>mvn dependency:tree</code> is the single most useful diagnostic
+command: it shows what was chosen and what was omitted for conflict.</p>
+<p>The fix for a bad resolution is to state the version yourself. A
+<code>&lt;dependencyManagement&gt;</code> block pins versions across the whole build without adding
+dependencies, so child modules inherit a consistent set and never declare versions at all.</p>
+
+<h4>The lifecycle is why order is not yours to choose</h4>
+<p><code>mvn package</code> does not just package: it runs validate → compile → test → package, in
+that order, because invoking a phase runs every phase before it. That is the trade Maven makes —
+convention over configuration. You do not describe <i>how</i> to build, you attach plugins to phases
+and accept the sequence.</p>
+<p>Hence a common confusion: <b><code>install</code> is not deployment.</b> It copies the artifact into
+your local <code>~/.m2</code> repository so other local projects can resolve it. Publishing to a shared
+repository is <code>deploy</code>.</p>
+<p><b>And <code>clean</code> is not a ritual.</b> It deletes <code>target/</code>. Adding it to every
+build "just in case" throws away incremental compilation and slows the loop; reach for it when stale
+output is genuinely suspected — after changing a plugin version, or when the build behaves in a way the
+source does not explain.</p>`,
 docs:[['Maven in 5 Minutes','https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html'],['POM Reference','https://maven.apache.org/pom.html']],
 ex:{title:'Write a POM',lang:'xml',
 prompt:`Write a minimal <code>pom.xml</code> for project <code>com.example.dojo : hello-maven : 0.1.0</code> that sets the compiler release to 21 and declares <b>one test-scoped dependency</b>: <code>org.junit.jupiter : junit-jupiter : 5.10.2</code>.`,
@@ -7119,7 +7288,50 @@ HTTP/1.1 200 OK
 Content-Type: application/json
 
 {"id": 42, "name": "Ada"}</div>
-<p>Methods: <code>GET</code> (read, safe), <code>POST</code> (create/act), <code>PUT</code> (replace), <code>PATCH</code> (partial update), <code>DELETE</code>. Status families: <b>2xx</b> success, <b>3xx</b> redirect, <b>4xx</b> client's fault (400 bad request, 401 unauthenticated, 403 forbidden, 404 not found, 409 conflict), <b>5xx</b> server's fault. Headers carry metadata: <code>Content-Type</code>, <code>Authorization</code>, <code>Cache-Control</code>.</p>`,
+<p>Methods: <code>GET</code> (read, safe), <code>POST</code> (create/act), <code>PUT</code> (replace), <code>PATCH</code> (partial update), <code>DELETE</code>. Status families: <b>2xx</b> success, <b>3xx</b> redirect, <b>4xx</b> client's fault (400 bad request, 401 unauthenticated, 403 forbidden, 404 not found, 409 conflict), <b>5xx</b> server's fault. Headers carry metadata: <code>Content-Type</code>, <code>Authorization</code>, <code>Cache-Control</code>.</p>
+
+<h4>Safe and idempotent: the two properties that matter</h4>
+<p>These are not synonyms, and the difference decides what a client, a proxy or a retry may do:</p>
+<div class="codeSample" data-hl>            SAFE?   IDEMPOTENT?   meaning
+GET          yes      yes        no side effects at all. cacheable, prefetchable
+HEAD         yes      yes        GET without the body
+PUT          no       yes        same request twice = same end state
+DELETE       no       yes        deleting twice leaves it deleted
+POST         no       NO         twice = two orders. this is why the browser
+                                 warns before re-submitting a form
+PATCH        no       usually not depends on whether the patch is absolute</div>
+<p>The practical consequence: <b>only idempotent requests are safe to retry automatically</b>. A client
+that retries a POST on timeout may create two orders, because it cannot know whether the first one
+arrived. That is what idempotency keys exist to solve — the client sends a unique key and the server
+recognises the repeat.</p>
+
+<h4>Statelessness, and what it actually costs</h4>
+<p>HTTP has no memory: each request must carry everything needed to serve it. That is why any server
+can answer any request, which is what makes horizontal scaling straightforward — and it is why
+identity has to be re-established every single request, via a cookie or an
+<code>Authorization</code> header. The whole of session and token design follows from this one
+property.</p>
+
+<h4>Status codes people get wrong</h4>
+<ul>
+<li><b>401 vs 403.</b> 401 means "I do not know who you are" — authenticate and try again. 403 means
+"I know exactly who you are and you still may not." Returning 401 for a permission failure sends
+clients into a pointless re-login loop.</li>
+<li><b>200 with an error body.</b> Popular and wrong: it defeats every client, proxy and monitor that
+reasons about status codes.</li>
+<li><b>404 vs 410.</b> 404 is "not here"; 410 is "deliberately gone, stop asking".</li>
+<li><b>422 vs 400.</b> 400 is malformed syntax; 422 is well-formed but semantically invalid.</li>
+<li><b>429.</b> Rate limited — and it should carry <code>Retry-After</code> so the client knows how
+long to wait rather than guessing.</li>
+</ul>
+
+<h4>The headers worth knowing beyond the basics</h4>
+<p><code>Accept</code> and <code>Content-Type</code> are a pair that people conflate: <code>Accept</code>
+says what you want back, <code>Content-Type</code> describes what you are sending.
+<code>Cache-Control</code> governs caching, and <code>ETag</code> plus
+<code>If-None-Match</code> turn a repeat request into a cheap <b>304 Not Modified</b> with no body at
+all. On the same mechanism, <code>If-Match</code> gives you optimistic concurrency — the update applies
+only if the resource has not changed since you read it.</p>`,
 docs:[['HTTP overview — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview'],['HTTP response status codes — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status']],
 ex:{title:'Speak raw HTTP',lang:'http',
 prompt:`Write a raw HTTP/1.1 request that creates a user: <code>POST</code> to path <code>/users</code> on host <code>api.dojo.dev</code>, declaring a JSON body (<code>Content-Type</code> header) and sending body <code>{"name": "Ada"}</code>. Then on the lines below it, write the <b>status line only</b> of the ideal response for: (a) success, (b) the same request with a malformed body, (c) missing auth token.`,
@@ -7531,7 +7743,45 @@ hints:['useState(0) returns the current value and a setter in an array you destr
     &lt;/ul&gt;
   );
 }</div>
-<p><b>Conditional rendering</b> is just JavaScript inside braces: <code>{isLoading &amp;&amp; &lt;Spinner /&gt;}</code> shows the spinner only when true, and a ternary <code>{user ? &lt;Profile /&gt; : &lt;Login /&gt;}</code> chooses between two. There is no special template syntax — you already know it.</p>`,
+<p><b>Conditional rendering</b> is just JavaScript inside braces: <code>{isLoading &amp;&amp; &lt;Spinner /&gt;}</code> shows the spinner only when true, and a ternary <code>{user ? &lt;Profile /&gt; : &lt;Login /&gt;}</code> chooses between two. There is no special template syntax — you already know it.</p>
+
+<h4>Keys: the part that causes real bugs</h4>
+<p>React uses <code>key</code> to match elements between renders. Get it wrong and React reuses the
+wrong DOM node, which shows up as <b>state attached to the wrong row</b> — a checkbox that stays
+ticked after you delete the item above it, or text typed into one input appearing in another.</p>
+<div class="codeSample" data-hl>// BAD: the index changes when items are inserted, removed or reordered
+{items.map((item, i) =&gt; &lt;Row key={i} item={item} /&gt;)}
+
+// GOOD: stable identity that belongs to the DATA
+{items.map(item =&gt; &lt;Row key={item.id} item={item} /&gt;)}</div>
+<p>Index keys are only safe when the list is append-only and never reordered or filtered. Since that is
+rarely guaranteed for long, use the data's own id. Keys must be unique among siblings, and they are a
+message to React — they are not passed to your component as a prop.</p>
+
+<h4>The falsy-zero trap</h4>
+<p><code>&amp;&amp;</code> renders whatever its left side evaluates to when that value is falsy — and
+React renders the number <code>0</code>, unlike <code>false</code>, <code>null</code> or
+<code>undefined</code>, which render nothing.</p>
+<div class="codeSample" data-hl>{items.length &amp;&amp; &lt;List /&gt;}          // empty list renders a literal "0"
+{items.length &gt; 0 &amp;&amp; &lt;List /&gt;}     // fine — the left side is a boolean
+{items.length ? &lt;List /&gt; : null}    // also fine</div>
+<p>Make the left side an explicit boolean and the problem disappears.</p>
+
+<h4>Deriving, not storing</h4>
+<p>A filtered or sorted list is <b>derived state</b> and should be computed during render, not kept in
+its own <code>useState</code> and synchronised with an effect. Two states that must agree will
+eventually disagree — that is the whole class of "stale filter" bugs.</p>
+<div class="codeSample" data-hl>const visible = items.filter(i =&gt; !i.done);   // just compute it
+
+// only if profiling shows it matters:
+const visible = useMemo(() =&gt; items.filter(i =&gt; !i.done), [items]);</div>
+<p>Reach for <code>useMemo</code> when a measurement says to, not by default — it has its own cost, and
+filtering a list of fifty items is not it.</p>
+
+<h4>Rendering the empty and loading cases</h4>
+<p>Every list has at least three states and a common bug is designing only the happy one. Handle
+<b>loading</b>, <b>empty</b> and <b>error</b> explicitly — an empty result is a normal outcome that
+deserves a message, not a blank area that looks like a failure.</p>`,
 docs:[['Rendering lists — React','https://react.dev/learn/rendering-lists'],['Conditional rendering','https://react.dev/learn/conditional-rendering']],
 ex:{title:'Render a keyed list',lang:'jsx',
 prompt:`Write a <code>List</code> component that takes <code>props</code> and returns a <code>&lt;ul&gt;</code> mapping <code>props.items</code> to a <code>&lt;li&gt;</code> for each item, using <code>key={item.id}</code> and showing <code>{item.name}</code>.`,
@@ -7749,7 +7999,53 @@ if (response.statusCode() == 200) {
 // async variant returns CompletableFuture:
 client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
       .thenApply(HttpResponse::body);</div>
-<p>POST bodies use <code>.POST(HttpRequest.BodyPublishers.ofString(json))</code>. Always check <code>statusCode()</code> — the client does not throw on 4xx/5xx.</p>`,
+<p>POST bodies use <code>.POST(HttpRequest.BodyPublishers.ofString(json))</code>. Always check <code>statusCode()</code> — the client does not throw on 4xx/5xx.</p>
+
+<h4>That last point is the one that bites</h4>
+<p>A 404 or a 500 is a <b>successful HTTP exchange</b> as far as the client is concerned — you asked, the
+server answered. <code>send()</code> throws only for transport-level failures: connection refused,
+DNS failure, timeout, TLS problems. So code that never inspects <code>statusCode()</code> will happily
+parse an error page as if it were data, and the bug surfaces much later as a confusing
+deserialization failure rather than "the API returned 503".</p>
+
+<h4>Reuse the client, always</h4>
+<p><code>HttpClient</code> is immutable, thread-safe, and holds the connection pool. Creating one per
+request throws away connection reuse and leaks threads under load. <b>Build one and share it</b> —
+typically a single instance for the lifetime of the application.</p>
+<div class="codeSample" data-hl>private static final HttpClient CLIENT = HttpClient.newBuilder()
+        .connectTimeout(Duration.ofSeconds(5))       // connect only
+        .followRedirects(HttpClient.Redirect.NORMAL) // default is NEVER
+        .build();
+
+HttpRequest req = HttpRequest.newBuilder()
+        .uri(URI.create(url))
+        .timeout(Duration.ofSeconds(10))   // the WHOLE request. set it.
+        .header("Accept", "application/json")
+        .build();</div>
+<p>Two defaults worth knowing. There is <b>no request timeout unless you set one</b>, so a hung server
+hangs your thread indefinitely — a leading cause of thread-pool exhaustion. And redirects are
+<b>not</b> followed by default, which surprises people migrating from other clients.</p>
+
+<h4>Timeouts are two different things</h4>
+<p><code>connectTimeout</code> on the client caps establishing the connection.
+<code>timeout</code> on the request caps the entire exchange including the response body. You want
+both: a server that accepts your connection and then trickles bytes forever defeats a connect timeout
+entirely.</p>
+
+<h4>Sync, async, and back-pressure</h4>
+<p><code>send()</code> blocks. <code>sendAsync()</code> returns a <code>CompletableFuture</code> and is
+the right choice for fan-out — fetching thirty resources concurrently without thirty blocked threads.
+The discipline it demands is <b>bounding the concurrency</b>: firing a thousand async requests at once
+will exhaust the pool or the remote service. Batch them.</p>
+<p><code>BodyHandlers</code> decide how the response is materialised. <code>ofString()</code> is
+convenient and reads everything into memory — fine for JSON, wrong for a large download, where
+<code>ofFile()</code> or <code>ofInputStream()</code> streams instead.</p>
+
+<h4>What the JDK client deliberately does not do</h4>
+<p>No retries, no circuit breaking, no automatic JSON binding, no rate limiting. Those are your job or a
+library's. Retrying is the one people most often need and most often get wrong: retry only idempotent
+requests (GET, PUT, DELETE — never a bare POST), use exponential backoff with jitter, cap the attempts,
+and honour <code>Retry-After</code> when the server sends it.</p>`,
 docs:[['HttpClient — API docs','https://docs.oracle.com/en/java/javase/21/docs/api/java.net.http/java/net/http/HttpClient.html'],['Java HTTP Client — Baeldung','https://www.baeldung.com/java-9-http-client']],
 ex:{title:'Call an API',
 prompt:`Write <code>ApiCaller</code> with <code>static String fetchUser(String id) throws Exception</code>: GET <code>https://api.dojo.dev/users/&lt;id&gt;</code> with header <code>Accept: application/json</code>; return the body on status 200, otherwise throw <code>RuntimeException</code> including the status code in the message.`,
@@ -7804,7 +8100,46 @@ List&lt;UserDto&gt; users = mapper.readValue(json,
 
 // unknown fields shouldn't break you:
 mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);</div>
-<p>Field-name mismatches are handled with <code>@JsonProperty("user_name")</code>. In Spring Boot, an ObjectMapper is auto-configured and used behind every <code>@RequestBody</code>/<code>@ResponseBody</code>.</p>`,
+<p>Field-name mismatches are handled with <code>@JsonProperty("user_name")</code>. In Spring Boot, an ObjectMapper is auto-configured and used behind every <code>@RequestBody</code>/<code>@ResponseBody</code>.</p>
+
+<h4>Reuse the ObjectMapper</h4>
+<p>It is thread-safe once configured, and constructing one is expensive — it builds and caches
+serializers per type. Creating a mapper per request throws that cache away every time. <b>One shared
+instance</b>, configured at startup.</p>
+
+<h4>The setting that prevents most breakage</h4>
+<div class="codeSample" data-hl>// default: an unknown field in the JSON throws.
+// so the day the API adds a field, your client breaks.
+mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL); // omit nulls
+mapper.registerModule(new JavaTimeModule());  // or Instant/LocalDate FAIL
+mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // ISO-8601</div>
+<p>Tolerating unknown fields is the <b>robustness principle</b> applied to APIs: be liberal in what you
+accept. A provider adding an optional field is a backward-compatible change on their side, and it
+should not be a breaking one on yours.</p>
+<p>The <code>JavaTimeModule</code> omission is the other classic: without it, Jackson cannot handle
+<code>Instant</code> or <code>LocalDate</code> at all, and the failure message rarely points at the
+missing module.</p>
+
+<h4>Records, and why constructors matter</h4>
+<p>Jackson historically needed a no-arg constructor plus setters, which pushed people toward mutable
+DTOs. Modern Jackson deserialises <b>records</b> and other immutable types directly by using the
+canonical constructor, so your DTOs can be immutable — which is what you want for objects crossing a
+boundary. If parameter names are stripped at compile time, you may still need
+<code>@JsonProperty</code> on the components or the <code>-parameters</code> compiler flag.</p>
+
+<h4>Treat the DTO as a boundary, not your model</h4>
+<p>Binding JSON straight onto your domain entity couples your internal model to someone else's wire
+format, and the coupling runs both ways: their rename becomes your refactor, and your private field
+becomes their public API. A separate DTO plus an explicit mapping step costs a little code and buys
+independent evolution.</p>
+<p>It also closes a security hole. Deserialising an arbitrary payload onto a domain object lets a caller
+set fields you never intended to expose — the <b>mass assignment</b> problem. If the JSON contains
+<code>"role":"admin"</code> and your entity has a <code>role</code> field, Jackson will happily set it.
+Use <code>@JsonIgnore</code>, or better, a DTO that simply has no such field.</p>
+<p><b>And never enable default typing</b> (<code>enableDefaultTyping()</code>). Letting the payload
+declare its own Java types is a well-known remote-code-execution vector.</p>`,
 docs:[['Jackson databind — GitHub','https://github.com/FasterXML/jackson-databind'],['Jackson ObjectMapper — Baeldung','https://www.baeldung.com/jackson-object-mapper-tutorial']],
 ex:{title:'Round-trip a record',
 prompt:`Define <code>record Position(String symbol, int quantity, double price)</code>. Write class <code>Json</code> with an ObjectMapper field, <code>Position parse(String json)</code> using <code>readValue</code>, <code>String write(Position p)</code> using <code>writeValueAsString</code>, and <code>double marketValue(String json)</code> that parses and returns quantity × price.`,
@@ -7912,7 +8247,40 @@ HTTP/1.1 200 OK
 X-RateLimit-Remaining: 4998
 ETag: "33a64df5"
 
-{"items":[...],"next_cursor":"eyJpZCI6MTk5In0"}</div>`,
+{"items":[...],"next_cursor":"eyJpZCI6MTk5In0"}</div>
+
+<h4>Why cursors beat offsets</h4>
+<p><code>?page=5&amp;size=20</code> is easy and quietly wrong at scale, for two reasons. It is
+<b>unstable</b>: if a row is inserted while a client pages through, every subsequent page shifts and an
+item is silently skipped or repeated. And it is <b>slow</b>: <code>OFFSET 100000</code> makes the
+database walk and discard a hundred thousand rows on every request.</p>
+<p>A cursor encodes <i>where you stopped</i> — typically the last id or sort key — so the next query is
+an indexed range scan of constant cost, and inserts elsewhere cannot shift your window. The trade is
+that you lose "jump to page 47", which most APIs never genuinely needed. Keep the cursor opaque
+(base64 an internal structure) so you can change what is inside it without breaking clients.</p>
+
+<h4>Versioning: pick one and mean it</h4>
+<div class="codeSample" data-hl>/v1/orders                        URI  — visible, cacheable, easy to route.
+                                       the pragmatic default.
+Accept: application/vnd.acme.v2+json   media type — "purer", far more awkward
+                                       in browsers, proxies and curl
+?version=2                        query — easy, but caches and logs treat it
+                                       as a different resource inconsistently</div>
+<p>The more important discipline is <b>not needing a new version</b>. Adding an optional field, adding
+an endpoint, adding an enum value a client can ignore — all backward compatible. Removing a field,
+renaming one, tightening validation or changing a default — all breaking. Version when you break, and
+run the old version until the clients you care about have moved, with usage metrics telling you when
+that is.</p>
+
+<h4>Rate limits should be legible</h4>
+<p>Return <b>429</b> with <code>Retry-After</code>, and expose the budget continuously rather than only
+at the moment of failure — <code>RateLimit-Limit</code>, <code>RateLimit-Remaining</code>,
+<code>RateLimit-Reset</code>. A client that can see its remaining budget can slow down; one that only
+learns at rejection can only retry and make it worse.</p>
+<p>Limit per <i>credential</i>, not per IP: many legitimate users share an IP, and one abusive client
+should not take out a corporate NAT. And prefer a token bucket to a fixed window — a fixed window lets
+a caller spend the whole quota in the last second of one window and again in the first second of the
+next, producing exactly the burst you were trying to prevent.</p>`,
 docs:[['API versioning — Postman guide','https://www.postman.com/api-platform/api-versioning/'],['RFC 6585 — 429 status','https://www.rfc-editor.org/rfc/rfc6585'],['HTTP caching & ETag — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag']],
 ex:{title:'Platform design drill',lang:'http',
 prompt:`One per numbered line: (1) a URL-versioned request line listing v2 trades with <b>cursor</b> pagination (cursor <code>abc</code>, limit 50), (2) the status line a rate-limited client gets, (3) the response header telling them when to retry (60s), (4) the conditional request header a client sends to revalidate a cached ETag <code>"x1"</code>, (5) the status line when that cache is still fresh.`,
@@ -8408,7 +8776,59 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)           // 201
     UserDto create(@RequestBody @Valid UserDto dto) { return users.save(dto); }
 }</div>
-<p>Parameter annotations: <code>@PathVariable</code> (from the URL), <code>@RequestParam</code> (?query=), <code>@RequestBody</code> (JSON body). <code>ResponseEntity</code> gives full control of status and headers.</p>`,
+<p>Parameter annotations: <code>@PathVariable</code> (from the URL), <code>@RequestParam</code> (?query=), <code>@RequestBody</code> (JSON body). <code>ResponseEntity</code> gives full control of status and headers.</p>
+
+<h4>Return the right status, not just 200</h4>
+<p>The default for a successful method is 200, and that is wrong often enough to matter. A creation
+should answer <b>201 Created</b> with a <code>Location</code> header pointing at the new resource; a
+delete that returns nothing should answer <b>204 No Content</b>; a lookup that finds nothing is
+<b>404</b>, not 200 with a null body.</p>
+<div class="codeSample" data-hl>@PostMapping
+ResponseEntity&lt;OrderDto&gt; create(@Valid @RequestBody CreateOrder cmd) {
+    Order saved = service.create(cmd);
+    return ResponseEntity
+        .created(URI.create("/orders/" + saved.id()))   // 201 + Location
+        .body(OrderDto.from(saved));
+}
+
+@GetMapping("/{id}")
+ResponseEntity&lt;OrderDto&gt; get(@PathVariable long id) {
+    return service.find(id)
+        .map(OrderDto::from)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -&gt; ResponseEntity.notFound().build());   // 404, not null
+}</div>
+
+<h4>Validate at the edge</h4>
+<p><code>@Valid</code> on a <code>@RequestBody</code> triggers Bean Validation
+(<code>@NotBlank</code>, <code>@Positive</code>, <code>@Email</code>) before your method runs, so
+invalid input never reaches your service layer. Without it the annotations on the DTO are decoration —
+a very common bug, because the code looks validated.</p>
+
+<h4>Handle errors in one place</h4>
+<p>Try/catch in every controller method produces inconsistent error shapes and a lot of noise. A
+<code>@RestControllerAdvice</code> centralises it, so every error leaves the application in the same
+format:</p>
+<div class="codeSample" data-hl>@RestControllerAdvice
+class ApiErrors {
+    @ExceptionHandler(NotFoundException.class)
+    ResponseEntity&lt;Problem&gt; notFound(NotFoundException e) {
+        return ResponseEntity.status(404).body(Problem.of(e.getMessage()));
+    }
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    ResponseEntity&lt;Problem&gt; invalid(MethodArgumentNotValidException e) { ... }
+}</div>
+<p>Two rules for the payload: use a consistent structure (RFC 9457 <i>problem details</i> is the
+standard one), and <b>never return the raw exception message or stack trace</b> — it leaks internals
+and sometimes data.</p>
+
+<h4>Keep controllers thin</h4>
+<p>A controller's job is HTTP: bind, validate, delegate, map the result to a status. Business logic
+belongs in a service, where it can be tested without a web layer. The tell that a controller has grown
+too much is a test that needs <code>MockMvc</code> to verify a business rule.</p>
+<p>And return <b>DTOs, not entities</b>. Serialising a JPA entity exposes your schema, drags lazy
+associations into the response (or throws when the session has closed), and turns a database rename
+into a breaking API change.</p>`,
 docs:[['Building a RESTful Web Service — guide','https://spring.io/guides/gs/rest-service'],['Spring MVC annotated controllers','https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller.html']],
 ex:{title:'A Positions API',
 prompt:`Write <code>PositionController</code>: <code>@RestController</code> mapped to <code>/api/positions</code>, with an in-memory <code>Map&lt;String, String&gt;</code>. Endpoints: <code>GET /{id}</code> returning <code>ResponseEntity&lt;String&gt;</code> — 200 with the value or 404 if absent; and <code>POST</code> taking <code>@RequestParam String id, @RequestParam String symbol</code>, storing it and returning the created value with status <code>201</code> via <code>@ResponseStatus</code>.`,
@@ -8548,6 +8968,23 @@ class PositionControllerTest {
            .andExpect(status().isNotFound());
     }
 }</div>
+<p>Configuration is a contract, not a pile of strings. <code>@Value</code> scatters keys across the
+codebase, so nothing tells you what the application needs and a typo fails at runtime on the first
+request that touches it. A properties record is <b>typed, validated and discoverable</b>: wrong type,
+missing value or failed constraint and the application fails to <i>start</i>, not at 2am.</p>
+<p><b>Profiles have a trap.</b> Putting behaviour behind <code>@Profile("prod")</code> means the code
+you tested is not the code you run. Keep profiles for configuration — endpoints, pool sizes,
+credentials — and keep behaviour identical everywhere; where it genuinely must differ, a feature flag
+you can flip without redeploying is the better tool. Precedence runs defaults → profile files →
+environment variables, which is what makes twelve-factor deployment work and why secrets arrive from
+the environment rather than a committed file.</p>
+<p><b>Slice tests are the difference between a fast suite and an abandoned one.</b>
+<code>@SpringBootTest</code> in every class is the biggest cause of slow Spring builds; slices start a
+fraction of the context. Spring also caches contexts <i>by configuration</i> across a run, so every
+distinct combination of annotations, properties and mock beans builds another one — keeping test
+configuration uniform is often a bigger win than any single optimisation. And test against the real
+database: H2 accepts SQL that Postgres rejects, so a green suite on H2 still fails in production.
+Testcontainers removes that whole class of surprise.</p>
 <p>Prefer <code>@ConfigurationProperties</code> records over scattered <code>@Value</code>; prefer slice tests (<code>@WebMvcTest</code>, <code>@DataJpaTest</code>) — they run in milliseconds, keeping the full <code>@SpringBootTest</code> for wiring smoke tests.</p>`,
 docs:[['Externalized configuration','https://docs.spring.io/spring-boot/reference/features/external-config.html'],['Testing Spring Boot apps','https://docs.spring.io/spring-boot/reference/testing/index.html']],
 ex:{title:'Type-safe config + a slice test',
@@ -9209,7 +9646,52 @@ try {
     pool.shutdown();                   // stop accepting; finish queued work
     pool.awaitTermination(10, TimeUnit.SECONDS);
 }</div>
-<p><code>Callable&lt;V&gt;</code> is Runnable that returns a value and may throw. Always shut pools down (or use try-with-resources — ExecutorService is AutoCloseable since Java 19). Forgetting shutdown() is why "my main never exits."</p>`,
+<p><code>Callable&lt;V&gt;</code> is Runnable that returns a value and may throw. Always shut pools down (or use try-with-resources — ExecutorService is AutoCloseable since Java 19). Forgetting shutdown() is why "my main never exits."</p>
+
+<h4>Choosing a pool, and why the default is often wrong</h4>
+<div class="codeSample" data-hl>newFixedThreadPool(n)     bounded threads, UNBOUNDED queue
+                          -&gt; work piles up in memory rather than being refused
+newCachedThreadPool()     UNBOUNDED threads, no queue
+                          -&gt; a burst can create thousands of threads
+newSingleThreadExecutor() serialised, ordering guaranteed
+newVirtualThreadPerTaskExecutor()  Java 21+: a thread per task, cheaply
+                          -&gt; the right default for blocking I/O work
+
+// production pools are usually built explicitly, because the interesting
+// decisions are the queue bound and what happens when it is full:
+new ThreadPoolExecutor(core, max, keepAlive, SECONDS,
+    new ArrayBlockingQueue&lt;&gt;(1000),          // BOUNDED. this is the point.
+    new ThreadPoolExecutor.CallerRunsPolicy() // back-pressure, not silent drop
+);</div>
+<p>The sizing heuristic: <b>CPU-bound</b> work wants roughly the number of cores, because more threads
+only add context switching. <b>I/O-bound</b> work wants many more, because threads spend their time
+blocked — and on Java 21+ that is exactly the case virtual threads solve, letting you stop tuning pool
+sizes for blocking work altogether.</p>
+
+<h4>Exceptions vanish unless you look</h4>
+<p>This is the behaviour that most often surprises people. A task submitted with
+<code>submit()</code> that throws does <b>not</b> print anything — the exception is captured in the
+<code>Future</code> and only surfaces when you call <code>get()</code>. Fire-and-forget
+<code>submit()</code> with an ignored return value silently discards failures.</p>
+<div class="codeSample" data-hl>pool.submit(task);        // throws? you will never know.
+pool.execute(task);       // throws? goes to the thread's uncaught handler
+Future&lt;?&gt; f = pool.submit(task);
+f.get();                  // NOW the exception arrives, wrapped in ExecutionException</div>
+<p><code>get()</code> also <b>blocks indefinitely</b> by default. Prefer the timeout overload; a hung
+task otherwise hangs the caller too.</p>
+
+<h4>Shutting down properly</h4>
+<p><code>shutdown()</code> stops accepting new work and lets running tasks finish.
+<code>shutdownNow()</code> additionally interrupts them and returns the queued tasks that never ran.
+Neither <i>waits</i> — that is <code>awaitTermination()</code>, and the usual correct sequence is
+shutdown, await a bounded time, then <code>shutdownNow()</code> if it has not drained.</p>
+<p>The reason "my main never exits" is that pool threads are <b>non-daemon</b> by default, so the JVM
+keeps running for them. Try-with-resources on Java 19+ handles this correctly and is the simplest fix.</p>
+
+<h4>The deadlock worth naming</h4>
+<p>Submitting a task to a pool and then <code>get()</code>-ing on a task that must run in that
+<i>same</i> pool will deadlock once the pool is saturated: the waiting task holds a thread the pending
+task needs. Keep dependent work off the pool it depends on.</p>`,
 docs:[['Executors — Oracle','https://docs.oracle.com/javase/tutorial/essential/concurrency/executors.html'],['ExecutorService — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html']],
 ex:{title:'Pool the work',
 prompt:`Write <code>Pool</code> with <code>static int sumSquares(int n) throws Exception</code>: create a fixed pool of 4 threads, submit <b>n</b> <code>Callable</code> tasks where task i returns i*i (for i = 1..n), collect the <code>Future</code>s in a list, sum all <code>get()</code> results, <b>shutdown</b> the pool in a finally block, and return the sum.`,
@@ -9307,7 +9789,54 @@ Task t = queue.take(); // consumer blocks when empty — no polling!
 
 CountDownLatch ready = new CountDownLatch(3);
 // each worker: ready.countDown();  main: ready.await();</div>
-<p><code>ConcurrentHashMap</code> beats <code>Collections.synchronizedMap</code> (striped, and compound ops like merge/compute are atomic). <code>AtomicInteger/Long</code> for counters, <code>LongAdder</code> under heavy contention. <code>CountDownLatch</code> = one-shot "wait for N events"; <code>Semaphore</code> = permits; <code>CyclicBarrier</code> = reusable meeting point.</p>`,
+<p><code>ConcurrentHashMap</code> beats <code>Collections.synchronizedMap</code> (striped, and compound ops like merge/compute are atomic). <code>AtomicInteger/Long</code> for counters, <code>LongAdder</code> under heavy contention. <code>CountDownLatch</code> = one-shot "wait for N events"; <code>Semaphore</code> = permits; <code>CyclicBarrier</code> = reusable meeting point.</p>
+
+<h4>Thread-safe collection, unsafe usage</h4>
+<p>The mistake that survives every code review: each <i>operation</i> on a concurrent collection is
+atomic, but a <i>sequence</i> of them is not. Check-then-act is a race no matter how thread-safe the
+map is.</p>
+<div class="codeSample" data-hl>// BROKEN — two threads can both see absent and both put
+if (!map.containsKey(k)) map.put(k, expensive(k));
+
+// CORRECT — one atomic operation
+map.computeIfAbsent(k, this::expensive);
+
+// counters
+map.merge(k, 1L, Long::sum);          // atomic increment-or-insert
+
+// and the same trap with the "synchronized" wrappers:
+List&lt;String&gt; l = Collections.synchronizedList(new ArrayList&lt;&gt;());
+for (String s : l) { ... }            // NOT safe — iteration needs the lock</div>
+<p><code>ConcurrentHashMap</code> beats <code>synchronizedMap</code> not merely on speed but because it
+<i>offers</i> the atomic compound operations — <code>computeIfAbsent</code>, <code>merge</code>,
+<code>putIfAbsent</code>, <code>compute</code> — that make correct code expressible. Keep the mapping
+function short and side-effect free; it runs while holding a lock on that bin, and calling back into
+the same map from inside it can deadlock.</p>
+
+<h4>Atomics, and when they stop being enough</h4>
+<p><code>AtomicInteger</code> and friends give you lock-free compare-and-swap. Under heavy contention
+CAS starts failing and retrying, which is why <b><code>LongAdder</code> outperforms
+<code>AtomicLong</code> for hot counters</b>: it spreads updates across cells and sums them only when
+read. Use <code>AtomicLong</code> when you read the value constantly, <code>LongAdder</code> when you
+mostly write.</p>
+<p>Atomics cover a <i>single</i> variable. Two variables that must change together need a lock — or a
+single immutable object swapped atomically via <code>AtomicReference</code>.</p>
+
+<h4>Picking the right coordinator</h4>
+<div class="codeSample" data-hl>CountDownLatch   one-shot gate. count only goes DOWN, never resets.
+                 "wait until N services have started"
+CyclicBarrier    reusable rendezvous. all N wait for each other, then all
+                 proceed; resets automatically. simulation rounds.
+Semaphore        N permits — a bounded resource. acquire/release, and
+                 RELEASE IN A FINALLY BLOCK or you leak permits until
+                 everything blocks forever.
+Phaser           barrier with a variable number of parties.</div>
+<p>The distinction that matters: a latch cannot be reset, so "wait for startup" is a latch and "wait for
+everyone each round" is a barrier. Using a latch where you needed a barrier produces code that works
+exactly once.</p>
+<p><b>Prefer structure to primitives.</b> Most code that reaches for a latch actually wants
+<code>invokeAll</code> on an executor, or <code>CompletableFuture.allOf</code>. Reach for these when
+the higher-level tools genuinely do not fit.</p>`,
 docs:[['Concurrent collections — Oracle','https://docs.oracle.com/javase/tutorial/essential/concurrency/collections.html'],['java.util.concurrent — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/package-summary.html']],
 ex:{title:'Thread-safe hit tracker',
 prompt:`Write <code>HitTracker</code> with an <code>AtomicLong total</code>, a <code>ConcurrentHashMap&lt;String, Long&gt; perPath</code>, method <code>void hit(String path)</code> that atomically increments both (use <code>merge</code> for the map), <code>long total()</code>, and <code>static void awaitAll(CountDownLatch latch) throws InterruptedException</code> that just awaits the latch (shows you know the primitive). No synchronized keyword anywhere.`,
@@ -9587,6 +10116,44 @@ AuditService audit = mock(AuditService.class);
 TransferService svc = new TransferService(audit);
 svc.transfer("a", "b", 100);
 verify(audit).log(contains("100"));</div>
+<p><b>What makes a test worth having.</b> A good test fails for exactly one reason, names that reason in
+its title, and does not change when you refactor the implementation. That last property is the one most
+often lost: a test that asserts on internal calls rather than observable behaviour breaks every time you
+improve the code, and a suite that punishes refactoring gets deleted or ignored.</p>
+
+<h4>Mock the boundary, not your own logic</h4>
+<div class="codeSample" data-hl>// GOOD — mock what you do not control
+when(paymentGateway.charge(any())).thenReturn(Receipt.ok("r-1"));
+
+// BAD — mocking your own domain means you are testing the mock
+when(orderCalculator.total(any())).thenReturn(new Money(100));
+
+// verify BEHAVIOUR that matters, not every interaction
+verify(paymentGateway).charge(argThat(c -&gt; c.amount().equals(expected)));
+verifyNoMoreInteractions(paymentGateway);   // use sparingly: it is brittle</div>
+<p>The rule of thumb: mock things that are slow, non-deterministic, or outside your process — clocks,
+networks, payment providers, the filesystem. Mocking your own value objects and calculators produces
+tests that pass while the system is broken.</p>
+
+<h4>Determinism: the two usual culprits</h4>
+<p><b>Time</b> and <b>randomness</b> make tests flaky, and both are fixable by injection. Take a
+<code>Clock</code> rather than calling <code>Instant.now()</code>, and a <code>Random</code> with a
+fixed seed. <code>Clock.fixed(...)</code> in a test turns "expires tomorrow" from a guess into an
+assertion — and it lets you test the boundary, which is where date bugs live.</p>
+
+<h4>JUnit 5 features worth using</h4>
+<div class="codeSample" data-hl>@ParameterizedTest                  // one test, many cases — beats copy-paste
+@CsvSource({"1,I", "4,IV", "9,IX"})
+void converts(int n, String expected) { ... }
+
+@Nested class WhenAccountIsClosed { ... }   // group by scenario, share setup
+assertThrows(InsufficientFunds.class, () -&gt; account.withdraw(500));
+assertAll(() -&gt; assertEquals(...), () -&gt; assertEquals(...));  // report ALL
+                                                               // failures, not
+                                                               // just the first</div>
+<p><code>@ParameterizedTest</code> is the highest-value habit here: it turns five near-identical tests
+into one with five rows, and adding a case becomes a line rather than a method.</p>
+
 <p>Structure every test as Arrange-Act-Assert. Name tests after behavior, not methods. Constructor injection (which you learned in the Spring stream) is exactly what makes mocking possible.</p>`,
 docs:[['JUnit 5 User Guide','https://junit.org/junit5/docs/current/user-guide/'],['Mockito','https://site.mockito.org/']],
 ex:{title:'Test the BankAccount',
@@ -12726,7 +13293,54 @@ solution:`import java.util.*;\n\npublic class SetZeroes {\n    static void setZe
 
 ]},
 {id:'ch3',title:'Hard round',body:`
-<p>The final bracket. Hards stack multiple insights or demand a data structure built from parts. Interviewers rarely expect a flawless solve — they expect structured thinking under pressure: brute force stated, invariants named, code that stays clean while the problem fights back. Take these slowly; use Next Step without shame; a hard solved after two hints teaches more than an easy solved in silence.</p>`,
+<p>The final bracket. Hards stack multiple insights, or demand a data structure assembled from parts.
+Interviewers rarely expect a flawless solve — they expect <b>structured thinking under pressure</b>:
+brute force stated, invariants named, code that stays clean while the problem fights back. Take these
+slowly, use Next Step without shame; a hard solved after two hints teaches more than an easy solved in
+silence.</p>
+
+<h4>What makes a problem hard</h4>
+<p>Usually one of four things, and naming which one tells you where to push:</p>
+<div class="codeSample" data-hl>STACKED INSIGHTS      two or three mediums composed. sliding window PLUS a
+                      frequency map PLUS a shrink condition. each part is
+                      familiar; the composition is not.
+
+BUILT DATA STRUCTURE  no library type fits, so you assemble one — LRU cache is
+                      a hash map plus a doubly linked list; a median stream is
+                      two heaps facing each other.
+
+NON-OBVIOUS STATE     the thing to track is not the thing being asked for.
+                      "longest valid parentheses" tracks INDICES, not counts.
+
+HIDDEN CONSTRAINT     "O(1) space" or "no extra array" is the whole puzzle,
+                      forcing in-place tricks: index-as-hash, sign marking,
+                      pointer reversal, cycle detection.</div>
+
+<h4>The invariant habit</h4>
+<p>Hards are where sloppy loops fall apart, and the cure is stating the invariant before writing the
+loop. "Everything left of <code>i</code> is already in final position." "The window always contains at
+most k distinct characters." "The two heaps differ in size by at most one." An invariant you can say
+out loud makes the loop body almost write itself, and it converts debugging from guessing into
+checking which line broke the promise.</p>
+
+<h4>How to fail well</h4>
+<p>Not finishing a hard is normal and is not automatically a bad outcome. What distinguishes a strong
+partial from a weak one:</p>
+<ul>
+<li><b>Get the brute force on the board first.</b> A stated O(n²) with correct logic beats an
+unfinished O(n) with none, and it gives you something to optimise from rather than a blank page.</li>
+<li><b>Say what you are trading.</b> "I can make this O(n) with O(n) extra space" is a design decision,
+not a concession — interviewers want to hear the axis you are moving along.</li>
+<li><b>Test on the smallest failing case.</b> When output is wrong, shrink the input until it fits in
+your head. Two elements, then three. Debugging a ten-element trace by eye is how the remaining time
+disappears.</li>
+<li><b>Keep talking.</b> Silence reads as being stuck even when you are thinking productively. "I am
+trying to see whether the window can ever shrink past the left bound" tells the interviewer where you
+are and often earns exactly the nudge you needed.</li>
+</ul>
+<p><b>The one habit worth taking from this round:</b> when a hard defeats you, do not just read the
+solution. Identify which of the four categories above it was, and what the single unlocking insight
+was. That is what transfers — the specific problem almost never reappears, and the category does.</p>`,
 docs:[['PriorityQueue — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html'],['Invariant-based reasoning — CP-Algorithms','https://cp-algorithms.com/']],
 exs:[
 {title:'Trapping rain water',

@@ -9,7 +9,50 @@ HTTP/1.1 200 OK
 Content-Type: application/json
 
 {"id": 42, "name": "Ada"}</div>
-<p>Methods: <code>GET</code> (read, safe), <code>POST</code> (create/act), <code>PUT</code> (replace), <code>PATCH</code> (partial update), <code>DELETE</code>. Status families: <b>2xx</b> success, <b>3xx</b> redirect, <b>4xx</b> client's fault (400 bad request, 401 unauthenticated, 403 forbidden, 404 not found, 409 conflict), <b>5xx</b> server's fault. Headers carry metadata: <code>Content-Type</code>, <code>Authorization</code>, <code>Cache-Control</code>.</p>`,
+<p>Methods: <code>GET</code> (read, safe), <code>POST</code> (create/act), <code>PUT</code> (replace), <code>PATCH</code> (partial update), <code>DELETE</code>. Status families: <b>2xx</b> success, <b>3xx</b> redirect, <b>4xx</b> client's fault (400 bad request, 401 unauthenticated, 403 forbidden, 404 not found, 409 conflict), <b>5xx</b> server's fault. Headers carry metadata: <code>Content-Type</code>, <code>Authorization</code>, <code>Cache-Control</code>.</p>
+
+<h4>Safe and idempotent: the two properties that matter</h4>
+<p>These are not synonyms, and the difference decides what a client, a proxy or a retry may do:</p>
+<div class="codeSample" data-hl>            SAFE?   IDEMPOTENT?   meaning
+GET          yes      yes        no side effects at all. cacheable, prefetchable
+HEAD         yes      yes        GET without the body
+PUT          no       yes        same request twice = same end state
+DELETE       no       yes        deleting twice leaves it deleted
+POST         no       NO         twice = two orders. this is why the browser
+                                 warns before re-submitting a form
+PATCH        no       usually not depends on whether the patch is absolute</div>
+<p>The practical consequence: <b>only idempotent requests are safe to retry automatically</b>. A client
+that retries a POST on timeout may create two orders, because it cannot know whether the first one
+arrived. That is what idempotency keys exist to solve — the client sends a unique key and the server
+recognises the repeat.</p>
+
+<h4>Statelessness, and what it actually costs</h4>
+<p>HTTP has no memory: each request must carry everything needed to serve it. That is why any server
+can answer any request, which is what makes horizontal scaling straightforward — and it is why
+identity has to be re-established every single request, via a cookie or an
+<code>Authorization</code> header. The whole of session and token design follows from this one
+property.</p>
+
+<h4>Status codes people get wrong</h4>
+<ul>
+<li><b>401 vs 403.</b> 401 means "I do not know who you are" — authenticate and try again. 403 means
+"I know exactly who you are and you still may not." Returning 401 for a permission failure sends
+clients into a pointless re-login loop.</li>
+<li><b>200 with an error body.</b> Popular and wrong: it defeats every client, proxy and monitor that
+reasons about status codes.</li>
+<li><b>404 vs 410.</b> 404 is "not here"; 410 is "deliberately gone, stop asking".</li>
+<li><b>422 vs 400.</b> 400 is malformed syntax; 422 is well-formed but semantically invalid.</li>
+<li><b>429.</b> Rate limited — and it should carry <code>Retry-After</code> so the client knows how
+long to wait rather than guessing.</li>
+</ul>
+
+<h4>The headers worth knowing beyond the basics</h4>
+<p><code>Accept</code> and <code>Content-Type</code> are a pair that people conflate: <code>Accept</code>
+says what you want back, <code>Content-Type</code> describes what you are sending.
+<code>Cache-Control</code> governs caching, and <code>ETag</code> plus
+<code>If-None-Match</code> turn a repeat request into a cheap <b>304 Not Modified</b> with no body at
+all. On the same mechanism, <code>If-Match</code> gives you optimistic concurrency — the update applies
+only if the resource has not changed since you read it.</p>`,
 docs:[['HTTP overview — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview'],['HTTP response status codes — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status']],
 ex:{title:'Speak raw HTTP',lang:'http',
 prompt:`Write a raw HTTP/1.1 request that creates a user: <code>POST</code> to path <code>/users</code> on host <code>api.dojo.dev</code>, declaring a JSON body (<code>Content-Type</code> header) and sending body <code>{"name": "Ada"}</code>. Then on the lines below it, write the <b>status line only</b> of the ideal response for: (a) success, (b) the same request with a malformed body, (c) missing auth token.`,

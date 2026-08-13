@@ -75,7 +75,45 @@ hints:['useState(0) returns the current value and a setter in an array you destr
     &lt;/ul&gt;
   );
 }</div>
-<p><b>Conditional rendering</b> is just JavaScript inside braces: <code>{isLoading &amp;&amp; &lt;Spinner /&gt;}</code> shows the spinner only when true, and a ternary <code>{user ? &lt;Profile /&gt; : &lt;Login /&gt;}</code> chooses between two. There is no special template syntax — you already know it.</p>`,
+<p><b>Conditional rendering</b> is just JavaScript inside braces: <code>{isLoading &amp;&amp; &lt;Spinner /&gt;}</code> shows the spinner only when true, and a ternary <code>{user ? &lt;Profile /&gt; : &lt;Login /&gt;}</code> chooses between two. There is no special template syntax — you already know it.</p>
+
+<h4>Keys: the part that causes real bugs</h4>
+<p>React uses <code>key</code> to match elements between renders. Get it wrong and React reuses the
+wrong DOM node, which shows up as <b>state attached to the wrong row</b> — a checkbox that stays
+ticked after you delete the item above it, or text typed into one input appearing in another.</p>
+<div class="codeSample" data-hl>// BAD: the index changes when items are inserted, removed or reordered
+{items.map((item, i) =&gt; &lt;Row key={i} item={item} /&gt;)}
+
+// GOOD: stable identity that belongs to the DATA
+{items.map(item =&gt; &lt;Row key={item.id} item={item} /&gt;)}</div>
+<p>Index keys are only safe when the list is append-only and never reordered or filtered. Since that is
+rarely guaranteed for long, use the data's own id. Keys must be unique among siblings, and they are a
+message to React — they are not passed to your component as a prop.</p>
+
+<h4>The falsy-zero trap</h4>
+<p><code>&amp;&amp;</code> renders whatever its left side evaluates to when that value is falsy — and
+React renders the number <code>0</code>, unlike <code>false</code>, <code>null</code> or
+<code>undefined</code>, which render nothing.</p>
+<div class="codeSample" data-hl>{items.length &amp;&amp; &lt;List /&gt;}          // empty list renders a literal "0"
+{items.length &gt; 0 &amp;&amp; &lt;List /&gt;}     // fine — the left side is a boolean
+{items.length ? &lt;List /&gt; : null}    // also fine</div>
+<p>Make the left side an explicit boolean and the problem disappears.</p>
+
+<h4>Deriving, not storing</h4>
+<p>A filtered or sorted list is <b>derived state</b> and should be computed during render, not kept in
+its own <code>useState</code> and synchronised with an effect. Two states that must agree will
+eventually disagree — that is the whole class of "stale filter" bugs.</p>
+<div class="codeSample" data-hl>const visible = items.filter(i =&gt; !i.done);   // just compute it
+
+// only if profiling shows it matters:
+const visible = useMemo(() =&gt; items.filter(i =&gt; !i.done), [items]);</div>
+<p>Reach for <code>useMemo</code> when a measurement says to, not by default — it has its own cost, and
+filtering a list of fifty items is not it.</p>
+
+<h4>Rendering the empty and loading cases</h4>
+<p>Every list has at least three states and a common bug is designing only the happy one. Handle
+<b>loading</b>, <b>empty</b> and <b>error</b> explicitly — an empty result is a normal outcome that
+deserves a message, not a blank area that looks like a failure.</p>`,
 docs:[['Rendering lists — React','https://react.dev/learn/rendering-lists'],['Conditional rendering','https://react.dev/learn/conditional-rendering']],
 ex:{title:'Render a keyed list',lang:'jsx',
 prompt:`Write a <code>List</code> component that takes <code>props</code> and returns a <code>&lt;ul&gt;</code> mapping <code>props.items</code> to a <code>&lt;li&gt;</code> for each item, using <code>key={item.id}</code> and showing <code>{item.name}</code>.`,

@@ -74,7 +74,48 @@ Transitive dependencies`}},
     &lt;/dependency&gt;
   &lt;/dependencies&gt;
 &lt;/project&gt;</div>
-<p>Key commands: <code>mvn compile</code>, <code>mvn test</code>, <code>mvn package</code> (jar in <code>target/</code>), <code>mvn clean install</code>.</p>`,
+<p>Key commands: <code>mvn compile</code>, <code>mvn test</code>, <code>mvn package</code> (jar in <code>target/</code>), <code>mvn clean install</code>.</p>
+
+<h4>Coordinates: how Maven finds anything</h4>
+<p>Every artifact in the world is addressed by <b>groupId : artifactId : version</b>, and that triple is
+the whole naming system. <code>groupId</code> is a reverse-domain namespace you control,
+<code>artifactId</code> the module name, <code>version</code> the release. A <code>-SNAPSHOT</code>
+suffix means "unreleased and mutable" — Maven re-checks it periodically, whereas a release version is
+cached forever on the assumption it can never change.</p>
+
+<h4>Scopes decide what ends up where</h4>
+<div class="codeSample" data-hl>compile   (default) needed to build AND at runtime; ships with your app
+provided  needed to compile, supplied by the environment at runtime
+          (servlet API, and anything the container already has)
+runtime   not needed to compile, required to run — JDBC drivers
+test      test code only; never packaged
+import    only in dependencyManagement, to pull in a BOM</div>
+<p>Getting a scope wrong produces a specific, recognisable failure: <code>provided</code> where you
+needed <code>compile</code> compiles fine and throws <code>NoClassDefFoundError</code> at runtime,
+which is why that error so often means "a scope is wrong", not "a dependency is missing".</p>
+
+<h4>Transitive dependencies and the nearest-wins rule</h4>
+<p>Your dependencies have dependencies. Maven resolves the graph automatically, and when two paths
+demand different versions of the same library it does <b>not</b> pick the newest — it picks the one
+<i>nearest to your POM</i> in the tree, breaking ties by declaration order. This surprises people
+regularly, and it is why <code>mvn dependency:tree</code> is the single most useful diagnostic
+command: it shows what was chosen and what was omitted for conflict.</p>
+<p>The fix for a bad resolution is to state the version yourself. A
+<code>&lt;dependencyManagement&gt;</code> block pins versions across the whole build without adding
+dependencies, so child modules inherit a consistent set and never declare versions at all.</p>
+
+<h4>The lifecycle is why order is not yours to choose</h4>
+<p><code>mvn package</code> does not just package: it runs validate → compile → test → package, in
+that order, because invoking a phase runs every phase before it. That is the trade Maven makes —
+convention over configuration. You do not describe <i>how</i> to build, you attach plugins to phases
+and accept the sequence.</p>
+<p>Hence a common confusion: <b><code>install</code> is not deployment.</b> It copies the artifact into
+your local <code>~/.m2</code> repository so other local projects can resolve it. Publishing to a shared
+repository is <code>deploy</code>.</p>
+<p><b>And <code>clean</code> is not a ritual.</b> It deletes <code>target/</code>. Adding it to every
+build "just in case" throws away incremental compilation and slows the loop; reach for it when stale
+output is genuinely suspected — after changing a plugin version, or when the build behaves in a way the
+source does not explain.</p>`,
 docs:[['Maven in 5 Minutes','https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html'],['POM Reference','https://maven.apache.org/pom.html']],
 ex:{title:'Write a POM',lang:'xml',
 prompt:`Write a minimal <code>pom.xml</code> for project <code>com.example.dojo : hello-maven : 0.1.0</code> that sets the compiler release to 21 and declares <b>one test-scoped dependency</b>: <code>org.junit.jupiter : junit-jupiter : 5.10.2</code>.`,
