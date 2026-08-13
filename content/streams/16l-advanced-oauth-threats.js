@@ -289,5 +289,124 @@ solution:`public class RefreshRotation {
 }`,
 tests:[{d:'current token rotates; old token triggers family revocation',re:'isCurrent\\s*\\?\\s*"rotate: issue new, revoke old"\\s*:\\s*"reuse detected: revoke the family"'},{d:'rotation is required for public clients',re:'equals\\s*\\(\\s*"public"\\s*\\)'}],
 behavior:`onUse(true) returns "rotate: issue new, revoke old"; onUse(false) returns "reuse detected: revoke the family" — the self-detecting response to a replayed refresh token. rotationRequired("public") is true: SPAs and mobile apps must rotate.`,
-hints:['Each refresh token is single-use: using the current one rotates it; seeing an old one means compromise.','On reuse, revoke the whole token family to force a fresh login.','Public clients cannot protect a long-lived secret, so rotation is required for them.']}}
+hints:['Each refresh token is single-use: using the current one rotates it; seeing an old one means compromise.','On reuse, revoke the whole token family to force a fresh login.','Public clients cannot protect a long-lived secret, so rotation is required for them.']}},
+
+{id:'ao7',title:'FAPI: what a hardened OAuth profile looks like',body:`
+<p>Plain OAuth 2.0 is a framework with a great many optional parts. That flexibility is why it is
+everywhere, and it is also why two conformant deployments can differ enormously in security. When the
+stakes are high — moving money, releasing health records — "conformant" is not a useful bar.</p>
+<p>A <b>profile</b> fixes this by removing choices. <b>FAPI</b> (Financial-grade API, from the OpenID
+Foundation) is the best-known one: a named set of mandatory requirements, with a certification suite
+that proves an implementation actually meets them. It is worth studying even if you never need it,
+because it is the industry's considered answer to "what does maximum-assurance OAuth look like?" — and
+every requirement is a lesson already covered here, made compulsory.</p>
+
+<h4>What a profile is</h4>
+<div class="codeSample" data-hl>the base spec says          a profile says
+  "should"                    MUST
+  "one of these options"      exactly this one
+  "implementers may choose"   here is the choice, and here is the test suite
+
+// FAPI adds no new cryptography. It removes the freedom to be weak.</div>
+<p>This is the same move as OAuth 2.1, applied harder and to a narrower audience. OAuth 2.1 raises the
+floor for everyone; FAPI raises the ceiling for regulated deployments.</p>
+
+<h4>The requirements, and the attack each one answers</h4>
+<ul>
+<li><b>PKCE with S256, always.</b> Authorization code interception and injection.</li>
+<li><b>Sender-constrained access tokens</b> — mTLS-bound or DPoP. A stolen token is inert without the
+key. Baseline OAuth's bearer semantics are simply not permitted.</li>
+<li><b>Strong client authentication</b> — <code>private_key_jwt</code> or mTLS. No shared
+<code>client_secret</code>, so there is no symmetric secret to leak from either side.</li>
+<li><b>PAR</b> (pushed authorization requests). The client sends the request parameters to the
+authorization server over the back channel first and receives a handle; the browser then carries only
+that handle. Request parameters never appear in a URL, so they cannot be tampered with or logged.</li>
+<li><b>JAR</b> (JWT-secured authorization request) — the request object is <i>signed</i>, so the
+authorization server can prove the client authored those parameters, not an attacker who rewrote a
+redirect.</li>
+<li><b>JARM</b> (JWT-secured authorization response) — the response is signed too, closing the mirror
+attack where a response is tampered with on the way back.</li>
+<li><b>Exact redirect URI matching</b>, and no open redirects anywhere in the flow.</li>
+<li><b>Short-lived authorization codes</b>, one-time use, bound to the client.</li>
+</ul>
+<p>Read that list again as a summary of the course: every item is a defence you have already met. FAPI's
+contribution is refusing to let any of them be optional.</p>
+
+<h4>Two levels</h4>
+<div class="codeSample" data-hl>FAPI 2.0 Security Profile     the baseline: PKCE, PAR, sender-constrained
+                              tokens, strong client auth
+                              -> read access, most regulated APIs
+
+FAPI 2.0 Message Signing      adds non-repudiation: requests AND responses are
+                              signed end to end, so neither party can later
+                              deny what was sent
+                              -> payment initiation, high-value transactions</div>
+<p>The distinction is worth understanding because it is not about strength but about <i>evidence</i>.
+The baseline protects the exchange. Message signing produces an artefact that survives the exchange —
+a signed record that stands up in a dispute months later. That is a legal requirement, not a
+cryptographic one, which is why it is a separate level rather than simply "more secure".</p>
+
+<h4>Certification: the part that makes it real</h4>
+<p>FAPI ships with a conformance suite, and implementations are formally certified. This matters more
+than it might appear. A specification alone is a document people interpret optimistically; a test suite
+is a specification nobody can talk their way past. Much of the practical value of FAPI comes from the
+fact that an ecosystem can <i>require certification</i> rather than trust a vendor's claim.</p>
+
+<h4>When it applies to you</h4>
+<p>Directly, if you build in open banking (the UK and Brazilian regimes mandate it), open healthcare, or
+anywhere a regulator names it. Indirectly, and more usefully, as a checklist: if you ever need to argue
+that an OAuth deployment is as strong as it reasonably can be, FAPI is the list to measure against.</p>
+<p>And the honest caveat: FAPI hardens the <i>protocol</i>. It says nothing about whether your scopes
+model reality, whether the resource server checks record ownership, or whether your support tooling
+lets staff read any account. A fully certified deployment can still have an IDOR on its main endpoint.
+Protocol hardening and authorization correctness are different problems, and only one of them has a
+test suite.</p>`,
+docs:[['FAPI 2.0 Security Profile','https://openid.net/specs/fapi-security-profile-2_0-final.html'],['FAPI 2.0 Message Signing','https://openid.net/specs/fapi-message-signing-2_0.html'],['RFC 9126 — Pushed Authorization Requests','https://www.rfc-editor.org/rfc/rfc9126'],['RFC 9101 — JWT-Secured Authorization Request (JAR)','https://www.rfc-editor.org/rfc/rfc9101'],['OpenID Foundation — certification','https://openid.net/certification/']],
+ex:{title:'Check a deployment against the FAPI baseline',
+prompt:`Write <code>Fapi</code> with three methods. <code>static boolean clientAuthOk(String method)</code> accepts only <code>"private_key_jwt"</code> and <code>"tls_client_auth"</code>, rejecting <code>"client_secret_basic"</code>, <code>"client_secret_post"</code>, <code>"none"</code> and null — no shared secret is permitted. <code>static boolean tokenBindingOk(String binding)</code> accepts only <code>"mtls"</code> and <code>"dpop"</code>, rejecting <code>"bearer"</code> and null. <code>static boolean baselineCompliant(boolean pkceS256, boolean par, String clientAuth, String tokenBinding, boolean exactRedirect)</code> is true only when every requirement holds.`,
+starter:`public class Fapi {
+    static boolean clientAuthOk(String method) {
+        return false;
+    }
+    static boolean tokenBindingOk(String binding) {
+        return false;
+    }
+    static boolean baselineCompliant(boolean pkceS256, boolean par, String clientAuth,
+                                     String tokenBinding, boolean exactRedirect) {
+        return false;
+    }
+}`,
+tests:[{d:'private_key_jwt is accepted',re:'"private_key_jwt"'},{d:'mTLS client auth is accepted',re:'"tls_client_auth"'},{d:'shared-secret client auth is refused',re:'default|return\\s+false'},{d:'mTLS-bound tokens are accepted',re:'"mtls"'},{d:'DPoP-bound tokens are accepted',re:'"dpop"'},{d:'plain bearer tokens are refused',re:'default|return\\s+false'},{d:'PKCE is required',re:'pkceS256'},{d:'PAR is required',re:'\\bpar\\b'},{d:'exact redirect matching is required',re:'exactRedirect'},{d:'every requirement must hold',re:'&&'}],
+behavior:`clientAuthOk("private_key_jwt") and clientAuthOk("tls_client_auth") are true; clientAuthOk("client_secret_basic") and clientAuthOk(null) are false, because a shared secret exists in two places and can leak from either. tokenBindingOk("dpop") and tokenBindingOk("mtls") are true; tokenBindingOk("bearer") is false, since bearer semantics are exactly what the profile removes. baselineCompliant(true,true,"private_key_jwt","dpop",true) is true, and flipping any single argument to a weaker value makes it false — a profile is only as strong as its weakest permitted option, which is the whole reason profiles remove options rather than recommend them.`,
+hints:['Two switch statements, each with two accepting cases and <code>default: return false;</code>.','Guard null before switching, or return false in the default arm after a null check.','Compose the last method from the two checks plus the three booleans, joined with &&.'],
+solution:`public class Fapi {
+    static boolean clientAuthOk(String method) {
+        if (method == null) return false;
+        switch (method) {
+            case "private_key_jwt":   // asymmetric: nothing shared to leak
+            case "tls_client_auth":
+                return true;
+            default:
+                return false;         // client_secret_* and none are not permitted
+        }
+    }
+    static boolean tokenBindingOk(String binding) {
+        if (binding == null) return false;
+        switch (binding) {
+            case "mtls":
+            case "dpop":
+                return true;
+            default:
+                return false;         // plain bearer is what the profile removes
+        }
+    }
+    static boolean baselineCompliant(boolean pkceS256, boolean par, String clientAuth,
+                                     String tokenBinding, boolean exactRedirect) {
+        return pkceS256
+            && par
+            && clientAuthOk(clientAuth)
+            && tokenBindingOk(tokenBinding)
+            && exactRedirect;
+    }
+}`}}
 ]});

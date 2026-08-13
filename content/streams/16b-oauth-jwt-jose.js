@@ -378,6 +378,122 @@ public class Jwe {
         jwe.decrypt(new RSADecrypter(recipientPrivate));
         return jwe.getJWTClaimsSet().getSubject();
     }
+}`}},
+
+{id:'jose7',title:'SD-JWT: selective disclosure, and proving one fact',body:`
+<p>Every token format so far has one property in common: <b>the verifier sees every claim</b>. A JWT
+proving you are over 18 also hands over your exact date of birth, your name and your address, because
+the signature covers the whole payload and removing a claim breaks it.</p>
+<p>That is tolerable when the verifier is your own API. It is unacceptable when the verifier is a bar
+checking your age, or a landlord checking your income — the emerging wallet and verifiable-credential
+world, where a credential issued once is presented to many unrelated parties.
+<b>SD-JWT</b> solves it: the holder chooses which claims to reveal, and the signature still verifies.</p>
+
+<h4>How it works</h4>
+<p>The trick is that the signed payload contains <b>hashes of claims, not the claims themselves</b>. The
+actual values travel separately, as <i>disclosures</i>, and the holder decides which ones to include.</p>
+<div class="codeSample" data-hl>1. ISSUER builds one disclosure per selectively-disclosable claim:
+     disclosure = base64url( ["&lt;random salt&gt;", "birthdate", "1985-03-14"] )
+     digest     = base64url( SHA-256( disclosure ) )
+
+2. the signed JWT payload carries only the DIGESTS:
+     { "iss": "https://dmv.example",
+       "exp": 1798761600,
+       "_sd": [ "5vX3...",      // digest of the birthdate disclosure
+                "9aQ2...",      // digest of the name disclosure
+                "Kp71..." ],    // digest of the address disclosure
+       "_sd_alg": "sha-256" }
+
+3. the credential is issued as the JWT plus ALL disclosures, tilde-separated:
+     &lt;jwt&gt;~&lt;disclosure-birthdate&gt;~&lt;disclosure-name&gt;~&lt;disclosure-address&gt;
+
+4. the HOLDER presents only what is needed — dropping the rest:
+     &lt;jwt&gt;~&lt;disclosure-birthdate&gt;~
+
+5. the VERIFIER hashes each disclosure it received and checks the digest is
+   in _sd. The signature still verifies, because the payload never changed.</div>
+<p>Nothing was removed from the signed document. The digests for name and address are still there — the
+verifier simply cannot invert them, so it learns that two further claims exist without learning what
+they are.</p>
+
+<h4>The salt matters</h4>
+<p>Each disclosure begins with fresh random salt, and it is not decoration. Without it, a verifier
+holding a digest could brute-force the value: there are only so many plausible birthdates, and a
+verifier could hash them all until one matched. The salt makes the digest input unguessable, so an
+undisclosed claim stays genuinely hidden.</p>
+<p>Salts must also be <b>unique per disclosure</b>. Reusing one lets a verifier recognise the same claim
+value across two presentations, which quietly reintroduces the correlation the format exists to
+prevent.</p>
+
+<h4>Key binding: stopping the credential being passed around</h4>
+<p>Selective disclosure alone leaves a hole. The presentation is just bytes — a verifier who receives it
+could replay it elsewhere, and a holder could hand their credential to somebody else.</p>
+<p><b>Key binding</b> closes it. The issuer includes the holder's public key in the signed payload
+(<code>cnf</code>, the same confirmation claim used by DPoP), and the holder appends a small JWT signed
+with the matching private key, naming the verifier and the moment:</p>
+<div class="codeSample" data-hl>&lt;jwt&gt;~&lt;disclosure&gt;~&lt;KB-JWT&gt;
+
+// the key-binding JWT
+{ "typ": "kb+jwt", "alg": "ES256" }
+{ "aud":   "https://bar.example",     // THIS verifier only
+  "nonce": "&lt;value the verifier just supplied&gt;",
+  "iat":   1767222000,
+  "sd_hash": "&lt;hash of the JWT + disclosures being presented&gt;" }
+
+// so a captured presentation cannot be replayed to a different verifier,
+// and cannot be presented by anyone who lacks the holder's private key.</div>
+
+<h4>What it does and does not solve</h4>
+<ul>
+<li><b>Solves data minimisation.</b> Prove one fact, disclose one fact.</li>
+<li><b>Solves holder binding</b>, with the key-binding JWT.</li>
+<li><b>Does not make you unlinkable.</b> The issuer's signature is identical in every presentation, so
+two colluding verifiers can tell they saw the same credential. Only more exotic cryptography — BBS+
+signatures, zero-knowledge proofs — removes that, and SD-JWT deliberately trades it away for being
+implementable with ordinary JOSE libraries today.</li>
+<li><b>Does not hide that undisclosed claims exist.</b> The verifier sees three digests and knows you
+withheld two things, which is occasionally itself informative.</li>
+<li><b>Does not solve revocation</b> — status lists are a separate mechanism.</li>
+</ul>
+<p>That third point is the honest limitation, and it is a deliberate design choice: SD-JWT is
+"good privacy you can actually ship" rather than perfect privacy nobody deploys. It is the format
+behind SD-JWT VC, and the one the European digital identity wallet work has converged on.</p>`,
+docs:[['Selective Disclosure for JWTs (SD-JWT)','https://datatracker.ietf.org/doc/draft-ietf-oauth-selective-disclosure-jwt/'],['SD-JWT-based Verifiable Credentials (SD-JWT VC)','https://datatracker.ietf.org/doc/draft-ietf-oauth-sd-jwt-vc/'],['RFC 7800 — the cnf claim','https://www.rfc-editor.org/rfc/rfc7800'],['W3C — Verifiable Credentials Data Model','https://www.w3.org/TR/vc-data-model-2.0/']],
+ex:{title:'Verify a selective disclosure',
+prompt:`Write <code>SdJwt</code> with three methods. <code>static java.util.List&lt;String&gt; parts(String presentation)</code> splits a tilde-separated presentation, returning an empty list when <code>presentation</code> is null or blank (use <code>split("~", -1)</code> so a trailing tilde is preserved). <code>static boolean disclosureAccepted(java.util.Set&lt;String&gt; sdDigests, String disclosureDigest)</code> is true only when both are non-null and the digest is listed in <code>_sd</code>. <code>static boolean keyBindingOk(String kbAud, String verifier, String kbNonce, String expectedNonce)</code> requires the audience to equal this verifier and the nonce to equal the one the verifier just issued, rejecting nulls — that is what stops a captured presentation being replayed elsewhere.`,
+starter:`import java.util.*;
+
+public class SdJwt {
+    static List<String> parts(String presentation) {
+        return null;
+    }
+    static boolean disclosureAccepted(Set<String> sdDigests, String disclosureDigest) {
+        return false;
+    }
+    static boolean keyBindingOk(String kbAud, String verifier, String kbNonce, String expectedNonce) {
+        return false;
+    }
+}`,
+tests:[{d:'a missing presentation yields an empty list',re:'List\\s*\\.\\s*of\\s*\\(\\s*\\)|emptyList\\s*\\(\\s*\\)|new\\s+ArrayList'},{d:'null or blank input is handled',re:'==\\s*null|isBlank\\s*\\(\\s*\\)'},{d:'parts are tilde-separated',re:'"~"'},{d:'the split keeps trailing empty parts',re:'split\\s*\\(\\s*"~"\\s*,\\s*-1\\s*\\)'},{d:'a disclosure must be listed in _sd',re:'contains\\s*\\(\\s*disclosureDigest\\s*\\)'},{d:'key binding checks the audience',re:'kbAud\\s*\\.\\s*equals\\s*\\(\\s*verifier|verifier\\s*\\.\\s*equals\\s*\\(\\s*kbAud'},{d:'key binding checks the nonce',re:'kbNonce\\s*\\.\\s*equals\\s*\\(\\s*expectedNonce|expectedNonce\\s*\\.\\s*equals\\s*\\(\\s*kbNonce'}],
+behavior:`parts("jwt~d1~d2~") returns four elements, the last empty, because -1 preserves the trailing separator that marks the end of the disclosure list. parts(null) and parts("") return an empty list. disclosureAccepted(Set.of("5vX3"), "5vX3") is true; a digest absent from _sd is false, which is how a forged disclosure is caught even though the signature still verifies over the unchanged payload. keyBindingOk("https://bar","https://bar","n1","n1") is true; a mismatched audience or nonce, or any null, is false — without both checks a presentation captured by one verifier could be replayed to another.`,
+hints:['Guard first, then <code>Arrays.asList(presentation.split("~", -1))</code>.','The -1 limit matters: the default drops trailing empty strings.','Both key-binding conditions must hold, and both comparisons need null guards.'],
+solution:`import java.util.*;
+
+public class SdJwt {
+    static List<String> parts(String presentation) {
+        if (presentation == null || presentation.isBlank()) return List.of();
+        // -1 keeps the trailing empty element that terminates the disclosure list
+        return Arrays.asList(presentation.split("~", -1));
+    }
+    static boolean disclosureAccepted(Set<String> sdDigests, String disclosureDigest) {
+        // the payload never changed, so a forged disclosure is caught here, not by the signature
+        return sdDigests != null && disclosureDigest != null && sdDigests.contains(disclosureDigest);
+    }
+    static boolean keyBindingOk(String kbAud, String verifier, String kbNonce, String expectedNonce) {
+        if (kbAud == null || kbNonce == null) return false;
+        // audience + nonce: this verifier, this moment
+        return kbAud.equals(verifier) && kbNonce.equals(expectedNonce);
+    }
 }`}}
 
 ]});

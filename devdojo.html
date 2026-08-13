@@ -751,7 +751,7 @@ window.QUIZZES_HAND = {
     {q:'When is mTLS-bound preferable to DPoP?',options:['In a browser app','In service-to-service and regulated environments where a PKI already exists','Whenever CDNs are involved','For mobile apps'],answer:1,why:'mTLS is hardware-backed and harder to steal, but needs a PKI and TLS terminated where the certificate is still visible.',whyWrong:['Client certificates effectively do not work in browsers.','','Client certificates often break through proxies and CDNs.','DPoP suits mobile far better.']}
   ],
   oa8b: [
-    {q:'Why is storing an access token in localStorage discouraged?',options:['It is too small','Any JavaScript on the page can read it, so one XSS or one bad dependency exfiltrates it','It is not encrypted at rest','Browsers are deprecating it'],answer:1,why:'If your app can read the token, so can injected script. No care with the flow changes that.',whyWrong:['Capacity is not the issue.','Encryption would not help, since the app must decrypt it to use it.','','localStorage is not being removed.']},
+    {q:'Why is storing an access token in localStorage discouraged?',options:['It is too small','Any JavaScript on the page can read it, so one XSS or one bad dependency exfiltrates it','It is not encrypted at rest','Browsers are deprecating it'],answer:1,why:'If your app can read the token, so can injected script. No care with the flow changes that.',whyWrong:['Capacity is not the issue.','','Encryption would not help, since the app must decrypt it to use it.','localStorage is not being removed.']},
     {q:'What does a BFF actually eliminate?',options:['XSS','The durable credential in the browser, so an XSS cannot grant lasting access','CSRF','The need for a session'],answer:1,why:'Injected script can still act as the user while the page is open, but there is no token to steal and reuse from elsewhere.',whyWrong:['XSS remains possible.','','A BFF reintroduces CSRF, because the browser now authenticates with a cookie.','It creates one.']},
     {q:'Adopting a BFF reintroduces which problem?',options:['Token theft','CSRF, because the browser authenticates with a cookie','Weak passwords','Clock skew'],answer:1,why:'SameSite cookies plus a per-session CSRF token on state-changing requests is the standard answer.',whyWrong:['That is what the BFF removes.','','Unrelated.','Unrelated.']},
     {q:'A team genuinely cannot run any backend. What is the least-bad option?',options:['Refresh token in localStorage','A short-lived access token in memory with PKCE and no refresh token in the browser','A long-lived access token in a cookie readable by script','An API key in the bundle'],answer:1,why:'Exposed while the page is open, but nothing durable is left behind, and re-authentication on refresh is accepted.',whyWrong:['The worst case: one XSS yields lasting access.','','A script-readable cookie is no better than localStorage.','A key in a bundle is public.']},
@@ -770,6 +770,28 @@ window.QUIZZES_HAND = {
     {q:'Why is it safe for the code_challenge to travel through the browser?',options:['It is encrypted','It is a SHA-256 hash, and the verifier cannot be recovered from it','It is short-lived','The browser hides it'],answer:1,why:'The challenge is public by design; the verifier travels only on the direct back-channel POST, once, at the end.',whyWrong:['It is hashed, not encrypted.','','Lifetime is not what protects it.','URLs are highly visible.']},
     {q:'What is the PKCE downgrade attack?',options:['Forcing plain instead of S256','Omitting code_verifier at the token endpoint and hoping the server treats it as optional','Using a shorter code','Reusing an old challenge'],answer:1,why:'If a challenge was stored, the verifier must be required. Absence is failure, not a skipped optional check.',whyWrong:['A related weakness, but the downgrade is the omission.','','Code length is set by the server.','Reuse is a different flaw.']},
     {q:'How do state and code_challenge differ?',options:['They are the same protection','state binds the response to the user session (CSRF); code_challenge binds the code to the client secret','state is for mobile only','code_challenge replaces state'],answer:1,why:'You need both, and in OIDC nonce is a third thing again, binding the ID token to this login.',whyWrong:['They defend different things.','','state applies everywhere.','Neither substitutes for the other.']}
+  ],
+  jose7: [
+    {q:'What does the signed payload of an SD-JWT actually contain for a selectively-disclosable claim?',options:['The claim value','A salted hash (digest) of the claim, with the value travelling separately','An encrypted claim','Nothing at all'],answer:1,why:'The holder can drop disclosures without breaking the signature, because the payload never changes — only which disclosures accompany it.',whyWrong:['That is an ordinary JWT, where dropping a claim breaks the signature.','','SD-JWT hashes rather than encrypts.','The digests are present, which is how the verifier checks what it receives.']},
+    {q:'Why does every disclosure begin with random salt?',options:['To make it longer','Without it a verifier could brute-force a guessable value such as a birthdate until a hash matched','To identify the issuer','To set the expiry'],answer:1,why:'Salt makes the digest input unguessable, and unique salts also stop a verifier correlating the same value across presentations.',whyWrong:['Length is not the goal.','','The iss claim does that.','Unrelated to expiry.']},
+    {q:'What problem does the key-binding JWT solve?',options:['Revocation','Replay — it names this verifier and this nonce, so a captured presentation cannot be reused elsewhere or by someone else','Selective disclosure','Signature verification'],answer:1,why:'The issuer puts the holder public key in cnf, and the holder signs a small JWT proving they hold the matching private key.',whyWrong:['Revocation needs a separate status mechanism.','','That is what the digests do.','The issuer signature is separate.']},
+    {q:'Two verifiers compare notes. Can they tell they saw the same SD-JWT credential?',options:['No, disclosures differ','Yes — the issuer signature is identical in every presentation, so SD-JWT is not unlinkable','Only if the holder reused a salt','Only with the private key'],answer:1,why:'Removing that linkage needs BBS+ or zero-knowledge proofs. SD-JWT deliberately trades unlinkability for being implementable with ordinary JOSE libraries.',whyWrong:['The signature is the same regardless of which disclosures are sent.','','Salt reuse makes it worse, but the signature already links them.','No key is needed to compare signatures.']},
+    {q:'A verifier receives a presentation with one disclosure. What does it learn about the withheld claims?',options:['Nothing at all','That they exist, because the digests are still in _sd — though not what they are','Their values','Their names only'],answer:1,why:'An honest limitation: the verifier can see you withheld two things, which is occasionally itself informative.',whyWrong:['The digests remain visible in the payload.','','Digests cannot be inverted when salted.','Names are inside the disclosure, which was not sent.']}
+  ],
+  ss6: [
+    {q:'Why is Single Logout structurally hard?',options:['Logout messages are slow','One login silently created N independent app sessions, and there is no reliable way to reach them all','Browsers block logout','The spec is incomplete'],answer:1,why:'Independent app sessions are what make federated login fast, and they are exactly what makes logout unreliable. You cannot have one without the other.',whyWrong:['Speed is not the issue.','','Browsers do not block it.','The specs exist; distributed state is the problem.']},
+    {q:'A user logs out of an app and is immediately logged back in on the next click. What happened?',options:['A bug in the cookie','Local logout ended the app session, but the IdP session was untouched','The token never expired','CSRF'],answer:1,why:'Three different things are called logout — local, IdP, and full SLO. Most complaints are a mismatch between which one the user expected.',whyWrong:['The cookie was cleared correctly.','','A new login occurred rather than an old token being reused.','Unrelated.']},
+    {q:'Why is front-channel logout in terminal decline?',options:['It is too slow','It depends on an app cookie being sent inside a cross-site iframe, which browsers now block by default','It requires JavaScript','It was never standardised'],answer:1,why:'Third-party cookie restrictions remove the mechanism it relies on, and it also fails when the user closes the tab.',whyWrong:['Speed is not the problem.','','Iframes work without scripting.','It is a published OIDC specification.']},
+    {q:'Why must a logout token not contain a nonce claim?',options:['It would be too large','A nonce marks the JWT as an ID token, so accepting one would let an attacker submit an ID token as a logout token','Nonces expire','It breaks the signature'],answer:1,why:'The specification forbids it precisely to keep the two token types distinguishable.',whyWrong:['Size is irrelevant.','','Expiry is not the issue.','The signature would still verify, which is the danger.']},
+    {q:'An app uses stateless JWT sessions. What happens when back-channel logout arrives?',options:['The session ends normally','There is nothing to delete — back-channel logout effectively requires server-side session state or a revocation list','The JWT is rewritten','The user is redirected'],answer:1,why:'The app must find and kill the session from sid or sub alone, which means indexing sessions somewhere.',whyWrong:['A stateless session cannot be ended by deleting a record.','','A JWT cannot be modified after issuance.','No browser is involved.']},
+    {q:'Given SLO is unreliable, which single measure most reduces post-logout access?',options:['A longer logout timeout','Revoking the refresh token and the grant, plus short access token lifetimes','More iframes','Clearing localStorage'],answer:1,why:'Without revoking the grant, a refresh quietly mints a new access token. Logging out does not un-issue tokens already handed out.',whyWrong:['Timeouts do not shorten token validity.','','More notifications do not fix the unreachable ones.','Helps locally, not for issued tokens.']}
+  ],
+  ao7: [
+    {q:'What does a security profile such as FAPI actually do?',options:['Adds new cryptography','Removes optionality — turning shoulds into MUSTs and picking one option where the base spec offered several','Replaces OAuth','Adds a new grant type'],answer:1,why:'Every FAPI requirement is a defence already available in OAuth. The contribution is refusing to let any of them be optional.',whyWrong:['It introduces no new primitives.','','It constrains OAuth rather than replacing it.','No new grants are defined.']},
+    {q:'Which client authentication methods does FAPI permit?',options:['client_secret_basic and client_secret_post','private_key_jwt and mTLS','Any, including none','HTTP Basic only'],answer:1,why:'Asymmetric methods have no shared secret, so there is nothing that can leak from either side.',whyWrong:['Shared secrets are exactly what is excluded.','','none is never acceptable here.','Basic uses a shared secret.']},
+    {q:'What does PAR contribute?',options:['Faster token issuance','Request parameters go to the authorization server over the back channel, so the browser carries only a handle','Longer tokens','Encrypted tokens'],answer:1,why:'Parameters never appear in a URL, so they cannot be tampered with, logged or leaked through a referrer.',whyWrong:['It adds a round trip.','','Unrelated to token size.','PAR does not encrypt tokens.']},
+    {q:'What distinguishes FAPI Message Signing from the baseline profile?',options:['Stronger encryption','Non-repudiation — a signed record of what each party sent, which survives the exchange','Faster flows','Support for more grants'],answer:1,why:'It is a legal requirement rather than a cryptographic one, which is why it is a separate level rather than simply "more secure".',whyWrong:['The cryptography is comparable.','','Signing adds work.','Grant support is unchanged.']},
+    {q:'A deployment is fully FAPI-certified. What does that not tell you?',options:['That client authentication is strong','Whether the resource server checks record ownership — protocol hardening and authorization correctness are different problems','That PKCE is used','That tokens are sender-constrained'],answer:1,why:'A certified deployment can still have an IDOR on its main endpoint. Only one of these two problems has a test suite.',whyWrong:['Certification does cover that.','','Certification does cover that.','Certification does cover that.']}
   ]
 };
 window.QUIZZES={"jvm1":[{"q":"location(\"object\") returns which value?","options":["heap","metaspace","stack"],"answer":0,"why":"location maps \"object\" to \"heap\".","whyWrong":["","That is what a different input maps to, not \"object\".","That is what a different input maps to, not \"object\"."]},{"q":"location(\"local-primitive\") returns which value?","options":["heap","metaspace","stack"],"answer":2,"why":"location maps \"local-primitive\" to \"stack\".","whyWrong":["That is what a different input maps to, not \"local-primitive\".","That is what a different input maps to, not \"local-primitive\".",""]},{"q":"location(\"reference-variable\") returns which value?","options":["heap","metaspace","stack"],"answer":2,"why":"location maps \"reference-variable\" to \"stack\".","whyWrong":["That is what a different input maps to, not \"reference-variable\".","That is what a different input maps to, not \"reference-variable\".",""]},{"q":"location(\"class-metadata\") returns which value?","options":["heap","metaspace","stack"],"answer":1,"why":"location maps \"class-metadata\" to \"metaspace\".","whyWrong":["That is what a different input maps to, not \"class-metadata\".","","That is what a different input maps to, not \"class-metadata\"."]},{"q":"error(\"deep-recursion\") returns which value?","options":["OutOfMemoryError","StackOverflowError"],"answer":1,"why":"error maps \"deep-recursion\" to \"StackOverflowError\".","whyWrong":["That is what a different input maps to, not \"deep-recursion\".",""]},{"q":"error(\"too-many-objects\") returns which value?","options":["OutOfMemoryError","StackOverflowError"],"answer":0,"why":"error maps \"too-many-objects\" to \"OutOfMemoryError\".","whyWrong":["","That is what a different input maps to, not \"too-many-objects\"."]}],"ds6":[{"q":"bound(\"upper\") returns which value?","options":["Big-O","Omega","Theta"],"answer":0,"why":"bound maps \"upper\" to \"Big-O\".","whyWrong":["","That is what a different input maps to, not \"upper\".","That is what a different input maps to, not \"upper\"."]},{"q":"bound(\"tight\") returns which value?","options":["Big-O","Omega","Theta"],"answer":2,"why":"bound maps \"tight\" to \"Theta\".","whyWrong":["That is what a different input maps to, not \"tight\".","That is what a different input maps to, not \"tight\".",""]},{"q":"bound(\"lower\") returns which value?","options":["Big-O","Omega","Theta"],"answer":1,"why":"bound maps \"lower\" to \"Omega\".","whyWrong":["That is what a different input maps to, not \"lower\".","","That is what a different input maps to, not \"lower\"."]},{"q":"of(\"hash-lookup\") returns which value?","options":["O(1)","O(log n)","O(n)","O(n^2)"],"answer":0,"why":"of maps \"hash-lookup\" to \"O(1)\".","whyWrong":["","That is what a different input maps to, not \"hash-lookup\".","That is what a different input maps to, not \"hash-lookup\".","That is what a different input maps to, not \"hash-lookup\"."]},{"q":"of(\"binary-search\") returns which value?","options":["O(1)","O(log n)","O(n)","O(n^2)"],"answer":1,"why":"of maps \"binary-search\" to \"O(log n)\".","whyWrong":["That is what a different input maps to, not \"binary-search\".","","That is what a different input maps to, not \"binary-search\".","That is what a different input maps to, not \"binary-search\"."]},{"q":"of(\"linear-scan\") returns which value?","options":["O(1)","O(log n)","O(n)","O(n^2)"],"answer":2,"why":"of maps \"linear-scan\" to \"O(n)\".","whyWrong":["That is what a different input maps to, not \"linear-scan\".","That is what a different input maps to, not \"linear-scan\".","","That is what a different input maps to, not \"linear-scan\"."]}],"ds7":[{"q":"pick(\"exact-key-lookup\") returns which value?","options":["balanced BST","hash table","heap","trie"],"answer":1,"why":"pick maps \"exact-key-lookup\" to \"hash table\".","whyWrong":["That is what a different input maps to, not \"exact-key-lookup\".","","That is what a different input maps to, not \"exact-key-lookup\".","That is what a different input maps to, not \"exact-key-lookup\"."]},{"q":"pick(\"sorted-range\") returns which value?","options":["balanced BST","hash table","heap","trie"],"answer":0,"why":"pick maps \"sorted-range\" to \"balanced BST\".","whyWrong":["","That is what a different input maps to, not \"sorted-range\".","That is what a different input maps to, not \"sorted-range\".","That is what a different input maps to, not \"sorted-range\"."]},{"q":"pick(\"prefix-autocomplete\") returns which value?","options":["balanced BST","hash table","heap","trie"],"answer":3,"why":"pick maps \"prefix-autocomplete\" to \"trie\".","whyWrong":["That is what a different input maps to, not \"prefix-autocomplete\".","That is what a different input maps to, not \"prefix-autocomplete\".","That is what a different input maps to, not \"prefix-autocomplete\".",""]},{"q":"pick(\"top-k\") returns which value?","options":["balanced BST","hash table","heap","trie"],"answer":2,"why":"pick maps \"top-k\" to \"heap\".","whyWrong":["That is what a different input maps to, not \"top-k\".","That is what a different input maps to, not \"top-k\".","","That is what a different input maps to, not \"top-k\"."]},{"q":"pick(\"disk-index\") returns which value?","options":["B-tree","balanced BST","hash table","trie"],"answer":0,"why":"pick maps \"disk-index\" to \"B-tree\".","whyWrong":["","That is what a different input maps to, not \"disk-index\".","That is what a different input maps to, not \"disk-index\".","That is what a different input maps to, not \"disk-index\"."]}],"ds8":[{"q":"dataStructure(\"bfs\") returns which value?","options":["priority queue","queue","stack"],"answer":1,"why":"dataStructure maps \"bfs\" to \"queue\".","whyWrong":["That is what a different input maps to, not \"bfs\".","","That is what a different input maps to, not \"bfs\"."]},{"q":"dataStructure(\"dfs\") returns which value?","options":["priority queue","queue","stack"],"answer":2,"why":"dataStructure maps \"dfs\" to \"stack\".","whyWrong":["That is what a different input maps to, not \"dfs\".","That is what a different input maps to, not \"dfs\".",""]},{"q":"dataStructure(\"dijkstra\") returns which value?","options":["priority queue","queue","stack"],"answer":0,"why":"dataStructure maps \"dijkstra\" to \"priority queue\".","whyWrong":["","That is what a different input maps to, not \"dijkstra\".","That is what a different input maps to, not \"dijkstra\"."]},{"q":"pick(\"shortest-unweighted\") returns which value?","options":["bfs","dfs","dijkstra","topological sort"],"answer":0,"why":"pick maps \"shortest-unweighted\" to \"bfs\".","whyWrong":["","That is what a different input maps to, not \"shortest-unweighted\".","That is what a different input maps to, not \"shortest-unweighted\".","That is what a different input maps to, not \"shortest-unweighted\"."]},{"q":"pick(\"shortest-weighted\") returns which value?","options":["bfs","dfs","dijkstra","topological sort"],"answer":2,"why":"pick maps \"shortest-weighted\" to \"dijkstra\".","whyWrong":["That is what a different input maps to, not \"shortest-weighted\".","That is what a different input maps to, not \"shortest-weighted\".","","That is what a different input maps to, not \"shortest-weighted\"."]},{"q":"pick(\"path-exists\") returns which value?","options":["bfs","dfs","dijkstra","topological sort"],"answer":1,"why":"pick maps \"path-exists\" to \"dfs\".","whyWrong":["That is what a different input maps to, not \"path-exists\".","","That is what a different input maps to, not \"path-exists\".","That is what a different input maps to, not \"path-exists\"."]}],"web9":[{"q":"style(\"stable-large-dataset\") returns which value?","options":["cursor","offset"],"answer":0,"why":"style maps \"stable-large-dataset\" to \"cursor\".","whyWrong":["","That is what a different input maps to, not \"stable-large-dataset\"."]},{"q":"style(\"jump-to-page\") returns which value?","options":["cursor","offset"],"answer":1,"why":"style maps \"jump-to-page\" to \"offset\".","whyWrong":["That is what a different input maps to, not \"jump-to-page\".",""]}],"web10":[{"q":"location(\"uri\") returns which value?","options":["/v1/orders","Api-Version: 1","application/vnd.acme.v1+json"],"answer":0,"why":"location maps \"uri\" to \"/v1/orders\".","whyWrong":["","That is what a different input maps to, not \"uri\".","That is what a different input maps to, not \"uri\"."]},{"q":"location(\"header\") returns which value?","options":["/v1/orders","Api-Version: 1","application/vnd.acme.v1+json"],"answer":1,"why":"location maps \"header\" to \"Api-Version: 1\".","whyWrong":["That is what a different input maps to, not \"header\".","","That is what a different input maps to, not \"header\"."]},{"q":"location(\"media-type\") returns which value?","options":["/v1/orders","Api-Version: 1","application/vnd.acme.v1+json"],"answer":2,"why":"location maps \"media-type\" to \"application/vnd.acme.v1+json\".","whyWrong":["That is what a different input maps to, not \"media-type\".","That is what a different input maps to, not \"media-type\".",""]}],"con0":[{"q":"memory(\"process\") returns which value?","options":["isolated","shared"],"answer":0,"why":"memory maps \"process\" to \"isolated\".","whyWrong":["","That is what a different input maps to, not \"process\"."]},{"q":"memory(\"thread\") returns which value?","options":["isolated","shared"],"answer":1,"why":"memory maps \"thread\" to \"shared\".","whyWrong":["That is what a different input maps to, not \"thread\".",""]}],"con7":[{"q":"classify(\"intermittent-failure\") returns which value?","options":["deadlock","race condition","unsynchronized shared state"],"answer":1,"why":"classify maps \"intermittent-failure\" to \"race condition\".","whyWrong":["That is what a different input maps to, not \"intermittent-failure\".","","That is what a different input maps to, not \"intermittent-failure\"."]},{"q":"classify(\"threads-stuck-forever\") returns which value?","options":["deadlock","race condition","unsynchronized shared state"],"answer":0,"why":"classify maps \"threads-stuck-forever\" to \"deadlock\".","whyWrong":["","That is what a different input maps to, not \"threads-stuck-forever\".","That is what a different input maps to, not \"threads-stuck-forever\"."]},{"q":"classify(\"lost-updates\") returns which value?","options":["deadlock","race condition","unsynchronized shared state"],"answer":2,"why":"classify maps \"lost-updates\" to \"unsynchronized shared state\".","whyWrong":["That is what a different input maps to, not \"lost-updates\".","That is what a different input maps to, not \"lost-updates\".",""]},{"q":"tool(\"inspect-thread-dump\") returns which value?","options":["AtomicInteger","jcstress","jstack"],"answer":2,"why":"tool maps \"inspect-thread-dump\" to \"jstack\".","whyWrong":["That is what a different input maps to, not \"inspect-thread-dump\".","That is what a different input maps to, not \"inspect-thread-dump\".",""]},{"q":"tool(\"stress-test-memory-model\") returns which value?","options":["AtomicInteger","jcstress","jstack"],"answer":1,"why":"tool maps \"stress-test-memory-model\" to \"jcstress\".","whyWrong":["That is what a different input maps to, not \"stress-test-memory-model\".","","That is what a different input maps to, not \"stress-test-memory-model\"."]},{"q":"tool(\"safe-counter\") returns which value?","options":["AtomicInteger","jcstress","jstack"],"answer":0,"why":"tool maps \"safe-counter\" to \"AtomicInteger\".","whyWrong":["","That is what a different input maps to, not \"safe-counter\".","That is what a different input maps to, not \"safe-counter\"."]}],"pat8":[{"q":"remedy(\"god-object\") returns which value?","options":["extract a named constant","extract a shared method","inject dependencies","split by responsibility"],"answer":3,"why":"remedy maps \"god-object\" to \"split by responsibility\".","whyWrong":["That is what a different input maps to, not \"god-object\".","That is what a different input maps to, not \"god-object\".","That is what a different input maps to, not \"god-object\".",""]},{"q":"remedy(\"magic-number\") returns which value?","options":["extract a named constant","extract a shared method","inject dependencies","split by responsibility"],"answer":0,"why":"remedy maps \"magic-number\" to \"extract a named constant\".","whyWrong":["","That is what a different input maps to, not \"magic-number\".","That is what a different input maps to, not \"magic-number\".","That is what a different input maps to, not \"magic-number\"."]},{"q":"remedy(\"copy-paste\") returns which value?","options":["extract a named constant","extract a shared method","inject dependencies","split by responsibility"],"answer":1,"why":"remedy maps \"copy-paste\" to \"extract a shared method\".","whyWrong":["That is what a different input maps to, not \"copy-paste\".","","That is what a different input maps to, not \"copy-paste\".","That is what a different input maps to, not \"copy-paste\"."]},{"q":"remedy(\"global-mutable-state\") returns which value?","options":["extract a named constant","extract a shared method","inject dependencies","split by responsibility"],"answer":2,"why":"remedy maps \"global-mutable-state\" to \"inject dependencies\".","whyWrong":["That is what a different input maps to, not \"global-mutable-state\".","That is what a different input maps to, not \"global-mutable-state\".","","That is what a different input maps to, not \"global-mutable-state\"."]},{"q":"remedy(\"premature-optimization\") returns which value?","options":["extract a named constant","extract a shared method","measure then optimize","split by responsibility"],"answer":2,"why":"remedy maps \"premature-optimization\" to \"measure then optimize\".","whyWrong":["That is what a different input maps to, not \"premature-optimization\".","That is what a different input maps to, not \"premature-optimization\".","","That is what a different input maps to, not \"premature-optimization\"."]}]};
@@ -14412,6 +14434,152 @@ tests:[{d:'removes the session id from the active set',re:'active\\.remove\\s*\\
 behavior:`Given an active set containing "s1", revoke(active,"s1") removes it and returns true; the server will now reject that id. Deleting only the browser cookie would not achieve this.`,
 hints:['Set has a remove method that deletes the element.','After removing, contains(sid) should be false.','Return the negation of contains to confirm the session is gone.']}},
 
+{id:'ss6',title:'Single Logout: why it is hard and how the mechanisms work',body:`
+<p>Single Sign-On is a pleasant illusion. One login event silently created <i>N</i> independent
+application sessions, and the user has no idea. Logout is where the illusion collapses, because now all
+<i>N</i> must be found and ended — and there is no reliable way to reach them all.</p>
+<p>This is not an implementation failing. It is the structural consequence of the thing that made SSO
+valuable: each application keeps its own session so it does not have to consult the IdP on every
+request.</p>
+
+<h4>Three different things called "logout"</h4>
+<ul>
+<li><b>Local logout</b> — end the session at <i>this</i> application. Easy, and usually all that
+actually happens. The user is then baffled to find that clicking the app again logs them straight back
+in, because the IdP session is untouched.</li>
+<li><b>IdP logout</b> — end the session at the identity provider, so the <i>next</i> app that redirects
+there prompts for credentials. Apps already logged in stay logged in.</li>
+<li><b>Single Logout (SLO)</b> — end the IdP session <i>and</i> every application session it produced.
+This is the one that is hard.</li>
+</ul>
+<p>Most "logout is broken" reports are really a mismatch between what the user expected and which of
+these three the system implemented.</p>
+
+<h4>RP-initiated logout: the redirect</h4>
+<p>The app sends the user to the IdP's <code>end_session_endpoint</code>, which clears its own session
+and redirects back:</p>
+<div class="codeSample" data-hl>GET /connect/endsession
+  ?id_token_hint=eyJhbGciOi...          proves who is logging out
+  &post_logout_redirect_uri=https://app.example.com/bye   must be registered
+  &state=xyz
+
+// the id_token_hint matters: without it the IdP cannot tell WHICH session to
+// end, and must either prompt the user or refuse.</div>
+<p>This ends the local session and the IdP session. It does nothing about the other applications — for
+that the IdP has to notify them, and there are two ways to do it.</p>
+
+<h4>Front-channel logout: through the browser</h4>
+<p>The IdP's logout page embeds a hidden iframe per application, each pointing at that app's logout URI.
+The browser loads them, each app sees its own cookie, each clears its session.</p>
+<div class="codeSample" data-hl>&lt;iframe src="https://app-a.example.com/logout?iss=...&amp;sid=..."&gt;
+&lt;iframe src="https://app-b.example.com/logout?iss=...&amp;sid=..."&gt;
+
+WHY IT BREAKS
+  the user closes the tab before the iframes finish   -> some apps never notified
+  third-party cookie blocking                          -> the iframe has no session
+    to clear, because the app's cookie is not sent in a cross-site frame
+  an app is slow or down                               -> silently skipped
+  no acknowledgement                                   -> the IdP never learns
+    which logouts succeeded</div>
+<p>Third-party cookie restrictions are the decisive problem. The mechanism depends on an app's cookie
+being sent inside a cross-site iframe, which is precisely what browsers now block by default. Front-
+channel logout is, for practical purposes, in terminal decline.</p>
+
+<h4>Back-channel logout: server to server</h4>
+<p>The IdP POSTs a signed <b>logout token</b> directly to each application's registered endpoint. No
+browser involved, so nothing depends on the user keeping a tab open:</p>
+<div class="codeSample" data-hl>POST /backchannel-logout
+Content-Type: application/x-www-form-urlencoded
+
+logout_token=eyJhbGciOiJSUzI1NiIs...
+
+// the logout token is a JWT, and must be validated like any other:
+{ "iss": "https://idp.example.com",
+  "aud": "app-a",
+  "iat": 1767222000,
+  "jti": "unique-id",                        // reject replays
+  "sub": "u-4817",                           // and/or
+  "sid": "session-abc",                      // the specific session
+  "events": { "http://schemas.openid.net/event/backchannel-logout": {} } }
+
+// MUST NOT contain a nonce claim — that would mark it as an ID token,
+// and an attacker could otherwise submit an ID token as a logout token.</div>
+<p>It is more reliable, and it introduces its own problem: <b>the application must be able to find and
+kill the session from the token alone.</b> That means indexing sessions by <code>sid</code> or
+<code>sub</code> — and an app using stateless JWT sessions has nothing to delete. Back-channel logout
+effectively requires server-side session state, or a revocation list the app checks.</p>
+<p>Note the asymmetry with front-channel: back-channel reaches the <i>server</i>, but the user's browser
+may still hold a valid cookie for an app the notification failed to reach.</p>
+
+<h4>Why full SLO rarely works in practice</h4>
+<ol>
+<li><b>Not every app supports it.</b> One SaaS vendor without a back-channel endpoint means logout is
+incomplete by definition, and you cannot make them implement it.</li>
+<li><b>There is no transaction.</b> Some notifications succeed, some fail, some time out, and there is
+no rollback and usually no retry.</li>
+<li><b>Access tokens outlive the session.</b> Even a perfectly ended session leaves already-issued
+access tokens valid until they expire. Logging out does not un-issue a token.</li>
+<li><b>Native and mobile apps</b> may not be running to receive anything.</li>
+</ol>
+
+<h4>What to do instead</h4>
+<p>Given that SLO is unreliable, the practical posture is to reduce how much it needs to accomplish:</p>
+<ul>
+<li><b>Short access token lifetimes</b> — five to fifteen minutes — so the post-logout window is
+small.</li>
+<li><b>Revoke the refresh token and the grant</b> at logout. This is the one that actually stops
+continued access, since without it a refresh quietly mints a new access token.</li>
+<li><b>Check session validity on sensitive operations</b> rather than trusting a long-lived local
+session.</li>
+<li><b>Be honest in the UI.</b> "You have been signed out of this application" is accurate; "You have
+been signed out everywhere" usually is not, and a "sign out of all devices" control that shows what it
+actually ended is better than a claim you cannot keep.</li>
+</ul>
+<p>The deeper point: logout is the mirror of the SSO trade-off. Independent app sessions are what make
+federated login fast, and they are exactly what makes logout unreliable. You cannot have the first
+property without the second.</p>`,
+docs:[['OpenID Connect RP-Initiated Logout 1.0','https://openid.net/specs/openid-connect-rpinitiated-1_0.html'],['OpenID Connect Back-Channel Logout 1.0','https://openid.net/specs/openid-connect-backchannel-1_0.html'],['OpenID Connect Front-Channel Logout 1.0','https://openid.net/specs/openid-connect-frontchannel-1_0.html'],['RFC 7009 — OAuth 2.0 Token Revocation','https://www.rfc-editor.org/rfc/rfc7009']],
+ex:{title:'Validate a back-channel logout token',
+prompt:`Write <code>LogoutToken</code> with three methods. <code>static boolean valid(String iss, String expectedIss, String aud, String clientId, boolean hasLogoutEvent, boolean hasNonce)</code> requires the issuer and audience to match the expected values, the logout event to be present, and <code>hasNonce</code> to be <b>false</b> — a nonce marks the JWT as an ID token, and accepting one would let an attacker submit an ID token as a logout token. <code>static boolean notReplayed(java.util.Set&lt;String&gt; seenJtis, String jti)</code> is true only for a non-null jti not already seen. <code>static String sessionKey(String sid, String sub)</code> returns <code>sid</code> when it is non-null, otherwise <code>sub</code>, otherwise null — the key the app uses to find the session it must kill.`,
+starter:`import java.util.*;
+
+public class LogoutToken {
+    static boolean valid(String iss, String expectedIss, String aud, String clientId,
+                         boolean hasLogoutEvent, boolean hasNonce) {
+        return false;
+    }
+    static boolean notReplayed(Set<String> seenJtis, String jti) {
+        return false;
+    }
+    static String sessionKey(String sid, String sub) {
+        return null;
+    }
+}`,
+tests:[{d:'the issuer must match',re:'iss\\s*!=\\s*null|expectedIss\\s*\\.\\s*equals|iss\\s*\\.\\s*equals'},{d:'the audience must match this client',re:'clientId|aud'},{d:'the logout event must be present',re:'hasLogoutEvent'},{d:'a nonce disqualifies the token',re:'!\\s*hasNonce|hasNonce\\s*==\\s*false'},{d:'replayed jtis are rejected',re:'contains\\s*\\(\\s*jti\\s*\\)'},{d:'a null jti is rejected',re:'jti\\s*!=\\s*null|jti\\s*==\\s*null'},{d:'sid is preferred over sub',re:'sid\\s*!=\\s*null|null\\s*!=\\s*sid'}],
+behavior:`valid("https://idp","https://idp","app-a","app-a",true,false) is true. It is false when the issuer or audience differ, when the logout event is absent, and crucially when hasNonce is true — the specification forbids a nonce precisely so that an ID token cannot be replayed to the logout endpoint to sign a user out, or worse. notReplayed(new HashSet<>(), "j1") is true; a jti already in the set, or a null jti, is false. sessionKey("sess-1","u-1") returns sess-1, since sid identifies the specific session; sessionKey(null,"u-1") returns u-1, which logs the user out of every session; sessionKey(null,null) returns null and the app cannot act.`,
+hints:['Join the checks with &&, guarding the two string comparisons for null first.','<code>return jti != null &amp;&amp; seenJtis != null &amp;&amp; !seenJtis.contains(jti);</code>','A nested ternary is enough for sessionKey — prefer sid, fall back to sub.'],
+solution:`import java.util.*;
+
+public class LogoutToken {
+    static boolean valid(String iss, String expectedIss, String aud, String clientId,
+                         boolean hasLogoutEvent, boolean hasNonce) {
+        if (iss == null || aud == null) return false;
+        // a nonce would make this an ID token: never accept one here
+        return iss.equals(expectedIss)
+            && aud.equals(clientId)
+            && hasLogoutEvent
+            && !hasNonce;
+    }
+    static boolean notReplayed(Set<String> seenJtis, String jti) {
+        return jti != null && seenJtis != null && !seenJtis.contains(jti);
+    }
+    static String sessionKey(String sid, String sub) {
+        // sid kills one session; sub kills all of the user's sessions
+        if (sid != null) return sid;
+        return sub;
+    }
+}`}},
+
 ]});
 STREAMS.push({iam:true,sec:'OAuth 2.0 & OpenID Connect',icon:'🔓',title:'OAuth 2.0 & OpenID Connect',blurb:'Every OAuth 2.0 flow from first principles — authorization code, PKCE, client credentials, device, refresh — plus OpenID Connect on top (ID tokens, discovery, UserInfo, nonce). The protocol that issues the tokens.',lessons:[
 
@@ -15684,6 +15852,122 @@ public class Jwe {
         jwe.decrypt(new RSADecrypter(recipientPrivate));
         return jwe.getJWTClaimsSet().getSubject();
     }
+}`}},
+
+{id:'jose7',title:'SD-JWT: selective disclosure, and proving one fact',body:`
+<p>Every token format so far has one property in common: <b>the verifier sees every claim</b>. A JWT
+proving you are over 18 also hands over your exact date of birth, your name and your address, because
+the signature covers the whole payload and removing a claim breaks it.</p>
+<p>That is tolerable when the verifier is your own API. It is unacceptable when the verifier is a bar
+checking your age, or a landlord checking your income — the emerging wallet and verifiable-credential
+world, where a credential issued once is presented to many unrelated parties.
+<b>SD-JWT</b> solves it: the holder chooses which claims to reveal, and the signature still verifies.</p>
+
+<h4>How it works</h4>
+<p>The trick is that the signed payload contains <b>hashes of claims, not the claims themselves</b>. The
+actual values travel separately, as <i>disclosures</i>, and the holder decides which ones to include.</p>
+<div class="codeSample" data-hl>1. ISSUER builds one disclosure per selectively-disclosable claim:
+     disclosure = base64url( ["&lt;random salt&gt;", "birthdate", "1985-03-14"] )
+     digest     = base64url( SHA-256( disclosure ) )
+
+2. the signed JWT payload carries only the DIGESTS:
+     { "iss": "https://dmv.example",
+       "exp": 1798761600,
+       "_sd": [ "5vX3...",      // digest of the birthdate disclosure
+                "9aQ2...",      // digest of the name disclosure
+                "Kp71..." ],    // digest of the address disclosure
+       "_sd_alg": "sha-256" }
+
+3. the credential is issued as the JWT plus ALL disclosures, tilde-separated:
+     &lt;jwt&gt;~&lt;disclosure-birthdate&gt;~&lt;disclosure-name&gt;~&lt;disclosure-address&gt;
+
+4. the HOLDER presents only what is needed — dropping the rest:
+     &lt;jwt&gt;~&lt;disclosure-birthdate&gt;~
+
+5. the VERIFIER hashes each disclosure it received and checks the digest is
+   in _sd. The signature still verifies, because the payload never changed.</div>
+<p>Nothing was removed from the signed document. The digests for name and address are still there — the
+verifier simply cannot invert them, so it learns that two further claims exist without learning what
+they are.</p>
+
+<h4>The salt matters</h4>
+<p>Each disclosure begins with fresh random salt, and it is not decoration. Without it, a verifier
+holding a digest could brute-force the value: there are only so many plausible birthdates, and a
+verifier could hash them all until one matched. The salt makes the digest input unguessable, so an
+undisclosed claim stays genuinely hidden.</p>
+<p>Salts must also be <b>unique per disclosure</b>. Reusing one lets a verifier recognise the same claim
+value across two presentations, which quietly reintroduces the correlation the format exists to
+prevent.</p>
+
+<h4>Key binding: stopping the credential being passed around</h4>
+<p>Selective disclosure alone leaves a hole. The presentation is just bytes — a verifier who receives it
+could replay it elsewhere, and a holder could hand their credential to somebody else.</p>
+<p><b>Key binding</b> closes it. The issuer includes the holder's public key in the signed payload
+(<code>cnf</code>, the same confirmation claim used by DPoP), and the holder appends a small JWT signed
+with the matching private key, naming the verifier and the moment:</p>
+<div class="codeSample" data-hl>&lt;jwt&gt;~&lt;disclosure&gt;~&lt;KB-JWT&gt;
+
+// the key-binding JWT
+{ "typ": "kb+jwt", "alg": "ES256" }
+{ "aud":   "https://bar.example",     // THIS verifier only
+  "nonce": "&lt;value the verifier just supplied&gt;",
+  "iat":   1767222000,
+  "sd_hash": "&lt;hash of the JWT + disclosures being presented&gt;" }
+
+// so a captured presentation cannot be replayed to a different verifier,
+// and cannot be presented by anyone who lacks the holder's private key.</div>
+
+<h4>What it does and does not solve</h4>
+<ul>
+<li><b>Solves data minimisation.</b> Prove one fact, disclose one fact.</li>
+<li><b>Solves holder binding</b>, with the key-binding JWT.</li>
+<li><b>Does not make you unlinkable.</b> The issuer's signature is identical in every presentation, so
+two colluding verifiers can tell they saw the same credential. Only more exotic cryptography — BBS+
+signatures, zero-knowledge proofs — removes that, and SD-JWT deliberately trades it away for being
+implementable with ordinary JOSE libraries today.</li>
+<li><b>Does not hide that undisclosed claims exist.</b> The verifier sees three digests and knows you
+withheld two things, which is occasionally itself informative.</li>
+<li><b>Does not solve revocation</b> — status lists are a separate mechanism.</li>
+</ul>
+<p>That third point is the honest limitation, and it is a deliberate design choice: SD-JWT is
+"good privacy you can actually ship" rather than perfect privacy nobody deploys. It is the format
+behind SD-JWT VC, and the one the European digital identity wallet work has converged on.</p>`,
+docs:[['Selective Disclosure for JWTs (SD-JWT)','https://datatracker.ietf.org/doc/draft-ietf-oauth-selective-disclosure-jwt/'],['SD-JWT-based Verifiable Credentials (SD-JWT VC)','https://datatracker.ietf.org/doc/draft-ietf-oauth-sd-jwt-vc/'],['RFC 7800 — the cnf claim','https://www.rfc-editor.org/rfc/rfc7800'],['W3C — Verifiable Credentials Data Model','https://www.w3.org/TR/vc-data-model-2.0/']],
+ex:{title:'Verify a selective disclosure',
+prompt:`Write <code>SdJwt</code> with three methods. <code>static java.util.List&lt;String&gt; parts(String presentation)</code> splits a tilde-separated presentation, returning an empty list when <code>presentation</code> is null or blank (use <code>split("~", -1)</code> so a trailing tilde is preserved). <code>static boolean disclosureAccepted(java.util.Set&lt;String&gt; sdDigests, String disclosureDigest)</code> is true only when both are non-null and the digest is listed in <code>_sd</code>. <code>static boolean keyBindingOk(String kbAud, String verifier, String kbNonce, String expectedNonce)</code> requires the audience to equal this verifier and the nonce to equal the one the verifier just issued, rejecting nulls — that is what stops a captured presentation being replayed elsewhere.`,
+starter:`import java.util.*;
+
+public class SdJwt {
+    static List<String> parts(String presentation) {
+        return null;
+    }
+    static boolean disclosureAccepted(Set<String> sdDigests, String disclosureDigest) {
+        return false;
+    }
+    static boolean keyBindingOk(String kbAud, String verifier, String kbNonce, String expectedNonce) {
+        return false;
+    }
+}`,
+tests:[{d:'a missing presentation yields an empty list',re:'List\\s*\\.\\s*of\\s*\\(\\s*\\)|emptyList\\s*\\(\\s*\\)|new\\s+ArrayList'},{d:'null or blank input is handled',re:'==\\s*null|isBlank\\s*\\(\\s*\\)'},{d:'parts are tilde-separated',re:'"~"'},{d:'the split keeps trailing empty parts',re:'split\\s*\\(\\s*"~"\\s*,\\s*-1\\s*\\)'},{d:'a disclosure must be listed in _sd',re:'contains\\s*\\(\\s*disclosureDigest\\s*\\)'},{d:'key binding checks the audience',re:'kbAud\\s*\\.\\s*equals\\s*\\(\\s*verifier|verifier\\s*\\.\\s*equals\\s*\\(\\s*kbAud'},{d:'key binding checks the nonce',re:'kbNonce\\s*\\.\\s*equals\\s*\\(\\s*expectedNonce|expectedNonce\\s*\\.\\s*equals\\s*\\(\\s*kbNonce'}],
+behavior:`parts("jwt~d1~d2~") returns four elements, the last empty, because -1 preserves the trailing separator that marks the end of the disclosure list. parts(null) and parts("") return an empty list. disclosureAccepted(Set.of("5vX3"), "5vX3") is true; a digest absent from _sd is false, which is how a forged disclosure is caught even though the signature still verifies over the unchanged payload. keyBindingOk("https://bar","https://bar","n1","n1") is true; a mismatched audience or nonce, or any null, is false — without both checks a presentation captured by one verifier could be replayed to another.`,
+hints:['Guard first, then <code>Arrays.asList(presentation.split("~", -1))</code>.','The -1 limit matters: the default drops trailing empty strings.','Both key-binding conditions must hold, and both comparisons need null guards.'],
+solution:`import java.util.*;
+
+public class SdJwt {
+    static List<String> parts(String presentation) {
+        if (presentation == null || presentation.isBlank()) return List.of();
+        // -1 keeps the trailing empty element that terminates the disclosure list
+        return Arrays.asList(presentation.split("~", -1));
+    }
+    static boolean disclosureAccepted(Set<String> sdDigests, String disclosureDigest) {
+        // the payload never changed, so a forged disclosure is caught here, not by the signature
+        return sdDigests != null && disclosureDigest != null && sdDigests.contains(disclosureDigest);
+    }
+    static boolean keyBindingOk(String kbAud, String verifier, String kbNonce, String expectedNonce) {
+        if (kbAud == null || kbNonce == null) return false;
+        // audience + nonce: this verifier, this moment
+        return kbAud.equals(verifier) && kbNonce.equals(expectedNonce);
+    }
 }`}}
 
 ]});
@@ -16899,7 +17183,126 @@ solution:`public class RefreshRotation {
 }`,
 tests:[{d:'current token rotates; old token triggers family revocation',re:'isCurrent\\s*\\?\\s*"rotate: issue new, revoke old"\\s*:\\s*"reuse detected: revoke the family"'},{d:'rotation is required for public clients',re:'equals\\s*\\(\\s*"public"\\s*\\)'}],
 behavior:`onUse(true) returns "rotate: issue new, revoke old"; onUse(false) returns "reuse detected: revoke the family" — the self-detecting response to a replayed refresh token. rotationRequired("public") is true: SPAs and mobile apps must rotate.`,
-hints:['Each refresh token is single-use: using the current one rotates it; seeing an old one means compromise.','On reuse, revoke the whole token family to force a fresh login.','Public clients cannot protect a long-lived secret, so rotation is required for them.']}}
+hints:['Each refresh token is single-use: using the current one rotates it; seeing an old one means compromise.','On reuse, revoke the whole token family to force a fresh login.','Public clients cannot protect a long-lived secret, so rotation is required for them.']}},
+
+{id:'ao7',title:'FAPI: what a hardened OAuth profile looks like',body:`
+<p>Plain OAuth 2.0 is a framework with a great many optional parts. That flexibility is why it is
+everywhere, and it is also why two conformant deployments can differ enormously in security. When the
+stakes are high — moving money, releasing health records — "conformant" is not a useful bar.</p>
+<p>A <b>profile</b> fixes this by removing choices. <b>FAPI</b> (Financial-grade API, from the OpenID
+Foundation) is the best-known one: a named set of mandatory requirements, with a certification suite
+that proves an implementation actually meets them. It is worth studying even if you never need it,
+because it is the industry's considered answer to "what does maximum-assurance OAuth look like?" — and
+every requirement is a lesson already covered here, made compulsory.</p>
+
+<h4>What a profile is</h4>
+<div class="codeSample" data-hl>the base spec says          a profile says
+  "should"                    MUST
+  "one of these options"      exactly this one
+  "implementers may choose"   here is the choice, and here is the test suite
+
+// FAPI adds no new cryptography. It removes the freedom to be weak.</div>
+<p>This is the same move as OAuth 2.1, applied harder and to a narrower audience. OAuth 2.1 raises the
+floor for everyone; FAPI raises the ceiling for regulated deployments.</p>
+
+<h4>The requirements, and the attack each one answers</h4>
+<ul>
+<li><b>PKCE with S256, always.</b> Authorization code interception and injection.</li>
+<li><b>Sender-constrained access tokens</b> — mTLS-bound or DPoP. A stolen token is inert without the
+key. Baseline OAuth's bearer semantics are simply not permitted.</li>
+<li><b>Strong client authentication</b> — <code>private_key_jwt</code> or mTLS. No shared
+<code>client_secret</code>, so there is no symmetric secret to leak from either side.</li>
+<li><b>PAR</b> (pushed authorization requests). The client sends the request parameters to the
+authorization server over the back channel first and receives a handle; the browser then carries only
+that handle. Request parameters never appear in a URL, so they cannot be tampered with or logged.</li>
+<li><b>JAR</b> (JWT-secured authorization request) — the request object is <i>signed</i>, so the
+authorization server can prove the client authored those parameters, not an attacker who rewrote a
+redirect.</li>
+<li><b>JARM</b> (JWT-secured authorization response) — the response is signed too, closing the mirror
+attack where a response is tampered with on the way back.</li>
+<li><b>Exact redirect URI matching</b>, and no open redirects anywhere in the flow.</li>
+<li><b>Short-lived authorization codes</b>, one-time use, bound to the client.</li>
+</ul>
+<p>Read that list again as a summary of the course: every item is a defence you have already met. FAPI's
+contribution is refusing to let any of them be optional.</p>
+
+<h4>Two levels</h4>
+<div class="codeSample" data-hl>FAPI 2.0 Security Profile     the baseline: PKCE, PAR, sender-constrained
+                              tokens, strong client auth
+                              -> read access, most regulated APIs
+
+FAPI 2.0 Message Signing      adds non-repudiation: requests AND responses are
+                              signed end to end, so neither party can later
+                              deny what was sent
+                              -> payment initiation, high-value transactions</div>
+<p>The distinction is worth understanding because it is not about strength but about <i>evidence</i>.
+The baseline protects the exchange. Message signing produces an artefact that survives the exchange —
+a signed record that stands up in a dispute months later. That is a legal requirement, not a
+cryptographic one, which is why it is a separate level rather than simply "more secure".</p>
+
+<h4>Certification: the part that makes it real</h4>
+<p>FAPI ships with a conformance suite, and implementations are formally certified. This matters more
+than it might appear. A specification alone is a document people interpret optimistically; a test suite
+is a specification nobody can talk their way past. Much of the practical value of FAPI comes from the
+fact that an ecosystem can <i>require certification</i> rather than trust a vendor's claim.</p>
+
+<h4>When it applies to you</h4>
+<p>Directly, if you build in open banking (the UK and Brazilian regimes mandate it), open healthcare, or
+anywhere a regulator names it. Indirectly, and more usefully, as a checklist: if you ever need to argue
+that an OAuth deployment is as strong as it reasonably can be, FAPI is the list to measure against.</p>
+<p>And the honest caveat: FAPI hardens the <i>protocol</i>. It says nothing about whether your scopes
+model reality, whether the resource server checks record ownership, or whether your support tooling
+lets staff read any account. A fully certified deployment can still have an IDOR on its main endpoint.
+Protocol hardening and authorization correctness are different problems, and only one of them has a
+test suite.</p>`,
+docs:[['FAPI 2.0 Security Profile','https://openid.net/specs/fapi-security-profile-2_0-final.html'],['FAPI 2.0 Message Signing','https://openid.net/specs/fapi-message-signing-2_0.html'],['RFC 9126 — Pushed Authorization Requests','https://www.rfc-editor.org/rfc/rfc9126'],['RFC 9101 — JWT-Secured Authorization Request (JAR)','https://www.rfc-editor.org/rfc/rfc9101'],['OpenID Foundation — certification','https://openid.net/certification/']],
+ex:{title:'Check a deployment against the FAPI baseline',
+prompt:`Write <code>Fapi</code> with three methods. <code>static boolean clientAuthOk(String method)</code> accepts only <code>"private_key_jwt"</code> and <code>"tls_client_auth"</code>, rejecting <code>"client_secret_basic"</code>, <code>"client_secret_post"</code>, <code>"none"</code> and null — no shared secret is permitted. <code>static boolean tokenBindingOk(String binding)</code> accepts only <code>"mtls"</code> and <code>"dpop"</code>, rejecting <code>"bearer"</code> and null. <code>static boolean baselineCompliant(boolean pkceS256, boolean par, String clientAuth, String tokenBinding, boolean exactRedirect)</code> is true only when every requirement holds.`,
+starter:`public class Fapi {
+    static boolean clientAuthOk(String method) {
+        return false;
+    }
+    static boolean tokenBindingOk(String binding) {
+        return false;
+    }
+    static boolean baselineCompliant(boolean pkceS256, boolean par, String clientAuth,
+                                     String tokenBinding, boolean exactRedirect) {
+        return false;
+    }
+}`,
+tests:[{d:'private_key_jwt is accepted',re:'"private_key_jwt"'},{d:'mTLS client auth is accepted',re:'"tls_client_auth"'},{d:'shared-secret client auth is refused',re:'default|return\\s+false'},{d:'mTLS-bound tokens are accepted',re:'"mtls"'},{d:'DPoP-bound tokens are accepted',re:'"dpop"'},{d:'plain bearer tokens are refused',re:'default|return\\s+false'},{d:'PKCE is required',re:'pkceS256'},{d:'PAR is required',re:'\\bpar\\b'},{d:'exact redirect matching is required',re:'exactRedirect'},{d:'every requirement must hold',re:'&&'}],
+behavior:`clientAuthOk("private_key_jwt") and clientAuthOk("tls_client_auth") are true; clientAuthOk("client_secret_basic") and clientAuthOk(null) are false, because a shared secret exists in two places and can leak from either. tokenBindingOk("dpop") and tokenBindingOk("mtls") are true; tokenBindingOk("bearer") is false, since bearer semantics are exactly what the profile removes. baselineCompliant(true,true,"private_key_jwt","dpop",true) is true, and flipping any single argument to a weaker value makes it false — a profile is only as strong as its weakest permitted option, which is the whole reason profiles remove options rather than recommend them.`,
+hints:['Two switch statements, each with two accepting cases and <code>default: return false;</code>.','Guard null before switching, or return false in the default arm after a null check.','Compose the last method from the two checks plus the three booleans, joined with &&.'],
+solution:`public class Fapi {
+    static boolean clientAuthOk(String method) {
+        if (method == null) return false;
+        switch (method) {
+            case "private_key_jwt":   // asymmetric: nothing shared to leak
+            case "tls_client_auth":
+                return true;
+            default:
+                return false;         // client_secret_* and none are not permitted
+        }
+    }
+    static boolean tokenBindingOk(String binding) {
+        if (binding == null) return false;
+        switch (binding) {
+            case "mtls":
+            case "dpop":
+                return true;
+            default:
+                return false;         // plain bearer is what the profile removes
+        }
+    }
+    static boolean baselineCompliant(boolean pkceS256, boolean par, String clientAuth,
+                                     String tokenBinding, boolean exactRedirect) {
+        return pkceS256
+            && par
+            && clientAuthOk(clientAuth)
+            && tokenBindingOk(tokenBinding)
+            && exactRedirect;
+    }
+}`}}
 ]});
 STREAMS.push({icon:'🗝️',iam:true,sec:'Governance & privileged access',title:'Identity Governance & Privileged Access',blurb:'Keeping access correct over time: identity governance (access reviews, certification, separation of duties), privileged access management (vaulting, just-in-time elevation), secrets management and rotation, and CIAM vs workforce IAM.',lessons:[
 
