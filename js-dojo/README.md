@@ -1,9 +1,9 @@
 <p align="center">
   <img src="https://img.shields.io/badge/status-in%20progress-f59e0b" alt="status">
-  <img src="https://img.shields.io/badge/streams-10%20of%2015-eab308" alt="streams built">
-  <img src="https://img.shields.io/badge/lessons-40-eab308" alt="lessons">
-  <img src="https://img.shields.io/badge/exercises-65-06b6d4" alt="exercises">
-  <img src="https://img.shields.io/badge/executed%20cases-361-2ea44f" alt="executed test cases">
+  <img src="https://img.shields.io/badge/streams-11%20of%2015-eab308" alt="streams built">
+  <img src="https://img.shields.io/badge/lessons-43-eab308" alt="lessons">
+  <img src="https://img.shields.io/badge/exercises-70-06b6d4" alt="exercises">
+  <img src="https://img.shields.io/badge/executed%20cases-392-2ea44f" alt="executed test cases">
   <img src="https://img.shields.io/badge/real%20execution-100%25-06b6d4" alt="exercises graded by real execution">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
@@ -14,10 +14,10 @@ JavaScript and Node from the ground up, **assuming nothing**, in a single offlin
 course in this repository, built on the same [shared engine](../engine/README.md) as
 [DevDojo](../README.md) and [IdentityDojo](../identity-dojo/README.md).
 
-> **Status: in progress — 10 of 15 streams built.** Streams 1–9 and 11 are written, verifying and
-> executing: **40 lessons, 65 exercises, 361 executed cases, 0 failures**. Every exercise runs for real.
-> The language core, both debugging streams, the OAuth-flow walkthrough, modules/npm and the Node runtime
-> are done; TypeScript and the remaining Node streams are outlined below. The badges count what exists.
+> **Status: in progress — 11 of 15 streams built.** Streams 1–9, 11 and 12 are written, verifying and
+> executing: **43 lessons, 70 exercises, 392 executed cases, 0 failures**. Every exercise runs for real.
+> The language core, both debugging streams, the OAuth-flow walkthrough, modules/npm, the Node runtime and
+> files/streams are done; TypeScript, the HTTP server, Node profiling and the capstone remain.
 
 ## Why this course exists
 
@@ -55,7 +55,7 @@ hand-waved as "just how JavaScript is".
 | 9 | **Modules, Packages & Tooling** ✅ | ESM vs CommonJS, `package.json`, npm, semver, lockfiles, bundlers, linting and formatting |
 | 10 | TypeScript | why types, structural typing, generics, narrowing, `unknown` vs `any`, migrating JS |
 | 11 | **The Node Runtime** ✅ | what Node is, its event loop and phases, `process`, env and CLI args, globals |
-| 12 | Files, Streams & the Standard Library | `fs`, `path`, buffers, streams, backpressure, `worker_threads` |
+| 12 | **Files, Streams & the Standard Library** ✅ | `fs`, `path`, buffers, streams, backpressure, `worker_threads` |
 | 13 | Building an HTTP Server | the `http` module, routing, middleware, REST, validation, auth, security headers |
 | 14 | Debugging, Testing & Profiling Node | `node --inspect`, breakpoints in server code, `node:test`, heap snapshots, CPU profiles, event-loop blocking |
 | 15 | Capstone | build and debug a real application end to end |

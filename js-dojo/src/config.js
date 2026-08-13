@@ -39,5 +39,6 @@ const DOJO_DOMAINS = [
   {name:'Code at Scale',icon:'\u{1F4E6}',titles:[
     'Modules, Packages & Tooling']},
   {name:'Node.js',icon:'\u{1F7E9}',titles:[
-    'The Node Runtime']}
+    'The Node Runtime',
+    'Files, Streams & the Node Standard Library']}
 ];
