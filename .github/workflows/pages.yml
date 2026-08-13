@@ -23,6 +23,11 @@ jobs:
         with:
           node-version: '22'
 
+      # The shared runtime is unit-tested before any course is built, because a
+      # bug here breaks all three at once.
+      - name: Test the shared engine
+        run: node --test engine/test/engine.test.js
+
       # Every course is gated on their own content-integrity check before
       # anything is published. A failure here fails the deploy.
       - name: Verify DevDojo content

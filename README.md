@@ -3,12 +3,14 @@
 </p>
 
 <p align="center">
-  <a href="https://rcbart.github.io/knowledge-base/dev/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-DevDojo-6a5cf5" alt="DevDojo live"></a>
-  <a href="https://rcbart.github.io/knowledge-base/identity/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-IdentityDojo-8b5cf6" alt="IdentityDojo live"></a>
+  <a href="https://rcbart.github.io/dojo/dev/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-DevDojo-6a5cf5" alt="DevDojo live"></a>
+  <a href="https://rcbart.github.io/dojo/identity/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-IdentityDojo-8b5cf6" alt="IdentityDojo live"></a>
+  <a href="https://rcbart.github.io/dojo/js/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-JSDojo-eab308" alt="JSDojo live"></a>
   <img src="https://img.shields.io/badge/tracks-28-8b5cf6" alt="tracks">
   <img src="https://img.shields.io/badge/lessons-200-8b5cf6" alt="lessons">
   <img src="https://img.shields.io/badge/exercises-313-06b6d4" alt="exercises">
   <img src="https://img.shields.io/badge/content%20checks-1566-2ea44f" alt="content integrity checks">
+  <img src="https://img.shields.io/badge/engine%20tests-22-2ea44f" alt="engine unit tests">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
@@ -19,7 +21,7 @@ An interactive, self-contained learning platform for software engineering. **28 
 exercise on every lesson, a belt progression, **spaced-repetition review**, a **difficulty-filtered practice hub**, a domain
 glossary with click-to-explain terms, tournaments, and end-to-end capstone projects.
 
-It began as a Java course (JavaDojo) and now spans the full stack: the Java language and JVM,
+It began as a Java course (JavaDojo) — which is why this repository was once named for it — and now spans the full stack: the Java language and JVM,
 computer science & algorithms, web/HTTP, front-end (React), APIs, databases & SQL, concurrency,
 security & cryptography, DevOps, architecture, and a senior ("dan") track. Identity & access has its
 own course (below).
@@ -30,12 +32,15 @@ unbalanced a course meant to cover software engineering broadly. It is now
 and OIDC, SAML, WebAuthn/FIDO2 internals, Active Directory and Kerberos, zero trust, and a Running
 Identity stream on incident response, migration and operations. Same engine, separate build.
 
-**▶ Live:** https://rcbart.github.io/knowledge-base/ — a landing page for both courses.
-[**DevDojo**](https://rcbart.github.io/knowledge-base/dev/) ·
-[**IdentityDojo**](https://rcbart.github.io/knowledge-base/identity/). Each is a single,
-self-contained page; SQL exercises run against real sample data in your browser with no server.
-*(First time: in Settings → Pages, set Source to "GitHub Actions"; the workflow verifies and builds
-both courses on every push and fails the deploy if either content check fails.)*
+**▶ Live:** https://rcbart.github.io/dojo/ — a landing page for all three courses.
+[**DevDojo**](https://rcbart.github.io/dojo/dev/) ·
+[**IdentityDojo**](https://rcbart.github.io/dojo/identity/) ·
+[**JSDojo**](https://rcbart.github.io/dojo/js/). Each is a single,
+self-contained page; SQL exercises run against real sample data in your browser with no server, and
+JSDojo's exercises execute in a sandboxed Web Worker.
+*(First time: in Settings → Pages, set Source to "GitHub Actions". The workflow unit-tests the shared
+engine, then verifies and builds all three courses on every push, and fails the deploy if any check
+fails.)*
 
 ## What's inside
 
@@ -100,6 +105,14 @@ flowchart TD
   Runtime --> ID["identity-dojo/ · same shape, own content + build"]
   ID --> GH
 ```
+
+**The engine is unit-tested.** `node --test engine/test/engine.test.js` runs 22 tests against the shared
+runtime's pure logic — regex grading and its failure modes, the Web Worker sandbox preamble, quiz option
+shuffling, difficulty rating, and HTML escaping. They run in CI before any course is built, because a bug
+in the engine breaks all three at once. Two of them exist because a real bug shipped: every hand-authored
+quiz once had its answer at option A, and two exercise regexes did not match their own reference
+solutions. Writing them found a third — `esc()` threw on `undefined`, which would blank a panel rather
+than render nothing.
 
 **How grading works (honestly).** The headline number to be careful with is the **content checks**
 badge: `scripts/verify.js` runs 1566 assertions proving every exercise's reference solution matches its

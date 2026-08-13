@@ -123,7 +123,7 @@ canonical ordering, constant-time comparison — which are exactly the parts peo
 
 ## Repository layout
 
-JSDojo lives inside [`rcbart/knowledge-base`](https://github.com/rcbart/knowledge-base) alongside DevDojo
+JSDojo lives inside [`rcbart/dojo`](https://github.com/rcbart/dojo) alongside DevDojo
 and IdentityDojo, sharing one `engine/`. That is deliberate: three courses, one runtime, one place to fix
 a bug. Because the only coupling is the `ENGINE` constant at the top of `build.js`, lifting this course
 into its own repository is a copy rather than a fork — see the README section on the engine.

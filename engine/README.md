@@ -28,3 +28,21 @@ See `../identity-dojo/src/config.js` for a worked example.
 
 Any edit here affects every course. Run each course's `scripts/verify.js` and `build.js` before
 committing — the CI workflow does both and fails the deploy if either course breaks.
+
+
+## Tests
+
+```bash
+node --test engine/test/engine.test.js
+```
+
+22 unit tests covering the pure logic every course depends on: `localChecks` (regex grading, including
+inverted checks and malformed patterns), `buildWorkerSrc` (the sandbox preamble — strict mode, the removed
+network globals, and that the hardening precedes submitted code), `shuffleQuiz` (that the answer index and
+every `whyWrong` stay aligned with their option, over 200 shuffles), `exDiff` (determinism, and that it
+always returns one of three tiers) and `esc`.
+
+`test/harness.js` loads `app.js` into a `vm` context with the few browser globals it touches, so the
+runtime stays written for the browser and the tests assert on it unchanged. Note that objects created
+inside that context have a different `Object.prototype`, so the tests compare fields rather than using
+`deepEqual` across the realm boundary.

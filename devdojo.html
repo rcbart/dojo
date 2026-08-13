@@ -616,7 +616,10 @@ function extractJson(raw){
 }
 const BELTS=[[0,'White belt'],[10,'Yellow belt'],[25,'Orange belt'],[40,'Green belt'],[55,'Blue belt'],[70,'Purple belt'],[85,'Brown belt'],[100,'Black belt 🖤']];
 /* ============================== HELPERS ============================== */
-const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+/* Guard the coercion: esc is called on optional fields (a lesson without docs,
+   an exercise without a note), and an undefined there should render as nothing
+   rather than throwing and blanking the panel. Found by engine/test. */
+const esc=s=>(s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 function highlight(src){
   const toks=[];
   const stash=(html)=>{toks.push(html);return '\u0000'+String.fromCharCode(0xE000+toks.length-1);};
