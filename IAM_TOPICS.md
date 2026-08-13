@@ -1,10 +1,10 @@
 # Identity & Access Management — complete topic map
 
 The IAM domain, organized by sub-category in reading order, with the concepts each lesson covers.
-All 13 sub-categories are built: **115 lessons, 122 exercises, 537 checks**. ⬜ marks topics
+All 14 sub-categories are built: **126 lessons, 133 exercises, 619 checks**. ⬜ marks topics
 identified but not yet written.
 
-The 13 content modules (`16b`–`16m` plus the `16z` capstone) merge at runtime into a single
+The 14 content modules (`16b`–`16n` plus the `16z` capstone) merge at runtime into a single
 **Identity and Access** stream with named sub-categories. Order is set by `content/streams/manifest.json`.
 
 ---
@@ -122,10 +122,17 @@ under three sets of names. Everything after Foundations can then be read as mech
 - SPIFFE/SPIRE and SVIDs; cloud & mesh workload identity; zero-trust decision guide
 - Context propagation; impersonation vs delegation
 
-## ✅ Enterprise identity & directories *(8 lessons)*
+## ✅ Enterprise identity & directories *(10 lessons)*
 
-- LDAP & Active Directory; Kerberos; SCIM & joiner/mover/leaver; JIT provisioning & home-realm
-  discovery; social login & account linking; B2B/B2C/B2B2C; multi-tenant identity
+- LDAP & Active Directory; SCIM & joiner/mover/leaver; JIT provisioning & home-realm discovery;
+  social login & account linking; B2B/B2C/B2B2C; multi-tenant identity
+- **Active Directory in depth** — forest as the security boundary (a domain is not one), trusts and
+  their inverted direction, SID filtering, group scopes, GPO as a code-execution path, ACL abuse and
+  shadow admins, DCSync and NTDS.dit, the tiering model, LAPS, and AD as a *graph* attackers walk
+- **Kerberos in depth** — the AS/TGS/AP exchanges, pre-authentication, the PAC, SPNs and why any user
+  may request any service ticket (Kerberoasting), golden vs silver tickets and the double krbtgt
+  rotation, unconstrained / constrained / resource-based delegation and S4U, clock and name
+  sensitivity, and the defensive checklist
 
 ## ✅ Advanced OAuth & threats *(8 lessons)*
 
@@ -140,6 +147,28 @@ under three sets of names. Everything after Foundations can then be read as mech
 
 - IGA reviews & certification; entitlements & separation of duties; PAM; secrets management &
   rotation; CIAM vs workforce IAM; consent & privacy; identity audit, logging & compliance
+
+## ✅ Running identity in production *(9 lessons)*
+
+**The half of identity that is not a protocol.**
+
+- **Incident response** — blast radius per leaked artefact, why access tokens cannot be recalled,
+  emergency signing-key rotation and JWKS cache TTL as the exposure window, hunting persistence
+- **Migration** — coexistence and the strangler pattern, lazy password rehashing, why passkeys cannot
+  migrate, identifier mapping, sequencing by recoverability
+- **Availability & break-glass** — the IdP as the blast radius for everything, serving stale JWKS,
+  break-glass accounts that do not live behind the thing they bypass, degraded modes
+- **Observability** — the metrics that change decisions (time to deprovision first), SLOs, what to log,
+  correlation ids, and what must never be logged
+- **Testing** — the pyramid for identity, the negative cases that fail *open*, mock IdPs and test keys
+- **Diagnosis** — locating the failure in the redirect chain, symptom-to-cause mapping, the five
+  triage questions, reading the artefacts, and the expiry class of bug
+- **The 3am page** — outage versus attack, the first ten minutes, traps specific to identity, a worked
+  incident, and what makes the review worthwhile
+- **Change safety** — what does not roll back, additive rollout, why authorization changes fail
+  silently and open, and the business-continuity questions
+- **Evaluating and recommending a solution** — the ten questions that discriminate, build versus buy,
+  gates before weighted scores, a POC designed to fail, and how to present a defensible recommendation
 
 ## ✅ Capstone *(1 lesson)*
 

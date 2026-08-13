@@ -5,16 +5,16 @@
 <p align="center">
   <a href="https://rcbart.github.io/knowledge-base/"><img src="https://img.shields.io/badge/%E2%96%B6%20live%20demo-DevDojo-6a5cf5" alt="live demo"></a>
   <img src="https://img.shields.io/badge/tracks-29-8b5cf6" alt="tracks">
-  <img src="https://img.shields.io/badge/lessons-315-8b5cf6" alt="lessons">
-  <img src="https://img.shields.io/badge/exercises-435-06b6d4" alt="exercises">
-  <img src="https://img.shields.io/badge/checks-2103%20passing-2ea44f" alt="checks">
+  <img src="https://img.shields.io/badge/lessons-326-8b5cf6" alt="lessons">
+  <img src="https://img.shields.io/badge/exercises-446-06b6d4" alt="exercises">
+  <img src="https://img.shields.io/badge/checks-2185%20passing-2ea44f" alt="checks">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
 # DevDojo 🥋
 
 An interactive, self-contained learning platform for software engineering. **29 training tracks,
-315 lessons, and 435 hands-on exercises** run entirely in the browser — an in-editor coding
+326 lessons, and 446 hands-on exercises** run entirely in the browser — an in-editor coding
 exercise on every lesson, **real code execution where possible** (SQL, JavaScript, and opt-in Java),
 a belt progression, **spaced-repetition review**, a **difficulty-filtered practice hub**, a domain
 glossary with click-to-explain terms, tournaments, and end-to-end capstone projects.
@@ -24,14 +24,16 @@ computer science & algorithms, web/HTTP, front-end (React), APIs, databases & SQ
 security & cryptography, a large identity & access domain, DevOps, architecture, and a senior
 ("dan") track.
 
-**Identity & access is the deepest domain** — 115 lessons across 13 sub-categories, built to teach the
+**Identity & access is the deepest domain** — 126 lessons across 14 sub-categories, built to teach the
 concepts *before* the protocols that assume them: what a token actually is and how a role differs from
 a format, the identity lifecycle from proofing to deprovisioning, and why SSO is a user experience
 while federation and delegation are the mechanisms underneath. From there into OAuth 2.0/2.1 and PKCE
 end to end, OIDC, SAML, WebAuthn/FIDO2 internals, DPoP and sender-constrained tokens, SD-JWT selective
 disclosure, zero trust, data-level authorization and IDOR, on-behalf-of chains, and the patterns most
 courses skip entirely — API keys, capability URLs, cross-account role assumption, and support
-"act as user" access.
+"act as user" access. A **Running Identity** sub-category covers the half that is not a protocol:
+incident response, diagnosing failures, the 3am page, migration, rollback, break-glass and continuity,
+what to measure, how to test it, and how to evaluate and recommend an identity solution.
 
 **▶ Live demo:** https://rcbart.github.io/knowledge-base/ — a single, self-contained page. SQL
 exercises run against real sample data in your browser (built-in engine, no server). *(First time:
@@ -52,7 +54,7 @@ deploys on every push.)*
   them on expanding intervals; the sidebar shows what's due.
 - **🎯 Practice** — every exercise is rated easy/medium/hard and filterable, giving a difficulty ramp
   across the whole catalog.
-- **🧠 Quick check** — 250 multiple-choice questions with instant feedback: not just "wrong", but which
+- **🧠 Quick check** — 308 multiple-choice questions with instant feedback: not just "wrong", but which
   answer was right, why it is right, and why the option you picked is not. The concept-heavy lessons
   carry hand-authored questions in plain English; the rest are auto-generated from the exercise specs.
   **Options are shuffled per lesson visit**, so the answer position can never be memorised.
@@ -137,19 +139,19 @@ build.js            assembles src/ + content/ into dist/index.html and a devdojo
 site/               optional Node server: accounts, progress sync, admin (SQLite via node:sqlite)
 ```
 
-The 13 identity modules (`16b`–`16m` plus the `16z` capstone) are merged at runtime into a single
-**Identity and Access** stream with named sub-categories, so the app shows 29 tracks from 41 content
+The 14 identity modules (`16b`–`16n` plus the `16z` capstone) are merged at runtime into a single
+**Identity and Access** stream with named sub-categories, so the app shows 29 tracks from 42 content
 files. Those sub-categories, in reading order:
 
 | Sub-category | Lessons | Sub-category | Lessons |
 |---|--:|---|--:|
-| Identity & federation foundations | 23 | SAML & enterprise web SSO | 5 |
-| Authentication & MFA | 13 | PKI & certificates | 6 |
-| Authorization models | 8 | Service-to-service & zero trust | 8 |
-| Sessions, cookies & web login | 6 | Enterprise identity & directories | 8 |
-| OAuth 2.0 & OpenID Connect | 15 | Advanced OAuth & threats | 8 |
-| Tokens: JWT & JOSE | 7 | Governance & privileged access | 7 |
-| | | Capstone project | 1 |
+| Identity & federation foundations | 23 | PKI & certificates | 6 |
+| Authentication & MFA | 13 | Service-to-service & zero trust | 8 |
+| Authorization models | 8 | Enterprise identity & directories | 10 |
+| Sessions, cookies & web login | 6 | Advanced OAuth & threats | 8 |
+| OAuth 2.0 & OpenID Connect | 15 | Governance & privileged access | 7 |
+| Tokens: JWT & JOSE | 7 | **Running identity in production** | 9 |
+| SAML & enterprise web SSO | 5 | Capstone project | 1 |
 
 ## Workflow
 
