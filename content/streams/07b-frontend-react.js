@@ -3,7 +3,22 @@ STREAMS.push({icon:'⚛️',title:'Front-End with React',blurb:'Build user inter
 {id:'ui1',title:'What a UI framework is (and why React)',body:`
 <p>The browser shows a tree of elements called the <b>DOM</b>. The old way to update it was <b>imperative</b>: you found a node and mutated it by hand (<code>el.textContent = ...</code>), which gets tangled fast as an app grows. A UI framework flips this to <b>declarative</b>: you describe what the screen should look like <i>for the current data</i>, and the framework figures out the minimal DOM changes to get there.</p>
 <p><b>React</b> is the most widely used of these frameworks. Its core ideas are tiny: your UI is built from <b>components</b> (reusable functions that return markup), each component has <b>props</b> (inputs passed in) and <b>state</b> (data that changes over time), and whenever state changes React <b>re-renders</b> that component and reconciles the DOM for you. This is the MVC "view" done right: data in, UI out.</p>
-<p>This stream builds from a single component up to a data-driven, secured app. It pairs with the MVC and HTTP lessons on the backend side.</p>`,
+<p>This stream builds from a single component up to a data-driven, secured app. It pairs with the MVC and HTTP lessons on the backend side.</p>
+
+<h4>What "declarative" buys, concretely</h4>
+<p>Imperative UI code describes <i>transitions</i>: when the cart gains an item, increment the badge, show the badge if it was hidden, update the total, enable the checkout button. Every new feature adds transitions between every pair of states, and the bugs live in the pairs nobody wrote — the badge that stays visible after the last item is removed. Declarative code describes <i>states</i>: given this cart, the screen looks like this. There are no transitions to forget, because the framework computes the difference for you.</p>
+<p>That is the whole trade. You give up direct control of the DOM and gain a guarantee that the screen matches the data. When a React app has a stale-UI bug, the cause is almost always a place where that contract was broken — data mutated in place so React never learned it changed.</p>
+
+<h4>The three ideas everything else is built on</h4>
+<ul>
+<li><b>Components</b> are functions from data to markup. They compose like functions, and their reuse story is the same as any function's: small, single-purpose, named for what they render.</li>
+<li><b>Props flow down, events flow up.</b> A child never reaches into its parent; it calls a function the parent handed it. That one rule is what keeps data flow traceable in an app of a thousand components.</li>
+<li><b>State triggers re-render.</b> Changing state schedules a re-render of that component and its children; React then reconciles the result against the previous one and touches only the DOM nodes that differ.</li>
+</ul>
+
+<h4>What React is not</h4>
+<p>React is a view library, not a framework in the Angular sense. It has no router, no data-fetching layer, no form validation and no opinion about your build — which is why real projects assemble React plus a router plus a data library, and why the ecosystem churns more than the core does. The core API has been remarkably stable; the surrounding advice changes yearly.</p>
+<p>It is also not the only answer. Vue and Svelte solve the same problem with less ceremony, and for a page with three interactive widgets, plain JavaScript is still correct. React earns its cost when the state is genuinely complex and shared — and this stream builds to exactly that case.</p>`,
 docs:[['React — official docs','https://react.dev/learn'],['DOM introduction — MDN','https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction']],
 ex:{title:'The core vocabulary',lang:'js',run:{call:'role',cases:[{args:['component'],expect:'reusable piece of UI'},{args:['props'],expect:'inputs passed to a component'},{args:['state'],expect:'data that changes over time'},{args:['render'],expect:'produce UI from current data'},{args:['zzz'],expect:'unknown'}]},
 prompt:`Write <code>function role(term)</code> that returns what each React concept is: <code>"component"</code>→<code>"reusable piece of UI"</code>, <code>"props"</code>→<code>"inputs passed to a component"</code>, <code>"state"</code>→<code>"data that changes over time"</code>, <code>"render"</code>→<code>"produce UI from current data"</code>, else <code>"unknown"</code>.`,
@@ -363,7 +378,19 @@ hints:['Side effects like fetch belong in useEffect, not in the render body.','C
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(user)
-});</div>`,
+});</div>
+
+<h4>Choosing among the four</h4>
+<p>The decision is about the direction and frequency of the data, not fashion. <b>REST over fetch</b> covers request/response, which is most of what an app does. <b>SSE</b> is the right answer for server-to-client push over ordinary HTTP: it reconnects automatically, carries an event id so the server can resume, and needs no new protocol — notifications and live feeds fit it exactly. <b>WebSocket</b> earns its complexity only when the client also sends frequently: chat, collaborative editing, multiplayer. <b>GraphQL</b> is a query-shape decision rather than a transport one, and it pays off when many different clients need different subsets of the same graph; for a single client and a stable API it is mostly extra machinery.</p>
+
+<h4>The parts everyone gets wrong once</h4>
+<ul>
+<li><b><code>fetch</code> does not reject on 4xx or 5xx.</b> It resolves, with <code>ok: false</code>. Code that only catches network errors will happily parse an error page as data. Check <code>res.ok</code> before <code>res.json()</code>, every time.</li>
+<li><b>Cancel in-flight requests.</b> A component that unmounts while its fetch is running will try to set state on nothing. Pass an <code>AbortController</code> signal and abort in the effect's cleanup — which also fixes the race where a slow first response overwrites a fast second one.</li>
+<li><b>Errors need a place to go.</b> Every request has three visible states — loading, error, data — and a UI that renders only the third looks broken exactly when the network is.</li>
+<li><b>Credentials are opt-in.</b> Cookies do not travel cross-origin unless you set <code>credentials: "include"</code>, and then the server must allow credentials and name a single origin rather than <code>*</code>.</li>
+</ul>
+<p>CORS is worth understanding rather than working around: it decides whether your script may <i>read</i> the response, not whether the request was sent. A dev proxy makes the browser see a same-origin URL and is the reason a call that works locally can fail in production, where the proxy is gone.</p>`,
 docs:[['Using fetch — MDN','https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch'],['WebSocket — MDN','https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API'],['Server-sent events — MDN','https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events']],
 ex:{title:'POST JSON to the backend',lang:'js',run:{call:'createUser',mock:'fetch',cases:[{name:'sends a JSON POST to /api/users with the user in the body',args:[{name:'Ada'}],expect:{method:'POST',url:'/api/users',contentType:'application/json',bodyIncludes:'Ada'}}]},
 prompt:`Write <code>async function createUser(user)</code> that POSTs to <code>/api/users</code> with <code>fetch</code>: method <code>"POST"</code>, header <code>"Content-Type": "application/json"</code>, body <code>JSON.stringify(user)</code>. <code>await</code> the response and return its parsed JSON.`,
@@ -392,7 +419,18 @@ hints:['fetch takes a URL and an options object with method, headers, and body.'
     default:    return state;
   }
 }</div>
-<p><b>Context</b> solves "prop drilling" — passing a value through many layers. A provider makes a value available to any descendant via <code>useContext</code>, ideal for the current user, theme, or locale. Reach for an external store (Redux, Zustand) only when context plus reducers genuinely stop scaling; most apps never need to. And lift shared state up to the nearest common parent before reaching for anything fancier.</p>`,
+<p><b>Context</b> solves "prop drilling" — passing a value through many layers. A provider makes a value available to any descendant via <code>useContext</code>, ideal for the current user, theme, or locale. Reach for an external store (Redux, Zustand) only when context plus reducers genuinely stop scaling; most apps never need to. And lift shared state up to the nearest common parent before reaching for anything fancier.</p>
+
+<h4>When a reducer beats useState</h4>
+<p>The tell is not the amount of state but the <b>relationships</b> in it. When two fields must change together, when the next value depends on the previous one, or when the same update is dispatched from several places, a reducer collects that logic in one pure function you can read, test and reason about without rendering anything. Scattered <code>setX</code> calls across six handlers is how a component becomes untouchable.</p>
+<p>Because the reducer is pure, the tests are ordinary function tests: given this state and this action, expect that state. No component, no DOM, no mocking.</p>
+
+<h4>Context is not a state manager</h4>
+<p>Context is a delivery mechanism — it moves a value down the tree without threading it through props. It has no store, no selectors and no way to update a subscriber without re-rendering everything that consumes it. That last property is the practical limit: put a rapidly-changing value in a context near the root, and every consumer re-renders on every change, no matter how little of the value they use. The usual fixes are splitting one context into several (the stable configuration separately from the volatile data), or passing the dispatch function through its own context, since dispatch never changes identity.</p>
+
+<h4>The escalation order</h4>
+<p>Reach for the smallest thing that works, in this order: local <code>useState</code>; lift the state to the nearest common parent; <code>useReducer</code> when the updates get related; context when the depth genuinely hurts; a dedicated store only when profiling shows context re-renders are the problem or the state outlives the tree. Most applications stop at step three or four.</p>
+<p>One category deserves naming, because putting it in any of the above is the most common architectural mistake in React apps: <b>server data is not application state</b>. Cached responses need staleness, refetching, deduplication and invalidation — which is what data-fetching libraries provide and what a reducer does not. Keeping the two separate is what stops a store from slowly becoming a hand-written cache with no eviction.</p>`,
 docs:[['useReducer — React','https://react.dev/reference/react/useReducer'],['Passing data with context','https://react.dev/learn/passing-data-deeply-with-context']],
 ex:{title:'Write a reducer',lang:'js',run:{call:'reducer',cases:[{name:'inc increments count',args:[{count:0},{type:'inc'}],expect:{count:1}},{name:'dec decrements count',args:[{count:5},{type:'dec'}],expect:{count:4}},{name:'unknown action returns state unchanged',args:[{count:2},{type:'noop'}],expect:{count:2}}]},
 prompt:`Write <code>function reducer(state, action)</code> that switches on <code>action.type</code>: <code>"inc"</code> returns <code>{ count: state.count + 1 }</code>, <code>"dec"</code> returns <code>{ count: state.count - 1 }</code>, and any other action returns the unchanged <code>state</code>.`,
@@ -425,7 +463,19 @@ hints:['A reducer is a pure function switching on action.type.','Return a NEW ob
 <li><b>CSRF</b> — for cookie-based auth, defend with <code>SameSite</code> cookies and anti-CSRF tokens.</li>
 <li><b>Clickjacking</b> — send <code>X-Frame-Options: DENY</code> or a <code>frame-ancestors</code> CSP so your app cannot be framed.</li>
 <li><b>Secrets &amp; dependencies</b> — never ship API secrets in the bundle (anything in the front end is public), and run <code>npm audit</code> to catch vulnerable packages (supply-chain risk).</li>
-</ul>`,
+</ul>
+
+<h4>Where React's escaping stops</h4>
+<p>Auto-escaping covers text interpolated with <code>{ }</code>, and that is most of an app. It does not cover four places, and every real React XSS lives in one of them: <code>dangerouslySetInnerHTML</code>; a URL built from user input, where <code>javascript:</code> as an <code>href</code> executes on click; props spread blindly onto an element (<code>{...userProvided}</code>) which can inject an <code>onError</code> handler; and anything rendered outside React, such as a third-party widget handed raw HTML.</p>
+<p>If HTML from users genuinely must be rendered — a rich-text field — sanitise it with a maintained library (DOMPurify) on an allowlist basis, and do it on the server as well, because anything done only in the browser is done by an attacker's browser too.</p>
+
+<h4>The storage argument, honestly</h4>
+<p>The usual advice — "cookies, not localStorage" — is right but often stated too strongly. An <code>HttpOnly</code> cookie cannot be read by injected script, which removes the easy theft of a token; it does not stop that script from <i>using</i> the session by making requests as the user, since the browser attaches the cookie automatically. So cookies raise the cost of XSS rather than neutralising it, and they add CSRF as a concern that <code>SameSite</code> and anti-CSRF tokens then have to answer.</p>
+<p>The defensible position: <code>HttpOnly; Secure; SameSite=Lax</code> cookies, short-lived tokens, and a real CSP — with the recognition that if you have XSS, you have a problem no storage choice solves. That is the argument for the BFF pattern: no token in the browser at all.</p>
+
+<h4>Two rules the front end cannot break</h4>
+<p><b>Nothing in the bundle is secret.</b> Every API key, feature flag and internal URL you ship is public, including anything in an environment variable your bundler inlined. Secrets live on a server you control.</p>
+<p><b>Client-side checks are UX, not security.</b> Hiding an admin button is a courtesy to the user; the API must reject the call regardless, because the button was never the control. Every check that matters is re-done on the server — which is the same lesson as the API stream's, arriving from the other side.</p>`,
 docs:[['XSS prevention — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html'],['dangerouslySetInnerHTML — React','https://react.dev/reference/react-dom/components/common#dangerously-setting-the-inner-html'],['CSP — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP']],
 ex:{title:'Render user content safely',lang:'jsx',
 prompt:`Write a <code>Comment</code> component that safely displays untrusted <code>props.text</code> by interpolating it inside a <code>&lt;p&gt;</code> with <code>{props.text}</code> (letting React auto-escape it). Do <b>not</b> use <code>dangerouslySetInnerHTML</code>.`,

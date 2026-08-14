@@ -79,7 +79,7 @@ List&lt;Consumer&lt;String&gt;&gt; listeners = new ArrayList&lt;&gt;();
 void onSale(Consumer&lt;String&gt; l) { listeners.add(l); }
 void fire(String item) { listeners.forEach(l -&gt; l.accept(item)); }</div>`,
 docs:[['Refactoring Guru — Strategy','https://refactoring.guru/design-patterns/strategy'],['Refactoring Guru — Observer','https://refactoring.guru/design-patterns/observer'],['Refactoring Guru — Template Method','https://refactoring.guru/design-patterns/template-method']],
-ex:{title:'Pricing with pluggable strategies',
+exs:[{title:'Pricing with pluggable strategies',
 prompt:`Build (1) a <code>@FunctionalInterface</code> <code>Discount</code> with <code>double apply(double price)</code>; (2) <code>class Register</code> with constants <code>Discount NONE</code> (identity lambda) and <code>Discount SUMMER</code> (20% off — multiply by 0.8); (3) <code>double checkout(double price, Discount d)</code> delegating to the strategy; (4) Observer support: a <code>List&lt;Consumer&lt;Double&gt;&gt; listeners</code>, <code>void onSale(Consumer&lt;Double&gt; l)</code>, and have <code>checkout</code> notify every listener with the final price via <code>forEach</code> + <code>accept</code>.`,
 starter:`import java.util.ArrayList;
 import java.util.List;
@@ -120,7 +120,15 @@ class Register {
         listeners.forEach(l -> l.accept(f));
         return f;
     }
-}`}},
+}`},
+{title:'Strategy without the ceremony',lang:'js',diff:'medium',
+run:{call:'applyStrategy',cases:[{"name": "ten percent off", "args": ["tenPercent", 1000], "expect": 900}, {"name": "a flat five off, in cents", "args": ["flatFive", 1000], "expect": 500}, {"name": "the discount never makes the total negative", "args": ["flatFive", 100], "expect": 0}, {"name": "no discount leaves the amount alone", "args": ["none", 1000], "expect": 1000}, {"name": "an unknown strategy falls back to none", "args": ["nope", 1000], "expect": 1000}]},
+prompt:`Write <code>function applyStrategy(name, amount)</code> where <code>amount</code> is in cents and the strategies are: <code>none</code> (unchanged), <code>tenPercent</code> (10% off, rounded to the nearest cent), and <code>flatFive</code> (500 cents off, never below zero). An unknown name behaves as <code>none</code>. In JavaScript a strategy is a function in a lookup table — the same pattern the Java lesson expresses with an interface.`,
+starter:`function applyStrategy(name, amount) {\n  return amount;\n}`,
+solution:`function applyStrategy(name, amount) {\n  const strategies = {\n    none: a => a,\n    tenPercent: a => Math.round(a * 0.9),\n    flatFive: a => Math.max(0, a - 500)\n  };\n  return (strategies[name] ?? strategies.none)(amount);\n}`,
+tests:[{d:'strategies live in a lookup table',re:'\\{[^}]*=>'},{d:'an unknown name falls back',re:'\\?\\?|\\|\\||undefined'},{d:'the percentage strategy rounds',re:'Math\\.round'},{d:'the flat discount is floored at zero',re:'Math\\.max'}],
+behavior:`Five cases run. The floor case is the requirement people leave out, and it is the one that shows up as a negative invoice. The unknown-name case is the important design choice: falling back to "no discount" is safe, while throwing would take down a checkout because someone added a promotion the code has not shipped yet — and defaulting to the LARGEST discount would be worse still. Note what has disappeared compared with the Java version: no interface, no classes, no factory. The pattern is the idea — behaviour selected at runtime by name — and the class ceremony is one language\x27s way of expressing it, not the pattern itself.`,
+hints:['A plain object whose values are functions IS the strategy table.','Look the strategy up, fall back if it is missing, then call it.','Money is in cents and must never go negative — clamp the result.']}]},
 {id:'pat3',title:'Structural: Adapter, Decorator & Facade',body:`
 <p>Third family: <b>composing objects into bigger structures</b> — all three are exercises in <i>composition over inheritance</i>: hold a reference, delegate, add value around the call.</p>
 <ul>
@@ -184,7 +192,18 @@ class PrefixPrinter implements Printer {
 <li><b>Abstract Factory</b> — a factory of related factories: it produces <b>families of objects</b> that must go together (e.g. a <code>WidgetFactory</code> that makes matching buttons, menus, and dialogs for a given OS theme), so you never mix incompatible parts.</li>
 <li><b>Object Pool</b> — reuse a fixed set of expensive objects (DB connections, threads) instead of creating and destroying them. HikariCP and thread pools are object pools.</li>
 </ul>
-<p>The through-line: control <i>how</i> objects come into being — by cloning, by coordinated families, or by reuse — to cut cost or enforce consistency.</p>`,
+<p>The through-line: control <i>how</i> objects come into being — by cloning, by coordinated families, or by reuse — to cut cost or enforce consistency.</p>
+
+<h4>Prototype: copying is harder than it looks</h4>
+<p>The pattern is trivial; the correctness is not. A copy is <b>shallow</b> unless you make it deep — copy an object holding a list and both copies share that list, so a mutation through one is visible through the other. That aliasing bug is the reason <code>Cloneable</code> has a bad reputation: <code>Object.clone()</code> is shallow, the interface declares no <code>clone</code> method, and the whole mechanism bypasses constructors, so invariants and final fields are not established the way the class expects.</p>
+<p>The modern form is a <b>copy constructor</b> or a static <code>copyOf</code>, which is ordinary code with ordinary rules: you decide field by field what is shared and what is duplicated, immutable fields can be shared safely, and the compiler helps you when a field is added. Records make the deep-copy question explicit rather than automatic — <code>with</code>-style copying still shares any mutable component.</p>
+
+<h4>Abstract Factory: the point is the family</h4>
+<p>A plain factory hides <i>which</i> implementation you get. An abstract factory guarantees the pieces <b>match</b>: one call site cannot produce a Postgres connection with a MySQL dialect, because the factory hands you both. The cost is a lot of interfaces for a benefit you only need when incompatible mixtures are genuinely possible — which is why it appears in toolkits, drivers and cross-platform UI and is over-applied everywhere else. In modern Java the same guarantee often comes for free from a sealed interface plus a switch, or from the service loader.</p>
+
+<h4>Object Pool: reuse what is expensive to create, and nothing else</h4>
+<p>Pooling was once general advice and is now a narrow one. Object allocation on the JVM is close to free — a pointer bump in the young generation — and a pooled object survives long enough to be promoted, which makes GC work harder rather than easier. Pool only things that are expensive for reasons the JVM cannot help with: a TCP connection with a handshake, a thread with a stack, a native handle. That is why HikariCP exists and why an object pool for your DTOs does not.</p>
+<p>Pools also introduce their own failure modes: exhaustion under load (a queue, a timeout and a rejection policy are required, not optional), leaked objects that are never returned, and state left over from the previous user — a pooled object must be reset on return or it will carry one request's data into the next.</p>`,
 docs:[['Prototype pattern','https://refactoring.guru/design-patterns/prototype'],['Abstract Factory','https://refactoring.guru/design-patterns/abstract-factory']],
 ex:{title:'Implement Prototype (copy)',
 prompt:`Write class <code>Prototype</code> with a constructor <code>(String theme, int size)</code>, accessors <code>theme()</code> and <code>size()</code>, and a <code>Prototype copy()</code> method that returns a <b>new</b> instance with the same field values (the prototype clone).`,

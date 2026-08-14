@@ -361,7 +361,22 @@ spec:
             httpGet: { path: /actuator/health, port: 8080 }
           livenessProbe:           # restart if wedged
             httpGet: { path: /actuator/health, port: 8080 }</div>
-<p><b>Readiness</b> gates traffic, <b>liveness</b> restarts wedged pods — that plus a rolling update strategy is zero-downtime deployment: new pods come up, pass readiness, old pods drain. Round it out with structured JSON logs to stdout, metrics (Micrometer → Prometheus), and graceful shutdown (<code>server.shutdown=graceful</code>) so in-flight auth requests finish before a pod dies — in CIAM, that last one is client-visible.</p>`,
+<p><b>Readiness</b> gates traffic, <b>liveness</b> restarts wedged pods — that plus a rolling update strategy is zero-downtime deployment: new pods come up, pass readiness, old pods drain. Round it out with structured JSON logs to stdout, metrics (Micrometer → Prometheus), and graceful shutdown (<code>server.shutdown=graceful</code>) so in-flight auth requests finish before a pod dies — in CIAM, that last one is client-visible.</p>
+
+<h4>The three probes, and what each one is allowed to do</h4>
+<p>Kubernetes exposes three, and conflating them causes outages. <b>Readiness</b> answers "should this pod receive traffic?" — failing it removes the pod from the service endpoints and nothing else. <b>Liveness</b> answers "is this pod wedged?" — failing it <i>kills the container</i>. <b>Startup</b> answers "has it finished booting?" and suspends the other two until it passes, which is how a slow JVM start avoids being killed by an impatient liveness probe.</p>
+<p>The dangerous mistake is a liveness probe that checks dependencies. If your liveness endpoint touches the database, then a database blip restarts every pod simultaneously — turning a recoverable dependency failure into a full outage, and one that keeps restarting so the service never comes back. <b>Liveness must test only the process itself.</b> Dependencies belong in readiness, where the pod is merely taken out of rotation and returns when the dependency does.</p>
+
+<h4>Zero downtime is more than a rolling update</h4>
+<p>A rolling update alone will still drop requests. Three more pieces are required:</p>
+<ul>
+<li><b>Graceful shutdown.</b> On SIGTERM the app must stop accepting new work, finish in-flight requests, then exit — <code>server.shutdown=graceful</code> plus a <code>terminationGracePeriodSeconds</code> longer than your slowest request.</li>
+<li><b>A preStop delay.</b> Endpoint removal and SIGTERM race: a pod can receive requests for a moment after it starts shutting down. A short <code>preStop</code> sleep lets the endpoint change propagate first.</li>
+<li><b>A PodDisruptionBudget</b>, so a node drain cannot take down every replica at once.</li>
+</ul>
+
+<h4>Requests, limits and the JVM</h4>
+<p>Set memory <b>requests equal to limits</b> for a JVM and size the heap under the limit: a container that exceeds its memory limit is OOM-killed by the kernel with no Java stack trace and no heap dump — it simply dies. Modern JVMs are container-aware and size the heap from the cgroup limit, so <code>-XX:MaxRAMPercentage=70</code> is usually better than a fixed <code>-Xmx</code>. CPU limits deserve more caution: aggressive limits throttle the JVM at exactly the wrong moments (startup, GC), so requests-without-limits is a common and defensible choice for latency-sensitive services.</p>`,
 docs:[['Kubernetes Deployments','https://kubernetes.io/docs/concepts/workloads/controllers/deployment/'],['Liveness & readiness probes','https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/'],['Spring Boot graceful shutdown','https://docs.spring.io/spring-boot/reference/web/graceful-shutdown.html']],
 ex:{title:'Deploy manifest',lang:'yaml',
 prompt:`Write a minimal Kubernetes Deployment: name <code>api</code>, <code>replicas: 3</code>, container image <code>dojo/api:1.0.0</code>, <code>containerPort: 8080</code>, and BOTH a <code>readinessProbe</code> and <code>livenessProbe</code> doing an <code>httpGet</code> against <code>/actuator/health</code> on port 8080. (Selector/labels: app: api.)`,

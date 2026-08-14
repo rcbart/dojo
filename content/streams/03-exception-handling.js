@@ -9,7 +9,22 @@ STREAMS.push({icon:'🧯',title:'Exception Handling',blurb:'try/catch to custom 
 } finally {
     System.out.println("always runs");     // cleanup — even after a throw
 }</div>
-<p>Catch the <i>most specific</i> type you can handle. Catching bare <code>Exception</code> hides bugs.</p>`,
+<p>Catch the <i>most specific</i> type you can handle. Catching bare <code>Exception</code> hides bugs.</p>
+
+<h4>Checked versus unchecked, decided rather than inherited</h4>
+<p>The distinction is about <b>who can do something about it</b>. A checked exception is a documented, expected outcome the caller may reasonably recover from — the file might not be there, the remote service might be down. An unchecked exception says the program is wrong: a null where one was not allowed, an argument outside its contract. The compiler enforces the first and ignores the second, which is why the choice belongs to the API designer and not to convenience.</p>
+<p>The rule that follows: catch what you can act on. A <code>catch (Exception e)</code> at the top of a method swallows the NullPointerException that means you have a bug alongside the IOException you meant to retry, and the bug then surfaces days later as missing data rather than as a stack trace.</p>
+
+<h4>finally, and the two ways to lose an exception</h4>
+<p><code>finally</code> runs whether the block completes, throws, or returns — which makes it the right place for cleanup and the wrong place for control flow. Two specific traps:</p>
+<div class="codeSample">try { return compute(); }
+finally { return fallback(); }   // DISCARDS the exception AND the value
+try { risky(); }
+catch (IOException e) { throw new IllegalStateException("failed"); }  // cause LOST</div>
+<p>A <code>return</code> inside <code>finally</code> silently replaces whatever was in flight, including an exception on its way up. And rethrowing without passing the cause — <code>new IllegalStateException("failed", e)</code> — throws away the stack trace that says what actually went wrong. Both compile, both look defensive, and both destroy the information an incident needs.</p>
+
+<h4>Reading a stack trace</h4>
+<p>Top line is what was thrown and where; each line below is the caller beneath it; <code>Caused by:</code> sections read the same way, and the <b>deepest</b> cause is usually the real one. Frames marked <code>... 24 more</code> are shared with the trace above. The habit that saves the most time: scroll to the last <code>Caused by</code> first, then find the topmost frame in <i>your</i> package — that is the line to open.</p>`,
 docs:[['Exceptions — Oracle Trail','https://docs.oracle.com/javase/tutorial/essential/exceptions/index.html'],['Checked vs unchecked — Baeldung','https://www.baeldung.com/java-checked-unchecked-exceptions']],
 ex:{title:'Safe parsing',
 prompt:`Write <code>SafeParse</code> with <code>static int toIntOr(String s, int fallback)</code>: return the parsed int, or <code>fallback</code> if <code>s</code> is null or not a valid number. Catch only <code>NumberFormatException</code> — handle null with a plain check, not a catch.`,
@@ -151,7 +166,22 @@ public class Wallet {
 class Session implements AutoCloseable {
     @Override public void close() { System.out.println("closed"); }
 }</div>
-<p>If both the body and <code>close()</code> throw, the close-exception is attached as a <i>suppressed</i> exception instead of swallowing the original — another win over manual finally.</p>`,
+<p>If both the body and <code>close()</code> throw, the close-exception is attached as a <i>suppressed</i> exception instead of swallowing the original — another win over manual finally.</p>
+
+<h4>What the compiler generates for you</h4>
+<p>The try header is not sugar for a <code>finally</code> block you could easily write. It expands to a nested structure that closes every resource in <b>reverse order of declaration</b>, guards each close against the others failing, and — the part that is genuinely hard by hand — keeps the original exception primary while attaching any close failure as a <b>suppressed</b> exception, retrievable with <code>getSuppressed()</code>.</p>
+<p>Written manually, the naive version loses the original: if the body throws and then <code>close()</code> throws inside <code>finally</code>, the close exception replaces the real cause and you debug the wrong thing. That specific bug is the reason the construct exists.</p>
+
+<h4>The rules that catch people</h4>
+<ul>
+<li><b>Resources close in reverse order</b>, which is what you want when a writer wraps a stream: the wrapper flushes before the thing it wraps is closed.</li>
+<li><b>Only what you open</b> belongs in the header. Putting a resource you were handed there closes something the caller still owns — the ownership question is the whole of resource management.</li>
+<li><b>Java 9+ accepts an effectively-final variable</b> directly: <code>try (client; in; out)</code>, which is how the socket lessons adopt an already-created socket.</li>
+<li><b>Closing is not flushing on failure.</b> Closing a buffered writer flushes it, so a partial write can reach disk even on the exception path. If a file must be all-or-nothing, write to a temporary file and rename.</li>
+</ul>
+
+<h4>Where this generalises</h4>
+<p>Every long-lived scarce thing has this shape: file handles, sockets, database connections, locks, thread pools, tracing spans. The failure mode is always the same — a path that skips the release, invisible at low volume, fatal under load as the pool exhausts. Connection leaks in particular usually trace to a connection obtained outside a try-with-resources and returned only on the happy path. When you see <code>Timeout waiting for connection from pool</code>, this construct is what was missing.</p>`,
 docs:[['try-with-resources — Oracle','https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html'],['AutoCloseable — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html']],
 ex:{title:'An auto-closing resource',
 prompt:`Write class <code>Connection implements AutoCloseable</code> with <code>boolean open</code> set true in the constructor, a method <code>String query(String sql)</code> that throws <code>IllegalStateException</code> if not open (else returns <code>"OK: " + sql</code>), and <code>close()</code> setting open to false. Then write <code>class Demo</code> with <code>static String run()</code> that uses <b>try-with-resources</b> to create a Connection, run one query, and return its result.`,
@@ -303,7 +333,18 @@ public class UserStore {
     }
     public String getOrderId() { return orderId; }
 }</div>
-<p>Two habits make custom exceptions professional. Always offer a constructor that accepts a <b>cause</b> and pass it to <code>super(message, cause)</code> so the original stack trace is not lost (exception chaining). And add fields/getters for the context a handler will want — an id, an amount, a limit — so <code>catch</code> blocks can act on facts instead of parsing strings.</p>`,
+<p>Two habits make custom exceptions professional. Always offer a constructor that accepts a <b>cause</b> and pass it to <code>super(message, cause)</code> so the original stack trace is not lost (exception chaining). And add fields/getters for the context a handler will want — an id, an amount, a limit — so <code>catch</code> blocks can act on facts instead of parsing strings.</p>
+
+<h4>Designing the hierarchy, not just the class</h4>
+<p>One custom exception is rarely enough and thirty is unusable. The pattern that scales is a small tree: one base exception per module or bounded context, with specific subtypes beneath it. Callers who care about a particular failure catch the subtype; callers who only need "the payment layer failed" catch the base; frameworks map the base to a status code in one place. Without the base class every handler becomes a list of catch blocks that must be updated whenever anyone adds a failure mode.</p>
+
+<h4>Carrying facts, not prose</h4>
+<p>A message is for a human reading a log. A <b>field</b> is for code making a decision. <code>InsufficientFundsException</code> carrying <code>balance</code> and <code>required</code> lets a handler tell the user how much is missing, decide whether to offer a top-up, and emit a metric — none of which is possible if the numbers exist only inside a formatted string. Parsing a message to recover data is a sure sign a field was missing.</p>
+<p>Two things to keep <i>out</i> of exception messages: secrets and personal data. Exception text ends up in logs, in error trackers and sometimes in HTTP responses, so a message including a token or a full card number has just published it three times over.</p>
+
+<h4>The boundary rule</h4>
+<p>Domain exceptions belong to the domain. Letting <code>SQLException</code> escape a repository, or a JSON parsing error escape a client, leaks the implementation into every caller and freezes your ability to change it — replacing the database then changes the exception every layer catches. Translate at the boundary: catch the technology-specific exception, wrap it in a domain one <b>with the original as the cause</b>, and let it travel. Spring's <code>DataAccessException</code> hierarchy is precisely this pattern applied to persistence, which is a good argument for it and a good model to copy.</p>
+<p>Finally, cost: filling in a stack trace is the expensive part of throwing. For an exception used as ordinary control flow at high frequency — rarely a good idea, but sometimes unavoidable in parsing — a constructor calling <code>super(msg, cause, false, false)</code> disables suppression and the stack trace, which makes it about as cheap as a return value.</p>`,
 docs:[['Creating exception classes — Oracle','https://docs.oracle.com/javase/tutorial/essential/exceptions/creating.html'],['Chained exceptions','https://docs.oracle.com/javase/tutorial/essential/exceptions/chained.html']],
 exs:[{title:'Writing an unchecked exception',
 prompt:`Create an unchecked exception <code>InsufficientFundsException</code> that <code>extends RuntimeException</code>, holds a <code>long shortfall</code> field, has a constructor <code>(String message, long shortfall)</code> that calls <code>super(message)</code> and stores the field, and exposes <code>long getShortfall()</code>. Then in class <code>Account</code>, method <code>void withdraw(long amount, long balance)</code> must <code>throw new InsufficientFundsException(...)</code> when <code>amount &gt; balance</code>, passing the shortfall <code>amount - balance</code>.`,

@@ -59,7 +59,24 @@ echo $JAVA_HOME`}},
         System.out.println("Hello, Dojo!");
     }
 }</div>
-<p>Coming from another language, the key differences: everything lives in a class, the file name must match the public class name, every statement ends with <code>;</code>, and Java is statically typed — every variable has a declared (or inferred) type.</p>`,
+<p>Coming from another language, the key differences: everything lives in a class, the file name must match the public class name, every statement ends with <code>;</code>, and Java is statically typed — every variable has a declared (or inferred) type.</p>
+
+<h4>What compilation actually produces</h4>
+<p><code>javac</code> does not produce machine code for your CPU. It produces <b>bytecode</b> — instructions for an imaginary machine, the JVM — which is why the same <code>.class</code> file runs unchanged on a Mac, a Linux server and a phone. At runtime the JVM interprets that bytecode and, for code that runs often, the <b>JIT compiler</b> translates it into native instructions tuned to the actual processor. That two-stage design is the source of Java's portability and of its startup cost: the first execution of a method is slow, the ten-thousandth is not.</p>
+
+<h4>Reading the incantation</h4>
+<p><code>public static void main(String[] args)</code> is four decisions, not one word:</p>
+<ul>
+<li><b>public</b> — the JVM, outside your class, must be able to call it.</li>
+<li><b>static</b> — it runs without an instance, because nothing has been constructed yet at startup.</li>
+<li><b>void</b> — it returns nothing; the exit status comes from <code>System.exit</code> or from finishing normally.</li>
+<li><b>String[] args</b> — the command-line arguments, which is why <code>java Greeter Ada</code> arrives as <code>args[0]</code>.</li>
+</ul>
+<p>Get any part wrong and the JVM reports <code>Main method not found in class Greeter</code> rather than a compile error, because the class compiled perfectly well — it just has no entry point.</p>
+
+<h4>The errors you will meet in your first hour</h4>
+<p><code>class Greeter is public, should be declared in a file named Greeter.java</code> — the file name must match the public class. <code>Could not find or load main class</code> — you are in the wrong directory, or you typed the file name instead of the class name: <code>java Greeter</code>, not <code>java Greeter.class</code>. And <code>cannot find symbol</code> is Java's phrase for "you used a name I do not know", where the caret under the offending token is the fastest thing to read.</p>
+<p>Since Java 11, <code>java Greeter.java</code> compiles in memory and runs in one step, which is ideal for learning and for single-file scripts. It is not how applications ship — that is the build-tools stream — but it removes a step while you are getting the language into your fingers.</p>`,
 docs:[['dev.java — Getting Started','https://dev.java/learn/getting-started/'],['Oracle Tutorial — A Closer Look at main','https://docs.oracle.com/javase/tutorial/getStarted/application/index.html']],
 ex:{title:'Your first Greeter',
 prompt:`Write a class <code>Greeter</code> with: (1) a <code>main</code> method that prints exactly <code>Welcome to DevDojo!</code>, and (2) a <code>static</code> method <code>String greet(String name)</code> that returns <code>"Hello, " + name + "!"</code>. Have main also print <code>greet("Ada")</code>.`,
@@ -1064,7 +1081,17 @@ for (Map.Entry&lt;String,Integer&gt; e : freq.entrySet())
 
 List.of(1, 2, 3);        // immutable literal (Java 9+)
 new TreeSet&lt;&gt;(names);    // sorted unique</div>
-<p><code>TreeSet</code>/<code>TreeMap</code> keep sorted order; <code>LinkedHashMap</code> keeps insertion order. Generic methods declare their own type parameter: <code>static &lt;T&gt; T first(List&lt;T&gt; list)</code>.</p>`,
+<p><code>TreeSet</code>/<code>TreeMap</code> keep sorted order; <code>LinkedHashMap</code> keeps insertion order. Generic methods declare their own type parameter: <code>static &lt;T&gt; T first(List&lt;T&gt; list)</code>.</p>
+
+<h4>Choosing the implementation</h4>
+<p>The interface says what it does; the implementation decides what it costs. <b><code>ArrayList</code></b> is a resizable array: O(1) access by index and appending, O(n) inserting or removing in the middle. <b><code>LinkedList</code></b> is O(1) at the ends and O(n) to reach a position, and its per-element node objects make it slower in practice for nearly everything — the honest advice is ArrayList unless you have measured otherwise. <b><code>HashMap</code></b> and <b><code>HashSet</code></b> give O(1) average lookup with no ordering; <b><code>LinkedHashMap</code></b> preserves insertion order for a small cost; <b><code>TreeMap</code></b> and <b><code>TreeSet</code></b> keep keys sorted at O(log n) and add navigation methods like <code>firstKey</code> and <code>headMap</code>.</p>
+
+<h4>The contract that makes hashing work</h4>
+<p>Anything used as a <code>HashMap</code> key or a <code>HashSet</code> element must implement <code>equals</code> and <code>hashCode</code> together: equal objects must have equal hash codes. Override one and not the other and objects vanish into maps — you put a value in, look it up with an equal key, and get <code>null</code>, because the lookup went to a different bucket. This is the most common silent bug in beginner Java, and records fix it by generating both for you.</p>
+<p>The second half of the contract is that a key must not <b>mutate</b> while it is in the map. Change a field the hash code depends on and the entry is now in the wrong bucket, unreachable by any lookup and still occupying memory. Immutable keys — Strings, records, boxed numbers — avoid the whole category.</p>
+
+<h4>Modern conveniences worth adopting</h4>
+<p><code>List.of</code>, <code>Set.of</code> and <code>Map.of</code> build compact <b>immutable</b> collections, which is the right default for constants and for anything you return from a method — a caller cannot corrupt what it cannot modify. Note they reject nulls and throw on modification rather than ignoring it. On maps, <code>getOrDefault</code>, <code>computeIfAbsent</code> and <code>merge</code> replace the check-then-act patterns that fill older code: <code>counts.merge(word, 1, Integer::sum)</code> is the whole of a word count. And iterate with the enhanced <code>for</code>; removing during iteration is what <code>Iterator.remove</code> or <code>removeIf</code> is for, and doing it any other way is how you meet <code>ConcurrentModificationException</code>.</p>`,
 docs:[['Collections Trail — Oracle','https://docs.oracle.com/javase/tutorial/collections/index.html'],['Generics — dev.java','https://dev.java/learn/generics/']],
 ex:{title:'Word frequency',
 prompt:`Write class <code>WordStats</code> with <code>static Map&lt;String,Integer&gt; frequencies(List&lt;String&gt; words)</code> returning how often each word appears (case-insensitive: lowercase the keys), and <code>static Set&lt;String&gt; uniqueSorted(List&lt;String&gt; words)</code> returning the distinct lowercased words in alphabetical order.`,

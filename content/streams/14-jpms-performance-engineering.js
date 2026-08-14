@@ -9,7 +9,23 @@ STREAMS.push({icon:'📦',title:'JPMS & Performance Engineering',blurb:'The Java
 <div class="codeSample">javac -d out --module-source-path src $(find src -name "*.java")
 java --module-path out -m com.dojo.api/com.dojo.api.client.Main
 jdeps --module-path out out/com.dojo.api      # analyze real dependencies</div>
-<p>The win: <b>strong encapsulation</b> — "public" stops meaning "everyone"; only exported packages are API. <code>requires transitive</code> is for types that appear in your own API signatures. Code without module-info lands on the classpath as the <i>unnamed module</i> — perfectly legal, which is why most apps adopt JPMS gradually or never; the JDK itself, though, is fully modular, and jlink (next lesson) needs it.</p>`,
+<p>The win: <b>strong encapsulation</b> — "public" stops meaning "everyone"; only exported packages are API. <code>requires transitive</code> is for types that appear in your own API signatures. Code without module-info lands on the classpath as the <i>unnamed module</i> — perfectly legal, which is why most apps adopt JPMS gradually or never; the JDK itself, though, is fully modular, and jlink (next lesson) needs it.</p>
+
+<h4>Why the module system exists</h4>
+<p>Before Java 9 the classpath was a flat list with two structural problems. <b>Encapsulation stopped at <code>public</code></b>: any class in any jar could reach any public type in any other, so "internal" packages were internal by convention and by nothing else — which is how <code>sun.misc.Unsafe</code> ended up load-bearing across the ecosystem. And <b>dependencies were unverified</b>: a missing jar produced a <code>NoClassDefFoundError</code> at the moment of first use, potentially in production at 3am, rather than at startup.</p>
+<p>Modules address both. <code>requires</code> is checked when the module graph is resolved, so a missing dependency fails immediately and visibly, and split packages — the same package in two jars — are rejected outright rather than resolved by classpath order.</p>
+
+<h4>The directives worth knowing</h4>
+<ul>
+<li><code>exports p</code> — package <code>p</code> is API. <code>exports p to m</code> is a qualified export, visible only to named modules.</li>
+<li><code>requires transitive m</code> — anyone requiring you also gets <code>m</code>. Use it when <code>m</code>'s types appear in <i>your</i> public signatures; forgetting it means your callers fail to compile against your own API.</li>
+<li><code>opens p</code> — allows deep reflection at runtime without exporting at compile time, which is what frameworks doing dependency injection or ORM need. <code>open module</code> opens everything, and is the pragmatic escape hatch.</li>
+<li><code>provides X with Y</code> / <code>uses X</code> — the module-aware form of <code>ServiceLoader</code>.</li>
+</ul>
+
+<h4>The honest adoption story</h4>
+<p>Most applications never write a <code>module-info.java</code>, and that is a defensible choice: on the classpath your code lives in the unnamed module, which reads everything and exports everything, exactly as before. The value is highest for <b>libraries</b> — where a published module boundary is a real API contract — and for anything that wants <code>jlink</code> to produce a trimmed runtime image, since jlink needs a fully modular graph.</p>
+<p>What everyone does encounter, modules or not, is the JDK's own modularity: <code>InaccessibleObjectException</code> and the "module java.base does not open java.lang" message are the platform enforcing encapsulation on reflection. The correct answer is a targeted <code>--add-opens</code> flag while the library is fixed, not a blanket one, and certainly not staying on an old JDK.</p>`,
 docs:[['Modules — dev.java','https://dev.java/learn/modules/'],['JPMS quick-start — openjdk','https://openjdk.org/projects/jigsaw/quick-start']],
 ex:{title:'Write a module descriptor',
 prompt:`Write the <code>module-info.java</code> for module <code>com.example.tokens</code>: it <code>requires java.net.http</code>, <code>requires transitive com.example.model</code> (model types appear in its public API), and exports exactly two packages: <code>com.example.tokens.api</code> and <code>com.example.tokens.claims</code>. Nothing else is exported.`,
@@ -216,7 +232,23 @@ jfr summary probe.jfr`}},
 ./asprof -e alloc -d 30 -f alloc.html 4242 # who ALLOCATES (GC pressure hunting)
 ./asprof -e lock  -d 30 -f lock.html 4242  # lock contention
 ./asprof -e wall  -d 30 -f wall.html 4242  # wall clock: includes waiting (I/O-bound apps!)</div>
-<p><b>Reading a flame graph</b>: y-axis is stack depth, x-axis is <i>proportion of samples</i> — width = time, and the x-order is alphabetical, NOT chronological. Hunt for wide plateaus: a wide frame with no children doing work is your hotspot. The four modes map to the four classic diagnoses: CPU-bound (cpu), memory-churn (alloc), contention (lock), and waiting-on-I/O (wall — where cpu profiles look deceptively idle).</p>`,
+<p><b>Reading a flame graph</b>: y-axis is stack depth, x-axis is <i>proportion of samples</i> — width = time, and the x-order is alphabetical, NOT chronological. Hunt for wide plateaus: a wide frame with no children doing work is your hotspot. The four modes map to the four classic diagnoses: CPU-bound (cpu), memory-churn (alloc), contention (lock), and waiting-on-I/O (wall — where cpu profiles look deceptively idle).</p>
+
+<h4>Sampling, and what it can and cannot tell you</h4>
+<p>A sampling profiler interrupts the process many times a second and records the current stack. It therefore measures <b>where time is spent</b>, in proportion, with an overhead of a percent or two — which is what makes it safe to run in production. What it cannot tell you is anything that happens between samples: a method called ten million times for a microsecond each shows up as a wide plateau with no explanation, and a rare five-second stall may not appear at all. For counts and exact durations you need instrumentation or JFR events, not a profiler.</p>
+<p>The safepoint-bias point matters here. The JVM's built-in sampler can only take a sample at a safepoint, and hot inlined loops may contain none — so it systematically blames the wrong frames. async-profiler samples via OS perf events and sees the true stack, including JIT-compiled and native frames.</p>
+
+<h4>Which mode answers which question</h4>
+<ul>
+<li><b>cpu</b> — "the machine is busy; what is it computing?" Wide plateaus at the leaves are the hotspots.</li>
+<li><b>alloc</b> — "GC is running constantly." This profiles allocation <i>sites</i>, which is what to fix; tuning the collector is what you do after the churn is gone.</li>
+<li><b>lock</b> — "threads are waiting on each other." Width is time blocked on a monitor, which points at the contended lock rather than the slow method.</li>
+<li><b>wall</b> — "the request takes two seconds but the CPU is idle." Wall-clock sampling includes time blocked on I/O, and it is the mode that finds the sequential downstream call nobody remembered.</li>
+</ul>
+<p>Choosing the wrong mode is the most common reason a profiling session finds nothing: a service waiting on a database is invisible in a CPU profile, and its flame graph will look reassuringly flat while the latency is entirely real.</p>
+
+<h4>Method</h4>
+<p>Profile the workload you care about, under load, on hardware that resembles production — a profile of a JVM doing nothing is a picture of the JIT warming up. Take a baseline before the change and a second profile after, and compare like for like; "it feels faster" is not a measurement. And read the graph top-down for width, not bottom-up for familiarity: the frame you recognise is rarely the frame that is costing you.</p>`,
 docs:[['async-profiler — GitHub','https://github.com/async-profiler/async-profiler'],['Flame graphs — Brendan Gregg','https://www.brendangregg.com/flamegraphs.html']],
 ex:{title:'Profiler triage',lang:'text',
 prompt:`Answer on the numbered lines: (1) the command for a 30s CPU flame graph of pid 4242 into <code>cpu.html</code>, (2) the event mode that shows what is creating GC pressure, (3) the event mode that catches time spent blocked on I/O that a CPU profile misses, (4) in a flame graph, what the WIDTH of a frame means, (5) true or false: left-to-right order in a flame graph is chronological.`,

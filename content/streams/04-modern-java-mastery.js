@@ -217,7 +217,17 @@ static &lt;T&gt; Supplier&lt;T&gt; memoize(Supplier&lt;T&gt; expensive) {
         return v;
     };
 }</div>
-<p>These patterns power real APIs: <code>Comparator.comparing(...).thenComparing(...)</code>, retry/timing wrappers, and every middleware chain you've ever used. If you can read <code>a -> b -> a + b</code> without blinking, you've arrived.</p>`,
+<p>These patterns power real APIs: <code>Comparator.comparing(...).thenComparing(...)</code>, retry/timing wrappers, and every middleware chain you've ever used. If you can read <code>a -> b -> a + b</code> without blinking, you've arrived.</p>
+
+<h4>Why a function returning a function is useful</h4>
+<p>The point of a higher-order function is <b>configuration captured once, behaviour reused many times</b>. <code>Comparator.comparing(Person::age)</code> is a function that builds a comparator; a retry wrapper is a function that takes an operation and returns a more resilient operation with the same signature. Because the result has the same type as the input, wrappers compose: retry around timing around logging, each written once and unaware of the others. That is the whole idea behind middleware, filters and interceptors, and it is why reading <code>Function&lt;A, Function&lt;B, C&gt;&gt;</code> without flinching is worth the practice.</p>
+
+<h4>Currying, and what it is actually for in Java</h4>
+<p>Currying turns a two-argument function into a one-argument function returning another. In languages built around it, this is how partial application works; in Java it is occasionally elegant and frequently over-applied. The honest use is <b>pre-binding a dependency</b>: a function that takes a configured client and returns a function taking the request, so the caller only supplies what varies. Beyond that, a plain method with two parameters is clearer, and clarity is the point of the whole stream.</p>
+
+<h4>Memoization, and its two traps</h4>
+<p>Wrapping a pure function in a cache is the same technique the DP stream calls memoization, and the same caveats apply with a Java accent. First, <b>the function must be pure</b> — cache a function that reads a database or a clock and you have cached a moment, not a value. Second, <b>an unbounded cache is a memory leak with good intentions</b>: <code>computeIfAbsent</code> on a static map keyed by user input grows forever. Use a bounded cache with an eviction policy (Caffeine, Guava) for anything whose key space you do not control.</p>
+<p>One Java-specific hazard worth knowing: recursively calling <code>computeIfAbsent</code> on a <code>HashMap</code> from inside its own mapping function can corrupt the map or throw <code>ConcurrentModificationException</code>, because you are structurally modifying it mid-computation. Compute the value first, then put it.</p>`,
 docs:[['Writing lambdas — dev.java','https://dev.java/learn/lambdas/writing-lambdas/'],['Currying in Java — Baeldung','https://www.baeldung.com/java-currying']],
 ex:{title:'Function factory',
 prompt:`In class <code>Higher</code>: (1) define <code>static Function&lt;Integer, Function&lt;Integer, Integer&gt;&gt; MULTIPLIER = a -&gt; b -&gt; a * b</code> (curried multiply). (2) Write generic <code>static &lt;T, R&gt; Function&lt;T, R&gt; withDefault(Function&lt;T, R&gt; f, R fallback)</code> returning a function that calls f but returns fallback if f throws <b>any</b> RuntimeException. (3) Write <code>static Supplier&lt;String&gt; once(Supplier&lt;String&gt; s)</code> that calls s at most once and caches the result (a simple non-null field check is fine).`,
@@ -336,7 +346,23 @@ hints:['Only the abstract method ends in a semicolon; default/private/static one
 long count = names.stream().filter(n -&gt; n.startsWith("J")).count();
 boolean anyEmpty = names.stream().anyMatch(String::isEmpty);
 String joined = names.stream().collect(Collectors.joining(", "));</div>
-<p>This replaces most manual loops that build up a result list. Think in transformations, not iterations.</p>`,
+<p>This replaces most manual loops that build up a result list. Think in transformations, not iterations.</p>
+
+<h4>Lazy, and why it matters</h4>
+<p>Intermediate operations build a plan; nothing runs until the terminal operation asks for a result. That is not a performance footnote — it changes what the pipeline costs. Elements flow through the whole chain one at a time, so <code>filter().map().findFirst()</code> stops as soon as it has an answer rather than mapping the entire list first. It is also why a stream with no terminal operation does precisely nothing, which surprises everyone once.</p>
+<p>Ordering follows from that: put the cheap, selective <code>filter</code> before the expensive <code>map</code>, and you do the expensive work only for what survives.</p>
+
+<h4>The collectors worth memorising</h4>
+<ul>
+<li><code>toList()</code> — Java 16+, returns an unmodifiable list, and is what you want by default.</li>
+<li><code>groupingBy(Order::status)</code> — the SQL GROUP BY of the language, and by far the highest-value collector to know. Add a downstream collector for the aggregate: <code>groupingBy(Order::status, counting())</code>, or <code>summingLong</code>, or <code>mapping</code>.</li>
+<li><code>toMap(Order::id, o -&gt; o)</code> — with the caveat that duplicate keys throw <code>IllegalStateException</code>; supply a merge function when duplicates are possible.</li>
+<li><code>joining(", ")</code> — string assembly without a loop or a trailing-comma bug.</li>
+</ul>
+
+<h4>Where streams are the wrong tool</h4>
+<p>Three cases, and knowing them is what separates using streams from over-using them. A plain <code>for</code> loop is clearer when you need the index, when you must break out early with complex conditions, or when the body mutates several things. Checked exceptions do not fit lambdas, so a pipeline calling code that throws <code>IOException</code> turns into wrapper noise — a loop stays readable. And <code>parallelStream()</code> is not a free speed-up: it costs a fork/join split and merge, it is wrong for anything order-dependent or contended, and it is a genuine improvement only for large, CPU-bound, side-effect-free work you have measured.</p>
+<p>The unbreakable rule: <b>no side effects in a pipeline</b>. A <code>forEach</code> that adds to an external list is a loop wearing a costume — and it is broken under <code>parallelStream</code>, quietly, with results that differ between runs.</p>`,
 docs:[['The Stream API — dev.java','https://dev.java/learn/api/streams/'],['java.util.stream — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html']],
 ex:{title:'Pipeline practice',
 prompt:`Write <code>Pipeline</code> with <code>static List&lt;String&gt; activeEmails(List&lt;User&gt; users)</code> that returns the <b>lowercased emails</b> of users that are <b>active</b>, <b>sorted alphabetically</b> — one stream pipeline, no loops. The <code>User</code> record is provided.`,
@@ -704,7 +730,18 @@ String label = switch (shape) {          // switch expression + patterns
     case Rect r      -&gt; "rect " + r.w() + "x" + r.h();
     default          -&gt; "unknown";
 };</div>
-<p>Rules: never call <code>Optional.get()</code> without checking; use records for DTOs and value objects; switch expressions with <code>-&gt;</code> don't fall through and must be exhaustive.</p>`,
+<p>Rules: never call <code>Optional.get()</code> without checking; use records for DTOs and value objects; switch expressions with <code>-&gt;</code> don't fall through and must be exhaustive.</p>
+
+<h4>Optional, used as intended</h4>
+<p><code>Optional</code> was designed for one job: a <b>return type</b> that may legitimately have no value. Used there it forces the caller to acknowledge the empty case at compile time. Used elsewhere it makes things worse — as a field it is not serialisable and adds an object per instance, and as a parameter it forces every caller to wrap, when two overloads say the same thing more clearly.</p>
+<p>The idiomatic style is to keep the value inside the box and transform it: <code>findUser(id).map(User::email).filter(e -&gt; e.endsWith("@acme.com")).orElseThrow(...)</code>. Calling <code>isPresent()</code> then <code>get()</code> is the null check you were trying to escape, wearing a longer name. Two more choices worth making deliberately: <code>orElse(compute())</code> evaluates its argument every time, while <code>orElseGet(() -&gt; compute())</code> only on the empty path — an easy performance bug when the fallback hits a database. And never return <code>null</code> from a method whose type is <code>Optional</code>.</p>
+
+<h4>Records are about equality, not brevity</h4>
+<p>A record generates a canonical constructor, accessors, <code>equals</code>, <code>hashCode</code> and <code>toString</code> — but the reason to use one is the semantic claim: <b>this type is its data</b>, two instances with equal components are equal, and it is immutable. That makes records correct as map keys and as values passed between threads, which is the bug class the collections lesson warns about, removed by construction.</p>
+<p>Validation goes in a <b>compact constructor</b>, which runs before the fields are assigned. And immutability is shallow: a record holding a <code>List</code> shares that list with whoever passed it, so defensive-copy in the compact constructor when the component is mutable.</p>
+
+<h4>Pattern matching, and why exhaustiveness matters</h4>
+<p><code>instanceof</code> with a binding removes the cast, and a switch over a <b>sealed</b> interface removes the default branch — which is the valuable part. When the compiler knows every permitted subtype, adding a new one turns every switch that does not handle it into a compile error, so the compiler finds the places you must update instead of you finding them in production. That combination — sealed types, records as the cases, switch with patterns — is how Java expresses a closed set of alternatives, and it is worth reaching for whenever a domain has a fixed list of shapes.</p>`,
 docs:[['Records — dev.java','https://dev.java/learn/records/'],['Pattern matching — dev.java','https://dev.java/learn/pattern-matching/'],['Optional — dev.java','https://dev.java/learn/api/streams/optionals/']],
 ex:{title:'Modern trio',
 prompt:`(1) Define <code>record Book(String title, String author, int year)</code>. (2) Write <code>Library</code> with a private <code>List&lt;Book&gt; books</code>, method <code>Optional&lt;Book&gt; findByTitle(String t)</code> using a stream + <code>findFirst()</code>, and (3) <code>String describe(Object o)</code> using a <b>switch expression with pattern matching</b>: a <code>Book b</code> → <code>b.title() + " (" + b.year() + ")"</code>, a <code>String s</code> → <code>"text: " + s</code>, anything else → <code>"unknown"</code>.`,

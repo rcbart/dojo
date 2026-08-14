@@ -230,7 +230,22 @@ static void fillZeros(List&lt;? super Integer&gt; dst, int count) {
 }
 
 static &lt;T extends Comparable&lt;T&gt;&gt; T max(List&lt;T&gt; items) { ... }</div>
-<p><b>Erasure</b>: generics exist only at compile time — at runtime a <code>List&lt;String&gt;</code> is just a <code>List</code>. Consequences: no <code>new T()</code>, no <code>T.class</code>, no <code>instanceof List&lt;String&gt;</code>, and Jackson needs <code>TypeReference</code> for generic targets (you met this in the JSON lesson).</p>`,
+<p><b>Erasure</b>: generics exist only at compile time — at runtime a <code>List&lt;String&gt;</code> is just a <code>List</code>. Consequences: no <code>new T()</code>, no <code>T.class</code>, no <code>instanceof List&lt;String&gt;</code>, and Jackson needs <code>TypeReference</code> for generic targets (you met this in the JSON lesson).</p>
+
+<h4>Why a List of Integer is not a List of Number</h4>
+<p>The rule looks unhelpful until you follow the alternative. If it were allowed, this would compile:</p>
+<div class="codeSample">List&lt;Integer&gt; ints = new ArrayList&lt;&gt;();
+List&lt;Number&gt; nums = ints;      // imagine this were legal
+nums.add(3.14);                 // a Double, into a list of Integers
+int x = ints.get(0);            // ClassCastException at runtime</div>
+<p>Generics are <b>invariant</b> precisely to make that impossible at compile time. Arrays, which predate generics, <i>are</i> covariant — <code>Integer[]</code> is an <code>Object[]</code> — and pay for it with <code>ArrayStoreException</code>, a runtime error for a type mistake. Wildcards exist to recover the flexibility invariance costs, without giving up the guarantee.</p>
+
+<h4>PECS, and why each half is safe</h4>
+<p><code>? extends Number</code> is a <b>producer</b>: every element is <i>at least</i> a Number, so reading is safe. Writing is not — the list might be a <code>List&lt;Integer&gt;</code>, and the compiler cannot know your value fits, so it rejects every <code>add</code> except <code>null</code>. <code>? super Integer</code> is a <b>consumer</b>: the list holds Integer or something more general, so adding an Integer is always safe, while reading gives back only <code>Object</code>, since it could be a <code>List&lt;Object&gt;</code>. Read the signature of <code>Collections.copy(List&lt;? super T&gt; dest, List&lt;? extends T&gt; src)</code> and the mnemonic stops being a mnemonic: source produces, destination consumes.</p>
+
+<h4>Erasure, and the workarounds it forces</h4>
+<p>Generics were added without changing the class file format, so the compiler checks types and then <b>erases</b> them, inserting casts where needed. The compatibility win was enormous — existing code and libraries kept working — and the cost is a list of things you cannot do: no <code>new T[]</code>, no <code>T.class</code>, no <code>instanceof List&lt;String&gt;</code>, no overloads differing only in type argument, and no primitives as type arguments (hence the boxing that Project Valhalla aims to remove).</p>
+<p>The standard workarounds are worth recognising because you will read them in every library: pass a <code>Class&lt;T&gt;</code> token when you need the runtime type, and use the anonymous-subclass trick — Jackson's <code>TypeReference</code>, Spring's <code>ParameterizedTypeReference</code> — when you need a full generic type, which survives erasure because it is recorded in the subclass's signature. And treat an unavoidable unchecked cast as a claim you have verified: annotate it with <code>@SuppressWarnings("unchecked")</code> and a comment saying why it holds.</p>`,
 docs:[['Wildcards & PECS — Oracle','https://docs.oracle.com/javase/tutorial/java/generics/wildcards.html'],['Type erasure — Oracle','https://docs.oracle.com/javase/tutorial/java/generics/erasure.html']],
 ex:{title:'PECS in practice',
 prompt:`Write class <code>Variance</code> with three methods: (1) <code>static double total(java.util.List&lt;? extends Number&gt; prices)</code> summing via <code>doubleValue()</code>; (2) <code>static void pad(java.util.List&lt;? super Integer&gt; target, int n)</code> adding the numbers 1..n to the list; (3) <code>static &lt;T extends Comparable&lt;T&gt;&gt; T biggest(java.util.List&lt;T&gt; items)</code> returning the max via <code>compareTo</code> (assume non-empty).`,

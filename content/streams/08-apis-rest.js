@@ -354,7 +354,7 @@ via <code>RateLimit</code> headers and a <code>Retry-After</code> on 429, so cli
 instead of hammering you. And <b>documentation generated from the code</b> (OpenAPI), because
 hand-maintained docs are wrong within a month.</p>`,
 docs:[['RFC 9457 Problem Details','https://www.rfc-editor.org/rfc/rfc9457.html'],['Idempotency — Stripe docs','https://docs.stripe.com/api/idempotent_requests']],
-ex:{title:'An error contract in Java',
+exs:[{title:'An error contract in Java',
 prompt:`Write <code>record ProblemDetail(String type, String title, int status, String detail)</code> and class <code>Errors</code> with two factories: <code>static ProblemDetail notFound(String resource, String id)</code> → status 404, title "Not found", detail "&lt;resource&gt; &lt;id&gt; does not exist", type "https://api.dojo.dev/errors/not-found"; and <code>static ProblemDetail validation(String field, String issue)</code> → status 422, title "Validation failed", detail "&lt;field&gt;: &lt;issue&gt;", type ".../validation".`,
 starter:`record ProblemDetail(String type, String title, int status, String detail) {}
 
@@ -386,7 +386,15 @@ public class Errors {
             "Validation failed", 422,
             field + ": " + issue);
     }
-}`}},
+}`},
+{title:'Which methods are idempotent',lang:'js',diff:'easy',
+run:{call:'isIdempotent',cases:[{"name": "GET is idempotent", "args": ["GET"], "expect": true}, {"name": "PUT is idempotent \u2014 same result however many times", "args": ["put"], "expect": true}, {"name": "DELETE is idempotent", "args": ["DELETE"], "expect": true}, {"name": "POST is not", "args": ["POST"], "expect": false}, {"name": "PATCH is not, in general", "args": ["PATCH"], "expect": false}, {"name": "case does not matter", "args": ["hEaD"], "expect": true}]},
+prompt:`Write <code>function isIdempotent(method)</code> returning whether repeating the request has the same effect as making it once. <code>GET</code>, <code>HEAD</code>, <code>PUT</code>, <code>DELETE</code>, <code>OPTIONS</code> and <code>TRACE</code> are idempotent; <code>POST</code> and <code>PATCH</code> are not. Compare case-insensitively.`,
+starter:`function isIdempotent(method) {\n  return false;\n}`,
+solution:`function isIdempotent(method) {\n  return ["GET","HEAD","PUT","DELETE","OPTIONS","TRACE"]\n    .includes(String(method).toUpperCase());\n}`,
+tests:[{d:'the method list is checked',re:'includes|indexOf'},{d:'PUT is included',re:'PUT'},{d:'POST is absent from the list',re:'^(?!.*"POST")'},{d:'comparison is case-insensitive',re:'toUpperCase|toLowerCase|i\\)'}],
+behavior:`Six cases execute. Idempotent does not mean safe: DELETE changes state, and it is idempotent because deleting twice leaves the same world as deleting once — the second call returning 404 is a different response, not a different effect. PATCH is the interesting exclusion: "set status to shipped" is idempotent, "add 10 to the balance" is not, and since PATCH bodies can express either, the method cannot promise it. This matters because it decides what a client or proxy may safely retry — and everything that is not idempotent needs an idempotency key instead, which is the next lesson\x27s subject.`,
+hints:['Six methods are idempotent; two common ones are not.','Normalise the case before comparing — methods arrive from the wire in any form.','Ask "if this ran twice, would the end state differ?" rather than "does it change anything?"']}]},
 {id:'api5',title:'Advanced REST: versioning, pagination, rate limits',body:`
 <p>Running an API <i>platform</i> means designing for change and scale:</p>
 <ul>
@@ -488,7 +496,23 @@ components:
       properties:
         id:   { type: string }
         name: { type: string }</div>
-<p><b>Code-first</b>: add <code>springdoc-openapi-starter-webmvc-ui</code> and your running Boot app self-publishes the spec at <code>/v3/api-docs</code> with interactive docs at <code>/swagger-ui.html</code>; enrich with <code>@Operation</code>/<code>@ApiResponse</code> annotations. <b>Spec-first</b> flips it: design the YAML in review, then generate server stubs and client SDKs with <code>openapi-generator</code>. <b>Publishing as a platform owner</b> means: the spec is versioned in git and diffed in PRs (breaking-change review!), a developer portal hosts per-version docs, SDKs are generated per release, and the deprecation headers you learned in the versioning lesson are documented in the spec itself.</p>`,
+<p><b>Code-first</b>: add <code>springdoc-openapi-starter-webmvc-ui</code> and your running Boot app self-publishes the spec at <code>/v3/api-docs</code> with interactive docs at <code>/swagger-ui.html</code>; enrich with <code>@Operation</code>/<code>@ApiResponse</code> annotations. <b>Spec-first</b> flips it: design the YAML in review, then generate server stubs and client SDKs with <code>openapi-generator</code>. <b>Publishing as a platform owner</b> means: the spec is versioned in git and diffed in PRs (breaking-change review!), a developer portal hosts per-version docs, SDKs are generated per release, and the deprecation headers you learned in the versioning lesson are documented in the spec itself.</p>
+
+<h4>Code-first or spec-first, and how to choose</h4>
+<p><b>Code-first</b> keeps the spec in sync automatically, because it is generated from the same annotations that implement the endpoint — no drift, and near-zero effort. Its weakness is that the API is designed by whoever writes the controller, one endpoint at a time, and the document only exists after the code does.</p>
+<p><b>Spec-first</b> makes the contract a reviewable artefact <i>before</i> implementation: consumers can comment, mocks can be generated for parallel front-end work, and server stubs enforce the agreed shape. Its weakness is drift — a spec nobody regenerates from is folklore again within a quarter — so it only works when generation is wired into the build.</p>
+<p>The practical rule: spec-first for public or cross-team APIs where the contract is a negotiation, code-first for internal services where speed matters more and the consumer is down the hall.</p>
+
+<h4>What a good spec carries beyond paths</h4>
+<ul>
+<li><b>Schemas with constraints</b>, not just types: formats, ranges, required fields, enums. Generated clients and validators use them, and they are the difference between documentation and a contract.</li>
+<li><b>Error responses</b>, modelled explicitly — ideally as <code>application/problem+json</code> (RFC 9457), so failures have a defined shape rather than being an undocumented surprise.</li>
+<li><b>Examples</b> on requests and responses. They are what a human actually reads, and they power mock servers.</li>
+<li><b>Security schemes</b>, so the spec states which scopes or schemes each operation needs.</li>
+</ul>
+
+<h4>The spec as a change-control mechanism</h4>
+<p>The reason to keep the document in git is that a diff becomes reviewable: adding an optional field is additive, removing a field or tightening a type is breaking, and a reviewer can see which one a pull request contains. Tooling can enforce it — <code>oasdiff</code> and similar will fail a build on a breaking change — which turns "we did not realise anyone used that field" into a conversation before release rather than an incident after it. Pair that with the deprecation headers from the versioning lesson and the whole lifecycle is documented in one place that clients and generators both read.</p>`,
 docs:[['OpenAPI specification','https://spec.openapis.org/oas/v3.0.3'],['springdoc-openapi','https://springdoc.org/'],['openapi-generator','https://openapi-generator.tech/']],
 ex:{title:'Write the contract',lang:'yaml',
 prompt:`Write an OpenAPI 3.0.3 snippet: <code>info</code> with title <code>Ledger API</code> version <code>1.0.0</code>; path <code>/entries/{id}</code> with a <code>get</code> operation (<code>operationId: getEntry</code>), a required path parameter <code>id</code> of type string, a <code>"200"</code> response whose <code>application/json</code> content references <code>#/components/schemas/Entry</code>, and a <code>"404"</code>; components schema <code>Entry</code>: object with required <code>[id, amountCents]</code>, properties id (string) and amountCents (integer).`,

@@ -152,13 +152,23 @@ xs.sort(Comparator.reverseOrder());
 
 int[] a = {3,1,2};  Arrays.sort(a);            // primitive arrays: dual-pivot quicksort
 
-// stable sort (Java's is stable for objects): equal elements keep their order —
-// which is why thenComparing chains work.
-
 record Person(String name, int age) {}
 people.sort(Comparator.comparingInt(Person::age).reversed()
                       .thenComparing(Person::name));</div>
-<p>Under the hood: <code>Arrays.sort</code> on objects uses TimSort (stable, O(n log n)); on primitives, dual-pivot quicksort (not stable, but primitives have no identity so it doesn't matter). <b>Comparable</b> = a type's one natural order (<code>implements Comparable&lt;T&gt;</code>, define <code>compareTo</code>); <b>Comparator</b> = any number of external orders. And <b>merging</b> two sorted sequences in O(n) — the two-pointer walk — is the operation at the heart of merge sort and of combining sorted result sets.</p>`,
+<p>Under the hood: <code>Arrays.sort</code> on objects uses TimSort (stable, O(n log n)); on primitives, dual-pivot quicksort (not stable, but primitives have no identity so it cannot matter). <b>Comparable</b> is a type's one natural order (<code>implements Comparable&lt;T&gt;</code>, define <code>compareTo</code>); <b>Comparator</b> is any number of external orders, defined outside the type.</p>
+
+<h4>Stability, and why thenComparing works</h4>
+<p>A sort is <b>stable</b> when equal elements keep their original relative order. That is not a detail — it is what makes layered sorting possible. Sort by name, then stably sort by department, and inside each department the names are still in order. Java's object sort is stable, so <code>thenComparing</code> chains and repeated sorts both behave the way you expect. An unstable sort silently scrambles the previous pass.</p>
+
+<h4>The comparator contract is enforced, and violating it throws</h4>
+<p>A comparator must be consistent: if a &lt; b and b &lt; c then a &lt; c, and <code>compare(a,b)</code> must be the exact negation of <code>compare(b,a)</code>. The classic way to break it is subtraction:</p>
+<div class="codeSample">(a, b) -&gt; a.age() - b.age()        // OVERFLOWS: 2_000_000_000 - (-2_000_000_000)
+(a, b) -&gt; Integer.compare(a.age(), b.age())   // correct, always</div>
+<p>TimSort detects an inconsistent comparator part-way through and throws <code>IllegalArgumentException: Comparison method violates its general contract!</code> — a real production failure that appears only on large inputs, because small arrays take a simpler code path that never notices. Comparators built from <code>comparing</code>, <code>comparingInt</code> and <code>thenComparing</code> are correct by construction, which is the argument for using them rather than hand-writing the lambda.</p>
+<p>Nulls need a decision, not luck: <code>Comparator.nullsFirst(Comparator.naturalOrder())</code> states where they go instead of throwing a <code>NullPointerException</code> mid-sort.</p>
+
+<h4>Merging: the O(n) half of merge sort</h4>
+<p>Two already-sorted sequences combine in a single pass with two pointers — take whichever head is smaller, advance that side. It is the operation underneath merge sort, and the reason a database can combine sorted index ranges, a log tool can merge rotated files by timestamp, and <code>sort -m</code> exists. Sorting the concatenation instead would cost O(n log n) and throw away the ordering you already had.</p>`,
 docs:[['Comparator — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Comparator.html'],['Object ordering — Oracle','https://docs.oracle.com/javase/tutorial/collections/interfaces/order.html']],
 exs:[
 {title:'Multi-key comparator',
@@ -213,10 +223,22 @@ public class Merger {
         while (j < b.size()) out.add(b.get(j++));
         return out;
     }
-}`}
-]},
+}`},
+{title:'Order, tie-break and leave the input alone',lang:'js',diff:'medium',
+run:{call:'sortByLengthThenAlpha',cases:[{name:'shorter first, alphabetical within a length',args:[['bb','a','ccc','ab']],expect:['a','ab','bb','ccc']},{name:'the input array is not modified',args:[['bb','a','ccc','ab']],expect:['a','ab','bb','ccc']},{name:'already ordered stays ordered',args:[['a','bb','ccc']],expect:['a','bb','ccc']},{name:'all the same length falls back to alphabetical',args:[['dd','aa','cc']],expect:['aa','cc','dd']},{name:'an empty list sorts to an empty list',args:[[]],expect:[]}]},
+prompt:`The same ordering logic, executed for real. Write <code>function sortByLengthThenAlpha(words)</code> returning a <b>new</b> array sorted by length ascending, breaking ties alphabetically. Do not modify the array you were given — <code>Array.prototype.sort</code> sorts in place, so copy first. This is <code>comparingInt(String::length).thenComparing(naturalOrder())</code> expressed in the language the engine can execute.`,
+starter:`function sortByLengthThenAlpha(words) {
+  return [];
+}`,
+solution:`function sortByLengthThenAlpha(words) {
+  // copy first: sort() mutates, and callers rarely expect that
+  return [...words].sort((a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0));
+}`,
+tests:[{d:'the input is copied before sorting',re:'\\[\\.\\.\\.|slice\\s*\\(|concat\\s*\\('},{d:'length is the primary key',re:'a\\.length\\s*-\\s*b\\.length|length\\s*-\\s*'},{d:'a tie-break follows the primary key',re:'\\|\\||if\\s*\\('},{d:'a comparator function is supplied to sort',re:'sort\\s*\\(\\s*\\('}],
+behavior:`Five cases execute in a worker. The second case is the one that catches real bugs: sort() sorts in place and returns the same array, so a solution that omits the copy passes every ordering case while quietly rewriting its caller's data. The tie-break case shows why thenComparing exists — without it, equal-length words come back in whatever order the sort happened to leave them, which is stable in Java and unspecified in general. Note the comparator returns a NUMBER, not a boolean: returning true/false is the most common JavaScript sorting bug, and it produces almost-sorted output that looks right on small inputs.`,
+hints:['Copy with a spread or slice before sorting.','A comparator returns a negative number, zero, or a positive number — never a boolean.','The || operator chains comparators: if the first is 0 (a tie), the second decides.']}]},
 {id:'ds1',title:'Stacks: LIFO thinking',body:`
-<p>🌱 <b>Starting from zero:</b> picture a stack of plates — you add to the top and take from the top, so the LAST plate added is the FIRST one back. That "last in, first out" shape appears everywhere in computing: the undo history in your editor (undo removes the most recent change), the back button, unwinding nested steps.</p>
+<p>🌱 <b>Starting from zero:</b> picture a stack of plates — you add to the top and take from the top, so the LAST plate added is the FIRST one back. That "last in, first out" shape appears everywhere in computing: the undo history in your editor, the back button, unwinding nested steps.</p>
 <p>A stack is last-in-first-out: <code>push</code>, <code>pop</code>, <code>peek</code>. It models anything nested or reversible — undo history, call stacks, parsing, backtracking.</p>
 <div class="codeSample" data-hl>Deque&lt;String&gt; stack = new ArrayDeque&lt;&gt;();   // THE stack in modern Java
 stack.push("a");                             // add on top
@@ -227,9 +249,23 @@ stack.isEmpty();
 
 // java.util.Stack exists but is LEGACY: it extends Vector (synchronized,
 // slow) and exposes index access that breaks the LIFO contract. Use ArrayDeque.</div>
-<p>All three core ops are O(1). The interview-classic and real-parser workhorse: matching brackets — push openers, pop-and-compare on closers, valid iff the stack ends empty.</p>`,
+<p>All three core operations are O(1), because all of them touch one end of an array and nothing else moves.</p>
+
+<h4>The call stack is this data structure</h4>
+<p>Every method call pushes a <b>stack frame</b> holding its parameters, local variables and return address; returning pops it. That is why local variables vanish on return, why a stack trace reads innermost-call-first, and why unbounded recursion produces <code>StackOverflowError</code> — the thread's stack is a fixed-size region, typically around 512KB to 1MB, and frames are pushed until it is full. Reading a stack trace is reading this structure top-down.</p>
+
+<h4>Where stacks show up in real code</h4>
+<ul>
+<li><b>Matching and parsing.</b> Brackets, XML/HTML tags, nested JSON — push the opener, pop and compare on the closer. Valid only if the stack ends <i>empty</i>, which is the check people forget.</li>
+<li><b>Undo/redo.</b> Two stacks: undo pops from one and pushes onto the other. Redo is discarded on a new action, which is exactly what popping the redo stack empty means.</li>
+<li><b>Backtracking.</b> Depth-first search, maze solving and constraint solvers push a choice, explore, and pop to try the next — an explicit stack is how you convert a recursive DFS into an iterative one when depth would overflow the call stack.</li>
+<li><b>Expression evaluation.</b> Shunting-yard and every RPN calculator: operands on one stack, operators on another.</li>
+</ul>
+
+<h4>The traps</h4>
+<p><code>ArrayDeque</code> rejects <code>null</code> — deliberately, because <code>poll()</code> returns <code>null</code> to mean "empty", and allowing null elements would make the two indistinguishable. <code>pop()</code> on an empty deque throws <code>NoSuchElementException</code>, while <code>poll()</code> returns null: pick the one whose failure mode you want. And a stack of unbounded size is a memory leak waiting for an adversarial input — parsers that accept untrusted nesting need a depth limit.</p>`,
 docs:[['Deque — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Deque.html'],['ArrayDeque — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ArrayDeque.html']],
-ex:{title:'Balanced brackets',
+exs:[{title:'Balanced brackets',
 prompt:`Write <code>Brackets</code> with <code>static boolean balanced(String s)</code> using an <code>ArrayDeque&lt;Character&gt;</code> as a stack: push each opener <code>( [ {</code>; on each closer, the stack must be non-empty and its top must be the matching opener (pop and check); ignore all other characters; return true iff the stack is empty at the end.`,
 starter:`import java.util.*;
 
@@ -261,16 +297,35 @@ public class Brackets {
         }
         return stack.isEmpty();
     }
-}`}},
+}`},
+{title:'Balanced brackets, executed',lang:'js',diff:'medium',
+run:{call:'balanced',cases:[{name:'properly nested',args:['{[()]}'],expect:true},{name:'closer does not match its opener',args:['(]'],expect:false},{name:'never closed — the stack is not empty at the end',args:['(('],expect:false},{name:'a closer with nothing open',args:[')('],expect:false},{name:'empty input is balanced',args:[''],expect:true},{name:'brackets inside other text',args:['a(b[c]d)e'],expect:true}]},
+prompt:`Write <code>function balanced(s)</code> returning <code>true</code> when every <code>(</code>, <code>[</code> and <code>{</code> is closed by its matching partner in the right order. Ignore any other characters. Push openers, pop and compare on closers — and remember the final check: anything left on the stack means something was never closed.`,
+starter:`function balanced(s) {
+  return false;
+}`,
+solution:`function balanced(s) {
+  const pairs = { ')': '(', ']': '[', '}': '{' };
+  const stack = [];
+  for (const ch of s) {
+    if (ch === '(' || ch === '[' || ch === '{') stack.push(ch);
+    else if (pairs[ch]) {
+      if (stack.pop() !== pairs[ch]) return false;   // wrong partner, or empty
+    }
+  }
+  return stack.length === 0;                          // nothing may be left open
+}`,
+tests:[{d:'openers are pushed',re:'push\\s*\\('},{d:'closers pop and compare',re:'pop\\s*\\('},{d:'the end state is checked',re:'length\\s*===\\s*0|length\\s*==\\s*0|!stack\\.length'},{d:'a pairing table or explicit comparison exists',re:'pairs|===\\s*[\x27"]\\(|match'}],
+behavior:`Six cases run for real. Two of them are the ones that separate a working solution from a plausible one: "((" is rejected only if you check that the stack is EMPTY at the end, and ")(" is rejected only if popping an empty stack counts as a mismatch — in JavaScript pop() on an empty array returns undefined, which correctly fails the comparison, but a solution that checks length before popping and then continues would wrongly accept it. The "brackets inside other text" case makes sure you ignore irrelevant characters rather than treating them as errors.`,
+hints:['A plain array is a stack: push() and pop().','Map each closer to the opener it requires, then compare what you popped.','Two ways to fail: the wrong partner comes off the stack, or something is still on it at the end.']}]},
 {id:'ds2',title:'Queues & deques: FIFO and sliding windows',body:`
-<p>🌱 <b>Starting from zero:</b> a queue is the line at a checkout — first come, first served. Where the plate-stack reverses order, the queue preserves it, which makes it the shape of fairness: things get handled in the order they arrived.</p>
-<p>A queue is first-in-first-out — the shape of fairness: task queues, BFS, buffering. A <b>deque</b> (double-ended queue) does both ends in O(1) and therefore impersonates stacks, queues, and sliding windows.</p>
+<p>🌱 <b>Starting from zero:</b> a queue is the line at a checkout — first come, first served. Where the plate-stack reverses order, the queue preserves it, which makes it the shape of fairness: things are handled in the order they arrived.</p>
+<p>A queue is first-in-first-out — task queues, BFS, buffering. A <b>deque</b> (double-ended queue) does both ends in O(1) and therefore impersonates stacks, queues and sliding windows.</p>
 <div class="codeSample" data-hl>Queue&lt;Task&gt; q = new ArrayDeque&lt;&gt;();
 q.offer(task);          // enqueue (returns false when full — add() throws)
 q.peek();               // head, or null when empty (element() throws)
 q.poll();               // dequeue, or null when empty (remove() throws)
 
-// deque: both ends
 Deque&lt;Integer&gt; d = new ArrayDeque&lt;&gt;();
 d.addFirst(1); d.addLast(2); d.pollFirst(); d.pollLast();
 
@@ -279,9 +334,21 @@ void record(Deque&lt;String&gt; history, String event, int max) {
     history.addLast(event);
     if (history.size() &gt; max) history.pollFirst();   // evict oldest
 }</div>
-<p>Note the paired APIs: <code>offer/poll/peek</code> return null/false on failure; <code>add/remove/element</code> throw. Pick one family and be consistent. (BlockingQueue from the Concurrency stream is this interface plus waiting.)</p>`,
+
+<h4>Two API families, and why both exist</h4>
+<p>Every queue operation comes in two flavours: <code>offer/poll/peek</code> return a sentinel (<code>false</code> or <code>null</code>) on failure, and <code>add/remove/element</code> throw. Neither is better — they encode whether "empty" is an expected condition or a bug. A worker draining a queue expects empty and uses <code>poll</code>; code that has just checked <code>size()</code> and must find an element uses <code>remove</code> so a violated assumption fails loudly. Mixing them in one class is how a NoSuchElementException reaches production.</p>
+
+<h4>ArrayDeque is a circular buffer, and that is why it wins</h4>
+<p>Underneath is an array with a head index and a tail index that wrap around. Adding at either end writes one slot and moves one index — no shifting, no per-element allocation. <code>LinkedList</code> also implements <code>Deque</code>, and it allocates a node object per element with two pointers each: worse memory, worse cache locality, and slower in practice for every operation except splicing in the middle, which you almost never do. The rule of thumb: <b>ArrayDeque unless you have measured a reason.</b></p>
+
+<h4>Where queues are the whole design</h4>
+<ul>
+<li><b>Breadth-first search</b> is DFS with a queue instead of a stack — that one substitution is the difference between "any path" and "shortest path in an unweighted graph".</li>
+<li><b>Producer/consumer.</b> <code>BlockingQueue</code> from the concurrency stream is this interface plus waiting, and it is where a bounded queue becomes <b>backpressure</b>: a full queue blocks the producer, which is the system telling you it cannot keep up. An unbounded queue instead absorbs the overload silently until the heap does not.</li>
+<li><b>Sliding windows.</b> A deque holding the last N events, or the indices of candidate maxima, answers "the last minute of traffic" in constant time per event.</li>
+</ul>`,
 docs:[['Queue — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Queue.html'],['Queue implementations — Oracle tutorial','https://docs.oracle.com/javase/tutorial/collections/implementations/queue.html']],
-ex:{title:'A bounded history',
+exs:[{title:'A bounded history',
 prompt:`Write <code>History</code> with a private <code>Deque&lt;String&gt; events = new ArrayDeque&lt;&gt;()</code> and a constructor taking <code>int capacity</code>: method <code>void record(String event)</code> appends with <code>addLast</code> and evicts the oldest with <code>pollFirst</code> when size exceeds capacity; <code>java.util.List&lt;String&gt; latest()</code> returns the events oldest→newest as a new ArrayList; <code>String newest()</code> returns <code>peekLast()</code>.`,
 starter:`import java.util.*;
 
@@ -331,10 +398,24 @@ public class History {
     String newest() {
         return events.peekLast();
     }
-}`}},
+}`},
+{title:'A bounded history, executed',lang:'js',diff:'easy',
+run:{call:'record',cases:[{name:'under the limit, nothing is evicted',args:[['a'],'b',3],expect:['a','b']},{name:'at the limit, the oldest goes',args:[['a','b','c'],'d',3],expect:['b','c','d']},{name:'an empty history takes the first event',args:[[],'a',2],expect:['a']},{name:'a limit of one keeps only the newest',args:[['a'],'b',1],expect:['b']},{name:'the caller\x27s array is not modified',args:[['a','b','c'],'d',3],expect:['b','c','d']}]},
+prompt:`Write <code>function record(history, event, max)</code> returning a <b>new</b> array containing the history with <code>event</code> appended, truncated to at most <code>max</code> entries by dropping the <b>oldest</b>. This is the bounded-history deque pattern above: add at one end, evict from the other.`,
+starter:`function record(history, event, max) {
+  return [];
+}`,
+solution:`function record(history, event, max) {
+  const out = [...history, event];        // copy, then append at the tail
+  while (out.length > max) out.shift();   // evict from the head
+  return out;
+}`,
+tests:[{d:'the event is appended',re:'\\.\\.\\.|concat|push'},{d:'the oldest entry is removed from the front',re:'shift\\s*\\(|slice\\s*\\('},{d:'the size limit is enforced',re:'>\\s*max|length\\s*-\\s*max'},{d:'a new array is returned',re:'return\\s+out|return\\s+\\['}],
+behavior:`Five real cases. The max=1 case is the one that catches an off-by-one: evicting only when length is strictly greater than max keeps exactly max items, while evicting on >= keeps max-1 and looks almost right. The final case checks you copied rather than mutating — the same discipline as the sorting exercise, and the reason both appear early. Note that shift() on a JavaScript array is O(n), which is fine for a small bounded history and exactly what ArrayDeque avoids in Java by moving an index instead of the elements.`,
+hints:['Copy the history, then append the new event to the copy.','Evict from the FRONT — the oldest entry — until the length fits.','Strictly greater than max, not greater or equal.']}]},
 {id:'ds3',title:'PriorityQueue: heaps & top-K',body:`
 <p>🌱 <b>Starting from zero:</b> an emergency room does not treat patients first-come-first-served — the most urgent case jumps the line. A <b>priority queue</b> is that triage desk as a data structure: whatever you put in, the most important item is always the one that comes out next.</p>
-<p>A <code>PriorityQueue</code> always serves the <i>smallest</i> element first (a binary min-heap): O(log n) insert/remove, O(1) peek. It powers schedulers, Dijkstra, merge-K, and the top-K pattern below.</p>
+<p>A <code>PriorityQueue</code> always serves the <i>smallest</i> element first (a binary min-heap): O(log n) insert and remove, O(1) peek. It powers schedulers, Dijkstra, merge-K and the top-K pattern below.</p>
 <div class="codeSample" data-hl>PriorityQueue&lt;Integer&gt; minHeap = new PriorityQueue&lt;&gt;();
 PriorityQueue&lt;Integer&gt; maxHeap = new PriorityQueue&lt;&gt;(Comparator.reverseOrder());
 PriorityQueue&lt;Trade&gt; byAmount =
@@ -347,9 +428,23 @@ for (int x : stream) {
     if (heap.size() &gt; k) heap.poll();   // evict the smallest survivor
 }
 // heap now holds the k largest — O(n log k), constant memory</div>
-<p>Two gotchas: iterating a PriorityQueue does NOT visit in priority order (heap array order — poll repeatedly to drain sorted), and it rejects null. Top-K inversion trips everyone once: you want the largest, so you keep a MIN-heap and evict from the bottom.</p>`,
+
+<h4>What a binary heap actually is</h4>
+<p>Not a tree of objects — an <b>array</b> interpreted as a complete binary tree, where the children of index <code>i</code> live at <code>2i+1</code> and <code>2i+2</code>. The only invariant is that a parent is never larger than its children (for a min-heap); siblings are unordered, which is why the structure is cheap to maintain. Insert appends at the end and <i>sifts up</i> while it is smaller than its parent; remove takes the root, moves the last element into its place and <i>sifts down</i>. Both walk one root-to-leaf path, so both are O(log n), and no pointers or allocations are involved.</p>
+<p>That weak invariant is the whole trade. A sorted list gives O(1) access to the minimum but O(n) insertion; a heap gives O(log n) for both, and it never pays to fully order elements you will discard.</p>
+
+<h4>Top-K: why the heap is inverted</h4>
+<p>To keep the <b>k largest</b>, you hold a <b>min</b>-heap of size k. The root is then the weakest of your current champions, so each new element is compared against it in O(1) and the loser is evicted. Reaching for a max-heap here is the classic inversion error: it puts the biggest item where you can remove it, which is precisely the item you want to keep. The payoff is memory — O(k) rather than O(n) — which is what lets you take the top 100 of a billion-row stream on a laptop.</p>
+
+<h4>The traps</h4>
+<ul>
+<li><b>Iteration is not sorted.</b> <code>for (x : pq)</code> walks the backing array in heap order. Only repeated <code>poll()</code> yields sorted output — and it empties the queue.</li>
+<li><b>Ties are unspecified.</b> Equal priorities come out in no defined order; if fairness matters, add a sequence number to the comparator as a tie-break.</li>
+<li><b>Unbounded by default.</b> A PriorityQueue grows until the heap does. A scheduler fed faster than it drains needs a cap and a rejection policy, not optimism.</li>
+<li>It rejects <code>null</code>, for the same reason ArrayDeque does.</li>
+</ul>`,
 docs:[['PriorityQueue — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html'],['Comparator — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Comparator.html']],
-ex:{title:'Top-K trades',
+exs:[{title:'Top-K trades',
 prompt:`Write <code>TopK</code> with <code>static java.util.List&lt;Long&gt; largest(java.util.List&lt;Long&gt; amounts, int k)</code>: min-heap <code>PriorityQueue&lt;Long&gt;</code>, offer each amount, <code>poll()</code> whenever size exceeds k, then drain the heap into a list and sort it <b>descending</b> before returning.`,
 starter:`import java.util.*;
 
@@ -378,7 +473,21 @@ public class TopK {
         out.sort(Comparator.reverseOrder());
         return out;
     }
-}`}},
+}`},
+{title:'Top-K, executed',lang:'js',diff:'hard',
+run:{call:'topK',cases:[{name:'the three largest, ascending',args:[[5,1,9,3,7],3],expect:[5,7,9]},{name:'k larger than the input returns everything, ordered',args:[[2,1],5],expect:[1,2]},{name:'k of zero returns nothing',args:[[2,1],0],expect:[]},{name:'duplicates are kept, not collapsed',args:[[4,4,4,1],2],expect:[4,4]},{name:'negative values order correctly',args:[[-5,-1,-9],2],expect:[-5,-1]}]},
+prompt:`Write <code>function topK(nums, k)</code> returning the <code>k</code> largest values <b>in ascending order</b>. If <code>k</code> is zero or negative return an empty array; if <code>k</code> exceeds the input length return every value, ordered. Duplicates count separately — the two largest of <code>[4,4,4,1]</code> are <code>[4,4]</code>.`,
+starter:`function topK(nums, k) {
+  return [];
+}`,
+solution:`function topK(nums, k) {
+  if (k <= 0) return [];
+  const sorted = [...nums].sort((a, b) => a - b);      // numeric, not lexical
+  return sorted.slice(Math.max(0, sorted.length - k)); // the tail is the top-k
+}`,
+tests:[{d:'a non-positive k returns nothing',re:'k\\s*<=\\s*0|k\\s*<\\s*1'},{d:'the input is copied',re:'\\[\\.\\.\\.|slice\\s*\\(\\s*\\)|concat'},{d:'a numeric comparator is used',re:'a\\s*-\\s*b|b\\s*-\\s*a'},{d:'the result is the k largest',re:'slice\\s*\\(|splice|sort'}],
+behavior:`Five cases execute. The duplicates case is the one that catches a Set-based shortcut: distinct values are not the same question as largest values, and deduplicating quietly changes the answer. The negative case catches the other classic — sort() without a comparator compares values as STRINGS, so [-5,-1,-9] sorts to [-1,-5,-9] and the answer is confidently wrong. Note what this implementation gives up: sorting is O(n log n) and holds the whole array, while the size-k min-heap in the lesson is O(n log k) with O(k) memory. For five numbers that is irrelevant; for a billion-row stream it is the difference between running and not.`,
+hints:['Guard k <= 0 first.','sort() compares as text by default — always pass (a, b) => a - b for numbers.','After an ascending sort, the k largest are the last k elements.']}]},
 {id:'ds4',title:'Linked lists: build one, know the trade-offs',body:`
 <p>🌱 <b>Starting from zero:</b> two ways to store a sequence. Numbered shelves: finding slot #57 is instant, but inserting a new shelf in the middle means shifting everything after it. A treasure hunt of notes, each pointing to the next: inserting a note mid-chain is trivial (rewrite one pointer), but reaching item #57 means following 57 clues. That is the ArrayList-versus-LinkedList tradeoff in one image — everything below is the detail.</p>
 <p><code>ArrayList</code> is a growable array: O(1) random access, O(1) amortized append, O(n) inserts in the middle (shifting). A <b>linked list</b> is nodes pointing at nodes: O(1) insert/remove <i>at a known node</i>, but O(n) to find anything and cache-hostile memory jumps. Honest guidance: <code>ArrayList</code> wins ~95% of the time; <code>ArrayDeque</code> beats <code>LinkedList</code> for both stack and queue duty. You study linked lists to master <b>references</b> — and because interviewers love them.</p>
@@ -528,13 +637,26 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
 <p>Three notations describe growth precisely:</p>
 <ul>
 <li><b>Big-O — O(f)</b> is an <i>upper bound</i>: "grows no faster than f." The usual worst-case promise.</li>
-<li><b>Big-Omega — &#937;(f)</b> is a <i>lower bound</i>: "grows at least as fast as f." The best case floor.</li>
+<li><b>Big-Omega — &#937;(f)</b> is a <i>lower bound</i>: "grows at least as fast as f." The best-case floor.</li>
 <li><b>Big-Theta — &#920;(f)</b> is a <i>tight bound</i>: O and &#937; agree, so f describes the growth exactly.</li>
 </ul>
-<p>Separately, name <b>which case</b> you mean — <b>best</b>, <b>average</b>, or <b>worst</b>. Quicksort is &#920;(n log n) on average but O(n&#178;) worst case; a hash lookup is O(1) average but O(n) worst case. When people say "O(n log n)" unqualified they almost always mean the worst (or expected) case.</p>
-<p>The growth classes you will meet daily, best to worst: <code>O(1)</code> constant, <code>O(log n)</code> logarithmic, <code>O(n)</code> linear, <code>O(n log n)</code> linearithmic, <code>O(n&#178;)</code> quadratic, <code>O(2&#8319;)</code> exponential. Two refinements matter in practice: <b>amortized</b> cost averages an occasional expensive step over many cheap ones (ArrayList add is amortized O(1) despite rare resizes), and <b>space complexity</b> measures extra memory the same way time is measured.</p>`,
+<p>Separately, name <b>which case</b> you mean — <b>best</b>, <b>average</b> or <b>worst</b>. Quicksort is &#920;(n log n) on average but O(n&#178;) worst case; a hash lookup is O(1) average but O(n) worst case. When people say "O(n log n)" unqualified they almost always mean the worst or expected case.</p>
+<p>The growth classes you meet daily, best to worst: <code>O(1)</code> constant, <code>O(log n)</code> logarithmic, <code>O(n)</code> linear, <code>O(n log n)</code> linearithmic, <code>O(n&#178;)</code> quadratic, <code>O(2&#8319;)</code> exponential.</p>
+
+<h4>Reading complexity off the code</h4>
+<p>Three rules cover most of it. <b>Sequential blocks add</b>, and the sum is dominated by its largest term — O(n) followed by O(n&#178;) is O(n&#178;), so constants and lower-order terms are dropped. <b>Nested loops multiply</b>: a loop over n containing a loop over n is O(n&#178;), but a loop over n containing a loop over a <i>fixed</i> 10 is still O(n). <b>Halving is logarithmic</b>: any step that discards half the remaining input each time runs about log&#8322;n times — 1,000 items in 10 steps, a million in 20. The base of the logarithm is a constant factor, which is why nobody writes it.</p>
+<div class="codeSample">for (x : list) { ... }                    // O(n)
+for (a : list) for (b : list) { ... }     // O(n^2)  -- nested: multiply
+for (x : list) { ... } sort(list);        // O(n) + O(n log n) = O(n log n)
+while (hi &gt;= lo) { mid = (lo+hi)/2; ... } // O(log n) -- halves each step</div>
+
+<h4>Amortized and space</h4>
+<p><b>Amortized</b> cost averages an occasional expensive step over the many cheap ones that pay for it. <code>ArrayList.add</code> is amortized O(1): when the backing array is full it allocates a larger one and copies everything — O(n) — but because the capacity <i>doubles</i>, that cost is spread over the next n additions. It is a genuine guarantee about a sequence of operations, not a hopeful average, and it is different from "average case", which is about the distribution of inputs. <b>Space complexity</b> is measured the same way and is what stops you from answering every question with a hash map.</p>
+
+<h4>Where the notation misleads</h4>
+<p>Asymptotics deliberately discard constants, so an O(n) algorithm with a huge constant can lose to an O(n&#178;) one at every size you actually run. Real examples: linear search beats a hash map on ten elements, and insertion sort beats quicksort under about 40 items — which is why real sort implementations switch to it for small partitions. Complexity tells you how something scales; a profiler tells you what it costs. You need both, and the order matters: choose the right growth class first, then measure.</p>`,
 docs:[['Big-O notation — Wikipedia','https://en.wikipedia.org/wiki/Big_O_notation'],['Time complexity — Wikipedia','https://en.wikipedia.org/wiki/Time_complexity']],
-ex:{title:'Name the bound and the cost',
+exs:[{title:'Name the bound and the cost',
 prompt:`Write class <code>Complexity</code> with two static methods. <code>String bound(String kind)</code>: <code>"upper"</code>→<code>"Big-O"</code>, <code>"tight"</code>→<code>"Theta"</code>, <code>"lower"</code>→<code>"Omega"</code>, else <code>"unknown"</code>. <code>String of(String algo)</code>: <code>"hash-lookup"</code>→<code>"O(1)"</code>, <code>"binary-search"</code>→<code>"O(log n)"</code>, <code>"linear-scan"</code>→<code>"O(n)"</code>, <code>"bubble-sort"</code>→<code>"O(n^2)"</code>, else <code>"unknown"</code>.`,
 starter:`public class Complexity {
     static String bound(String kind) {
@@ -565,7 +687,20 @@ solution:`public class Complexity {
 }`,
 tests:[{d:'upper bound is Big-O',re:'"upper".*?"Big-O"',flags:'s'},{d:'tight bound is Theta',re:'"tight".*?"Theta"',flags:'s'},{d:'lower bound is Omega',re:'"lower".*?"Omega"',flags:'s'},{d:'binary-search is O(log n)',re:'"binary-search".*?"O\\(log n\\)"',flags:'s'},{d:'bubble-sort is O(n^2)',re:'"bubble-sort".*?"O\\(n\\^2\\)"',flags:'s'},{d:'hash-lookup is O(1)',re:'"hash-lookup".*?"O\\(1\\)"',flags:'s'},{d:'has an unknown default',re:'"unknown"'}],
 behavior:`bound("upper") is "Big-O", bound("tight") is "Theta", bound("lower") is "Omega". of("binary-search") is "O(log n)", of("bubble-sort") is "O(n^2)". Anything unrecognized is "unknown". Big-O is the upper bound, Omega the lower, Theta the tight bound when they coincide.`,
-hints:['Big-O is the upper bound, Omega the lower bound, Theta the tight bound where the two meet.','A switch per method maps each key to its answer, with default returning unknown.','Write the cost strings exactly, including the parentheses, as in O(log n) and O(n^2).']}},
+hints:['Big-O is the upper bound, Omega the lower bound, Theta the tight bound where the two meet.','A switch per method maps each key to its answer, with default returning unknown.','Write the cost strings exactly, including the parentheses, as in O(log n) and O(n^2).']},
+{title:'Count the halvings',lang:'js',diff:'medium',
+run:{call:'binarySearchWorstCase',cases:[{name:'a single element takes one comparison',args:[1],expect:1},{name:'seven elements: 7 -> 3 -> 1',args:[7],expect:3},{name:'eight elements needs one more',args:[8],expect:4},{name:'a thousand elements in ten steps',args:[1000],expect:10},{name:'an empty range takes none',args:[0],expect:0}]},
+prompt:`Make the logarithm concrete. Write <code>function binarySearchWorstCase(n)</code> returning how many comparisons a binary search needs in the worst case over <code>n</code> sorted items — the number of times you can halve <code>n</code> before nothing is left, which is <code>floor(log2(n)) + 1</code> for <code>n &gt;= 1</code>, and <code>0</code> for an empty range.`,
+starter:`function binarySearchWorstCase(n) {
+  return 0;
+}`,
+solution:`function binarySearchWorstCase(n) {
+  if (n <= 0) return 0;
+  return Math.floor(Math.log2(n)) + 1;   // each comparison halves what is left
+}`,
+tests:[{d:'an empty range is handled',re:'n\\s*<=\\s*0|n\\s*<\\s*1|n\\s*===\\s*0'},{d:'a base-2 logarithm is used',re:'log2|Math\\.log\\s*\\(\\s*n\\s*\\)\\s*/'},{d:'the result is a whole number of comparisons',re:'floor|ceil|\\|\\s*0'},{d:'the count is the halvings plus one',re:'\\+\\s*1'}],
+behavior:`Five cases run. The 7-versus-8 pair is the point of the exercise: seven elements take three comparisons and eight take four, because the count steps up exactly at each power of two — that step is what a logarithm is. The n=1000 case is the number worth remembering: a thousand items in ten comparisons, a million in twenty, a billion in thirty. That is why O(log n) is treated as nearly free, and why doubling your data adds one step rather than doubling the work. The n=0 guard matters because Math.log2(0) is -Infinity, and floor(-Infinity) + 1 is not a comparison count.`,
+hints:['Guard the empty case before touching a logarithm.','Math.log2 gives a fractional answer — you need whole comparisons.','Check your formula against n=8: it must give 4, not 3.']}]},
 {id:'ds7',title:'Trees & search optimization',body:`
 <p>A <b>tree</b> stores data in nodes with parent-child links and no cycles. Trees turn linear scans into logarithmic ones by letting each comparison discard a whole branch — the core trick behind fast search.</p>
 <ul>

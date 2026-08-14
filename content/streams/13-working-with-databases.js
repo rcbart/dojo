@@ -809,7 +809,17 @@ SELECT o FROM Order o JOIN FETCH o.user WHERE o.status = 'OPEN'
 
 EXPLAIN ANALYZE SELECT * FROM orders WHERE user_id = 42;
 -- Index Scan using idx_orders_user_id  ← good
--- Seq Scan on orders (cost=0.00..421337) ← add the index!</div>`,
+-- Seq Scan on orders (cost=0.00..421337) ← add the index!</div>
+
+<h4>Finding the problem before guessing at it</h4>
+<p>Every item above has a symptom you can look for rather than a habit you adopt on faith. N+1 shows as a burst of identical SELECTs differing only in the id — turn on SQL logging in a test and <b>count the statements</b>, because an assertion on query count is the only regression test that reliably catches it coming back. Missing indexes show as <code>Seq Scan</code> over a large table in <code>EXPLAIN ANALYZE</code>; note the difference between <code>EXPLAIN</code>, which shows the plan the optimiser intends, and <code>EXPLAIN ANALYZE</code>, which runs the query and shows what actually happened, including how far the row estimates were out. Pool exhaustion shows as a timeout waiting for a connection while the database itself is idle — the queue is in your process, not in the database.</p>
+
+<h4>What an index costs</h4>
+<p>An index is a second, ordered copy of the columns it covers. Reads get faster; every insert, update and delete must now maintain that copy, and the storage is real. Three refinements are worth knowing: a <b>composite</b> index is usable for a prefix of its columns and not for a suffix, so the column order is a design decision rather than a detail; a <b>covering</b> index that includes the selected columns lets the database answer from the index alone; and a <b>low-selectivity</b> index — a boolean, a status with three values — often will not be used at all, because scanning is cheaper than jumping.</p>
+
+<h4>Transactions, and the calls that must not be inside them</h4>
+<p>A connection is held for the entire transaction, so transaction duration is pool consumption. An HTTP call inside a transaction pins a connection for the remote service's timeout, and a downstream slowdown then drains the pool and takes the whole application with it — a dependency failure converted into an outage by structure. Keep transactions to the database work: do the remote call before or after, and if the two must be consistent, that is a saga or an outbox, not a longer transaction.</p>
+<p>The same logic makes keyset pagination worth the effort. <code>OFFSET 100000</code> makes the database produce and discard a hundred thousand rows on every page, so the last page of a report is the slowest query in the system; <code>WHERE id &gt; ?</code> with a limit reads exactly one page regardless of depth.</p>`,
 docs:[['N+1 problem — Vlad Mihalcea','https://vladmihalcea.com/n-plus-1-query-problem/'],['Postgres EXPLAIN','https://www.postgresql.org/docs/current/using-explain.html'],['HikariCP','https://github.com/brettwooldridge/HikariCP']],
 ex:{title:'Performance triage',lang:'text',
 prompt:`Answer on the numbered lines: (1) the name of the anti-pattern when listing 100 orders fires 101 queries, (2) the JPQL keyword pair that fixes it in one query, (3) the SQL command prefix that shows a query's execution plan with timings, (4) the plan operation that signals a missing index on a large table, (5) the command to create an index named <code>idx_orders_user_id</code> on <code>orders(user_id)</code>, (6) Spring Boot's default connection pool.`,

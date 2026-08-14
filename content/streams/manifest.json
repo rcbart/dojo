@@ -15,6 +15,7 @@
  "10-concurrency-multithreading.js",
  "11-time-testing-reflection-the-jvm.js",
  "12-deploying-java-to-the-web.js",
+ "12b-reading-production-logs.js",
  "13-working-with-databases.js",
  "14-jpms-performance-engineering.js",
  "15-networking-sockets.js",
