@@ -99,7 +99,7 @@ for (const c of exercise.run.cases) {
 }
 ```
 
-Load the answer key. Work the questions. Compare. It runs 155 exercises and 839 cases in about a second,
+Load the answer key. Work the questions. Compare. It runs 168 exercises and 907 cases in about a second,
 and it exits non-zero if anything disagrees, which makes it a gate rather than a report.
 
 ## What the first run found

@@ -1,5 +1,12 @@
 # DevDojo — Roadmap: per-domain belts, dan tracks & the full IAM curriculum
 
+> **Status note (this document is historical).** It was written before the identity material was split
+> out into its own course, so its figures describe IAM *inside* DevDojo and no longer match anything.
+> What it proposed has shipped: per-domain percentage belts, per-domain dan tracks, and an IAM curriculum
+> that outgrew the estimate here and became [IdentityDojo](identity-dojo/README.md) — now 14 streams and
+> 149 lessons. For current figures see [ARCHITECTURE.md](ARCHITECTURE.md); this file is kept for the
+> reasoning, not the numbers.
+
 This captures the product direction you described so nothing is lost, and proposes a concrete,
 low-risk way to build it. Three things are in scope:
 
