@@ -532,7 +532,44 @@ instant revocation matters. Many large providers do both — issuing an opaque t
 swapping it for a JWT at the API gateway.</p>
 <p>Now that <b>token</b> means something concrete, the next lesson can compare carrying identity in a
 session against carrying it in a token — and the choice will read as a real engineering trade-off
-rather than jargon.</p>`,
+rather than jargon.</p>
+
+<h4>A note on cookies, since one appeared above</h4>
+<p>Shape 4 in that list mentions a cookie, and this course does not use a term before defining it — so
+here is the whole idea, in one paragraph. <b>HTTP has no memory.</b> Two requests from the same browser are,
+as far as the protocol is concerned, two strangers. A <b>cookie</b> is the fix: the server sends a small
+named value back with a response, the browser stores it, and the browser then attaches it
+<i>automatically</i> to every subsequent request to that site.</p>
+<div class="codeSample" data-hl>// the server hands one out:
+HTTP/1.1 200 OK
+Set-Cookie: session=8f3a91c07b2e4d15; HttpOnly; Secure; SameSite=Lax
+
+// and the browser sends it back, unprompted, on every later request:
+GET /account
+Cookie: session=8f3a91c07b2e4d15</div>
+<p>That word <b>automatically</b> is the whole story, good and bad. It is what makes staying logged in
+effortless — you never re-present anything. It is also why a cookie can be sent by a request the user did
+not intend, which is the basis of CSRF, and why cookies carry flags (<code>HttpOnly</code>,
+<code>Secure</code>, <code>SameSite</code>) that constrain when the browser will attach them.</p>
+<p>For now, one thing to carry forward: <b>a cookie is a transport, not a kind of token</b>. What rides in
+it might be an opaque session id, or a JWT, or anything else. The Sessions and Web Login stream takes
+cookies apart properly — flags, CSRF, fixation and revocation. This paragraph exists so that the word means
+something the first time you meet it.
+
+<h4>Two more words this lesson used before defining them</h4>
+<p><b>JWKS</b> — "JSON Web Key Set". When an issuer signs tokens with a private key, verifiers need the
+matching <i>public</i> key. Publishing it at a well-known URL is how: a small JSON document listing the
+issuer's current public keys, each with a <code>kid</code> (key id) that the token's header names. A
+verifier fetches it once, caches it, and re-fetches when it sees a <code>kid</code> it does not recognise —
+which is what makes key rotation a non-event. The JOSE stream builds one.</p>
+<p><b>Refresh token</b> — an access token is deliberately short-lived so a leaked one expires quickly, but
+sending the user back through login every few minutes is unacceptable. A refresh token is a second,
+longer-lived credential whose only purpose is to obtain a fresh access token, silently, over a back
+channel. It is therefore <b>higher value than the thing it replaces</b>, and the OAuth stream covers what
+follows from that — rotation, reuse detection, and why a bare one in a browser is the worst credential in
+the system.</p>
+<p>Neither is needed to follow the rest of this stream. They appear here because a token lesson cannot
+honestly avoid naming them, and this course does not leave a term hanging.</p>`,
 docs:[['RFC 7519 — JSON Web Token (JWT)','https://www.rfc-editor.org/rfc/rfc7519'],['RFC 6750 — Bearer Token Usage','https://www.rfc-editor.org/rfc/rfc6750'],['RFC 7662 — OAuth 2.0 Token Introspection','https://www.rfc-editor.org/rfc/rfc7662'],['RFC 9068 — JWT Profile for OAuth 2.0 Access Tokens','https://www.rfc-editor.org/rfc/rfc9068'],['jwt.io — paste a JWT and see it decoded','https://jwt.io/']],
 exs:[
 {title:'Read a JWT: split it and decode the claims',
@@ -658,7 +695,55 @@ browser never holds a token at all.</p>
 <p>People say "token" for both. A session id <i>is</i> a token in the loose sense — a string that stands for
 your authenticated state. The distinction that matters is not the word but whether the value
 <b>carries</b> its meaning or <b>refers</b> to it. Ask that question about any credential and the rest of
-its behaviour follows: how it is revoked, what happens if it leaks, whether the issuer can be offline.</p>`,
+its behaviour follows: how it is revoked, what happens if it leaks, whether the issuer can be offline.</p>
+
+<h4>Stateful and stateless, in plain English</h4>
+<p>Those two words sit underneath everything above, and they are worth ten seconds on their own because
+they get used as jargon far more often than they get explained.</p>
+<p><b>Stateful</b> means <i>the server remembers something between requests.</i> It wrote something down.
+<b>Stateless</b> means <i>it remembers nothing</i> — every request has to arrive carrying whatever is needed
+to handle it, because the server starts from scratch each time.</p>
+<div class="codeSample" data-hl>STATEFUL  — the doctor's surgery
+  you give your name, and they pull your file. the file lives with THEM.
+  they can add to it, correct it, or shred it at any moment.
+  but the receptionist has to be able to REACH the filing cabinet.
+
+STATELESS — the coffee shop loyalty card
+  the card itself carries the nine stamps. nothing is written down at
+  the shop. any branch can read it, with no filing cabinet anywhere.
+  but if you claim a stamp was wrong, there is nothing to correct -
+  and the shop cannot cancel your card once it is in your pocket.</div>
+
+<h4>What each one costs</h4>
+<p><b>Stateful costs a lookup and a shared place to look.</b> One server is easy. Ten servers behind a load
+balancer means they must all reach the same store — so now you run Redis or a database in the request path
+of every single call, and if it goes down, nobody is logged in anywhere. Scaling means scaling that store
+too.</p>
+<p><b>Stateless costs the ability to change your mind.</b> Nothing to look up means nothing to delete. The
+credential is valid because it verifies, not because anyone still agrees with it — so revoking it before it
+expires means reintroducing exactly the shared store you were avoiding, just for the exceptions.</p>
+
+<h4>Why this is the real reason sessions and tokens differ</h4>
+<p>A session is the stateful choice and a self-contained token is the stateless one, and every difference in
+the table above falls out of that:</p>
+<div class="codeSample" data-hl>revocation   stateful wins.  there is a row; delete it.
+scaling      stateless wins. no shared store to reach or to fail.
+size         stateful wins.  a cookie holds an id, not a payload.
+privacy      stateful wins.  an opaque id reveals nothing; a JWT is
+                             readable by anyone holding it.
+availability stateless wins. the issuer can be offline and calls still work.
+freshness    stateful wins.  a stateless token carries the permissions it
+                             had WHEN IT WAS MINTED, not the ones you have now.</div>
+<p>That last row is the one people meet in production. You revoke someone's admin role at 09:00 and their
+token keeps asserting it until 09:15, because the token is a photograph of their permissions rather than a
+window onto them. Nothing is broken — that is what stateless means.</p>
+
+<h4>The honest summary</h4>
+<p><b>Neither is more secure.</b> They fail differently, and the choice is about which failure you can live
+with. Most real systems end up in the middle on purpose: short-lived stateless tokens so the staleness
+window is small, plus a stateful denylist for the small number of credentials that must die immediately.
+That is not indecision — it is buying revocation only where you actually need it, and paying the lookup only
+on that path.</p>`,
 docs:[['MDN — Authorization header','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization'],['RFC 6750 — Bearer Token Usage','https://www.rfc-editor.org/rfc/rfc6750']],
 ex:{title:'Bearer header: build and parse',
 prompt:`Write <code>Bearer</code> with: <code>static String header(String token)</code> returning the header <b>value</b> <code>"Bearer " + token</code>; and <code>static String parse(String header)</code> that returns the token from a value like <code>"Bearer abc.def.ghi"</code> — return <code>null</code> if <code>header</code> is null or does not <code>startsWith("Bearer ")</code>, otherwise the substring after <code>"Bearer "</code>.`,
