@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ron Bar-Tor · roniam.dev · engineering leadership &amp; identity</title>
+<meta name="description" content="Ron Bar-Tor: engineering leader and identity &amp; access management specialist, sharing accumulated knowledge through three interactive courses (409 lessons, 624 hands-on exercises) and essays on engineering management. Built to develop engineers, not park them in tutorial hell.">
+<meta property="og:title" content="Ron Bar-Tor · roniam.dev">
+<meta property="og:description" content="roniam = Ron + IAM. Built to develop engineers, not park them in tutorial hell. 409 lessons, every one ends with you doing the work.">
+<meta property="og:url" content="https://roniam.dev/">
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="%23f59e0b"/><stop offset=".5" stop-color="%23f43f5e"/><stop offset="1" stop-color="%238b5cf6"/></linearGradient></defs><rect x="1" y="1" width="30" height="30" rx="8" fill="%23130f26"/><g fill="none" stroke="url(%23g)" stroke-width="2.4" stroke-linecap="round"><path d="M5 10.5 Q16 8 27 10.5" stroke-width="2.8"/><path d="M7.5 14.5 H24.5"/><path d="M10 11 V25"/><path d="M22 11 V25"/></g></svg>'>
+<style>
+  :root{
+    --bg:#fbf8f3; --panel:#ffffff; --ink:#191530; --muted:#5b5872; --line:#e9e2d8;
+    --night:#130f26; --night2:#221a44;
+    --amber:#f59e0b; --rose:#f43f5e; --violet:#8b5cf6; --teal:#0d9488;
+    --grad:linear-gradient(100deg,#f59e0b,#f43f5e 48%,#8b5cf6);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:16.5px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--teal);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:980px;margin:0 auto;padding:0 24px}
+  .iam{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
+
+  /* ---------- night hero ---------- */
+  .top{background:radial-gradient(1100px 500px at 75% -10%, #2d1f5e 0%, var(--night2) 45%, var(--night) 100%);color:#f3f0ff}
+  nav{border-bottom:1px solid rgba(255,255,255,.09)}
+  .navrow{display:flex;align-items:center;gap:22px;padding:16px 0}
+  .mark{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:.2px;color:#fff}
+  .mark:hover{text-decoration:none}
+  .navlinks{margin-left:auto;display:flex;gap:20px;font-size:14.5px;font-weight:600}
+  .navlinks a{color:#cfc9ec} .navlinks a:hover{color:#fff;text-decoration:none}
+
+  .hero{padding:78px 0 66px}
+  .domain{font:700 15px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:1px;color:#a89ee0}
+  .domain b{color:#fff} .domain .iam{font-weight:800}
+  h1{font-family:var(--serif);font-size:clamp(34px,6vw,60px);line-height:1.07;margin:18px 0 10px;
+     letter-spacing:-.5px;font-weight:600;color:#fff}
+  h1 .iam{font-style:normal}
+  .tagline{font-family:var(--serif);font-style:italic;font-size:clamp(17px,2.4vw,21px);color:#b9b0e6;margin:0 0 22px}
+  .lede{font-size:18.5px;color:#cfc9ec;max-width:64ch;margin:0 0 30px}
+  .lede b{color:#fff}
+  .ctas{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .btn{display:inline-block;font-weight:700;font-size:15px;padding:13px 22px;border-radius:10px;
+       background:var(--grad);color:#130f26;transition:transform .12s,filter .12s}
+  .btn:hover{transform:translateY(-1px);filter:brightness(1.08);text-decoration:none}
+  .btn.alt{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.4)}
+  .btn.alt:hover{border-color:#fff;filter:none}
+  .social{display:flex;gap:16px;font-size:14px;align-items:center}
+  .social a{color:#a89ee0;font-weight:600} .social a:hover{color:#fff}
+
+  /* pull quote, sitting across the seam */
+  .pull{max-width:980px;margin:-34px auto 0;padding:0 24px;position:relative;z-index:2}
+  .pull figure{margin:0;background:var(--panel);border:1px solid var(--line);border-left:5px solid;
+     border-image:var(--grad) 1;border-radius:14px;padding:24px 28px;cursor:pointer;
+     box-shadow:0 14px 40px rgba(19,15,38,.18)}
+  .pull blockquote{font-family:var(--serif);font-size:clamp(19px,2.7vw,25px);font-style:italic;
+     line-height:1.45;margin:0;color:var(--ink)}
+  .pull figcaption{margin-top:8px;font-size:13.5px;color:var(--muted)}
+  .pull .hintq{opacity:.55}
+
+  /* ---------- sections ---------- */
+  section{padding:52px 0 10px}
+  .k{font-size:12.5px;font-weight:800;letter-spacing:2.2px;text-transform:uppercase}
+  .k.amber{color:var(--amber)} .k.rose{color:var(--rose)} .k.violet{color:var(--violet)} .k.teal{color:var(--teal)}
+  h2{font-family:var(--serif);font-size:31px;margin:6px 0 8px;font-weight:600}
+  .secdesc{color:var(--muted);margin:0 0 26px;max-width:72ch}
+  .secdesc b{color:var(--ink)}
+
+  .stats{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:14px;
+         background:var(--panel);overflow:hidden;margin:6px 0 28px}
+  .stat{flex:1 1 150px;padding:18px 20px;border-right:1px solid var(--line)}
+  .stat:last-child{border-right:0}
+  .stat b{display:block;font-family:var(--serif);font-size:31px}
+  .stat:nth-child(1) b{color:var(--amber)} .stat:nth-child(2) b{color:var(--rose)}
+  .stat:nth-child(3) b{color:var(--violet)} .stat:nth-child(4) b{color:var(--teal)}
+  .stat:nth-child(5) b{color:var(--ink)}
+  .stat span{font-size:13px;color:var(--muted)}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--c,var(--violet));
+        border-radius:14px;padding:24px;display:flex;flex-direction:column;
+        transition:transform .15s,box-shadow .15s}
+  .card:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(25,21,48,.10)}
+  .card h3{margin:0 0 4px;font-size:20px;font-family:var(--serif)}
+  .card .tag{font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--c,var(--violet));margin-bottom:8px}
+  .card p{color:var(--muted);font-size:14.5px;margin:0 0 16px;flex:1}
+  .card .nums{font-size:12.5px;color:var(--muted);margin-bottom:12px}
+  .card .nums b{color:var(--ink)}
+  .card .go{font-weight:700;font-size:14.5px;color:var(--c,var(--violet))}
+
+  .prin{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px}
+  .p-card{border:1px solid var(--line);border-left:4px solid var(--c,var(--violet));border-radius:14px;
+          padding:22px 24px;background:var(--panel)}
+  .p-card h3{font-family:var(--serif);font-size:19px;margin:0 0 8px;font-style:italic}
+  .p-card p{font-size:14.5px;color:var(--muted);margin:0}
+  .p-card p b{color:var(--ink)}
+
+  .post{display:block;padding:20px 0;border-bottom:1px solid var(--line);color:inherit}
+  .post:hover{text-decoration:none}
+  .post h3{font-family:var(--serif);font-size:21px;margin:0 0 6px;transition:color .12s}
+  .post:hover h3{color:var(--rose)}
+  .post .pdate{font-size:13px;color:var(--muted);letter-spacing:.4px}
+  .post p{color:var(--muted);font-size:15px;margin:6px 0 0;max-width:75ch}
+
+  footer{margin-top:56px;background:var(--night);color:#a89ee0;font-size:14px;padding:30px 0 44px}
+  footer .wrap{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+  footer a{color:#cfc9ec;font-weight:600} footer a:hover{color:#fff}
+  @media print{nav,.ctas{display:none}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <nav><div class="wrap navrow">
+    <a class="mark" href="/"><svg width="26" height="26" viewBox="0 0 32 32"><defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset=".5" stop-color="#f43f5e"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect x="1" y="1" width="30" height="30" rx="8" fill="#221a44"/><g fill="none" stroke="url(#tg)" stroke-width="2.4" stroke-linecap="round"><path d="M5 10.5 Q16 8 27 10.5" stroke-width="2.8"/><path d="M7.5 14.5 H24.5"/><path d="M10 11 V25"/><path d="M22 11 V25"/></g></svg>
+    <span>ron<span class="iam">iam</span>.dev</span></a>
+    <div class="navlinks">
+      <a href="#dojos">The dojos</a>
+      <a href="#identity">Identity</a>
+      <a href="#principles">How I lead</a>
+      <a href="/blog/">Writing</a>
+    </div>
+  </div></nav>
+
+  <div class="wrap"><header class="hero">
+    <div class="domain">ron<span class="iam">iam</span>.dev &nbsp;=&nbsp; <b>Ron</b> + <b>IAM</b> &nbsp;·&nbsp; identity &amp; access management</div>
+    <h1>Hi, I'm Ron. <span class="iam">I&nbsp;AM</span> what I do.</h1>
+    <p class="tagline">roniam = Ron + IAM. Identity in both senses: the field I work in, and the fact
+    that developing engineers is who I am.</p>
+    <p class="lede">I'm <b>Ron Bar-Tor</b>, an engineering manager whose technical home is
+    <b>identity</b>: OAuth&nbsp;2.1, OIDC, SAML, WebAuthn, Kerberos, zero trust. I built this site to
+    pass on what I've accumulated: <b>three interactive courses</b> spanning identity, software
+    engineering and JavaScript, plus an engineering blog. The aim is to <b>develop engineers</b>, not
+    park them in tutorial hell: every lesson ends with you doing the work, and CI gates hold the
+    material to the same bar I'd hold a team to.</p>
+    <div class="ctas">
+      <a class="btn" href="#dojos">Train in the dojos</a>
+      <a class="btn alt" href="/blog/">Read the writing</a>
+    </div>
+    <div class="social">
+      <a href="https://github.com/rcbart">GitHub</a> ·
+      <a href="https://www.linkedin.com/in/ron-bar-tor">LinkedIn</a> ·
+      <a href="mailto:rcbart@gmail.com">rcbart@gmail.com</a>
+    </div>
+  </header></div>
+</div>
+
+<div class="pull"><figure id="quote" title="Click for another">
+  <blockquote id="quoteText">“A check that produces a report is a signal. A check that can refuse to
+  let your work ship is a gate.”</blockquote>
+  <figcaption><span id="quoteSrc">from “My tests were green…”</span> · <span class="hintq">↻ click for another</span></figcaption>
+</figure></div>
+
+<div class="wrap">
+
+  <section id="dojos">
+    <div class="k amber">Proof of work</div>
+    <h2>Don't take my word for it. Take the course.</h2>
+    <p class="secdesc">Tutorial hell is watching someone else code. The way out is doing the work, so
+    <b>every lesson here ends with an exercise you complete yourself</b>, in the page. Three platforms,
+    each a single self-contained HTML file with <b>zero dependencies</b>: they run offline, from a USB
+    stick if you like. Every push is gated by five CI checks, including one that executes every graded
+    exercise against its own reference solution. Free, no accounts, no tracking. Knowledge shared is
+    the whole point.</p>
+
+    <div class="stats">
+      <div class="stat"><b>58</b><span>tracks &amp; streams</span></div>
+      <div class="stat"><b>409</b><span>lessons</span></div>
+      <div class="stat"><b>624</b><span>hands-on exercises</span></div>
+      <div class="stat"><b>2,934</b><span>content-gate assertions</span></div>
+      <div class="stat"><b>0</b><span>dependencies</span></div>
+    </div>
+
+    <div class="cards">
+      <div class="card" style="--c:var(--rose)">
+        <div class="tag">Identity &amp; access</div>
+        <h3>🛂 IdentityDojo</h3>
+        <div class="nums"><b>14 streams · 149 lessons · 159 exercises</b></div>
+        <p>The deep one, and the IAM in roniam. Every OAuth 2.0/2.1 and OIDC flow diagrammed step by step,
+        SAML, JOSE, WebAuthn/FIDO2 internals, Kerberos &amp; Active Directory, SPIFFE, and zero trust,
+        through to running identity in production: incidents, migrations, break-glass.</p>
+        <a class="go" href="/identity/">Enter IdentityDojo →</a>
+      </div>
+      <div class="card" style="--c:var(--violet)">
+        <div class="tag">Software engineering</div>
+        <h3>🥋 DevDojo</h3>
+        <div class="nums"><b>29 tracks · 207 lessons · 374 exercises</b></div>
+        <p>End to end: Java &amp; the JVM, algorithms, web &amp; HTTP, React, APIs, Spring, SQL against
+        real in-browser data, concurrency, DevOps, and a senior architecture track.</p>
+        <a class="go" href="/dev/">Enter DevDojo →</a>
+      </div>
+      <div class="card" style="--c:var(--amber)">
+        <div class="tag">JavaScript &amp; Node</div>
+        <h3>⚡ JSDojo</h3>
+        <div class="nums"><b>15 streams · 53 lessons · 91 exercises</b></div>
+        <p>JavaScript from the ground up, every exercise executed for real in a sandboxed Web Worker:
+        your code runs, and the grade is the result.</p>
+        <a class="go" href="/js/">Enter JSDojo →</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="identity">
+    <div class="k rose">The IAM in roniam</div>
+    <h2>Identity is the perimeter.</h2>
+    <p class="secdesc">Most of my technical depth lives where authentication, authorization and
+    federation meet production reality. If you want to know how I think about a protocol, the relevant
+    IdentityDojo stream is the answer at full length. Every authentication flow is walked through step by
+    step, with sequence diagrams and the attacks that shaped each design. Highlights:
+    <a href="/identity/">OAuth 2.0 &amp; OIDC</a> · <a href="/identity/">SAML &amp; Web SSO</a> ·
+    <a href="/identity/">WebAuthn &amp; passkeys</a> · <a href="/identity/">Kerberos &amp; AD</a> ·
+    <a href="/identity/">service-to-service auth &amp; SPIFFE</a> ·
+    <a href="/identity/">advanced OAuth threats</a> · <a href="/identity/">running identity</a>.</p>
+  </section>
+
+  <section id="principles">
+    <div class="k violet">Management, practiced</div>
+    <h2>How I lead</h2>
+    <p class="secdesc">Principles I hold myself to as a manager, with the receipts where they can be
+    public.</p>
+    <div class="prin">
+      <div class="p-card" style="--c:var(--amber)">
+        <h3>“People ship software. I ship teams.”</h3>
+        <p>My output is the team's output. 1:1s are about the person, not the status report; growth
+        plans are written, revisited, and real. The best week is one where a decision got made well
+        <b>without me in the room</b>.</p>
+      </div>
+      <div class="p-card" style="--c:var(--rose)">
+        <h3>“Feedback is delivered fresh, never frozen.”</h3>
+        <p>Hard conversations happen in days, not at review season. Praise in public, correction in
+        private, both specific enough to act on. A surprise in a performance review is a failure, and it is <b>mine</b>.</p>
+      </div>
+      <div class="p-card" style="--c:var(--violet)">
+        <h3>“Disagree with me in public and win.”</h3>
+        <p>I run decisions so the best argument beats the highest title: written options, explicit
+        trade-offs, reversible-by-default calls, and a record of why. When someone junior overturns my
+        plan with better evidence, <b>that's the system working</b>.</p>
+      </div>
+      <div class="p-card" style="--c:var(--teal)">
+        <h3>“Encode the bar in gates, not in heroics.”</h3>
+        <p>Quality that depends on someone remembering to be careful doesn't survive a busy quarter.
+        I put the standard into CI where it can say no on my behalf; this site ships behind
+        <b>five such gates</b>, and they've caught what review missed.</p>
+      </div>
+      <div class="p-card" style="--c:var(--rose)">
+        <h3>“Honest numbers stay useful. Inflated ones stop.”</h3>
+        <p>I'd rather report an uncomfortable 8% truthfully than a comfortable 100% nobody can act on.
+        The repo badge here says <i>content checks</i>, not <i>tests</i>, for exactly that reason:
+        flattered metrics <b>stop informing decisions</b>, including mine.</p>
+      </div>
+      <div class="p-card" style="--c:var(--amber)">
+        <h3>“Volunteer the weakness before it's found.”</h3>
+        <p>Postmortems are blameless, limitations are stated first, and "here's what I'd do differently"
+        comes from me before anyone asks. Owning the gap is cheaper than defending it, <b>in code
+        review and in careers</b>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="writing">
+    <div class="k teal">Writing</div>
+    <h2>Essays &amp; post-mortems</h2>
+    <p class="secdesc">Engineering management, identity, and the occasional bug worth a post-mortem.</p>
+    @@POSTS@@
+    <p style="margin-top:18px"><a href="/blog/" style="font-weight:700">All posts →</a></p>
+  </section>
+
+</div>
+
+<footer><div class="wrap">
+  <span>© @@YEAR@@ Ron Bar-Tor · ron<span class="iam">iam</span>.dev</span>
+  <a href="https://github.com/rcbart">GitHub</a>
+  <a href="https://www.linkedin.com/in/ron-bar-tor">LinkedIn</a>
+  <a href="mailto:rcbart@gmail.com">rcbart@gmail.com</a>
+  <a href="/courses/">Cloud-native path</a>
+  <span style="margin-left:auto">Built by hand. Zero dependencies, like everything else here.</span>
+</div></footer>
+
+<script>
+// quotable: rotate pull-quotes on click; no storage, no deps
+(function(){
+  const qs=[
+    ['“A check that produces a report is a signal. A check that can refuse to let your work ship is a gate.”','from “My tests were green…”'],
+    ['“Don’t take my word for it. Take the course.”','on sharing knowledge'],
+    ['“Tutorial hell is watching someone else code. The way out is doing the work.”','on developing engineers'],
+    ['“Identity is the perimeter.”','on zero trust'],
+    ['“People ship software. I ship teams.”','on management'],
+    ['“roniam: because ‘Ron’ and ‘IAM’ were never really two different words.”','on the domain name'],
+    ['“What kind of bug would survive everything we currently run?”','the question worth a slow afternoon'],
+    ['“Honest numbers stay useful. Inflated ones stop.”','on metrics'],
+  ];
+  let i=0;
+  const t=document.getElementById('quoteText'), s=document.getElementById('quoteSrc');
+  document.getElementById('quote').addEventListener('click',()=>{
+    i=(i+1)%qs.length; t.textContent=qs[i][0]; s.textContent=qs[i][1];
+  });
+})();
+</script>
+</body>
+</html>
