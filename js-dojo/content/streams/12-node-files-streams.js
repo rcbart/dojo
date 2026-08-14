@@ -293,12 +293,12 @@ behavior:`Six cases execute. The third is the point: a 1 MB unbounded input stil
 hints:['Unbounded is the stronger condition — check it first and return.','The threshold comparison is strictly greater than.','Only bounded, small inputs are safe to read whole.']},
 {title:'Consume a stream with backpressure',diff:'hard',lang:'js',
 run:{call:'drainPlan',cases:[
- {name:'the writer keeps up, so nothing pauses',args:[[1,1,1],3],expect:{written:3,pauses:0,maxBuffered:1}},
- {name:'a slow writer forces a pause',args:[[3,3],2],expect:{written:2,pauses:1,maxBuffered:3}},
- {name:'buffer fills exactly and pauses',args:[[2,2],2],expect:{written:2,pauses:1,maxBuffered:2}},
+ {name:'the writer keeps up, so nothing pauses',args:[[1,1,1],5],expect:{written:3,pauses:0,maxBuffered:3}},
+ {name:'a slow writer forces a pause',args:[[3,1],4],expect:{written:2,pauses:1,maxBuffered:4}},
+ {name:'buffer fills exactly and pauses',args:[[1,1],2],expect:{written:2,pauses:1,maxBuffered:2}},
  {name:'nothing to write',args:[[],5],expect:{written:0,pauses:0,maxBuffered:0}},
  {name:'a single oversized chunk still gets written',args:[[10],2],expect:{written:1,pauses:1,maxBuffered:10}},
- {name:'repeated pauses across many chunks',args:[[2,2,2,2],2],expect:{written:4,pauses:3,maxBuffered:2}}]},
+ {name:'repeated pauses across many chunks',args:[[2,2,2,2],2],expect:{written:4,pauses:4,maxBuffered:2}}]},
 prompt:`Write <code>function drainPlan(chunks, highWaterMark)</code> modelling backpressure. Process each chunk in order: add its size to the buffer and count it as written. If the buffer then reaches or exceeds <code>highWaterMark</code>, the writer signals "full" — count a <b>pause</b> and drain the buffer back to 0 before the next chunk. Return <code>{ written, pauses, maxBuffered }</code>, where <code>maxBuffered</code> is the highest the buffer ever reached. The final chunk pausing still counts.`,
 starter:`function drainPlan(chunks, highWaterMark) {
   return { written: 0, pauses: 0, maxBuffered: 0 };

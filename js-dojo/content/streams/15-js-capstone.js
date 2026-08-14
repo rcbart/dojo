@@ -140,7 +140,7 @@ solution:`function rateLimit(timestamps, limit, windowMs) {
 
   for (const t of timestamps) {
     const cutoff = t - windowMs;
-    const inWindow = allowed.filter(a => a > cutoff);   // slide the window
+    const inWindow = allowed.filter(a => a >= cutoff);  // window edge is INSIDE
     if (inWindow.length < limit) {
       allowed.push(t);                                   // record only successes
       out.push(true);
@@ -189,12 +189,12 @@ behavior:`Seven cases execute and two pin the ordering. Case 3 sends an invalid 
 hints:['The rate limit is the first check — it should cost nothing to refuse.','Handle the /links path separately from the redirect paths.','Check known before expired: expiry is only a fact about a link that exists.']},
 {title:'5. Diagnose it in production',diff:'hard',lang:'js',
 run:{call:'triageService',cases:[
- {name:'a blocked loop explains everything else',args:{loopLagMs:350,error5xxRate:0.4,heapTrend:'rising',redirectLatencyMs:900,limitRejectRate:0.1},expect:{cause:'blocked event loop',action:'CPU profile the redirect path'}},
- {name:'a rising heap with a healthy loop is a leak',args:{loopLagMs:5,error5xxRate:0.0,heapTrend:'rising',redirectLatencyMs:20,limitRejectRate:0.1},expect:{cause:'memory leak',action:'compare two heap snapshots'}},
- {name:'mass rejections mean the limit is too tight',args:{loopLagMs:5,error5xxRate:0.0,heapTrend:'flat',redirectLatencyMs:20,limitRejectRate:0.6},expect:{cause:'rate limit too tight',action:'raise the limit or widen the window'}},
- {name:'errors without any of the above need the logs',args:{loopLagMs:5,error5xxRate:0.3,heapTrend:'flat',redirectLatencyMs:20,limitRejectRate:0.1},expect:{cause:'application errors',action:'read the 5xx logs by request id'}},
- {name:'a leak is diagnosed before mass rejections',args:{loopLagMs:5,error5xxRate:0.0,heapTrend:'rising',redirectLatencyMs:20,limitRejectRate:0.9},expect:{cause:'memory leak',action:'compare two heap snapshots'}},
- {name:'everything healthy',args:{loopLagMs:5,error5xxRate:0.0,heapTrend:'flat',redirectLatencyMs:20,limitRejectRate:0.1},expect:{cause:'healthy',action:'no action'}}]},
+ {name:'a blocked loop explains everything else',args:[{loopLagMs:350,error5xxRate:0.4,heapTrend:'rising',redirectLatencyMs:900,limitRejectRate:0.1}],expect:{cause:'blocked event loop',action:'CPU profile the redirect path'}},
+ {name:'a rising heap with a healthy loop is a leak',args:[{loopLagMs:5,error5xxRate:0.0,heapTrend:'rising',redirectLatencyMs:20,limitRejectRate:0.1}],expect:{cause:'memory leak',action:'compare two heap snapshots'}},
+ {name:'mass rejections mean the limit is too tight',args:[{loopLagMs:5,error5xxRate:0.0,heapTrend:'flat',redirectLatencyMs:20,limitRejectRate:0.6}],expect:{cause:'rate limit too tight',action:'raise the limit or widen the window'}},
+ {name:'errors without any of the above need the logs',args:[{loopLagMs:5,error5xxRate:0.3,heapTrend:'flat',redirectLatencyMs:20,limitRejectRate:0.1}],expect:{cause:'application errors',action:'read the 5xx logs by request id'}},
+ {name:'a leak is diagnosed before mass rejections',args:[{loopLagMs:5,error5xxRate:0.0,heapTrend:'rising',redirectLatencyMs:20,limitRejectRate:0.9}],expect:{cause:'memory leak',action:'compare two heap snapshots'}},
+ {name:'everything healthy',args:[{loopLagMs:5,error5xxRate:0.0,heapTrend:'flat',redirectLatencyMs:20,limitRejectRate:0.1}],expect:{cause:'healthy',action:'no action'}}]},
 prompt:`Write <code>function triageService(m)</code> returning <code>{ cause, action }</code> from live metrics, in this order. <code>loopLagMs</code> above 100 &rarr; <code>"blocked event loop"</code> / <code>"CPU profile the redirect path"</code>. Then <code>heapTrend</code> of <code>"rising"</code> &rarr; <code>"memory leak"</code> / <code>"compare two heap snapshots"</code>. Then <code>limitRejectRate</code> above 0.5 &rarr; <code>"rate limit too tight"</code> / <code>"raise the limit or widen the window"</code>. Then <code>error5xxRate</code> above 0.1 &rarr; <code>"application errors"</code> / <code>"read the 5xx logs by request id"</code>. Otherwise <code>"healthy"</code> / <code>"no action"</code>.`,
 starter:`function triageService(m) {
   return { cause: null, action: null };
