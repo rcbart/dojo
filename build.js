@@ -20,6 +20,9 @@ const script = engine('sqlengine.js')
   + read('src/gradejava.js')
   + read('src/quizzes_hand.js')
   + read('src/quizzes.js')
+  + engine('glossary.js')   // must precede app.js: merges terms into KW at load
+  + engine('grade.js')
+  + engine('feedback.js')
   + engine('app.js')
   + data
   + engine('boot.js');

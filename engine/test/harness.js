@@ -10,7 +10,9 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
-const src = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+// Same files, same order, as every course's build.js concatenates them.
+const PARTS = ['glossary.js', 'grade.js', 'feedback.js', 'app.js'];
+const src = PARTS.map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
 
 function stubElement() {
   const el = {
