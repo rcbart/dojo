@@ -588,7 +588,37 @@ that an OAuth deployment is as strong as it reasonably can be, FAPI is the list 
 model reality, whether the resource server checks record ownership, or whether your support tooling
 lets staff read any account. A fully certified deployment can still have an IDOR on its main endpoint.
 Protocol hardening and authorization correctness are different problems, and only one of them has a
-test suite.</p>`,
+test suite.</p>
+
+<h4>Grant Management: treating the grant as a thing you can manage</h4>
+<p>Ordinary OAuth has a blind spot. A user consents, tokens are issued, and after that <b>nobody can
+enumerate what was actually granted</b>. Ask "which permissions does this bank's app currently hold for me,
+and when were they given?" and the protocol has no answer — the grant exists only as a consequence of tokens
+that were minted at some point.</p>
+<p>That is tolerable for a photo-sharing app and not tolerable under open banking, where a regulator expects
+a customer to see and withdraw individual consents. The <b>Grant Management API</b> (a FAPI 2.0 extension)
+fixes it by making the grant a <b>first-class resource with its own identifier</b>.</p>
+<div class="codeSample" data-hl>// on /authorize, say what to do with the grant:
+grant_management_action=create   // a new grant; the response carries a grant_id
+                       =update   // ADD scopes to an existing grant
+                       =replace  // swap its contents entirely
+                       =merge
+
+// then the grant can be inspected and revoked on its own:
+GET    /grants/{grant_id}    -> the scopes and claims currently granted
+DELETE /grants/{grant_id}    -> revoke THIS grant, and every token from it
+
+// what this buys, and it is not cosmetic:
+//   the user can be shown a truthful list of what each app holds
+//   incremental consent stops silently REPLACING the previous grant
+//   revocation is per-grant, not "log out everywhere"</div>
+<p>The problem it removes is subtle and real. Without it, an app asking for one extra scope starts a fresh
+authorization that may <b>replace</b> everything previously granted — so a user who declines the new
+permission can lose the ones they had already agreed to, with nothing in the protocol saying that happened.
+<code>update</code> versus <code>replace</code> makes that an explicit, auditable choice.</p>
+<p>You will meet this in regulated finance rather than in general-purpose OAuth, and it is worth recognising
+because it is the direction the mature end of the ecosystem is moving: consent as a durable, inspectable
+record rather than a side effect of a redirect.`,
 docs:[['FAPI 2.0 Security Profile','https://openid.net/specs/fapi-security-profile-2_0-final.html'],['FAPI 2.0 Message Signing','https://openid.net/specs/fapi-message-signing-2_0.html'],['RFC 9126 — Pushed Authorization Requests','https://www.rfc-editor.org/rfc/rfc9126'],['RFC 9101 — JWT-Secured Authorization Request (JAR)','https://www.rfc-editor.org/rfc/rfc9101'],['OpenID Foundation — certification','https://openid.net/certification/']],
 ex:{title:'Check a deployment against the FAPI baseline',
 prompt:`Write <code>Fapi</code> with three methods. <code>static boolean clientAuthOk(String method)</code> accepts only <code>"private_key_jwt"</code> and <code>"tls_client_auth"</code>, rejecting <code>"client_secret_basic"</code>, <code>"client_secret_post"</code>, <code>"none"</code> and null — no shared secret is permitted. <code>static boolean tokenBindingOk(String binding)</code> accepts only <code>"mtls"</code> and <code>"dpop"</code>, rejecting <code>"bearer"</code> and null. <code>static boolean baselineCompliant(boolean pkceS256, boolean par, String clientAuth, String tokenBinding, boolean exactRedirect)</code> is true only when every requirement holds.`,

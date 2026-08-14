@@ -392,6 +392,90 @@ public class Claims {
     }
 }`}},
 
+{id:'idfpair',title:'Pairwise identifiers: the same person, different names',body:`
+<p>Every application you sign into with the same identity provider receives an identifier for you. If they
+all receive the <b>same</b> one, then any two of them can compare notes and discover they are talking about
+the same person — without asking you, and without either of them holding your name.</p>
+
+<h4>The problem, concretely</h4>
+<p>Suppose a fertility clinic, a job board and a debt advice service all use the same social login. Each
+receives <code>sub = 7c9e6679-...</code>. None of them knows who you are. But if two of them share data —
+through an advertising network, a data broker, or a breach — that shared identifier <b>joins the two
+records</b>, and the combination reveals something neither held alone.</p>
+<p>This is <b>correlation</b>, and it is a privacy failure rather than a security one. Nothing was stolen;
+the identifier did exactly what it was designed to do.</p>
+
+<h4>Public versus pairwise</h4>
+<div class="codeSample" data-hl>PUBLIC       every relying party gets the SAME sub for this user.
+  app A  ->  sub = 7c9e6679-7425-40de-944b-e07fc1f90ae7
+  app B  ->  sub = 7c9e6679-7425-40de-944b-e07fc1f90ae7
+             ^ identical. A and B can join their records.
+
+PAIRWISE     each relying party gets a DIFFERENT sub for the same user.
+  app A  ->  sub = 2f4c...   derived from (user, A's sector, a salt)
+  app B  ->  sub = 9ab1...   derived from (user, B's sector, the salt)
+             ^ unlinkable without the IdP's salt.
+
+// the derivation is deterministic, so app A sees the SAME 2f4c...
+// every time you return - the identifier is still stable, just local.</div>
+
+<h4>Sector identifiers, and the problem they solve</h4>
+<p>If pairwise is derived per <i>client</i>, an organisation running five applications gets five different
+identifiers for one user — and now <i>they</i> cannot recognise their own customer across their own
+products. That is the opposite problem.</p>
+<p>A <b>sector identifier</b> is the grouping key. Several clients declare the same sector, so they receive
+the same pairwise <code>sub</code> as each other and a different one from everyone else. The sector is
+proved by hosting a JSON file listing the redirect URIs that belong to it, so a client cannot simply claim
+somebody else's sector and inherit their identifiers.</p>
+<div class="codeSample" data-hl>subject_type = pairwise
+sector_identifier_uri = https://example.com/redirect_uris.json
+   // that file lists every redirect URI in the sector, and the IdP
+   // checks each client's registered URI appears in it.
+
+sub = hash(sector_identifier + local_user_id + salt)
+
+// same sector  -> same sub  (one company recognises its own user)
+// other sector -> different sub  (nobody else can join to it)</div>
+
+<h4>What it costs, and when not to use it</h4>
+<p><b>Support becomes harder.</b> A user quoting "my ID is 2f4c..." means nothing to anyone but that one
+application, and correlating a complaint across systems now needs the IdP.</p>
+<p><b>Migration is awkward.</b> Switching an existing integration from public to pairwise changes every
+identifier at once, so every account is orphaned unless you run a mapping table through the transition.</p>
+<p><b>It is wrong inside one trust boundary.</b> Workforce identity <i>wants</i> correlation: HR, payroll
+and the helpdesk are supposed to be talking about the same employee. Pairwise is a <b>CIAM</b> tool, which
+is the CIAM-versus-workforce distinction from earlier in this stream showing up as a concrete technical
+default.</p>
+
+<h4>The rule</h4>
+<p><b>Public for workforce and for applications you control. Pairwise for consumer identity, and
+particularly wherever the mere fact of using a service is sensitive</b> — health, finance, legal,
+employment. Apple's Sign in with Apple made the strong version of this famous by also offering a relay
+email address, which extends the same idea from the identifier to the contact detail.</p>
+<p>And the caveat worth stating: pairwise stops correlation <i>by identifier</i>. It does nothing about an
+email address, a phone number or a device fingerprint shared between the same two parties. It is one
+control, not a privacy guarantee.</p>`,
+docs:[['OIDC Core — pairwise subject identifiers','https://openid.net/specs/openid-connect-core-1_0.html#PairwiseAlg'],['OIDC Core — sector identifier','https://openid.net/specs/openid-connect-registration-1_0.html#SectorIdentifierValidation'],['NIST SP 800-63C — federation and privacy','https://pages.nist.gov/800-63-3/sp800-63c.html']],
+ex:{title:'Public or pairwise?',lang:'js',
+run:{call:'subjectType',cases:[
+ {name:'a consumer health app',args:['consumer','health',false],expect:'pairwise'},
+ {name:'a consumer shopping app',args:['consumer','retail',false],expect:'pairwise'},
+ {name:'internal HR tooling',args:['workforce','hr',false],expect:'public'},
+ {name:'workforce, even for sensitive data',args:['workforce','health',false],expect:'public'},
+ {name:'consumer apps inside one company share a sector',args:['consumer','retail',true],expect:'pairwise-same-sector'},
+ {name:'workforce is unaffected by the sector flag',args:['workforce','hr',true],expect:'public'}]},
+prompt:`Write <code>function subjectType(population, domain, sameOrganisation)</code>. Workforce always returns <code>"public"</code> — correlation across internal systems is the point. Consumer returns <code>"pairwise-same-sector"</code> when the applications belong to one organisation, and <code>"pairwise"</code> otherwise.`,
+starter:`function subjectType(population, domain, sameOrganisation) {
+  return null;
+}`,
+solution:`function subjectType(population, domain, sameOrganisation) {
+  if (population === "workforce") return "public";   // checked FIRST
+  return sameOrganisation ? "pairwise-same-sector" : "pairwise";
+}`,
+tests:[{d:'workforce is always public',re:'"workforce"'},{d:'a shared sector groups an organisation',re:'pairwise-same-sector'},{d:'consumer defaults to pairwise',re:'"pairwise"'}],
+behavior:`Six cases execute, and the fourth is the one that pins the ordering: workforce identity stays public even when the data is sensitive, because HR, payroll and the helpdesk are supposed to be able to recognise the same employee. Checking the domain before the population would get that backwards. The sector flag exists so one company's five consumer apps still recognise their own customer while remaining unlinkable to anyone else.`,
+hints:['Population is the stronger condition — check it before anything else.','Workforce wants correlation; consumer identity wants to prevent it.','The sector groups applications that belong to the same organisation.']}},
+
 {id:'idftok',title:'What a token actually is (and how it differs from a JWT)',body:`
 <p>Every lesson from here on says <b>token</b> constantly. Before that word can carry any weight, you
 need to know what one physically <i>is</i>: what it looks like on the wire, who makes it, what is

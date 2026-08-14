@@ -1,7 +1,7 @@
 # Identity & Access Management — complete topic map
 
 The IAM domain, organized by sub-category in reading order, with the concepts each lesson covers.
-All 14 sub-categories are built: **132 lessons, 139 exercises, 648 checks**. ⬜ marks topics
+All 14 sub-categories are built: **134 lessons, 141 exercises, 656 checks**. ⬜ marks topics
 identified but not yet written.
 
 The 14 content modules (`16b`–`16n` plus the `16z` capstone) merge at runtime into a single
