@@ -54,6 +54,21 @@ db.exec(`
     data         TEXT NOT NULL DEFAULT '{}',
     PRIMARY KEY (username, exercise_key)
   );
+
+  /* Lesson ratings. Phase 1 stores the signal only; the comment column exists
+     now so phase 2 (written feedback) is an UPDATE rather than a migration.
+     One row per user per lesson — re-rating overwrites rather than appends,
+     because the question is "what do you think of this lesson", not "what did
+     you think each time you visited". */
+  CREATE TABLE IF NOT EXISTS ratings (
+    username   TEXT NOT NULL REFERENCES users(username) ON DELETE CASCADE,
+    lesson_key TEXT NOT NULL,
+    rating     INTEGER NOT NULL CHECK (rating IN (-1, 0, 1)),
+    comment    TEXT,
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (username, lesson_key)
+  );
+  CREATE INDEX IF NOT EXISTS idx_ratings_lesson ON ratings(lesson_key);
 `);
 
 /* one-time migration from the JSON store */
@@ -121,6 +136,46 @@ exports.setActive = (username, active) => stmts.setActive.run(active ? 1 : 0, us
 exports.deleteUser = username => stmts.del.run(username);
 exports.listUsers = () => stmts.listAll.all().map(r => ({
   ...rowToUser(r), doneCount: r.done_count,
+}));
+
+/* ------------------------------- ratings -------------------------------- */
+
+const rStmts = {
+  upsert: db.prepare(`INSERT INTO ratings (username, lesson_key, rating, comment, updated_at)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(username, lesson_key) DO UPDATE SET
+      rating = excluded.rating,
+      comment = COALESCE(excluded.comment, ratings.comment),
+      updated_at = excluded.updated_at`),
+  mine: db.prepare('SELECT lesson_key, rating, comment, updated_at FROM ratings WHERE username = ?'),
+  totals: db.prepare(`SELECT lesson_key,
+      SUM(rating =  1) AS up,
+      SUM(rating =  0) AS neutral,
+      SUM(rating = -1) AS down,
+      COUNT(*)         AS total
+    FROM ratings GROUP BY lesson_key ORDER BY down DESC, total DESC`),
+};
+
+/** Record or change one user's rating of one lesson. comment is phase 2. */
+exports.rateLesson = (username, lessonKey, rating, comment) => {
+  if (![-1, 0, 1].includes(rating)) throw new Error('rating must be -1, 0 or 1');
+  if (typeof lessonKey !== 'string' || !/^[\w.:-]{1,64}$/.test(lessonKey)) throw new Error('bad lesson key');
+  const text = typeof comment === 'string' && comment.trim() ? comment.trim().slice(0, 2000) : null;
+  rStmts.upsert.run(username, lessonKey, rating, text, Date.now());
+};
+
+exports.getRatings = username => {
+  const out = {};
+  for (const r of rStmts.mine.all(username)) {
+    out[r.lesson_key] = { rating: r.rating, comment: r.comment || undefined, updatedAt: r.updated_at };
+  }
+  return out;
+};
+
+/** Aggregate across all users — the point of collecting this at all. */
+exports.ratingTotals = () => rStmts.totals.all().map(r => ({
+  lesson: r.lesson_key, up: r.up, neutral: r.neutral, down: r.down, total: r.total,
+  score: r.total ? Math.round(((r.up - r.down) / r.total) * 100) : null,
 }));
 
 /* ------------------------------ progress ------------------------------- */

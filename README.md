@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/lessons-206-8b5cf6" alt="lessons">
   <img src="https://img.shields.io/badge/exercises-372-06b6d4" alt="exercises">
   <img src="https://img.shields.io/badge/content%20checks-1866-2ea44f" alt="content integrity checks">
-  <img src="https://img.shields.io/badge/engine%20tests-23-2ea44f" alt="engine unit tests">
+  <img src="https://img.shields.io/badge/engine%20tests-28-2ea44f" alt="engine unit tests">
   <img src="https://img.shields.io/badge/executed%20exercises-31-06b6d4" alt="exercises graded by real execution">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>

@@ -330,9 +330,31 @@ async function handle(req, res) {
     return json(res, 200, { progress: db.getProgress(me.username) });
   }
 
+  /* ---------- lesson ratings ---------- */
+
+  if (p === '/api/ratings' && req.method === 'GET') {
+    if (!authed) return json(res, 401, { error: 'not signed in' });
+    return json(res, 200, { ratings: db.getRatings(me.username) });
+  }
+  if (p === '/api/ratings' && req.method === 'POST') {
+    if (!authed) return json(res, 401, { error: 'not signed in' });
+    let body; try { body = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+    const lesson = body && body.lesson;
+    const rating = body && Number(body.rating);
+    try {
+      db.rateLesson(me.username, String(lesson), rating, body && body.comment);
+    } catch (e) { return json(res, 400, { error: e.message }); }
+    return json(res, 200, { ok: true });
+  }
+
   /* ---------- admin ---------- */
 
   const isAdmin = authed && me.role === 'admin';
+
+  if (p === '/api/admin/ratings' && req.method === 'GET') {
+    if (!isAdmin) return json(res, authed ? 403 : 401, { error: 'admin only' });
+    return json(res, 200, { ratings: db.ratingTotals() });   // worst-rated first
+  }
 
   if (p === '/api/admin/users' && req.method === 'GET') {
     if (!isAdmin) return json(res, authed ? 403 : 401, { error: 'admin only' });

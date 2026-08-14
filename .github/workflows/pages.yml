@@ -46,6 +46,18 @@ jobs:
       - name: Execute every graded exercise against its own solution
         run: node scripts/verify-exec.js
 
+      # Fourth gate: COMPILE every self-contained Java reference solution. The
+      # other three never compile Java at all — 331 exercises are graded by
+      # regex, so a model answer with a syntax error would ship as the answer.
+      # Pinned to 21 so records, sealed types and text blocks parse.
+      - name: Set up a JDK for the Java compile gate
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Compile every Java reference solution
+        run: node scripts/verify-java.js
+
       - name: Build DevDojo
         run: node build.js
       - name: Build IdentityDojo

@@ -10,7 +10,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { load } = require('./harness.js');
 
-const { localChecks, buildWorkerSrc, exDiff, shuffleQuiz, esc } = load();
+const { localChecks, buildWorkerSrc, exDiff, shuffleQuiz, esc,
+        rateAggregate, ratingMarkup, setRating, getRating } = load();
 
 /* ---------------------------------------------------------------- grading */
 test('localChecks passes a matching regex', () => {
@@ -176,4 +177,50 @@ test('esc neutralises HTML in learner-visible strings', () => {
 test('esc handles empty and undefined input without throwing', () => {
   assert.doesNotThrow(() => esc(''));
   assert.doesNotThrow(() => esc(undefined));
+});
+
+/* ------------------------------------------------------- lesson ratings */
+/* Phase 1 of the feedback loop. The aggregate is pure, so it is tested
+   directly rather than through the DOM. */
+test('rateAggregate counts each value and ignores unrelated keys', () => {
+  const a = rateAggregate({
+    'rating:a': { v: 1 }, 'rating:b': { v: 1 }, 'rating:c': { v: 0 }, 'rating:d': { v: -1 },
+    'someExercise': { done: true },          // progress, not a rating
+    'rating:e': {},                          // written but never rated
+  });
+  assert.deepEqual({ up: a.up, neutral: a.neutral, down: a.down, rated: a.rated },
+                   { up: 2, neutral: 1, down: 1, rated: 4 });
+});
+
+test('rateAggregate scores -100..100 and is null with no ratings', () => {
+  assert.equal(rateAggregate({ 'rating:a': { v: 1 }, 'rating:b': { v: 1 } }).score, 100);
+  assert.equal(rateAggregate({ 'rating:a': { v: -1 }, 'rating:b': { v: -1 } }).score, -100);
+  assert.equal(rateAggregate({ 'rating:a': { v: 1 }, 'rating:b': { v: -1 } }).score, 0);
+  assert.equal(rateAggregate({}).score, null);
+  assert.equal(rateAggregate(undefined).rated, 0);
+});
+
+test('setRating stores a valid value and rejects anything else', () => {
+  assert.equal(setRating('lesson-x', 1), true);
+  assert.equal(getRating('lesson-x'), 1);
+  assert.equal(setRating('lesson-x', -1), true);      // changing a rating is allowed
+  assert.equal(getRating('lesson-x'), -1);
+  assert.equal(setRating('lesson-y', 7), false);      // out of range
+  assert.equal(setRating('lesson-y', '1'), false);    // wrong type, not coerced
+  assert.equal(getRating('lesson-y'), null);
+});
+
+test('ratingMarkup asks before a rating exists and confirms afterwards', () => {
+  assert.match(ratingMarkup('never-rated'), /Was this lesson useful\?/);
+  assert.match(ratingMarkup('never-rated'), /aria-pressed="false"/);
+  setRating('rated-one', 1);
+  const after = ratingMarkup('rated-one');
+  assert.match(after, /rating saved/);
+  assert.match(after, /aria-pressed="true"/);
+});
+
+test('a rating never collides with exercise progress under the same id', () => {
+  setRating('collide', 1);
+  const agg = rateAggregate({ 'rating:collide': { v: 1 }, 'collide': { done: true } });
+  assert.equal(agg.rated, 1);                          // the progress entry is not counted
 });

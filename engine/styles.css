@@ -346,3 +346,19 @@ details.depth[open]>summary::before{content:'▾'}
 .scaleBar{display:inline-block;margin:6px 0 18px;padding:7px 14px;border-radius:999px;
   background:linear-gradient(135deg,rgba(139,92,246,.16),rgba(6,182,212,.16));
   border:1px solid var(--line);font-size:13px;font-weight:700;letter-spacing:.2px}
+
+/* ---- lesson rating (phase 1: counts only; phase 2 adds a comment) ---- */
+.rateBox{margin-top:22px;padding-top:14px;border-top:1px solid var(--line,#26313d)}
+.rateRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rateAsk{font-size:13px;color:var(--muted);margin-right:4px}
+.rateAsk.done{color:#16a34a}
+.rateBtn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--line,#26313d);
+  color:var(--fg,#e6edf3);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
+.rateBtn:hover{border-color:#6a5cf5}
+.rateBtn:focus-visible{outline:2px solid #6a5cf5;outline-offset:2px}
+.rateBtn.on{background:#1d2b3a;border-color:#6a5cf5}
+.rateLbl{font-size:12.5px}
+.rateSkip{background:transparent;border:0;color:var(--muted);font-size:12.5px;cursor:pointer;text-decoration:underline}
+.ratePrompt{margin-top:12px;padding:12px;border:1px solid #6a5cf5;border-radius:10px;background:#141b23;font-size:13.5px}
+.ratePrompt .rateRow{margin-top:8px}
+@media (prefers-reduced-motion:reduce){.rateBtn{transition:none}}
