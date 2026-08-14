@@ -72,6 +72,9 @@ fails.)*
 
 ## Architecture
 
+> Full write-up: [**ARCHITECTURE.md**](ARCHITECTURE.md) — the three layers, the two CI gates, the
+> security model, and the decisions worth defending.
+
 Three decoupled layers — content is pure data, a vanilla-JS runtime renders it, and a build step
 fuses everything into one offline file. An optional Node/SQLite backend adds accounts and progress.
 
@@ -218,6 +221,8 @@ Separate hands-on courses, each a self-contained interactive site:
 
 ## Companion docs
 
+- `ARCHITECTURE.md` — how it is built and why: the three layers, the two CI gates, the security model,
+  and the decisions worth defending
 - `DEVDOJO_ROADMAP.md` — per-domain belt design and curriculum plan
 - `IAM_TOPICS.md` — the identity & access topic map
 - `LAUNCH_GUIDE.md` — hosting → backend → AI judge → sandboxed runner

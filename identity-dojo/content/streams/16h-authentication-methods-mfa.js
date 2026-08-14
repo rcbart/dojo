@@ -6,7 +6,55 @@ STREAMS.push({icon:'🔑',iam:true,sec:'Authentication & MFA',title:'Authenticat
 <div class="codeSample" data-hl>// pseudocode — a real app calls a library (e.g. Spring Security's Argon2PasswordEncoder)
 String hash = argon2id(password, randomSalt);   // store hash + params; never the password
 boolean ok  = argon2Verify(entered, hash);       // constant-time compare inside</div>
-<p>Alongside hashing, enforce a sane <b>policy</b>: length beats complexity (aim for 12+), and check new passwords against known-breached lists (credential stuffing reuses leaked passwords). Length is the cheapest security you can buy.</p>`,
+<p>Alongside hashing, enforce a sane <b>policy</b>: length beats complexity (aim for 12+), and check new passwords against known-breached lists (credential stuffing reuses leaked passwords). Length is the cheapest security you can buy.</p>
+
+<h4>Why "slow" is the feature</h4>
+<p>This is the part that sounds backwards. Everywhere else in engineering, faster is better. For a password
+hash, <b>slow is the entire product</b>.</p>
+<p>Think about who runs the function. You run it once, when a user logs in — 200 milliseconds is invisible
+to them. An attacker who has stolen your database runs it <i>billions of times</i>, against a wordlist. Make
+it a thousand times slower and the user notices nothing; the attacker's six-hour job becomes six months.
+That asymmetry is the whole design.</p>
+<div class="codeSample" data-hl>SHA-256      ~10,000,000,000 guesses/sec on a rented GPU rig
+             a leaked database of SHA-256 passwords is a WORDLIST with
+             extra steps. common passwords fall in seconds.
+
+Argon2id     tuned to ~200ms and ~64MB of MEMORY per guess
+             memory is the point: GPUs have thousands of cores and not
+             much memory each, so memory-hardness removes the attacker's
+             main advantage rather than just slowing them down.</div>
+
+<h4>Salt and pepper, plainly</h4>
+<p>A <b>salt</b> is a random value stored alongside the hash, different for every user. Without it, two
+people with the same password get the same hash — so an attacker cracks once and opens both accounts, and
+precomputed rainbow tables work. With it, every password must be attacked individually. It is not secret,
+and it does not need to be; a modern library generates and embeds it for you.</p>
+<p>A <b>pepper</b> is a single secret value mixed in, kept <i>outside</i> the database — in an HSM or the
+application's secret store. It buys one specific thing: if only the database leaks, the hashes are
+uncrackable without the pepper too. It costs you a rotation problem, so treat it as an addition for
+high-value systems rather than a default.</p>
+
+<h4>What the modern policy actually is</h4>
+<p>NIST SP 800-63B changed the advice, and much of the industry has not caught up:</p>
+<div class="codeSample" data-hl>DO                                   DO NOT
+require a minimum length (8+, 12+   impose composition rules
+  is better) and allow up to 64       ("one uppercase, one symbol") -
+allow ALL characters, spaces and      they produce Password1! and
+  emoji included                      nothing else
+check against known-breached lists  expire passwords on a schedule
+  and reject matches                  with no evidence of compromise -
+allow paste, so managers work         it only produces Summer2026 ->
+                                      Autumn2026
+                                    use hints or security questions</div>
+<p>The reasoning behind the two crossed-out habits is the same: they push people toward predictable
+patterns, so they lower real entropy while appearing to raise it.</p>
+
+<h4>Two implementation details</h4>
+<p><b>Compare in constant time.</b> A comparison that returns early leaks, through timing, how much of the
+value matched. Every real library does this internally, which is one more reason not to hand-roll.</p>
+<p><b>Never reveal whether the username exists.</b> "No such user" versus "wrong password" hands an attacker
+a free account-enumeration oracle. Return one message, and take roughly the same time on both paths — which
+means hashing a dummy value even when the user was not found.</p>`,
 docs:[['Password storage — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html'],['Argon2 (RFC 9106)','https://www.rfc-editor.org/rfc/rfc9106.html']],
 ex:{title:'Policy & algorithm choice',
 prompt:`Write class <code>Passwords</code> with two static methods: <code>String algorithm()</code> that returns <code>"argon2id"</code>, and <code>boolean strong(String pw)</code> that returns true only when <code>pw</code> is at least 12 characters long. Do not use MD5 or SHA-256 for password hashing.`,
@@ -609,7 +657,52 @@ hints:['Compute a sensitive flag first from the two high-risk actions joined by 
 <li><b>AAL — Authenticator Assurance Level</b> (login): how strong the <i>authentication</i> is. AAL1 = single factor; AAL2 = MFA; AAL3 = hardware-based, phishing-resistant (a security key/passkey with verifier binding).</li>
 <li><b>FAL — Federation Assurance Level</b> (assertion): how strongly the <i>federated assertion</i> is protected. FAL1 = signed; FAL2 = signed and encrypted; FAL3 = holder-of-key (the assertion is bound to a key the presenter must prove).</li>
 </ul>
-<p>The point is to <b>match assurance to risk</b>: reading public docs might need only IAL1/AAL1, while moving money needs high AAL (step-up to MFA or a passkey) and, for a regulated identity, higher IAL. The three scales are independent — you can have a strongly proofed identity (high IAL) logging in weakly (low AAL), which is itself a risk to notice.</p>`,
+<p>The point is to <b>match assurance to risk</b>: reading public docs might need only IAL1/AAL1, while moving money needs high AAL (step-up to MFA or a passkey) and, for a regulated identity, higher IAL. The three scales are independent — you can have a strongly proofed identity (high IAL) logging in weakly (low AAL), which is itself a risk to notice.</p>
+
+<h4>Why three scales instead of one</h4>
+<p>"How much do we trust this login?" is really three questions that people habitually collapse into one,
+and collapsing them produces bad decisions in both directions.</p>
+<div class="codeSample" data-hl>IAL  "is this the right HUMAN?"       - settled ONCE, at enrolment
+AAL  "is this that human, NOW?"       - settled at EVERY login
+FAL  "can I trust this MESSAGE about  - settled per federated assertion
+      them from another system?"
+
+// a concrete case that shows why they must be separate:
+//   a bank verified your passport in a branch          -> IAL2/3
+//   and lets you log in with a password alone          -> AAL1
+// strongly proofed, weakly authenticated. that gap IS the risk, and a
+// single combined score would hide it entirely.</div>
+
+<h4>What each level actually requires</h4>
+<p><b>IAL</b> is about evidence at enrolment. <b>IAL1</b> is self-asserted — anyone can type a name, which
+is right for a newsletter and wrong for a bank. <b>IAL2</b> means remote or in-person evidence was checked
+against authoritative sources. <b>IAL3</b> adds a supervised, in-person process. The cost rises steeply, and
+so does the amount of personal data you are then holding — which is a liability as well as an asset.</p>
+<p><b>AAL</b> is about the authenticator. <b>AAL1</b> is a single factor. <b>AAL2</b> is two independent
+factors — this is where a password plus TOTP lands. <b>AAL3</b> requires a hardware-based,
+<b>phishing-resistant</b> authenticator with verifier impersonation resistance, which in practice means a
+security key or a device-bound passkey. Note what that excludes: TOTP and push approvals are AAL2 and
+cannot reach AAL3, because they can be relayed.</p>
+<p><b>FAL</b> is about the assertion crossing a boundary. <b>FAL1</b> signed, <b>FAL2</b> signed and
+encrypted, <b>FAL3</b> holder-of-key — the presenter must prove possession of a key the assertion is bound
+to. FAL3 is the same idea as DPoP and mTLS-bound tokens: the assertion stops being a bearer credential.</p>
+
+<h4>Using them without turning it into paperwork</h4>
+<p>The practical value is that <b>you can dial each independently against the risk of the action</b>, rather
+than treating a user as uniformly trusted. Reading published documentation needs almost nothing. Changing a
+payment destination needs high AAL, right now — a step-up, not a session from this morning. Opening a
+regulated financial account needs high IAL at enrolment and says nothing about how they log in
+afterwards.</p>
+<p>In OIDC these travel as <code>acr</code> and <code>amr</code>, and in SAML as
+<code>AuthnContextClassRef</code>. The rule from the step-up lesson applies: <b>asking for a level means
+nothing unless you check what came back</b>. A provider that cannot satisfy your request may simply return
+the session it already had.</p>
+
+<h4>The mismatch worth watching for</h4>
+<p>High IAL with low AAL is the combination that quietly creates risk, because the account <i>feels</i>
+trustworthy — a verified human is behind it — while the door is weak. It is also the most common state in
+regulated industries, where enrolment received enormous attention and login was left as a password. If you
+audit one thing from this lesson, audit that gap.</p>`,
 docs:[['NIST SP 800-63-3 (Digital Identity)','https://pages.nist.gov/800-63-3/'],['800-63B (Authenticator AALs)','https://pages.nist.gov/800-63-3/sp800-63b.html']],
 ex:{title:'Name the scale and the level',
 prompt:`Write class <code>Assurance</code> with two static methods. <code>String scale(String concern)</code>: <code>"identity-proofing"</code>→<code>"IAL"</code>, <code>"authentication-strength"</code>→<code>"AAL"</code>, <code>"federation-assertion"</code>→<code>"FAL"</code>, else <code>"unknown"</code>. <code>String aal(String method)</code>: <code>"single-factor"</code>→<code>"AAL1"</code>, <code>"mfa"</code>→<code>"AAL2"</code>, <code>"hardware-phishing-resistant"</code>→<code>"AAL3"</code>, else <code>"unknown"</code>.`,
@@ -645,7 +738,55 @@ hints:['IAL is about proofing the real-world identity; AAL is about login streng
 {id:'am7',title:'Passwordless login & account recovery',body:`
 <p><b>Passwordless</b> removes the password entirely. The common methods: <b>magic links</b> (a one-time link emailed to you), <b>one-time codes</b> (emailed or texted — SMS is the weakest, SIM-swappable), and <b>passkeys</b> (WebAuthn — the strongest, phishing-resistant). Removing the password removes the biggest attack surface.</p>
 <p><b>But account recovery becomes the soft underbelly.</b> A system is only as strong as the easiest way in — and that is usually the "forgot password" / recovery flow. If recovery is weaker than login, attackers ignore login and attack recovery. Two rules: <b>recovery must be at least as strong as primary authentication</b>, and knowledge-based questions (mother's maiden name) are <b>weak</b> — the answers are guessable or already leaked.</p>
-<p>Good recovery hygiene: reset tokens that are <b>single-use, short-lived, and unpredictable</b>; delivered over a verified channel; rate-limited; and every reset <b>notifies the user</b>. Passwordless does not remove recovery — if a device is lost you still need a way back in, so provide <b>backup passkeys or one-time recovery codes</b> rather than dropping to a weak email OTP.</p>`,
+<p>Good recovery hygiene: reset tokens that are <b>single-use, short-lived, and unpredictable</b>; delivered over a verified channel; rate-limited; and every reset <b>notifies the user</b>. Passwordless does not remove recovery — if a device is lost you still need a way back in, so provide <b>backup passkeys or one-time recovery codes</b> rather than dropping to a weak email OTP.</p>
+
+<h4>The uncomfortable arithmetic</h4>
+<p>Deploy passkeys and you have made login phishing-resistant. Now ask what happens when someone loses their
+phone. If the answer is "we email them a link", then <b>your real authenticator is their email account</b>,
+and everything above it is decoration.</p>
+<p>This is not a hypothetical. An attacker looking at a hardened login page does not attack it — they attack
+the recovery flow, because it is the same door with a weaker lock. The rule that follows is blunt:
+<b>recovery must be at least as strong as primary authentication</b>, and if it is not, your security level
+is the recovery flow's, whatever the login page does.</p>
+
+<h4>Comparing the passwordless methods honestly</h4>
+<div class="codeSample" data-hl>PASSKEY / WebAuthn      phishing-resistant. origin-bound. nothing typed.
+                        the only one on this list a relay cannot defeat.
+MAGIC LINK              relayable in real time, and it moves your security
+                        to the mailbox. also: mail scanners CONSUME the
+                        link before the user clicks it - a real, common bug.
+EMAIL OTP               same mailbox dependency, and the code is typed,
+                        so it is relayable.
+SMS OTP                 weakest. SIM swap, SS7 interception, and the code
+                        is readable from a lock screen.
+
+// note that three of the four are "passwordless" and still phishable.
+// removing the password is not the same as removing the phishing.</div>
+
+<h4>Designing recovery that is not the weak point</h4>
+<p><b>Enrol two authenticators up front.</b> This is the single highest-value thing you can do, and it is
+almost entirely a UX problem rather than a security one. A user with a phone passkey and a hardware key, or
+a set of recovery codes printed at enrolment, never needs a weak fallback path at all.</p>
+<p><b>Make recovery slow and noisy.</b> Login should be fast; recovery should not. A delay of hours for a
+high-value account, a notification to every registered channel, and a window in which the legitimate user
+can cancel it, together defeat the quiet takeover — which is the attack that matters, because the victim
+never notices until it is done.</p>
+<p><b>Never reduce assurance silently.</b> If someone recovers into an account via a weaker path, the
+session that results should be treated as weaker: no privileged actions, no adding new authenticators
+without a further check, and a cooling-off period before high-value operations. Otherwise recovery becomes a
+downgrade attack you built yourself.</p>
+<div class="codeSample" data-hl>// a reset token, and the four properties it needs
+single-use     mark it consumed inside the same transaction as the reset
+short-lived    minutes, not the 24 hours most frameworks default to
+unpredictable  from a CSPRNG, and stored HASHED - a leaked reset table
+               is otherwise a list of live account takeovers
+scoped         to one account and one action. it is not a login.</div>
+
+<h4>The thing nobody plans for</h4>
+<p><b>The helpdesk is a recovery path.</b> If a support agent can reset MFA after a phone call, then social
+engineering that agent is the cheapest route into any account — and it has been the entry point in several
+well-publicised breaches. Identity-verify before the agent can act, require a second approver for privileged
+accounts, and record what was done. A technical control that a phone call bypasses is not a control.</p>`,
 docs:[['Passwordless — FIDO/passkeys','https://fidoalliance.org/passkeys/'],['Forgot-password / recovery — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html']],
 ex:{title:'A safe reset token & the best method',lang:'js',
 run:{call:'acceptableResetToken',cases:[{name:'single-use, short-lived, unpredictable',args:[true,true,true],expect:true},{name:'reusable',args:[false,true,true],expect:false},{name:'long-lived',args:[true,false,true],expect:false},{name:'guessable',args:[true,true,false],expect:false}]},
@@ -669,7 +810,59 @@ hints:['A reset token should be single-use, short-lived, and unpredictable — c
 <p>Passkeys/WebAuthn run <b>two ceremonies</b>, and knowing the difference is the whole model.</p>
 <p><b>1. Registration (attestation).</b> The relying party asks the authenticator to <b>create a new key pair</b> scoped to this site. The device keeps the <b>private key</b> and returns the <b>public key</b> plus a credential id — and, optionally, an <b>attestation</b> statement that cryptographically proves what kind of authenticator it is (a YubiKey, a platform passkey). The RP stores the public key against the user.</p>
 <p><b>2. Authentication (assertion).</b> On login the RP sends a random <b>challenge</b>; the authenticator <b>signs it</b> with the stored credential's private key; the RP verifies the signature with the public key it saved at registration.</p>
-<p>Three properties make this phishing-resistant and replay-resistant: the <b>private key never leaves the device</b>; the signature is over a fresh <b>challenge</b> (so a captured response can't be replayed); and the assertion is <b>bound to the origin</b> (so a look-alike site gets a signature it can't use). A <b>user-presence/verification</b> gesture (touch or biometric) authorizes each operation. Attestation matters mainly to high-assurance RPs that must confirm a certified authenticator model; most consumer sites skip verifying it.</p>`,
+<p>Three properties make this phishing-resistant and replay-resistant: the <b>private key never leaves the device</b>; the signature is over a fresh <b>challenge</b> (so a captured response can't be replayed); and the assertion is <b>bound to the origin</b> (so a look-alike site gets a signature it can't use). A <b>user-presence/verification</b> gesture (touch or biometric) authorizes each operation. Attestation matters mainly to high-assurance RPs that must confirm a certified authenticator model; most consumer sites skip verifying it.</p>
+
+<h4>Ceremony, and why the word is used</h4>
+<p>A protocol is what two machines do. A <b>ceremony</b> includes the human — the touch, the biometric, the
+fact that a browser rather than the site decides which origin is being talked to. WebAuthn is described as
+ceremonies because the security depends on parts that are deliberately outside your application's control.
+That is the point: your code cannot be tricked into signing for the wrong site, because your code is not the
+thing deciding.</p>
+
+<h4>Registration, field by field</h4>
+<div class="codeSample" data-hl>the RP sends creation options:
+  challenge          random, single-use, from the SERVER. never the client.
+  rp.id              the domain the credential is scoped to. a registrable
+                     suffix of the origin - "corp.com" works for
+                     "app.corp.com", but never the reverse.
+  user.id            an OPAQUE, stable byte string. NOT an email, NOT a
+                     username - it is stored on the device, sometimes
+                     forever, and it should not leak who the person is.
+  excludeCredentials the credentials already registered, so the same
+                     authenticator does not silently enrol twice.
+
+the authenticator returns:
+  clientDataJSON     the challenge, the ORIGIN, and the type. the browser
+                     wrote the origin - the site could not lie about it.
+  attestationObject  authData + an optional attestation statement
+  authData flags     UP  user was present (a touch)
+                     UV  user was verified (biometric or PIN)
+                     BE  the credential is backup-ELIGIBLE (syncable)
+                     BS  the credential is currently backed up
+                     (BE/BS are WebAuthn Level 3 additions)</div>
+
+<h4>Authentication, and the counter that catches people</h4>
+<p>Login sends a fresh challenge; the authenticator signs over <code>authData</code> and a hash of
+<code>clientDataJSON</code>; the RP verifies with the stored public key, then checks the challenge matches
+the one it issued, the origin is expected, and the RP ID hash is right.</p>
+<p>The <b>signature counter</b> is meant to detect a cloned authenticator: it should only ever increase. But
+<b>synced passkeys legitimately report 0 every time</b>, because there is no single device to count. An
+implementation that treats a non-increasing counter as cloning will lock out every passkey user on the
+platform. The rule: enforce the counter only when it has been non-zero before, and never for a credential
+that reports 0.</p>
+
+<h4>Attestation: what it is for, and why most sites skip it</h4>
+<p>Attestation lets the authenticator prove <i>what model it is</i>, identified by an <b>AAGUID</b>. An
+enterprise that must guarantee only certified FIDO2 keys are used needs this. A consumer site does not — and
+verifying it there is actively harmful, because it means rejecting authenticators you did not anticipate and
+turning users away for no security gain. Request <code>none</code> unless you have a stated policy that
+requires otherwise.</p>
+
+<h4>The failure modes that survive</h4>
+<p>WebAuthn removes credential phishing completely. It does not remove: a <b>session token stolen after
+login</b>, a <b>weak recovery path</b> (the previous lesson), an <b>attacker who registers their own
+authenticator</b> on an account they briefly controlled, or the dependency on the <b>platform account</b>
+that syncs a passkey. Deploy it knowing which problem it solved.</p>`,
 docs:[['WebAuthn ceremonies — W3C','https://www.w3.org/TR/webauthn-2/#sctn-api'],['Passkeys — FIDO Alliance','https://fidoalliance.org/passkeys/']],
 ex:{title:'Name the ceremony',
 prompt:`Write class <code>WebAuthn</code> with <code>static String ceremony(String phase)</code>: <code>"register"</code>→<code>"attestation"</code>, <code>"authenticate"</code>→<code>"assertion"</code>, else <code>"unknown"</code>. Also <code>static boolean privateKeyLeavesDevice()</code> returning <code>false</code>.`,
@@ -964,7 +1157,64 @@ public class Assertion {
 <li><b>Bot sign-ups / automation</b> → bot detection (device and behavioral signals), and a <b>CAPTCHA</b> only as a last resort.</li>
 <li><b>Account takeover</b> → anomaly / <b>risk-based</b> signals (new device, impossible travel, odd hour) that trigger <b>step-up</b> authentication, plus alerting.</li>
 </ul>
-<p>The through-line: assume passwords are already leaked, so make a stolen password insufficient (MFA), make automation expensive (rate limits + bot detection), and watch for anomalies (risk-based auth).</p>`,
+<p>The through-line: assume passwords are already leaked, so make a stolen password insufficient (MFA), make automation expensive (rate limits + bot detection), and watch for anomalies (risk-based auth).</p>
+
+<h4>Start from the attacker's economics</h4>
+<p>Credential stuffing is not clever and it does not need to be. Billions of username/password pairs are
+freely available, roughly two thirds of people reuse passwords, and a rented botnet makes the attempts cost
+almost nothing. At a success rate of a fraction of a percent, an attacker replaying ten million pairs
+against your login page still walks away with thousands of accounts.</p>
+<p>Every defence below is an attempt to change one of three numbers: <b>the hit rate</b>, <b>the cost per
+attempt</b>, or <b>the value of a hit</b>. Framing it that way is what stops the defences being a list of
+disconnected features.</p>
+
+<div class="codeSample" data-hl>MFA                     -> makes a HIT WORTHLESS. the single most
+                           effective control, by a wide margin.
+breached-password check -> lowers the HIT RATE at the source
+rate limiting           -> raises the COST PER ATTEMPT
+bot detection           -> raises the cost of automating at all
+risk-based step-up      -> makes a hit CONDITIONAL on looking normal</div>
+
+<h4>Rate limiting that actually works</h4>
+<p>The obvious implementation — count failures per account — defends against brute force and does nothing
+against stuffing, because the attacker tries <i>one</i> password against a million accounts. Two more
+dimensions are needed.</p>
+<div class="codeSample" data-hl>PER ACCOUNT     catches brute force against one target.
+                and it is a DENIAL OF SERVICE VECTOR: an attacker can
+                lock a real user out on purpose. prefer progressive
+                delay and step-up over hard lockout.
+PER IP          catches the naive script. defeated by any botnet, and
+                it punishes shared corporate NAT. never IP alone.
+PER PASSWORD    the one people miss. the SAME password failing across
+                many accounts is stuffing, and almost nothing else.
+                counting that is a strong, low-false-positive signal.
+
+// and get the client IP right: behind a proxy, the socket address is
+// the proxy. trusting a spoofable X-Forwarded-For makes the limit
+// bypassable with one header.</div>
+
+<h4>Checking breached passwords without becoming the breach</h4>
+<p>You want to reject a password that appears in a known leak — and you must not send the password anywhere.
+The <b>k-anonymity</b> approach solves it neatly: hash the password, send the <i>first five characters</i> of
+the hash, receive every matching suffix, and compare locally. The service learns a bucket containing
+hundreds of hashes and never learns which one you asked about.</p>
+<p>Check at registration and at password change. Checking at <i>login</i> is also defensible — if an existing
+password later appears in a leak, that user is now at risk — but it needs a plan for what you tell them,
+because a forced reset with no explanation reads as a breach of your system.</p>
+
+<h4>Detection, not just prevention</h4>
+<p>The controls above are preventive. The signals that tell you an attack is <i>happening</i> are worth
+alerting on independently: a sharp rise in the <b>failure rate</b>, a fall in the ratio of successes to
+attempts, a surge in traffic to the login endpoint specifically, many accounts failing with the same
+password, and a spike in password resets. Those are cheap to emit and they are the difference between
+discovering a campaign during it and reading about it afterwards.</p>
+
+<h4>Where CAPTCHA belongs</h4>
+<p>Last, and reluctantly. It is an accessibility barrier, it measurably costs conversions, and solving
+services price it in fractions of a cent — so it stops hobbyists and not funded attackers. Use it as a
+conditional response to a risk signal, never as a gate on every login. The honest ordering is: <b>MFA
+first</b>, because it makes stolen passwords worthless, and everything on this page is compensating for the
+accounts that do not have it yet.`,
 docs:[['Credential stuffing — OWASP','https://owasp.org/www-community/attacks/Credential_stuffing'],['Have I Been Pwned — k-anonymity','https://haveibeenpwned.com/API/v3#PwnedPasswords'],['Credential stuffing prevention — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Credential_Stuffing_Prevention_Cheat_Sheet.html']],
 ex:{title:'Match the defense to the attack',
 prompt:`Write class <code>AtoDefense</code> with <code>static String against(String attack)</code>: <code>"credential-stuffing"</code>→<code>"breached-password check + MFA"</code>, <code>"brute-force"</code>→<code>"rate limit + lockout"</code>, <code>"bot-signup"</code>→<code>"bot detection"</code>, <code>"account-takeover"</code>→<code>"risk-based step-up"</code>, and <code>"unknown"</code> otherwise.`,
