@@ -170,6 +170,103 @@ public class MtlsIdentity {
     }
 }`}},
 
+{id:'s2sx',title:'Token exchange from first principles: why you would ever trade a token',body:`
+<p>Before the parameters, the idea — because token exchange is one of those specifications that looks
+trivial once you see the problem and impenetrable if you meet the parameters first.</p>
+
+<h4>The problem, in one scene</h4>
+<p>A user signs in to your app and their browser sends a token to your API gateway. The gateway needs the
+orders service to do the work. The orders service needs the billing service. Billing needs the ledger.
+One human clicked one button, and four services are now involved.</p>
+<p>The token the user arrived with was minted for <b>the gateway</b>. What should the gateway send to
+orders? There are only three possible answers, and two of them are bad.</p>
+<ul>
+<li><b>Forward the user's token unchanged.</b> Easy, and it means every service downstream holds a
+credential that works at every other service. One compromised service can call anything the user could.
+It also breaks audience validation: if orders correctly checks that tokens are addressed to it, this token
+fails; if it accepts the token anyway, it has stopped checking who tokens were for.</li>
+<li><b>Drop the user and call as yourself.</b> The orders service calls billing with its own service
+credential. Now billing knows <i>orders</i> asked, but not <i>who for</i> — so it cannot enforce anything
+about the user, and your audit log says "the orders service did it" for every customer in the system.</li>
+<li><b>Trade the token in for a different one.</b> Ask an authority you both trust for a new token that is
+addressed to the next service, carries the same user, and says who is asking. That is token exchange.</li>
+</ul>
+
+<h4>The mental model</h4>
+<p>Think of a cloakroom ticket. The ticket you hold proves something about you at <i>one</i> counter. You
+cannot use it at a different counter, and you cannot write yourself a new one — but you can hand it to the
+cloakroom attendant and ask for a ticket valid at the counter you actually need. The attendant checks your
+ticket is genuine, checks you are allowed to make that request, and issues a new one. The old ticket is not
+modified, because you were never trusted to modify it.</p>
+<p>That is the whole protocol. <b>You present a token you were given, and receive a different token you
+could not have minted yourself.</b> The authority is the only party that can sign, which is what makes the
+result trustworthy to whoever receives it next.</p>
+
+<h4>Three tokens, and keeping them straight</h4>
+<p>The confusion in this specification is that up to three tokens are in play at once, and they all just
+look like tokens:</p>
+<ul>
+<li>The <b>subject token</b> — <i>who the work is for</i>. Usually the user's token, the one you were
+handed.</li>
+<li>The <b>actor token</b> — <i>who is asking</i>. Your own service credential. Optional, and the thing
+that turns an anonymous swap into a recorded one.</li>
+<li>The <b>returned token</b> — the new one, addressed to the next service.</li>
+</ul>
+<p>Say it out loud when you write the request: <i>"the work is for the subject, I am the actor, and I want
+a token for that audience."</i> Most integration bugs here are one of those three being the wrong thing.</p>
+
+<h4>Delegation or impersonation — the difference that matters</h4>
+<p>The exchange can produce two very different results, and the choice is a policy decision rather than a
+technical one.</p>
+<p><b>Delegation</b> keeps both parties visible. The new token says "this is user Y, and service X is acting
+for them", recorded in an <code>act</code> claim. Billing can enforce rules about the user <i>and</i> know
+which service made the call, and your audit trail names both.</p>
+<p><b>Impersonation</b> keeps only the user. The new token says "this is user Y" and nothing about who
+obtained it — downstream, the call is indistinguishable from the user acting directly. Simpler for services
+that only understand users, and it destroys the information you need after an incident.</p>
+<p>The default should be delegation. Impersonation is occasionally necessary and should be a deliberate,
+narrow, logged exception — the support-access lesson in the foundations stream is the honest use of it.</p>
+
+<h4>Why this beats the alternatives</h4>
+<p>Every property comes from the same source: <b>a service that cannot mint tokens cannot grant itself
+authority.</b> The new token is narrower than the one you presented, addressed to exactly one audience,
+short-lived, and signed by an authority that applied policy before issuing it. A compromised service can
+ask for tokens, and the authority decides what it gets — which is the difference between a breach that is
+contained and one that spreads sideways through your estate.</p>
+<p>The cost is a network call on the path of every hop, and an authority that is now on the critical path
+for internal traffic. Cache the result for its short lifetime, and read the next lesson for the parameters
+that carry all of this on the wire.</p>`,
+docs:[['RFC 8693 — OAuth 2.0 Token Exchange','https://www.rfc-editor.org/rfc/rfc8693'],['RFC 8693 §4.1 — the act (actor) claim','https://www.rfc-editor.org/rfc/rfc8693#section-4.1'],['RFC 9700 — OAuth 2.0 Security Best Current Practice','https://www.rfc-editor.org/rfc/rfc9700']],
+exs:[{title:'Is this a well-formed exchange request?',lang:'js',diff:'easy',
+run:{call:'validExchange',cases:[{name:'the minimum viable request',args:[{grant_type:'urn:ietf:params:oauth:grant-type:token-exchange',subject_token:'eyJ...',subject_token_type:'urn:ietf:params:oauth:token-type:access_token',audience:'billing'}],expect:true},{name:'resource may name the target instead of audience',args:[{grant_type:'urn:ietf:params:oauth:grant-type:token-exchange',subject_token:'eyJ...',subject_token_type:'urn:ietf:params:oauth:token-type:access_token',resource:'https://billing.internal'}],expect:true},{name:'a different grant type is not an exchange',args:[{grant_type:'authorization_code',subject_token:'eyJ...',subject_token_type:'urn:ietf:params:oauth:token-type:access_token',audience:'billing'}],expect:false},{name:'no subject token means nobody to act for',args:[{grant_type:'urn:ietf:params:oauth:grant-type:token-exchange',subject_token_type:'urn:ietf:params:oauth:token-type:access_token',audience:'billing'}],expect:false},{name:'a token without its type is unusable',args:[{grant_type:'urn:ietf:params:oauth:grant-type:token-exchange',subject_token:'eyJ...',audience:'billing'}],expect:false},{name:'no target audience at all',args:[{grant_type:'urn:ietf:params:oauth:grant-type:token-exchange',subject_token:'eyJ...',subject_token_type:'urn:ietf:params:oauth:token-type:access_token'}],expect:false}]},
+prompt:`Write <code>function validExchange(req)</code> returning <code>true</code> when a token-exchange request has what it needs: <code>grant_type</code> exactly <code>urn:ietf:params:oauth:grant-type:token-exchange</code>, a <code>subject_token</code> <b>and</b> its <code>subject_token_type</code>, and a target named by either <code>audience</code> or <code>resource</code>.`,
+starter:`function validExchange(req) {
+  return false;
+}`,
+solution:`function validExchange(req) {
+  if (req.grant_type !== "urn:ietf:params:oauth:grant-type:token-exchange") return false;
+  if (!req.subject_token || !req.subject_token_type) return false;  // the token AND what it is
+  return Boolean(req.audience || req.resource);                     // where it is going
+}`,
+tests:[{d:'the exchange grant type is required exactly',re:'grant-type:token-exchange'},{d:'the subject token is required',re:'subject_token'},{d:'its type is required alongside it',re:'subject_token_type'},{d:'either audience or resource names the target',re:'audience\\s*\\|\\||resource'}],
+behavior:`Six cases execute. The missing-type case is the one worth understanding rather than memorising: a token is an opaque string, so an authority handed one with no type cannot know whether to parse it as a JWT, introspect it, or treat it as a SAML assertion — the type is not bureaucracy, it is the only thing that makes the value interpretable. The final case matters because a token with no audience is exactly the over-broad credential this whole mechanism exists to avoid; if you do not say where the new token is going, you are asking for one that works everywhere.`,
+hints:['Four conditions, and one of them is an either/or.','A token and its type always travel together in this protocol.','audience and resource are two ways of naming the same thing: where the new token may be used.']},
+{title:'Delegation, impersonation, and the chain',lang:'js',diff:'hard',
+run:{call:'exchangeResult',cases:[{name:'delegation records who is acting',args:[{sub:'user-1'},'svc-a','delegation'],expect:{sub:'user-1',act:{sub:'svc-a'}}},{name:'impersonation drops the actor entirely',args:[{sub:'user-1'},'svc-a','impersonation'],expect:{sub:'user-1'}},{name:'a second hop nests the previous actor',args:[{sub:'user-1',act:{sub:'svc-a'}},'svc-b','delegation'],expect:{sub:'user-1',act:{sub:'svc-b',act:{sub:'svc-a'}}}},{name:'the subject never changes, however long the chain',args:[{sub:'user-1',act:{sub:'svc-b',act:{sub:'svc-a'}}},'svc-c','delegation'],expect:{sub:'user-1',act:{sub:'svc-c',act:{sub:'svc-b',act:{sub:'svc-a'}}}}},{name:'impersonation at hop two erases the whole chain',args:[{sub:'user-1',act:{sub:'svc-a'}},'svc-b','impersonation'],expect:{sub:'user-1'}}]},
+prompt:`Write <code>function exchangeResult(subject, actor, mode)</code> returning the claims of the issued token. For <code>"impersonation"</code>, return only <code>{ sub }</code> — the actor disappears. For <code>"delegation"</code>, return <code>{ sub, act }</code> where <code>act.sub</code> is the current actor; if the subject token already carried an <code>act</code>, the previous actor is <b>nested inside</b> the new one, so the chain reads most-recent-first.`,
+starter:`function exchangeResult(subject, actor, mode) {
+  return {};
+}`,
+solution:`function exchangeResult(subject, actor, mode) {
+  if (mode === "impersonation") return { sub: subject.sub };   // actor deliberately not recorded
+  const act = subject.act ? { sub: actor, act: subject.act }   // nest the previous actor
+                          : { sub: actor };
+  return { sub: subject.sub, act };
+}`,
+tests:[{d:'impersonation returns only the subject',re:'impersonation'},{d:'delegation records the actor',re:'act'},{d:'an existing chain is nested rather than replaced',re:'subject\\.act'},{d:'the subject is carried through unchanged',re:'sub:\\s*subject\\.sub'}],
+behavior:`Five cases execute. Case three is the rule people miss: the previous actor is nested inside the new one, so a three-hop chain reads svc-c acting through svc-b acting through svc-a, and the sub stays the original user at every hop. A solution that overwrites act instead of nesting produces a token that looks correct and has silently erased the middle of the chain — which is exactly the evidence an incident review needs. Case five is the honest cost of impersonation: it does not merely omit this hop's actor, it discards everything recorded before it, so one impersonating service anywhere in a chain makes the entire path unattributable.`,
+hints:['Two modes, and they differ in whether the actor is recorded at all.','Before building the new act, look at whether the subject token already had one.','The subject is the same human at hop one and hop five — only the actor changes.']}]},
+
 {id:'s2s3',title:'OAuth Token Exchange (on-behalf-of)',body:`
 <p><i>The shape of this problem — audience per hop, subject survives, acting party recorded — is covered
 by the on-behalf-of lesson in Identity Foundations. This lesson is the mechanism.</i></p>
@@ -865,5 +962,115 @@ solution:`function toolAllowed(agentScopes, tool, highRisk, humanApproved) {
 }`,
 tests:[{d:'the agent must hold the scope',re:'includes\\s*\\(\\s*tool|indexOf\\s*\\(\\s*tool'},{d:'high-risk tools are treated differently',re:'highRisk'},{d:'approval is required for those',re:'humanApproved'},{d:'the scope check returns immediately, before approval is considered',re:'includes[\\s\\S]{0,60}return false'}],
 behavior:`Five cases execute. The last is the one that encodes the principle: a human pressing approve on a transfer must not enable a transfer the agent's credential was never granted, because approval is a check on consequence and scope is a check on authority — collapsing them means a convincing prompt plus one distracted click equals privilege escalation. The ordering is therefore load-bearing rather than stylistic. Note also what is absent: nothing here inspects the prompt, the model or the conversation. That is deliberate. The agent will sometimes be persuaded to attempt the wrong thing, and the control that survives that is a credential which cannot perform it.`,
-hints:['Two independent conditions, and the order matters.','Scope answers "may this agent ever do this?"; approval answers "should it, this once?".','Nothing in this function looks at the prompt — that is the point.']}}
+hints:['Two independent conditions, and the order matters.','Scope answers "may this agent ever do this?"; approval answers "should it, this once?".','Nothing in this function looks at the prompt — that is the point.']}},
+
+{id:'s2stxn',title:'Transaction tokens: signing the context once, verifying it at every hop',body:`
+<p>Ask a team what authorizes an internal service-to-service call and the answer is usually one of three:
+nothing at all (the network is trusted), a forwarded user access token, or a service credential that says
+who is calling but nothing about why. Each is a way of saying <b>the inside of the system is trusted</b> —
+which stopped being true the moment a supply-chain compromise, a leaked credential or one over-permissive
+workload became a realistic entry point.</p>
+<p><b>Transaction Tokens</b> — Txn-Tokens, defined in an IETF draft rather than a finished RFC — are an
+answer to that. They are short-lived signed JWTs carrying the identity and context of <i>one</i> external
+request, minted at the boundary and passed along every internal hop that request causes.</p>
+
+<h4>The vocabulary, which is small</h4>
+<ul>
+<li><b>Workload</b> — a running service. <b>Trust Domain</b> — a group of workloads under one set of
+security controls. <b>Call Chain</b> — every invocation caused by one incoming request.</li>
+<li><b>External Endpoint</b> — the published entry point, usually a gateway.</li>
+<li><b>Transaction Token Service (TTS)</b> — the one service allowed to mint Txn-Tokens. A trust domain has
+exactly one logical TTS, which makes it both the control point and something you must keep available.</li>
+</ul>
+
+<h4>How one gets made — and this is the previous lesson, applied</h4>
+<p>A request arrives at the gateway with an ordinary OAuth access token. Before calling anything internal,
+the gateway <b>exchanges</b> it: an RFC 8693 token-exchange request to the TTS, asking for
+<code>requested_token_type</code> of <code>urn:ietf:params:oauth:token-type:txn_token</code>. That is the
+whole relationship between the two specifications — token exchange is the <i>mechanism</i>, transaction
+tokens are the <i>thing you ask it for</i>.</p>
+<div class="codeSample" data-hl>POST /token_endpoint            (the TTS)
+grant_type=urn:ietf:params:oauth:grant-type:token-exchange
+&amp;requested_token_type=urn:ietf:params:oauth:token-type:txn_token
+&amp;audience=trust-domain.example              // the DOMAIN, not one service
+&amp;scope=trade.stocks                         // the narrow purpose of THIS transaction
+&amp;subject_token=&lt;the incoming access token&gt;
+&amp;subject_token_type=urn:ietf:params:oauth:token-type:access_token
+&amp;request_context={"req_ip":"69.151.72.123","authn":"face"}
+&amp;request_details={"action":"BUY","ticker":"MSFT","quantity":"100"}</div>
+<p>A workload with no inbound token — a scheduled job, say — may instead present a self-signed JWT or an
+unsigned JSON object, with the matching <code>subject_token_type</code>. One thing is explicitly excluded:
+a refresh token may never be the subject.</p>
+
+<h4>What is inside, and why each part is there</h4>
+<div class="codeSample" data-hl>header  { "typ": "txntoken+jwt", "alg": "RS256", "kid": "..." }
+
+body    { "iat": 1686536226,
+          "exp": 1686536586,               // minutes. this is deliberate
+          "aud": "trust-domain.example",   // the TRUST DOMAIN
+          "txn": "97053963-771d-49cc...",  // unique id for THIS transaction
+          "sub": "user-1234",              // unique within the trust domain
+          "scope": "trade.stocks",         // narrow purpose, decided by the TTS
+          "req_wl": "gateway-01",          // which workload asked for this
+          "rctx": { "req_ip": "...", "authn": "face" },        // environment
+          "tctx": { "action": "BUY", "ticker": "MSFT",         // the immutable
+                    "quantity": "100" } }                      //   parameters</div>
+<p>Two claims carry the value. <b><code>tctx</code></b> holds what must not change as the request travels —
+the actual parameters of the transaction. <b><code>rctx</code></b> holds the environment it arrived in: the
+caller's IP, how they authenticated, the transport. Because the TTS signs both, a workload five hops down
+can verify that the quantity it was told to trade is the quantity the customer actually asked for.</p>
+<p>Note what <code>aud</code> is: the trust <i>domain</i>, not a service. That is a deliberate inversion of
+the usual audience rule — the token is meant to be accepted by many workloads inside one boundary and by
+nothing outside it.</p>
+
+<h4>The four attacks this is aimed at</h4>
+<ul>
+<li><b>Invocation with no valid transaction.</b> A workload reached directly, outside any real request, has
+no Txn-Token to present.</li>
+<li><b>Impersonation.</b> A compromised workload cannot claim to be acting for a different user, because it
+cannot mint a token saying so.</li>
+<li><b>Parameter modification.</b> The signed <code>tctx</code> means a service cannot quietly change the
+amount, the account or the target between hops.</li>
+<li><b>Stolen access token replay.</b> An access token lifted from the edge is not a Txn-Token and will not
+be accepted internally.</li>
+</ul>
+
+<h4>The honest limits</h4>
+<p>A Txn-Token is <b>not an authentication credential and not an access token</b>; the draft says so
+explicitly, and treating it as either is the likely first misuse. It does not prevent replay <i>within</i>
+its lifetime and trust domain, which is precisely why lifetimes are minutes and scopes are narrow. The TTS
+is a new dependency on the critical path of internal traffic, with the availability and key-rotation
+obligations that implies. And this is a draft: expect claim details to move.</p>
+<p>The idea worth taking even if you never adopt the specification: <b>establish context once, at the
+boundary, sign it, and verify it at every hop</b> — rather than re-deriving it, or trusting whatever the
+previous service said.</p>`,
+docs:[['OAuth Transaction Tokens (IETF draft)','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens'],['RFC 8693 — OAuth 2.0 Token Exchange','https://www.rfc-editor.org/rfc/rfc8693'],['RFC 8417 — Security Event Token (the txn claim)','https://www.rfc-editor.org/rfc/rfc8417']],
+exs:[{title:'Should this workload accept the token?',lang:'js',diff:'medium',
+run:{call:'acceptTxnToken',cases:[{name:'a valid token for this trust domain',args:[{typ:'txntoken+jwt',aud:'trust-domain.example',txn:'abc-123',exp:2000},'trust-domain.example',1000],expect:'accept'},{name:'minted for a different trust domain',args:[{typ:'txntoken+jwt',aud:'other-domain.example',txn:'abc-123',exp:2000},'trust-domain.example',1000],expect:'reject: wrong trust domain'},{name:'expired — and these live for minutes',args:[{typ:'txntoken+jwt',aud:'trust-domain.example',txn:'abc-123',exp:900},'trust-domain.example',1000],expect:'reject: expired'},{name:'an access token is not a transaction token',args:[{typ:'at+jwt',aud:'trust-domain.example',txn:'abc-123',exp:2000},'trust-domain.example',1000],expect:'reject: not a txn-token'},{name:'no transaction id means nothing to correlate',args:[{typ:'txntoken+jwt',aud:'trust-domain.example',exp:2000},'trust-domain.example',1000],expect:'reject: no transaction id'}]},
+prompt:`Write <code>function acceptTxnToken(token, trustDomain, nowSec)</code> returning <code>"accept"</code> or a reason string. Check in this order: <code>typ</code> must be <code>txntoken+jwt</code> (<code>"reject: not a txn-token"</code>), <code>aud</code> must equal this trust domain (<code>"reject: wrong trust domain"</code>), a <code>txn</code> must be present (<code>"reject: no transaction id"</code>), and <code>exp</code> must be in the future (<code>"reject: expired"</code>).`,
+starter:`function acceptTxnToken(token, trustDomain, nowSec) {
+  return "accept";
+}`,
+solution:`function acceptTxnToken(t, trustDomain, nowSec) {
+  if (t.typ !== "txntoken+jwt") return "reject: not a txn-token";   // an access token is not this
+  if (t.aud !== trustDomain) return "reject: wrong trust domain";   // aud is the DOMAIN
+  if (!t.txn) return "reject: no transaction id";
+  if (t.exp <= nowSec) return "reject: expired";
+  return "accept";
+}`,
+tests:[{d:'the token type is checked',re:'txntoken\\+jwt'},{d:'the audience is the trust domain',re:'trustDomain'},{d:'a transaction id is required',re:'\\.txn'},{d:'expiry is enforced against the supplied clock',re:'exp\\s*<=?\\s*nowSec|nowSec\\s*>=?'}],
+behavior:`Five cases execute. The typ check first is the point: this is what stops a stolen access token from being replayed inside the trust domain, and a verifier that only checks the signature and the audience will happily accept one. The audience case inverts the usual rule — here aud names a whole trust domain rather than one service, so the check is "am I inside the boundary this was minted for", and a token from a neighbouring domain must be refused even though it is perfectly valid there. The missing-txn case is about operations rather than security: without a transaction id you cannot tie the fifteen log lines this request produced back into one story.`,
+hints:['Four checks, and the order given is the order to write them.','The audience is a trust domain, not a service name — compare it to the domain you are in.','exp is seconds since the epoch; compare it with the clock you were handed rather than a real one.']},
+{title:'Did anyone change the parameters mid-chain?',lang:'js',diff:'hard',
+run:{call:'contextIntact',cases:[{name:'the parameters match what was signed',args:[{action:'BUY',ticker:'MSFT',quantity:'100'},{action:'BUY',ticker:'MSFT',quantity:'100'}],expect:true},{name:'extra parameters not in the context are ignored',args:[{action:'BUY',ticker:'MSFT'},{action:'BUY',ticker:'MSFT',requestId:'r-99'}],expect:true},{name:'the quantity was inflated between hops',args:[{action:'BUY',ticker:'MSFT',quantity:'100'},{action:'BUY',ticker:'MSFT',quantity:'10000'}],expect:false},{name:'a signed parameter was dropped',args:[{action:'BUY',ticker:'MSFT'},{action:'BUY'}],expect:false},{name:'an empty context constrains nothing',args:[{},{action:'SELL'}],expect:true}]},
+prompt:`Write <code>function contextIntact(tctx, params)</code> returning whether the parameters this workload was asked to act on still match the signed <code>tctx</code>. <b>Every</b> key in <code>tctx</code> must be present in <code>params</code> with the same value. Extra keys in <code>params</code> are fine — the token constrains what it named, not everything that exists.`,
+starter:`function contextIntact(tctx, params) {
+  return false;
+}`,
+solution:`function contextIntact(tctx, params) {
+  return Object.keys(tctx).every(k => tctx[k] === params[k]);
+}`,
+tests:[{d:'every signed key is checked',re:'Object\\.keys|for\\s*\\('},{d:'values are compared, not just presence',re:'===|!=='},{d:'the check is driven by the token, not the request',re:'tctx'},{d:'a boolean is returned',re:'every|return'}],
+behavior:`Five cases execute. The dropped-parameter case is why the loop must be driven by the token rather than the request: iterating over params instead of tctx would find every key it was given to match and quietly pass a request that removed a signed constraint. The inflated-quantity case is the attack in one line — a compromised middle service turning a hundred shares into ten thousand — and it is exactly what a signed context makes detectable at the hop that matters, rather than at reconciliation the next morning. The extra-keys case encodes a real design decision: the token fixes what it named and says nothing about the rest, so per-hop parameters like a request id remain free.`,
+hints:['Iterate over the keys of the signed context, not the request.','Strict equality — a quantity of "100" and 100 are not the same value.','Ask what should happen for a key the token never mentioned, then encode that answer.']}]}
 ]});

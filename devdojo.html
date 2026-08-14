@@ -1466,6 +1466,10 @@ const GLOSS_ALL=[
      ['Resource Server (RS)',`The API that accepts and validates access tokens.`],
    ]},
    {h:'3 · Tokens & assertions',terms:[
+     ['Transaction Token (Txn-Token)',`A short-lived, signed JWT carrying the identity and immutable context of one request as it passes through the internal call chain. Its aud is a trust DOMAIN rather than a single service, and it is explicitly neither an authentication credential nor an access token. Defined in an IETF draft, obtained via RFC 8693 token exchange.`],
+     ['Transaction Token Service (TTS)',`The single logical service in a trust domain permitted to mint transaction tokens. It validates the presented subject token, applies issuance policy, and decides the scope and context claims — which makes it both the control point and a dependency on the path of internal traffic.`],
+     ['Subject token',`In a token exchange, the token identifying WHO the work is being done for — usually the user's token, the one you were handed. Distinct from the actor token, which says who is asking.`],
+     ['Actor token',`In a token exchange, the token identifying WHO is asking for the new token — the calling service's own credential. Optional, and what turns an anonymous swap into a recorded delegation.`],
      ['kid (key id)',`The key identifier in a JWS/JWT header, naming which key in the JWKS signed this token. Selecting the key by kid is what lets an issuer rotate keys without coordinating with any verifier.`],
      ['Crypto agility',`The ability to change algorithm or key without changing the system — algorithms in a policy list rather than hardcoded, keys selected by kid, rotation as a routine drill. Measured by how long it would take you to stop using an algorithm, not by which one you use today.`],
      ['Post-quantum cryptography (PQC)',`Algorithms designed to resist attack by a quantum computer — NIST's ML-KEM for key establishment, ML-DSA and SLH-DSA for signatures. Confidentiality is the urgent case ("harvest now, decrypt later"); short-lived signatures are far less exposed.`],
@@ -1524,6 +1528,9 @@ const GLOSS_ALL=[
      ['Discovery',`The /.well-known/openid-configuration document listing a provider endpoints and keys.`],
    ]},
    {h:'7 · Core concepts',terms:[
+     ['Trust domain',`A group of workloads sharing one set of security controls and policies, invoked only through published interfaces. The unit a transaction token is scoped to, and the boundary at which external authorization is exchanged for internal context.`],
+     ['Call chain',`Every invocation across every workload caused by one incoming request. The thing a transaction token travels along, and the thing a single forwarded access token would over-authorise.`],
+     ['Workload',`A running instance of software executing for a specific purpose — a container, a service, a managed database. The non-human actor in service-to-service authorization.`],
      ['Same-origin policy',`The browser rule that script on one origin (scheme + host + port) cannot read responses from another. It does not stop the request being sent or cookies being attached — which is the gap CSRF lives in.`],
      ['CORS (Cross-Origin Resource Sharing)',`Server opt-in, enforced by browsers, that lets script on another origin READ a response. It governs reading, not sending, and not whether cookies ride along (that is SameSite). Because only browsers enforce it, it is never a substitute for authorization.`],
      ['Preflight request',`The OPTIONS request a browser sends before a cross-origin call that carries an Authorization header, a custom header or an unusual content type, asking the server whether the real request is permitted.`],
