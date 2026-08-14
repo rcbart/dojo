@@ -479,6 +479,65 @@ public class Stores {
     static boolean trusts(Set<String> truststoreAliases, String caAlias) {
         return truststoreAliases.contains(caAlias);
     }
-}`}}
+}`}},
 
+{id:'pki7',title:'Certificate pinning: stronger than trust, and easier to get wrong',body:`
+<p>The chain-of-trust lessons end with a reassuring conclusion: your client trusts a set of certificate
+authorities, and any certificate chaining to one of them is accepted. That is what makes the web work, and
+it contains an uncomfortable implication — <b>any</b> of the hundred-odd CAs in the trust store can issue a
+certificate for your domain. A compromised or coerced CA, or a corporate interception proxy installed on
+the device, produces a certificate your client accepts happily.</p>
+<p><b>Certificate pinning</b> narrows that. The client refuses to accept a connection unless something in
+the presented chain matches a value it was configured with in advance. Trust stops being "any CA" and
+becomes "this specific key".</p>
+
+<h4>What to pin, and why it is usually not the leaf</h4>
+<p>Modern practice pins the <b>public key</b> — specifically a hash of the SubjectPublicKeyInfo — rather
+than the certificate itself. That distinction matters: certificates are reissued routinely, and if the key
+is carried across a renewal, a key pin survives it while a certificate pin does not.</p>
+<p>Then there is a choice of which certificate in the chain to pin:</p>
+<ul>
+<li><b>The leaf</b> — the strongest and the most brittle. Every rotation is a coordinated release.</li>
+<li><b>An intermediate</b> — survives leaf rotation, still excludes every other CA. The usual choice.</li>
+<li><b>The root</b> — survives almost everything, and narrows trust only from "any CA" to "this one CA".</li>
+</ul>
+<p>Whatever you choose, <b>pin more than one value</b>. A backup pin — a second key held offline and not yet
+in use — is what turns an emergency key rotation from an outage into a deployment.</p>
+
+<h4>The failure mode is self-inflicted denial of service</h4>
+<p>This is the thing to understand before adopting it. A pin that no longer matches does not degrade
+gracefully; the client refuses to connect, and it refuses in a way no server-side change can fix. If your
+mobile app pins a key you then rotate, every installed copy is bricked until users update — and you cannot
+push an update to a client that will not talk to you.</p>
+<p>The rule that follows: <b>the pin lifetime is bounded by your ability to update clients.</b> A web page
+can reasonably pin nothing at all, because the browser already ships a trust store and a revocation
+mechanism. A mobile app with a slow update tail should pin an intermediate, keep a backup pin, and monitor
+failures. An internal service, where you control both ends and can deploy together, can pin aggressively.</p>
+<p>Note also that HTTP Public Key Pinning — the header-based version for browsers — was <b>removed</b>
+precisely because sites bricked themselves with it. Pinning survives where the client is an application you
+control, not where it is a browser.</p>
+
+<h4>Where it earns its risk</h4>
+<p>Mobile applications talking to their own backend, because the threat is real: an attacker with a device
+and a proxy certificate reads your entire API otherwise. Payment and messaging clients where interception
+is the whole attack. Internal service-to-service calls, where mTLS with a private CA is really pinning by
+another name and the update problem does not exist.</p>
+<p>Where it does not earn its risk: a public website, a service integrating with third-party APIs whose
+rotation schedule you do not control, and anywhere the operational maturity to monitor and rotate pins does
+not exist. The honest test is whether you can answer "what happens when this key rotates unexpectedly?"
+with a procedure rather than a silence.</p>`,
+docs:[['OWASP — certificate and public key pinning','https://owasp.org/www-community/controls/Certificate_and_Public_Key_Pinning'],['RFC 7469 — HPKP (obsolete, and instructive)','https://www.rfc-editor.org/rfc/rfc7469'],['Android — network security configuration','https://developer.android.com/privacy-and-security/security-config']],
+ex:{title:'Accept the chain, or fail closed',lang:'js',
+run:{call:'pinAccepted',cases:[{name:'the leaf key matches a pin',args:[[{spkiHash:'aaa',isLeaf:true},{spkiHash:'bbb'}],['aaa']],expect:true},{name:'the leaf rotated but the pinned intermediate still matches',args:[[{spkiHash:'zzz',isLeaf:true},{spkiHash:'bbb'}],['aaa','bbb']],expect:true},{name:'nothing in the chain matches',args:[[{spkiHash:'zzz',isLeaf:true},{spkiHash:'yyy'}],['aaa','bbb']],expect:false},{name:'an empty pin set fails closed',args:[[{spkiHash:'aaa',isLeaf:true}],[]],expect:false},{name:'an empty chain matches nothing',args:[[],['aaa']],expect:false}]},
+prompt:`Write <code>function pinAccepted(chain, pins)</code> returning whether a presented certificate chain satisfies pinning. Accept when <b>any</b> certificate in the chain has an <code>spkiHash</code> present in <code>pins</code>. An empty or missing pin set returns <code>false</code> — fail closed, so a configuration that failed to load never silently disables the control.`,
+starter:`function pinAccepted(chain, pins) {
+  return false;
+}`,
+solution:`function pinAccepted(chain, pins) {
+  if (!pins || pins.length === 0) return false;      // no pins loaded: fail closed
+  return chain.some(c => pins.includes(c.spkiHash)); // ANY cert in the chain may match
+}`,
+tests:[{d:'an empty pin set is refused',re:'length\\s*===\\s*0|!pins|length\\s*<\\s*1'},{d:'the whole chain is searched',re:'some\\s*\\(|for\\s*\\('},{d:'the pin list is consulted',re:'pins\\.includes|indexOf'},{d:'the key hash is what is compared',re:'spkiHash'}],
+behavior:`Five cases execute. Case two is the argument for pinning an intermediate rather than a leaf: the leaf key changed — an ordinary certificate renewal — and the connection still succeeds because the pinned intermediate is in the chain. Pin only the leaf and that same renewal is an outage on every installed client, fixable only by shipping an update to devices that can no longer reach you. Case four is a deliberate design choice worth arguing about: an empty pin list could mean "pinning disabled" and return true, which is friendlier and means a failed configuration load silently removes a security control. Failing closed makes the misconfiguration loud, which is the correct trade for a control you adopted on purpose.`,
+hints:['Any certificate in the chain matching any pin is enough.','Decide what an empty pin list means before you write the loop — it is a security decision.','You are comparing key hashes, not certificates.']}}
 ]});

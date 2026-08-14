@@ -1072,5 +1072,77 @@ solution:`function contextIntact(tctx, params) {
 }`,
 tests:[{d:'every signed key is checked',re:'Object\\.keys|for\\s*\\('},{d:'values are compared, not just presence',re:'===|!=='},{d:'the check is driven by the token, not the request',re:'tctx'},{d:'a boolean is returned',re:'every|return'}],
 behavior:`Five cases execute. The dropped-parameter case is why the loop must be driven by the token rather than the request: iterating over params instead of tctx would find every key it was given to match and quietly pass a request that removed a signed constraint. The inflated-quantity case is the attack in one line — a compromised middle service turning a hundred shares into ten thousand — and it is exactly what a signed context makes detectable at the hop that matters, rather than at reconciliation the next morning. The extra-keys case encodes a real design decision: the token fixes what it named and says nothing about the rest, so per-hop parameters like a request id remain free.`,
-hints:['Iterate over the keys of the signed context, not the request.','Strict equality — a quantity of "100" and 100 are not the same value.','Ask what should happen for a key the token never mentioned, then encode that answer.']}]}
+hints:['Iterate over the keys of the signed context, not the request.','Strict equality — a quantity of "100" and 100 are not the same value.','Ask what should happen for a key the token never mentioned, then encode that answer.']}]},
+
+{id:'s2scicd',title:'Workload identity federation: deleting your cloud keys',body:`
+<p>Here is a credential almost every organisation has, and almost nobody is comfortable with. A CI pipeline
+needs to deploy to AWS, so someone creates an access key, pastes it into the repository's secrets, and it
+sits there — long-lived, high-privilege, copied into whatever forks or logs eventually see it, and rotated
+approximately never.</p>
+<p><b>Workload identity federation</b> deletes it. The insight is that your CI provider already knows which
+pipeline is running, and can say so in a signed token. If the cloud provider trusts that issuer, the
+pipeline can exchange its identity for short-lived cloud credentials at the moment it needs them. No stored
+key exists to leak.</p>
+
+<h4>How it actually works</h4>
+<p>Three parties, and the flow is short:</p>
+<div class="codeSample" data-hl>1. The CI platform mints an OIDC token for THIS job, signed by its own key.
+   Claims describe the job:  iss = the CI platform's issuer
+                             aud = the cloud provider
+                             sub = repo:acme/app:ref:refs/heads/main
+
+2. The job presents that token to the cloud's STS and asks to assume a role.
+
+3. The cloud verifies the signature against the CI platform's published JWKS,
+   then checks its OWN trust policy: right issuer, right audience,
+   and does the sub match what this role permits?
+
+4. It returns credentials that expire in minutes.</div>
+<p>Nothing here is new. It is the discovery, JWKS verification and audience checking from earlier lessons,
+applied to a machine instead of a person. What makes it feel new is <i>who</i> the subject is: not a user,
+but a specific branch of a specific repository in a specific workflow.</p>
+
+<h4>The trust policy is the whole security boundary</h4>
+<p>Verifying the signature only proves the token came from the CI platform — and the CI platform mints
+tokens for <b>every repository it hosts</b>, including the attacker's. If your policy checks the issuer and
+stops there, anyone with a free account on that platform can assume your role.</p>
+<p>So the subject condition is doing all the work, and it is where the mistakes live:</p>
+<ul>
+<li><b>Too broad.</b> A condition matching <code>repo:acme/*</code> lets any repository in the organisation
+deploy to production, including the sandbox one somebody created to test an action they found online.</li>
+<li><b>No ref.</b> Matching the repository but not the branch means a pull request from a fork can obtain
+production credentials — which is exactly how this has gone wrong in public incidents.</li>
+<li><b>Careless wildcards.</b> A prefix match on <code>repo:acme/app</code> also matches
+<code>repo:acme/app-sandbox</code>, and if the platform's namespace allows it, an attacker's lookalike.</li>
+<li><b>Missing audience.</b> The <code>aud</code> claim is what stops a token minted for one cloud being
+replayed at another.</li>
+</ul>
+
+<h4>What you get, and what you now depend on</h4>
+<p>The gain is real: no stored credential, so nothing to rotate, nothing to leak, and access is bounded to
+the life of one job. The audit trail improves too — the cloud log records which repository and which branch
+assumed the role, rather than "someone with the deploy key".</p>
+<p>The dependency is equally real. Your deployment path now requires the CI platform's OIDC issuer to be
+reachable and its keys to be valid, and the trust relationship is configured in the cloud provider rather
+than in your repository, which means the people who can change it may not be the people who understand it.
+Treat that policy as production configuration: reviewed, version-controlled and alerted on.</p>
+<p>The same pattern generalises well beyond CI. Any workload with a platform-issued identity — a Kubernetes
+service account, a cloud function, a mesh workload with a SPIFFE identity — can exchange it for credentials
+somewhere else. Once you have seen it here, you will recognise it as the general answer to "how does this
+thing prove who it is without holding a secret?"</p>`,
+docs:[['GitHub Actions — OIDC hardening and the subject claim','https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect'],['AWS — web identity federation with OIDC','https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_oidc.html'],['RFC 8693 — OAuth 2.0 Token Exchange','https://www.rfc-editor.org/rfc/rfc8693']],
+ex:{title:'Write the trust policy check',lang:'js',
+run:{call:'trustPolicyAllows',cases:[{name:'the exact repository, branch and audience',args:[{iss:'https://token.actions.githubusercontent.com',aud:'sts.amazonaws.com',sub:'repo:acme/app:ref:refs/heads/main'},{issuer:'https://token.actions.githubusercontent.com',audience:'sts.amazonaws.com',allowedSubjects:['repo:acme/app:ref:refs/heads/main']}],expect:true},{name:'a different branch is refused',args:[{iss:'https://token.actions.githubusercontent.com',aud:'sts.amazonaws.com',sub:'repo:acme/app:ref:refs/heads/feature'},{issuer:'https://token.actions.githubusercontent.com',audience:'sts.amazonaws.com',allowedSubjects:['repo:acme/app:ref:refs/heads/main']}],expect:false},{name:'a lookalike repository is refused',args:[{iss:'https://token.actions.githubusercontent.com',aud:'sts.amazonaws.com',sub:'repo:acme/app-evil:ref:refs/heads/main'},{issuer:'https://token.actions.githubusercontent.com',audience:'sts.amazonaws.com',allowedSubjects:['repo:acme/app:ref:refs/heads/main']}],expect:false},{name:'a pull-request context is not the main branch',args:[{iss:'https://token.actions.githubusercontent.com',aud:'sts.amazonaws.com',sub:'repo:acme/app:pull_request'},{issuer:'https://token.actions.githubusercontent.com',audience:'sts.amazonaws.com',allowedSubjects:['repo:acme/app:ref:refs/heads/main']}],expect:false},{name:'a token minted for another cloud is refused',args:[{iss:'https://token.actions.githubusercontent.com',aud:'other-cloud',sub:'repo:acme/app:ref:refs/heads/main'},{issuer:'https://token.actions.githubusercontent.com',audience:'sts.amazonaws.com',allowedSubjects:['repo:acme/app:ref:refs/heads/main']}],expect:false},{name:'a token from a different issuer entirely',args:[{iss:'https://evil.example',aud:'sts.amazonaws.com',sub:'repo:acme/app:ref:refs/heads/main'},{issuer:'https://token.actions.githubusercontent.com',audience:'sts.amazonaws.com',allowedSubjects:['repo:acme/app:ref:refs/heads/main']}],expect:false}]},
+prompt:`Write <code>function trustPolicyAllows(token, policy)</code> returning whether a CI-issued OIDC token may assume a cloud role. All three must hold: <code>token.iss</code> equals <code>policy.issuer</code>, <code>token.aud</code> equals <code>policy.audience</code>, and <code>token.sub</code> is in <code>policy.allowedSubjects</code>. Compare subjects <b>exactly</b> — a prefix or "starts with" check is how <code>repo:acme/app-evil</code> gets in.`,
+starter:`function trustPolicyAllows(token, policy) {
+  return false;
+}`,
+solution:`function trustPolicyAllows(token, policy) {
+  if (token.iss !== policy.issuer) return false;      // signature alone proves nothing
+  if (token.aud !== policy.audience) return false;    // not minted for another cloud
+  return policy.allowedSubjects.includes(token.sub);  // exact match, not a prefix test
+}`,
+tests:[{d:'the issuer is checked',re:'iss'},{d:'the audience is checked',re:'aud'},{d:'the subject is matched exactly against the list',re:'includes\\s*\\(\\s*token\\.sub|indexOf\\s*\\(\\s*token\\.sub'},{d:'the expected issuer comes from the policy, not a constant',re:'policy\\.issuer'}],
+behavior:`Six cases execute. The lookalike-repository case is the reason exact matching is specified: startsWith on "repo:acme/app" also matches "repo:acme/app-evil", and on a platform where anyone can create a repository that is an open door. The branch case is the one that has caused real incidents — a policy naming the repository but not the ref lets a pull request from a fork obtain production credentials, because forks run workflows too. And the issuer case is worth thinking about twice: the signature was perfectly valid in every one of these tokens, because the CI platform mints tokens for every repository it hosts, including an attacker's. Verifying the signature tells you where the token came from and nothing about whether this particular job should be trusted.`,
+hints:['Three independent conditions, all of which must hold.','The subject is a structured string — compare the whole thing, not the beginning of it.','Ask what the signature actually proves. It is less than it appears.']}}
 ]});

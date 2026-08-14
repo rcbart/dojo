@@ -471,6 +471,71 @@ solution:`public class Assertion {
                 && myEntityId.equals(audience)
                 && nowEpoch < notOnOrAfterEpoch;
     }
-}`}}
+}`}},
 
+{id:'sml6',title:'Migrating from SAML to OIDC without a flag day',body:`
+<p>Plenty of working SAML deployments will outlive the people who built them, and that is fine — SAML is
+not broken. But new applications are built against OIDC, mobile and single-page apps fit it badly through
+SAML, and eventually an organisation ends up running both. This lesson is about getting from one to the
+other while people keep logging in.</p>
+<p>The first thing to establish is that there is no flag day. Anyone proposing "we switch on Saturday" is
+proposing to discover every undocumented integration at once, at the weekend.</p>
+
+<h4>What actually has to move</h4>
+<p>The protocol swap is the easy part. What makes migrations long is everything attached to it:</p>
+<ul>
+<li><b>The identifier.</b> SAML gives you a <code>NameID</code>; OIDC gives you a <code>sub</code>. They
+are usually <i>different values for the same person</i>, and if the application stored the NameID as its
+user key, the OIDC login looks like a brand new user.</li>
+<li><b>The attribute contract.</b> SAML attribute names are URIs by convention
+(<code>http://schemas.xmlsoap.org/.../emailaddress</code>); OIDC claims are short names
+(<code>email</code>). Every mapping has to be restated, and applications tend to depend on attributes
+nobody documented.</li>
+<li><b>Session and logout behaviour.</b> SAML single logout and OIDC front- or back-channel logout are not
+equivalent, and a partially migrated estate can leave a user signed out of some applications and not
+others.</li>
+<li><b>The long tail.</b> The applications nobody owns, the service that authenticates through SAML for one
+nightly job, the vendor whose OIDC support is "on the roadmap".</li>
+</ul>
+
+<h4>The strategy that works: run both, migrate per application</h4>
+<p>Support both protocols simultaneously against one user population, and move applications one at a time.
+Two shapes do this well. Either the IdP speaks both — most do — or you put a <b>broker</b> in the middle
+that is a SAML SP upstream and an OIDC provider downstream, which lets applications migrate without the
+IdP changing at all.</p>
+<p>Then, per application: enable OIDC alongside SAML, move a pilot group, verify that the <i>same human</i>
+resolves to the <i>same account</i>, cut the rest over, and only then remove the SAML integration. The
+removal is a separate change, deliberately, so a rollback is a configuration flip rather than a rebuild.</p>
+
+<h4>The identity-linking rule, which is where migrations go wrong</h4>
+<p>During the overlap the same person can arrive as a SAML assertion or an OIDC token, and something must
+decide they are one account. The tempting shortcut is to match on email address. Do not.</p>
+<p>Email is mutable, reassignable, and — critically — asserted by whichever side is speaking. Auto-linking
+on it means anyone able to influence an email claim can attach themselves to an existing account. The
+correct approach is an explicit <b>link table</b>: a row per protocol identifier pointing at one internal
+account, populated deliberately — from a directory export, from a first login that was verified another
+way, or from an administrator's action. Unknown identifier means no account, not "probably this one".</p>
+<p>This is also the reason to key applications on an internal account id rather than on whatever the
+protocol handed them. Estates that did that migrate in weeks; estates that stored NameIDs everywhere spend
+a year finding them.</p>
+
+<h4>Knowing when you are finished</h4>
+<p>Instrument the login path by protocol before you start, so "SAML logins last week" is a number rather
+than an opinion. The migration is done when that number reaches zero for an application, and the SAML
+integration is removed <i>after</i> a quiet period rather than at the same moment — because the traffic you
+cannot see is the traffic that will page you.</p>`,
+docs:[['OpenID Connect Core','https://openid.net/specs/openid-connect-core-1_0.html'],['SAML 2.0 core (assertions and NameID)','https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['NIST SP 800-63C — federation assurance','https://pages.nist.gov/800-63-3/sp800-63c.html']],
+ex:{title:'Resolve one human across two protocols',lang:'js',
+run:{call:'resolveAccount',cases:[{name:'a known SAML identifier',args:[{protocol:'saml',id:'ada@acme.com',email:'ada@acme.com'},[{protocol:'saml',id:'ada@acme.com',accountId:'acct-1'},{protocol:'oidc',id:'sub-9911',accountId:'acct-1'}]],expect:'acct-1'},{name:'a known OIDC subject reaches the same account',args:[{protocol:'oidc',id:'sub-9911',email:'ada@acme.com'},[{protocol:'saml',id:'ada@acme.com',accountId:'acct-1'},{protocol:'oidc',id:'sub-9911',accountId:'acct-1'}]],expect:'acct-1'},{name:'an unknown subject is NOT linked by matching email',args:[{protocol:'oidc',id:'sub-0000',email:'ada@acme.com'},[{protocol:'saml',id:'ada@acme.com',accountId:'acct-1'},{protocol:'oidc',id:'sub-9911',accountId:'acct-1'}]],expect:null},{name:'the same string under the wrong protocol does not match',args:[{protocol:'oidc',id:'ada@acme.com',email:'ada@acme.com'},[{protocol:'saml',id:'ada@acme.com',accountId:'acct-1'}]],expect:null},{name:'no links at all',args:[{protocol:'saml',id:'ada@acme.com',email:'ada@acme.com'},[]],expect:null}]},
+prompt:`Write <code>function resolveAccount(claim, links)</code> returning the internal account id for an arriving login, or <code>null</code>. A link is <code>{ protocol, id, accountId }</code> and matches only when <b>both</b> the protocol and the identifier match. The <code>email</code> on the claim is deliberately present and must not be used — auto-linking on email is the vulnerability this exercise exists to prevent.`,
+starter:`function resolveAccount(claim, links) {
+  return null;
+}`,
+solution:`function resolveAccount(claim, links) {
+  const hit = links.find(l => l.protocol === claim.protocol && l.id === claim.id);
+  return hit ? hit.accountId : null;   // unknown identifier: no account, never a guess
+}`,
+tests:[{d:'the protocol is part of the match',re:'claim\\.protocol'},{d:'the identifier is part of the match',re:'claim\\.id'},{d:'an unmatched login returns null',re:'null'},{d:'the email claim is never used to find an account',re:'^(?!.*claim\\.email)',flags:'s'}],
+behavior:`Five cases execute. Case three is the security property: the email matches an existing account exactly, and the correct answer is still null. A migration that auto-links on email lets anyone who can influence an email claim attach themselves to an existing account — and during a migration there are two protocols asserting it, which doubles the opportunity. Case four is the subtler one: the same string can be a SAML NameID for one person and an OIDC subject for another, so the protocol is part of the key rather than decoration. The cost of doing this properly is that links must be populated deliberately, which is real work and is the actual content of a migration plan.`,
+hints:['A link matches on two fields, not one.','The email is on the claim to tempt you. Leave it alone.','An identifier you have never seen is not evidence about which account it belongs to.']}}
 ]});

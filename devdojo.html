@@ -1498,6 +1498,8 @@ const GLOSS_ALL=[
      ['Sender-constrained token',`A token bound to a key only the real client has (mTLS-bound or DPoP), so a stolen copy is useless.`],
    ]},
    {h:'4 · Protocols & standards',terms:[
+     ['Workload identity federation',`Exchanging a platform-issued identity — a CI job's OIDC token, a Kubernetes service account, a mesh workload's SPIFFE identity — for short-lived credentials somewhere else, so no long-lived key is stored anywhere. The security boundary is the relying platform's trust policy, not the signature.`],
+     ['Identity broker (IdP proxy)',`A hub that is a relying party to many upstream identity providers and an identity provider to many downstream applications, turning n x m integrations into n + m. Also the one place cross-cutting policy, claim normalisation and audit can live — and a concentrated blast radius.`],
      ['Authorization Server Metadata',`The document at /.well-known/oauth-authorization-server (RFC 8414) or /.well-known/openid-configuration listing an authorization server's endpoints, supported algorithms and jwks_uri. Its issuer value must match, character for character, the issuer it was resolved from.`],
      ['Resource indicator',`The resource parameter (RFC 8707) naming the API a token is intended for, so the authorization server issues a token whose aud covers that API only. Worthless unless each resource server validates aud.`],
      ['OAuth 2.0',`The delegated authorization framework: lets an app act for a user without the user password.`],
@@ -1594,6 +1596,8 @@ const GLOSS_ALL=[
      ['Session',`Server- or cookie-tracked state that remembers a logged-in user between requests.`],
    ]},
    {h:'8 · Threats & defenses',terms:[
+     ['Certificate pinning',`Requiring a presented chain to contain a specific pre-configured public key rather than accepting any certificate from any trusted CA. Pin the SubjectPublicKeyInfo hash, prefer an intermediate over the leaf, always hold a backup pin — a failed pin denies service in a way no server-side change can fix.`],
+     ['Subject collision',`Two upstream identity providers issuing the same subject identifier for different people. Only the (issuer, subject) pair is unique, so a broker or application keying on the raw subject alone will eventually merge two unrelated accounts.`],
      ['IdP mix-up',`An attack in which a client is induced to use one identity provider's endpoints while believing it is talking to another, typically by supplying attacker-controlled metadata. Defended by exact issuer comparison and the iss response parameter (RFC 9207).`],
      ['Algorithm confusion',`Forging a token by changing its alg — most classically re-signing an RS256 token as HS256 using the issuer's public key as the HMAC secret. Defended by validating alg against your own policy list rather than dispatching on the header.`],
      ['Consent phishing (illicit grant)',`Obtaining access by persuading a user to approve a genuine consent screen for an attacker's request, rather than by stealing a credential. Nothing is spoofed, MFA is satisfied honestly, and phishing-resistant authentication does not prevent it.`],

@@ -706,5 +706,85 @@ solution:`public class Tenant {
 }`,
 tests:[{d:'derives the tenant from the email domain',re:'substring\\s*\\(\\s*email\\.indexOf\\s*\\(\\s*"@"\\s*\\)\\s*\\+\\s*1\\s*\\)'},{d:'isolation: access only within the same tenant',re:'resourceTenant\\.equals\\s*\\(\\s*userTenant\\s*\\)'}],
 behavior:`tenantKey("ada@acme.com") is "acme.com" (used to find Acme's tenant and IdP). sameTenant("acme","acme") is true; sameTenant("acme","beta") is false — the isolation check that prevents cross-tenant access.`,
-hints:['Tenant discovery from an email is the substring after the @.','Isolation is an equality check: the resource tenant must equal the user tenant.','Resolve tenant first, route to its IdP, then enforce isolation on every request.']}}
+hints:['Tenant discovery from an email is the substring after the @.','Isolation is an equality check: the resource tenant must equal the user tenant.','Resolve tenant first, route to its IdP, then enforce isolation on every request.']}},
+
+{id:'eibroker',title:'Identity brokering: one hub between many IdPs and many apps',body:`
+<p>Federation lessons so far assume one identity provider and one application. Real estates rarely look
+like that. A university has a dozen upstream providers and hundreds of services; a SaaS company has one
+login page and a different corporate IdP behind every enterprise customer; an acquisition arrives with its
+own directory that will not be merged for two years.</p>
+<p>Connecting every app to every IdP is the quadratic problem federation was supposed to solve. An
+<b>identity broker</b> — sometimes an IdP proxy or hub — sits in the middle: it is a relying party to every
+upstream provider and an identity provider to every application. Each side integrates once, with it.</p>
+
+<div class="codeSample" data-hl>  Okta (customer A)  ─┐                    ┌─▶ App 1
+  Entra (customer B) ─┼─▶  [ BROKER ]  ──┼─▶ App 2
+  Google (consumers) ─┤    RP upstream   ├─▶ App 3
+  Legacy LDAP        ─┘    IdP downstream└─▶ App 4
+
+  n + m integrations instead of n x m</div>
+
+<h4>What the broker is actually for</h4>
+<p>The integration arithmetic is the obvious benefit and the least interesting one. The real value is that
+the broker is the one place where cross-cutting decisions can live: where MFA policy is applied
+consistently no matter which upstream authenticated the user, where claims from four very different
+providers are normalised into one shape your applications understand, where a session exists that spans
+them, and where the audit trail is complete.</p>
+<p>It is also where you absorb change. Replacing an upstream provider becomes a broker configuration
+change rather than a project touching every application.</p>
+
+<h4>The two failures that matter</h4>
+<p><b>Subject collision.</b> Every upstream provider assigns its own subject identifiers, and they are only
+unique within that provider. Two upstreams can each have a user <code>12345</code>. A broker that keys
+accounts on the raw upstream <code>sub</code> will eventually merge two unrelated people, and the way you
+find out is a support ticket from someone seeing another customer's data. The fix is to <b>namespace the
+subject by its issuer</b> — the identity is the pair, never the value alone.</p>
+<p><b>Unverified claims.</b> This one is sharper. An upstream provider can assert any email address it
+likes, including one belonging to a user of a different upstream. If your broker links accounts by email,
+a customer who controls their own IdP can assert <code>ceo@yourcompany.com</code> and take over that
+account. The rule: a claim is only as trustworthy as the provider's <b>authority over it</b>, so verify
+domain ownership and only accept an email claim from an upstream authoritative for that domain.</p>
+
+<h4>The costs, which are structural</h4>
+<ul>
+<li><b>A single point of failure.</b> If the broker is down, nobody signs in to anything. It inherits the
+availability requirements of every application behind it.</li>
+<li><b>A double hop.</b> Two redirects, two sets of clock-skew tolerances, two session lifetimes, and
+error messages that arrive at the user two translations away from where they originated. Diagnosis takes
+longer, which is why the trace identifier must survive both hops.</li>
+<li><b>The temptation to add logic.</b> Brokers accumulate transformation rules until nobody can say what
+claims an application receives. Keep the mapping declarative and reviewable.</li>
+<li><b>Concentrated blast radius.</b> Compromise the broker and you have every application and every
+upstream at once — the same argument as the IdP-as-blast-radius lesson, one level up.</li>
+</ul>
+<p>Use one when you genuinely have many-to-many, or when you need a consistent policy point across
+providers you do not control. For three applications and one IdP it is machinery you will regret.</p>`,
+docs:[['Keycloak — identity brokering','https://www.keycloak.org/docs/latest/server_admin/#_identity_broker'],['OpenID Connect Core — the sub claim','https://openid.net/specs/openid-connect-core-1_0.html#IDToken'],['NIST SP 800-63C — federation and assertions','https://pages.nist.gov/800-63-3/sp800-63c.html']],
+exs:[{title:'Namespace the subject',lang:'js',diff:'medium',
+run:{call:'brokeredSubject',cases:[{name:'an upstream subject becomes issuer-qualified',args:['https://acme.okta.com','12345'],expect:'https://acme.okta.com|12345'},{name:'the same raw id from another upstream is a different person',args:['https://beta.example','12345'],expect:'https://beta.example|12345'},{name:'a missing subject is not an identity',args:['https://acme.okta.com',''],expect:null},{name:'a missing issuer is not an identity',args:['','12345'],expect:null}]},
+prompt:`Write <code>function brokeredSubject(upstreamIssuer, upstreamSub)</code> returning a subject identifier that is unique across all upstream providers — the issuer and the subject joined by <code>|</code>. Return <code>null</code> if either part is missing, because half an identity is not an identity.`,
+starter:`function brokeredSubject(upstreamIssuer, upstreamSub) {
+  return null;
+}`,
+solution:`function brokeredSubject(upstreamIssuer, upstreamSub) {
+  if (!upstreamIssuer || !upstreamSub) return null;   // half an identity is not one
+  return upstreamIssuer + "|" + upstreamSub;          // unique across ALL upstreams
+}`,
+tests:[{d:'both parts are required',re:'!upstreamIssuer|!upstreamSub'},{d:'the issuer qualifies the subject',re:'upstreamIssuer\\s*\\+|\\$\\{upstreamIssuer'},{d:'the subject is included',re:'upstreamSub'},{d:'missing input returns null',re:'return null'}],
+behavior:`Four cases execute, and cases one and two are the whole lesson: the same raw identifier 12345 arrives from two different providers and must produce two different accounts. A broker keying on the raw sub merges them, and the symptom is a user seeing someone else's data — which is discovered by a support ticket rather than by a test. The rule generalises past brokering: a subject identifier is only unique within its issuer, so anywhere you store one, store the issuer beside it.`,
+hints:['The identity is the pair, not either value alone.','Guard both inputs before combining them.','Pick a separator that cannot appear in an issuer URL.']},
+{title:'Which upstream may assert this email?',lang:'js',diff:'hard',
+run:{call:'acceptUpstreamEmail',cases:[{name:'the upstream is authoritative for the domain',args:['https://acme.okta.com','ada@acme.com',{'https://acme.okta.com':['acme.com'],'https://beta.example':['beta.example']}],expect:true},{name:'another customer claiming your domain is refused',args:['https://beta.example','ada@acme.com',{'https://acme.okta.com':['acme.com'],'https://beta.example':['beta.example']}],expect:false},{name:'domains compare case-insensitively',args:['https://acme.okta.com','Ada@ACME.com',{'https://acme.okta.com':['acme.com'],'https://beta.example':['beta.example']}],expect:true},{name:'a malformed address is refused',args:['https://acme.okta.com','not-an-email',{'https://acme.okta.com':['acme.com']}],expect:false},{name:'an upstream with no verified domains',args:['https://who.example','ada@acme.com',{'https://acme.okta.com':['acme.com']}],expect:false}]},
+prompt:`Write <code>function acceptUpstreamEmail(upstreamIssuer, email, authoritative)</code> deciding whether to believe an email claim. <code>authoritative</code> maps each upstream issuer to the list of domains it has proven it owns. Accept only when the email's domain is in that upstream's list. Compare domains case-insensitively, and reject anything without an <code>@</code>.`,
+starter:`function acceptUpstreamEmail(upstreamIssuer, email, authoritative) {
+  return false;
+}`,
+solution:`function acceptUpstreamEmail(upstreamIssuer, email, authoritative) {
+  if (!email || !email.includes("@")) return false;
+  const domain = email.split("@").pop().toLowerCase();
+  return (authoritative[upstreamIssuer] || []).includes(domain);  // unknown upstream: no domains
+}`,
+tests:[{d:'the address is validated before use',re:'includes\\s*\\(\\s*["\x27]@|indexOf\\s*\\(\\s*["\x27]@'},{d:'the domain is extracted',re:'split\\s*\\(\\s*["\x27]@'},{d:'comparison is case-insensitive',re:'toLowerCase'},{d:'an unknown upstream has no authority',re:'\\|\\|\\s*\\[\\]|\\?\\?\\s*\\[\\]'}],
+behavior:`Five cases execute. Case two is the account-takeover vector in one line: a customer who runs their own IdP asserts an email at your domain, and a broker that links accounts by email hands them the matching account. That is not hypothetical — it is a recurring finding in multi-tenant SaaS. The unknown-upstream case matters just as much: falling back to an empty list means a provider you have not configured has authority over nothing, which is the correct default. Note what this function does NOT do — it never uses the email to find an account. It only decides whether the claim is believable; linking still requires an explicit, verified step.`,
+hints:['Take the domain from the address, then ask whether this upstream owns it.','An upstream you have never configured should have authority over nothing.','Domains are case-insensitive; local parts are not, but you are not comparing those.']}]}
 ]});
