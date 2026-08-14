@@ -63,7 +63,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS ratings (
     username   TEXT NOT NULL REFERENCES users(username) ON DELETE CASCADE,
     lesson_key TEXT NOT NULL,
-    rating     INTEGER NOT NULL CHECK (rating IN (-1, 0, 1)),
+    rating     INTEGER CHECK (rating IS NULL OR rating IN (-1, 0, 1)),
     comment    TEXT,
     updated_at INTEGER NOT NULL,
     PRIMARY KEY (username, lesson_key)
@@ -140,28 +140,67 @@ exports.listUsers = () => stmts.listAll.all().map(r => ({
 
 /* ------------------------------- ratings -------------------------------- */
 
+/* Phase 1 created ratings.rating as NOT NULL. Phase 2 lets someone leave a
+   comment without rating, so the column has to be nullable — and SQLite cannot
+   drop NOT NULL in place. Rebuild once, preserving rows. */
+(() => {
+  const cols = db.prepare('PRAGMA table_info(ratings)').all();
+  const r = cols.find(c => c.name === 'rating');
+  if (!r || !r.notnull) return;                       // already nullable, or table absent
+  db.exec(`
+    BEGIN;
+    CREATE TABLE ratings_new (
+      username   TEXT NOT NULL REFERENCES users(username) ON DELETE CASCADE,
+      lesson_key TEXT NOT NULL,
+      rating     INTEGER CHECK (rating IS NULL OR rating IN (-1, 0, 1)),
+      comment    TEXT,
+      updated_at INTEGER NOT NULL,
+      PRIMARY KEY (username, lesson_key)
+    );
+    INSERT INTO ratings_new SELECT username, lesson_key, rating, comment, updated_at FROM ratings;
+    DROP TABLE ratings;
+    ALTER TABLE ratings_new RENAME TO ratings;
+    CREATE INDEX IF NOT EXISTS idx_ratings_lesson ON ratings(lesson_key);
+    COMMIT;`);
+})();
+
 const rStmts = {
+  /* A comment-only submission must not wipe an existing rating, and re-rating
+     must not wipe an existing comment — hence COALESCE on both sides. An
+     explicitly cleared comment arrives as '' and is stored as NULL below. */
   upsert: db.prepare(`INSERT INTO ratings (username, lesson_key, rating, comment, updated_at)
     VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(username, lesson_key) DO UPDATE SET
-      rating = excluded.rating,
-      comment = COALESCE(excluded.comment, ratings.comment),
+      rating = COALESCE(excluded.rating, ratings.rating),
+      comment = CASE WHEN excluded.comment IS NULL THEN ratings.comment
+                     WHEN excluded.comment = '' THEN NULL
+                     ELSE excluded.comment END,
       updated_at = excluded.updated_at`),
   mine: db.prepare('SELECT lesson_key, rating, comment, updated_at FROM ratings WHERE username = ?'),
+  /* Rows with a comment but no rating count toward comments, never toward the
+     score — otherwise written feedback would silently read as neutral. */
   totals: db.prepare(`SELECT lesson_key,
-      SUM(rating =  1) AS up,
-      SUM(rating =  0) AS neutral,
-      SUM(rating = -1) AS down,
-      COUNT(*)         AS total
-    FROM ratings GROUP BY lesson_key ORDER BY down DESC, total DESC`),
+      COALESCE(SUM(rating =  1), 0) AS up,
+      COALESCE(SUM(rating =  0), 0) AS neutral,
+      COALESCE(SUM(rating = -1), 0) AS down,
+      SUM(rating IS NOT NULL)       AS rated,
+      SUM(comment IS NOT NULL AND TRIM(comment) <> '') AS comments,
+      COUNT(*)                      AS total
+    FROM ratings GROUP BY lesson_key ORDER BY down DESC, comments DESC, total DESC`),
+  comments: db.prepare(`SELECT username, lesson_key, rating, comment, updated_at FROM ratings
+    WHERE comment IS NOT NULL AND TRIM(comment) <> '' ORDER BY updated_at DESC LIMIT 500`),
 };
 
-/** Record or change one user's rating of one lesson. comment is phase 2. */
+/** Record a rating, a comment, or both. Either may be omitted, but not both. */
 exports.rateLesson = (username, lessonKey, rating, comment) => {
-  if (![-1, 0, 1].includes(rating)) throw new Error('rating must be -1, 0 or 1');
   if (typeof lessonKey !== 'string' || !/^[\w.:-]{1,64}$/.test(lessonKey)) throw new Error('bad lesson key');
-  const text = typeof comment === 'string' && comment.trim() ? comment.trim().slice(0, 2000) : null;
-  rStmts.upsert.run(username, lessonKey, rating, text, Date.now());
+  const hasRating = rating !== null && rating !== undefined;
+  if (hasRating && ![-1, 0, 1].includes(rating)) throw new Error('rating must be -1, 0 or 1');
+  const hasComment = typeof comment === 'string';
+  if (!hasRating && !hasComment) throw new Error('nothing to record');
+  // '' is meaningful: the reader cleared their comment. undefined means "unchanged".
+  const text = hasComment ? comment.trim().slice(0, 2000) : null;
+  rStmts.upsert.run(username, lessonKey, hasRating ? rating : null, text, Date.now());
 };
 
 exports.getRatings = username => {
@@ -174,8 +213,15 @@ exports.getRatings = username => {
 
 /** Aggregate across all users — the point of collecting this at all. */
 exports.ratingTotals = () => rStmts.totals.all().map(r => ({
-  lesson: r.lesson_key, up: r.up, neutral: r.neutral, down: r.down, total: r.total,
-  score: r.total ? Math.round(((r.up - r.down) / r.total) * 100) : null,
+  lesson: r.lesson_key, up: r.up, neutral: r.neutral, down: r.down,
+  rated: r.rated, comments: r.comments, total: r.total,
+  score: r.rated ? Math.round(((r.up - r.down) / r.rated) * 100) : null,
+}));
+
+/** The written feedback itself, newest first. This is the phase-2 payoff. */
+exports.ratingComments = () => rStmts.comments.all().map(r => ({
+  user: r.username, lesson: r.lesson_key, rating: r.rating,
+  comment: r.comment, updatedAt: r.updated_at,
 }));
 
 /* ------------------------------ progress ------------------------------- */

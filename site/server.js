@@ -340,7 +340,8 @@ async function handle(req, res) {
     if (!authed) return json(res, 401, { error: 'not signed in' });
     let body; try { body = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
     const lesson = body && body.lesson;
-    const rating = body && Number(body.rating);
+    // A rating may be absent (comment only) — do not coerce that to 0.
+    const rating = body && body.rating !== undefined && body.rating !== null ? Number(body.rating) : null;
     try {
       db.rateLesson(me.username, String(lesson), rating, body && body.comment);
     } catch (e) { return json(res, 400, { error: e.message }); }
@@ -354,6 +355,10 @@ async function handle(req, res) {
   if (p === '/api/admin/ratings' && req.method === 'GET') {
     if (!isAdmin) return json(res, authed ? 403 : 401, { error: 'admin only' });
     return json(res, 200, { ratings: db.ratingTotals() });   // worst-rated first
+  }
+  if (p === '/api/admin/comments' && req.method === 'GET') {
+    if (!isAdmin) return json(res, authed ? 403 : 401, { error: 'admin only' });
+    return json(res, 200, { comments: db.ratingComments() }); // newest first
   }
 
   if (p === '/api/admin/users' && req.method === 'GET') {

@@ -52,7 +52,8 @@ function load() {
   vm.createContext(sandbox);
   // Expose the functions under test by name after evaluation.
   const exposed = ['localChecks', 'buildWorkerSrc', 'exDiff', 'shuffleQuiz', 'esc',
-                   'rateAggregate', 'ratingMarkup', 'setRating', 'getRating', 'store'];
+                   'rateAggregate', 'ratingMarkup', 'setRating', 'getRating', 'store',
+                   'saveComment', 'getComment', 'commentQuestion', 'commentMarkup'];
   const tail = '\n;(' + JSON.stringify(exposed) +
     ').forEach(function(n){ try { globalThis.__x = globalThis.__x || {}; globalThis.__x[n] = eval(n); } catch (e) {} });';
   vm.runInContext(src + tail, sandbox, { filename: 'engine/app.js' });

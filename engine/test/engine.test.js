@@ -11,7 +11,8 @@ const assert = require('node:assert/strict');
 const { load } = require('./harness.js');
 
 const { localChecks, buildWorkerSrc, exDiff, shuffleQuiz, esc,
-        rateAggregate, ratingMarkup, setRating, getRating } = load();
+        rateAggregate, ratingMarkup, setRating, getRating,
+        saveComment, getComment, commentQuestion, commentMarkup } = load();
 
 /* ---------------------------------------------------------------- grading */
 test('localChecks passes a matching regex', () => {
@@ -223,4 +224,64 @@ test('a rating never collides with exercise progress under the same id', () => {
   setRating('collide', 1);
   const agg = rateAggregate({ 'rating:collide': { v: 1 }, 'collide': { done: true } });
   assert.equal(agg.rated, 1);                          // the progress entry is not counted
+});
+
+/* --------------------------------------------- lesson comments (phase 2) */
+test('saveComment trims, caps length, and round-trips', () => {
+  saveComment('c1', '   the JOIN example lost me   ');
+  assert.equal(getComment('c1'), 'the JOIN example lost me');
+  const long = 'x'.repeat(3000);
+  assert.equal(saveComment('c2', long).length, 2000);
+  assert.equal(getComment('c2').length, 2000);
+});
+
+test('an empty comment clears rather than storing whitespace', () => {
+  saveComment('c3', 'something');
+  assert.equal(getComment('c3'), 'something');
+  assert.equal(saveComment('c3', '    '), '');
+  assert.equal(getComment('c3'), '');
+});
+
+test('a comment and a rating coexist under one key without overwriting', () => {
+  setRating('c4', -1);
+  saveComment('c4', 'the second example contradicts the first');
+  assert.equal(getRating('c4'), -1);                    // comment did not clear the rating
+  assert.equal(getComment('c4'), 'the second example contradicts the first');
+  setRating('c4', 1);
+  assert.equal(getComment('c4'), 'the second example contradicts the first'); // rating did not clear it
+  assert.equal(getRating('c4'), 1);
+});
+
+test('a comment can be left without any rating', () => {
+  saveComment('c5', 'no rating, just a note');
+  assert.equal(getRating('c5'), null);
+  assert.equal(getComment('c5'), 'no rating, just a note');
+  const agg = rateAggregate({ 'rating:c5': { c: 'no rating, just a note' } });
+  assert.equal(agg.rated, 0);          // must NOT read as neutral
+  assert.equal(agg.comments, 1);
+  assert.equal(agg.score, null);
+});
+
+test('the question asked depends on the rating given', () => {
+  setRating('c6', -1);
+  assert.match(commentQuestion('c6'), /trying to do/);
+  setRating('c6', 1);
+  assert.match(commentQuestion('c6'), /worked/);
+  assert.match(commentQuestion('never-rated-q'), /clearer/);
+});
+
+test('commentMarkup escapes stored text rather than injecting it', () => {
+  saveComment('c7', '<img src=x onerror=alert(1)>');
+  const html = commentMarkup('c7');
+  assert.ok(!html.includes('<img src=x'));
+  assert.match(html, /&lt;img/);
+});
+
+test('rateAggregate counts comments separately from ratings', () => {
+  const a = rateAggregate({
+    'rating:a': { v: 1, c: 'helpful' }, 'rating:b': { v: -1 },
+    'rating:c': { c: 'comment only' }, 'rating:d': { c: '   ' },
+  });
+  assert.equal(a.rated, 2);
+  assert.equal(a.comments, 2);         // whitespace-only does not count
 });
