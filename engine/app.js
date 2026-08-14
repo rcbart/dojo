@@ -307,7 +307,7 @@ const DOMAINS=(typeof DOJO_DOMAINS!=="undefined")?DOJO_DOMAINS:[
   {name:'Systems & Networking',icon:'🔌',titles:['Networking & Sockets']},
   {name:'Security & Cryptography',icon:'🔐',titles:['Security & Crypto APIs']},
   {name:'Identity & Access (IAM)',icon:'🛂',titles:['Identity and Access']},
-  {name:'DevOps & Delivery',icon:'🚀',titles:['Build Tools: Maven & Gradle','Git: Beginner to Master','Deploying Java to the Web','CI/CD: GitHub Actions & ArgoCD']},
+  {name:'DevOps & Delivery',icon:'🚀',titles:['Build Tools: Maven & Gradle','Git: Beginner to Master','Deploying Java to the Web','Reading Production: the Command Line for Logs','CI/CD: GitHub Actions & ArgoCD']},
   {name:'Architecture & Design',icon:'🏛️',titles:['Design Patterns']},
   {name:'Senior Track (Dan)',icon:'⛩️',titles:['System Design & Tradeoffs','Failure-First: Distributed Systems','Working with Real Code']},
   {name:'Coding Challenges',icon:'🏆',titles:['Coding Challenges: The Tournament']},
@@ -767,7 +767,14 @@ function buildWorkerSrc(code,spec){
     + (mode==='fetch'?'':'try{delete self.fetch;}catch(e){self.fetch=undefined;}')
     + '}catch(e){}\n';
   return '"use strict";\n'+harden
-    +'function deepEq(a,b){return JSON.stringify(a)===JSON.stringify(b);}\n'
+    /* Deep equality that ignores OBJECT key order but respects ARRAY order.
+       JSON.stringify alone made {a:1,b:2} unequal to {b:2,a:1}, so a learner
+       returning the right object with the keys in another order was told they
+       had failed. Array order stays significant because for a list it is data. */
+    +'function canon(v){if(v===null||typeof v!=="object")return v;'
+    +'if(Array.isArray(v))return v.map(canon);'
+    +'var o={};Object.keys(v).sort().forEach(function(k){o[k]=canon(v[k]);});return o;}\n'
+    +'function deepEq(a,b){return JSON.stringify(canon(a))===JSON.stringify(canon(b));}\n'
     +'function checkFetch(x,req){if(!req)return{ok:false,note:"no fetch was called"};var o=req.opts||{};'
     +'if(x.method&&String(o.method||"GET").toUpperCase()!==x.method.toUpperCase())return{ok:false,note:"method was "+(o.method||"GET")};'
     +'if(x.url&&String(req.url).indexOf(x.url)<0)return{ok:false,note:"url was "+req.url};'
@@ -927,6 +934,12 @@ const GLOSS_ALL=[
      ['Resource Server (RS)',`The API that accepts and validates access tokens.`],
    ]},
    {h:'3 · Tokens & assertions',terms:[
+     ['kid (key id)',`The key identifier in a JWS/JWT header, naming which key in the JWKS signed this token. Selecting the key by kid is what lets an issuer rotate keys without coordinating with any verifier.`],
+     ['Crypto agility',`The ability to change algorithm or key without changing the system — algorithms in a policy list rather than hardcoded, keys selected by kid, rotation as a routine drill. Measured by how long it would take you to stop using an algorithm, not by which one you use today.`],
+     ['Post-quantum cryptography (PQC)',`Algorithms designed to resist attack by a quantum computer — NIST's ML-KEM for key establishment, ML-DSA and SLH-DSA for signatures. Confidentiality is the urgent case ("harvest now, decrypt later"); short-lived signatures are far less exposed.`],
+     ['ML-KEM',`The NIST-standardised post-quantum key encapsulation mechanism (FIPS 203, formerly Kyber). Used in hybrid TLS key exchange today, because confidentiality is the urgent post-quantum case.`],
+     ['ML-DSA',`The NIST-standardised post-quantum signature algorithm (FIPS 204, formerly Dilithium). Relevant first to long-lived signed artefacts — certificates, firmware, credentials valid for years — rather than to five-minute access tokens.`],
+     ['SLH-DSA',`A NIST-standardised stateless hash-based signature scheme (FIPS 205, formerly SPHINCS+). Conservative and slow, with large signatures; chosen where a very long security lifetime matters more than size.`],
      ['Access token',`The key an app uses to call an API. Represents authorization, not identity.`],
      ['ID token',`OIDC proof of who the user is, issued to the client. A JWT. Not for calling APIs.`],
      ['Refresh token',`A long-lived token used to obtain new access tokens without a fresh login.`],
@@ -949,6 +962,8 @@ const GLOSS_ALL=[
      ['Sender-constrained token',`A token bound to a key only the real client has (mTLS-bound or DPoP), so a stolen copy is useless.`],
    ]},
    {h:'4 · Protocols & standards',terms:[
+     ['Authorization Server Metadata',`The document at /.well-known/oauth-authorization-server (RFC 8414) or /.well-known/openid-configuration listing an authorization server's endpoints, supported algorithms and jwks_uri. Its issuer value must match, character for character, the issuer it was resolved from.`],
+     ['Resource indicator',`The resource parameter (RFC 8707) naming the API a token is intended for, so the authorization server issues a token whose aud covers that API only. Worthless unless each resource server validates aud.`],
      ['OAuth 2.0',`The delegated authorization framework: lets an app act for a user without the user password.`],
      ['OpenID Connect (OIDC)',`An authentication layer on top of OAuth 2.0 that adds the ID token.`],
      ['SAML 2.0',`An XML-based standard for enterprise web single sign-on.`],
@@ -977,6 +992,11 @@ const GLOSS_ALL=[
      ['Discovery',`The /.well-known/openid-configuration document listing a provider endpoints and keys.`],
    ]},
    {h:'7 · Core concepts',terms:[
+     ['Same-origin policy',`The browser rule that script on one origin (scheme + host + port) cannot read responses from another. It does not stop the request being sent or cookies being attached — which is the gap CSRF lives in.`],
+     ['CORS (Cross-Origin Resource Sharing)',`Server opt-in, enforced by browsers, that lets script on another origin READ a response. It governs reading, not sending, and not whether cookies ride along (that is SameSite). Because only browsers enforce it, it is never a substitute for authorization.`],
+     ['Preflight request',`The OPTIONS request a browser sends before a cross-origin call that carries an Authorization header, a custom header or an unusual content type, asking the server whether the real request is permitted.`],
+     ['SameSite',`The cookie attribute deciding whether a cookie is attached to requests originating from another site — Strict, Lax or None (which requires Secure). The primary structural defence against CSRF.`],
+     ['Cross-device flow',`Any flow where the device gaining access is not the device that authenticates: the device grant, QR-code login, CIBA. Convenient where there is no keyboard or browser, and structurally weak because consent is given without context.`],
      ['SSO',`Single Sign-On — a user experience, not a protocol: one login event, many apps. Achievable by a shared session cookie within one domain, or by federation across boundaries.`],
      ['Federation',`A trust architecture: an app stops authenticating users itself and accepts signed statements from an authority it trusts, usually across an organizational boundary. Delivers SSO as a side effect, but is worth doing for one app.`],
 ['Single Logout (SLO)',`Ending every session created by an SSO login. Unreliable in practice because one login event really created many independent app sessions.`],
@@ -1035,6 +1055,11 @@ const GLOSS_ALL=[
      ['Session',`Server- or cookie-tracked state that remembers a logged-in user between requests.`],
    ]},
    {h:'8 · Threats & defenses',terms:[
+     ['IdP mix-up',`An attack in which a client is induced to use one identity provider's endpoints while believing it is talking to another, typically by supplying attacker-controlled metadata. Defended by exact issuer comparison and the iss response parameter (RFC 9207).`],
+     ['Algorithm confusion',`Forging a token by changing its alg — most classically re-signing an RS256 token as HS256 using the issuer's public key as the HMAC secret. Defended by validating alg against your own policy list rather than dispatching on the header.`],
+     ['Consent phishing (illicit grant)',`Obtaining access by persuading a user to approve a genuine consent screen for an attacker's request, rather than by stealing a credential. Nothing is spoofed, MFA is satisfied honestly, and phishing-resistant authentication does not prevent it.`],
+     ['SSRF',`Server-Side Request Forgery: making a server issue HTTP requests of the attacker's choosing. In identity systems it is a common route to internal metadata endpoints and to tokens the server holds.`],
+     ['Device-code phishing',`Cross-device consent phishing: the attacker starts a device-grant flow and sends the resulting user_code to the victim, who authenticates at the real provider and approves the attacker's session.`],
      ['CSRF',`Cross-Site Request Forgery — a malicious page makes your browser send an unintended authenticated request. Defended with the state parameter and anti-CSRF tokens.`],
      ['Replay attack',`Re-sending a captured token or message to impersonate someone. Defended with short expiries, nonces, and sender-constrained tokens.`],
      ['Token theft',`Stealing a bearer token to reuse it. Defended with short lifetimes, secure storage, and proof-of-possession.`],
@@ -1141,7 +1166,7 @@ const GLOSS_ALL=[
      ['Header',`A key-value line carrying metadata on a request or response.`],
      ['Idempotency',`An operation that has the same effect whether done once or many times (safe to retry).`],
      ['Statelessness',`Each request stands alone; the server keeps no per-request memory of the client.`],
-     ['CORS',`Cross-Origin Resource Sharing: browser rules for calling another origin.`],
+     ['CORS',`Cross-Origin Resource Sharing: server opt-in, enforced by browsers, that lets script on another origin read a response. It governs reading the response, not sending the request — and it is not authorization, because only browsers enforce it.`],
    ]},
    {h:'API design',terms:[
      ['REST',`An architectural style using HTTP verbs on resource URLs.`],
@@ -1202,6 +1227,17 @@ const GLOSS_ALL=[
    ]},
  ]},
  {domain:'DevOps & Delivery',icon:'🚀',groups:[
+   {h:'Reading production: the command line',terms:[
+     ['stdin / stdout / stderr',`The three streams every filter has: input, results, and a separate channel for diagnostics — separate so that warnings never contaminate the data flowing down a pipe.`],
+     ['Pipeline',`Two or more filters joined by |, running concurrently, with one program's stdout feeding the next one's stdin. Data streams through as it is produced, so file size stops being a memory limit.`],
+     ['Exit code',`The status a program returns: 0 for success, non-zero for failure. grep returns 1 for "ran fine, matched nothing" — which is why an empty result aborts a script running under set -e.`],
+     ['SIGPIPE',`The signal delivered to a process that writes to a pipe whose reader has closed. It is why "grep pattern huge.log | head -5" returns instantly instead of reading the whole file.`],
+     ['pipefail',`The shell option (set -o pipefail) that makes a pipeline fail if any stage failed. Without it a pipeline reports only its last command's status, so a broken first stage exits 0 and produces nothing.`],
+     ['Greedy matching',`The default behaviour of .* — match as much as possible. It is why s/.*=// deletes through the LAST delimiter on the line; the POSIX fix is a negated class such as [^=]*=.`],
+     ['Associative array',`awk's string-keyed hash map. It turns group-by into one pass with memory proportional to the number of distinct keys, which is what makes awk, rather than grep or sed, the tool that aggregates.`],
+     ['Percentile (p99)',`The value below which that share of observations fall. A mean describes the typical request and hides the tail; a p99 that moves tenfold while the median holds steady is the signature of a slow dependency on a small fraction of calls.`],
+     ['Nearest rank',`The simplest percentile definition: sort the values and take position ceil(p x n). Requires a numeric sort — a text sort ranks "99" above "1075" and quietly returns the wrong tail.`]
+   ]},
    {h:'Pipeline & packaging',terms:[
      ['CI',`Continuous Integration: automatically build and test every change.`],
      ['CD',`Continuous Delivery/Deployment: automatically ship changes to environments.`],

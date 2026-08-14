@@ -68,6 +68,21 @@ test('buildWorkerSrc deletes fetch unless the exercise mocks it', () => {
   assert.ok(!mocked.includes('delete self.fetch'));
 });
 
+/* deepEq inside the worker: object key order must not decide pass/fail.
+   Found by executing every exercise's reference solution against its own
+   run-cases — six cases in JSDojo failed only because the solution built its
+   result object with the keys in a different order than the expectation. */
+test('the worker deepEq ignores object key order but not array order', () => {
+  const src = buildWorkerSrc('function f(){}', { call: 'f', cases: [] });
+  const scope = {};
+  new Function(src.replace(/\(async function\(\)[\s\S]*$/, '') + '\nthis.deepEq = deepEq;').call(scope);
+  assert.equal(scope.deepEq({ a: 1, b: 2 }, { b: 2, a: 1 }), true);
+  assert.equal(scope.deepEq({ h: { x: 1, y: 2 } }, { h: { y: 2, x: 1 } }), true);
+  assert.equal(scope.deepEq({ a: 1 }, { a: 2 }), false);
+  assert.equal(scope.deepEq([1, 2], [2, 1]), false);
+  assert.equal(scope.deepEq([{ a: 1, b: 2 }], [{ b: 2, a: 1 }]), true);
+});
+
 test('buildWorkerSrc embeds the cases and calls the named function', () => {
   const src = buildWorkerSrc('function add(a,b){return a+b;}', {
     call: 'add', cases: [{ args: [1, 2], expect: 3 }]

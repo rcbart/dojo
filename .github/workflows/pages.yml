@@ -39,6 +39,13 @@ jobs:
         run: node scripts/verify.js
         working-directory: js-dojo
 
+      # Third gate: every exercise that ships a run spec is EXECUTED against its
+      # own reference solution, exactly as the in-browser worker would. The two
+      # gates above cannot see an executed exercise whose cases disagree with its
+      # own solution — this one found four that had shipped.
+      - name: Execute every graded exercise against its own solution
+        run: node scripts/verify-exec.js
+
       - name: Build DevDojo
         run: node build.js
       - name: Build IdentityDojo
