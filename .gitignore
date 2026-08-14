@@ -38,6 +38,10 @@ DESIGN_AND_TRADEOFFS.md
 
 # local-only personal interview prep — do NOT commit
 INTERVIEW_SENIOR_EM_GUIDE.md
+ARCHITECTURE_INTERVIEW.md
+
+# one-off history-rewrite helper — local only
+purge-history.sh
 
 # separate local repo for roniam.dev architecture designs (its own git repo)
 architecture-designs/
