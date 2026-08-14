@@ -104,7 +104,61 @@ hints:['A client is the application, not the user; it is registered with the aut
 MessageDigest sha = MessageDigest.getInstance("SHA-256");
 byte[] hash = sha.digest(verifier.getBytes("US-ASCII"));
 String challenge = Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
-// send on /authorize:  &code_challenge=...&code_challenge_method=S256</div>`,
+// send on /authorize:  &code_challenge=...&code_challenge_method=S256</div>
+
+<h4>The attack, told as a story</h4>
+<p>A mobile app starts a login. The authorization server needs to send the code back, so the app registered
+a custom URL scheme — <code>myapp://callback</code>. On some platforms, <b>any app can claim that
+scheme</b>. A malicious app installed on the same phone registers it too, the operating system hands it the
+redirect, and it now holds a valid authorization code for your user.</p>
+<p>Before PKCE, that code was enough. A public client has no secret, so the token endpoint could not tell
+the malicious app from the real one — both presented the same <code>client_id</code> and a valid code, and
+both got tokens.</p>
+
+<h4>The fix: a secret invented per flow</h4>
+<p>PKCE's insight is that the client does not need a <i>long-lived</i> secret. It needs to prove it is the
+same party that <b>started</b> this particular flow, and for that a one-time value generated in memory is
+enough.</p>
+<div class="codeSample" data-hl>1. the app invents a code_verifier: 43-128 random characters, in memory
+2. it sends only the HASH of it on the (visible) /authorize request:
+     code_challenge = base64url(SHA-256(verifier))
+     code_challenge_method = S256
+3. the code comes back through the browser - and a thief who intercepts
+   it holds a code but NOT the verifier
+4. redeeming the code requires presenting the ORIGINAL verifier, which
+   the AS hashes and compares against the challenge it stored
+
+// the challenge is public; the verifier never leaves the app; SHA-256
+// cannot be reversed. so an intercepted code is inert.</div>
+
+<h4>Why <code>plain</code> exists and must not be used</h4>
+<p>The spec permits <code>code_challenge_method=plain</code>, where the challenge <i>is</i> the verifier.
+That protects nothing against anyone who saw the authorization request — which is precisely the attacker
+this defends against. <b>Always <code>S256</code></b>, and a server should refuse <code>plain</code>.</p>
+<p>Related, and subtler: the <b>downgrade attack</b>. If an attacker can strip the
+<code>code_challenge</code> from the request, an authorization server that treats PKCE as optional will
+issue a code with no challenge attached — and the protection silently disappears. A server that requires
+PKCE for public clients closes it; a client cannot.</p>
+
+<h4>Three parameters people confuse</h4>
+<div class="codeSample" data-hl>state            CSRF on the redirect endpoint, and app state
+                 ("send me back to /reports"). per RFC 9700, PKCE now
+                 provides the CSRF protection, so state is increasingly
+                 just the return address.
+nonce            OIDC replay protection. sent on /authorize, echoed in
+                 the ID TOKEN, checked by the client. binds the token
+                 to THIS login.
+code_verifier    PKCE. proves the redeemer started the flow. never
+                 leaves the client until the token request.
+
+// three different jobs, three different attacks. they are not
+// interchangeable, and having one does not excuse missing another.</div>
+
+<h4>It is no longer just for mobile</h4>
+<p>PKCE was designed for native apps and is now <b>required for every client</b> using the authorization
+code flow under OAuth 2.1 — including confidential ones with a secret. The reason is that a client secret
+protects the <i>token request</i> and does nothing about a code stolen in transit, whereas PKCE binds the
+code itself to the flow that created it. The two defend different things, so you want both.</p>`,
 docs:[['RFC 7636 — PKCE','https://www.rfc-editor.org/rfc/rfc7636'],['oauth.net — PKCE','https://oauth.net/2/pkce/']],
 ex:{title:'Compute the PKCE code_challenge',
 prompt:`Write <code>Pkce</code> with: <code>static String verifier()</code> returning a base64url (no padding) string of <b>32 random bytes</b> from <code>SecureRandom</code>; and <code>static String challenge(String verifier)</code> returning <code>base64url(SHA-256(verifier))</code> — use <code>MessageDigest.getInstance("SHA-256")</code>, hash <code>verifier.getBytes("US-ASCII")</code>, and encode with <code>Base64.getUrlEncoder().withoutPadding()</code>. Declare <code>throws Exception</code>.`,
@@ -480,7 +534,62 @@ public class ClientCreds {
 <p>The lifecycle in one line: <b>authenticate once → short access tokens for calls → refresh to renew → refresh expires or is revoked → log in again.</b></p>
 <div class="codeSample" data-hl>POST /token
 grant_type=refresh_token&refresh_token=STORED_REFRESH&scope=orders%3Aread
-// response: a new (shorter-lived) access_token, and usually a rotated refresh_token</div>`,
+// response: a new (shorter-lived) access_token, and usually a rotated refresh_token</div>
+
+<h4>Why refresh tokens exist at all</h4>
+<p>Two goals pull in opposite directions. <b>Short access tokens</b> limit the damage from a leak — a token
+that expires in five minutes is nearly worthless to a thief. <b>Not asking the user to log in every five
+minutes</b> is a hard product requirement.</p>
+<p>The refresh token resolves it by splitting the credential in two: a short-lived one that travels widely
+(to every API you call) and a long-lived one that travels rarely and only to the authorization server. The
+thing that gets exposed is the thing that expires fast.</p>
+
+<h4>Which makes the refresh token the crown jewels</h4>
+<div class="codeSample" data-hl>ACCESS TOKEN            REFRESH TOKEN
+minutes                 days, weeks, sometimes indefinitely
+sent to every API       sent ONLY to the authorization server
+leaks broadly           should never appear in a log or a header you
+                        did not control
+expires into safety     mints NEW access tokens, silently, forever
+
+// steal a refresh token and you have durable access with no login,
+// no MFA prompt, and nothing in the authentication logs. it is the
+// highest-value credential in an OAuth system.</div>
+
+<h4>Rotation, and the insight behind it</h4>
+<p>Rotation means each refresh token may be used <b>exactly once</b>: redeeming it returns a new access
+token <i>and</i> a new refresh token, retiring the old one. On its own that is only mildly useful. The
+insight is what a <b>reuse</b> means.</p>
+<div class="codeSample" data-hl>normal:  RT1 -> (AT1, RT2) -> (AT2, RT3) -> ...   each used once
+
+theft:   the attacker redeems RT2      -> gets AT2, RT3
+         the real client redeems RT2   -> ALREADY USED
+
+// the server cannot tell which party is the thief - and it does not
+// need to. a reuse means SOMEONE is replaying, so the WHOLE FAMILY is
+// revoked: every token descended from that original grant.
+// the legitimate user is logged out too. that is the accepted trade.</div>
+<p>Without rotation a stolen refresh token works quietly for as long as it lives. With it, the two parties
+inevitably collide, and the collision is the alarm.</p>
+
+<h4>The wrinkles that bite in production</h4>
+<p><b>Concurrent refreshes.</b> A page firing three requests at once may refresh three times in parallel, and
+naive reuse detection reads that as theft and logs the user out. Real implementations allow a short grace
+window where the immediately-previous token still works, and serialise refreshes in the client.</p>
+<p><b>Lost responses.</b> The client redeems a token, the response never arrives, and it now holds a dead
+token with no way back. Handle that path explicitly or the session simply stops working with no error
+anyone can see.</p>
+
+<h4>The lifetimes worth thinking about</h4>
+<p>There are three, and only naming two is a common mistake. <b>Access token lifetime</b> is your
+revocation lag. <b>Refresh token lifetime</b> is the idle timeout — how long an inactive user stays signed
+in. And the <b>absolute session lifetime</b> caps the whole grant regardless of activity, which is the one
+teams forget: without it, a user who keeps refreshing stays authenticated for ever, and so does whoever
+stole their refresh token.</p>
+<p>Rotation is the fallback, not the goal. If the refresh token can be <b>sender-constrained</b> with DPoP
+or mTLS, do that instead — a bound token cannot be replayed at all, so there is no collision to detect.
+OAuth 2.1 requires one or the other for public clients precisely because a bare bearer refresh token in a
+browser is the worst credential in the system.</p>`,
 docs:[['RFC 6749 §6 — Refreshing an Access Token','https://www.rfc-editor.org/rfc/rfc6749#section-6'],['oauth.net — Refresh Tokens','https://oauth.net/2/grant-types/refresh-token/']],
 ex:{title:'Build the refresh request',
 prompt:`Write <code>Refresh</code> with <code>static String body(String refreshToken, String scope)</code> returning <code>"grant_type=refresh_token"</code> then <code>&amp;refresh_token=</code> and <code>&amp;scope=</code>, each value passed through <code>java.net.URLEncoder.encode(value, "UTF-8")</code>. Declare <code>throws Exception</code>.`,
@@ -518,7 +627,60 @@ public class Refresh {
 <div class="codeSample" data-hl>// request authentication by adding the openid scope (+ nonce)
 scope=openid%20profile%20email &nonce=RANDOM
 // then fetch profile from UserInfo with the ACCESS token
-GET /userinfo    Authorization: Bearer ACCESS_TOKEN</div>`,
+GET /userinfo    Authorization: Bearer ACCESS_TOKEN</div>
+
+<h4>The confusion OIDC was invented to end</h4>
+<p>OAuth answers "may this app access that resource?". It does not answer "who is this person?" — and for
+years everyone pretended it did. The pattern was: get an access token, call the provider's profile endpoint,
+and treat whatever came back as the logged-in user.</p>
+<p>That is broken, and the reason is worth understanding rather than memorising. <b>An access token is a
+bearer credential meant for an API.</b> It does not say who obtained it, it is not audience-restricted to
+your application, and it carries no proof that it was issued in response to <i>your</i> login request. An
+attacker who obtains an access token for a different app — from a malicious app the same user installed —
+can present it to your profile lookup, which will happily describe that user, and you will log them in as
+someone else. This is the <b>confused deputy</b> again, and it had a real name in the wild: the token
+substitution attack.</p>
+
+<h4>What OIDC adds, and why each piece is there</h4>
+<div class="codeSample" data-hl>scope=openid    the switch. without it you get plain OAuth and no
+                ID token. this one word is what makes it OIDC.
+
+ID TOKEN        a JWT ABOUT THE AUTHENTICATION EVENT, audience-restricted
+                to YOUR client_id. it is for the CLIENT, not for an API.
+  iss  who authenticated them        aud  YOUR client_id - check this
+  sub  the stable user identifier    exp  when it stops being valid
+  iat  when it was issued            nonce  binds it to YOUR login
+  auth_time  when they ACTUALLY authenticated (not when this was minted)
+  acr / amr  how strongly, and by what means
+
+// the two claims that fix the old attack:
+//   aud   this token was minted FOR YOU. another app's cannot be reused.
+//   nonce YOU generated it, YOU stored it, and it must come back. a
+//         replayed token from an earlier session fails.</div>
+
+<h4>The rule to carry away</h4>
+<p><b>Access token = for the API, about authorization. ID token = for the client, about authentication.</b>
+Sending an ID token to an API is a category error the API should reject. Using an access token to decide who
+the user is reintroduces the attack OIDC exists to prevent.</p>
+
+<h4>Discovery, and why it matters more than it looks</h4>
+<p><code>/.well-known/openid-configuration</code> publishes every endpoint, the supported algorithms, and
+the <code>jwks_uri</code>. A client configured with just an issuer URL fetches the rest — which means key
+rotation is a non-event, because the client re-fetches the JWKS when it sees an unfamiliar <code>kid</code>.
+Hard-coding endpoints and keys is how an integration breaks on the day the provider rotates.</p>
+
+<h4>UserInfo, and choosing where claims come from</h4>
+<p>The <b>UserInfo endpoint</b> returns profile claims for the access token presented. You now have two
+sources for a user's name and email, and they differ in a way worth deciding deliberately: claims in the ID
+token are a <b>snapshot at login</b> and cost nothing to read; UserInfo is <b>current</b> and costs a
+request. Put identity essentials in the token, fetch mutable profile data when you actually need it, and do
+not put large or sensitive attributes in a token that travels everywhere.</p>
+
+<h4>What to validate, in order</h4>
+<p>Signature against the JWKS; <code>iss</code> exactly matching the configured issuer; <code>aud</code>
+containing your <code>client_id</code>; <code>exp</code> and <code>iat</code> within tolerance; and the
+<code>nonce</code> equal to the one you stored for this login. Skipping the last two is how replay becomes
+possible, and skipping <code>aud</code> is how you accept another application's token.</p>`,
 docs:[['OpenID Connect Core','https://openid.net/specs/openid-connect-core-1_0.html'],['OIDC Discovery','https://openid.net/specs/openid-connect-discovery-1_0.html']],
 ex:{title:'Validate an ID token + call UserInfo',
 prompt:`Write <code>Oidc</code> with: <code>static boolean idTokenOk(String aud, String nonce, long expEpoch, String expectedAud, String expectedNonce, long now)</code> returning true only if <code>expectedAud.equals(aud)</code>, <code>expectedNonce.equals(nonce)</code>, and <code>expEpoch &gt; now</code>; and <code>static String userInfo(String accessToken)</code> returning the Authorization header value <code>"Bearer " + accessToken</code> used to call the UserInfo endpoint.`,
@@ -560,7 +722,62 @@ solution:`public class Oidc {
 <p>Modern guidance (OAuth 2.1 / Security BCP): use <b>Authorization Code + PKCE</b> for user flows, <b>Client Credentials</b> for machine-to-machine, and <b>Device</b> for constrained devices. Avoid Implicit and ROPC.</p>
 <div class="codeSample" data-hl>// device flow polls the token endpoint with the device_code grant
 grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=DEV_CODE&client_id=tvapp
-// AS replies authorization_pending until the user approves on another screen</div>`,
+// AS replies authorization_pending until the user approves on another screen</div>
+
+<h4>The problem the device flow solves</h4>
+<p>You are setting up a television. It has no keyboard worth using, no browser you would want to log in
+with, and typing a password on a remote control is miserable. But you have a phone in your hand.</p>
+<p>The device flow splits authentication across <b>two devices</b>: the constrained one shows a short code,
+and the authentication happens somewhere comfortable. Nothing secret is ever typed on the television.</p>
+<div class="codeSample" data-hl>1. TV -> AS   POST /device_authorization  (client_id, scope)
+2. AS -> TV   { device_code, user_code: "WDJB-MJHT",
+                verification_uri: "https://example.com/activate",
+                interval: 5, expires_in: 600 }
+3. TV shows   "go to example.com/activate and enter WDJB-MJHT"
+4. the human  opens that on a PHONE, signs in, approves
+5. TV polls   POST /token  grant_type=...:device_code&device_code=...
+                 authorization_pending  -> keep waiting
+                 slow_down              -> increase the interval
+                 access_denied          -> the user said no. STOP.
+                 expired_token          -> too slow. STOP.
+                 200 + tokens           -> done
+
+// two errors mean STOP and two mean CONTINUE. a client that polls
+// through access_denied is both wrong and abusive.</div>
+
+<h4>The attack it invites</h4>
+<p>Device flow has a phishing variant worth knowing: an attacker starts a device flow for <i>their</i>
+client, then sends the victim the legitimate <code>verification_uri</code> and code — "enter this code to
+finish setting up your account". The victim authenticates on a genuine page and approves, and the tokens go
+to the attacker's device.</p>
+<p>The mitigations are all about making the consent screen honest: show <b>what is being authorised and
+which device is asking</b>, keep the code short-lived, and require the user to type the code rather than
+following a pre-filled link. Restricting which clients may use the grant at all is the strongest
+control.</p>
+
+<h4>The two grants to recognise and never write</h4>
+<p><b>Implicit</b> (<code>response_type=token</code>) returned the access token directly in the URL
+fragment. That put a credential in browser history, in the Referer header, and in any script on the page —
+and it existed only because browsers once could not make cross-origin token requests. CORS solved that, so
+the reason is gone. Authorization Code with PKCE replaces it entirely.</p>
+<p><b>ROPC</b> (<code>grant_type=password</code>) has the application collect the user's actual username and
+password and send them to the authorization server. It defeats the entire point of OAuth: the app sees the
+password, so there is no delegation, no consent screen, no MFA, no SSO, and no federation. Every one of
+those is a capability you lose.</p>
+<div class="codeSample" data-hl>// both are REMOVED in OAuth 2.1. if you meet one:
+implicit  -> Authorization Code + PKCE. always. no exceptions.
+ROPC      -> Authorization Code + PKCE, in a system browser or a
+             web view you do not control the DOM of.
+
+// the usual defence of ROPC is "it is our own first-party app, so
+// the password is safe with us". it still blocks MFA and SSO, still
+// trains users to type their password into app UIs, and still cannot
+// federate. it is a dead end you have to migrate off later.</div>
+
+<h4>The modern guidance, in one line</h4>
+<p>Authorization Code with PKCE for anything with a user, Client Credentials for machine-to-machine, Device
+Authorization for input-constrained hardware, and Token Exchange when a user's identity must survive a hop.
+Everything else is either one of those in disguise or something you should stop doing.</p>`,
 docs:[['RFC 8628 — Device Authorization Grant','https://www.rfc-editor.org/rfc/rfc8628'],['OAuth 2.0 Security BCP (RFC 9700)','https://www.rfc-editor.org/rfc/rfc9700'],['Why the Implicit flow is deprecated','https://oauth.net/2/grant-types/implicit/']],
 ex:{title:'Poll the token endpoint (device flow)',
 prompt:`Write <code>DeviceFlow</code> with: <code>static String pollBody(String deviceCode, String clientId)</code> returning <code>"grant_type=urn:ietf:params:oauth:grant-type:device_code"</code> then <code>&amp;device_code=</code> and <code>&amp;client_id=</code>, each value <code>java.net.URLEncoder.encode(value, "UTF-8")</code>; and <code>static boolean keepPolling(String error)</code> returning true when <code>error</code> is <code>"authorization_pending"</code> or <code>"slow_down"</code> (the device should keep polling). Declare <code>throws Exception</code>.`,
@@ -863,7 +1080,62 @@ hints:['Three readable stores joined by ||, everything else false.','The dangero
 
  outward = opaque  → revocable, leaks nothing to the client
  inward  = JWT     → self-contained, fast offline verification between services</div>
-<p><b>Benefits:</b> instant revocation and no data exposure on the public side, and JWT performance on the internal side; internal services never call the AS. This is a very common production architecture (e.g. with a gateway in front of a mesh).</p>`,
+<p><b>Benefits:</b> instant revocation and no data exposure on the public side, and JWT performance on the internal side; internal services never call the AS. This is a very common production architecture (e.g. with a gateway in front of a mesh).</p>
+
+<h4>The same stateful/stateless trade, one layer up</h4>
+<p>The Foundations stream framed sessions versus tokens as stateful versus stateless. Access tokens face the
+identical choice, and it is worth seeing that it is the <i>same</i> decision rather than a new one.</p>
+<div class="codeSample" data-hl>OPAQUE                          JWT
+a random string. means nothing  self-describing. claims inside, signed.
+  to anyone but the issuer.
+the API must ASK the issuer     the API verifies the signature LOCALLY
+  (introspection: RFC 7662)       against a cached public key
+revocation is INSTANT           valid until exp, whatever you do
+  - stop returning active:true
+tiny                            hundreds of bytes to several KB, on
+                                every single request
+reveals nothing if it leaks     readable by anyone holding it. NEVER
+                                put anything sensitive in one.
+a network call per request      no call, no dependency, no latency</div>
+
+<h4>Introspection is a real dependency</h4>
+<p>Opaque tokens sound obviously safer until you count the calls. Every request to every service now makes a
+synchronous call to the authorization server before it can do anything. That is latency on every hop, load
+on the AS proportional to your total traffic, and — the part that matters — <b>the authorization server is
+now in the availability path of your entire estate</b>. When it is slow, everything is slow. When it is
+down, nothing works.</p>
+<p>Caching introspection responses helps and reintroduces the staleness you were avoiding: a cached
+<code>active: true</code> is a revocation you have not honoured yet. There is no version of this where you
+get both properties for free.</p>
+
+<h4>The split-token pattern</h4>
+<p>The pattern that gets you most of both, and it is what large platforms actually do: <b>issue an opaque
+token to the outside world and a JWT inside</b>.</p>
+<div class="codeSample" data-hl>browser / third party  --opaque token-->  YOUR EDGE (gateway)
+                                             |
+                       introspects ONCE, or looks it up locally
+                                             |
+                                        mints a short-lived JWT
+                                             |
+   internal services  <--JWT (verified locally, no AS call)--
+
+// what you get:
+//   INSTANT revocation at the edge - the opaque token stops working
+//   NO per-hop AS dependency inside - services verify a signature
+//   nothing readable leaks to the client - the JWT never leaves
+//   the internal JWT can be audience-narrowed per hop (token exchange)</div>
+<p>The cost is a gateway that must be there and must be fast. That is a real piece of infrastructure, which
+is why this pattern belongs to platforms with enough services to justify it, not to a single application.</p>
+
+<h4>Choosing, honestly</h4>
+<p><b>Opaque</b> when revocation must be immediate, when the client is a browser or a third party, or when
+the token would otherwise carry anything you do not want read. <b>JWT</b> for internal service-to-service
+calls where the audience is narrow, the lifetime is short, and the availability win is worth the revocation
+lag. <b>Split</b> when you have both problems and a gateway already.</p>
+<p>And the sentence that settles most arguments: <b>a JWT's expiry is your revocation policy</b>. If a
+fifteen-minute window between disabling an account and its tokens dying is acceptable, JWTs are fine. If it
+is not, no amount of design makes them fine — you need a lookup somewhere, and the only question is where
+you put it.`,
 docs:[['RFC 7662 — Token Introspection','https://www.rfc-editor.org/rfc/rfc7662'],['Phantom Token pattern','https://curity.io/resources/learn/phantom-token-pattern/'],['Split Token pattern','https://curity.io/resources/learn/split-token-pattern/']],
 ex:{title:'Introspect an opaque token',
 prompt:`Write <code>Introspect</code> with: <code>static String body(String token)</code> returning <code>"token=" + URLEncoder.encode(token, "UTF-8") + "&amp;token_type_hint=access_token"</code>; <code>static String basicAuth(String clientId, String clientSecret)</code> returning the <code>"Basic " + base64(clientId:clientSecret)</code> value (the resource server authenticates to the introspection endpoint); and <code>static boolean isActive(boolean active, long expEpoch, long now)</code> returning <code>active &amp;&amp; expEpoch &gt; now</code>. Declare <code>throws Exception</code> where needed.`,
