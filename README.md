@@ -6,18 +6,19 @@
   <a href="https://rcbart.github.io/dojo/dev/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-DevDojo-6a5cf5" alt="DevDojo live"></a>
   <a href="https://rcbart.github.io/dojo/identity/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-IdentityDojo-8b5cf6" alt="IdentityDojo live"></a>
   <a href="https://rcbart.github.io/dojo/js/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-JSDojo-eab308" alt="JSDojo live"></a>
-  <img src="https://img.shields.io/badge/tracks-28-8b5cf6" alt="tracks">
-  <img src="https://img.shields.io/badge/lessons-200-8b5cf6" alt="lessons">
-  <img src="https://img.shields.io/badge/exercises-313-06b6d4" alt="exercises">
-  <img src="https://img.shields.io/badge/content%20checks-1566-2ea44f" alt="content integrity checks">
-  <img src="https://img.shields.io/badge/engine%20tests-22-2ea44f" alt="engine unit tests">
+  <img src="https://img.shields.io/badge/tracks-29-8b5cf6" alt="tracks">
+  <img src="https://img.shields.io/badge/lessons-206-8b5cf6" alt="lessons">
+  <img src="https://img.shields.io/badge/exercises-372-06b6d4" alt="exercises">
+  <img src="https://img.shields.io/badge/content%20checks-1866-2ea44f" alt="content integrity checks">
+  <img src="https://img.shields.io/badge/engine%20tests-23-2ea44f" alt="engine unit tests">
+  <img src="https://img.shields.io/badge/executed%20exercises-31-06b6d4" alt="exercises graded by real execution">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
 # DevDojo 🥋
 
-An interactive, self-contained learning platform for software engineering. **28 training tracks,
-200 lessons, and 313 hands-on exercises** run entirely in the browser — an in-editor coding
+An interactive, self-contained learning platform for software engineering. **29 training tracks,
+206 lessons, and 372 hands-on exercises** run entirely in the browser — an in-editor coding
 exercise on every lesson, a belt progression, **spaced-repetition review**, a **difficulty-filtered practice hub**, a domain
 glossary with click-to-explain terms, tournaments, and end-to-end capstone projects.
 
@@ -26,7 +27,7 @@ computer science & algorithms, web/HTTP, front-end (React), APIs, databases & SQ
 security & cryptography, DevOps, architecture, and a senior ("dan") track. Identity & access has its
 own course (below).
 
-**Identity & access now lives in its own course.** It grew to 132 lessons — 40% of DevDojo — which
+**Identity & access now lives in its own course.** It grew past 130 lessons — 40% of DevDojo — which
 unbalanced a course meant to cover software engineering broadly. It is now
 [**IdentityDojo**](identity-dojo/README.md): 14 streams covering the identity lifecycle, OAuth 2.0/2.1
 and OIDC, SAML, WebAuthn/FIDO2 internals, Active Directory and Kerberos, zero trust, and a Running
@@ -64,7 +65,7 @@ fails.)*
   questions across 47 lessons** — each with a written explanation of why the right answer is right and
   why every distractor is wrong — plus 41 auto-generated from the exercise specs. IdentityDojo carries a
   further 297. Extending the hand-authored bank to the remaining lessons is an open item.
-- **📖 Glossary** — 10 domains / 272 terms, collapsible and searchable, doubling as the in-lesson
+- **📖 Glossary** — 12 domains / 329 terms, collapsible and searchable, doubling as the in-lesson
   click-to-explain source.
 - **Belts & capstones** — per-domain percentage belts (white → black), dan sub-tracks for advanced
   topics, and a graded multi-step capstone. Streams
@@ -118,8 +119,10 @@ solutions. Writing them found a third — `esc()` threw on `undefined`, which wo
 than render nothing.
 
 **How grading works (honestly).** The headline number to be careful with is the **content checks**
-badge: `scripts/verify.js` runs 1566 assertions proving every exercise's reference solution matches its
-own regex checks and that ids are unique. That is a **content integrity gate, not a test suite for a
+badge: `scripts/verify.js` runs 1866 assertions proving every exercise's reference solution matches its
+own regex checks and that ids are unique. A separate gate, `scripts/verify-exec.js`, goes further for the
+exercises that are executed: it loads each reference solution and calls it with that exercise's own cases,
+so a solution that does not actually produce the expected result fails the build. That is a **content integrity gate, not a test suite for a
 running product** — it says the material is internally consistent, not that a learner's code is
 correct.
 
@@ -164,6 +167,8 @@ content/streams/    one module per stream — the course content
   manifest.json     stream order
 scripts/verify.js   content integrity gate: parses every module, runs each exercise's
                     regex tests against its own solution, checks id uniqueness
+scripts/verify-exec.js  execution gate: runs every run-spec exercise's reference
+                    solution against its own cases, as the browser worker does
 build.js            engine/ + src/ + content/ -> dist/index.html (+ devdojo.html)
 identity-dojo/      IdentityDojo: same shape, consumes ../engine
 site/               optional Node server: accounts, progress sync (SQLite via node:sqlite)

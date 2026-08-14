@@ -1,15 +1,15 @@
 <p align="center">
   <img src="https://img.shields.io/badge/streams-14-8b5cf6" alt="streams">
-  <img src="https://img.shields.io/badge/lessons-134-8b5cf6" alt="lessons">
-  <img src="https://img.shields.io/badge/exercises-141-06b6d4" alt="exercises">
-  <img src="https://img.shields.io/badge/content%20checks-656-2ea44f" alt="content integrity checks">
+  <img src="https://img.shields.io/badge/lessons-139-8b5cf6" alt="lessons">
+  <img src="https://img.shields.io/badge/exercises-146-06b6d4" alt="exercises">
+  <img src="https://img.shields.io/badge/content%20checks-676-2ea44f" alt="content integrity checks">
   <img src="https://img.shields.io/badge/real%20execution-19%25-06b6d4" alt="exercises graded by real execution">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
 # IdentityDojo 🛂
 
-A self-contained course on identity and access management — **14 streams, 134 lessons, 141 hands-on
+A self-contained course on identity and access management — **14 streams, 139 lessons, 146 hands-on
 exercises**, in a single offline HTML file. Split out of [DevDojo](../README.md) once the domain grew
 large enough to stand on its own.
 
