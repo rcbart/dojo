@@ -21,7 +21,24 @@ RSAKey rsa = new RSAKeyGenerator(2048)
 
 RSAKey publicOnly = rsa.toPublicJWK();     // safe to publish; strips the private half
 String json = publicOnly.toJSONString();   // the JSON you serve at a JWKS endpoint</div>
-<p>The <b>kid</b> (key ID) is important: it is a stable label for the key. Because issuers hold several keys and rotate them, the kid is how a verifier later knows <i>which</i> key signed a given token (next lessons).</p>`,
+<p>The <b>kid</b> (key ID) is important: it is a stable label for the key. Because issuers hold several keys and rotate them, the kid is how a verifier later knows <i>which</i> key signed a given token (next lessons).</p>
+
+<h4>Reading a JWK</h4>
+<p>A JWK is a JSON object whose fields depend on the key type. The parameters worth recognising:</p>
+<div class="codeSample" data-hl>{ "kty": "EC",          // key type: EC, RSA or oct (symmetric)
+  "crv": "P-256",       // the curve, for EC keys
+  "x": "...", "y": "...",   // the public point. RSA instead has "n" and "e"
+  "kid": "2026-08-a",   // key id: your label, any string, must be unique
+  "use": "sig",         // sig (signature) or enc (encryption) — never both
+  "alg": "ES256" }      // the algorithm this key is intended for</div>
+<p>A <b>private</b> JWK adds the secret parameters — <code>d</code> for EC, and <code>d</code>, <code>p</code>, <code>q</code> and friends for RSA. That is the single most dangerous mistake in this area: publishing the full JWK instead of its public half exposes your signing key, and it looks identical to the correct thing at a glance. Libraries provide an explicit "public only" projection precisely because the difference is a few fields.</p>
+<p>A <b>JWKS</b> is simply <code>{"keys": [ ... ]}</code> — several JWKs together, which is what makes rotation possible: publish the new key beside the old one, and verifiers holding either can keep working.</p>
+
+<h4>Choosing the key type</h4>
+<p>RSA-2048 and EC P-256 offer comparable security today — roughly 112 and 128 bits respectively — but their shapes differ. RSA has larger keys and much larger signatures (256 bytes against 64), which every token carries on every request. EC signs faster; RSA verifies faster, and verification is the more frequent operation. For a new system with no legacy constraints, ES256 is the better default on size alone; RS256 remains correct where an existing ecosystem expects it. EdDSA (Ed25519) is a third option, smaller and faster still, supported by fewer libraries.</p>
+
+<h4>Where the private key lives</h4>
+<p>Nowhere in your source, and ideally nowhere in your process memory. Production signing keys belong in a KMS or an HSM that performs the signature without releasing the key, so a compromise of the application does not become a permanent forgery capability. If the key must exist as a file, it belongs in a secret manager with access logged, and its rotation belongs in a runbook that has been rehearsed — because the day you discover the key has leaked is a bad day to be reading about rotation for the first time.</p>`,
 docs:[['Nimbus JOSE+JWT','https://connect2id.com/products/nimbus-jose-jwt'],['RFC 7517 — JSON Web Key','https://www.rfc-editor.org/rfc/rfc7517'],['RFC 7638 — JWK Thumbprint','https://www.rfc-editor.org/rfc/rfc7638']],
 ex:{title:'Generate signing JWKs',
 prompt:`Using Nimbus, write <code>JwkKeys</code> with: <code>static RSAKey rsa()</code> returning a <b>2048-bit RSA</b> signing JWK (<code>RSAKeyGenerator(2048)</code>, <code>KeyUse.SIGNATURE</code>, algorithm <code>JWSAlgorithm.RS256</code>, <code>keyIDFromThumbprint(true)</code>); <code>static ECKey ec()</code> returning a <b>P-256</b> signing JWK (<code>ECKeyGenerator(Curve.P_256)</code>, <code>KeyUse.SIGNATURE</code>, <code>JWSAlgorithm.ES256</code>, thumbprint kid); and <code>static String publicJwkJson(JWK jwk)</code> returning <code>jwk.toPublicJWK().toJSONString()</code>. Declare <code>throws Exception</code> where needed.`,
@@ -86,7 +103,25 @@ public class JwkKeys {
         .expirationTime(new Date(now + 900_000))// exp — valid 15 minutes
         .issueTime(new Date())                  // iat — now
         .claim("role", "admin")                 // custom claim
-        .build();</div>`,
+        .build();</div>
+
+<h4>The claims a verifier must actually check</h4>
+<p>Writing claims is easy; the value is in knowing which ones a receiver is obliged to verify, and why each check exists.</p>
+<ul>
+<li><b>iss</b> — compare it to the issuer you expect, as an exact string. Skipping this means accepting a perfectly valid token signed by somebody else's authorization server.</li>
+<li><b>aud</b> — must contain <i>you</i>. This is the check that stops a token minted for another API being replayed at yours, and it is the one most often left out because the token verifies cryptographically without it.</li>
+<li><b>exp</b>, and <b>nbf</b> when present — with a small clock-skew allowance, conventionally sixty seconds. Larger tolerances quietly extend the lifetime of every token you issue.</li>
+<li><b>alg</b> — against your own policy list, never dispatched from the header.</li>
+<li><b>sub</b> — the identifier you key your own records on. Note it is only unique <i>within</i> an issuer, so a multi-IdP system must store issuer plus subject, not the subject alone.</li>
+</ul>
+
+<h4>Two claims people misuse</h4>
+<p><b>sub is not an email address.</b> Emails change, get reassigned between employees, and are a terrible primary key — yet mapping <code>email</code> to a local account is a common shortcut, and it is how a new employee inherits a former colleague's access. Use the stable subject identifier and treat email as a mutable attribute.</p>
+<p><b>jti is only useful if you store it.</b> A unique id enables one-time-use and replay detection, but only if the receiver keeps a record of what it has seen until the token expires. A jti nobody records is decoration.</p>
+
+<h4>Size, secrecy and namespacing</h4>
+<p>The payload is base64url, not encryption — <b>every claim is readable by anyone holding the token</b>, including the user's browser and any log that recorded the Authorization header. Nothing private goes in a JWS payload. It also travels on every request, so a token stuffed with roles, permissions and profile data becomes a header measured in kilobytes; put the identifier in the token and look up the detail behind it.</p>
+<p>Namespace custom claims (<code>https://myapp.example.com/role</code>) so they cannot collide with registered claims or with another issuer's conventions — the same reason XML namespaces exist, arrived at the hard way.</p>`,
 docs:[['RFC 7519 — JSON Web Token','https://www.rfc-editor.org/rfc/rfc7519'],['IANA JWT claims registry','https://www.iana.org/assignments/jwt/jwt.xhtml'],['Nimbus — JWTClaimsSet','https://www.javadoc.io/doc/com.nimbusds/nimbus-jose-jwt/latest/com/nimbusds/jwt/JWTClaimsSet.html']],
 ex:{title:'Assemble the claims',
 prompt:`Write <code>JwtClaims</code> with <code>static JWTClaimsSet build(String issuer, String subject, String audience, Date expiry, String role)</code> that returns a <code>JWTClaimsSet</code> built with <code>.issuer(issuer)</code>, <code>.subject(subject)</code>, <code>.audience(audience)</code>, <code>.expirationTime(expiry)</code>, an <code>.issueTime(new Date())</code>, and a custom <code>.claim("role", role)</code>, finished with <code>.build()</code>.`,
@@ -135,7 +170,18 @@ String tok = sign(rsa, claims);
 double ms = (System.nanoTime() - t0) / 1_000_000.0;
 System.out.println("RS256 size=" + tok.length() + " chars, sign=" + ms + "ms");</div>
 <p>In the exercise below you'll write a <code>compare()</code> method that does exactly this for <b>both</b> algorithms and prints the two lines side by side, so the size and speed difference is right in front of you.</p>
-<p><b>Which to pick?</b> ES256 for smaller tokens and fast signing (great for high token issuance and mobile/bandwidth-sensitive clients); RS256 when your ecosystem/verifiers expect RSA or you want the fastest verification. Both are secure — this is an engineering trade-off, not a security one.</p>`,
+<p><b>Which to pick?</b> ES256 for smaller tokens and fast signing (great for high token issuance and mobile/bandwidth-sensitive clients); RS256 when your ecosystem/verifiers expect RSA or you want the fastest verification. Both are secure — this is an engineering trade-off, not a security one.</p>
+
+<h4>What the header carries, and why it is signed</h4>
+<p>The JWS header names the algorithm (<code>alg</code>) and, in practice, the key (<code>kid</code>). Both are covered by the signature — the signing input is the encoded header <i>and</i> the encoded payload — so an attacker cannot alter them without breaking verification. What they <i>can</i> do is present a completely different token with a header of their choosing, which is why the verifier's rule remains: use the <code>kid</code> to <b>select</b> a key from the set you already trust, and use your own policy to decide whether the algorithm is acceptable. Never let the header decide the verification routine.</p>
+<p>Two header fields to refuse outright: <code>jku</code> and <code>x5u</code>, which point at a URL where the key may be found. Following them is letting the token nominate its own trust anchor.</p>
+
+<h4>The measurement in context</h4>
+<p>The size difference is not academic. An access token is sent on every request, and headers are not compressed the way bodies are; 192 extra bytes per request across a billion requests a day is roughly 170GB of traffic that buys nothing. On constrained links it also risks crossing header-size limits in proxies and gateways, which fail in ways that are hard to diagnose because they depend on how many claims a particular user has.</p>
+<p>The speed asymmetry is worth internalising too: RSA verification is very fast and RSA signing is slow, while EC is the reverse. Since an authorization server signs once and resource servers verify many times, RSA's profile is arguably better matched to the workload — which is the honest counterweight to the size argument, and why both remain in use.</p>
+
+<h4>Making the choice reversible</h4>
+<p>Whichever you pick, the decision that matters more is whether you can change it later. That means: algorithms in a configurable policy list rather than a constant, key selection by <code>kid</code>, both algorithms accepted during a migration, and a rotation procedure that has been run at least once when nothing was on fire. A system that can move from RS256 to ES256 without a release is a system that can also move away from either when the ground shifts — which the post-quantum lesson in this stream argues is the property to design for.</p>`,
 docs:[['RFC 7515 — JSON Web Signature','https://www.rfc-editor.org/rfc/rfc7515'],['RFC 7518 — JWA (algorithms)','https://www.rfc-editor.org/rfc/rfc7518'],['Nimbus — signing a JWT','https://connect2id.com/products/nimbus-jose-jwt/examples/signed-jwt']],
 ex:{title:'Sign with RS256 and ES256',
 prompt:`Write <code>JwtSigner</code> with: <code>static String sign(RSAKey key, JWTClaimsSet claims)</code> — build a <code>SignedJWT</code> with a <code>JWSHeader.Builder(JWSAlgorithm.RS256).keyID(key.getKeyID()).build()</code>, sign it with <code>new RSASSASigner(key)</code>, and return <code>serialize()</code>; and <code>static String signEc(ECKey key, JWTClaimsSet claims)</code> — same but <code>JWSAlgorithm.ES256</code> and <code>new ECDSASigner(key)</code>. Then add <code>static String compare(RSAKey rsa, ECKey ec, JWTClaimsSet claims)</code> that signs the <b>same</b> claims with both algorithms, <b>times each signing with <code>System.nanoTime()</code></b> (capture the time just before and after each sign), builds a report showing each token's size via <code>length()</code> and its sign time in milliseconds, <b>prints it with <code>System.out.print(...)</code></b> so you can see the results, and returns that report string. Declare <code>throws Exception</code>.`,
@@ -280,7 +326,23 @@ boolean valid = SignedJWT.parse(token).verify(new RSASSAVerifier(publicKey));
 <div style="font-size:12px;color:#93a1b1">The two signatures are: <span id="jt-diff" style="color:#e6edf3"></span></div>
 <div style="font-size:12px;color:#93a1b1;margin-top:8px">Tampered token: <span id="jt-token" style="word-break:break-all;font-family:monospace;font-size:10.5px;color:#93a1b1"></span></div>
 </div>
-<p>This is the property the whole OAuth trust model rests on: the resource server never trusts the token's contents until the signature check passes with the issuer's public key.</p>`,
+<p>This is the property the whole OAuth trust model rests on: the resource server never trusts the token's contents until the signature check passes with the issuer's public key.</p>
+
+<h4>Why a one-character change destroys the signature</h4>
+<p>The demonstration above is a property of the hash underneath. Signing computes a digest of the signing input and then a signature over that digest, and a cryptographic hash has the <b>avalanche property</b>: flipping a single bit of input changes about half the bits of the output, unpredictably. So there is no "close enough" signature and no gradual degradation — the required signature for the tampered payload is entirely unrelated to the one the token carries. Producing the right one requires the private key, and that is the whole of the security.</p>
+
+<h4>The forgeries that do work</h4>
+<p>Every real JWT forgery attacks the <b>verification code</b>, never the mathematics:</p>
+<ul>
+<li><b>alg: none</b> — the specification's unsecured mode. A library that honours it accepts a token with an empty signature. Refuse it explicitly.</li>
+<li><b>Algorithm confusion</b> — change <code>alg</code> from RS256 to HS256 and sign with the issuer's <i>public</i> key as the HMAC secret. A verifier that picks its routine from the header will validate it. Selecting the algorithm from your own policy makes this impossible.</li>
+<li><b>Decoding without verifying</b> — libraries offer a decode function that parses claims and checks nothing, and it is used by mistake constantly. If your code path can reach the claims without a verification result, that is the bug.</li>
+<li><b>Ignoring iss and aud</b> — a genuine, unexpired, correctly-signed token from a different issuer or intended for a different API is not a forgery at all; it is a valid token you should have rejected.</li>
+<li><b>Trusting jku or a key fetched from the token</b> — the attacker supplies the key that verifies their own signature.</li>
+</ul>
+
+<h4>What the property does and does not buy</h4>
+<p>Tamper-evidence is not confidentiality: the payload is readable by anyone who holds the token, so a JWS in a log or a browser is a disclosure of everything in it. It is also not revocation — a signed token remains cryptographically valid until it expires, whatever happens to the user's account, which is why short lifetimes and the introspection and CAE mechanisms elsewhere in this course exist. And it says nothing about <i>who presented</i> the token: a bearer token is valid in anyone's hands, which is the gap sender-constrained tokens (DPoP, mTLS) close.</p>`,
 docs:[['RFC 7515 §5.2 — verifying a JWS','https://www.rfc-editor.org/rfc/rfc7515#section-5.2'],['RFC 8725 — JWT best current practices','https://www.rfc-editor.org/rfc/rfc8725'],['Nimbus — Base64URL','https://www.javadoc.io/doc/com.nimbusds/nimbus-jose-jwt/latest/com/nimbusds/jose/util/Base64URL.html']],
 ex:{title:'Detect the tamper',
 prompt:`Write <code>TamperCheck</code> with: <code>static boolean isTampered(RSAKey publicKey, String token)</code> that parses the token with <code>SignedJWT.parse</code>, verifies it with <code>new RSASSAVerifier(publicKey)</code>, and returns <code>true</code> when the signature is <b>invalid</b> (i.e. <code>return !jwt.verify(...)</code>); and <code>static String decodePayload(String token)</code> that returns the payload JSON with no key, via <code>SignedJWT.parse(token).getParsedParts()[1].decodeToString()</code>. Declare <code>throws Exception</code>.`,
@@ -494,6 +556,73 @@ public class SdJwt {
         // audience + nonce: this verifier, this moment
         return kbAud.equals(verifier) && kbNonce.equals(expectedNonce);
     }
-}`}}
+}`}},
+
+{id:'jose8',title:'Crypto agility: kid, alg, and the post-quantum migration',body:`
+<p>Every algorithm in production today is on a path to becoming a liability. MD5 and SHA-1 were once
+default choices; 1024-bit RSA was once prudent. The question a system should be designed to answer is not
+"is this algorithm safe?" but <b>"how long would it take us to stop using it?"</b> That property is
+<b>crypto agility</b>. JOSE has the machinery for it built in — which most deployments then defeat by
+hardcoding one algorithm in a dozen places.</p>
+
+<h4>The two header fields that make rotation possible</h4>
+<p><code>kid</code> names <i>which key</i> signed this token; <code>alg</code> names <i>which
+algorithm</i> was used. A JWKS can publish several keys at once, of different types, so a rotation is a
+sequence with no downtime:</p>
+<div class="codeSample" data-hl>1. publish the new key in the JWKS   (both keys present, old one still signing)
+2. wait longer than your JWKS cache TTL   <- verifiers must have seen it
+3. start signing with the new kid
+4. keep the old key published for at least max token lifetime
+5. remove the old key
+
+// a verifier that selects by kid needs no coordination at all:
+//   header.kid -> look up in cached JWKS -> unknown? refresh once, rate-limited -> verify</div>
+<p>Steps 2 and 4 are the ones people skip, and each has its own failure mode. Skip step 2 and verifiers
+reject tokens signed by a key they have not fetched yet. Skip step 4 and tokens still inside their
+validity window fail. Both look like an outage; neither looks like a key problem.</p>
+
+<h4>The verifier decides the algorithm — never the token</h4>
+<p>The rule from the validation checklist deserves repeating here because agility is where it gets
+violated: <b>your policy names the acceptable algorithms, and the token's <code>alg</code> is checked
+against that list</b>. Selecting a verification routine from the header is how <code>alg: "none"</code>
+and the RS256-to-HS256 confusion attack work. In the latter, an attacker re-signs a token with HMAC,
+using the RSA <i>public</i> key as the shared secret. A verifier that trusts the header then validates
+the forgery happily.</p>
+<p>Agility and this rule fit together neatly: the policy is a <i>list</i>, so adding an algorithm is a
+config change, while everything absent from the list is refused by default.</p>
+
+<h4>Where post-quantum sits, honestly</h4>
+<p>NIST standardised ML-KEM (key establishment), ML-DSA and SLH-DSA (signatures) in 2024. The urgency
+differs sharply by use:</p>
+<ul>
+<li><b>Confidentiality is urgent</b>, because of <i>harvest now, decrypt later</i>: traffic captured today
+can be decrypted once a cryptographically relevant quantum computer exists. This is why browsers and
+servers already negotiate <b>hybrid</b> TLS key exchange (X25519 combined with ML-KEM), and why long-lived
+JWE-encrypted data deserves attention now.</li>
+<li><b>Signatures are less urgent</b>, because a signature only needs to resist forgery <i>during the
+lifetime of the thing it signs</i>. A five-minute access token is not a harvest-now target. Long-lived
+artefacts — certificates, firmware, verifiable credentials valid for years — are.</li>
+</ul>
+<p>The practical answer for an identity system in 2026 is not to swap to ML-DSA everywhere. It is:
+<b>inventory where each algorithm is named</b>, remove the hardcoded strings, keep token lifetimes short,
+make key rotation a routine drill rather than an incident, prefer hybrid key exchange where the library
+offers it, and use a maintained crypto library instead of your own. A system that can rotate keys on a
+Tuesday afternoon can change algorithms; a system where rotation requires a release train cannot, whatever
+its algorithm choice is today.</p>`,
+docs:[['RFC 7517 — JSON Web Key (kid, key sets)','https://www.rfc-editor.org/rfc/rfc7517'],['NIST post-quantum standards (FIPS 203/204/205)','https://csrc.nist.gov/projects/post-quantum-cryptography'],['RFC 8725 — JWT best current practices','https://www.rfc-editor.org/rfc/rfc8725']],
+ex:{title:'Enforce an algorithm policy',lang:'js',
+run:{call:'acceptAlg',cases:[{name:'an algorithm on the policy list',args:['ES256',['ES256','RS256']],expect:true},{name:'alg none is always refused',args:['none',['ES256','RS256']],expect:false},{name:'HS256 when policy allows only RS256 — the confusion attack',args:['HS256',['RS256']],expect:false},{name:'algorithm names are case-sensitive',args:['es256',['ES256']],expect:false},{name:'an empty policy accepts nothing',args:['ES256',[]],expect:false}]},
+prompt:`Write <code>function acceptAlg(tokenAlg, allowedAlgs)</code> returning <code>true</code> only when the token's algorithm appears in <b>your</b> policy list. <code>"none"</code> is refused even if somebody put it in the list. An empty or missing list accepts nothing, and comparison is exact — <code>"es256"</code> is not <code>"ES256"</code>.`,
+starter:`function acceptAlg(tokenAlg, allowedAlgs) {
+  return false;
+}`,
+solution:`function acceptAlg(tokenAlg, allowedAlgs) {
+  if (!tokenAlg || !allowedAlgs || allowedAlgs.length === 0) return false;
+  if (tokenAlg === "none") return false;      // never, under any policy
+  return allowedAlgs.includes(tokenAlg);      // your list, not the token's claim
+}`,
+tests:[{d:'a missing algorithm or policy is refused',re:'!tokenAlg|!allowedAlgs'},{d:'an empty policy accepts nothing',re:'length\\s*===\\s*0|length\\s*==\\s*0|!allowedAlgs\\.length'},{d:'alg none is rejected explicitly',re:'["\\x27]none["\\x27]'},{d:'membership of the policy list decides',re:'allowedAlgs\\s*\\.\\s*includes|indexOf\\s*\\(\\s*tokenAlg'}],
+behavior:`Five cases execute. The HS256-against-an-RS256-policy case is the confusion attack in miniature: an attacker takes your published RSA public key, uses it as an HMAC secret, sets alg to HS256, and a verifier that dispatches on the header verifies the forgery. Refusing anything outside your own list makes the attack impossible rather than merely difficult. The empty-policy case matters because a config that failed to load must fail closed — an empty allowlist that accepts everything is the classic inverted default. And case sensitivity is deliberate: algorithm identifiers are exact registry strings, so a "helpful" lowercase comparison widens what you accept.`,
+hints:['Fail closed first: missing token alg, missing list, or an empty list are all refusals.','"none" gets its own explicit check — do not rely on it being absent from the list.','Then it is a membership test against your policy, compared exactly.']}}
 
 ]});

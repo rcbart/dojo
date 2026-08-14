@@ -62,7 +62,21 @@ public class AuthorizeUrl {
                   client_secret: "gX1...9f"   (confidential clients only — shown ONCE)
                   redirect_uris: ["https://app.example.com/callback"]</div>
 <p><b>How clients are created.</b> Two ways: manually in the AS dashboard/admin console (you register the app and copy the id and secret), or programmatically via <b>Dynamic Client Registration</b> (RFC 7591), where a client is created through an API and the AS returns the credentials in the response.</p>
-<p><b>How the secret is shared — and protected.</b> The AS generates the secret at registration and displays it <b>once</b>; you store it in a secret manager or environment variable, <b>never in source control or front-end code</b>, and rotate it periodically. Stronger clients skip the shared secret entirely: <b>private_key_jwt</b> (the client signs a JWT with its private key; the AS verifies with the client's public key — no shared secret to leak) or <b>mTLS</b> client certificates. So client authentication runs from "nothing" (public + PKCE) to a shared <code>client_secret</code> to asymmetric keys, in increasing order of assurance.</p>`,
+<p><b>How the secret is shared — and protected.</b> The AS generates the secret at registration and displays it <b>once</b>; you store it in a secret manager or environment variable, <b>never in source control or front-end code</b>, and rotate it periodically. Stronger clients skip the shared secret entirely: <b>private_key_jwt</b> (the client signs a JWT with its private key; the AS verifies with the client's public key — no shared secret to leak) or <b>mTLS</b> client certificates. So client authentication runs from "nothing" (public + PKCE) to a shared <code>client_secret</code> to asymmetric keys, in increasing order of assurance.</p>
+
+<h4>Client authentication is more than a secret</h4>
+<p>A shared <code>client_secret</code> is the weakest of the options the specification allows, because it is a symmetric credential that both parties hold: it appears in configuration, in CI variables, in the authorization server's database, and in whatever place a developer pasted it during setup. Two better mechanisms exist and are worth asking for:</p>
+<ul>
+<li><b><code>private_key_jwt</code></b> — the client signs a short-lived JWT assertion with a private key and sends that instead. The authorization server only ever holds a <i>public</i> key, so a compromise of its database does not yield anything that can impersonate a client.</li>
+<li><b><code>tls_client_auth</code> (mTLS)</b> — the client authenticates with a certificate during the TLS handshake, which also enables certificate-bound access tokens.</li>
+</ul>
+<p>Where a secret must be used, prefer <code>client_secret_basic</code> or <code>client_secret_post</code> over anything that puts it in a URL, rotate it on a schedule, and support two valid secrets at once so rotation does not require downtime. Hardened profiles such as FAPI simply ban shared secrets, which tells you where the direction of travel is.</p>
+
+<h4>Redirect URI matching is a security boundary</h4>
+<p>The registered redirect URIs are the list of places an authorization code may be delivered, and the specification requires <b>exact string matching</b> for a reason: every relaxation has produced real attacks. Wildcards in the host let a subdomain takeover receive codes. Allowing a path prefix lets an open redirect on that path forward the code onward. Permitting arbitrary query parameters allows the same. The rule is to register complete, exact URIs, keep the list short, and never add <code>http://</code> entries outside of loopback for native apps.</p>
+
+<h4>Dynamic registration, and the metadata that comes with it</h4>
+<p>Dynamic Client Registration (RFC 7591) exists because some ecosystems cannot pre-register everyone by hand — native apps registering per installation, or a federation where participants join continuously. Open registration is a spam and abuse surface, so real deployments gate it with an initial access token, or replace it with the software-statement and trust-chain mechanisms of OpenID Federation. Whichever route, registration is where the client's <b>metadata</b> is fixed: its grant types, response types, scopes, token endpoint auth method and JWKS location. That metadata is the authorization server's model of what this client is allowed to do — which makes registration a security decision, not an onboarding formality.</p>`,
 docs:[['Client registration (RFC 6749 §2)','https://www.rfc-editor.org/rfc/rfc6749#section-2'],['Dynamic Client Registration (RFC 7591)','https://www.rfc-editor.org/rfc/rfc7591'],['Client authentication (OIDC)','https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication']],
 ex:{title:'Pick the client credential',
 prompt:`Write class <code>Client</code> with two static methods. <code>String credential(String clientType)</code>: <code>"spa"</code>→<code>"none (PKCE)"</code>, <code>"mobile"</code>→<code>"none (PKCE)"</code>, <code>"server"</code>→<code>"client_secret"</code>, <code>"backend-high-security"</code>→<code>"private_key_jwt"</code>, else <code>"unknown"</code>. <code>boolean confidential(String clientType)</code>: true only for <code>"server"</code> or <code>"backend-high-security"</code> (the clients that can keep a secret).`,
@@ -706,6 +720,81 @@ solution:`public class Oidc {
     }
 }`}},
 
+{id:'oadisc',title:'Discovery: metadata, JWKS, and why endpoints are never hardcoded',body:`
+<p>Every flow so far has said "the client sends the code to the token endpoint" without saying how the
+client <i>knows</i> where that is. The naive answer — paste the URLs into a config file — is how a
+provider migration turns into an outage, and how a key rotation turns into every login failing at once.
+The protocol's answer is a <b>metadata document</b>: one signed-by-TLS JSON file, published at a
+well-known path, that tells a client everything it needs to talk to this authorization server.</p>
+
+<h4>Two well-known paths, one idea</h4>
+<p>OpenID Connect Discovery publishes <code>/.well-known/openid-configuration</code>; OAuth 2.0
+Authorization Server Metadata (RFC 8414) publishes <code>/.well-known/oauth-authorization-server</code>.
+The contents overlap heavily — endpoints, supported algorithms, supported scopes, the JWKS location:</p>
+<div class="codeSample" data-hl>GET https://id.example.com/.well-known/openid-configuration
+
+{ "issuer":                 "https://id.example.com",
+  "authorization_endpoint": "https://id.example.com/authorize",
+  "token_endpoint":         "https://id.example.com/token",
+  "jwks_uri":               "https://id.example.com/.well-known/jwks.json",
+  "id_token_signing_alg_values_supported": ["ES256","RS256"],
+  "token_endpoint_auth_methods_supported": ["private_key_jwt","client_secret_basic"] }</div>
+<p>One path detail catches people out: OIDC <b>appends</b> the well-known segment to the issuer, while
+RFC 8414 <b>inserts</b> it before the issuer's path. For an issuer of
+<code>https://id.example.com/tenant-a</code> those give different URLs, which is exactly the sort of thing
+that works in single-tenant testing and breaks the day you go multi-tenant.</p>
+
+<h4>The issuer is the identity of the server, and it must match exactly</h4>
+<p>The single most important validation in this lesson: <b>the <code>issuer</code> value inside the
+document must be identical, character for character, to the issuer you resolved it from</b> — and later,
+to the <code>iss</code> claim of every token you accept from it. Not "the same host". Not "equal after
+normalising the trailing slash". Identical.</p>
+<p>Without that check, an attacker who can get your client to fetch metadata from a URL of their choosing
+supplies their own authorize and token endpoints, and your client walks the entire flow against a server
+the attacker controls. This is the <b>IdP mix-up</b> family of attacks, and exact issuer comparison is the
+defence that makes it structurally impossible rather than merely unlikely.</p>
+
+<h4>JWKS: fetch, cache, and key by kid</h4>
+<p><code>jwks_uri</code> is where the signing public keys live. The discipline is small and rigid:</p>
+<ul>
+<li><b>Cache the key set</b> — never fetch it per request. A verifier that fetches on every token turns
+your identity provider into your own denial-of-service target, and its availability into yours.</li>
+<li><b>Select by <code>kid</code></b>, the key id in the token header. On an unknown <code>kid</code>,
+refresh once — rate-limited — and fail if it is still unknown. That single behaviour is what makes key
+rotation invisible to users.</li>
+<li><b>Never follow a URL from the token itself.</b> A <code>jku</code> or <code>x5u</code> header naming
+where to find the key is an attacker telling you which key to trust. Keys come from metadata you resolved
+from the issuer, full stop.</li>
+</ul>
+<p>Cache lifetime is a security parameter, not a performance knob: too long and a rotated-away key stays
+trusted, too short and every restart stampedes the provider. Minutes, with a jittered refresh, is the
+usual answer.</p>
+
+<h4>What to validate before you trust a document</h4>
+<p>Metadata arrives over TLS and is trusted on that basis, so the checks are about consistency rather than
+signatures. The issuer must match exactly. Every endpoint must be <code>https</code>, on a host you
+expect. The algorithms offered must intersect with the ones your policy permits — and the decision uses
+<i>your</i> list, never theirs. A provider advertising <code>HS256</code> does not make it acceptable
+to you.</p>
+<p>Then cache the document with its own TTL and re-resolve periodically. Endpoints do move. That is the
+entire point of not hardcoding them.</p>`,
+docs:[['OpenID Connect Discovery 1.0','https://openid.net/specs/openid-connect-discovery-1_0.html'],['RFC 8414 — OAuth 2.0 Authorization Server Metadata','https://www.rfc-editor.org/rfc/rfc8414'],['RFC 9207 — the iss parameter and mix-up defence','https://www.rfc-editor.org/rfc/rfc9207']],
+ex:{title:'Accept a metadata document',lang:'js',
+run:{call:'acceptMetadata',cases:[{name:'exact issuer match over https',args:['https://id.example.com','https://id.example.com','https://id.example.com/token'],expect:true},{name:'issuer points somewhere else — the mix-up attack',args:['https://id.example.com','https://evil.example.com','https://evil.example.com/token'],expect:false},{name:'trailing slash makes it a different issuer',args:['https://id.example.com','https://id.example.com/','https://id.example.com/token'],expect:false},{name:'a plaintext token endpoint is never acceptable',args:['https://id.example.com','https://id.example.com','http://id.example.com/token'],expect:false},{name:'a missing issuer field is not a pass',args:['https://id.example.com',null,'https://id.example.com/token'],expect:false}]},
+prompt:`Write <code>function acceptMetadata(fetchedFromIssuer, metadataIssuer, tokenEndpoint)</code> returning <code>true</code> only when the document's <code>issuer</code> is <b>identical</b> to the issuer it was resolved from, and the token endpoint is an <code>https://</code> URL. Any missing value is a rejection. Do not normalise, trim or lowercase anything — exact comparison is the security property.`,
+starter:`function acceptMetadata(fetchedFromIssuer, metadataIssuer, tokenEndpoint) {
+  return false;
+}`,
+solution:`function acceptMetadata(fetchedFromIssuer, metadataIssuer, tokenEndpoint) {
+  if (!fetchedFromIssuer || !metadataIssuer || !tokenEndpoint) return false;
+  // exact string equality — this is the mix-up defence
+  if (metadataIssuer !== fetchedFromIssuer) return false;
+  return tokenEndpoint.startsWith("https://");
+}`,
+tests:[{d:'missing values are rejected',re:'!fetchedFromIssuer|== *null|!metadataIssuer'},{d:'the issuer is compared exactly',re:'metadataIssuer\\s*!==\\s*fetchedFromIssuer|fetchedFromIssuer\\s*!==\\s*metadataIssuer|metadataIssuer\\s*===\\s*fetchedFromIssuer'},{d:'the token endpoint must be https',re:'startsWith\\s*\\(\\s*["\\x27]https://|https://'},{d:'no normalisation is applied',re:'^(?!.*toLowerCase)',flags:'s'}],
+behavior:`All five cases run for real. The trailing-slash case is the one worth staring at: https://id.example.com/ is a different issuer from https://id.example.com, and a verifier that "helpfully" normalises them has quietly accepted that two distinct issuer strings are the same server — which is the assumption the mix-up attack needs. The evil-issuer case is the attack in its plainest form: fetch metadata from a URL the attacker influenced, and every endpoint in the flow is theirs. The http case fails because a plaintext token endpoint means the code and client secret cross the network in the clear.`,
+hints:['Reject anything missing first — a null issuer must never pass.','Compare with !== on the raw strings. Resist the urge to trim or lowercase.','The endpoint check is a prefix test on the string.']}},
+
 {id:'oa7',title:'Device flow & the legacy grants',body:`
 <p>Two more flows round out the picture — one modern, two you should <b>recognize but avoid</b>.</p>
 <p><b>Device Authorization Flow</b> (for input-constrained devices: TVs, CLIs, IoT). The device can't show a browser/keyboard well, so:</p>
@@ -824,7 +913,23 @@ public class DeviceFlow {
  5. App POSTs code + code_verifier to /token   (no client secret — it is public)
  6. App gets access + refresh + id tokens; stores the refresh token in Keychain/Keystore
  7. App calls APIs with the Bearer access token; refreshes silently when it expires</div>
-<p>Use a vetted library (<b>AppAuth</b> for iOS/Android) rather than hand-rolling. Store refresh tokens in the platform secure store (Keychain / Keystore), keep access tokens short, and consider sender-constraining (DPoP) since mobile tokens live on devices you don't control.</p>`,
+<p>Use a vetted library (<b>AppAuth</b> for iOS/Android) rather than hand-rolling. Store refresh tokens in the platform secure store (Keychain / Keystore), keep access tokens short, and consider sender-constraining (DPoP) since mobile tokens live on devices you don't control.</p>
+
+<h4>Why a custom scheme is weaker than it looks</h4>
+<p>Nothing stops a second application on the device from registering <code>com.example.app:/callback</code>. On some platforms the resolution of a collision is undefined; on others it goes to whichever app registered most recently. A malicious app that wins the race receives the authorization code that was meant for you. PKCE is what makes that theft useless — the attacker has the code but not the verifier, so the exchange fails — which is precisely why PKCE is mandatory for native clients rather than advisory.</p>
+<p>Claimed HTTPS links close the hole entirely: the operating system verifies your domain's ownership through a file served over TLS at a well-known path, so no other app can claim the URL. The cost is real setup — hosting the association file, matching bundle identifiers and signing fingerprints — which is why so many apps ship the weaker option and rely on PKCE alone.</p>
+
+<h4>Where the tokens live on a device</h4>
+<p>The platform secure store — Keychain on iOS, Keystore-backed storage on Android — is the only acceptable place for a refresh token, and it is worth knowing what it does and does not protect. It protects against another app reading the value and, with the right flags, against extraction from a backup or from a device that is merely stolen and locked. It does not protect against a compromised or rooted device, and it does not stop the token being used by malware running inside your own app's process.</p>
+<p>That residual risk is what <b>sender-constrained tokens</b> address: with DPoP or mTLS binding, a stolen refresh token cannot be used without the private key it is bound to, and on modern devices that key can be generated inside hardware and made non-exportable. Combine it with refresh token rotation and reuse detection and a theft becomes detectable as well as difficult.</p>
+
+<h4>Practical rules for shipping</h4>
+<ul>
+<li><b>Use AppAuth</b> or the platform's own authentication session API rather than opening a browser by hand — the details of ephemeral sessions, cancellation and interception are easy to get subtly wrong.</li>
+<li><b>Never embed a client secret</b> in the binary. It is extractable in minutes, and a secret every user holds is not a secret.</li>
+<li><b>Handle the cancel path.</b> Users dismiss the browser; an app that hangs on a pending authorization looks broken.</li>
+<li><b>Log out means revoke.</b> Deleting the token locally leaves it valid at the authorization server, so call the revocation endpoint as well.</li>
+</ul>`,
 docs:[['RFC 8252 — OAuth for Native Apps','https://www.rfc-editor.org/rfc/rfc8252'],['AppAuth','https://appauth.io/'],['Apple Universal Links','https://developer.apple.com/ios/universal-links/'],['Android App Links','https://developer.android.com/training/app-links']],
 ex:{title:'Build a mobile authorize URL (public client + PKCE)',
 prompt:`Write <code>MobileAuthorize</code> with <code>static String build(String base, String clientId, String appLinkRedirect, String scope, String state, String codeChallenge)</code> returning the <code>/authorize</code> URL for a native app: <code>response_type=code</code>, then URL-encoded <code>client_id</code>, <code>redirect_uri</code> (the App/Universal Link), <code>scope</code>, <code>state</code>, and <code>code_challenge</code>, plus <code>code_challenge_method=S256</code>. <b>Do not include a client_secret</b> — a mobile app is a public client. Declare <code>throws Exception</code>.`,
@@ -1196,7 +1301,17 @@ public class Introspect {
  Need auth on a SEPARATE device (push-to-approve)? → CIBA
  Need to trade a token for another (delegation / S2S)? → Token Exchange
  Renewing without re-login? → Refresh Token
- Considering Implicit or ROPC? → don't — they're deprecated</div>`,
+ Considering Implicit or ROPC? → don't — they're deprecated</div>
+
+<h4>The decision, as three questions</h4>
+<p>The list above is a map; in practice you get to the answer with three questions in order. <b>Is a user involved?</b> No means Client Credentials, and nothing else. <b>Can the device show a browser and take input?</b> No means the Device grant (a TV, a CLI on a headless box) or CIBA when the user has a registered second device and the request originates elsewhere, such as a call centre. <b>Can the client keep a secret?</b> A server-side app can, and authenticates itself at the token endpoint — ideally with <code>private_key_jwt</code> or mTLS rather than a shared string. A browser app or a mobile app cannot, whatever it looks like: anything shipped to a user's device is public, which is what PKCE exists to compensate for.</p>
+<p>That is the whole decision for new systems, and it collapses to one sentence: <b>Authorization Code with PKCE unless there is no user, in which case Client Credentials.</b> Everything else is a special case with a specific justification.</p>
+
+<h4>Why the deprecated ones are deprecated</h4>
+<p><b>Implicit</b> returned the access token in the URL fragment, where it landed in browser history, in referrer headers and in any script on the page, with no client authentication and no way to bind the response to the request. PKCE plus the code flow gives the same capability without any of that. <b>ROPC</b> has the application collect the user's password directly, which defeats the entire purpose of federation: it trains users to type their corporate password into third-party forms, cannot support MFA properly, and cannot be used with an external IdP at all. Both are removed in OAuth 2.1. When you meet them, they are almost always a migration artefact, and the migration is the work.</p>
+
+<h4>Refresh tokens are not a flow</h4>
+<p>Worth stating because the list above puts them side by side: a refresh token is not a way to <i>obtain</i> authorization, it is a way to keep one alive. It is issued by another grant and exchanged at the token endpoint, and its security properties are entirely about what happens if it leaks — which is why public clients must have rotation with reuse detection, and why a refresh token with no rotation, no expiry and no binding is a password that never changes.</p>`,
 docs:[['OAuth 2.0 grant types','https://oauth.net/2/grant-types/'],['OAuth 2.1 (consolidated best practice)','https://oauth.net/2.1/'],['RFC 9126 — CIBA / decoupled','https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html']],
 ex:{title:'Recommend the right flow',
 prompt:`Write <code>FlowChooser</code> with: <code>static String recommend(String scenario)</code> returning the grant to use — <code>"authorization_code+pkce"</code> for <code>"web-app"</code>, <code>"spa"</code>, or <code>"mobile"</code>; <code>"client_credentials"</code> for <code>"service"</code> or <code>"backend-daemon"</code>; <code>"device_code"</code> for <code>"tv"</code>, <code>"cli"</code>, or <code>"iot"</code>; and <code>"authorization_code+pkce"</code> for anything else (safe default); and <code>static boolean deprecated(String grant)</code> returning true for <code>"implicit"</code> or <code>"password"</code>.`,

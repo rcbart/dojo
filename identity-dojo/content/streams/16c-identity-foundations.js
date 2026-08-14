@@ -14,7 +14,19 @@ keywords now covers the whole identity vocabulary.</p>
 <p>The rest of this stream builds on that vocabulary: authentication vs authorization, sessions vs
 tokens, SSO &amp; federation, IdPs and clients, scopes and consent. Whenever a word trips you up, the
 Glossary is one click away. The quick exercise below cements the acronyms you will see most.</p>
-`,
+
+<h4>Why the vocabulary is the hard part</h4>
+<p>Identity is unusual among technical domains: the concepts are not especially complicated, but the <b>same idea has a different name in every protocol</b>, and two different ideas frequently share a name. The thing that requests a token is a <i>client</i> in OAuth, a <i>relying party</i> in OIDC and a <i>service provider</i> in SAML. The thing that issues one is an <i>authorization server</i> in OAuth, an <i>OpenID provider</i> in OIDC and an <i>identity provider</i> in SAML. None of these are synonyms by accident — each specification named the roles from its own point of view — but a conversation mixing all three is where most identity confusion actually comes from.</p>
+<p>Three pairs are worth fixing in your head before anything else, because getting them backwards makes whole protocols unreadable:</p>
+<ul>
+<li><b>Authentication</b> proves who you are; <b>authorization</b> decides what you may do. OAuth is an authorization protocol, which is why using it alone to answer "who is this user?" is a category error — and why OIDC exists.</li>
+<li><b>An access token</b> is for a resource server and is none of your business as a client; an <b>ID token</b> is for the client and says who signed in. Sending an ID token to an API is one of the most common integration bugs there is.</li>
+<li><b>Authorization</b> (permission) is not <b>authentication</b> (identity) is not <b>accounting</b> (the audit trail) — the three A's are separate systems with separate failure modes.</li>
+</ul>
+
+<h4>How to use the glossary while you read</h4>
+<p>Open the <b>&#128214; Glossary</b> in the sidebar as a full reference, or select any term inside a lesson to see its definition in place. The order it is organised in — core distinction, actors, tokens, protocols, flows, endpoints, concepts, threats, governance — is also a reasonable reading order if you want the vocabulary in one pass before the protocols that use it.</p>
+<p>One habit pays for itself throughout this course: whenever a lesson introduces a term, say out loud <b>which role it belongs to and in which protocol</b>. "Assertion — that is SAML's word for the signed statement about the user, the equivalent of an ID token." Terms anchored to a role and a protocol stay put; terms learned as isolated definitions do not.</p>`,
 docs:[['OAuth 2.0 roles (RFC 6749 §1.1)','https://www.rfc-editor.org/rfc/rfc6749#section-1.1'],['OIDC terminology','https://openid.net/specs/openid-connect-core-1_0.html#Terminology'],['CSRF (OWASP)','https://owasp.org/www-community/attacks/csrf']],
 ex:{title:'Expand the acronyms',
 prompt:`Write <code>Glossary</code> with <code>static String expand(String abbr)</code> that returns the full term for common identity acronyms: <code>"IdP"</code>→<code>"Identity Provider"</code>, <code>"SP"</code>→<code>"Service Provider"</code>, <code>"RP"</code>→<code>"Relying Party"</code>, <code>"AS"</code>→<code>"Authorization Server"</code>, <code>"RS"</code>→<code>"Resource Server"</code>, <code>"OIDC"</code>→<code>"OpenID Connect"</code>, <code>"PKCE"</code>→<code>"Proof Key for Code Exchange"</code>, <code>"JWT"</code>→<code>"JSON Web Token"</code>, <code>"MFA"</code>→<code>"Multi-Factor Authentication"</code>, <code>"SSO"</code>→<code>"Single Sign-On"</code>, and <code>"unknown"</code> for anything else.`,
@@ -2274,7 +2286,21 @@ solution:`public class TokenCheck {
 <p>The problem: if every app keeps its own usernames and passwords, you drown in logins and each app becomes a place your password can leak. <b>Federation</b> solves this by letting apps <b>trust a shared authority</b> to say who you are, instead of each checking for themselves.</p>
 <p><b>The passport analogy.</b> Your country verifies who you are and issues a passport; other countries accept it at the border without re-investigating you, because they trust the issuer. In identity, the <b>Identity Provider (IdP)</b> is your country, the passport is a signed <b>token or assertion</b>, and each app — the <b>Service Provider / Relying Party</b> — is the border that trusts it.</p>
 <p><b>Everyday examples.</b> "Log in with Google": Google is the IdP that vouches for you, and the app relies on Google&#8217;s word rather than storing your password. Corporate SSO: an employee logs into Okta once and reaches Salesforce, Slack, and Workday — each app trusts Okta, so one login opens all of them. That is <b>federated identity</b>: your identity lives in one place and is accepted in many.</p>
-<p>The trust is set up in advance (the app is configured with the IdP&#8217;s keys/metadata), which is why a random site cannot simply claim "Google says this is you" — only the real, pre-trusted IdP&#8217;s signature is accepted.</p>`,
+<p>The trust is set up in advance (the app is configured with the IdP&#8217;s keys/metadata), which is why a random site cannot simply claim "Google says this is you" — only the real, pre-trusted IdP&#8217;s signature is accepted.</p>
+
+<h4>What the app gives up, and what it gains</h4>
+<p>Federation is a trade, and naming both sides makes the rest of this stream easier to reason about. The app <b>gains</b>: no password to store or leak, no reset flow to build, MFA and policy enforced centrally, and access that ends when the employer says it ends. The app <b>gives up</b>: control of the login experience, the ability to authenticate when the IdP is down, and any independent knowledge of who the user is — it believes what the token says.</p>
+<p>That last item is why the IdP becomes the highest-value target in the estate. Compromise one app and you have one app; compromise the IdP and you can mint a valid identity for every app that trusts it. Federation does not remove risk, it <b>concentrates</b> it — which is a good bargain, because one system defended extremely well beats fifty defended averagely, but only if the concentration is acknowledged and funded.</p>
+
+<h4>Reading the passport analogy carefully</h4>
+<p>The analogy is worth pushing on, because its edges are the real subject. A border checks that the passport is authentic (the signature), unexpired (the token's lifetime), and issued by a country it recognises (the trust configuration). It does not phone the issuing country, which is why revoking a passport is slow and imperfect — exactly like a signed token that stays valid until it expires. And a passport says who you are, not what you may do; the visa is separate, which is the distinction between authentication and authorization arriving in the same document.</p>
+
+<h4>Three things that must be arranged in advance</h4>
+<ul>
+<li><b>Keys</b> — the app must know the IdP's public keys, which it fetches from a metadata or JWKS URL rather than having them pasted into config, so rotation does not require a deployment.</li>
+<li><b>Identifiers</b> — the app and the IdP must agree on what names the user. A stable subject identifier, not an email.</li>
+<li><b>Attributes</b> — which claims the IdP will release, since an app that needs a department or a group only gets it if the IdP is configured to send it. In enterprise deployments this negotiation is most of the integration work, and it is where "SSO is set up but nobody has the right permissions" comes from.</li>
+</ul>`,
 docs:[['Identity federation — Wikipedia','https://en.wikipedia.org/wiki/Federated_identity'],['SSO & federation basics','https://www.cloudflare.com/learning/access-management/what-is-federated-identity/']],
 ex:{title:'Who plays which role?',
 prompt:`Write class <code>Federation</code> with <code>static String role(String party)</code>: <code>"idp"</code>→<code>"vouches for the user"</code>, <code>"sp"</code>→<code>"relies on the idp"</code>, and <code>"unknown"</code> for anything else.`,
@@ -2304,7 +2330,21 @@ hints:['A two-case switch plus a default covers it.','The identity provider vouc
 <li><b>The app</b> — the <b>Relying Party (RP) / Service Provider (SP)</b> receives that proof and <b>verifies</b> it rather than checking a password.</li>
 <li><b>The wiring</b> — <b>metadata / discovery</b> tells the RP where the IdP's endpoints and <b>public keys</b> live (a <code>jwks_uri</code> for OIDC, metadata XML for SAML), so the RP can find and check everything.</li>
 </ul>
-<p>The safe shape is <b>SP-initiated</b>: the app starts the login by redirecting to the IdP, the user authenticates, and the IdP redirects back with a proof the app verifies and turns into a session. Because the app started it, it can correlate the response to its own request — a property the trust deep-dive builds on next.</p>`,
+<p>The safe shape is <b>SP-initiated</b>: the app starts the login by redirecting to the IdP, the user authenticates, and the IdP redirects back with a proof the app verifies and turns into a session. Because the app started it, it can correlate the response to its own request — a property the trust deep-dive builds on next.</p>
+
+<h4>Why SP-initiated is the safe shape</h4>
+<p>When the app starts the flow it creates state before anything leaves: a request id, a <code>state</code> value, a PKCE verifier, a return URL. Everything that comes back can then be matched against something the app itself generated, which is what makes a response forged or replayed by a third party detectable. In the <b>IdP-initiated</b> direction — the user clicks a tile in a portal and an unsolicited assertion arrives at the app — none of that state exists. The app receives a valid-looking assertion it never asked for, and it cannot tell whether the user meant to send it or an attacker did. That is the shape behind a whole family of login-CSRF and assertion-replay problems, and it is why modern guidance is to avoid IdP-initiated flows or to convert them into SP-initiated ones by bouncing the user back to the app first.</p>
+
+<h4>What "trust" concretely consists of</h4>
+<p>Trust in federation is not a feeling; it is four pieces of configuration that both sides can point at. The <b>issuer identifier</b>, which must match exactly. The <b>signing keys</b>, discovered rather than hardcoded so rotation is invisible. The <b>audience</b>, so an assertion for one app is not usable at another. And the <b>attribute contract</b> — which claims are released, in what format, with what identifier. Get the first three wrong and you have a security problem; get the fourth wrong and you have an integration that authenticates people it cannot authorise.</p>
+
+<h4>The failure modes worth expecting</h4>
+<ul>
+<li><b>The IdP is a single point of failure.</b> When it is down, nobody logs into anything — which is why break-glass access and cached sessions are operational requirements rather than nice-to-haves.</li>
+<li><b>Clock skew</b> breaks assertion validity windows, and SAML's windows are typically minutes. NTP is a dependency of your login.</li>
+<li><b>Certificate and key rotation</b> at the IdP breaks every relying party that pinned instead of discovering — the most common cause of a federation outage that "nobody changed anything" precedes.</li>
+<li><b>Session lifetime mismatch.</b> The app's session can outlive the IdP's, so a user disabled centrally stays signed in locally until the app's session expires. Short app sessions, or a revocation signal, are the answers.</li>
+</ul>`,
 docs:[['Federated identity — Wikipedia','https://en.wikipedia.org/wiki/Federated_identity'],['OIDC Core','https://openid.net/specs/openid-connect-core-1_0.html'],['SAML 2.0 overview','https://docs.oasis-open.org/security/saml/v2.0/']],
 ex:{title:'Name the moving parts',
 prompt:`Write class <code>Federation</code> with <code>static String piece(String role)</code>: <code>"authority"</code>→<code>"IdP"</code>, <code>"app"</code>→<code>"relying party"</code>, <code>"proof"</code>→<code>"signed token or assertion"</code>, <code>"keys"</code>→<code>"published at JWKS or metadata"</code>, else <code>"unknown"</code>.`,
@@ -2363,7 +2403,22 @@ hints:['Trust is configuration (registration) plus cryptography (verifying a sig
 <li><b>Verifiable Credential (VC)</b> — a tamper-evident, cryptographically signed claim (e.g. "over 18", "employed by Acme") <b>issued</b> by an authority, <b>held</b> by you in a wallet, and <b>presented</b> to whoever needs it.</li>
 </ul>
 <p>The model is a <b>trust triangle</b>: the <b>issuer</b> signs and gives you a credential; the <b>holder</b> (you) stores it in a wallet; the <b>verifier</b> checks the issuer signature — without calling the issuer. A powerful property is <b>selective disclosure</b> (and zero-knowledge proofs): prove you are over 18 <i>without</i> revealing your birthdate.</p>
-<p>Versus federation: there is no central login and no IdP that sees every sign-in, which improves privacy and resilience. The honest caveat: the ecosystem (wallets, revocation, standards) is still maturing, so most production identity today is still federated — but VCs are showing up in digital IDs and know-your-customer flows.</p>`,
+<p>Versus federation: there is no central login and no IdP that sees every sign-in, which improves privacy and resilience. The honest caveat: the ecosystem (wallets, revocation, standards) is still maturing, so most production identity today is still federated — but VCs are showing up in digital IDs and know-your-customer flows.</p>
+
+<h4>The trust triangle, and what is genuinely new</h4>
+<p>Federation and decentralized identity both rest on a signature from an authority you trust. The difference is <b>where the authority sits at the moment of use</b>. In federation the IdP is online and in the flow: it learns every login, every relying party, and every time you sign in. In the credential model the issuer signs once and goes away — the verifier checks a signature against a published key and never contacts the issuer. That absence is the point: no phone-home means no central observer of your behaviour, and no single service whose outage stops every login.</p>
+<p><b>Selective disclosure</b> is the second genuinely new property. A signed credential normally has to be shown whole, which is why proving your age with a driving licence reveals your address. SD-JWT and similar constructions let the holder reveal individual claims while the signature still verifies over what was revealed, so "over 18" is provable without a birthdate. That is a capability federation simply does not have.</p>
+
+<h4>The parts that are still hard</h4>
+<ul>
+<li><b>Revocation.</b> An offline check cannot see that a credential was revoked this morning, so schemes use status lists, short lifetimes or re-issuance — and each trades privacy against freshness, because a status lookup can leak which credential is being checked.</li>
+<li><b>Key recovery.</b> If you hold your own keys, losing your phone means losing your identity unless there is recovery — and recovery is a backdoor by another name, which is why wallet vendors differ so much here.</li>
+<li><b>Trust registries.</b> A verifier still has to decide which issuers to believe. That question does not disappear; it moves to a registry, and the governance of that registry is where the politics lives.</li>
+<li><b>Correlation.</b> Presenting the same credential identifier everywhere reintroduces tracking, which is what batch-issued single-use credentials and pairwise identifiers exist to prevent.</li>
+</ul>
+
+<h4>Where it is actually being used</h4>
+<p>The honest position in 2026: this is no longer a research topic and not yet the default. The EU Digital Identity Wallet regulation obliges member states to offer wallets, mobile driving licences are in production in several US states and are accepted at airports, and OpenID for Verifiable Credential Issuance and Presentation (OID4VCI / OID4VP) have made the flows look reassuringly like OAuth — which is the pragmatic reason they are gaining traction. Most enterprise identity remains federated, and the two will coexist: an employee logs in via the corporate IdP and presents a credential to prove a professional certification the employer never held.</p>`,
 docs:[['Decentralized Identifiers (W3C DID)','https://www.w3.org/TR/did-core/'],['Verifiable Credentials (W3C)','https://www.w3.org/TR/vc-data-model/'],['Self-sovereign identity','https://en.wikipedia.org/wiki/Self-sovereign_identity']],
 ex:{title:'The trust triangle',
 prompt:`Write class <code>Ssi</code> with <code>static String role(String party)</code>: <code>"issuer"</code>→<code>"signs and issues the credential"</code>, <code>"holder"</code>→<code>"keeps it in a wallet"</code>, <code>"verifier"</code>→<code>"checks the issuer signature"</code>, and <code>"unknown"</code> otherwise.`,

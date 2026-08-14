@@ -427,4 +427,75 @@ public class LogoutToken {
     }
 }`}},
 
+
+{id:'ss7',title:'CORS: the browser\'s other security model',body:`
+<p>Two browser mechanisms decide whether a login works from a single-page app, and people routinely
+confuse them. <b>SameSite</b> decides whether the cookie is <i>attached</i> to a request. <b>CORS</b>
+decides whether JavaScript is allowed to <i>read the response</i>. Different questions, different
+failures, and a debugging session goes badly until you know which one you are looking at.</p>
+
+<h4>The same-origin policy, and the gap it leaves</h4>
+<p>An <b>origin</b> is scheme + host + port. <code>https://app.example.com</code> and
+<code>https://api.example.com</code> are different origins; so are <code>http</code> and
+<code>https</code> versions of the same host. The same-origin policy says script on one origin cannot read
+responses from another.</p>
+<p>Note precisely what it does <i>not</i> say: it does not stop the request being <b>sent</b>, and it does
+not stop cookies riding along. That gap is the whole reason CSRF exists — the attacker's page can cause a
+state-changing request with your cookies attached, it simply cannot read the answer. Which is why the
+defence for CSRF is SameSite and tokens, not CORS.</p>
+
+<h4>How CORS relaxes it — server opt-in, browser enforcement</h4>
+<p>A cross-origin read is permitted only when the <i>server</i> says so, in response headers the browser
+checks before handing the body to script:</p>
+<div class="codeSample" data-hl>// simple request: sent immediately, response gated on the header
+Access-Control-Allow-Origin: https://app.example.com
+
+// anything with an Authorization header, a custom header or an
+// unusual content type is PREFLIGHTED first:
+OPTIONS /token                       Access-Control-Request-Method: POST
+                                     Access-Control-Request-Headers: authorization
+-> Access-Control-Allow-Origin: https://app.example.com
+   Access-Control-Allow-Methods: POST
+   Access-Control-Allow-Headers: authorization
+   Access-Control-Max-Age: 600       // cache the preflight, or you double every call</div>
+<p>This matters for identity because the endpoints an SPA calls directly — <code>/token</code> for a PKCE
+public client, <code>/.well-known/openid-configuration</code>, <code>jwks_uri</code>, sometimes
+<code>/userinfo</code> — all need CORS headers, and an <code>Authorization</code> header forces a
+preflight on every one of them.</p>
+
+<h4>Credentials change the rules</h4>
+<p>If the request carries cookies (<code>credentials: "include"</code>), two extra conditions apply:
+the server must send <code>Access-Control-Allow-Credentials: true</code>, and
+<code>Access-Control-Allow-Origin</code> <b>may not be <code>*</code></b>. It must name a single origin.</p>
+<p>The dangerous workaround is to reflect whatever <code>Origin</code> arrives back in the header. That
+technically satisfies the browser — and it means <i>every</i> site on the internet can read your API's
+responses with the victim's cookies attached. Reflecting an origin is only safe against an explicit
+allowlist, and "allowlist" must mean exact strings, not a <code>startsWith("https://example")</code> that
+also matches <code>https://example.attacker.com</code>.</p>
+
+<h4>CORS is not authorization</h4>
+<p>The rules are enforced by browsers, for browsers. <code>curl</code>, a mobile app, a server-side proxy
+and an attacker's script all ignore them completely. CORS protects your <i>users</i> from other websites
+reading their data; it does nothing to protect your API from a determined caller. Every endpoint still
+needs real authentication and authorization behind it.</p>
+<p>Which is the underrated argument for the <b>BFF pattern</b> from the OAuth stream. Keep the browser
+talking to its own origin and let a small backend hold the tokens. The entire CORS-plus-credentials
+minefield then stops being your problem — along with token storage in the browser.</p>`,
+docs:[['MDN — Cross-Origin Resource Sharing','https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS'],['Fetch Standard — CORS protocol','https://fetch.spec.whatwg.org/#http-cors-protocol'],['OWASP — CORS misconfiguration','https://owasp.org/www-community/attacks/CORS_OriginHeaderScrutiny']],
+ex:{title:'Decide whether a credentialed read is allowed',lang:'js',
+run:{call:'corsAllowsCredentialedRead',cases:[{name:'an allowlisted origin, echoed exactly, with credentials on',args:[['https://app.example.com'],'https://app.example.com','https://app.example.com',true],expect:true},{name:'wildcard plus credentials is refused by the browser',args:[['https://app.example.com'],'https://app.example.com','*',true],expect:false},{name:'reflecting an origin that is not on the allowlist',args:[['https://app.example.com'],'https://evil.example.com','https://evil.example.com',true],expect:false},{name:'allowlisted, but the server did not allow credentials',args:[['https://app.example.com'],'https://app.example.com','https://app.example.com',false],expect:false},{name:'header names a different origin than the caller',args:[['https://app.example.com'],'https://app.example.com','https://other.example.com',true],expect:false}]},
+prompt:`Write <code>function corsAllowsCredentialedRead(allowlist, requestOrigin, allowOriginHeader, allowCredentials)</code> returning <code>true</code> only when: the requesting origin is on the allowlist (exact match), the <code>Access-Control-Allow-Origin</code> header names that same origin, it is not <code>"*"</code>, and <code>Access-Control-Allow-Credentials</code> is <code>true</code>. This is the rule the browser applies before letting script read the body.`,
+starter:`function corsAllowsCredentialedRead(allowlist, requestOrigin, allowOriginHeader, allowCredentials) {
+  return false;
+}`,
+solution:`function corsAllowsCredentialedRead(allowlist, requestOrigin, allowOriginHeader, allowCredentials) {
+  if (!allowlist || !allowlist.includes(requestOrigin)) return false;
+  if (allowOriginHeader === "*") return false;          // never valid with credentials
+  if (allowOriginHeader !== requestOrigin) return false; // must name this one origin
+  return allowCredentials === true;
+}`,
+tests:[{d:'the origin is checked against an allowlist',re:'allowlist\\s*\\.\\s*includes|indexOf\\s*\\(\\s*requestOrigin'},{d:'the wildcard is rejected outright',re:'["\\x27]\\*["\\x27]'},{d:'the header must name the requesting origin',re:'allowOriginHeader\\s*!==\\s*requestOrigin|allowOriginHeader\\s*===\\s*requestOrigin'},{d:'credentials must be explicitly allowed',re:'allowCredentials\\s*===\\s*true|allowCredentials\\s*==='}],
+behavior:`Five real cases. The wildcard case is the specification's own guard: a browser refuses Access-Control-Allow-Origin: * on a credentialed request, precisely so that an API cannot accidentally publish authenticated responses to every origin. The reflected-origin case is the misconfiguration that shows up in real audits — the server echoes whatever Origin it receives, the browser is satisfied, and any site the victim visits can read their data. The allowlist must hold exact origins: a prefix check on "https://example" also accepts https://example.attacker.com.`,
+hints:['Four independent conditions; any one failing is a refusal.','The wildcard has a special rule of its own — check it before comparing strings.','Exact string membership in the allowlist. A prefix test is a vulnerability, not a shortcut.']}}
+
 ]});

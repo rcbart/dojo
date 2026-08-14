@@ -777,5 +777,143 @@ public class Caep {
         // a stateless verifier has nowhere to record the revocation
         return keepsRevocationState;
     }
-}`}}
+}`}},
+
+{id:'ao9',title:'Resource indicators: one token per audience',body:`
+<p>A client that talks to five APIs asks for the scopes it needs across all five, and receives <b>one
+access token that all five accept</b>. That is the default behaviour of most authorization servers, and it
+is a design flaw hiding in plain sight: whichever of those five APIs is weakest now holds a credential
+that works at the other four.</p>
+
+<h4>The failure, concretely</h4>
+<p>The reporting service is compromised — a log leak, a debug endpoint, an SSRF, take your pick. The
+attacker now has bearer tokens belonging to real users. Those tokens carry
+<code>scope: "reports.read payments.write"</code> because the client needed both, and they are accepted by
+the payments API, which is well-written, well-tested and entirely uninvolved in the breach. The blast
+radius of the weakest service became the union of everything the client was allowed to do.</p>
+<p>The obvious answer — "the payments API should check the scope" — does not help. The scope
+<i>is</i> present and valid. Scope answers <b>what</b> may be done; it does not answer <b>where</b> the
+token may be presented.</p>
+
+<h4>The resource parameter (RFC 8707)</h4>
+<p><b>Resource indicators</b> let the client name the API it intends to call, on the authorization request
+and again on the token request. The authorization server issues a token whose <code>aud</code> is that
+resource — and only that resource:</p>
+<div class="codeSample" data-hl>POST /token
+  grant_type=authorization_code&code=...
+  &resource=https://api.payments.example.com     <- the intended audience
+  &scope=payments.write
+
+// -> { "access_token": "...", "aud": "https://api.payments.example.com" }
+//    presented to the reporting API, this token is refused: wrong audience.
+
+// need to call two APIs? two token requests, from the same grant.
+// need to narrow an existing token? RFC 8693 token exchange, downscoped.</div>
+<p>The mechanism is only half the story, though. A resource indicator is <b>worthless unless the resource
+server validates <code>aud</code></b> — and audience validation is the check most often skipped, because a
+token that verifies cryptographically and carries the right scope <i>looks</i> correct. Both halves are
+required: the AS must issue narrowly, and every RS must refuse tokens not addressed to it.</p>
+
+<h4>Where the audience is a security boundary</h4>
+<ul>
+<li><b>Scope names collide.</b> Two teams both define <code>read</code>. Without an audience, a token
+minted for one service's <code>read</code> satisfies the other's check.</li>
+<li><b>Third-party APIs.</b> Sending a token to an external service is handing over a credential; if it is
+audience-restricted to that service, the worst case is bounded.</li>
+<li><b>Service chains.</b> When service A calls B which calls C, forwarding A's token to C is the confused
+deputy from the service-to-service stream. Token exchange issues a fresh, narrowly-audienced token at each
+hop instead.</li>
+</ul>
+
+<h4>The cost, stated plainly</h4>
+<p>More token requests, more caching logic in clients, and more configuration on the authorization server —
+resources must be registered, and clients must be told which they may request. Providers differ: some
+implement <code>resource</code>, some use a non-standard <code>audience</code> parameter, some derive the
+audience from scope naming conventions. The principle survives the variation: <b>a token should be usable
+in exactly one place, and that place should check that it is the one</b>.</p>`,
+docs:[['RFC 8707 — Resource Indicators for OAuth 2.0','https://www.rfc-editor.org/rfc/rfc8707'],['RFC 8693 — OAuth 2.0 Token Exchange','https://www.rfc-editor.org/rfc/rfc8693'],['RFC 9700 — OAuth 2.0 Security Best Current Practice','https://www.rfc-editor.org/rfc/rfc9700']],
+ex:{title:'Validate the audience at the resource server',lang:'js',
+run:{call:'tokenUsableAt',cases:[{name:'a single-string audience naming this API',args:['https://api.billing.example.com','https://api.billing.example.com'],expect:true},{name:'an array audience containing this API',args:[['https://api.billing.example.com','https://api.reports.example.com'],'https://api.reports.example.com'],expect:true},{name:'a token minted for a different API',args:['https://api.billing.example.com','https://api.payments.example.com'],expect:false},{name:'no audience claim at all is not a pass',args:[null,'https://api.billing.example.com'],expect:false},{name:'an empty array names nobody',args:[[],'https://api.billing.example.com'],expect:false}]},
+prompt:`Write <code>function tokenUsableAt(tokenAud, resourceId)</code> returning <code>true</code> only when the token's <code>aud</code> names this resource. <code>aud</code> may be a string <b>or</b> an array of strings — the JWT specification permits both, and handling only one is a real-world bug. A missing audience is a rejection, never a wildcard.`,
+starter:`function tokenUsableAt(tokenAud, resourceId) {
+  return false;
+}`,
+solution:`function tokenUsableAt(tokenAud, resourceId) {
+  if (!tokenAud || !resourceId) return false;
+  if (Array.isArray(tokenAud)) return tokenAud.includes(resourceId);
+  return tokenAud === resourceId;
+}`,
+tests:[{d:'a missing audience is rejected',re:'!tokenAud|tokenAud\\s*==\\s*null'},{d:'the array form is handled',re:'Array\\s*\\.\\s*isArray'},{d:'array membership is checked',re:'includes\\s*\\(\\s*resourceId|indexOf\\s*\\(\\s*resourceId'},{d:'the string form is compared exactly',re:'tokenAud\\s*===\\s*resourceId|resourceId\\s*===\\s*tokenAud'}],
+behavior:`Five real cases. The array case is the one that bites: aud is defined as a string OR an array of strings, so a verifier written against the single-string form quietly rejects every multi-audience token — or, worse, a verifier written as a substring test accepts https://api.billing.example.com.attacker.net. The null case is the one that matters most: treating a missing audience as "no restriction" turns every token in your estate into a token for this API, which is precisely the situation resource indicators exist to end.`,
+hints:['Two shapes to handle: a string and an array of strings.','Array.isArray tells you which branch you are in.','Missing means refuse. A token with no audience is not a token for everyone.']}},
+
+{id:'ao10',title:'Cross-device flows: QR login, device code and consent phishing',body:`
+<p>Three flows share one shape: the device that <b>gets</b> access is not the device that
+<b>authenticates</b>. The device flow puts a code on a TV and asks you to type it on your phone. QR login
+shows a code on a laptop that a phone app scans. CIBA sends a push to a phone while a call-centre agent
+waits. Each solves a real problem — no keyboard, no browser, no shared session — and each introduces the
+same structural weakness.</p>
+
+<h4>The weakness: consent without context</h4>
+<p>In a normal browser flow, the thing that starts the request and the thing that approves it are the same
+context, bound by the same session, and the user sees the URL. Cross-device breaks that binding. The user
+is asked to approve something they cannot see, initiated somewhere they cannot verify, on a device that
+has no connection to the one that will be granted access.</p>
+<p>An attacker therefore does not need to steal anything. They need only <b>start a flow and get the
+victim to complete it</b>:</p>
+<div class="codeSample" data-hl>1. attacker starts a device-code flow for a real client, real IdP
+2. IdP returns:  user_code = WDJB-MJHT   verification_uri = https://id.example.com/device
+3. attacker emails the victim: "IT security check — go to id.example.com/device, enter WDJB-MJHT"
+4. victim authenticates AT THE REAL IdP, sees a real consent screen, approves
+5. attacker polls the token endpoint and receives the victim's tokens
+
+// nothing was spoofed. no password was captured. MFA was satisfied — by the victim,
+// for a session the attacker started. the phishing-resistant part was never bypassed;
+// it was never the target.</div>
+<p>QR-jacking is the same attack with a picture: an attacker's QR code, displayed on a page the victim
+trusts. And the <b>illicit consent grant</b> is its application-level cousin: a malicious registered app
+asks for broad scopes, and the consent screen is real, so nothing looks wrong.</p>
+
+<h4>Why passkeys do not save you here</h4>
+<p>Worth being precise, because it is a common misreading. WebAuthn is phishing-resistant because the
+credential is bound to an origin, so it cannot be replayed at a fake site. In a cross-device attack there
+<i>is</i> no fake site — the user authenticates at the genuine origin, with the genuine authenticator, and
+the ceremony succeeds honestly. What was phished is the <b>authorization</b>, not the credential.</p>
+
+<h4>The defences, in order of effectiveness</h4>
+<ul>
+<li><b>Do not enable the flow where it is not needed.</b> Device flow exists for input-constrained
+devices. Enabling it for every client, as many providers do by default, hands the attacker a starting
+point.</li>
+<li><b>Bind the code to the approving user's action.</b> Requiring the user to <i>type</i> a short code
+displayed on the initiating device — rather than tapping "approve" — means an attacker must get their code
+in front of the victim and persuade them to enter it, which is a visible, describable act.</li>
+<li><b>Show what and where.</b> The consent screen should name the client, the scopes, and the requesting
+device's location or network. "Approve sign-in for Smart TV in Warsaw" is a question a user can answer.</li>
+<li><b>Short expiry and rate-limited polling.</b> Minutes, not hours, and one grant per code.</li>
+<li><b>Exclude high-value scopes.</b> Admin, payment and consent-granting scopes should require a
+same-device flow, unconditionally.</li>
+<li><b>Proximity where the platform offers it.</b> FIDO's hybrid transport uses Bluetooth proximity between
+the two devices, which is the only defence here that is not advisory — it makes remote approval physically
+impossible.</li>
+</ul>
+<p>The general principle, and it outlives all three protocols: <b>consent is only meaningful when the user
+can see what they are consenting to and knows why they were asked</b>. Cross-device flows remove both, so
+whatever you can add back — a code they must type, a device they must recognise, a scope you refuse to
+grant this way — is the whole of the security.</p>`,
+docs:[['OAuth 2.0 Cross-Device Flows Best Current Practice','https://datatracker.ietf.org/doc/draft-ietf-oauth-cross-device-security/'],['RFC 8628 — OAuth 2.0 Device Authorization Grant','https://www.rfc-editor.org/rfc/rfc8628'],['Microsoft — device code phishing','https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-device-code']],
+ex:{title:'Gate a cross-device approval',lang:'js',
+run:{call:'approveCrossDevice',cases:[{name:'the right code, entered in time, ordinary scope',args:['WDJB-MJHT','WDJB-MJHT',30,300,false],expect:true},{name:'a code the user did not get from this device',args:['AAAA-BBBB','WDJB-MJHT',30,300,false],expect:false},{name:'the code expired before approval',args:['WDJB-MJHT','WDJB-MJHT',301,300,false],expect:false},{name:'a high-value scope may never be approved cross-device',args:['WDJB-MJHT','WDJB-MJHT',30,300,true],expect:false},{name:'tapping approve without entering a code',args:['','WDJB-MJHT',30,300,false],expect:false}]},
+prompt:`Write <code>function approveCrossDevice(enteredCode, expectedCode, secondsElapsed, maxAgeSeconds, highValueScope)</code> returning <code>true</code> only when the user typed the exact expected code, within <code>maxAgeSeconds</code>, for a scope that is not high-value. A high-value scope is refused <b>regardless</b> of everything else — check it first.`,
+starter:`function approveCrossDevice(enteredCode, expectedCode, secondsElapsed, maxAgeSeconds, highValueScope) {
+  return false;
+}`,
+solution:`function approveCrossDevice(enteredCode, expectedCode, secondsElapsed, maxAgeSeconds, highValueScope) {
+  if (highValueScope) return false;                       // never cross-device
+  if (!enteredCode || enteredCode !== expectedCode) return false;
+  return secondsElapsed <= maxAgeSeconds;
+}`,
+tests:[{d:'high-value scopes are refused first',re:'highValueScope'},{d:'an empty entry is not an approval',re:'!enteredCode|enteredCode\\s*===\\s*["\\x27]["\\x27]'},{d:'the code must match exactly',re:'enteredCode\\s*!==\\s*expectedCode|enteredCode\\s*===\\s*expectedCode'},{d:'expiry is enforced',re:'secondsElapsed\\s*<=?\\s*maxAgeSeconds|secondsElapsed\\s*>'}],
+behavior:`Five cases run. The empty-code case encodes the design point of the whole lesson: an approval that requires only a tap can be obtained by an attacker who sends a push at the right moment, while an approval that requires typing a code shown on the initiating device requires the attacker to get that code in front of the victim — a step the victim can notice and describe afterwards. The high-value case is deliberately unconditional: some scopes should have no cross-device path at all, so the check comes before anything else and cannot be reasoned around by a correct code. Expiry is a rate-limit on the whole attack: a code alive for five minutes gives the attacker five minutes to write a convincing email.`,
+hints:['One check is unconditional and comes first.','An empty string is not a match — reject falsy input before comparing.','Elapsed time within the maximum is the last condition, not the first.']}}
 ]});

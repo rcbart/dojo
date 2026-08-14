@@ -351,7 +351,23 @@ hints:['A two-case switch with a default covers it.','CIAM is customer-facing; w
 <li><b>Progressive profiling</b> — ask for more information over time as it's needed, instead of a giant signup form.</li>
 <li><b>Data-subject rights</b> — access, correction, and <b>erasure</b> ("right to be forgotten"), plus the ability to <b>revoke consent</b> at any time.</li>
 </ul>
-<p><b>Privacy by design</b>: default to the least data, encrypt PII, make consent revocable, and keep an auditable record of what each user agreed to and when. Consent you can't prove or revoke isn't real consent.</p>`,
+<p><b>Privacy by design</b>: default to the least data, encrypt PII, make consent revocable, and keep an auditable record of what each user agreed to and when. Consent you can't prove or revoke isn't real consent.</p>
+
+<h4>Consent has to be provable, not just collected</h4>
+<p>A checkbox is not consent; the <b>record</b> is. What a regulator, an auditor or an angry customer asks for is the same thing: what exactly did this person agree to, in what wording, on what date, under which version of the policy, and through what interface? That is a <b>consent receipt</b> — purpose, scope, timestamp, policy version, and the mechanism — stored as an immutable record rather than a boolean column that yesterday's migration overwrote.</p>
+<p>The same applies to withdrawal. Consent that cannot be revoked as easily as it was given is not valid consent under GDPR, and "as easily" is a design constraint: if opting in took one click, opting out cannot require an email to support. Revocation must also propagate — to the marketing platform, the analytics pipeline and every downstream copy — which is why consent belongs in a service other systems query, not in a flag each system caches.</p>
+
+<h4>Lawful basis, and why consent is often the wrong one</h4>
+<p>Consent is one of six lawful bases in GDPR, and frequently the weakest choice. Processing an order needs no consent — it is <b>contractual necessity</b>. Fraud prevention and security logging are usually <b>legitimate interests</b>. Asking for consent where another basis applies creates an obligation you cannot honour: if a user withdraws consent for something you must do anyway to run the service, you have promised something untrue. Map each purpose to its basis first, then ask for consent only where consent is genuinely the basis — typically marketing, optional personalisation and non-essential cookies.</p>
+
+<h4>What data-subject rights mean for the identity store</h4>
+<ul>
+<li><b>Access and portability</b> — you must be able to export everything you hold about one person, which means knowing every store that keys on a user id, including logs and backups.</li>
+<li><b>Erasure</b> — genuinely hard, because deleting a user id from a relational store breaks referential integrity and audit records must survive. The usual answer is to delete or crypto-shred the personal data while retaining a pseudonymous id for the records that must remain, and to document that decision.</li>
+<li><b>Correction</b> — including in the downstream systems provisioned from your directory.</li>
+<li><b>Identity for the request itself</b> — a subject-access request is a beautiful phishing target, so verifying the requester is part of honouring the right.</li>
+</ul>
+<p><b>Privacy by design</b>, restated as engineering: collect the minimum, separate identifiers from attributes, set retention per purpose and enforce it automatically, encrypt personal data at rest, and make every one of those choices visible in the data model rather than in a policy document nobody reads.</p>`,
 docs:[['GDPR consent','https://gdpr.eu/gdpr-consent-requirements/'],['Privacy by design','https://en.wikipedia.org/wiki/Privacy_by_design']],
 ex:{title:'Is this consent valid?',lang:'js',
 run:{call:'valid',cases:[{name:'explicit, granular and revocable',args:[true,true,true],expect:true},{name:'not explicit',args:[false,true,true],expect:false},{name:'not granular',args:[true,false,true],expect:false},{name:'not revocable',args:[true,true,false],expect:false}]},
@@ -373,7 +389,17 @@ hints:['Three conditions joined with &&.','A pre-ticked box is not explicit cons
 <li><b>Access reviews</b> — periodic certification that people still need what they hold (IGA), evidenced by the trail.</li>
 <li><b>Compliance</b> — frameworks like <b>SOC 2</b>, ISO 27001, and <b>NIST 800-63</b> map controls to exactly these identity practices: MFA, least privilege, timely deprovisioning, and complete audit logs. The audit trail is the evidence auditors ask for.</li>
 </ul>
-<p>Design notes: log identity events as structured, append-only records; never log secrets or full tokens; correlate with a request/trace id; and make sure <b>deprovisioning</b> and access-review actions are themselves logged — the controls have to prove they ran.</p>`,
+<p>Design notes: log identity events as structured, append-only records; never log secrets or full tokens; correlate with a request/trace id; and make sure <b>deprovisioning</b> and access-review actions are themselves logged — the controls have to prove they ran.</p>
+
+<h4>What makes a log an audit trail</h4>
+<p>Application logs and audit logs answer different questions and have different rules. An audit event is a <b>factual record of an action</b>, written for someone who was not there and may be reading it in two years: actor, action, target, outcome, time, and the context that makes it interpretable — source address, session or request id, client, and which policy allowed it. It is append-only, retained on a schedule you can state, and protected so that the people whose actions it records cannot alter it. That last property is why audit logs are shipped off the machine that produces them within seconds, and why write access to the audit store is itself a privileged operation.</p>
+<p>Two things distinguish a usable trail from a pile of lines. <b>Events are structured</b>, with stable field names, so a query for "every privilege change by this admin" is a filter rather than a regular expression. And <b>failures are recorded as carefully as successes</b> — a denied access is often the more interesting event, and a trail that only shows what worked cannot show an attack that did not.</p>
+
+<h4>What must never appear in it</h4>
+<p>Passwords, tokens, session identifiers, MFA codes, private keys, full card numbers, and the contents of assertions. This matters more in identity than elsewhere, because the audit pipeline is widely readable by design — SOC analysts, auditors, on-call engineers — so a token in a log has effectively been published. Log identifiers and hashes instead: a token's <code>jti</code>, a key's <code>kid</code>, the last four digits, a salted hash of an email where correlation is needed without exposure. And treat the pipeline as processing personal data, because names, addresses and behaviour patterns are exactly what identity events contain.</p>
+
+<h4>From evidence to control</h4>
+<p>The reason to invest here is that in identity the audit trail is not documentation of the controls — it <i>is</i> several of them. Access reviews are evidenced by it. Deprovisioning is proved by it. "Least privilege" is measurable only if you can see what was actually used, which is what makes usage-derived recommendations possible. Detection — impossible travel, a burst of failures, a new admin, a first-time-seen client — reads the same stream. And the honest test of the whole thing is a rehearsal: pick a real question ("which accounts did this compromised admin touch on Tuesday?") and try to answer it from the logs alone. Most teams discover a missing field the first time, which is much better than discovering it during an incident.</p>`,
 docs:[['Logging & monitoring — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html'],['NIST SP 800-63','https://pages.nist.gov/800-63-3/'],['SOC 2 overview','https://www.aicpa-cima.com/topic/audit-assurance/audit-and-assurance-greater-than-soc-2']],
 ex:{title:'Map the requirement to the control',
 prompt:`Write class <code>Audit</code> with <code>static String control(String requirement)</code>: <code>"prove-who-did-what"</code>→<code>"immutable audit log"</code>, <code>"detect-attacks"</code>→<code>"SIEM alerting"</code>, <code>"periodic-access-review"</code>→<code>"IGA certification"</code>, <code>"remove-leaver-access"</code>→<code>"deprovisioning"</code>, and <code>"unknown"</code> otherwise.`,

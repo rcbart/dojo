@@ -7,7 +7,7 @@ const DOJO_NO_IAM_MERGE = true;
 const DOJO_HOME = {
   name: 'IdentityDojo',
   title: 'Welcome to IdentityDojo \u{1F6C2}',
-  intro: '14 streams and 132 lessons take you from what an identity actually is to running one in production. '
+  intro: '14 streams and 139 lessons take you from what an identity actually is to running one in production. '
        + 'The sequencing is deliberate: concepts are grounded <b>before</b> the protocols that assume them, so you meet '
        + '"token" as a defined thing before any lesson uses one, and learn that <b>SSO is a user experience</b> before '
        + 'the protocols that produce it. From there into OAuth 2.0/2.1 and PKCE end to end, OIDC, SAML, WebAuthn and '
