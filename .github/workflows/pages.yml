@@ -58,6 +58,12 @@ jobs:
       - name: Compile every Java reference solution
         run: node scripts/verify-java.js
 
+      # Fifth gate: is any lesson too thin for the course it sits in? The floor
+      # is half the course MEDIAN — see the header of the script for why the
+      # mean was the wrong middle.
+      - name: Check lesson depth
+        run: node scripts/verify-depth.js
+
       - name: Build DevDojo
         run: node build.js
       - name: Build IdentityDojo

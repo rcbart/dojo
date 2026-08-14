@@ -15,7 +15,33 @@ echo $JAVA_HOME                  # where tools will look
 
 javac Greeter.java && java Greeter    # compile then run
 java Greeter.java                     # single-file mode: no javac step
-jshell                                # REPL: try Java line by line</div>`,
+jshell                                # REPL: try Java line by line</div>
+
+<h4>Which JDK, and why the answer is boring on purpose</h4>
+<p>Take an <b>LTS</b> release — 21 today — from a build you can name: Temurin, Corretto, Zulu, Liberica or
+Oracle's. They are all builds of the same OpenJDK source and differ mainly in who supports them and for how
+long. The reason to care is that a non-LTS release stops receiving updates in six months, which is a
+security decision disguised as a version number.</p>
+<p>Have more than one installed and you will eventually build with the wrong one. That is what
+<code>JAVA_HOME</code> decides — not the <code>java</code> on your <code>PATH</code> — which is why a
+project can compile in your terminal and fail in your IDE while both claim to be on 21.</p>
+
+<h4>Verifying the setup actually works</h4>
+<div class="codeSample">java -version      # the runtime you will run on
+javac -version     # the compiler — a JRE-only install has no javac at all
+echo $JAVA_HOME    # what Maven, Gradle and your IDE will actually use
+jshell             # if this opens, the toolchain is genuinely working</div>
+<p>Those four lines catch nearly every setup problem: a JRE where you wanted a JDK, a
+<code>JAVA_HOME</code> pointing at an old version, and a <code>PATH</code> that disagrees with both.</p>
+
+<h4>The errors you will hit in the first hour</h4>
+<p><code>command not found: javac</code> — you have a JRE, or the JDK's <code>bin</code> is not on your
+PATH. <code>UnsupportedClassVersionError</code> — the class was compiled by a newer JDK than the one
+running it, and the numbers in the message are class-file versions, not Java versions (65 is Java 21).
+<code>invalid target release</code> is the same mismatch caught earlier, at compile time.</p>
+<p>Finally, learn the command line even though the IDE is more comfortable. CI servers have no IDE, and
+"works on my machine" is nearly always a difference between what your IDE configured and what the build
+actually does.</p>`,
 docs:[['Adoptium Temurin downloads','https://adoptium.net'],['SDKMAN! usage','https://sdkman.io/usage'],['JShell tutorial — Oracle','https://docs.oracle.com/en/java/javase/21/jshell/introduction-jshell.html']],
 ex:{title:'Toolchain drill',lang:'shell',
 prompt:`One per numbered line: (1) the SDKMAN command to install Temurin 21 (identifier <code>21.0.3-tem</code>), (2) verify the active Java version, (3) compile <code>Greeter.java</code> and, on the same line with <code>&amp;&amp;</code>, run the resulting class, (4) run <code>Greeter.java</code> directly without a compile step, (5) start the Java REPL, (6) print the JAVA_HOME environment variable.`,
@@ -316,7 +342,34 @@ String quarter = switch (month) {
         yield "invalid";
     }
 };</div>
-<p>Style rules that scale: prefer guard clauses over deep nesting; ternaries for tiny picks, never nested; switch <i>expressions</i> (with <code>-&gt;</code>) over statements — the compiler checks exhaustiveness and fall-through bugs vanish.</p>`,
+<p>Style rules that scale: prefer guard clauses over deep nesting; ternaries for tiny picks, never nested; switch <i>expressions</i> (with <code>-&gt;</code>) over statements — the compiler checks exhaustiveness and fall-through bugs vanish.</p>
+
+<h4>Why the arrow form is worth adopting everywhere</h4>
+<p>The classic <code>switch</code> falls through to the next case unless you write <code>break</code>,
+which is almost never what anyone means and is a genuine source of bugs. The arrow form
+(<code>case A -&gt; …</code>) does not fall through, groups labels with a comma, and can be used as an
+<b>expression</b> that produces a value:</p>
+<div class="codeSample">String label = switch (status) {
+    case NEW, PENDING -&gt; "waiting";
+    case SHIPPED      -&gt; "on its way";
+    case CANCELLED    -&gt; "cancelled";
+};   // no break, no fall-through, and the compiler checks every case is covered</div>
+<p>That last property is the valuable one. Over an <code>enum</code> or a sealed type the compiler requires
+exhaustiveness, so adding a new constant turns every switch that does not handle it into a compile error —
+the compiler finds the places you must update instead of your users finding them.</p>
+
+<h4>Conditions that read as intent</h4>
+<p>Deeply nested <code>if</code> statements are usually a sign that guard clauses are missing. Returning
+early for the invalid cases leaves the main path unindented and unconditional, which is far easier to read
+than an arrow of nesting. And remember <code>&amp;&amp;</code> and <code>||</code> short-circuit, which is
+what makes <code>obj != null &amp;&amp; obj.isReady()</code> safe — the order of those operands is
+load-bearing, not stylistic.</p>
+
+<h4>The equality trap</h4>
+<p><code>==</code> on objects compares references, so comparing strings with it works for literals — which
+are interned and shared — and then fails for a string built at runtime. That is the worst kind of bug: it
+passes every test you wrote by hand and fails on real input. Use <code>equals</code> for content, and
+<code>Objects.equals</code> when either side may be null.`,
 docs:[['if-then-else — Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/if.html'],['Switch expressions — dev.java','https://dev.java/learn/language-basics/switch-expression/']],
 exs:[
 {title:'Classic chain: letter grades',
@@ -416,7 +469,34 @@ outer:                                  // labeled break: escape nested loops
 for (int r = 0; r &lt; rows; r++)
     for (int c = 0; c &lt; cols; c++)
         if (grid[r][c] == target) break outer;</div>
-<p>Choose by intent: <code>for</code> when the count is known, <code>while</code> when it isn't, <code>do-while</code> when the body must run first (input loops). Off-by-one errors live at the boundaries — always test first and last iterations mentally. The enhanced for (next lesson) replaces most index loops over collections.</p>`,
+<p>Choose by intent: <code>for</code> when the count is known, <code>while</code> when it isn't, <code>do-while</code> when the body must run first (input loops). Off-by-one errors live at the boundaries — always test first and last iterations mentally. The enhanced for (next lesson) replaces most index loops over collections.</p>
+
+<h4>The off-by-one, and how to stop making it</h4>
+<p>Nearly every loop bug is a boundary: <code>&lt;</code> where <code>&lt;=</code> was meant, or starting at
+1 where the data starts at 0. Two habits remove most of them. Say the range out loud — "from zero, while
+less than length" — and let the collection tell you its own bounds rather than hard-coding a number that
+some later edit will invalidate.</p>
+<p>Better still, avoid the index when you do not need it. <code>for (String s : list)</code> cannot go out
+of bounds, because there is no bound to get wrong. Reach for the counted loop only when the index is part
+of the problem.</p>
+
+<h4>break, continue and the loop that will not end</h4>
+<p><code>break</code> leaves the loop; <code>continue</code> skips to the next iteration — and in a
+<code>for</code> it still runs the update expression, while in a <code>while</code> it does not, which is
+how an infinite loop is written by accident:</p>
+<div class="codeSample">int i = 0;
+while (i &lt; 10) {
+    if (skip(i)) continue;   // i is never incremented -> spins forever
+    i++;
+}</div>
+<p>A <code>while</code> whose update sits at the bottom of the body is fragile for exactly this reason. If
+you find yourself writing one, a <code>for</code> probably expresses it better.</p>
+
+<h4>Choosing the shape</h4>
+<p><b>for</b> when you know how many times, or need the index. <b>while</b> when the end condition is
+discovered as you go — reading lines, polling, consuming a queue. <b>do-while</b> when the body must run at
+least once, which in practice means prompting for input: ask, validate, ask again. The rarest of the three,
+and when it fits nothing else reads as well.</p>`,
 docs:[['The for statement — Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/for.html'],['while & do-while — Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/while.html'],['Branching statements — Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/branch.html']],
 exs:[
 {title:'Classic for: sum the evens',
@@ -526,7 +606,32 @@ for (Map.Entry&lt;String, Double&gt; e : prices.entrySet())
 names.forEach(System.out::println);
 names.removeIf(String::isBlank);        // the safe-removal one-liner
 prices.forEach((k, v) -&gt; System.out.println(k + " = " + v));</div>
-<p>The rule that bites everyone once: mutating a collection inside its own enhanced for throws <code>ConcurrentModificationException</code> — use <code>Iterator.remove()</code> or, better, <code>removeIf</code>. The enhanced for works on any <code>Iterable</code> (you built one in the Modern Java stream) and arrays.</p>`,
+<p>The rule that bites everyone once: mutating a collection inside its own enhanced for throws <code>ConcurrentModificationException</code> — use <code>Iterator.remove()</code> or, better, <code>removeIf</code>. The enhanced for works on any <code>Iterable</code> (you built one in the Modern Java stream) and arrays.</p>
+
+<h4>Why there are three ways, and which to reach for</h4>
+<p>Each generation removed a category of mistake rather than merely shortening the code. The explicit
+<code>Iterator</code> exposes <code>hasNext</code> and <code>next</code>, so it is the only form that can
+remove safely mid-traversal — and the only one where you can get the sequence wrong. The enhanced
+<code>for</code> hides the iterator entirely, which removes the off-by-one and the "called next twice"
+bug in one stroke. <code>forEach</code> with a lambda goes further and hides the loop.</p>
+<p>The default is the enhanced <code>for</code>. Reach for the explicit iterator when you need
+<code>remove</code>, and for <code>forEach</code> when the body is a single action you are handing to
+someone else's code — a stream pipeline, a parallel traversal, a callback.</p>
+
+<h4>What forEach gives up</h4>
+<p>You cannot <code>break</code>, you cannot <code>continue</code>, and a <code>return</code> inside the
+lambda returns from the lambda rather than the enclosing method. So a search loop that stops early stays a
+loop, or becomes a stream with <code>findFirst</code>. Checked exceptions cannot escape either, which is
+why a <code>forEach</code> over IO-throwing code fills with try/catch noise that a plain loop would not
+need.</p>
+
+<h4>The exception everyone meets once</h4>
+<p><code>ConcurrentModificationException</code> is not about threads, despite the name. A single thread
+removing from a list inside its own enhanced <code>for</code> triggers it, because the iterator holds a
+modification count and checks it on every step. It is a <b>fail-fast</b> design: the alternative is
+undefined behaviour that silently skips elements. The fixes, in order of preference:
+<code>list.removeIf(predicate)</code>, an explicit <code>Iterator</code> with
+<code>iterator.remove()</code>, or building a new collection and replacing the old one.</p>`,
 docs:[['The Collection interface & iterators — Oracle','https://docs.oracle.com/javase/tutorial/collections/interfaces/collection.html'],['Iterable.forEach — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html']],
 exs:[
 {title:'Explicit Iterator: remove while iterating',
@@ -635,7 +740,31 @@ public class Modern {
     public void add(int n)    { count += n; }
     public void add(int n, int times) { count += n * times; }
 }</div>
-<p>Rule of thumb: if a method uses no instance fields, it can be static. Utility methods (like <code>Math.max</code>) are static; behavior tied to object state is instance.</p>`,
+<p>Rule of thumb: if a method uses no instance fields, it can be static. Utility methods (like <code>Math.max</code>) are static; behavior tied to object state is instance.</p>
+
+<h4>Overloading is resolved by the compiler, not at runtime</h4>
+<p>When several methods share a name, the compiler picks one from the <i>declared</i> types of the
+arguments, before the program runs. That is why a <code>null</code> argument can be ambiguous — it fits
+several overloads equally — and why widening a parameter type can silently change which method a caller
+ends up in. Overload for genuine convenience, on clearly different types; when the parameters are the same
+shape and only the meaning differs, two well-named methods beat one clever name.</p>
+
+<h4>static versus instance, stated precisely</h4>
+<p>An instance method has a <code>this</code>; a static one does not. Everything else follows. A static
+method cannot read instance fields because there is no instance to read them from, which is why the
+compiler rejects it rather than guessing. Utility functions that depend only on their arguments are
+naturally static — <code>Math.max</code>, <code>List.of</code> — and anything that expresses the behaviour
+of one object should be an instance method.</p>
+<p>The trap is <b>static mutable state</b>: a static field is shared by everything in the process, so it is
+a global variable with better manners, and under concurrency it needs the same care as any other shared
+mutable thing.</p>
+
+<h4>Signatures, and what a good one says</h4>
+<p>The signature is the part callers depend on, so it is worth more thought than the body. Name it for what
+it does from the caller's side. Keep the parameter list short — more than three or four is usually a
+missing type. Return a value rather than mutating an argument, because a method that quietly changes what
+it was given is one whose call site lies about what happens. And prefer returning an empty collection over
+<code>null</code>, so no caller has to remember a check.</p>`,
 docs:[['Defining Methods — Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/methods.html'],['Class vs instance members — Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/classvars.html']],
 ex:{title:'Overloaded Temperature',
 prompt:`Write a class <code>Temperature</code> with a private instance field <code>double celsius</code>, a constructor <code>Temperature(double celsius)</code>, an instance method <code>double inFahrenheit()</code> (C × 9/5 + 32), and two <b>overloaded static</b> factory methods: <code>Temperature of(double celsius)</code> and <code>Temperature of(double value, String unit)</code> where unit "F" converts to celsius first ((F − 32) × 5/9).`,
@@ -1398,7 +1527,30 @@ names.sort(new Comparator&lt;String&gt;() {
 
 // same thing as a lambda — functional interface, one method
 names.sort((a, b) -&gt; Integer.compare(a.length(), b.length()));</div>
-<p><b>Capture rule</b>: local and anonymous classes (and lambdas) can only read local variables that are <i>effectively final</i> — assigned once. The workaround for a mutable counter is a one-element array or <code>AtomicInteger</code>; the better fix is usually restructuring.</p>`,
+<p><b>Capture rule</b>: local and anonymous classes (and lambdas) can only read local variables that are <i>effectively final</i> — assigned once. The workaround for a mutable counter is a one-element array or <code>AtomicInteger</code>; the better fix is usually restructuring.</p>
+
+<h4>The hidden reference, and the leak it causes</h4>
+<p>A non-static inner class holds an invisible pointer to the instance that created it. That is convenient
+until the inner object outlives its parent: a listener, a callback or a <code>Runnable</code> handed to a
+long-lived executor keeps the entire outer object — and everything it references — alive for as long as
+the listener is registered. The heap dump shows the outer object retained by something that looks
+unrelated, which is why this is a classic and confusing leak.</p>
+<p>The rule that avoids it: <b>make it <code>static</code> unless it genuinely needs the outer
+instance.</b> A static nested class is just a namespaced class with no hidden state, which is what a
+<code>Node</code>, a <code>Builder</code> or a request DTO almost always wants to be.</p>
+
+<h4>Anonymous classes versus lambdas</h4>
+<p>Since lambdas arrived, an anonymous class is the right choice in exactly three situations: the interface
+has more than one abstract method, you need instance state or an initialiser, or you want a real class name
+in the stack trace. Otherwise a lambda is shorter, cheaper and does not shadow <code>this</code> —
+inside an anonymous class <code>this</code> is the anonymous instance, while inside a lambda it is the
+enclosing object, and that difference has produced a great deal of confusion.</p>
+
+<h4>Where each one earns its place</h4>
+<p>Static nested for helpers and data holders. Inner for an object that is genuinely part of its parent —
+an <code>Iterator</code> over its own collection is the canonical example. Local for a class used once
+inside a single method, which is rare. Anonymous for the three cases above, and records for anything that
+is really just data.`,
 docs:[['Nested classes — dev.java','https://dev.java/learn/classes-objects/nested-classes/'],['Anonymous classes — Oracle tutorial','https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html']],
 ex:{title:'Three flavors, one file',
 prompt:`Write <code>Playlist</code>: (1) a <b>static nested</b> class <code>Track</code> (fields <code>String title; int seconds</code>, constructor). (2) A method <code>Comparator&lt;Track&gt; byLength()</code> returning an <b>anonymous class</b> implementing <code>Comparator&lt;Track&gt;</code> comparing by seconds with <code>Integer.compare</code>. (3) A method <code>Comparator&lt;Track&gt; byTitle()</code> returning the same idea as a <b>lambda</b> using <code>compareTo</code> on titles.`,

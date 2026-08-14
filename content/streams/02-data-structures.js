@@ -506,7 +506,30 @@ while (cur != null) {
     cur.next = prev;              // flip the arrow
     prev = cur; cur = next;       // advance
 }
-head = prev;</div>`,
+head = prev;</div>
+
+<h4>The cost that does not appear in the Big-O</h4>
+<p>On paper a linked list inserts in O(1) and an array list in O(n), which suggests the linked list should
+win. In practice it usually loses, and the reason is memory layout. An <code>ArrayList</code> holds its
+elements contiguously, so walking it streams through cache lines the CPU has already prefetched. A linked
+list holds a node object per element, scattered across the heap, so each step is a pointer chase and
+potentially a cache miss — and a cache miss costs roughly what a hundred arithmetic operations do.</p>
+<p>The O(1) insertion is also conditional: it is O(1) <i>once you are holding the node</i>. Reaching a
+position by index is O(n), so <code>list.get(i)</code> in a loop over a <code>LinkedList</code> is
+accidentally quadratic — a genuinely common performance bug.</p>
+
+<h4>When a linked structure is still right</h4>
+<p>When you hold a reference to the position already, and splice frequently: an LRU cache moving a node to
+the front, a scheduler moving tasks between queues, an intrusive list where the node lives inside the
+element. Note that Java's own <code>LinkedHashMap</code> uses exactly this — a linked list threaded through
+hash entries — to get insertion order without paying for lookup.</p>
+
+<h4>Why it remains worth building once</h4>
+<p>Writing the node class, the traversal, the insert and the delete teaches the pointer discipline that
+underlies trees, graphs and every intrusive structure you will meet later. The classic interview
+techniques — two pointers to find the middle or detect a cycle, reversing by rewiring rather than copying —
+are all rehearsals for reasoning about references. The data structure is rarely the right answer; the
+skill of manipulating references correctly always is.`,
 docs:[['LinkedList — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/LinkedList.html'],['Collection implementation trade-offs — Oracle','https://docs.oracle.com/javase/tutorial/collections/implementations/list.html']],
 ex:{title:'Your own singly linked list',
 prompt:`Build <code>IntList</code>: inner <code>static class Node</code> (int value, Node next), field <code>Node head</code>; <code>void addFirst(int v)</code> — O(1) head insert; <code>int size()</code> — walk and count; <code>java.util.List&lt;Integer&gt; toList()</code> — walk head→tail collecting values; and <code>void reverse()</code> — the in-place three-pointer re-linking (prev/cur/next), no arrays or collections allowed inside reverse.`,
@@ -601,7 +624,30 @@ new LinkedHashMap&lt;K, V&gt;(16, 0.75f, true) {     // true = access order!
         return size() &gt; maxEntries;             // evict least-recently-used
     }
 };</div>
-<p>Mutating a field that feeds hashCode while the object sits in a HashSet loses the object — use immutable keys (records). This LRU is real infrastructure: session caches, token caches, JWKS key caches — all this exact pattern.</p>`,
+<p>Mutating a field that feeds hashCode while the object sits in a HashSet loses the object — use immutable keys (records). This LRU is real infrastructure: session caches, token caches, JWKS key caches — all this exact pattern.</p>
+
+<h4>How a hash table actually finds things</h4>
+<p><code>hashCode()</code> chooses a bucket; <code>equals()</code> then distinguishes the entries inside
+it. Both steps are needed, which is exactly why the contract exists: equal objects must produce equal hash
+codes, or a lookup goes to the wrong bucket and the entry you stored becomes unreachable while still
+occupying memory.</p>
+<p>Two consequences follow. A <b>bad hash</b> — one that clusters — degrades O(1) to a scan, which is the
+basis of hash-collision denial of service and why Java's <code>HashMap</code> converts long collision
+chains into balanced trees. And a <b>mutable key</b> whose hash changes after insertion is stranded: it is
+in the table, and no lookup will ever find it again.</p>
+
+<h4>Load factor and resizing</h4>
+<p>A <code>HashMap</code> resizes when it is about 75% full, allocating a larger array and redistributing
+every entry. That is amortised O(1), but the individual resize is O(n) and it happens at an unpredictable
+moment — which matters in a latency-sensitive path. If you know roughly how many entries you will hold,
+sizing the map up front avoids several rounds of rehashing.</p>
+
+<h4>Why LinkedHashMap gives you an LRU cache almost free</h4>
+<p><code>LinkedHashMap</code> threads a doubly-linked list through its entries. Construct it with
+<code>accessOrder = true</code> and every <code>get</code> moves that entry to the end, so the eldest entry
+is always the least recently used — and overriding <code>removeEldestEntry</code> to return true past a
+size limit gives you a bounded LRU cache in a handful of lines. It is a neat demonstration of the general
+point: the interesting structures are usually two simple ones composed, not one clever one.`,
 docs:[['equals & hashCode contract — Object API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()'],['LinkedHashMap — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/LinkedHashMap.html']],
 ex:{title:'Build the LRU cache',
 prompt:`Build an <b>LRU (least-recently-used) cache</b>: it holds at most <code>maxEntries</code> entries, and inserting beyond that evicts the entry <b>accessed longest ago</b> (a get counts as an access). Write <code>LruCache&lt;K, V&gt; extends java.util.LinkedHashMap&lt;K, V&gt;</code>: field <code>int maxEntries</code>; constructor <code>LruCache(int maxEntries)</code> calling <code>super(16, 0.75f, true)</code> (the <code>true</code> = access order — the whole trick); override <code>protected boolean removeEldestEntry(java.util.Map.Entry&lt;K, V&gt; eldest)</code> returning <code>size() &gt; maxEntries</code>.`,

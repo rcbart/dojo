@@ -53,7 +53,30 @@ git commit -m "Update notes"
 
 git log --oneline                 # the story so far, one line per commit</div>
 <p>Read <code>git status</code> obsessively — it names every state and even prints the command to move each file to the next one. The two diffs matter: plain <code>git diff</code> is working-vs-staged ("what have I not yet staged?"), <code>git diff --staged</code> is staged-vs-committed ("what am I about to commit?"). Checking the second before every commit is the habit that prevents "oops, that wasn't meant to go in".</p>
-<p>Commit messages: imperative mood, say <i>why</i> when it isn't obvious. "Add notes", not "added some stuff".</p>`,
+<p>Commit messages: imperative mood, say <i>why</i> when it isn't obvious. "Add notes", not "added some stuff".</p>
+
+<h4>Three places a file can be, and the two diffs that show them</h4>
+<p>Every tracked file exists in three states at once: the <b>working tree</b> (what you edited), the
+<b>index</b> (what will go into the next commit), and <b>HEAD</b> (what the last commit recorded). Almost
+every confusing moment in git is a question about which pair you are looking at:</p>
+<div class="codeSample">git diff             # working tree vs index — "what have I NOT staged?"
+git diff --staged    # index vs HEAD       — "what am I ABOUT to commit?"
+git status           # names all three, and prints the command to move between them</div>
+<p>Read <code>git status</code> obsessively while learning. It is unusually good documentation: it tells
+you the state and the command that changes it.</p>
+
+<h4>What a commit records</h4>
+<p>Not a diff — a <b>snapshot</b> of the whole tracked tree, plus a pointer to its parent, an author, a
+timestamp and a message. Diffs are computed on demand by comparing snapshots. That is why branching is
+cheap, why history is a graph rather than a stack of patches, and why a commit hash identifies an exact
+state of the entire project rather than a change to part of it.</p>
+
+<h4>Messages, and why the effort is repaid</h4>
+<p>Write the subject in the imperative — "Add notes", not "Added some stuff" — because git's own generated
+messages read that way and the line completes the sentence "this commit will…". Then, when it is not
+obvious, say <b>why</b> in the body. The what is in the diff and always will be; the why exists only in
+your head until you write it down, and it is what the next person needs, including you in six months
+reading <code>git blame</code> on a line you do not remember writing.`,
 docs:[['git status','https://git-scm.com/docs/git-status'],['git diff','https://git-scm.com/docs/git-diff'],['Pro Git — recording changes','https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository']],
 ex:{title:'The single-file drill',lang:'shell',
 prompt:`You are in an empty folder with one file, <code>notes.txt</code>, already created. One command per numbered line: (1) turn the folder into a git repository, (2) show the state of the working tree, (3) stage <code>notes.txt</code>, (4) commit with message <code>Add notes</code>, (5) after editing the file — show the <b>unstaged</b> changes, (6) stage it and show what is <b>about to be committed</b> (two commands joined with <code>&amp;&amp;</code>), (7) commit with message <code>Update notes</code>, (8) show the compact one-line history.`,
@@ -99,7 +122,31 @@ git rm scratch.txt                  # delete AND stage the deletion</div>
 <li><b>Hunk staging</b> — <code>git add -p notes.txt</code> walks each change block asking stage/skip: two unrelated edits in ONE file can become two clean commits.</li>
 <li><b>Let git see renames</b> — <code>git mv</code> keeps history following the file; <code>git log --follow tasks.txt</code> traces through the rename.</li>
 <li><b>Review shape, not just content</b> — <code>git log --stat</code> shows which files each commit touched; a commit touching 14 files named "fix typo" is lying about something.</li>
-</ul>`,
+</ul>
+
+<h4>Why the staging area exists at all</h4>
+<p>Most version-control systems commit everything you changed. Git inserts a deliberate step between
+"changed" and "recorded" so a commit can be <i>composed</i> rather than merely captured. That matters
+because the commit is the unit of review, revert and cherry-pick: a commit containing one logical change
+can be understood in isolation and undone without collateral damage, and one containing everything you did
+on Tuesday cannot.</p>
+
+<h4>Composing a commit from a messy working tree</h4>
+<div class="codeSample">git add -p            # walk the changes hunk by hunk, choosing what belongs
+git diff --staged     # read exactly what is about to be committed
+git restore --staged src/Other.java   # pulled in something that does not belong? take it back out</div>
+<p><code>git add -p</code> is the tool that makes this practical. Work rarely arrives in tidy units — you
+fix a bug and notice a typo and rename a variable — and hunk-level staging lets you separate them
+afterwards rather than pretending you worked tidily.</p>
+
+<h4>The habit that prevents the embarrassing commit</h4>
+<p>Read <code>git diff --staged</code> before every commit. It is the last moment before the change becomes
+history, and it is where you catch the debug print, the commented-out block, the credential you pasted in
+while testing. Two minutes there saves a follow-up commit titled "remove debugging" — or a rotation of a
+leaked key.</p>
+<p>And note what <code>git add</code> actually records: the content <i>at that moment</i>. Edit the file
+afterwards and the later edit is not staged, which is why <code>git status</code> can show one file as both
+staged and modified. That is not a bug; it is the staging area doing exactly what it exists for.`,
 docs:[['git add (incl. -p)','https://git-scm.com/docs/git-add'],['git mv','https://git-scm.com/docs/git-mv'],['Pro Git — viewing history','https://git-scm.com/book/en/v2/Git-Basics-Viewing-the-Commit-History']],
 ex:{title:'The two-file drill',lang:'shell',
 prompt:`Both <code>notes.txt</code> (modified) and <code>todo.txt</code> (brand new) have changes. One command per numbered line: (1) stage <b>only</b> <code>todo.txt</code>, (2) commit with message <code>Add todo list</code>, (3) stage <code>notes.txt</code> interactively, <b>hunk by hunk</b> (the -p flag), (4) commit with message <code>Update notes</code>, (5) show the history <b>with per-file statistics</b>, (6) rename <code>todo.txt</code> to <code>tasks.txt</code> the git way, (7) show the full changes introduced by the latest commit (one command, no arguments needed).`,
@@ -175,7 +222,30 @@ day 2: shipped the feature
 day 2: fixed the bug
 &gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/tags</div>
 <p>Nothing is broken: edit the file to the text you actually want (removing the markers), <code>git add</code> it, <code>git commit</code>. That's the entire resolution protocol. <code>git merge --abort</code> backs out entirely if you want to think first. Conflicts are not errors — they are git refusing to guess between two truths.</p>
-<p>Branch hygiene: short-lived branches, named by intent (<code>feature/…</code>, <code>fix/…</code>), merged within days. The longer a branch lives, the bigger the merge.</p>`,
+<p>Branch hygiene: short-lived branches, named by intent (<code>feature/…</code>, <code>fix/…</code>), merged within days. The longer a branch lives, the bigger the merge.</p>
+
+<h4>What a merge conflict actually is</h4>
+<p>Git merges by comparing both branches against their <b>common ancestor</b>. If one side changed a region
+and the other did not, it takes the change without asking. A conflict means <i>both</i> sides changed the
+same region, so there is no answer derivable from the history — the markers are git declining to guess
+rather than failing.</p>
+<p>Which means the resolution is rarely "pick a side". It is usually to write the version that expresses
+both intentions, then run the tests, because a syntactically clean merge of two logically incompatible
+changes compiles perfectly and behaves wrongly.</p>
+
+<h4>Merge or rebase</h4>
+<p><b>Merge</b> preserves what actually happened, including the fact that two lines of work existed. It
+creates a merge commit and the history is a graph. <b>Rebase</b> replays your commits onto the new base,
+producing a straight line that is easier to read and that never happened. Both are defensible; the
+non-negotiable part is that rebase rewrites commits, so it belongs to work you have not shared.</p>
+
+<h4>Keeping branches cheap</h4>
+<p>The cost of a branch is not the branch, it is the <b>divergence</b>, and divergence grows with time.
+A branch open for a day merges itself; one open for three weeks becomes a negotiation. That is the entire
+argument for continuous integration — merging main into your branch daily, or rebasing onto it, converts
+one large painful merge into a series of trivial ones.</p>
+<p>Delete branches after merging. A repository with two hundred stale branches makes it impossible to tell
+which represent work in progress, and git keeps the commits regardless.`,
 docs:[['Basic branching & merging — Pro Git','https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging'],['git switch','https://git-scm.com/docs/git-switch'],['git merge','https://git-scm.com/docs/git-merge']],
 ex:{title:'The branch cycle drill',lang:'shell',
 prompt:`One command per numbered line: (1) create <b>and switch to</b> branch <code>feature/tags</code> (the modern <code>switch</code> form), (2) stage <b>both</b> <code>notes.txt</code> and <code>tasks.txt</code> in one command naming them, (3) commit with message <code>Add tagging</code>, (4) switch back to <code>main</code>, (5) merge the feature branch in, (6) delete the merged branch, (7) show the history as a <b>graph</b>, one line per commit (two flags).`,
@@ -212,7 +282,30 @@ hints:['switch -c = create + switch. The older spelling checkout -b does the sam
    working dir only          staged                    committed & pushed
    git restore FILE          git restore --staged F    git revert HASH
    (edits gone)              (edits kept)              (inverse commit)
-              lost something? → git reflog → git switch -c rescue HASH</div>`,
+              lost something? → git reflog → git switch -c rescue HASH</div>
+
+<h4>The question that picks the tool</h4>
+<p><b>Has it been pushed?</b> That single question splits the toolbox in two. Unpushed history is yours to
+rewrite — <code>reset</code>, <code>amend</code> and <code>rebase</code> are all fair game. Pushed history
+belongs to everyone who has pulled it, so the only safe undo is one that <i>adds</i> a commit:
+<code>revert</code>. Force-pushing a shared branch is not an undo, it is a problem you have handed to every
+colleague simultaneously.</p>
+
+<h4>The three resets, in one line each</h4>
+<div class="codeSample">git reset --soft HEAD~1    # undo the commit, keep everything STAGED
+git reset HEAD~1           # undo the commit, keep the changes unstaged  (--mixed, the default)
+git reset --hard HEAD~1    # undo the commit AND throw the changes away</div>
+<p>Only the last one destroys anything, and it destroys only what was never committed. That is the key to
+the confidence: <b>a commit is almost impossible to lose.</b> Even after a bad reset or rebase, the commit
+still exists and <code>git reflog</code> knows where HEAD has been, so recovery is usually
+<code>git reset --hard abc123</code> away.</p>
+
+<h4>What genuinely cannot be recovered</h4>
+<p>Three things, and knowing them tells you where to be careful: uncommitted working-tree changes wiped by
+<code>reset --hard</code> or <code>restore</code>; untracked files removed by <code>git clean -fd</code>;
+and anything from before your first commit. Everything else is reachable. The practical habit is to commit
+early and often — even a rough commit turns a destructive mistake into a recoverable one, and you can tidy
+the history afterwards while it is still unpushed.</p>`,
 docs:[['git restore','https://git-scm.com/docs/git-restore'],['git revert','https://git-scm.com/docs/git-revert'],['git stash','https://git-scm.com/docs/git-stash'],['git reflog','https://git-scm.com/docs/git-reflog']],
 ex:{title:'Undo triage',lang:'shell',
 prompt:`For each scenario write ONE command on the numbered line: (1) throw away your uncommitted edits to <code>notes.txt</code>, (2) unstage <code>notes.txt</code> but keep the edits, (3) undo commit <code>abc123</code> that is already pushed to main, (4) shelve all your dirty work quickly to switch branches, (5) bring the shelved work back (and drop it from the shelf), (6) show the log of everywhere HEAD has pointed — your safety net.`,

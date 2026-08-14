@@ -65,7 +65,34 @@ LIMIT 10 OFFSET 20;                -- page 3 of 10-per-page</div>
 <li><b>DISTINCT</b> — <code>SELECT DISTINCT author_id FROM books</code>: the unique set, not every row.</li>
 <li><b>Aggregates</b> — <code>COUNT(*)</code>, <code>SUM(x)</code>, <code>AVG(x)</code>, <code>MIN</code>/<code>MAX</code> collapse rows into one answer: <code>SELECT COUNT(*), AVG(price_cents) FROM books WHERE author_id = 3;</code> — grouping per author arrives with GROUP BY in the next lesson's queries.</li>
 </ul>
-<p>Why <code>NULL = NULL</code> is not true: NULL means <i>unknown</i>, and "is unknown equal to unknown?" is itself unknown — three-valued logic. WHERE keeps only rows where the predicate is <i>true</i>, so unknowns silently drop. When a query "loses" rows, check for a NULL comparison first.</p>`,
+<p>Why <code>NULL = NULL</code> is not true: NULL means <i>unknown</i>, and "is unknown equal to unknown?" is itself unknown — three-valued logic. WHERE keeps only rows where the predicate is <i>true</i>, so unknowns silently drop. When a query "loses" rows, check for a NULL comparison first.</p>
+
+<h4>Why the logical order matters more than the written order</h4>
+<p>You write <code>SELECT</code> first and the engine evaluates it fourth. That single fact explains two
+things beginners find arbitrary. An alias defined in the <code>SELECT</code> list cannot be used in
+<code>WHERE</code>, because the alias does not exist yet when the filter runs. And <code>WHERE</code>
+filters rows before grouping while <code>HAVING</code> filters after it — which is why one takes raw
+columns and the other takes aggregates.</p>
+
+<h4>NULL is not a value, and it changes comparisons</h4>
+<p><code>NULL</code> means <i>unknown</i>, so any comparison with it is unknown rather than false. That is
+why <code>WHERE email = NULL</code> matches nothing at all and <code>IS NULL</code> is required. The same
+logic bites in negation: <code>WHERE status &lt;&gt; 'shipped'</code> silently excludes rows where status
+is NULL, because unknown is not "different". If those rows should be included, say so —
+<code>OR status IS NULL</code>.</p>
+
+<h4>Habits that keep a query honest</h4>
+<ul>
+<li><b>Name your columns.</b> <code>SELECT *</code> in application code means the result shape changes
+whenever the table does, silently.</li>
+<li><b><code>LIMIT</code> while exploring.</b> A stray query against a large table is the easiest way to
+inconvenience a shared database.</li>
+<li><b><code>ORDER BY</code> is not optional if order matters.</b> Without it the engine may return rows
+in any order, and the order it happens to return today is not a promise — it changes when the plan
+changes.</li>
+<li><b><code>DISTINCT</code> is usually a symptom.</b> Duplicates in a result set most often mean a join
+matched more rows than you expected; removing them hides the cause rather than fixing it.</li>
+</ul>`,
 docs:[['PostgreSQL tutorial — queries','https://www.postgresql.org/docs/current/tutorial-select.html'],['SELECT reference','https://www.postgresql.org/docs/current/sql-select.html'],['Pattern matching (LIKE)','https://www.postgresql.org/docs/current/functions-matching.html']],
 ex:{title:'SELECT drill',lang:'sql',data:'library',
 prompt:`Against the <code>books(id, author_id, title, price_cents, published)</code> table, one query under each numbered comment: (1) every column of all books; (2) only <code>title</code> of books cheaper than 1500 cents, sorted by title <b>ascending</b>; (3) title and price of the 5 most expensive books (<code>ORDER BY ... DESC LIMIT</code>); (4) all books whose title starts with <code>Java</code> (LIKE); (5) books that have <b>no</b> published date (NULL check); (6) the number of books and the average price, in one query (COUNT + AVG).`,
@@ -122,7 +149,32 @@ UPDATE books SET price_cents = price_cents * 0.9   -- expressions read the OLD v
 -- DELETE
 DELETE FROM books WHERE id = 7;</div>
 <p><b>The missing-WHERE catastrophe</b>: <code>UPDATE books SET price_cents = 0</code> — no WHERE — updates <b>every row</b>, instantly, no confirmation. Same for DELETE. Professional habits: write the WHERE first; run a <code>SELECT COUNT(*)</code> with the same WHERE to preview the blast radius; do risky writes inside <code>BEGIN; ... ROLLBACK/COMMIT;</code> so you can look before it sticks (transactions get their own lesson soon).</p>
-<p>Omitted columns take their <code>DEFAULT</code> (so <code>id</code> and <code>created_at</code> fill themselves) or NULL if none — and a <code>NOT NULL</code> column without a default makes the INSERT fail, which is the schema doing its job. <code>RETURNING</code> works on UPDATE and DELETE too: change-and-see in one round trip.</p>`,
+<p>Omitted columns take their <code>DEFAULT</code> (so <code>id</code> and <code>created_at</code> fill themselves) or NULL if none — and a <code>NOT NULL</code> column without a default makes the INSERT fail, which is the schema doing its job. <code>RETURNING</code> works on UPDATE and DELETE too: change-and-see in one round trip.</p>
+
+<h4>UPDATE and DELETE are the same statement with a different verb</h4>
+<p>Both take a <code>WHERE</code>, both default to <i>every row</i> when it is missing, and both are
+irreversible outside a transaction. The habit that prevents the accident is mechanical rather than clever:
+<b>write the WHERE clause first</b>, run it as a <code>SELECT</code>, look at the count, then change
+<code>SELECT *</code> into <code>UPDATE … SET …</code>. It costs ten seconds and it is the difference
+between changing four rows and changing four million.</p>
+<div class="codeSample">SELECT COUNT(*) FROM books WHERE author_id = 42;   -- 1. how big is the blast radius?
+BEGIN;                                             -- 2. get a safety net
+UPDATE books SET price_cents = 0 WHERE author_id = 42;
+SELECT COUNT(*) FROM books WHERE price_cents = 0;  -- 3. did it do what you meant?
+COMMIT;                                            --    or ROLLBACK;</div>
+
+<h4>What the database does for you when you leave a column out</h4>
+<p>An omitted column takes its <code>DEFAULT</code>, or <code>NULL</code> when there is none — which is why
+<code>id</code> and <code>created_at</code> fill themselves. A <code>NOT NULL</code> column with no default
+makes the insert fail, and that failure is the schema doing its job: it is telling you the row would have
+been meaningless. Resist the urge to make such columns nullable to quiet the error.</p>
+
+<h4>Getting the row back</h4>
+<p><code>RETURNING</code> gives you the affected rows in the same round trip, and it works on
+<code>INSERT</code>, <code>UPDATE</code> and <code>DELETE</code>. That matters more than convenience:
+fetching a generated id with a second <code>SELECT</code> is a race, because another statement can run in
+between. One statement that both changes and reports has no gap in it — the same reasoning as the upsert
+lesson later in this stream.</p>`,
 docs:[['INSERT','https://www.postgresql.org/docs/current/sql-insert.html'],['UPDATE','https://www.postgresql.org/docs/current/sql-update.html'],['DELETE','https://www.postgresql.org/docs/current/sql-delete.html']],
 ex:{title:'Write-path drill',lang:'sql',
 prompt:`Against <code>books(id, author_id, title, price_cents, published)</code>, one statement per numbered comment: (1) insert a book: author 1, title <code>Effective Java</code>, price 4500 — naming the three columns; (2) one INSERT adding <b>two</b> books for author 2: <code>Clean Code</code> at 3900 and <code>Refactoring</code> at 4700 (multi-row VALUES); (3) insert author 3's <code>DDIA</code> at 5200 and <b>return the generated id</b> (RETURNING); (4) set the price of book id 7 to 3990; (5) apply a 10% discount to <b>every book by author 1</b> (price = price * 0.9, WHERE required); (6) delete all books priced 0.`,
@@ -605,7 +657,31 @@ id | full_name    | email_addr        | country     id | name        | email
  3 | Cy Young     | NULL              | US          -- rows to migrate: valid emails only,
  4 | Di Ng        | di@example.com    | SG          --   lowercased, de-duplicated
  5 | Bo Diaz      | BO@example.com    | ES          -- (row 5 duplicates row 2 once lowercased)</div>
-<p>The migration has three moves: copy with a <b>transform</b> (rename columns, lowercase the email) while <b>filtering</b> out the NULL; make the load <b>idempotent</b> so re-running it will not create duplicates (Postgres <code>INSERT ... ON CONFLICT ... DO NOTHING</code>, using the target's UNIQUE email); and <b>verify</b> the row count. Idempotency matters: real migrations are run more than once (dry run, retry after a failure), and must be safe to repeat.</p>`,
+<p>The migration has three moves: copy with a <b>transform</b> (rename columns, lowercase the email) while <b>filtering</b> out the NULL; make the load <b>idempotent</b> so re-running it will not create duplicates (Postgres <code>INSERT ... ON CONFLICT ... DO NOTHING</code>, using the target's UNIQUE email); and <b>verify</b> the row count. Idempotency matters: real migrations are run more than once (dry run, retry after a failure), and must be safe to repeat.</p>
+
+<h4>Idempotency is what makes a migration survivable</h4>
+<p>A migration that cannot be re-run is a migration you must get right first time, at 2am, with the old
+system already off. Making the load idempotent — <code>ON CONFLICT DO NOTHING</code>, or a natural key with
+a unique constraint — means a partial failure is fixed by running it again rather than by hand-repairing
+half-loaded tables. That single property changes the risk profile of the whole exercise.</p>
+
+<h4>Reconcile, do not assume</h4>
+<p>Every migration needs a check that runs afterwards and compares source with target: row counts per
+table, sums of the money columns, and a spot-check of the rows the transform touched most. Nobody regrets
+writing it, and the alternative is discovering months later that a filter silently dropped four thousand
+records. Write the reconciliation query <i>before</i> the migration, because writing it afterwards tempts
+you to make it agree.</p>
+
+<h4>The mess is the job</h4>
+<p>Legacy data carries duplicates that differ only in whitespace, mixed-case emails, NULLs where the new
+schema says NOT NULL, dates as text in three formats, and encodings nobody documented. The decisions those
+force are business decisions, not technical ones: does a NULL email mean drop the row, or invent a
+placeholder? Whoever owns the data must answer, and the answer belongs in a comment beside the query.</p>
+
+<h4>Cutover</h4>
+<p>The safe shape is the same as a schema migration: <b>run both systems</b>, backfill history, then
+dual-write while the new one catches up, verify, and only then switch reads. A big-bang cutover is a plan
+with no rollback, and the moment you need one is the moment you cannot get it.</p>`,
 docs:[['INSERT ... SELECT','https://www.postgresql.org/docs/current/sql-insert.html'],['ON CONFLICT (upsert)','https://www.postgresql.org/docs/current/sql-insert.html#SQL-ON-CONFLICT'],['Data migration — overview','https://en.wikipedia.org/wiki/Data_migration']],
 ex:{title:'Migrate legacy_customers into customers',lang:'sql',
 prompt:`Source <code>legacy_customers(id, full_name, email_addr, country)</code>; target <code>customers(id, name, email)</code> where <code>email</code> is UNIQUE. One statement per numbered comment: (1) copy every row that <b>has</b> an email into <code>customers</code>, mapping <code>full_name</code>→<code>name</code> and <code>LOWER(email_addr)</code>→<code>email</code>, skipping NULL emails (<code>INSERT INTO ... SELECT ... FROM legacy_customers WHERE email_addr IS NOT NULL</code>); (2) make it repeatable by de-duplicating on the unique email with <code>ON CONFLICT (email) DO NOTHING</code> — add it to the same insert; (3) verify the result with <code>SELECT COUNT(*) FROM customers</code>.`,

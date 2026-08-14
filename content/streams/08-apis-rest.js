@@ -586,7 +586,33 @@ curl -X POST https://api.dojo.dev/users \\
 curl -X PUT ... -d @payload.json                           # body from a file
 curl -o out.json -w "%{http_code}\\n" ...                  # save body, print status
 curl -L ...                                                # follow redirects</div>
-<p>Debugging ritual: reproduce with curl first — it strips away SDKs, retries and frameworks until only the HTTP truth remains. If curl works and your code doesn't, diff the headers with <code>-v</code>.</p>`,
+<p>Debugging ritual: reproduce with curl first — it strips away SDKs, retries and frameworks until only the HTTP truth remains. If curl works and your code doesn't, diff the headers with <code>-v</code>.</p>
+
+<h4>The headers that decide whether your request works at all</h4>
+<p><code>Content-Type</code> describes what you are <i>sending</i>; <code>Accept</code> describes what you
+want <i>back</i>. Confusing them produces the two most-searched status codes in API work: <b>415
+Unsupported Media Type</b> means the server does not accept what you sent, <b>406 Not Acceptable</b> means
+it cannot produce what you asked for. Neither is about authentication, and both are read as "the API is
+broken" by people who have not internalised the distinction.</p>
+<p><code>Authorization</code> is a request header and never a query parameter — a token in a URL lands in
+browser history, proxy logs and the <code>Referer</code> sent to the next site. If you find yourself
+putting a credential in a query string, that is the signal to stop.</p>
+
+<h4>curl flags worth knowing by heart</h4>
+<div class="codeSample">curl -i https://api.example.com/orders          # -i: response headers WITH the body
+curl -v ...                                     # -v: the full exchange, request headers included
+curl -X POST -H 'Content-Type: application/json' -d '{"a":1}' ...
+curl -H 'Accept: application/json' -w '\n%{http_code} %{time_total}s\n' -o /dev/null -s ...
+curl --fail ...            # non-zero exit on 4xx/5xx — the flag that makes curl safe in a script</div>
+<p><code>--fail</code> matters more than it looks: without it curl exits 0 on a 500 and prints the error
+body, so a shell script "succeeds" while receiving an error page. That is the same class of bug as a
+pipeline reporting only its last command's status.</p>
+
+<h4>The debugging ritual, and why it works</h4>
+<p>Reproduce with curl before touching the code. An SDK adds retries, default headers, connection pooling
+and its own serialisation, so a failure inside it has half a dozen candidate causes. curl removes all of
+them and leaves the HTTP truth. If curl succeeds and your client does not, run both with headers visible
+and <b>diff them</b> — the difference is nearly always a header you did not know your SDK was setting.</p>`,
 docs:[['HTTP headers — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers'],['curl docs','https://curl.se/docs/manpage.html'],['Everything curl (book)','https://everything.curl.dev/']],
 ex:{title:'curl drill',lang:'shell',
 prompt:`One per numbered line: (1) GET <code>https://api.dojo.dev/me</code> with a bearer token from <code>$TOKEN</code> and <code>Accept: application/json</code>, (2) POST <code>{"name": "Ada"}</code> to <code>https://api.dojo.dev/users</code> with the right Content-Type, (3) the same GET as (1) but showing <b>response headers</b> too, (4) fetch <code>https://api.dojo.dev/report</code> saving the body to <code>report.json</code> while printing the status code, (5) which header pair the server/client use for conditional caching (name both, comma-separated).`,

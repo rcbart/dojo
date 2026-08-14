@@ -10,7 +10,34 @@ BinaryOperator&lt;Integer&gt; add = (a, b) -&gt; a + b;       // (T,T) → T
 
 names.removeIf(s -&gt; s.isBlank());
 list.sort((a, b) -&gt; a.compareToIgnoreCase(b));</div>
-<p>Multi-statement bodies use braces and an explicit <code>return</code>. Lambdas can read effectively-final local variables from the enclosing scope. Mark your own single-method interfaces <code>@FunctionalInterface</code>.</p>`,
+<p>Multi-statement bodies use braces and an explicit <code>return</code>. Lambdas can read effectively-final local variables from the enclosing scope. Mark your own single-method interfaces <code>@FunctionalInterface</code>.</p>
+
+<h4>What the compiler actually does with a lambda</h4>
+<p>A lambda is not an anonymous class with nicer syntax. Anonymous classes generate a separate class file
+and allocate an object every time; lambdas are compiled to an <code>invokedynamic</code> instruction and
+linked at first use, and a lambda that captures nothing can be reused rather than reallocated. The
+practical consequences: lambdas are cheaper in hot paths, they do not have their own <code>this</code>
+(inside a lambda <code>this</code> is the enclosing instance, which is usually what you wanted), and they
+appear in stack traces under synthetic names that take a moment to read.</p>
+
+<h4>The shapes worth memorising</h4>
+<p>Four interfaces cover most code, and knowing them by shape stops you inventing your own:</p>
+<div class="codeSample">Function&lt;T,R&gt;   R apply(T t)      // transform one thing into another
+Predicate&lt;T&gt;    boolean test(T t)  // answer a yes/no question about it
+Consumer&lt;T&gt;     void accept(T t)   // do something with it, return nothing
+Supplier&lt;T&gt;     T get()            // produce one, given nothing</div>
+<p>The primitive variants — <code>IntPredicate</code>, <code>ToLongFunction</code> and friends — exist to
+avoid boxing, which is why a stream over millions of <code>int</code>s should use <code>IntStream</code>
+rather than <code>Stream&lt;Integer&gt;</code>.</p>
+
+<h4>The rule that catches everyone</h4>
+<p>A lambda may only read local variables that are <b>effectively final</b> — assigned once and never
+reassigned. That is not arbitrary: the value is <i>captured by copy</i>, so allowing reassignment would
+give you two views of one variable that silently disagree. Fields are captured differently — through
+<code>this</code> — so a lambda can see later changes to a field, which is a genuine source of surprise
+when a lambda outlives the call that created it. And a checked exception cannot escape a lambda whose
+interface does not declare one, which is why pipelines calling IO-throwing code fill up with wrapper
+noise.</p>`,
 docs:[['Lambda Expressions — dev.java','https://dev.java/learn/lambdas/'],['java.util.function — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/package-summary.html']],
 ex:{title:'Think in functions',
 prompt:`Write class <code>Funcs</code> with three <code>static</code> fields: <code>Predicate&lt;String&gt; NON_BLANK</code> (true when the string is not blank), <code>Function&lt;Integer,Integer&gt; SQUARE</code> (returns its input times itself: 5 → 25), and <code>BinaryOperator&lt;Integer&gt; MAX</code> (returns the larger of two ints — use a lambda, you may call Math.max inside). Import from <code>java.util.function</code>.`,
@@ -812,7 +839,37 @@ static String describe(Shape s) {
         case Rect r                    -&gt; "rect";
     };
 }</div>
-<p><b>Record patterns</b> (Java 21) deconstruct in the case label — including nested: <code>case Line(Point(var x1, var y1), Point p2)</code>. <b>Guards</b> add a boolean with <code>when</code>. Order matters: cases are tested top-down, so guarded cases go before their unguarded catch-all.</p>`,
+<p><b>Record patterns</b> (Java 21) deconstruct in the case label — including nested: <code>case Line(Point(var x1, var y1), Point p2)</code>. <b>Guards</b> add a boolean with <code>when</code>. Order matters: cases are tested top-down, so guarded cases go before their unguarded catch-all.</p>
+
+<h4>What sealing actually buys</h4>
+<p><code>sealed</code> tells the compiler the complete list of permitted subtypes. That turns a switch over
+the type into something it can <b>check for exhaustiveness</b>: handle every permitted case and no
+<code>default</code> is needed, and — the valuable half — adding a new permitted subtype turns every switch
+that does not handle it into a compile error. The compiler finds the call sites instead of your users
+finding them.</p>
+<p>Each permitted subtype must declare its own intent: <code>final</code> (no further extension),
+<code>sealed</code> (a closed set beneath it) or <code>non-sealed</code> (deliberately reopened). There is
+no silent default, which is the point.</p>
+
+<h4>Records and patterns, and why they arrived together</h4>
+<p>A sealed interface with record implementations is Java's way of expressing a closed set of alternatives
+that carry data — what other languages call an algebraic data type. Pattern matching then destructures them
+in the same switch that dispatches on them:</p>
+<div class="codeSample">sealed interface Shape permits Circle, Square {}
+record Circle(double r) implements Shape {}
+record Square(double side) implements Shape {}
+
+double area = switch (shape) {
+    case Circle c -&gt; Math.PI * c.r() * c.r();
+    case Square s -&gt; s.side() * s.side();
+};   // exhaustive: no default, and a new Shape breaks this line at compile time</div>
+
+<h4>When to reach for it, and when not</h4>
+<p>Use it when the set of alternatives is genuinely closed and known to you: a protocol's message types,
+the states of a workflow, the result of a parse. Do <b>not</b> use it where you want third parties to
+extend your abstraction — that is what an ordinary interface is for, and sealing it is a deliberate
+statement that they may not. The choice between an open interface and a sealed one is a statement about who
+owns the set of cases, and it is worth making on purpose.`,
 docs:[['Sealed classes — JEP 409','https://openjdk.org/jeps/409'],['Record patterns — JEP 440','https://openjdk.org/jeps/440'],['Pattern matching for switch — JEP 441','https://openjdk.org/jeps/441']],
 ex:{title:'An exhaustive payment switch',
 prompt:`Model payments as a <code>sealed interface Payment permits Card, Cash, Transfer</code> with three <b>records</b>: <code>Card(String last4, double amount)</code>, <code>Cash(double amount)</code>, <code>Transfer(String iban, double amount)</code>. Write <code>static String receipt(Payment p)</code> as a pattern-matching <code>switch</code> using <b>record patterns</b>, with a <b>guarded</b> case first: any Card <code>when</code> amount &gt; 1000 returns <code>"card (verified)"</code>; otherwise Card → <code>"card ****"+last4</code>, Cash → <code>"cash"</code>, Transfer → <code>"transfer to "+iban</code>. No <code>default</code> branch — the sealed hierarchy makes it exhaustive.`,

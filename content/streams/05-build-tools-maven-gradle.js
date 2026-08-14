@@ -19,7 +19,39 @@ Gson gson = new Gson();                     // class loaded from the jar at runt
 
 // where things come from: Maven Central (search.maven.org) hosts the jars;
 // your pom/build.gradle names GAV coordinates; the tool resolves + caches them.</div>
-<p>So "importing an SDK" is really three steps: declare the coordinate in the build file → tool downloads it to the local cache and puts it on the classpath → your <code>import</code> statements compile. The JDK's own classes (java.util, java.net.http) need no dependency — they ship with the runtime; only <code>java.lang</code> needs no import.</p>`,
+<p>So "importing an SDK" is really three steps: declare the coordinate in the build file → tool downloads it to the local cache and puts it on the classpath → your <code>import</code> statements compile. The JDK's own classes (java.util, java.net.http) need no dependency — they ship with the runtime; only <code>java.lang</code> needs no import.</p>
+
+<h4>What the classpath actually is</h4>
+<p>An ordered list of places to look for <code>.class</code> files — directories and jars. When the JVM
+needs <code>com.acme.Order</code> it asks the class loader, which walks that list and takes the
+<b>first</b> match. Two consequences follow, and both cause real incidents.</p>
+<p><b>Order decides the winner.</b> If two jars contain the same class, the earlier one wins silently and
+the later one is invisible — no warning, no error, just behaviour from a version you did not expect. That
+is the classic "it works locally" bug, because the local and CI classpath order differ.</p>
+<p><b>An import is not a dependency.</b> <code>import</code> is compile-time shorthand so you can write
+<code>Order</code> instead of the fully qualified name; it loads nothing. The dependency is what put the
+jar on the classpath, which is why removing an import never fixes a
+<code>NoClassDefFoundError</code>.</p>
+
+<h4>Reading the three failures</h4>
+<ul>
+<li><b><code>ClassNotFoundException</code></b> — something asked for a class by name at runtime and no jar
+on the classpath had it. Usually a missing dependency, or one marked <code>provided</code> that nothing
+provided.</li>
+<li><b><code>NoClassDefFoundError</code></b> — it was present at compile time and is missing now. Almost
+always a packaging problem: the fat jar did not include it, or the runtime classpath differs from the build
+one.</li>
+<li><b><code>NoSuchMethodError</code></b> — the class is there but a different version of it. This is
+diamond dependency hell: two libraries want incompatible versions of a third, and the resolver picked one.
+<code>mvn dependency:tree</code> shows you which, and a <code>dependencyManagement</code> entry pins it.</li>
+</ul>
+
+<h4>Why the module system exists, and why most projects still do not use it</h4>
+<p>Every problem above comes from a flat, unverified list. JPMS replaces it with a module graph that is
+checked at startup — missing dependencies fail immediately rather than at first use, and split packages are
+rejected outright. Most applications still run on the classpath because the ecosystem migration is
+substantial and the payoff is largest for libraries; the JPMS lesson later in the course covers the trade
+in full.`,
 docs:[['Classpath — Oracle','https://docs.oracle.com/javase/8/docs/technotes/tools/unix/classpath.html'],['Using package members / imports — Oracle','https://docs.oracle.com/javase/tutorial/java/package/usepkgs.html'],['Maven Central search','https://central.sonatype.com/']],
 ex:{title:'Classpath forensics',lang:'shell',
 prompt:`Answer one per numbered line: (1) the command compiling <code>src/App.java</code> into <code>out/</code> with <code>lib/gson-2.11.0.jar</code> on the classpath, (2) the command running class <code>App</code> with both <code>out</code> and that jar on the classpath (macOS/Linux separator), (3) the import statement for <code>com.google.gson.Gson</code>, (4) the error you get at RUNTIME when a class present at compile time is missing from the runtime classpath, (5) the directory where Maven caches downloaded dependencies, (6) the term for dependencies your dependencies pull in.`,
@@ -423,7 +455,35 @@ include 'api', 'core'
     ├── test/java/com/example/svc/   # mirrors main — tooling depends on this
     └── test/resources/</div>
 <p><b>Under the hood</b>, when you run <code>./mvnw verify</code>: the wrapper downloads the pinned Maven version → Maven reads the POM, resolves the dependency graph (local cache <code>~/.m2</code> first, then Central), builds the compile/test classpaths → plugins bound to each lifecycle phase run in order (compiler → surefire tests → jar → failsafe). "Convention over configuration" is why there is no config for any of this: the standard layout IS the contract the plugins rely on.</p>
-<p>The senior habits: wrapper committed (never "install maven 3.9 first"), versions pinned (no version ranges), formatter + linter as build plugins (Spotless — style debates end), tests and CI wired before the first feature, one-command onboarding (<code>git clone && ./mvnw verify</code> must just work), and a <code>.gitignore</code> that keeps build output and IDE noise out of review forever.</p>`,
+<p>The senior habits: wrapper committed (never "install maven 3.9 first"), versions pinned (no version ranges), formatter + linter as build plugins (Spotless — style debates end), tests and CI wired before the first feature, one-command onboarding (<code>git clone && ./mvnw verify</code> must just work), and a <code>.gitignore</code> that keeps build output and IDE noise out of review forever.</p>
+
+<h4>Why the wrapper is not optional</h4>
+<p>Committing <code>mvnw</code> or <code>gradlew</code> means a new machine — a colleague's laptop, a CI
+runner, your own in two years — builds with the <i>same</i> build tool version you used, downloaded
+automatically. Without it the README acquires a line saying "install Maven 3.9 first", and that line is
+where reproducibility ends. It is the same argument as pinning dependencies, applied to the thing that
+resolves dependencies.</p>
+
+<h4>The checklist, and the reason behind each item</h4>
+<ul>
+<li><b>Pin every version.</b> A version range means today's build and tomorrow's differ for reasons nobody
+recorded. Use a dependency-management block so the version appears once.</li>
+<li><b>One command builds and tests it.</b> If the README needs four steps in order, the fourth one gets
+skipped.</li>
+<li><b>Fail the build on what matters</b> — test failures obviously, and ideally a coverage floor and a
+vulnerability scan. A warning nobody is obliged to read is not a control.</li>
+<li><b>.gitignore before the first commit.</b> Removing <code>target/</code> or a stray <code>.env</code>
+from history afterwards is far more work than adding a line up front.</li>
+<li><b>A README that says what it is, how to run it, and how to test it</b> — in that order, in the first
+screen.</li>
+</ul>
+
+<h4>The convention that makes all of it work</h4>
+<p>Maven's standard layout is not a suggestion, it is the contract the plugins rely on: source in
+<code>src/main/java</code>, tests in <code>src/test/java</code>, resources beside them. That is why a
+correctly laid out project needs almost no configuration — and why a project that fought the convention
+carries pages of it. When a build file is unusually long, the first question is which convention it is
+working around.</p>`,
 docs:[['Standard directory layout — Maven','https://maven.apache.org/guides/introduction/introduction-to-the-standard-directory-layout.html'],['Maven wrapper','https://maven.apache.org/wrapper/'],['Spotless plugin','https://github.com/diffplug/spotless']],
 ex:{title:'Bootstrap checklist',lang:'shell',
 prompt:`One per numbered line: (1) the command that adds the Maven wrapper to a project, (2) the three most important <code>.gitignore</code> entries for a Maven + IntelliJ project (one line, space-separated), (3) the standard directory for production code of package <code>com.example.svc</code> (full path from project root), (4) the single command a new teammate should need after cloning, (5) which file pins the exact Maven version the wrapper uses.`,

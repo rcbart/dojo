@@ -45,8 +45,9 @@ hints:['A nudge toward the shape.','A nudge toward the trap.','The name of the t
 
 **Body**
 
-- [ ] **At or above the course average.** DevDojo ~430 words, IdentityDojo ~665, JSDojo ~465. The floor is
-      half the course average and it *rises* as the course improves, so aim for the average, not the floor.
+- [ ] **At or above the course median.** DevDojo ~510 words, IdentityDojo ~655, JSDojo ~455. The floor is
+      half the course median — 255 / 328 / 228 — and `scripts/verify-depth.js` fails the build below it.
+      Aim for the median, not the floor: a lesson written to the minimum is the next one to be flagged.
 - [ ] **Sentences average under ~19 words.** Nothing over 50. Check with the readability script before
       committing.
 - [ ] `<h4>` sections. Three to five. Each one a claim, not a label — "Why there is a code at all" beats
@@ -93,6 +94,7 @@ node --test engine/test/engine.test.js   # the runtime (all four engine files)
 node scripts/verify.js                   # content integrity  (per course)
 node scripts/verify-exec.js              # executes every run spec
 node scripts/verify-java.js              # compiles every Java solution
+node scripts/verify-depth.js             # every lesson clears its course floor
 ```
 
 ---

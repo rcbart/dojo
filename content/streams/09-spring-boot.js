@@ -1117,7 +1117,31 @@ public class WelcomeListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     void provisionAccess(UserRegistered e) { ... }   // 3) only after the tx COMMITS
 }</div>
-<p>The traps that separate senior from junior here: plain <code>@EventListener</code> is <b>synchronous</b> — a slow listener slows the publisher, a throwing listener rolls back the publisher's transaction. <code>@Async</code> needs <code>@EnableAsync</code> on a config class (and a sensible executor — virtual threads shine). And the big one: side effects that must only happen if the data is really saved (emails, provisioning, webhooks) belong in <code>@TransactionalEventListener(AFTER_COMMIT)</code> — otherwise a rollback leaves you having emailed about a user that doesn't exist. Beyond one process, the same pattern scales out via Kafka/RabbitMQ (Spring Cloud Stream) with the <b>transactional outbox</b> pattern replacing AFTER_COMMIT.</p>`,
+<p>The traps that separate senior from junior here: plain <code>@EventListener</code> is <b>synchronous</b> — a slow listener slows the publisher, a throwing listener rolls back the publisher's transaction. <code>@Async</code> needs <code>@EnableAsync</code> on a config class (and a sensible executor — virtual threads shine). And the big one: side effects that must only happen if the data is really saved (emails, provisioning, webhooks) belong in <code>@TransactionalEventListener(AFTER_COMMIT)</code> — otherwise a rollback leaves you having emailed about a user that doesn't exist. Beyond one process, the same pattern scales out via Kafka/RabbitMQ (Spring Cloud Stream) with the <b>transactional outbox</b> pattern replacing AFTER_COMMIT.</p>
+
+<h4>What an application event actually decouples</h4>
+<p>The publisher names a fact — "an order was placed" — and does not know who reacts. That is the benefit
+and the cost in one sentence. The benefit is that adding a reaction requires no change to the publisher.
+The cost is that reading the publisher no longer tells you what happens next, so the indirection has to
+earn its place: use it for genuine fan-out, not to avoid a method call.</p>
+
+<h4>Synchronous by default, and why that surprises people</h4>
+<p>An <code>@EventListener</code> runs on the <b>publishing thread</b>, inside the publisher's transaction,
+before <code>publishEvent</code> returns. So a slow listener slows the request that triggered it, and a
+listener that throws propagates back into the publisher — which can roll back the transaction that
+published the event. Neither is wrong, but both are the opposite of what "event" suggests to most people.</p>
+<div class="codeSample">@TransactionalEventListener(phase = AFTER_COMMIT)   // only if the data actually committed
+@Async                                              // and on another thread, if it should not block</div>
+
+<h4>The bug this prevents, and the one it introduces</h4>
+<p><code>AFTER_COMMIT</code> exists because of a specific failure: sending a confirmation email for an order
+whose transaction then rolled back. The customer has an email and you have no order. Publishing after
+commit removes that class of bug entirely.</p>
+<p>It introduces the opposite one. After the commit, the event is no longer transactional — if the listener
+fails, the data is committed and the reaction never happened, with nothing to retry it. In-process events
+are therefore fine for cache eviction, metrics and in-app notifications, and not sufficient when another
+system must learn about the change. That is what the outbox pattern in the messaging lesson is for, and the
+distinction is worth making deliberately rather than discovering it in production.`,
 docs:[['Application events — Spring','https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events'],['@TransactionalEventListener — API','https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html'],['@Async — Spring','https://docs.spring.io/spring-framework/reference/integration/scheduling.html#scheduling-annotation-support-async']],
 ex:{title:'Announce, then react',
 prompt:`Build the pipeline: (1) <code>record UserRegistered(String userId, String email)</code>. (2) <code>@Service class RegistrationService</code> with constructor-injected <code>ApplicationEventPublisher</code> and <code>@Transactional void register(String userId, String email)</code> that calls <code>events.publishEvent(new UserRegistered(...))</code>. (3) <code>@Component class WelcomeListener</code> with an <code>@Async @EventListener</code> method <code>sendEmail(UserRegistered e)</code> and a <code>@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)</code> method <code>provision(UserRegistered e)</code>. (4) <code>@Configuration @EnableAsync class AsyncConfig</code>.`,
@@ -1202,7 +1226,32 @@ Mono&lt;UserDto&gt; byId(@PathVariable String id) {
 @GetMapping(value = "/ticks", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 Flux&lt;Long&gt; ticks() {
     return Flux.interval(Duration.ofSeconds(1)).take(10);   // SSE stream
-}</div>`,
+}</div>
+
+<h4>The problem it was built for</h4>
+<p>A thread-per-request server holds a whole thread — a megabyte of stack and a scheduler slot — while a
+request waits on a database. Under heavy I/O the threads are nearly all idle and you are out of them
+anyway. Reactive programming removes the waiting: work is expressed as a pipeline of callbacks that the
+runtime resumes when data arrives, so a handful of threads serve thousands of concurrent requests.</p>
+<p><code>Mono</code> is zero or one result, <code>Flux</code> is many, and <b>nothing runs until you
+subscribe</b> — a pipeline you build and never subscribe to simply does nothing, which is the first
+surprise everyone meets.</p>
+
+<h4>What it costs</h4>
+<p>The debugger stops helping. Stack traces show reactor internals rather than your call path, breakpoints
+land in scheduler code, and a blocking call accidentally left in a reactive chain stalls an event loop that
+serves everyone — a failure with no local symptom. Reasoning about the code is a genuinely different skill,
+and it is one every maintainer must also have.</p>
+
+<h4>Why virtual threads changed the argument</h4>
+<p>The cost of blocking I/O was never the syntax; it was the thread. Virtual threads make a blocked thread
+almost free, so ordinary sequential code — real stack traces, working debuggers, plain try/finally — now
+scales the way reactive code does. For most new services that removes the main reason to pay the reactive
+tax.</p>
+<p>What remains genuinely reactive territory is <b>streaming</b> and <b>backpressure</b>: server-sent
+events, long-lived subscriptions, and pipelines where a fast producer must be told to slow down. That is
+what Reactor expresses well and what virtual threads do not address at all. The honest position for 2026:
+choose reactive for streams and demand signalling, not for concurrency.`,
 docs:[['Project Reactor reference','https://projectreactor.io/docs/core/release/reference/'],['Spring WebFlux reference','https://docs.spring.io/spring-framework/reference/web/webflux.html'],['Which operator do I need? — Reactor','https://projectreactor.io/docs/core/release/reference/#which-operator']],
 ex:{title:'A non-blocking user endpoint',
 prompt:`Write <code>UserService</code> with: (1) <code>Flux&lt;String&gt; activeNames(Flux&lt;User&gt; users)</code> — <code>filter</code> active users, <code>map</code> to <code>getName()</code>, <code>take(50)</code>; (2) <code>Mono&lt;User&gt; byId(String id)</code> — call <code>repo.findById(id)</code> (returns <code>Mono&lt;User&gt;</code>) and use <code>switchIfEmpty</code> with <code>Mono.error(new IllegalStateException("not found"))</code>. Do <b>not</b> call <code>subscribe()</code> or <code>block()</code> anywhere — the framework subscribes.`,
@@ -1260,7 +1309,33 @@ void onOrder(String payload) {
     if (processed.contains(evt.eventId())) return;   // idempotency guard
     charge(evt);
     processed.add(evt.eventId());
-}</div>`,
+}</div>
+
+<h4>The two guarantees, and why exactly-once is not one of them</h4>
+<p>Brokers offer <b>at-most-once</b> (fire and forget, messages can be lost) or <b>at-least-once</b>
+(acknowledged, messages can be duplicated). Everyone wants exactly-once, and end to end it does not exist:
+the acknowledgement can be lost after the work is done, so the sender cannot tell "did not happen" from
+"happened but I did not hear". What you can build is <b>at-least-once delivery with an idempotent
+consumer</b>, which produces an exactly-once <i>effect</i>. That is the real design, and it puts the
+responsibility on the consumer rather than the broker.</p>
+
+<h4>Why the outbox pattern exists</h4>
+<p>The problem it solves is sharp: you must update the database and publish an event, and there is no
+transaction spanning both. Write first and the publish can fail, leaving the world unaware. Publish first
+and the write can fail, leaving an event about something that never happened.</p>
+<p>The outbox removes the second system from the transaction. The event is inserted into an
+<code>outbox</code> table in the <i>same</i> transaction as the data, and a relay reads that table and
+publishes afterwards. Either both are committed or neither is, and the relay's retries are safe because the
+consumer is idempotent.</p>
+
+<h4>Ordering, and what it costs</h4>
+<p>Kafka orders messages within a <b>partition</b>, not within a topic — so ordering is per key, and the
+key you choose is a design decision. Order by account id and events for one account stay ordered while
+different accounts proceed in parallel. Ask for global ordering and you have asked for one partition, which
+means one consumer and no horizontal scale.</p>
+<p>Finally, plan for the message you cannot process: a dead-letter queue plus an alert on its depth. Without
+one, a single malformed message either blocks the partition forever or is silently dropped, and both are
+discovered late.`,
 docs:[['Spring for Apache Kafka reference','https://docs.spring.io/spring-kafka/reference/'],['Kafka introduction','https://kafka.apache.org/intro'],['Transactional outbox — microservices.io','https://microservices.io/patterns/data/transactional-outbox.html']],
 ex:{title:'Publish & consume order events',
 prompt:`Write <code>OrderEvents</code>: (1) a field <code>KafkaTemplate&lt;String, String&gt; kafka</code>; (2) <code>void publish(String orderId, String payload)</code> that sends to topic <code>"orders"</code> with <code>orderId</code> as the <b>key</b> (ordering per order); (3) a consumer method <code>void onOrder(String payload)</code> annotated <code>@KafkaListener(topics = "orders", groupId = "billing")</code> that skips already-processed payloads using a <code>Set&lt;String&gt; processed</code> (idempotency) before calling <code>handle(payload)</code>.`,
@@ -1326,7 +1401,33 @@ void update(User user) { repo.save(user); }          // stale entry dropped
         .expireAfterWrite(Duration.ofMinutes(10)));
     return m;
 }</div>
-<p>The three classic cache bugs: <b>staleness</b> (evict on every write path — the hard part of cache invalidation), <b>unbounded growth</b> (always set <code>maximumSize</code>), and <b>stampede</b> (a hot key expires and a thousand requests hit the DB at once — Caffeine's <code>refreshAfterWrite</code> serves the old value while one thread reloads). And never cache mutable objects you then modify — you'll corrupt the cache in place.</p>`,
+<p>The three classic cache bugs: <b>staleness</b> (evict on every write path — the hard part of cache invalidation), <b>unbounded growth</b> (always set <code>maximumSize</code>), and <b>stampede</b> (a hot key expires and a thousand requests hit the DB at once — Caffeine's <code>refreshAfterWrite</code> serves the old value while one thread reloads). And never cache mutable objects you then modify — you'll corrupt the cache in place.</p>
+
+<h4>The two questions to answer before adding a cache</h4>
+<p><b>What is the correct staleness?</b> Not "is stale data acceptable" — it always is, briefly — but how
+many seconds of wrongness this particular data can carry. A product price and a session token have very
+different answers, and a cache without a stated answer is a bug waiting for a customer to find.</p>
+<p><b>What is the hit rate?</b> A cache below roughly 80% hits is often adding a lookup, a serialisation
+and a network hop to buy very little. Measure before and after; "we added caching" without a hit-rate
+number is not an optimisation, it is a hope.</p>
+
+<h4>Invalidation, and why it is the hard half</h4>
+<p>There are only three strategies, and every system uses some mix. <b>TTL</b> is the simplest and the only
+one that needs no discipline — the data is wrong for at most N seconds, by design. <b>Explicit eviction</b>
+on write is correct and requires every write path to remember, including the batch job somebody added last
+month. <b>Versioned keys</b> sidestep invalidation entirely by making the key contain the version, so old
+entries are never read and simply age out.</p>
+<p>The failure mode people underestimate is the <b>cache as a hidden dependency</b>: a 99% hit rate means
+the database is sized for the surviving 1%, so a flush or a restart sends a hundred times its expected load
+at it. Stagger your TTLs so keys do not all expire together, and use request coalescing so one miss does
+not become a thousand identical queries.</p>
+
+<h4>Choosing a layer</h4>
+<p>In-process is nanoseconds and per-instance, so it is right for hot, small, read-mostly data where each
+node disagreeing slightly is harmless — reference data, compiled patterns, feature flags. Distributed costs
+a millisecond and buys agreement, so it is right for anything a user must see consistently across
+instances. Many systems want both: a local cache in front of Redis, with a short local TTL to bound the
+disagreement.</p>`,
 docs:[['Caffeine — GitHub','https://github.com/ben-manes/caffeine'],['Spring cache abstraction','https://docs.spring.io/spring-framework/reference/integration/cache.html'],['Spring Boot caching guide','https://docs.spring.io/spring-boot/reference/io/caching.html']],
 ex:{title:'Cache the user lookups',
 prompt:`Write <code>UserCacheConfig</code> annotated <code>@EnableCaching</code> containing a <code>@Bean</code> method returning a <code>CaffeineCacheManager</code> for cache <code>"users"</code> configured with <code>maximumSize(10_000)</code> and <code>expireAfterWrite(Duration.ofMinutes(10))</code>. Then a <code>UserService</code> with <code>@Cacheable(value = "users", key = "#id")</code> on <code>byId(long id)</code> and <code>@CacheEvict(value = "users", key = "#user.id")</code> on <code>update(User user)</code>.`,

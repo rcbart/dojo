@@ -19,7 +19,34 @@ HttpRequest req = HttpRequest.newBuilder()
     .uri(URI.create("https://api.example.com"))
     .timeout(Duration.ofSeconds(5))
     .header("Accept", "application/json")
-    .build();</div>`,
+    .build();</div>
+
+<h4>Singleton: the one to be suspicious of</h4>
+<p>It is the most recognised pattern and the most often wrong. A singleton is global mutable state with a
+respectable name: it hides dependencies (nothing in a signature says the class uses it), it makes tests
+order-dependent because state survives between them, and under concurrency it needs the same care as any
+shared mutable object. In a Spring application you almost never write one — a <code>@Component</code> is
+already a single instance managed by the container, and it arrives through a constructor where you can see
+and replace it.</p>
+<p>When you genuinely need one, an <code>enum</code> is the most robust form in Java: the JVM guarantees a
+single instance, including against reflection and serialisation, which most hand-written singletons do
+not.</p>
+
+<h4>Factory: naming the thing that varies</h4>
+<p>A factory earns its place when construction involves a <i>decision</i> — which implementation, based on
+configuration, input or capability. If there is no decision, a constructor is clearer than a factory that
+merely forwards to it. Static factory methods are worth the habit even without polymorphism, because they
+can be named: <code>Duration.ofSeconds(30)</code> says what the argument means where
+<code>new Duration(30)</code> does not.</p>
+
+<h4>Builder: for the parameter list nobody can read</h4>
+<p>Once a constructor takes several same-typed parameters, callers can transpose two of them and the
+compiler cannot help — two adjacent <code>String</code>s or three <code>boolean</code>s are a bug waiting to
+be written. A builder names each value at the call site and lets the object validate itself once, at
+<code>build()</code>, so an invalid instance never exists.</p>
+<p>The modern caveat: for a small immutable value, a <b>record</b> does most of this with no ceremony at
+all. Reach for a builder when there are genuinely many optional fields, defaults to apply, or invariants to
+check across them.`,
 docs:[['Effective Java patterns summary — items 1-5','https://dev.java/learn/api/'],['Refactoring Guru — Builder','https://refactoring.guru/design-patterns/builder'],['Refactoring Guru — Singleton','https://refactoring.guru/design-patterns/singleton']],
 ex:{title:'Build an immutable config',
 prompt:`Write an immutable <code>ServerConfig</code> (fields <code>String host; int port; boolean tls</code>, all <code>final</code>) with a <b>private constructor</b>, a <code>static Builder builder()</code> entry point, and a <b>static nested</b> class <code>Builder</code> whose fluent setters (<code>host(String)</code>, <code>port(int)</code>, <code>tls(boolean)</code>) each <code>return this</code>, finished by <code>ServerConfig build()</code> that calls the private constructor.`,
@@ -77,7 +104,35 @@ double checkout(double price, Discount d) { return d.apply(price); }
 // Observer: subscribers over time
 List&lt;Consumer&lt;String&gt;&gt; listeners = new ArrayList&lt;&gt;();
 void onSale(Consumer&lt;String&gt; l) { listeners.add(l); }
-void fire(String item) { listeners.forEach(l -&gt; l.accept(item)); }</div>`,
+void fire(String item) { listeners.forEach(l -&gt; l.accept(item)); }</div>
+
+<h4>What these three actually have in common</h4>
+<p>All three separate <b>what varies</b> from <b>what stays the same</b> — which is the whole of behavioural
+design. Strategy varies an algorithm behind a fixed call. Observer varies who reacts to an event without the
+source knowing. Template Method fixes the skeleton and varies the steps. Naming them matters less than
+recognising the move, because you have already made it: every <code>Comparator</code> is a strategy, every
+listener list is an observer, and every abstract base class with a <code>run()</code> that calls
+<code>doStep()</code> is a template method.</p>
+
+<h4>Where each goes wrong</h4>
+<ul>
+<li><b>Strategy</b> collapses to a lambda in modern Java, and that is usually correct — but a map of
+lambdas keyed by string trades compile-time checking for a runtime lookup that can fail. If the set of
+strategies is fixed, a sealed interface or an enum keeps the compiler involved.</li>
+<li><b>Observer</b> is the one that causes production incidents. Listeners are usually called
+<i>synchronously</i>, so a slow listener slows the publisher, and one that throws can prevent the rest from
+running. Unregistering is also easy to forget, which is a memory leak with a hidden reference — the same
+one as inner classes.</li>
+<li><b>Template Method</b> ties subclasses to the parent's call order forever, which is the fragile base
+class problem. Composition — passing the varying step in — gives the same flexibility without inheritance,
+which is why it has quietly lost ground to strategy.</li>
+</ul>
+
+<h4>The test before reaching for any of them</h4>
+<p>Ask whether the variation is real and present, not hypothetical. A strategy interface with one
+implementation is indirection you pay for and do not use, and the second implementation is cheap to
+introduce when it actually arrives. Patterns are a vocabulary for describing structure you needed anyway,
+not a shopping list to work through.</p>`,
 docs:[['Refactoring Guru — Strategy','https://refactoring.guru/design-patterns/strategy'],['Refactoring Guru — Observer','https://refactoring.guru/design-patterns/observer'],['Refactoring Guru — Template Method','https://refactoring.guru/design-patterns/template-method']],
 exs:[{title:'Pricing with pluggable strategies',
 prompt:`Build (1) a <code>@FunctionalInterface</code> <code>Discount</code> with <code>double apply(double price)</code>; (2) <code>class Register</code> with constants <code>Discount NONE</code> (identity lambda) and <code>Discount SUMMER</code> (20% off — multiply by 0.8); (3) <code>double checkout(double price, Discount d)</code> delegating to the strategy; (4) Observer support: a <code>List&lt;Consumer&lt;Double&gt;&gt; listeners</code>, <code>void onSale(Consumer&lt;Double&gt; l)</code>, and have <code>checkout</code> notify every listener with the final price via <code>forEach</code> + <code>accept</code>.`,

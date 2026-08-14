@@ -173,6 +173,8 @@ scripts/verify.js   content integrity gate: parses every module, runs each exerc
                     regex tests against its own solution, checks id uniqueness
 scripts/verify-exec.js  execution gate: runs every run-spec exercise's reference
                     solution against its own cases, as the browser worker does
+scripts/verify-java.js  compiles every self-contained Java reference solution
+scripts/verify-depth.js depth gate: every lesson against half its course median
 build.js            engine/ + src/ + content/ -> dist/index.html (+ devdojo.html)
 identity-dojo/      IdentityDojo: same shape, consumes ../engine
 site/               optional Node server: accounts, progress sync (SQLite via node:sqlite)

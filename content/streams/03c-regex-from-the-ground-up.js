@@ -220,7 +220,34 @@ if (m.matches()) {
 }
 
 "a1b2c3".replaceAll("\\d", "#");            // "a#b#c#"
-Pattern.quote("price (USD)");               // matches those literal chars</div>`,
+Pattern.quote("price (USD)");               // matches those literal chars</div>
+
+<h4>Compile once — the mistake that shows up in profiles</h4>
+<p><code>"…".matches(regex)</code>, <code>replaceAll</code> and <code>split</code> compile the pattern on
+every single call. In a loop over a million log lines that is a million compilations, and it is one of the
+most common findings in a first CPU profile of a text-processing job. Hoist it:</p>
+<div class="codeSample">private static final Pattern TRACE = Pattern.compile("trace=([0-9a-f]+)");
+Matcher m = TRACE.matcher(line);   // cheap; the Pattern is shared and thread-safe</div>
+<p>The split is deliberate: a <code>Pattern</code> is immutable and safe to share across threads, while a
+<code>Matcher</code> holds the position of one attempt over one input and must never be shared. One static
+final Pattern per expression, a fresh Matcher per string.</p>
+
+<h4>Reading a Matcher without surprising yourself</h4>
+<p><code>find()</code> advances through the input and can be called repeatedly in a <code>while</code>
+loop; <code>matches()</code> anchors to the whole input and does not advance. Both must be called
+<i>before</i> <code>group()</code>, or you get <code>IllegalStateException: No match found</code> — the
+matcher genuinely has no result yet. <code>group(0)</code> is the whole match; <code>group(1)</code> the
+first capture. A group that did not participate returns <code>null</code>, which is not the same as an
+empty string and is worth checking when a pattern has alternation.</p>
+
+<h4>Where regex stops being the right tool</h4>
+<p>Two limits worth internalising. <b>Nested structure is out of reach</b>: HTML, JSON and balanced
+brackets are not regular languages, so a pattern that appears to work will fail on the first nested case —
+use a parser. And <b>catastrophic backtracking</b> is a denial-of-service risk when the pattern contains
+nested quantifiers such as <code>(a+)+</code> and the input is attacker-supplied; the engine explores
+exponentially many ways to match before giving up. Prefer possessive quantifiers or an anchored, specific
+pattern, and never build a pattern by concatenating untrusted input — <code>Pattern.quote</code> exists for
+exactly that.</p>`,
 docs:[['Pattern — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Pattern.html'],['Regex — dev.java tutorial','https://dev.java/learn/regex/'],['Matcher — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Matcher.html']],
 exs:[{title:'Log-line parser',
 prompt:`Write <code>LogParser</code> with a <code>private static final Pattern</code> named <code>LINE</code> using <b>named groups</b> <code>date</code>, <code>level</code>, <code>msg</code> to parse lines like <code>2026-07-17 ERROR disk is full</code> (date <code>\\d{4}-\\d{2}-\\d{2}</code>, level one of INFO/WARN/ERROR). Add <code>static String levelOf(String line)</code> that returns the level via <code>matches()</code> + <code>group("level")</code>, or <code>"UNKNOWN"</code> when the line doesn't match.`,

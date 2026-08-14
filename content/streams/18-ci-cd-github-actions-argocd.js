@@ -58,7 +58,38 @@ jobs:                         # ── JOBS: run in PARALLEL by default,
 <li><b>uses vs run</b>: <code>uses:</code> pulls a versioned, reusable action from the marketplace (checkout, setup-java, docker/build-push-action); <code>run:</code> is your own shell.</li>
 <li><b>Secrets</b>: stored in repo Settings → Secrets, injected as <code>\${{ secrets.MY_KEY }}</code> — never hardcode credentials in the YAML (it is versioned, forkable, and public-ish forever).</li>
 <li><b>Contexts</b>: <code>\${{ github.sha }}</code>, <code>\${{ github.actor }}</code>, <code>\${{ secrets.* }}</code> — template expressions GitHub substitutes before the step runs.</li>
-</ul>`,
+</ul>
+
+<h4>What actually triggers a run, and why that is a security question</h4>
+<p>The <code>on:</code> block decides when a workflow runs, and the difference between
+<code>pull_request</code> and <code>pull_request_target</code> is the one to understand rather than copy.
+<code>pull_request</code> runs the workflow <i>from the pull request</i> with no access to your secrets.
+<code>pull_request_target</code> runs the workflow <i>from your default branch</i> with secrets available —
+which is safe only if it never checks out and executes the contributor's code. Getting that pair backwards
+on a public repository hands your secrets to anyone who can open a pull request.</p>
+
+<h4>Jobs, steps and the thing people get wrong about state</h4>
+<p>Steps within a job share a runner and a working directory. <b>Jobs do not.</b> Each job gets a fresh
+machine, so anything one job produces and another needs must travel through an artifact or a cache — and
+each <code>run:</code> step is its own shell, so a <code>cd</code> or an exported variable does not survive
+to the next step unless you write it to <code>$GITHUB_ENV</code>.</p>
+<div class="codeSample">jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4          # pin actions; a moving tag is someone else's code
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - run: ./mvnw -B verify              # -B: batch mode, no interactive progress spam</div>
+
+<h4>Making it fast and making it honest</h4>
+<p>Cache the dependency directory, not the build output — a cached <code>~/.m2</code> turns a three-minute
+download into seconds, while caching compiled classes risks a stale build that passes. Use a matrix when
+you genuinely support several versions, and remember every matrix cell is a full run: a three-by-three
+matrix is nine machines and nine times the minutes.</p>
+<p>And pin third-party actions. <code>@v4</code> is a moving tag that can be repointed, so a supply-chain
+compromise upstream becomes your CI running someone else's code with your secrets. Pinning to a commit SHA
+is the version of this advice that actually holds.</p>`,
 docs:[['Workflow syntax reference','https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions'],['Events that trigger workflows','https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows'],['Using secrets','https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions']],
 ex:{title:'Write a workflow skeleton',lang:'yaml',
 prompt:`Write a complete workflow YAML named <code>greet</code> that: (1) triggers on <b>push to main only</b> and additionally on <b>manual dispatch</b> (<code>workflow_dispatch</code>); (2) has one job <code>hello</code> on <code>ubuntu-latest</code>; (3) first step <b>checks out the repo</b> with <code>actions/checkout@v4</code>; (4) second step is named <code>Say it</code> and runs the shell command <code>echo "hello \${{ github.actor }}"</code> — using the context expression so the pusher's username appears.`,
@@ -121,6 +152,32 @@ jobs:
 <li><b>Tag images with the commit SHA</b> — <code>:latest</code> tells you nothing; <code>:\${{ github.sha }}</code> makes every running container traceable to the exact commit. Ship <code>:latest</code> as an <i>additional</i> tag if you like.</li>
 <li><b>GITHUB_TOKEN over PATs</b> — the auto-provided token is scoped to this repo and expires with the run; a personal access token in a secret is a standing credential to steal.</li>
 <li><b>permissions:</b> — default the workflow to read-only and grant <code>packages: write</code> explicitly. Least privilege applies to robots too.</li>
+</ul>
+
+<h4>Fast feedback is a design goal, not a nice-to-have</h4>
+<p>A pipeline that takes twenty minutes changes behaviour: people stop waiting for it, batch their changes,
+and merge on hope. Under five minutes it becomes part of the edit-run loop. That is worth optimising for
+directly — cache dependencies, run the fast checks first so an obvious failure returns in seconds, and
+parallelise the slow ones.</p>
+<p>Order matters more than raw speed. Compile and unit tests before integration tests; static checks before
+either. Failing in ninety seconds on a typo beats failing in twelve minutes on the same typo after the
+container has been built.</p>
+
+<h4>The traceability that makes an incident survivable</h4>
+<p>Tag the image with the commit SHA, always, and use <code>:latest</code> only as an <i>additional</i>
+tag. During an incident the question is "what exactly is running?", and <code>:latest</code> cannot answer
+it — the digest pinned to a commit can. The same reasoning applies to build metadata: stamping the version,
+commit and build time into the artifact costs nothing and turns a guess into a lookup.</p>
+
+<h4>What CI must never contain</h4>
+<ul>
+<li><b>Secrets in the workflow file.</b> Use the platform's secret store, and prefer OIDC federation to a
+long-lived cloud key entirely — the workload-identity argument from the identity course.</li>
+<li><b><code>-DskipTests</code>.</b> A pipeline that builds without testing is a slower way to ship the
+same bug.</li>
+<li><b>Unpinned third-party actions.</b> A moving tag is someone else's code with access to your secrets.</li>
+<li><b>Flaky tests left quarantined forever.</b> A test suite people re-run until it passes has stopped
+being a gate — which is the same failure as a red build that gets overridden.</li>
 </ul>`,
 docs:[['setup-java action','https://github.com/actions/setup-java'],['build-push-action','https://github.com/docker/build-push-action'],['Publishing images to GHCR','https://docs.github.com/en/actions/use-cases-and-examples/publishing-packages/publishing-docker-images']],
 ex:{title:'Write the Java CI workflow',lang:'yaml',
@@ -171,7 +228,35 @@ hints:['permissions: is a TOP-LEVEL key (same indent as jobs:) — contents: rea
 <li><b>Canary</b>: route 1-5% of real traffic to the new version, watch error rates and latency, then ramp. The most honest test there is — production traffic is the one workload you cannot simulate.</li>
 <li><b>Rollback ≠ revert</b>: rollback redeploys the previous <i>artifact</i> (seconds); revert undoes the <i>commit</i> and rebuilds (minutes, plus review). Have both; reach for rollback first.</li>
 </ul>
-<p>One rule ties the room together: <b>the artifact is immutable</b>. If staging tested image <code>:abc123</code>, production runs <code>:abc123</code> — not a rebuild "of the same code". Rebuilds can differ (new base image, new dependency resolution); what you tested is what you ship.</p>`,
+<p>One rule ties the room together: <b>the artifact is immutable</b>. If staging tested image <code>:abc123</code>, production runs <code>:abc123</code> — not a rebuild "of the same code". Rebuilds can differ (new base image, new dependency resolution); what you tested is what you ship.</p>
+
+<h4>The database is what makes deployment hard</h4>
+<p>Rolling deploys mean two versions of your code run at the same time, against one schema. That single
+fact dictates the discipline: <b>expand, migrate, contract</b>. Add the new column, deploy code that writes
+both old and new, backfill, deploy code that reads the new one, and only then remove the old — four
+deploys, each of which is safe on its own, instead of one that must be perfect.</p>
+<p>A destructive migration shipped alongside the code that needs it is the classic cause of an unrollable
+deploy: the code can go back, the dropped column cannot.</p>
+
+<h4>Choosing a release strategy by what it buys</h4>
+<ul>
+<li><b>Rolling</b> — cheapest, no extra capacity, two versions live. The default.</li>
+<li><b>Blue-green</b> — full second environment, instant switch, instant rollback. You pay for double
+capacity during the cutover and you still have the schema problem.</li>
+<li><b>Canary</b> — a small share of real traffic on the new version while you watch error rate and
+latency. The only strategy that gives you evidence before full exposure, and the only one that requires
+you to have decided in advance what "bad" looks like.</li>
+<li><b>Feature flags</b> — separate <i>deploying</i> from <i>releasing</i>, so the risky change ships dark
+and is turned on independently. The cost is flag debt: every flag is a branch in production that someone
+must eventually remove.</li>
+</ul>
+
+<h4>What makes a rollback real</h4>
+<p>Rollback is not a plan, it is a rehearsed action with a number attached: how long does it take, who can
+do it at 3am, and does it survive the migration you just ran? If the answer to any of those is unknown, you
+have a forward-only deploy and should treat every release accordingly. The environments should differ only
+in <b>configuration</b> — same image, different variables — because an artefact rebuilt per environment is
+no longer the artefact you tested.`,
 docs:[['GitHub Environments & protection rules','https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment'],['Blue/green deployments — Fowler','https://martinfowler.com/bliki/BlueGreenDeployment.html'],['Canary release — Fowler','https://martinfowler.com/bliki/CanaryRelease.html']],
 ex:{title:'Strategy triage',lang:'text',
 prompt:`One answer per numbered line: (1) the strategy that replaces instances gradually behind a load balancer (one word), (2) the strategy that runs old and new stacks side by side and flips traffic at the router (two words, slash ok), (3) the strategy that sends a small % of real traffic to the new version first (one word), (4) staging tested image :abc123 — does production <code>rebuild</code> or <code>reuse</code> that image? (5) the migration discipline that lets two app versions share one schema during a rolling deploy (hyphenated phrase: ______-then-______), (6) which is faster to execute: <code>rollback</code> or <code>revert</code>?`,

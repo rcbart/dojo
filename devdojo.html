@@ -2451,7 +2451,33 @@ echo $JAVA_HOME                  # where tools will look
 
 javac Greeter.java && java Greeter    # compile then run
 java Greeter.java                     # single-file mode: no javac step
-jshell                                # REPL: try Java line by line</div>`,
+jshell                                # REPL: try Java line by line</div>
+
+<h4>Which JDK, and why the answer is boring on purpose</h4>
+<p>Take an <b>LTS</b> release — 21 today — from a build you can name: Temurin, Corretto, Zulu, Liberica or
+Oracle's. They are all builds of the same OpenJDK source and differ mainly in who supports them and for how
+long. The reason to care is that a non-LTS release stops receiving updates in six months, which is a
+security decision disguised as a version number.</p>
+<p>Have more than one installed and you will eventually build with the wrong one. That is what
+<code>JAVA_HOME</code> decides — not the <code>java</code> on your <code>PATH</code> — which is why a
+project can compile in your terminal and fail in your IDE while both claim to be on 21.</p>
+
+<h4>Verifying the setup actually works</h4>
+<div class="codeSample">java -version      # the runtime you will run on
+javac -version     # the compiler — a JRE-only install has no javac at all
+echo $JAVA_HOME    # what Maven, Gradle and your IDE will actually use
+jshell             # if this opens, the toolchain is genuinely working</div>
+<p>Those four lines catch nearly every setup problem: a JRE where you wanted a JDK, a
+<code>JAVA_HOME</code> pointing at an old version, and a <code>PATH</code> that disagrees with both.</p>
+
+<h4>The errors you will hit in the first hour</h4>
+<p><code>command not found: javac</code> — you have a JRE, or the JDK's <code>bin</code> is not on your
+PATH. <code>UnsupportedClassVersionError</code> — the class was compiled by a newer JDK than the one
+running it, and the numbers in the message are class-file versions, not Java versions (65 is Java 21).
+<code>invalid target release</code> is the same mismatch caught earlier, at compile time.</p>
+<p>Finally, learn the command line even though the IDE is more comfortable. CI servers have no IDE, and
+"works on my machine" is nearly always a difference between what your IDE configured and what the build
+actually does.</p>`,
 docs:[['Adoptium Temurin downloads','https://adoptium.net'],['SDKMAN! usage','https://sdkman.io/usage'],['JShell tutorial — Oracle','https://docs.oracle.com/en/java/javase/21/jshell/introduction-jshell.html']],
 ex:{title:'Toolchain drill',lang:'shell',
 prompt:`One per numbered line: (1) the SDKMAN command to install Temurin 21 (identifier <code>21.0.3-tem</code>), (2) verify the active Java version, (3) compile <code>Greeter.java</code> and, on the same line with <code>&amp;&amp;</code>, run the resulting class, (4) run <code>Greeter.java</code> directly without a compile step, (5) start the Java REPL, (6) print the JAVA_HOME environment variable.`,
@@ -2752,7 +2778,34 @@ String quarter = switch (month) {
         yield "invalid";
     }
 };</div>
-<p>Style rules that scale: prefer guard clauses over deep nesting; ternaries for tiny picks, never nested; switch <i>expressions</i> (with <code>-&gt;</code>) over statements — the compiler checks exhaustiveness and fall-through bugs vanish.</p>`,
+<p>Style rules that scale: prefer guard clauses over deep nesting; ternaries for tiny picks, never nested; switch <i>expressions</i> (with <code>-&gt;</code>) over statements — the compiler checks exhaustiveness and fall-through bugs vanish.</p>
+
+<h4>Why the arrow form is worth adopting everywhere</h4>
+<p>The classic <code>switch</code> falls through to the next case unless you write <code>break</code>,
+which is almost never what anyone means and is a genuine source of bugs. The arrow form
+(<code>case A -&gt; …</code>) does not fall through, groups labels with a comma, and can be used as an
+<b>expression</b> that produces a value:</p>
+<div class="codeSample">String label = switch (status) {
+    case NEW, PENDING -&gt; "waiting";
+    case SHIPPED      -&gt; "on its way";
+    case CANCELLED    -&gt; "cancelled";
+};   // no break, no fall-through, and the compiler checks every case is covered</div>
+<p>That last property is the valuable one. Over an <code>enum</code> or a sealed type the compiler requires
+exhaustiveness, so adding a new constant turns every switch that does not handle it into a compile error —
+the compiler finds the places you must update instead of your users finding them.</p>
+
+<h4>Conditions that read as intent</h4>
+<p>Deeply nested <code>if</code> statements are usually a sign that guard clauses are missing. Returning
+early for the invalid cases leaves the main path unindented and unconditional, which is far easier to read
+than an arrow of nesting. And remember <code>&amp;&amp;</code> and <code>||</code> short-circuit, which is
+what makes <code>obj != null &amp;&amp; obj.isReady()</code> safe — the order of those operands is
+load-bearing, not stylistic.</p>
+
+<h4>The equality trap</h4>
+<p><code>==</code> on objects compares references, so comparing strings with it works for literals — which
+are interned and shared — and then fails for a string built at runtime. That is the worst kind of bug: it
+passes every test you wrote by hand and fails on real input. Use <code>equals</code> for content, and
+<code>Objects.equals</code> when either side may be null.`,
 docs:[['if-then-else — Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/if.html'],['Switch expressions — dev.java','https://dev.java/learn/language-basics/switch-expression/']],
 exs:[
 {title:'Classic chain: letter grades',
@@ -2852,7 +2905,34 @@ outer:                                  // labeled break: escape nested loops
 for (int r = 0; r &lt; rows; r++)
     for (int c = 0; c &lt; cols; c++)
         if (grid[r][c] == target) break outer;</div>
-<p>Choose by intent: <code>for</code> when the count is known, <code>while</code> when it isn't, <code>do-while</code> when the body must run first (input loops). Off-by-one errors live at the boundaries — always test first and last iterations mentally. The enhanced for (next lesson) replaces most index loops over collections.</p>`,
+<p>Choose by intent: <code>for</code> when the count is known, <code>while</code> when it isn't, <code>do-while</code> when the body must run first (input loops). Off-by-one errors live at the boundaries — always test first and last iterations mentally. The enhanced for (next lesson) replaces most index loops over collections.</p>
+
+<h4>The off-by-one, and how to stop making it</h4>
+<p>Nearly every loop bug is a boundary: <code>&lt;</code> where <code>&lt;=</code> was meant, or starting at
+1 where the data starts at 0. Two habits remove most of them. Say the range out loud — "from zero, while
+less than length" — and let the collection tell you its own bounds rather than hard-coding a number that
+some later edit will invalidate.</p>
+<p>Better still, avoid the index when you do not need it. <code>for (String s : list)</code> cannot go out
+of bounds, because there is no bound to get wrong. Reach for the counted loop only when the index is part
+of the problem.</p>
+
+<h4>break, continue and the loop that will not end</h4>
+<p><code>break</code> leaves the loop; <code>continue</code> skips to the next iteration — and in a
+<code>for</code> it still runs the update expression, while in a <code>while</code> it does not, which is
+how an infinite loop is written by accident:</p>
+<div class="codeSample">int i = 0;
+while (i &lt; 10) {
+    if (skip(i)) continue;   // i is never incremented -> spins forever
+    i++;
+}</div>
+<p>A <code>while</code> whose update sits at the bottom of the body is fragile for exactly this reason. If
+you find yourself writing one, a <code>for</code> probably expresses it better.</p>
+
+<h4>Choosing the shape</h4>
+<p><b>for</b> when you know how many times, or need the index. <b>while</b> when the end condition is
+discovered as you go — reading lines, polling, consuming a queue. <b>do-while</b> when the body must run at
+least once, which in practice means prompting for input: ask, validate, ask again. The rarest of the three,
+and when it fits nothing else reads as well.</p>`,
 docs:[['The for statement — Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/for.html'],['while & do-while — Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/while.html'],['Branching statements — Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/branch.html']],
 exs:[
 {title:'Classic for: sum the evens',
@@ -2962,7 +3042,32 @@ for (Map.Entry&lt;String, Double&gt; e : prices.entrySet())
 names.forEach(System.out::println);
 names.removeIf(String::isBlank);        // the safe-removal one-liner
 prices.forEach((k, v) -&gt; System.out.println(k + " = " + v));</div>
-<p>The rule that bites everyone once: mutating a collection inside its own enhanced for throws <code>ConcurrentModificationException</code> — use <code>Iterator.remove()</code> or, better, <code>removeIf</code>. The enhanced for works on any <code>Iterable</code> (you built one in the Modern Java stream) and arrays.</p>`,
+<p>The rule that bites everyone once: mutating a collection inside its own enhanced for throws <code>ConcurrentModificationException</code> — use <code>Iterator.remove()</code> or, better, <code>removeIf</code>. The enhanced for works on any <code>Iterable</code> (you built one in the Modern Java stream) and arrays.</p>
+
+<h4>Why there are three ways, and which to reach for</h4>
+<p>Each generation removed a category of mistake rather than merely shortening the code. The explicit
+<code>Iterator</code> exposes <code>hasNext</code> and <code>next</code>, so it is the only form that can
+remove safely mid-traversal — and the only one where you can get the sequence wrong. The enhanced
+<code>for</code> hides the iterator entirely, which removes the off-by-one and the "called next twice"
+bug in one stroke. <code>forEach</code> with a lambda goes further and hides the loop.</p>
+<p>The default is the enhanced <code>for</code>. Reach for the explicit iterator when you need
+<code>remove</code>, and for <code>forEach</code> when the body is a single action you are handing to
+someone else's code — a stream pipeline, a parallel traversal, a callback.</p>
+
+<h4>What forEach gives up</h4>
+<p>You cannot <code>break</code>, you cannot <code>continue</code>, and a <code>return</code> inside the
+lambda returns from the lambda rather than the enclosing method. So a search loop that stops early stays a
+loop, or becomes a stream with <code>findFirst</code>. Checked exceptions cannot escape either, which is
+why a <code>forEach</code> over IO-throwing code fills with try/catch noise that a plain loop would not
+need.</p>
+
+<h4>The exception everyone meets once</h4>
+<p><code>ConcurrentModificationException</code> is not about threads, despite the name. A single thread
+removing from a list inside its own enhanced <code>for</code> triggers it, because the iterator holds a
+modification count and checks it on every step. It is a <b>fail-fast</b> design: the alternative is
+undefined behaviour that silently skips elements. The fixes, in order of preference:
+<code>list.removeIf(predicate)</code>, an explicit <code>Iterator</code> with
+<code>iterator.remove()</code>, or building a new collection and replacing the old one.</p>`,
 docs:[['The Collection interface & iterators — Oracle','https://docs.oracle.com/javase/tutorial/collections/interfaces/collection.html'],['Iterable.forEach — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html']],
 exs:[
 {title:'Explicit Iterator: remove while iterating',
@@ -3071,7 +3176,31 @@ public class Modern {
     public void add(int n)    { count += n; }
     public void add(int n, int times) { count += n * times; }
 }</div>
-<p>Rule of thumb: if a method uses no instance fields, it can be static. Utility methods (like <code>Math.max</code>) are static; behavior tied to object state is instance.</p>`,
+<p>Rule of thumb: if a method uses no instance fields, it can be static. Utility methods (like <code>Math.max</code>) are static; behavior tied to object state is instance.</p>
+
+<h4>Overloading is resolved by the compiler, not at runtime</h4>
+<p>When several methods share a name, the compiler picks one from the <i>declared</i> types of the
+arguments, before the program runs. That is why a <code>null</code> argument can be ambiguous — it fits
+several overloads equally — and why widening a parameter type can silently change which method a caller
+ends up in. Overload for genuine convenience, on clearly different types; when the parameters are the same
+shape and only the meaning differs, two well-named methods beat one clever name.</p>
+
+<h4>static versus instance, stated precisely</h4>
+<p>An instance method has a <code>this</code>; a static one does not. Everything else follows. A static
+method cannot read instance fields because there is no instance to read them from, which is why the
+compiler rejects it rather than guessing. Utility functions that depend only on their arguments are
+naturally static — <code>Math.max</code>, <code>List.of</code> — and anything that expresses the behaviour
+of one object should be an instance method.</p>
+<p>The trap is <b>static mutable state</b>: a static field is shared by everything in the process, so it is
+a global variable with better manners, and under concurrency it needs the same care as any other shared
+mutable thing.</p>
+
+<h4>Signatures, and what a good one says</h4>
+<p>The signature is the part callers depend on, so it is worth more thought than the body. Name it for what
+it does from the caller's side. Keep the parameter list short — more than three or four is usually a
+missing type. Return a value rather than mutating an argument, because a method that quietly changes what
+it was given is one whose call site lies about what happens. And prefer returning an empty collection over
+<code>null</code>, so no caller has to remember a check.</p>`,
 docs:[['Defining Methods — Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/methods.html'],['Class vs instance members — Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/classvars.html']],
 ex:{title:'Overloaded Temperature',
 prompt:`Write a class <code>Temperature</code> with a private instance field <code>double celsius</code>, a constructor <code>Temperature(double celsius)</code>, an instance method <code>double inFahrenheit()</code> (C × 9/5 + 32), and two <b>overloaded static</b> factory methods: <code>Temperature of(double celsius)</code> and <code>Temperature of(double value, String unit)</code> where unit "F" converts to celsius first ((F − 32) × 5/9).`,
@@ -3834,7 +3963,30 @@ names.sort(new Comparator&lt;String&gt;() {
 
 // same thing as a lambda — functional interface, one method
 names.sort((a, b) -&gt; Integer.compare(a.length(), b.length()));</div>
-<p><b>Capture rule</b>: local and anonymous classes (and lambdas) can only read local variables that are <i>effectively final</i> — assigned once. The workaround for a mutable counter is a one-element array or <code>AtomicInteger</code>; the better fix is usually restructuring.</p>`,
+<p><b>Capture rule</b>: local and anonymous classes (and lambdas) can only read local variables that are <i>effectively final</i> — assigned once. The workaround for a mutable counter is a one-element array or <code>AtomicInteger</code>; the better fix is usually restructuring.</p>
+
+<h4>The hidden reference, and the leak it causes</h4>
+<p>A non-static inner class holds an invisible pointer to the instance that created it. That is convenient
+until the inner object outlives its parent: a listener, a callback or a <code>Runnable</code> handed to a
+long-lived executor keeps the entire outer object — and everything it references — alive for as long as
+the listener is registered. The heap dump shows the outer object retained by something that looks
+unrelated, which is why this is a classic and confusing leak.</p>
+<p>The rule that avoids it: <b>make it <code>static</code> unless it genuinely needs the outer
+instance.</b> A static nested class is just a namespaced class with no hidden state, which is what a
+<code>Node</code>, a <code>Builder</code> or a request DTO almost always wants to be.</p>
+
+<h4>Anonymous classes versus lambdas</h4>
+<p>Since lambdas arrived, an anonymous class is the right choice in exactly three situations: the interface
+has more than one abstract method, you need instance state or an initialiser, or you want a real class name
+in the stack trace. Otherwise a lambda is shorter, cheaper and does not shadow <code>this</code> —
+inside an anonymous class <code>this</code> is the anonymous instance, while inside a lambda it is the
+enclosing object, and that difference has produced a great deal of confusion.</p>
+
+<h4>Where each one earns its place</h4>
+<p>Static nested for helpers and data holders. Inner for an object that is genuinely part of its parent —
+an <code>Iterator</code> over its own collection is the canonical example. Local for a class used once
+inside a single method, which is rare. Anonymous for the three cases above, and records for anything that
+is really just data.`,
 docs:[['Nested classes — dev.java','https://dev.java/learn/classes-objects/nested-classes/'],['Anonymous classes — Oracle tutorial','https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html']],
 ex:{title:'Three flavors, one file',
 prompt:`Write <code>Playlist</code>: (1) a <b>static nested</b> class <code>Track</code> (fields <code>String title; int seconds</code>, constructor). (2) A method <code>Comparator&lt;Track&gt; byLength()</code> returning an <b>anonymous class</b> implementing <code>Comparator&lt;Track&gt;</code> comparing by seconds with <code>Integer.compare</code>. (3) A method <code>Comparator&lt;Track&gt; byTitle()</code> returning the same idea as a <b>lambda</b> using <code>compareTo</code> on titles.`,
@@ -4966,7 +5118,30 @@ while (cur != null) {
     cur.next = prev;              // flip the arrow
     prev = cur; cur = next;       // advance
 }
-head = prev;</div>`,
+head = prev;</div>
+
+<h4>The cost that does not appear in the Big-O</h4>
+<p>On paper a linked list inserts in O(1) and an array list in O(n), which suggests the linked list should
+win. In practice it usually loses, and the reason is memory layout. An <code>ArrayList</code> holds its
+elements contiguously, so walking it streams through cache lines the CPU has already prefetched. A linked
+list holds a node object per element, scattered across the heap, so each step is a pointer chase and
+potentially a cache miss — and a cache miss costs roughly what a hundred arithmetic operations do.</p>
+<p>The O(1) insertion is also conditional: it is O(1) <i>once you are holding the node</i>. Reaching a
+position by index is O(n), so <code>list.get(i)</code> in a loop over a <code>LinkedList</code> is
+accidentally quadratic — a genuinely common performance bug.</p>
+
+<h4>When a linked structure is still right</h4>
+<p>When you hold a reference to the position already, and splice frequently: an LRU cache moving a node to
+the front, a scheduler moving tasks between queues, an intrusive list where the node lives inside the
+element. Note that Java's own <code>LinkedHashMap</code> uses exactly this — a linked list threaded through
+hash entries — to get insertion order without paying for lookup.</p>
+
+<h4>Why it remains worth building once</h4>
+<p>Writing the node class, the traversal, the insert and the delete teaches the pointer discipline that
+underlies trees, graphs and every intrusive structure you will meet later. The classic interview
+techniques — two pointers to find the middle or detect a cycle, reversing by rewiring rather than copying —
+are all rehearsals for reasoning about references. The data structure is rarely the right answer; the
+skill of manipulating references correctly always is.`,
 docs:[['LinkedList — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/LinkedList.html'],['Collection implementation trade-offs — Oracle','https://docs.oracle.com/javase/tutorial/collections/implementations/list.html']],
 ex:{title:'Your own singly linked list',
 prompt:`Build <code>IntList</code>: inner <code>static class Node</code> (int value, Node next), field <code>Node head</code>; <code>void addFirst(int v)</code> — O(1) head insert; <code>int size()</code> — walk and count; <code>java.util.List&lt;Integer&gt; toList()</code> — walk head→tail collecting values; and <code>void reverse()</code> — the in-place three-pointer re-linking (prev/cur/next), no arrays or collections allowed inside reverse.`,
@@ -5061,7 +5236,30 @@ new LinkedHashMap&lt;K, V&gt;(16, 0.75f, true) {     // true = access order!
         return size() &gt; maxEntries;             // evict least-recently-used
     }
 };</div>
-<p>Mutating a field that feeds hashCode while the object sits in a HashSet loses the object — use immutable keys (records). This LRU is real infrastructure: session caches, token caches, JWKS key caches — all this exact pattern.</p>`,
+<p>Mutating a field that feeds hashCode while the object sits in a HashSet loses the object — use immutable keys (records). This LRU is real infrastructure: session caches, token caches, JWKS key caches — all this exact pattern.</p>
+
+<h4>How a hash table actually finds things</h4>
+<p><code>hashCode()</code> chooses a bucket; <code>equals()</code> then distinguishes the entries inside
+it. Both steps are needed, which is exactly why the contract exists: equal objects must produce equal hash
+codes, or a lookup goes to the wrong bucket and the entry you stored becomes unreachable while still
+occupying memory.</p>
+<p>Two consequences follow. A <b>bad hash</b> — one that clusters — degrades O(1) to a scan, which is the
+basis of hash-collision denial of service and why Java's <code>HashMap</code> converts long collision
+chains into balanced trees. And a <b>mutable key</b> whose hash changes after insertion is stranded: it is
+in the table, and no lookup will ever find it again.</p>
+
+<h4>Load factor and resizing</h4>
+<p>A <code>HashMap</code> resizes when it is about 75% full, allocating a larger array and redistributing
+every entry. That is amortised O(1), but the individual resize is O(n) and it happens at an unpredictable
+moment — which matters in a latency-sensitive path. If you know roughly how many entries you will hold,
+sizing the map up front avoids several rounds of rehashing.</p>
+
+<h4>Why LinkedHashMap gives you an LRU cache almost free</h4>
+<p><code>LinkedHashMap</code> threads a doubly-linked list through its entries. Construct it with
+<code>accessOrder = true</code> and every <code>get</code> moves that entry to the end, so the eldest entry
+is always the least recently used — and overriding <code>removeEldestEntry</code> to return true past a
+size limit gives you a bounded LRU cache in a handful of lines. It is a neat demonstration of the general
+point: the interesting structures are usually two simple ones composed, not one clever one.`,
 docs:[['equals & hashCode contract — Object API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()'],['LinkedHashMap — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/LinkedHashMap.html']],
 ex:{title:'Build the LRU cache',
 prompt:`Build an <b>LRU (least-recently-used) cache</b>: it holds at most <code>maxEntries</code> entries, and inserting beyond that evicts the entry <b>accessed longest ago</b> (a get counts as an access). Write <code>LruCache&lt;K, V&gt; extends java.util.LinkedHashMap&lt;K, V&gt;</code>: field <code>int maxEntries</code>; constructor <code>LruCache(int maxEntries)</code> calling <code>super(16, 0.75f, true)</code> (the <code>true</code> = access order — the whole trick); override <code>protected boolean removeEldestEntry(java.util.Map.Entry&lt;K, V&gt; eldest)</code> returning <code>size() &gt; maxEntries</code>.`,
@@ -5870,7 +6068,34 @@ if (m.matches()) {
 }
 
 "a1b2c3".replaceAll("\\d", "#");            // "a#b#c#"
-Pattern.quote("price (USD)");               // matches those literal chars</div>`,
+Pattern.quote("price (USD)");               // matches those literal chars</div>
+
+<h4>Compile once — the mistake that shows up in profiles</h4>
+<p><code>"…".matches(regex)</code>, <code>replaceAll</code> and <code>split</code> compile the pattern on
+every single call. In a loop over a million log lines that is a million compilations, and it is one of the
+most common findings in a first CPU profile of a text-processing job. Hoist it:</p>
+<div class="codeSample">private static final Pattern TRACE = Pattern.compile("trace=([0-9a-f]+)");
+Matcher m = TRACE.matcher(line);   // cheap; the Pattern is shared and thread-safe</div>
+<p>The split is deliberate: a <code>Pattern</code> is immutable and safe to share across threads, while a
+<code>Matcher</code> holds the position of one attempt over one input and must never be shared. One static
+final Pattern per expression, a fresh Matcher per string.</p>
+
+<h4>Reading a Matcher without surprising yourself</h4>
+<p><code>find()</code> advances through the input and can be called repeatedly in a <code>while</code>
+loop; <code>matches()</code> anchors to the whole input and does not advance. Both must be called
+<i>before</i> <code>group()</code>, or you get <code>IllegalStateException: No match found</code> — the
+matcher genuinely has no result yet. <code>group(0)</code> is the whole match; <code>group(1)</code> the
+first capture. A group that did not participate returns <code>null</code>, which is not the same as an
+empty string and is worth checking when a pattern has alternation.</p>
+
+<h4>Where regex stops being the right tool</h4>
+<p>Two limits worth internalising. <b>Nested structure is out of reach</b>: HTML, JSON and balanced
+brackets are not regular languages, so a pattern that appears to work will fail on the first nested case —
+use a parser. And <b>catastrophic backtracking</b> is a denial-of-service risk when the pattern contains
+nested quantifiers such as <code>(a+)+</code> and the input is attacker-supplied; the engine explores
+exponentially many ways to match before giving up. Prefer possessive quantifiers or an anchored, specific
+pattern, and never build a pattern by concatenating untrusted input — <code>Pattern.quote</code> exists for
+exactly that.</p>`,
 docs:[['Pattern — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Pattern.html'],['Regex — dev.java tutorial','https://dev.java/learn/regex/'],['Matcher — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Matcher.html']],
 exs:[{title:'Log-line parser',
 prompt:`Write <code>LogParser</code> with a <code>private static final Pattern</code> named <code>LINE</code> using <b>named groups</b> <code>date</code>, <code>level</code>, <code>msg</code> to parse lines like <code>2026-07-17 ERROR disk is full</code> (date <code>\\d{4}-\\d{2}-\\d{2}</code>, level one of INFO/WARN/ERROR). Add <code>static String levelOf(String line)</code> that returns the level via <code>matches()</code> + <code>group("level")</code>, or <code>"UNKNOWN"</code> when the line doesn't match.`,
@@ -6332,7 +6557,34 @@ BinaryOperator&lt;Integer&gt; add = (a, b) -&gt; a + b;       // (T,T) → T
 
 names.removeIf(s -&gt; s.isBlank());
 list.sort((a, b) -&gt; a.compareToIgnoreCase(b));</div>
-<p>Multi-statement bodies use braces and an explicit <code>return</code>. Lambdas can read effectively-final local variables from the enclosing scope. Mark your own single-method interfaces <code>@FunctionalInterface</code>.</p>`,
+<p>Multi-statement bodies use braces and an explicit <code>return</code>. Lambdas can read effectively-final local variables from the enclosing scope. Mark your own single-method interfaces <code>@FunctionalInterface</code>.</p>
+
+<h4>What the compiler actually does with a lambda</h4>
+<p>A lambda is not an anonymous class with nicer syntax. Anonymous classes generate a separate class file
+and allocate an object every time; lambdas are compiled to an <code>invokedynamic</code> instruction and
+linked at first use, and a lambda that captures nothing can be reused rather than reallocated. The
+practical consequences: lambdas are cheaper in hot paths, they do not have their own <code>this</code>
+(inside a lambda <code>this</code> is the enclosing instance, which is usually what you wanted), and they
+appear in stack traces under synthetic names that take a moment to read.</p>
+
+<h4>The shapes worth memorising</h4>
+<p>Four interfaces cover most code, and knowing them by shape stops you inventing your own:</p>
+<div class="codeSample">Function&lt;T,R&gt;   R apply(T t)      // transform one thing into another
+Predicate&lt;T&gt;    boolean test(T t)  // answer a yes/no question about it
+Consumer&lt;T&gt;     void accept(T t)   // do something with it, return nothing
+Supplier&lt;T&gt;     T get()            // produce one, given nothing</div>
+<p>The primitive variants — <code>IntPredicate</code>, <code>ToLongFunction</code> and friends — exist to
+avoid boxing, which is why a stream over millions of <code>int</code>s should use <code>IntStream</code>
+rather than <code>Stream&lt;Integer&gt;</code>.</p>
+
+<h4>The rule that catches everyone</h4>
+<p>A lambda may only read local variables that are <b>effectively final</b> — assigned once and never
+reassigned. That is not arbitrary: the value is <i>captured by copy</i>, so allowing reassignment would
+give you two views of one variable that silently disagree. Fields are captured differently — through
+<code>this</code> — so a lambda can see later changes to a field, which is a genuine source of surprise
+when a lambda outlives the call that created it. And a checked exception cannot escape a lambda whose
+interface does not declare one, which is why pipelines calling IO-throwing code fill up with wrapper
+noise.</p>`,
 docs:[['Lambda Expressions — dev.java','https://dev.java/learn/lambdas/'],['java.util.function — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/package-summary.html']],
 ex:{title:'Think in functions',
 prompt:`Write class <code>Funcs</code> with three <code>static</code> fields: <code>Predicate&lt;String&gt; NON_BLANK</code> (true when the string is not blank), <code>Function&lt;Integer,Integer&gt; SQUARE</code> (returns its input times itself: 5 → 25), and <code>BinaryOperator&lt;Integer&gt; MAX</code> (returns the larger of two ints — use a lambda, you may call Math.max inside). Import from <code>java.util.function</code>.`,
@@ -7134,7 +7386,37 @@ static String describe(Shape s) {
         case Rect r                    -&gt; "rect";
     };
 }</div>
-<p><b>Record patterns</b> (Java 21) deconstruct in the case label — including nested: <code>case Line(Point(var x1, var y1), Point p2)</code>. <b>Guards</b> add a boolean with <code>when</code>. Order matters: cases are tested top-down, so guarded cases go before their unguarded catch-all.</p>`,
+<p><b>Record patterns</b> (Java 21) deconstruct in the case label — including nested: <code>case Line(Point(var x1, var y1), Point p2)</code>. <b>Guards</b> add a boolean with <code>when</code>. Order matters: cases are tested top-down, so guarded cases go before their unguarded catch-all.</p>
+
+<h4>What sealing actually buys</h4>
+<p><code>sealed</code> tells the compiler the complete list of permitted subtypes. That turns a switch over
+the type into something it can <b>check for exhaustiveness</b>: handle every permitted case and no
+<code>default</code> is needed, and — the valuable half — adding a new permitted subtype turns every switch
+that does not handle it into a compile error. The compiler finds the call sites instead of your users
+finding them.</p>
+<p>Each permitted subtype must declare its own intent: <code>final</code> (no further extension),
+<code>sealed</code> (a closed set beneath it) or <code>non-sealed</code> (deliberately reopened). There is
+no silent default, which is the point.</p>
+
+<h4>Records and patterns, and why they arrived together</h4>
+<p>A sealed interface with record implementations is Java's way of expressing a closed set of alternatives
+that carry data — what other languages call an algebraic data type. Pattern matching then destructures them
+in the same switch that dispatches on them:</p>
+<div class="codeSample">sealed interface Shape permits Circle, Square {}
+record Circle(double r) implements Shape {}
+record Square(double side) implements Shape {}
+
+double area = switch (shape) {
+    case Circle c -&gt; Math.PI * c.r() * c.r();
+    case Square s -&gt; s.side() * s.side();
+};   // exhaustive: no default, and a new Shape breaks this line at compile time</div>
+
+<h4>When to reach for it, and when not</h4>
+<p>Use it when the set of alternatives is genuinely closed and known to you: a protocol's message types,
+the states of a workflow, the result of a parse. Do <b>not</b> use it where you want third parties to
+extend your abstraction — that is what an ordinary interface is for, and sealing it is a deliberate
+statement that they may not. The choice between an open interface and a sealed one is a statement about who
+owns the set of cases, and it is worth making on purpose.`,
 docs:[['Sealed classes — JEP 409','https://openjdk.org/jeps/409'],['Record patterns — JEP 440','https://openjdk.org/jeps/440'],['Pattern matching for switch — JEP 441','https://openjdk.org/jeps/441']],
 ex:{title:'An exhaustive payment switch',
 prompt:`Model payments as a <code>sealed interface Payment permits Card, Cash, Transfer</code> with three <b>records</b>: <code>Card(String last4, double amount)</code>, <code>Cash(double amount)</code>, <code>Transfer(String iban, double amount)</code>. Write <code>static String receipt(Payment p)</code> as a pattern-matching <code>switch</code> using <b>record patterns</b>, with a <b>guarded</b> case first: any Card <code>when</code> amount &gt; 1000 returns <code>"card (verified)"</code>; otherwise Card → <code>"card ****"+last4</code>, Cash → <code>"cash"</code>, Transfer → <code>"transfer to "+iban</code>. No <code>default</code> branch — the sealed hierarchy makes it exhaustive.`,
@@ -7187,7 +7469,39 @@ Gson gson = new Gson();                     // class loaded from the jar at runt
 
 // where things come from: Maven Central (search.maven.org) hosts the jars;
 // your pom/build.gradle names GAV coordinates; the tool resolves + caches them.</div>
-<p>So "importing an SDK" is really three steps: declare the coordinate in the build file → tool downloads it to the local cache and puts it on the classpath → your <code>import</code> statements compile. The JDK's own classes (java.util, java.net.http) need no dependency — they ship with the runtime; only <code>java.lang</code> needs no import.</p>`,
+<p>So "importing an SDK" is really three steps: declare the coordinate in the build file → tool downloads it to the local cache and puts it on the classpath → your <code>import</code> statements compile. The JDK's own classes (java.util, java.net.http) need no dependency — they ship with the runtime; only <code>java.lang</code> needs no import.</p>
+
+<h4>What the classpath actually is</h4>
+<p>An ordered list of places to look for <code>.class</code> files — directories and jars. When the JVM
+needs <code>com.acme.Order</code> it asks the class loader, which walks that list and takes the
+<b>first</b> match. Two consequences follow, and both cause real incidents.</p>
+<p><b>Order decides the winner.</b> If two jars contain the same class, the earlier one wins silently and
+the later one is invisible — no warning, no error, just behaviour from a version you did not expect. That
+is the classic "it works locally" bug, because the local and CI classpath order differ.</p>
+<p><b>An import is not a dependency.</b> <code>import</code> is compile-time shorthand so you can write
+<code>Order</code> instead of the fully qualified name; it loads nothing. The dependency is what put the
+jar on the classpath, which is why removing an import never fixes a
+<code>NoClassDefFoundError</code>.</p>
+
+<h4>Reading the three failures</h4>
+<ul>
+<li><b><code>ClassNotFoundException</code></b> — something asked for a class by name at runtime and no jar
+on the classpath had it. Usually a missing dependency, or one marked <code>provided</code> that nothing
+provided.</li>
+<li><b><code>NoClassDefFoundError</code></b> — it was present at compile time and is missing now. Almost
+always a packaging problem: the fat jar did not include it, or the runtime classpath differs from the build
+one.</li>
+<li><b><code>NoSuchMethodError</code></b> — the class is there but a different version of it. This is
+diamond dependency hell: two libraries want incompatible versions of a third, and the resolver picked one.
+<code>mvn dependency:tree</code> shows you which, and a <code>dependencyManagement</code> entry pins it.</li>
+</ul>
+
+<h4>Why the module system exists, and why most projects still do not use it</h4>
+<p>Every problem above comes from a flat, unverified list. JPMS replaces it with a module graph that is
+checked at startup — missing dependencies fail immediately rather than at first use, and split packages are
+rejected outright. Most applications still run on the classpath because the ecosystem migration is
+substantial and the payoff is largest for libraries; the JPMS lesson later in the course covers the trade
+in full.`,
 docs:[['Classpath — Oracle','https://docs.oracle.com/javase/8/docs/technotes/tools/unix/classpath.html'],['Using package members / imports — Oracle','https://docs.oracle.com/javase/tutorial/java/package/usepkgs.html'],['Maven Central search','https://central.sonatype.com/']],
 ex:{title:'Classpath forensics',lang:'shell',
 prompt:`Answer one per numbered line: (1) the command compiling <code>src/App.java</code> into <code>out/</code> with <code>lib/gson-2.11.0.jar</code> on the classpath, (2) the command running class <code>App</code> with both <code>out</code> and that jar on the classpath (macOS/Linux separator), (3) the import statement for <code>com.google.gson.Gson</code>, (4) the error you get at RUNTIME when a class present at compile time is missing from the runtime classpath, (5) the directory where Maven caches downloaded dependencies, (6) the term for dependencies your dependencies pull in.`,
@@ -7591,7 +7905,35 @@ include 'api', 'core'
     ├── test/java/com/example/svc/   # mirrors main — tooling depends on this
     └── test/resources/</div>
 <p><b>Under the hood</b>, when you run <code>./mvnw verify</code>: the wrapper downloads the pinned Maven version → Maven reads the POM, resolves the dependency graph (local cache <code>~/.m2</code> first, then Central), builds the compile/test classpaths → plugins bound to each lifecycle phase run in order (compiler → surefire tests → jar → failsafe). "Convention over configuration" is why there is no config for any of this: the standard layout IS the contract the plugins rely on.</p>
-<p>The senior habits: wrapper committed (never "install maven 3.9 first"), versions pinned (no version ranges), formatter + linter as build plugins (Spotless — style debates end), tests and CI wired before the first feature, one-command onboarding (<code>git clone && ./mvnw verify</code> must just work), and a <code>.gitignore</code> that keeps build output and IDE noise out of review forever.</p>`,
+<p>The senior habits: wrapper committed (never "install maven 3.9 first"), versions pinned (no version ranges), formatter + linter as build plugins (Spotless — style debates end), tests and CI wired before the first feature, one-command onboarding (<code>git clone && ./mvnw verify</code> must just work), and a <code>.gitignore</code> that keeps build output and IDE noise out of review forever.</p>
+
+<h4>Why the wrapper is not optional</h4>
+<p>Committing <code>mvnw</code> or <code>gradlew</code> means a new machine — a colleague's laptop, a CI
+runner, your own in two years — builds with the <i>same</i> build tool version you used, downloaded
+automatically. Without it the README acquires a line saying "install Maven 3.9 first", and that line is
+where reproducibility ends. It is the same argument as pinning dependencies, applied to the thing that
+resolves dependencies.</p>
+
+<h4>The checklist, and the reason behind each item</h4>
+<ul>
+<li><b>Pin every version.</b> A version range means today's build and tomorrow's differ for reasons nobody
+recorded. Use a dependency-management block so the version appears once.</li>
+<li><b>One command builds and tests it.</b> If the README needs four steps in order, the fourth one gets
+skipped.</li>
+<li><b>Fail the build on what matters</b> — test failures obviously, and ideally a coverage floor and a
+vulnerability scan. A warning nobody is obliged to read is not a control.</li>
+<li><b>.gitignore before the first commit.</b> Removing <code>target/</code> or a stray <code>.env</code>
+from history afterwards is far more work than adding a line up front.</li>
+<li><b>A README that says what it is, how to run it, and how to test it</b> — in that order, in the first
+screen.</li>
+</ul>
+
+<h4>The convention that makes all of it work</h4>
+<p>Maven's standard layout is not a suggestion, it is the contract the plugins rely on: source in
+<code>src/main/java</code>, tests in <code>src/test/java</code>, resources beside them. That is why a
+correctly laid out project needs almost no configuration — and why a project that fought the convention
+carries pages of it. When a build file is unusually long, the first question is which convention it is
+working around.</p>`,
 docs:[['Standard directory layout — Maven','https://maven.apache.org/guides/introduction/introduction-to-the-standard-directory-layout.html'],['Maven wrapper','https://maven.apache.org/wrapper/'],['Spotless plugin','https://github.com/diffplug/spotless']],
 ex:{title:'Bootstrap checklist',lang:'shell',
 prompt:`One per numbered line: (1) the command that adds the Maven wrapper to a project, (2) the three most important <code>.gitignore</code> entries for a Maven + IntelliJ project (one line, space-separated), (3) the standard directory for production code of package <code>com.example.svc</code> (full path from project root), (4) the single command a new teammate should need after cloning, (5) which file pins the exact Maven version the wrapper uses.`,
@@ -7678,7 +8020,30 @@ git commit -m "Update notes"
 
 git log --oneline                 # the story so far, one line per commit</div>
 <p>Read <code>git status</code> obsessively — it names every state and even prints the command to move each file to the next one. The two diffs matter: plain <code>git diff</code> is working-vs-staged ("what have I not yet staged?"), <code>git diff --staged</code> is staged-vs-committed ("what am I about to commit?"). Checking the second before every commit is the habit that prevents "oops, that wasn't meant to go in".</p>
-<p>Commit messages: imperative mood, say <i>why</i> when it isn't obvious. "Add notes", not "added some stuff".</p>`,
+<p>Commit messages: imperative mood, say <i>why</i> when it isn't obvious. "Add notes", not "added some stuff".</p>
+
+<h4>Three places a file can be, and the two diffs that show them</h4>
+<p>Every tracked file exists in three states at once: the <b>working tree</b> (what you edited), the
+<b>index</b> (what will go into the next commit), and <b>HEAD</b> (what the last commit recorded). Almost
+every confusing moment in git is a question about which pair you are looking at:</p>
+<div class="codeSample">git diff             # working tree vs index — "what have I NOT staged?"
+git diff --staged    # index vs HEAD       — "what am I ABOUT to commit?"
+git status           # names all three, and prints the command to move between them</div>
+<p>Read <code>git status</code> obsessively while learning. It is unusually good documentation: it tells
+you the state and the command that changes it.</p>
+
+<h4>What a commit records</h4>
+<p>Not a diff — a <b>snapshot</b> of the whole tracked tree, plus a pointer to its parent, an author, a
+timestamp and a message. Diffs are computed on demand by comparing snapshots. That is why branching is
+cheap, why history is a graph rather than a stack of patches, and why a commit hash identifies an exact
+state of the entire project rather than a change to part of it.</p>
+
+<h4>Messages, and why the effort is repaid</h4>
+<p>Write the subject in the imperative — "Add notes", not "Added some stuff" — because git's own generated
+messages read that way and the line completes the sentence "this commit will…". Then, when it is not
+obvious, say <b>why</b> in the body. The what is in the diff and always will be; the why exists only in
+your head until you write it down, and it is what the next person needs, including you in six months
+reading <code>git blame</code> on a line you do not remember writing.`,
 docs:[['git status','https://git-scm.com/docs/git-status'],['git diff','https://git-scm.com/docs/git-diff'],['Pro Git — recording changes','https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository']],
 ex:{title:'The single-file drill',lang:'shell',
 prompt:`You are in an empty folder with one file, <code>notes.txt</code>, already created. One command per numbered line: (1) turn the folder into a git repository, (2) show the state of the working tree, (3) stage <code>notes.txt</code>, (4) commit with message <code>Add notes</code>, (5) after editing the file — show the <b>unstaged</b> changes, (6) stage it and show what is <b>about to be committed</b> (two commands joined with <code>&amp;&amp;</code>), (7) commit with message <code>Update notes</code>, (8) show the compact one-line history.`,
@@ -7724,7 +8089,31 @@ git rm scratch.txt                  # delete AND stage the deletion</div>
 <li><b>Hunk staging</b> — <code>git add -p notes.txt</code> walks each change block asking stage/skip: two unrelated edits in ONE file can become two clean commits.</li>
 <li><b>Let git see renames</b> — <code>git mv</code> keeps history following the file; <code>git log --follow tasks.txt</code> traces through the rename.</li>
 <li><b>Review shape, not just content</b> — <code>git log --stat</code> shows which files each commit touched; a commit touching 14 files named "fix typo" is lying about something.</li>
-</ul>`,
+</ul>
+
+<h4>Why the staging area exists at all</h4>
+<p>Most version-control systems commit everything you changed. Git inserts a deliberate step between
+"changed" and "recorded" so a commit can be <i>composed</i> rather than merely captured. That matters
+because the commit is the unit of review, revert and cherry-pick: a commit containing one logical change
+can be understood in isolation and undone without collateral damage, and one containing everything you did
+on Tuesday cannot.</p>
+
+<h4>Composing a commit from a messy working tree</h4>
+<div class="codeSample">git add -p            # walk the changes hunk by hunk, choosing what belongs
+git diff --staged     # read exactly what is about to be committed
+git restore --staged src/Other.java   # pulled in something that does not belong? take it back out</div>
+<p><code>git add -p</code> is the tool that makes this practical. Work rarely arrives in tidy units — you
+fix a bug and notice a typo and rename a variable — and hunk-level staging lets you separate them
+afterwards rather than pretending you worked tidily.</p>
+
+<h4>The habit that prevents the embarrassing commit</h4>
+<p>Read <code>git diff --staged</code> before every commit. It is the last moment before the change becomes
+history, and it is where you catch the debug print, the commented-out block, the credential you pasted in
+while testing. Two minutes there saves a follow-up commit titled "remove debugging" — or a rotation of a
+leaked key.</p>
+<p>And note what <code>git add</code> actually records: the content <i>at that moment</i>. Edit the file
+afterwards and the later edit is not staged, which is why <code>git status</code> can show one file as both
+staged and modified. That is not a bug; it is the staging area doing exactly what it exists for.`,
 docs:[['git add (incl. -p)','https://git-scm.com/docs/git-add'],['git mv','https://git-scm.com/docs/git-mv'],['Pro Git — viewing history','https://git-scm.com/book/en/v2/Git-Basics-Viewing-the-Commit-History']],
 ex:{title:'The two-file drill',lang:'shell',
 prompt:`Both <code>notes.txt</code> (modified) and <code>todo.txt</code> (brand new) have changes. One command per numbered line: (1) stage <b>only</b> <code>todo.txt</code>, (2) commit with message <code>Add todo list</code>, (3) stage <code>notes.txt</code> interactively, <b>hunk by hunk</b> (the -p flag), (4) commit with message <code>Update notes</code>, (5) show the history <b>with per-file statistics</b>, (6) rename <code>todo.txt</code> to <code>tasks.txt</code> the git way, (7) show the full changes introduced by the latest commit (one command, no arguments needed).`,
@@ -7800,7 +8189,30 @@ day 2: shipped the feature
 day 2: fixed the bug
 &gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/tags</div>
 <p>Nothing is broken: edit the file to the text you actually want (removing the markers), <code>git add</code> it, <code>git commit</code>. That's the entire resolution protocol. <code>git merge --abort</code> backs out entirely if you want to think first. Conflicts are not errors — they are git refusing to guess between two truths.</p>
-<p>Branch hygiene: short-lived branches, named by intent (<code>feature/…</code>, <code>fix/…</code>), merged within days. The longer a branch lives, the bigger the merge.</p>`,
+<p>Branch hygiene: short-lived branches, named by intent (<code>feature/…</code>, <code>fix/…</code>), merged within days. The longer a branch lives, the bigger the merge.</p>
+
+<h4>What a merge conflict actually is</h4>
+<p>Git merges by comparing both branches against their <b>common ancestor</b>. If one side changed a region
+and the other did not, it takes the change without asking. A conflict means <i>both</i> sides changed the
+same region, so there is no answer derivable from the history — the markers are git declining to guess
+rather than failing.</p>
+<p>Which means the resolution is rarely "pick a side". It is usually to write the version that expresses
+both intentions, then run the tests, because a syntactically clean merge of two logically incompatible
+changes compiles perfectly and behaves wrongly.</p>
+
+<h4>Merge or rebase</h4>
+<p><b>Merge</b> preserves what actually happened, including the fact that two lines of work existed. It
+creates a merge commit and the history is a graph. <b>Rebase</b> replays your commits onto the new base,
+producing a straight line that is easier to read and that never happened. Both are defensible; the
+non-negotiable part is that rebase rewrites commits, so it belongs to work you have not shared.</p>
+
+<h4>Keeping branches cheap</h4>
+<p>The cost of a branch is not the branch, it is the <b>divergence</b>, and divergence grows with time.
+A branch open for a day merges itself; one open for three weeks becomes a negotiation. That is the entire
+argument for continuous integration — merging main into your branch daily, or rebasing onto it, converts
+one large painful merge into a series of trivial ones.</p>
+<p>Delete branches after merging. A repository with two hundred stale branches makes it impossible to tell
+which represent work in progress, and git keeps the commits regardless.`,
 docs:[['Basic branching & merging — Pro Git','https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging'],['git switch','https://git-scm.com/docs/git-switch'],['git merge','https://git-scm.com/docs/git-merge']],
 ex:{title:'The branch cycle drill',lang:'shell',
 prompt:`One command per numbered line: (1) create <b>and switch to</b> branch <code>feature/tags</code> (the modern <code>switch</code> form), (2) stage <b>both</b> <code>notes.txt</code> and <code>tasks.txt</code> in one command naming them, (3) commit with message <code>Add tagging</code>, (4) switch back to <code>main</code>, (5) merge the feature branch in, (6) delete the merged branch, (7) show the history as a <b>graph</b>, one line per commit (two flags).`,
@@ -7837,7 +8249,30 @@ hints:['switch -c = create + switch. The older spelling checkout -b does the sam
    working dir only          staged                    committed & pushed
    git restore FILE          git restore --staged F    git revert HASH
    (edits gone)              (edits kept)              (inverse commit)
-              lost something? → git reflog → git switch -c rescue HASH</div>`,
+              lost something? → git reflog → git switch -c rescue HASH</div>
+
+<h4>The question that picks the tool</h4>
+<p><b>Has it been pushed?</b> That single question splits the toolbox in two. Unpushed history is yours to
+rewrite — <code>reset</code>, <code>amend</code> and <code>rebase</code> are all fair game. Pushed history
+belongs to everyone who has pulled it, so the only safe undo is one that <i>adds</i> a commit:
+<code>revert</code>. Force-pushing a shared branch is not an undo, it is a problem you have handed to every
+colleague simultaneously.</p>
+
+<h4>The three resets, in one line each</h4>
+<div class="codeSample">git reset --soft HEAD~1    # undo the commit, keep everything STAGED
+git reset HEAD~1           # undo the commit, keep the changes unstaged  (--mixed, the default)
+git reset --hard HEAD~1    # undo the commit AND throw the changes away</div>
+<p>Only the last one destroys anything, and it destroys only what was never committed. That is the key to
+the confidence: <b>a commit is almost impossible to lose.</b> Even after a bad reset or rebase, the commit
+still exists and <code>git reflog</code> knows where HEAD has been, so recovery is usually
+<code>git reset --hard abc123</code> away.</p>
+
+<h4>What genuinely cannot be recovered</h4>
+<p>Three things, and knowing them tells you where to be careful: uncommitted working-tree changes wiped by
+<code>reset --hard</code> or <code>restore</code>; untracked files removed by <code>git clean -fd</code>;
+and anything from before your first commit. Everything else is reachable. The practical habit is to commit
+early and often — even a rough commit turns a destructive mistake into a recoverable one, and you can tidy
+the history afterwards while it is still unpushed.</p>`,
 docs:[['git restore','https://git-scm.com/docs/git-restore'],['git revert','https://git-scm.com/docs/git-revert'],['git stash','https://git-scm.com/docs/git-stash'],['git reflog','https://git-scm.com/docs/git-reflog']],
 ex:{title:'Undo triage',lang:'shell',
 prompt:`For each scenario write ONE command on the numbered line: (1) throw away your uncommitted edits to <code>notes.txt</code>, (2) unstage <code>notes.txt</code> but keep the edits, (3) undo commit <code>abc123</code> that is already pushed to main, (4) shelve all your dirty work quickly to switch branches, (5) bring the shelved work back (and drop it from the shelf), (6) show the log of everywhere HEAD has pointed — your safety net.`,
@@ -9594,7 +10029,33 @@ curl -X POST https://api.dojo.dev/users \\
 curl -X PUT ... -d @payload.json                           # body from a file
 curl -o out.json -w "%{http_code}\\n" ...                  # save body, print status
 curl -L ...                                                # follow redirects</div>
-<p>Debugging ritual: reproduce with curl first — it strips away SDKs, retries and frameworks until only the HTTP truth remains. If curl works and your code doesn't, diff the headers with <code>-v</code>.</p>`,
+<p>Debugging ritual: reproduce with curl first — it strips away SDKs, retries and frameworks until only the HTTP truth remains. If curl works and your code doesn't, diff the headers with <code>-v</code>.</p>
+
+<h4>The headers that decide whether your request works at all</h4>
+<p><code>Content-Type</code> describes what you are <i>sending</i>; <code>Accept</code> describes what you
+want <i>back</i>. Confusing them produces the two most-searched status codes in API work: <b>415
+Unsupported Media Type</b> means the server does not accept what you sent, <b>406 Not Acceptable</b> means
+it cannot produce what you asked for. Neither is about authentication, and both are read as "the API is
+broken" by people who have not internalised the distinction.</p>
+<p><code>Authorization</code> is a request header and never a query parameter — a token in a URL lands in
+browser history, proxy logs and the <code>Referer</code> sent to the next site. If you find yourself
+putting a credential in a query string, that is the signal to stop.</p>
+
+<h4>curl flags worth knowing by heart</h4>
+<div class="codeSample">curl -i https://api.example.com/orders          # -i: response headers WITH the body
+curl -v ...                                     # -v: the full exchange, request headers included
+curl -X POST -H 'Content-Type: application/json' -d '{"a":1}' ...
+curl -H 'Accept: application/json' -w '\n%{http_code} %{time_total}s\n' -o /dev/null -s ...
+curl --fail ...            # non-zero exit on 4xx/5xx — the flag that makes curl safe in a script</div>
+<p><code>--fail</code> matters more than it looks: without it curl exits 0 on a 500 and prints the error
+body, so a shell script "succeeds" while receiving an error page. That is the same class of bug as a
+pipeline reporting only its last command's status.</p>
+
+<h4>The debugging ritual, and why it works</h4>
+<p>Reproduce with curl before touching the code. An SDK adds retries, default headers, connection pooling
+and its own serialisation, so a failure inside it has half a dozen candidate causes. curl removes all of
+them and leaves the HTTP truth. If curl succeeds and your client does not, run both with headers visible
+and <b>diff them</b> — the difference is nearly always a header you did not know your SDK was setting.</p>`,
 docs:[['HTTP headers — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers'],['curl docs','https://curl.se/docs/manpage.html'],['Everything curl (book)','https://everything.curl.dev/']],
 ex:{title:'curl drill',lang:'shell',
 prompt:`One per numbered line: (1) GET <code>https://api.dojo.dev/me</code> with a bearer token from <code>$TOKEN</code> and <code>Accept: application/json</code>, (2) POST <code>{"name": "Ada"}</code> to <code>https://api.dojo.dev/users</code> with the right Content-Type, (3) the same GET as (1) but showing <b>response headers</b> too, (4) fetch <code>https://api.dojo.dev/report</code> saving the body to <code>report.json</code> while printing the status code, (5) which header pair the server/client use for conditional caching (name both, comma-separated).`,
@@ -10745,7 +11206,31 @@ public class WelcomeListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     void provisionAccess(UserRegistered e) { ... }   // 3) only after the tx COMMITS
 }</div>
-<p>The traps that separate senior from junior here: plain <code>@EventListener</code> is <b>synchronous</b> — a slow listener slows the publisher, a throwing listener rolls back the publisher's transaction. <code>@Async</code> needs <code>@EnableAsync</code> on a config class (and a sensible executor — virtual threads shine). And the big one: side effects that must only happen if the data is really saved (emails, provisioning, webhooks) belong in <code>@TransactionalEventListener(AFTER_COMMIT)</code> — otherwise a rollback leaves you having emailed about a user that doesn't exist. Beyond one process, the same pattern scales out via Kafka/RabbitMQ (Spring Cloud Stream) with the <b>transactional outbox</b> pattern replacing AFTER_COMMIT.</p>`,
+<p>The traps that separate senior from junior here: plain <code>@EventListener</code> is <b>synchronous</b> — a slow listener slows the publisher, a throwing listener rolls back the publisher's transaction. <code>@Async</code> needs <code>@EnableAsync</code> on a config class (and a sensible executor — virtual threads shine). And the big one: side effects that must only happen if the data is really saved (emails, provisioning, webhooks) belong in <code>@TransactionalEventListener(AFTER_COMMIT)</code> — otherwise a rollback leaves you having emailed about a user that doesn't exist. Beyond one process, the same pattern scales out via Kafka/RabbitMQ (Spring Cloud Stream) with the <b>transactional outbox</b> pattern replacing AFTER_COMMIT.</p>
+
+<h4>What an application event actually decouples</h4>
+<p>The publisher names a fact — "an order was placed" — and does not know who reacts. That is the benefit
+and the cost in one sentence. The benefit is that adding a reaction requires no change to the publisher.
+The cost is that reading the publisher no longer tells you what happens next, so the indirection has to
+earn its place: use it for genuine fan-out, not to avoid a method call.</p>
+
+<h4>Synchronous by default, and why that surprises people</h4>
+<p>An <code>@EventListener</code> runs on the <b>publishing thread</b>, inside the publisher's transaction,
+before <code>publishEvent</code> returns. So a slow listener slows the request that triggered it, and a
+listener that throws propagates back into the publisher — which can roll back the transaction that
+published the event. Neither is wrong, but both are the opposite of what "event" suggests to most people.</p>
+<div class="codeSample">@TransactionalEventListener(phase = AFTER_COMMIT)   // only if the data actually committed
+@Async                                              // and on another thread, if it should not block</div>
+
+<h4>The bug this prevents, and the one it introduces</h4>
+<p><code>AFTER_COMMIT</code> exists because of a specific failure: sending a confirmation email for an order
+whose transaction then rolled back. The customer has an email and you have no order. Publishing after
+commit removes that class of bug entirely.</p>
+<p>It introduces the opposite one. After the commit, the event is no longer transactional — if the listener
+fails, the data is committed and the reaction never happened, with nothing to retry it. In-process events
+are therefore fine for cache eviction, metrics and in-app notifications, and not sufficient when another
+system must learn about the change. That is what the outbox pattern in the messaging lesson is for, and the
+distinction is worth making deliberately rather than discovering it in production.`,
 docs:[['Application events — Spring','https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events'],['@TransactionalEventListener — API','https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html'],['@Async — Spring','https://docs.spring.io/spring-framework/reference/integration/scheduling.html#scheduling-annotation-support-async']],
 ex:{title:'Announce, then react',
 prompt:`Build the pipeline: (1) <code>record UserRegistered(String userId, String email)</code>. (2) <code>@Service class RegistrationService</code> with constructor-injected <code>ApplicationEventPublisher</code> and <code>@Transactional void register(String userId, String email)</code> that calls <code>events.publishEvent(new UserRegistered(...))</code>. (3) <code>@Component class WelcomeListener</code> with an <code>@Async @EventListener</code> method <code>sendEmail(UserRegistered e)</code> and a <code>@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)</code> method <code>provision(UserRegistered e)</code>. (4) <code>@Configuration @EnableAsync class AsyncConfig</code>.`,
@@ -10830,7 +11315,32 @@ Mono&lt;UserDto&gt; byId(@PathVariable String id) {
 @GetMapping(value = "/ticks", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 Flux&lt;Long&gt; ticks() {
     return Flux.interval(Duration.ofSeconds(1)).take(10);   // SSE stream
-}</div>`,
+}</div>
+
+<h4>The problem it was built for</h4>
+<p>A thread-per-request server holds a whole thread — a megabyte of stack and a scheduler slot — while a
+request waits on a database. Under heavy I/O the threads are nearly all idle and you are out of them
+anyway. Reactive programming removes the waiting: work is expressed as a pipeline of callbacks that the
+runtime resumes when data arrives, so a handful of threads serve thousands of concurrent requests.</p>
+<p><code>Mono</code> is zero or one result, <code>Flux</code> is many, and <b>nothing runs until you
+subscribe</b> — a pipeline you build and never subscribe to simply does nothing, which is the first
+surprise everyone meets.</p>
+
+<h4>What it costs</h4>
+<p>The debugger stops helping. Stack traces show reactor internals rather than your call path, breakpoints
+land in scheduler code, and a blocking call accidentally left in a reactive chain stalls an event loop that
+serves everyone — a failure with no local symptom. Reasoning about the code is a genuinely different skill,
+and it is one every maintainer must also have.</p>
+
+<h4>Why virtual threads changed the argument</h4>
+<p>The cost of blocking I/O was never the syntax; it was the thread. Virtual threads make a blocked thread
+almost free, so ordinary sequential code — real stack traces, working debuggers, plain try/finally — now
+scales the way reactive code does. For most new services that removes the main reason to pay the reactive
+tax.</p>
+<p>What remains genuinely reactive territory is <b>streaming</b> and <b>backpressure</b>: server-sent
+events, long-lived subscriptions, and pipelines where a fast producer must be told to slow down. That is
+what Reactor expresses well and what virtual threads do not address at all. The honest position for 2026:
+choose reactive for streams and demand signalling, not for concurrency.`,
 docs:[['Project Reactor reference','https://projectreactor.io/docs/core/release/reference/'],['Spring WebFlux reference','https://docs.spring.io/spring-framework/reference/web/webflux.html'],['Which operator do I need? — Reactor','https://projectreactor.io/docs/core/release/reference/#which-operator']],
 ex:{title:'A non-blocking user endpoint',
 prompt:`Write <code>UserService</code> with: (1) <code>Flux&lt;String&gt; activeNames(Flux&lt;User&gt; users)</code> — <code>filter</code> active users, <code>map</code> to <code>getName()</code>, <code>take(50)</code>; (2) <code>Mono&lt;User&gt; byId(String id)</code> — call <code>repo.findById(id)</code> (returns <code>Mono&lt;User&gt;</code>) and use <code>switchIfEmpty</code> with <code>Mono.error(new IllegalStateException("not found"))</code>. Do <b>not</b> call <code>subscribe()</code> or <code>block()</code> anywhere — the framework subscribes.`,
@@ -10888,7 +11398,33 @@ void onOrder(String payload) {
     if (processed.contains(evt.eventId())) return;   // idempotency guard
     charge(evt);
     processed.add(evt.eventId());
-}</div>`,
+}</div>
+
+<h4>The two guarantees, and why exactly-once is not one of them</h4>
+<p>Brokers offer <b>at-most-once</b> (fire and forget, messages can be lost) or <b>at-least-once</b>
+(acknowledged, messages can be duplicated). Everyone wants exactly-once, and end to end it does not exist:
+the acknowledgement can be lost after the work is done, so the sender cannot tell "did not happen" from
+"happened but I did not hear". What you can build is <b>at-least-once delivery with an idempotent
+consumer</b>, which produces an exactly-once <i>effect</i>. That is the real design, and it puts the
+responsibility on the consumer rather than the broker.</p>
+
+<h4>Why the outbox pattern exists</h4>
+<p>The problem it solves is sharp: you must update the database and publish an event, and there is no
+transaction spanning both. Write first and the publish can fail, leaving the world unaware. Publish first
+and the write can fail, leaving an event about something that never happened.</p>
+<p>The outbox removes the second system from the transaction. The event is inserted into an
+<code>outbox</code> table in the <i>same</i> transaction as the data, and a relay reads that table and
+publishes afterwards. Either both are committed or neither is, and the relay's retries are safe because the
+consumer is idempotent.</p>
+
+<h4>Ordering, and what it costs</h4>
+<p>Kafka orders messages within a <b>partition</b>, not within a topic — so ordering is per key, and the
+key you choose is a design decision. Order by account id and events for one account stay ordered while
+different accounts proceed in parallel. Ask for global ordering and you have asked for one partition, which
+means one consumer and no horizontal scale.</p>
+<p>Finally, plan for the message you cannot process: a dead-letter queue plus an alert on its depth. Without
+one, a single malformed message either blocks the partition forever or is silently dropped, and both are
+discovered late.`,
 docs:[['Spring for Apache Kafka reference','https://docs.spring.io/spring-kafka/reference/'],['Kafka introduction','https://kafka.apache.org/intro'],['Transactional outbox — microservices.io','https://microservices.io/patterns/data/transactional-outbox.html']],
 ex:{title:'Publish & consume order events',
 prompt:`Write <code>OrderEvents</code>: (1) a field <code>KafkaTemplate&lt;String, String&gt; kafka</code>; (2) <code>void publish(String orderId, String payload)</code> that sends to topic <code>"orders"</code> with <code>orderId</code> as the <b>key</b> (ordering per order); (3) a consumer method <code>void onOrder(String payload)</code> annotated <code>@KafkaListener(topics = "orders", groupId = "billing")</code> that skips already-processed payloads using a <code>Set&lt;String&gt; processed</code> (idempotency) before calling <code>handle(payload)</code>.`,
@@ -10954,7 +11490,33 @@ void update(User user) { repo.save(user); }          // stale entry dropped
         .expireAfterWrite(Duration.ofMinutes(10)));
     return m;
 }</div>
-<p>The three classic cache bugs: <b>staleness</b> (evict on every write path — the hard part of cache invalidation), <b>unbounded growth</b> (always set <code>maximumSize</code>), and <b>stampede</b> (a hot key expires and a thousand requests hit the DB at once — Caffeine's <code>refreshAfterWrite</code> serves the old value while one thread reloads). And never cache mutable objects you then modify — you'll corrupt the cache in place.</p>`,
+<p>The three classic cache bugs: <b>staleness</b> (evict on every write path — the hard part of cache invalidation), <b>unbounded growth</b> (always set <code>maximumSize</code>), and <b>stampede</b> (a hot key expires and a thousand requests hit the DB at once — Caffeine's <code>refreshAfterWrite</code> serves the old value while one thread reloads). And never cache mutable objects you then modify — you'll corrupt the cache in place.</p>
+
+<h4>The two questions to answer before adding a cache</h4>
+<p><b>What is the correct staleness?</b> Not "is stale data acceptable" — it always is, briefly — but how
+many seconds of wrongness this particular data can carry. A product price and a session token have very
+different answers, and a cache without a stated answer is a bug waiting for a customer to find.</p>
+<p><b>What is the hit rate?</b> A cache below roughly 80% hits is often adding a lookup, a serialisation
+and a network hop to buy very little. Measure before and after; "we added caching" without a hit-rate
+number is not an optimisation, it is a hope.</p>
+
+<h4>Invalidation, and why it is the hard half</h4>
+<p>There are only three strategies, and every system uses some mix. <b>TTL</b> is the simplest and the only
+one that needs no discipline — the data is wrong for at most N seconds, by design. <b>Explicit eviction</b>
+on write is correct and requires every write path to remember, including the batch job somebody added last
+month. <b>Versioned keys</b> sidestep invalidation entirely by making the key contain the version, so old
+entries are never read and simply age out.</p>
+<p>The failure mode people underestimate is the <b>cache as a hidden dependency</b>: a 99% hit rate means
+the database is sized for the surviving 1%, so a flush or a restart sends a hundred times its expected load
+at it. Stagger your TTLs so keys do not all expire together, and use request coalescing so one miss does
+not become a thousand identical queries.</p>
+
+<h4>Choosing a layer</h4>
+<p>In-process is nanoseconds and per-instance, so it is right for hot, small, read-mostly data where each
+node disagreeing slightly is harmless — reference data, compiled patterns, feature flags. Distributed costs
+a millisecond and buys agreement, so it is right for anything a user must see consistently across
+instances. Many systems want both: a local cache in front of Redis, with a short local TTL to bound the
+disagreement.</p>`,
 docs:[['Caffeine — GitHub','https://github.com/ben-manes/caffeine'],['Spring cache abstraction','https://docs.spring.io/spring-framework/reference/integration/cache.html'],['Spring Boot caching guide','https://docs.spring.io/spring-boot/reference/io/caching.html']],
 ex:{title:'Cache the user lookups',
 prompt:`Write <code>UserCacheConfig</code> annotated <code>@EnableCaching</code> containing a <code>@Bean</code> method returning a <code>CaffeineCacheManager</code> for cache <code>"users"</code> configured with <code>maximumSize(10_000)</code> and <code>expireAfterWrite(Duration.ofMinutes(10))</code>. Then a <code>UserService</code> with <code>@Cacheable(value = "users", key = "#id")</code> on <code>byId(long id)</code> and <code>@CacheEvict(value = "users", key = "#user.id")</code> on <code>update(User user)</code>.`,
@@ -13552,7 +14114,34 @@ LIMIT 10 OFFSET 20;                -- page 3 of 10-per-page</div>
 <li><b>DISTINCT</b> — <code>SELECT DISTINCT author_id FROM books</code>: the unique set, not every row.</li>
 <li><b>Aggregates</b> — <code>COUNT(*)</code>, <code>SUM(x)</code>, <code>AVG(x)</code>, <code>MIN</code>/<code>MAX</code> collapse rows into one answer: <code>SELECT COUNT(*), AVG(price_cents) FROM books WHERE author_id = 3;</code> — grouping per author arrives with GROUP BY in the next lesson's queries.</li>
 </ul>
-<p>Why <code>NULL = NULL</code> is not true: NULL means <i>unknown</i>, and "is unknown equal to unknown?" is itself unknown — three-valued logic. WHERE keeps only rows where the predicate is <i>true</i>, so unknowns silently drop. When a query "loses" rows, check for a NULL comparison first.</p>`,
+<p>Why <code>NULL = NULL</code> is not true: NULL means <i>unknown</i>, and "is unknown equal to unknown?" is itself unknown — three-valued logic. WHERE keeps only rows where the predicate is <i>true</i>, so unknowns silently drop. When a query "loses" rows, check for a NULL comparison first.</p>
+
+<h4>Why the logical order matters more than the written order</h4>
+<p>You write <code>SELECT</code> first and the engine evaluates it fourth. That single fact explains two
+things beginners find arbitrary. An alias defined in the <code>SELECT</code> list cannot be used in
+<code>WHERE</code>, because the alias does not exist yet when the filter runs. And <code>WHERE</code>
+filters rows before grouping while <code>HAVING</code> filters after it — which is why one takes raw
+columns and the other takes aggregates.</p>
+
+<h4>NULL is not a value, and it changes comparisons</h4>
+<p><code>NULL</code> means <i>unknown</i>, so any comparison with it is unknown rather than false. That is
+why <code>WHERE email = NULL</code> matches nothing at all and <code>IS NULL</code> is required. The same
+logic bites in negation: <code>WHERE status &lt;&gt; 'shipped'</code> silently excludes rows where status
+is NULL, because unknown is not "different". If those rows should be included, say so —
+<code>OR status IS NULL</code>.</p>
+
+<h4>Habits that keep a query honest</h4>
+<ul>
+<li><b>Name your columns.</b> <code>SELECT *</code> in application code means the result shape changes
+whenever the table does, silently.</li>
+<li><b><code>LIMIT</code> while exploring.</b> A stray query against a large table is the easiest way to
+inconvenience a shared database.</li>
+<li><b><code>ORDER BY</code> is not optional if order matters.</b> Without it the engine may return rows
+in any order, and the order it happens to return today is not a promise — it changes when the plan
+changes.</li>
+<li><b><code>DISTINCT</code> is usually a symptom.</b> Duplicates in a result set most often mean a join
+matched more rows than you expected; removing them hides the cause rather than fixing it.</li>
+</ul>`,
 docs:[['PostgreSQL tutorial — queries','https://www.postgresql.org/docs/current/tutorial-select.html'],['SELECT reference','https://www.postgresql.org/docs/current/sql-select.html'],['Pattern matching (LIKE)','https://www.postgresql.org/docs/current/functions-matching.html']],
 ex:{title:'SELECT drill',lang:'sql',data:'library',
 prompt:`Against the <code>books(id, author_id, title, price_cents, published)</code> table, one query under each numbered comment: (1) every column of all books; (2) only <code>title</code> of books cheaper than 1500 cents, sorted by title <b>ascending</b>; (3) title and price of the 5 most expensive books (<code>ORDER BY ... DESC LIMIT</code>); (4) all books whose title starts with <code>Java</code> (LIKE); (5) books that have <b>no</b> published date (NULL check); (6) the number of books and the average price, in one query (COUNT + AVG).`,
@@ -13609,7 +14198,32 @@ UPDATE books SET price_cents = price_cents * 0.9   -- expressions read the OLD v
 -- DELETE
 DELETE FROM books WHERE id = 7;</div>
 <p><b>The missing-WHERE catastrophe</b>: <code>UPDATE books SET price_cents = 0</code> — no WHERE — updates <b>every row</b>, instantly, no confirmation. Same for DELETE. Professional habits: write the WHERE first; run a <code>SELECT COUNT(*)</code> with the same WHERE to preview the blast radius; do risky writes inside <code>BEGIN; ... ROLLBACK/COMMIT;</code> so you can look before it sticks (transactions get their own lesson soon).</p>
-<p>Omitted columns take their <code>DEFAULT</code> (so <code>id</code> and <code>created_at</code> fill themselves) or NULL if none — and a <code>NOT NULL</code> column without a default makes the INSERT fail, which is the schema doing its job. <code>RETURNING</code> works on UPDATE and DELETE too: change-and-see in one round trip.</p>`,
+<p>Omitted columns take their <code>DEFAULT</code> (so <code>id</code> and <code>created_at</code> fill themselves) or NULL if none — and a <code>NOT NULL</code> column without a default makes the INSERT fail, which is the schema doing its job. <code>RETURNING</code> works on UPDATE and DELETE too: change-and-see in one round trip.</p>
+
+<h4>UPDATE and DELETE are the same statement with a different verb</h4>
+<p>Both take a <code>WHERE</code>, both default to <i>every row</i> when it is missing, and both are
+irreversible outside a transaction. The habit that prevents the accident is mechanical rather than clever:
+<b>write the WHERE clause first</b>, run it as a <code>SELECT</code>, look at the count, then change
+<code>SELECT *</code> into <code>UPDATE … SET …</code>. It costs ten seconds and it is the difference
+between changing four rows and changing four million.</p>
+<div class="codeSample">SELECT COUNT(*) FROM books WHERE author_id = 42;   -- 1. how big is the blast radius?
+BEGIN;                                             -- 2. get a safety net
+UPDATE books SET price_cents = 0 WHERE author_id = 42;
+SELECT COUNT(*) FROM books WHERE price_cents = 0;  -- 3. did it do what you meant?
+COMMIT;                                            --    or ROLLBACK;</div>
+
+<h4>What the database does for you when you leave a column out</h4>
+<p>An omitted column takes its <code>DEFAULT</code>, or <code>NULL</code> when there is none — which is why
+<code>id</code> and <code>created_at</code> fill themselves. A <code>NOT NULL</code> column with no default
+makes the insert fail, and that failure is the schema doing its job: it is telling you the row would have
+been meaningless. Resist the urge to make such columns nullable to quiet the error.</p>
+
+<h4>Getting the row back</h4>
+<p><code>RETURNING</code> gives you the affected rows in the same round trip, and it works on
+<code>INSERT</code>, <code>UPDATE</code> and <code>DELETE</code>. That matters more than convenience:
+fetching a generated id with a second <code>SELECT</code> is a race, because another statement can run in
+between. One statement that both changes and reports has no gap in it — the same reasoning as the upsert
+lesson later in this stream.</p>`,
 docs:[['INSERT','https://www.postgresql.org/docs/current/sql-insert.html'],['UPDATE','https://www.postgresql.org/docs/current/sql-update.html'],['DELETE','https://www.postgresql.org/docs/current/sql-delete.html']],
 ex:{title:'Write-path drill',lang:'sql',
 prompt:`Against <code>books(id, author_id, title, price_cents, published)</code>, one statement per numbered comment: (1) insert a book: author 1, title <code>Effective Java</code>, price 4500 — naming the three columns; (2) one INSERT adding <b>two</b> books for author 2: <code>Clean Code</code> at 3900 and <code>Refactoring</code> at 4700 (multi-row VALUES); (3) insert author 3's <code>DDIA</code> at 5200 and <b>return the generated id</b> (RETURNING); (4) set the price of book id 7 to 3990; (5) apply a 10% discount to <b>every book by author 1</b> (price = price * 0.9, WHERE required); (6) delete all books priced 0.`,
@@ -14092,7 +14706,31 @@ id | full_name    | email_addr        | country     id | name        | email
  3 | Cy Young     | NULL              | US          -- rows to migrate: valid emails only,
  4 | Di Ng        | di@example.com    | SG          --   lowercased, de-duplicated
  5 | Bo Diaz      | BO@example.com    | ES          -- (row 5 duplicates row 2 once lowercased)</div>
-<p>The migration has three moves: copy with a <b>transform</b> (rename columns, lowercase the email) while <b>filtering</b> out the NULL; make the load <b>idempotent</b> so re-running it will not create duplicates (Postgres <code>INSERT ... ON CONFLICT ... DO NOTHING</code>, using the target's UNIQUE email); and <b>verify</b> the row count. Idempotency matters: real migrations are run more than once (dry run, retry after a failure), and must be safe to repeat.</p>`,
+<p>The migration has three moves: copy with a <b>transform</b> (rename columns, lowercase the email) while <b>filtering</b> out the NULL; make the load <b>idempotent</b> so re-running it will not create duplicates (Postgres <code>INSERT ... ON CONFLICT ... DO NOTHING</code>, using the target's UNIQUE email); and <b>verify</b> the row count. Idempotency matters: real migrations are run more than once (dry run, retry after a failure), and must be safe to repeat.</p>
+
+<h4>Idempotency is what makes a migration survivable</h4>
+<p>A migration that cannot be re-run is a migration you must get right first time, at 2am, with the old
+system already off. Making the load idempotent — <code>ON CONFLICT DO NOTHING</code>, or a natural key with
+a unique constraint — means a partial failure is fixed by running it again rather than by hand-repairing
+half-loaded tables. That single property changes the risk profile of the whole exercise.</p>
+
+<h4>Reconcile, do not assume</h4>
+<p>Every migration needs a check that runs afterwards and compares source with target: row counts per
+table, sums of the money columns, and a spot-check of the rows the transform touched most. Nobody regrets
+writing it, and the alternative is discovering months later that a filter silently dropped four thousand
+records. Write the reconciliation query <i>before</i> the migration, because writing it afterwards tempts
+you to make it agree.</p>
+
+<h4>The mess is the job</h4>
+<p>Legacy data carries duplicates that differ only in whitespace, mixed-case emails, NULLs where the new
+schema says NOT NULL, dates as text in three formats, and encodings nobody documented. The decisions those
+force are business decisions, not technical ones: does a NULL email mean drop the row, or invent a
+placeholder? Whoever owns the data must answer, and the answer belongs in a comment beside the query.</p>
+
+<h4>Cutover</h4>
+<p>The safe shape is the same as a schema migration: <b>run both systems</b>, backfill history, then
+dual-write while the new one catches up, verify, and only then switch reads. A big-bang cutover is a plan
+with no rollback, and the moment you need one is the moment you cannot get it.</p>`,
 docs:[['INSERT ... SELECT','https://www.postgresql.org/docs/current/sql-insert.html'],['ON CONFLICT (upsert)','https://www.postgresql.org/docs/current/sql-insert.html#SQL-ON-CONFLICT'],['Data migration — overview','https://en.wikipedia.org/wiki/Data_migration']],
 ex:{title:'Migrate legacy_customers into customers',lang:'sql',
 prompt:`Source <code>legacy_customers(id, full_name, email_addr, country)</code>; target <code>customers(id, name, email)</code> where <code>email</code> is UNIQUE. One statement per numbered comment: (1) copy every row that <b>has</b> an email into <code>customers</code>, mapping <code>full_name</code>→<code>name</code> and <code>LOWER(email_addr)</code>→<code>email</code>, skipping NULL emails (<code>INSERT INTO ... SELECT ... FROM legacy_customers WHERE email_addr IS NOT NULL</code>); (2) make it repeatable by de-duplicating on the unique email with <code>ON CONFLICT (email) DO NOTHING</code> — add it to the same insert; (3) verify the result with <code>SELECT COUNT(*) FROM customers</code>.`,
@@ -15302,7 +15940,34 @@ HttpRequest req = HttpRequest.newBuilder()
     .uri(URI.create("https://api.example.com"))
     .timeout(Duration.ofSeconds(5))
     .header("Accept", "application/json")
-    .build();</div>`,
+    .build();</div>
+
+<h4>Singleton: the one to be suspicious of</h4>
+<p>It is the most recognised pattern and the most often wrong. A singleton is global mutable state with a
+respectable name: it hides dependencies (nothing in a signature says the class uses it), it makes tests
+order-dependent because state survives between them, and under concurrency it needs the same care as any
+shared mutable object. In a Spring application you almost never write one — a <code>@Component</code> is
+already a single instance managed by the container, and it arrives through a constructor where you can see
+and replace it.</p>
+<p>When you genuinely need one, an <code>enum</code> is the most robust form in Java: the JVM guarantees a
+single instance, including against reflection and serialisation, which most hand-written singletons do
+not.</p>
+
+<h4>Factory: naming the thing that varies</h4>
+<p>A factory earns its place when construction involves a <i>decision</i> — which implementation, based on
+configuration, input or capability. If there is no decision, a constructor is clearer than a factory that
+merely forwards to it. Static factory methods are worth the habit even without polymorphism, because they
+can be named: <code>Duration.ofSeconds(30)</code> says what the argument means where
+<code>new Duration(30)</code> does not.</p>
+
+<h4>Builder: for the parameter list nobody can read</h4>
+<p>Once a constructor takes several same-typed parameters, callers can transpose two of them and the
+compiler cannot help — two adjacent <code>String</code>s or three <code>boolean</code>s are a bug waiting to
+be written. A builder names each value at the call site and lets the object validate itself once, at
+<code>build()</code>, so an invalid instance never exists.</p>
+<p>The modern caveat: for a small immutable value, a <b>record</b> does most of this with no ceremony at
+all. Reach for a builder when there are genuinely many optional fields, defaults to apply, or invariants to
+check across them.`,
 docs:[['Effective Java patterns summary — items 1-5','https://dev.java/learn/api/'],['Refactoring Guru — Builder','https://refactoring.guru/design-patterns/builder'],['Refactoring Guru — Singleton','https://refactoring.guru/design-patterns/singleton']],
 ex:{title:'Build an immutable config',
 prompt:`Write an immutable <code>ServerConfig</code> (fields <code>String host; int port; boolean tls</code>, all <code>final</code>) with a <b>private constructor</b>, a <code>static Builder builder()</code> entry point, and a <b>static nested</b> class <code>Builder</code> whose fluent setters (<code>host(String)</code>, <code>port(int)</code>, <code>tls(boolean)</code>) each <code>return this</code>, finished by <code>ServerConfig build()</code> that calls the private constructor.`,
@@ -15360,7 +16025,35 @@ double checkout(double price, Discount d) { return d.apply(price); }
 // Observer: subscribers over time
 List&lt;Consumer&lt;String&gt;&gt; listeners = new ArrayList&lt;&gt;();
 void onSale(Consumer&lt;String&gt; l) { listeners.add(l); }
-void fire(String item) { listeners.forEach(l -&gt; l.accept(item)); }</div>`,
+void fire(String item) { listeners.forEach(l -&gt; l.accept(item)); }</div>
+
+<h4>What these three actually have in common</h4>
+<p>All three separate <b>what varies</b> from <b>what stays the same</b> — which is the whole of behavioural
+design. Strategy varies an algorithm behind a fixed call. Observer varies who reacts to an event without the
+source knowing. Template Method fixes the skeleton and varies the steps. Naming them matters less than
+recognising the move, because you have already made it: every <code>Comparator</code> is a strategy, every
+listener list is an observer, and every abstract base class with a <code>run()</code> that calls
+<code>doStep()</code> is a template method.</p>
+
+<h4>Where each goes wrong</h4>
+<ul>
+<li><b>Strategy</b> collapses to a lambda in modern Java, and that is usually correct — but a map of
+lambdas keyed by string trades compile-time checking for a runtime lookup that can fail. If the set of
+strategies is fixed, a sealed interface or an enum keeps the compiler involved.</li>
+<li><b>Observer</b> is the one that causes production incidents. Listeners are usually called
+<i>synchronously</i>, so a slow listener slows the publisher, and one that throws can prevent the rest from
+running. Unregistering is also easy to forget, which is a memory leak with a hidden reference — the same
+one as inner classes.</li>
+<li><b>Template Method</b> ties subclasses to the parent's call order forever, which is the fragile base
+class problem. Composition — passing the varying step in — gives the same flexibility without inheritance,
+which is why it has quietly lost ground to strategy.</li>
+</ul>
+
+<h4>The test before reaching for any of them</h4>
+<p>Ask whether the variation is real and present, not hypothetical. A strategy interface with one
+implementation is indirection you pay for and do not use, and the second implementation is cheap to
+introduce when it actually arrives. Patterns are a vocabulary for describing structure you needed anyway,
+not a shopping list to work through.</p>`,
 docs:[['Refactoring Guru — Strategy','https://refactoring.guru/design-patterns/strategy'],['Refactoring Guru — Observer','https://refactoring.guru/design-patterns/observer'],['Refactoring Guru — Template Method','https://refactoring.guru/design-patterns/template-method']],
 exs:[{title:'Pricing with pluggable strategies',
 prompt:`Build (1) a <code>@FunctionalInterface</code> <code>Discount</code> with <code>double apply(double price)</code>; (2) <code>class Register</code> with constants <code>Discount NONE</code> (identity lambda) and <code>Discount SUMMER</code> (20% off — multiply by 0.8); (3) <code>double checkout(double price, Discount d)</code> delegating to the strategy; (4) Observer support: a <code>List&lt;Consumer&lt;Double&gt;&gt; listeners</code>, <code>void onSale(Consumer&lt;Double&gt; l)</code>, and have <code>checkout</code> notify every listener with the final price via <code>forEach</code> + <code>accept</code>.`,
@@ -15870,7 +16563,38 @@ jobs:                         # ── JOBS: run in PARALLEL by default,
 <li><b>uses vs run</b>: <code>uses:</code> pulls a versioned, reusable action from the marketplace (checkout, setup-java, docker/build-push-action); <code>run:</code> is your own shell.</li>
 <li><b>Secrets</b>: stored in repo Settings → Secrets, injected as <code>\${{ secrets.MY_KEY }}</code> — never hardcode credentials in the YAML (it is versioned, forkable, and public-ish forever).</li>
 <li><b>Contexts</b>: <code>\${{ github.sha }}</code>, <code>\${{ github.actor }}</code>, <code>\${{ secrets.* }}</code> — template expressions GitHub substitutes before the step runs.</li>
-</ul>`,
+</ul>
+
+<h4>What actually triggers a run, and why that is a security question</h4>
+<p>The <code>on:</code> block decides when a workflow runs, and the difference between
+<code>pull_request</code> and <code>pull_request_target</code> is the one to understand rather than copy.
+<code>pull_request</code> runs the workflow <i>from the pull request</i> with no access to your secrets.
+<code>pull_request_target</code> runs the workflow <i>from your default branch</i> with secrets available —
+which is safe only if it never checks out and executes the contributor's code. Getting that pair backwards
+on a public repository hands your secrets to anyone who can open a pull request.</p>
+
+<h4>Jobs, steps and the thing people get wrong about state</h4>
+<p>Steps within a job share a runner and a working directory. <b>Jobs do not.</b> Each job gets a fresh
+machine, so anything one job produces and another needs must travel through an artifact or a cache — and
+each <code>run:</code> step is its own shell, so a <code>cd</code> or an exported variable does not survive
+to the next step unless you write it to <code>$GITHUB_ENV</code>.</p>
+<div class="codeSample">jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4          # pin actions; a moving tag is someone else's code
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - run: ./mvnw -B verify              # -B: batch mode, no interactive progress spam</div>
+
+<h4>Making it fast and making it honest</h4>
+<p>Cache the dependency directory, not the build output — a cached <code>~/.m2</code> turns a three-minute
+download into seconds, while caching compiled classes risks a stale build that passes. Use a matrix when
+you genuinely support several versions, and remember every matrix cell is a full run: a three-by-three
+matrix is nine machines and nine times the minutes.</p>
+<p>And pin third-party actions. <code>@v4</code> is a moving tag that can be repointed, so a supply-chain
+compromise upstream becomes your CI running someone else's code with your secrets. Pinning to a commit SHA
+is the version of this advice that actually holds.</p>`,
 docs:[['Workflow syntax reference','https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions'],['Events that trigger workflows','https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows'],['Using secrets','https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions']],
 ex:{title:'Write a workflow skeleton',lang:'yaml',
 prompt:`Write a complete workflow YAML named <code>greet</code> that: (1) triggers on <b>push to main only</b> and additionally on <b>manual dispatch</b> (<code>workflow_dispatch</code>); (2) has one job <code>hello</code> on <code>ubuntu-latest</code>; (3) first step <b>checks out the repo</b> with <code>actions/checkout@v4</code>; (4) second step is named <code>Say it</code> and runs the shell command <code>echo "hello \${{ github.actor }}"</code> — using the context expression so the pusher's username appears.`,
@@ -15933,6 +16657,32 @@ jobs:
 <li><b>Tag images with the commit SHA</b> — <code>:latest</code> tells you nothing; <code>:\${{ github.sha }}</code> makes every running container traceable to the exact commit. Ship <code>:latest</code> as an <i>additional</i> tag if you like.</li>
 <li><b>GITHUB_TOKEN over PATs</b> — the auto-provided token is scoped to this repo and expires with the run; a personal access token in a secret is a standing credential to steal.</li>
 <li><b>permissions:</b> — default the workflow to read-only and grant <code>packages: write</code> explicitly. Least privilege applies to robots too.</li>
+</ul>
+
+<h4>Fast feedback is a design goal, not a nice-to-have</h4>
+<p>A pipeline that takes twenty minutes changes behaviour: people stop waiting for it, batch their changes,
+and merge on hope. Under five minutes it becomes part of the edit-run loop. That is worth optimising for
+directly — cache dependencies, run the fast checks first so an obvious failure returns in seconds, and
+parallelise the slow ones.</p>
+<p>Order matters more than raw speed. Compile and unit tests before integration tests; static checks before
+either. Failing in ninety seconds on a typo beats failing in twelve minutes on the same typo after the
+container has been built.</p>
+
+<h4>The traceability that makes an incident survivable</h4>
+<p>Tag the image with the commit SHA, always, and use <code>:latest</code> only as an <i>additional</i>
+tag. During an incident the question is "what exactly is running?", and <code>:latest</code> cannot answer
+it — the digest pinned to a commit can. The same reasoning applies to build metadata: stamping the version,
+commit and build time into the artifact costs nothing and turns a guess into a lookup.</p>
+
+<h4>What CI must never contain</h4>
+<ul>
+<li><b>Secrets in the workflow file.</b> Use the platform's secret store, and prefer OIDC federation to a
+long-lived cloud key entirely — the workload-identity argument from the identity course.</li>
+<li><b><code>-DskipTests</code>.</b> A pipeline that builds without testing is a slower way to ship the
+same bug.</li>
+<li><b>Unpinned third-party actions.</b> A moving tag is someone else's code with access to your secrets.</li>
+<li><b>Flaky tests left quarantined forever.</b> A test suite people re-run until it passes has stopped
+being a gate — which is the same failure as a red build that gets overridden.</li>
 </ul>`,
 docs:[['setup-java action','https://github.com/actions/setup-java'],['build-push-action','https://github.com/docker/build-push-action'],['Publishing images to GHCR','https://docs.github.com/en/actions/use-cases-and-examples/publishing-packages/publishing-docker-images']],
 ex:{title:'Write the Java CI workflow',lang:'yaml',
@@ -15983,7 +16733,35 @@ hints:['permissions: is a TOP-LEVEL key (same indent as jobs:) — contents: rea
 <li><b>Canary</b>: route 1-5% of real traffic to the new version, watch error rates and latency, then ramp. The most honest test there is — production traffic is the one workload you cannot simulate.</li>
 <li><b>Rollback ≠ revert</b>: rollback redeploys the previous <i>artifact</i> (seconds); revert undoes the <i>commit</i> and rebuilds (minutes, plus review). Have both; reach for rollback first.</li>
 </ul>
-<p>One rule ties the room together: <b>the artifact is immutable</b>. If staging tested image <code>:abc123</code>, production runs <code>:abc123</code> — not a rebuild "of the same code". Rebuilds can differ (new base image, new dependency resolution); what you tested is what you ship.</p>`,
+<p>One rule ties the room together: <b>the artifact is immutable</b>. If staging tested image <code>:abc123</code>, production runs <code>:abc123</code> — not a rebuild "of the same code". Rebuilds can differ (new base image, new dependency resolution); what you tested is what you ship.</p>
+
+<h4>The database is what makes deployment hard</h4>
+<p>Rolling deploys mean two versions of your code run at the same time, against one schema. That single
+fact dictates the discipline: <b>expand, migrate, contract</b>. Add the new column, deploy code that writes
+both old and new, backfill, deploy code that reads the new one, and only then remove the old — four
+deploys, each of which is safe on its own, instead of one that must be perfect.</p>
+<p>A destructive migration shipped alongside the code that needs it is the classic cause of an unrollable
+deploy: the code can go back, the dropped column cannot.</p>
+
+<h4>Choosing a release strategy by what it buys</h4>
+<ul>
+<li><b>Rolling</b> — cheapest, no extra capacity, two versions live. The default.</li>
+<li><b>Blue-green</b> — full second environment, instant switch, instant rollback. You pay for double
+capacity during the cutover and you still have the schema problem.</li>
+<li><b>Canary</b> — a small share of real traffic on the new version while you watch error rate and
+latency. The only strategy that gives you evidence before full exposure, and the only one that requires
+you to have decided in advance what "bad" looks like.</li>
+<li><b>Feature flags</b> — separate <i>deploying</i> from <i>releasing</i>, so the risky change ships dark
+and is turned on independently. The cost is flag debt: every flag is a branch in production that someone
+must eventually remove.</li>
+</ul>
+
+<h4>What makes a rollback real</h4>
+<p>Rollback is not a plan, it is a rehearsed action with a number attached: how long does it take, who can
+do it at 3am, and does it survive the migration you just ran? If the answer to any of those is unknown, you
+have a forward-only deploy and should treat every release accordingly. The environments should differ only
+in <b>configuration</b> — same image, different variables — because an artefact rebuilt per environment is
+no longer the artefact you tested.`,
 docs:[['GitHub Environments & protection rules','https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment'],['Blue/green deployments — Fowler','https://martinfowler.com/bliki/BlueGreenDeployment.html'],['Canary release — Fowler','https://martinfowler.com/bliki/CanaryRelease.html']],
 ex:{title:'Strategy triage',lang:'text',
 prompt:`One answer per numbered line: (1) the strategy that replaces instances gradually behind a load balancer (one word), (2) the strategy that runs old and new stacks side by side and flips traffic at the router (two words, slash ok), (3) the strategy that sends a small % of real traffic to the new version first (one word), (4) staging tested image :abc123 — does production <code>rebuild</code> or <code>reuse</code> that image? (5) the migration discipline that lets two app versions share one schema during a rolling deploy (hyphenated phrase: ______-then-______), (6) which is faster to execute: <code>rollback</code> or <code>revert</code>?`,
