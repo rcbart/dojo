@@ -61,7 +61,7 @@ fails.)*
   across the whole catalog.
 - **🧠 Quick check** — multiple-choice questions with instant feedback: not just "wrong", but which
   answer was right, why it is right, and why the option you picked is not. **Options are shuffled per
-  lesson visit**, so the answer position can never be memorised. DevDojo now carries **392 hand-authored
+  lesson visit**, so the answer position can never be memorised. DevDojo now carries **397 hand-authored
   questions across 129 lessons** — each with a written explanation of why the right answer is right and
   why every distractor is wrong — plus 9 auto-generated from the exercise specs. IdentityDojo carries a
   further 327 and JSDojo 159. Extending the hand-authored bank to the remaining lessons is an open item.
@@ -154,7 +154,10 @@ graded by running it against sample data and comparing result sets.*
 
 ```
 engine/             the SHARED RUNTIME — used by every course in this repo
-  app.js            state, nav, editor, graders, Review (SRS), Practice, quizzes, glossary
+  app.js            state, nav, lessons, editor, Review (SRS), Practice, quizzes
+  glossary.js       keyword table, click-to-explain and the glossary (loads before app.js)
+  grade.js          all five grading paths
+  feedback.js       lesson ratings and written comments
   sqlengine.js      dependency-free in-browser SQL engine + sample datasets
   boot.js           startup wiring
   shell.html        page shell (placeholders: @@STYLES@@, @@SCRIPT@@)

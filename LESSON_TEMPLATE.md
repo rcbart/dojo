@@ -83,13 +83,13 @@ hints:['A nudge toward the shape.','A nudge toward the trap.','The name of the t
 **Wiring**
 
 - [ ] New stream? Add the file to `content/streams/manifest.json` and its title to `DOJO_DOMAINS`.
-- [ ] New term introduced? Add it to `GLOSS_ALL` in `engine/app.js`.
+- [ ] New term introduced? Add it to `GLOSS_ALL` in `engine/glossary.js`.
 - [ ] Update the counts in `README.md`, `ARCHITECTURE.md` and `docs/landing.html`.
 
 **Before committing**
 
 ```bash
-node --test engine/test/engine.test.js   # the runtime
+node --test engine/test/engine.test.js   # the runtime (all four engine files)
 node scripts/verify.js                   # content integrity  (per course)
 node scripts/verify-exec.js              # executes every run spec
 node scripts/verify-java.js              # compiles every Java solution
