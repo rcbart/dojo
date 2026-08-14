@@ -462,6 +462,35 @@ hints:['A plain object literal is the lookup table.','?? supplies the fallback f
 <li><b>Correct status codes</b> and, for errors, a standard shape — <b>RFC 7807</b> <code>application/problem+json</code> instead of ad-hoc error bodies.</li>
 <li><b>Consistent naming</b> (pick snake_case or camelCase and never mix), <b>ISO 8601</b> timestamps, and stable field names.</li>
 <li><b>Content negotiation</b> via <code>Accept</code>, <b>idempotency keys</b> for safe retries of writes, and <b>rate-limit headers</b> so clients can back off.</li>
+</ul>
+
+<h4>Why deep offsets get slow, precisely</h4>
+<p><code>OFFSET 100000</code> does not skip ahead. The database produces the first hundred thousand rows,
+in order, and discards them — so the last page of a report is the slowest query in the system, and it gets
+slower as the table grows. Keyset pagination replaces the offset with a <code>WHERE</code> on the last key
+you saw, so every page reads exactly one page's worth however deep you are.</p>
+<p>The correctness problem is worse than the speed one. Between page 2 and page 3, someone inserts a row
+near the top: every subsequent row shifts down one, so an item that was going to be first on page 3 is now
+last on page 2 — the reader never sees it. Deletes cause the mirror problem and show an item twice. Keyset
+pagination is immune, because it is anchored to a value rather than to a count.</p>
+
+<h4>What makes a cursor opaque, and why bother</h4>
+<p>A cursor is usually the sort key of the last row, encoded. Encoding it — base64 of
+<code>{"updated_at":"…","id":123}</code> — is not obfuscation for its own sake. It stops clients parsing
+and constructing cursors, which is what would freeze your sort key into a public contract you can never
+change. Make it opaque and the ordering stays an implementation detail.</p>
+<p>Two rules make cursors work: <b>sort on something unique</b>, or append the primary key as a tie-break,
+because rows sharing a timestamp will otherwise be skipped or repeated at the boundary. And validate the
+cursor server-side, since it arrives from the client like anything else.</p>
+
+<h4>The rest of the contract</h4>
+<ul>
+<li><b>Always cap the page size.</b> An unbounded <code>limit</code> is a denial-of-service parameter your
+API is offering to strangers. Clamp it, and document the maximum.</li>
+<li><b>Be honest about totals.</b> An exact <code>COUNT(*)</code> on every page is often the most expensive
+part of the request. Either omit it, or return an estimate labelled as one.</li>
+<li><b>Keep the ordering stable and explicit.</b> Pagination over an unspecified order is undefined
+behaviour that happens to work until the query plan changes.</li>
 </ul>`,
 docs:[['Web Linking (RFC 8288)','https://www.rfc-editor.org/rfc/rfc8288'],['Problem Details (RFC 7807)','https://www.rfc-editor.org/rfc/rfc7807'],['API design guide — Google','https://cloud.google.com/apis/design']],
 exs:[{title:'Pagination choice & error compliance',

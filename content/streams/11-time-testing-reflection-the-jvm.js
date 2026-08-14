@@ -16,7 +16,36 @@ try (var in = new ObjectInputStream(Files.newInputStream(path))) {
     Session s = (Session) in.readObject();                  // password field is null now
 }</div>
 <p>What to know cold: <code>Serializable</code> is a marker (no methods); <code>serialVersionUID</code> pins compatibility — omit it and any class change breaks old data with <code>InvalidClassException</code>; <code>transient</code> excludes secrets/caches; the whole reachable object graph gets serialized (a stray reference drags the world in).</p>
-<p><b>The security warning that is now exam material</b>: deserializing untrusted bytes is remote code execution waiting to happen (gadget chains) — never <code>readObject</code> external input; use serialization filters (<code>ObjectInputFilter</code>) if you must. Which is why modern systems serialize through explicit formats instead: JSON via Jackson (your api3 lesson), or Protobuf/Avro for compact schema-versioned data. Records + Jackson is the modern default; native serialization survives mainly in caches, session replication, and legacy RPC.</p>`,
+<p><b>The security warning that is now exam material</b>: deserializing untrusted bytes is remote code execution waiting to happen (gadget chains) — never <code>readObject</code> external input; use serialization filters (<code>ObjectInputFilter</code>) if you must. Which is why modern systems serialize through explicit formats instead: JSON via Jackson (your api3 lesson), or Protobuf/Avro for compact schema-versioned data. Records + Jackson is the modern default; native serialization survives mainly in caches, session replication, and legacy RPC.</p>
+
+<h4>Why the industry moved away from native serialization</h4>
+<p>Three reasons, in order of weight. <b>Security</b>: <code>readObject</code> constructs arbitrary types
+before your code sees anything, so an attacker who controls the bytes controls what gets built — the gadget
+chain problem, which is why the JDK added <code>ObjectInputFilter</code> and why the honest advice is never
+to deserialize untrusted input at all. <b>Coupling</b>: the format is your class structure, so a rename is
+a breaking change to data at rest. <b>Interoperability</b>: nothing outside the JVM can read it.</p>
+<p>Explicit formats invert all three. JSON, Protobuf and Avro have a schema you can version deliberately, a
+parser that builds only what you asked for, and readers in every language.</p>
+
+<h4>Schema evolution is the real subject</h4>
+<p>Serialization is easy once. The engineering is what happens on version two, while old and new code run
+at the same time. The rules that hold across formats:</p>
+<ul>
+<li><b>Adding an optional field is safe.</b> Old readers ignore it; new readers default it.</li>
+<li><b>Removing or renaming a field is not.</b> Deprecate, stop writing it, wait for consumers, then
+remove — the same expand-and-contract shape as a database migration.</li>
+<li><b>Never reuse a field number or a name</b> for a different meaning. Protobuf makes this explicit with
+<code>reserved</code>; JSON leaves you to remember.</li>
+<li><b>Tolerant readers win.</b> A consumer that ignores unknown fields lets producers move first, which is
+what makes independent deployment possible at all.</li>
+</ul>
+
+<h4>Choosing a format</h4>
+<p><b>JSON</b> is the default for anything crossing an organisational boundary: readable, debuggable, and
+supported everywhere, at the cost of size and no schema unless you add one. <b>Protobuf or Avro</b> earn
+their keep on high-volume internal traffic and event streams, where a schema registry gives you
+compatibility checks in CI rather than incidents in production. The deciding question is rarely
+performance — it is whether you need a contract that a machine can enforce.</p>`,
 docs:[['Serializable — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Serializable.html'],['Serialization filtering — Oracle','https://docs.oracle.com/en/java/javase/21/core/serialization-filtering1.html'],['OWASP: insecure deserialization','https://owasp.org/www-community/vulnerabilities/Deserialization_of_untrusted_data']],
 ex:{title:'Round-trip a session',
 prompt:`Write <code>class Session implements java.io.Serializable</code> with <code>private static final long serialVersionUID = 1L</code>, fields <code>String userId</code> and <code>transient char[] secret</code>, and a constructor for both. Then <code>class SessionStore</code> with <code>static void save(Session s, java.nio.file.Path p) throws Exception</code> using <code>ObjectOutputStream</code> over <code>Files.newOutputStream</code> in try-with-resources, and <code>static Session load(java.nio.file.Path p) throws Exception</code> using <code>ObjectInputStream</code> + a cast.`,

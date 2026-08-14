@@ -148,7 +148,35 @@ class TimestampPrinter implements Printer {
 }
 
 // stacks arbitrarily — exactly like java.io
-Printer p = new TimestampPrinter(new UpperCasePrinter(new ConsolePrinter()));</div>`,
+Printer p = new TimestampPrinter(new UpperCasePrinter(new ConsolePrinter()));</div>
+
+<h4>Telling the three apart, since they look identical in a diagram</h4>
+<p>All three wrap an object. The difference is <b>why</b>:</p>
+<ul>
+<li><b>Adapter</b> changes an interface you do not control into one your code expects. The wrapped thing
+was already useful; it simply spoke the wrong language. If you are writing an adapter, some third party
+made the shape decision for you.</li>
+<li><b>Decorator</b> keeps the same interface and adds behaviour — caching, retry, timing, logging. Because
+the type is unchanged, decorators stack, and the caller cannot tell how many are present.</li>
+<li><b>Facade</b> hides several collaborating objects behind one simple entry point. It does not change
+their interfaces or add behaviour; it narrows the surface a caller has to learn.</li>
+</ul>
+<p>The test question: <i>am I translating, adding, or simplifying?</i> One answer each.</p>
+
+<h4>Where each earns its place, and where it does not</h4>
+<p><b>Adapter</b> is what keeps a third-party library from spreading through your codebase. Wrap it once at
+the boundary and the rest of your code depends on your interface, so replacing the vendor is one class
+rather than a search-and-replace. The cost is a layer of indirection people will occasionally want to skip.</p>
+<p><b>Decorator</b> is the honest alternative to inheritance for cross-cutting behaviour. A retrying,
+caching, instrumented client composed from three decorators is testable in isolation; the same thing as a
+subclass hierarchy is not. Its failure mode is depth — a stack five deep gives a stack trace nobody can
+read, and an ordering that matters and is written down nowhere. If retry sits outside caching, you retry
+cache reads; inside, you cache failures.</p>
+<p><b>Facade</b> is the least glamorous and most often correct. Its risk is becoming a god object: a facade
+that grows a method per use case has stopped simplifying and started accumulating.</p>
+<p>Java's own library uses all three openly. <code>InputStreamReader</code> is an adapter from bytes to
+characters. <code>BufferedReader</code> is a decorator. <code>java.net.http.HttpClient</code> is a facade
+over connection pooling, negotiation and redirects.</p>`,
 docs:[['Refactoring Guru — Adapter','https://refactoring.guru/design-patterns/adapter'],['Refactoring Guru — Decorator','https://refactoring.guru/design-patterns/decorator'],['Refactoring Guru — Facade','https://refactoring.guru/design-patterns/facade']],
 ex:{title:'Adapt the legacy, decorate the new',
 prompt:`Given interface <code>Printer { void print(String msg); }</code> and an unchangeable <code>class LegacyPrinter { void output(String text) {...} }</code>: (1) write <code>PrinterAdapter implements Printer</code> holding a <code>LegacyPrinter</code> field (constructor-injected) whose <code>print</code> translates to <code>output(msg)</code>; (2) write decorator <code>PrefixPrinter implements Printer</code> holding a <code>Printer delegate</code> and a <code>String prefix</code>, whose <code>print</code> calls <code>delegate.print(prefix + msg)</code>. Both use composition — no extends anywhere.`,

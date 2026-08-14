@@ -480,6 +480,120 @@ tests:[{d:'Q1: SUM(CASE WHEN ... THEN 1 ELSE 0 END)',re:'1\\)[\\s\\S]*?sum\\s*\\
 behavior:`1. Q1 returns one row, two counts, in a single scan. 2. Q2 counts paid only, relying on CASE returning NULL (which COUNT skips) for the rest. 3. Q3 returns paid orders; the 1=1 anchor lets filters be appended uniformly. 4. Q4 names the per-user totals once, then filters them like a table. 5. Q5 keeps every order row but adds a per-user sequence number, newest first. 6. Q6 divides by NULLIF(count,0) so an empty table yields NULL instead of a divide-by-zero error.`,
 hints:['Turn a condition into a number: CASE WHEN cond THEN 1 ELSE 0 END, then SUM to count matches in one pass.','WHERE 1 = 1 is an always-true anchor so every real filter can be appended as AND ...; WHERE 1 = 0 returns no rows.','A CTE is WITH name AS ( ... ) followed by a SELECT that treats name like a table; window functions add OVER (PARTITION BY ... ORDER BY ...).']}},
 
+{id:'dbups',title:'Upserts: insert-or-update, and the four ways it bites',body:`
+<p>You have a row that may or may not exist. A daily import, a user profile from a partner system, a
+counter. The obvious code is check, then act:</p>
+<div class="codeSample">SELECT id FROM contacts WHERE email = 'ada@example.com';   -- exists?
+-- ...application decides...
+INSERT INTO contacts (email, name) VALUES ('ada@example.com', 'Ada');</div>
+<p>That is a <b>race</b>. Two workers run the SELECT at the same moment, both find nothing, both insert,
+and one gets a unique-violation — or worse, there is no unique constraint and you now have two Adas. The
+gap between deciding and doing is where the bug lives, and no amount of application locking closes it as
+cheaply as letting the database do both in one statement.</p>
+<p>That statement is an <b>upsert</b>.</p>
+
+<h4>The three dialects</h4>
+<div class="codeSample" data-hl>-- PostgreSQL / SQLite
+INSERT INTO contacts (email, name, updated_at)
+VALUES ('ada@example.com', 'Ada', now())
+ON CONFLICT (email) DO UPDATE
+  SET name = EXCLUDED.name, updated_at = EXCLUDED.updated_at;
+
+-- MySQL / MariaDB
+INSERT INTO contacts (email, name) VALUES ('ada@example.com', 'Ada')
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+-- SQL standard, and several engines
+MERGE INTO contacts USING (...) ON (...) WHEN MATCHED THEN UPDATE ... WHEN NOT MATCHED THEN INSERT ...;</div>
+<p><code>EXCLUDED</code> is the row you <i>tried</i> to insert. That is the whole trick: on conflict you
+still have both versions available, so the update can pick from either side.</p>
+
+<h4>Bite 1: it needs a real constraint, and the target must match it exactly</h4>
+<p><code>ON CONFLICT (email)</code> does not mean "if a row with this email exists". It means "if this
+insert violates the unique index on <code>email</code>". No unique constraint, no conflict — the insert
+simply succeeds and you get a duplicate, silently. If the index is partial
+(<code>WHERE deleted_at IS NULL</code>) or on an expression (<code>lower(email)</code>), the conflict
+target must name the same thing, or the database refuses with <i>there is no unique or exclusion
+constraint matching the ON CONFLICT specification</i>. Upsert is not a substitute for designing your keys;
+it is a reward for having designed them.</p>
+
+<h4>Bite 2: clobbering, and last-writer-wins</h4>
+<p>The lazy update list overwrites everything:</p>
+<div class="codeSample">ON CONFLICT (email) DO UPDATE SET
+  name = EXCLUDED.name, created_at = EXCLUDED.created_at,   -- destroys the original creation time
+  owner_id = EXCLUDED.owner_id;                              -- reassigns a row the importer knows nothing about</div>
+<p>Update only the columns this writer is authoritative for, and leave the rest alone. The subtler version
+is <b>ordering</b>: a delayed job carrying older data will happily overwrite newer data, because the
+database has no idea which version is fresher. If your rows carry a timestamp or a version, guard the
+update with it — <code>WHERE contacts.updated_at &lt; EXCLUDED.updated_at</code> — and a stale write
+becomes a no-op instead of data loss.</p>
+
+<h4>Bite 3: the lost update hiding in a counter</h4>
+<div class="codeSample">SET views = 501                        -- read 500 in the app, added one: a LOST UPDATE
+SET views = contacts.views + 1         -- computed inside the statement: atomic, correct</div>
+<p>The first form is the read-modify-write race from the concurrency stream, wearing SQL. Two workers both
+read 500 and both write 501, and one view is gone. Compute from the current row inside the statement and
+the database serialises it for you.</p>
+
+<h4>Bite 4: DO NOTHING returns nothing</h4>
+<p><code>ON CONFLICT DO NOTHING</code> is the tidy way to ignore duplicates — and it returns <b>no row</b>
+when it does nothing, so <code>RETURNING id</code> gives you an empty result exactly when the row already
+existed. Code that expects an id then fails on the second run and works on the first, which is a delightful
+bug to receive at 3am. If you need the id either way, use <code>DO UPDATE SET id = EXCLUDED.id</code> as a
+no-op touch, or select afterwards.</p>
+
+<h4>What else to know before you reach for it</h4>
+<ul>
+<li><b>Batch upserts deadlock</b> when two transactions touch the same keys in different orders. Sort the
+batch by key and the deadlock disappears.</li>
+<li><b>Sequence gaps are normal.</b> A failed insert attempt still consumed an identity value; gaps mean
+nothing is wrong.</li>
+<li><b>MERGE is not a drop-in.</b> In several engines it is not concurrency-safe in the way people assume —
+in PostgreSQL, MERGE can still raise a unique violation under concurrent inserts where
+<code>ON CONFLICT</code> would not.</li>
+<li><b>Every conflicting upsert writes a dead row</b>, so a high-churn upsert table needs vacuum attention
+that an insert-only table does not.</li>
+</ul>
+<p>The summary worth carrying: an upsert removes a race you cannot otherwise close, and in exchange it asks
+you to be explicit about <b>which writer owns which column</b> and <b>which version is newer</b>. Those two
+questions were always there — the check-then-insert version just let you avoid answering them.</p>`,
+docs:[['PostgreSQL — INSERT ... ON CONFLICT','https://www.postgresql.org/docs/current/sql-insert.html#SQL-ON-CONFLICT'],['SQLite — UPSERT','https://www.sqlite.org/lang_upsert.html'],['MySQL — INSERT ... ON DUPLICATE KEY UPDATE','https://dev.mysql.com/doc/refman/8.4/en/insert-on-duplicate.html']],
+exs:[{title:'Write the upsert',lang:'sql',diff:'medium',
+prompt:`One statement per numbered line, PostgreSQL syntax, table <code>contacts(email UNIQUE, name, views, updated_at)</code>. (1) Insert <code>('ada@example.com','Ada')</code> into <code>(email, name)</code> and on a conflict on <code>email</code> update <code>name</code> from the proposed row — use <code>ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name</code>. (2) The same insert but ignoring duplicates entirely — <code>ON CONFLICT (email) DO NOTHING</code>. (3) Increment <code>views</code> atomically on conflict, computing from the existing row rather than a value from your application: <code>SET views = contacts.views + 1</code>. (4) Guard against a stale write by only updating when the incoming row is newer — add <code>WHERE contacts.updated_at &lt; EXCLUDED.updated_at</code>.`,
+starter:`1.
+2.
+3.
+4.
+`,
+solution:`1. INSERT INTO contacts (email, name) VALUES ('ada@example.com', 'Ada') ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name;
+2. INSERT INTO contacts (email, name) VALUES ('ada@example.com', 'Ada') ON CONFLICT (email) DO NOTHING;
+3. INSERT INTO contacts (email, views) VALUES ('ada@example.com', 1) ON CONFLICT (email) DO UPDATE SET views = contacts.views + 1;
+4. INSERT INTO contacts (email, name, updated_at) VALUES ('ada@example.com', 'Ada', now()) ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name WHERE contacts.updated_at < EXCLUDED.updated_at;
+`,
+tests:[{d:'the conflict target names the unique column',re:'1\\.[^\\n]*ON CONFLICT\\s*\\(\\s*email\\s*\\)',flags:'i'},{d:'the update reads from the proposed row',re:'1\\.[^\\n]*EXCLUDED\\.name',flags:'i'},{d:'DO NOTHING ignores the duplicate',re:'2\\.[^\\n]*DO NOTHING',flags:'i'},{d:'the counter is computed from the existing row, not the application',re:'3\\.[^\\n]*contacts\\.views\\s*\\+\\s*1',flags:'i'},{d:'the stale-write guard compares timestamps',re:'4\\.[^\\n]*WHERE[^\\n]*updated_at\\s*<\\s*EXCLUDED\\.updated_at',flags:'i'}],
+behavior:`1. A second run updates instead of raising a unique violation — that is the race closed. 2. DO NOTHING is tidy and silent, and the silence is the trap: RETURNING id gives you an empty result precisely when the row already existed, so code that needs the id works the first time and fails the second. 3. contacts.views + 1 is computed inside the statement, so two concurrent upserts produce 502 rather than both writing 501. Passing a number your application calculated is the lost update this exercise exists to prevent. 4. Without the WHERE guard, a delayed job carrying older data overwrites newer data and nothing anywhere reports a problem. With it, the stale write becomes a no-op. Note that every one of these depends on a UNIQUE constraint on email actually existing — without it there is no conflict to detect and you quietly accumulate duplicates.`,
+hints:['EXCLUDED is the row you tried to insert; the table name refers to the row already there.','For the counter, read from the table side, not from a value you computed.','The stale-write guard is a WHERE on the DO UPDATE, comparing the two versions.']},
+{title:'Merge safely: newer wins, nulls do not clobber',lang:'js',diff:'hard',
+run:{call:'upsertRow',cases:[{name:'no existing row — the incoming row is inserted as-is',args:[null,{id:1,name:'Ada',createdAt:100,updatedAt:100}],expect:{id:1,name:'Ada',createdAt:100,updatedAt:100}},{name:'newer incoming wins, but createdAt is preserved',args:[{id:1,email:'a@x.com',name:'Ada',createdAt:100,updatedAt:200},{id:1,email:'a@x.com',name:'Ada Lovelace',createdAt:999,updatedAt:300}],expect:{id:1,email:'a@x.com',name:'Ada Lovelace',createdAt:100,updatedAt:300}},{name:'a stale write is rejected outright',args:[{id:1,email:'a@x.com',name:'Ada',createdAt:100,updatedAt:200},{id:1,name:'OLD',createdAt:1,updatedAt:150}],expect:{id:1,email:'a@x.com',name:'Ada',createdAt:100,updatedAt:200}},{name:'equal timestamps keep what is already there',args:[{id:1,email:'a@x.com',name:'Ada',createdAt:100,updatedAt:200},{id:1,name:'TIE',createdAt:1,updatedAt:200}],expect:{id:1,email:'a@x.com',name:'Ada',createdAt:100,updatedAt:200}},{name:'a null in the incoming row must not erase a real value',args:[{id:1,email:'a@x.com',name:'Ada',createdAt:100,updatedAt:200},{id:1,email:null,name:'Ada L',createdAt:1,updatedAt:300}],expect:{id:1,email:'a@x.com',name:'Ada L',createdAt:100,updatedAt:300}}]},
+prompt:`Model the merge an upsert performs. Write <code>function upsertRow(existing, incoming)</code> returning the row to store. If <code>existing</code> is null, take <code>incoming</code>. Otherwise: reject the write entirely when <code>incoming.updatedAt</code> is not <b>strictly</b> greater than <code>existing.updatedAt</code>; never overwrite <code>createdAt</code>; and never replace a value with <code>null</code> or <code>undefined</code>. Return a new object rather than mutating either input.`,
+starter:`function upsertRow(existing, incoming) {
+  return incoming;
+}`,
+solution:`function upsertRow(existing, incoming) {
+  if (!existing) return { ...incoming };                       // plain insert
+  if (incoming.updatedAt <= existing.updatedAt) return { ...existing };  // stale write: no-op
+  const merged = { ...existing };
+  for (const k of Object.keys(incoming)) {
+    if (k === 'createdAt') continue;                           // the original creation time wins
+    if (incoming[k] === null || incoming[k] === undefined) continue;   // do not clobber with nothing
+    merged[k] = incoming[k];
+  }
+  return merged;
+}`,
+tests:[{d:'an absent existing row is an insert',re:'!existing|existing\\s*==\\s*null'},{d:'a stale or equal timestamp is rejected',re:'updatedAt\\s*<=\\s*|>\\s*existing\\.updatedAt'},{d:'createdAt is protected',re:'createdAt'},{d:'null and undefined are skipped',re:'null|undefined'},{d:'neither input is mutated',re:'\\.\\.\\.existing|Object\\.assign\\s*\\(\\s*\\{'}],
+behavior:`Five cases execute. The stale-write case is the one that matters most in production: a delayed job carrying older data arrives after a newer update, and without the timestamp guard it silently overwrites good data with bad — nothing errors, nothing logs, and you find out from a customer. The equal-timestamps case forces a decision rather than an accident; keeping what is already there is the conservative choice and it must be deliberate. The null case is the mirror image of the clobbering problem in the lesson: a partial payload from an importer that omits a field should not erase it, which is exactly what SET email = EXCLUDED.email would do. And note the createdAt rule — a row can only be created once, so no writer arriving later is authoritative about when that happened.`,
+hints:['Three rules, applied in order: insert, reject, then merge field by field.','Strictly greater — decide what equal timestamps mean and encode it.','Copy into a new object so the caller\'s rows are untouched.']}]},
+
 {id:'dbmig',title:'Migrating data between databases',body:`
 <p>A rite of passage in real jobs: move data from an old schema into a new one — during a rewrite, a merger, or when normalizing a messy legacy table. This is <b>ETL</b> in miniature: <b>Extract</b> from the source, <b>Transform</b> to fit the target, <b>Load</b> into the new tables. SQL does it in one statement with <code>INSERT ... SELECT</code>.</p>
 <p>Here is the synthetic data you will migrate. A denormalized legacy table with real-world mess — a NULL email, a duplicate, and mixed-case addresses:</p>

@@ -1265,7 +1265,37 @@ BigDecimal net   = price.multiply(qty);                          // 59.97
 BigDecimal vat   = net.multiply(new BigDecimal("0.19"))
                       .setScale(2, RoundingMode.HALF_EVEN);      // 11.39
 net.add(vat);            // ⚠ result thrown away — BigDecimal is immutable
-BigDecimal gross = net.add(vat);                                 // 71.36</div>`,
+BigDecimal gross = net.add(vat);                                 // 71.36</div>
+
+<h4>Scale is part of the value, and it propagates</h4>
+<p>A <code>BigDecimal</code> is an unscaled integer plus a scale, so <code>1.10</code> is 110 with scale 2.
+That is why <code>equals</code> says <code>1.0</code> and <code>1.00</code> differ — they are different
+values in this representation — and why <b><code>compareTo</code> is the comparison you almost always
+want</b>. The same fact makes <code>BigDecimal</code> a poor <code>HashSet</code> member or map key,
+because two amounts a human would call equal land in different buckets.</p>
+<p>Arithmetic propagates scale in ways worth knowing before they surprise you: addition and subtraction
+take the larger scale, multiplication <i>adds</i> the scales, so a price with scale 2 times a quantity with
+scale 2 gives scale 4. If you want money back out, you must say so — <code>setScale(2,
+RoundingMode.HALF_UP)</code> — and saying so is a decision about rounding, not formatting.</p>
+
+<h4>Choosing a rounding mode is a business decision</h4>
+<p><code>HALF_UP</code> rounds 2.5 to 3 and is what most people mean by "round". <code>HALF_EVEN</code>,
+banker's rounding, sends 2.5 to 2 and 3.5 to 4, so a long series of roundings does not drift upward — which
+is why it is the finance default and the JDK's default for <code>MathContext.DECIMAL64</code>. Picking one
+is not a style choice: across millions of line items the difference is real money, and auditors ask which
+you used.</p>
+<p><code>RoundingMode.UNNECESSARY</code> is worth knowing as a tool: it throws if rounding would be
+required, which turns "we assumed this divides exactly" into a loud failure rather than a silent
+adjustment.</p>
+
+<h4>Where it costs, and the alternative</h4>
+<p><code>BigDecimal</code> is immutable, so every operation allocates, and it is roughly an order of
+magnitude slower than primitive arithmetic. In a tight loop over millions of amounts that matters; in a
+request handler it never will. The lighter option is <b>integer minor units</b> — store cents as a
+<code>long</code> — which is exact, fast and perfectly adequate while everything stays in one currency and
+divisions are rare. Reach for <code>BigDecimal</code> when you need division, rates, tax, or interoperation
+with systems that speak decimals. And never, in either scheme, let a <code>double</code> touch money on the
+way in or out.</p>`,
 docs:[['BigDecimal — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html'],['RoundingMode — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/RoundingMode.html']],
 ex:{title:'An exact invoice',
 prompt:`Write <code>Invoice</code> with <code>static BigDecimal gross(String unitPrice, int quantity, String vatRate)</code> returning the <b>gross total: unitPrice × quantity × (1 + vatRate)</b> — e.g. gross("19.99", 3, "0.19") == 71.36. Build the unit price and rate from the <b>String</b> constructor, multiply by quantity (<code>BigDecimal.valueOf(quantity)</code>), add the VAT portion, and return the total scaled to 2 with <code>RoundingMode.HALF_EVEN</code>. Also add <code>static boolean same(BigDecimal a, BigDecimal b)</code> returning true when the two are <b>numerically equal ignoring scale</b> (1.0 vs 1.00 → true). Do <b>not</b> use the double constructor anywhere.`,

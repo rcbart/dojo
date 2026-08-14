@@ -7,9 +7,9 @@
   <a href="https://rcbart.github.io/dojo/identity/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-IdentityDojo-8b5cf6" alt="IdentityDojo live"></a>
   <a href="https://rcbart.github.io/dojo/js/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-JSDojo-eab308" alt="JSDojo live"></a>
   <img src="https://img.shields.io/badge/tracks-29-8b5cf6" alt="tracks">
-  <img src="https://img.shields.io/badge/lessons-206-8b5cf6" alt="lessons">
-  <img src="https://img.shields.io/badge/exercises-372-06b6d4" alt="exercises">
-  <img src="https://img.shields.io/badge/content%20checks-1866-2ea44f" alt="content integrity checks">
+  <img src="https://img.shields.io/badge/lessons-207-8b5cf6" alt="lessons">
+  <img src="https://img.shields.io/badge/exercises-374-06b6d4" alt="exercises">
+  <img src="https://img.shields.io/badge/content%20checks-1876-2ea44f" alt="content integrity checks">
   <img src="https://img.shields.io/badge/engine%20tests-35-2ea44f" alt="engine unit tests">
   <img src="https://img.shields.io/badge/executed%20exercises-31-06b6d4" alt="exercises graded by real execution">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
@@ -18,7 +18,7 @@
 # DevDojo 🥋
 
 An interactive, self-contained learning platform for software engineering. **29 training tracks,
-206 lessons, and 372 hands-on exercises** run entirely in the browser — an in-editor coding
+207 lessons, and 374 hands-on exercises** run entirely in the browser — an in-editor coding
 exercise on every lesson, a belt progression, **spaced-repetition review**, a **difficulty-filtered practice hub**, a domain
 glossary with click-to-explain terms, tournaments, and end-to-end capstone projects.
 
@@ -165,6 +165,7 @@ src/                DevDojo's own content-derived maps (NOT the engine)
   quizzes_hand.js   hand-authored quizzes, where they exist
 content/streams/    one module per stream — the course content
   manifest.json     stream order
+LESSON_TEMPLATE.md  the shape every new lesson follows: skeleton, checklist, gates
 scripts/verify.js   content integrity gate: parses every module, runs each exercise's
                     regex tests against its own solution, checks id uniqueness
 scripts/verify-exec.js  execution gate: runs every run-spec exercise's reference

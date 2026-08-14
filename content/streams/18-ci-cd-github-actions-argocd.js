@@ -278,7 +278,33 @@ ArgoCD watches ─▶ OutOfSync ─▶ sync ─▶ cluster runs :SHA   (rollback
     kustomize edit set image api=ghcr.io/acme/api:\${{ github.sha }}
     git config user.name ci-bot && git config user.email ci@acme.dev
     git commit -am "api: deploy \${{ github.sha }}" && git push</div>
-<p>Day-2 ArgoCD you should know: <b>sync waves</b> (<code>argocd.argoproj.io/sync-wave</code> annotations order db-migration Jobs before Deployments), <b>hooks</b> (PreSync migration Jobs), and the <b>CLI</b> for scripting and CI checks. Rollback in GitOps is beautifully boring: <code>git revert</code> the bump commit — ArgoCD sees the old tag and converges. The cluster followed git into the hole; it follows git back out.</p>`,
+<p>Day-2 ArgoCD you should know: <b>sync waves</b> (<code>argocd.argoproj.io/sync-wave</code> annotations order db-migration Jobs before Deployments), <b>hooks</b> (PreSync migration Jobs), and the <b>CLI</b> for scripting and CI checks. Rollback in GitOps is beautifully boring: <code>git revert</code> the bump commit — ArgoCD sees the old tag and converges. The cluster followed git into the hole; it follows git back out.</p>
+
+<h4>Why the two halves are separate on purpose</h4>
+<p>The pipeline stops at the registry. Actions builds, tests and pushes an image; ArgoCD notices a changed
+manifest and reconciles the cluster toward it. Nothing in CI holds cluster credentials, which is the point:
+a compromised build job cannot deploy, because it has no way to reach production. It can only publish an
+artefact and propose a change.</p>
+<p>That separation also changes what "deployed" means. Push-based CD reports success when the deploy command
+returns; pull-based CD reports it when the cluster's actual state matches the declared state — which is a
+stronger claim, and the reason drift shows up as a status rather than as a surprise months later.</p>
+
+<h4>The handover: how the image tag reaches the manifest</h4>
+<p>Something has to write the new tag into the manifest repository, and this is where teams improvise
+badly. The honest options: a CI step that commits the tag to the config repo, or an image updater watching
+the registry. Either way, two rules hold. <b>Never deploy a mutable tag</b> such as <code>latest</code> —
+pin the digest or an immutable tag, or you cannot say what is running. And <b>keep application and config
+in separate repositories</b>, or the commit that updates the tag re-triggers the build that produced it.</p>
+
+<h4>What to verify before calling it done</h4>
+<ul>
+<li><b>A rollback is a revert.</b> If going back means re-running a pipeline, you do not have GitOps yet —
+you have a slower deploy.</li>
+<li><b>The cluster is the source of truth for what IS; git is the source of truth for what SHOULD BE.</b>
+Anyone who kubectl-edits production creates drift, and the reconciler either fights them or reports it.</li>
+<li><b>Secrets are not in git</b>, sealed or external — the one thing the declarative model cannot take
+literally.</li>
+</ul>`,
 docs:[['Kustomize — set image','https://kubectl.docs.kubernetes.io/references/kustomize/cmd/edit/setimage/'],['ArgoCD sync waves & hooks','https://argo-cd.readthedocs.io/en/stable/user_guide/sync-waves/'],['argocd CLI reference','https://argo-cd.readthedocs.io/en/stable/user_guide/commands/argocd_app/']],
 ex:{title:'argocd CLI drill',lang:'shell',
 prompt:`One command per numbered line, using the <code>argocd</code> CLI: (1) log in to server <code>argocd.acme.dev</code> (just the login command with the server host), (2) list all applications, (3) show the details/status of app <code>payments</code>, (4) trigger a sync of <code>payments</code>, (5) sync <code>payments</code> but only preview what would change (the diff, no apply — one command, it is not <code>sync</code>), (6) roll <code>payments</code> back to history id <code>7</code>.`,
