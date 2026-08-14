@@ -1236,5 +1236,84 @@ solution:`public class AtoDefense {
 }`,
 tests:[{d:'credential stuffing -> breached-password check + MFA',re:'"credential-stuffing".*?"breached-password check \\+ MFA"',flags:'s'},{d:'brute force -> rate limit + lockout',re:'"brute-force".*?"rate limit \\+ lockout"',flags:'s'},{d:'bot signup -> bot detection',re:'"bot-signup".*?"bot detection"',flags:'s'},{d:'account takeover -> risk-based step-up',re:'"account-takeover".*?"risk-based step-up"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
 behavior:`against("credential-stuffing") is "breached-password check + MFA"; against("brute-force") is "rate limit + lockout". The strategy assumes passwords are already leaked, so MFA + rate limits + anomaly detection carry the load.`,
-hints:['Credential stuffing reuses leaked passwords, so block breached passwords and add MFA.','Brute force is stopped by rate limiting and lockout.','Account takeover is caught by risk-based signals that trigger step-up.']}}
+hints:['Credential stuffing reuses leaked passwords, so block breached passwords and add MFA.','Brute force is stopped by rate limiting and lockout.','Account takeover is caught by risk-based signals that trigger step-up.']}},
+
+{id:'am10',title:'Proofing in practice: documents, liveness and the deepfake problem',body:`
+<p>The assurance-levels lesson gave you the framework — IAL for how well the real-world identity was
+proven, AAL for the strength of the login, FAL for how the assertion travels. This lesson is about actually
+<b>doing</b> IAL: what happens in the ninety seconds when a stranger claims to be a specific person and you
+have to decide whether to believe them.</p>
+<p>It matters more than it used to for two reasons that arrived at the same time. Generative models made
+convincing fake documents and fake faces cheap, and a wave of regulation — age assurance, financial
+onboarding, marketplace verification — made proofing mandatory in places that previously had none.</p>
+
+<h4>What a proofing check actually consists of</h4>
+<ul>
+<li><b>Document authenticity.</b> Is this a real passport or driving licence? Checks include the machine-
+readable zone's checksums, the security features under different lighting, the chip in an ePassport
+(genuinely strong, because it is cryptographically signed by the issuing state), and consistency between
+the printed data and the encoded data.</li>
+<li><b>Face match.</b> Does the selfie match the photo on the document? This is a biometric comparison
+returning a similarity score, not a yes or no.</li>
+<li><b>Liveness, properly called presentation-attack detection.</b> Is there a live human in front of the
+camera, rather than a photo, a screen, a mask or a generated video? This is the check the attacker is now
+attacking hardest.</li>
+<li><b>Data validation.</b> Does the claimed identity exist in an authoritative source — a credit file, a
+government register, a mobile-network record?</li>
+</ul>
+<p>Each returns a <i>score</i>, and the engineering decision is what to do with a set of scores rather than
+whether a single check passed.</p>
+
+<h4>Three outcomes, not two</h4>
+<p>The most consequential design choice in proofing is refusing to build a binary. A system with only
+<b>pass</b> and <b>fail</b> is forced to draw one line, and wherever that line sits it either rejects real
+customers or admits fraudsters. Every serious implementation has a third outcome — <b>refer</b> — where a
+human reviews the case.</p>
+<p>That changes the economics. You can set the automatic-pass threshold high enough that a false accept is
+rare, because the cost of borderline cases is a review queue rather than a lost customer. The two numbers
+to hold in your head are the <b>false accept rate</b> (fraudsters admitted, which is a loss event) and the
+<b>false reject rate</b> (real people turned away, which is a revenue and fairness event, and which is
+almost never measured with the same care).</p>
+
+<h4>The deepfake problem, stated honestly</h4>
+<p>Injection attacks are now the sharp edge. Rather than holding a printed photo to a camera — a
+<i>presentation</i> attack that liveness detection is good at spotting — an attacker bypasses the camera
+entirely, feeding synthetic video into the device through a virtual camera or a modified client. The
+biometric pipeline sees a perfect, well-lit, entirely fabricated human.</p>
+<p>The defences are layered and none is sufficient alone: signals that the capture came from a genuine
+device sensor, challenge-response that is hard to synthesise in real time, server-side liveness rather than
+a client's word for it, and — the strongest by a distance — <b>reading the chip</b> in an ePassport or a
+mobile driving licence, where the data is signed by the issuer and cannot be fabricated at all. The
+direction of travel is away from "look at a picture and judge" and towards "verify a signature", which is
+the same move identity made everywhere else.</p>
+
+<h4>Proofing is not authentication, and the difference is expensive to forget</h4>
+<p>Proofing happens <b>once</b>, to bind a real-world person to an account. Authentication happens
+<b>every time</b>, to prove the same person is back. Re-running document checks at each login would be slow,
+expensive and no more secure than a passkey.</p>
+<p>The failure this prevents is a specific and common one: a service proofs a user thoroughly at signup and
+then protects the account with a password and SMS recovery. An attacker never touches the proofing — they
+take the account over afterwards. <b>The strength of an identity is the weakest of its proofing and its
+authentication</b>, and the recovery path is part of the authentication.</p>
+<p>Two more things to get right. <b>Store the outcome, not the evidence</b> — retaining passport images and
+face templates creates a breach liability far larger than the fraud it prevents, so keep the decision, the
+scores, the vendor's reference and a retention deadline. And <b>measure the rejections</b>: proofing that
+disproportionately fails a group of legitimate people is a fairness failure that will not appear in any
+fraud metric.</p>`,
+docs:[['NIST SP 800-63A — identity proofing','https://pages.nist.gov/800-63-3/sp800-63a.html'],['ISO/IEC 30107 — presentation attack detection','https://www.iso.org/standard/79520.html'],['ICAO 9303 — machine readable travel documents','https://www.icao.int/publications/pages/publication.aspx?docnum=9303']],
+ex:{title:'Three outcomes, not two',lang:'js',
+run:{call:'proofingOutcome',cases:[{name:'strong scores and a live subject pass automatically',args:[{documentScore:0.95,faceMatchScore:0.93,livenessPassed:true}],expect:'pass'},{name:'a borderline document goes to a human',args:[{documentScore:0.72,faceMatchScore:0.93,livenessPassed:true}],expect:'refer'},{name:'a borderline face match also goes to a human',args:[{documentScore:0.99,faceMatchScore:0.60,livenessPassed:true}],expect:'refer'},{name:'a clearly bad document fails outright',args:[{documentScore:0.30,faceMatchScore:0.95,livenessPassed:true}],expect:'fail'},{name:'failed liveness fails whatever the other scores say',args:[{documentScore:0.99,faceMatchScore:0.99,livenessPassed:false}],expect:'fail'}]},
+prompt:`Write <code>function proofingOutcome(signals)</code> returning <code>"pass"</code>, <code>"refer"</code> or <code>"fail"</code> from <code>{ documentScore, faceMatchScore, livenessPassed }</code>. Failed liveness is an immediate <code>fail</code> whatever the scores. Any score below 0.5 is a <code>fail</code>. Any score below 0.8 is a <code>refer</code>. Everything else passes.`,
+starter:`function proofingOutcome(signals) {
+  return "fail";
+}`,
+solution:`function proofingOutcome(s) {
+  if (s.livenessPassed === false) return "fail";                       // no live human, no decision
+  if (s.documentScore < 0.5 || s.faceMatchScore < 0.5) return "fail";
+  if (s.documentScore < 0.8 || s.faceMatchScore < 0.8) return "refer"; // a human looks at it
+  return "pass";
+}`,
+tests:[{d:'liveness is checked before the scores',re:'livenessPassed'},{d:'a hard failure threshold exists',re:'0\\.5'},{d:'a referral band exists between the thresholds',re:'0\\.8'},{d:'all three outcomes can be returned',re:'["\x27]refer["\x27]'}],
+behavior:`Five cases execute. The referral band is the point of the exercise: a system with only pass and fail must put its single threshold somewhere, and wherever it goes it either admits fraudsters or turns away real customers. Adding a third outcome converts that dilemma into a review queue, which is a cost you can budget rather than a risk you absorb. The liveness case is ordered first deliberately — a perfect document photograph and a perfect face match are exactly what an injection attack produces, so a pipeline that averages the signals instead of gating on liveness scores the attack highly.`,
+hints:['Liveness is a gate, not a score to be averaged with the others.','Two thresholds produce three bands, which is why there are three outcomes.','Check the failing band before the referral band, or everything low reads as "refer".']}}
 ]});

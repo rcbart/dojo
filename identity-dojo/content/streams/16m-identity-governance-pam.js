@@ -272,77 +272,82 @@ behavior:`rotateDue(90,90) is true, rotateDue(91,90) is true, rotateDue(30,90) i
 hints:['Reached or exceeded means the >= comparison.','Compare ageDays against maxDays directly.','Return the boolean result of the comparison.']}},
 
 {id:'ig5',title:'CIAM vs workforce IAM',body:`
-<p>Identity comes in two flavors with different priorities. <b>Workforce IAM</b> governs employees and contractors: the emphasis is control — provisioning from HR, least privilege, access reviews, fast deprovisioning. <b>CIAM</b> (Customer IAM) governs external users: the emphasis is experience and scale — self-service registration, social login, consent and privacy, and handling millions of accounts.</p>
-<p>Both rest on the same protocols (OAuth, OIDC, SAML) and the same compliance backbone (audit, least privilege, deprovisioning), but you tune them differently for employees versus customers.</p>
+<p>Everything else in this stream assumes two things that consumer identity does not have. Access reviews,
+joiner-mover-leaver, entitlement certification and separation of duties all assume an <b>authoritative
+source</b> that says who exists, and <b>coercive power</b> to enforce a decision. For customers there is no
+HR system and no employment relationship. The foundations stream covers <i>why</i> the two disciplines
+diverge; this lesson is about what governance actually becomes once you accept that the usual machinery
+does not transfer.</p>
 
-<h4>Same protocols, opposite pressures</h4>
-<p>It is easy to read CIAM and workforce IAM as the same system pointed at different people. The
-protocols are indeed the same. The <b>forces acting on them are inverted</b>, and that is what makes the
-architectures diverge.</p>
-<div class="codeSample" data-hl>                    WORKFORCE                 CIAM
-who enrolls         HR system does it         the user does it
-population          thousands                 millions to hundreds of millions
-friction            acceptable - it is work   every step loses real revenue
-identity source     authoritative (HR)        self-asserted, unverified
-you can force       MFA, device, policy       almost nothing
-the failure mode    over-access               abandoned signup / breach of PII
-downtime cost       staff cannot work         customers cannot buy</div>
-
-<h4>What changes on the workforce side</h4>
-<p>You have an <b>authoritative source</b>. HR says a person exists, holds this job, reports to that
-manager, and left on this date. Everything downstream can be derived from it — birthright access on
-joining, recalculation on transfer, deprovisioning within minutes of termination. The whole discipline
-of governance in this stream assumes such a source exists.</p>
-<p>You also have <b>coercive power</b>. You can mandate phishing-resistant MFA, require a managed device,
-block legacy protocols, and revoke without negotiation. The user is an employee; friction is a cost of
-employment.</p>
-
-<h4>What changes on the customer side</h4>
-<p>There is no HR feed. The identity is whatever the person typed, and the account is often the only
-record they exist. That inverts the priorities:</p>
+<h4>What replaces each control</h4>
 <ul>
-<li><b>Registration is a funnel.</b> Every extra field measurably reduces completion. This is the one
-place where a security control has a directly attributable revenue cost, which is why CIAM decisions get
-argued about with marketing in the room.</li>
-<li><b>Progressive profiling</b> replaces the long form — collect the minimum at signup, ask for more when
-there is a reason the user understands.</li>
-<li><b>MFA cannot simply be mandated</b>, so it is risk-based: step up on a new device, a payment change,
-or an unusual location, rather than on every login.</li>
-<li><b>Account recovery is the real attack surface.</b> Workforce recovery routes through a helpdesk that
-can verify a human. Consumers have only email and SMS, which means the recovery path is usually weaker
-than the login path — and attackers know to go there first.</li>
-<li><b>Consent and data rights are legal obligations</b>, not features. Deletion has to actually delete,
-across every downstream system, on request.</li>
-<li><b>Scale is a design constraint</b>, not a capacity plan. Ten million users with a login spike
-during a marketing campaign is an availability problem, and identity is the front door — if it is down,
-everything is down.</li>
+<li><b>Access review becomes lifecycle policy.</b> Nobody can certify that a shopper still needs their
+account, so the question changes from "does this person still need access?" to "is this account still
+alive?" — expressed as dormancy thresholds and a retention deadline that runs automatically.</li>
+<li><b>Deprovisioning becomes deletion, with a legal basis.</b> A leaver is disabled by an event; a customer
+leaves by asking, or by never coming back. Both paths must end in data actually being removed, on a clock
+you can state.</li>
+<li><b>Entitlement certification becomes delegated administration.</b> In B2B2C you cannot certify a
+merchant's staff, so the merchant's own admin does — and you certify the <i>merchant</i>. The boundary
+moves up a level rather than disappearing.</li>
+<li><b>Separation of duties becomes fraud control.</b> The risk is not a customer accumulating conflicting
+permissions; it is a customer, or someone wearing their account, doing something the real person would not.</li>
 </ul>
 
-<h4>The mistake in both directions</h4>
-<p>Running consumers on a workforce stack produces a login experience that hemorrhages signups and a
-consent story that does not survive a regulator's question. Running employees on a consumer stack gives
-you no HR integration, no reviews, no joiner-mover-leaver, and an audit you will fail.</p>
-<p>And a third population sits between them: <b>B2B</b> — business customers whose own administrators must
-manage their own users, bring their own IdP, and see only their own tenant. That is neither CIAM nor
-workforce, and treating it as either is a common and expensive error. It gets its own treatment in the
-multi-tenancy lesson.</p>`,
+<h4>The consent lifecycle is the governance object</h4>
+<p>Where workforce governance tracks entitlements, consumer governance tracks <b>consent</b> — and it is
+harder, because consent is per purpose, revocable at any time, and must be provable years later. A usable
+implementation records what was agreed, in what wording, under which policy version, through which
+interface, and when. Withdrawal has to be as easy as granting, and it has to <b>propagate</b>: to the
+marketing platform, the analytics pipeline and every downstream copy. That is why consent belongs in a
+service other systems query rather than a flag each system caches and forgets.</p>
+
+<h4>The control that fails most often</h4>
+<p>It is not the login. It is the <b>support tool</b>. Every consumer product ends up with an internal
+interface that can view, edit and act on any customer account, built quickly under pressure, and it is
+routinely the least governed system in the estate — broad access, weak approval, thin logging.</p>
+<p>Treat it as privileged access, because it is: scope what an agent can see by ticket rather than granting
+the whole database, require a reason string that is logged, prefer time-boxed impersonation over standing
+access, mask what does not need to be read, and make impersonation visible to the customer where the law or
+decency requires it. The safe-support-access lesson in the foundations stream is the mechanism; this is the
+governance around it.</p>
+
+<h4>What to measure</h4>
+<p>Four numbers tell you whether any of this is real:</p>
+<ul>
+<li><b>Dormant-account ratio</b> — how much of your user base is inactive, which is both a breach surface
+and a signal about the product.</li>
+<li><b>Deletion latency</b> — the time from request to data actually gone, including backups. Most teams
+discover this number is unbounded when they first measure it.</li>
+<li><b>Consent-revocation propagation time</b> — how long after a withdrawal the last downstream system
+stops using the data.</li>
+<li><b>Support impersonation events reviewed</b> — as a proportion of events, not as a raw count.</li>
+</ul>
+
+<h4>The conflict you have to design for</h4>
+<p>Erasure and retention pull in opposite directions, and they will collide. A customer requests deletion
+while their account is under a legal hold, or inside a period a financial regulator requires you to keep.
+Erasure is a right, and it is not absolute; the resolution is neither to ignore the request nor to destroy
+regulated records. It is to <b>suspend and record</b>: stop processing, mark the account, and delete when
+the hold lifts — with the decision written down, because the one thing you cannot defend is having made no
+decision at all.</p>`,
 docs:[['CIAM vs IAM','https://auth0.com/blog/what-is-ciam/'],['Workforce vs customer identity','https://www.okta.com/customer-identity/']],
-ex:{title:'Who is the audience?',lang:'js',
-run:{call:'audience',cases:[{args:['ciam'],expect:'customers'},{args:['workforce'],expect:'employees'},{name:'anything else is unknown',args:['b2b'],expect:'unknown'},{args:[''],expect:'unknown'}]},
-prompt:`Write <code>function audience(type)</code>: <code>"ciam"</code>&rarr;<code>"customers"</code>, <code>"workforce"</code>&rarr;<code>"employees"</code>, and <code>"unknown"</code> for anything else.`,
-starter:`function audience(type) {
-  return null;
+ex:{title:'Decide the lifecycle action',lang:'js',
+run:{call:'lifecycleAction',cases:[{name:'a recent login is simply active',args:[{daysSinceLastSeen:10,deletionRequested:false,legalHoldActive:false,dormantAfterDays:180,deleteAfterDays:730}],expect:'active'},{name:'past the dormancy threshold',args:[{daysSinceLastSeen:200,deletionRequested:false,legalHoldActive:false,dormantAfterDays:180,deleteAfterDays:730}],expect:'dormant'},{name:'past the retention deadline, delete without being asked',args:[{daysSinceLastSeen:800,deletionRequested:false,legalHoldActive:false,dormantAfterDays:180,deleteAfterDays:730}],expect:'delete'},{name:'an erasure request beats an active account',args:[{daysSinceLastSeen:5,deletionRequested:true,legalHoldActive:false,dormantAfterDays:180,deleteAfterDays:730}],expect:'delete'},{name:'a legal hold outranks the erasure request',args:[{daysSinceLastSeen:5,deletionRequested:true,legalHoldActive:true,dormantAfterDays:180,deleteAfterDays:730}],expect:'retain-pending-hold'},{name:'exactly at the dormancy threshold counts as dormant',args:[{daysSinceLastSeen:180,deletionRequested:false,legalHoldActive:false,dormantAfterDays:180,deleteAfterDays:730}],expect:'dormant'}]},
+prompt:`Write <code>function lifecycleAction(account)</code> returning <code>"active"</code>, <code>"dormant"</code>, <code>"delete"</code> or <code>"retain-pending-hold"</code> from <code>{ daysSinceLastSeen, deletionRequested, legalHoldActive, dormantAfterDays, deleteAfterDays }</code>. An erasure request under a legal hold is <b>retain-pending-hold</b> — neither ignore the request nor destroy a regulated record. Otherwise an erasure request deletes; then the retention deadline; then dormancy; otherwise active.`,
+starter:`function lifecycleAction(account) {
+  return "active";
 }`,
-solution:`function audience(type) {
-  switch (type) {
-    case "ciam":      return "customers";
-    case "workforce": return "employees";
-    default:          return "unknown";
-  }
+solution:`function lifecycleAction(a) {
+  if (a.deletionRequested && a.legalHoldActive) return "retain-pending-hold"; // suspend and record
+  if (a.deletionRequested) return "delete";
+  if (a.daysSinceLastSeen >= a.deleteAfterDays) return "delete";
+  if (a.daysSinceLastSeen >= a.dormantAfterDays) return "dormant";
+  return "active";
 }`,
-tests:[{d:'CIAM serves customers',re:'"ciam"[\\s\\S]*?"customers"'},{d:'workforce IAM serves employees',re:'"workforce"[\\s\\S]*?"employees"'},{d:'unknown default',re:'"unknown"'}],
-behavior:`audience("ciam") is "customers", audience("workforce") is "employees", audience("b2b") is "unknown" — and B2B really is the third population that fits neither, as the lesson explains.`,
-hints:['A two-case switch with a default covers it.','CIAM is customer-facing; workforce IAM is employee-facing.','Anything else returns unknown.']}},
+tests:[{d:'the hold-versus-erasure conflict is handled first',re:'retain-pending-hold'},{d:'an erasure request is honoured',re:'deletionRequested'},{d:'the retention deadline deletes on its own',re:'deleteAfterDays'},{d:'dormancy is evaluated against its own threshold',re:'dormantAfterDays'}],
+behavior:`Six cases execute. The fifth is the one worth sitting with: a customer exercising a right to erasure while a legal hold is active is a genuine conflict between two obligations, and both obvious answers are wrong — ignoring the request breaches the right, destroying the record breaches the hold. The defensible outcome is to stop processing, mark the account and delete when the hold lifts, with the decision recorded. The third case is the one teams forget entirely: retention deadlines should delete accounts nobody asked about, because data you kept without a reason is the cheapest breach you will ever suffer. Note the ordering is the policy — reordering these five lines changes what your organisation promises.`,
+hints:['Two flags interact, and their combination is a distinct outcome rather than either one alone.','Deletion has two independent triggers: someone asked, or the clock ran out.','Decide whether exactly at a threshold counts, then encode it — that boundary is a policy statement.']}},
 {id:'ig6',title:'Consent & privacy in CIAM',body:`
 <p>Consumer identity (CIAM) means holding real people's personal data, so <b>consent and privacy are first-class</b>, not an afterthought — and often legally required (GDPR, CCPA).</p>
 <ul>

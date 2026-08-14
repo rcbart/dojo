@@ -968,6 +968,83 @@ function evaluate(gates, weightedScore) {
 }`,
 tests:[{d:'every gate must pass',re:'handlesLegacyTail\\s*&&'},{d:'residency is a gate',re:'meetsResidency'},{d:'audit evidence is a gate',re:'producesAuditEvidence'},{d:'phishing-resistant MFA is a gate',re:'phishingResistantMfa'},{d:'migration effort carries the heaviest weight',re:'3\\s*\\*\\s*migrationEffortInverse'},{d:'operational burden is weighted equally',re:'3\\s*\\*\\s*operationalEase'},{d:'a failed gate disqualifies rather than scores',re:'-1'}],
 behavior:`evaluate(true,55) is 55 and evaluate(false,55) is -1 — executed for real, so returning a low score instead of -1 actually fails. score(5,5,5,5,5) is 55: migration effort and operational burden carry triple weight because they are the largest real costs and the most consistently underestimated, while licence price and developer experience dominate most evaluations for no good reason.`,
-hints:['Four conditions joined with &&, no scoring involved.','Write the weighted sum literally so the weights are visible in the code.','<code>return gates ? weightedScore : -1;</code>']}}
+hints:['Four conditions joined with &&, no scoring involved.','Write the weighted sum literally so the weights are visible in the code.','<code>return gates ? weightedScore : -1;</code>']}},
 
+{id:'run10',title:'Detecting identity attacks: what ITDR actually watches',body:`
+<p>The incident-response lesson starts after you know credentials were compromised. The diagnosis lesson
+starts after something is visibly broken. This one covers the gap between them, which is where most real
+attacks live: <b>nothing is broken, nothing has been reported, and someone is signing in as your finance
+director.</b></p>
+<p>The industry name for the discipline is <b>ITDR</b> — Identity Threat Detection and Response. Strip the
+acronym and it is a simple observation: identity has become the primary attack surface, most intrusions now
+begin with a valid credential rather than an exploit, and the tooling built for malware does not look at
+logins at all.</p>
+
+<h4>Why the classic controls miss this</h4>
+<p>An attacker with a valid session is, to every system in your estate, a user. No malware runs. No
+vulnerability is exploited. The endpoint agent sees a browser, the WAF sees an authenticated request, and
+the access logs show a successful login — because it <i>was</i> a successful login. What separates the
+attacker from the employee is not the credential; it is the <b>pattern of use</b>. Detection therefore has
+to be behavioural, and it has to happen where identity events are, which is the IdP.</p>
+
+<h4>The signals worth building first</h4>
+<p>Ordered by value per unit of effort, not by sophistication:</p>
+<ul>
+<li><b>Impossible travel.</b> Two authentications from locations too far apart for the time between them.
+Cheap, and it catches session and credential theft directly. Beware the VPN false positive, which is why it
+is a signal rather than a verdict.</li>
+<li><b>MFA fatigue.</b> A burst of push notifications, then an approval. The attacker has the password and
+is waiting for the user to give up. The burst is far more suspicious than the approval.</li>
+<li><b>New OAuth consent grants</b>, especially to a newly registered client requesting broad scopes. This
+is consent phishing, and it leaves an audit trail that almost nobody reads.</li>
+<li><b>Authentication method downgrade.</b> A user with a passkey suddenly authenticating with a password
+and SMS, or a device enrolling a new authenticator minutes before a sensitive action.</li>
+<li><b>Dormant account waking.</b> An account unused for ninety days signing in successfully, from a new
+device, at an unusual hour.</li>
+<li><b>Service-account interactive login.</b> A non-human identity being used from a browser is almost
+always either a person misusing a shared credential, or an attacker.</li>
+<li><b>Token anomalies.</b> The same refresh token used from two locations; a token used after its user was
+disabled; a session whose IP changes mid-life.</li>
+</ul>
+
+<h4>Detection is the easy half</h4>
+<p>The hard half is <b>response</b>, because the useful responses are disruptive: kill the session, force
+re-authentication, disable the account, revoke the grant. Get it wrong and you have locked a director out
+of a board meeting on the strength of a VPN.</p>
+<p>The way through is to tier the response to the confidence, and to prefer reversible actions:</p>
+<div class="codeSample" data-hl>weak signal      -> log, enrich, raise the risk score
+medium signal    -> step up: require re-authentication or a passkey
+strong signal    -> revoke the session and refresh token, keep the account
+confirmed        -> disable the account, revoke grants, rotate its secrets
+
+// reversible before irreversible. a killed session costs a login;
+// a disabled executive account costs a phone call to your CISO.</div>
+<p>This is where <b>CAEP and Shared Signals</b> earn their place. A revocation is only as fast as its slowest
+consumer, and a stateless resource server will honour a stolen access token until it expires no matter what
+your IdP decided. Push-based signals turn "revoked in principle" into "revoked in seconds" — without them,
+your response time is your token lifetime.</p>
+
+<h4>What makes the difference in practice</h4>
+<p>Three unglamorous things, in order. <b>The logs have to exist and be complete</b> — every authentication,
+success and failure, with device, location, method and client, correlated by a request id. Most detections
+fail because a field was never collected. <b>The signals have to be tuned</b>, because an alert that fires
+daily and is dismissed daily is not a control; measure the dismissal rate and treat a high one as a defect
+in the rule. And <b>the response has to be rehearsed</b>: the first time you revoke every session for a
+compromised user should not be during a real incident, which is exactly why the break-glass and testing
+lessons in this stream exist.</p>`,
+docs:[['CISA — detecting identity-based attacks','https://www.cisa.gov/resources-tools/resources/identity-and-access-management-recommended-best-practices'],['OpenID Shared Signals & CAEP','https://openid.net/wg/sse/'],['MITRE ATT&CK — Valid Accounts (T1078)','https://attack.mitre.org/techniques/T1078/']],
+ex:{title:'Impossible travel, executed',lang:'js',
+run:{call:'impossibleTravel',cases:[{name:'London to Sydney in an hour',args:[5000,60,900],expect:true},{name:'a plausible domestic trip',args:[100,120,900],expect:false},{name:'the same location is never impossible',args:[0,0,900],expect:false},{name:'two places at once — the divide-by-zero case',args:[50,0,900],expect:true},{name:'exactly at the speed limit is allowed',args:[900,60,900],expect:false}]},
+prompt:`Write <code>function impossibleTravel(distanceKm, minutesApart, maxKmh)</code> returning <code>true</code> when the implied speed between two authentications exceeds <code>maxKmh</code>. Zero distance is never impossible. Two logins from different places at the <b>same instant</b> are impossible — and that is the case that divides by zero, so handle it before you compute a speed.`,
+starter:`function impossibleTravel(distanceKm, minutesApart, maxKmh) {
+  return false;
+}`,
+solution:`function impossibleTravel(distanceKm, minutesApart, maxKmh) {
+  if (distanceKm <= 0) return false;          // same place, nothing to explain
+  if (minutesApart <= 0) return true;         // two places at once: guard the divide
+  return distanceKm / (minutesApart / 60) > maxKmh;
+}`,
+tests:[{d:'zero distance is not a detection',re:'distanceKm\\s*<=\\s*0|distanceKm\\s*===\\s*0'},{d:'the zero-time case is handled before dividing',re:'minutesApart\\s*<=\\s*0|minutesApart\\s*===\\s*0'},{d:'speed is distance over time',re:'distanceKm\\s*/'},{d:'the threshold is compared, not hardcoded',re:'maxKmh'}],
+behavior:`Five cases execute. The zero-minutes case is the one that matters and the one most implementations get wrong: two authentications with the same timestamp from different cities is the strongest version of this signal, and a naive implementation divides by zero, produces Infinity, and — by luck — still returns true. Luck is not a detection. The boundary case is a reminder that exactly-at-the-limit should be a deliberate choice rather than an accident, because at scale that boundary decides how many real travellers you interrupt. And note what this function is not: a verdict. It is one input to a risk score, because the same output is produced by a VPN, and locking out a legitimate user is also an incident.`,
+hints:['Two guards come before any arithmetic.','Speed is distance divided by time in hours — minutes need converting.','Decide deliberately whether exactly at the limit counts, then encode that choice.']}}
 ]});

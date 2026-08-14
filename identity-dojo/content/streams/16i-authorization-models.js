@@ -647,6 +647,91 @@ solution:`public class Zanzibar {
         // arbitrary user-driven sharing is the case roles cannot enumerate
         return userDrivenSharing && !rolesMapCleanly;
     }
-}`}}
+}`}},
 
+{id:'az10',title:'Operating policy: testing, shadow mode and the denial nobody can explain',body:`
+<p>Every lesson so far in this stream has been about <i>expressing</i> authorization — roles, attributes,
+relationships, combining rules. This one is about <b>running</b> it, which is a different discipline and the
+one that decides whether your model survives contact with production. A policy engine is not a library you
+install; it is a system that answers thousands of questions per second, that everyone depends on, that
+almost nobody can read, and that fails in a way users experience as "the button does nothing".</p>
+
+<h4>The denial nobody can explain</h4>
+<p>Here is the failure that defines the discipline. A user is refused. They raise a ticket. Support cannot
+say why. The engineer on call opens the policy, reads forty rules across three files, and cannot say why
+either — because the decision depended on the user's group memberships at that instant, an attribute
+fetched from a directory, and a rule written by someone who left.</p>
+<p>The fix is not a better policy language. It is to make the engine <b>return its reasoning with its
+answer</b>. A decision should carry the rule that produced it, the inputs it used and the effect it applied:</p>
+<div class="codeSample" data-hl>{ "allow": false,
+  "rule":  "deny-prod-without-oncall",     // WHICH rule decided
+  "inputs": { "role": "dev", "env": "prod", "oncall": false },
+  "policy_version": "2026-08-14.3" }       // WHICH version of the policy</div>
+<p>That single field turns an unanswerable ticket into a ten-second lookup, and it is the difference between
+an authorization system you can operate and one you can only fear. Log every decision this way — deny
+<i>and</i> allow, because "why was this permitted?" is the question an auditor asks after an incident.</p>
+
+<h4>Policy is code, so test it like code</h4>
+<p>Policies have the same properties that make code worth testing: branches, precedence, and consequences
+when wrong. Yet they are routinely shipped with no test at all, because they live in a different file from
+the application and often in a different language.</p>
+<p>The tests worth writing are not "does rule 12 fire". They are the invariants your organisation actually
+holds:</p>
+<ul>
+<li><b>The positive cases.</b> A support agent can read a ticket. An engineer on call can restart a service.</li>
+<li><b>The negative cases, which matter more.</b> A support agent cannot read a payment method. A contractor
+cannot approve their own expense. Every negative test is a control you can prove.</li>
+<li><b>The separation-of-duties invariants</b>: no single identity can both create and approve the same
+payment, whatever roles it accumulates.</li>
+<li><b>The default.</b> A request that matches nothing must be denied — and there should be a test that
+fails loudly if a future edit makes the default permissive.</li>
+</ul>
+
+<h4>Shadow mode: the only safe way to change a policy</h4>
+<p>A policy change is a change to who can do what, applied to everyone at once, with no gradual rollout —
+unless you build one. <b>Shadow mode</b> is that rollout: run the new policy alongside the old, enforce the
+<i>old</i> answer, and log every case where the two disagree.</p>
+<p>After a day you have a list of exactly who would have been newly denied. That list is the review. It
+routinely contains a team nobody thought about — the batch job running as a service account, the
+integration that authenticates as a former employee — and finding them in a log is enormously cheaper than
+finding them in an incident. Only when the disagreement list is empty, or entirely expected, do you switch
+to enforcing.</p>
+
+<h4>The operational properties nobody specifies until they hurt</h4>
+<ul>
+<li><b>Latency.</b> Authorization sits in every request. A remote PDP adds a network hop to every call, which
+is why decisions get cached — and caching a decision means a revoked permission stays live for the cache
+lifetime. That TTL is a security parameter, not a performance one.</li>
+<li><b>Availability.</b> If the PDP is unreachable, do you fail open or closed? Closed is correct and it
+means the PDP's uptime is now your application's uptime. That is an argument for distributing policy to
+the enforcement points rather than centralising the decision.</li>
+<li><b>Versioning.</b> A decision made yesterday was made by yesterday's policy. Without a version in the
+decision log you cannot reconstruct why, which makes post-incident review guesswork.</li>
+<li><b>Staleness.</b> Attributes and group memberships arrive from elsewhere and are almost always slightly
+old. "How stale can this input be before the decision is wrong?" is a question worth answering deliberately
+rather than discovering.</li>
+</ul>
+<p>The summary a senior engineer should be able to give: <b>a policy you cannot test, explain or roll out
+gradually is not a policy — it is a liability with a syntax.</b></p>`,
+docs:[['OPA — policy testing','https://www.openpolicyagent.org/docs/latest/policy-testing/'],['AWS Cedar — policy validation','https://docs.cedarpolicy.com/'],['Google SRE Workbook — canarying releases','https://sre.google/workbook/canarying-releases/']],
+ex:{title:'Return the reason with the decision',lang:'js',
+run:{call:'decide',cases:[{name:'a matching allow rule is reported by id',args:[[{id:'r1',effect:'allow',when:{role:'admin'}},{id:'r2',effect:'deny',when:{env:'prod'}}],{role:'admin',env:'dev'}],expect:{allow:true,reason:'r1'}},{name:'deny overrides an earlier allow',args:[[{id:'r1',effect:'allow',when:{role:'admin'}},{id:'r2',effect:'deny',when:{env:'prod'}}],{role:'admin',env:'prod'}],expect:{allow:false,reason:'r2'}},{name:'nothing matches, so the default denies',args:[[{id:'r1',effect:'allow',when:{role:'admin'}}],{role:'guest'}],expect:{allow:false,reason:'no rule matched'}},{name:'an empty policy denies rather than permits',args:[[],{role:'admin'}],expect:{allow:false,reason:'no rule matched'}},{name:'a rule matches only when every condition holds',args:[[{id:'r1',effect:'allow',when:{role:'dev',oncall:true}}],{role:'dev',oncall:false}],expect:{allow:false,reason:'no rule matched'}}]},
+prompt:`Write <code>function decide(rules, req)</code> returning <code>{ allow, reason }</code>. A rule is <code>{ id, effect, when }</code> and matches when <b>every</b> key in <code>when</code> equals the same key in <code>req</code>. Deny wins: if any matching rule denies, return that rule's id. Otherwise return the id of the first matching allow. If nothing matches, deny with the reason <code>"no rule matched"</code>. The <code>reason</code> is the decision log — without it, a refused user is an unanswerable ticket.`,
+starter:`function decide(rules, req) {
+  return { allow: false, reason: "" };
+}`,
+solution:`function decide(rules, req) {
+  let allowedBy = null;
+  for (const r of rules) {
+    const match = Object.keys(r.when).every(k => r.when[k] === req[k]);
+    if (!match) continue;
+    if (r.effect === "deny") return { allow: false, reason: r.id };   // deny wins
+    if (!allowedBy) allowedBy = r.id;                                  // remember the first allow
+  }
+  return allowedBy ? { allow: true, reason: allowedBy }
+                   : { allow: false, reason: "no rule matched" };      // default deny
+}`,
+tests:[{d:'every condition in a rule must match',re:'every\\s*\\(|for\\s*\\(.*of\\s+Object\\.keys'},{d:'a matching deny returns immediately',re:'["\x27]deny["\x27]'},{d:'the deciding rule id is returned',re:'reason:\\s*r\\.id|reason:\\s*allowedBy'},{d:'the default is deny with a stated reason',re:'no rule matched'}],
+behavior:`Five cases execute. The last one is the one that catches a partial-match bug: a rule requiring role dev AND oncall true must not fire for an on-call-false developer, and a solution using "some" instead of "every" quietly grants it. The empty-policy case encodes the most important default in authorization — no rules means no permission, never "nothing to stop you". And note what the reason field does to operations: every one of these outcomes is explainable in one line to a user, a support agent or an auditor, which is the difference between a policy you can run and one you can only apologise for.`,
+hints:['A rule matches only when EVERY condition in its when block matches the request.','Deny wins, so return as soon as a matching deny is found.','Remember the first matching allow rather than returning it immediately — a later deny must still win.']}}
 ]});
