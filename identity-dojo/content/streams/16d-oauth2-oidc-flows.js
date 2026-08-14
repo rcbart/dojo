@@ -29,7 +29,39 @@ client that cannot rely on PKCE (the AS does not support it) still needs it.</p>
   &client_id=app123
   &redirect_uri=https://app.example.com/callback
   &scope=openid%20profile        // space-separated, URL-encoded
-  &state=xyzRANDOM               // CSRF protection, verified on return</div>`,
+  &state=xyzRANDOM               // CSRF protection, verified on return</div>
+
+<h4>Why there is a code at all</h4>
+<p>The obvious design would be for the authorization server to redirect back with the access token itself.
+The reason it does not is that the redirect travels through the <b>browser</b>, and a browser is a leaky
+place. URLs land in history, in server access logs, in the <code>Referer</code> header sent to the next
+site, and in the address bar over someone's shoulder. Anything you put in a redirect should be assumed to
+be seen.</p>
+<p>So the redirect carries a <b>code</b>, which is useless on its own. Redeeming it requires something the
+browser never had: the client's secret, or the PKCE verifier. An attacker who captures the code from a log
+gets a value that has already been used, expires in seconds, and cannot be exchanged without a second
+factor they do not hold.</p>
+
+<h4>Front channel and back channel, precisely</h4>
+<p>The <b>front channel</b> is anything routed through the user's browser — the <code>/authorize</code>
+request and the redirect back. It is visible, modifiable and untrusted. The <b>back channel</b> is a direct
+server-to-server HTTPS call — the <code>/token</code> request — where the client authenticates and nobody
+in between can read the response. Tokens belong in the back channel. Once you hold that distinction, most
+OAuth security advice stops needing to be memorised: it is nearly all "do not put that in the front
+channel".</p>
+
+<h4>What the redirect actually carries</h4>
+<div class="codeSample">GET /authorize?response_type=code        // ask for a code, not a token
+  &amp;client_id=my-app                      // who is asking
+  &amp;redirect_uri=https://app.example/cb    // where to come back to — EXACT match
+  &amp;scope=openid profile invoices:read     // what is being requested
+  &amp;code_challenge=...&amp;code_challenge_method=S256   // PKCE
+  &amp;state=...                              // app state, and CSRF where PKCE is unavailable</div>
+<p>Two of these cause most integration failures. <code>redirect_uri</code> is matched as an <b>exact
+string</b> against the registered list — a trailing slash, a different port in development, or an added
+query parameter is a mismatch, and that strictness is deliberate: every relaxation of it has produced a
+real attack. And the <b>code is single-use</b>. If one is presented twice the authorization server should
+treat it as a theft signal and revoke the whole grant, not merely refuse the second attempt.</p>`,
 docs:[['RFC 9700 &sect;2.1 - CSRF: PKCE, nonce or state','https://www.rfc-editor.org/rfc/rfc9700#section-2.1'],['RFC 6749 — OAuth 2.0','https://www.rfc-editor.org/rfc/rfc6749'],['oauth.net — Authorization Code','https://oauth.net/2/grant-types/authorization-code/'],['RFC 9700 — OAuth security BCP','https://www.rfc-editor.org/rfc/rfc9700']],
 ex:{title:'Build the /authorize request',
 prompt:`Write <code>AuthorizeUrl</code> with <code>static String build(String base, String clientId, String redirectUri, String scope, String state)</code> that returns the authorization request URL: <code>base + "?response_type=code"</code> then <code>&amp;client_id=</code>, <code>&amp;redirect_uri=</code>, <code>&amp;scope=</code>, <code>&amp;state=</code>, each value passed through <code>java.net.URLEncoder.encode(value, "UTF-8")</code>. Include <code>response_type=code</code> and all four params. Declare <code>throws Exception</code>.`,
@@ -1342,13 +1374,43 @@ solution:`public class FlowChooser {
 ,
 {id:'oa3p',title:'Third-party integrations & unsolicited assertions',body:`
 <p>Most OAuth in the wild is <b>integrating with a third party</b>: "Log in with Google," a GitHub App that opens pull requests, a Slack app that posts messages, or an enterprise customer single-signing-on into your SaaS. In every case two independent organizations must establish <b>trust</b> before any token flows.</p>
-<p><b>How trust is established.</b> You register your application with the provider and receive credentials — a <code>client_id</code> and <code>client_secret</code> (OAuth/OIDC), or you exchange <b>SAML metadata</b> containing an <b>X.509 certificate</b>. The critical asymmetry: you <b>share public keys</b> (or a certificate) so each side can <i>verify</i> the other's signatures, but each side keeps its <b>private key secret</b>. The provider publishes its signing keys at a <b>JWKS</b> URL (or in SAML metadata), so your app can verify that a token or assertion genuinely came from it. For <b>webhooks</b>, trust is usually a shared signing secret used to HMAC the payload so you can confirm it was not forged.</p>
+<p><b>How trust is established.</b> You register your application with the provider. In OAuth or OIDC you
+receive a <code>client_id</code> and usually a <code>client_secret</code>. In SAML you exchange metadata
+containing an X.509 certificate.</p>
+<p>The asymmetry underneath is the part worth holding on to. Each side <b>publishes its public key</b> so
+the other can verify its signatures. Each side <b>keeps its private key</b>, so only it can produce them.
+The provider publishes signing keys at a JWKS URL, or inside SAML metadata, and your application verifies
+against those rather than against anything the message itself supplies.</p>
+<p>Webhooks are the same idea with a symmetric key: a shared secret produces an HMAC over the payload, and
+you recompute it to confirm the message was not forged.</p>
 <div class="codeSample">Your app  ──register──▶  Provider
           ◀─client_id/secret, or exchange SAML metadata + cert──
 Later:    Provider ──signed token/assertion──▶ Your app
           Your app verifies the signature using the provider's PUBLISHED public key (JWKS/metadata)</div>
 <p><b>Unsolicited assertions.</b> Normally your app <i>starts</i> the flow (SP-initiated), so it can match the response to its own request. An <b>unsolicited assertion</b> is the opposite: the identity provider pushes a signed assertion to your app <i>without</i> a preceding request — this is SAML <b>IdP-initiated SSO</b> (OIDC deliberately has no such flow). It is convenient (a portal launches the app for the user) but riskier: there is <b>no request to correlate to</b> (no in-response-to / state), so it is more exposed to <b>replay</b> and to an assertion being injected from elsewhere.</p>
-<p><b>Defending unsolicited assertions.</b> Accept them only from a <b>pre-configured, trusted IdP</b>; verify the <b>signature</b> against that IdP's known key; enforce the <b>audience/recipient</b> so an assertion minted for another service is rejected; enforce a short validity window (<code>NotOnOrAfter</code>) to bound replay; and <b>track assertion IDs</b> so the same one cannot be replayed. When you can, prefer SP-initiated flows — the request you send is itself a defense.</p>`,
+<p><b>Defending unsolicited assertions.</b> Accept them only from a <b>pre-configured, trusted IdP</b>; verify the <b>signature</b> against that IdP's known key; enforce the <b>audience/recipient</b> so an assertion minted for another service is rejected; enforce a short validity window (<code>NotOnOrAfter</code>) to bound replay; and <b>track assertion IDs</b> so the same one cannot be replayed. When you can, prefer SP-initiated flows — the request you send is itself a defense.</p>
+<h4>Verifying what arrives, in both directions</h4>
+<p>An integration has two trust paths and teams routinely secure only one. <b>Inbound tokens and
+assertions</b> are verified against the provider's published keys. <b>Inbound webhooks</b> are verified
+against the shared secret — and that check needs three parts, not one: recompute the HMAC over the exact
+raw body before any parsing, compare it in <b>constant time</b>, and reject anything whose timestamp is
+outside a short window so a captured-and-replayed call is refused.</p>
+<p>The subtlety that breaks implementations is the raw body. Parsing JSON and re-serialising it changes
+whitespace and key order, so the signature no longer matches. Capture the bytes as they arrived.</p>
+
+<h4>What breaks later, and how to survive it</h4>
+<ul>
+<li><b>Key rotation at the provider.</b> Fetch and cache the JWKS, refresh on an unknown <code>kid</code>,
+and never pin a single key. Providers rotate on their schedule, not yours, and a pinned key fails on their
+timetable.</li>
+<li><b>Certificate expiry in SAML.</b> Metadata certificates expire, and the failure is a total outage for
+that integration on a date that was knowable years in advance. Refresh metadata automatically and alert
+well before the date.</li>
+<li><b>Secret rotation on your side.</b> Support two valid secrets at once, or rotation requires downtime —
+which is why it never happens.</li>
+</ul>
+<p>The rule for both directions is the same: <b>discover keys, do not embed them</b>, and treat every
+credential in the integration as something that will change while you are not looking.</p>`,
 docs:[['SAML IdP-initiated SSO','https://en.wikipedia.org/wiki/SAML_2.0#IdP-initiated'],['OAuth 2.0 Security BCP','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['JWKS / verifying tokens','https://www.rfc-editor.org/rfc/rfc7517']],
 ex:{title:'Accept a third-party assertion',lang:'js',
 run:{call:'accept',cases:[{name:'everything checks out',args:[true,true,true,true],expect:true},{name:'bad signature',args:[false,true,true,true],expect:false},{name:'wrong audience',args:[true,false,true,true],expect:false},{name:'outside the validity window',args:[true,true,false,true],expect:false},{name:'replayed',args:[true,true,true,false],expect:false}]},

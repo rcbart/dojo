@@ -1280,10 +1280,10 @@ almost never measured with the same care).</p>
 <i>presentation</i> attack that liveness detection is good at spotting — an attacker bypasses the camera
 entirely, feeding synthetic video into the device through a virtual camera or a modified client. The
 biometric pipeline sees a perfect, well-lit, entirely fabricated human.</p>
-<p>The defences are layered and none is sufficient alone: signals that the capture came from a genuine
-device sensor, challenge-response that is hard to synthesise in real time, server-side liveness rather than
-a client's word for it, and — the strongest by a distance — <b>reading the chip</b> in an ePassport or a
-mobile driving licence, where the data is signed by the issuer and cannot be fabricated at all. The
+<p>The defences are layered and none is sufficient alone. Signals that the capture came from a genuine
+device sensor. Challenge-response that is hard to synthesise in real time. Server-side liveness rather than
+a client's word for it. And, strongest by a distance, <b>reading the chip</b> in an ePassport or a mobile
+driving licence — where the data is signed by the issuing state and cannot be fabricated at all. The
 direction of travel is away from "look at a picture and judge" and towards "verify a signature", which is
 the same move identity made everywhere else.</p>
 

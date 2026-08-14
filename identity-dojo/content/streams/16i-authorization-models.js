@@ -29,7 +29,33 @@ RBAC         alice -> "editor" -> {read, write}
 bundle of permissions. A <b>group</b> is a collection of people. Roles and groups get used
 interchangeably and should not be: "who is in Finance?" is an HR question, "what may Finance do?" is a
 security question, and collapsing them means every org-chart change silently becomes a permissions
-change nobody reviewed.</p>`,
+change nobody reviewed.</p>
+
+<h4>Where ACLs are still the right answer</h4>
+<p>RBAC replaced ACLs for organisational permissions and never replaced them for <b>per-object sharing</b>.
+When a user shares one document with one colleague, no role expresses that — the grant genuinely belongs to
+the object. Every file-sharing product works this way, and trying to model it as roles produces one role
+per document, which is the reductio of role explosion.</p>
+<p>So real systems are hybrids: coarse organisational access from roles, fine per-object access from lists
+or relationships. Knowing which question you are answering — "what may this job function do?" versus "who
+may touch this specific thing?" — tells you which model you are in.</p>
+
+<h4>The question RBAC makes harder</h4>
+<p>Indirection cuts both ways. With an ACL, "who can read this file?" is answered by reading the file's
+list. With RBAC the answer requires walking backwards from permission to roles to every user and group
+holding them — and that reverse question is the one auditors, incident responders and customers actually
+ask.</p>
+<p>If your system cannot answer it on demand, that is not a reporting gap; it is a sign that access reviews
+are people approving role names they cannot evaluate. It is also the specific problem the relationship-based
+model in the next lessons is built to solve.</p>
+
+<h4>Deny, and why RBAC mostly avoids it</h4>
+<p>ACLs commonly support explicit deny entries, which are seductive and produce systems nobody can reason
+about: once allow and deny both exist, the answer depends on precedence rules a reader has to hold in their
+head. Most RBAC implementations are deliberately <b>allow-only</b> — you hold a permission or you do not —
+and handle exclusions through separation-of-duties constraints instead, which are checked at assignment
+time rather than at every decision. That is a simplicity worth defending; when you meet a model with deny
+rules, find out immediately how conflicts resolve.</p>`,
 docs:[['RBAC — NIST','https://csrc.nist.gov/projects/role-based-access-control'],['Access control — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Access_Control_Cheat_Sheet.html']],
 ex:{title:'Role check',gradeJava:{class:'Rbac',cases:[{name:'admin present -> true',call:'isAdmin',args:['java.util.Set.of("admin")'],expect:'true'},{name:'no admin -> false',call:'isAdmin',args:['java.util.Set.of("viewer")'],expect:'false'}]},
 prompt:`Write class <code>Rbac</code> with <code>static boolean isAdmin(java.util.Set&lt;String&gt; roles)</code> that returns true only when the set of roles contains <code>"admin"</code>.`,
@@ -74,7 +100,34 @@ three levels up appears nowhere near the role you are inspecting.</p>
 <p>For any person, the reviewable figure is <b>effective permissions</b> — the flattened union across
 every role and group, direct and inherited. If your system cannot produce that for one user on demand,
 you cannot answer the only question an auditor will ask, and your access reviews are people approving
-names they do not understand.</p>`,
+names they do not understand.</p>
+
+<h4>Designing roles from job functions, not from screens</h4>
+<p>The most common way to get this wrong is to derive roles from the application's user interface: a role
+per page, or per feature flag. Those roles change whenever the product changes, and they mean nothing to
+the manager who has to approve them during a review.</p>
+<p>Roles derived from <b>job functions</b> — what a person is employed to do — are stable across releases
+and reviewable by someone who understands the business rather than the codebase. The test is whether a
+non-engineer can read the role name and say confidently whether this person should have it. "Claims
+Adjuster" passes. "invoice-page-write" does not.</p>
+
+<h4>Two tiers, which is how large estates stay manageable</h4>
+<p>Mature implementations separate <b>business roles</b> from <b>technical roles</b>. A business role
+("Claims Adjuster") is what a person is granted; it is composed of technical roles or permission sets in
+individual applications. Adding an application then means composing a new technical role into an existing
+business role, rather than granting every person something new.</p>
+<p>This is also what makes joiners work: a <b>birthright</b> business role attached to a job title grants a
+sensible default on day one, and everything beyond it is <b>requestable</b> — approved, time-bound, and
+expiring on its own. The distinction matters because standing access accumulates and time-bound access does
+not.</p>
+
+<h4>Ownership, or the review is theatre</h4>
+<p>Every role needs a named owner who can say what it is for and whether it is still correct. Without one,
+access reviews become a manager approving a list of names they cannot evaluate — which is worse than no
+review, because it produces an audit artefact asserting that someone checked.</p>
+<p>Two numbers tell you whether the model is healthy: the ratio of roles to users, which should fall as the
+organisation grows rather than rise, and the proportion of grants that are time-bound rather than standing.
+Both are cheap to compute and neither is usually measured.</p>`,
 docs:[['RBAC roles & permissions','https://auth0.com/docs/manage-users/access-control/rbac'],['Least privilege','https://csrc.nist.gov/glossary/term/least_privilege']],
 ex:{title:'Map roles to permissions',
 prompt:`Write class <code>Roles</code> with <code>static String permissions(String role)</code>: <code>"viewer"</code>→<code>"read"</code>, <code>"editor"</code>→<code>"read,write"</code>, <code>"admin"</code>→<code>"read,write,delete"</code>, and <code>""</code> (empty string) for any unknown role.`,

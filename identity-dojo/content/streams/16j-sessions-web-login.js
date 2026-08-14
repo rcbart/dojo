@@ -196,7 +196,32 @@ private than the others.</p>
 <p>The honest ranking of outcomes: an HttpOnly cookie means XSS can <i>act</i> as the user while the page
 is open; localStorage means XSS <i>walks away with</i> a credential usable from anywhere until it
 expires. Same vulnerability, very different blast radius — which is the entire argument for the BFF
-pattern.</p>`,
+pattern.</p>
+
+<h4>The three moments a session id must change</h4>
+<p>Regeneration is not only a login concern. The id should be replaced at <b>authentication</b>, at any
+<b>privilege change</b> (assuming a role, entering an admin area, completing step-up), and the old session
+must be <b>destroyed server-side at logout</b> rather than merely forgotten by the browser.</p>
+<p>That last one is the quiet failure: clearing the cookie ends the session for a cooperative user and does
+nothing to a stolen copy, which continues to work until it expires. Logout has to invalidate state on the
+server or it is a visual effect.</p>
+
+<h4>Two clocks, not one</h4>
+<p>A session needs an <b>idle timeout</b> (inactive for N minutes) and an <b>absolute lifetime</b> (valid
+for at most N hours regardless of activity). Idle timeout alone means a stolen session that is kept warm by
+the attacker never expires at all — the absolute lifetime is what bounds that, and it is the one people
+omit because it occasionally logs out an active user.</p>
+
+<h4>Storage, ranked honestly</h4>
+<p>In descending order of safety: an <b>HttpOnly, Secure, SameSite</b> cookie that page script cannot read;
+a token held only in <b>JavaScript memory</b>, which is lost on refresh but never written anywhere an
+attacker can read later; <b>sessionStorage</b>; and <b>localStorage</b>, which persists and is readable by
+any script that runs on the page.</p>
+<p>The honest framing is about blast radius rather than prevention. With an HttpOnly cookie, an XSS bug lets
+an attacker act as the user <i>while the page is open</i>. With localStorage, the same bug lets them walk
+away with a credential usable from anywhere until it expires. Same vulnerability, very different aftermath —
+and neither is fixed by storage choice, which is why the BFF pattern, where the browser holds no token at
+all, is the structural answer rather than a preference.</p>`,
 docs:[['Session fixation — OWASP','https://owasp.org/www-community/attacks/Session_fixation'],['Token storage — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html#local-storage']],
 ex:{title:'Choose safe token storage',lang:'js',
 run:{call:'safe',cases:[{args:['httponly-cookie'],expect:true},{args:['localstorage'],expect:false},{args:['sessionstorage'],expect:false},{name:'a plain variable is still script-readable',args:['jsvariable'],expect:false}]},

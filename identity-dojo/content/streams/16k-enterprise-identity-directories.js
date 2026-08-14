@@ -405,7 +405,39 @@ Repeat over a career and you get the privilege accumulation that access reviews 
 <h4>Why it is worth the effort</h4>
 <p>Federation ends access at the IdP but leaves the account behind in every app. SCIM is what makes
 deprovisioning real rather than theoretical, and time-to-deprovision is the metric audits actually
-fail on.</p>`,
+fail on.</p>
+
+<h4>What the calls look like</h4>
+<div class="codeSample">POST /scim/v2/Users            // joiner: create, with externalId as the stable key
+PATCH /scim/v2/Users/{id}      // mover: change what changed, not the whole record
+PATCH /scim/v2/Users/{id}      // leaver: {"op":"replace","path":"active","value":false}
+GET  /scim/v2/Users?filter=userName eq "ada@example.com"   // find before you create</div>
+<p>The shape is deliberately boring, and that is the point: one integration pattern instead of fifty
+bespoke user APIs.</p>
+
+<h4>Where SCIM gets rough in practice</h4>
+<ul>
+<li><b>PATCH is the interoperability problem.</b> The specification's PATCH syntax is intricate and vendors
+implement subsets of it inconsistently, so the same payload succeeds against one application and fails
+against another. Teams routinely discover this per integration rather than once.</li>
+<li><b>Ordering matters.</b> A user must exist before they can be added to a group, and a group before it
+can be referenced. Provisioning engines that fire events in parallel produce failures that disappear on
+retry, which is the worst kind of bug to diagnose.</li>
+<li><b>Push needs a pull as a safety net.</b> SCIM is event-driven, and events are lost — a webhook fails, a
+service is down, a change is made directly in the target application. A periodic <b>reconciliation</b> that
+compares source and target and reports drift is what turns "we send events" into "we know the state is
+right".</li>
+</ul>
+
+<h4>The gap that surprises people</h4>
+<p>Setting <code>active:false</code> ends the ability to sign in. It does not end sessions that are already
+live, and it does not invalidate an access token already issued — those remain valid until they expire.
+Deprovisioning is therefore two actions, not one: deactivate the account <i>and</i> revoke the live
+sessions and tokens, which is exactly what the continuous-access-evaluation mechanism in the threats stream
+exists to make fast.</p>
+<p>The number auditors ask for is <b>time to deprovision</b>: from the leaver event in the authoritative
+source to access actually being gone everywhere. Measured honestly, including the applications nobody
+connected, it is usually far worse than teams expect.</p>`,
 docs:[['SCIM','https://scim.cloud/'],['SCIM (RFC 7644)','https://www.rfc-editor.org/rfc/rfc7644']],
 ex:{title:'Map the lifecycle event to an operation',
 prompt:`Write class <code>Scim</code> with <code>static String op(String event)</code>: <code>"joiner"</code>→<code>"create"</code>, <code>"mover"</code>→<code>"update"</code>, <code>"leaver"</code>→<code>"delete"</code>, and <code>"unknown"</code> otherwise.`,
