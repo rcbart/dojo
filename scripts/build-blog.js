@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 // build-blog.js: static blog + portfolio home for roniam.dev. Zero dependencies.
 //
-// Reads blog/*.md (front-matter + markdown subset), renders:
+// Reads posts/*.md (published; blog/*.md drafts too with INCLUDE_DRAFTS=1), renders:
 //   OUT/index.html          = docs/home.html with @@POSTS@@ / @@YEAR@@ filled in
 //   OUT/blog/index.html     = the archive
 //   OUT/blog/<slug>/index.html = one page per post
 //
 // Markdown subset (all this blog uses): # ## ### headings, ``` fences, `code`,
 // **bold**, *italic*, [text](url), > quotes, - lists, --- rules, paragraphs.
-// Posts with draft: true are skipped.
+// Publishing = moving a file from blog/ to posts/ (see the blog-post skill).
 //
 // Run: node scripts/build-blog.js [outDir]     (default: dist-site)
 const fs = require('fs');
@@ -86,8 +86,8 @@ const page = (title, desc, body, root) => `<!doctype html>
 <meta name="description" content="${esc(desc)}">
 <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="8" fill="%231a1f2b"/><g fill="none" stroke="%23d97706" stroke-width="2.4" stroke-linecap="round"><path d="M5 10.5 Q16 8 27 10.5" stroke-width="2.8"/><path d="M7.5 14.5 H24.5"/><path d="M10 11 V25"/><path d="M22 11 V25"/></g></svg>'>
 <style>
-  :root{--bg:#faf7f2;--panel:#fff;--ink:#1a1f2b;--muted:#5c6470;--line:#e7e0d4;
-        --accent:#b45309;--accent-ink:#92400e;--deep2:#0f766e;
+  :root{--bg:#f6f6fa;--panel:#fff;--ink:#191530;--muted:#5b5872;--line:#e4e4f0;
+        --accent:#f59e0b;--accent-ink:#b45309;--deep2:#0d9488;
         --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);
@@ -106,7 +106,7 @@ const page = (title, desc, body, root) => `<!doctype html>
   pre.code{background:#161b26;color:#e2e8f0;border-radius:10px;padding:14px 16px;overflow-x:auto;
            font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
   code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;
-       background:#efe9dd;border-radius:5px;padding:1.5px 5px}
+       background:#ebebf5;border-radius:5px;padding:1.5px 5px}
   pre.code code{background:none;padding:0;font-size:inherit}
   hr{border:0;border-top:1px solid var(--line);margin:30px 0}
   .post{display:block;padding:20px 0;border-bottom:1px solid var(--line);color:inherit}
@@ -123,8 +123,11 @@ const page = (title, desc, body, root) => `<!doctype html>
 </div></nav>
 <div class="wrap">
 ${body}
-<footer>© ${new Date().getFullYear()} Ron Bar-Tor · <a href="https://github.com/rcbart">GitHub</a> · <a href="mailto:rcbart@gmail.com">rcbart@gmail.com</a></footer>
+<footer>© ${new Date().getFullYear()} Ron Bar-Tor · <a href="https://github.com/rcbart">GitHub</a> · <span id="mailme" style="cursor:pointer;font-weight:600;color:var(--deep2)">email me</span></footer>
 </div>
+<script>
+(function(){const p=['rc','ba','rt'],d=['gm','ail'];document.getElementById('mailme').addEventListener('click',()=>{location.href='mailto:'+p.join('')+'@'+d.join('')+'.com?subject='+encodeURIComponent('Hello from roniam.dev')});})();
+</script>
 </body>
 </html>`;
 
