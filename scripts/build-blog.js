@@ -157,11 +157,20 @@ fs.writeFileSync(path.join(OUT, 'blog', 'index.html'),
   page('Writing · Ron Bar-Tor', 'Essays on engineering management, identity, and quality.',
     `<h1>Writing</h1><div class="pdate">Engineering management, identity, and the occasional bug worth a post-mortem.</div>` + list('/'), '/'));
 
-// home page: fill @@POSTS@@ (latest 3, home-styled) and @@YEAR@@
+// home page: fill @@POSTS@@ (latest 3, home-styled), @@NAVPOSTS@@ (sidebar
+// links, latest 5, title only) and @@YEAR@@
+const navPosts = posts.length
+  ? posts.slice(0, 5).map(p =>
+      `<a class="snav post" href="/blog/${p.slug}/" title="${esc(p.meta.title)}">${esc(p.meta.title)}</a>`).join('\n  ')
+  : '<span class="snone">first post coming soon</span>';
+const mainPosts = posts.length
+  ? posts.slice(0, 3).map(p =>
+      `<a class="post" href="/blog/${p.slug}/"><div class="pdate">${fmtDate(p.date)}</div>` +
+      `<h3>${esc(p.meta.title)}</h3><p>${esc(p.meta.description || '')}</p></a>`).join('\n')
+  : '<p class="secdesc">First post coming soon.</p>';
 const home = fs.readFileSync(path.join(ROOT, 'docs', 'home.html'), 'utf8')
-  .replace('@@POSTS@@', posts.slice(0, 3).map(p =>
-    `<a class="post" href="/blog/${p.slug}/"><div class="pdate">${fmtDate(p.date)}</div>` +
-    `<h3>${esc(p.meta.title)}</h3><p>${esc(p.meta.description || '')}</p></a>`).join('\n'))
+  .replace('@@POSTS@@', mainPosts)
+  .replace('@@NAVPOSTS@@', navPosts)
   .replace('@@YEAR@@', String(new Date().getFullYear()));
 fs.writeFileSync(path.join(OUT, 'index.html'), home);
 

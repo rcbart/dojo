@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ron Bar-Tor · roniam.dev · engineering leadership &amp; identity</title>
-<meta name="description" content="Ron Bar-Tor: engineering leader and identity &amp; access management specialist, sharing accumulated knowledge through three interactive courses (409 lessons, 624 hands-on exercises) and essays on engineering management. Built to develop engineers, not park them in tutorial hell.">
+<title>Ron Bar-Tor · roniam.dev · Senior Engineering Manager, identity &amp; access</title>
+<meta name="description" content="Ron Bar-Tor is a Senior Engineering Manager specializing in identity and access management, sharing accumulated knowledge through three interactive courses (409 lessons, 624 hands-on exercises) and essays on engineering management. Built to develop engineers, not park them in tutorial hell.">
 <meta property="og:title" content="Ron Bar-Tor · roniam.dev">
 <meta property="og:description" content="roniam = Ron + IAM. Built to develop engineers, not park them in tutorial hell. 409 lessons, every one ends with you doing the work.">
 <meta property="og:url" content="https://roniam.dev/">
@@ -14,8 +14,10 @@
     --bg:#fbf8f3; --panel:#ffffff; --ink:#191530; --muted:#5b5872; --line:#e9e2d8;
     --night:#130f26; --night2:#221a44;
     --amber:#f59e0b; --rose:#f43f5e; --violet:#8b5cf6; --teal:#0d9488;
+    --accent-ink:#92400e;
     --grad:linear-gradient(100deg,#f59e0b,#f43f5e 48%,#8b5cf6);
     --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --sidew:264px;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -23,149 +25,204 @@
        font:16.5px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
   a{color:var(--teal);text-decoration:none}
   a:hover{text-decoration:underline}
-  .wrap{max-width:980px;margin:0 auto;padding:0 24px}
   .iam{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
 
-  /* ---------- night hero ---------- */
-  .top{background:radial-gradient(1100px 500px at 75% -10%, #2d1f5e 0%, var(--night2) 45%, var(--night) 100%);color:#f3f0ff}
-  nav{border-bottom:1px solid rgba(255,255,255,.09)}
-  .navrow{display:flex;align-items:center;gap:22px;padding:16px 0}
-  .mark{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:.2px;color:#fff}
-  .mark:hover{text-decoration:none}
-  .navlinks{margin-left:auto;display:flex;gap:20px;font-size:14.5px;font-weight:600}
-  .navlinks a{color:#cfc9ec} .navlinks a:hover{color:#fff;text-decoration:none}
+  /* ---------- left sidebar ---------- */
+  aside{position:fixed;inset:0 auto 0 0;width:var(--sidew);overflow-y:auto;
+        background:radial-gradient(500px 320px at 85% -5%, #2d1f5e 0%, var(--night2) 50%, var(--night) 100%);
+        color:#cfc9ec;padding:26px 22px 22px;display:flex;flex-direction:column;gap:4px}
+  .brand{display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;font-size:17px;margin-bottom:2px}
+  .brand:hover{text-decoration:none}
+  .role{font-size:12.5px;color:#a89ee0;line-height:1.45;margin:2px 0 18px}
+  .role b{color:#e8e3ff;font-weight:700}
+  .sgroup{font-size:11px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:#7f74b8;
+          margin:16px 0 6px}
+  .snav{display:block;color:#cfc9ec;font-size:14px;font-weight:600;padding:6px 9px;border-radius:8px;
+        line-height:1.35}
+  .snav:hover{background:rgba(255,255,255,.08);color:#fff;text-decoration:none}
+  .snav .em{margin-right:7px}
+  .snav small{display:block;color:#8d84c0;font-weight:400;font-size:11.5px;margin-top:1px}
+  .snav.post{font-weight:500;font-size:13px;color:#b9b0e6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .snone{display:block;color:#7f74b8;font-size:12.5px;padding:4px 9px;font-style:italic}
+  .sfoot{margin-top:auto;padding-top:20px}
+  .mailme{display:block;text-align:center;background:var(--grad);color:#130f26;font-weight:800;
+          font-size:14.5px;padding:12px 14px;border-radius:10px;cursor:pointer}
+  .mailme:hover{filter:brightness(1.08);text-decoration:none}
+  .slinks{display:flex;gap:14px;justify-content:center;margin-top:12px;font-size:13px}
+  .slinks a{color:#a89ee0;font-weight:600} .slinks a:hover{color:#fff}
 
-  .hero{padding:78px 0 66px}
-  .domain{font:700 15px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:1px;color:#a89ee0}
-  .domain b{color:#fff} .domain .iam{font-weight:800}
-  h1{font-family:var(--serif);font-size:clamp(34px,6vw,60px);line-height:1.07;margin:18px 0 10px;
-     letter-spacing:-.5px;font-weight:600;color:#fff}
-  h1 .iam{font-style:normal}
-  .tagline{font-family:var(--serif);font-style:italic;font-size:clamp(17px,2.4vw,21px);color:#b9b0e6;margin:0 0 22px}
-  .lede{font-size:18.5px;color:#cfc9ec;max-width:64ch;margin:0 0 30px}
-  .lede b{color:#fff}
-  .ctas{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}
-  .btn{display:inline-block;font-weight:700;font-size:15px;padding:13px 22px;border-radius:10px;
-       background:var(--grad);color:#130f26;transition:transform .12s,filter .12s}
-  .btn:hover{transform:translateY(-1px);filter:brightness(1.08);text-decoration:none}
-  .btn.alt{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.4)}
-  .btn.alt:hover{border-color:#fff;filter:none}
-  .social{display:flex;gap:16px;font-size:14px;align-items:center}
-  .social a{color:#a89ee0;font-weight:600} .social a:hover{color:#fff}
+  /* ---------- main column ---------- */
+  main{margin-left:var(--sidew);padding:0 30px}
+  .col{max-width:820px;margin:0 auto}
 
-  /* pull quote, sitting across the seam */
-  .pull{max-width:980px;margin:-34px auto 0;padding:0 24px;position:relative;z-index:2}
+  .hero{padding:64px 0 8px}
+  .domain{font:700 14px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:1px;color:var(--muted)}
+  .domain b{color:var(--ink)}
+  h1{font-family:var(--serif);font-size:clamp(32px,4.6vw,50px);line-height:1.1;margin:16px 0 12px;
+     letter-spacing:-.5px;font-weight:600}
+  .tagline{font-family:var(--serif);font-style:italic;font-size:clamp(16.5px,2vw,19.5px);color:var(--muted);margin:0 0 20px}
+  .lede{font-size:17.5px;color:var(--muted);max-width:66ch;margin:0 0 24px}
+  .lede b{color:var(--ink)}
+
+  .pull{margin:26px 0 8px}
   .pull figure{margin:0;background:var(--panel);border:1px solid var(--line);border-left:5px solid;
-     border-image:var(--grad) 1;border-radius:14px;padding:24px 28px;cursor:pointer;
-     box-shadow:0 14px 40px rgba(19,15,38,.18)}
-  .pull blockquote{font-family:var(--serif);font-size:clamp(19px,2.7vw,25px);font-style:italic;
-     line-height:1.45;margin:0;color:var(--ink)}
-  .pull figcaption{margin-top:8px;font-size:13.5px;color:var(--muted)}
+     border-image:var(--grad) 1;border-radius:14px;padding:20px 26px;cursor:pointer;
+     box-shadow:0 8px 26px rgba(19,15,38,.07)}
+  .pull blockquote{font-family:var(--serif);font-size:clamp(18px,2.3vw,22px);font-style:italic;
+     line-height:1.45;margin:0}
+  .pull figcaption{margin-top:7px;font-size:13px;color:var(--muted)}
   .pull .hintq{opacity:.55}
 
-  /* ---------- sections ---------- */
-  section{padding:52px 0 10px}
-  .k{font-size:12.5px;font-weight:800;letter-spacing:2.2px;text-transform:uppercase}
+  section{padding:44px 0 6px}
+  .k{font-size:12px;font-weight:800;letter-spacing:2.2px;text-transform:uppercase}
   .k.amber{color:var(--amber)} .k.rose{color:var(--rose)} .k.violet{color:var(--violet)} .k.teal{color:var(--teal)}
-  h2{font-family:var(--serif);font-size:31px;margin:6px 0 8px;font-weight:600}
-  .secdesc{color:var(--muted);margin:0 0 26px;max-width:72ch}
+  h2{font-family:var(--serif);font-size:29px;margin:6px 0 8px;font-weight:600}
+  .secdesc{color:var(--muted);margin:0 0 24px;max-width:72ch}
   .secdesc b{color:var(--ink)}
 
+  .alpha{border:1.5px solid var(--amber);background:color-mix(in srgb,var(--amber) 8%,var(--panel));
+         border-radius:14px;padding:18px 22px;margin:0 0 24px;font-size:15px}
+  .alpha b{color:var(--accent-ink)}
+  .alpha .k2{font-size:11.5px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:6px}
+  .alpha .mailme2{color:var(--teal);font-weight:700;cursor:pointer}
+  .alpha .mailme2:hover{text-decoration:underline}
+
   .stats{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:14px;
-         background:var(--panel);overflow:hidden;margin:6px 0 28px}
-  .stat{flex:1 1 150px;padding:18px 20px;border-right:1px solid var(--line)}
+         background:var(--panel);overflow:hidden;margin:6px 0 24px}
+  .stat{flex:1 1 140px;padding:16px 18px;border-right:1px solid var(--line)}
   .stat:last-child{border-right:0}
-  .stat b{display:block;font-family:var(--serif);font-size:31px}
+  .stat b{display:block;font-family:var(--serif);font-size:29px}
   .stat:nth-child(1) b{color:var(--amber)} .stat:nth-child(2) b{color:var(--rose)}
   .stat:nth-child(3) b{color:var(--violet)} .stat:nth-child(4) b{color:var(--teal)}
   .stat:nth-child(5) b{color:var(--ink)}
-  .stat span{font-size:13px;color:var(--muted)}
+  .stat span{font-size:12.5px;color:var(--muted)}
 
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
   .card{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--c,var(--violet));
-        border-radius:14px;padding:24px;display:flex;flex-direction:column;
+        border-radius:14px;padding:22px;display:flex;flex-direction:column;
         transition:transform .15s,box-shadow .15s}
   .card:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(25,21,48,.10)}
-  .card h3{margin:0 0 4px;font-size:20px;font-family:var(--serif)}
-  .card .tag{font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--c,var(--violet));margin-bottom:8px}
-  .card p{color:var(--muted);font-size:14.5px;margin:0 0 16px;flex:1}
-  .card .nums{font-size:12.5px;color:var(--muted);margin-bottom:12px}
+  .card h3{margin:0 0 4px;font-size:19px;font-family:var(--serif)}
+  .card .tag{font-size:11.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--c,var(--violet));margin-bottom:8px}
+  .card p{color:var(--muted);font-size:14px;margin:0 0 14px;flex:1}
+  .card .nums{font-size:12px;color:var(--muted);margin-bottom:10px}
   .card .nums b{color:var(--ink)}
-  .card .go{font-weight:700;font-size:14.5px;color:var(--c,var(--violet))}
+  .card .go{font-weight:700;font-size:14px;color:var(--c,var(--violet))}
 
-  .alpha{border:1.5px solid var(--amber);background:color-mix(in srgb,var(--amber) 8%,var(--panel));
-         border-radius:14px;padding:18px 22px;margin:0 0 26px;font-size:15px}
-  .alpha b{color:var(--accent-ink, #92400e)}
-  .alpha .k2{font-size:12px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:6px}
-  .alpha a{font-weight:700}
-  .ainote{border-top:1px solid var(--line);margin-top:44px;padding:26px 0 8px;color:var(--muted);font-size:14.5px;max-width:72ch}
-  .ainote h3{font-family:var(--serif);font-style:italic;font-size:18px;color:var(--ink);margin:0 0 8px}
-  .ainote b{color:var(--ink)}
-
-  .prin{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px}
+  .prin{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
   .p-card{border:1px solid var(--line);border-left:4px solid var(--c,var(--violet));border-radius:14px;
-          padding:22px 24px;background:var(--panel)}
-  .p-card h3{font-family:var(--serif);font-size:19px;margin:0 0 8px;font-style:italic}
-  .p-card p{font-size:14.5px;color:var(--muted);margin:0}
+          padding:20px 22px;background:var(--panel)}
+  .p-card h3{font-family:var(--serif);font-size:18px;margin:0 0 8px;font-style:italic}
+  .p-card p{font-size:14px;color:var(--muted);margin:0}
   .p-card p b{color:var(--ink)}
 
-  .post{display:block;padding:20px 0;border-bottom:1px solid var(--line);color:inherit}
+  .post{display:block;padding:18px 0;border-bottom:1px solid var(--line);color:inherit}
   .post:hover{text-decoration:none}
-  .post h3{font-family:var(--serif);font-size:21px;margin:0 0 6px;transition:color .12s}
+  .post h3{font-family:var(--serif);font-size:20px;margin:0 0 6px;transition:color .12s}
   .post:hover h3{color:var(--rose)}
-  .post .pdate{font-size:13px;color:var(--muted);letter-spacing:.4px}
-  .post p{color:var(--muted);font-size:15px;margin:6px 0 0;max-width:75ch}
+  .post .pdate{font-size:12.5px;color:var(--muted);letter-spacing:.4px}
+  .post p{color:var(--muted);font-size:14.5px;margin:6px 0 0;max-width:75ch}
 
-  footer{margin-top:56px;background:var(--night);color:#a89ee0;font-size:14px;padding:30px 0 44px}
-  footer .wrap{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
-  footer a{color:#cfc9ec;font-weight:600} footer a:hover{color:#fff}
-  @media print{nav,.ctas{display:none}}
+  .contact{background:var(--night);color:#cfc9ec;border-radius:16px;padding:30px 32px;margin:44px 0 0}
+  .contact h2{color:#fff;margin-top:0}
+  .contact p{max-width:64ch}
+  .contact b{color:#fff}
+  .contact .mailme{display:inline-block;margin-top:14px;padding:12px 24px}
+
+  .ainote{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--violet);
+          border-radius:14px;padding:20px 24px;margin:6px 0 10px;color:var(--muted);font-size:14.5px}
+  .ainote h3{font-family:var(--serif);font-style:italic;font-size:18.5px;color:var(--ink);margin:0 0 8px}
+  .ainote b{color:var(--ink)}
+  .ainote p{margin:0}
+
+  footer{color:var(--muted);font-size:13.5px;padding:26px 0 40px}
+  footer a{color:var(--muted);font-weight:600}
+
+  /* ---------- small screens: sidebar becomes a header ---------- */
+  @media(max-width:920px){
+    aside{position:static;width:auto;inset:auto;padding:20px 22px}
+    .sgroup{margin:12px 0 4px}
+    .snav{display:inline-block}
+    .snav.post{display:block;max-width:100%}
+    .sfoot{margin-top:14px}
+    main{margin-left:0;padding:0 22px}
+  }
+  @media print{aside{display:none}main{margin-left:0}}
 </style>
 </head>
 <body>
 
-<div class="top">
-  <nav><div class="wrap navrow">
-    <a class="mark" href="/"><svg width="26" height="26" viewBox="0 0 32 32"><defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset=".5" stop-color="#f43f5e"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect x="1" y="1" width="30" height="30" rx="8" fill="#221a44"/><g fill="none" stroke="url(#tg)" stroke-width="2.4" stroke-linecap="round"><path d="M5 10.5 Q16 8 27 10.5" stroke-width="2.8"/><path d="M7.5 14.5 H24.5"/><path d="M10 11 V25"/><path d="M22 11 V25"/></g></svg>
-    <span>ron<span class="iam">iam</span>.dev</span></a>
-    <div class="navlinks">
-      <a href="#dojos">The dojos</a>
-      <a href="#identity">Identity</a>
-      <a href="#principles">How I lead</a>
-      <a href="/blog/">Writing</a>
-    </div>
-  </div></nav>
+<aside>
+  <a class="brand" href="/"><svg width="26" height="26" viewBox="0 0 32 32"><defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset=".5" stop-color="#f43f5e"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect x="1" y="1" width="30" height="30" rx="8" fill="#221a44"/><g fill="none" stroke="url(#tg)" stroke-width="2.4" stroke-linecap="round"><path d="M5 10.5 Q16 8 27 10.5" stroke-width="2.8"/><path d="M7.5 14.5 H24.5"/><path d="M10 11 V25"/><path d="M22 11 V25"/></g></svg>
+  <span>ron<span class="iam">iam</span>.dev</span></a>
+  <div class="role"><b>Ron Bar-Tor</b><br>Senior Engineering Manager<br>Identity &amp; access management</div>
 
-  <div class="wrap"><header class="hero">
-    <div class="domain">ron<span class="iam">iam</span>.dev &nbsp;=&nbsp; <b>Ron</b> + <b>IAM</b> &nbsp;·&nbsp; identity &amp; access management</div>
+  <div class="sgroup">Start here</div>
+  <a class="snav" href="#about"><span class="em">👋</span>About</a>
+  <a class="snav" href="#principles"><span class="em">🧭</span>How I lead</a>
+
+  <div class="sgroup">The dojos</div>
+  <a class="snav" href="/identity/"><span class="em">🛂</span>IdentityDojo<small>OAuth, OIDC, SAML, WebAuthn, Kerberos</small></a>
+  <a class="snav" href="/dev/"><span class="em">🥋</span>DevDojo<small>software engineering, end to end</small></a>
+  <a class="snav" href="/js/"><span class="em">⚡</span>JSDojo<small>JavaScript &amp; Node, executed for real</small></a>
+  <a class="snav" href="/courses/"><span class="em">☁️</span>Cloud-native path<small>Docker → Kubernetes → Envoy → Istio</small></a>
+
+  <div class="sgroup">Writing</div>
+  @@NAVPOSTS@@
+  <a class="snav" href="/blog/" style="color:#fff">All posts →</a>
+
+  <div class="sfoot">
+    <a class="mailme" data-sub="Hello from roniam.dev">Drop me a line</a>
+    <div class="slinks">
+      <a href="https://github.com/rcbart">GitHub</a>
+      <a href="https://www.linkedin.com/in/ron-bar-tor">LinkedIn</a>
+    </div>
+  </div>
+</aside>
+
+<main><div class="col">
+
+  <div class="alpha" style="margin:26px 0 0">
+    <span class="k2">🧪 Alpha · volunteers wanted</span>
+    The dojos are in <b>alpha</b>: complete enough to learn from, not yet ready for launch. I'm
+    looking for <b>10 to 15 volunteers</b> to take a course end to end and tell me where it falls
+    short: what confused you, what bored you, what the grader got wrong. I can't compensate you
+    with anything except knowledge, and there's a lot of that here. Interested?
+    <span class="mailme2" data-sub="Dojo alpha volunteer">Drop me a line</span> and I'll make sure
+    you're set up.
+  </div>
+
+  <header class="hero" id="about">
+    <div class="domain">ron<b>iam</b>.dev = <b>Ron</b> + <b>IAM</b> · identity &amp; access management</div>
     <h1>Hi, I'm Ron. <span class="iam">I&nbsp;AM</span> what I do.</h1>
     <p class="tagline">roniam = Ron + IAM. Identity in both senses: the field I work in, and the fact
     that developing engineers is who I am.</p>
-    <p class="lede">I'm <b>Ron Bar-Tor</b>, an engineering manager whose technical home is
-    <b>identity</b>: OAuth&nbsp;2.1, OIDC, SAML, WebAuthn, Kerberos, zero trust. I built this site to
+    <p class="lede">I'm <b>Ron Bar-Tor</b>, a <b>Senior Engineering Manager</b> whose technical home is
+    identity: OAuth&nbsp;2.1, OIDC, SAML, WebAuthn, Kerberos, zero trust. I built this site to
     pass on what I've accumulated: <b>three interactive courses</b> spanning identity, software
     engineering and JavaScript, plus an engineering blog. The aim is to <b>develop engineers</b>, not
-    park them in tutorial hell: every lesson ends with you doing the work, and CI gates hold the
+    park them in tutorial hell. Every lesson ends with you doing the work, and CI gates hold the
     material to the same bar I'd hold a team to.</p>
-    <div class="ctas">
-      <a class="btn" href="#dojos">Train in the dojos</a>
-      <a class="btn alt" href="/blog/">Read the writing</a>
-    </div>
-    <div class="social">
-      <a href="https://github.com/rcbart">GitHub</a> ·
-      <a href="https://www.linkedin.com/in/ron-bar-tor">LinkedIn</a> ·
-      <a href="mailto:rcbart@gmail.com">rcbart@gmail.com</a>
-    </div>
-  </header></div>
-</div>
 
-<div class="pull"><figure id="quote" title="Click for another">
-  <blockquote id="quoteText">“A check that produces a report is a signal. A check that can refuse to
-  let your work ship is a gate.”</blockquote>
-  <figcaption><span id="quoteSrc">from “My tests were green…”</span> · <span class="hintq">↻ click for another</span></figcaption>
-</figure></div>
+    <div class="pull"><figure id="quote" title="Click for another">
+      <blockquote id="quoteText">“A check that produces a report is a signal. A check that can refuse
+      to let your work ship is a gate.”</blockquote>
+      <figcaption><span id="quoteSrc">from “My tests were green…”</span> · <span class="hintq">↻ click for another</span></figcaption>
+    </figure></div>
+  </header>
 
-<div class="wrap">
+  <div class="ainote" id="ai">
+    <h3>Where AI fits, and where it doesn't</h3>
+    <p>I'll be straightforward: AI generated this site, and it generated large parts of the dojos.
+    That was a deliberate engineering decision, and it's the same call I make as a technical leader
+    every day: <b>know what to delegate, and know what only you can do.</b> The curriculum, the
+    architecture, the design decisions, and every technical judgment in these lessons are mine, drawn
+    from years of hands-on work in identity and platform engineering. When the problem needed my hands,
+    it got them: the grading model, the CI gates, the protocol details a generator would happily get
+    wrong. When the work was mechanical, I delegated it and reviewed the output, exactly as I would
+    with a team. The typing was delegated. The thinking wasn't. And the same <b>five CI gates</b> hold
+    every line to the bar, no matter who or what wrote it.</p>
+  </div>
 
   <section id="dojos">
     <div class="k amber">Proof of work</div>
@@ -176,16 +233,6 @@
     stick if you like. Every push is gated by five CI checks, including one that executes every graded
     exercise against its own reference solution. Free, no accounts, no tracking. Knowledge shared is
     the whole point.</p>
-
-    <div class="alpha">
-      <span class="k2">🧪 Alpha · volunteers wanted</span>
-      The dojos are in <b>alpha</b>: complete enough to learn from, not yet ready for launch. I'm
-      looking for <b>10 to 15 volunteers</b> to take a course end to end and tell me where it falls
-      short: what confused you, what bored you, what the grader got wrong. I can't compensate you
-      with anything except knowledge, and there's a lot of that here. Interested?
-      <a href="mailto:rcbart@gmail.com?subject=Dojo%20alpha%20volunteer">Drop me a line</a> and I'll
-      make sure you're set up.
-    </div>
 
     <div class="stats">
       <div class="stat"><b>58</b><span>tracks &amp; streams</span></div>
@@ -200,9 +247,9 @@
         <div class="tag">Identity &amp; access</div>
         <h3>🛂 IdentityDojo</h3>
         <div class="nums"><b>14 streams · 149 lessons · 159 exercises</b></div>
-        <p>The deep one, and the IAM in roniam. Every OAuth 2.0/2.1 and OIDC flow diagrammed step by step,
-        SAML, JOSE, WebAuthn/FIDO2 internals, Kerberos &amp; Active Directory, SPIFFE, and zero trust,
-        through to running identity in production: incidents, migrations, break-glass.</p>
+        <p>The deep one, and the IAM in roniam. Every OAuth 2.0/2.1 and OIDC flow diagrammed step by
+        step, SAML, JOSE, WebAuthn/FIDO2 internals, Kerberos &amp; Active Directory, SPIFFE, and zero
+        trust, through to running identity in production: incidents, migrations, break-glass.</p>
         <a class="go" href="/identity/">Enter IdentityDojo →</a>
       </div>
       <div class="card" style="--c:var(--violet)">
@@ -229,8 +276,8 @@
     <h2>Identity is the perimeter.</h2>
     <p class="secdesc">Most of my technical depth lives where authentication, authorization and
     federation meet production reality. If you want to know how I think about a protocol, the relevant
-    IdentityDojo stream is the answer at full length. Every authentication flow is walked through step by
-    step, with sequence diagrams and the attacks that shaped each design. Highlights:
+    IdentityDojo stream is the answer at full length. Every authentication flow is walked through step
+    by step, with sequence diagrams and the attacks that shaped each design. Highlights:
     <a href="/identity/">OAuth 2.0 &amp; OIDC</a> · <a href="/identity/">SAML &amp; Web SSO</a> ·
     <a href="/identity/">WebAuthn &amp; passkeys</a> · <a href="/identity/">Kerberos &amp; AD</a> ·
     <a href="/identity/">service-to-service auth &amp; SPIFFE</a> ·
@@ -252,7 +299,8 @@
       <div class="p-card" style="--c:var(--rose)">
         <h3>“Feedback is delivered fresh, never frozen.”</h3>
         <p>Hard conversations happen in days, not at review season. Praise in public, correction in
-        private, both specific enough to act on. A surprise in a performance review is a failure, and it is <b>mine</b>.</p>
+        private, both specific enough to act on. A surprise in a performance review is a failure, and
+        it is <b>mine</b>.</p>
       </div>
       <div class="p-card" style="--c:var(--violet)">
         <h3>“Disagree with me in public and win.”</h3>
@@ -286,29 +334,27 @@
     <h2>Essays &amp; post-mortems</h2>
     <p class="secdesc">Engineering management, identity, and the occasional bug worth a post-mortem.</p>
     @@POSTS@@
-    <p style="margin-top:18px"><a href="/blog/" style="font-weight:700">All posts →</a></p>
+    <p style="margin-top:16px"><a href="/blog/" style="font-weight:700">All posts →</a></p>
   </section>
 
-  <div class="ainote">
-    <h3>A note on AI</h3>
-    <p>This site was generated with AI, and so were the dojos. I want to be straightforward about
-    that, and equally straightforward about what the AI did not bring: the curriculum, the design,
-    the architecture, and every technical judgment in these lessons come from <b>my experience and my
-    knowledge</b>. I direct the tools the way I'd direct a team: I decide what gets built, I set the
-    bar, and I review what comes back. The typing was delegated. The thinking wasn't. And the same
-    five CI gates hold every line to that bar, no matter who or what wrote it.</p>
+  <div class="contact" id="contact">
+    <div class="k amber">Say hello</div>
+    <h2>Let's build something.</h2>
+    <p>I'm always happy to talk shop: identity architecture, engineering management, course feedback,
+    or a collaboration you have in mind. I read everything that lands in my inbox, and
+    <b>alpha volunteers</b> get a personal onboarding.</p>
+    <a class="mailme" data-sub="Hello from roniam.dev">Drop me a line</a>
   </div>
 
-</div>
+  <footer>
+    © @@YEAR@@ Ron Bar-Tor · ron<span class="iam">iam</span>.dev ·
+    <a href="https://github.com/rcbart">GitHub</a> ·
+    <a href="https://www.linkedin.com/in/ron-bar-tor">LinkedIn</a> ·
+    <span class="mailme2" data-sub="Hello from roniam.dev" style="cursor:pointer;font-weight:600">email me</span>
+    · Built by hand. Zero dependencies, like everything else here.
+  </footer>
 
-<footer><div class="wrap">
-  <span>© @@YEAR@@ Ron Bar-Tor · ron<span class="iam">iam</span>.dev</span>
-  <a href="https://github.com/rcbart">GitHub</a>
-  <a href="https://www.linkedin.com/in/ron-bar-tor">LinkedIn</a>
-  <a href="mailto:rcbart@gmail.com">rcbart@gmail.com</a>
-  <a href="/courses/">Cloud-native path</a>
-  <span style="margin-left:auto">Built by hand. Zero dependencies, like everything else here.</span>
-</div></footer>
+</div></main>
 
 <script>
 // quotable: rotate pull-quotes on click; no storage, no deps
@@ -327,6 +373,18 @@
   const t=document.getElementById('quoteText'), s=document.getElementById('quoteSrc');
   document.getElementById('quote').addEventListener('click',()=>{
     i=(i+1)%qs.length; t.textContent=qs[i][0]; s.textContent=qs[i][1];
+  });
+})();
+// contact: the address is assembled on click so it never sits in the page in plain view
+(function(){
+  const p=['rc','ba','rt'], d=['gm','ail'], t='com';
+  const addr=()=>p.join('')+'@'+d.join('')+'.'+t;
+  document.querySelectorAll('.mailme,.mailme2').forEach(el=>{
+    el.addEventListener('click',e=>{
+      e.preventDefault();
+      const sub=encodeURIComponent(el.dataset.sub||'Hello');
+      location.href='mailto:'+addr()+'?subject='+sub;
+    });
   });
 })();
 </script>
