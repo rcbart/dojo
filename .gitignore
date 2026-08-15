@@ -52,3 +52,7 @@ architecture-designs/
 
 # bridge cleanup staging (files the cloud session could not delete)
 _to_delete/
+
+# blog drafts stay local until deliberately published — remove this line
+# (and blog/ from .git/hooks/pre-push) when a post is ready to go public
+blog/
