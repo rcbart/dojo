@@ -167,8 +167,8 @@ const list = root => posts.map(p =>
   `<div class="pdate">${fmtDate(p.date)}</div><p>${esc(p.meta.description || '')}</p></a>`).join('\n');
 
 fs.writeFileSync(path.join(OUT, 'blog', 'index.html'),
-  page('Writing · Ron Bar-Tor', 'Essays on engineering management, identity, and quality.',
-    `<h1>Writing</h1><div class="pdate">Engineering management, identity, and the occasional bug worth telling the whole story about.</div>` + list('/'), '/'));
+  page('Essays & proud scars · Ron Bar-Tor', 'Essays on engineering management, identity, and quality.',
+    `<h1>Essays &amp; proud scars</h1><div class="pdate">Engineering management, identity, and the occasional bug worth telling the whole story about.</div>` + list('/'), '/'));
 
 // home page: fill @@POSTS@@ (latest 3, home-styled), @@NAVPOSTS@@ (sidebar
 // links, latest 5, title only) and @@YEAR@@
