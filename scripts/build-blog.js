@@ -129,13 +129,23 @@ ${body}
 </html>`;
 
 // ---- read posts ----
+// Two directories, one publish gate:
+//   posts/  tracked in git, always built  -> these are the published posts
+//   blog/   gitignored, local drafts      -> built ONLY with INCLUDE_DRAFTS=1,
+//           titles marked so a preview can never be mistaken for the real site
+// Publishing a post = moving its file from blog/ to posts/ (see the blog-post skill).
 const posts = [];
-const blogDir = path.join(ROOT, 'blog');
-for (const f of fs.existsSync(blogDir) ? fs.readdirSync(blogDir).filter(f => f.endsWith('.md')) : []) {
-  const [meta, body] = frontMatter(fs.readFileSync(path.join(blogDir, f), 'utf8'));
-  if (String(meta.draft) === 'true') continue;
-  const slug = meta.slug || f.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.md$/, '');
-  posts.push({ meta, body, slug, date: meta.date || f.slice(0, 10) });
+const sources = [['posts', true, ''], ['blog', process.env.INCLUDE_DRAFTS === '1', '[preview] ']];
+for (const [dir, include, mark] of sources) {
+  if (!include) continue;
+  const dp = path.join(ROOT, dir);
+  if (!fs.existsSync(dp)) continue;
+  for (const f of fs.readdirSync(dp).filter(f => f.endsWith('.md'))) {
+    const [meta, body] = frontMatter(fs.readFileSync(path.join(dp, f), 'utf8'));
+    if (mark) meta.title = mark + (meta.title || f);
+    const slug = meta.slug || f.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.md$/, '');
+    posts.push({ meta, body, slug, date: meta.date || f.slice(0, 10) });
+  }
 }
 posts.sort((a, b) => b.date.localeCompare(a.date));
 
