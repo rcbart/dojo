@@ -73,20 +73,25 @@ jobs:
         run: node build.js
         working-directory: js-dojo
 
-      # One Pages site: a landing page at / that presents both courses, and
-      # one path per course. Adding a course = one build step + one copy line.
+      # One Pages site. The root is the roniam.dev portfolio home plus the blog
+      # (both emitted by scripts/build-blog.js from blog/*.md and docs/home.html);
+      # each course keeps its own path, and the old course landing survives at
+      # /courses/. Adding a course = one build step + one copy line.
       - name: Assemble the site
         run: |
-          mkdir -p _site/dev _site/identity _site/js
-          cp docs/landing.html                _site/index.html
+          mkdir -p _site/dev _site/identity _site/js _site/courses
+          node scripts/build-blog.js _site
+          cp docs/landing.html                _site/courses/index.html
           cp dist/index.html                  _site/dev/index.html
           cp identity-dojo/dist/index.html    _site/identity/index.html
           cp js-dojo/dist/index.html          _site/js/index.html
           test -s _site/index.html
+          test -s _site/blog/index.html
+          test -s _site/courses/index.html
           test -s _site/dev/index.html
           test -s _site/identity/index.html
           test -s _site/js/index.html
-          ls -lh _site _site/dev _site/identity _site/js
+          ls -lh _site _site/blog _site/dev _site/identity _site/js
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
