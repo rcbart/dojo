@@ -168,7 +168,7 @@ const list = root => posts.map(p =>
 
 fs.writeFileSync(path.join(OUT, 'blog', 'index.html'),
   page('Writing · Ron Bar-Tor', 'Essays on engineering management, identity, and quality.',
-    `<h1>Writing</h1><div class="pdate">Engineering management, identity, and the occasional bug worth a post-mortem.</div>` + list('/'), '/'));
+    `<h1>Writing</h1><div class="pdate">Engineering management, identity, and the occasional bug worth telling the whole story about.</div>` + list('/'), '/'));
 
 // home page: fill @@POSTS@@ (latest 3, home-styled), @@NAVPOSTS@@ (sidebar
 // links, latest 5, title only) and @@YEAR@@
