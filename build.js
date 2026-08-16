@@ -29,7 +29,7 @@ const script = engine('sqlengine.js')
 
 const html = engine('shell.html')
   .replace('@@STYLES@@', () => engine('styles.css'))
-  .replace('@@SCRIPT@@', () => script);
+  .replace('@@SCRIPT@@', () => script.replace(/<\/script/gi, '<\\/script')) /* SCRIPT-SAFE: a literal </script> inside content would terminate the inline tag */;
 
 fs.mkdirSync(path.join(ROOT, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'dist/index.html'), html);

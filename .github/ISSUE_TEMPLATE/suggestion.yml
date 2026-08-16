@@ -1,0 +1,23 @@
+name: Suggestion or correction
+description: An improvement idea, a correction, or a lesson you'd like to see
+title: "[suggestion] "
+labels: ["suggestion"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: What is it about?
+      options:
+        - A specific lesson (correction or improvement)
+        - A course that should cover something it doesn't
+        - The site itself
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: The suggestion
+      description: What would you change or add, and why? If it's a correction, say what's wrong today.
+    validations:
+      required: true

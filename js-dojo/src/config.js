@@ -10,9 +10,16 @@ const DOJO_HOME = {
   icon: '🟨',
   pageTitle: 'JS Dojo — JavaScript & Node, from the ground up',
   title: 'Welcome to JS Dojo \u{1F7E8}',
-  intro: 'JavaScript from the ground up, assuming nothing. <b>16 streams cover the whole road</b>: '
-       + 'the language core, how it really works underneath, the event loop, the browser, two full '
-       + 'streams of debugging, modules and TypeScript, and Node all the way to a real HTTP server.<br><br>'
+  intro: '<b>Why is this dojo here?</b> Because I want to leave nothing to chance and assume nothing. '
+       + 'Exercises all across this site run in JavaScript — a decision I made to keep the lesson tooling '
+       + 'simple and self-contained, with nothing to install and nothing to configure. That decision comes '
+       + 'with a duty: if JS is the language everything else is practiced in, you deserve a place to learn '
+       + 'it properly. This is that place. Work through the examples, quizzes and exercises here and '
+       + 'you will have the background for everything else on the site. <b>If you are starting from '
+       + 'nothing, this is the dojo to start with.</b><br><br>'
+       + '<b>16 streams cover the whole road</b>: the language core, how it really works underneath, '
+       + 'the event loop, the browser, two full streams of debugging, modules and TypeScript, and Node '
+       + 'all the way to a real HTTP server.<br><br>'
        + 'The order is deliberate: you meet <b>values and types</b> before anything that manipulates them, '
        + '<b>the call stack</b> before closures, and <b>the event loop</b> before a single promise. Coercion, '
        + 'closures, <code>this</code>, prototypes, promises and async/await are each taken apart until the '

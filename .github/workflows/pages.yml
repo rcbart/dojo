@@ -94,7 +94,7 @@ jobs:
       # /courses/. Adding a course = one build step + one copy line.
       - name: Assemble the site
         run: |
-          mkdir -p _site/dev _site/identity _site/js _site/courses \
+          mkdir -p _site/dev _site/identity _site/js _site/courses _site/ml \
                    _site/fundamentals _site/docker _site/kubernetes _site/envoy _site/istio
           node scripts/build-blog.js _site
           cp docs/landing.html                       _site/courses/index.html
@@ -106,6 +106,8 @@ jobs:
           cp kubernetes-crash-course/index.html      _site/kubernetes/index.html
           cp envoy-crash-course/index.html           _site/envoy/index.html
           cp istio-crash-course/index.html           _site/istio/index.html
+          # ML Dojo lives in its own repo; this is a tracked snapshot of its build
+          cp ml-dojo/dist/index.html                 _site/ml/index.html
           test -s _site/index.html
           test -s _site/blog/index.html
           test -s _site/courses/index.html
@@ -117,6 +119,7 @@ jobs:
           test -s _site/kubernetes/index.html
           test -s _site/envoy/index.html
           test -s _site/istio/index.html
+          test -s _site/ml/index.html
           ls -lh _site _site/blog _site/dev _site/identity _site/js
 
       - name: Upload Pages artifact

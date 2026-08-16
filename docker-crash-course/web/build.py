@@ -53,6 +53,7 @@ with open(os.path.join(WEB, "render.js"), encoding="utf-8") as f:
 
 DATA = {"pages": pages, "quizzes": quizzes}
 data_json = json.dumps(DATA, ensure_ascii=False)
+data_json = data_json.replace("</script", "<\\/script")  # SCRIPT-SAFE: valid JSON escape, inert in strings
 
 TEMPLATE = r"""<!DOCTYPE html>
 <html lang="en">

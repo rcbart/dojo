@@ -2,6 +2,14 @@
 /* The shell ships Dev Dojo's static <title>; sibling courses correct it here
    (and their build.js also swaps it at build time, so crawlers see it too). */
 if(typeof DOJO_HOME!=='undefined'&&DOJO_HOME.pageTitle)document.title=DOJO_HOME.pageTitle;
+(function(){ if(typeof DOJO_HOME==='undefined')return;
+  var lg=document.querySelector('header .logo');
+  if(lg&&DOJO_HOME.name){ var parts=DOJO_HOME.name.split(' ');
+    lg.textContent=''; lg.appendChild(document.createTextNode((DOJO_HOME.icon||'\u{1F94B}')+' '+parts.slice(0,-1).join(' ')+' '));
+    var sp=document.createElement('span'); sp.textContent=parts[parts.length-1]; lg.appendChild(sp); }
+  var tip=document.querySelector('header .tip');
+  if(tip)tip.textContent='Select or double-click any highlighted term in a lesson to see what it means.';
+})();
 mergeIdentity();
 /* attach auto-generated executable-grading specs (opt-in Java runner) by lesson id */
 (function(){ if(!window.GRADEJAVA)return; STREAMS.forEach(function(s){(s.lessons||[]).forEach(function(l){var exs=l.exs||(l.ex?[l.ex]:[]);exs.forEach(function(e,i){var k=exs.length>1?l.id+'#'+i:l.id; if(window.GRADEJAVA[k]&&!e.gradeJava)e.gradeJava=window.GRADEJAVA[k];});});}); })();

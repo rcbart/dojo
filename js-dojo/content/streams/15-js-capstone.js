@@ -54,7 +54,7 @@ run:{call:'validUrl',cases:[
  {name:'https is allowed',args:['https://example.com/a'],expect:true},
  {name:'http is allowed',args:['http://example.com'],expect:true},
  {name:'javascript: is refused',args:['javascript:alert(1)'],expect:false},
- {name:'data: is refused',args:['data:text/html,<script>alert(1)</script>'],expect:false},
+ {name:'data: is refused',args:['data:text/html,<scr'+'ipt>alert(1)</scr'+'ipt>'],expect:false},
  {name:'file: is refused',args:['file:///etc/passwd'],expect:false},
  {name:'a relative path is not a URL',args:['/just/a/path'],expect:false},
  {name:'nonsense is refused',args:['not a url at all'],expect:false},

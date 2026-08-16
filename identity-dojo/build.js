@@ -32,7 +32,7 @@ const script = read('src/config.js') + '\n'
 
 const html = engine('shell.html')
   .replace('@@STYLES@@', () => engine('styles.css'))
-  .replace('@@SCRIPT@@', () => script)
+  .replace('@@SCRIPT@@', () => script.replace(/<\/script/gi, '<\\/script')) /* SCRIPT-SAFE: a literal </script> inside content would terminate the inline tag */
   .replace(/<title>[^<]*<\/title>/,
     () => { const m = read('src/config.js').match(/pageTitle:\s*'([^']+)'/);
             return m ? `<title>${m[1]}</title>` : '<title>Dev Dojo — Master software engineering</title>'; });
