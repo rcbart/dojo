@@ -24,7 +24,7 @@ sidecar.
 ```
 
 Every packet in or out of your app quietly detours through its personal Envoy, which applies
-encryption, routing, and policy. It's powerful and simple to reason about: one proxy per app,
+encryption, routing, and policy. It covers everything and is simple to reason about: one proxy per app,
 full features everywhere.
 
 **The catch:** a proxy in *every* pod costs CPU and memory per pod, adds a little latency, and

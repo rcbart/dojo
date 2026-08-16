@@ -35,11 +35,11 @@ Not every system has every box, and some boxes collapse into one product — but
 always there, and knowing which job lives where is what lets you debug "the site is down" in
 minutes instead of hours.
 
-## Each box, in one honest paragraph
+## Each box, in one no-nonsense paragraph
 
 **DNS** answers exactly one question: what address should I talk to for this name? It's a
 distributed phone book with aggressive caching. Because it's the *first* step, it's also a place
-to do crude but powerful routing — send Europeans to the Frankfurt region, fail over to the backup
+to do crude but far-reaching routing — send Europeans to the Frankfurt region, fail over to the backup
 site — all before a single packet reaches your infrastructure.
 
 **A CDN** (content delivery network) is thousands of small caches placed physically near your

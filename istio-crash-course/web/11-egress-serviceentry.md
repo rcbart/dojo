@@ -52,7 +52,7 @@ connections and eject a flapping endpoint — your resilience policies, wrapped 
 you don't operate. Declaring an entry per external dependency also produces something audit teams
 ask for and rarely get: a *reviewed*, version-controlled list of everything the cluster talks to.
 
-## The honest caveat: hosts vs IPs
+## The caveat that matters: hosts vs IPs
 
 `REGISTRY_ONLY` matches TLS traffic by **SNI hostname**. A pod calling a raw IP, or speaking a
 protocol without SNI, doesn't match a `hosts:` entry — and sufficiently deliberate malware can
@@ -75,7 +75,7 @@ pod → sidecar ──mTLS──► egress gateway ──TLS──► api.stripe
 The wins: the processor can allowlist the gateway's IPs; outbound TLS origination happens at one
 audited place; and *all* external traffic funnels through a choke point you can log, meter, and —
 in an incident — close. The cost is real too: an extra hop, an extra fleet to run, and more YAML
-(the VirtualService that reroutes sidecar→gateway is famously fiddly). The honest sizing: most
+(the VirtualService that reroutes sidecar→gateway is famously fiddly). The realistic sizing: most
 teams live well on `REGISTRY_ONLY` + ServiceEntries; add the egress gateway when a regulator,
 partner contract, or SOC's allowlist asks for it by name — not before.
 

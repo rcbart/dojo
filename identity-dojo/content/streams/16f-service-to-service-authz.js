@@ -237,7 +237,7 @@ which service made the call, and your audit trail names both.</p>
 obtained it — downstream, the call is indistinguishable from the user acting directly. Simpler for services
 that only understand users, and it destroys the information you need after an incident.</p>
 <p>The default should be delegation. Impersonation is occasionally necessary and should be a deliberate,
-narrow, logged exception — the support-access lesson in the foundations stream is the honest use of it.</p>
+narrow, logged exception — the support-access lesson in the foundations stream is the legitimate use of it.</p>
 
 <h4>Why this beats the alternatives</h4>
 <p>Every property comes from the same source: <b>a service that cannot mint tokens cannot grant itself
@@ -276,7 +276,7 @@ solution:`function exchangeResult(subject, actor, mode) {
   return { sub: subject.sub, act };
 }`,
 tests:[{d:'impersonation returns only the subject',re:'impersonation'},{d:'delegation records the actor',re:'act'},{d:'an existing chain is nested rather than replaced',re:'subject\\.act'},{d:'the subject is carried through unchanged',re:'sub:\\s*subject\\.sub'}],
-behavior:`Five cases execute. Case three is the rule people miss: the previous actor is nested inside the new one, so a three-hop chain reads svc-c acting through svc-b acting through svc-a, and the sub stays the original user at every hop. A solution that overwrites act instead of nesting produces a token that looks correct and has silently erased the middle of the chain — which is exactly the evidence an incident review needs. Case five is the honest cost of impersonation: it does not merely omit this hop's actor, it discards everything recorded before it, so one impersonating service anywhere in a chain makes the entire path unattributable.`,
+behavior:`Five cases execute. Case three is the rule people miss: the previous actor is nested inside the new one, so a three-hop chain reads svc-c acting through svc-b acting through svc-a, and the sub stays the original user at every hop. A solution that overwrites act instead of nesting produces a token that looks correct and has silently erased the middle of the chain — which is exactly the evidence an incident review needs. Case five shows what impersonation actually costs: it does not merely omit this hop's actor, it discards everything recorded before it, so one impersonating service anywhere in a chain makes the entire path unattributable.`,
 hints:['Two modes, and they differ in whether the actor is recorded at all.','Before building the new act, look at whether the subject token already had one.','The subject is the same human at hop one and hop five — only the actor changes.']}]},
 
 {id:'s2s3',title:'OAuth Token Exchange (on-behalf-of)',body:`
@@ -463,7 +463,7 @@ JWT one knowingly, with a short lifetime and an audience check.</p>
 // the workload never presents a credential to get one. it asks a local
 // socket, and the platform's own knowledge of it is the proof.</div>
 
-<h4>The honest trade</h4>
+<h4>The trade</h4>
 <p>SPIRE is real infrastructure: a server, agents on every node, a registration entry per workload, and a
 trust domain to operate and back up. That is a meaningful cost, and for a handful of services a client
 secret in a secret manager is the proportionate answer.</p>
@@ -1083,7 +1083,7 @@ amount, the account or the target between hops.</li>
 be accepted internally.</li>
 </ul>
 
-<h4>The honest limits</h4>
+<h4>The limits</h4>
 <p>A Txn-Token is <b>not an authentication credential and not an access token</b>; the draft says so
 explicitly, and treating it as either is the likely first misuse. It does not prevent replay <i>within</i>
 its lifetime and trust domain, which is precisely why lifetimes are minutes and scopes are narrow. The TTS

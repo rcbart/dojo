@@ -14,7 +14,7 @@ When something is wrong, resist guessing at YAML. Follow the request through Env
 
 1. **Is Envoy even up and healthy?** `curl localhost:9901/ready` → `LIVE`. Check `docker`/`kubectl`
    logs for a config parse error on startup (Envoy refuses to start on invalid *bootstrap*).
-2. **Read the access log line.** It has the response code and — crucially — **`%RESPONSE_FLAGS%`**.
+2. **Read the access log line.** It has the response code and — the field to read first — **`%RESPONSE_FLAGS%`**.
    The flag usually tells you the answer before you look anywhere else (table below).
 3. **Did it match a route?** `curl localhost:9901/config_dump` and find your route config. Flag
    `NR` = *no route matched* → your `match` is wrong or ordered below a catch-all.

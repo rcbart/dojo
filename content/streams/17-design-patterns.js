@@ -28,7 +28,7 @@ order-dependent because state survives between them, and under concurrency it ne
 shared mutable object. In a Spring application you almost never write one — a <code>@Component</code> is
 already a single instance managed by the container, and it arrives through a constructor where you can see
 and replace it.</p>
-<p>When you genuinely need one, an <code>enum</code> is the most robust form in Java: the JVM guarantees a
+<p>When you genuinely need one, an <code>enum</code> is the form Java itself defends best: the JVM guarantees a
 single instance, including against reflection and serialisation, which most hand-written singletons do
 not.</p>
 
@@ -222,7 +222,7 @@ their interfaces or add behaviour; it narrows the surface a caller has to learn.
 <p><b>Adapter</b> is what keeps a third-party library from spreading through your codebase. Wrap it once at
 the boundary and the rest of your code depends on your interface, so replacing the vendor is one class
 rather than a search-and-replace. The cost is a layer of indirection people will occasionally want to skip.</p>
-<p><b>Decorator</b> is the honest alternative to inheritance for cross-cutting behaviour. A retrying,
+<p><b>Decorator</b> is the cleaner alternative to inheritance for cross-cutting behaviour. A retrying,
 caching, instrumented client composed from three decorators is testable in isolation; the same thing as a
 subclass hierarchy is not. Its failure mode is depth — a stack five deep gives a stack trace nobody can
 read, and an ordering that matters and is written down nowhere. If retry sits outside caching, you retry
@@ -444,7 +444,7 @@ order explicit, because "which handler ran?" is otherwise a debugging exercise.<
 <p><b>Iterator</b> traverses without exposing internals — built into Java as <code>Iterable</code>.
 <b>Mediator</b> centralises interaction so N components talk to one hub instead of each other, which is
 what a message bus does. <b>Visitor</b> adds operations to a stable class hierarchy without editing it;
-it is powerful for ASTs and awkward everywhere else, and Java's pattern matching for switch has largely
+it earns its keep on ASTs and is awkward everywhere else, and Java's pattern matching for switch has largely
 replaced it.</p>`,
 docs:[['State pattern','https://refactoring.guru/design-patterns/state'],['Chain of Responsibility','https://refactoring.guru/design-patterns/chain-of-responsibility'],['Command pattern','https://refactoring.guru/design-patterns/command']],
 ex:{title:'Implement a State machine',
@@ -488,8 +488,8 @@ exist because <b>a boundary needs protecting</b>.</p>
 how long it lives. Receiving them instead moves all three decisions outward, and the practical result is
 that the class can be tested with fakes and reused in another context.</p>
 <p>Constructor injection specifically, because it makes the invalid state unreachable: the object cannot
-exist without its dependencies, the fields can be <code>final</code>, and the constructor signature is an
-honest list of what the class depends on. A constructor with nine parameters is telling you the class does
+exist without its dependencies, the fields can be <code>final</code>, and the constructor signature is a
+visible list of what the class depends on. A constructor with nine parameters is telling you the class does
 too much — field injection hides that same fact behind nine annotations.</p>
 
 <h4>Repository — a boundary, not a wrapper</h4>

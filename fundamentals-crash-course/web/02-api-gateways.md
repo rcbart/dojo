@@ -84,7 +84,7 @@ many other departments — a payments platform inside a big company is effective
 internal customers, and it wants the same front-desk services: stable routes, quotas so one buggy
 consumer can't flatten it, and an audit trail. In a small system, an internal gateway is usually
 premature — the service mesh (Istio course) already gives you mTLS, retries, and telemetry for
-east–west traffic, and a mesh plus an *external* gateway covers most architectures. The honest
+east–west traffic, and a mesh plus an *external* gateway covers most architectures. The practical
 sequence: external gateway first, mesh when service-to-service concerns bite, internal gateways
 only when a domain inside the company becomes a platform.
 

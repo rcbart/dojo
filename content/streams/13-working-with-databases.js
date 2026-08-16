@@ -81,7 +81,7 @@ logic bites in negation: <code>WHERE status &lt;&gt; 'shipped'</code> silently e
 is NULL, because unknown is not "different". If those rows should be included, say so —
 <code>OR status IS NULL</code>.</p>
 
-<h4>Habits that keep a query honest</h4>
+<h4>Habits that keep a query well-behaved</h4>
 <ul>
 <li><b>Name your columns.</b> <code>SELECT *</code> in application code means the result shape changes
 whenever the table does, silently.</li>

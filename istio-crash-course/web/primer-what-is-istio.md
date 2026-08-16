@@ -87,12 +87,12 @@ turns them into proxy behavior. The main ones (each gets its own module later):
 ## Two ways to run it (a heads-up)
 
 Istio has two "data-plane modes," and you'll meet both. **Sidecar mode** puts a full Envoy proxy
-inside every pod — powerful, and the classic model this course teaches first. **Ambient mode** is
+inside every pod — full-featured, and the classic model this course teaches first. **Ambient mode** is
 newer and sidecar-less: it uses a lightweight per-node agent for encryption and adds Envoy only
 where richer features are needed, cutting resource cost. The next primer explains the difference
 simply; Module 8 is hands-on.
 
-## Do you even need Istio? (honest note)
+## Do you even need Istio? (a straight answer)
 
 A mesh earns its complexity when you have **many** services all needing uniform security,
 resilience, and visibility. For a handful of services, a single gateway at the edge is often

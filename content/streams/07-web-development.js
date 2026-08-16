@@ -487,7 +487,7 @@ cursor server-side, since it arrives from the client like anything else.</p>
 <ul>
 <li><b>Always cap the page size.</b> An unbounded <code>limit</code> is a denial-of-service parameter your
 API is offering to strangers. Clamp it, and document the maximum.</li>
-<li><b>Be honest about totals.</b> An exact <code>COUNT(*)</code> on every page is often the most expensive
+<li><b>Be careful with totals.</b> An exact <code>COUNT(*)</code> on every page is often the most expensive
 part of the request. Either omit it, or return an estimate labelled as one.</li>
 <li><b>Keep the ordering stable and explicit.</b> Pagination over an unspecified order is undefined
 behaviour that happens to work until the query plan changes.</li>

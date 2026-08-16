@@ -122,7 +122,7 @@ package.json  "type": "commonjs"   -> .js files are CJS  (the default)
 "require() of ES Module ... not supported"
      -> a CJS file tried to require an ESM one. see below.</div>
 
-<h4>Interop, honestly</h4>
+<h4>Interop, warts and all</h4>
 <p><b>ESM can import CommonJS.</b> It works, and it gives you the whole <code>module.exports</code> object
 as the default export — so named imports may or may not exist depending on whether Node's static analysis
 could detect them.</p>

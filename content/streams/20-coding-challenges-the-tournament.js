@@ -11,7 +11,7 @@ loops — I can trade space for time with a map of complements, O(n) time and O(
 the thing they are actually there to find out.</p>
 
 <h4>The fundamentals being tested</h4>
-<div class="codeSample" data-hl>HASH LOOKUP        "have I seen X?" in O(1). the single highest-leverage
+<div class="codeSample" data-hl>HASH LOOKUP        "have I seen X?" in O(1). the single most valuable
                    structure in interviews. complement lookups, frequency
                    counts, dedup, grouping — all the same move.
 
@@ -525,7 +525,7 @@ trying to see whether the window can ever shrink past the left bound" tells the 
 are and often earns exactly the nudge you needed.</li>
 </ul>
 <p><b>The one habit worth taking from this round:</b> when a hard defeats you, do not just read the
-solution. Identify which of the four categories above it was, and what the single unlocking insight
+solution. Identify which of the four categories above it was, and what the one insight that cracked it
 was. That is what transfers — the specific problem almost never reappears, and the category does.</p>`,
 docs:[['PriorityQueue — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html'],['Invariant-based reasoning — CP-Algorithms','https://cp-algorithms.com/']],
 exs:[

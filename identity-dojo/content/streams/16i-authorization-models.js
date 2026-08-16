@@ -356,7 +356,7 @@ the first substitute for the second.</p>
 Invoice inv = repo.findById(id);
 if (inv.tenantId != currentTenant) throw new Forbidden();
 
-// ROBUST — the constraint is part of the query. Wrong tenant simply finds nothing.
+// SAFE — the constraint is part of the query. Wrong tenant simply finds nothing.
 Invoice inv = repo.findByIdAndTenantId(id, currentTenant);
 
 // and for lists, the filter must be in the WHERE clause, never applied afterwards
@@ -654,7 +654,7 @@ substitution is where correctness is usually lost.</p>
 <h4>The centralisation trade</h4>
 <p>A central authorization service buys consistent policy, one audit trail, and one place to answer
 "who can see this?" — a question most estates genuinely cannot answer. It costs you a <b>hard runtime
-dependency on the critical path of every request</b>. That is the trade to weigh honestly, and the
+dependency on the critical path of every request</b>. That is the trade to weigh, and the
 mitigations are the familiar ones: aggressive caching, and a deliberate decision about what happens
 when the service is unreachable. Fail closed, and an authorization outage is a total outage.</p>
 
@@ -664,7 +664,7 @@ roles map cleanly to permissions    sharing is user-driven and arbitrary
 authorization is per-endpoint       "shared with me", nested folders, links
 one service owns the data           many services must agree on one answer
 "who can see this?" is answerable   the answer is currently unknowable</div>
-<p>The honest default: <b>most applications do not need Zanzibar</b>, and a tenant-scoped query with an
+<p>The sensible default: <b>most applications do not need Zanzibar</b>, and a tenant-scoped query with an
 ownership check is the right answer. Reach for a relationship graph when users themselves grant access
 to each other in patterns you cannot enumerate in advance — which is exactly the case document sharing,
 repositories and collaboration tools have.</p>

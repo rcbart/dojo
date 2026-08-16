@@ -347,7 +347,7 @@ server.on("request", (req, res) =&gt; {
   bus.on("tick", () =&gt; { ... });   // a NEW listener per request,
 });                                 // never removed - the classic leak
 
-// three honest fixes:
+// three real fixes:
 res.on("close", () =&gt; bus.off("tick", handler));   // remove when done
 bus.once("tick", handler);                          // if once is the truth
 bus.on("tick", handler, { signal });                // AbortController cleanup</div>

@@ -58,7 +58,7 @@ succeed (and it auto-fails if the new pods never become ready).
 ## Two deployment models: push vs pull (GitOps)
 
 - **Push-based CD** (above) — the pipeline has cluster credentials and runs `kubectl`/`helm` *to* the
-  cluster. Simple, but the CI system holds powerful credentials and the cluster can drift from git.
+  cluster. Simple, but the CI system holds cluster-admin-grade credentials and the cluster can drift from git.
 - **Pull-based CD = GitOps** — a controller *inside* the cluster (**Argo CD** or **Flux**)
   continuously **pulls** the desired manifests from a git repo and reconciles the cluster to match.
   Git becomes the single source of truth.

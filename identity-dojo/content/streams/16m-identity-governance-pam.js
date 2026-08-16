@@ -34,7 +34,7 @@ actually catches the mover problem, because it fires at the moment the access be
 <code>APP_FIN_GL_RW_PRD</code> and they will approve all of them in one click, because the alternative is
 an afternoon of guessing. The fix is not exhortation — it is making the decision answerable: show the
 plain-language description, when it was last used, and who else in the same job holds it. <b>Last-used
-data is the single highest-leverage addition to a review</b>; "not used in 180 days" converts a judgement
+data is the one addition that improves a review most</b>; "not used in 180 days" converts a judgement
 call into an obvious revoke.</p>
 <p><b>Wrong reviewer</b> is the second. A line manager knows whether someone still works for them; only
 the application owner knows what a given entitlement actually permits. Serious programmes run both
@@ -231,7 +231,7 @@ end state is not "store the secret better" — it is <b>having no long-lived sec
 that proves its identity to the cloud provider and receives a fifteen-minute credential has removed the
 entire class of problem.</p>
 
-<h4>Rotation, honestly</h4>
+<h4>What rotation is actually for</h4>
 <p>Rotation limits the useful life of a credential you did not know was stolen. That is its whole
 purpose, and it is worth stating plainly because rotation is often performed as ritual: a 90-day policy
 diligently followed, with no ability to rotate <i>quickly</i> when it actually matters.</p>
@@ -404,7 +404,7 @@ hints:['Three conditions joined with &&.','A pre-ticked box is not explicit cons
 <p>Passwords, tokens, session identifiers, MFA codes, private keys, full card numbers, and the contents of assertions. This matters more in identity than elsewhere, because the audit pipeline is widely readable by design — SOC analysts, auditors, on-call engineers — so a token in a log has effectively been published. Log identifiers and hashes instead: a token's <code>jti</code>, a key's <code>kid</code>, the last four digits, a salted hash of an email where correlation is needed without exposure. And treat the pipeline as processing personal data, because names, addresses and behaviour patterns are exactly what identity events contain.</p>
 
 <h4>From evidence to control</h4>
-<p>The reason to invest here is that in identity the audit trail is not documentation of the controls — it <i>is</i> several of them. Access reviews are evidenced by it. Deprovisioning is proved by it. "Least privilege" is measurable only if you can see what was actually used, which is what makes usage-derived recommendations possible. Detection — impossible travel, a burst of failures, a new admin, a first-time-seen client — reads the same stream. And the honest test of the whole thing is a rehearsal: pick a real question ("which accounts did this compromised admin touch on Tuesday?") and try to answer it from the logs alone. Most teams discover a missing field the first time, which is much better than discovering it during an incident.</p>`,
+<p>The reason to invest here is that in identity the audit trail is not documentation of the controls — it <i>is</i> several of them. Access reviews are evidenced by it. Deprovisioning is proved by it. "Least privilege" is measurable only if you can see what was actually used, which is what makes usage-derived recommendations possible. Detection — impossible travel, a burst of failures, a new admin, a first-time-seen client — reads the same stream. And the real test of the whole thing is a rehearsal: pick a real question ("which accounts did this compromised admin touch on Tuesday?") and try to answer it from the logs alone. Most teams discover a missing field the first time, which is much better than discovering it during an incident.</p>`,
 docs:[['Logging & monitoring — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html'],['NIST SP 800-63','https://pages.nist.gov/800-63-3/'],['SOC 2 overview','https://www.aicpa-cima.com/topic/audit-assurance/audit-and-assurance-greater-than-soc-2']],
 ex:{title:'Map the requirement to the control',
 prompt:`Write class <code>Audit</code> with <code>static String control(String requirement)</code>: <code>"prove-who-did-what"</code>→<code>"immutable audit log"</code>, <code>"detect-attacks"</code>→<code>"SIEM alerting"</code>, <code>"periodic-access-review"</code>→<code>"IGA certification"</code>, <code>"remove-leaver-access"</code>→<code>"deprovisioning"</code>, and <code>"unknown"</code> otherwise.`,

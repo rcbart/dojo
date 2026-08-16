@@ -55,10 +55,10 @@ called **xDS**. Services appear, disappear, scale — istiod keeps every proxy u
 
 Same features either way — only the plumbing differs.
 
-## Istio vs the alternatives (so you know the landscape)
+## Istio vs the alternatives (what else is out there)
 
 - **Istio** — the most feature-rich and widely used mesh; uses Envoy; now offers both sidecar and
-  ambient. Powerful, historically heavier (ambient addresses that).
+  ambient. Full-featured, historically heavier (ambient addresses that).
 - **Linkerd** — a simpler, lighter mesh that uses its *own* tiny Rust proxy (not Envoy). Fewer
   knobs, easy to run; less flexible for complex L7 needs.
 - **Consul (service mesh)** — HashiCorp's mesh, also Envoy-based, strong in multi-platform / VM +

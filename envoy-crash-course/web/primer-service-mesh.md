@@ -78,7 +78,7 @@ That's why learning Envoy pays off so widely: **understand this one proxy and yo
 engine inside nearly every mesh and gateway.** A mesh, from Envoy's point of view, is just "lots of
 Envoys, each configured by a control plane instead of a static file."
 
-## Do you always need a mesh? (an honest note)
+## Do you always need a mesh? (a straight answer)
 
 No. A mesh earns its complexity when you have **many** services that all need uniform security,
 resilience, and observability without touching each one. For a handful of services, a single Envoy

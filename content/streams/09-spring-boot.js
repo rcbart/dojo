@@ -14,7 +14,7 @@ public class DojoApplication {
 }</div>
 <p>Start any project at <a href="https://start.spring.io" target="_blank" rel="noopener">start.spring.io</a>. Component scanning finds your annotated classes in the same package and below — the #1 beginner bug is putting classes outside that package tree.</p>
 <h4>The problem Boot solved</h4>
-<p>Spring before Boot was powerful and miserable to start. A web application meant hand-picking a dozen
+<p>Spring before Boot could do everything and was miserable to start. A web application meant hand-picking a dozen
 mutually-compatible library versions, writing XML or Java configuration for the DispatcherServlet, the
 view resolver, the data source and the transaction manager, then packaging a WAR and deploying it into a
 Tomcat someone had installed and configured separately. Days of work before a single line of business
@@ -212,7 +212,7 @@ new OrderService();       // compiles. object is BROKEN - payments is null.
 new OrderService(fake);   // the ONLY way to build it is correctly.</div>
 <p>Three concrete consequences. The object is <b>never in an invalid state</b> — there is no window
 between construction and injection. The dependencies are <b>visible in the signature</b>, so a
-constructor with nine parameters tells you honestly that the class does too much, where nine
+constructor with nine parameters tells you outright that the class does too much, where nine
 <code>@Autowired</code> fields hide it. And tests use plain <code>new</code>, with no Spring context and
 no reflection.</p>
 
@@ -1214,7 +1214,7 @@ class AsyncConfig {}`}},
 <li><b>Operators</b>: <code>map</code> (sync transform), <code>flatMap</code> (async transform — returns another publisher), <code>filter</code>, <code>take</code>, <code>zip</code>, <code>switchIfEmpty</code> (the reactive "or else"), <code>onErrorResume</code> (the reactive catch).</li>
 <li><b>Backpressure</b>: the subscriber tells the producer how much it can handle (<code>request(n)</code>) — a slow consumer no longer means an exploding queue. This is the actual point of Reactive Streams, the spec Reactor implements.</li>
 <li><b>Never block</b> in a reactive pipeline — <code>block()</code>, JDBC, <code>Thread.sleep</code> on an event-loop thread stalls <i>every</i> request. Blocking work goes to <code>Schedulers.boundedElastic()</code>; databases get R2DBC.</li>
-<li><b>Honest guidance</b>: virtual threads (see the concurrency stream) now cover much of what WebFlux was adopted for. Reach for reactive when you need streaming, composition over many async sources, or backpressure itself.</li>
+<li><b>Practical guidance</b>: virtual threads (see the concurrency stream) now cover much of what WebFlux was adopted for. Reach for reactive when you need streaming, composition over many async sources, or backpressure itself.</li>
 </ul>
 <div class="codeSample">@GetMapping("/users/{id}")
 Mono&lt;UserDto&gt; byId(@PathVariable String id) {
@@ -1250,7 +1250,7 @@ scales the way reactive code does. For most new services that removes the main r
 tax.</p>
 <p>What remains genuinely reactive territory is <b>streaming</b> and <b>backpressure</b>: server-sent
 events, long-lived subscriptions, and pipelines where a fast producer must be told to slow down. That is
-what Reactor expresses well and what virtual threads do not address at all. The honest position for 2026:
+what Reactor expresses well and what virtual threads do not address at all. The realistic position for 2026:
 choose reactive for streams and demand signalling, not for concurrency.`,
 docs:[['Project Reactor reference','https://projectreactor.io/docs/core/release/reference/'],['Spring WebFlux reference','https://docs.spring.io/spring-framework/reference/web/webflux.html'],['Which operator do I need? — Reactor','https://projectreactor.io/docs/core/release/reference/#which-operator']],
 ex:{title:'A non-blocking user endpoint',

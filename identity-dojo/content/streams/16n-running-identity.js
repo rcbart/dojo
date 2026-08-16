@@ -890,7 +890,7 @@ product for two engineers who also own three other systems.</li>
 </ol>
 
 <h4>Build versus buy</h4>
-<p>Be honest in both directions. <b>Building authentication is almost always a false economy</b>: the
+<p>Apply the same scrutiny in both directions. <b>Building authentication is almost always a false economy</b>: the
 protocol is the easy part, and the long tail — MFA, recovery, session management, bot defence, audit,
 compliance, keeping pace with the security BCP — is a permanent team. Most "we built our own" estates
 are quietly worse and quietly expensive.</p>

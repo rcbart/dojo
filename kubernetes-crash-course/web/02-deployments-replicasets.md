@@ -111,7 +111,7 @@ kubectl rollout undo deployment/web
 kubectl get pods                                          # healthy again
 ```
 
-Notice step 2's crucial safety property: because new pods never became **ready**, the rollout didn't
+Notice step 2's safety property: because new pods never became **ready**, the rollout didn't
 kill the old healthy ones — **no downtime from a bad deploy**. This is why readiness probes (Module
 6) matter so much.
 

@@ -482,7 +482,7 @@ run:{call:'promoteAll',cases:[
  {name:'extra properties survive the copy',args:[[{name:'Cy',role:'dev',logins:2,team:'core'}]],expect:{promoted:[{name:'Cy',role:'admin',logins:3,team:'core'}],original:[{name:'Cy',role:'dev',logins:2,team:'core'}]}},
  {name:'an empty list is fine',args:[[]],expect:{promoted:[],original:[]}},
  {name:'two users promoted, neither touched',args:[[{name:'Bo',role:'dev',logins:0},{name:'Ida',role:'ops',logins:9}]],expect:{promoted:[{name:'Bo',role:'admin',logins:1},{name:'Ida',role:'admin',logins:10}],original:[{name:'Bo',role:'dev',logins:0},{name:'Ida',role:'ops',logins:9}]}}]},
-prompt:`Write <code>function promoteAll(users)</code> returning <code>{ promoted, original }</code>: <code>promoted</code> is a <b>new</b> array of <b>new</b> objects with <code>role</code> set to <code>"admin"</code> and <code>logins</code> increased by one; <code>original</code> is the very array you were given, handed back as-is. That second half is the honesty check — the grader inspects the input <i>after</i> your function ran, so an implementation that mutates convicts itself with its own return value.`,
+prompt:`Write <code>function promoteAll(users)</code> returning <code>{ promoted, original }</code>: <code>promoted</code> is a <b>new</b> array of <b>new</b> objects with <code>role</code> set to <code>"admin"</code> and <code>logins</code> increased by one; <code>original</code> is the very array you were given, handed back as-is. That second half is the mutation check — the grader inspects the input <i>after</i> your function ran, so an implementation that mutates convicts itself with its own return value.`,
 starter:`function promoteAll(users) {
   return { promoted: users, original: users };
 }`,

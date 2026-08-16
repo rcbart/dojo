@@ -428,7 +428,7 @@ solution:`public class SamlTrust {
 <ul>
 <li><b>Signing</b> (always) — the IdP signs the assertion/response with <b>XML Signature</b>; the SP verifies with the metadata cert. Without a valid signature the assertion is worthless. The SP must also check the <b>Conditions</b>: <code>NotOnOrAfter</code> (not expired) and <code>Audience</code> (this SP) — the SAML <code>exp</code>/<code>aud</code>.</li>
 <li><b>Encryption</b> (optional) — the IdP can <b>encrypt</b> the assertion (XML Encryption) to the SP's public key so intermediaries/the browser can't read it. Analogous to JWE vs JWS: sign for integrity, encrypt for confidentiality.</li>
-<li><b>Single Logout (SLO)</b> — log the user out of the IdP <i>and</i> all SPs in one action. Powerful but notoriously fiddly (every SP must be reachable and cooperate), so many deployments rely on short sessions instead.</li>
+<li><b>Single Logout (SLO)</b> — log the user out of the IdP <i>and</i> all SPs in one action. Attractive on paper and notoriously fiddly (every SP must be reachable and cooperate), so many deployments rely on short sessions instead.</li>
 </ul>
 <p><b>SAML or OIDC?</b></p>
 <ul>

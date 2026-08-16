@@ -26,7 +26,7 @@ Three wins, in order of importance:
 3. **Availability** — many CDNs can serve stale copies while your origin is down; visitors read
    yesterday's page instead of an error page.
 
-## What's cacheable, honestly
+## What's cacheable, really
 
 - **Static assets** — images, JS, CSS, fonts, downloads. The classic case; cache aggressively.
 - **Anonymous dynamic content** — the same rendered blog post everyone sees. Cache for seconds or
@@ -69,8 +69,8 @@ You deployed `app.js` v2; edges hold v1 for another `max-age`. Your options, bes
 ## When a CDN is the wrong tool
 
 - **Cache hit rate near zero** — every response personalized or unique. You've added a hop and a
-  bill; the CDN's other edge services (TLS, DDoS absorption) may still justify it, but be honest
-  about *which* product you're buying.
+  bill; the CDN's other edge services (TLS, DDoS absorption) may still justify it, but know
+  *which* product you're actually buying.
 - **Strong consistency reads** — "balance after transfer" must come from the system of record. A
   cache is, by definition, allowed to be stale.
 - **As a substitute for capacity planning** — a CDN absorbs *read* spikes of *cacheable* content.

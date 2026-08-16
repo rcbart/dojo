@@ -136,7 +136,7 @@ real cause.</p>
 <p><b>A self-signed certificate</b> is its own issuer. It is not weaker cryptographically — it is simply
 unvouched-for, which is why every client refuses it unless you explicitly add it to a trust store.</p>
 
-<h4>Private CAs, and the honest trade</h4>
+<h4>Private CAs, and what they cost</h4>
 <p>Inside your own estate you can run a CA and put its root in your own trust stores. That is how service
 meshes and internal mTLS work, and it is legitimate. The cost is that <b>you now operate a CA</b>: you own
 the root key's protection, the issuance policy, the rotation schedule, and the trust-store distribution to
@@ -551,7 +551,7 @@ is the whole attack. Internal service-to-service calls, where mTLS with a privat
 another name and the update problem does not exist.</p>
 <p>Where it does not earn its risk: a public website, a service integrating with third-party APIs whose
 rotation schedule you do not control, and anywhere the operational maturity to monitor and rotate pins does
-not exist. The honest test is whether you can answer "what happens when this key rotates unexpectedly?"
+not exist. The real test is whether you can answer "what happens when this key rotates unexpectedly?"
 with a procedure rather than a silence.</p>`,
 docs:[['OWASP — certificate and public key pinning','https://owasp.org/www-community/controls/Certificate_and_Public_Key_Pinning'],['RFC 7469 — HPKP (obsolete, and instructive)','https://www.rfc-editor.org/rfc/rfc7469'],['Android — network security configuration','https://developer.android.com/privacy-and-security/security-config']],
 ex:{title:'Accept the chain, or fail closed',lang:'js',

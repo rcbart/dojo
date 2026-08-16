@@ -375,7 +375,7 @@ db.query("SELECT * FROM users WHERE name = ?", [name])   // parameterised
 el.textContent = comment                                  // text, never markup
 execFile("convert", [filename])                           // args, not a shell string</div>
 <p>Treat <code>eval</code> and <code>new Function</code> on anything derived from input as disallowed
-outright. There is essentially no legitimate application use; every appearance in a code review is either
+outright. There is no real legitimate application use; every appearance in a code review is either
 a bug or an incident.</p>
 
 <h4>Prototype pollution: the JavaScript-only one</h4>

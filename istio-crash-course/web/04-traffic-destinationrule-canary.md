@@ -12,7 +12,7 @@ They work as a team:
 - **VirtualService = the "where."** Routing decisions: which service, which **subset** (version),
   what weights/splits, matches, rewrites.
 - **DestinationRule = the "how."** Policy applied *after* a destination is chosen: load-balancing
-  algorithm, connection pool limits, outlier detection — **and crucially, it defines the `subsets`**
+  algorithm, connection pool limits, outlier detection — **and — the piece everything else leans on — it defines the `subsets`**
   (named versions) that a VirtualService can route to.
 
 > A VirtualService can't send traffic to "v2" until a DestinationRule has *defined* what "v2" means

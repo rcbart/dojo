@@ -36,7 +36,7 @@ The rule of thumb: **L4 when you just need to spread connections; L7 when routin
 on what's *inside* the request.** Most real systems have both: an L4 balancer at the very edge,
 L7 balancers (often Envoy) behind it.
 
-## The algorithms, honestly
+## The algorithms, and how much they matter
 
 People expect this list to matter more than it does:
 
@@ -47,7 +47,7 @@ People expect this list to matter more than it does:
 | **Weighted** | Some servers get more traffic | Mixed hardware; canary releases |
 | **Hashing / sticky** | Same client → same server | Sessions or caches on the server |
 
-The honest advice: round robin or least-connections covers nearly everything, and **sticky
+In practice, round robin or least-connections covers nearly everything, and **sticky
 sessions are usually a smell** — they mean a server holds state that should live in a shared
 store, and they turn one server's death into some users' logout. The cloud-native courses keep
 pushing state *out* of servers precisely so the balancer can treat them as interchangeable.
@@ -55,12 +55,12 @@ pushing state *out* of servers precisely so the balancer can treat them as inter
 ## Health checks — the part worth configuring carefully
 
 A health check is a question the LB asks each server on repeat: *are you OK?* Three grades of
-honesty:
+rigor:
 
 - **TCP check** — "does the port accept a connection?" Cheap, and catches only total death.
 - **HTTP check** — "does `GET /healthz` return 200?" Catches a hung or crashing app.
 - **Deep check** — the `/healthz` handler verifies its own dependencies (database reachable,
-  cache warm). Powerful and dangerous: if every server's check fails because the *database*
+  cache warm). Thorough and dangerous: if every server's check fails because the *database*
   blinked, the LB removes all of them and turns a wobble into an outage. Check what the server
   itself controls; report dependencies as separate signals.
 

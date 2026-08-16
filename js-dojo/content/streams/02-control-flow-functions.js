@@ -367,7 +367,7 @@ A pure function needs no mocks, no setup and no teardown to test.</p>
 <code>if (isExpired(token))</code> needs no comment. And avoid names that lie: a function called
 <code>getUser</code> that also creates one has misled every future reader.</p>
 
-<h4>Side effects, stated honestly</h4>
+<h4>Side effects, stated up front</h4>
 <p>If a function mutates its argument, say so in the name (<code>sortInPlace</code>) or do not do it.
 Silently modifying an object the caller passed in is the source of bugs that appear far from their
 cause — the caller's data changed and nothing at the call site suggests it could have.</p>`,
@@ -396,7 +396,7 @@ solution:`function pay(user, amount) {
 tests:[{d:'guards on a missing user first',re:'!\\s*user'},{d:'guards on inactive',re:'user\\.active'},{d:'rejects non-positive amounts',re:'amount\\s*<=\\s*0'},{d:'checks the balance',re:'balance\\s*<\\s*amount'}],
 behavior:`Order is executed, not merely described: a null user is checked before any property is read, so the inactive test cannot throw. The boundary cases matter too — an amount of exactly 0 is invalid, and a balance of exactly the amount succeeds.`,
 hints:['Check the null user first, or reading user.active will throw.','Each guard returns immediately, so no else is needed.','Non-positive means <= 0, and insufficient means balance < amount.']},
-{title:'An options object, defaulted honestly',diff:'medium',lang:'js',
+{title:'An options object, defaulted properly',diff:'medium',lang:'js',
 run:{call:'summarize',cases:[
  {name:'short text passes through',args:['Ship it'],expect:'Ship it'},
  {name:'no options object needed at all',args:['Guard clauses win'],expect:'Guard clause…'},

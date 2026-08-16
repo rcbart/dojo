@@ -172,7 +172,7 @@ solution:`function diagnoseSourceMap(hasSourceMappingComment, mapFileReachable, 
   return "look elsewhere";              // the maps are fine; the bug is not here
 }`,
 tests:[{d:'checks for the sourceMappingURL comment first',re:'!\\s*hasSourceMappingComment'},{d:'then whether the map can be fetched',re:'!\\s*mapFileReachable'},{d:'then whether it matches the bundle',re:'!\\s*mapMatchesBundle'},{d:'otherwise the problem is elsewhere',re:'"look elsewhere"'}],
-behavior:`The guards run in the order you would actually check them: no point testing whether a map is stale before confirming one is referenced at all. The final case is the honest one — when the tooling is fine, stop debugging the tooling.`,
+behavior:`The guards run in the order you would actually check them: no point testing whether a map is stale before confirming one is referenced at all. The final case is the hardest to accept — when the tooling is fine, stop debugging the tooling.`,
 hints:['Guard clauses in the order you would check them in real life.','The comment must exist before the file can matter.','All three fine means the source maps are not your problem.']}},
 
 {id:'js32',title:'The Network panel',body:`

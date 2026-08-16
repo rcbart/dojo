@@ -82,7 +82,7 @@ The rules, which exist because a CNAME means "*everything* about this name lives
 defines it — but a feature of your DNS *provider*: you configure "apex → `lb.provider.net`", and
 the provider's authoritative servers secretly resolve the target themselves, then answer queries
 with plain **A records**. The world sees ordinary addresses; you get CNAME-like
-track-the-target behavior at the apex. Two honest caveats: it's provider-specific (moving DNS
+track-the-target behavior at the apex. Two real caveats: it's provider-specific (moving DNS
 hosts means re-creating it, maybe differently), and the target gets resolved *from the provider's
 servers*, so a geo-aware target may pick an address near your DNS provider rather than near your
 user. Good providers mitigate this; worth asking how yours does.
@@ -117,7 +117,7 @@ resolver at a time, and until then they serve the old answer. Which makes TTL st
 state: **low TTLs (30–300s) on records you might need to change in a hurry** (anything used for
 failover or migration), **long TTLs (hours+) on stable records** to cut latency and load — and,
 before any planned change, **lower the TTL one full old-TTL in advance**, because the change to
-the TTL itself obeys the *old* TTL. One more honest wrinkle: some resolvers clamp or ignore very
+the TTL itself obeys the *old* TTL. One more real-world wrinkle: some resolvers clamp or ignore very
 low TTLs, so treat "one minute" as *most* of the internet, not all of it.
 
 ## DNS as a routing layer
@@ -130,10 +130,10 @@ Because DNS runs before any connection, it's a place to make routing decisions:
   Europeans get Frankfurt, 5% of resolutions get the canary region. Coarse (per-resolver, not
   per-user, and cached) but universal.
 - **Health-checked failover** — the provider probes your endpoints and drops dead ones from
-  answers. With honest TTLs this is minutes-not-seconds failover; pair with anycast (module 0's
+  answers. With realistic TTLs this is minutes-not-seconds failover; pair with anycast (module 0's
   CDN trick) when seconds matter.
 - **Split-horizon** — internal resolvers answer with private addresses, public ones with public:
-  same name, different truths. Powerful and a debugging trap: "it resolves differently from the
+  same name, different truths. A sharp tool and a debugging trap: "it resolves differently from the
   office" is split-horizon until proven otherwise.
 
 ## Debugging: three commands and three failures

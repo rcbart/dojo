@@ -93,7 +93,7 @@ failures, collecting metrics — that's exactly the reverse-proxy job.
 
 ## And this is where Envoy comes in
 
-**Envoy is a reverse proxy** — a very powerful, programmable one. Everything above (routing,
+**Envoy is a reverse proxy** — a programmable one with everything above built in. Everything above (routing,
 load balancing, retries, TLS, metrics, shielding your servers) is precisely what Envoy does, and
 the rest of this course is really just:
 

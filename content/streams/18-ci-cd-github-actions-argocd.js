@@ -82,7 +82,7 @@ to the next step unless you write it to <code>$GITHUB_ENV</code>.</p>
         with: { distribution: temurin, java-version: '21' }
       - run: ./mvnw -B verify              # -B: batch mode, no interactive progress spam</div>
 
-<h4>Making it fast and making it honest</h4>
+<h4>Making it fast without faking it</h4>
 <p>Cache the dependency directory, not the build output — a cached <code>~/.m2</code> turns a three-minute
 download into seconds, while caching compiled classes risks a stale build that passes. Use a matrix when
 you genuinely support several versions, and remember every matrix cell is a full run: a three-by-three
@@ -225,7 +225,7 @@ hints:['permissions: is a TOP-LEVEL key (same indent as jobs:) — contents: rea
 <li><b>Environments</b>: the same image flows dev → staging → production; only configuration (env vars, secrets, replica counts) changes. GitHub Environments let you attach <b>required reviewers</b> to production — the "gate" from lesson 1, encoded in the platform.</li>
 <li><b>Rolling deploy</b>: replace instances a few at a time behind the load balancer. Zero downtime, but two versions run simultaneously — your DB migrations must tolerate that (expand-then-contract: add the new column first, deploy code that writes both, remove the old column a release later).</li>
 <li><b>Blue/green</b>: run the full new stack (green) beside the old (blue), flip traffic at the router, keep blue warm for instant rollback. Costs 2× capacity for the window.</li>
-<li><b>Canary</b>: route 1-5% of real traffic to the new version, watch error rates and latency, then ramp. The most honest test there is — production traffic is the one workload you cannot simulate.</li>
+<li><b>Canary</b>: route 1-5% of real traffic to the new version, watch error rates and latency, then ramp. The ultimate test — production traffic is the one workload you cannot simulate.</li>
 <li><b>Rollback ≠ revert</b>: rollback redeploys the previous <i>artifact</i> (seconds); revert undoes the <i>commit</i> and rebuilds (minutes, plus review). Have both; reach for rollback first.</li>
 </ul>
 <p>One rule ties the room together: <b>the artifact is immutable</b>. If staging tested image <code>:abc123</code>, production runs <code>:abc123</code> — not a rebuild "of the same code". Rebuilds can differ (new base image, new dependency resolution); what you tested is what you ship.</p>
@@ -376,7 +376,7 @@ stronger claim, and the reason drift shows up as a status rather than as a surpr
 
 <h4>The handover: how the image tag reaches the manifest</h4>
 <p>Something has to write the new tag into the manifest repository, and this is where teams improvise
-badly. The honest options: a CI step that commits the tag to the config repo, or an image updater watching
+badly. The workable options: a CI step that commits the tag to the config repo, or an image updater watching
 the registry. Either way, two rules hold. <b>Never deploy a mutable tag</b> such as <code>latest</code> —
 pin the digest or an immutable tag, or you cannot say what is running. And <b>keep application and config
 in separate repositories</b>, or the commit that updates the tag re-triggers the build that produced it.</p>

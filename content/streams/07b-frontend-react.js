@@ -469,7 +469,7 @@ hints:['A reducer is a pure function switching on action.type.','Return a NEW ob
 <p>Auto-escaping covers text interpolated with <code>{ }</code>, and that is most of an app. It does not cover four places, and every real React XSS lives in one of them: <code>dangerouslySetInnerHTML</code>; a URL built from user input, where <code>javascript:</code> as an <code>href</code> executes on click; props spread blindly onto an element (<code>{...userProvided}</code>) which can inject an <code>onError</code> handler; and anything rendered outside React, such as a third-party widget handed raw HTML.</p>
 <p>If HTML from users genuinely must be rendered — a rich-text field — sanitise it with a maintained library (DOMPurify) on an allowlist basis, and do it on the server as well, because anything done only in the browser is done by an attacker's browser too.</p>
 
-<h4>The storage argument, honestly</h4>
+<h4>The storage argument, stated carefully</h4>
 <p>The usual advice — "cookies, not localStorage" — is right but often stated too strongly. An <code>HttpOnly</code> cookie cannot be read by injected script, which removes the easy theft of a token; it does not stop that script from <i>using</i> the session by making requests as the user, since the browser attaches the cookie automatically. So cookies raise the cost of XSS rather than neutralising it, and they add CSRF as a concern that <code>SameSite</code> and anti-CSRF tokens then have to answer.</p>
 <p>The defensible position: <code>HttpOnly; Secure; SameSite=Lax</code> cookies, short-lived tokens, and a real CSP — with the recognition that if you have XSS, you have a problem no storage choice solves. That is the argument for the BFF pattern: no token in the browser at all.</p>
 

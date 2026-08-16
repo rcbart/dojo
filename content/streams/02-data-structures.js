@@ -490,7 +490,7 @@ behavior:`Five cases execute. The duplicates case is the one that catches a Set-
 hints:['Guard k <= 0 first.','sort() compares as text by default — always pass (a, b) => a - b for numbers.','After an ascending sort, the k largest are the last k elements.']}]},
 {id:'ds4',title:'Linked lists: build one, know the trade-offs',body:`
 <p>🌱 <b>Starting from zero:</b> two ways to store a sequence. Numbered shelves: finding slot #57 is instant, but inserting a new shelf in the middle means shifting everything after it. A treasure hunt of notes, each pointing to the next: inserting a note mid-chain is trivial (rewrite one pointer), but reaching item #57 means following 57 clues. That is the ArrayList-versus-LinkedList tradeoff in one image — everything below is the detail.</p>
-<p><code>ArrayList</code> is a growable array: O(1) random access, O(1) amortized append, O(n) inserts in the middle (shifting). A <b>linked list</b> is nodes pointing at nodes: O(1) insert/remove <i>at a known node</i>, but O(n) to find anything and cache-hostile memory jumps. Honest guidance: <code>ArrayList</code> wins ~95% of the time; <code>ArrayDeque</code> beats <code>LinkedList</code> for both stack and queue duty. You study linked lists to master <b>references</b> — and because interviewers love them.</p>
+<p><code>ArrayList</code> is a growable array: O(1) random access, O(1) amortized append, O(n) inserts in the middle (shifting). A <b>linked list</b> is nodes pointing at nodes: O(1) insert/remove <i>at a known node</i>, but O(n) to find anything and cache-hostile memory jumps. The practical guidance: <code>ArrayList</code> wins ~95% of the time; <code>ArrayDeque</code> beats <code>LinkedList</code> for both stack and queue duty. You study linked lists to master <b>references</b> — and because interviewers love them.</p>
 <div class="codeSample" data-hl>class Node {
     int value;
     Node next;                    // null = end of the chain
@@ -606,7 +606,7 @@ public class IntList {
     }
 }`}},
 {id:'ds5',title:'Hash structures: equals/hashCode & an LRU cache',body:`
-<p>🌱 <b>Starting from zero:</b> a coat check hands you ticket #217 and puts your coat on hook 217 — returning it later takes seconds regardless of how many coats they hold, because the ticket number says exactly where to look. <b>Hashing</b> gives every object such a ticket number (its hash code), and HashMap/HashSet use it to jump straight to the right hook instead of searching. The catch: YOUR classes must issue their tickets honestly — that is the contract this lesson drills.</p>
+<p>🌱 <b>Starting from zero:</b> a coat check hands you ticket #217 and puts your coat on hook 217 — returning it later takes seconds regardless of how many coats they hold, because the ticket number says exactly where to look. <b>Hashing</b> gives every object such a ticket number (its hash code), and HashMap/HashSet use it to jump straight to the right hook instead of searching. The catch: YOUR classes must issue their tickets consistently — that is the contract this lesson drills.</p>
 <p>HashMap/HashSet give O(1) average lookups by hashing keys into buckets. That performance rests on a contract YOU uphold:</p>
 <div class="codeSample" data-hl>// THE CONTRACT: equal objects MUST have equal hashCodes.
 // Override both together or hash structures silently break:

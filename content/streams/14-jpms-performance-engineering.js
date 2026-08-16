@@ -23,7 +23,7 @@ jdeps --module-path out out/com.dojo.api      # analyze real dependencies</div>
 <li><code>provides X with Y</code> / <code>uses X</code> — the module-aware form of <code>ServiceLoader</code>.</li>
 </ul>
 
-<h4>The honest adoption story</h4>
+<h4>The real adoption story</h4>
 <p>Most applications never write a <code>module-info.java</code>, and that is a defensible choice: on the classpath your code lives in the unnamed module, which reads everything and exports everything, exactly as before. The value is highest for <b>libraries</b> — where a published module boundary is a real API contract — and for anything that wants <code>jlink</code> to produce a trimmed runtime image, since jlink needs a fully modular graph.</p>
 <p>What everyone does encounter, modules or not, is the JDK's own modularity: <code>InaccessibleObjectException</code> and the "module java.base does not open java.lang" message are the platform enforcing encapsulation on reflection. The correct answer is a targeted <code>--add-opens</code> flag while the library is fixed, not a blanket one, and certainly not staying on an old JDK.</p>`,
 docs:[['Modules — dev.java','https://dev.java/learn/modules/'],['JPMS quick-start — openjdk','https://openjdk.org/projects/jigsaw/quick-start']],
@@ -102,12 +102,12 @@ Strong encapsulation is the feature — the JDK's own internals became genuinely
 allowed the platform to evolve — and the <code>--add-opens</code> flags you have seen in start-up scripts
 are the same thing being pried open from outside.</p>
 
-<h4><code>jlink</code>, and the honest position on JPMS</h4>
+<h4><code>jlink</code>, and where JPMS actually landed</h4>
 <p><code>jlink</code> is the concrete payoff: a runtime image containing only the modules you actually use.
 A hello-world image is around 40MB against a full JDK's 300MB, which matters for container size and cold
 start. It works only if the whole graph is modular, which is why <code>jdeps</code> exists to find what is
 missing.</p>
-<p>And the honest assessment worth having: <b>JPMS did not win in application code.</b> The JDK itself is
+<p>And the assessment worth stating plainly: <b>JPMS did not win in application code.</b> The JDK itself is
 modular and benefits enormously, but most Spring Boot services ship a fat jar on the classpath and use
 Docker for the packaging problem JPMS was partly aimed at. Learn it because you will meet
 <code>--add-opens</code>, because the JDK's structure now depends on it, and because <code>jlink</code> is
@@ -149,7 +149,7 @@ jfr print --events jdk.GCPhasePause probe.jfr    # CLI peek without JMC
 jfr summary probe.jfr</div>
 <p>Reading it in JMC: start with <b>Automated Analysis</b> (it names suspects), then Method Profiling (hot methods), Memory (allocation pressure → GC pain), and Lock Instances (contention). Rule one of performance work: <b>measure before you optimize</b> — the bottleneck is almost never where intuition points.</p>
 <h4>Why "safe in production" changes everything</h4>
-<p>Most profilers are honest tools for a laboratory: they slow the process enough that you must reproduce
+<p>Most profilers are laboratory tools: they slow the process enough that you must reproduce
 the problem in a test environment first. But the interesting performance problems <b>only exist in
 production</b> — they need real traffic patterns, real data volumes, real concurrency and the one customer
 whose account has 400,000 rows. A profiler you cannot run there is a profiler that cannot see them.</p>

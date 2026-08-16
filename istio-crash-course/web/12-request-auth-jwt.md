@@ -74,7 +74,7 @@ tokens, one policy. That sentence is the whole zero-trust pitch, made concrete.
 - **At the service** — the zero-trust position: the orders service doesn't *trust* that the
   gateway checked; its own sidecar re-verifies. Verification is local (signature + cached JWKS),
   so the second check costs microseconds, not a network hop.
-- **Both** is the grown-up answer, and it's cheap precisely because JWTs verify offline.
+- **Both** is the serious answer, and it's cheap precisely because JWTs verify offline.
 
 What the sidecar does **not** do: issue tokens, refresh them, or run login flows — that's your
 IdP's job, and your app still reads claims for fine-grained, data-dependent decisions ("is this

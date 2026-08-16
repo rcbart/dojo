@@ -52,7 +52,7 @@ admin:
 ```
 
 Envoy exposes a built-in management server. It's how you inspect a running Envoy — stats, the
-live config, health. We'll use it heavily in Module 06. **It is powerful and unauthenticated;
+live config, health. We'll use it heavily in Module 06. **It has full control of the process and no authentication;
 never bind it to a public interface in production** (here it's fine — it's local).
 
 Try it now while the lab runs:
@@ -154,7 +154,7 @@ clusters:
    few times. Each produces an access-log line in Envoy's output. That's step 6 of the lifecycle
    you learned.
 
-2. **Break the backend, see Envoy's honesty.** Stop just the backend:
+2. **Break the backend, watch Envoy report it.** Stop just the backend:
    `docker compose stop backend`, then `curl -v localhost:10000`. Envoy responds **503** with a
    header `x-envoy-upstream-service-time` absent and a body like `no healthy upstream` — Envoy is
    up, but it has nowhere to route. Restart it: `docker compose start backend`.

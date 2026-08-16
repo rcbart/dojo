@@ -21,7 +21,7 @@ try (var in = new ObjectInputStream(Files.newInputStream(path))) {
 <h4>Why the industry moved away from native serialization</h4>
 <p>Three reasons, in order of weight. <b>Security</b>: <code>readObject</code> constructs arbitrary types
 before your code sees anything, so an attacker who controls the bytes controls what gets built — the gadget
-chain problem, which is why the JDK added <code>ObjectInputFilter</code> and why the honest advice is never
+chain problem, which is why the JDK added <code>ObjectInputFilter</code> and why the standing advice is never
 to deserialize untrusted input at all. <b>Coupling</b>: the format is your class structure, so a rename is
 a breaking change to data at rest. <b>Interoperability</b>: nothing outside the JVM can read it.</p>
 <p>Explicit formats invert all three. JSON, Protobuf and Avro have a schema you can version deliberately, a
@@ -316,7 +316,7 @@ for (Method m : Service.class.getDeclaredMethods()) {
     Audited a = m.getAnnotation(Audited.class);
     if (a != null) System.out.println(m.getName() + " audited as " + a.value());
 }</div>
-<p>Without <code>RUNTIME</code> retention, <code>getAnnotation</code> returns null — the single most common custom-annotation bug. Reflection is powerful but slow and unchecked: frameworks cache it; application code should rarely need it.</p>
+<p>Without <code>RUNTIME</code> retention, <code>getAnnotation</code> returns null — the single most common custom-annotation bug. Reflection can reach almost anything, but it is slow and unchecked: frameworks cache it; application code should rarely need it.</p>
 <h4>Why the two are always discussed together</h4>
 <p>Separately they are unremarkable: an annotation is inert metadata, and reflection is a slow way to do
 what a normal method call does better. Together they are the mechanism behind every framework you have
@@ -340,7 +340,7 @@ RUNTIME  in the class file AND readable via reflection. what frameworks
 <p><code>@Target</code> is the other half: it makes misuse a <b>compile error</b> rather than an annotation
 that silently does nothing where it was put.</p>
 
-<h4>The costs, honestly</h4>
+<h4>A clear look at the costs</h4>
 <p>Reflection is slower than direct invocation — lookups are expensive, and while modern JITs optimise
 repeated calls well, the discovery phase is not free. It also <b>defeats the compiler</b>: a field renamed
 by a refactoring tool leaves a string somewhere that no longer matches, and you find out at runtime. And

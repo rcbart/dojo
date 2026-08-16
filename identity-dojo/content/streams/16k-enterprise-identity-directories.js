@@ -460,7 +460,7 @@ Deprovisioning is therefore two actions, not one: deactivate the account <i>and<
 sessions and tokens, which is exactly what the continuous-access-evaluation mechanism in the threats stream
 exists to make fast.</p>
 <p>The number auditors ask for is <b>time to deprovision</b>: from the leaver event in the authoritative
-source to access actually being gone everywhere. Measured honestly, including the applications nobody
+source to access actually being gone everywhere. Measured properly, including the applications nobody
 connected, it is usually far worse than teams expect.</p>`,
 docs:[['SCIM','https://scim.cloud/'],['SCIM (RFC 7644)','https://www.rfc-editor.org/rfc/rfc7644']],
 ex:{title:'Map the lifecycle event to an operation',
@@ -550,7 +550,7 @@ hints:['indexOf("@") gives the position of the @ character.','substring from tha
 {id:'ei4b',title:'JIT provisioning: methods, security & when to use',body:`
 <p>When a federated user shows up, where does their local account come from? There are three provisioning models, and choosing well is a real design decision.</p>
 <ul>
-<li><b>Pre-provisioning (SCIM / directory sync)</b> — accounts are created <i>ahead of time</i> from an authoritative source (HR system, corporate directory). Deterministic, supports rich attributes, and — crucially — supports <b>deprovisioning</b> when someone leaves.</li>
+<li><b>Pre-provisioning (SCIM / directory sync)</b> — accounts are created <i>ahead of time</i> from an authoritative source (HR system, corporate directory). Deterministic, supports rich attributes, and — the part that matters — supports <b>deprovisioning</b> when someone leaves.</li>
 <li><b>Just-in-time (JIT) provisioning</b> — the account is created <i>on first successful login</i>, from the claims in the IdP's token or assertion. No pre-import, so it scales to large or unpredictable populations (customers, partners).</li>
 <li><b>Manual</b> — an admin creates each account. Fine at small scale or where every account needs explicit approval.</li>
 </ul>

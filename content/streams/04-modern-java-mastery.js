@@ -123,7 +123,7 @@ public class Refs {
     static Consumer<Object> PRINT = System.out::println;
 }`}},
 {id:'modL2',title:'Lambdas II: composition & custom functional interfaces',body:`
-<p>Lambdas become powerful when you <b>combine</b> them. The JDK functional interfaces ship default methods for exactly that:</p>
+<p>Lambdas start paying off when you <b>combine</b> them. The JDK functional interfaces ship default methods for exactly that:</p>
 <div class="codeSample" data-hl>Function&lt;Integer,Integer&gt; plus3  = n -&gt; n + 3;
 Function&lt;Integer,Integer&gt; times2 = n -&gt; n * 2;
 
@@ -250,7 +250,7 @@ static &lt;T&gt; Supplier&lt;T&gt; memoize(Supplier&lt;T&gt; expensive) {
 <p>The point of a higher-order function is <b>configuration captured once, behaviour reused many times</b>. <code>Comparator.comparing(Person::age)</code> is a function that builds a comparator; a retry wrapper is a function that takes an operation and returns a more resilient operation with the same signature. Because the result has the same type as the input, wrappers compose: retry around timing around logging, each written once and unaware of the others. That is the whole idea behind middleware, filters and interceptors, and it is why reading <code>Function&lt;A, Function&lt;B, C&gt;&gt;</code> without flinching is worth the practice.</p>
 
 <h4>Currying, and what it is actually for in Java</h4>
-<p>Currying turns a two-argument function into a one-argument function returning another. In languages built around it, this is how partial application works; in Java it is occasionally elegant and frequently over-applied. The honest use is <b>pre-binding a dependency</b>: a function that takes a configured client and returns a function taking the request, so the caller only supplies what varies. Beyond that, a plain method with two parameters is clearer, and clarity is the point of the whole stream.</p>
+<p>Currying turns a two-argument function into a one-argument function returning another. In languages built around it, this is how partial application works; in Java it is occasionally elegant and frequently over-applied. The real use is <b>pre-binding a dependency</b>: a function that takes a configured client and returns a function taking the request, so the caller only supplies what varies. Beyond that, a plain method with two parameters is clearer, and clarity is the point of the whole stream.</p>
 
 <h4>Memoization, and its two traps</h4>
 <p>Wrapping a pure function in a cache is the same technique the DP stream calls memoization, and the same caveats apply with a Java accent. First, <b>the function must be pure</b> — cache a function that reads a database or a clock and you have cached a moment, not a value. Second, <b>an unbounded cache is a memory leak with good intentions</b>: <code>computeIfAbsent</code> on a static map keyed by user input grows forever. Use a bounded cache with an eviction policy (Caffeine, Guava) for anything whose key space you do not control.</p>
@@ -477,7 +477,7 @@ clearer and often faster. Save <code>reduce</code> for folds those do not cover.
 <h4>Primitive streams, and why boxing matters</h4>
 <p><code>mapToInt</code>, <code>mapToDouble</code> and <code>mapToLong</code> exist because a
 <code>Stream&lt;Integer&gt;</code> allocates an object per element. On a large stream that is real cost
-and real garbage. They also unlock methods the object stream does not have —
+and real garbage. They also give you methods the object stream does not have —
 <code>sum()</code>, <code>average()</code>, <code>summaryStatistics()</code> — the last of which gives
 count, sum, min, max and average in a single pass.</p>
 <p><b>One trap:</b> <code>average()</code> returns an <code>OptionalDouble</code>, not a

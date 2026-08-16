@@ -108,7 +108,7 @@ whole lesson: click a <code>&lt;b&gt;</code> inside a button, and <code>target</
   &lt;li data-id="2"&gt;Second&lt;/li&gt;       li  ->  ul  ->  body  ->  document
 &lt;/ul&gt;                              in that order. that is BUBBLING.
 
-event.stopPropagation()   // halt the journey here (use sparingly - other
+event.stopPropagation()   // stop the climb here (use sparingly - other
                           // code may legitimately be listening above you)</div>
 
 <h4>Delegation: one listener instead of a hundred</h4>
@@ -155,7 +155,7 @@ solution:`function bubblePath(chain, clicked) {
 }`,
 tests:[{d:'locates the clicked element in the chain',re:'indexOf'},{d:'nothing fires for an element outside the chain',re:'-1'},{d:'returns the tail of the chain from the target outward',re:'\\.slice\\('}],
 behavior:`Five cases execute the model: the event starts at the target and visits every ancestor above it, which is why a listener on the container hears clicks on rows that did not exist when the listener was attached — the fact delegation is built on.`,
-hints:['Find where the clicked element sits in the chain.','slice from that index gives the upward journey.','Not found means an empty result, not an error.']},
+hints:['Find where the clicked element sits in the chain.','slice from that index gives the upward path.','Not found means an empty result, not an error.']},
 {title:'Delegate clicks from one listener',diff:'hard',lang:'js',
 run:{call:'delegate',cases:[
  {name:'a click inside a row resolves to that row id',args:[[['b','7'],['li','7'],['ul',null]],'li'],expect:'7'},

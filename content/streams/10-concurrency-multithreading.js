@@ -1,7 +1,7 @@
 STREAMS.push({icon:'🧵',title:'Concurrency & Multithreading',blurb:'Threads, synchronization, executors, CompletableFuture, concurrent collections and virtual threads.',lessons:[
 {id:'con0',title:'What is a thread? Threads vs processes',body:`
 <p>Before any synchronization or thread pools, get the mental model right. When you launch a program, the operating system creates a <b>process</b>: an isolated container with its own private memory, its own file handles, and at least one <b>thread</b> of execution. A <b>thread</b> is a single sequential path through the code — the thing that actually runs your instructions one after another.</p>
-<p>The key difference is <b>memory</b>. Processes are <i>isolated</i>: one process cannot read another&#8217;s memory, which makes them safe but heavyweight, and talking between them needs deliberate inter-process communication. Threads <i>within the same process</i> are different — they <b>share the process&#8217;s heap</b> (all its objects), but each thread gets its <b>own stack</b> for its local variables and method calls. That shared heap is exactly what makes threads powerful and dangerous at once.</p>
+<p>The key difference is <b>memory</b>. Processes are <i>isolated</i>: one process cannot read another&#8217;s memory, which makes them safe but heavyweight, and talking between them needs deliberate inter-process communication. Threads <i>within the same process</i> are different — they <b>share the process&#8217;s heap</b> (all its objects), but each thread gets its <b>own stack</b> for its local variables and method calls. That shared heap is exactly what makes threads useful and dangerous at once.</p>
 <div class="codeSample">Process (isolated memory)
  ├─ Thread 1  → own stack ┐
  ├─ Thread 2  → own stack ├─ all share the SAME heap (objects)
@@ -44,7 +44,7 @@ t.join();           // wait for it to finish
 
 Thread.sleep(100);  // pause current thread (throws InterruptedException)
 t.isAlive();        // still running?</div>
-<p><code>join()</code> blocks until the thread dies — the simplest coordination tool. Daemon threads (<code>setDaemon(true)</code> before start) don't keep the JVM alive. Interruption is cooperative: <code>t.interrupt()</code> sets a flag; blocking calls throw <code>InterruptedException</code>, which you must handle honestly (restore the flag or exit).</p>
+<p><code>join()</code> blocks until the thread dies — the simplest coordination tool. Daemon threads (<code>setDaemon(true)</code> before start) don't keep the JVM alive. Interruption is cooperative: <code>t.interrupt()</code> sets a flag; blocking calls throw <code>InterruptedException</code>, which you must handle properly (restore the flag or exit).</p>
 <h4>What a thread costs, and why that shapes everything</h4>
 <p>A platform thread is a thin wrapper over an <b>operating system</b> thread. Creating one is a system
 call; each carries a stack reserved in megabytes, not kilobytes; and switching between them means the

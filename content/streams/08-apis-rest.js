@@ -36,13 +36,13 @@ CACHEABLE   the response may be stored and reused.  GET mostly
 <h4>PUT vs PATCH, which people get wrong constantly</h4>
 <p><code>PUT</code> <b>replaces</b> the resource with the body you sent — so a field you omitted is a field
 you deleted. That is the semantics, and clients that send partial bodies to <code>PUT</code> are silently
-wiping data. <code>PATCH</code> applies a partial change, and because "partial" needs a format, the honest
+wiping data. <code>PATCH</code> applies a partial change, and because "partial" needs a format, the careful
 version specifies one (JSON Merge Patch, RFC 7396, is the pragmatic choice).</p>
 
 <h4>Status codes as part of the contract</h4>
 <p>They are not decoration; clients branch on them. <code>201</code> with a <code>Location</code> header
 tells the caller where the new thing lives. <code>204</code> means success with nothing to say.
-<code>202</code> means accepted for later processing, which is honest for async work.
+<code>202</code> means accepted for later processing, which is exactly right for async work.
 <code>409</code> means a conflict with current state, <code>422</code> means understood but unprocessable,
 and <code>4xx</code> versus <code>5xx</code> tells the caller whether retrying could possibly help.</p>
 <p>The cardinal sin is <code>200</code> with an error inside the body: it breaks every client's error
@@ -52,7 +52,7 @@ handling, every monitor, and every cache.</p>
 <p>Some operations are genuinely not CRUD on a noun. "Cancel this order" is a real business action with
 rules, and contorting it into <code>PATCH /orders/42 {"status":"cancelled"}</code> hides the fact that
 cancelling is not the same as setting a field. Modelling it as a sub-resource —
-<code>POST /orders/42/cancellations</code> — keeps the interface honest. And HATEOAS, the level of REST
+<code>POST /orders/42/cancellations</code> — keeps the interface saying what actually happens. And HATEOAS, the level of REST
 almost nobody implements, is worth knowing about so you can say clearly that you have chosen not to.</p>`,
 docs:[['REST — MDN glossary','https://developer.mozilla.org/en-US/docs/Glossary/REST'],['HTTP methods — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods']],
 ex:{title:'Design the endpoints',lang:'http',

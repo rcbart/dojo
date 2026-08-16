@@ -320,7 +320,7 @@ solution:`function diagnoseService(signals) {
            nextStep: "add loop lag and dependency latency metrics" };
 }`,
 tests:[{d:'checks loop lag first',re:'loopLagMs\\s*>\\s*100'},{d:'then the heap trend',re:'"rising"'},{d:'then dependency latency',re:'dependencyLatencyMs\\s*>\\s*1000'},{d:'falls back to admitting it does not know',re:'"unknown"'}],
-behavior:`Six cases execute and two exist to pin the ORDER. Case 4 has every signal bad at once and must return "blocked event loop", because a blocked loop makes everything downstream look slow — the dependency latency you measured includes time your own process spent not reading the socket. Case 5 puts a leak and a slow dependency together, and the leak wins, because unbounded memory growth eventually causes the other symptoms too. The last case is the honest one: when nothing is conclusive the answer is more instrumentation, not a guess.`,
+behavior:`Six cases execute and two exist to pin the ORDER. Case 4 has every signal bad at once and must return "blocked event loop", because a blocked loop makes everything downstream look slow — the dependency latency you measured includes time your own process spent not reading the socket. Case 5 puts a leak and a slow dependency together, and the leak wins, because unbounded memory growth eventually causes the other symptoms too. The last case is the disciplined one: when nothing is conclusive the answer is more instrumentation, not a guess.`,
 hints:['Guard clauses in the stated order — the first match wins.','A blocked loop distorts every other measurement, so it is checked first.','The final return admits ignorance and asks for better metrics rather than picking a cause.']}]}
 ,
 

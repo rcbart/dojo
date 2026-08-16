@@ -51,7 +51,7 @@ is every foundational term the course leans on, explained simply.
   its own.
 - **Port** — a numbered "door" on a machine for a specific service (web servers usually listen on
   port 80, databases on 5432). One machine has many ports so many services can share one IP.
-- **`localhost` / `127.0.0.1`** — "this same machine." Crucial gotcha: inside a container,
+- **`localhost` / `127.0.0.1`** — "this same machine." The gotcha: inside a container,
   `localhost` means *the container itself*, not your laptop or another container.
 - **Publish a port** (`-p 8080:80`) — poke a hole so a port inside a container is reachable from the
   host. "Host 8080 → container 80."

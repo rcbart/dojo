@@ -7,7 +7,7 @@
 Everything so far — DNS, CDN, load balancer, gateway — optimizes the **synchronous path**: a user
 is waiting, milliseconds count. But a mature system moves as much work as possible *off* that
 path, and three technologies do most of the moving: queues, caches, and object storage. They
-aren't strictly "traffic" infrastructure, but no map of a cloud-native system is honest without
+aren't strictly "traffic" infrastructure, but no map of a cloud-native system is complete without
 them.
 
 ## Message queues: do it later, reliably
@@ -30,7 +30,7 @@ The two shapes: **work queues** (each message consumed once, by one worker — b
 **pub/sub streams** (each message readable by *every* interested consumer — events, the Kafka
 family).
 
-The honesty section — queues have rules you can't opt out of:
+The fine print — queues have rules you can't opt out of:
 
 - Delivery is **at-least-once** in practice; exactly-once is a marketing word. Sometimes a message
   arrives twice, so consumers must be **idempotent**: processing "order 4412 placed" twice must

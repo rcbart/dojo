@@ -55,7 +55,7 @@ Narrated:
 
 1. **The listener accepts the TCP connection** on `0.0.0.0:10000`. A listener is bound to an
    address+port and owns one or more filter chains.
-2. **The filter chain runs its network (L4) filters.** For HTTP traffic the crucial one is the
+2. **The filter chain runs its network (L4) filters.** For HTTP traffic the one that matters is the
    **HTTP Connection Manager (HCM)** — a network filter that turns the raw byte stream into
    structured HTTP requests (handling HTTP/1.1, HTTP/2, HTTP/3). Everything HTTP happens *inside*
    the HCM.
@@ -100,7 +100,7 @@ There are two ways Envoy gets its listeners/routes/clusters:
   listeners… my clusters… my endpoints…") and receives updates live, with no restart. This is
   how meshes and gateways manage fleets. **Module 07** covers it.
 
-Crucially, the *objects are the same* either way — a cluster is a cluster whether it came from a
+The key fact: the *objects are the same* either way — a cluster is a cluster whether it came from a
 file or a control-plane push. Master the static objects first and dynamic config is just "the
 same objects, delivered over the network."
 

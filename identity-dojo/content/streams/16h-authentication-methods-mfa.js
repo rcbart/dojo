@@ -263,7 +263,7 @@ losing a phone does not lose the account — that is what made passkeys viable f
 also what makes the security model depend on the platform account. A <b>device-bound</b> credential on a
 hardware key never leaves that key: stronger, and it is on you to enroll a second one.</p>
 
-<h4>The honest limits</h4>
+<h4>The limits</h4>
 <p>Passkeys do not protect a session after login — a token stolen from the browser is still a token.
 They do not fix account recovery, which remains the weakest path in most deployments. And they shift
 trust onto the platform account that syncs them. What they do eliminate, completely, is credential
@@ -504,7 +504,7 @@ the only real secret.</p>
 
 <p><b>10. Biometrics.</b> Fingerprint, face.<br>
 <i>Pros:</i> nothing to remember or carry.<br>
-<i>Cons:</i> the crucial point — a biometric is <b>not a factor you send anywhere</b>. It is a local
+<i>Cons:</i> the point that matters — a biometric is <b>not a factor you send anywhere</b>. It is a local
 gesture that unlocks a key on the device. A biometric transmitted to a server is a password you can
 never change. Also: false rejects, and it cannot be revoked.<br>
 <i>Best practice:</i> keep it local, as the unlock for a passkey or a device key. Never send a template
@@ -772,7 +772,7 @@ the recovery flow, because it is the same door with a weaker lock. The rule that
 <b>recovery must be at least as strong as primary authentication</b>, and if it is not, your security level
 is the recovery flow's, whatever the login page does.</p>
 
-<h4>Comparing the passwordless methods honestly</h4>
+<h4>The passwordless methods, side by side</h4>
 <div class="codeSample" data-hl>PASSKEY / WebAuthn      phishing-resistant. origin-bound. nothing typed.
                         the only one on this list a relay cannot defeat.
 MAGIC LINK              relayable in real time, and it moves your security
@@ -1261,7 +1261,7 @@ discovering a campaign during it and reading about it afterwards.</p>
 <h4>Where CAPTCHA belongs</h4>
 <p>Last, and reluctantly. It is an accessibility barrier, it measurably costs conversions, and solving
 services price it in fractions of a cent — so it stops hobbyists and not funded attackers. Use it as a
-conditional response to a risk signal, never as a gate on every login. The honest ordering is: <b>MFA
+conditional response to a risk signal, never as a gate on every login. The real ordering is: <b>MFA
 first</b>, because it makes stolen passwords worthless, and everything on this page is compensating for the
 accounts that do not have it yet.`,
 docs:[['Credential stuffing — OWASP','https://owasp.org/www-community/attacks/Credential_stuffing'],['Have I Been Pwned — k-anonymity','https://haveibeenpwned.com/API/v3#PwnedPasswords'],['Credential stuffing prevention — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Credential_Stuffing_Prevention_Cheat_Sheet.html']],
@@ -1324,7 +1324,7 @@ to hold in your head are the <b>false accept rate</b> (fraudsters admitted, whic
 <b>false reject rate</b> (real people turned away, which is a revenue and fairness event, and which is
 almost never measured with the same care).</p>
 
-<h4>The deepfake problem, stated honestly</h4>
+<h4>The deepfake problem, stated plainly</h4>
 <p>Injection attacks are now the sharp edge. Rather than holding a printed photo to a camera — a
 <i>presentation</i> attack that liveness detection is good at spotting — an attacker bypasses the camera
 entirely, feeding synthetic video into the device through a virtual camera or a modified client. The

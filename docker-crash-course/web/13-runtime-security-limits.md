@@ -37,7 +37,7 @@ the tightening pattern is drop everything, add back what's proven necessary:
 docker run --cap-drop=ALL --cap-add=NET_BIND_SERVICE nginx
 ```
 
-And the flag to treat as radioactive: **`--privileged`** turns *off* essentially all isolation —
+And the flag to treat as radioactive: **`--privileged`** turns *off* practically all isolation —
 every capability, every device, no seccomp. If a README tells you to use it, the README is asking
 you to run that software as the host. There is almost always a narrower flag (`--cap-add`,
 `--device`) that grants only what's needed.

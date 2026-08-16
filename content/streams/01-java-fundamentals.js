@@ -128,7 +128,7 @@ solution:`public class Greeter {
 <p><b>Variables deserve a slower look — everything else builds on them.</b> A variable is a <i>named piece of storage with a declared type</i>: the name is how your code refers to it, the type is the compiler-enforced promise about what it can hold. Three moments in a variable's life are worth separating: <b>declaration</b> (<code>int count;</code> — the name and type exist), <b>initialization</b> (the <i>first</i> value goes in), and <b>assignment</b> (any later value replaces the current one). <code>final</code> forbids that third step — declare-once, assign-once — and modern Java style uses it liberally: a variable that never changes is one less thing to track while reading.</p>
 <p>⚠️ <b>Always initialize your variables — ideally in the same line that declares them.</b> Java's rules here have a trap-shaped asymmetry:</p>
 <ul>
-<li><b>Local variables</b> (inside methods) have <b>no default value at all</b>. Using one before it's assigned is a <i>compile error</i> ("variable count might not have been initialized") — the compiler proves <b>definite assignment</b> on every path. Good: the mistake can't reach runtime. But don't fight the checker with a lazy <code>int count = 0;</code>-then-reassign dance when <code>int count = computeCount();</code> says it in one honest line.</li>
+<li><b>Local variables</b> (inside methods) have <b>no default value at all</b>. Using one before it's assigned is a <i>compile error</i> ("variable count might not have been initialized") — the compiler proves <b>definite assignment</b> on every path. Good: the mistake can't reach runtime. But don't fight the checker with a lazy <code>int count = 0;</code>-then-reassign dance when <code>int count = computeCount();</code> says it in one clear line.</li>
 <li><b>Fields</b> (class members) silently get defaults: <code>0</code>, <code>0.0</code>, <code>false</code>, and — the dangerous one — <b><code>null</code> for every reference type</b>. A field you forgot to initialize doesn't fail the build; it waits and throws <code>NullPointerException</code> the first time something calls a method on it, often far from where the real mistake lives. The habit that prevents this: initialize fields at the declaration or in the constructor — those are the only two places a reader looks.</li>
 </ul>
 <div class="codeSample" data-hl>int x;
@@ -1213,7 +1213,7 @@ new TreeSet&lt;&gt;(names);    // sorted unique</div>
 <p><code>TreeSet</code>/<code>TreeMap</code> keep sorted order; <code>LinkedHashMap</code> keeps insertion order. Generic methods declare their own type parameter: <code>static &lt;T&gt; T first(List&lt;T&gt; list)</code>.</p>
 
 <h4>Choosing the implementation</h4>
-<p>The interface says what it does; the implementation decides what it costs. <b><code>ArrayList</code></b> is a resizable array: O(1) access by index and appending, O(n) inserting or removing in the middle. <b><code>LinkedList</code></b> is O(1) at the ends and O(n) to reach a position, and its per-element node objects make it slower in practice for nearly everything — the honest advice is ArrayList unless you have measured otherwise. <b><code>HashMap</code></b> and <b><code>HashSet</code></b> give O(1) average lookup with no ordering; <b><code>LinkedHashMap</code></b> preserves insertion order for a small cost; <b><code>TreeMap</code></b> and <b><code>TreeSet</code></b> keep keys sorted at O(log n) and add navigation methods like <code>firstKey</code> and <code>headMap</code>.</p>
+<p>The interface says what it does; the implementation decides what it costs. <b><code>ArrayList</code></b> is a resizable array: O(1) access by index and appending, O(n) inserting or removing in the middle. <b><code>LinkedList</code></b> is O(1) at the ends and O(n) to reach a position, and its per-element node objects make it slower in practice for nearly everything — the practical advice is ArrayList unless you have measured otherwise. <b><code>HashMap</code></b> and <b><code>HashSet</code></b> give O(1) average lookup with no ordering; <b><code>LinkedHashMap</code></b> preserves insertion order for a small cost; <b><code>TreeMap</code></b> and <b><code>TreeSet</code></b> keep keys sorted at O(log n) and add navigation methods like <code>firstKey</code> and <code>headMap</code>.</p>
 
 <h4>The contract that makes hashing work</h4>
 <p>Anything used as a <code>HashMap</code> key or a <code>HashSet</code> element must implement <code>equals</code> and <code>hashCode</code> together: equal objects must have equal hash codes. Override one and not the other and objects vanish into maps — you put a value in, look it up with an equal key, and get <code>null</code>, because the lookup went to a different bucket. This is the most common silent bug in beginner Java, and records fix it by generating both for you.</p>
@@ -1259,7 +1259,7 @@ public class WordStats {
 }`}}
 ,
 {id:'enm1',title:'Enums in depth: fields, methods & strategy',body:`
-<p>🌱 <b>Starting from zero:</b> some values come from a short fixed menu: days of the week, sizes S/M/L, shipping speeds. You COULD store them as free text, but then nothing stops "Tuseday" from sneaking in. An <b>enum</b> is Java\u0027s multiple-choice type: you declare the complete list of allowed values once, and the compiler guarantees no other value ever appears. Even better, each choice can carry its own data and behavior — which turns out to be quietly powerful.</p>
+<p>🌱 <b>Starting from zero:</b> some values come from a short fixed menu: days of the week, sizes S/M/L, shipping speeds. You COULD store them as free text, but then nothing stops "Tuseday" from sneaking in. An <b>enum</b> is Java\u0027s multiple-choice type: you declare the complete list of allowed values once, and the compiler guarantees no other value ever appears. Even better, each choice can carry its own data and behavior — which turns out to matter more than it first looks.</p>
 <p>A Java enum is a full class with a fixed set of instances. Each constant can carry <b>fields</b> (set via a private constructor), expose <b>methods</b>, and even override methods <b>per constant</b> — which turns an enum into a strategy table with exhaustive switch support for free.</p>
 <div class="codeSample">enum Op {
     ADD("+")  { double apply(double a, double b) { return a + b; } },
@@ -1273,7 +1273,7 @@ public class WordStats {
 <ul>
 <li><b>Built-ins</b>: <code>values()</code> (all constants, in declaration order), <code>valueOf("ADD")</code> (throws on unknown names), <code>name()</code>, <code>ordinal()</code> — never persist <code>ordinal()</code>; reordering constants silently corrupts stored data.</li>
 <li><b>EnumMap / EnumSet</b>: specialized, array-backed collections keyed by enum — faster and smaller than HashMap/HashSet. <code>new EnumMap&lt;&gt;(Op.class)</code>, <code>EnumSet.of(Op.ADD)</code>, <code>EnumSet.allOf(Op.class)</code>.</li>
-<li><b>Singleton</b>: a one-constant enum is the most robust singleton in Java — serialization- and reflection-proof (Effective Java, Item 3).</li>
+<li><b>Singleton</b>: a one-constant enum is the hardest-to-break singleton in Java — serialization- and reflection-proof (Effective Java, Item 3).</li>
 </ul>`,
 docs:[['Enum types — dev.java','https://dev.java/learn/classes-objects/enums/'],['EnumMap — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/EnumMap.html'],['EnumSet — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/EnumSet.html']],
 ex:{title:'Enum as a strategy table',
@@ -1309,7 +1309,7 @@ solution:`public enum Shipping {
     }
 }`}},
 {id:'ctr1',title:'The equals / hashCode / toString contracts',body:`
-<p>🌱 <b>Starting from zero:</b> when are two things "the same"? Two printouts of the same photo are equal in content but are not one object; identical twins are equal-looking but different people. Java needs YOUR answer to this question for every class you write, because its containers ask it constantly — "is this key already in the map?", "does the set contain this?". Three small methods are how a class answers — equals (are we the same in content?), hashCode (a quick fingerprint used for fast lookup), toString (how do I describe myself in print?) — and this lesson teaches the rules that keep the answers honest.</p>
+<p>🌱 <b>Starting from zero:</b> when are two things "the same"? Two printouts of the same photo are equal in content but are not one object; identical twins are equal-looking but different people. Java needs YOUR answer to this question for every class you write, because its containers ask it constantly — "is this key already in the map?", "does the set contain this?". Three small methods are how a class answers — equals (are we the same in content?), hashCode (a quick fingerprint used for fast lookup), toString (how do I describe myself in print?) — and this lesson teaches the rules that keep the answers consistent.</p>
 <p>Half the collections library only works if your classes honor three contracts from <code>Object</code>. Get them wrong and HashMap "loses" your keys, HashSet holds duplicates, and lists can't find elements.</p>
 <ul>
 <li><b>equals</b> must be reflexive, symmetric, transitive, consistent, and return false for null. The signature is <code>equals(Object)</code> — overloading with your own type creates a second, unrelated method the collections never call.</li>
@@ -1655,7 +1655,7 @@ environment variables for configuration, and files or network for data — large
 require a human to be present. Do notice that <code>args</code> is empty, not null, when nothing was
 passed, so <code>args.length</code> is the check.</p>`,
 docs:[['Scanner — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Scanner.html'],['Formatting output — Oracle','https://docs.oracle.com/javase/tutorial/java/data/numberformat.html']],
-ex:{title:'A robust prompt',
+ex:{title:'A prompt that survives bad input',
 prompt:`Write <code>Prompt</code> with two static methods taking a <code>java.util.Scanner</code> parameter (passing it in keeps them testable): <code>static int askAge(java.util.Scanner sc)</code> — loop with <code>hasNextInt()</code>, discarding invalid tokens with <code>sc.next()</code>, then return <code>nextInt()</code>; and <code>static String welcome(java.util.Scanner sc)</code> — read a full name with <code>nextLine()</code> and return it formatted via <code>String.format("Welcome, %s!", name)</code>.`,
 starter:`import java.util.Scanner;
 

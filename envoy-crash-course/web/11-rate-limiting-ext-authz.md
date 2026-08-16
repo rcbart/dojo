@@ -52,7 +52,7 @@ YAML. The cost is a network hop on the request path, so the filter's `failure_mo
 matters: deny-on-failure protects the backend even when the limiter dies, allow-on-failure
 protects availability — pick per route, deliberately. In practice: local limits everywhere as the
 crude backstop, global limits where a promise to a *customer* is being kept — both at once is the
-grown-up configuration.
+production configuration.
 
 ## ext_authz: authentication decisions, outsourced
 

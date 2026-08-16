@@ -355,7 +355,7 @@ minimisation, and in a consumer context it is what a consent screen is approving
 table, and mismatched mappings are the single most common cause of a federation integration that
 authenticates fine but creates broken user records.</p>
 
-<h4>Why "claim" is the honest word</h4>
+<h4>Why "claim" is exactly the right word</h4>
 <p>A claim carries no authority on its own. Its weight comes entirely from three things: <i>who</i>
 asserted it (<code>iss</code>), whether the signature proves they really did, and whether you had
 already decided to trust that issuer for that kind of fact. An IdP asserting
@@ -611,7 +611,7 @@ token</b> is the opposite: meant for the API, and your app should treat it as an
 forward, even when it happens to be a readable JWT.</p>
 
 <h4>Why not always JWT?</h4>
-<p>JWTs won on tooling, not on merit. The honest scorecard:</p>
+<p>JWTs won on tooling, not on merit. The real scorecard:</p>
 <ul>
 <li><b>Revocation.</b> A structured token cannot be un-issued. Log a user out and their JWT keeps
 working until <code>exp</code>. The industry's answer is short lifetimes (5&ndash;15 minutes) plus a
@@ -665,7 +665,7 @@ channel. It is therefore <b>higher value than the thing it replaces</b>, and the
 follows from that — rotation, reuse detection, and why a bare one in a browser is the worst credential in
 the system.</p>
 <p>Neither is needed to follow the rest of this stream. They appear here because a token lesson cannot
-honestly avoid naming them, and this course does not leave a term hanging.</p>`,
+reasonably avoid naming them, and this course does not leave a term hanging.</p>`,
 docs:[['RFC 7519 — JSON Web Token (JWT)','https://www.rfc-editor.org/rfc/rfc7519'],['RFC 6750 — Bearer Token Usage','https://www.rfc-editor.org/rfc/rfc6750'],['RFC 7662 — OAuth 2.0 Token Introspection','https://www.rfc-editor.org/rfc/rfc7662'],['RFC 9068 — JWT Profile for OAuth 2.0 Access Tokens','https://www.rfc-editor.org/rfc/rfc9068'],['jwt.io — paste a JWT and see it decoded','https://jwt.io/']],
 exs:[
 {title:'Read a JWT: split it and decode the claims',
@@ -834,7 +834,7 @@ freshness    stateful wins.  a stateless token carries the permissions it
 token keeps asserting it until 09:15, because the token is a photograph of their permissions rather than a
 window onto them. Nothing is broken — that is what stateless means.</p>
 
-<h4>The honest summary</h4>
+<h4>The bottom line</h4>
 <p><b>Neither is more secure.</b> They fail differently, and the choice is about which failure you can live
 with. Most real systems end up in the middle on purpose: short-lived stateless tokens so the staleness
 window is small, plus a stateful denylist for the small number of credentials that must die immediately.
@@ -955,7 +955,7 @@ solution:`public class Actors {
 
 {id:'idf3',title:'SSO vs federation vs delegation: experience, trust, permission',body:`
 <p>These three words get used as if they were interchangeable, and they describe completely different
-kinds of thing. Getting them apart is probably the highest-leverage clarification in the whole domain,
+kinds of thing. Getting them apart is probably the clarification that pays off most in the whole domain,
 because almost every muddled identity conversation is really a collision between them.</p>
 <div class="codeSample" data-hl>SSO         is an EXPERIENCE   — what the user feels: "I only logged in once"
 Federation  is an ARCHITECTURE — who is trusted to authenticate, across a boundary
@@ -1016,7 +1016,7 @@ it as proof of identity is a real vulnerability. <b>OpenID Connect</b> exists pr
 adding an ID token — an authentication statement — on top of OAuth's delegation.</p>
 <p>And delegation has a dangerous neighbour. In <b>delegation</b> the token records both identities:
 "app X, acting for user Y." In <b>impersonation</b> the app simply becomes user Y and the API cannot
-tell the difference. Impersonation is more powerful, harder to audit, and should be a deliberate
+tell the difference. Impersonation carries more authority, is harder to audit, and should be a deliberate
 choice.</p>
 
 <h4>Putting it together</h4>
@@ -1163,7 +1163,7 @@ user in support.</i></p>
 <p><b>Delegation vs impersonation</b> — a subtle but important distinction:</p>
 <ul>
 <li><b>Delegation</b>: the token says "app X, acting for user Y, may do Z." Both identities are present — the API knows a client is acting for a user.</li>
-<li><b>Impersonation</b>: the app simply <i>becomes</i> user Y — the API can't tell it isn't Y. More powerful, riskier, and audited differently. (Token exchange, in the S2S stream, formalizes both.)</li>
+<li><b>Impersonation</b>: the app simply <i>becomes</i> user Y — the API can't tell it isn't Y. More authority, more risk, and audited differently. (Token exchange, in the S2S stream, formalizes both.)</li>
 </ul>
 <p>A resource server enforces scopes on every call: it reads the token's <code>scope</code> claim and checks the required scope is present before doing the work.</p>
 <div class="codeSample" data-hl>// token carries the granted scopes as a space-separated string
@@ -1459,7 +1459,7 @@ public class Delegation {
 {id:'idfobo',title:'On-behalf-of: carrying "who asked" across services',body:`
 <p>A request arrives from Ada at your gateway. The gateway calls the orders service, which calls the
 billing service, which calls the ledger. Four hops in, something has to decide whether <i>Ada</i> may
-do this. How does her identity survive the journey — and who is accountable for what happens at the
+do this. How does her identity survive the chain of hops — and who is accountable for what happens at the
 end? That is the <b>on-behalf-of</b> problem.</p>
 
 <h4>Four ways to answer it, from worst to best</h4>
@@ -1471,7 +1471,7 @@ trust exists to kill.</li>
 the first service; every later service must ignore the audience check to accept it, and now a token
 minted for one service works everywhere. You have built a universal key.</li>
 <li><b>Drop the user entirely and call as the service.</b> The downstream sees "orders-service," which
-is honest about the caller but loses the user completely. The ledger cannot enforce Ada's own limits,
+is accurate about the caller but loses the user completely. The ledger cannot enforce Ada's own limits,
 and the audit log says a service did it — true, useless.</li>
 <li><b>Exchange the token, preserving both identities.</b> The service asks the authority for a
 <i>new</i> token, correctly audienced for the next hop, that still names Ada as the subject and records
@@ -1490,7 +1490,7 @@ who is acting. Both facts survive.</li>
 <li><b>Delegation</b> — the token says "Ada, being acted for by orders-service." Both identities
 present. The API can apply Ada's rights <i>and</i> know a service did it. Attribution survives.</li>
 <li><b>Impersonation</b> — the token simply says "Ada." The downstream cannot tell a service is
-involved. More powerful, and the audit trail now claims Ada did something she never touched.</li>
+involved. More authority, and the audit trail now claims Ada did something she never touched.</li>
 </ul>
 <p>OAuth Token Exchange encodes delegation with an <b>act</b> claim, which nests to record the whole
 chain, and gates who is permitted to do this with <b>may_act</b> on the original token:</p>
@@ -1913,7 +1913,7 @@ binding to a caller.</li>
 <li><b>Identifies an application</b> — there is no user in the picture, so "who did this?" can only
 ever be answered as "whichever integration holds this key."</li>
 </ul>
-<p>Compare it honestly against an OAuth access token and the trade is clear: keys win on simplicity and
+<p>Compare it against an OAuth access token and the trade is clear: keys win on simplicity and
 lose on everything else.</p>
 <div class="codeSample" data-hl>                 API KEY                    OAUTH ACCESS TOKEN
 lifetime         forever (usually)          minutes
@@ -2379,7 +2379,7 @@ solution:`public class Federation {
 tests:[{d:'the authority is the IdP',re:'"authority".*?"IdP"',flags:'s'},{d:'the app is the relying party',re:'"app".*?"relying party"',flags:'s'},{d:'the proof is a signed token or assertion',re:'"proof".*?"signed token or assertion"',flags:'s'},{d:'keys are published at JWKS/metadata',re:'"keys".*?"published at JWKS or metadata"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
 behavior:`piece("authority") is "IdP", piece("app") is "relying party", piece("proof") is "signed token or assertion", piece("keys") is "published at JWKS or metadata". Those four pieces — authority, app, proof, and published keys — are all federation is.`,
 hints:['Federation removes password sprawl by making apps trust one authority.','The IdP issues a signed proof; the relying party verifies it instead of a password.','Metadata/JWKS publishes the IdP public keys and endpoints so the app can find and check them.']}},
-{id:'idftrust',title:'How trust is established: a deep dive',body:`
+{id:'idftrust',title:'How trust is established, end to end',body:`
 <p>Federation only works if the relying party (RP) can be sure a proof really came from the identity provider (IdP), is meant for <i>this</i> app, and is fresh. That certainty is <b>trust</b>, and it is not a feeling — it is <b>configuration plus cryptography</b>. This lesson ties together the pieces you meet across the OAuth, SAML and PKI streams.</p>
 <p><b>1. Identification (set up once, out of band).</b> The RP <b>registers</b> with the IdP. In OAuth/OIDC it receives a <code>client_id</code> and, for a confidential client, a <code>client_secret</code>, and registers exact redirect URIs. In SAML the two sides exchange <b>metadata</b> containing an <b>X.509 certificate</b>. This is where the parties learn who each other are.</p>
 <p><b>2. Keys (the core asymmetry).</b> The IdP signs proofs with its <b>private</b> key and <b>publishes the matching public key</b> — at a <b>JWKS</b> endpoint (OIDC) or in SAML metadata. The RP verifies signatures with that public key. <b>Public keys are shared; private keys never leave their owner</b> — which is exactly why a forger who can read the public key still cannot mint a valid signature. For certificates, verification may walk a <b>PKI chain</b> to a trusted <b>CA</b>.</p>
@@ -2414,8 +2414,8 @@ hints:['Trust is configuration (registration) plus cryptography (verifying a sig
 <li><b>DID (Decentralized Identifier)</b> — an identifier you control (a URI like <code>did:example:123</code>) that resolves to a <b>DID document</b> containing your public keys. It is not issued or ownable by any one company.</li>
 <li><b>Verifiable Credential (VC)</b> — a tamper-evident, cryptographically signed claim (e.g. "over 18", "employed by Acme") <b>issued</b> by an authority, <b>held</b> by you in a wallet, and <b>presented</b> to whoever needs it.</li>
 </ul>
-<p>The model is a <b>trust triangle</b>: the <b>issuer</b> signs and gives you a credential; the <b>holder</b> (you) stores it in a wallet; the <b>verifier</b> checks the issuer signature — without calling the issuer. A powerful property is <b>selective disclosure</b> (and zero-knowledge proofs): prove you are over 18 <i>without</i> revealing your birthdate.</p>
-<p>Versus federation: there is no central login and no IdP that sees every sign-in, which improves privacy and resilience. The honest caveat: the ecosystem (wallets, revocation, standards) is still maturing, so most production identity today is still federated — but VCs are showing up in digital IDs and know-your-customer flows.</p>
+<p>The model is a <b>trust triangle</b>: the <b>issuer</b> signs and gives you a credential; the <b>holder</b> (you) stores it in a wallet; the <b>verifier</b> checks the issuer signature — without calling the issuer. The standout property is <b>selective disclosure</b> (and zero-knowledge proofs): prove you are over 18 <i>without</i> revealing your birthdate.</p>
+<p>Versus federation: there is no central login and no IdP that sees every sign-in, which improves privacy and resilience. The caveat: the ecosystem (wallets, revocation, standards) is still maturing, so most production identity today is still federated — but VCs are showing up in digital IDs and know-your-customer flows.</p>
 
 <h4>The trust triangle, and what is genuinely new</h4>
 <p>Federation and decentralized identity both rest on a signature from an authority you trust. The difference is <b>where the authority sits at the moment of use</b>. In federation the IdP is online and in the flow: it learns every login, every relying party, and every time you sign in. In the credential model the issuer signs once and goes away — the verifier checks a signature against a published key and never contacts the issuer. That absence is the point: no phone-home means no central observer of your behaviour, and no single service whose outage stops every login.</p>
@@ -2430,7 +2430,7 @@ hints:['Trust is configuration (registration) plus cryptography (verifying a sig
 </ul>
 
 <h4>Where it is actually being used</h4>
-<p>The honest position in 2026: this is no longer a research topic and not yet the default. The EU Digital Identity Wallet regulation obliges member states to offer wallets, mobile driving licences are in production in several US states and are accepted at airports, and OpenID for Verifiable Credential Issuance and Presentation (OID4VCI / OID4VP) have made the flows look reassuringly like OAuth — which is the pragmatic reason they are gaining traction. Most enterprise identity remains federated, and the two will coexist: an employee logs in via the corporate IdP and presents a credential to prove a professional certification the employer never held.</p>`,
+<p>Where this stands in 2026: it is no longer a research topic and not yet the default. The EU Digital Identity Wallet regulation obliges member states to offer wallets, mobile driving licences are in production in several US states and are accepted at airports, and OpenID for Verifiable Credential Issuance and Presentation (OID4VCI / OID4VP) have made the flows look reassuringly like OAuth — which is the pragmatic reason they are gaining traction. Most enterprise identity remains federated, and the two will coexist: an employee logs in via the corporate IdP and presents a credential to prove a professional certification the employer never held.</p>`,
 docs:[['Decentralized Identifiers (W3C DID)','https://www.w3.org/TR/did-core/'],['Verifiable Credentials (W3C)','https://www.w3.org/TR/vc-data-model/'],['Self-sovereign identity','https://en.wikipedia.org/wiki/Self-sovereign_identity']],
 ex:{title:'The trust triangle',
 prompt:`Write class <code>Ssi</code> with <code>static String role(String party)</code>: <code>"issuer"</code>→<code>"signs and issues the credential"</code>, <code>"holder"</code>→<code>"keeps it in a wallet"</code>, <code>"verifier"</code>→<code>"checks the issuer signature"</code>, and <code>"unknown"</code> otherwise.`,
@@ -2500,7 +2500,7 @@ roadside stop with no connectivity. OID4VP came from the web. Both are real, bot
 convergence is partial: OID4VP can carry mdoc credentials, so the transport and the format are
 increasingly separable. Expect to meet both.</p>
 
-<h4>Age assurance: the honest version</h4>
+<h4>Age assurance: what wallets do and do not solve</h4>
 <p>Regulators increasingly require age checks, and wallets are the mechanism most often proposed.
 Verifiable presentation genuinely solves the technical problem — prove over-18 without revealing
 identity or birthdate, unlinkably enough for most purposes. What it does not solve is that <b>somebody

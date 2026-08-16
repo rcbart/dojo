@@ -284,7 +284,7 @@ application { mainClass = 'com.example.dojo.Main' }</div>
 <p><code>implementation</code> ≈ Maven compile (but hidden from consumers' compile classpath), <code>testImplementation</code> ≈ test scope, <code>api</code> leaks to consumers (library projects only). Run: <code>./gradlew build</code>, <code>./gradlew test</code>, <code>./gradlew run</code>, <code>./gradlew tasks</code>.</p>
 <h4>The trade Gradle makes</h4>
 <p>Maven describes a build declaratively and runs a fixed lifecycle. Gradle builds a <b>task graph</b> and
-lets you program it — which is genuinely more powerful and genuinely easier to make a mess of. A Gradle
+lets you program it — which can do more, and is easier to make a mess of. A Gradle
 build can do anything, and "anything" includes becoming a bespoke program that only its author
 understands.</p>
 <p>The discipline that keeps it good: use plugins and conventions for everything you can, and treat
@@ -375,7 +375,7 @@ test {
 </ul>
 <p>Multi-module: a parent POM (<code>&lt;packaging&gt;pom&lt;/packaging&gt;</code>, <code>&lt;modules&gt;</code>) or Gradle <code>settings.gradle</code> with <code>include 'api', 'core'</code>. Share versions centrally: Maven <code>&lt;dependencyManagement&gt;</code>, Gradle version catalogs (<code>libs.versions.toml</code>). A Spring Boot project typically inherits <code>spring-boot-starter-parent</code> precisely to get managed versions.</p>
 <h4>How to actually make the choice</h4>
-<p>For a typical Spring Boot service, the honest answer is that it rarely matters — both work, and the
+<p>For a typical Spring Boot service, the real answer is that it rarely matters — both work, and the
 build is not where your project succeeds or fails. What tips it:</p>
 <div class="codeSample" data-hl>choose MAVEN when
   the team is mixed-experience or rotates (nobody has to learn your build)

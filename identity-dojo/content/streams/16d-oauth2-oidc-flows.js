@@ -433,7 +433,7 @@ of what the two channels can and cannot protect.</p>
 
 BACK CHANNEL (client backend -> AS, direct TLS)
   no browser, no intermediaries, client can authenticate itself
-  -> carries the TOKENS: long-lived, powerful, must never be exposed
+  -> carries the TOKENS: long-lived, high-privilege, must never be exposed
 
 // the code exchange exists precisely to move value from the leaky
 // channel to the private one. that is the whole design.</div>
@@ -951,7 +951,7 @@ and the authentication happens somewhere comfortable. Nothing secret is ever typ
 client, then sends the victim the legitimate <code>verification_uri</code> and code — "enter this code to
 finish setting up your account". The victim authenticates on a genuine page and approves, and the tokens go
 to the attacker's device.</p>
-<p>The mitigations are all about making the consent screen honest: show <b>what is being authorised and
+<p>The mitigations are all about making the consent screen say what is really happening: show <b>what is being authorised and
 which device is asking</b>, keep the code short-lived, and require the user to type the code rather than
 following a pre-filled link. Restricting which clients may use the grant at all is the strongest
 control.</p>
@@ -1118,7 +1118,7 @@ or mTLS) or rotated on every use with reuse detection.</li>
 Client Credentials, Refresh, Device Authorization Grant: all still present and unchanged. Token
 formats, scopes, the endpoints, OpenID Connect on top — all the same. There is <b>no protocol
 incompatibility</b>: an OAuth 2.1 client talks to an OAuth 2.0 server perfectly well, provided that
-server supports PKCE, which essentially all of them now do.</p>
+server supports PKCE, which practically all of them now do.</p>
 
 <h4>What it deliberately does not solve</h4>
 <p>OAuth 2.1 tightens the flows. It does not address the problems that live above them, and it is worth
@@ -1358,7 +1358,7 @@ token to the outside world and a JWT inside</b>.</p>
 <p>The cost is a gateway that must be there and must be fast. That is a real piece of infrastructure, which
 is why this pattern belongs to platforms with enough services to justify it, not to a single application.</p>
 
-<h4>Choosing, honestly</h4>
+<h4>How to choose</h4>
 <p><b>Opaque</b> when revocation must be immediate, when the client is a browser or a third party, or when
 the token would otherwise carry anything you do not want read. <b>JWT</b> for internal service-to-service
 calls where the audience is narrow, the lifetime is short, and the availability win is worth the revocation
@@ -1557,7 +1557,7 @@ entity declares    token_endpoint_auth_method: "client_secret_basic"
                    -> REJECTED. the entity cannot widen what the anchor allowed.</div>
 <p>This is how an ecosystem enforces a security baseline — the FAPI requirements from the threats
 stream, for example — on participants it does not operate. A member cannot opt into weaker client
-authentication, because the policy is applied during chain resolution, not by the member's own honesty.</p>
+authentication, because the policy is applied during chain resolution, not left to the member to enforce on itself.</p>
 
 <h4>Automatic registration</h4>
 <p>Because the chain proves who a client is and what it is permitted to declare, an OP can accept a
@@ -1565,7 +1565,7 @@ client it has never registered — the client presents its entity identifier, th
 applies policy, and proceeds. That removes the manual onboarding step that makes large ecosystems
 impractical, and it is the practical reason the specification exists.</p>
 
-<h4>The trade-offs, honestly</h4>
+<h4>The trade-offs</h4>
 <ul>
 <li><b>The anchor is absolute.</b> Compromise it and the entire ecosystem is compromised — the trust
 anchor lesson's point at maximum stakes. Anchor keys belong offline, with a rehearsed rotation.</li>

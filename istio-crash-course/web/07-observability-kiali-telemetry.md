@@ -16,7 +16,7 @@ you installed (Prometheus, Grafana, Kiali, Jaeger) turn that data into dashboard
 | **Prometheus** | Collects/stores the metrics the proxies emit | The database of numbers |
 | **Grafana** | Graphs those metrics over time (dashboards) | The charts |
 | **Kiali** | A live **map** of services and how they call each other | The X-ray of your mesh |
-| **Jaeger** | **Distributed traces**: one request's whole journey across services | The flight recorder |
+| **Jaeger** | **Distributed traces**: one request's whole path across services | The flight recorder |
 
 ## The golden signals, for free
 
@@ -69,7 +69,7 @@ istioctl dashboard grafana      # open the "Istio Service Dashboard"
 Pick the `productpage` service and watch request volume, success rate, and latency percentiles —
 the golden signals, graphed.
 
-### Jaeger — a single request's journey
+### Jaeger — a single request's path
 
 ```bash
 istioctl dashboard jaeger       # search service "productpage", find a trace

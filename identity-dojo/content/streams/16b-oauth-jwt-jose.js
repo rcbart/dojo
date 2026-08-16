@@ -85,7 +85,7 @@ public class JwkKeys {
 }`}},
 
 {id:'jose2',title:'Building a JWT: the claims, explained',body:`
-<p>A <b>JWT</b> (JSON Web Token) is three base64url pieces joined by dots: <code>header.payload.signature</code>. The <b>payload</b> is a JSON object of <b>claims</b> — statements about the token. Crucially, until it is encrypted (JWE, last lesson) the payload is <i>not secret</i>: anyone can base64url-decode and read it. Signing makes it <i>tamper-proof</i>, not <i>hidden</i>.</p>
+<p>A <b>JWT</b> (JSON Web Token) is three base64url pieces joined by dots: <code>header.payload.signature</code>. The <b>payload</b> is a JSON object of <b>claims</b> — statements about the token. And the part everyone forgets: until it is encrypted (JWE, last lesson) the payload is <i>not secret</i>: anyone can base64url-decode and read it. Signing makes it <i>tamper-proof</i>, not <i>hidden</i>.</p>
 <p>Here is what the standard claims mean, in plain terms:</p>
 <ul>
 <li><b>iss</b> (issuer) — <i>who minted the token.</i> The Authorization Server's identifier (usually its URL). Like the letterhead on a letter: it says who is vouching for this.</li>
@@ -178,7 +178,7 @@ System.out.println("RS256 size=" + tok.length() + " chars, sign=" + ms + "ms");<
 
 <h4>The measurement in context</h4>
 <p>The size difference is not academic. An access token is sent on every request, and headers are not compressed the way bodies are; 192 extra bytes per request across a billion requests a day is roughly 170GB of traffic that buys nothing. On constrained links it also risks crossing header-size limits in proxies and gateways, which fail in ways that are hard to diagnose because they depend on how many claims a particular user has.</p>
-<p>The speed asymmetry is worth internalising too: RSA verification is very fast and RSA signing is slow, while EC is the reverse. Since an authorization server signs once and resource servers verify many times, RSA's profile is arguably better matched to the workload — which is the honest counterweight to the size argument, and why both remain in use.</p>
+<p>The speed asymmetry is worth internalising too: RSA verification is very fast and RSA signing is slow, while EC is the reverse. Since an authorization server signs once and resource servers verify many times, RSA's profile is arguably better matched to the workload — which is the real counterweight to the size argument, and why both remain in use.</p>
 
 <h4>Making the choice reversible</h4>
 <p>Whichever you pick, the decision that matters more is whether you can change it later. That means: algorithms in a configurable policy list rather than a constant, key selection by <code>kid</code>, both algorithms accepted during a migration, and a rotation procedure that has been run at least once when nothing was on fire. A system that can move from RS256 to ES256 without a release is a system that can also move away from either when the ground shifts — which the post-quantum lesson in this stream argues is the property to design for.</p>`,
@@ -528,7 +528,7 @@ implementable with ordinary JOSE libraries today.</li>
 withheld two things, which is occasionally itself informative.</li>
 <li><b>Does not solve revocation</b> — status lists are a separate mechanism.</li>
 </ul>
-<p>That third point is the honest limitation, and it is a deliberate design choice: SD-JWT is
+<p>That third point is the real limitation, and it is a deliberate design choice: SD-JWT is
 "good privacy you can actually ship" rather than perfect privacy nobody deploys. It is the format
 behind SD-JWT VC, and the one the European digital identity wallet work has converged on.</p>`,
 docs:[['Selective Disclosure for JWTs (SD-JWT)','https://datatracker.ietf.org/doc/draft-ietf-oauth-selective-disclosure-jwt/'],['SD-JWT-based Verifiable Credentials (SD-JWT VC)','https://datatracker.ietf.org/doc/draft-ietf-oauth-sd-jwt-vc/'],['RFC 7800 — the cnf claim','https://www.rfc-editor.org/rfc/rfc7800'],['W3C — Verifiable Credentials Data Model','https://www.w3.org/TR/vc-data-model-2.0/']],
@@ -602,7 +602,7 @@ the forgery happily.</p>
 <p>Agility and this rule fit together neatly: the policy is a <i>list</i>, so adding an algorithm is a
 config change, while everything absent from the list is refused by default.</p>
 
-<h4>Where post-quantum sits, honestly</h4>
+<h4>Where post-quantum actually sits</h4>
 <p>NIST standardised ML-KEM (key establishment), ML-DSA and SLH-DSA (signatures) in 2024. The urgency
 differs sharply by use:</p>
 <ul>

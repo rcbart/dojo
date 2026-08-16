@@ -217,7 +217,7 @@ localStorage        readable by any script; survives restarts. the worst.</div>
 <p>The rule underneath: <b>if your code can read it, injected script can read it.</b> No amount of
 obfuscation changes that, and no framework "secure storage" helper in a browser is meaningfully more
 private than the others.</p>
-<p>The honest ranking of outcomes: an HttpOnly cookie means XSS can <i>act</i> as the user while the page
+<p>The real ranking is of outcomes: an HttpOnly cookie means XSS can <i>act</i> as the user while the page
 is open; localStorage means XSS <i>walks away with</i> a credential usable from anywhere until it
 expires. Same vulnerability, very different blast radius — which is the entire argument for the BFF
 pattern.</p>
@@ -236,12 +236,12 @@ for at most N hours regardless of activity). Idle timeout alone means a stolen s
 the attacker never expires at all — the absolute lifetime is what bounds that, and it is the one people
 omit because it occasionally logs out an active user.</p>
 
-<h4>Storage, ranked honestly</h4>
+<h4>Storage, ranked</h4>
 <p>In descending order of safety: an <b>HttpOnly, Secure, SameSite</b> cookie that page script cannot read;
 a token held only in <b>JavaScript memory</b>, which is lost on refresh but never written anywhere an
 attacker can read later; <b>sessionStorage</b>; and <b>localStorage</b>, which persists and is readable by
 any script that runs on the page.</p>
-<p>The honest framing is about blast radius rather than prevention. With an HttpOnly cookie, an XSS bug lets
+<p>The useful framing is blast radius rather than prevention. With an HttpOnly cookie, an XSS bug lets
 an attacker act as the user <i>while the page is open</i>. With localStorage, the same bug lets them walk
 away with a credential usable from anywhere until it expires. Same vulnerability, very different aftermath —
 and neither is fixed by storage choice, which is why the BFF pattern, where the browser holds no token at
@@ -438,7 +438,7 @@ small.</li>
 continued access, since without it a refresh quietly mints a new access token.</li>
 <li><b>Check session validity on sensitive operations</b> rather than trusting a long-lived local
 session.</li>
-<li><b>Be honest in the UI.</b> "You have been signed out of this application" is accurate; "You have
+<li><b>Make the UI say only what actually happened.</b> "You have been signed out of this application" is accurate; "You have
 been signed out everywhere" usually is not, and a "sign out of all devices" control that shows what it
 actually ended is better than a claim you cannot keep.</li>
 </ul>
@@ -463,7 +463,7 @@ public class LogoutToken {
     }
 }`,
 tests:[{d:'the issuer must match',re:'iss\\s*!=\\s*null|expectedIss\\s*\\.\\s*equals|iss\\s*\\.\\s*equals'},{d:'the audience must match this client',re:'clientId|aud'},{d:'the logout event must be present',re:'hasLogoutEvent'},{d:'a nonce disqualifies the token',re:'!\\s*hasNonce|hasNonce\\s*==\\s*false'},{d:'replayed jtis are rejected',re:'contains\\s*\\(\\s*jti\\s*\\)'},{d:'a null jti is rejected',re:'jti\\s*!=\\s*null|jti\\s*==\\s*null'},{d:'sid is preferred over sub',re:'sid\\s*!=\\s*null|null\\s*!=\\s*sid'}],
-behavior:`valid("https://idp","https://idp","app-a","app-a",true,false) is true. It is false when the issuer or audience differ, when the logout event is absent, and crucially when hasNonce is true — the specification forbids a nonce precisely so that an ID token cannot be replayed to the logout endpoint to sign a user out, or worse. notReplayed(new HashSet<>(), "j1") is true; a jti already in the set, or a null jti, is false. sessionKey("sess-1","u-1") returns sess-1, since sid identifies the specific session; sessionKey(null,"u-1") returns u-1, which logs the user out of every session; sessionKey(null,null) returns null and the app cannot act.`,
+behavior:`valid("https://idp","https://idp","app-a","app-a",true,false) is true. It is false when the issuer or audience differ, when the logout event is absent, and above all when hasNonce is true — the specification forbids a nonce precisely so that an ID token cannot be replayed to the logout endpoint to sign a user out, or worse. notReplayed(new HashSet<>(), "j1") is true; a jti already in the set, or a null jti, is false. sessionKey("sess-1","u-1") returns sess-1, since sid identifies the specific session; sessionKey(null,"u-1") returns u-1, which logs the user out of every session; sessionKey(null,null) returns null and the app cannot act.`,
 hints:['Join the checks with &&, guarding the two string comparisons for null first.','<code>return jti != null &amp;&amp; seenJtis != null &amp;&amp; !seenJtis.contains(jti);</code>','A nested ternary is enough for sessionKey — prefer sid, fall back to sub.'],
 solution:`import java.util.*;
 

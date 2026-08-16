@@ -1,4 +1,4 @@
-STREAMS.push({icon:'🔷',title:'TypeScript: Types for JavaScript',blurb:'Catching mistakes before you run the code: what TypeScript is and is not, the type system from primitives to generics, structural typing, narrowing and why unknown beats any, typing an API boundary honestly, and adding types to an existing JavaScript project.',lessons:[
+STREAMS.push({icon:'🔷',title:'TypeScript: Types for JavaScript',blurb:'Catching mistakes before you run the code: what TypeScript is and is not, the type system from primitives to generics, structural typing, narrowing and why unknown beats any, typing an API boundary you can trust, and adding types to an existing JavaScript project.',lessons:[
 
 {id:'js50',title:'What TypeScript is, and what it is not',body:`
 <p><b>TypeScript is JavaScript plus type annotations, checked at compile time and then erased.</b> Every
@@ -220,7 +220,7 @@ tests:[{d:'compares required against actual',re:'requiredProps'},{d:'ignores ext
 behavior:`Seven cases execute and three of them define structural typing precisely. Extra properties must pass — that is the whole difference from nominal typing, and it is why a plain object can be handed to a function expecting an interface it never declared. Order must not matter. And an empty requirement is satisfied by anything, including nothing, which is why the check has to run over the required list rather than the actual one.`,
 hints:['Filter the REQUIRED list for anything the actual list lacks — not the other way round.','Extras never fail; only absences do.','An empty required list produces an empty missing list for free.']}]},
 
-{id:'js52',title:'Narrowing, unknown, and typing a boundary honestly',body:`
+{id:'js52',title:'Narrowing, unknown, and typing a boundary you can trust',body:`
 <p>Where TypeScript earns its keep is in forcing you to handle the case you would otherwise forget: the
 value that might be missing, or might be one of several shapes.</p>
 
@@ -271,13 +271,13 @@ if (typeof u === "object" && u !== null && "foo" in u) { ... }
 // unknown is any with the safety kept on. use it at every boundary, and
 // treat any as a deliberate, commented escape hatch - never a default.</div>
 
-<h4>Typing a boundary honestly</h4>
+<h4>Typing a boundary you can trust</h4>
 <p>This is where the erasure lesson comes back. <code>as User</code> is an <b>assertion</b>: you are
 telling the compiler to stop checking, and if you are wrong it will not find out.</p>
-<div class="codeSample" data-hl>// dishonest - a lie the compiler believes:
+<div class="codeSample" data-hl>// the assertion - a lie the compiler believes:
 const user = await res.json() as User;
 
-// honest - a runtime check that PRODUCES the type:
+// the alternative - a runtime check that PRODUCES the type:
 import { z } from "zod";
 const User = z.object({ id: z.number(), name: z.string() });
 type User = z.infer&lt;typeof User&gt;;          // the type comes FROM the schema

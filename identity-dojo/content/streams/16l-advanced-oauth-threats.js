@@ -417,7 +417,7 @@ authorization code lands on their server. The fix is not validation-by-blocklist
 <b>allow-list of exact redirect URIs</b>, and never reflecting a user-supplied URL into a redirect.</p>
 
 <p><b>2. Mix-up attack.</b> An app that supports several IdPs is tricked into sending the code from
-IdP&nbsp;A to IdP&nbsp;B's token endpoint — where B, being honest, has no idea it did not issue it, but
+IdP&nbsp;A to IdP&nbsp;B's token endpoint — where B, a legitimate IdP, has no idea it did not issue it, but
 an <i>attacker-controlled</i> IdP happily keeps it. Defence: track which IdP each authorization request
 went to, and check the <code>iss</code> returned in the response matches. This is why RFC 9207 added an
 explicit <code>iss</code> parameter to the authorization response.</p>
@@ -627,7 +627,7 @@ fact that an ecosystem can <i>require certification</i> rather than trust a vend
 <p>Directly, if you build in open banking (the UK and Brazilian regimes mandate it), open healthcare, or
 anywhere a regulator names it. Indirectly, and more usefully, as a checklist: if you ever need to argue
 that an OAuth deployment is as strong as it reasonably can be, FAPI is the list to measure against.</p>
-<p>And the honest caveat: FAPI hardens the <i>protocol</i>. It says nothing about whether your scopes
+<p>And the caveat that matters: FAPI hardens the <i>protocol</i>. It says nothing about whether your scopes
 model reality, whether the resource server checks record ownership, or whether your support tooling
 lets staff read any account. A fully certified deployment can still have an IDOR on its main endpoint.
 Protocol hardening and authorization correctness are different problems, and only one of them has a
@@ -771,7 +771,7 @@ token lifetime short enough to bound the gap, is still required.</li>
 rejecting? Both are defensible; not having chosen is not.</li>
 </ol>
 
-<h4>The honest assessment</h4>
+<h4>The trade, plainly</h4>
 <p>CAE narrows the revocation window from minutes to seconds, and for high-value sessions that is worth
 real effort. But notice what it costs: <b>the resource server becomes stateful</b>, which is precisely
 the property self-contained tokens were adopted to avoid. It is not a free win but a considered trade —
@@ -921,7 +921,7 @@ asks for broad scopes, and the consent screen is real, so nothing looks wrong.</
 <p>Worth being precise, because it is a common misreading. WebAuthn is phishing-resistant because the
 credential is bound to an origin, so it cannot be replayed at a fake site. In a cross-device attack there
 <i>is</i> no fake site — the user authenticates at the genuine origin, with the genuine authenticator, and
-the ceremony succeeds honestly. What was phished is the <b>authorization</b>, not the credential.</p>
+the ceremony succeeds exactly as designed. What was phished is the <b>authorization</b>, not the credential.</p>
 
 <h4>The defences, in order of effectiveness</h4>
 <ul>

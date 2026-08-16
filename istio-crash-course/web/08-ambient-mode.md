@@ -29,7 +29,7 @@ it.
 
 ## Why it exists
 
-Sidecars are powerful but cost a proxy's CPU/memory in **every** pod, add latency, and force a pod
+Sidecars deliver all of that but cost a proxy's CPU/memory in **every** pod, add latency, and force a pod
 restart on every Istio upgrade. Ambient:
 
 - **Cuts resource cost** — one ztunnel per node instead of one Envoy per pod.

@@ -43,7 +43,7 @@ curl -s localhost:9901/clusters | head
 
 ## Metrics (stats)
 
-Envoy tracks **counters**, **gauges**, and **histograms** for essentially everything. Names are
+Envoy tracks **counters**, **gauges**, and **histograms** for practically everything. Names are
 dotted and namespaced by the `stat_prefix` you set on the HCM and by cluster name. Send a couple
 of requests, then:
 

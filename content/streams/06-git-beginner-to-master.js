@@ -116,7 +116,7 @@ git log --stat                      # history + which files each commit touched
 git show                            # the full content of the latest commit
 git mv todo.txt tasks.txt           # rename WITH history (mv + stage in one step)
 git rm scratch.txt                  # delete AND stage the deletion</div>
-<p>The professional habits this unlocks:</p>
+<p>The professional habits this makes possible:</p>
 <ul>
 <li><b>Path-scoped staging</b> — <code>git add &lt;file&gt;</code> per file; <code>git add .</code> only when you've checked status first and truly mean "all of it".</li>
 <li><b>Hunk staging</b> — <code>git add -p notes.txt</code> walks each change block asking stage/skip: two unrelated edits in ONE file can become two clean commits.</li>
@@ -324,16 +324,16 @@ solution:`1. git restore notes.txt
 6. git reflog
 `,
 tests:[{d:'restore discards working-copy edits',re:'1\\.\\s*git\\s+restore\\s+notes\\.txt',flags:'i'},{d:'--staged unstages but keeps edits',re:'2\\.\\s*git\\s+restore\\s+--staged\\s+notes\\.txt',flags:'i'},{d:'pushed history undone with revert, never reset',re:'3\\.\\s*git\\s+revert\\s+abc123',flags:'i'},{d:'stash shelves dirty work',re:'4\\.\\s*git\\s+stash\\s*$',flags:'im'},{d:'stash pop restores and drops',re:'5\\.\\s*git\\s+stash\\s+pop',flags:'i'},{d:'reflog is the safety net',re:'6\\.\\s*git\\s+reflog',flags:'i'}],
-behavior:`1. notes.txt matches the last commit again; the edits are gone for real. 2. The change leaves the staging area but stays in the file — recomposition, not destruction. 3. A new commit "Revert ..." lands; the bad commit remains in history but its effect is gone — safe on shared branches. 4-5. stash/pop round-trips the entire dirty state. 6. reflog lists HEAD's journey with hashes — from there, any state is recoverable via switch -c.`,
+behavior:`1. notes.txt matches the last commit again; the edits are gone for real. 2. The change leaves the staging area but stays in the file — recomposition, not destruction. 3. A new commit "Revert ..." lands; the bad commit remains in history but its effect is gone — safe on shared branches. 4-5. stash/pop round-trips the entire dirty state. 6. reflog lists every position HEAD has held, with hashes — from there, any state is recoverable via switch -c.`,
 hints:['restore vs restore --staged: working copy vs staging area.','Pushed = shared = revert. Reset on a pushed branch rewrites history other people already have.','reflog is local and expires (default ~90 days) — a safety net, not an archive.']}},
 
 {id:'git6',title:'Advanced: revert, rebase & rewriting history',body:`
-<p>The advanced toolbox splits cleanly in two: commands that <b>move history forward</b> (safe anywhere) and commands that <b>rewrite history</b> (powerful, local-only). The golden rule that keeps teams sane: <b>never rewrite commits that others may already have</b>.</p>
+<p>The advanced toolbox splits cleanly in two: commands that <b>move history forward</b> (safe anywhere) and commands that <b>rewrite history</b> (sharp-edged, local-only). The golden rule that keeps teams sane: <b>never rewrite commits that others may already have</b>.</p>
 <ul>
 <li><b>git revert HASH</b> — the forward undo: a new commit containing the inverse change. Works on any branch, shared or not, because it only <i>adds</i> history.</li>
 <li><b>git reset</b> — moves your branch pointer backwards, three strengths: <code>--soft HEAD~1</code> (uncommit, keep changes staged — perfect for "forgot a file" or "wrong message"), <code>--mixed</code> (default: uncommit and unstage, changes kept in files), <code>--hard</code> (all gone — reflog is your only friend after this). Local branches only.</li>
 <li><b>git rebase main</b> — <i>replay</i> your branch's commits on top of the latest main, one by one, as if you had started today. Result: a straight line, no merge commit, clean review. Your commits get NEW hashes — that's the rewrite, and that's why it's for unpushed branches.</li>
-<li><b>git rebase -i HEAD~4</b> — interactive: an editor lists the last 4 commits and you direct the replay: <code>pick</code>, <code>reword</code> (fix a message), <code>squash</code>/<code>fixup</code> (fold "wip" and "typo" into one honest commit), <code>drop</code>, or reorder the lines. The standard tidy-up before opening a PR.</li>
+<li><b>git rebase -i HEAD~4</b> — interactive: an editor lists the last 4 commits and you direct the replay: <code>pick</code>, <code>reword</code> (fix a message), <code>squash</code>/<code>fixup</code> (fold "wip" and "typo" into one coherent commit), <code>drop</code>, or reorder the lines. The standard tidy-up before opening a PR.</li>
 <li><b>git cherry-pick HASH</b> — copy ONE commit from anywhere onto the current branch (the hotfix that must land on both main and the release branch).</li>
 <li><b>git bisect</b> — binary-search history for the commit that broke things: <code>start</code>, mark <code>bad</code>/<code>good</code>, answer git's checkouts until it names the culprit. Twenty commits ≈ 5 tests.</li>
 </ul>

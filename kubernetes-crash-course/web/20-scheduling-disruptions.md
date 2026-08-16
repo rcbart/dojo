@@ -65,7 +65,7 @@ metadata: { name: critical-service }
 value: 100000
 ```
 
-Reference it with `priorityClassName` in the pod spec. Two honest rules: define a *small* set
+Reference it with `priorityClassName` in the pod spec. Two rules that hold up in practice: define a *small* set
 (critical / normal / batch — three is plenty), because a proliferation of priorities is an
 un-debuggable pecking order; and give batch work a *low* priority explicitly, so the 2 a.m.
 report job is what dies when the API needs room — not the other way round. Combined with module
