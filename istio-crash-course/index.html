@@ -36,6 +36,12 @@
   .result .rs{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
   .result .rs mark{background:var(--teal-dim);color:#d7fff6;border-radius:3px;padding:0 2px}
   .noresult{padding:12px 20px;font-size:13px;color:var(--muted)}
+  .pathlinks{padding:14px 20px 4px;border-top:1px solid var(--line);margin-top:12px;
+    font-size:12px;color:var(--muted);line-height:1.9}
+  .pathlinks a{color:var(--muted)} .pathlinks a:hover{color:var(--teal)}
+  .pathlinks .pl-here{color:var(--teal);font-weight:700}
+  .pathlinks .pl-head{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:1px;
+    font-weight:800;color:var(--muted);margin-bottom:2px}
   .navgroup{font-size:11px;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);
     padding:14px 20px 6px;font-weight:700}
   .navitem{display:flex;align-items:center;gap:9px;padding:8px 20px;cursor:pointer;
@@ -127,6 +133,13 @@
     </div>
     <div id="results"></div>
     <nav id="nav"></nav>
+    <div class="pathlinks">
+      <span class="pl-head">The cloud-native path</span>
+      <a href="/fundamentals/">Fundamentals</a> · <a href="/docker/">Docker</a> · <a href="/kubernetes/">Kubernetes</a> · <a href="/envoy/">Envoy</a> · <span class="pl-here">Istio</span>
+      <span class="pl-head" style="margin-top:10px">Course</span>
+      <a href="https://github.com/rcbart/dojo/issues/new?labels=bug,istio&template=bug_report.yml" target="_blank" rel="noopener">Report an issue</a> ·
+      <a href="https://roniam.dev/">roniam.dev</a>
+    </div>
   </aside>
   <main id="main"><div id="content"></div></main>
 </div>

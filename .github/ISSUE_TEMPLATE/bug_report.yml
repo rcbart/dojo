@@ -1,0 +1,42 @@
+name: Bug report
+description: Something is broken, wrong, or misleading in a course or on the site
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: course
+    attributes:
+      label: Where did you find it?
+      options:
+        - roniam.dev (the site itself)
+        - Dev Dojo
+        - Identity Dojo
+        - JS Dojo
+        - Cloud-Native Fundamentals
+        - Docker crash course
+        - Kubernetes crash course
+        - Envoy crash course
+        - Istio crash course
+        - The blog
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Lesson / page
+      description: The lesson title, module number, or URL where you hit it
+      placeholder: "e.g. JS Dojo → The Browser → jsdom3, or /fundamentals/ module 4"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What's wrong?
+      description: What did you see, and what did you expect instead? Exact text helps.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Browser / device (only if it looks like a display or grading problem)
+      placeholder: "e.g. Safari 19 on macOS, exercise marked wrong despite matching the solution"

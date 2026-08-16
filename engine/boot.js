@@ -1,4 +1,7 @@
 /* ============================== BOOT ============================== */
+/* The shell ships Dev Dojo's static <title>; sibling courses correct it here
+   (and their build.js also swaps it at build time, so crawlers see it too). */
+if(typeof DOJO_HOME!=='undefined'&&DOJO_HOME.pageTitle)document.title=DOJO_HOME.pageTitle;
 mergeIdentity();
 /* attach auto-generated executable-grading specs (opt-in Java runner) by lesson id */
 (function(){ if(!window.GRADEJAVA)return; STREAMS.forEach(function(s){(s.lessons||[]).forEach(function(l){var exs=l.exs||(l.ex?[l.ex]:[]);exs.forEach(function(e,i){var k=exs.length>1?l.id+'#'+i:l.id; if(window.GRADEJAVA[k]&&!e.gradeJava)e.gradeJava=window.GRADEJAVA[k];});});}); })();

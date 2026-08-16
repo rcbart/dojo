@@ -17,6 +17,41 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const OUT = path.resolve(process.argv[2] || 'dist-site');
 
+// ---- comments (giscus: GitHub Discussions-backed) ----
+// Rendered on every published post page. Requires one-time setup on GitHub:
+//   1. repo Settings -> Features -> enable Discussions
+//   2. install the giscus app for rcbart/dojo (github.com/apps/giscus)
+//   3. create an Announcements-type category "Blog comments"
+//   4. open giscus.app, pick the repo + category, and paste the two IDs below
+// Until both IDs are filled in, no comments block is emitted (the build stays valid).
+const GISCUS = {
+  repo: 'rcbart/dojo',
+  repoId: '',       // looks like  R_kgDO...   (from giscus.app)
+  category: 'Blog comments',
+  categoryId: '',   // looks like  DIC_kwDO...  (from giscus.app)
+};
+const giscusBlock = () => (GISCUS.repoId && GISCUS.categoryId) ? `
+<section class="comments">
+  <h2 style="font-size:20px;margin:44px 0 4px">Comments</h2>
+  <p style="color:var(--muted);font-size:13.5px;margin:0 0 14px">Signed with your GitHub account — identity required, drive-by anonymity not offered.</p>
+  <script src="https://giscus.app/client.js"
+        data-repo="${GISCUS.repo}"
+        data-repo-id="${GISCUS.repoId}"
+        data-category="${GISCUS.category}"
+        data-category-id="${GISCUS.categoryId}"
+        data-mapping="pathname"
+        data-strict="1"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="top"
+        data-theme="light"
+        data-lang="en"
+        data-loading="lazy"
+        crossorigin="anonymous"
+        async>
+  </scr` + `ipt>
+</section>` : '';
+
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 function inline(s) {
@@ -123,7 +158,7 @@ const page = (title, desc, body, root) => `<!doctype html>
 </div></nav>
 <div class="wrap">
 ${body}
-<footer>© ${new Date().getFullYear()} Ron Bar-Tor · <a href="https://github.com/rcbart">GitHub</a> · <span id="mailme" style="cursor:pointer;font-weight:600;color:var(--deep2)">email me</span></footer>
+<footer>© ${new Date().getFullYear()} Ron Bar-Tor · <a href="https://github.com/rcbart">GitHub</a> · <span id="mailme" style="cursor:pointer;font-weight:600;color:var(--deep2)">email me</span> · <a href="https://github.com/rcbart/dojo/issues/new?template=bug_report.yml&labels=bug,blog">report an issue</a></footer>
 </div>
 <script>
 (function(){const p=['rc','ba','rt'],d=['gm','ail'];document.getElementById('mailme').addEventListener('click',()=>{location.href='mailto:'+p.join('')+'@'+d.join('')+'.com?subject='+encodeURIComponent('Hello from roniam.dev')});})();
@@ -157,7 +192,7 @@ fs.mkdirSync(path.join(OUT, 'blog'), { recursive: true });
 
 for (const p of posts) {
   const html = page(p.meta.title + ' · Ron Bar-Tor', p.meta.description || '',
-    `<h1>${esc(p.meta.title)}</h1><div class="pdate">${fmtDate(p.date)}</div>` + md(p.body), '/');
+    `<h1>${esc(p.meta.title)}</h1><div class="pdate">${fmtDate(p.date)}</div>` + md(p.body) + giscusBlock(), '/');
   fs.mkdirSync(path.join(OUT, 'blog', p.slug), { recursive: true });
   fs.writeFileSync(path.join(OUT, 'blog', p.slug, 'index.html'), html);
 }
