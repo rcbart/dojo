@@ -74,7 +74,7 @@ all drive **Envoy** as the thing on the wire. They differ mainly in their *contr
 brain — but the muscle carrying traffic is the same Envoy. There's a standard API, called **xDS**,
 that a control plane uses to program Envoy (you'll meet it in Module 07).
 
-That's why learning Envoy is such high-leverage: **understand this one proxy and you understand the
+That's why learning Envoy pays off so widely: **understand this one proxy and you understand the
 engine inside nearly every mesh and gateway.** A mesh, from Envoy's point of view, is just "lots of
 Envoys, each configured by a control plane instead of a static file."
 

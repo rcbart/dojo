@@ -24,7 +24,7 @@ Everything is an option on this one command. The ones you'll use daily:
 | `-v ...` | Mount a volume / bind mount (Module 4) |
 | `--rm` | Delete the container automatically when it exits |
 | `-it` | Interactive + TTY — for shells and interactive programs |
-| `--restart` | Restart policy (e.g. `unless-stopped`) — Module 9 |
+| `--restart` | Restart policy (e.g. `unless-stopped`) — Module 10 |
 
 ## Foreground vs detached
 

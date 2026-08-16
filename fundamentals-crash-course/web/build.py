@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a single self-contained interactive index.html for the Docker crash course."""
+"""Build a single self-contained interactive index.html for the Cloud-Native Fundamentals course."""
 import json, os, re, html
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # envoy-crash-course/
@@ -8,23 +8,12 @@ WEB = os.path.join(ROOT, "web")
 # (id, source_path, title, group)  — all pages live in web/
 def W(name): return os.path.join(WEB, name)
 PAGES = [
-    ("setup-local-docker",           W("setup-local-docker.md"),           "Setup — install & run Docker",       "Get started"),
-    ("primer-what-are-containers",   W("primer-what-are-containers.md"),   "Primer — What are containers?",      "Get started"),
-    ("primer-core-concepts",         W("primer-core-concepts.md"),         "Primer — Core concepts & glossary",  "Get started"),
-    ("00-what-is-docker",            W("00-what-is-docker.md"),            "0 · What Docker is",                 "Fundamentals"),
-    ("01-images-and-layers",         W("01-images-and-layers.md"),         "1 · Images & layers",                "Fundamentals"),
-    ("02-lab-run-manage-containers", W("02-lab-run-manage-containers.md"), "2 · Lab: run & manage containers",   "Fundamentals"),
-    ("03-dockerfiles",               W("03-dockerfiles.md"),               "3 · Building images (Dockerfiles)",  "Fundamentals"),
-    ("04-data-volumes",              W("04-data-volumes.md"),              "4 · Data: volumes & bind mounts",    "Fundamentals"),
-    ("05-networking",                W("05-networking.md"),                "5 · Networking",                     "Fundamentals"),
-    ("06-docker-compose",            W("06-docker-compose.md"),            "6 · Docker Compose",                 "Fundamentals"),
-    ("07-image-optimization-security",W("07-image-optimization-security.md"),"7 · Image optimization & security","Practitioner"),
-    ("08-buildkit-buildx-multiplatform",W("08-buildkit-buildx-multiplatform.md"),"8 · Advanced builds: buildx & multi-arch","Practitioner"),
-    ("09-registries-distribution",   W("09-registries-distribution.md"),   "9 · Registries & distribution",      "Practitioner"),
-    ("10-debugging-production",       W("10-debugging-production.md"),      "10 · Debugging & production",        "Practitioner"),
-    ("13-runtime-security-limits",    W("13-runtime-security-limits.md"),   "10b · Runtime security & limits",    "Practitioner"),
-    ("11-challenges-projects",        W("11-challenges-projects.md"),       "11 · Hands-on challenges & projects","Practitioner"),
-    ("12-next-steps-kubernetes",      W("12-next-steps-kubernetes.md"),     "12 · From Docker to Kubernetes",     "Practitioner"),
+    ("00-the-path-of-a-request",   W("00-the-path-of-a-request.md"),   "0 · The path of a request",        "The map"),
+    ("01-load-balancers",          W("01-load-balancers.md"),          "1 · Load balancers",               "The boxes"),
+    ("02-api-gateways",            W("02-api-gateways.md"),            "2 · API gateways",                 "The boxes"),
+    ("03-cdns",                    W("03-cdns.md"),                    "3 · CDNs",                         "The boxes"),
+    ("04-dns-and-tls",             W("04-dns-and-tls.md"),             "4 · DNS & TLS",                    "The boxes"),
+    ("05-queues-caches-async",     W("05-queues-caches-async.md"),     "5 · Queues, caches & async",       "The boxes"),
 ]
 
 def load_page(path):
@@ -59,7 +48,7 @@ TEMPLATE = r"""<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Docker Crash Course</title>
+<title>Cloud-Native Fundamentals</title>
 <style>
   :root{
     --bg:#0d1117; --panel:#141b23; --panel2:#1b2530; --ink:#e6edf3; --muted:#93a1b1;
@@ -171,8 +160,8 @@ TEMPLATE = r"""<!DOCTYPE html>
 <div id="app">
   <aside id="sidebar">
     <div class="brand">
-      <h1>Docker Crash Course</h1>
-      <div class="sub">From zero to production containers · interactive</div>
+      <h1>Cloud-Native Fundamentals</h1>
+      <div class="sub">The map before the machines · no installs needed</div>
     </div>
     <div class="progwrap">
       <div class="progbar"><div class="progfill" id="progfill"></div></div>
@@ -192,7 +181,7 @@ __RENDER_JS__
 </script>
 <script>
 const DATA = __DATA__;
-const KEY = "docker-course-progress-v1";
+const KEY = "cn-fundamentals-progress-v1";
 let done = {};
 try { done = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e){ done = {}; }
 let current = 0;

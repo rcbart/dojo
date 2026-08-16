@@ -148,4 +148,4 @@ would just remove it from Service traffic without restarting.
 
 ---
 
-**Next:** [7 — Security: RBAC, ServiceAccounts & NetworkPolicy →](./07-security-rbac-netpol.md)
+**Next:** [6b — Scheduling & disruptions →](./20-scheduling-disruptions.md)

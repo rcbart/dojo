@@ -111,4 +111,4 @@ Each follows the same method: get → describe/Events → logs → confirm cause
 
 ---
 
-**Next:** [9 — Packaging with Helm →](./09-helm.md)
+**Next:** [8b — Reading kubectl output (healthy vs broken) →](./18-reading-kubectl-output.md)

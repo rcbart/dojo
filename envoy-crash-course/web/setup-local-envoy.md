@@ -3,6 +3,13 @@
 *Do this once. In ~10 minutes you'll have Envoy running on your own machine and a request flowing
 through it. No prior setup assumed — every step spelled out for macOS, Windows, and Linux.*
 
+> **This course is hands-on, on your own machine.** The site you're reading gives you the lessons
+> and quizzes, but the real work happens in your own terminal — installing tools, running
+> containers, and breaking things you can then fix. This setup page gets your machine ready; do it
+> before the first lab.
+> The labs also use ready-made config files from the repo — grab them once with
+> `git clone https://github.com/rcbart/dojo.git && cd dojo/envoy-crash-course`.
+
 You don't install Envoy directly. You run it as a **Docker container**, which means you install one
 tool (Docker) and everything else — Envoy itself, the practice backend — is pulled automatically.
 
@@ -183,4 +190,4 @@ or run inside WSL.
 
 ---
 
-**Next:** [Primer — Service meshes in plain English →](./primer-service-mesh.md)
+**Next:** [Primer — What is a proxy? →](./primer-what-is-a-proxy.md)

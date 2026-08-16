@@ -1,4 +1,4 @@
-# 9 — Debugging & production practices
+# 10 — Debugging & production practices
 
 *Running containers well, and fixing them when they break. Concepts + a lab. ~25 min. Requires
 Docker.*
@@ -127,4 +127,4 @@ docker rm -f boom web
 
 ---
 
-**Next:** [10 — From Docker to Kubernetes →](./10-next-steps-kubernetes.md)
+**Next:** [10b — Runtime security & resource limits →](./13-runtime-security-limits.md)

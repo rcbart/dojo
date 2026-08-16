@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a single self-contained interactive index.html for the Envoy crash course."""
+"""Build a single self-contained interactive index.html for the Kubernetes crash course."""
 import json, os, re, html
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # envoy-crash-course/
@@ -9,16 +9,18 @@ WEB = os.path.join(ROOT, "web")
 def W(name): return os.path.join(WEB, name)
 PAGES = [
     ("setup-local-k8s",                  W("setup-local-k8s.md"),                  "Setup — a local cluster",             "Get started"),
-    ("primer-core-concepts",             W("primer-core-concepts.md"),             "Primer — Core concepts & glossary",   "Get started"),
     ("primer-why-kubernetes",            W("primer-why-kubernetes.md"),            "Primer — Why Kubernetes?",            "Get started"),
     ("primer-cluster-architecture",      W("primer-cluster-architecture.md"),      "Primer — The cluster at a glance",    "Get started"),
+    ("primer-core-concepts",             W("primer-core-concepts.md"),             "Primer — Core concepts & glossary",   "Get started"),
     ("00-what-is-kubernetes",            W("00-what-is-kubernetes.md"),            "0 · What Kubernetes is",              "Fundamentals"),
     ("01-pods-and-kubectl",              W("01-pods-and-kubectl.md"),              "1 · Pods & kubectl",                  "Fundamentals"),
     ("02-deployments-replicasets",       W("02-deployments-replicasets.md"),       "2 · Deployments & ReplicaSets",       "Fundamentals"),
+    ("19-workloads-beyond-deployments",  W("19-workloads-beyond-deployments.md"),  "2b · DaemonSets, Jobs & CronJobs",    "Fundamentals"),
     ("03-services-networking",           W("03-services-networking.md"),           "3 · Services & networking",           "Fundamentals"),
     ("04-configmaps-secrets",            W("04-configmaps-secrets.md"),            "4 · ConfigMaps & Secrets",            "Fundamentals"),
     ("05-storage-volumes-statefulsets",  W("05-storage-volumes-statefulsets.md"),  "5 · Storage & StatefulSets",          "Fundamentals"),
     ("06-health-resources",              W("06-health-resources.md"),              "6 · Health checks & resources",       "Production & security"),
+    ("20-scheduling-disruptions",        W("20-scheduling-disruptions.md"),        "6b · Scheduling & disruptions",       "Production & security"),
     ("07-security-rbac-netpol",          W("07-security-rbac-netpol.md"),          "7 · Security: RBAC & NetworkPolicy",  "Production & security"),
     ("08-observability-troubleshooting", W("08-observability-troubleshooting.md"), "8 · Observability & troubleshooting", "Production & security"),
     ("18-reading-kubectl-output",        W("18-reading-kubectl-output.md"),        "8b · Reading kubectl output",         "Production & security"),
@@ -325,7 +327,8 @@ function renderQuiz(pid){
           if (xi === q.answer) x.classList.add("correct");
           if (xi === oi && !ok) x.classList.add("wrong");
         });
-        why.textContent = (ok ? "✓ Correct. " : "✗ Not quite. ") + q.why;
+        why.textContent = ok ? ("✓ Correct. " + q.why)
+          : ("✗ Not quite. " + ((q.whyWrong && q.whyWrong[oi]) ? q.whyWrong[oi] + " " : "") + q.why);
         why.className = "why show " + (ok ? "ok":"no");
         maybeComplete();
       };

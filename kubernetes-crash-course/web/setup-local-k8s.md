@@ -4,6 +4,11 @@
 `kubectl` talking to it, Helm installed, and your first app deployed. Every step spelled out.
 Assumes you finished the Docker course (or know Docker basics).*
 
+> **This course is hands-on, on your own machine.** The site you're reading gives you the lessons
+> and quizzes, but the real work happens in your own terminal — installing tools, running
+> containers, and breaking things you can then fix. This setup page gets your machine ready; do it
+> before the first lab.
+
 Kubernetes normally runs across many servers, but you can run a full cluster locally inside Docker
 with **kind** (Kubernetes-IN-Docker) — free, fast, and disposable. You'll install four tools.
 

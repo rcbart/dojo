@@ -3,6 +3,11 @@
 *Do this once. In ~10 minutes you'll have Docker installed and a real container running. Every step
 spelled out for macOS, Windows, and Linux. No prior experience assumed.*
 
+> **This course is hands-on, on your own machine.** The site you're reading gives you the lessons
+> and quizzes, but the real work happens in your own terminal — installing tools, running
+> containers, and breaking things you can then fix. This setup page gets your machine ready; do it
+> before the first lab.
+
 ---
 
 ## Step 1 — Install Docker

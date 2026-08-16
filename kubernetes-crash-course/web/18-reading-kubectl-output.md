@@ -272,4 +272,4 @@ Once you can glance at a column and know "that's wrong," you debug in seconds in
 
 ---
 
-**Next:** [Back to the course index](./00-what-is-kubernetes.md)
+**Next:** [9 — Packaging with Helm →](./09-helm.md)

@@ -2,7 +2,7 @@
 
 *Concepts + a TLS lab. You'll make Envoy speak HTTPS. ~20 min. Requires Docker + `openssl`.*
 
-Lab files: [`labs/03-tls/`](./labs/03-tls/).
+Lab files: [`labs/03-tls/`](../labs/03-tls/).
 
 ---
 
@@ -88,7 +88,7 @@ PKI, or — in a mesh — the mesh's own CA).
 ### 2. Read the TLS bit of the config
 
 The only new thing vs Lab 02 is the **`transport_socket`** on the filter chain
-([`envoy.yaml`](./labs/03-tls/envoy.yaml)):
+([`envoy.yaml`](../labs/03-tls/envoy.yaml)):
 
 ```yaml
 filter_chains:

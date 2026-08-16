@@ -134,4 +134,4 @@ kubectl apply -f samples/bookinfo/networking/virtual-service-all-v1.yaml
 
 ---
 
-**Next:** [6 — Security: mTLS & authorization →](./06-security-mtls-authz.md)
+**Next:** [5b — Egress & ServiceEntry →](./11-egress-serviceentry.md)

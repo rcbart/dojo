@@ -114,4 +114,4 @@ module is fuzzy. Every concept here appears, in context, in the modules that fol
 
 ---
 
-**Next:** [Primer — Why Kubernetes? →](./primer-why-kubernetes.md)
+**Next:** [0 — What Kubernetes is →](./00-what-is-kubernetes.md)

@@ -1,4 +1,4 @@
-# 10 — From Docker to Kubernetes
+# 12 — From Docker to Kubernetes
 
 *The bridge module. What you've mastered, what Docker alone can't do, and exactly how each concept
 maps into Kubernetes. Concept-only. ~12 min.*

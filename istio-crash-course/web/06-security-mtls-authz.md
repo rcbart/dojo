@@ -162,4 +162,4 @@ kubectl delete peerauthentication default -n default    # back to PERMISSIVE def
 
 ---
 
-**Next:** [7 — Observability: Kiali & telemetry →](./07-observability-kiali-telemetry.md)
+**Next:** [6b — Request authentication: JWTs at the mesh →](./12-request-auth-jwt.md)

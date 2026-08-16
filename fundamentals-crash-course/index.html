@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cloud-Native Fundamentals</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#141b23; --panel2:#1b2530; --ink:#e6edf3; --muted:#93a1b1;
+    --teal:#2dd4bf; --teal-dim:#155e59; --line:#26313d; --code:#0b1017;
+    --good:#22c55e; --good-bg:#0e2a1a; --bad:#ef4444; --bad-bg:#2a1414; --accent:#38bdf8;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--teal);text-decoration:none} a:hover{text-decoration:underline}
+  #app{display:flex;min-height:100vh}
+  /* sidebar */
+  #sidebar{width:290px;flex:0 0 290px;background:var(--panel);border-right:1px solid var(--line);
+    position:sticky;top:0;height:100vh;overflow-y:auto;padding:20px 0}
+  .brand{padding:0 20px 14px;border-bottom:1px solid var(--line);margin-bottom:10px}
+  .brand h1{font-size:17px;margin:0;color:#fff;letter-spacing:.2px}
+  .brand .sub{font-size:12px;color:var(--muted);margin-top:3px}
+  .progwrap{padding:12px 20px}
+  .progbar{height:7px;background:var(--panel2);border-radius:6px;overflow:hidden}
+  .progfill{height:100%;width:0;background:linear-gradient(90deg,var(--teal-dim),var(--teal));transition:width .4s}
+  .progtxt{font-size:11px;color:var(--muted);margin-top:6px}
+  .searchwrap{padding:6px 20px 4px}
+  #search{width:100%;background:var(--code);border:1px solid var(--line);color:var(--ink);
+    border-radius:8px;padding:9px 11px;font-size:13.5px;outline:none}
+  #search:focus{border-color:var(--teal)}
+  .searchinfo{font-size:11px;color:var(--muted);padding:4px 20px 0}
+  .result{padding:9px 20px;cursor:pointer;border-left:3px solid transparent}
+  .result:hover{background:var(--panel2);border-left-color:var(--teal)}
+  .result .rt{font-size:13.5px;color:#fff;font-weight:600}
+  .result .rs{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
+  .result .rs mark{background:var(--teal-dim);color:#d7fff6;border-radius:3px;padding:0 2px}
+  .noresult{padding:12px 20px;font-size:13px;color:var(--muted)}
+  .navgroup{font-size:11px;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);
+    padding:14px 20px 6px;font-weight:700}
+  .navitem{display:flex;align-items:center;gap:9px;padding:8px 20px;cursor:pointer;
+    font-size:14px;color:var(--ink);border-left:3px solid transparent}
+  .navitem:hover{background:var(--panel2)}
+  .navitem.active{background:var(--panel2);border-left-color:var(--teal);color:#fff}
+  .navitem .dot{width:16px;height:16px;flex:0 0 16px;border-radius:50%;border:2px solid var(--line);
+    display:inline-flex;align-items:center;justify-content:center;font-size:10px}
+  .navitem.done .dot{background:var(--teal);border-color:var(--teal);color:#04211f}
+  .navitem .t{flex:1}
+  /* main */
+  #main{flex:1;min-width:0;display:flex;justify-content:center;padding:38px 40px 90px}
+  #content{max-width:820px;width:100%}
+  #content h2{font-size:26px;margin:.2em 0 .5em;color:#fff}
+  #content h3{font-size:19px;margin:1.5em 0 .4em;color:var(--teal)}
+  #content h4{font-size:16px;margin:1.2em 0 .3em;color:var(--ink)}
+  #content p{margin:.7em 0}
+  #content p.dd{margin:.2em 0 .8em 1.2em;color:var(--muted)}
+  #content ul,#content ol{margin:.6em 0;padding-left:1.4em}
+  #content li{margin:.3em 0}
+  #content strong{color:#fff}
+  #content code{background:var(--code);border:1px solid var(--line);border-radius:5px;
+    padding:.08em .38em;font:13.5px/1.4 "SF Mono",Menlo,Consolas,monospace;color:#8be9c9}
+  #content hr{border:0;border-top:1px solid var(--line);margin:1.8em 0}
+  blockquote{margin:1em 0;padding:.5em 1em;background:var(--panel);border-left:3px solid var(--accent);
+    border-radius:0 6px 6px 0;color:var(--ink)}
+  blockquote p{margin:.3em 0}
+  pre.code{position:relative;background:var(--code);border:1px solid var(--line);border-radius:9px;
+    padding:14px 16px;overflow-x:auto;margin:1em 0}
+  pre.code code{background:none;border:0;padding:0;color:#d7e2ea;
+    font:13px/1.55 "SF Mono",Menlo,Consolas,monospace;white-space:pre}
+  pre.code .copy{position:absolute;top:8px;right:8px;background:var(--panel2);color:var(--muted);
+    border:1px solid var(--line);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+  pre.code .copy:hover{color:var(--teal);border-color:var(--teal)}
+  .tablewrap{overflow-x:auto;margin:1em 0}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#fff}
+  tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+  .pagehdr{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:2px}
+  /* quiz */
+  .quiz{margin:34px 0 10px;padding:22px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+  .quiz h3{margin-top:0;color:#fff}
+  .quiz .qmeta{font-size:13px;color:var(--muted);margin-bottom:14px}
+  .qcard{margin:16px 0;padding:16px;background:var(--panel2);border:1px solid var(--line);border-radius:10px}
+  .qtext{font-weight:600;margin-bottom:12px}
+  .opt{display:block;width:100%;text-align:left;background:var(--code);border:1px solid var(--line);
+    color:var(--ink);border-radius:8px;padding:11px 13px;margin:8px 0;cursor:pointer;font-size:14.5px;
+    transition:border-color .15s,background .15s}
+  .opt:hover{border-color:var(--teal)}
+  .opt.correct{border-color:var(--good);background:var(--good-bg)}
+  .opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+  .opt.disabled{cursor:default;opacity:.85}
+  .why{margin-top:10px;font-size:13.5px;color:var(--ink);background:var(--code);
+    border-left:3px solid var(--teal);border-radius:0 6px 6px 0;padding:9px 12px;display:none}
+  .why.show{display:block}
+  .why.ok{border-left-color:var(--good)} .why.no{border-left-color:var(--bad)}
+  .qscore{margin-top:16px;font-size:14px;color:var(--muted)}
+  .navbtns{display:flex;justify-content:space-between;margin-top:40px;gap:12px}
+  .navbtns button{background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+    border-radius:9px;padding:11px 18px;font-size:14px;cursor:pointer}
+  .navbtns button:hover:not(:disabled){border-color:var(--teal);color:#fff}
+  .navbtns button:disabled{opacity:.35;cursor:default}
+  .navbtns .next{background:var(--teal-dim);border-color:var(--teal)}
+  .mobtog{display:none}
+  @media(max-width:860px){
+    #sidebar{position:fixed;left:0;top:0;z-index:30;transform:translateX(-100%);transition:transform .25s}
+    #sidebar.open{transform:none}
+    #main{padding:64px 18px 80px}
+    .mobtog{display:inline-flex;position:fixed;top:12px;left:12px;z-index:40;background:var(--panel);
+      border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 12px;cursor:pointer}
+  }
+</style>
+</head>
+<body>
+<button class="mobtog" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ Menu</button>
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand">
+      <h1>Cloud-Native Fundamentals</h1>
+      <div class="sub">The map before the machines · no installs needed</div>
+    </div>
+    <div class="progwrap">
+      <div class="progbar"><div class="progfill" id="progfill"></div></div>
+      <div class="progtxt" id="progtxt">0% complete</div>
+    </div>
+    <div class="searchwrap">
+      <input id="search" type="search" placeholder="Search the course…" autocomplete="off">
+    </div>
+    <div id="results"></div>
+    <nav id="nav"></nav>
+  </aside>
+  <main id="main"><div id="content"></div></main>
+</div>
+
+<script>
+/* Minimal, dependency-free Markdown -> HTML renderer.
+   Supports the subset used by the course: headings, bold, inline code, links,
+   fenced code blocks, tables, blockquotes, ordered/unordered lists, hr,
+   definition-style ": " lines, and paragraphs. Works in Node and the browser. */
+(function (global) {
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function inline(text) {
+    // protect inline code spans
+    var codes = [];
+    text = text.replace(/`([^`]+)`/g, function (_, c) {
+      codes.push("<code>" + escapeHtml(c) + "</code>");
+      return " " + (codes.length - 1) + " ";
+    });
+    text = escapeHtml(text);
+    // bold (non-greedy so it can span inner single-* italics)
+    text = text.replace(/\*\*([\s\S]+?)\*\*/g, "<strong>$1</strong>");
+    // italics (remaining single *)
+    text = text.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+    // links [text](url)
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (_, t, u) {
+      var safe = u.replace(/"/g, "%22");
+      var ext = /^https?:\/\//.test(u) ? ' target="_blank" rel="noopener"' : "";
+      return '<a href="' + safe + '"' + ext + ">" + t + "</a>";
+    });
+    // restore code spans
+    text = text.replace(/ (\d+) /g, function (_, i) {
+      return codes[+i];
+    });
+    return text;
+  }
+
+  function renderTable(rows) {
+    // rows: array of raw '| a | b |' lines (header, sep, ...body)
+    function cells(line) {
+      var t = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+      return t.split("|").map(function (c) { return c.trim(); });
+    }
+    var header = cells(rows[0]);
+    var body = rows.slice(2).map(cells);
+    var html = '<div class="tablewrap"><table><thead><tr>';
+    header.forEach(function (h) { html += "<th>" + inline(h) + "</th>"; });
+    html += "</tr></thead><tbody>";
+    body.forEach(function (r) {
+      html += "<tr>";
+      r.forEach(function (c) { html += "<td>" + inline(c) + "</td>"; });
+      html += "</tr>";
+    });
+    html += "</tbody></table></div>";
+    return html;
+  }
+
+  function mdToHtml(md) {
+    md = md.replace(/\r\n/g, "\n");
+    var lines = md.split("\n");
+    var out = [];
+    var i = 0;
+
+    function isTableSep(line) {
+      return /^\s*\|?[\s:-]*-[\s:|-]*\|?\s*$/.test(line) && line.indexOf("-") !== -1;
+    }
+
+    while (i < lines.length) {
+      var line = lines[i];
+
+      // fenced code block
+      var fence = line.match(/^```(\w*)\s*$/);
+      if (fence) {
+        var lang = fence[1] || "";
+        var buf = [];
+        i++;
+        while (i < lines.length && !/^```\s*$/.test(lines[i])) { buf.push(lines[i]); i++; }
+        i++; // skip closing fence
+        out.push('<pre class="code" data-lang="' + lang + '"><button class="copy" type="button">Copy</button><code>' +
+          escapeHtml(buf.join("\n")) + "</code></pre>");
+        continue;
+      }
+
+      // horizontal rule
+      if (/^\s*---\s*$/.test(line)) { out.push("<hr>"); i++; continue; }
+
+      // heading
+      var h = line.match(/^(#{1,6})\s+(.*)$/);
+      if (h) {
+        var lvl = h[1].length;
+        out.push("<h" + lvl + ">" + inline(h[2].trim()) + "</h" + lvl + ">");
+        i++;
+        continue;
+      }
+
+      // blockquote (may span lines)
+      if (/^\s*>\s?/.test(line)) {
+        var q = [];
+        while (i < lines.length && /^\s*>\s?/.test(lines[i])) {
+          q.push(lines[i].replace(/^\s*>\s?/, ""));
+          i++;
+        }
+        out.push('<blockquote>' + mdToHtml(q.join("\n")) + "</blockquote>");
+        continue;
+      }
+
+      // table
+      if (line.indexOf("|") !== -1 && i + 1 < lines.length && isTableSep(lines[i + 1])) {
+        var trows = [];
+        while (i < lines.length && lines[i].indexOf("|") !== -1 && lines[i].trim() !== "") {
+          trows.push(lines[i]);
+          i++;
+        }
+        out.push(renderTable(trows));
+        continue;
+      }
+
+      // unordered list
+      if (/^\s*[-*]\s+/.test(line)) {
+        var items = [];
+        while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
+          var item = lines[i].replace(/^\s*[-*]\s+/, "");
+          i++;
+          // continuation lines (indented, not a new list item / block)
+          while (i < lines.length && /^\s{2,}\S/.test(lines[i]) && !/^\s*[-*]\s+/.test(lines[i]) && lines[i].trim() !== "") {
+            item += " " + lines[i].trim();
+            i++;
+          }
+          items.push("<li>" + inline(item) + "</li>");
+        }
+        out.push("<ul>" + items.join("") + "</ul>");
+        continue;
+      }
+
+      // ordered list
+      if (/^\s*\d+\.\s+/.test(line)) {
+        var oitems = [];
+        while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) {
+          var oitem = lines[i].replace(/^\s*\d+\.\s+/, "");
+          i++;
+          while (i < lines.length && /^\s{2,}\S/.test(lines[i]) && !/^\s*\d+\.\s+/.test(lines[i]) && lines[i].trim() !== "") {
+            oitem += " " + lines[i].trim();
+            i++;
+          }
+          oitems.push("<li>" + inline(oitem) + "</li>");
+        }
+        out.push("<ol>" + oitems.join("") + "</ol>");
+        continue;
+      }
+
+      // definition-style ": " line -> indented note paragraph
+      if (/^:\s+/.test(line)) {
+        out.push('<p class="dd">' + inline(line.replace(/^:\s+/, "")) + "</p>");
+        i++;
+        continue;
+      }
+
+      // blank line
+      if (line.trim() === "") { i++; continue; }
+
+      // paragraph (gather until blank / block start)
+      var para = [line];
+      i++;
+      while (i < lines.length && lines[i].trim() !== "" &&
+             !/^(#{1,6})\s/.test(lines[i]) &&
+             !/^```/.test(lines[i]) &&
+             !/^\s*>\s?/.test(lines[i]) &&
+             !/^\s*[-*]\s+/.test(lines[i]) &&
+             !/^\s*\d+\.\s+/.test(lines[i]) &&
+             !/^:\s+/.test(lines[i]) &&
+             !/^\s*---\s*$/.test(lines[i]) &&
+             !(lines[i].indexOf("|") !== -1 && i + 1 < lines.length && isTableSep(lines[i + 1]))) {
+        para.push(lines[i]);
+        i++;
+      }
+      out.push("<p>" + inline(para.join(" ")) + "</p>");
+    }
+
+    return out.join("\n");
+  }
+
+  if (typeof module !== "undefined" && module.exports) module.exports = mdToHtml;
+  else global.mdToHtml = mdToHtml;
+})(typeof window !== "undefined" ? window : this);
+
+</script>
+<script>
+const DATA = {"pages": [{"id": "00-the-path-of-a-request", "title": "0 · The path of a request", "group": "The map", "md": "*No installs, no labs — this whole course is the mental model the other four courses assume. ~10 min read.*\n\n---\n\nType a URL, press Enter, and your request crosses half a dozen pieces of infrastructure before any\ncode you wrote ever runs. Every one of those pieces exists to solve a real problem, and every one of\nthem is a thing you'll meet again in the Docker, Kubernetes, Envoy, and Istio courses. This module\ndraws the whole map once, so each later module can zoom into one box without you losing the plot.\n\n## The map\n\n```\n you (browser / app)\n   │\n   ▼\n DNS            \"where IS api.example.com?\"        → an IP address\n   │\n   ▼\n CDN            the copy shop at the edge          (static content, cached responses)\n   │\n   ▼\n Load balancer  the traffic cop                    (spreads requests across machines)\n   │\n   ▼\n API gateway    the front desk                     (auth, rate limits, routing)\n   │\n   ▼\n your services  the actual work                    (each behind its own internal LB,\n                                                    talking to queues, caches, databases)\n```\n\nNot every system has every box, and some boxes collapse into one product — but the *jobs* are\nalways there, and knowing which job lives where is what lets you debug \"the site is down\" in\nminutes instead of hours.\n\n## Each box, in one honest paragraph\n\n**DNS** answers exactly one question: what address should I talk to for this name? It's a\ndistributed phone book with aggressive caching. Because it's the *first* step, it's also a place\nto do crude but powerful routing — send Europeans to the Frankfurt region, fail over to the backup\nsite — all before a single packet reaches your infrastructure.\n\n**A CDN** (content delivery network) is thousands of small caches placed physically near your\nusers. If the answer to a request hasn't changed — an image, a script, yesterday's blog post — the\nCDN answers from a server 20 ms away instead of your origin 200 ms away, and your servers never\nsee the request at all. The fastest and cheapest request is the one that never arrives.\n\n**A load balancer** takes a stream of incoming requests and spreads it across many identical\nservers, checking their health and skipping the dead ones. It's the piece that turns \"a server\"\ninto \"a fleet\", and it's what makes deploys, crashes, and scaling invisible to users.\n\n**An API gateway** is the single front door for your APIs. It checks who you are, enforces how\noften you may call, routes each path to the right backend service, and gives the outside world one\nstable address while the services behind it split, merge, and move. It is a *policy* layer — the\ncourse module on it is mostly about what it should *not* do.\n\n**Your services** — the containers, pods, and meshes of the other four courses — finally do the\nwork. Inside that boundary the same patterns repeat at smaller scale: internal load balancers in\nfront of each service, internal gateways between departments, caches and queues between services.\n\n## Two directions of traffic\n\nTraffic from the outside world into your system is called **north–south**; traffic between your\nown services is **east–west**. The distinction matters because the tools differ: the CDN, the edge\nload balancer, and the external API gateway handle north–south; service meshes (Istio) and\ninternal load balancing handle east–west. When someone says \"the gateway\", asking *which\ndirection* is the fastest way to know what they mean.\n\n## Control plane vs data plane\n\nOne more pair of words the whole cloud-native world leans on. The **data plane** is whatever\ntouches each request as it flows — proxies, load balancers, caches. The **control plane** is\nwhatever *configures* the data plane — the thing you talk to when you change a route or add a\nbackend. DNS has resolvers and registrars; Envoy has proxies and xDS servers; Kubernetes has\nkubelets and an API server. Same split, every time. When requests still flow but you can't change\nanything, the control plane is down; when nothing flows, look at the data plane.\n\n## How to use this course\n\nEach of the next modules takes one box and answers the same four questions: what problem does it\nsolve, how does it actually work, what should it do — and, just as important, what should it *not*\ndo. There are no labs here; the labs live in the four hands-on courses this one feeds into."}, {"id": "01-load-balancers", "title": "1 · Load balancers", "group": "The boxes", "md": "*The traffic cop: what it balances, how it decides, and why health checks are the real feature. ~12 min read.*\n\n---\n\nOne server can only do so much, and it can crash. The moment you run two servers, a new question\nappears: **who decides which request goes to which server?** That decision-maker is the load\nbalancer, and it's quietly one of the most important components you'll ever run — because it's the\npiece that makes failure invisible.\n\n## The job description\n\nA load balancer (LB) sits in front of a group of servers and does three things:\n\n1. **Spreads requests** across the servers so no single one drowns.\n2. **Health-checks** the servers and stops sending traffic to the ones that fail.\n3. **Hides the fleet** behind one stable address, so clients neither know nor care how many\n   servers exist, which just crashed, or which are mid-deploy.\n\nNumber 2 is the one that earns its keep. Balancing a healthy fleet is easy; noticing at 3 a.m.\nthat server four is returning garbage and quietly removing it — *that's* the feature.\n\n## L4 vs L7 — what the balancer can see\n\nThe classic split (the Envoy course goes deep here):\n\n- An **L4 load balancer** works at the connection level. It sees \"TCP connection from this IP to\n  that port\" and forwards bytes. It cannot read URLs or headers — but it's extremely fast, protocol\n  agnostic, and hard to break.\n- An **L7 load balancer** speaks the application protocol (usually HTTP). It sees the method, the\n  path, the headers — so it can route `/api/` differently from `/images/`, retry a failed GET,\n  or send 5% of traffic to a canary build.\n\nThe rule of thumb: **L4 when you just need to spread connections; L7 when routing decisions depend\non what's *inside* the request.** Most real systems have both: an L4 balancer at the very edge,\nL7 balancers (often Envoy) behind it.\n\n## The algorithms, honestly\n\nPeople expect this list to matter more than it does:\n\n| Algorithm | What it does | When it matters |\n|---|---|---|\n| **Round robin** | Next server, in order | The default; fine almost always |\n| **Least connections** | Server with fewest open connections | Long-lived or uneven requests |\n| **Weighted** | Some servers get more traffic | Mixed hardware; canary releases |\n| **Hashing / sticky** | Same client → same server | Sessions or caches on the server |\n\nThe honest advice: round robin or least-connections covers nearly everything, and **sticky\nsessions are usually a smell** — they mean a server holds state that should live in a shared\nstore, and they turn one server's death into some users' logout. The cloud-native courses keep\npushing state *out* of servers precisely so the balancer can treat them as interchangeable.\n\n## Health checks — the part worth configuring carefully\n\nA health check is a question the LB asks each server on repeat: *are you OK?* Three grades of\nhonesty:\n\n- **TCP check** — \"does the port accept a connection?\" Cheap, and catches only total death.\n- **HTTP check** — \"does `GET /healthz` return 200?\" Catches a hung or crashing app.\n- **Deep check** — the `/healthz` handler verifies its own dependencies (database reachable,\n  cache warm). Powerful and dangerous: if every server's check fails because the *database*\n  blinked, the LB removes all of them and turns a wobble into an outage. Check what the server\n  itself controls; report dependencies as separate signals.\n\nKubernetes readiness probes (Kubernetes course, module 6) are exactly this idea, one layer down.\n\n## Global vs regional\n\nEverything above balances within one place. Balancing *across* places uses different machinery:\n\n- **DNS-based** — resolve `api.example.com` to Frankfurt for Europeans and Virginia for Americans;\n  fail the whole name over when a region dies. Coarse (DNS caching makes changes slow to\n  propagate) but universal.\n- **Anycast** — advertise the *same* IP address from many locations and let internet routing\n  deliver each user to the nearest one. This is how CDNs and big public DNS resolvers work.\n\nA global request often passes **two or three balancers**: DNS/anycast chooses the region, an L4\nbalancer at the region's edge spreads connections, an L7 balancer inside routes to services. Each\nlayer only has the one job.\n\n## What a load balancer should NOT do\n\nThe LB is a fast, dumb, reliable traffic cop — and its value comes from staying that way:\n\n- **No business logic.** The moment routing rules encode \"premium customers go to the fast\n  cluster\", you've hidden product behavior in infrastructure config nobody reviews.\n- **No request transformation** beyond headers it owns (adding `X-Forwarded-For` is fine;\n  rewriting response bodies is not — that's an application's or gateway's job).\n- **Not a substitute for capacity.** A balancer spreads load; it doesn't create it. If every\n  server is at 100%, the balancer just distributes the suffering evenly.\n\nIf you find yourself wanting the balancer to be smarter, what you usually want is the next module's\ncomponent — the API gateway — or the application itself."}, {"id": "02-api-gateways", "title": "2 · API gateways", "group": "The boxes", "md": "*The front desk: what belongs at the front door, what absolutely doesn't, and the internal vs external split. ~12 min read.*\n\n---\n\nOnce a system is more than one service, the outside world has a problem: *which* service do I talk\nto, and does every one of them really need its own authentication, its own rate limiting, its own\nTLS setup? An **API gateway** is the answer: one front door for all your APIs, where the\ncross-cutting concerns live exactly once.\n\n## What an API gateway is\n\nMechanically, a gateway is an L7 reverse proxy — the same species as the load balancer from the\nlast module and the Envoy proxy from its own course. What makes it a *gateway* is the job it's\ngiven: it is the **policy edge** of your API. Clients see one stable host; behind it, requests fan\nout to whatever services currently implement each path.\n\n```\n            api.example.com\n                  │\n           ┌──── gateway ────┐        authn, rate limits, routing, TLS\n           ▼        ▼        ▼\n        orders   billing   search      each service, free to change\n```\n\n## What a gateway SHOULD do\n\nEach of these is a thing every service would otherwise have to implement, identically, forever:\n\n- **Authentication at the edge.** Validate the token (OAuth2/OIDC/JWT — Identity Dojo territory)\n  once, reject garbage before it touches a backend, and pass verified identity inward as headers\n  or a signed token. Services still *authorize* (\"may this user delete that order?\") — but they\n  shouldn't each be parsing tokens.\n- **Rate limiting & quotas.** \"1,000 requests/hour per API key\" is meaningless if every service\n  counts separately. The front door is the only place a global count can live.\n- **Routing & API versioning.** `/v2/orders` → the new orders service; `/v1/orders` → the old one\n  until it dies. The public URL space stays stable while the service topology churns.\n- **TLS termination** for north–south traffic, with certificates managed in one place.\n- **Observability at the boundary.** One access log, one latency histogram, one request-ID stamp\n  for every API call you serve — the baseline every debugging session starts from.\n- **Basic request hygiene.** Size limits, timeout enforcement, rejecting obviously malformed\n  requests — the cheap protections, applied uniformly.\n\n## What a gateway should NOT do\n\nThis list is why gateway projects fail. The gateway is shared infrastructure on the hot path of\n*every* request; whatever you put in it, you've put in front of everything you ship:\n\n- **No business logic.** The moment the gateway knows that \"gold-tier customers skip the fraud\n  check\", product behavior lives in a config file owned by the infrastructure team, deployed on\n  its own schedule, reviewed by nobody who owns the feature. This is the #1 failure mode, and it\n  has a name from history: the ESB — the enterprise service bus that slowly ate the business\n  logic of a generation of architectures and became the thing nobody could change.\n- **No response aggregation / orchestration.** \"Call orders, then billing, then merge the JSON\" is\n  an application. If clients need a stitched view, build a thin **backend-for-frontend** service\n  that owns that stitching — it can deploy, scale, and fail on its own without taking every other\n  API with it.\n- **No data transformation** beyond protocol mechanics. Header in, header out is fine; rewriting\n  payload schemas between versions is a service's contract, not the front desk's.\n- **Not a shared database of config for everyone.** Route tables with thousands of entries edited\n  by twenty teams through tickets is the ESB again, wearing a YAML costume. Good gateway setups\n  let each team own their routes (the Kubernetes Gateway API's Gateway-vs-HTTPRoute split — Envoy\n  course module 8 — is exactly this).\n\nThe test for any proposed gateway feature: **would this rule need to change when a product feature\nchanges?** If yes, it belongs in a service someone owns, not in the front door.\n\n## Internal vs external gateways\n\nBoth are \"a gateway\", but they answer different threats and serve different clients:\n\n| | **External (edge) gateway** | **Internal gateway** |\n|---|---|---|\n| Clients | The internet: browsers, mobile apps, partners | Your own teams' services |\n| Trust level | Zero — assume hostility | Low but not zero (zero-trust says: still verify) |\n| Auth job | Full authentication: OIDC, API keys, bot defense | Service identity (mTLS, service tokens), tenant isolation |\n| Rate limits | Per customer/key — protecting you from the world | Per calling service — protecting teams from each other |\n| API surface | Small, stable, versioned, documented for outsiders | Wider, faster-moving, documented for insiders |\n| Typical form | Managed edge product or Envoy-based edge fleet | Lighter proxy tier, often per-domain, or mesh policy |\n\n**When do you need an internal gateway at all?** When one department's services are consumed by\nmany other departments — a payments platform inside a big company is effectively a product with\ninternal customers, and it wants the same front-desk services: stable routes, quotas so one buggy\nconsumer can't flatten it, and an audit trail. In a small system, an internal gateway is usually\npremature — the service mesh (Istio course) already gives you mTLS, retries, and telemetry for\neast–west traffic, and a mesh plus an *external* gateway covers most architectures. The honest\nsequence: external gateway first, mesh when service-to-service concerns bite, internal gateways\nonly when a domain inside the company becomes a platform.\n\n## How this connects\n\nA gateway is often *implemented* with the pieces you already know: Envoy is the data plane of many\ngateway products, the Kubernetes Gateway API is the config model, and the token validation it does\nat the edge is the OAuth/OIDC material from Identity Dojo, deployed to production."}, {"id": "03-cdns", "title": "3 · CDNs", "group": "The boxes", "md": "*The copy shop at the edge: what caching actually buys you, cache keys, invalidation, and when a CDN is the wrong tool. ~10 min read.*\n\n---\n\nPhysics is the one scaling problem you can't code around: a request from Sydney to a server in\nVirginia spends ~200 ms just *traveling*, before your code runs at all. A **content delivery\nnetwork** attacks the problem the only way physics allows — by moving the answer closer to the\nquestion.\n\n## What a CDN is\n\nA CDN is thousands of cache servers (\"edge nodes\" or **PoPs**, points of presence) spread across\ncities worldwide, all announcing the same address via **anycast** (module 4 explains how that\nworks). Your user's request lands at the nearest node. If that node has a valid copy of the\nanswer — a **cache hit** — it responds from 20 ms away and your servers (**the origin**) never\nhear about it. If not — a **miss** — the node fetches from your origin, serves the user, and keeps\na copy for the next person.\n\nThree wins, in order of importance:\n\n1. **Latency** — answers come from nearby.\n2. **Origin offload** — your servers see a fraction of the traffic; the cheapest request is the\n   one that never arrives. This is also your DDoS shock absorber.\n3. **Availability** — many CDNs can serve stale copies while your origin is down; visitors read\n   yesterday's page instead of an error page.\n\n## What's cacheable, honestly\n\n- **Static assets** — images, JS, CSS, fonts, downloads. The classic case; cache aggressively.\n- **Anonymous dynamic content** — the same rendered blog post everyone sees. Cache for seconds or\n  minutes; even a 30-second TTL collapses a traffic spike into one origin request per PoP.\n- **Personalized or private responses** — *your* shopping cart, *your* account page. Do **not**\n  cache at a shared edge, and mark them so: one `Cache-Control: public` on a per-user response is\n  a data breach with your name on the commit.\n- **APIs** — GETs with common parameters often cache well; writes never do.\n\nThe control knobs are HTTP itself: `Cache-Control` (`max-age`, `s-maxage`, `public`/`private`,\n`no-store`), `ETag` revalidation, and `Vary`.\n\n## The cache key — where correctness lives\n\nThe **cache key** is what the CDN uses to decide \"same content\": typically host + path + a chosen\nsubset of query parameters and headers. Both failure directions hurt:\n\n- **Key too broad** (ignores a header that changes the response): users receive *someone else's*\n  variant — the gzip-page-served-to-a-client-that-can't-unzip class of bug, or worse, someone\n  else's data.\n- **Key too narrow** (includes irrelevant parameters): `?utm_source=twitter` makes every marketing\n  link a cache miss and your hit rate quietly dies.\n\n`Vary` is how the origin tells caches \"this header changes the answer.\" Treat cache-key design as\nAPI design — deliberate, reviewed, and tested.\n\n## Invalidation — the famous hard problem\n\nYou deployed `app.js` v2; edges hold v1 for another `max-age`. Your options, best first:\n\n1. **Versioned URLs.** Build the version into the name — `app.9f31c2.js` — and cache it for a\n   year. A new deploy is a *new URL*, so there's nothing to invalidate, and rollbacks are just the\n   old URL again. This removes the problem instead of solving it; every serious frontend build\n   does this.\n2. **Short TTL + revalidation** for things that must live at stable URLs (the HTML page itself):\n   `max-age=60` bounds staleness at a minute; `ETag` makes the refresh cheap (a 304, no body).\n3. **Purge APIs** — \"invalidate `/index.html` everywhere, now.\" Fine as a deploy step or emergency\n   brake; a design smell if your architecture *depends* on purges racing around the planet.\n\n## When a CDN is the wrong tool\n\n- **Cache hit rate near zero** — every response personalized or unique. You've added a hop and a\n  bill; the CDN's other edge services (TLS, DDoS absorption) may still justify it, but be honest\n  about *which* product you're buying.\n- **Strong consistency reads** — \"balance after transfer\" must come from the system of record. A\n  cache is, by definition, allowed to be stale.\n- **As a substitute for capacity planning** — a CDN absorbs *read* spikes of *cacheable* content.\n  Checkout traffic goes straight through to origin, every time.\n- **East–west traffic** — CDNs are a north–south, edge technology. Service-to-service caching is a\n  Redis/application-cache problem (module 5), not a CDN problem.\n\n## Where it sits in the map\n\nThe CDN is the outermost ring of module 0's diagram: DNS resolves to the CDN, the CDN terminates\nTLS meters away from the user, serves what it can, and forwards the rest to your load balancer.\nThat also makes it the first suspect when \"the site shows old content\" — check what the edge\ncached, and what your `Cache-Control` headers *actually said*, before blaming the app."}, {"id": "04-dns-and-tls", "title": "4 · DNS & TLS", "group": "The boxes", "md": "*The two technologies every request uses before your code runs: finding the address, and trusting the connection. ~12 min read.*\n\n---\n\nEvery box in module 0's map depends on two things working first: the client has to *find* an\naddress for your name, and both sides have to *trust* the pipe between them. DNS and TLS are old,\nunglamorous, and involved in essentially 100% of outages that begin with \"it works from my\nmachine.\"\n\n## DNS: the distributed phone book\n\nWhen a browser needs `api.example.com`, it asks a **resolver** (usually the OS's or the ISP's),\nwhich walks the hierarchy — root servers → `.com` servers → *your* zone's **authoritative\nservers** — and returns an answer that then gets **cached at every step**, for the number of\nseconds your record's **TTL** allows.\n\nThe records you'll actually touch:\n\n| Record | Maps | Notes |\n|---|---|---|\n| **A / AAAA** | name → IPv4 / IPv6 address | The workhorses |\n| **CNAME** | name → another name | \"This is an alias\" — how you point at a CDN |\n| **ALIAS/ANAME** | apex name → another name | CNAME isn't allowed at `example.com` itself; providers offer this workaround |\n| **TXT** | name → arbitrary text | Domain-ownership proofs, email policy (SPF/DKIM) |\n| **NS** | zone → its authoritative servers | Delegation — who answers for this zone |\n\n## DNS as a traffic tool\n\nBecause DNS is the *first* decision in every request, it's also the coarsest, most universal\nrouting layer you have:\n\n- **Geo/latency routing** — answer Europeans with the Frankfurt IP, Australians with Sydney.\n- **Failover** — health-check the primary; when it dies, answer with the standby's address.\n- **Weighted answers** — 5% of resolutions get the new region: a crude canary.\n\nThe catch is always the same: **caching**. A resolver that cached your record ignores your\nfailover until the TTL expires — and some resolvers ignore TTLs entirely. That's why serious\nfailover pairs low TTLs (30–60s) with the *anycast* trick: instead of changing the answer, you\nadvertise **one IP from many locations** and let internet routing (BGP) deliver each user to the\nnearest healthy one. When a site withdraws its announcement, routing heals in seconds, no cache\ninvolved. CDNs and public resolvers (`1.1.1.1`, `8.8.8.8`) live on anycast.\n\nPractical scars, cheaply acquired: lower TTLs a day *before* a migration, not during it; remember\n`CNAME` at the zone apex is illegal (use ALIAS); and when something \"works from my machine but not\nproduction\", compare what each side's resolver actually returns (`dig`) before debugging anything\nelse.\n\n## TLS: trust for the pipe\n\nTLS gives a connection three properties: **encryption** (nobody reads it), **integrity** (nobody\nalters it), and **authentication** (you're talking to who you think). The third one is where all\nthe operational pain lives, because it runs on **certificates**.\n\nA certificate says \"this public key belongs to `api.example.com`\", signed by a **certificate\nauthority** the client already trusts, usually via an intermediate — the **chain**. Your server\nmust present the *whole* chain; a missing intermediate is the classic \"works in Chrome, fails in\ncurl/Java\" bug, because browsers repair incomplete chains and strict clients don't.\n\nSince one server IP often hosts many names, the client announces the name it wants in the TLS\nhandshake — **SNI** — and the server picks the matching certificate. You met SNI-based routing in\nthe Envoy course's filter-chain matching; this is why it exists.\n\n**Let's Encrypt and the ACME protocol** turned certificates from an annual manual ritual into\nfree, automated, 90-day issuance — which is why modern practice is: automate issuance and renewal\non day one, or module 4's most predictable outage (*the cert expired on a Saturday*) will\neventually find you. cert-manager (Kubernetes course, module 12) is this automation as a cluster\ncomponent.\n\n## Where TLS terminates — a real architectural decision\n\n\"Terminate TLS\" means: decrypt here. Each choice moves the plaintext boundary:\n\n```\nuser ──TLS──► CDN ──?──► LB ──?──► gateway ──?──► service\n```\n\n- **Terminate at the edge** (CDN/LB), plaintext inside — simple, and common historically; but\n  everything inside the perimeter sees plaintext. The zero-trust position is that \"inside\" is not\n  a trust boundary.\n- **Re-encrypt hop by hop** — edge terminates (it must, to route on L7), then makes a fresh TLS\n  connection inward. The common serious setup.\n- **End-to-end mTLS between services** — every service proves its identity with its own\n  certificate, both directions. Doing this by hand is brutal, which is precisely the pitch of the\n  service mesh: Istio's sidecars (Istio course, module 6) do mTLS invisibly, with certificates\n  rotated hourly, and the identity in that certificate — not the network location — is what\n  authorization decisions use.\n\nThat last point closes a loop this course has been circling: **modern infrastructure identity is\ncertificates all the way down**, and the identity-aware proxy is how it's deployed. The Identity\nDojo service-to-service stream (SPIFFE) picks up exactly here."}, {"id": "05-queues-caches-async", "title": "5 · Queues, caches & async", "group": "The boxes", "md": "*The technologies that take work OFF the request path: message queues, application caches, and object storage. ~12 min read.*\n\n---\n\nEverything so far — DNS, CDN, load balancer, gateway — optimizes the **synchronous path**: a user\nis waiting, milliseconds count. But a mature system moves as much work as possible *off* that\npath, and three technologies do most of the moving: queues, caches, and object storage. They\naren't strictly \"traffic\" infrastructure, but no map of a cloud-native system is honest without\nthem.\n\n## Message queues: do it later, reliably\n\nA checkout request needs to: charge the card, update inventory, send a receipt email, notify the\nwarehouse, update analytics. The user needs an answer *now*; four of those five can happen in the\nnext few seconds. A **message queue** is how: the service handling the request writes a message —\n\"order 4412 placed\" — to the queue and responds. Independent **consumers** read messages and do\nthe slow work at their own pace.\n\nWhat this buys, concretely:\n\n- **Latency** — the user waits for one write, not five downstream systems.\n- **Decoupling** — the email service can be down for an hour; messages wait, nothing is lost, and\n  checkout never noticed. Compare that with a synchronous call: their outage is your outage.\n- **Load leveling** — a spike of 10,000 orders/minute becomes a queue that drains at whatever rate\n  the consumers sustain, instead of a stampede that flattens the warehouse system.\n\nThe two shapes: **work queues** (each message consumed once, by one worker — background jobs) and\n**pub/sub streams** (each message readable by *every* interested consumer — events, the Kafka\nfamily).\n\nThe honesty section — queues have rules you can't opt out of:\n\n- Delivery is **at-least-once** in practice; exactly-once is a marketing word. Sometimes a message\n  arrives twice, so consumers must be **idempotent**: processing \"order 4412 placed\" twice must\n  not charge twice. (Design the handler around a key — *have I processed 4412?* — and this is\n  manageable; ignore it and it's a production incident.)\n- Messages that repeatedly crash their consumer need a **dead-letter queue** — a sidetrack where\n  poison messages go for humans to inspect, instead of blocking everything behind them.\n- **A queue is not a database.** If a message's data matters, it also lives in the system of\n  record; the queue is transport, not truth.\n\n## Application caches: don't compute it twice\n\nThe CDN cached responses at the edge for *everyone*; an **application cache** (Redis and its\nfamily) caches *data* inside your system: session data, rendered fragments, the result of an\nexpensive query, \"the 100 hottest products.\"\n\nThe standard pattern is **cache-aside**: look in the cache; on a miss, read the database, put the\nresult in the cache with a TTL, return it. Simple — and its failure modes are famous enough to\nhave names:\n\n- **Staleness.** The database changed; the cache hasn't expired. Decide *per key* how stale is\n  acceptable, and let TTL enforce it. \"I'll invalidate on every write\" sounds better and is where\n  the famous quote about the two hard problems in computer science comes from — explicit\n  invalidation is a correctness protocol you now must maintain forever.\n- **Stampede.** A hot key expires and 5,000 concurrent requests all miss and all hit the database\n  at once — the cache was *hiding* load, and it returns as a spike. Mitigations: staggered TTLs,\n  or one request refreshes while others serve the stale value briefly.\n- **Cache as the only copy.** If restarting Redis loses data you needed, it wasn't a cache — it\n  was an accidental database, without a database's guarantees. Caches must be safe to flush at\n  any moment.\n\nThe unifying rule with the CDN module: **a cache is permission to be stale in exchange for speed.**\nEvery cache decision is choosing how much staleness the business can tolerate for that data.\n\n## Object storage: files are not your server's problem\n\nUser uploads, build artifacts, backups, logs — anything that's \"a blob of bytes with a name\" —\nbelongs in **object storage** (the S3 family): effectively unlimited, cheap, replicated, and\naddressable by URL. The pattern that matters architecturally: services **pass URLs, not bytes**.\nAn upload goes *directly* from the user's browser to object storage via a **pre-signed URL** (a\nshort-lived, permission-scoped link your service issues); the service stores the object's key; the\nCDN serves the object to readers. Your application servers — the expensive, stateful-averse things\nKubernetes is scheduling — never carry file traffic at all.\n\n## The map, finished\n\n```\n                      you\n                       │\n        DNS ── CDN ── LB ── gateway ── services\n                                          │  │\n                                   cache ─┘  └─ queue ─► workers\n                                     │              │\n                                  database      object storage\n```\n\nRead it with the two questions this course keeps asking: *is a user waiting?* (sync path — spend\non latency) and *who owns the truth?* (systems of record vs the caches and queues that serve\nthem). Those two questions, asked box by box, are most of architecture review.\n\n**Where to go from here:** the four hands-on courses. Docker packages the services, Kubernetes\nruns them, Envoy is the data plane inside the LBs and gateways you now understand, and Istio is\nwhat happens when every service gets its own tiny gateway. See you there."}], "quizzes": {"00-the-path-of-a-request": [{"q": "What is the difference between north–south and east–west traffic?", "options": ["Encrypted vs unencrypted traffic", "Traffic between the outside world and your system vs traffic between your own services", "Upload vs download", "IPv4 vs IPv6"], "answer": 1, "why": "North–south crosses your edge (users, partners → your system); east–west stays inside (service to service). The tools differ: CDN/LB/gateway for north–south, service mesh for east–west.", "whyWrong": ["Both directions can and should be encrypted — encryption isn't what the terms describe.", "", "Direction of data transfer isn't the distinction; both kinds carry both.", "The IP version is irrelevant to the north–south/east–west split."]}, {"q": "Requests are still flowing normally, but no configuration change you make takes effect. Which half of the system is down?", "options": ["The data plane", "The control plane", "DNS", "The CDN"], "answer": 1, "why": "The data plane is whatever touches requests in flight; the control plane is whatever configures it. Flowing traffic + frozen config = data plane fine, control plane down.", "whyWrong": ["If the data plane were down, requests would not be flowing.", "", "If DNS were down, new connections would be failing, not config changes.", "A CDN outage would show as failing or slow requests, not ignored config."]}, {"q": "Why does the request path put the CDN before the load balancer?", "options": ["CDNs are older technology, so they come first historically", "The CDN's job is to answer as many requests as possible before they reach your infrastructure at all", "Load balancers can't handle TLS", "It's arbitrary; the order doesn't matter"], "answer": 1, "why": "The CDN is the outermost ring because a cache hit at the edge means your origin — including the load balancer — never sees the request. The cheapest request is the one that never arrives.", "whyWrong": ["Age has nothing to do with placement; jobs determine order.", "", "Load balancers terminate TLS routinely — that's not the reason.", "The order is the point: each ring exists to shed work from the rings behind it."]}], "01-load-balancers": [{"q": "What is the practical difference between an L4 and an L7 load balancer?", "options": ["L7 is newer and faster", "L4 sees connections (IPs and ports); L7 reads the request itself (path, headers) and can route on it", "L4 is for internal traffic only", "L7 requires special hardware"], "answer": 1, "why": "L4 forwards bytes between addresses without understanding them — fast and protocol-agnostic. L7 parses the protocol, so it can send /api/ one way and /images/ another, retry a GET, or split traffic for a canary.", "whyWrong": ["L7 does more work per request — it's the slower, smarter one.", "", "L4 balancers sit at the public edge of most large systems.", "Both are ordinary software; Envoy does both on any machine."]}, {"q": "Why are sticky sessions usually considered a design smell?", "options": ["They're slower than round robin", "They mean a server holds user state, so that server's death logs users out and servers stop being interchangeable", "Browsers don't support them", "They only work with IPv6"], "answer": 1, "why": "Stickiness exists to compensate for state living on one server. Move the state to a shared store and any server can answer, the balancer stays free to route anywhere, and a server dying is a non-event.", "whyWrong": ["The routing cost is trivial; the architectural coupling is the problem.", "", "Stickiness is implemented by the balancer (usually via cookie), and browsers handle cookies fine.", "IP version has nothing to do with session affinity."]}, {"q": "Your /healthz handler checks that the database is reachable. During a 30-second database blip, what does the load balancer do to your fleet?", "options": ["Nothing — health checks don't run that often", "It removes every server at once, because they all fail the same dependency check, turning a wobble into an outage", "It doubles the traffic to compensate", "It restarts the database"], "answer": 1, "why": "Every server reports the same dependency failure simultaneously, so the balancer drains the entire pool. Health checks should verify what the server itself controls; dependency health belongs in separate signals.", "whyWrong": ["Checks typically run every few seconds — well within a 30-second blip.", "", "Balancers don't create capacity or traffic; they only distribute what arrives.", "A load balancer has no idea the database exists — it only sees the check fail."]}], "02-api-gateways": [{"q": "Which of these belongs IN an API gateway?", "options": ["Merging the orders and billing responses into one JSON for the mobile app", "Skipping the fraud check for gold-tier customers", "Validating tokens, enforcing rate limits, and routing /v2/ to the new service", "Recalculating cart totals"], "answer": 2, "why": "Cross-cutting policy — authn at the edge, quotas, routing, TLS, observability — is exactly the front desk's job: every service would otherwise implement it identically.", "whyWrong": ["Aggregation is an application; that's what a backend-for-frontend service is for.", "Tier-based behavior is business logic — it changes when the product changes, so it belongs in a service someone owns.", "", "Money math is core business logic; the gateway should never know what a cart is."]}, {"q": "What was the ESB, and why does it come up in gateway discussions?", "options": ["An early load balancer that couldn't do TLS", "The enterprise service bus — middleware that gradually absorbed business logic until nobody could change anything; the cautionary tale for gateways", "A Kubernetes component replaced by Ingress", "A CDN feature for APIs"], "answer": 1, "why": "The ESB ate a generation of architectures by centralizing logic in shared middleware. A gateway that accumulates orchestration and business rules is rebuilding it in YAML — which is why the should-not list exists.", "whyWrong": ["It wasn't a load balancer; it was integration middleware.", "", "It predates Kubernetes and lived at a different layer entirely.", "It has nothing to do with CDNs."]}, {"q": "When does an INTERNAL gateway earn its place?", "options": ["Always — every microservice should sit behind one", "When a domain inside the company (say, a payments platform) is consumed by many other teams and needs stable routes, quotas, and an audit trail", "Whenever you install a service mesh", "When the external gateway is overloaded"], "answer": 1, "why": "An internal gateway makes sense when part of your system is effectively a product with internal customers. Short of that, an external gateway plus a mesh covers most architectures — an internal gateway earlier is premature machinery.", "whyWrong": ["Per-service gateways everywhere is overhead without a matching problem — the mesh already handles east–west concerns.", "", "A mesh reduces the need for internal gateways by providing mTLS, retries, and telemetry between services.", "Capacity problems are solved by scaling the gateway, not adding a differently-purposed one."]}], "03-cdns": [{"q": "A response marked Cache-Control: public contains the logged-in user's account details. What happens?", "options": ["Nothing — CDNs know not to cache personal data", "The edge may cache it and serve one user's account page to other users: a data breach", "The response gets slower", "The CDN encrypts it extra"], "answer": 1, "why": "Shared caches do what the headers say. 'public' on a per-user response invites the edge to store it under a key other users will hit. Personal responses need private/no-store — and a review process for cache headers.", "whyWrong": ["CDNs cannot know what's personal; the headers are the contract, and they said public.", "", "Speed isn't the issue — disclosure is.", "Encryption on the wire doesn't help; the cache serves the decrypted response to the wrong person."]}, {"q": "Why do frontend builds name files like app.9f31c2.js instead of app.js?", "options": ["Shorter names load faster", "The hash hides the code from competitors", "A new deploy produces a new URL, so old cached copies never conflict — caching can be maximal and invalidation becomes unnecessary", "It's required by JavaScript modules"], "answer": 2, "why": "Versioned URLs dissolve the invalidation problem: the immutable file is cached for a year, and 'updating' is just referencing a new name. Rollback is the old name. Nothing needs purging, ever.", "whyWrong": ["The name is longer, not shorter — and length is irrelevant.", "The content is exactly as public as before; the hash is a version stamp, not obfuscation.", "", "No module system requires hashed names; build tools add them for caching."]}, {"q": "For which of these is a CDN the WRONG tool?", "options": ["A product-image gallery served worldwide", "Absorbing a traffic spike on a viral blog post", "Reading an account balance immediately after a transfer", "Serving yesterday's leaderboard to millions"], "answer": 2, "why": "A balance-after-write is a strong-consistency read: it must come from the system of record. A cache is by definition allowed to be stale — that's the deal that makes it fast.", "whyWrong": ["Static images for a global audience are the CDN's founding use case.", "Identical cacheable content under read spike is exactly what edge caching absorbs.", "", "Slightly-stale, identical-for-everyone content is ideal CDN material."]}], "04-dns-and-tls": [{"q": "You updated a DNS record to point at the new server, but half your users still reach the old one hours later. Why?", "options": ["DNS servers are slow to process changes", "Resolvers cached the old answer and will keep it until its TTL expires — and some ignore TTLs entirely", "The new server rejected the record", "You need to restart the old server"], "answer": 1, "why": "DNS scales by caching at every step, and a cached answer lives for its TTL regardless of what you changed upstream. That's why migrations lower TTLs the day before, and why serious failover uses anycast instead of racing caches.", "whyWrong": ["Authoritative servers pick up the change quickly — the delay lives in everyone else's caches.", "", "Servers don't accept or reject DNS records; DNS is resolved by clients, not targets.", "The old server has no say in where names point."]}, {"q": "Your HTTPS site works in every browser but fails from curl and a Java service with certificate errors. The likely cause?", "options": ["curl doesn't support TLS", "The server sends an incomplete certificate chain; browsers repair missing intermediates, strict clients don't", "Java requires special certificates", "The certificate expired"], "answer": 1, "why": "Browsers fetch missing intermediates automatically; most other clients validate exactly the chain the server presents. Serving the full chain fixes every client at once — this is the classic asymmetric TLS bug.", "whyWrong": ["curl speaks TLS fine; it's just honest about broken chains.", "", "Java validates the same standard chains — it simply doesn't repair yours.", "An expired certificate fails everywhere, browsers included."]}, {"q": "What does it mean to choose where TLS terminates?", "options": ["Choosing when the certificate expires", "Choosing which component decrypts the traffic — and therefore where plaintext begins inside your system", "Choosing the cipher suite", "Choosing between HTTP and HTTPS"], "answer": 1, "why": "Termination is the decryption point: edge-only termination means plaintext everywhere inside; hop-by-hop re-encryption and mesh mTLS push the trust boundary inward until every service proves its identity. It's a security architecture decision, not a checkbox.", "whyWrong": ["Expiry is a certificate property, unrelated to the termination point.", "", "Cipher choice happens at every TLS hop regardless of where you terminate.", "That choice is whether to use TLS at all — termination is about where it ends."]}], "05-queues-caches-async": [{"q": "Why must a queue consumer be idempotent?", "options": ["To process messages faster", "Because delivery is at-least-once in practice: the same message can arrive twice, and processing it twice must not double the effect", "Because queues shuffle message order", "Because messages expire"], "answer": 1, "why": "Redelivery after failures is part of the contract — exactly-once is a marketing word. Handlers keyed on 'have I already processed order 4412?' make duplicates harmless; handlers that charge on every delivery make them incidents.", "whyWrong": ["Idempotence is about correctness under redelivery, not throughput.", "", "Ordering is a separate concern; duplicates arrive even in strictly-ordered streams.", "Expiry would mean fewer deliveries, not repeated ones."]}, {"q": "A hot cache key expires and 5,000 concurrent requests hit the database at once. What is this called, and what's the fix?", "options": ["A cache breach; rotate credentials", "A stampede; stagger TTLs or let one request refresh while others briefly serve the stale value", "Normal operation; databases handle it", "A memory leak; restart the cache"], "answer": 1, "why": "The cache was hiding that load; simultaneous expiry returns it as a spike. Jittered TTLs spread the refreshes, and serve-stale-while-revalidate collapses 5,000 refreshes into one.", "whyWrong": ["Nothing was breached — no attacker is involved, just an expiry.", "", "The database sized for cached traffic meets uncached traffic — that's exactly the outage.", "Memory is fine; the pattern is about expiry timing, not leaks."]}, {"q": "Why should file uploads go directly from the browser to object storage via a pre-signed URL instead of through your application servers?", "options": ["Browsers can't send files to application servers", "It's more secure because the URL is secret forever", "Application servers then never carry file traffic — the service issues a short-lived scoped link, stores the key, and stays out of the byte path", "Object storage is the only place TLS works for files"], "answer": 2, "why": "Pass URLs, not bytes: the pre-signed link is short-lived and permission-scoped, the heavy transfer happens between the user and storage built for it, and your expensive stateless servers do what they're good at.", "whyWrong": ["Browsers upload to app servers fine — it's just a waste of your compute and bandwidth.", "Pre-signed URLs are deliberately short-lived; their security comes from scope and expiry, not permanent secrecy.", "", "TLS works everywhere; that's not the differentiator."]}]}};
+const KEY = "cn-fundamentals-progress-v1";
+let done = {};
+try { done = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e){ done = {}; }
+let current = 0;
+
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch(e){} }
+
+// plain-text index for search (strip markdown to readable text)
+function stripMd(md){
+  return md
+    .replace(/```[\s\S]*?```/g, " ")     // code fences
+    .replace(/`[^`]+`/g, " ")            // inline code
+    .replace(/^\s*\|.*$/gm, " ")         // table rows
+    .replace(/[#>*_\-]+/g, " ")          // md symbols
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // links -> text
+    .replace(/\s+/g, " ").trim();
+}
+const INDEX = DATA.pages.map((p,idx) => ({idx, id:p.id, title:p.title, text:stripMd(p.md)}));
+
+function escRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+function escHtml(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function snippet(text, q){
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  if (i === -1) return "";
+  const start = Math.max(0, i - 45), end = Math.min(text.length, i + q.length + 55);
+  let s = (start>0?"…":"") + text.slice(start, end) + (end<text.length?"…":"");
+  const re = new RegExp(escRe(q), "ig");
+  return escHtml(s).replace(re, m => "<mark>"+escHtml(m)+"</mark>");
+}
+
+function doSearch(q){
+  const nav = document.getElementById("nav");
+  const box = document.getElementById("results");
+  q = q.trim();
+  if (!q){ box.innerHTML = ""; nav.style.display = ""; return; }
+  nav.style.display = "none";
+  const ql = q.toLowerCase();
+  const hits = INDEX.map(p => {
+    const inTitle = p.title.toLowerCase().includes(ql);
+    const inText = p.text.toLowerCase().includes(ql);
+    return (inTitle||inText) ? {p, inTitle, snip: snippet(p.text, q)} : null;
+  }).filter(Boolean);
+  if (!hits.length){ box.innerHTML = '<div class="noresult">No matches for “'+escHtml(q)+'”.</div>'; return; }
+  box.innerHTML = '<div class="searchinfo">'+hits.length+' module'+(hits.length>1?'s':'')+' match</div>';
+  hits.forEach(h => {
+    const d = document.createElement("div");
+    d.className = "result";
+    d.innerHTML = '<div class="rt"></div><div class="rs">'+(h.snip||"(title match)")+'</div>';
+    d.querySelector(".rt").textContent = h.p.title;
+    d.onclick = () => {
+      document.getElementById("search").value = "";
+      doSearch("");
+      go(h.p.idx);
+      document.getElementById('sidebar').classList.remove('open');
+    };
+    box.appendChild(d);
+  });
+}
+
+function buildNav(){
+  const nav = document.getElementById("nav");
+  nav.innerHTML = "";
+  let lastGroup = null;
+  DATA.pages.forEach((p, idx) => {
+    if (p.group !== lastGroup){
+      const g = document.createElement("div");
+      g.className = "navgroup"; g.textContent = p.group;
+      nav.appendChild(g); lastGroup = p.group;
+    }
+    const it = document.createElement("div");
+    it.className = "navitem" + (idx===current?" active":"") + (done[p.id]?" done":"");
+    it.innerHTML = '<span class="dot">'+(done[p.id]?"✓":"")+'</span><span class="t"></span>';
+    it.querySelector(".t").textContent = p.title;
+    it.onclick = () => { go(idx); document.getElementById('sidebar').classList.remove('open'); };
+    nav.appendChild(it);
+  });
+}
+
+function updateProgress(){
+  const total = DATA.pages.length;
+  const n = DATA.pages.filter(p => done[p.id]).length;
+  const pct = Math.round(100*n/total);
+  document.getElementById("progfill").style.width = pct + "%";
+  document.getElementById("progtxt").textContent = pct + "% complete · " + n + "/" + total + " modules";
+}
+
+function attachCopy(root){
+  root.querySelectorAll("pre.code .copy").forEach(btn => {
+    btn.onclick = () => {
+      const code = btn.parentElement.querySelector("code").innerText;
+      navigator.clipboard.writeText(code).then(()=>{
+        btn.textContent = "Copied!"; setTimeout(()=>btn.textContent="Copy", 1200);
+      });
+    };
+  });
+}
+
+function renderQuiz(pid){
+  const qs = DATA.quizzes[pid];
+  if (!qs || !qs.length) return "";
+  const wrap = document.createElement("div");
+  wrap.className = "quiz";
+  wrap.innerHTML = '<h3>Test your knowledge</h3><div class="qmeta">'+qs.length+
+    ' questions · answer all to mark this module complete.</div>';
+  const state = {answered: new Array(qs.length).fill(false), correct: 0};
+  qs.forEach((q, qi) => {
+    const card = document.createElement("div");
+    card.className = "qcard";
+    const qt = document.createElement("div");
+    qt.className = "qtext"; qt.textContent = (qi+1)+". "+q.q;
+    card.appendChild(qt);
+    const why = document.createElement("div");
+    why.className = "why";
+    q.options.forEach((opt, oi) => {
+      const b = document.createElement("button");
+      b.className = "opt"; b.textContent = opt;
+      b.onclick = () => {
+        if (state.answered[qi]) return;
+        state.answered[qi] = true;
+        const ok = oi === q.answer;
+        if (ok) state.correct++;
+        card.querySelectorAll(".opt").forEach((x, xi) => {
+          x.classList.add("disabled");
+          if (xi === q.answer) x.classList.add("correct");
+          if (xi === oi && !ok) x.classList.add("wrong");
+        });
+        why.textContent = ok ? ("✓ Correct. " + q.why)
+          : ("✗ Not quite. " + ((q.whyWrong && q.whyWrong[oi]) ? q.whyWrong[oi] + " " : "") + q.why);
+        why.className = "why show " + (ok ? "ok":"no");
+        maybeComplete();
+      };
+      card.appendChild(b);
+    });
+    card.appendChild(why);
+    wrap.appendChild(card);
+  });
+  const score = document.createElement("div");
+  score.className = "qscore";
+  wrap.appendChild(score);
+  function maybeComplete(){
+    const n = state.answered.filter(Boolean).length;
+    score.textContent = "Answered "+n+"/"+qs.length+" · "+state.correct+" correct";
+    if (n === qs.length){
+      if (!done[pid]){ done[pid] = true; save(); buildNav(); updateProgress(); }
+      score.textContent += "  —  module complete ✓";
+    }
+  }
+  return wrap;
+}
+
+function go(idx){
+  current = idx;
+  const p = DATA.pages[idx];
+  const c = document.getElementById("content");
+  c.innerHTML = '<div class="pagehdr">'+p.group+'</div><h2></h2>';
+  c.querySelector("h2").textContent = p.title;
+  const body = document.createElement("div");
+  body.innerHTML = mdToHtml(p.md);
+  c.appendChild(body);
+  attachCopy(c);
+  const quiz = renderQuiz(p.id);
+  if (quiz) c.appendChild(quiz);
+  // prev/next
+  const nb = document.createElement("div");
+  nb.className = "navbtns";
+  const prev = document.createElement("button");
+  prev.textContent = "← Previous"; prev.disabled = idx===0;
+  prev.onclick = ()=>go(idx-1);
+  const next = document.createElement("button");
+  next.className = "next";
+  next.textContent = idx===DATA.pages.length-1 ? "Finish ✓" : "Next →";
+  next.disabled = idx===DATA.pages.length-1 && !!done[p.id];
+  next.onclick = ()=>{ if(idx<DATA.pages.length-1) go(idx+1); else { done[p.id]=true; save(); buildNav(); updateProgress(); } };
+  nb.appendChild(prev); nb.appendChild(next);
+  c.appendChild(nb);
+  buildNav();
+  updateProgress();
+  window.scrollTo(0,0);
+  document.getElementById("main").scrollTo && document.getElementById("main").scrollTo(0,0);
+}
+
+document.getElementById("search").addEventListener("input", e => doSearch(e.target.value));
+
+buildNav();
+updateProgress();
+go(0);
+</script>
+</body>
+</html>

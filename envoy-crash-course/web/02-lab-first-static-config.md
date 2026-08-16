@@ -3,7 +3,7 @@
 *Hands-on. You'll run Envoy in Docker, proxy a real request through it, and understand every line
 of the config. ~20 min. Requires Docker.*
 
-The files for this lab live in [`labs/02-static/`](./labs/02-static/) — `envoy.yaml` and
+The files for this lab live in [`labs/02-static/`](../labs/02-static/) — `envoy.yaml` and
 `docker-compose.yaml`. You can run them as-is; below we build the same config up piece by piece
 so nothing is a black box.
 
@@ -39,7 +39,7 @@ That response came **from the backend, through Envoy**. You now have a working p
 
 ## The config, line by line
 
-Open [`envoy.yaml`](./labs/02-static/envoy.yaml). It has three top-level sections: `admin`,
+Open [`envoy.yaml`](../labs/02-static/envoy.yaml). It has three top-level sections: `admin`,
 `static_resources.listeners`, and `static_resources.clusters`. Recall the mental checklist from
 Module 01 — listeners, filter chains, HTTP filters + routes, clusters. Here they are for real.
 

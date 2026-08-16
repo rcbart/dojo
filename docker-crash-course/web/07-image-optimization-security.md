@@ -7,7 +7,7 @@
 
 A working image isn't a good image. Production images should be **small** (fast to push/pull, less
 to attack), **cached well** (fast builds), and **secure** (no secrets, no root, few packages). This
-module is the highest-leverage practitioner content in the course.
+module is the practitioner content that pays for itself fastest.
 
 ## Multi-stage builds — the big one
 
@@ -141,4 +141,4 @@ LEAK=$(docker history --no-trunc safe:1.0 2>/dev/null | grep -ci "password\|secr
 
 ---
 
-**Next:** [8 — Registries & distribution →](./08-registries-distribution.md)
+**Next:** [8 — Advanced builds: BuildKit, buildx & multi-arch →](./08-buildkit-buildx-multiplatform.md)

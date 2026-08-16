@@ -240,4 +240,4 @@ it into the **Kubernetes course** and run it at scale.
 
 ---
 
-**Next:** [12 — From Docker to Kubernetes →](./10-next-steps-kubernetes.md)
+**Next:** [12 — From Docker to Kubernetes →](./12-next-steps-kubernetes.md)

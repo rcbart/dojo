@@ -87,4 +87,4 @@ it. Master the lunchbox, then learn to manage a whole warehouse of them.
 
 ---
 
-**Next:** [0 — What Docker is (and why it exists) →](./00-what-is-docker.md)
+**Next:** [Primer — Core concepts & glossary (keep it open as you go) →](./primer-core-concepts.md)

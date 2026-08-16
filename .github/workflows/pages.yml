@@ -64,6 +64,14 @@ jobs:
       - name: Check lesson depth
         run: node scripts/verify-depth.js
 
+      # Sixth gate: the cloud-native path. The five crash courses build with
+      # their own pipeline (markdown -> one interactive HTML file); this gate
+      # checks the structure the builds depend on — every page file exists,
+      # every page has quiz entries and every quiz entry is well-formed, and
+      # the markdown Next-links agree with the built sidebar order.
+      - name: Verify the cloud-native path
+        run: node scripts/verify-cloudnative.js
+
       - name: Build DevDojo
         run: node build.js
       - name: Build IdentityDojo
@@ -72,6 +80,13 @@ jobs:
       - name: Build JSDojo
         run: node build.js
         working-directory: js-dojo
+      - name: Build the cloud-native courses
+        run: |
+          python3 fundamentals-crash-course/web/build.py
+          python3 docker-crash-course/web/build.py
+          python3 kubernetes-crash-course/web/build.py
+          python3 envoy-crash-course/web/build.py
+          python3 istio-crash-course/web/build.py
 
       # One Pages site. The root is the roniam.dev portfolio home plus the blog
       # (both emitted by scripts/build-blog.js from blog/*.md and docs/home.html);
@@ -79,18 +94,29 @@ jobs:
       # /courses/. Adding a course = one build step + one copy line.
       - name: Assemble the site
         run: |
-          mkdir -p _site/dev _site/identity _site/js _site/courses
+          mkdir -p _site/dev _site/identity _site/js _site/courses \
+                   _site/fundamentals _site/docker _site/kubernetes _site/envoy _site/istio
           node scripts/build-blog.js _site
-          cp docs/landing.html                _site/courses/index.html
-          cp dist/index.html                  _site/dev/index.html
-          cp identity-dojo/dist/index.html    _site/identity/index.html
-          cp js-dojo/dist/index.html          _site/js/index.html
+          cp docs/landing.html                       _site/courses/index.html
+          cp dist/index.html                         _site/dev/index.html
+          cp identity-dojo/dist/index.html           _site/identity/index.html
+          cp js-dojo/dist/index.html                 _site/js/index.html
+          cp fundamentals-crash-course/index.html    _site/fundamentals/index.html
+          cp docker-crash-course/index.html          _site/docker/index.html
+          cp kubernetes-crash-course/index.html      _site/kubernetes/index.html
+          cp envoy-crash-course/index.html           _site/envoy/index.html
+          cp istio-crash-course/index.html           _site/istio/index.html
           test -s _site/index.html
           test -s _site/blog/index.html
           test -s _site/courses/index.html
           test -s _site/dev/index.html
           test -s _site/identity/index.html
           test -s _site/js/index.html
+          test -s _site/fundamentals/index.html
+          test -s _site/docker/index.html
+          test -s _site/kubernetes/index.html
+          test -s _site/envoy/index.html
+          test -s _site/istio/index.html
           ls -lh _site _site/blog _site/dev _site/identity _site/js
 
       - name: Upload Pages artifact

@@ -60,7 +60,7 @@ Read it top-down:
   **hostname** on the auto-created network — that's why `api` reaches the database at `db:5432`.
 - **`build: .`** vs **`image:`** — build from a local Dockerfile, or pull a prebuilt image.
 - **`depends_on`** — start order (db and cache before api). *Note: it waits for start, not for
-  "ready" — for true readiness you add healthchecks, Module 9.*
+  "ready" — for true readiness you add healthchecks, Module 10.*
 - **`volumes:`** (top level) — declares named volumes the services mount.
 
 ## The everyday Compose commands

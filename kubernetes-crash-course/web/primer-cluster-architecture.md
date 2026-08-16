@@ -81,4 +81,4 @@ unreachable" → you can't submit anything. You'll meet these in the troubleshoo
 
 ---
 
-**Next:** [0 — What Kubernetes is →](./00-what-is-kubernetes.md)
+**Next:** [Primer — Core concepts & glossary (keep it open as you go) →](./primer-core-concepts.md)

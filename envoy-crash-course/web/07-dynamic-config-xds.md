@@ -3,7 +3,7 @@
 *The idea that makes Envoy a platform, not just a proxy. Concepts + a hot-reload lab. ~25 min.
 Requires Docker.*
 
-Lab files: [`labs/07-xds/`](./labs/07-xds/).
+Lab files: [`labs/07-xds/`](../labs/07-xds/).
 
 ---
 
@@ -48,7 +48,7 @@ Both deliver the same typed resources; only the transport differs.
 
 A dynamic Envoy still needs a tiny **bootstrap** config to start: its `node` identity, the `admin`
 block, and — instead of `static_resources` — a **`dynamic_resources`** block pointing LDS and CDS
-at their sources. See [`bootstrap.yaml`](./labs/07-xds/bootstrap.yaml):
+at their sources. See [`bootstrap.yaml`](../labs/07-xds/bootstrap.yaml):
 
 ```yaml
 dynamic_resources:
@@ -56,8 +56,8 @@ dynamic_resources:
   cds_config: { path_config_source: { path: /etc/envoy/cds.yaml, watched_directory: {...} } }
 ```
 
-The listeners live in [`lds.yaml`](./labs/07-xds/lds.yaml) and clusters in
-[`cds.yaml`](./labs/07-xds/cds.yaml), each a `resources:` list of typed objects — exactly the same
+The listeners live in [`lds.yaml`](../labs/07-xds/lds.yaml) and clusters in
+[`cds.yaml`](../labs/07-xds/cds.yaml), each a `resources:` list of typed objects — exactly the same
 Listener/Cluster shapes you've been writing, just delivered dynamically.
 
 ## Lab: change config with no restart

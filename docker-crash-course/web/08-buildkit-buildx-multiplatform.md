@@ -165,4 +165,4 @@ rm token.txt
 
 ---
 
-**Next:** [9 — Registries & distribution →](./08-registries-distribution.md)
+**Next:** [9 — Registries & distribution →](./09-registries-distribution.md)

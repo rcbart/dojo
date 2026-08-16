@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a single self-contained interactive index.html for the Envoy crash course."""
+"""Build a single self-contained interactive index.html for the Istio crash course."""
 import json, os, re, html
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # envoy-crash-course/
@@ -17,7 +17,9 @@ PAGES = [
     ("03-traffic-gateway-virtualservice",W("03-traffic-gateway-virtualservice.md"),"3 · Ingress: Gateway & VirtualService","Fundamentals"),
     ("04-traffic-destinationrule-canary",W("04-traffic-destinationrule-canary.md"),"4 · DestinationRule & canaries",      "Fundamentals"),
     ("05-resilience-fault-injection",    W("05-resilience-fault-injection.md"),    "5 · Resilience & fault injection",    "Fundamentals"),
+    ("11-egress-serviceentry",           W("11-egress-serviceentry.md"),           "5b · Egress & ServiceEntry",          "Fundamentals"),
     ("06-security-mtls-authz",           W("06-security-mtls-authz.md"),           "6 · Security: mTLS & authorization",  "Fundamentals"),
+    ("12-request-auth-jwt",              W("12-request-auth-jwt.md"),              "6b · Request auth: JWTs",             "Fundamentals"),
     ("07-observability-kiali-telemetry", W("07-observability-kiali-telemetry.md"), "7 · Observability: Kiali & telemetry","Fundamentals"),
     ("08-ambient-mode",                  W("08-ambient-mode.md"),                  "8 · Ambient mode (sidecarless)",      "Platform"),
     ("09-gateway-api",                   W("09-gateway-api.md"),                   "9 · The Kubernetes Gateway API",      "Platform"),
@@ -316,7 +318,8 @@ function renderQuiz(pid){
           if (xi === q.answer) x.classList.add("correct");
           if (xi === oi && !ok) x.classList.add("wrong");
         });
-        why.textContent = (ok ? "✓ Correct. " : "✗ Not quite. ") + q.why;
+        why.textContent = ok ? ("✓ Correct. " + q.why)
+          : ("✗ Not quite. " + ((q.whyWrong && q.whyWrong[oi]) ? q.whyWrong[oi] + " " : "") + q.why);
         why.className = "why show " + (ok ? "ok":"no");
         maybeComplete();
       };

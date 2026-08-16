@@ -139,4 +139,4 @@ All share the same declarative, self-healing model.
 
 ---
 
-**Next:** [3 — Services & networking →](./03-services-networking.md)
+**Next:** [2b — Workloads beyond Deployments: DaemonSets, Jobs & CronJobs →](./19-workloads-beyond-deployments.md)

@@ -4,6 +4,11 @@
 installed, a demo app running inside the mesh, and a dashboard showing traffic. Every step spelled
 out. Requires a machine with ~8 GB RAM free.*
 
+> **This course is hands-on, on your own machine.** The site you're reading gives you the lessons
+> and quizzes, but the real work happens in your own terminal — installing tools, running
+> containers, and breaking things you can then fix. This setup page gets your machine ready; do it
+> before the first lab.
+
 Istio runs on **Kubernetes**, so first we make a tiny throwaway Kubernetes cluster on your machine
 with **kind** (Kubernetes-IN-Docker), then install Istio into it. You'll install four command-line
 tools; everything else is pulled automatically.

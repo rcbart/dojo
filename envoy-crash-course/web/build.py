@@ -10,17 +10,18 @@ PAGES = [
     ("setup-local-envoy",                    os.path.join(WEB, "setup-local-envoy.md"),                     "Setup — run Envoy locally",            "Get started"),
     ("primer-what-is-a-proxy",               os.path.join(WEB, "primer-what-is-a-proxy.md"),                "Primer — What is a proxy?",            "Get started"),
     ("primer-service-mesh",                  os.path.join(WEB, "primer-service-mesh.md"),                   "Primer — Service meshes",              "Get started"),
-    ("00-what-is-envoy",                     os.path.join(ROOT, "00-what-is-envoy.md"),                     "0 · What Envoy is",                    "Fundamentals"),
-    ("01-architecture-and-request-lifecycle",os.path.join(ROOT, "01-architecture-and-request-lifecycle.md"),"1 · Architecture & request flow",     "Fundamentals"),
-    ("02-lab-first-static-config",           os.path.join(ROOT, "02-lab-first-static-config.md"),           "2 · Lab: your first Envoy",            "Fundamentals"),
-    ("03-listeners-filter-chains-tls",       os.path.join(ROOT, "03-listeners-filter-chains-tls.md"),       "3 · Listeners, filter chains & TLS",   "Fundamentals"),
-    ("04-http-routing-and-filters",          os.path.join(ROOT, "04-http-routing-and-filters.md"),          "4 · HTTP routing & filters",           "Fundamentals"),
-    ("05-clusters-load-balancing-resilience",os.path.join(ROOT, "05-clusters-load-balancing-resilience.md"),"5 · Clusters, LB & resilience",       "Fundamentals"),
-    ("06-observability-and-admin",           os.path.join(ROOT, "06-observability-and-admin.md"),           "6 · Observability & admin",            "Fundamentals"),
-    ("07-dynamic-config-xds",                os.path.join(ROOT, "07-dynamic-config-xds.md"),                "7 · Dynamic config (xDS)",             "Fundamentals"),
-    ("08-envoy-on-kubernetes",               os.path.join(ROOT, "08-envoy-on-kubernetes.md"),               "8 · Envoy on Kubernetes",              "Platform"),
-    ("09-service-mesh-sidecars",             os.path.join(ROOT, "09-service-mesh-sidecars.md"),             "9 · Service mesh & sidecars",          "Platform"),
-    ("10-debugging-gotchas-next-steps",      os.path.join(ROOT, "10-debugging-gotchas-next-steps.md"),      "10 · Debugging & next steps",          "Platform"),
+    ("00-what-is-envoy",                     os.path.join(WEB, "00-what-is-envoy.md"),                     "0 · What Envoy is",                    "Fundamentals"),
+    ("01-architecture-and-request-lifecycle",os.path.join(WEB, "01-architecture-and-request-lifecycle.md"),"1 · Architecture & request flow",     "Fundamentals"),
+    ("02-lab-first-static-config",           os.path.join(WEB, "02-lab-first-static-config.md"),           "2 · Lab: your first Envoy",            "Fundamentals"),
+    ("03-listeners-filter-chains-tls",       os.path.join(WEB, "03-listeners-filter-chains-tls.md"),       "3 · Listeners, filter chains & TLS",   "Fundamentals"),
+    ("04-http-routing-and-filters",          os.path.join(WEB, "04-http-routing-and-filters.md"),          "4 · HTTP routing & filters",           "Fundamentals"),
+    ("11-rate-limiting-ext-authz",           os.path.join(WEB, "11-rate-limiting-ext-authz.md"),           "4b · Rate limiting & ext_authz",       "Fundamentals"),
+    ("05-clusters-load-balancing-resilience",os.path.join(WEB, "05-clusters-load-balancing-resilience.md"),"5 · Clusters, LB & resilience",       "Fundamentals"),
+    ("06-observability-and-admin",           os.path.join(WEB, "06-observability-and-admin.md"),           "6 · Observability & admin",            "Fundamentals"),
+    ("07-dynamic-config-xds",                os.path.join(WEB, "07-dynamic-config-xds.md"),                "7 · Dynamic config (xDS)",             "Fundamentals"),
+    ("08-envoy-on-kubernetes",               os.path.join(WEB, "08-envoy-on-kubernetes.md"),               "8 · Envoy on Kubernetes",              "Platform"),
+    ("09-service-mesh-sidecars",             os.path.join(WEB, "09-service-mesh-sidecars.md"),             "9 · Service mesh & sidecars",          "Platform"),
+    ("10-debugging-gotchas-next-steps",      os.path.join(WEB, "10-debugging-gotchas-next-steps.md"),      "10 · Debugging & next steps",          "Platform"),
 ]
 
 def load_page(path):
@@ -35,6 +36,10 @@ def load_page(path):
     # drop any trailing "**Next:** ..." nav and trailing hr
     md = re.sub(r"\n\*\*Next:\*\*.*$", "", md.strip(), flags=re.S)
     md = re.sub(r"\n---\s*$", "", md.strip())
+    md = re.sub(r"\]\((?:\.\./)?labs/([^)]+?)\.(yaml|yml|json)\)",
+                r"](https://github.com/rcbart/dojo/blob/main/envoy-crash-course/labs/\1.\2)", md)
+    md = re.sub(r"\]\((?:\.\./)?labs/([^)]+?)/?\)",
+                r"](https://github.com/rcbart/dojo/tree/main/envoy-crash-course/labs/\1)", md)
     return md.strip()
 
 pages = []
@@ -457,7 +462,8 @@ function renderQuiz(pid){
           if (xi === q.answer) x.classList.add("correct");
           if (xi === oi && !ok) x.classList.add("wrong");
         });
-        why.textContent = (ok ? "✓ Correct. " : "✗ Not quite. ") + q.why;
+        why.textContent = ok ? ("✓ Correct. " + q.why)
+          : ("✗ Not quite. " + ((q.whyWrong && q.whyWrong[oi]) ? q.whyWrong[oi] + " " : "") + q.why);
         why.className = "why show " + (ok ? "ok":"no");
         maybeComplete();
       };

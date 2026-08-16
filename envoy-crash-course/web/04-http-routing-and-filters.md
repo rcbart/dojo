@@ -3,7 +3,7 @@
 *The heart of everyday Envoy work. Concepts + a lab exercising real routing rules and an HTTP
 filter. ~25 min. Requires Docker.*
 
-Lab files: [`labs/04-routing/`](./labs/04-routing/).
+Lab files: [`labs/04-routing/`](../labs/04-routing/).
 
 ---
 
@@ -71,7 +71,7 @@ just another `typed_config` block.
 
 ## Lab: routing rules + a fault filter
 
-The lab config ([`envoy.yaml`](./labs/04-routing/envoy.yaml)) sets up several behaviors on one
+The lab config ([`envoy.yaml`](../labs/04-routing/envoy.yaml)) sets up several behaviors on one
 listener. Run it:
 
 ```bash
@@ -142,4 +142,4 @@ routes above general ones.**
 
 ---
 
-**Next:** [05 — Clusters, load balancing & resilience →](./05-clusters-load-balancing-resilience.md)
+**Next:** [4b — Rate limiting & ext_authz →](./11-rate-limiting-ext-authz.md)

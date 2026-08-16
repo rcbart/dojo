@@ -3,7 +3,7 @@
 *How Envoy picks a healthy backend and survives failures. Concepts + a two-backend lab. ~25 min.
 Requires Docker.*
 
-Lab files: [`labs/05-clusters/`](./labs/05-clusters/).
+Lab files: [`labs/05-clusters/`](../labs/05-clusters/).
 
 ---
 

@@ -3,7 +3,7 @@
 *Where Envoy actually lives in modern infra. Concepts + a real kind + Envoy Gateway lab. ~30 min.
 Requires Docker, `kind`, `kubectl`, and `helm`.*
 
-Lab files: [`labs/08-k8s/`](./labs/08-k8s/).
+Lab files: [`labs/08-k8s/`](../labs/08-k8s/).
 
 ---
 
@@ -61,7 +61,7 @@ writing.)*
 
 ### 3. Deploy the app + Gateway API resources
 
-[`app-and-route.yaml`](./labs/08-k8s/app-and-route.yaml) contains the echo Deployment/Service plus
+[`app-and-route.yaml`](../labs/08-k8s/app-and-route.yaml) contains the echo Deployment/Service plus
 the **GatewayClass**, **Gateway**, and **HTTPRoute**:
 
 ```bash
