@@ -10,13 +10,16 @@ const DOJO_HOME = {
   icon: '🟨',
   pageTitle: 'JS Dojo — JavaScript & Node, from the ground up',
   title: 'Welcome to JS Dojo \u{1F7E8}',
-  intro: 'JavaScript from the ground up, assuming nothing. <b>5 of a planned 15 streams are written</b> — '
-       + 'the language core and the event loop. Debugging, modules, TypeScript and Node are next.<br><br>'
+  intro: 'JavaScript from the ground up, assuming nothing. <b>16 streams cover the whole road</b>: '
+       + 'the language core, how it really works underneath, the event loop, the browser, two full '
+       + 'streams of debugging, modules and TypeScript, and Node all the way to a real HTTP server.<br><br>'
        + 'The order is deliberate: you meet <b>values and types</b> before anything that manipulates them, '
        + '<b>the call stack</b> before closures, and <b>the event loop</b> before a single promise. Coercion, '
        + 'closures, <code>this</code>, prototypes, promises and async/await are each taken apart until the '
-       + 'surprising behaviour stops being surprising. Then modules and npm, the Node runtime, files and '
-       + 'streams, a real HTTP server, testing and TypeScript.<br><br>'
+       + 'surprising behaviour stops being surprising. The browser then gets a stream of its own — the DOM, '
+       + 'events, <code>fetch</code> and forms — because that is where most JavaScript actually lives. '
+       + 'From there: generators, the EventEmitter pattern, security, memory and workers, each one placed '
+       + 'where you have the background to understand it.<br><br>'
        + 'Two streams are devoted to <b>debugging</b>, because it is the skill nobody teaches: reading a stack '
        + 'trace properly, breakpoints and the scope pane, the Network panel, tracing an OAuth redirect flow end '
        + 'to end, <code>node --inspect</code>, heap snapshots and CPU profiles. '
@@ -35,9 +38,11 @@ const DOJO_DOMAINS = [
     'Prototypes, Classes & Objects in Depth']},
   {name:'Asynchronous JavaScript',icon:'\u{23F3}',titles:[
     'The Event Loop & Asynchronous JavaScript']},
-  {name:'Errors & Debugging',icon:'\u{1F41B}',titles:[
-    'Errors, Exceptions & the Debugging Method',
+  {name:'The Browser',icon:'\u{1F310}',titles:[
+    'The Browser: DOM, Events & fetch',
     'Debugging in the Browser']},
+  {name:'Errors & Debugging',icon:'\u{1F41B}',titles:[
+    'Errors, Exceptions & the Debugging Method']},
   {name:'Code at Scale',icon:'\u{1F4E6}',titles:[
     'Modules, Packages & Tooling',
     'TypeScript: Types for JavaScript']},

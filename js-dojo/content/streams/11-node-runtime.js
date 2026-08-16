@@ -310,5 +310,93 @@ solution:`function loadConfig(env) {
 tests:[{d:'collects errors rather than throwing on the first',re:'errors\\.push'},{d:'requires the database url',re:'DATABASE_URL'},{d:'validates the port range',re:'65535'},{d:'compares DEBUG to the exact string',re:'===\\s*"true"'},{d:'returns null config on failure',re:'config:\\s*null'}],
 behavior:`Six cases execute, and three of them separate a real implementation from a plausible one. The string "false" is truthy, so writing debug as Boolean(env.DEBUG) turns debugging on in production — the third case catches exactly that. The last case requires collecting ALL errors rather than returning at the first: an operator restarting a service wants one message listing everything wrong, not six deploys each revealing the next problem. And a valid default port must survive an unrelated failure elsewhere.`,
 hints:['Accumulate into an errors array instead of returning early — you want every problem at once.','DEBUG is true only when it is exactly the string "true"; every other string is false.','Apply the PORT default when the variable is absent, and validate it only when it is present.']}]}
+,
+
+{id:'jsemit',title:'EventEmitter: the pattern under everything',body:`
+<p>Nearly every object you meet in Node — servers, sockets, streams, <code>process</code> itself — is an
+<b>EventEmitter</b>. It is the third async shape after callbacks and promises, and it exists because some
+things are not one result but <b>many occurrences</b>: a request arrives, then another, then another. A
+promise can settle once; an emitter can fire forever.</p>
+
+<h4>The mechanics</h4>
+<div class="codeSample" data-hl>import { EventEmitter } from "node:events";
+const bus = new EventEmitter();
+
+bus.on("order", (id) =&gt; console.log("ship", id));     // subscribe
+bus.on("order", (id) =&gt; console.log("email", id));    // more than one is fine
+bus.once("boot", () =&gt; console.log("first time only"));
+
+bus.emit("order", 42);       // calls BOTH listeners, in registration order,
+                             // SYNCHRONOUSLY - emit returns after they ran
+bus.off("order", handler);   // unsubscribe needs the SAME function reference</div>
+<p>Two details there bite people. <code>emit</code> is synchronous — the listeners have all run before the
+next line. And <code>off</code> compares by reference, so an anonymous arrow you did not save cannot be
+removed later.</p>
+
+<h4>The "error" event is special</h4>
+<div class="codeSample" data-hl>const em = new EventEmitter();
+em.emit("error", new Error("boom"));
+// no "error" listener registered? Node THROWS and your process crashes.
+// this is deliberate: an error nobody is listening for should not
+// vanish. every long-lived emitter needs:
+em.on("error", (err) =&gt; log.error({ err }, "stream failed"));</div>
+
+<h4>The leak the warning is about</h4>
+<div class="codeSample" data-hl>// MaxListenersExceededWarning: 11 order listeners added
+server.on("request", (req, res) =&gt; {
+  bus.on("tick", () =&gt; { ... });   // a NEW listener per request,
+});                                 // never removed - the classic leak
+
+// three honest fixes:
+res.on("close", () =&gt; bus.off("tick", handler));   // remove when done
+bus.once("tick", handler);                          // if once is the truth
+bus.on("tick", handler, { signal });                // AbortController cleanup</div>
+<p>This is the listener leak the profiling lesson's heap snapshots keep finding: the emitter holds a
+reference to every listener, the listener's closure holds whatever it captured, and none of it can be
+collected while the subscription lives. Subscribing is <i>allocating</i>; treat it like something that
+needs a matching release.</p>
+
+<h4>What it is underneath</h4>
+<p>Strip the class away and an emitter is a map from event names to arrays of functions — <code>on</code>
+pushes, <code>emit</code> loops, <code>off</code> filters, <code>once</code> removes after the first call.
+The exercise has you build exactly that, because having built one, no emitter behavior will surprise you
+again.</p>`,
+docs:[['Node — events','https://nodejs.org/api/events.html'],['Node — EventEmitter class','https://nodejs.org/api/events.html#class-eventemitter'],['Node — events best practices','https://nodejs.org/en/learn/asynchronous-work/the-nodejs-event-emitter']],
+ex:{title:'Build a tiny emitter',diff:'hard',lang:'js',
+run:{call:'runEvents',cases:[
+ {name:'a listener fires on every emit',args:[[['on','greet','A'],['emit','greet','hi'],['emit','greet','yo']]],expect:['A:hi','A:yo']},
+ {name:'once fires a single time',args:[[['once','boot','B'],['emit','boot','1'],['emit','boot','2']]],expect:['B:1']},
+ {name:'off removes the listener',args:[[['on','tick','C'],['emit','tick','1'],['off','tick','C'],['emit','tick','2']]],expect:['C:1']},
+ {name:'listeners fire in registration order',args:[[['on','order','ship'],['on','order','email'],['emit','order','42']]],expect:['ship:42','email:42']},
+ {name:'emitting into silence does nothing',args:[[['emit','ghost','boo'],['on','ghost','D'],['emit','ghost','ok']]],expect:['D:ok']},
+ {name:'on and once coexist on one event',args:[[['on','msg','keep'],['once','msg','drop'],['emit','msg','a'],['emit','msg','b']]],expect:['keep:a','drop:a','keep:b']}]},
+prompt:`Write <code>function runEvents(script)</code>: a tiny emitter driven by a script of operations. Each entry is <code>['on', event, label]</code>, <code>['once', event, label]</code>, <code>['off', event, label]</code> or <code>['emit', event, payload]</code>. On emit, every listener for that event fires <b>in registration order</b>, appending <code>label + ":" + payload</code> to a log; <code>once</code> listeners are removed after firing; <code>off</code> removes all listeners with that label. Return the log.`,
+starter:`function runEvents(script) {
+  const listeners = {};   // event -> array of { label, once }
+  const log = [];
+  for (const [op, event, arg] of script) {
+    // handle on / once / off / emit
+  }
+  return log;
+}`,
+solution:`function runEvents(script) {
+  const listeners = {};                  // event -> [{ label, once }]
+  const log = [];
+  for (const [op, event, arg] of script) {
+    if (op === "on")   (listeners[event] ||= []).push({ label: arg, once: false });
+    if (op === "once") (listeners[event] ||= []).push({ label: arg, once: true });
+    if (op === "off")  listeners[event] = (listeners[event] || []).filter(l => l.label !== arg);
+    if (op === "emit") {
+      const current = listeners[event] || [];   // snapshot, like Node does
+      for (const l of current) log.push(l.label + ":" + arg);
+      listeners[event] = current.filter(l => !l.once);
+    }
+  }
+  return log;
+}`,
+tests:[{d:'keeps listeners per event name',re:'listeners\\[event\\]'},{d:'once listeners carry a flag',re:'once'},{d:'off filters by label',re:'\\.filter\\('},{d:'emit walks listeners in order',re:'for\\s*\\(.*of\\s'}],
+behavior:`Six cases execute the contract Node's real emitter keeps: registration order is preserved, once-listeners survive exactly one emit, off removes without disturbing the others, and emitting with no listeners is silently fine. The solution snapshots the listener array before looping — the same choice Node makes, so a listener added during an emit does not fire in that same emit.`,
+hints:['Store { label, once } records so once and on share one array.','After an emit, filter out the listeners whose once flag is set.','off filters by label; emit into a missing event should touch nothing.']}}
+
 
 ]});

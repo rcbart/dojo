@@ -424,5 +424,97 @@ function collect(from, to) {
 tests:[{d:'implements the iterator symbol',re:'Symbol\\.iterator'},{d:'produces values',re:'yield|next'},{d:'spreads the iterable',re:'\\[\\s*\\.\\.\\.'}],
 behavior:`Spread only works if the protocol is implemented correctly, so this executes the real thing rather than checking for a keyword. The empty case falls out for free: the loop never runs, the generator finishes immediately, and spread produces [].`,
 hints:['A generator method inside the object literal is the shortest correct implementation.','The computed key is [Symbol.iterator], and a * before it makes it a generator.','Spreading an iterable consumes it into an array.']}}
+,
+
+{id:'jsgen',title:'Generators in practice, and async iteration',body:`
+<p>The last lesson introduced generators as a shortcut for writing iterators. This one is about what they
+are actually <i>for</i> — because a generator is not just less machinery, it is a function that can
+<b>pause</b>, and a function that can pause turns out to solve several problems that nothing else in the
+language solves as cleanly.</p>
+
+<h4>A generator is a paused machine</h4>
+<div class="codeSample" data-hl>function* steps() {
+  console.log("one");   yield 1;
+  console.log("two");   yield 2;
+  console.log("done");
+}
+const g = steps();      // NOTHING runs yet - you hold a paused machine
+g.next()                // logs "one",  returns { value: 1, done: false }
+g.next()                // logs "two",  returns { value: 2, done: false }
+g.next()                // logs "done", returns { value: undefined, done: true }</div>
+<p>Each <code>next()</code> runs the body <i>to the next yield</i> and stops. All the local variables
+survive between calls — the function's whole state is parked, not rebuilt. That is what
+<code>for...of</code> and spread are driving when they consume one.</p>
+
+<h4>Delegation, and stopping early</h4>
+<div class="codeSample" data-hl>function* tree(node) {
+  yield node.value;
+  for (const child of node.children) yield* tree(child);   // yield* = hand over
+}
+// yield* delegates to another iterable - recursion over a tree
+// becomes four lines, with no accumulator array in sight.
+
+function* lines() {
+  try { yield "a"; yield "b"; yield "c"; }
+  finally { console.log("cleanup"); }        // runs even when abandoned
+}
+for (const l of lines()) {
+  if (l === "b") break;    // break calls the generator's return() -
+}                          // the finally runs. "cleanup" logs here.</div>
+<p>That <code>finally</code> detail is why generators can safely hold resources: a consumer that stops
+early — <code>break</code>, a thrown error, a <code>return</code> — still triggers the cleanup, the same
+guarantee <code>try/finally</code> gives ordinary code.</p>
+
+<h4>Async iteration: the same idea, awaited</h4>
+<p>A sequence where each item takes time — pages of an API, chunks of a file — combines both machines
+you now know: the iterator protocol and promises.</p>
+<div class="codeSample" data-hl>async function* pages(url) {
+  while (url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const page = await res.json();
+    yield* page.items;               // hand out this page's items
+    url = page.nextUrl;              // then fetch the next page lazily
+  }
+}
+
+for await (const item of pages("/api/items")) {
+  if (looksRight(item)) break;       // stop - and NO further pages are fetched
+}</div>
+<p>The consumer reads like a plain loop, but each step awaits a promise, later pages are only requested
+if the loop keeps going, and Node's streams implement exactly this protocol — <code>for await</code>
+over a file stream is the reading pattern the Node streams lesson builds on.</p>
+
+<h4>When to reach for one</h4>
+<p>A plain array is still right for a handful of items you already have. Generators earn their place when
+the sequence is <b>large, expensive, or endless</b> — lines of a file, pages of an API, retry delays,
+walks over a tree — because laziness means you only pay for what the consumer actually takes.</p>`,
+docs:[['MDN — function*','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*'],['MDN — for await...of','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of'],['MDN — yield*','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/yield*']],
+ex:{title:'Chunk a list with a generator',diff:'medium',lang:'js',
+run:{call:'chunks',cases:[
+ {name:'splits into pairs with a remainder',args:[[1,2,3,4,5],2],expect:[[1,2],[3,4],[5]]},
+ {name:'an exact fit has no remainder',args:[[1,2,3,4],2],expect:[[1,2],[3,4]]},
+ {name:'a size beyond the list is one chunk',args:[[1,2,3],10],expect:[[1,2,3]]},
+ {name:'size one wraps every element',args:[['a','b','c'],1],expect:[['a'],['b'],['c']]},
+ {name:'an empty list yields nothing',args:[[],3],expect:[]}]},
+prompt:`Write a <b>generator</b> <code>function* chunkGen(list, size)</code> that yields successive slices of <code>list</code>, each <code>size</code> long (the last may be shorter) — then write <code>function chunks(list, size)</code> that returns <code>[...chunkGen(list, size)]</code>. The generator is the machine; the spread is one possible consumer.`,
+starter:`function* chunkGen(list, size) {
+  // yield slices here
+}
+function chunks(list, size) {
+  return [];
+}`,
+solution:`function* chunkGen(list, size) {
+  for (let i = 0; i < list.length; i += size) {
+    yield list.slice(i, i + size);       // pause here, hand out one chunk
+  }
+}
+function chunks(list, size) {
+  return [...chunkGen(list, size)];      // spread drives next() to done
+}`,
+tests:[{d:'declares a generator',re:'function\\s*\\*'},{d:'yields each chunk',re:'yield\\s'},{d:'slices without mutating',re:'\\.slice\\('},{d:'a consumer materialises it',re:'\\.\\.\\.|Array\\.from'}],
+behavior:`Five cases execute the whole protocol: the spread in chunks() calls next() until done, and each yield hands out one slice. The generator itself never builds the full result — the same chunkGen could feed a for...of that stops after the first chunk of a million-element list, and would compute exactly one slice.`,
+hints:['Step the index by size, not by one.','slice(i, i + size) is safely clipped at the end of the list.','chunks() just spreads the generator - the exercise is the yield loop.']}}
+
 
 ]});

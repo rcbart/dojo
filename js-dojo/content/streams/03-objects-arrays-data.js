@@ -422,5 +422,78 @@ solution:`function safeParse(text) {
 tests:[{d:'calls JSON.parse',re:'JSON\\.parse'},{d:'catches the failure',re:'catch'}],
 behavior:`Three malformed inputs execute, each of which throws a SyntaxError without the catch. Note the last case: the string "null" is valid JSON that parses to null, so a valid parse and a failed one produce the same answer here — a real ambiguity, and the reason production code usually returns { ok, value } instead.`,
 hints:['Wrap the parse in try/catch.','catch { } without a binding is legal modern JavaScript.','Return null from the catch block, not from after the try.']}]}
+,
+
+{id:'jsdate',title:'Dates, times and Intl',body:`
+<p>Dates look easy and are the most reliable source of production bugs in this stream. The reason is that
+a moment in time is one thing, and a human's description of it — "March 3rd, in Sydney" — is another, and
+JavaScript's <code>Date</code> mixes the two in ways you have to learn once, properly.</p>
+
+<h4>What a Date actually is</h4>
+<div class="codeSample" data-hl>Date.now()               // 1755350400000 - milliseconds since Jan 1 1970 UTC
+new Date()               // now, as an object
+new Date("2026-03-03T10:00:00Z")   // the Z means UTC. ALWAYS send this form.
+
+// a Date is JUST that number with methods on it. it has no timezone
+// inside it - the timezone appears when you FORMAT it:
+d.toISOString()          // "2026-03-03T10:00:00.000Z"  - UTC, for machines
+d.toLocaleString()       // "3/3/2026, 9:00 PM"         - the USER'S zone</div>
+<p>That is the whole model: <b>store and transmit UTC instants, format for humans at the very edge</b>.
+The bug class this prevents — a birthday shifting a day depending on who views it — comes from doing
+either job in the wrong place.</p>
+
+<h4>The traps, named</h4>
+<div class="codeSample" data-hl>new Date("2026-03-03")       // midnight UTC - shows as Mar 2 in New York!
+new Date(2026, 2, 3)         // months are ZERO-BASED: 2 is March. yes really.
+d.getMonth()                 // also zero-based
+d.getDay()                   // day of WEEK (0=Sunday), not day of month
+new Date("garbage")          // Invalid Date - no throw, and every method
+                             // on it returns NaN, which then spreads
+
+// durations: subtracting Dates gives milliseconds
+const days = (end - start) / (1000 * 60 * 60 * 24);
+// safe for elapsed time. NOT safe for "same time tomorrow" - daylight
+// saving makes some days 23 or 25 hours long. calendar math needs a
+// library (Temporal, the replacement API, fixes this properly).</div>
+
+<h4>Intl: formatting you do not have to write</h4>
+<p>Every "format this nicely" function you are tempted to write already exists, localised, in
+<code>Intl</code>:</p>
+<div class="codeSample" data-hl>new Intl.DateTimeFormat("en-GB", { dateStyle: "long" }).format(d)
+// "3 March 2026"
+new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(9.99)
+// "9,99 €"       - and yes, the decimal comma is correct in German
+new Intl.RelativeTimeFormat("en").format(-2, "day")
+// "2 days ago"
+new Intl.NumberFormat("en", { notation: "compact" }).format(14500)
+// "15K"</div>
+<p>Reaching for <code>Intl</code> instead of hand-rolled formatting is one of those habits that quietly
+marks experienced code: it handles locales you have never heard of, and it means a French user sees
+French punctuation without anyone writing an if-statement about it.</p>`,
+docs:[['MDN — Date','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date'],['MDN — Intl','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl'],['TC39 — Temporal','https://tc39.es/proposal-temporal/docs/']],
+ex:{title:'Work with instants, not strings',diff:'medium',lang:'js',
+run:{call:'daysBetween',cases:[
+ {name:'a simple span',args:['2026-03-01T00:00:00Z','2026-03-04T00:00:00Z'],expect:3},
+ {name:'the same instant is zero days',args:['2026-03-01T00:00:00Z','2026-03-01T00:00:00Z'],expect:0},
+ {name:'order does not matter',args:['2026-03-04T00:00:00Z','2026-03-01T00:00:00Z'],expect:3},
+ {name:'partial days round DOWN',args:['2026-03-01T00:00:00Z','2026-03-02T18:00:00Z'],expect:1},
+ {name:'an invalid date returns null, not NaN',args:['garbage','2026-03-01T00:00:00Z'],expect:null},
+ {name:'both invalid is also null',args:['x','y'],expect:null}]},
+prompt:`Write <code>function daysBetween(a, b)</code> taking two ISO strings and returning the number of <b>whole</b> days between the instants, regardless of order. Parse with <code>new Date(...)</code>, and return <code>null</code> when either fails to parse — remember that an invalid Date does not throw, it poisons every calculation after it with <code>NaN</code>.`,
+starter:`function daysBetween(a, b) {
+  return 0;
+}`,
+solution:`function daysBetween(a, b) {
+  const da = new Date(a), db = new Date(b);
+  if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) {
+    return null;                       // Invalid Date poisons silently - stop it here
+  }
+  const ms = Math.abs(db - da);        // subtraction gives milliseconds
+  return Math.floor(ms / 86400000);    // 1000*60*60*24, whole days only
+}`,
+tests:[{d:'parses both inputs as Dates',re:'new\\s+Date'},{d:'detects an invalid date',re:'isNaN'},{d:'is order-independent',re:'Math\\.abs'},{d:'rounds down to whole days',re:'Math\\.floor'}],
+behavior:`Six cases execute. The invalid-date pair is the production one: new Date("garbage") is not an exception, it is a value whose getTime() is NaN, and NaN divided, floored and compared stays NaN — so a guard at the boundary is the only place to catch it, exactly like toNumber in the foundations stream.`,
+hints:['getTime() on an invalid Date is NaN — check both before any arithmetic.','Subtracting Dates yields milliseconds; Math.abs removes the order problem.','86,400,000 milliseconds make a day; floor keeps only whole ones.']}}
+
 
 ]});

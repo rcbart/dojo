@@ -355,5 +355,87 @@ solution:`function respond(req) {
 tests:[{d:'401 carries the challenge header',re:'www-authenticate'},{d:'distinguishes 403 from 401',re:'403'},{d:'rejects the wrong content type',re:'415'},{d:'bounds the body size',re:'413'},{d:'sets nosniff on every response',re:'x-content-type-options'}],
 behavior:`Six cases execute and two of them exist purely to pin the ORDER. The fourth has a body of 99999999 bytes and the wrong content type, and must return 415 — you reject a payload you cannot parse before measuring it. The sixth has no credential, the wrong role, the wrong type and an enormous body, and must still return 401: authentication comes first, because everything after it is a statement about a caller you have not identified. A 401 without www-authenticate is also non-compliant, which is why that header is checked separately.`,
 hints:['Build the shared header object once and spread it into each response.','The order is authenticate, authorise, then validate the request itself.','The 401 is the only response without cache-control, so return it before adding that header.']}]}
+,
+
+{id:'jssec',title:'Security in JavaScript: injection, pollution and the supply chain',body:`
+<p>The server lesson covered the headers and the rate limits. This lesson is the layer under that — the
+handful of JavaScript-specific ways applications actually get owned, and the habits that close them. None
+of them require a security team to apply; all of them have appeared in real incident reports.</p>
+
+<h4>Injection is one disease with many hosts</h4>
+<p>Every injection attack is the same mistake: <b>user text concatenated into something that gets
+executed</b>. Change the host and it changes its name.</p>
+<div class="codeSample" data-hl>"SELECT * FROM users WHERE name='" + name + "'"   // SQL injection
+el.innerHTML = "&lt;b&gt;" + comment + "&lt;/b&gt;"              // XSS (the DOM lesson's warning)
+exec("convert " + filename)                        // command injection
+eval("callback_" + userInput + "()")               // code injection, hand-built
+
+// and one cure, every time: keep data OUT of the executable channel
+db.query("SELECT * FROM users WHERE name = ?", [name])   // parameterised
+el.textContent = comment                                  // text, never markup
+execFile("convert", [filename])                           // args, not a shell string</div>
+<p>Treat <code>eval</code> and <code>new Function</code> on anything derived from input as disallowed
+outright. There is essentially no legitimate application use; every appearance in a code review is either
+a bug or an incident.</p>
+
+<h4>Prototype pollution: the JavaScript-only one</h4>
+<p>The objects stream showed that every plain object inherits from <code>Object.prototype</code>. So if an
+attacker can write to <i>that</i>, they poison every object in the process. The way in is any code that
+copies user-supplied keys into objects — deep merges, config patchers, query-string parsers.</p>
+<div class="codeSample" data-hl>// attacker sends: {"__proto__": {"isAdmin": true}}
+merge(config, userPatch)          // a naive merge walks INTO __proto__
+({}).isAdmin                      // true - EVERY object now says so
+
+// defenses, in the order to reach for them:
+if (["__proto__","constructor","prototype"].includes(key)) continue;
+const clean = Object.create(null);        // an object with NO prototype
+structuredClone(x)  /* or */ new Map()    // Maps have no such magic keys</div>
+
+<h4>The supply chain: npm install is code execution</h4>
+<div class="codeSample" data-hl># installing a package runs its lifecycle scripts ON YOUR MACHINE
+# typosquats count on it:  lodahs, cross-env-shell, electorn...
+npm install --ignore-scripts     # worth making your default
+npm ci                           # installs EXACTLY the lockfile - no drift
+npm audit                        # known-CVE check; noisy but free</div>
+<p>The lockfile is a security file: it pins the exact bytes you audited. Commit it, install with
+<code>npm ci</code> in CI, and treat a surprise lockfile diff in a pull request with the suspicion you
+would give a binary blob. And the cheapest defense of all is <b>fewer dependencies</b> — every package is
+code you now ship but did not read.</p>
+
+<h4>Secrets</h4>
+<p>Secrets live in the environment (<code>process.env</code>, from the runtime lesson), never in code, and
+never in logs — the logging lesson's redaction rules exist mostly for this. A token that reaches a log
+file has left your control: logs are copied, shipped to third parties, and kept for years.</p>`,
+docs:[['OWASP — Top 10','https://owasp.org/www-project-top-ten/'],['OWASP — prototype pollution','https://cheatsheetseries.owasp.org/cheatsheets/Prototype_Pollution_Prevention_Cheat_Sheet.html'],['npm — audit','https://docs.npmjs.com/cli/commands/npm-audit']],
+ex:{title:'Vet a patch before merging it',diff:'hard',lang:'js',
+run:{call:'vetPatch',cases:[
+ {name:'a clean patch is ok',args:[{name:'Ada',theme:'dark'}],expect:'ok'},
+ {name:'clean nesting is still ok',args:[{profile:{theme:'dark',fontSize:14}}],expect:'ok'},
+ {name:'__proto__ at the top is rejected',args:[JSON.parse('{"__proto__":{"isAdmin":true}}')],expect:'reject: __proto__'},
+ {name:'constructor smuggled deep inside is found',args:[JSON.parse('{"profile":{"constructor":{"prototype":{"isAdmin":true}}}}')],expect:'reject: constructor'},
+ {name:'prototype as a key is rejected too',args:[JSON.parse('{"prototype":{"x":1}}')],expect:'reject: prototype'},
+ {name:'dangerous keys inside arrays are found',args:[{items:[{ok:1},JSON.parse('{"__proto__":{"a":1}}')]}],expect:'reject: __proto__'}]},
+prompt:`Write <code>function vetPatch(patch)</code> that walks an incoming object (objects, arrays, any depth) looking for the three pollution keys: <code>__proto__</code>, <code>constructor</code>, <code>prototype</code>. Return <code>"reject: "</code> plus the first dangerous key found (depth-first, in key order), or <code>"ok"</code> if the patch is clean. Use <code>Object.keys</code> to read keys — it sees own properties only, which is exactly the attack surface.`,
+starter:`function vetPatch(patch) {
+  return "ok";
+}`,
+solution:`function vetPatch(patch) {
+  const banned = ["__proto__", "constructor", "prototype"];
+  function walk(value) {
+    if (value === null || typeof value !== "object") return null;
+    for (const key of Object.keys(value)) {
+      if (banned.includes(key)) return key;    // found the attack
+      const hit = walk(value[key]);            // depth-first into children
+      if (hit) return hit;
+    }
+    return null;
+  }
+  const hit = walk(patch);
+  return hit ? "reject: " + hit : "ok";
+}`,
+tests:[{d:'bans __proto__',re:'__proto__'},{d:'bans constructor and prototype',re:'constructor'},{d:'reads own keys only',re:'Object\\.keys'},{d:'recurses into nested values',re:'walk\\s*\\(|vetPatch\\s*\\('}],
+behavior:`The dangerous cases are built with JSON.parse in the test data for a reason: a literal {__proto__: ...} in source code would silently set the object's prototype, but JSON.parse creates it as an ordinary own property — which is exactly how the attack arrives over the network, and exactly what Object.keys exposes. The walker refuses the patch before any merge happens, which is cheaper than cleaning up a poisoned Object.prototype ever is.`,
+hints:['Recurse: a function inside vetPatch that calls itself on object values.','Arrays are objects too - Object.keys gives their indices, so one walker handles both.','Return the key from the recursion so the first find wins.']}}
+
 
 ]});

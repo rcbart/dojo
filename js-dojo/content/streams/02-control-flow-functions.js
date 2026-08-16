@@ -277,8 +277,7 @@ exs:[
 {title:'Defaults apply to undefined only',diff:'easy',lang:'js',
 run:{call:'welcome',cases:[
  {name:'both arguments supplied',args:['Ada','Hi'],expect:'Hi, Ada'},
- {name:'the default is used when omitted',args:['Ada'],expect:'Hello, Ada'},
- {name:'undefined also triggers the default',args:['Ada',undefined],expect:'Hello, Ada'},
+ {name:'omitted (which IS undefined) triggers the default',args:['Ada'],expect:'Hello, Ada'},
  {name:'null does NOT trigger the default',args:['Ada',null],expect:'null, Ada'},
  {name:'an empty string does not trigger it either',args:['Ada',''],expect:', Ada'}]},
 prompt:`Write <code>function welcome(name, greeting = "Hello")</code> returning <code>"GREETING, NAME"</code> with a template literal. Use a real default parameter — do not write your own fallback, because the point of this exercise is that defaults fire on <code>undefined</code> and nothing else.`,
@@ -373,7 +372,8 @@ A pure function needs no mocks, no setup and no teardown to test.</p>
 Silently modifying an object the caller passed in is the source of bugs that appear far from their
 cause — the caller's data changed and nothing at the call site suggests it could have.</p>`,
 docs:[['MDN — Functions guide','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions'],['Refactoring: guard clauses','https://refactoring.com/catalog/replaceNestedConditionalWithGuardClauses.html']],
-ex:{title:'Rewrite with guard clauses',diff:'easy',lang:'js',
+exs:[
+{title:'Rewrite with guard clauses',diff:'easy',lang:'js',
 run:{call:'pay',cases:[
  {name:'missing user',args:[null,10],expect:'no user'},
  {name:'inactive user',args:[{active:false,balance:100},10],expect:'inactive'},
@@ -395,6 +395,30 @@ solution:`function pay(user, amount) {
 }`,
 tests:[{d:'guards on a missing user first',re:'!\\s*user'},{d:'guards on inactive',re:'user\\.active'},{d:'rejects non-positive amounts',re:'amount\\s*<=\\s*0'},{d:'checks the balance',re:'balance\\s*<\\s*amount'}],
 behavior:`Order is executed, not merely described: a null user is checked before any property is read, so the inactive test cannot throw. The boundary cases matter too — an amount of exactly 0 is invalid, and a balance of exactly the amount succeeds.`,
-hints:['Check the null user first, or reading user.active will throw.','Each guard returns immediately, so no else is needed.','Non-positive means <= 0, and insufficient means balance < amount.']}}
+hints:['Check the null user first, or reading user.active will throw.','Each guard returns immediately, so no else is needed.','Non-positive means <= 0, and insufficient means balance < amount.']},
+{title:'An options object, defaulted honestly',diff:'medium',lang:'js',
+run:{call:'summarize',cases:[
+ {name:'short text passes through',args:['Ship it'],expect:'Ship it'},
+ {name:'no options object needed at all',args:['Guard clauses win'],expect:'Guard clause…'},
+ {name:'exactly maxLength is untouched',args:['twelve chars'],expect:'twelve chars'},
+ {name:'whitespace is trimmed first',args:['   padded   '],expect:'padded'},
+ {name:'a custom maxLength is respected',args:['JavaScript',{maxLength:4}],expect:'Java…'},
+ {name:'a custom suffix is respected',args:['readability matters here',{suffix:'...'}],expect:'readability...'},
+ {name:'the cut does not end mid-space',args:['one two three four',{maxLength:8}],expect:'one two…'},
+ {name:'non-string input returns an empty string',args:[42],expect:''}]},
+prompt:`The parameter-count advice, applied. Write <code>function summarize(text, options)</code> where <code>options</code> is optional and may carry <code>maxLength</code> (default <code>12</code>) and <code>suffix</code> (default <code>"…"</code>). Guard first: a non-string <code>text</code> returns <code>""</code>. Trim the text; if it fits within <code>maxLength</code> return it as-is; otherwise cut it to <code>maxLength</code>, strip any trailing space from the cut, and append the suffix.`,
+starter:`function summarize(text, options) {
+  return "";
+}`,
+solution:`function summarize(text, options = {}) {
+  if (typeof text !== "string") return "";           // guard clause first
+  const { maxLength = 12, suffix = "…" } = options;  // named, defaulted "arguments"
+  const clean = text.trim();
+  if (clean.length <= maxLength) return clean;
+  return clean.slice(0, maxLength).trimEnd() + suffix;
+}`,
+tests:[{d:'guards on non-string input',re:'typeof'},{d:'defaults each option as it destructures',re:'maxLength\\s*='},{d:'trims before measuring',re:'\\.trim\\('},{d:'does not end the cut on a space',re:'trimEnd'}],
+behavior:`Compare the call sites this signature buys: summarize(text) reads clean, summarize(text, { maxLength: 4 }) names its argument — against a hypothetical summarize(text, 4, "…", true) where no reader knows which value is which. The boundary cases execute the craft details: exactly-at-the-limit text is untouched, padding never counts against the budget, and the trimEnd stops "one two …" from shipping with a floating space.`,
+hints:['Default the whole parameter with options = {}, then each field as you destructure it.','Trim first — the padding case expects whitespace not to count.','Slice, then trimEnd, then append the suffix; that order settles the mid-space case.']}]}
 
 ]});

@@ -389,6 +389,31 @@ solution:`function decodePayload(token) {
 }`,
 tests:[{d:'splits on the dot',re:'split\\s*\\(\\s*"\\."'},{d:'requires exactly three segments',re:'length\\s*!==\\s*3'},{d:'decodes the middle segment',re:'parts\\[1\\]|\\[1\\]'},{d:'guards against bad input',re:'catch'}],
 behavior:`Five cases execute, including two that throw without the try/catch — atob rejects invalid base64 and JSON.parse rejects the result. This is the Console one-liner from the lesson, hardened. It reads a token without sending it anywhere, which is the entire reason not to use an online decoder on a live credential.`,
-hints:['A JWT is three dot-separated segments; the payload is the middle one.','atob decodes base64, and it throws on invalid input.','Wrap the decode and parse together in one try/catch.']}]}
+hints:['A JWT is three dot-separated segments; the payload is the middle one.','atob decodes base64, and it throws on invalid input.','Wrap the decode and parse together in one try/catch.']},
+{title:'Judge the decoded claims',diff:'hard',lang:'js',
+run:{call:'checkClaims',cases:[
+ {name:'a clean token is accepted',args:[{iss:'https://as.example',aud:'app1',exp:1755303600,nonce:'n-1'},{issuer:'https://as.example',clientId:'app1',now:1755300000,nonce:'n-1'}],expect:'accept'},
+ {name:'a foreign issuer is rejected first',args:[{iss:'https://evil.example',aud:'app1',exp:1755303600,nonce:'n-1'},{issuer:'https://as.example',clientId:'app1',now:1755300000,nonce:'n-1'}],expect:'wrong issuer'},
+ {name:'aud as an array is fine if it contains you',args:[{iss:'https://as.example',aud:['other','app1'],exp:1755303600,nonce:'n-1'},{issuer:'https://as.example',clientId:'app1',now:1755300000,nonce:'n-1'}],expect:'accept'},
+ {name:'a token for someone else is not for you',args:[{iss:'https://as.example',aud:['other','api2'],exp:1755303600,nonce:'n-1'},{issuer:'https://as.example',clientId:'app1',now:1755300000,nonce:'n-1'}],expect:'wrong audience'},
+ {name:'exp equal to now is already expired',args:[{iss:'https://as.example',aud:'app1',exp:1755300000,nonce:'n-1'},{issuer:'https://as.example',clientId:'app1',now:1755300000,nonce:'n-1'}],expect:'expired'},
+ {name:'a missing exp counts as expired',args:[{iss:'https://as.example',aud:'app1',nonce:'n-1'},{issuer:'https://as.example',clientId:'app1',now:1755300000,nonce:'n-1'}],expect:'expired'},
+ {name:'a replayed nonce is caught',args:[{iss:'https://as.example',aud:'app1',exp:1755303600,nonce:'stale'},{issuer:'https://as.example',clientId:'app1',now:1755300000,nonce:'n-1'}],expect:'nonce mismatch'},
+ {name:'no expected nonce means none is checked',args:[{iss:'https://as.example',aud:'app1',exp:1755303600},{issuer:'https://as.example',clientId:'app1',now:1755300000}],expect:'accept'}]},
+prompt:`Write <code>function checkClaims(claims, expected)</code> — the checklist the lesson runs in the Console, executed. Check in order and return at the first failure: <code>claims.iss</code> must equal <code>expected.issuer</code> (&rarr; <code>"wrong issuer"</code>); <code>claims.aud</code>, which may be a string <b>or an array</b>, must include <code>expected.clientId</code> (&rarr; <code>"wrong audience"</code>); <code>claims.exp</code> must be strictly greater than <code>expected.now</code>, with a missing exp counting as expired (&rarr; <code>"expired"</code>); and when <code>expected.nonce</code> is present, <code>claims.nonce</code> must match it (&rarr; <code>"nonce mismatch"</code>). Otherwise return <code>"accept"</code>.`,
+starter:`function checkClaims(claims, expected) {
+  return "accept";
+}`,
+solution:`function checkClaims(claims, expected) {
+  if (claims.iss !== expected.issuer) return "wrong issuer";
+  const aud = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+  if (!aud.includes(expected.clientId)) return "wrong audience";
+  if (!(claims.exp > expected.now)) return "expired";   // missing exp fails this too
+  if (expected.nonce && claims.nonce !== expected.nonce) return "nonce mismatch";
+  return "accept";
+}`,
+tests:[{d:'checks the issuer',re:'\\.iss\\b'},{d:'normalises aud to an array',re:'Array\\.isArray'},{d:'compares exp against now',re:'\\.exp\\b'},{d:'verifies the nonce when one is expected',re:'nonce'}],
+behavior:`Eight cases execute the four checks the lesson names, in order, guard-clause style. Two deserve attention: exp equal to now is already expired (a token is valid strictly before its expiry), and a missing exp fails the same check — !(undefined > now) is true, so absence of an expiry reads as expired rather than as immortal. That inversion — unprovable freshness is staleness — is the safe default everywhere in identity.`,
+hints:['Guard clauses in the order given: iss, aud, exp, nonce.','Normalise aud with Array.isArray, then one includes() covers both shapes.','Write the exp check as !(claims.exp > expected.now) so a missing exp also fails it.']}]}
 
 ]});

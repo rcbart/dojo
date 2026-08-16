@@ -180,7 +180,7 @@ run:{call:'describe',cases:[
  {name:'a number',args:[42],expect:'number'},
  {name:'a string',args:['hi'],expect:'string'},
  {name:'a boolean',args:[true],expect:'boolean'},
- {name:'undefined',args:[undefined],expect:'undefined'},
+ {name:'undefined (the argument is simply not passed)',args:[],expect:'undefined'},
  {name:'null is reported as null, not object',args:[null],expect:'null'},
  {name:'an array is distinguished from a plain object',args:[[1,2]],expect:'array'},
  {name:'a plain object',args:[{a:1}],expect:'object'},

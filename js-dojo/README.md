@@ -1,11 +1,11 @@
 <p align="center">
   <img src="https://img.shields.io/badge/status-complete-2ea44f" alt="status">
-  <img src="https://img.shields.io/badge/streams-15-eab308" alt="streams built">
-  <img src="https://img.shields.io/badge/lessons-53-eab308" alt="lessons">
-  <img src="https://img.shields.io/badge/exercises-91-06b6d4" alt="exercises">
-  <img src="https://img.shields.io/badge/executed%20cases-531-2ea44f" alt="executed test cases">
+  <img src="https://img.shields.io/badge/streams-16-eab308" alt="streams built">
+  <img src="https://img.shields.io/badge/lessons-64-eab308" alt="lessons">
+  <img src="https://img.shields.io/badge/exercises-106-06b6d4" alt="exercises">
+  <img src="https://img.shields.io/badge/executed%20cases-618-2ea44f" alt="executed test cases">
   <img src="https://img.shields.io/badge/real%20execution-100%25-06b6d4" alt="exercises graded by real execution">
-  <img src="https://img.shields.io/badge/quiz%20questions-159-8b5cf6" alt="hand-authored quiz questions">
+  <img src="https://img.shields.io/badge/quiz%20questions-192-8b5cf6" alt="hand-authored quiz questions">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
@@ -15,9 +15,9 @@ JavaScript and Node from the ground up, **assuming nothing**, in a single offlin
 course in this repository, built on the same [shared engine](../engine/README.md) as
 [Dev Dojo](../README.md) and [Identity Dojo](../identity-dojo/README.md).
 
-> **All 15 streams are built.** **53 lessons, 91 exercises, 531 executed cases, 0 failures** — and
+> **All 16 streams are built.** **64 lessons, 106 exercises, 618 executed cases, 0 failures** — and
 > every exercise is graded by real execution, not by pattern-matching. Exercises are tagged
-> `easy` / `medium` / `hard` and ramp within each lesson; the 20 hard ones are small realistic problems
+> `easy` / `medium` / `hard` and ramp within each lesson; the 25 hard ones are small realistic problems
 > written so that a plausible-but-wrong implementation fails a **named** case.
 
 ## Why this course exists
@@ -47,19 +47,20 @@ hand-waved as "just how JavaScript is".
 |--:|---|---|
 | 1 | **JavaScript Foundations** ✅ | where JS runs, the eight types, `let`/`const`/`var`, operators, coercion, truthiness, `==` vs `===`, strings and numbers |
 | 2 | **Control Flow & Functions** ✅ | conditionals, loops, function forms, parameters, arrow functions, early return |
-| 3 | **Objects, Arrays & Data** ✅ | objects, arrays, destructuring, spread/rest, `map`/`filter`/`reduce`, `Map`/`Set`, JSON |
-| 4 | **Functions in Depth** ✅ | the call stack, scope chain, closures, `this` in all five forms, `call`/`apply`/`bind`, recursion |
-| 5 | **Prototypes, Classes & Objects** ✅ | the prototype chain, `class`, inheritance, getters/setters, private fields, symbols, iterators |
+| 3 | **Objects, Arrays & Data** ✅ | objects, arrays, destructuring, spread/rest, `map`/`filter`/`reduce`, `Map`/`Set`, JSON, dates and `Intl` |
+| 4 | **Functions in Depth** ✅ | the call stack, scope chain, closures, `this` in all five forms, `call`/`apply`/`bind`, recursion, pure functions and immutability |
+| 5 | **Prototypes, Classes & Objects** ✅ | the prototype chain, `class`, inheritance, getters/setters, private fields, symbols, iterators, generators and async iteration |
 | 6 | **The Event Loop & Async** ✅ | callbacks, promises, `async`/`await`, microtasks vs macrotasks, concurrency, cancellation |
-| 7 | **Errors & the Debugging Method** ✅ | `Error` types, `try`/`catch`/`finally`, custom errors, reading stack traces, async errors, bisect/reproduce/isolate |
-| 8 | **Debugging in the Browser** ✅ | DevTools Sources, breakpoints (conditional, logpoint, DOM, XHR), the scope pane, blackboxing, source maps, the Network panel, cookies and storage, **tracing an OAuth/OIDC redirect flow end to end** |
-| 9 | **Modules, Packages & Tooling** ✅ | ESM vs CommonJS, `package.json`, npm, semver, lockfiles, bundlers, linting and formatting |
-| 10 | **TypeScript** ✅ | why types, structural typing, generics, narrowing, `unknown` vs `any`, migrating JS |
-| 11 | **The Node Runtime** ✅ | what Node is, its event loop and phases, `process`, env and CLI args, globals |
-| 12 | **Files, Streams & the Standard Library** ✅ | `fs`, `path`, buffers, streams, backpressure, `worker_threads` |
-| 13 | **Building an HTTP Server** ✅ | the `http` module, routing, middleware, REST, validation, auth, security headers |
-| 14 | **Debugging, Testing & Profiling Node** ✅ | `node --inspect`, breakpoints in server code, `node:test`, heap snapshots, CPU profiles, event-loop blocking |
-| 15 | **Capstone** ✅ | build and debug a real application end to end |
+| 7 | **The Browser: DOM, Events & fetch** ✅ | the DOM tree, `textContent` vs `innerHTML` and XSS, events, bubbling and delegation, `fetch` and `res.ok`, CORS, `AbortController`, forms, `FormData` and layered validation |
+| 8 | **Errors & the Debugging Method** ✅ | `Error` types, `try`/`catch`/`finally`, custom errors, reading stack traces, async errors, bisect/reproduce/isolate |
+| 9 | **Debugging in the Browser** ✅ | DevTools Sources, breakpoints (conditional, logpoint, DOM, XHR), the scope pane, blackboxing, source maps, the Network panel, cookies and storage, **tracing an OAuth/OIDC redirect flow end to end** |
+| 10 | **Modules, Packages & Tooling** ✅ | ESM vs CommonJS, `package.json`, npm, semver, lockfiles, bundlers, linting and formatting |
+| 11 | **TypeScript** ✅ | why types, structural typing, generics, narrowing, `unknown` vs `any`, migrating JS |
+| 12 | **The Node Runtime** ✅ | what Node is, its event loop and phases, `process`, env and CLI args, globals, the EventEmitter pattern |
+| 13 | **Files, Streams & the Standard Library** ✅ | `fs`, `path`, buffers, streams, backpressure, `worker_threads` |
+| 14 | **Building an HTTP Server** ✅ | the `http` module, routing, middleware, REST, validation, auth, security headers, injection, prototype pollution and the supply chain |
+| 15 | **Debugging, Testing & Profiling Node** ✅ | `node --inspect`, breakpoints in server code, `node:test`, heap snapshots, CPU profiles, event-loop blocking, garbage collection, `WeakMap` and workers |
+| 16 | **Capstone** ✅ | build and debug a real application end to end |
 
 ## How the exercises are pitched
 
@@ -79,7 +80,7 @@ The hard tier is written so that a plausible-looking implementation fails a **na
 
 ## Quizzes
 
-Every one of the 53 lessons carries **at least 3 hand-authored questions — 159 in total**, ordered within
+Every one of the 64 lessons carries **at least 3 hand-authored questions — 192 in total**, ordered within
 each lesson from recall to reasoning to judgement. Each one explains why the right answer is right *and*
 why every distractor is wrong, and options are shuffled per visit so the answer position cannot be
 memorised.

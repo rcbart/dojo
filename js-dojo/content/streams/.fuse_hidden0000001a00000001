@@ -490,8 +490,8 @@ solution:`function promoteAll(users) {
   const promoted = users.map(user => ({ ...user, role: "admin", logins: user.logins + 1 }));
   return { promoted, original: users };
   // the spread copies every property; the overrides after it win.
-  // an increment written onto the CALLER'S object instead would leave
-  // its evidence right in the original you hand back.
+  // user.logins += 1 would have changed the CALLER'S object - and the
+  // evidence would appear right in the original you hand back.
 }`,
 tests:[{d:'maps to new objects',re:'\\.map\\('},{d:'spreads each user into a copy',re:'\\.\\.\\.\\s*user'},{d:'overrides the role',re:'"admin"'},{d:'does not assign onto the input',re:'user\\.(role|logins)\\s*[+]?=',not:true}],
 behavior:`Every case checks the input twice: once through the promoted copies, and once through original — the same array your function received, examined after it ran. A mutating implementation returns an original whose users are already admins with bumped logins, and fails on real evidence of the side effect, not on style. The copying implementation leaves logins exactly where it found them.`,

@@ -322,5 +322,164 @@ solution:`function diagnoseService(signals) {
 tests:[{d:'checks loop lag first',re:'loopLagMs\\s*>\\s*100'},{d:'then the heap trend',re:'"rising"'},{d:'then dependency latency',re:'dependencyLatencyMs\\s*>\\s*1000'},{d:'falls back to admitting it does not know',re:'"unknown"'}],
 behavior:`Six cases execute and two exist to pin the ORDER. Case 4 has every signal bad at once and must return "blocked event loop", because a blocked loop makes everything downstream look slow — the dependency latency you measured includes time your own process spent not reading the socket. Case 5 puts a leak and a slow dependency together, and the leak wins, because unbounded memory growth eventually causes the other symptoms too. The last case is the honest one: when nothing is conclusive the answer is more instrumentation, not a guess.`,
 hints:['Guard clauses in the stated order — the first match wins.','A blocked loop distorts every other measurement, so it is checked first.','The final return admits ignorance and asks for better metrics rather than picking a cause.']}]}
+,
+
+{id:'jsmem',title:'How memory works: reachability, GC and weak references',body:`
+<p>The profiling lesson taught you to catch a leak from the outside — heap trends and snapshots. This one
+explains the machine underneath, because once you know the collector's one rule, every leak pattern stops
+being folklore and becomes obvious.</p>
+
+<h4>The one rule: reachability</h4>
+<p>JavaScript has no <code>free()</code>. The engine keeps an object alive exactly as long as it is
+<b>reachable</b> — findable by following references from the <b>roots</b>: global variables, the current
+call stack, and active closures. Everything unreachable is garbage, collected whenever the engine
+pleases.</p>
+<div class="codeSample" data-hl>let user = { name: "Ada" };
+user = null;              // the object is now unreachable -> collectable
+
+let a = {}, b = {};
+a.pal = b; b.pal = a;     // a CYCLE - they point at each other
+a = null; b = null;       // still fine! reachability from ROOTS is what
+                          // counts, and no root reaches either. a cycle
+                          // of garbage is still garbage.</div>
+<p>That cycle example is why the rule is reachability and not reference counting — a counter would see
+"someone still points at me" and keep both forever. (Mark-and-sweep starts at the roots, marks everything
+it can reach, and sweeps the rest; generational engines like V8 collect young objects far more often than
+old ones, which is why short-lived allocation is cheap.)</p>
+
+<h4>So a leak is an unwanted reference</h4>
+<div class="codeSample" data-hl>const cache = new Map();                    // module-level = a ROOT
+function render(user) {
+  cache.set(user.id, expensiveLayout(user));   // grows forever - every
+}                                              // entry is reachable, so
+                                               // NOTHING here is garbage
+emitter.on("tick", () =&gt; use(bigThing));   // the emitter (alive) holds the
+                                            // listener, the listener's closure
+                                            // holds bigThing. subscribed = alive.</div>
+<p>Every leak from the profiling lesson's list is this shape: some long-lived object — a module-level
+collection, an emitter, a timer — holds a path to something that should have died. The fix is always the
+same verb: <b>sever the path</b> (delete the entry, remove the listener, clear the timer).</p>
+
+<h4>WeakMap: an entry that does not count</h4>
+<p>Sometimes you want to attach data <i>to</i> an object without keeping the object alive. That is
+precisely what <code>WeakMap</code> is for: its keys are held <b>weakly</b> — a key reachable only through
+the WeakMap is collectable, and its entry evaporates with it.</p>
+<div class="codeSample" data-hl>const layouts = new WeakMap();          // object -> computed layout
+layouts.set(user, expensiveLayout(user));
+// when the LAST real reference to user drops, the entry goes too -
+// a cache that cannot leak its keys.
+
+// consequences of weakness: keys must be objects, and a WeakMap is
+// not iterable - you cannot list what the collector may be removing.
+// (WeakRef and FinalizationRegistry go further down this road; they
+// are almost never the right tool in application code.)</div>
+
+<h4>What you cannot do</h4>
+<p>You cannot force a collection, and you should not try to time one — GC is the engine's business, and
+<code>process.memoryUsage()</code> not dropping the instant you null a reference means nothing. Your job
+is only ever the references: keep the paths you need, sever the ones you do not, and let the collector do
+the rest.</p>`,
+docs:[['MDN — Memory management','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Memory_management'],['MDN — WeakMap','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap'],['V8 — Trash talk: the garbage collector','https://v8.dev/blog/trash-talk']],
+ex:{title:'Implement the mark phase',diff:'medium',lang:'js',
+run:{call:'reachable',cases:[
+ {name:'follows a chain from the root',args:[{root:['a'],a:['b'],b:[]},['root']],expect:['a','b','root']},
+ {name:'a cycle does not loop forever',args:[{a:['b'],b:['a']},['a']],expect:['a','b']},
+ {name:'the unreachable island is garbage',args:[{root:['a'],a:[],x:['y'],y:['x']},['root']],expect:['a','root']},
+ {name:'multiple roots all count',args:[{g:['obj1'],stack:['obj2'],obj1:[],obj2:[]},['g','stack']],expect:['g','obj1','obj2','stack']},
+ {name:'no roots means everything is garbage',args:[{a:['b'],b:[]},[]],expect:[]},
+ {name:'diamond shapes are visited once',args:[{r:['a','b'],a:['c'],b:['c'],c:[]},['r']],expect:['a','b','c','r']}]},
+prompt:`Write <code>function reachable(graph, roots)</code> — the collector's mark phase. <code>graph</code> maps each object name to the list of names it references; <code>roots</code> lists where marking starts. Return the <b>sorted</b> array of every name reachable from any root, visiting each node once (the graphs contain cycles — an unguarded walk will never finish).`,
+starter:`function reachable(graph, roots) {
+  return [];
+}`,
+solution:`function reachable(graph, roots) {
+  const seen = new Set();
+  const stack = [...roots];
+  while (stack.length) {
+    const node = stack.pop();
+    if (seen.has(node)) continue;        // the cycle guard
+    seen.add(node);                      // mark
+    for (const next of graph[node] || []) stack.push(next);
+  }
+  return [...seen].sort();               // everything NOT in here is garbage
+}`,
+tests:[{d:'tracks visited nodes in a Set',re:'new\\s+Set'},{d:'guards against revisiting',re:'\\.has\\('},{d:'follows outgoing references',re:'graph\\[node\\]'},{d:'returns a sorted list',re:'\\.sort\\('}],
+behavior:`This is the actual algorithm, executed on six heaps. The cycle case is the argument for the whole design: a and b reference each other, no root references either, and the walk from the roots simply never arrives — the cycle collects itself by being unreachable. The seen-set is what real collectors call the mark bit, and the diamond case proves each object is marked once no matter how many paths lead to it.`,
+hints:['Keep a Set of seen names and a stack of names still to visit.','Pop, skip if seen, mark, push the node\\u2019s references.','Sort the Set\\u2019s contents at the end - the cases expect alphabetical order.']}}
+
+,
+
+{id:'jswork',title:'Workers: real parallelism, and when you need it',body:`
+<p>Everything in this course so far has run on one thread, and the async stream showed how far that goes:
+I/O concurrency without parallelism. The gap is <b>CPU work</b> — parse a huge file, compress an image,
+hash a password — where the loop lesson's rule was blunt: while your code computes, nothing else runs.
+Workers are the escape hatch: <b>more event loops</b>, not a faster one.</p>
+
+<h4>What a worker is</h4>
+<div class="codeSample" data-hl>// main.js
+import { Worker } from "node:worker_threads";
+const w = new Worker("./crunch.js", { workerData: { file: "big.csv" } });
+w.on("message", (result) =&gt; console.log("done", result));
+w.on("error", (err) =&gt; log.error({ err }));
+
+// crunch.js - a separate thread, a separate event loop
+import { parentPort, workerData } from "node:worker_threads";
+parentPort.postMessage(crunch(workerData.file));</div>
+<p>Browsers have the same shape with <code>new Worker(url)</code> and <code>postMessage</code> — and, a
+little poetically, <b>every exercise you have run in this course executed inside one</b>. That is why
+your solutions had to be pure functions: a worker has no DOM and shares no variables with the page. The
+sandbox you have been coding in all along is this lesson's subject.</p>
+
+<h4>Messages are copies: structured clone</h4>
+<div class="codeSample" data-hl>w.postMessage({ user, items });   // the OTHER side gets a deep COPY
+
+// structured clone carries: objects, arrays, strings, numbers, Date,
+// Map, Set, RegExp, typed arrays - and survives cycles, which JSON cannot.
+// it REFUSES: functions and DOM nodes (DataCloneError, it throws).
+// and class instances arrive as plain data: own properties, no methods.</div>
+<p>No shared variables means no data races — the whole category of bugs that makes threading notorious
+simply cannot be expressed. The price is copying cost on big payloads. (The escape hatches exist:
+transfer lists move a buffer instead of copying it, and <code>SharedArrayBuffer</code> +
+<code>Atomics</code> genuinely share memory — at which point the races return, which is why almost
+nobody starts there.)</p>
+
+<h4>When a worker is the answer</h4>
+<div class="codeSample" data-hl>// I/O-bound?  NEVER a worker. the loop already handles ten thousand
+// concurrent requests; a worker would add copying and solve nothing.
+
+// CPU-bound and SMALL (a few ms)?  just do it. the copy costs more.
+
+// CPU-bound and BIG (tens of ms and up, on a server: per request)?
+// -> a worker, or better, a POOL of them sized near your core count.
+//    spawning is expensive; reuse is the whole game.</div>
+<p>The decision is the event-loop lesson's arithmetic: 50ms of synchronous work on a server handling 100
+requests per second does not slow things down, it <i>stops</i> them. Move that computation to a pool and
+the loop goes back to what it is good at — waiting on everything at once.</p>`,
+docs:[['Node — worker_threads','https://nodejs.org/api/worker_threads.html'],['MDN — Web Workers','https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers'],['MDN — structured clone','https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm']],
+ex:{title:'Loop or worker?',diff:'medium',lang:'js',
+run:{call:'whereToRun',cases:[
+ {name:'slow I/O still belongs on the loop',args:[{kind:'io',ms:2000}],expect:'the event loop: async I/O does not block'},
+ {name:'a tiny calculation is not worth the copy',args:[{kind:'cpu',ms:5}],expect:'the event loop: too small to be worth a worker'},
+ {name:'heavy CPU work blocks everyone',args:[{kind:'cpu',ms:400}],expect:'a worker: this would block the loop'},
+ {name:'the 50ms boundary goes to the worker',args:[{kind:'cpu',ms:50}],expect:'a worker: this would block the loop'},
+ {name:'just under the boundary stays home',args:[{kind:'cpu',ms:49}],expect:'the event loop: too small to be worth a worker'},
+ {name:'even instant I/O is still I/O',args:[{kind:'io',ms:1}],expect:'the event loop: async I/O does not block'}]},
+prompt:`Write <code>function whereToRun(job)</code> for a job <code>{ kind, ms }</code> where <code>kind</code> is <code>"io"</code> or <code>"cpu"</code> and <code>ms</code> is how long the work takes. I/O always returns <code>"the event loop: async I/O does not block"</code> — no matter how slow. CPU work of 50ms or more returns <code>"a worker: this would block the loop"</code>; less returns <code>"the event loop: too small to be worth a worker"</code>.`,
+starter:`function whereToRun(job) {
+  return null;
+}`,
+solution:`function whereToRun(job) {
+  if (job.kind === "io") {
+    return "the event loop: async I/O does not block";   // slowness is fine;
+  }                                                       // the loop WAITS, it
+  if (job.ms >= 50) {                                     // does not compute
+    return "a worker: this would block the loop";
+  }
+  return "the event loop: too small to be worth a worker";
+}`,
+tests:[{d:'checks the kind first',re:'kind'},{d:'I/O never goes to a worker',re:'does not block'},{d:'uses the 50ms boundary',re:'50'},{d:'sends heavy CPU work away',re:'block the loop'}],
+behavior:`The first case is the one that reorders intuitions: two full seconds of I/O stays on the loop, because the loop spends that time waiting, not computing — it can wait on ten thousand things at once. The boundary cases pin the CPU rule: 50ms is worker territory, 49ms is not, and the real threshold in production is whatever your latency budget says it is.`,
+hints:['Guard on kind === "io" first - duration is irrelevant for I/O.','&gt;= 50 goes to the worker; the boundary case is included.','Three returns, no else needed - the guard-clause habit from stream 02.']}}
+
 
 ]});

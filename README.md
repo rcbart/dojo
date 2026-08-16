@@ -64,8 +64,8 @@ fails.)*
   lesson visit**, so the answer position can never be memorised. Dev Dojo now carries **397 hand-authored
   questions across 129 lessons** — each with a written explanation of why the right answer is right and
   why every distractor is wrong — plus 9 auto-generated from the exercise specs. Identity Dojo carries a
-  further 327 and JS Dojo 159. Extending the hand-authored bank to the remaining lessons is an open item.
-- **📖 Glossary** — 12 domains / 340 terms, collapsible and searchable, doubling as the in-lesson
+  further 327 and JS Dojo 192. Extending the hand-authored bank to the remaining lessons is an open item.
+- **📖 Glossary** — 11 domains / 360 terms, collapsible and searchable, doubling as the in-lesson
   click-to-explain source.
 - **Belts & capstones** — per-domain percentage belts (white → black), dan sub-tracks for advanced
   topics, and a graded multi-step capstone. Streams

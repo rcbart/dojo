@@ -5,6 +5,7 @@
   "04-functions-in-depth.js",
   "05-prototypes-classes.js",
   "06-async-event-loop.js",
+  "06b-browser-dom-events-fetch.js",
   "07-errors-debugging-method.js",
   "08-debugging-in-the-browser.js",
   "09-modules-packages-tooling.js",

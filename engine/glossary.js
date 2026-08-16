@@ -480,7 +480,7 @@ const GLOSS_ALL=[
      ['Replication',`Keeping copies of data on multiple nodes for durability and reads.`],
      ['SLO',`A Service Level Objective: a target for reliability or latency.`],
    ]},
- ]},,
+ ]},
  {domain:'JavaScript & Node',icon:'\u{1F7E8}',groups:[
    {h:'1 \u00b7 Values and types',terms:[
      ['Primitive',`One of the seven immutable single values: number, string, boolean, undefined, null, bigint, symbol. Everything else is an object.`],
@@ -502,26 +502,48 @@ const GLOSS_ALL=[
      ['Shallow copy',`Spread and Object.assign copy only top-level properties; nested objects remain shared references. structuredClone copies deeply.`],
      ['Prototype pollution',`Merging untrusted data can set __proto__ and thereby add a property to every object in the program. Use Object.create(null) or a Map for untrusted keys.`],
      ['Iterable protocol',`An object with a [Symbol.iterator] method works with for...of, spread and destructuring.`]]},
-   {h:'4 \u00b7 Asynchrony',terms:[
+   {h:'4 \u00b7 The browser',terms:[
+     ['DOM',`The Document Object Model \u2014 the live tree of objects the browser builds from your HTML. JavaScript changes the page by changing this tree; the HTML text itself is never edited.`],
+     ['Event',`A signal that something happened \u2014 a click, a keypress, a submitted form. Code subscribes with addEventListener and receives an event object describing exactly what occurred.`],
+     ['Bubbling',`After an event fires on its target it travels up through the ancestors, giving each one a chance to handle it. Why a listener on a list can hear clicks on its items.`],
+     ['Delegation',`One listener on a parent handling events for all its children, using bubbling plus event.target to learn where it started. Survives children being added and removed.`],
+     ['fetch',`The browser\u2019s HTTP function: fetch(url) returns a promise of a response. It rejects only on network failure \u2014 a 404 or 500 still resolves, so check res.ok yourself.`],
+     ['CORS',`Cross-Origin Resource Sharing: the browser blocks reading responses from another origin unless that server explicitly allows your page. Fixed on the server, never in your code.`],
+     ['FormData',`Reads a whole form\u2019s fields into key\u2013value pairs in one line: new FormData(formElement). Pairs with the submit event for JavaScript-handled forms.`],
+     ['XSS',`Cross-site scripting: user text ending up executed as markup or script, e.g. via innerHTML. Cured by keeping data out of executable channels \u2014 textContent for text, always.`]]},
+   {h:'5 \u00b7 Asynchrony',terms:[
      ['Event loop',`When the call stack is empty, take the next callback from a queue and run it. The host does the waiting; nothing in your code runs in parallel.`],
      ['Microtask',`A promise callback. The entire microtask queue drains after each macrotask, so promises always run before the next timer.`],
      ['Macrotask',`A timer or I/O callback. setTimeout(fn, 0) is a minimum delay, not an immediate call.`],
      ['Unhandled rejection',`A rejected promise nobody awaited or caught. Since Node 15 it terminates the process.`],
      ['Backpressure',`A slow writer signalling a fast reader to pause, so unwritten data does not pile up in memory. pipeline handles it for you.`],
      ['Event loop lag',`The gap between when a timer should have fired and when it did. The single most useful health metric a Node service can emit.`]]},
-   {h:'5 \u00b7 Modules, tooling and types',terms:[
+   {h:'6 \u00b7 Modules, tooling and types',terms:[
      ['ESM',`ES modules: import/export, statically resolved before execution — which is what makes tree-shaking possible.`],
      ['CommonJS',`Node\u2019s original module system: require/module.exports, resolved dynamically at the moment of the call.`],
      ['Tree-shaking',`Dropping unused exports from a bundle. Only possible because ESM\u2019s dependency graph is known without running the code.`],
      ['Semver',`MAJOR.MINOR.PATCH. ^ allows minor and patch but never crosses a major — except below 1.0, where it treats the minor as breaking.`],
      ['Lockfile',`Records the exact version of every package in the tree. npm ci installs from it; npm install rewrites it.`],
      ['Type erasure',`TypeScript annotations are removed before the code runs, so there are no runtime type checks and every boundary still needs validation.`],
-     ['Source map',`A file mapping bundled, minified positions back to your original source, so a stack trace names real files and variables.`]]}]}
+     ['Source map',`A file mapping bundled, minified positions back to your original source, so a stack trace names real files and variables.`]]},
+   {h:'7 \u00b7 Memory, time and the runtime',terms:[
+     ['Generator',`A function* that can pause at yield and resume later, keeping all its local state. Produces values lazily \u2014 you only pay for what the consumer takes.`],
+     ['EventEmitter',`Node\u2019s many-occurrences pattern: on() subscribes, emit() calls every listener synchronously in order. An "error" event with no listener crashes the process.`],
+     ['Worker',`A separate thread with its own event loop, talking to yours only by message passing. For CPU-bound work; I/O never needs one.`],
+     ['Structured clone',`The deep-copy algorithm behind postMessage and structuredClone: carries objects, arrays, Map, Set and Date, survives cycles, refuses functions and DOM nodes.`],
+     ['Garbage collection',`The engine frees any object that can no longer be reached from a root (globals, the stack, live closures). There is no free() \u2014 only references to sever.`],
+     ['Reachability',`The collector\u2019s one rule: alive means findable by following references from the roots. A cycle nothing points at is still garbage.`],
+     ['Memory leak',`In JavaScript, always an unintended reference: a module-level Map that only grows, a cache with no eviction, a listener never removed.`],
+     ['WeakMap',`A map whose keys are held weakly: a key reachable only through the WeakMap can still be collected, and its entry evaporates with it. Metadata that cannot cause a leak.`],
+     ['Immutability',`Treating data as read-only and making changed copies instead: spread for objects, toSorted over sort. Turns a class of far-away bugs impossible.`],
+     ['Intl',`The built-in, localised formatting library for dates, numbers, currencies and relative time. Reach for it before hand-rolling any "format this nicely" function.`],
+     ['UTC',`The shared zero-offset timeline every timezone is defined against. Store and transmit UTC instants; convert to local time only when formatting for a human.`],
+     ['ISO 8601',`The unambiguous date-time text format: 2026-03-03T10:00:00Z. The trailing Z means UTC. The only string form a Date should ever be built from.`]]}]}
 ];
 
 /* Per-course glossary. A course sets DOJO_GLOSS_DOMAINS in its config to name the
-   domains it actually teaches; without it, every domain is shown (Dev Dojo's case).
-   This is why Identity Dojo does not list Java collections and JS Dojo does not list
+   domains it actually teaches; without it, every domain is shown (DevDojo's case).
+   This is why IdentityDojo does not list Java collections and JSDojo does not list
    Kerberos — one shared vocabulary file, filtered per course. */
 const GLOSS=(typeof DOJO_GLOSS_DOMAINS!=="undefined"&&Array.isArray(DOJO_GLOSS_DOMAINS))
   ? GLOSS_ALL.filter(function(d){return DOJO_GLOSS_DOMAINS.indexOf(d.domain)>=0;})
