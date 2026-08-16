@@ -9,11 +9,11 @@
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
-# JSDojo 🟨
+# JS Dojo 🟨
 
 JavaScript and Node from the ground up, **assuming nothing**, in a single offline HTML file. The third
 course in this repository, built on the same [shared engine](../engine/README.md) as
-[DevDojo](../README.md) and [IdentityDojo](../identity-dojo/README.md).
+[Dev Dojo](../README.md) and [Identity Dojo](../identity-dojo/README.md).
 
 > **All 15 streams are built.** **53 lessons, 91 exercises, 531 executed cases, 0 failures** — and
 > every exercise is graded by real execution, not by pattern-matching. Exercises are tagged
@@ -22,7 +22,7 @@ course in this repository, built on the same [shared engine](../engine/README.md
 
 ## Why this course exists
 
-DevDojo teaches Java in depth and JavaScript almost not at all — its React stream teaches React while
+Dev Dojo teaches Java in depth and JavaScript almost not at all — its React stream teaches React while
 assuming the language underneath it. This course fills that gap, and it does so where the platform is
 strongest: **JavaScript is the only language the engine can execute for real**, in a sandboxed Web
 Worker, so every exercise here is graded by calling your function with real inputs and checking what it
@@ -91,7 +91,7 @@ node build.js                  # produces dist/index.html
 node scripts/verify.js         # content integrity gate (target: 0 failures)
 ```
 
-Open `dist/index.html` directly in a browser, or host it on any static host. JSDojo owns everything in
+Open `dist/index.html` directly in a browser, or host it on any static host. JS Dojo owns everything in
 this directory except the runtime, which comes from the shared [`../engine`](../engine/README.md).
 
 ## Security
@@ -123,8 +123,8 @@ canonical ordering, constant-time comparison — which are exactly the parts peo
 
 ## Repository layout
 
-JSDojo lives inside [`rcbart/dojo`](https://github.com/rcbart/dojo) alongside DevDojo
-and IdentityDojo, sharing one `engine/`. That is deliberate: three courses, one runtime, one place to fix
+JS Dojo lives inside [`rcbart/dojo`](https://github.com/rcbart/dojo) alongside Dev Dojo
+and Identity Dojo, sharing one `engine/`. That is deliberate: three courses, one runtime, one place to fix
 a bug. Because the only coupling is the `ENGINE` constant at the top of `build.js`, lifting this course
 into its own repository is a copy rather than a fork — see the README section on the engine.
 

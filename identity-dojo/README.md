@@ -7,10 +7,10 @@
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
-# IdentityDojo 🛂
+# Identity Dojo 🛂
 
 A self-contained course on identity and access management — **14 streams, 149 lessons, 159 hands-on
-exercises**, in a single offline HTML file. Split out of [DevDojo](../README.md) once the domain grew
+exercises**, in a single offline HTML file. Split out of [Dev Dojo](../README.md) once the domain grew
 large enough to stand on its own.
 
 ## The design principle
@@ -57,9 +57,9 @@ node scripts/verify.js         # content integrity gate (target: 0 failures)
 
 Open `dist/index.html` directly in a browser, or host it on any static host.
 
-IdentityDojo owns everything in this directory except the runtime, which comes from the shared
+Identity Dojo owns everything in this directory except the runtime, which comes from the shared
 [`../engine`](../engine/README.md) — one engine, used by every course in the repo, rather than a fork
-per course. That is the course's **only** external dependency: to lift IdentityDojo into its own
+per course. That is the course's **only** external dependency: to lift Identity Dojo into its own
 repository, vendor or submodule `engine/` and change the `ENGINE` constant at the top of `build.js`.
 Nothing else moves.
 

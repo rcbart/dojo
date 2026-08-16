@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="docs/banner.svg" alt="DevDojo — master software engineering" width="100%">
+  <img src="docs/banner.svg" alt="Dev Dojo — master software engineering" width="100%">
 </p>
 
 <p align="center">
-  <a href="https://rcbart.github.io/dojo/dev/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-DevDojo-6a5cf5" alt="DevDojo live"></a>
-  <a href="https://rcbart.github.io/dojo/identity/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-IdentityDojo-8b5cf6" alt="IdentityDojo live"></a>
-  <a href="https://rcbart.github.io/dojo/js/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-JSDojo-eab308" alt="JSDojo live"></a>
+  <a href="https://rcbart.github.io/dojo/dev/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-Dev%20Dojo-6a5cf5" alt="Dev Dojo live"></a>
+  <a href="https://rcbart.github.io/dojo/identity/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-Identity%20Dojo-8b5cf6" alt="Identity Dojo live"></a>
+  <a href="https://rcbart.github.io/dojo/js/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-JS%20Dojo-eab308" alt="JS Dojo live"></a>
   <img src="https://img.shields.io/badge/tracks-29-8b5cf6" alt="tracks">
   <img src="https://img.shields.io/badge/lessons-207-8b5cf6" alt="lessons">
   <img src="https://img.shields.io/badge/exercises-374-06b6d4" alt="exercises">
@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
-# DevDojo 🥋
+# Dev Dojo 🥋
 
 An interactive, self-contained learning platform for software engineering. **29 training tracks,
 207 lessons, and 374 hands-on exercises** run entirely in the browser — an in-editor coding
@@ -27,18 +27,18 @@ computer science & algorithms, web/HTTP, front-end (React), APIs, databases & SQ
 security & cryptography, DevOps, architecture, and a senior ("dan") track. Identity & access has its
 own course (below).
 
-**Identity & access now lives in its own course.** It grew past 130 lessons — 40% of DevDojo — which
+**Identity & access now lives in its own course.** It grew past 130 lessons — 40% of Dev Dojo — which
 unbalanced a course meant to cover software engineering broadly. It is now
-[**IdentityDojo**](identity-dojo/README.md): 14 streams covering the identity lifecycle, OAuth 2.0/2.1
+[**Identity Dojo**](identity-dojo/README.md): 14 streams covering the identity lifecycle, OAuth 2.0/2.1
 and OIDC, SAML, WebAuthn/FIDO2 internals, Active Directory and Kerberos, zero trust, and a Running
 Identity stream on incident response, migration and operations. Same engine, separate build.
 
 **▶ Live:** https://rcbart.github.io/dojo/ — a landing page for all three courses.
-[**DevDojo**](https://rcbart.github.io/dojo/dev/) ·
-[**IdentityDojo**](https://rcbart.github.io/dojo/identity/) ·
-[**JSDojo**](https://rcbart.github.io/dojo/js/). Each is a single,
+[**Dev Dojo**](https://rcbart.github.io/dojo/dev/) ·
+[**Identity Dojo**](https://rcbart.github.io/dojo/identity/) ·
+[**JS Dojo**](https://rcbart.github.io/dojo/js/). Each is a single,
 self-contained page; SQL exercises run against real sample data in your browser with no server, and
-JSDojo's exercises execute in a sandboxed Web Worker.
+JS Dojo's exercises execute in a sandboxed Web Worker.
 *(First time: in Settings → Pages, set Source to "GitHub Actions". The workflow unit-tests the shared
 engine, then verifies and builds all three courses on every push, and fails the deploy if any check
 fails.)*
@@ -61,10 +61,10 @@ fails.)*
   across the whole catalog.
 - **🧠 Quick check** — multiple-choice questions with instant feedback: not just "wrong", but which
   answer was right, why it is right, and why the option you picked is not. **Options are shuffled per
-  lesson visit**, so the answer position can never be memorised. DevDojo now carries **397 hand-authored
+  lesson visit**, so the answer position can never be memorised. Dev Dojo now carries **397 hand-authored
   questions across 129 lessons** — each with a written explanation of why the right answer is right and
-  why every distractor is wrong — plus 9 auto-generated from the exercise specs. IdentityDojo carries a
-  further 327 and JSDojo 159. Extending the hand-authored bank to the remaining lessons is an open item.
+  why every distractor is wrong — plus 9 auto-generated from the exercise specs. Identity Dojo carries a
+  further 327 and JS Dojo 159. Extending the hand-authored bank to the remaining lessons is an open item.
 - **📖 Glossary** — 12 domains / 340 terms, collapsible and searchable, doubling as the in-lesson
   click-to-explain source.
 - **Belts & capstones** — per-domain percentage belts (white → black), dan sub-tracks for advanced
@@ -159,7 +159,7 @@ engine/             the SHARED RUNTIME — used by every course in this repo
   boot.js           startup wiring
   shell.html        page shell (placeholders: @@STYLES@@, @@SCRIPT@@)
   styles.css        all styling
-src/                DevDojo's own content-derived maps (NOT the engine)
+src/                Dev Dojo's own content-derived maps (NOT the engine)
   gradejava.js      auto-generated executable-grading specs (by lesson id)
   quizzes.js        auto-generated quick-check bank (by lesson id)
   quizzes_hand.js   hand-authored quizzes, where they exist
@@ -173,11 +173,11 @@ scripts/verify-exec.js  execution gate: runs every run-spec exercise's reference
 scripts/verify-java.js  compiles every self-contained Java reference solution
 scripts/verify-depth.js depth gate: every lesson against half its course median
 build.js            engine/ + src/ + content/ -> dist/index.html (+ devdojo.html)
-identity-dojo/      IdentityDojo: same shape, consumes ../engine
+identity-dojo/      Identity Dojo: same shape, consumes ../engine
 site/               optional Node server: accounts, progress sync (SQLite via node:sqlite)
 ```
 
-**Why `engine/` is separate.** `src/` used to be both "DevDojo's source" and "the shared runtime",
+**Why `engine/` is separate.** `src/` used to be both "Dev Dojo's source" and "the shared runtime",
 which meant a second course could only be added by forking 1,600 lines of `app.js`. Splitting the
 engine out makes the seam explicit: a course is content plus a build file, and lifting one into its own
 repository is a copy rather than a fork.
@@ -232,5 +232,5 @@ Separate hands-on courses, each a self-contained interactive site:
 - `DEVDOJO_ROADMAP.md` — per-domain belt design and curriculum plan
 - `IAM_TOPICS.md` — the identity & access topic map
 - `LAUNCH_GUIDE.md` — hosting → backend → AI judge → sandboxed runner
-- `BACKEND_PLAN.md` — architecture for publishing DevDojo as a product
+- `BACKEND_PLAN.md` — architecture for publishing Dev Dojo as a product
 - `MLDOJO_PLAN.md` — ml-dojo architecture and curriculum
