@@ -87,4 +87,4 @@ cached, and what your `Cache-Control` headers *actually said*, before blaming th
 
 ---
 
-**Next:** [4 — DNS & TLS →](./04-dns-and-tls.md)
+**Next:** [4 — DNS in depth →](./04-dns.md)

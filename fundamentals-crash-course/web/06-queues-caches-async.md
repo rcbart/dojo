@@ -1,4 +1,4 @@
-# 5 — Queues, caches & the async path
+# 6 — Queues, caches & the async path
 
 *The technologies that take work OFF the request path: message queues, application caches, and object storage. ~12 min read.*
 

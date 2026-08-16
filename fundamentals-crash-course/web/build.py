@@ -12,8 +12,9 @@ PAGES = [
     ("01-load-balancers",          W("01-load-balancers.md"),          "1 · Load balancers",               "The boxes"),
     ("02-api-gateways",            W("02-api-gateways.md"),            "2 · API gateways",                 "The boxes"),
     ("03-cdns",                    W("03-cdns.md"),                    "3 · CDNs",                         "The boxes"),
-    ("04-dns-and-tls",             W("04-dns-and-tls.md"),             "4 · DNS & TLS",                    "The boxes"),
-    ("05-queues-caches-async",     W("05-queues-caches-async.md"),     "5 · Queues, caches & async",       "The boxes"),
+    ("04-dns",                     W("04-dns.md"),                     "4 · DNS in depth",                 "The boxes"),
+    ("05-tls",                     W("05-tls.md"),                     "5 · TLS & certificates",           "The boxes"),
+    ("06-queues-caches-async",     W("06-queues-caches-async.md"),     "6 · Queues, caches & async",       "The boxes"),
 ]
 
 def load_page(path):
