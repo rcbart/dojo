@@ -33,7 +33,7 @@
 ">
 <meta name="referrer" content="no-referrer">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%20role%3D%22img%22%20aria-label%3D%22JavaDojo%22%3E%20%3Cdefs%3E%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236a5cf5%22%2F%3E%20%3Cstop%20offset%3D%220.55%22%20stop-color%3D%22%238b5cf6%22%2F%3E%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2306b6d4%22%2F%3E%20%3C%2FlinearGradient%3E%20%3C%2Fdefs%3E%20%3Crect%20x%3D%221%22%20y%3D%221%22%20width%3D%2230%22%20height%3D%2230%22%20rx%3D%228%22%20fill%3D%22url(%23g)%22%2F%3E%20%3C!--%20torii%20gate%20(dojo)%20--%3E%20%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%3E%20%3C!--%20top%20beam%20(kasagi)%2C%20gently%20arced%20--%3E%20%3Cpath%20d%3D%22M5%2010.5%20Q16%208%2027%2010.5%22%20stroke-width%3D%222.8%22%2F%3E%20%3C!--%20second%20beam%20(nuki)%20--%3E%20%3Cpath%20d%3D%22M7.5%2014.5%20H24.5%22%2F%3E%20%3C!--%20posts%20--%3E%20%3Cpath%20d%3D%22M10%2011%20V25%22%2F%3E%20%3Cpath%20d%3D%22M22%2011%20V25%22%2F%3E%20%3C%2Fg%3E%20%3C!--%20Java%20steam%20dot%20--%3E%20%3Ccircle%20cx%3D%2216%22%20cy%3D%2219%22%20r%3D%221.7%22%20fill%3D%22%23fff%22%2F%3E%20%3C%2Fsvg%3E">
-<title>DevDojo — Master software engineering</title>
+<title>Dev Dojo — Master software engineering</title>
 <style>
 :root { color-scheme: light;
   --bg:#f6f7fb; --panel:#ffffff; --ink:#1c2333; --muted:#5b6478; --line:#e4e7f0;
@@ -412,11 +412,34 @@ details.depth[open]>summary::before{content:'▾'}
 .cmtSend:hover{background:#24344a}
 .cmtSend:focus-visible{outline:2px solid #6a5cf5;outline-offset:2px}
 .cmtNote{font-size:12px;color:var(--muted)}
+
+/* ---- flow diagrams (auth-flow sequence diagrams, see identity-dojo/scripts/flowdia.js) ---- */
+.flowDia{margin:14px auto 6px;max-width:820px}
+.flowDia svg{display:block;width:100%;height:auto}
+.flowDia text{font-family:inherit}
+.fdActor{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
+.fdActorT{fill:var(--ink);font-size:12.5px;font-weight:600;text-anchor:middle}
+.fdActorS{fill:var(--muted);font-size:10.5px;text-anchor:middle}
+.fdLife{stroke:var(--line);stroke-width:1.5;stroke-dasharray:3 4}
+.fdArrow{stroke-width:2;fill:none;stroke-linecap:round}
+.fdLabel{fill:var(--ink);font-size:11.5px;text-anchor:middle}
+.fdLabelBad{fill:var(--bad)}
+.fdNum{fill:var(--panel);stroke-width:1.8}
+.fdNumT{font-size:10.5px;font-weight:700;text-anchor:middle}
+.fdSelf{fill:var(--bg);stroke-width:1.5}
+.fdSelfT{fill:var(--ink);font-size:11.5px;text-anchor:middle}
+.fdNote{fill:var(--muted);font-size:11.5px;font-style:italic;text-anchor:middle}
+.fdPhase{stroke:var(--line);stroke-width:1;stroke-dasharray:6 5}
+.fdPhaseT{fill:var(--muted);font-size:11px;font-style:italic;text-anchor:middle}
+.fdLegend{fill:var(--muted);font-size:11px}
+.fdSteps{margin:6px 0 10px;padding-left:26px}
+.fdSteps li{margin:5px 0}
+.fdSteps li::marker{color:var(--accent);font-weight:700}
 </style>
 </head>
 <body>
 <header>
-  <div class="logo">🥋 Dev<span>Dojo</span></div>
+  <div class="logo">🥋 Dev <span>Dojo</span></div>
   <div class="tip">Select any Java keyword in a lesson or the editor to see what it does.</div>
   <div class="belt"><span id="beltName">White belt</span><div class="strip"><i id="beltFill" style="width:0%"></i></div><span id="beltPct">0%</span><span id="beltNext" class="beltNext"></span></div>
 </header>
@@ -1082,8 +1105,8 @@ const GLOSS_ALL=[
 ];
 
 /* Per-course glossary. A course sets DOJO_GLOSS_DOMAINS in its config to name the
-   domains it actually teaches; without it, every domain is shown (DevDojo's case).
-   This is why IdentityDojo does not list Java collections and JSDojo does not list
+   domains it actually teaches; without it, every domain is shown (Dev Dojo's case).
+   This is why Identity Dojo does not list Java collections and JS Dojo does not list
    Kerberos — one shared vocabulary file, filtered per course. */
 const GLOSS=(typeof DOJO_GLOSS_DOMAINS!=="undefined"&&Array.isArray(DOJO_GLOSS_DOMAINS))
   ? GLOSS_ALL.filter(function(d){return DOJO_GLOSS_DOMAINS.indexOf(d.domain)>=0;})
@@ -1797,7 +1820,7 @@ function renderNav(){
    Each entry lists the exact stream titles it contains, in display order. Any stream
    not matched here falls into a "More" section so nothing is ever hidden. */
 /* The course name, used in shared UI copy. A sibling dojo sets DOJO_HOME.name. */
-const DOJO_NAME=(typeof DOJO_HOME!=="undefined"&&DOJO_HOME.name)?DOJO_HOME.name:'DevDojo';
+const DOJO_NAME=(typeof DOJO_HOME!=="undefined"&&DOJO_HOME.name)?DOJO_HOME.name:'Dev Dojo';
 const DOMAINS=(typeof DOJO_DOMAINS!=="undefined")?DOJO_DOMAINS:[
   {name:'Java & the JVM',icon:'☕',titles:['Java Fundamentals','Generics from the Ground Up','Exception Handling','Regex from the Ground Up','Working with User Input','Modern Java Mastery','Concurrency & Multithreading','Time, Testing, Reflection & the JVM','JPMS & Performance Engineering']},
   {name:'Computer Science & Algorithms',icon:'🧠',titles:['Data Structures','Dynamic Programming & Advanced Algorithms']},
@@ -1878,10 +1901,10 @@ function renderHome(){
     sections+=`<details class="domainSec"><summary class="domainHd"><span class="domainLeft">✨ More</span><span class="domainMeta">${extra.length} streams · ${n} lessons</span></summary><div class="grid">${extra.map(si=>streamCard(STREAMS[si],si)).join('')}</div></details>`;
   }
   // Per-course home copy. A sibling dojo overrides this via DOJO_HOME in its
-  // config; the defaults below are DevDojo's.
+  // config; the defaults below are Dev Dojo's.
   const HOME=(typeof DOJO_HOME!=="undefined")?DOJO_HOME:{
-    name:'DevDojo',
-    title:'Welcome to DevDojo 🥋',
+    name:'Dev Dojo',
+    title:'Welcome to Dev Dojo 🥋',
     intro:STREAMS.length+' training tracks take you from fundamentals to mastery across software engineering — Java &amp; the JVM, computer science &amp; algorithms, web/HTTP &amp; front-end (React), APIs &amp; Spring, databases &amp; SQL, concurrency, security, DevOps, and senior-level architecture, all grouped by domain below.'
   };
   m.innerHTML=`<div class="home">
@@ -2541,18 +2564,18 @@ echo $JAVA_HOME`}},
 <p>Since Java 11, <code>java Greeter.java</code> compiles in memory and runs in one step, which is ideal for learning and for single-file scripts. It is not how applications ship — that is the build-tools stream — but it removes a step while you are getting the language into your fingers.</p>`,
 docs:[['dev.java — Getting Started','https://dev.java/learn/getting-started/'],['Oracle Tutorial — A Closer Look at main','https://docs.oracle.com/javase/tutorial/getStarted/application/index.html']],
 ex:{title:'Your first Greeter',
-prompt:`Write a class <code>Greeter</code> with: (1) a <code>main</code> method that prints exactly <code>Welcome to DevDojo!</code>, and (2) a <code>static</code> method <code>String greet(String name)</code> that returns <code>"Hello, " + name + "!"</code>. Have main also print <code>greet("Ada")</code>.`,
+prompt:`Write a class <code>Greeter</code> with: (1) a <code>main</code> method that prints exactly <code>Welcome to Dev Dojo!</code>, and (2) a <code>static</code> method <code>String greet(String name)</code> that returns <code>"Hello, " + name + "!"</code>. Have main also print <code>greet("Ada")</code>.`,
 starter:`public class Greeter {
     // 1. add main here
 
     // 2. add static String greet(String name)
 }`,
-tests:[{d:'Declares public class Greeter',re:'public\\s+class\\s+Greeter'},{d:'Has a proper main method',re:'public\\s+static\\s+void\\s+main\\s*\\(\\s*String\\s*\\[\\]\\s*\\w+\\s*\\)'},{d:'Defines static String greet(String ...)',re:'static\\s+String\\s+greet\\s*\\(\\s*String\\s+\\w+\\s*\\)'},{d:'Prints the welcome line',re:'Welcome to DevDojo!'}],
-behavior:`1. main prints "Welcome to DevDojo!" as first line. 2. greet("Ada") returns exactly "Hello, Ada!". 3. main prints the result of greet("Ada"). 4. Code compiles (types, semicolons, braces).`,
+tests:[{d:'Declares public class Greeter',re:'public\\s+class\\s+Greeter'},{d:'Has a proper main method',re:'public\\s+static\\s+void\\s+main\\s*\\(\\s*String\\s*\\[\\]\\s*\\w+\\s*\\)'},{d:'Defines static String greet(String ...)',re:'static\\s+String\\s+greet\\s*\\(\\s*String\\s+\\w+\\s*\\)'},{d:'Prints the welcome line',re:'Welcome to Dev Dojo!'}],
+behavior:`1. main prints "Welcome to Dev Dojo!" as first line. 2. greet("Ada") returns exactly "Hello, Ada!". 3. main prints the result of greet("Ada"). 4. Code compiles (types, semicolons, braces).`,
 hints:['main has the exact signature <code>public static void main(String[] args)</code> — the JVM looks for that exact shape.','Printing is <code>System.out.println("...")</code>. Do it inside main.','greet should <code>return "Hello, " + name + "!";</code> — then call <code>System.out.println(greet("Ada"));</code> from main (works because both are static).'],
 solution:`public class Greeter {
     public static void main(String[] args) {
-        System.out.println("Welcome to DevDojo!");
+        System.out.println("Welcome to Dev Dojo!");
         System.out.println(greet("Ada"));
     }
 
@@ -13802,7 +13825,7 @@ behavior:`Four cases run. The first-sighting guard is what awk gives you for fre
 hints:['Build up a plain object keyed by the field value.','undefined + 1 is NaN — start unseen keys at 0 explicitly.','One pass over the lines is enough; no sorting is needed to count.']}]},
 
 {id:'rpl5',title:'jq: structured logs, where modern services actually live',body:`
-<p>Every tool so far treats a log line as text and re-derives its structure with a regex. Modern services skip that: they emit <b>one JSON object per line</b>, so the structure is already there — as JSDojo's structured-logging lesson puts it, log to stdout, one object per line, and let the platform collect it. The cost of that decision is that <code>awk '{print $5}'</code> becomes meaningless: fields have names, not positions, they may be absent, and a message can contain a comma, a quote or a newline without breaking anything. <b><code>jq</code> is awk for JSON</b> — a filter language over structured values.</p>
+<p>Every tool so far treats a log line as text and re-derives its structure with a regex. Modern services skip that: they emit <b>one JSON object per line</b>, so the structure is already there — as JS Dojo's structured-logging lesson puts it, log to stdout, one object per line, and let the platform collect it. The cost of that decision is that <code>awk '{print $5}'</code> becomes meaningless: fields have names, not positions, they may be absent, and a message can contain a comma, a quote or a newline without breaking anything. <b><code>jq</code> is awk for JSON</b> — a filter language over structured values.</p>
 <div class="codeSample">{"ts":"2026-08-11T09:36:36Z","level":"error","route":"/api/checkout","status":500,"dur_ms":73,"trace":"2c1eea"}</div>
 <p>Four ideas cover most real use.</p>
 <ul>
@@ -13916,7 +13939,7 @@ solution:`1. parse
 6. slurp
 `,
 tests:[{d:'A non-JSON line causes a parse error',re:'1\\.\\s*parse',flags:'i'},{d:'Anchored grep guards the jq stage',re:'2\\.\\s*grep\\s+([\'"])\\^\\{\\1\\s+app\\.json\\.log\\s*\\|\\s*jq\\s+-c\\s+\\.',flags:''},{d:'// defaults a missing nested field',re:'3\\.[^\\n]*\\.user\\.id // "anonymous"',flags:''},{d:'A renamed field silently yields null',re:'4\\.\\s*null',flags:'i'},{d:'--arg passes data, not code',re:'5\\.\\s*--arg',flags:''},{d:'Filter before slurping',re:'6\\.\\s*slurp',flags:'i'}],
-behavior:`1. A parse error, and it aborts the whole run — jq is strict by design, so one stray startup banner or stack trace in the file kills a pipeline that worked yesterday. 2. grep '^{' is the pragmatic guard: cheap, streaming, and it keeps the malformed lines out. (jq's own -R with fromjson? can skip them instead, at more typing.) 3. Without //, a missing user key gives null, and null then flows into whatever you do next — string concatenation, comparisons, a group_by bucket named null. 4. null, on every line, silently. No error, no warning: your dashboard shows zero and your alert never fires. Log field names are an interface, and renaming one is a breaking change that no compiler will catch — which is why they belong in code review and in a schema, and why the JSDojo lesson insists on a fixed set of fields. 5. --arg (and --argjson for non-string values). 6. Slurp. select streams one object at a time; -s materialises everything, so filter first and slurp only the survivors.`,
+behavior:`1. A parse error, and it aborts the whole run — jq is strict by design, so one stray startup banner or stack trace in the file kills a pipeline that worked yesterday. 2. grep '^{' is the pragmatic guard: cheap, streaming, and it keeps the malformed lines out. (jq's own -R with fromjson? can skip them instead, at more typing.) 3. Without //, a missing user key gives null, and null then flows into whatever you do next — string concatenation, comparisons, a group_by bucket named null. 4. null, on every line, silently. No error, no warning: your dashboard shows zero and your alert never fires. Log field names are an interface, and renaming one is a breaking change that no compiler will catch — which is why they belong in code review and in a schema, and why the JS Dojo lesson insists on a fixed set of fields. 5. --arg (and --argjson for non-string values). 6. Slurp. select streams one object at a time; -s materialises everything, so filter first and slurp only the survivors.`,
 hints:['Question 1 and 2 are the same problem: jq trusts its input completely.','Question 4 is the one that bites in production, and it produces no error at all.','The last two are the same discipline as awk: values in as data, and do not load what you can filter out.']},
 
 {title:'p99 per route, in jq alone',lang:'shell',diff:'hard',
@@ -19191,7 +19214,7 @@ Postgres. The write rate is trivial; durability and joins are the need.
 <p>Why writing beats meetings: text is reviewable asynchronously and by more people; writing exposes hand-waving that speech hides ("...and then somehow the cache invalidates"); the alternatives section forces real comparison; and the archive turns "why on earth is it built this way?" from archaeology into a link. Every "why do we even have this queue?" argument that ends in a shrug is a missing ADR.</p>`,
 docs:[['ADR — the original pattern (Nygard)','https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions'],['adr.github.io — formats & tools','https://adr.github.io/'],['Design docs at Google','https://www.industrialempathy.com/posts/design-docs-at-google/']],
 exs:[{title:'Write an ADR',lang:'text',
-prompt:`Write ADR-0001 for DevDojo's own launch (the decision is made — record it): a markdown-shaped doc containing, in order: (1) a title line starting <code># ADR-0001:</code> about choosing a <b>separate runner service</b> for executing user code; (2) a <code>Status: accepted</code> line; (3) a <code>## Context</code> section mentioning that user code is <b>untrusted</b>; (4) a <code>## Decision</code> section stating code runs in an <b>isolated container</b> with <b>no network</b>; (5) a <code>## Consequences</code> section with at least one <code>+</code> line and at least one <code>-</code> line — and the minus must name a real accepted cost (latency, ops burden...).`,
+prompt:`Write ADR-0001 for Dev Dojo's own launch (the decision is made — record it): a markdown-shaped doc containing, in order: (1) a title line starting <code># ADR-0001:</code> about choosing a <b>separate runner service</b> for executing user code; (2) a <code>Status: accepted</code> line; (3) a <code>## Context</code> section mentioning that user code is <b>untrusted</b>; (4) a <code>## Decision</code> section stating code runs in an <b>isolated container</b> with <b>no network</b>; (5) a <code>## Consequences</code> section with at least one <code>+</code> line and at least one <code>-</code> line — and the minus must name a real accepted cost (latency, ops burden...).`,
 starter:`# ADR-0001:
 
 Status:
@@ -20237,6 +20260,13 @@ mergeIdentity();
 /* attach hand-authored quizzes first (they take priority), then auto-generated ones */
 (function(){ if(!window.QUIZZES_HAND)return; STREAMS.forEach(function(s){(s.lessons||[]).forEach(function(l){ if(!l.quiz&&window.QUIZZES_HAND[l.id])l.quiz=window.QUIZZES_HAND[l.id]; });}); })();
 (function(){ if(!window.QUIZZES)return; STREAMS.forEach(function(s){(s.lessons||[]).forEach(function(l){ if(!l.quiz&&window.QUIZZES[l.id])l.quiz=window.QUIZZES[l.id]; });}); })();
+/* per-course chrome: sibling dojos override the shared shell's title and logo */
+(function(){ if(typeof DOJO_HOME==='undefined'||!DOJO_HOME.name)return;
+  document.title=DOJO_HOME.pageTitle||(DOJO_HOME.name+' — learn by doing');
+  var lg=document.querySelector('header .logo');
+  if(lg){var n=DOJO_HOME.name,i=n.lastIndexOf(' ');
+    lg.innerHTML=(DOJO_HOME.icon||'🥋')+' '+(i>0?n.slice(0,i)+' <span>'+n.slice(i+1)+'</span>':'<span>'+n+'</span>');}
+})();
 renderNav();renderHome();refreshBelt();
 
 /* ---- interactive JWT tamper demo (used by the OAuth/JWT/JOSE stream, lesson jose5) ---- */

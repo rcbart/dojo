@@ -5,6 +5,13 @@ mergeIdentity();
 /* attach hand-authored quizzes first (they take priority), then auto-generated ones */
 (function(){ if(!window.QUIZZES_HAND)return; STREAMS.forEach(function(s){(s.lessons||[]).forEach(function(l){ if(!l.quiz&&window.QUIZZES_HAND[l.id])l.quiz=window.QUIZZES_HAND[l.id]; });}); })();
 (function(){ if(!window.QUIZZES)return; STREAMS.forEach(function(s){(s.lessons||[]).forEach(function(l){ if(!l.quiz&&window.QUIZZES[l.id])l.quiz=window.QUIZZES[l.id]; });}); })();
+/* per-course chrome: sibling dojos override the shared shell's title and logo */
+(function(){ if(typeof DOJO_HOME==='undefined'||!DOJO_HOME.name)return;
+  document.title=DOJO_HOME.pageTitle||(DOJO_HOME.name+' — learn by doing');
+  var lg=document.querySelector('header .logo');
+  if(lg){var n=DOJO_HOME.name,i=n.lastIndexOf(' ');
+    lg.innerHTML=(DOJO_HOME.icon||'🥋')+' '+(i>0?n.slice(0,i)+' <span>'+n.slice(i+1)+'</span>':'<span>'+n+'</span>');}
+})();
 renderNav();renderHome();refreshBelt();
 
 /* ---- interactive JWT tamper demo (used by the OAuth/JWT/JOSE stream, lesson jose5) ---- */

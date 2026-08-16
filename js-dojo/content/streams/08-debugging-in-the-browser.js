@@ -271,7 +271,7 @@ hints:['A switch handles both the string and numeric cases.','401 and 403 mean d
 
 {id:'js33',title:'Storage, cookies, and tracing an OAuth flow end to end',body:`
 <p>This lesson puts the whole panel set to work on the flow that most often needs it. If you have worked
-through IdentityDojo, this is the same Authorization Code flow seen from the browser's side.</p>
+through Identity Dojo, this is the same Authorization Code flow seen from the browser's side.</p>
 
 <h4>The Application panel</h4>
 <div class="codeSample" data-hl>Cookies         per origin: name, value, Domain, Path, Expires, HttpOnly,

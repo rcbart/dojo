@@ -257,7 +257,7 @@ if (!auth?.startsWith("Bearer ")) {
 }
 const token = auth.slice("Bearer ".length);
 
-// then, from IdentityDojo: verify the SIGNATURE, and check iss, aud and
+// then, from Identity Dojo: verify the SIGNATURE, and check iss, aud and
 // exp. decoding is not verifying, and a token minted by your own issuer
 // for a DIFFERENT service must be rejected here.</div>
 <p>Timing matters when comparing secrets. An API key checked with <code>===</code> leaks, through response

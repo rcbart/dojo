@@ -72,7 +72,7 @@ test('buildWorkerSrc deletes fetch unless the exercise mocks it', () => {
 
 /* deepEq inside the worker: object key order must not decide pass/fail.
    Found by executing every exercise's reference solution against its own
-   run-cases — six cases in JSDojo failed only because the solution built its
+   run-cases — six cases in JS Dojo failed only because the solution built its
    result object with the keys in a different order than the expectation. */
 test('the worker deepEq ignores object key order but not array order', () => {
   const src = buildWorkerSrc('function f(){}', { call: 'f', cases: [] });

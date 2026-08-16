@@ -520,8 +520,8 @@ const GLOSS_ALL=[
 ];
 
 /* Per-course glossary. A course sets DOJO_GLOSS_DOMAINS in its config to name the
-   domains it actually teaches; without it, every domain is shown (DevDojo's case).
-   This is why IdentityDojo does not list Java collections and JSDojo does not list
+   domains it actually teaches; without it, every domain is shown (Dev Dojo's case).
+   This is why Identity Dojo does not list Java collections and JS Dojo does not list
    Kerberos — one shared vocabulary file, filtered per course. */
 const GLOSS=(typeof DOJO_GLOSS_DOMAINS!=="undefined"&&Array.isArray(DOJO_GLOSS_DOMAINS))
   ? GLOSS_ALL.filter(function(d){return DOJO_GLOSS_DOMAINS.indexOf(d.domain)>=0;})

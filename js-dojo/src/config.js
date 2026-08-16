@@ -1,13 +1,15 @@
-/* JSDojo configuration. Loaded BEFORE the shared runtime so it can override
+/* JS Dojo configuration. Loaded BEFORE the shared runtime so it can override
    the domain grouping and the home-page copy. DOJO_NO_IAM_MERGE keeps the
    engine from folding any stream into an "Identity and Access" group — this
    course has no identity content. */
 const DOJO_NO_IAM_MERGE = true;
 
-/* Home-page copy. Without this the shared engine falls back to DevDojo's. */
+/* Home-page copy. Without this the shared engine falls back to Dev Dojo's. */
 const DOJO_HOME = {
-  name: 'JSDojo',
-  title: 'Welcome to JSDojo \u{1F7E8}',
+  name: 'JS Dojo',
+  icon: '🟨',
+  pageTitle: 'JS Dojo — JavaScript & Node, from the ground up',
+  title: 'Welcome to JS Dojo \u{1F7E8}',
   intro: 'JavaScript from the ground up, assuming nothing. <b>5 of a planned 15 streams are written</b> — '
        + 'the language core and the event loop. Debugging, modules, TypeScript and Node are next.<br><br>'
        + 'The order is deliberate: you meet <b>values and types</b> before anything that manipulates them, '
@@ -48,7 +50,7 @@ const DOJO_DOMAINS = [
     'JavaScript Capstone']}
 ];
 
-/* Glossary scope: JSDojo shows its own vocabulary plus the two shared domains its
+/* Glossary scope: JS Dojo shows its own vocabulary plus the two shared domains its
    lessons genuinely draw on — HTTP semantics in the server stream, and the identity
    terms used when tracing an OAuth flow in the browser-debugging stream. */
 const DOJO_GLOSS_DOMAINS = [

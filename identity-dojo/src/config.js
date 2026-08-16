@@ -1,12 +1,14 @@
-/* IdentityDojo configuration. Loaded BEFORE the shared runtime so it can
+/* Identity Dojo configuration. Loaded BEFORE the shared runtime so it can
    override the domain grouping and keep the 14 identity streams separate
    instead of merging them into one "Identity and Access" stream. */
 const DOJO_NO_IAM_MERGE = true;
 
-/* Home-page copy. Without this the shared engine falls back to DevDojo's. */
+/* Home-page copy. Without this the shared engine falls back to Dev Dojo's. */
 const DOJO_HOME = {
-  name: 'IdentityDojo',
-  title: 'Welcome to IdentityDojo \u{1F6C2}',
+  name: 'Identity Dojo',
+  icon: '🔐',
+  pageTitle: 'Identity Dojo — Master identity & access management',
+  title: 'Welcome to Identity Dojo \u{1F510}',
   intro: '14 streams and 139 lessons take you from what an identity actually is to running one in production. '
        + 'The sequencing is deliberate: concepts are grounded <b>before</b> the protocols that assume them, so you meet '
        + '"token" as a defined thing before any lesson uses one, and learn that <b>SSO is a user experience</b> before '
@@ -26,7 +28,7 @@ const DOJO_DOMAINS = [
   {name:'Capstone',icon:'⛩️',titles:['Identity Capstone']}
 ];
 
-/* Glossary scope: IdentityDojo shows only the vocabulary it teaches. Without this the
+/* Glossary scope: Identity Dojo shows only the vocabulary it teaches. Without this the
    shared glossary would also list Java collections, SQL and React terms. */
 const DOJO_GLOSS_DOMAINS = [
   'Identity & Access (IAM)',

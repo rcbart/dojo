@@ -238,7 +238,7 @@ function renderNav(){
    Each entry lists the exact stream titles it contains, in display order. Any stream
    not matched here falls into a "More" section so nothing is ever hidden. */
 /* The course name, used in shared UI copy. A sibling dojo sets DOJO_HOME.name. */
-const DOJO_NAME=(typeof DOJO_HOME!=="undefined"&&DOJO_HOME.name)?DOJO_HOME.name:'DevDojo';
+const DOJO_NAME=(typeof DOJO_HOME!=="undefined"&&DOJO_HOME.name)?DOJO_HOME.name:'Dev Dojo';
 const DOMAINS=(typeof DOJO_DOMAINS!=="undefined")?DOJO_DOMAINS:[
   {name:'Java & the JVM',icon:'☕',titles:['Java Fundamentals','Generics from the Ground Up','Exception Handling','Regex from the Ground Up','Working with User Input','Modern Java Mastery','Concurrency & Multithreading','Time, Testing, Reflection & the JVM','JPMS & Performance Engineering']},
   {name:'Computer Science & Algorithms',icon:'🧠',titles:['Data Structures','Dynamic Programming & Advanced Algorithms']},
@@ -319,10 +319,10 @@ function renderHome(){
     sections+=`<details class="domainSec"><summary class="domainHd"><span class="domainLeft">✨ More</span><span class="domainMeta">${extra.length} streams · ${n} lessons</span></summary><div class="grid">${extra.map(si=>streamCard(STREAMS[si],si)).join('')}</div></details>`;
   }
   // Per-course home copy. A sibling dojo overrides this via DOJO_HOME in its
-  // config; the defaults below are DevDojo's.
+  // config; the defaults below are Dev Dojo's.
   const HOME=(typeof DOJO_HOME!=="undefined")?DOJO_HOME:{
-    name:'DevDojo',
-    title:'Welcome to DevDojo 🥋',
+    name:'Dev Dojo',
+    title:'Welcome to Dev Dojo 🥋',
     intro:STREAMS.length+' training tracks take you from fundamentals to mastery across software engineering — Java &amp; the JVM, computer science &amp; algorithms, web/HTTP &amp; front-end (React), APIs &amp; Spring, databases &amp; SQL, concurrency, security, DevOps, and senior-level architecture, all grouped by domain below.'
   };
   m.innerHTML=`<div class="home">

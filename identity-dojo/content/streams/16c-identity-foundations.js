@@ -2,7 +2,7 @@ STREAMS.push({iam:true,sec:'Identity & federation foundations',icon:'🪪',title
 
 {id:'idf0',title:'Glossary: the identity & OAuth vocabulary',body:`
 <p>Identity is drowning in jargon, and many terms mean the same thing in different protocols. Rather
-than cram every definition here, DevDojo keeps a living <b>&#128214; Glossary</b> as its own section in
+than cram every definition here, Dev Dojo keeps a living <b>&#128214; Glossary</b> as its own section in
 the left sidebar, organized by domain and in logical reading order (core distinction &rarr; actors
 &rarr; tokens &rarr; protocols &rarr; flows &rarr; endpoints &rarr; concepts &rarr; threats &rarr;
 governance).</p>
