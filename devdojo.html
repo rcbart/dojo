@@ -1065,7 +1065,7 @@ const GLOSS_ALL=[
      ['Replication',`Keeping copies of data on multiple nodes for durability and reads.`],
      ['SLO',`A Service Level Objective: a target for reliability or latency.`],
    ]},
- ]},,
+ ]},
  {domain:'JavaScript & Node',icon:'\u{1F7E8}',groups:[
    {h:'1 \u00b7 Values and types',terms:[
      ['Primitive',`One of the seven immutable single values: number, string, boolean, undefined, null, bigint, symbol. Everything else is an object.`],
@@ -1087,26 +1087,48 @@ const GLOSS_ALL=[
      ['Shallow copy',`Spread and Object.assign copy only top-level properties; nested objects remain shared references. structuredClone copies deeply.`],
      ['Prototype pollution',`Merging untrusted data can set __proto__ and thereby add a property to every object in the program. Use Object.create(null) or a Map for untrusted keys.`],
      ['Iterable protocol',`An object with a [Symbol.iterator] method works with for...of, spread and destructuring.`]]},
-   {h:'4 \u00b7 Asynchrony',terms:[
+   {h:'4 \u00b7 The browser',terms:[
+     ['DOM',`The Document Object Model \u2014 the live tree of objects the browser builds from your HTML. JavaScript changes the page by changing this tree; the HTML text itself is never edited.`],
+     ['Event',`A signal that something happened \u2014 a click, a keypress, a submitted form. Code subscribes with addEventListener and receives an event object describing exactly what occurred.`],
+     ['Bubbling',`After an event fires on its target it travels up through the ancestors, giving each one a chance to handle it. Why a listener on a list can hear clicks on its items.`],
+     ['Delegation',`One listener on a parent handling events for all its children, using bubbling plus event.target to learn where it started. Survives children being added and removed.`],
+     ['fetch',`The browser\u2019s HTTP function: fetch(url) returns a promise of a response. It rejects only on network failure \u2014 a 404 or 500 still resolves, so check res.ok yourself.`],
+     ['CORS',`Cross-Origin Resource Sharing: the browser blocks reading responses from another origin unless that server explicitly allows your page. Fixed on the server, never in your code.`],
+     ['FormData',`Reads a whole form\u2019s fields into key\u2013value pairs in one line: new FormData(formElement). Pairs with the submit event for JavaScript-handled forms.`],
+     ['XSS',`Cross-site scripting: user text ending up executed as markup or script, e.g. via innerHTML. Cured by keeping data out of executable channels \u2014 textContent for text, always.`]]},
+   {h:'5 \u00b7 Asynchrony',terms:[
      ['Event loop',`When the call stack is empty, take the next callback from a queue and run it. The host does the waiting; nothing in your code runs in parallel.`],
      ['Microtask',`A promise callback. The entire microtask queue drains after each macrotask, so promises always run before the next timer.`],
      ['Macrotask',`A timer or I/O callback. setTimeout(fn, 0) is a minimum delay, not an immediate call.`],
      ['Unhandled rejection',`A rejected promise nobody awaited or caught. Since Node 15 it terminates the process.`],
      ['Backpressure',`A slow writer signalling a fast reader to pause, so unwritten data does not pile up in memory. pipeline handles it for you.`],
      ['Event loop lag',`The gap between when a timer should have fired and when it did. The single most useful health metric a Node service can emit.`]]},
-   {h:'5 \u00b7 Modules, tooling and types',terms:[
+   {h:'6 \u00b7 Modules, tooling and types',terms:[
      ['ESM',`ES modules: import/export, statically resolved before execution — which is what makes tree-shaking possible.`],
      ['CommonJS',`Node\u2019s original module system: require/module.exports, resolved dynamically at the moment of the call.`],
      ['Tree-shaking',`Dropping unused exports from a bundle. Only possible because ESM\u2019s dependency graph is known without running the code.`],
      ['Semver',`MAJOR.MINOR.PATCH. ^ allows minor and patch but never crosses a major — except below 1.0, where it treats the minor as breaking.`],
      ['Lockfile',`Records the exact version of every package in the tree. npm ci installs from it; npm install rewrites it.`],
      ['Type erasure',`TypeScript annotations are removed before the code runs, so there are no runtime type checks and every boundary still needs validation.`],
-     ['Source map',`A file mapping bundled, minified positions back to your original source, so a stack trace names real files and variables.`]]}]}
+     ['Source map',`A file mapping bundled, minified positions back to your original source, so a stack trace names real files and variables.`]]},
+   {h:'7 \u00b7 Memory, time and the runtime',terms:[
+     ['Generator',`A function* that can pause at yield and resume later, keeping all its local state. Produces values lazily \u2014 you only pay for what the consumer takes.`],
+     ['EventEmitter',`Node\u2019s many-occurrences pattern: on() subscribes, emit() calls every listener synchronously in order. An "error" event with no listener crashes the process.`],
+     ['Worker',`A separate thread with its own event loop, talking to yours only by message passing. For CPU-bound work; I/O never needs one.`],
+     ['Structured clone',`The deep-copy algorithm behind postMessage and structuredClone: carries objects, arrays, Map, Set and Date, survives cycles, refuses functions and DOM nodes.`],
+     ['Garbage collection',`The engine frees any object that can no longer be reached from a root (globals, the stack, live closures). There is no free() \u2014 only references to sever.`],
+     ['Reachability',`The collector\u2019s one rule: alive means findable by following references from the roots. A cycle nothing points at is still garbage.`],
+     ['Memory leak',`In JavaScript, always an unintended reference: a module-level Map that only grows, a cache with no eviction, a listener never removed.`],
+     ['WeakMap',`A map whose keys are held weakly: a key reachable only through the WeakMap can still be collected, and its entry evaporates with it. Metadata that cannot cause a leak.`],
+     ['Immutability',`Treating data as read-only and making changed copies instead: spread for objects, toSorted over sort. Turns a class of far-away bugs impossible.`],
+     ['Intl',`The built-in, localised formatting library for dates, numbers, currencies and relative time. Reach for it before hand-rolling any "format this nicely" function.`],
+     ['UTC',`The shared zero-offset timeline every timezone is defined against. Store and transmit UTC instants; convert to local time only when formatting for a human.`],
+     ['ISO 8601',`The unambiguous date-time text format: 2026-03-03T10:00:00Z. The trailing Z means UTC. The only string form a Date should ever be built from.`]]}]}
 ];
 
 /* Per-course glossary. A course sets DOJO_GLOSS_DOMAINS in its config to name the
-   domains it actually teaches; without it, every domain is shown (Dev Dojo's case).
-   This is why Identity Dojo does not list Java collections and JS Dojo does not list
+   domains it actually teaches; without it, every domain is shown (DevDojo's case).
+   This is why IdentityDojo does not list Java collections and JSDojo does not list
    Kerberos — one shared vocabulary file, filtered per course. */
 const GLOSS=(typeof DOJO_GLOSS_DOMAINS!=="undefined"&&Array.isArray(DOJO_GLOSS_DOMAINS))
   ? GLOSS_ALL.filter(function(d){return DOJO_GLOSS_DOMAINS.indexOf(d.domain)>=0;})
@@ -2587,7 +2609,7 @@ solution:`public class Greeter {
 <p><b>Variables deserve a slower look — everything else builds on them.</b> A variable is a <i>named piece of storage with a declared type</i>: the name is how your code refers to it, the type is the compiler-enforced promise about what it can hold. Three moments in a variable's life are worth separating: <b>declaration</b> (<code>int count;</code> — the name and type exist), <b>initialization</b> (the <i>first</i> value goes in), and <b>assignment</b> (any later value replaces the current one). <code>final</code> forbids that third step — declare-once, assign-once — and modern Java style uses it liberally: a variable that never changes is one less thing to track while reading.</p>
 <p>⚠️ <b>Always initialize your variables — ideally in the same line that declares them.</b> Java's rules here have a trap-shaped asymmetry:</p>
 <ul>
-<li><b>Local variables</b> (inside methods) have <b>no default value at all</b>. Using one before it's assigned is a <i>compile error</i> ("variable count might not have been initialized") — the compiler proves <b>definite assignment</b> on every path. Good: the mistake can't reach runtime. But don't fight the checker with a lazy <code>int count = 0;</code>-then-reassign dance when <code>int count = computeCount();</code> says it in one honest line.</li>
+<li><b>Local variables</b> (inside methods) have <b>no default value at all</b>. Using one before it's assigned is a <i>compile error</i> ("variable count might not have been initialized") — the compiler proves <b>definite assignment</b> on every path. Good: the mistake can't reach runtime. But don't fight the checker with a lazy <code>int count = 0;</code>-then-reassign dance when <code>int count = computeCount();</code> says it in one clear line.</li>
 <li><b>Fields</b> (class members) silently get defaults: <code>0</code>, <code>0.0</code>, <code>false</code>, and — the dangerous one — <b><code>null</code> for every reference type</b>. A field you forgot to initialize doesn't fail the build; it waits and throws <code>NullPointerException</code> the first time something calls a method on it, often far from where the real mistake lives. The habit that prevents this: initialize fields at the declaration or in the constructor — those are the only two places a reader looks.</li>
 </ul>
 <div class="codeSample" data-hl>int x;
@@ -3672,7 +3694,7 @@ new TreeSet&lt;&gt;(names);    // sorted unique</div>
 <p><code>TreeSet</code>/<code>TreeMap</code> keep sorted order; <code>LinkedHashMap</code> keeps insertion order. Generic methods declare their own type parameter: <code>static &lt;T&gt; T first(List&lt;T&gt; list)</code>.</p>
 
 <h4>Choosing the implementation</h4>
-<p>The interface says what it does; the implementation decides what it costs. <b><code>ArrayList</code></b> is a resizable array: O(1) access by index and appending, O(n) inserting or removing in the middle. <b><code>LinkedList</code></b> is O(1) at the ends and O(n) to reach a position, and its per-element node objects make it slower in practice for nearly everything — the honest advice is ArrayList unless you have measured otherwise. <b><code>HashMap</code></b> and <b><code>HashSet</code></b> give O(1) average lookup with no ordering; <b><code>LinkedHashMap</code></b> preserves insertion order for a small cost; <b><code>TreeMap</code></b> and <b><code>TreeSet</code></b> keep keys sorted at O(log n) and add navigation methods like <code>firstKey</code> and <code>headMap</code>.</p>
+<p>The interface says what it does; the implementation decides what it costs. <b><code>ArrayList</code></b> is a resizable array: O(1) access by index and appending, O(n) inserting or removing in the middle. <b><code>LinkedList</code></b> is O(1) at the ends and O(n) to reach a position, and its per-element node objects make it slower in practice for nearly everything — the practical advice is ArrayList unless you have measured otherwise. <b><code>HashMap</code></b> and <b><code>HashSet</code></b> give O(1) average lookup with no ordering; <b><code>LinkedHashMap</code></b> preserves insertion order for a small cost; <b><code>TreeMap</code></b> and <b><code>TreeSet</code></b> keep keys sorted at O(log n) and add navigation methods like <code>firstKey</code> and <code>headMap</code>.</p>
 
 <h4>The contract that makes hashing work</h4>
 <p>Anything used as a <code>HashMap</code> key or a <code>HashSet</code> element must implement <code>equals</code> and <code>hashCode</code> together: equal objects must have equal hash codes. Override one and not the other and objects vanish into maps — you put a value in, look it up with an equal key, and get <code>null</code>, because the lookup went to a different bucket. This is the most common silent bug in beginner Java, and records fix it by generating both for you.</p>
@@ -3718,7 +3740,7 @@ public class WordStats {
 }`}}
 ,
 {id:'enm1',title:'Enums in depth: fields, methods & strategy',body:`
-<p>🌱 <b>Starting from zero:</b> some values come from a short fixed menu: days of the week, sizes S/M/L, shipping speeds. You COULD store them as free text, but then nothing stops "Tuseday" from sneaking in. An <b>enum</b> is Java\u0027s multiple-choice type: you declare the complete list of allowed values once, and the compiler guarantees no other value ever appears. Even better, each choice can carry its own data and behavior — which turns out to be quietly powerful.</p>
+<p>🌱 <b>Starting from zero:</b> some values come from a short fixed menu: days of the week, sizes S/M/L, shipping speeds. You COULD store them as free text, but then nothing stops "Tuseday" from sneaking in. An <b>enum</b> is Java\u0027s multiple-choice type: you declare the complete list of allowed values once, and the compiler guarantees no other value ever appears. Even better, each choice can carry its own data and behavior — which turns out to matter more than it first looks.</p>
 <p>A Java enum is a full class with a fixed set of instances. Each constant can carry <b>fields</b> (set via a private constructor), expose <b>methods</b>, and even override methods <b>per constant</b> — which turns an enum into a strategy table with exhaustive switch support for free.</p>
 <div class="codeSample">enum Op {
     ADD("+")  { double apply(double a, double b) { return a + b; } },
@@ -3732,7 +3754,7 @@ public class WordStats {
 <ul>
 <li><b>Built-ins</b>: <code>values()</code> (all constants, in declaration order), <code>valueOf("ADD")</code> (throws on unknown names), <code>name()</code>, <code>ordinal()</code> — never persist <code>ordinal()</code>; reordering constants silently corrupts stored data.</li>
 <li><b>EnumMap / EnumSet</b>: specialized, array-backed collections keyed by enum — faster and smaller than HashMap/HashSet. <code>new EnumMap&lt;&gt;(Op.class)</code>, <code>EnumSet.of(Op.ADD)</code>, <code>EnumSet.allOf(Op.class)</code>.</li>
-<li><b>Singleton</b>: a one-constant enum is the most robust singleton in Java — serialization- and reflection-proof (Effective Java, Item 3).</li>
+<li><b>Singleton</b>: a one-constant enum is the hardest-to-break singleton in Java — serialization- and reflection-proof (Effective Java, Item 3).</li>
 </ul>`,
 docs:[['Enum types — dev.java','https://dev.java/learn/classes-objects/enums/'],['EnumMap — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/EnumMap.html'],['EnumSet — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/EnumSet.html']],
 ex:{title:'Enum as a strategy table',
@@ -3768,7 +3790,7 @@ solution:`public enum Shipping {
     }
 }`}},
 {id:'ctr1',title:'The equals / hashCode / toString contracts',body:`
-<p>🌱 <b>Starting from zero:</b> when are two things "the same"? Two printouts of the same photo are equal in content but are not one object; identical twins are equal-looking but different people. Java needs YOUR answer to this question for every class you write, because its containers ask it constantly — "is this key already in the map?", "does the set contain this?". Three small methods are how a class answers — equals (are we the same in content?), hashCode (a quick fingerprint used for fast lookup), toString (how do I describe myself in print?) — and this lesson teaches the rules that keep the answers honest.</p>
+<p>🌱 <b>Starting from zero:</b> when are two things "the same"? Two printouts of the same photo are equal in content but are not one object; identical twins are equal-looking but different people. Java needs YOUR answer to this question for every class you write, because its containers ask it constantly — "is this key already in the map?", "does the set contain this?". Three small methods are how a class answers — equals (are we the same in content?), hashCode (a quick fingerprint used for fast lookup), toString (how do I describe myself in print?) — and this lesson teaches the rules that keep the answers consistent.</p>
 <p>Half the collections library only works if your classes honor three contracts from <code>Object</code>. Get them wrong and HashMap "loses" your keys, HashSet holds duplicates, and lists can't find elements.</p>
 <ul>
 <li><b>equals</b> must be reflexive, symmetric, transitive, consistent, and return false for null. The signature is <code>equals(Object)</code> — overloading with your own type creates a second, unrelated method the collections never call.</li>
@@ -4114,7 +4136,7 @@ environment variables for configuration, and files or network for data — large
 require a human to be present. Do notice that <code>args</code> is empty, not null, when nothing was
 passed, so <code>args.length</code> is the check.</p>`,
 docs:[['Scanner — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Scanner.html'],['Formatting output — Oracle','https://docs.oracle.com/javase/tutorial/java/data/numberformat.html']],
-ex:{title:'A robust prompt',
+ex:{title:'A prompt that survives bad input',
 prompt:`Write <code>Prompt</code> with two static methods taking a <code>java.util.Scanner</code> parameter (passing it in keeps them testable): <code>static int askAge(java.util.Scanner sc)</code> — loop with <code>hasNextInt()</code>, discarding invalid tokens with <code>sc.next()</code>, then return <code>nextInt()</code>; and <code>static String welcome(java.util.Scanner sc)</code> — read a full name with <code>nextLine()</code> and return it formatted via <code>String.format("Welcome, %s!", name)</code>.`,
 starter:`import java.util.Scanner;
 
@@ -4630,7 +4652,7 @@ solution:`1. same
 6. unchecked cast
 `,
 tests:[{d:'Q1: same class at runtime',re:'1\\.\\s*same',flags:'is'},{d:'Q2: type erasure',re:'2\\.\\s*type\\s+erasure',flags:'is'},{d:'Q3: new T() is impossible',re:'3\\.\\s*no',flags:'is'},{d:'Q4: List<?> is the checkable form',re:'4\\.\\s*List<\\?>',flags:'is'},{d:'Q5: raw type',re:'5\\.\\s*raw',flags:'is'},{d:'Q6: unchecked cast',re:'6\\.\\s*unchecked\\s+cast',flags:'is'}],
-behavior:`1. same — one List class serves every label; getClass() proves it. 2. type erasure — the compiler checks, then strips. 3. no — T is Object at runtime; pass a Class<T> or Supplier<T> when construction is needed. 4. List<?> — "some list", the only honest runtime question. 5. raw — the pre-2004 compatibility mode, never for new code. 6. unchecked cast — the compiler admitting it cannot back your assertion.`,
+behavior:`1. same — one List class serves every label; getClass() proves it. 2. type erasure — the compiler checks, then strips. 3. no — T is Object at runtime; pass a Class<T> or Supplier<T> when construction is needed. 4. List<?> — "some list", the only runtime-checkable question. 5. raw — the pre-2004 compatibility mode, never for new code. 6. unchecked cast — the compiler admitting it cannot back your assertion.`,
 hints:['Everything here is one fact wearing six disguises: labels die at compile time.','Q4: the ? wildcard asks nothing about the element type — which is exactly why it may be asked at runtime.','Q6 is the warning to treat as debt: every unchecked cast is a place the 2003 failure mode can sneak back in.']}}
 ]});
 STREAMS.push({icon:'🧱',title:'Data Structures',blurb:'Lists, sets, maps, sorting, stacks, queues, heaps, linked lists and hashing — the right tool, its Big-O, and building your own.',lessons:[
@@ -5125,7 +5147,7 @@ behavior:`Five cases execute. The duplicates case is the one that catches a Set-
 hints:['Guard k <= 0 first.','sort() compares as text by default — always pass (a, b) => a - b for numbers.','After an ascending sort, the k largest are the last k elements.']}]},
 {id:'ds4',title:'Linked lists: build one, know the trade-offs',body:`
 <p>🌱 <b>Starting from zero:</b> two ways to store a sequence. Numbered shelves: finding slot #57 is instant, but inserting a new shelf in the middle means shifting everything after it. A treasure hunt of notes, each pointing to the next: inserting a note mid-chain is trivial (rewrite one pointer), but reaching item #57 means following 57 clues. That is the ArrayList-versus-LinkedList tradeoff in one image — everything below is the detail.</p>
-<p><code>ArrayList</code> is a growable array: O(1) random access, O(1) amortized append, O(n) inserts in the middle (shifting). A <b>linked list</b> is nodes pointing at nodes: O(1) insert/remove <i>at a known node</i>, but O(n) to find anything and cache-hostile memory jumps. Honest guidance: <code>ArrayList</code> wins ~95% of the time; <code>ArrayDeque</code> beats <code>LinkedList</code> for both stack and queue duty. You study linked lists to master <b>references</b> — and because interviewers love them.</p>
+<p><code>ArrayList</code> is a growable array: O(1) random access, O(1) amortized append, O(n) inserts in the middle (shifting). A <b>linked list</b> is nodes pointing at nodes: O(1) insert/remove <i>at a known node</i>, but O(n) to find anything and cache-hostile memory jumps. The practical guidance: <code>ArrayList</code> wins ~95% of the time; <code>ArrayDeque</code> beats <code>LinkedList</code> for both stack and queue duty. You study linked lists to master <b>references</b> — and because interviewers love them.</p>
 <div class="codeSample" data-hl>class Node {
     int value;
     Node next;                    // null = end of the chain
@@ -5241,7 +5263,7 @@ public class IntList {
     }
 }`}},
 {id:'ds5',title:'Hash structures: equals/hashCode & an LRU cache',body:`
-<p>🌱 <b>Starting from zero:</b> a coat check hands you ticket #217 and puts your coat on hook 217 — returning it later takes seconds regardless of how many coats they hold, because the ticket number says exactly where to look. <b>Hashing</b> gives every object such a ticket number (its hash code), and HashMap/HashSet use it to jump straight to the right hook instead of searching. The catch: YOUR classes must issue their tickets honestly — that is the contract this lesson drills.</p>
+<p>🌱 <b>Starting from zero:</b> a coat check hands you ticket #217 and puts your coat on hook 217 — returning it later takes seconds regardless of how many coats they hold, because the ticket number says exactly where to look. <b>Hashing</b> gives every object such a ticket number (its hash code), and HashMap/HashSet use it to jump straight to the right hook instead of searching. The catch: YOUR classes must issue their tickets consistently — that is the contract this lesson drills.</p>
 <p>HashMap/HashSet give O(1) average lookups by hashing keys into buckets. That performance rests on a contract YOU uphold:</p>
 <div class="codeSample" data-hl>// THE CONTRACT: equal objects MUST have equal hashCodes.
 // Override both together or hash structures silently break:
@@ -5950,7 +5972,7 @@ shorthands for the common menus (memorize these three):
 {2,4}  two to four                       [a-z]{2,4}
 {2,}   two or more</div>
 <p>Reading practice — sound these out before peeking: <code>\\\\d{4}-\\\\d{2}-\\\\d{2}</code> — "4 digits, dash, 2 digits, dash, 2 digits": a date like 2026-07-19. <code>[A-Z]\\\\w+</code> — "one capital, then one or more word chars": a capitalized word. <code>\\\\s*</code> — "any amount of whitespace, including none" (which is why it appears between things in forgiving parsers).</p>
-<p>One honest caution to file away: quantifiers are <b>greedy</b> — <code>.*</code> grabs as much as it can while still letting the rest of the pattern succeed. It rarely matters at this stage, but when a pattern someday matches "too much", greed is the first suspect (the fix, <code>.*?</code>, means "as little as possible").</p>`,
+<p>One caution to file away: quantifiers are <b>greedy</b> — <code>.*</code> grabs as much as it can while still letting the rest of the pattern succeed. It rarely matters at this stage, but when a pattern someday matches "too much", greed is the first suspect (the fix, <code>.*?</code>, means "as little as possible").</p>`,
 docs:[['Character classes — Oracle','https://docs.oracle.com/javase/tutorial/essential/regex/char_classes.html'],['Quantifiers — Oracle','https://docs.oracle.com/javase/tutorial/essential/regex/quant.html'],['Predefined classes — Oracle','https://docs.oracle.com/javase/tutorial/essential/regex/pre_char_classes.html']],
 exs:[{title:'Kinds and amounts drill',
 prompt:`Write class <code>Shapes</code> with four static methods, each one <code>return raw.matches(...)</code>: (1) <code>boolean isPin(String raw)</code> — exactly four digits: <code>[0-9]{4}</code>; (2) <code>boolean isHandle(String raw)</code> — an <code>@</code>, then one lowercase letter, then two to fourteen more lowercase letters or digits: <code>@[a-z][a-z0-9]{2,14}</code>; (3) <code>boolean isHexColor(String raw)</code> — a <code>#</code> then exactly six characters from the menu <code>[0-9a-fA-F]</code>; (4) <code>boolean isShout(String raw)</code> — one or more uppercase letters followed by one or more <code>!</code> — remember <code>!</code> is not special, but write the plus signs where they belong: <code>[A-Z]+!+</code>.`,
@@ -6157,7 +6179,7 @@ prompt:`Write <code>function splitCsvLine(line)</code> splitting on commas and d
 starter:`function splitCsvLine(line) {\n  return [];\n}`,
 solution:`function splitCsvLine(line) {\n  return line.split(/\\s*,\\s*/);\n}`,
 tests:[{d:'split is given a regular expression',re:'split\\s*\\(\\s*/'},{d:'whitespace around the separator is consumed',re:'\\\\s\\*'},{d:'the comma is the separator',re:','},{d:'an array is returned',re:'return'}],
-behavior:`Four real cases. The trailing-separator case is the behaviour to know rather than to fix: "a,b," splits into three fields, the last empty, because a separator at the end means there is something after it. That is correct and it surprises people. Note the honest limit of this whole approach — it is not a CSV parser. A quoted field containing a comma will be split in two, which is the same warning the log-reading stream gives about -F, in awk: regex splitting works until the data has quoting.`,
+behavior:`Four real cases. The trailing-separator case is the behaviour to know rather than to fix: "a,b," splits into three fields, the last empty, because a separator at the end means there is something after it. That is correct and it surprises people. Note the real limit of this whole approach — it is not a CSV parser. A quoted field containing a comma will be split in two, which is the same warning the log-reading stream gives about -F, in awk: regex splitting works until the data has quoting.`,
 hints:['split accepts a regex as its separator.','\\s* on both sides absorbs any spaces or tabs around the comma.','Think about what a separator at the very end should produce before you special-case it.']}]},
 
 {id:'rgxwild',title:'Regex in the wild: replace, split & restraint',body:`
@@ -6166,7 +6188,7 @@ hints:['split accepts a regex as its separator.','\\s* on both sides absorbs any
 <li><b>Compile once.</b> <code>String.matches()</code> recompiles its pattern on every call — fine in a drill, wasteful in a loop over a million lines. The production shape is the one from the parser lesson: <code>private static final Pattern LINE = Pattern.compile(...)</code>, then <code>LINE.matcher(input)</code> per use. Pattern objects are immutable and thread-safe; compiled-once-shared-forever is free performance.</li>
 <li><b>The split family.</b> <code>s.split("\\\\s*,\\\\s*")</code> — split on commas <i>with optional surrounding spaces</i>: "a, b ,c" → [a, b, c] with no trimming pass. The limit parameter you met in the REPL lesson (<code>split(regex, 2)</code>) caps the pieces.</li>
 <li><b>Replace with judgment.</b> <code>replaceAll</code> takes a regex; <code>replace</code> takes literal text — reaching for replaceAll to delete a literal dot (and forgetting it's special) is a classic self-inflicted wound. Regex for patterns, replace for text.</li>
-<li><b>Flags.</b> <code>Pattern.CASE_INSENSITIVE</code> (or inline <code>(?i)</code>) — "error|ERROR|Error" collapses to one honest pattern. <code>Pattern.MULTILINE</code> makes <code>^</code>/<code>$</code> work per-line instead of per-string — the difference between "the string starts with" and "some line starts with".</li>
+<li><b>Flags.</b> <code>Pattern.CASE_INSENSITIVE</code> (or inline <code>(?i)</code>) — "error|ERROR|Error" collapses to one clean pattern. <code>Pattern.MULTILINE</code> makes <code>^</code>/<code>$</code> work per-line instead of per-string — the difference between "the string starts with" and "some line starts with".</li>
 </ul>
 <p><b>And the restraint.</b> Two famous failure modes mark the edge of regex territory:</p>
 <ul>
@@ -6693,7 +6715,7 @@ public class Refs {
     static Consumer<Object> PRINT = System.out::println;
 }`}},
 {id:'modL2',title:'Lambdas II: composition & custom functional interfaces',body:`
-<p>Lambdas become powerful when you <b>combine</b> them. The JDK functional interfaces ship default methods for exactly that:</p>
+<p>Lambdas start paying off when you <b>combine</b> them. The JDK functional interfaces ship default methods for exactly that:</p>
 <div class="codeSample" data-hl>Function&lt;Integer,Integer&gt; plus3  = n -&gt; n + 3;
 Function&lt;Integer,Integer&gt; times2 = n -&gt; n * 2;
 
@@ -6820,7 +6842,7 @@ static &lt;T&gt; Supplier&lt;T&gt; memoize(Supplier&lt;T&gt; expensive) {
 <p>The point of a higher-order function is <b>configuration captured once, behaviour reused many times</b>. <code>Comparator.comparing(Person::age)</code> is a function that builds a comparator; a retry wrapper is a function that takes an operation and returns a more resilient operation with the same signature. Because the result has the same type as the input, wrappers compose: retry around timing around logging, each written once and unaware of the others. That is the whole idea behind middleware, filters and interceptors, and it is why reading <code>Function&lt;A, Function&lt;B, C&gt;&gt;</code> without flinching is worth the practice.</p>
 
 <h4>Currying, and what it is actually for in Java</h4>
-<p>Currying turns a two-argument function into a one-argument function returning another. In languages built around it, this is how partial application works; in Java it is occasionally elegant and frequently over-applied. The honest use is <b>pre-binding a dependency</b>: a function that takes a configured client and returns a function taking the request, so the caller only supplies what varies. Beyond that, a plain method with two parameters is clearer, and clarity is the point of the whole stream.</p>
+<p>Currying turns a two-argument function into a one-argument function returning another. In languages built around it, this is how partial application works; in Java it is occasionally elegant and frequently over-applied. The real use is <b>pre-binding a dependency</b>: a function that takes a configured client and returns a function taking the request, so the caller only supplies what varies. Beyond that, a plain method with two parameters is clearer, and clarity is the point of the whole stream.</p>
 
 <h4>Memoization, and its two traps</h4>
 <p>Wrapping a pure function in a cache is the same technique the DP stream calls memoization, and the same caveats apply with a Java accent. First, <b>the function must be pure</b> — cache a function that reads a database or a clock and you have cached a moment, not a value. Second, <b>an unbounded cache is a memory leak with good intentions</b>: <code>computeIfAbsent</code> on a static map keyed by user input grows forever. Use a bounded cache with an eviction policy (Caffeine, Guava) for anything whose key space you do not control.</p>
@@ -7047,7 +7069,7 @@ clearer and often faster. Save <code>reduce</code> for folds those do not cover.
 <h4>Primitive streams, and why boxing matters</h4>
 <p><code>mapToInt</code>, <code>mapToDouble</code> and <code>mapToLong</code> exist because a
 <code>Stream&lt;Integer&gt;</code> allocates an object per element. On a large stream that is real cost
-and real garbage. They also unlock methods the object stream does not have —
+and real garbage. They also give you methods the object stream does not have —
 <code>sum()</code>, <code>average()</code>, <code>summaryStatistics()</code> — the last of which gives
 count, sum, min, max and average in a single pass.</p>
 <p><b>One trap:</b> <code>average()</code> returns an <code>OptionalDouble</code>, not a
@@ -7757,7 +7779,7 @@ application { mainClass = 'com.example.dojo.Main' }</div>
 <p><code>implementation</code> ≈ Maven compile (but hidden from consumers' compile classpath), <code>testImplementation</code> ≈ test scope, <code>api</code> leaks to consumers (library projects only). Run: <code>./gradlew build</code>, <code>./gradlew test</code>, <code>./gradlew run</code>, <code>./gradlew tasks</code>.</p>
 <h4>The trade Gradle makes</h4>
 <p>Maven describes a build declaratively and runs a fixed lifecycle. Gradle builds a <b>task graph</b> and
-lets you program it — which is genuinely more powerful and genuinely easier to make a mess of. A Gradle
+lets you program it — which can do more, and is easier to make a mess of. A Gradle
 build can do anything, and "anything" includes becoming a bespoke program that only its author
 understands.</p>
 <p>The discipline that keeps it good: use plugins and conventions for everything you can, and treat
@@ -7848,7 +7870,7 @@ test {
 </ul>
 <p>Multi-module: a parent POM (<code>&lt;packaging&gt;pom&lt;/packaging&gt;</code>, <code>&lt;modules&gt;</code>) or Gradle <code>settings.gradle</code> with <code>include 'api', 'core'</code>. Share versions centrally: Maven <code>&lt;dependencyManagement&gt;</code>, Gradle version catalogs (<code>libs.versions.toml</code>). A Spring Boot project typically inherits <code>spring-boot-starter-parent</code> precisely to get managed versions.</p>
 <h4>How to actually make the choice</h4>
-<p>For a typical Spring Boot service, the honest answer is that it rarely matters — both work, and the
+<p>For a typical Spring Boot service, the real answer is that it rarely matters — both work, and the
 build is not where your project succeeds or fails. What tips it:</p>
 <div class="codeSample" data-hl>choose MAVEN when
   the team is mixed-experience or rotates (nobody has to learn your build)
@@ -8106,7 +8128,7 @@ git log --stat                      # history + which files each commit touched
 git show                            # the full content of the latest commit
 git mv todo.txt tasks.txt           # rename WITH history (mv + stage in one step)
 git rm scratch.txt                  # delete AND stage the deletion</div>
-<p>The professional habits this unlocks:</p>
+<p>The professional habits this makes possible:</p>
 <ul>
 <li><b>Path-scoped staging</b> — <code>git add &lt;file&gt;</code> per file; <code>git add .</code> only when you've checked status first and truly mean "all of it".</li>
 <li><b>Hunk staging</b> — <code>git add -p notes.txt</code> walks each change block asking stage/skip: two unrelated edits in ONE file can become two clean commits.</li>
@@ -8314,16 +8336,16 @@ solution:`1. git restore notes.txt
 6. git reflog
 `,
 tests:[{d:'restore discards working-copy edits',re:'1\\.\\s*git\\s+restore\\s+notes\\.txt',flags:'i'},{d:'--staged unstages but keeps edits',re:'2\\.\\s*git\\s+restore\\s+--staged\\s+notes\\.txt',flags:'i'},{d:'pushed history undone with revert, never reset',re:'3\\.\\s*git\\s+revert\\s+abc123',flags:'i'},{d:'stash shelves dirty work',re:'4\\.\\s*git\\s+stash\\s*$',flags:'im'},{d:'stash pop restores and drops',re:'5\\.\\s*git\\s+stash\\s+pop',flags:'i'},{d:'reflog is the safety net',re:'6\\.\\s*git\\s+reflog',flags:'i'}],
-behavior:`1. notes.txt matches the last commit again; the edits are gone for real. 2. The change leaves the staging area but stays in the file — recomposition, not destruction. 3. A new commit "Revert ..." lands; the bad commit remains in history but its effect is gone — safe on shared branches. 4-5. stash/pop round-trips the entire dirty state. 6. reflog lists HEAD's journey with hashes — from there, any state is recoverable via switch -c.`,
+behavior:`1. notes.txt matches the last commit again; the edits are gone for real. 2. The change leaves the staging area but stays in the file — recomposition, not destruction. 3. A new commit "Revert ..." lands; the bad commit remains in history but its effect is gone — safe on shared branches. 4-5. stash/pop round-trips the entire dirty state. 6. reflog lists every position HEAD has held, with hashes — from there, any state is recoverable via switch -c.`,
 hints:['restore vs restore --staged: working copy vs staging area.','Pushed = shared = revert. Reset on a pushed branch rewrites history other people already have.','reflog is local and expires (default ~90 days) — a safety net, not an archive.']}},
 
 {id:'git6',title:'Advanced: revert, rebase & rewriting history',body:`
-<p>The advanced toolbox splits cleanly in two: commands that <b>move history forward</b> (safe anywhere) and commands that <b>rewrite history</b> (powerful, local-only). The golden rule that keeps teams sane: <b>never rewrite commits that others may already have</b>.</p>
+<p>The advanced toolbox splits cleanly in two: commands that <b>move history forward</b> (safe anywhere) and commands that <b>rewrite history</b> (sharp-edged, local-only). The golden rule that keeps teams sane: <b>never rewrite commits that others may already have</b>.</p>
 <ul>
 <li><b>git revert HASH</b> — the forward undo: a new commit containing the inverse change. Works on any branch, shared or not, because it only <i>adds</i> history.</li>
 <li><b>git reset</b> — moves your branch pointer backwards, three strengths: <code>--soft HEAD~1</code> (uncommit, keep changes staged — perfect for "forgot a file" or "wrong message"), <code>--mixed</code> (default: uncommit and unstage, changes kept in files), <code>--hard</code> (all gone — reflog is your only friend after this). Local branches only.</li>
 <li><b>git rebase main</b> — <i>replay</i> your branch's commits on top of the latest main, one by one, as if you had started today. Result: a straight line, no merge commit, clean review. Your commits get NEW hashes — that's the rewrite, and that's why it's for unpushed branches.</li>
-<li><b>git rebase -i HEAD~4</b> — interactive: an editor lists the last 4 commits and you direct the replay: <code>pick</code>, <code>reword</code> (fix a message), <code>squash</code>/<code>fixup</code> (fold "wip" and "typo" into one honest commit), <code>drop</code>, or reorder the lines. The standard tidy-up before opening a PR.</li>
+<li><b>git rebase -i HEAD~4</b> — interactive: an editor lists the last 4 commits and you direct the replay: <code>pick</code>, <code>reword</code> (fix a message), <code>squash</code>/<code>fixup</code> (fold "wip" and "typo" into one coherent commit), <code>drop</code>, or reorder the lines. The standard tidy-up before opening a PR.</li>
 <li><b>git cherry-pick HASH</b> — copy ONE commit from anywhere onto the current branch (the hotfix that must land on both main and the release branch).</li>
 <li><b>git bisect</b> — binary-search history for the commit that broke things: <code>start</code>, mark <code>bad</code>/<code>good</code>, answer git's checkouts until it names the culprit. Twenty commits ≈ 5 tests.</li>
 </ul>
@@ -8881,7 +8903,7 @@ cursor server-side, since it arrives from the client like anything else.</p>
 <ul>
 <li><b>Always cap the page size.</b> An unbounded <code>limit</code> is a denial-of-service parameter your
 API is offering to strangers. Clamp it, and document the maximum.</li>
-<li><b>Be honest about totals.</b> An exact <code>COUNT(*)</code> on every page is often the most expensive
+<li><b>Be careful with totals.</b> An exact <code>COUNT(*)</code> on every page is often the most expensive
 part of the request. Either omit it, or return an estimate labelled as one.</li>
 <li><b>Keep the ordering stable and explicit.</b> Pagination over an unspecified order is undefined
 behaviour that happens to work until the query plan changes.</li>
@@ -9443,7 +9465,7 @@ hints:['A reducer is a pure function switching on action.type.','Return a NEW ob
 <p>Auto-escaping covers text interpolated with <code>{ }</code>, and that is most of an app. It does not cover four places, and every real React XSS lives in one of them: <code>dangerouslySetInnerHTML</code>; a URL built from user input, where <code>javascript:</code> as an <code>href</code> executes on click; props spread blindly onto an element (<code>{...userProvided}</code>) which can inject an <code>onError</code> handler; and anything rendered outside React, such as a third-party widget handed raw HTML.</p>
 <p>If HTML from users genuinely must be rendered — a rich-text field — sanitise it with a maintained library (DOMPurify) on an allowlist basis, and do it on the server as well, because anything done only in the browser is done by an attacker's browser too.</p>
 
-<h4>The storage argument, honestly</h4>
+<h4>The storage argument, stated carefully</h4>
 <p>The usual advice — "cookies, not localStorage" — is right but often stated too strongly. An <code>HttpOnly</code> cookie cannot be read by injected script, which removes the easy theft of a token; it does not stop that script from <i>using</i> the session by making requests as the user, since the browser attaches the cookie automatically. So cookies raise the cost of XSS rather than neutralising it, and they add CSRF as a concern that <code>SameSite</code> and anti-CSRF tokens then have to answer.</p>
 <p>The defensible position: <code>HttpOnly; Secure; SameSite=Lax</code> cookies, short-lived tokens, and a real CSP — with the recognition that if you have XSS, you have a problem no storage choice solves. That is the argument for the BFF pattern: no token in the browser at all.</p>
 
@@ -9502,13 +9524,13 @@ CACHEABLE   the response may be stored and reused.  GET mostly
 <h4>PUT vs PATCH, which people get wrong constantly</h4>
 <p><code>PUT</code> <b>replaces</b> the resource with the body you sent — so a field you omitted is a field
 you deleted. That is the semantics, and clients that send partial bodies to <code>PUT</code> are silently
-wiping data. <code>PATCH</code> applies a partial change, and because "partial" needs a format, the honest
+wiping data. <code>PATCH</code> applies a partial change, and because "partial" needs a format, the careful
 version specifies one (JSON Merge Patch, RFC 7396, is the pragmatic choice).</p>
 
 <h4>Status codes as part of the contract</h4>
 <p>They are not decoration; clients branch on them. <code>201</code> with a <code>Location</code> header
 tells the caller where the new thing lives. <code>204</code> means success with nothing to say.
-<code>202</code> means accepted for later processing, which is honest for async work.
+<code>202</code> means accepted for later processing, which is exactly right for async work.
 <code>409</code> means a conflict with current state, <code>422</code> means understood but unprocessable,
 and <code>4xx</code> versus <code>5xx</code> tells the caller whether retrying could possibly help.</p>
 <p>The cardinal sin is <code>200</code> with an error inside the body: it breaks every client's error
@@ -9518,7 +9540,7 @@ handling, every monitor, and every cache.</p>
 <p>Some operations are genuinely not CRUD on a noun. "Cancel this order" is a real business action with
 rules, and contorting it into <code>PATCH /orders/42 {"status":"cancelled"}</code> hides the fact that
 cancelling is not the same as setting a field. Modelling it as a sub-resource —
-<code>POST /orders/42/cancellations</code> — keeps the interface honest. And HATEOAS, the level of REST
+<code>POST /orders/42/cancellations</code> — keeps the interface saying what actually happens. And HATEOAS, the level of REST
 almost nobody implements, is worth knowing about so you can say clearly that you have chosen not to.</p>`,
 docs:[['REST — MDN glossary','https://developer.mozilla.org/en-US/docs/Glossary/REST'],['HTTP methods — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods']],
 ex:{title:'Design the endpoints',lang:'http',
@@ -10126,7 +10148,7 @@ public class DojoApplication {
 }</div>
 <p>Start any project at <a href="https://start.spring.io" target="_blank" rel="noopener">start.spring.io</a>. Component scanning finds your annotated classes in the same package and below — the #1 beginner bug is putting classes outside that package tree.</p>
 <h4>The problem Boot solved</h4>
-<p>Spring before Boot was powerful and miserable to start. A web application meant hand-picking a dozen
+<p>Spring before Boot could do everything and was miserable to start. A web application meant hand-picking a dozen
 mutually-compatible library versions, writing XML or Java configuration for the DispatcherServlet, the
 view resolver, the data source and the transaction manager, then packaging a WAR and deploying it into a
 Tomcat someone had installed and configured separately. Days of work before a single line of business
@@ -10324,7 +10346,7 @@ new OrderService();       // compiles. object is BROKEN - payments is null.
 new OrderService(fake);   // the ONLY way to build it is correctly.</div>
 <p>Three concrete consequences. The object is <b>never in an invalid state</b> — there is no window
 between construction and injection. The dependencies are <b>visible in the signature</b>, so a
-constructor with nine parameters tells you honestly that the class does too much, where nine
+constructor with nine parameters tells you outright that the class does too much, where nine
 <code>@Autowired</code> fields hide it. And tests use plain <code>new</code>, with no Spring context and
 no reflection.</p>
 
@@ -11326,7 +11348,7 @@ class AsyncConfig {}`}},
 <li><b>Operators</b>: <code>map</code> (sync transform), <code>flatMap</code> (async transform — returns another publisher), <code>filter</code>, <code>take</code>, <code>zip</code>, <code>switchIfEmpty</code> (the reactive "or else"), <code>onErrorResume</code> (the reactive catch).</li>
 <li><b>Backpressure</b>: the subscriber tells the producer how much it can handle (<code>request(n)</code>) — a slow consumer no longer means an exploding queue. This is the actual point of Reactive Streams, the spec Reactor implements.</li>
 <li><b>Never block</b> in a reactive pipeline — <code>block()</code>, JDBC, <code>Thread.sleep</code> on an event-loop thread stalls <i>every</i> request. Blocking work goes to <code>Schedulers.boundedElastic()</code>; databases get R2DBC.</li>
-<li><b>Honest guidance</b>: virtual threads (see the concurrency stream) now cover much of what WebFlux was adopted for. Reach for reactive when you need streaming, composition over many async sources, or backpressure itself.</li>
+<li><b>Practical guidance</b>: virtual threads (see the concurrency stream) now cover much of what WebFlux was adopted for. Reach for reactive when you need streaming, composition over many async sources, or backpressure itself.</li>
 </ul>
 <div class="codeSample">@GetMapping("/users/{id}")
 Mono&lt;UserDto&gt; byId(@PathVariable String id) {
@@ -11362,7 +11384,7 @@ scales the way reactive code does. For most new services that removes the main r
 tax.</p>
 <p>What remains genuinely reactive territory is <b>streaming</b> and <b>backpressure</b>: server-sent
 events, long-lived subscriptions, and pipelines where a fast producer must be told to slow down. That is
-what Reactor expresses well and what virtual threads do not address at all. The honest position for 2026:
+what Reactor expresses well and what virtual threads do not address at all. The realistic position for 2026:
 choose reactive for streams and demand signalling, not for concurrency.`,
 docs:[['Project Reactor reference','https://projectreactor.io/docs/core/release/reference/'],['Spring WebFlux reference','https://docs.spring.io/spring-framework/reference/web/webflux.html'],['Which operator do I need? — Reactor','https://projectreactor.io/docs/core/release/reference/#which-operator']],
 ex:{title:'A non-blocking user endpoint',
@@ -11595,7 +11617,7 @@ class UserService {
 STREAMS.push({icon:'🧵',title:'Concurrency & Multithreading',blurb:'Threads, synchronization, executors, CompletableFuture, concurrent collections and virtual threads.',lessons:[
 {id:'con0',title:'What is a thread? Threads vs processes',body:`
 <p>Before any synchronization or thread pools, get the mental model right. When you launch a program, the operating system creates a <b>process</b>: an isolated container with its own private memory, its own file handles, and at least one <b>thread</b> of execution. A <b>thread</b> is a single sequential path through the code — the thing that actually runs your instructions one after another.</p>
-<p>The key difference is <b>memory</b>. Processes are <i>isolated</i>: one process cannot read another&#8217;s memory, which makes them safe but heavyweight, and talking between them needs deliberate inter-process communication. Threads <i>within the same process</i> are different — they <b>share the process&#8217;s heap</b> (all its objects), but each thread gets its <b>own stack</b> for its local variables and method calls. That shared heap is exactly what makes threads powerful and dangerous at once.</p>
+<p>The key difference is <b>memory</b>. Processes are <i>isolated</i>: one process cannot read another&#8217;s memory, which makes them safe but heavyweight, and talking between them needs deliberate inter-process communication. Threads <i>within the same process</i> are different — they <b>share the process&#8217;s heap</b> (all its objects), but each thread gets its <b>own stack</b> for its local variables and method calls. That shared heap is exactly what makes threads useful and dangerous at once.</p>
 <div class="codeSample">Process (isolated memory)
  ├─ Thread 1  → own stack ┐
  ├─ Thread 2  → own stack ├─ all share the SAME heap (objects)
@@ -11638,7 +11660,7 @@ t.join();           // wait for it to finish
 
 Thread.sleep(100);  // pause current thread (throws InterruptedException)
 t.isAlive();        // still running?</div>
-<p><code>join()</code> blocks until the thread dies — the simplest coordination tool. Daemon threads (<code>setDaemon(true)</code> before start) don't keep the JVM alive. Interruption is cooperative: <code>t.interrupt()</code> sets a flag; blocking calls throw <code>InterruptedException</code>, which you must handle honestly (restore the flag or exit).</p>
+<p><code>join()</code> blocks until the thread dies — the simplest coordination tool. Daemon threads (<code>setDaemon(true)</code> before start) don't keep the JVM alive. Interruption is cooperative: <code>t.interrupt()</code> sets a flag; blocking calls throw <code>InterruptedException</code>, which you must handle properly (restore the flag or exit).</p>
 <h4>What a thread costs, and why that shapes everything</h4>
 <p>A platform thread is a thin wrapper over an <b>operating system</b> thread. Creating one is a system
 call; each carries a stack reserved in megabytes, not kilobytes; and switching between them means the
@@ -12253,7 +12275,7 @@ try (var in = new ObjectInputStream(Files.newInputStream(path))) {
 <h4>Why the industry moved away from native serialization</h4>
 <p>Three reasons, in order of weight. <b>Security</b>: <code>readObject</code> constructs arbitrary types
 before your code sees anything, so an attacker who controls the bytes controls what gets built — the gadget
-chain problem, which is why the JDK added <code>ObjectInputFilter</code> and why the honest advice is never
+chain problem, which is why the JDK added <code>ObjectInputFilter</code> and why the standing advice is never
 to deserialize untrusted input at all. <b>Coupling</b>: the format is your class structure, so a rename is
 a breaking change to data at rest. <b>Interoperability</b>: nothing outside the JVM can read it.</p>
 <p>Explicit formats invert all three. JSON, Protobuf and Avro have a schema you can version deliberately, a
@@ -12548,7 +12570,7 @@ for (Method m : Service.class.getDeclaredMethods()) {
     Audited a = m.getAnnotation(Audited.class);
     if (a != null) System.out.println(m.getName() + " audited as " + a.value());
 }</div>
-<p>Without <code>RUNTIME</code> retention, <code>getAnnotation</code> returns null — the single most common custom-annotation bug. Reflection is powerful but slow and unchecked: frameworks cache it; application code should rarely need it.</p>
+<p>Without <code>RUNTIME</code> retention, <code>getAnnotation</code> returns null — the single most common custom-annotation bug. Reflection can reach almost anything, but it is slow and unchecked: frameworks cache it; application code should rarely need it.</p>
 <h4>Why the two are always discussed together</h4>
 <p>Separately they are unremarkable: an annotation is inert metadata, and reflection is a slow way to do
 what a normal method call does better. Together they are the mechanism behind every framework you have
@@ -12572,7 +12594,7 @@ RUNTIME  in the class file AND readable via reflection. what frameworks
 <p><code>@Target</code> is the other half: it makes misuse a <b>compile error</b> rather than an annotation
 that silently does nothing where it was put.</p>
 
-<h4>The costs, honestly</h4>
+<h4>A clear look at the costs</h4>
 <p>Reflection is slower than direct invocation — lookups are expensive, and while modern JITs optimise
 repeated calls well, the discovery phase is not free. It also <b>defeats the compiler</b>: a field renamed
 by a refactoring tool leaves a string somewhere that no longer matches, and you find out at runtime. And
@@ -13390,7 +13412,7 @@ solution:`1. text
 `,
 tests:[{d:'The narrow waist is lines of text',re:'1\\.\\s*text',flags:'is'},{d:'Pipeline stages run concurrently, not sequentially',re:'2\\.\\s*concurrent',flags:'is'},{d:'Streaming means constant memory',re:'3\\.\\s*constant',flags:'is'},{d:'Early exit propagates as SIGPIPE',re:'4\\.\\s*SIGPIPE',flags:'is'},{d:'Each tool does one job well',re:'5\\.\\s*job',flags:'is'},{d:'The cost: text is a weak data model',re:'6\\.\\s*model',flags:'is'}],
 behavior:`1. Lines of text is the narrow waist: no schema, no shared library, no version negotiation — so tools written decades apart compose without either knowing the other exists. 2. Concurrently. Both processes start immediately and the kernel's pipe buffer applies backpressure; "run a, then run b" is what > and a temp file do. 3. Constant memory — the file size stops being a limit, which is the whole reason this beats an editor on production data. 4. SIGPIPE: writing to a pipe whose reader has closed kills the writer by default, which is why "| head" is fast rather than merely truncated. 5. One job well — capability is added by writing a new tool, not by growing an existing one, and combinations nobody planned are the normal case. 6. Data model. Every stage re-parses text, so a route containing a space or a quoted field with a delimiter inside it will break a naive pipeline — that is exactly what jq exists to fix for structured logs.`,
-hints:['Question 1 is the reason the answer to "why does jq work with sed?" is "neither knows the other exists".','Question 2: if they ran one after the other, "grep | head" on a 40GB file could not possibly return instantly.','Question 6 is the honest limitation — the reason the last lesson of this stream switches to JSON.']}]},
+hints:['Question 1 is the reason the answer to "why does jq work with sed?" is "neither knows the other exists".','Question 2: if they ran one after the other, "grep | head" on a 40GB file could not possibly return instantly.','Question 6 is the real limitation — the reason the last lesson of this stream switches to JSON.']}]},
 
 {id:'rpl2',title:'grep properly: fixed strings, context, and the anchoring mistake',body:`
 <p>Nearly everyone can use <code>grep</code> badly. Used well it answers three different questions — <i>does this appear?</i>, <i>how often?</i>, <i>what surrounds it?</i> — and the difference between the two is mostly knowing six flags and one failure mode.</p>
@@ -13467,7 +13489,7 @@ solution:`1. duration
 6. grep -E '/api/(checkout|orders)' app.log
 `,
 tests:[{d:'A bare 200 also matches inside the duration',re:'1\\.\\s*duration',flags:'i'},{d:'Delimiters included inside the quotes',re:'2\\.\\s*grep\\s+-F\\s+([\'"]) 200 \\1',flags:''},{d:'awk compares the field itself, so it cannot over-match',re:'3\\.\\s*awk\\s+.\\$6\\s*==\\s*500',flags:'i'},{d:'^ anchors to start of line',re:'4\\.\\s*\\^'},{d:'$ anchors to end of line',re:'5\\.\\s*\\$'},{d:'-E alternation with |',re:'6\\.\\s*grep\\s+-E\\s+.?/api/\\(checkout\\|orders\\)',flags:'i'}],
-behavior:`1. A duration of 1200ms contains 200, and so does the trace id 2004ab and the timestamp T12:00:20Z. On the sample log the naive count is 911 against a true 910 — small enough to believe, wrong enough to mislead. 2. Putting the spaces inside the quotes turns "the digits 200" into "the field 200", which is the cheapest correct fix. 3. awk '$6==500' is the honest version: it compares the sixth field as a value, so no amount of 500 elsewhere on the line can match. It is also the moment to leave grep — positional questions are awk's job. 4-5. ^ and $ pin a pattern to a position; unanchored patterns are claims about the entire line. 6. -E gives you alternation without backslashes; plain grep would need /api/\\(checkout\\|orders\\).`,
+behavior:`1. A duration of 1200ms contains 200, and so does the trace id 2004ab and the timestamp T12:00:20Z. On the sample log the naive count is 911 against a true 910 — small enough to believe, wrong enough to mislead. 2. Putting the spaces inside the quotes turns "the digits 200" into "the field 200", which is the cheapest correct fix. 3. awk '$6==500' is the exact version: it compares the sixth field as a value, so no amount of 500 elsewhere on the line can match. It is also the moment to leave grep — positional questions are awk's job. 4-5. ^ and $ pin a pattern to a position; unanchored patterns are claims about the entire line. 6. -E gives you alternation without backslashes; plain grep would need /api/\\(checkout\\|orders\\).`,
 hints:['Ask of every pattern: could these characters appear somewhere else on the line? On a log line full of numbers, the answer is usually yes.','The cheapest fix is to include the delimiters — the spaces are part of what you mean by "the status field".','When the answer depends on WHICH field, grep is the wrong tool: awk compares fields by number.']},
 
 {title:'Extract, then rank',lang:'shell',diff:'medium',
@@ -13527,7 +13549,7 @@ solution:`1. grep -rl --include='*.log' ERROR logs/
 6. grep -oE '[0-9]+ms' app.log | grep -oE '[0-9]+' | sort -n | tail -1
 `,
 tests:[{d:'-r plus -l plus --include scopes the search',re:'1\\.\\s*grep\\s+-(rl|lr)\\s+--include=([\'"])\\*\\.log\\2\\s+ERROR\\s+logs/?',flags:''},{d:'One ERE counts 4xx and 5xx together',re:'2\\.\\s*grep\\s+-cE\\s+([\'"]) \\(4\\|5\\)\\[0-9\\]\\{2\\} \\1',flags:''},{d:'-h suppresses filename prefixes so the count is by route',re:'3\\.\\s*grep\\s+-rhoE[^\\n]*\\|\\s*sort\\s*\\|\\s*uniq\\s+-c\\s*\\|\\s*sort\\s+-rn',flags:'i'},{d:'-m stops after n matches',re:'4\\.\\s*grep\\s+-m\\s?2\\s+ERROR',flags:''},{d:'Field position expressed by anchoring past earlier fields',re:'5\\.\\s*grep\\s+-E\\s+([\'"])\\^\\[\\^ \\]\\+ \\[\\^ \\]\\+ \\(ERROR\\|WARN\\) \\1',flags:''},{d:'Two greps then a numeric sort finds the maximum',re:'6\\.[^\\n]*sort\\s+-n\\s*\\|\\s*tail\\s+-n?\\s?1',flags:'i'}],
-behavior:`1. -l prints names only and --include keeps rotated .gz and stray .txt files out of the search; on the sample tree only logs/api.log matches, because the JSON copy writes the level in lowercase. 2. 80 lines — one regex instead of two passes, and the surrounding spaces keep it to the status field. 3. Without -h, recursive grep prefixes every match with its filename, so the "route" you count becomes "logs/api.log:/api/orders" and every file gets its own bucket. 4. -m2 stops reading after the second match — the same early-exit economics as | head, done inside grep. 5. This is grep straining: expressing "the third field" as "past two runs of non-spaces" works, but it is unreadable and breaks the moment a field contains a space. awk '$3=="ERROR"' is the honest version, and the next lesson but one is where you switch. 6. 1075ms. The second grep strips the unit so sort -n compares numbers; without it, sort would compare "99ms" against "1075ms" as text and answer 99.`,
+behavior:`1. -l prints names only and --include keeps rotated .gz and stray .txt files out of the search; on the sample tree only logs/api.log matches, because the JSON copy writes the level in lowercase. 2. 80 lines — one regex instead of two passes, and the surrounding spaces keep it to the status field. 3. Without -h, recursive grep prefixes every match with its filename, so the "route" you count becomes "logs/api.log:/api/orders" and every file gets its own bucket. 4. -m2 stops reading after the second match — the same early-exit economics as | head, done inside grep. 5. This is grep straining: expressing "the third field" as "past two runs of non-spaces" works, but it is unreadable and breaks the moment a field contains a space. awk '$3=="ERROR"' is the clean version, and the next lesson but one is where you switch. 6. 1075ms. The second grep strips the unit so sort -n compares numbers; without it, sort would compare "99ms" against "1075ms" as text and answer 99.`,
 hints:['Question 3 has a subtle flag: recursive grep prefixes filenames, which poisons a frequency count.','Question 5 is deliberately awkward — notice how much regex it takes to say "the third field", and remember it when you meet awk.','Question 6 needs the unit gone before a numeric sort can mean anything.']},
 {title:'Compare the field, not the line',lang:'js',diff:'easy',
 run:{call:'fieldMatches',cases:[{"name": "the third field is ERROR", "args": ["2026-08-11T09:00:00Z api ERROR", 2, "ERROR"], "expect": true}, {"name": "the value appears elsewhere on the line but not in that field", "args": ["ERROR-free api INFO", 2, "ERROR"], "expect": false}, {"name": "fields are counted from zero here", "args": ["a b c", 0, "a"], "expect": true}, {"name": "a missing field is not a match", "args": ["a b", 5, "x"], "expect": false}, {"name": "runs of whitespace count as one separator", "args": ["a   b", 1, "b"], "expect": true}]},
@@ -13612,7 +13634,7 @@ solution:`1. sed -E 's/trace=[0-9a-f]+/trace=REDACTED/' app.log
 6. greedy
 `,
 tests:[{d:'Substitution with an ERE character class',re:'1\\.\\s*sed\\s+-E\\s+([\'"])s/trace=\\[0-9a-f\\]\\+/trace=REDACTED/\\1',flags:'i'},{d:'-n with s///p is the extraction idiom',re:'2\\.\\s*sed\\s+-nE\\s+([\'"])s/\\.\\* \\(\\[0-9\\]\\+\\)ms \\.\\*/\\\\1/p\\1'},{d:'A different delimiter avoids escaping slashes',re:'3\\.\\s*sed\\s+-E\\s+([\'"])s#/api/orders/\\[0-9\\]\\+#/api/orders/:id#\\1',flags:'i'},{d:'g replaces every occurrence on the line',re:'4\\.\\s*g\\s*$',flags:'im'},{d:'-i edits in place, irreversibly',re:'5\\.\\s*-i',flags:'i'},{d:'.* is greedy',re:'6\\.\\s*greedy',flags:'i'}],
-behavior:`1. Scrubbing identifiers is the honest way to share a log in a ticket — and -E lets you write + instead of \\+. 2. This is THE sed idiom: -n prints nothing, the s/// keeps only capture group 1, and the trailing p prints just that. Without -n you would get every line, changed or not. 3. Collapsing /api/orders/1234 into /api/orders/:id is what makes routes countable — otherwise every request is its own unique "route" and uniq -c tells you nothing. Choosing # as the delimiter removes six backslashes. 4. Without g, sed replaces only the FIRST match per line — a classic near-miss when a line carries two trace ids. 5. -i has no undo, and GNU (-i) and BSD/macOS (-i '') disagree on the syntax, so the same script behaves differently on a laptop and in CI. Run it without -i first. 6. Greedy: .* takes as much as it can, so an extraction anchored with .* silently starts from the last possible position.`,
+behavior:`1. Scrubbing identifiers is the responsible way to share a log in a ticket — and -E lets you write + instead of \\+. 2. This is THE sed idiom: -n prints nothing, the s/// keeps only capture group 1, and the trailing p prints just that. Without -n you would get every line, changed or not. 3. Collapsing /api/orders/1234 into /api/orders/:id is what makes routes countable — otherwise every request is its own unique "route" and uniq -c tells you nothing. Choosing # as the delimiter removes six backslashes. 4. Without g, sed replaces only the FIRST match per line — a classic near-miss when a line carries two trace ids. 5. -i has no undo, and GNU (-i) and BSD/macOS (-i '') disagree on the syntax, so the same script behaves differently on a laptop and in CI. Run it without -i first. 6. Greedy: .* takes as much as it can, so an extraction anchored with .* silently starts from the last possible position.`,
 hints:['Question 2 is the extraction idiom: -n, a capture group, and the p flag on the s command.','The delimiter after s is whatever character you put there — if the pattern is full of slashes, pick something else.','Question 6 explains why an extraction that "works on most lines" fails on the line with two separators.']},
 
 {title:'Normalise, then count',lang:'shell',diff:'medium',
@@ -13777,7 +13799,7 @@ behavior:`1. /api/search 259, /api/orders 257, /api/checkout 249, /api/users 225
 hints:['Every one of these is the same three-part shape: pattern, array update, END loop.','for (k in arr) has no defined order — pipe to sort when order matters.','Counting, summing and maxing differ only in what the action does to the array slot.']},
 
 {title:'The average that hides the outage',lang:'shell',diff:'hard',
-prompt:`Aggregate properly, then read the result honestly. One command per numbered line: (1) print, per route, the average duration formatted with <code>printf "%-16s avg=%6.1fms n=%d\\n", r, s[r]/n[r], n[r]</code> — accumulate <code>s[$5]+=$7+0</code> and <code>n[$5]++</code>, (2) pipe it through <code>sort</code> so the routes come out in a stable order, (3) restrict the same calculation to lines <b>after</b> the deploy at 14:00 by adding the pattern <code>$1 &gt;= "2026-08-11T14:00:00Z"</code> (string comparison — ISO-8601 sorts correctly as text), (4) print the maximum duration per route alongside the average, so the tail is visible — add <code>if (($7+0)&gt;m[$5]) m[$5]=$7+0</code> and print <code>m[r]</code> too, (5) checkout's average after the deploy is about 76ms while its worst request is over 1000ms: name the statistic that would have shown the problem (one word, e.g. p99 — write <code>percentile</code>), (6) the reason the average missed it, in one word: the slow requests are a small ____ of the total.`,
+prompt:`Aggregate properly, then read the result critically. One command per numbered line: (1) print, per route, the average duration formatted with <code>printf "%-16s avg=%6.1fms n=%d\\n", r, s[r]/n[r], n[r]</code> — accumulate <code>s[$5]+=$7+0</code> and <code>n[$5]++</code>, (2) pipe it through <code>sort</code> so the routes come out in a stable order, (3) restrict the same calculation to lines <b>after</b> the deploy at 14:00 by adding the pattern <code>$1 &gt;= "2026-08-11T14:00:00Z"</code> (string comparison — ISO-8601 sorts correctly as text), (4) print the maximum duration per route alongside the average, so the tail is visible — add <code>if (($7+0)&gt;m[$5]) m[$5]=$7+0</code> and print <code>m[r]</code> too, (5) checkout's average after the deploy is about 76ms while its worst request is over 1000ms: name the statistic that would have shown the problem (one word, e.g. p99 — write <code>percentile</code>), (6) the reason the average missed it, in one word: the slow requests are a small ____ of the total.`,
 starter:`1.
 2.
 3.
@@ -13793,7 +13815,7 @@ solution:`1. awk '{s[$5]+=$7+0; n[$5]++} END {for (r in s) printf "%-16s avg=%6.
 6. fraction
 `,
 tests:[{d:'Average per route with aligned printf output',re:'1\\.[^\\n]*s\\[\\$5\\]\\+=\\$7\\+0; n\\[\\$5\\]\\+\\+[^\\n]*printf "%-16s avg=%6\\.1fms n=%d',flags:''},{d:'Sorted for a stable, readable table',re:'2\\.[^\\n]*\\|\\s*sort\\s*$',flags:'m'},{d:'ISO-8601 timestamps compare correctly as strings',re:'3\\.\\s*awk\\s+([\'"])\\$1 >= "2026-08-11T14:00:00Z" \\{',flags:''},{d:'Max per route exposes the tail the mean hides',re:'4\\.[^\\n]*if \\(\\(\\$7\\+0\\)>m\\[\\$5\\]\\) m\\[\\$5\\]=\\$7\\+0[^\\n]*max=%dms',flags:''},{d:'Percentiles show what averages hide',re:'5\\.\\s*percentile|5\\.\\s*p99',flags:'i'},{d:'A small fraction of requests moves the tail, not the mean',re:'6\\.\\s*fraction|6\\.\\s*percent|6\\.\\s*proportion',flags:'i'}],
-behavior:`1. checkout avg=76.3ms n=249, orders 75.3, search 127.7, users 25.2 — a table that says "everything is fine". 2. for-in order is unspecified; piping to sort is what makes two runs comparable. 3. After the deploy checkout's mean is 86.1ms against 64.8ms before — up a third, on 134 samples, which is exactly the kind of move a tired on-call engineer writes off as noise. Its median goes 65ms to 67ms: unchanged. Meanwhile its p99 goes 95ms to 975ms. 4. Add the max and checkout reads 1075ms against 200, 120 and 40 for the others — the first honest signal in the whole table. 5. A percentile: p99 goes from 95ms to 975ms on this data, a 10x regression the mean rounds away. 6. A small fraction: 3 of the 134 checkout calls after the deploy exceed 500ms — 2.2%. Three slow requests move the mean by about 21ms and the 99th percentile by 880. This is why SLOs are written on percentiles, and why "average response time" dashboards let outages run for hours.`,
+behavior:`1. checkout avg=76.3ms n=249, orders 75.3, search 127.7, users 25.2 — a table that says "everything is fine". 2. for-in order is unspecified; piping to sort is what makes two runs comparable. 3. After the deploy checkout's mean is 86.1ms against 64.8ms before — up a third, on 134 samples, which is exactly the kind of move a tired on-call engineer writes off as noise. Its median goes 65ms to 67ms: unchanged. Meanwhile its p99 goes 95ms to 975ms. 4. Add the max and checkout reads 1075ms against 200, 120 and 40 for the others — the first real signal in the whole table. 5. A percentile: p99 goes from 95ms to 975ms on this data, a 10x regression the mean rounds away. 6. A small fraction: 3 of the 134 checkout calls after the deploy exceed 500ms — 2.2%. Three slow requests move the mean by about 21ms and the 99th percentile by 880. This is why SLOs are written on percentiles, and why "average response time" dashboards let outages run for hours.`,
 hints:['Everything here is the group-by shape from the last exercise plus printf.','ISO-8601 was designed so that lexical order equals chronological order — a plain string comparison is a valid time filter.','Compute the max next to the mean and the story changes; that is the whole argument for percentiles.']},
 
 {title:'Interview: why awk, and where it stops',lang:'text',diff:'hard',
@@ -13813,7 +13835,7 @@ solution:`1. pattern
 6. quoted
 `,
 tests:[{d:'Pattern then action',re:'1\\.\\s*pattern',flags:'is'},{d:'NR is the record number',re:'2\\.\\s*NR',flags:'s'},{d:'NF is the field count',re:'3\\.\\s*NF',flags:'s'},{d:'Associative arrays give group-by',re:'4\\.\\s*associative',flags:'is'},{d:'Leading-digit coercion yields 87',re:'5\\.\\s*87',flags:'s'},{d:'Quoted fields defeat naive splitting',re:'6\\.\\s*quoted',flags:'is'}],
-behavior:`1. Pattern and action — omit either and awk supplies a default, which is why one-liners are so short. 2-3. NR is records seen so far (line number), NF is fields on the current line; NR>1 skips a header, NF!=8 finds malformed lines. 4. Associative: string-keyed hash maps, so counting, summing and maxing per group are all one pass with memory proportional to distinct keys, not to file size. 5. 87 — awk reads the leading digits and stops at "m". "ms87" would be 0, so the coercion helps only when the number leads. 6. A quoted field: "Smith, John" contains the separator, and -F, splits it in two. Real CSV needs a real parser (Python's csv module, or a dedicated tool) — and the honest senior answer to "can awk do this?" is "yes, until the data has quoting, and then no".`,
+behavior:`1. Pattern and action — omit either and awk supplies a default, which is why one-liners are so short. 2-3. NR is records seen so far (line number), NF is fields on the current line; NR>1 skips a header, NF!=8 finds malformed lines. 4. Associative: string-keyed hash maps, so counting, summing and maxing per group are all one pass with memory proportional to distinct keys, not to file size. 5. 87 — awk reads the leading digits and stops at "m". "ms87" would be 0, so the coercion helps only when the number leads. 6. A quoted field: "Smith, John" contains the separator, and -F, splits it in two. Real CSV needs a real parser (Python's csv module, or a dedicated tool) — and the senior answer to "can awk do this?" is "yes, until the data has quoting, and then no".`,
 hints:['Two of the answers are two-letter built-in variables that come up in every awk script.','Question 4 is the answer to "why not just use grep and sed for this?"','Question 6 is the boundary: the failure appears on the first row that quotes its separator, not before.']},
 {title:'Group and count, executed',lang:'js',diff:'medium',
 run:{call:'groupCount',cases:[{"name": "two of one key and one of another", "args": [["a x", "b y", "a z"], 0], "expect": {"a": 2, "b": 1}}, {"name": "grouping by a different field", "args": [["a x", "b x", "c y"], 1], "expect": {"x": 2, "y": 1}}, {"name": "an empty input gives an empty table", "args": [[], 0], "expect": {}}, {"name": "one line, one group", "args": [["only line"], 0], "expect": {"only": 1}}]},
@@ -13840,7 +13862,7 @@ jq -s 'group_by(.route) | map({route:.[0].route, n:length, avg:((map(.dur_ms)|ad
 jq --arg r /api/users -r 'select(.route==$r) | .dur_ms' app.json.log     # values from the shell, safely
 jq -r '.user.id // "anonymous"' app.json.log                             # default for a missing field</div>
 <p>Two survival details. <b><code>//</code> supplies a default</b> when a field is missing or null — <code>.user.id // "anonymous"</code> — because real logs are ragged and a missing key otherwise yields <code>null</code> that spreads through the rest of your expression. And <b><code>--arg</code> passes shell values in as data</b>, never by string-splicing them into the program, for the same reason <code>awk -v</code> and SQL parameters exist.</p>
-<p><b>The honest limits.</b> One malformed line aborts the run with <code>parse error</code>, so mixed text-and-JSON logs need <code>grep '^{'</code> in front, or jq's <code>--seq</code>/<code>-R 'fromjson?'</code> to skip the wreckage. <code>-s</code> is not streaming. And the field names are a contract nobody enforces: rename <code>dur_ms</code> to <code>duration_ms</code> in a service and every dashboard and pipeline that read it silently returns <code>null</code> — the structured-logging equivalent of a schema migration, which is why the field list belongs in a review checklist.</p>`,
+<p><b>The real limits.</b> One malformed line aborts the run with <code>parse error</code>, so mixed text-and-JSON logs need <code>grep '^{'</code> in front, or jq's <code>--seq</code>/<code>-R 'fromjson?'</code> to skip the wreckage. <code>-s</code> is not streaming. And the field names are a contract nobody enforces: rename <code>dur_ms</code> to <code>duration_ms</code> in a service and every dashboard and pipeline that read it silently returns <code>null</code> — the structured-logging equivalent of a schema migration, which is why the field list belongs in a review checklist.</p>`,
 docs:[['jq manual','https://jqlang.github.io/jq/manual/'],['jq play — try expressions in the browser','https://jqplay.org/'],['JSON Lines (one object per line)','https://jsonlines.org/']],
 exs:[{title:'Paths and raw output',lang:'shell',diff:'easy',
 prompt:`The file <code>app.json.log</code> holds one JSON object per line with keys <code>ts, level, svc, host, method, route, status, dur_ms, trace</code>. One command per numbered line: (1) print the <code>route</code> of every line, (2) print it <b>without surrounding quotes</b> — add the raw-output flag, (3) print the whole object compactly, one per line (the compact flag), (4) print the nested value <code>.user.id</code>, falling back to the string <code>anonymous</code> when it is missing — use the alternative operator <code>//</code>, (5) print the key names of the first object using <code>keys_unsorted</code> — pipe through <code>head -1</code>, (6) drop the <code>trace</code> and <code>host</code> keys from every object, keeping compact output — use <code>del(.trace, .host)</code>.`,
@@ -13918,7 +13940,7 @@ solution:`1. jq -s 'map(.dur_ms) | add / length' app.json.log
 5. jq -s 'map(select(.ts >= "2026-08-11T14:00:00Z")) | group_by(.route) | map({route:.[0].route, n:length, avg:((map(.dur_ms)|add)/length)})' app.json.log
 6. memory
 `,
-tests:[{d:'-s turns the stream into one array',re:'1\\.\\s*jq\\s+-s\\s+([\'"])map\\(\\.dur_ms\\) \\| add / length\\1',flags:''},{d:'length counts the slurped array',re:'2\\.\\s*jq\\s+-s\\s+([\'"])length\\1',flags:''},{d:'group_by plus map is jq\'s GROUP BY',re:'3\\.[^\\n]*group_by\\(\\.route\\) \\| map\\(\\{route:\\.\\[0\\]\\.route, n:length, avg:\\(\\(map\\(\\.dur_ms\\)\\|add\\)/length\\)\\}\\)',flags:''},{d:'sort_by then reverse ranks the groups',re:'4\\.[^\\n]*\\| sort_by\\(\\.avg\\) \\| reverse',flags:''},{d:'Filtering before grouping keeps it honest',re:'5\\.[^\\n]*map\\(select\\(\\.ts >= "2026-08-11T14:00:00Z"\\)\\) \\|[^\\n]*group_by',flags:''},{d:'Slurping costs memory',re:'6\\.\\s*memory',flags:'i'}],
+tests:[{d:'-s turns the stream into one array',re:'1\\.\\s*jq\\s+-s\\s+([\'"])map\\(\\.dur_ms\\) \\| add / length\\1',flags:''},{d:'length counts the slurped array',re:'2\\.\\s*jq\\s+-s\\s+([\'"])length\\1',flags:''},{d:'group_by plus map is jq\'s GROUP BY',re:'3\\.[^\\n]*group_by\\(\\.route\\) \\| map\\(\\{route:\\.\\[0\\]\\.route, n:length, avg:\\(\\(map\\(\\.dur_ms\\)\\|add\\)/length\\)\\}\\)',flags:''},{d:'sort_by then reverse ranks the groups',re:'4\\.[^\\n]*\\| sort_by\\(\\.avg\\) \\| reverse',flags:''},{d:'Filtering before grouping keeps the numbers right',re:'5\\.[^\\n]*map\\(select\\(\\.ts >= "2026-08-11T14:00:00Z"\\)\\) \\|[^\\n]*group_by',flags:''},{d:'Slurping costs memory',re:'6\\.\\s*memory',flags:'i'}],
 behavior:`1. 77.88ms — the same number awk produced, computed the same way, on data that no longer needs a regex to read. 2. 990. 3. Four groups; checkout's avg is 76.29, orders 75.3, search 127.7, users 25.2 — again, the average says nothing is wrong. 4. sort_by is ascending only, so ranking descending means sort_by then reverse; there is no sort_by -r. 5. Filtering inside the slurped array is how you compare two time windows in one command — and doing the select BEFORE group_by is what keeps the groups meaningful. 6. Memory. -s materialises the entire input, so on a multi-gigabyte log you filter with select first (streaming, one object at a time) and slurp only what survives. This is the one place jq stops being a streaming filter.`,
 hints:['Without -s, jq sees one object at a time and cannot count or group anything.','group_by yields an array of arrays; map over it to turn each group into a summary object.','sort_by only ascends — reverse is how you rank.']},
 
@@ -14039,11 +14061,11 @@ solution:`1. awk '$1 >= "2026-08-11T14:00:00Z" {print $5, $7+0}' app.log
 6. 95 975
 `,
 tests:[{d:'Stage 1 windows and projects',re:'1\\.\\s*awk\\s+([\'"])\\$1 >= "2026-08-11T14:00:00Z" \\{print \\$5, \\$7\\+0\\}\\1\\s+app\\.log',flags:''},{d:'Stage 2 sorts by route then duration numerically',re:'2\\.\\s*sort\\s+-k1,1\\s+-k2,2n',flags:''},{d:'Stage 3 accumulates per route and indexes the p99',re:'3\\.[^\\n]*v\\[\\$1\\]=v\\[\\$1\\]" "\\$2; n\\[\\$1\\]\\+\\+[^\\n]*split\\(v\\[r\\],a," "\\)[^\\n]*int\\(\\(n\\[r\\]\\*99\\+99\\)/100\\)',flags:''},{d:'Stage 4 gives stable output order',re:'4\\.\\s*sort',flags:''},{d:'The regressed route is /api/checkout',re:'5\\.\\s*/api/checkout',flags:''},{d:'p99 went from 95ms to 975ms',re:'6\\.\\s*95\\s+975',flags:''}],
-behavior:`1. 486 lines, two columns. 2. Durations ascend within each route — the precondition the final stage depends on, and the reason a wrong sort produces a wrong percentile with no error. 3. v[r] accumulates a space-separated list, split() turns it into a 1-based array, and the nearest-rank index reads the p99 straight out. Memory is proportional to the data for the distinct routes, not to the file. 4. for-in order is unspecified, so the final sort is what makes two runs comparable side by side. 5-6. /api/checkout, 95ms to 975ms — a 10x tail regression, while its median moved 65ms to 67ms and its mean 64.8ms to 86.1ms. The finding to report is precise: not "checkout is slow" but "checkout's p99 went 95ms to 975ms after the 14:00 deploy, median essentially unchanged at 67ms, so a small fraction of requests hit something new and slow".`,
+behavior:`1. 486 lines, two columns. 2. Durations ascend within each route — the precondition the final stage depends on, and the reason a wrong sort produces a wrong percentile with no error. 3. v[r] accumulates a space-separated list, split() turns it into a 1-based array, and the nearest-rank index reads the p99 straight out. Memory is proportional to the data for the distinct routes, not to the file. 4. for-in order is unspecified, so the final sort is what makes two runs comparable side by side. 5-6. /api/checkout, 95ms to 975ms — a 10x tail regression, while its median moved 65ms to 67ms and its mean 64.8ms to 86.1ms. The finding to report is precise: not "checkout is slow" but "checkout's p99 went 95ms to 975ms after the 14:00 deploy, median steady at 67ms, so a small fraction of requests hit something new and slow".`,
 hints:['Stage 3 is the group-by shape again: accumulate into an array keyed by route, then loop in END.','split() fills a 1-based array, so the nearest-rank index needs no offset.','If your p99 looks like a typical value rather than a tail value, check that stage 2 sorted numerically.']},
 
 {title:'Interview: report the finding',lang:'text',diff:'hard',
-prompt:`The last mile is communicating it. One answer per numbered line: (1) the statistic that showed the regression (one word — write <code>p99</code>), (2) the statistic that hid it (one word), (3) checkout's median was unchanged, so the slowdown affects a small ____ of requests (one word), (4) the shape that implicates: a dependency that is slow on ____ calls, not on all of them (one word — "some" / "all"), (5) the habit that keeps a long pipeline honest: build it ____ , checking the output after each stage (one word), (6) when the same question comes up for the third time, the right answer stops being a pipeline and becomes ____ in the metrics stack (one word — the thing you ask for).`,
+prompt:`The last mile is communicating it. One answer per numbered line: (1) the statistic that showed the regression (one word — write <code>p99</code>), (2) the statistic that hid it (one word), (3) checkout's median was unchanged, so the slowdown affects a small ____ of requests (one word), (4) the shape that implicates: a dependency that is slow on ____ calls, not on all of them (one word — "some" / "all"), (5) the habit that keeps a long pipeline from fooling you: build it ____ , checking the output after each stage (one word), (6) when the same question comes up for the third time, the right answer stops being a pipeline and becomes ____ in the metrics stack (one word — the thing you ask for).`,
 starter:`1.
 2.
 3.
@@ -14153,7 +14175,7 @@ logic bites in negation: <code>WHERE status &lt;&gt; 'shipped'</code> silently e
 is NULL, because unknown is not "different". If those rows should be included, say so —
 <code>OR status IS NULL</code>.</p>
 
-<h4>Habits that keep a query honest</h4>
+<h4>Habits that keep a query well-behaved</h4>
 <ul>
 <li><b>Name your columns.</b> <code>SELECT *</code> in application code means the result shape changes
 whenever the table does, silently.</li>
@@ -15143,7 +15165,7 @@ jdeps --module-path out out/com.dojo.api      # analyze real dependencies</div>
 <li><code>provides X with Y</code> / <code>uses X</code> — the module-aware form of <code>ServiceLoader</code>.</li>
 </ul>
 
-<h4>The honest adoption story</h4>
+<h4>The real adoption story</h4>
 <p>Most applications never write a <code>module-info.java</code>, and that is a defensible choice: on the classpath your code lives in the unnamed module, which reads everything and exports everything, exactly as before. The value is highest for <b>libraries</b> — where a published module boundary is a real API contract — and for anything that wants <code>jlink</code> to produce a trimmed runtime image, since jlink needs a fully modular graph.</p>
 <p>What everyone does encounter, modules or not, is the JDK's own modularity: <code>InaccessibleObjectException</code> and the "module java.base does not open java.lang" message are the platform enforcing encapsulation on reflection. The correct answer is a targeted <code>--add-opens</code> flag while the library is fixed, not a blanket one, and certainly not staying on an old JDK.</p>`,
 docs:[['Modules — dev.java','https://dev.java/learn/modules/'],['JPMS quick-start — openjdk','https://openjdk.org/projects/jigsaw/quick-start']],
@@ -15222,12 +15244,12 @@ Strong encapsulation is the feature — the JDK's own internals became genuinely
 allowed the platform to evolve — and the <code>--add-opens</code> flags you have seen in start-up scripts
 are the same thing being pried open from outside.</p>
 
-<h4><code>jlink</code>, and the honest position on JPMS</h4>
+<h4><code>jlink</code>, and where JPMS actually landed</h4>
 <p><code>jlink</code> is the concrete payoff: a runtime image containing only the modules you actually use.
 A hello-world image is around 40MB against a full JDK's 300MB, which matters for container size and cold
 start. It works only if the whole graph is modular, which is why <code>jdeps</code> exists to find what is
 missing.</p>
-<p>And the honest assessment worth having: <b>JPMS did not win in application code.</b> The JDK itself is
+<p>And the assessment worth stating plainly: <b>JPMS did not win in application code.</b> The JDK itself is
 modular and benefits enormously, but most Spring Boot services ship a fat jar on the classpath and use
 Docker for the packaging problem JPMS was partly aimed at. Learn it because you will meet
 <code>--add-opens</code>, because the JDK's structure now depends on it, and because <code>jlink</code> is
@@ -15269,7 +15291,7 @@ jfr print --events jdk.GCPhasePause probe.jfr    # CLI peek without JMC
 jfr summary probe.jfr</div>
 <p>Reading it in JMC: start with <b>Automated Analysis</b> (it names suspects), then Method Profiling (hot methods), Memory (allocation pressure → GC pain), and Lock Instances (contention). Rule one of performance work: <b>measure before you optimize</b> — the bottleneck is almost never where intuition points.</p>
 <h4>Why "safe in production" changes everything</h4>
-<p>Most profilers are honest tools for a laboratory: they slow the process enough that you must reproduce
+<p>Most profilers are laboratory tools: they slow the process enough that you must reproduce
 the problem in a test environment first. But the interesting performance problems <b>only exist in
 production</b> — they need real traffic patterns, real data volumes, real concurrency and the one customer
 whose account has 400,000 rows. A profiler you cannot run there is a profiler that cannot see them.</p>
@@ -15972,7 +15994,7 @@ order-dependent because state survives between them, and under concurrency it ne
 shared mutable object. In a Spring application you almost never write one — a <code>@Component</code> is
 already a single instance managed by the container, and it arrives through a constructor where you can see
 and replace it.</p>
-<p>When you genuinely need one, an <code>enum</code> is the most robust form in Java: the JVM guarantees a
+<p>When you genuinely need one, an <code>enum</code> is the form Java itself defends best: the JVM guarantees a
 single instance, including against reflection and serialisation, which most hand-written singletons do
 not.</p>
 
@@ -16166,7 +16188,7 @@ their interfaces or add behaviour; it narrows the surface a caller has to learn.
 <p><b>Adapter</b> is what keeps a third-party library from spreading through your codebase. Wrap it once at
 the boundary and the rest of your code depends on your interface, so replacing the vendor is one class
 rather than a search-and-replace. The cost is a layer of indirection people will occasionally want to skip.</p>
-<p><b>Decorator</b> is the honest alternative to inheritance for cross-cutting behaviour. A retrying,
+<p><b>Decorator</b> is the cleaner alternative to inheritance for cross-cutting behaviour. A retrying,
 caching, instrumented client composed from three decorators is testable in isolation; the same thing as a
 subclass hierarchy is not. Its failure mode is depth — a stack five deep gives a stack trace nobody can
 read, and an ordering that matters and is written down nowhere. If retry sits outside caching, you retry
@@ -16388,7 +16410,7 @@ order explicit, because "which handler ran?" is otherwise a debugging exercise.<
 <p><b>Iterator</b> traverses without exposing internals — built into Java as <code>Iterable</code>.
 <b>Mediator</b> centralises interaction so N components talk to one hub instead of each other, which is
 what a message bus does. <b>Visitor</b> adds operations to a stable class hierarchy without editing it;
-it is powerful for ASTs and awkward everywhere else, and Java's pattern matching for switch has largely
+it earns its keep on ASTs and is awkward everywhere else, and Java's pattern matching for switch has largely
 replaced it.</p>`,
 docs:[['State pattern','https://refactoring.guru/design-patterns/state'],['Chain of Responsibility','https://refactoring.guru/design-patterns/chain-of-responsibility'],['Command pattern','https://refactoring.guru/design-patterns/command']],
 ex:{title:'Implement a State machine',
@@ -16432,8 +16454,8 @@ exist because <b>a boundary needs protecting</b>.</p>
 how long it lives. Receiving them instead moves all three decisions outward, and the practical result is
 that the class can be tested with fakes and reused in another context.</p>
 <p>Constructor injection specifically, because it makes the invalid state unreachable: the object cannot
-exist without its dependencies, the fields can be <code>final</code>, and the constructor signature is an
-honest list of what the class depends on. A constructor with nine parameters is telling you the class does
+exist without its dependencies, the fields can be <code>final</code>, and the constructor signature is a
+visible list of what the class depends on. A constructor with nine parameters is telling you the class does
 too much — field injection hides that same fact behind nine annotations.</p>
 
 <h4>Repository — a boundary, not a wrapper</h4>
@@ -16610,7 +16632,7 @@ to the next step unless you write it to <code>$GITHUB_ENV</code>.</p>
         with: { distribution: temurin, java-version: '21' }
       - run: ./mvnw -B verify              # -B: batch mode, no interactive progress spam</div>
 
-<h4>Making it fast and making it honest</h4>
+<h4>Making it fast without faking it</h4>
 <p>Cache the dependency directory, not the build output — a cached <code>~/.m2</code> turns a three-minute
 download into seconds, while caching compiled classes risks a stale build that passes. Use a matrix when
 you genuinely support several versions, and remember every matrix cell is a full run: a three-by-three
@@ -16753,7 +16775,7 @@ hints:['permissions: is a TOP-LEVEL key (same indent as jobs:) — contents: rea
 <li><b>Environments</b>: the same image flows dev → staging → production; only configuration (env vars, secrets, replica counts) changes. GitHub Environments let you attach <b>required reviewers</b> to production — the "gate" from lesson 1, encoded in the platform.</li>
 <li><b>Rolling deploy</b>: replace instances a few at a time behind the load balancer. Zero downtime, but two versions run simultaneously — your DB migrations must tolerate that (expand-then-contract: add the new column first, deploy code that writes both, remove the old column a release later).</li>
 <li><b>Blue/green</b>: run the full new stack (green) beside the old (blue), flip traffic at the router, keep blue warm for instant rollback. Costs 2× capacity for the window.</li>
-<li><b>Canary</b>: route 1-5% of real traffic to the new version, watch error rates and latency, then ramp. The most honest test there is — production traffic is the one workload you cannot simulate.</li>
+<li><b>Canary</b>: route 1-5% of real traffic to the new version, watch error rates and latency, then ramp. The ultimate test — production traffic is the one workload you cannot simulate.</li>
 <li><b>Rollback ≠ revert</b>: rollback redeploys the previous <i>artifact</i> (seconds); revert undoes the <i>commit</i> and rebuilds (minutes, plus review). Have both; reach for rollback first.</li>
 </ul>
 <p>One rule ties the room together: <b>the artifact is immutable</b>. If staging tested image <code>:abc123</code>, production runs <code>:abc123</code> — not a rebuild "of the same code". Rebuilds can differ (new base image, new dependency resolution); what you tested is what you ship.</p>
@@ -16904,7 +16926,7 @@ stronger claim, and the reason drift shows up as a status rather than as a surpr
 
 <h4>The handover: how the image tag reaches the manifest</h4>
 <p>Something has to write the new tag into the manifest repository, and this is where teams improvise
-badly. The honest options: a CI step that commits the tag to the config repo, or an image updater watching
+badly. The workable options: a CI step that commits the tag to the config repo, or an image updater watching
 the registry. Either way, two rules hold. <b>Never deploy a mutable tag</b> such as <code>latest</code> —
 pin the digest or an immutable tag, or you cannot say what is running. And <b>keep application and config
 in separate repositories</b>, or the commit that updates the tag re-triggers the build that produced it.</p>
@@ -17303,7 +17325,7 @@ loops — I can trade space for time with a map of complements, O(n) time and O(
 the thing they are actually there to find out.</p>
 
 <h4>The fundamentals being tested</h4>
-<div class="codeSample" data-hl>HASH LOOKUP        "have I seen X?" in O(1). the single highest-leverage
+<div class="codeSample" data-hl>HASH LOOKUP        "have I seen X?" in O(1). the single most valuable
                    structure in interviews. complement lookups, frequency
                    counts, dedup, grouping — all the same move.
 
@@ -17817,7 +17839,7 @@ trying to see whether the window can ever shrink past the left bound" tells the 
 are and often earns exactly the nudge you needed.</li>
 </ul>
 <p><b>The one habit worth taking from this round:</b> when a hard defeats you, do not just read the
-solution. Identify which of the four categories above it was, and what the single unlocking insight
+solution. Identify which of the four categories above it was, and what the one insight that cracked it
 was. That is what transfers — the specific problem almost never reappears, and the category does.</p>`,
 docs:[['PriorityQueue — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html'],['Invariant-based reasoning — CP-Algorithms','https://cp-algorithms.com/']],
 exs:[
@@ -18764,7 +18786,7 @@ tests:[{d:'Caching and scheduling both enabled',re:'@EnableCaching[\\s\\S]*?@Ena
 behavior:`1. First forCity("london") hits the network; the next 10 minutes of calls return instantly from cache; entry expires and the next call refetches. 2. forCity("atlantis") throws IllegalArgumentException — and is NOT cached (exceptions never populate a @Cacheable cache). 3. Every 10 minutes warm() refreshes both cities, so real users almost always hit warm cache. 4. Open-Meteo down during warm-up: the error is logged, the OTHER city still refreshes, stale entries keep serving. 5. maximumSize(500) caps memory even if you add a city-search feature later.`,
 hints:['CaffeineCacheManager("weather") + setCaffeine(builder) — the builder carries size and TTL.','@Cacheable key = "#city" is SpEL referencing the parameter by name.','The warm-up try/catch goes INSIDE the for loop — outside it, one bad city aborts the whole refresh cycle.']},
 {title:'The dashboard endpoint',
-prompt:`Write <code>WeatherController</code>: <code>@RestController</code>, constructor-injected final <code>WeatherService service</code>. One endpoint <code>@GetMapping("/api/weather/{city}")</code> returning <code>ResponseEntity&lt;WeatherClient.Reading&gt;</code>: call <code>service.forCity(city)</code> in a try/catch — return <code>ResponseEntity.ok(reading)</code> on success; catch <code>IllegalArgumentException</code> → <code>ResponseEntity.notFound().build()</code>; catch any other <code>Exception</code> → <code>ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build()</code> (503 — the upstream failed, not the client's fault, and honest status codes are how frontends degrade gracefully).`,
+prompt:`Write <code>WeatherController</code>: <code>@RestController</code>, constructor-injected final <code>WeatherService service</code>. One endpoint <code>@GetMapping("/api/weather/{city}")</code> returning <code>ResponseEntity&lt;WeatherClient.Reading&gt;</code>: call <code>service.forCity(city)</code> in a try/catch — return <code>ResponseEntity.ok(reading)</code> on success; catch <code>IllegalArgumentException</code> → <code>ResponseEntity.notFound().build()</code>; catch any other <code>Exception</code> → <code>ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build()</code> (503 — the upstream failed, not the client's fault, and accurate status codes are how frontends degrade gracefully).`,
 starter:`import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18807,7 +18829,7 @@ hints:['Three outcomes, three branches: ok / notFound / SERVICE_UNAVAILABLE — 
 
 STREAMS.push({icon:'📐',dan:true,title:'System Design & Tradeoffs',blurb:'The senior skill: deciding what to build. Estimation, the scaling toolbox, data decisions, a full design walkthrough, and writing it down in design docs & ADRs.',lessons:[
 {id:'sd1',title:'Thinking in tradeoffs',body:`
-<p>Everything before this stream taught you to build correctly. Seniority starts with a different question: <b>of the five correct designs, which one should exist?</b> The honest answer is always a tradeoff — and the senior habit is naming what you're paying and what you're buying, out loud, before committing.</p>
+<p>Everything before this stream taught you to build correctly. Seniority starts with a different question: <b>of the five correct designs, which one should exist?</b> The real answer is always a tradeoff — and the senior habit is naming what you're paying and what you're buying, out loud, before committing.</p>
 <p>The currencies you trade between:</p>
 <ul>
 <li><b>Latency vs throughput</b> — batching requests raises total work done per second and makes each individual answer slower. Neither is "better"; a trading system and a nightly report want opposite ends.</li>
@@ -18905,7 +18927,7 @@ hints:['The ladder to memorize: RAM ~100ns, SSD ~100µs, same-DC ~0.5ms, cross-r
 <ul>
 <li><b>1. Vertical scaling</b> — a bigger box. Unfashionable and correct: zero code changes, and modern boxes are enormous. Its limits (price curve, single point of failure) are real but usually further away than people claim.</li>
 <li><b>2. Stateless horizontal scaling</b> — N identical app servers behind a load balancer. The prerequisite is that <i>the servers hold no state</i>: sessions in Redis or JWTs, files in object storage, memory only as cache. This is why the Ledgerly project kept state in Postgres — stateless services scale by copy-paste.</li>
-<li><b>3. Caching</b> — the highest-leverage tool, in layers: browser (Cache-Control), CDN for static assets, application cache (Caffeine/Redis — your cache stampede lesson), and the database's own buffer pool. Every layer answers requests the layer below never sees. The tax: invalidation, staleness, and one of computing's two hard problems.</li>
+<li><b>3. Caching</b> — the tool that buys you the most, in layers: browser (Cache-Control), CDN for static assets, application cache (Caffeine/Redis — your cache stampede lesson), and the database's own buffer pool. Every layer answers requests the layer below never sees. The tax: invalidation, staleness, and one of computing's two hard problems.</li>
 <li><b>4. Read replicas</b> — the 10:1 read-heavy reality means one writer + N readers goes far. New tax: <b>replication lag</b> — a user who writes then immediately reads may not see their own write unless you route read-after-write to the primary.</li>
 <li><b>5. Queues as shock absorbers</b> — decouple accepting work from doing it (your Kafka/outbox lessons). Spikes become backlog instead of outages; the tax is eventual completion and idempotent consumers.</li>
 <li><b>6. Sharding</b> — split the data itself across databases by some key. <b>Last resort</b>: cross-shard queries, rebalancing, and hot keys (the celebrity problem) make everything harder forever. Reach for it when a single writer genuinely cannot cope — not before.</li>
@@ -18988,7 +19010,7 @@ solution:`1. queue
 6. idempotency key
 `,
 tests:[{d:'Q1: a queue absorbs the spike',re:'1\\.\\s*queue',flags:'is'},{d:'Q2: virtual waiting room',re:'2\\.\\s*(virtual\\s+)?waiting\\s+room',flags:'is'},{d:'Q3: only the database can be trusted',re:'3\\.\\s*database\\s+constraint',flags:'is'},{d:'Q4: the guard is remaining > 0',re:'4\\.\\s*>\\s*0',flags:'is'},{d:'Q5: TTL returns abandoned holds',re:'5\\.\\s*ttl|5\\.\\s*expiry',flags:'is'},{d:'Q6: idempotency key dedupes the double click',re:'6\\.\\s*idempotency\\s+key',flags:'is'}],
-behavior:`1-2. The queue is physics, the waiting room is fairness on top: honest position numbers beat 10M browsers hammering retry. 3. Every layer above the database lies under concurrency — 10k app servers each "remembering" 50k remaining sell 500M tickets. 4. WHERE remaining > 0 makes claim-and-check ONE atomic statement; zero rows updated = sold out — no gap for two buyers in one ticket. 5. TTL on holds (plus a reconciliation sweep — belt and suspenders) keeps abandoned carts from strangling inventory. 6. The idempotency key — lesson fdr3 cashing in: double-click, timeout-retry, and back-button all collapse to one charge.`,
+behavior:`1-2. The queue is physics, the waiting room is fairness on top: real position numbers beat 10M browsers hammering retry. 3. Every layer above the database lies under concurrency — 10k app servers each "remembering" 50k remaining sell 500M tickets. 4. WHERE remaining > 0 makes claim-and-check ONE atomic statement; zero rows updated = sold out — no gap for two buyers in one ticket. 5. TTL on holds (plus a reconciliation sweep — belt and suspenders) keeps abandoned carts from strangling inventory. 6. The idempotency key — lesson fdr3 cashing in: double-click, timeout-retry, and back-button all collapse to one charge.`,
 hints:['The theme of Q3-Q4: under concurrency, truth lives where the ATOMICITY lives.','Q4 is your db3 transfer exercise\'s WHERE clause, promoted to inventory.','Interviewers push follow-ups toward Q5-Q6 — the unhappy paths are where candidates separate.']},
 {title:'The celebrity problem (hot keys)',lang:'text',
 prompt:`Your feed system shards by user id and caches per-post data. A celebrity with 100M followers posts — the classic hot-key follow-up. One per numbered line: (1) the general name for one key receiving wildly disproportionate traffic (two words); (2) push-based fan-out writes 100M feed entries for this one post — the hybrid strategy handles celebrities how instead (one word, the other fan-out); (3) 500k req/s all miss the cache for the same post id at the same instant and hit the database together — this stampede is called the ____ ____ problem (two words, either name accepted); (4) the fix where only ONE request recomputes while the rest wait (two words, or the Caffeine feature name); (5) the cheap second layer that absorbs hot reads before they reach the shared cache (two words); (6) sharding by post id — does the hot post's traffic still land on one shard (<code>yes</code>/<code>no</code>)?`,
@@ -19192,7 +19214,7 @@ behavior:`1. The queue decouples "we accepted it" (202, milliseconds) from "we d
 hints:['This question is beloved precisely because it composes everything: queue, bulkhead, idempotency, rate limit, DLQ — a resilience-pattern roll call.','Q4 is the subtle one interviewers probe: state read at enqueue time is stale by send time.','Q6: "what happens after the LAST retry?" — always have an answer; "it loops" is the wrong one.']}]},
 
 {id:'sd5',title:'Design docs & ADRs: deciding in writing',body:`
-<p>A design that lives in your head scales to one person and zero months. Senior engineers <b>decide in writing</b> — not bureaucracy, but the cheapest known way to find flaws before building, get honest review, and let 2027-you understand why 2026-you did this.</p>
+<p>A design that lives in your head scales to one person and zero months. Senior engineers <b>decide in writing</b> — not bureaucracy, but the cheapest known way to find flaws before building, get real review, and let 2027-you understand why 2026-you did this.</p>
 <p><b>The design doc</b> (one to four pages, written <i>before</i> building anything significant):</p>
 <div class="codeSample">1. Context     — the problem, the numbers, what happens if we do nothing
 2. Goals       — bullet list; and NON-goals: what this explicitly won't do
@@ -19200,7 +19222,7 @@ hints:['This question is beloved precisely because it composes everything: queue
 4. Alternatives— 2-3 seriously considered options and WHY NOT each
                  (the section reviewers read first — no alternatives = no thinking)
 5. Risks       — what could go wrong, blast radius, rollback story
-6. Open questions — asked honestly; a doc with zero open questions is bluffing</div>
+6. Open questions — asked outright; a doc with zero open questions is bluffing</div>
 <p><b>The ADR</b> (Architecture Decision Record) is the design doc's small sibling: half a page recording ONE decision, numbered and immutable, living in the repo (<code>docs/adr/0007-use-postgres-for-progress.md</code>). Its power is the <b>Context → Decision → Consequences</b> discipline — consequences <i>including the bad ones you accept</i>:</p>
 <div class="codeSample"># ADR-0007: Store progress in Postgres, not Redis
 Status: accepted            (later: superseded by ADR-0019 — history preserved, never edited)
@@ -19248,7 +19270,7 @@ timeout. The API talks to it only through a queue.
 `,
 tests:[{d:'Numbered title about the runner decision',re:'#\\s*ADR-0001:.*runner',flags:'i'},{d:'Status recorded as accepted',re:'Status:\\s*accepted',flags:'i'},{d:'Context names the untrusted-code reality',re:'##\\s*Context[\\s\\S]*?untrusted',flags:'i'},{d:'Decision: isolated container, no network',re:'##\\s*Decision[\\s\\S]*?isolat[\\s\\S]*?no\\s+network',flags:'i'},{d:'Consequences include at least one + and one -',re:'##\\s*Consequences[\\s\\S]*?^\\+[\\s\\S]*?^-',flags:'im'},{d:'The minus names a real cost (latency or ops)',re:'-\\s*.*(latenc|deploy|monitor|patch|ops|complex)',flags:'i'}],
 behavior:`1. The document reads Context → Decision → Consequences: why, what, and the price — in that order. 2. Context justifies without deciding; Decision decides without re-arguing. 3. The minus lines are the ADR's soul: container latency and ops burden are ACCEPTED, in writing, so nobody relitigates them in six months without new information. 4. Numbered and immutable: a future change gets ADR-00NN "supersedes 0001" — the history of the system's mind stays readable.`,
-hints:['Context answers "why did this need deciding?" — one paragraph of problem, zero solution.','The Decision section is 2-4 sentences; if it sprawls, it is re-arguing instead of recording.','A Consequences section with only + lines is marketing, not engineering — the honest minus is what makes the doc trustworthy.']},{title:'ADR: Kafka vs a managed queue',lang:'text',
+hints:['Context answers "why did this need deciding?" — one paragraph of problem, zero solution.','The Decision section is 2-4 sentences; if it sprawls, it is re-arguing instead of recording.','A Consequences section with only + lines is marketing, not engineering — the real minus is what makes the doc trustworthy.']},{title:'ADR: Kafka vs a managed queue',lang:'text',
 prompt:`Your notification system needs its queue and the team is split between self-hosted Kafka and a managed cloud queue (SQS-style). The decision: <b>managed queue for the MVP</b>. Record it as ADR-0002 with the discipline from the lesson: (1) title line <code># ADR-0002:</code> naming the managed-queue choice; (2) <code>Status: accepted</code>; (3) <code>## Context</code> mentioning the team is <b>small</b> (or has no ops capacity) and volume is modest; (4) <code>## Decision</code> naming the managed queue and explicitly stating Kafka is <b>deferred, not rejected</b> — revisit at a stated trigger (e.g. when replay or multi-consumer streams are needed); (5) <code>## Consequences</code> with at least one <code>+</code> line and at least TWO <code>-</code> lines — real accepted costs (vendor lock-in, no replay, per-message pricing...).`,
 starter:`# ADR-0002:
 
@@ -19283,8 +19305,8 @@ volume above ~5k msgs/s.
 - no replay: a consumer bug that deletes messages loses them for good
 - per-message pricing grows linearly with volume
 `,
-tests:[{d:'Numbered title names the managed-queue decision',re:'#\\s*ADR-0002:.*(managed|cloud|sqs)',flags:'i'},{d:'Status accepted',re:'Status:\\s*accepted',flags:'i'},{d:'Context names the small team / no ops capacity',re:'##\\s*Context[\\s\\S]*?(small|three|no\\s+op|capacity)',flags:'i'},{d:'Decision defers Kafka with an explicit revisit trigger',re:'##\\s*Decision[\\s\\S]*?(deferred|revisit)[\\s\\S]*?(replay|consumers|volume|msgs)',flags:'i'},{d:'At least one honest plus',re:'##\\s*Consequences[\\s\\S]*?^\\+',flags:'im'},{d:'At least two honest minuses',re:'^-[\\s\\S]*?^-',flags:'im'}],
-behavior:`1. The Context sells nothing — it states team size, volume and absent requirements, which make the decision nearly self-evident (good ADRs often do). 2. "Deferred, not rejected" with a NAMED trigger is the senior signature: the Kafka advocates know exactly what future evidence reopens the question, so the debate ends instead of festering. 3. Two minuses, honestly priced: lock-in and no-replay are real, and writing them down now is what makes the 2027 migration discussion start from facts instead of blame. 4. This ADR takes ten minutes and saves the third re-litigation of this argument in standup.`,
+tests:[{d:'Numbered title names the managed-queue decision',re:'#\\s*ADR-0002:.*(managed|cloud|sqs)',flags:'i'},{d:'Status accepted',re:'Status:\\s*accepted',flags:'i'},{d:'Context names the small team / no ops capacity',re:'##\\s*Context[\\s\\S]*?(small|three|no\\s+op|capacity)',flags:'i'},{d:'Decision defers Kafka with an explicit revisit trigger',re:'##\\s*Decision[\\s\\S]*?(deferred|revisit)[\\s\\S]*?(replay|consumers|volume|msgs)',flags:'i'},{d:'At least one real plus',re:'##\\s*Consequences[\\s\\S]*?^\\+',flags:'im'},{d:'At least two real minuses',re:'^-[\\s\\S]*?^-',flags:'im'}],
+behavior:`1. The Context sells nothing — it states team size, volume and absent requirements, which make the decision nearly self-evident (good ADRs often do). 2. "Deferred, not rejected" with a NAMED trigger is the senior signature: the Kafka advocates know exactly what future evidence reopens the question, so the debate ends instead of festering. 3. Two minuses, priced in full: lock-in and no-replay are real, and writing them down now is what makes the 2027 migration discussion start from facts instead of blame. 4. This ADR takes ten minutes and saves the third re-litigation of this argument in standup.`,
 hints:['The revisit trigger is the magic sentence — it converts opponents into future allies with a defined trial date.','Managed-vs-self-hosted ADRs almost always hinge on Context stating the team\'s ops capacity out loud.','Two minuses minimum: a one-sided Consequences section reads as advocacy and gets argued with.']},
 {title:'Review this design doc',lang:'text',
 prompt:`A teammate's design doc reads, in full: <i>"We will migrate user sessions from Postgres to Redis. Redis is much faster. Implementation: dual-write for a week, then cut over reads, then stop writing to Postgres. Timeline: 3 weeks."</i> — Using the lesson's template, name what's missing, one per numbered line: (1) no numbers anywhere — the section that should quantify the problem being solved (one word); (2) nothing says what this migration is NOT changing — the missing bullet list (two words, hyphen ok); (3) "Redis is much faster" considers no other option — the missing section (one word); (4) sessions in Redis with no persistence config — every user logged out on restart: which section should have caught this class of surprise (one word); (5) dual-write with no comparison step — name the missing validation activity (one word or two: comparing the two stores' answers); (6) nothing says how to abort mid-migration — the missing story (one word).`,
@@ -19377,7 +19399,7 @@ solution:`1. at
 6. at-least-once
 `,
 tests:[{d:'Q1: at-most-once = lossy, no retry',re:'1\\.\\s*at\\b',flags:'is'},{d:'Q2: at-least-once = retried, duplicated',re:'2\\.\\s*at\\b',flags:'is'},{d:'Q3: exactly-once delivery is impossible',re:'3\\.\\s*impossible',flags:'is'},{d:'Q4: effectively-once is the shippable goal',re:'4\\.\\s*once',flags:'is'},{d:'Q5: metrics tolerate at-most-once',re:'5\\.\\s*at[- ]?most[- ]?once',flags:'is'},{d:'Q6: payments need at-least-once + idempotency',re:'6\\.\\s*at[- ]?least[- ]?once',flags:'is'}],
-behavior:`1-2. The two honest choices the network permits: give up (lose some) or retry (duplicate some). 3. Impossible — you cannot distinguish "lost request" from "lost response", so you must pick which error to tolerate. 4. Effectively-once — at-least-once wire delivery + dedupe at the consumer = the business outcome of exactly-once without the impossible guarantee. 5. At-most-once: for high-volume metrics, retrying is more expensive than the rounding error a dropped point causes — the RIGHT laziness. 6. At-least-once for payments, made safe by idempotency keys — never at-most-once (a silently dropped charge is a lost sale and an angry merchant). Choosing semantics per use-case by cost is the senior move.`,
+behavior:`1-2. The only two choices the network permits: give up (lose some) or retry (duplicate some). 3. Impossible — you cannot distinguish "lost request" from "lost response", so you must pick which error to tolerate. 4. Effectively-once — at-least-once wire delivery + dedupe at the consumer = the business outcome of exactly-once without the impossible guarantee. 5. At-most-once: for high-volume metrics, retrying is more expensive than the rounding error a dropped point causes — the RIGHT laziness. 6. At-least-once for payments, made safe by idempotency keys — never at-most-once (a silently dropped charge is a lost sale and an angry merchant). Choosing semantics per use-case by cost is the senior move.`,
 hints:['Two knobs, pick your poison: lose messages, or duplicate them — never neither.','Q5 vs Q6 is the whole lesson: the SAME impossibility, opposite correct choices, decided by what an error costs.','"Effectively once" is the phrase that signals you understand the impossibility instead of denying it.']},
 {title:'What is worth retrying',lang:'js',diff:'medium',
 run:{call:'shouldRetry',cases:[{"name": "503 on the first attempt", "args": [503, 1, 3], "expect": true}, {"name": "429 is retryable \u2014 with backoff", "args": [429, 1, 3], "expect": true}, {"name": "500 is retryable", "args": [500, 2, 3], "expect": true}, {"name": "400 is the caller\\x27s fault and will fail again", "args": [400, 1, 3], "expect": false}, {"name": "404 will not become found", "args": [404, 1, 3], "expect": false}, {"name": "attempts exhausted", "args": [503, 3, 3], "expect": false}]},
@@ -19391,7 +19413,7 @@ hints:['Check the attempt budget first, so nothing can bypass it.','Transient me
 {id:'fdr2',title:'Timeouts, retries & backoff with jitter',body:`
 <p>Two disciplines turn "the network is unreliable" from terror into arithmetic. Both look trivial; both are done wrong everywhere.</p>
 <p><b>Timeouts: every remote call has one, and a budget.</b> No timeout means a hung dependency parks your thread forever (the cascading lesson made this a pool-filler). But timeouts must also <i>nest</i>: if your caller gives you 2s and you call two services, their timeouts must fit inside — say 800ms each plus your own work — or you'll still be diligently working on a request whose caller hung up long ago. That's a <b>timeout budget</b>: the deadline flows down the call chain, each hop spending part of it.</p>
-<p><b>Retries: powerful, and a loaded weapon.</b> A transient blip (dropped packet, rolling deploy) deserves one cheap retry. But naive retrying has two famous failure modes:</p>
+<p><b>Retries: the most-reached-for tool, and a loaded weapon.</b> A transient blip (dropped packet, rolling deploy) deserves one cheap retry. But naive retrying has two famous failure modes:</p>
 <ul>
 <li><b>Retry amplification</b> — you retry 3×, your caller retries 3×, their caller retries 3×: one user click becomes 27 requests at the worst possible moment — while the dependency is already struggling. Retry at ONE layer (usually the edge), not every layer.</li>
 <li><b>The thundering herd</b> — a service dies for 10s; 10,000 clients all retry on the same fixed 1s interval; it comes back to a perfectly synchronized battering ram and dies again. The fix is two-part: <b>exponential backoff</b> (wait 1s, 2s, 4s, 8s — pressure decays) and <b>jitter</b> (randomize each wait — the herd spreads into a drizzle). Full jitter — <code>sleep(random(0, base × 2^attempt))</code> — is the standard.</li>
@@ -19399,7 +19421,7 @@ hints:['Check the attempt budget first, so nothing can bypass it.','Transient me
 <div class="codeSample">attempt 1  ──fail──▶  wait random(0, 1s)
 attempt 2  ──fail──▶  wait random(0, 2s)
 attempt 3  ──fail──▶  wait random(0, 4s)
-attempt 4  ──fail──▶  give up — surface the error honestly
+attempt 4  ──fail──▶  give up — surface the error to the caller
 (and only retry SAFE-to-repeat operations — the next lesson makes them safe)</div>
 <p>Two more rules complete the kit: <b>cap the attempts</b> (a retry budget — infinite patience is an outage prolonger), and <b>only retry retryable things</b> — a 503 or timeout, yes; a 400 Bad Request will be exactly as bad the fourth time. Idempotency (next lesson) is what makes even the scary world-3 retry safe.</p>`,
 docs:[['Exponential backoff & jitter — AWS','https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/'],['Google SRE — handling overload','https://sre.google/sre-book/handling-overload/'],['Resilience4j — retry','https://resilience4j.readme.io/docs/retry']],
@@ -19441,7 +19463,7 @@ public class Retry {
     }
 }`,
 tests:[{d:'Bounded attempts — a for loop over maxAttempts',re:'for\\s*\\(\\s*int\\s+attempt\\s*=\\s*0\\s*;\\s*attempt\\s*<\\s*maxAttempts'},{d:'Success returns immediately from inside the try',re:'try\\s*\\{\\s*return\\s+call\\.get\\s*\\(\\s*\\)'},{d:'Last attempt rethrows instead of sleeping',re:'attempt\\s*==\\s*maxAttempts\\s*-\\s*1[\\s\\S]*?throw\\s+e'},{d:'Exponential cap via bit shift',re:'baseMillis\\s*\\*\\s*\\(\\s*1L\\s*<<\\s*attempt\\s*\\)'},{d:'FULL jitter: random in [0, cap]',re:'ThreadLocalRandom\\.current\\s*\\(\\s*\\)\\s*\\.nextLong\\s*\\(\\s*cap\\s*\\+\\s*1\\s*\\)'},{d:'Interrupt status restored before wrapping',re:'Thread\\.currentThread\\s*\\(\\s*\\)\\s*\\.interrupt\\s*\\(\\s*\\)[\\s\\S]*?throw\\s+new\\s+RuntimeException'}],
-behavior:`1. A supplier that succeeds immediately returns with zero sleeps. 2. One that fails twice then succeeds sleeps ~random(0,base) then ~random(0,2·base) and returns the third result. 3. One that always fails throws its own exception after exactly maxAttempts calls — bounded budget, honest surfacing. 4. Two thousand instances retrying the same dead service wake at scattered moments — the jitter IS the herd-dispersal. 5. Interrupting the sleeping thread propagates promptly with interrupt status intact (the concurrency stream's etiquette, honored under pressure).`,
+behavior:`1. A supplier that succeeds immediately returns with zero sleeps. 2. One that fails twice then succeeds sleeps ~random(0,base) then ~random(0,2·base) and returns the third result. 3. One that always fails throws its own exception after exactly maxAttempts calls — bounded budget, clean surfacing. 4. Two thousand instances retrying the same dead service wake at scattered moments — the jitter IS the herd-dispersal. 5. Interrupting the sleeping thread propagates promptly with interrupt status intact (the concurrency stream's etiquette, honored under pressure).`,
 hints:['The shape is: try { return } catch { last? rethrow : sleep-and-loop } — nothing else.','1L << attempt is 2^attempt without Math.pow — and the L keeps 31+ attempts from overflowing int.','Full jitter means the FLOOR is zero: nextLong(cap + 1) picks uniformly in [0, cap] — not cap itself, not cap/2 + random.']},{title:'Deadline propagation',
 prompt:`Interview scenario: a request enters with a budget and must not let downstream calls outlive it (timeout budgets, lesson fdr2). Write class <code>Deadline</code>: a <code>private final long deadlineNanos</code>; a static factory <code>static Deadline in(long millis)</code> returning <code>new Deadline(System.nanoTime() + millis * 1_000_000)</code> (make the constructor private, taking the absolute nanos); <code>long remainingMillis()</code> returning <code>Math.max(0, (deadlineNanos - System.nanoTime()) / 1_000_000)</code>; <code>boolean expired()</code> returning <code>System.nanoTime() &gt;= deadlineNanos</code>. Use <code>nanoTime</code> throughout — a deadline measured on the wall clock is a bug.`,
 starter:`public class Deadline {
@@ -19616,7 +19638,7 @@ OPEN    ── calls FAIL IMMEDIATELY (no thread parked, no timeout burned)
            after a cool-down: ──▶ HALF_OPEN
 HALF_OPEN ── let ONE probe through:  success → CLOSED (normal service resumes)
                                      failure → OPEN  (another cool-down)</div>
-<p>The subtle virtues: failing <i>fast</i> keeps your own latency honest (a 2ms "dependency unavailable" beats a 30s timeout), the caller gets a clean signal to degrade gracefully (Skywatch's 503-or-stale-cache lesson — same philosophy), and the open circuit is <i>mercy for the dependency</i> — recovery under zero load is 10× easier than under a retry storm. In production you use resilience4j rather than hand-rolling; you hand-roll one today because the state machine <b>is</b> the understanding.</p>
+<p>The subtle virtues: failing <i>fast</i> keeps your own latency predictable (a 2ms "dependency unavailable" beats a 30s timeout), the caller gets a clean signal to degrade gracefully (Skywatch's 503-or-stale-cache lesson — same philosophy), and the open circuit is <i>mercy for the dependency</i> — recovery under zero load is 10× easier than under a retry storm. In production you use resilience4j rather than hand-rolling; you hand-roll one today because the state machine <b>is</b> the understanding.</p>
 <p><b>Bulkheads</b> attack the other half of the cascade: shared thread pools. If calls to the slow thumbnail service and calls to the payment service share one pool, thumbnails hanging = payments starving — one compartment's flood sinks the ship. The bulkhead: <b>a separate, bounded pool (or semaphore) per dependency</b> — thumbnails may exhaust <i>their</i> 10 threads and queue at <i>their</i> door; payments' threads never notice. Same principle as the runner service being its own container in your launch plan: isolation is decided at design time, not hoped for at runtime.</p>
 <p>The kit assembled — timeout (bound each wait), retry+jitter (survive blips), idempotency (make retries legal), breaker (stop hammering the fallen), bulkhead (contain the flood): five small patterns that together are most of "resilience engineering".</p>`,
 docs:[['Fowler — CircuitBreaker','https://martinfowler.com/bliki/CircuitBreaker.html'],['resilience4j — circuitbreaker','https://resilience4j.readme.io/docs/circuitbreaker'],['Release It! — stability patterns (Nygard)','https://pragprog.com/titles/mnee2/release-it-second-edition/']],
@@ -19674,7 +19696,7 @@ public class CircuitBreaker {
     }
 }`,
 tests:[{d:'Open circuit fails fast during cool-down',re:'state\\s*==\\s*State\\.OPEN[\\s\\S]*?coolDownMillis[\\s\\S]*?IllegalStateException\\s*\\(\\s*"circuit open"'},{d:'Cool-down elapsed → HALF_OPEN probe allowed',re:'state\\s*=\\s*State\\.HALF_OPEN'},{d:'Success closes and resets the count',re:'state\\s*=\\s*State\\.CLOSED\\s*;\\s*failures\\s*=\\s*0'},{d:'Half-open failure OR threshold trips it open with a timestamp',re:'state\\s*==\\s*State\\.HALF_OPEN\\s*\\|\\|\\s*failures\\s*>=\\s*threshold[\\s\\S]*?openedAt\\s*=\\s*System\\.currentTimeMillis'},{d:'Original exception rethrown, not swallowed',re:'catch\\s*\\(\\s*RuntimeException\\s+e\\s*\\)[\\s\\S]*?throw\\s+e'},{d:'State transitions are synchronized',re:'synchronized\\s+<T>\\s+T\\s+call'}],
-behavior:`1. threshold 3: two failures → still CLOSED (blips tolerated); the third → OPEN. 2. While OPEN, call() throws "circuit open" in microseconds — no thread parked on a doomed 30s timeout, and the dependency hears silence. 3. After coolDownMillis, exactly one probe passes (HALF_OPEN): success → CLOSED with a clean slate; failure → OPEN again for another cool-down. 4. The caller catches IllegalStateException and degrades (cached data, honest 503) — fail-fast turns an outage into a feature flag. 5. synchronized keeps racing threads from double-transitioning — correctness first; a production breaker swaps in atomics.`,
+behavior:`1. threshold 3: two failures → still CLOSED (blips tolerated); the third → OPEN. 2. While OPEN, call() throws "circuit open" in microseconds — no thread parked on a doomed 30s timeout, and the dependency hears silence. 3. After coolDownMillis, exactly one probe passes (HALF_OPEN): success → CLOSED with a clean slate; failure → OPEN again for another cool-down. 4. The caller catches IllegalStateException and degrades (cached data, a plain 503) — fail-fast turns an outage into a feature flag. 5. synchronized keeps racing threads from double-transitioning — correctness first; a production breaker swaps in atomics.`,
 hints:['Write the state diagram as comments first; the method is just the diagram transcribed.','HALF_OPEN is the load-bearing state: ONE probe decides, which is why a half-open failure trips immediately regardless of count.','Fail-fast is the point: the throw in the OPEN branch is the pattern working, not an error case.']},{title:'Bulkhead with a semaphore',
 prompt:`Isolate a flaky dependency so it can't drain your whole thread pool (bulkhead, fdr4). Write class <code>Bulkhead</code>: a <code>private final java.util.concurrent.Semaphore permits</code> built in the constructor from an int <code>maxConcurrent</code> (<code>new Semaphore(maxConcurrent)</code>). Method <code>&lt;T&gt; T execute(java.util.function.Supplier&lt;T&gt; call)</code>: <code>if (!permits.tryAcquire())</code> throw <code>new IllegalStateException("bulkhead full")</code> — fail fast, do NOT queue; then <code>try { return call.get(); } finally { permits.release(); }</code> so the permit is always returned even on exception.`,
 starter:`import java.util.concurrent.Semaphore;
@@ -19744,18 +19766,18 @@ hints:['Three states, decided by two comparisons.','Below the threshold nothing 
 <li><b>Never use timestamps to order events across machines.</b> Two servers stamp two chat messages; server B's clock runs 80ms ahead; "sort by timestamp" now shows the reply before the question. Cross-machine ordering needs a <b>logical</b> source: a per-conversation sequence from the database (your chat-design drill answered this), an auto-increment id, or — in fully distributed settings — Lamport-style logical clocks, whose one-line essence is <i>"causality increments a counter; clocks don't vote"</i>.</li>
 <li><b>Beware the deceptively hard nearby problems.</b> Distributed locks with expiry ("I hold it for 10s" — says whose clock?), exactly-at-midnight jobs on N servers (N executions), TTL-based coordination — each is a clock-skew bug wearing a feature costume. The senior reflex: any sentence coordinating machines via wall-clock time gets redesigned around a single writer, a database constraint, or a logical sequence.</li>
 </ul>
-<div class="codeSample">// measuring elapsed time — the one honest way:
+<div class="codeSample">// measuring elapsed time — the one correct way:
 long t0 = System.nanoTime();
 doWork();
 long elapsedMs = (System.nanoTime() - t0) / 1_000_000;   // immune to NTP shenanigans
 
-// ordering chat messages — the one honest way:
+// ordering chat messages — the one correct way:
 //   messages(conversation_id, seq BIGINT, ...)  seq from the DB, not from clocks
 </div>
 <p>Full ordering-under-partition (vector clocks, consensus, Spanner's atomic clocks) is a rabbit hole with excellent books at the bottom; the working-senior 90% is these three rules applied without exception. They cost nothing and each prevents a bug that is miserable to reproduce — the worst kind.</p>`,
 docs:[['Kleppmann — ch. 8, the trouble with clocks','https://dataintensive.net/'],['System.nanoTime — Javadoc','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/System.html#nanoTime()'],['Lamport clocks — the paper, gently','https://martinfowler.com/articles/patterns-of-distributed-systems/lamport-clock.html']],
 exs:[{title:'Clock discipline drill',lang:'text',
-prompt:`One per numbered line: (1) which Java call measures elapsed time safely: <code>System.currentTimeMillis</code> or <code>System.nanoTime</code>? (2) can currentTimeMillis move backwards during normal operation — <code>yes</code> or <code>no</code>? (3) two servers timestamp two chat messages 80ms apart in wall time — is "sort by timestamp" a correct ordering strategy (<code>yes</code>/<code>no</code>)? (4) the honest cross-machine ordering source for one conversation (one word, from the chat drill), (5) "the lock expires in 10 seconds" — name the hidden question that makes this dangerous (three words, starts with <code>whose</code>), (6) a nightly job configured "at 00:00" on 4 identical servers runs how many times (one number)?`,
+prompt:`One per numbered line: (1) which Java call measures elapsed time safely: <code>System.currentTimeMillis</code> or <code>System.nanoTime</code>? (2) can currentTimeMillis move backwards during normal operation — <code>yes</code> or <code>no</code>? (3) two servers timestamp two chat messages 80ms apart in wall time — is "sort by timestamp" a correct ordering strategy (<code>yes</code>/<code>no</code>)? (4) the correct cross-machine ordering source for one conversation (one word, from the chat drill), (5) "the lock expires in 10 seconds" — name the hidden question that makes this dangerous (three words, starts with <code>whose</code>), (6) a nightly job configured "at 00:00" on 4 identical servers runs how many times (one number)?`,
 starter:`1.
 2.
 3.
@@ -19771,7 +19793,7 @@ solution:`1. System.nanoTime
 6. 4
 `,
 tests:[{d:'Q1: nanoTime for durations',re:'1\\.\\s*(System\\.)?nanoTime',flags:'is'},{d:'Q2: wall clocks step backwards — yes',re:'2\\.\\s*yes',flags:'is'},{d:'Q3: timestamp ordering across machines — no',re:'3\\.\\s*no',flags:'is'},{d:'Q4: a sequence, not a clock',re:'4\\.\\s*sequence',flags:'is'},{d:'Q5: whose clock decides',re:'5\\.\\s*whose\\s+clock',flags:'is'},{d:'Q6: all four servers fire',re:'6\\.\\s*4|6\\.\\s*four',flags:'is'}],
-behavior:`1. nanoTime — monotonic, built for exactly this. 2. Yes — NTP corrections step clocks; negative "durations" follow. 3. No — 80ms of skew reorders a conversation; humans notice immediately. 4. A per-conversation sequence from the single writer (the database) — causality by construction. 5. Whose clock decides — the locker's? the store's? skew between them silently shortens or lengthens every lease. 6. 4 — each server's cron is honest and local; without a leader election or a locked job table, "the" job is four jobs. All six are one rule: clocks answer "roughly when for humans", never "in what order for machines".`,
+behavior:`1. nanoTime — monotonic, built for exactly this. 2. Yes — NTP corrections step clocks; negative "durations" follow. 3. No — 80ms of skew reorders a conversation; humans notice immediately. 4. A per-conversation sequence from the single writer (the database) — causality by construction. 5. Whose clock decides — the locker's? the store's? skew between them silently shortens or lengthens every lease. 6. 4 — each server's cron runs locally on its own; without a leader election or a locked job table, "the" job is four jobs. All six are one rule: clocks answer "roughly when for humans", never "in what order for machines".`,
 hints:['Two clocks, two questions: what-time-is-it (wall) vs how-long-has-it-been (monotonic). Mixing them is the bug.','Q4-Q6 share one fix: route ordering/uniqueness through a single authority (DB sequence, unique index, leader).','Q5 is the interview classic: distributed locks with TTL are correct only when a fencing token rides along.']},{title:'Interview: the distributed lock trap',lang:'text',
 prompt:`"We’ll use a Redis lock with a 10-second expiry to make sure only one worker processes each job." Find the bugs, one per numbered line: (1) worker A acquires the lock, then GC-pauses for 12 seconds; the lock expires and worker B acquires it — now how many workers think they hold it (one number); (2) A wakes and writes, unaware it lost the lock — the corruption this causes is a ____ (one word, think two writers); (3) "the lock expires in 10s" hides the question ____ ____ decides (two words, from fdr5); (4) the fix: each lock acquisition gets a monotonically increasing ____ token (one word) that the resource checks and rejects if stale; (5) using wall-clock timestamps to decide lock expiry across machines is safe — true or false; (6) the general lesson: distributed locks are only correct when the protected resource can ____ writes from a superseded holder (one word, think turn away).`,
 starter:`1.
@@ -19838,7 +19860,7 @@ STREAMS.push({icon:'🧭',dan:true,title:'Working with Real Code',blurb:'The ung
 <li><b>Start from the entry points, not the file tree.</b> Where does execution begin — <code>main</code>, the controllers, the message listeners, the scheduled jobs? An unfamiliar codebase is a set of stories; entry points are their first pages. Reading alphabetically by folder is how you learn nothing in four hours.</li>
 <li><b>Trace one request end to end.</b> Pick a single concrete operation ("what happens when a user posts a comment?") and follow it through every layer, writing the chain down as you go: <code>CommentController → CommentService → SpamChecker → CommentRepo → events</code>. One completed trace teaches more architecture than any diagram in the wiki (which is outdated anyway — trust the code, verify the docs).</li>
 <li><b>Interrogate the history — git is a time machine with testimony.</b> <code>git log --follow</code> on a confusing file; <code>git log -S "methodName"</code> (the "pickaxe") finds every commit that ever touched a string — who introduced this, with what commit message, alongside what else? <code>git blame</code> answers "why is this line weird" more often than the line itself does. A strange <code>if</code> guarding nothing visible + a blame pointing at "fix prod incident 2023-04" = load-bearing weirdness; leave it until you understand it.</li>
-<li><b>Read the tests as documentation.</b> Test names are executable claims about intended behavior — often the only honest spec in the building. No tests? The archaeology just told you the most important fact about this code.</li>
+<li><b>Read the tests as documentation.</b> Test names are executable claims about intended behavior — often the only spec in the building that actually runs. No tests? The archaeology just told you the most important fact about this code.</li>
 <li><b>Build a map, not a memory.</b> Keep notes: entry points found, the trace chains, surprises, questions. Your future PRs will be reviewed by people who hold this map in their heads; the notes are how you catch up in weeks instead of years.</li>
 </ul>
 <div class="codeSample">git log --oneline --follow src/billing/InvoiceCalc.java   # story of one file
@@ -19848,7 +19870,7 @@ git log --oneline --since="3 months" -- src/billing/      # what's hot lately (h
 <p>The mindset shift this lesson asks for: unfamiliar code is <i>evidence</i>, not mess. Every weird line was written by someone with a reason under some constraint; archaeology recovers the reason before you delete the constraint — which is next lesson's famous fence.</p>`,
 docs:[['git pickaxe & log search','https://git-scm.com/docs/git-log#Documentation/git-log.txt--Sltstringgt'],['Working Effectively with Legacy Code (Feathers)','https://www.oreilly.com/library/view/working-effectively-with/0131177052/'],['Chesterton’s fence','https://fs.blog/chestertons-fence/']],
 exs:[{title:'Archaeology drill',lang:'shell',
-prompt:`One answer per numbered line: (1) the git command showing every commit whose diff ever added or removed the string <code>applyDiscount</code> (the pickaxe), (2) the command showing who last changed each of lines 10-30 of <code>Billing.java</code> (use <code>-L</code>), (3) the command listing commits that touched anything under <code>src/billing/</code> in the last 3 months (one line, use <code>--since="3 months"</code> and the path after <code>--</code>), (4) concept: you find an inexplicable <code>if</code> statement and blame says "fix prod incident" — do you delete it or <b>understand it first</b> (two words), (5) concept: the most honest, executable documentation of intended behavior in a codebase (one word), (6) concept: reading should start from entry ____ , not the file tree (one word).`,
+prompt:`One answer per numbered line: (1) the git command showing every commit whose diff ever added or removed the string <code>applyDiscount</code> (the pickaxe), (2) the command showing who last changed each of lines 10-30 of <code>Billing.java</code> (use <code>-L</code>), (3) the command listing commits that touched anything under <code>src/billing/</code> in the last 3 months (one line, use <code>--since="3 months"</code> and the path after <code>--</code>), (4) concept: you find an inexplicable <code>if</code> statement and blame says "fix prod incident" — do you delete it or <b>understand it first</b> (two words), (5) concept: the executable documentation of intended behavior in a codebase (one word), (6) concept: reading should start from entry ____ , not the file tree (one word).`,
 starter:`1.
 2.
 3.
@@ -19863,10 +19885,10 @@ solution:`1. git log -S "applyDiscount"
 5. tests
 6. points
 `,
-tests:[{d:'Pickaxe search with -S',re:'1\\.\\s*git\\s+log\\s+-S\\s+"?applyDiscount"?',flags:'i'},{d:'Line-ranged blame',re:'2\\.\\s*git\\s+blame\\s+-L\\s+10,30\\s+Billing\\.java',flags:'i'},{d:'Path-scoped recent history',re:'3\\.\\s*git\\s+log\\s+--since="?3 months"?\\s+--\\s+src/billing/',flags:'i'},{d:'Chesterton’s fence: understand before deleting',re:'4\\.\\s*understand(\\s+it)?\\s+first',flags:'i'},{d:'Tests are the honest spec',re:'5\\.\\s*tests',flags:'i'},{d:'Entry points first',re:'6\\.\\s*points',flags:'i'}],
+tests:[{d:'Pickaxe search with -S',re:'1\\.\\s*git\\s+log\\s+-S\\s+"?applyDiscount"?',flags:'i'},{d:'Line-ranged blame',re:'2\\.\\s*git\\s+blame\\s+-L\\s+10,30\\s+Billing\\.java',flags:'i'},{d:'Path-scoped recent history',re:'3\\.\\s*git\\s+log\\s+--since="?3 months"?\\s+--\\s+src/billing/',flags:'i'},{d:'Chesterton’s fence: understand before deleting',re:'4\\.\\s*understand(\\s+it)?\\s+first',flags:'i'},{d:'Tests are the executable spec',re:'5\\.\\s*tests',flags:'i'},{d:'Entry points first',re:'6\\.\\s*points',flags:'i'}],
 behavior:`1. -S finds commits where the string count changed — introductions and removals, with their commit messages as testimony. 2. blame -L scopes to exactly the weird lines: author, commit, date per line. 3. Recently-hot paths are where the bugs and the knowledge both live. 4. Understand first — Chesterton's fence: the fence was built for a reason; find it before removing (the blame message just told you where to look). 5. Tests — names like rejects_negative_amounts() are claims the build verifies daily; comments merely hope. 6. Entry points — code is read as executions, not as an alphabet.`,
 hints:['The pickaxe (-S) answers "when did this name enter/leave the codebase" — the single best archaeology tool.','-L takes start,end before the filename.','Q4 has a name worth knowing in reviews: Chesterton’s fence — never remove a fence until you know why it stands.']},{title:'Interview: onboarding into a legacy codebase',lang:'text',
-prompt:`"You join a team with a 400k-line service, no docs, the author left. Walk me through your first week." — the real senior interview question. One per numbered line: (1) start reading from the file tree alphabetically, or from the ____ ____ where execution begins (two words); (2) the single most instructive exercise: ____ one request end to end (one word, a verb); (3) to find who introduced a mysterious method and why, the git command family (one word — the flag letter tool, "-S", is the ____); (4) the honest, executable spec of intended behavior, when it exists (one word); (5) you find a weird guard clause; git blame says "hotfix prod incident" — delete it or ____ ____ first (two words); (6) what you produce for yourself as you go, so week 3 isn't week 1 again (one word — notes/a ____).`,
+prompt:`"You join a team with a 400k-line service, no docs, the author left. Walk me through your first week." — the real senior interview question. One per numbered line: (1) start reading from the file tree alphabetically, or from the ____ ____ where execution begins (two words); (2) the single most instructive exercise: ____ one request end to end (one word, a verb); (3) to find who introduced a mysterious method and why, the git command family (one word — the flag letter tool, "-S", is the ____); (4) the executable spec of intended behavior, when it exists (one word); (5) you find a weird guard clause; git blame says "hotfix prod incident" — delete it or ____ ____ first (two words); (6) what you produce for yourself as you go, so week 3 isn't week 1 again (one word — notes/a ____).`,
 starter:`1.
 2.
 3.
@@ -19881,7 +19903,7 @@ solution:`1. entry points
 5. understand it
 6. map
 `,
-tests:[{d:'Q1: start from entry points',re:'1\\.\\s*entry\\s+points',flags:'is'},{d:'Q2: trace a request end to end',re:'2\\.\\s*trace',flags:'is'},{d:'Q3: the pickaxe (git log -S)',re:'3\\.\\s*pickaxe',flags:'is'},{d:'Q4: tests are the honest spec',re:'4\\.\\s*tests',flags:'is'},{d:'Q5: understand before deleting (Chesterton)',re:'5\\.\\s*understand',flags:'is'},{d:'Q6: build a map, not a memory',re:'6\\.\\s*map',flags:'is'}],
+tests:[{d:'Q1: start from entry points',re:'1\\.\\s*entry\\s+points',flags:'is'},{d:'Q2: trace a request end to end',re:'2\\.\\s*trace',flags:'is'},{d:'Q3: the pickaxe (git log -S)',re:'3\\.\\s*pickaxe',flags:'is'},{d:'Q4: tests are the executable spec',re:'4\\.\\s*tests',flags:'is'},{d:'Q5: understand before deleting (Chesterton)',re:'5\\.\\s*understand',flags:'is'},{d:'Q6: build a map, not a memory',re:'6\\.\\s*map',flags:'is'}],
 behavior:`1. Entry points — controllers, listeners, main, scheduled jobs; the file tree is an index, not a story. 2. Trace one concrete operation through every layer; one completed trace beats a week of browsing and any stale wiki diagram. 3. The pickaxe (git log -S "name") surfaces every commit that added or removed a symbol, with its message as testimony. 4. Tests — their names are claims the build verifies daily; no tests is itself the most important finding. 5. Understand it first — Chesterton's fence, and the blame message just handed you the thread to pull. 6. A map: entry points, traces, surprises, questions — the notes that turn onboarding from years into weeks. This IS a common senior-screen question; a crisp method is the signal.`,
 hints:['The anti-pattern the interviewer is listening for: "I’d read through the code" (aimlessly). The signal: entry points → trace → history.','git log -S is called the pickaxe — the single best archaeology tool.','Chesterton’s fence: never remove what you don’t yet understand, especially with an incident in its history.']},
 {title:'Read unfamiliar code: find the bug',
@@ -20113,9 +20135,9 @@ hints:['"Rewrite from scratch" is the answer that fails the interview — name t
 <li><b>4. Readability</b>: naming, dead code, comment drift.</li>
 <li><b>5. Style — automate it out of the conversation entirely.</b> If humans are debating brace position, the team lacks a formatter, not opinions. Review time spent on style is review time stolen from correctness.</li>
 </ul>
-<p><b>Phrasing is engineering too</b> — review comments have a blast radius: comment on the <i>code, never the author</i> ("this method re-reads the file per loop iteration" — not "you always do this"); <b>ask before asserting</b> ("what happens here when the list is empty?" beats "this breaks on empty" — and is more instructive when you're the one who's wrong); label severity honestly — <code>blocking:</code> vs <code>suggestion:</code> vs <code>nit:</code> — so the author knows what must change versus what's an offering; and <b>say what's good</b>: "this test names the bug it prevents — nice" teaches as much as any critique, and costs one line.</p>
+<p><b>Phrasing is engineering too</b> — review comments have a blast radius: comment on the <i>code, never the author</i> ("this method re-reads the file per loop iteration" — not "you always do this"); <b>ask before asserting</b> ("what happens here when the list is empty?" beats "this breaks on empty" — and is more instructive when you're the one who's wrong); label severity accurately — <code>blocking:</code> vs <code>suggestion:</code> vs <code>nit:</code> — so the author knows what must change versus what's an offering; and <b>say what's good</b>: "this test names the bug it prevents — nice" teaches as much as any critique, and costs one line.</p>
 <p><b>Receiving — the half seniors model:</b> the review is of the code, not of you; every question is a place the code failed to explain itself (the reviewer is the first confused reader of many — fix the code or add the why-comment, don't just answer in the thread, where the answer evaporates); and gratitude for a hard review is a senior tell — someone spent an hour making your change better before production got to review it the expensive way.</p>
-<p><b>And the author's duty that precedes it all</b>: small PRs. Review quality collapses with size — a 200-line PR gets found bugs; a 2,000-line PR gets "LGTM" (approval by exhaustion). Stacking small PRs is the single highest-leverage habit for getting good reviews. The fifteen boring commits from the refactoring lesson? That's also what a reviewable change looks like.</p>`,
+<p><b>And the author's duty that precedes it all</b>: small PRs. Review quality collapses with size — a 200-line PR gets found bugs; a 2,000-line PR gets "LGTM" (approval by exhaustion). Stacking small PRs is the habit that improves your reviews most. The fifteen boring commits from the refactoring lesson? That's also what a reviewable change looks like.</p>`,
 docs:[['Google engineering practices — code review','https://google.github.io/eng-practices/review/'],['Conventional comments (labels)','https://conventionalcomments.org/'],['How to make your code reviewer fall in love with you','https://mtlynch.io/code-review-love/']],
 exs:[{title:'Review this diff',lang:'text',
 prompt:`You're reviewing this handler: <code>String load(String userId) { String sql = "SELECT data FROM docs WHERE owner='" + userId + "'"; try { return db.query(sql); } catch (Exception e) { return null; } }</code> — write a four-comment review, one per numbered line, each starting with a severity label: (1) a <code>blocking:</code> comment naming the <b>SQL injection</b> (mention PreparedStatement or parameters), (2) a <code>blocking:</code> comment on the <b>swallowed exception</b> returning null (mention what's lost or what should happen), (3) a <code>question:</code> — asked, not asserted — about what the <b>caller does with null</b>, (4) a <code>nit:</code> or <code>suggestion:</code> about the method name <code>load</code> being vague (suggest a better one like <code>loadOwnedDoc</code>).`,
@@ -20130,7 +20152,7 @@ solution:`1. blocking: userId is concatenated straight into the SQL — this is 
 4. nit: load is vague about scope — loadOwnedDoc(userId) would say what it loads and hint at the ownership rule.
 `,
 tests:[{d:'Injection flagged as blocking with the fix named',re:'1\\.\\s*blocking:[\\s\\S]*?(inject|concatenat)[\\s\\S]*?(PreparedStatement|\\bparameter)',flags:'i'},{d:'Swallowed exception flagged: cause lost / propagate',re:'2\\.\\s*blocking:[\\s\\S]*?(swallow|lost|propagate|wrap)',flags:'i'},{d:'Null contract raised as a QUESTION with a question mark',re:'3\\.\\s*question:[\\s\\S]*?\\?',flags:'i'},{d:'Naming nit offers a concrete alternative',re:'4\\.\\s*(nit|suggestion):[\\s\\S]*?loadOwnedDoc',flags:'i'},{d:'Comments target the code, not the person (no "you always/never")',re:'you\\s+(always|never)',not:true,flags:'i'}],
-behavior:`1. The two real dangers carry blocking: — severity is information, and both name the fix, not just the crime. 2. The null-contract issue arrives as a genuine question — the reviewer might be missing context, and the question teaches either way. 3. The naming point is honestly labeled nit: — the author knows it won't block merge. 4. Every comment discusses the code's behavior; none discusses the author. That's the difference between a review culture people learn from and one they armor against. 5. Bonus you'd add in real life: one line about anything done well.`,
+behavior:`1. The two real dangers carry blocking: — severity is information, and both name the fix, not just the crime. 2. The null-contract issue arrives as a genuine question — the reviewer might be missing context, and the question teaches either way. 3. The naming point is labeled nit: — the author knows it won't block merge. 4. Every comment discusses the code's behavior; none discusses the author. That's the difference between a review culture people learn from and one they armor against. 5. Bonus you'd add in real life: one line about anything done well.`,
 hints:['Severity labels are kindness: the author instantly knows the must-fix list from the take-it-or-leave-it list.','The question format is not politeness theater — phrased as a question, being wrong costs the reviewer nothing and the thread stays curious.','Both blocking comments follow the same shape: symptom → consequence → concrete alternative.']},{title:'Interview: reviewing a risky PR',lang:'text',
 prompt:`A teammate opens a 900-line PR titled "refactor auth + add SSO + fix logging". You're the reviewer. One per numbered line: (1) the first problem is the PR's ____ — it should be several small PRs, not one (one word); (2) three unrelated changes in one PR make it hard to ____ if one breaks prod (one word — think undo a single change); (3) severity label for "this concatenates user input into SQL" (one word, the must-fix tag); (4) severity label for "consider renaming this variable" (one word, the take-it-or-leave-it tag); (5) you spot a real bug but you might be missing context — phrase it as a ____ not an assertion (one word); (6) one thing a good review always includes besides criticism (one word — what you say about the good parts).`,
 starter:`1.
@@ -20148,7 +20170,7 @@ solution:`1. size
 6. praise
 `,
 tests:[{d:'Q1: the PR is too large',re:'1\\.\\s*size|1\\.\\s*(too\\s+)?(large|big)',flags:'is'},{d:'Q2: bundled changes are hard to revert',re:'2\\.\\s*revert',flags:'is'},{d:'Q3: injection is blocking',re:'3\\.\\s*blocking',flags:'is'},{d:'Q4: naming is a nit',re:'4\\.\\s*nit',flags:'is'},{d:'Q5: ask, don’t assert',re:'5\\.\\s*question',flags:'is'},{d:'Q6: name what was done well',re:'6\\.\\s*praise|6\\.\\s*positive',flags:'is'}],
-behavior:`1. Size — "refactor + feature + fix" in 900 lines guarantees a rubber-stamp "LGTM"; review quality collapses with size, so the first, kindest feedback is "please split this". 2. Revert — if this ships and prod breaks, you can't roll back the logging fix without also reverting SSO; bundled changes lose git's superpower. 3. Blocking — injection must change before merge; the label tells the author it's non-negotiable. 4. Nit — naming is take-it-or-leave-it; labeling it honestly means the author won't over-index on it. 5. Question — "what happens here on empty input?" teaches whether you're right OR wrong, and costs the author no face. 6. Praise — "this test names the bug it prevents, nice" teaches as much as any critique and builds the culture people stay for. Reviewing well is a distinct senior craft.`,
+behavior:`1. Size — "refactor + feature + fix" in 900 lines guarantees a rubber-stamp "LGTM"; review quality collapses with size, so the first, kindest feedback is "please split this". 2. Revert — if this ships and prod breaks, you can't roll back the logging fix without also reverting SSO; bundled changes lose git's superpower. 3. Blocking — injection must change before merge; the label tells the author it's non-negotiable. 4. Nit — naming is take-it-or-leave-it; labeling it that way means the author won't over-index on it. 5. Question — "what happens here on empty input?" teaches whether you're right OR wrong, and costs the author no face. 6. Praise — "this test names the bug it prevents, nice" teaches as much as any critique and builds the culture people stay for. Reviewing well is a distinct senior craft.`,
 hints:['The biggest review problem is usually structural: PR size, before any single line.','Severity labels (blocking/nit/question) are kindness — they tell the author what MUST change vs what’s optional.','A review that’s all criticism trains people to fear reviews; one line of praise changes that.']},
 {title:'Review this concurrency PR',lang:'text',
 prompt:`Reviewing: <code>class Counter { private int n; public int next(){ return n++; } }</code> used across threads to hand out unique ids. Write a three-comment review, one per numbered line, each starting with a severity label: (1) a <code>blocking:</code> comment naming why <code>n++</code> is unsafe here (mention <b>atomic</b> or <b>race</b>) and a fix (mention <code>AtomicInteger</code>); (2) a <code>question:</code> — asked, not asserted — about whether ids must be unique across process <b>restarts</b> (which an in-memory int can't guarantee); (3) a <code>nit:</code> or <code>suggestion:</code> that <code>next</code> is a vague name (suggest <code>nextId</code>).`,
@@ -20161,7 +20183,7 @@ solution:`1. blocking: n++ is a read-modify-write and isn't atomic — under con
 3. nit: next is vague; nextId() would say what it returns and read better at call sites.
 `,
 tests:[{d:'Blocking: names the atomicity/race bug + AtomicInteger fix',re:'1\\.\\s*blocking:[\\s\\S]*?(atomic|race)[\\s\\S]*?AtomicInteger',flags:'i'},{d:'Question about uniqueness across restarts, with a "?"',re:'2\\.\\s*question:[\\s\\S]*?restart[\\s\\S]*?\\?',flags:'i'},{d:'Nit offers a concrete better name',re:'3\\.\\s*(nit|suggestion):[\\s\\S]*?nextId',flags:'i'},{d:'Comments address the code, not the author',re:'you\\s+(always|never)',not:true,flags:'i'}],
-behavior:`1. The blocking comment names the exact defect (read-modify-write race) and the exact fix (AtomicInteger.getAndIncrement) — symptom, consequence, remedy, the shape of every good blocking note. 2. The restart question raises a design issue the diff can't answer: an in-memory counter resets to 0 on deploy, silently colliding with old ids — asked as a question because the reviewer might lack context, and instructive either way. 3. The naming point is honestly tagged nit so the author knows it won't block. 4. Not one comment attacks the person. That's the difference between a review culture engineers learn from and one they armor against — and it's a graded senior skill at every company that reviews well.`,
+behavior:`1. The blocking comment names the exact defect (read-modify-write race) and the exact fix (AtomicInteger.getAndIncrement) — symptom, consequence, remedy, the shape of every good blocking note. 2. The restart question raises a design issue the diff can't answer: an in-memory counter resets to 0 on deploy, silently colliding with old ids — asked as a question because the reviewer might lack context, and instructive either way. 3. The naming point is tagged nit so the author knows it won't block. 4. Not one comment attacks the person. That's the difference between a review culture engineers learn from and one they armor against — and it's a graded senior skill at every company that reviews well.`,
 hints:['The blocking comment follows the template: symptom (race) → consequence (dup ids) → fix (AtomicInteger).','Q2 shows senior range: the concurrency bug is obvious, but the RESTART uniqueness gap is the one juniors miss.','Question-form for anything you’re not 100% sure of — being wrong then costs nothing and teaches you.']}]},
 
 {id:'wrc5',title:'Incidents: mitigate first, learn always',body:`
@@ -20173,8 +20195,8 @@ hints:['The blocking comment follows the template: symptom (race) → consequenc
 <li><b>3. Only then, diagnose</b> — with the telemetry you invested in earlier: logs with MDC request-ids (trace ONE failing request end to end), metrics for the shape (all requests or one endpoint? gradual or cliff? — a cliff points at a change, a ramp at a resource leak), and thread dumps when the service is alive-but-frozen: two dumps 10 seconds apart, and the threads that didn't move are your suspects — dozens parked in <code>WAITING</code> on the same pool means a starved pool (your bulkhead lesson, arriving as evidence).</li>
 <li><b>Communicate on a cadence</b> — a status line every 15 minutes ("mitigated via rollback, root cause under investigation") costs 20 seconds and prevents the second incident: everyone important interrupting the people fixing the first one.</li>
 </ul>
-<p><b>After: the blameless postmortem.</b> Its premise is load-bearing: <i>the engineer acted reasonably given what they knew; the SYSTEM let a reasonable action cause damage</i> — so fix the system. Name a human cause and people hide the next near-miss; name a system cause and you get action items. The document: timeline (detection → mitigation → resolution, with timestamps), impact honestly quantified, <b>root causes plural</b> (there are always several: the bug AND the review that missed it AND the missing alert AND the slow rollback), and action items that are <i>specific, owned, and deadlined</i> — "add an alert on p99 &gt; 500ms, owner: you, by Friday" — never "be more careful", which is a wish wearing a checkbox.</p>
-<p>The quiet payoff: teams that run honest postmortems convert every outage into infrastructure. Teams that don't, meet the same outage annually like a holiday.</p>`,
+<p><b>After: the blameless postmortem.</b> Its premise is load-bearing: <i>the engineer acted reasonably given what they knew; the SYSTEM let a reasonable action cause damage</i> — so fix the system. Name a human cause and people hide the next near-miss; name a system cause and you get action items. The document: timeline (detection → mitigation → resolution, with timestamps), impact quantified plainly, <b>root causes plural</b> (there are always several: the bug AND the review that missed it AND the missing alert AND the slow rollback), and action items that are <i>specific, owned, and deadlined</i> — "add an alert on p99 &gt; 500ms, owner: you, by Friday" — never "be more careful", which is a wish wearing a checkbox.</p>
+<p>The quiet payoff: teams that run real postmortems convert every outage into infrastructure. Teams that don't, meet the same outage annually like a holiday.</p>`,
 docs:[['Google SRE — managing incidents','https://sre.google/sre-book/managing-incidents/'],['Blameless postmortems — Etsy debriefing guide','https://www.etsy.com/codeascraft/blameless-postmortems/'],['Java thread dump analysis','https://docs.oracle.com/en/java/javase/21/troubleshoot/troubleshooting-tools.html']],
 exs:[{title:'Incident triage drill',lang:'text',
 prompt:`One per numbered line: (1) error rate jumped to 40% eight minutes after a deploy — your FIRST action: <code>rollback</code> or <code>debug the code</code>? (2) the first diagnostic question of any incident, three words, starts with "what"; (3) the service is up but every request hangs; you take two thread dumps 10s apart — which threads are the suspects: the ones that <code>moved</code> or the ones that <code>didn't</code>? (4) during a 90-minute incident, roughly how often do you post a status update (one number of minutes), (5) a postmortem names "engineer pushed without testing" as root cause — is that <code>blameless</code>? (yes/no), (6) which is a valid action item: <code>"be more careful with configs"</code> or <code>"add config validation to CI, owner Dana, by June 1"</code> (write <code>first</code> or <code>second</code>).`,
@@ -20254,6 +20276,17 @@ hints:['Lead with quantified Impact — it’s the first thing every reader want
 ]});
 //__STREAMS__
 /* ============================== BOOT ============================== */
+/* The shell ships Dev Dojo's static <title>; sibling courses correct it here
+   (and their build.js also swaps it at build time, so crawlers see it too). */
+if(typeof DOJO_HOME!=='undefined'&&DOJO_HOME.pageTitle)document.title=DOJO_HOME.pageTitle;
+(function(){ if(typeof DOJO_HOME==='undefined')return;
+  var lg=document.querySelector('header .logo');
+  if(lg&&DOJO_HOME.name){ var parts=DOJO_HOME.name.split(' ');
+    lg.textContent=''; lg.appendChild(document.createTextNode((DOJO_HOME.icon||'\u{1F94B}')+' '+parts.slice(0,-1).join(' ')+' '));
+    var sp=document.createElement('span'); sp.textContent=parts[parts.length-1]; lg.appendChild(sp); }
+  var tip=document.querySelector('header .tip');
+  if(tip)tip.textContent='Select or double-click any highlighted term in a lesson to see what it means.';
+})();
 mergeIdentity();
 /* attach auto-generated executable-grading specs (opt-in Java runner) by lesson id */
 (function(){ if(!window.GRADEJAVA)return; STREAMS.forEach(function(s){(s.lessons||[]).forEach(function(l){var exs=l.exs||(l.ex?[l.ex]:[]);exs.forEach(function(e,i){var k=exs.length>1?l.id+'#'+i:l.id; if(window.GRADEJAVA[k]&&!e.gradeJava)e.gradeJava=window.GRADEJAVA[k];});});}); })();
