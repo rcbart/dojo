@@ -119,7 +119,7 @@ const page = (title, desc, body, root) => `<!doctype html>
 <body>
 <nav><div class="wrap navrow" style="padding-bottom:14px">
   <a href="${root}">← roniam.dev</a><a href="${root}blog/">Writing</a>
-  <span style="margin-left:auto"><a href="${root}identity/">IdentityDojo</a></span>
+  <span style="margin-left:auto"><a href="${root}identity/">Identity Dojo</a></span>
 </div></nav>
 <div class="wrap">
 ${body}
