@@ -44,8 +44,9 @@ node --test                     # the built-in runner, once you add tests
 node --inspect server.js        # breakpoints in your handlers
 # and the Network panel to watch the 302 actually redirect</div>
 <p>The exercises below give you each piece with its edge cases pinned. Assembling them into a running
-server — with the <code>http</code> module from stream 13, the config validation from stream 11 and the
-structured logging from stream 14 — is the part worth doing on your own machine.</p>`,
+server — with the <code>http</code> module from the HTTP stream, the config validation from the Node
+runtime stream and the structured logging from the testing stream — is the part worth doing on your own
+machine.</p>`,
 docs:[['Node — http server','https://nodejs.org/api/http.html'],['MDN — URL','https://developer.mozilla.org/en-US/docs/Web/API/URL'],['MDN — 302 vs 301','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/302'],['OWASP — unvalidated redirects','https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html']],
 exs:[
 {title:'1. Validate a submitted URL',diff:'medium',lang:'js',
