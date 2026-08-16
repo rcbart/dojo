@@ -66,12 +66,11 @@
 
   .pull{margin:26px 0 8px}
   .pull figure{margin:0;background:var(--panel);border:1px solid var(--line);border-left:5px solid;
-     border-image:var(--grad) 1;border-radius:14px;padding:20px 26px;cursor:pointer;
+     border-image:var(--grad) 1;border-radius:14px;padding:20px 26px;
      box-shadow:0 8px 26px rgba(19,15,38,.07)}
   .pull blockquote{font-family:var(--serif);font-size:clamp(18px,2.3vw,22px);font-style:italic;
      line-height:1.45;margin:0}
   .pull figcaption{margin-top:7px;font-size:13px;color:var(--muted)}
-  .pull .hintq{opacity:.55}
 
   section{padding:44px 0 6px}
   .k{font-size:12px;font-weight:800;letter-spacing:2.2px;text-transform:uppercase}
@@ -214,10 +213,10 @@
     park them in tutorial hell. Every lesson ends with you doing the work, and CI gates hold the
     material to the same bar I'd hold a team to.</p>
 
-    <div class="pull"><figure id="quote" title="Click for another">
-      <blockquote id="quoteText">“A check that produces a report is a signal. A check that can refuse
-      to let your work ship is a gate.”</blockquote>
-      <figcaption><span id="quoteSrc">on CI gates</span> · <span class="hintq">↻ click for another</span></figcaption>
+    <div class="pull"><figure>
+      <blockquote>“If you don’t dogfood your own product, everything you built is a technical
+      pass-through. It compiles, it deploys, it demos. Whether it works is anybody’s guess.”</blockquote>
+      <figcaption>from <a href="/blog/sit-the-exam/">“Write the exam, write the answer key, then sit the exam”</a></figcaption>
     </figure></div>
   </header>
 
@@ -394,26 +393,6 @@
 </div></main>
 
 <script>
-// quotable: rotate pull-quotes on click; no storage, no deps
-(function(){
-  const qs=[
-    ['“A check that produces a report is a signal. A check that can refuse to let your work ship is a gate.”','on CI gates'],
-    ['“Don’t take my word for it. Take the course.”','on sharing knowledge'],
-    ['“Tutorial hell is watching someone else code. The way out is doing the work.”','on developing engineers'],
-    ['“Identity is the perimeter.”','on zero trust'],
-    ['“People ship software. I ship teams.”','on management'],
-    ['“roniam: because ‘Ron’ and ‘IAM’ were never really two different words.”','on the domain name'],
-    ['“Sam-I-Am made the first great identity claim. I just added the access management.”','on Green Eggs and Ham'],
-    ['“ML Dojo is built from the love and the fear of complicated math. Mostly both at once.”','on graduate school'],
-    ['“What kind of bug would survive everything we currently run?”','the question worth a slow afternoon'],
-    ['“Honest numbers stay useful. Inflated ones stop.”','on metrics'],
-  ];
-  let i=0;
-  const t=document.getElementById('quoteText'), s=document.getElementById('quoteSrc');
-  document.getElementById('quote').addEventListener('click',()=>{
-    i=(i+1)%qs.length; t.textContent=qs[i][0]; s.textContent=qs[i][1];
-  });
-})();
 // contact: the address is assembled on click so it never sits in the page in plain view
 (function(){
   const p=['rc','ba','rt'], d=['gm','ail'], t='com';
