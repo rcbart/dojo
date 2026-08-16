@@ -33,7 +33,7 @@ unbalanced a course meant to cover software engineering broadly. It is now
 and OIDC, SAML, WebAuthn/FIDO2 internals, Active Directory and Kerberos, zero trust, and a Running
 Identity stream on incident response, migration and operations. Same engine, separate build.
 
-**▶ Live:** https://rcbart.github.io/dojo/ — a landing page for all three courses.
+**▶ Live:** https://roniam.dev/ — the portfolio home; https://rcbart.github.io/dojo/courses/ lists every course.
 [**Dev Dojo**](https://rcbart.github.io/dojo/dev/) ·
 [**Identity Dojo**](https://rcbart.github.io/dojo/identity/) ·
 [**JS Dojo**](https://rcbart.github.io/dojo/js/). Each is a single,
@@ -172,6 +172,8 @@ scripts/verify-exec.js  execution gate: runs every run-spec exercise's reference
                     solution against its own cases, as the browser worker does
 scripts/verify-java.js  compiles every self-contained Java reference solution
 scripts/verify-depth.js depth gate: every lesson against half its course median
+scripts/verify-cloudnative.js  cloud-native gate: the five crash courses — pages exist,
+                    quizzes well-formed, Next-chains match the built order
 build.js            engine/ + src/ + content/ -> dist/index.html (+ devdojo.html)
 identity-dojo/      Identity Dojo: same shape, consumes ../engine
 site/               optional Node server: accounts, progress sync (SQLite via node:sqlite)
@@ -218,11 +220,20 @@ Content lives inside JS template literals. Escaping rules that keep the build cl
 and `${`; in HTML `body` code samples use `&lt;`/`&gt;`/`&amp;`; keep single-quoted `hints` free of
 apostrophes and `\u` sequences. Always run `node scripts/verify.js` after editing.
 
-## Companion courses (standalone, in this repo)
+## The cloud-native path (standalone, in this repo)
 
-Separate hands-on courses, each a self-contained interactive site:
+Five companion courses on their own lighter pipeline (markdown → `web/build.py` → one interactive
+HTML file each), all live on the same Pages site and gated in CI by `scripts/verify-cloudnative.js`
+(80 pages, 374 quiz questions, every answer explained — right and wrong options alike):
 
-- `docker-crash-course/`, `kubernetes-crash-course/`, `istio-crash-course/`, `envoy-crash-course/`
+- [**Cloud-Native Fundamentals**](https://rcbart.github.io/dojo/fundamentals/) — the map before the
+  machines: the path of a request, load balancers, API gateways, CDNs, DNS in depth, TLS, queues &
+  caches. Pure concepts, nothing to install.
+- [**Docker**](https://rcbart.github.io/dojo/docker/) ·
+  [**Kubernetes**](https://rcbart.github.io/dojo/kubernetes/) ·
+  [**Envoy**](https://rcbart.github.io/dojo/envoy/) ·
+  [**Istio**](https://rcbart.github.io/dojo/istio/) — hands-on on your own machine; each starts
+  with a step-by-step local setup guide, and Envoy ships runnable lab configs in `envoy-crash-course/labs/`.
 - `ml-dojo` — a machine-learning curriculum (Python via Pyodide). It forked the engine and shares
   nothing with this repo, so it now lives in its own repository: https://github.com/rcbart/ml-dojo
 - `oauth-trainer/` — a small Maven CLI for generating and signing JWKs

@@ -46,7 +46,7 @@ hints:['A nudge toward the shape.','A nudge toward the trap.','The name of the t
 **Body**
 
 - [ ] **At or above the course median.** DevDojo ~510 words, IdentityDojo ~655, JSDojo ~455. The floor is
-      half the course median — 255 / 328 / 228 — and `scripts/verify-depth.js` fails the build below it.
+      half the course median — 255 / 338 / 226 — and `scripts/verify-depth.js` fails the build below it.
       Aim for the median, not the floor: a lesson written to the minimum is the next one to be flagged.
 - [ ] **Sentences average under ~19 words.** Nothing over 50. Check with the readability script before
       committing.
