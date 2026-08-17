@@ -3,13 +3,13 @@
 *Envoy's superpower is that it sees every request. This module is how you look. Concepts +
 hands-on using the admin API of any lab you already have running. ~20 min.*
 
-No new lab — start any earlier stack (`labs/02-static/`, `labs/04-routing/`, or
+No new lab: start any earlier stack (`labs/02-static/`, `labs/04-routing/`, or
 `labs/05-clusters/`) with `docker compose up` and follow along.
 
 ---
 
 Because every request passes through Envoy, it's a natural place to emit telemetry. Envoy gives
-you the classic **three pillars** — logs, metrics, traces — plus a live **admin interface** for
+you the classic **three pillars** (logs, metrics, traces) plus a live **admin interface** for
 introspection.
 
 ## The admin interface (port 9901)
@@ -54,12 +54,12 @@ curl -s localhost:9901/stats | grep -E "cluster\.echo_service\.(upstream_rq_tota
 
 Key families to know:
 
-- **`http.<stat_prefix>.downstream_rq_*`** — requests *from clients*: totals and by response class
+- **`http.<stat_prefix>.downstream_rq_*`**: requests *from clients*: totals and by response class
   (`_2xx`, `_4xx`, `_5xx`), active connections, request time histograms.
-- **`cluster.<name>.upstream_rq_*` / `upstream_cx_*`** — requests/connections *to backends*,
+- **`cluster.<name>.upstream_rq_*` / `upstream_cx_*`**: requests/connections *to backends*,
   including `upstream_rq_retry`, `_pending_overflow` (circuit breaker trips), and per-endpoint
   health.
-- **`server.*`** — memory, uptime, live connections.
+- **`server.*`**: memory, uptime, live connections.
 
 The **RED method** (Rate, Errors, Duration) maps directly: rate = `downstream_rq_total`, errors =
 `downstream_rq_5xx`, duration = the `downstream_rq_time` histogram. In production you scrape
@@ -82,7 +82,7 @@ access_log:
         inline_string: "%START_TIME% %REQ(:METHOD)% %REQ(:PATH)% %RESPONSE_CODE% %RESPONSE_FLAGS% %DURATION%ms upstream=%UPSTREAM_HOST%\n"
 ```
 
-**`%RESPONSE_FLAGS%` is the debugging goldmine** — short codes explain *why* a request ended a
+**`%RESPONSE_FLAGS%` is the debugging goldmine**: short codes explain *why* a request ended a
 certain way: `UH` (no healthy upstream), `UF` (upstream connection failure), `UT` (upstream
 timeout), `NR` (no route configured), `URX` (retry limit hit), `DC` (downstream disconnect). When
 something's wrong, read the flag first.
@@ -92,7 +92,7 @@ something's wrong, read the flag first.
 Envoy can generate/propagate trace spans (B3 / W3C `traceparent` headers) and report them to
 Jaeger, Zipkin, or an OpenTelemetry collector. Enable it with a `tracing:` block on the HCM and
 set a sampling percentage. Because the sidecar sits on every hop, an Envoy mesh gives you
-end-to-end traces across services with no app code changes — a major reason teams adopt it. Full
+end-to-end traces across services with no app code changes, a major reason teams adopt it. Full
 setup (running a collector) is beyond this crash course, but know that it's config, not code.
 
 ## Lab tasks
@@ -110,9 +110,9 @@ setup (running a collector) is beyond this crash course, but know that it's conf
    endpoints like `/quitquitquit`.)*
 3. In RED terms, which stats are rate/errors/duration? *(`downstream_rq_total` /
    `downstream_rq_5xx` / `downstream_rq_time`.)*
-4. What does `%RESPONSE_FLAGS%` give you? *(A short code for *why* a request ended that way — UH,
+4. What does `%RESPONSE_FLAGS%` give you? *(A short code for *why* a request ended that way: UH,
    UT, NR, etc.)*
-5. How much app code do you change to get tracing across a mesh? *(None — it's Envoy config on
+5. How much app code do you change to get tracing across a mesh? *(None; it's Envoy config on
    each hop.)*
 
 ---

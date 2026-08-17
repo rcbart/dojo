@@ -5,12 +5,12 @@ cluster.*
 
 ---
 
-The same image should run in dev, staging, and prod — only the **configuration** differs (database
+The same image should run in dev, staging, and prod; only the **configuration** differs (database
 URLs, feature flags, credentials). Baking config into the image is wrong (you'd rebuild per
 environment, and secrets would leak). Kubernetes injects config at run time via **ConfigMaps** (non
 -secret) and **Secrets** (sensitive).
 
-This is the direct successor to Docker's `-e` env vars and mounted config files — now as first-class,
+This is the direct successor to Docker's `-e` env vars and mounted config files, now as first-class,
 reusable cluster objects.
 
 ## ConfigMap — non-secret configuration
@@ -39,7 +39,7 @@ kubectl create secret generic db-secret \
 ```
 
 > **Reality check on "Secret."** By default, Secret values are only **base64-encoded, not
-> encrypted** — anyone with read access can decode them. Treat Secrets as "handled separately from
+> encrypted**: anyone with read access can decode them. Treat Secrets as "handled separately from
 > ConfigMaps," and in real clusters add **encryption at rest** (etcd encryption) and tight **RBAC**
 > (Module 7), or use an external secrets manager. Never commit real Secret YAML to git.
 
@@ -74,9 +74,9 @@ spec:
     configMap: { name: app-config }
 ```
 
-- **Env vars** — simplest, great for individual settings. *Note: env vars are set at pod start;
-  changing the ConfigMap does **not** update running env vars — you must restart the pod.*
-- **Mounted files** — better for whole config files, and mounted ConfigMap/Secret values **do**
+- **Env vars**: simplest, great for individual settings. *Note: env vars are set at pod start;
+  changing the ConfigMap does **not** update running env vars; you must restart the pod.*
+- **Mounted files**: better for whole config files, and mounted ConfigMap/Secret values **do**
   update in the pod over time (with a short delay). Use files for config you want to hot-reload and
   for TLS certs.
 
@@ -105,17 +105,17 @@ kubectl get configmap app-config -o yaml
 kubectl get secret app-secret -o jsonpath='{.data.TOKEN}' | base64 -d ; echo   # decodes to abc123
 ```
 
-That last command demonstrates the base64 point — Secrets are encoded, not encrypted.
+That last command demonstrates the base64 point: Secrets are encoded, not encrypted.
 
 ### Experiment: mounted file that updates
 
 Mount the ConfigMap as files, then edit the ConfigMap (`kubectl edit configmap app-config`) and watch
-`/etc/config/GREETING` inside the pod change after a delay — something env vars won't do.
+`/etc/config/GREETING` inside the pod change after a delay, something env vars won't do.
 
 ## Practitioner rules
 
-- **Config out of images** — one image, many environments, config injected per environment.
-- **Secrets ≠ ConfigMaps** — different object, tighter RBAC, encryption at rest, never in git.
+- **Config out of images**: one image, many environments, config injected per environment.
+- **Secrets ≠ ConfigMaps**: different object, tighter RBAC, encryption at rest, never in git.
 - **Prefer files for things that rotate** (certs, config you hot-reload); env for simple flags.
 - **Changed a ConfigMap used as env vars?** Restart the Deployment (`kubectl rollout restart`) to
   pick it up.
@@ -123,10 +123,10 @@ Mount the ConfigMap as files, then edit the ConfigMap (`kubectl edit configmap a
 ## Check yourself
 
 1. Why not bake configuration into the image? *(The same image should run everywhere; only config
-   differs — and secrets would leak. Inject config at run time.)*
+   differs, and secrets would leak. Inject config at run time.)*
 2. ConfigMap vs Secret? *(Both inject config; Secrets are for sensitive data, handled separately with
    tighter access and encryption at rest.)*
-3. Are Secret values encrypted by default? *(No — only base64-encoded; add etcd encryption + RBAC, or
+3. Are Secret values encrypted by default? *(No: only base64-encoded; add etcd encryption + RBAC, or
    an external manager.)*
 4. Two ways to consume config in a pod? *(As environment variables, or mounted as files via a
    volume.)*

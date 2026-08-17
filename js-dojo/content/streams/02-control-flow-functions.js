@@ -1,4 +1,4 @@
-STREAMS.push({icon:'🔀',title:'Control Flow & Functions',blurb:'Making decisions and repeating work: if/else and switch, the four loop forms and when each is right, and functions from the ground up — declarations vs expressions vs arrows, parameters and defaults, rest and arguments, return, and why early return beats nesting.',lessons:[
+STREAMS.push({icon:'🔀',title:'Control Flow & Functions',blurb:'Making decisions and repeating work: if/else and switch, the four loop forms and when each is right, and functions from the ground up: declarations vs expressions vs arrows, parameters and defaults, rest and arguments, return, and why early return beats nesting.',lessons:[
 
 {id:'js6',title:'Making decisions: if, else and switch',body:`
 <p>Every non-trivial program branches. JavaScript gives you three constructs, and choosing well is mostly
@@ -16,7 +16,7 @@ about how many outcomes there are and how much each branch does.</p>
 // order matters: the FIRST true branch wins and the rest are skipped.
 // reversing these so 80 is tested first would give "B" to a score of 95.</div>
 <p>Always use braces, even for a single statement. The braceless form is legal and it is the reason for a
-famous class of bug — a second line added later looks like it is inside the branch and is not.</p>
+famous class of bug: a second line added later looks like it is inside the branch and is not.</p>
 <p>Remember from the previous stream that the condition is <b>coerced</b>. <code>if (count)</code> is
 false when <code>count</code> is legitimately <code>0</code>, which is almost never what you meant. Write
 the comparison you actually mean.</p>
@@ -50,7 +50,7 @@ silently returns <code>undefined</code> for anything unexpected, which is exactl
 function fails open.</p>
 
 <h4>Short-circuit evaluation</h4>
-<p><code>&&</code> and <code>||</code> do not return booleans — they return <b>one of their operands</b>,
+<p><code>&&</code> and <code>||</code> do not return booleans; they return <b>one of their operands</b>,
 and they stop evaluating as soon as the answer is known:</p>
 <div class="codeSample" data-hl>"a" && "b"        // "b"    both truthy -> the LAST value
 0 && "b"          // 0      stops at the first falsy
@@ -95,7 +95,7 @@ solution:`function classify(method) {
   }
 }`,
 tests:[{d:'GET is safe',re:'"GET"'},{d:'PUT is idempotent',re:'"PUT"'},{d:'POST is neither',re:'"POST"'},{d:'has a default branch',re:'default'}],
-behavior:`Nine cases run, including "BREW" and a lowercase "get". The lowercase case is the point: switch compares with ===, so casing must match exactly — normalise before switching if you want case-insensitive behaviour.`,
+behavior:`Nine cases run, including "BREW" and a lowercase "get". The lowercase case is the point: switch compares with ===, so casing must match exactly; normalise before switching if you want case-insensitive behaviour.`,
 hints:['Group cases by letting them fall through to a shared return.','Each group ends with a return, so no break is needed.','The default must exist, or unknown methods return undefined.']}},
 
 {id:'js7',title:'Loops: four forms and when to use each',body:`
@@ -109,7 +109,7 @@ while (cond) / do...while        when the count is not known in advance.</div>
 
 <h4><code>for...of</code> is the one you want most of the time</h4>
 <p>It iterates <b>values</b>, works on anything iterable (arrays, strings, <code>Map</code>,
-<code>Set</code>, generators), and supports <code>break</code> and <code>continue</code> — which the
+<code>Set</code>, generators), and supports <code>break</code> and <code>continue</code>, which the
 array method <code>forEach</code> does not.</p>
 <div class="codeSample" data-hl>for (const ch of "héllo") { }        // iterates CHARACTERS correctly,
                                      // including multi-byte ones
@@ -148,7 +148,7 @@ for (let i = 0; i &lt; n; i--) { }        // wrong direction
 
 <h4>Choosing</h4>
 <p>Prefer <code>for...of</code>. Reach for the classic <code>for</code> when you genuinely need the index
-or a non-unit step. Use <code>while</code> when the end condition is not a count — reading until an input
+or a non-unit step. Use <code>while</code> when the end condition is not a count: reading until an input
 is exhausted, retrying until success. And when you are <i>transforming</i> data rather than performing
 side effects, the array methods in the next stream (<code>map</code>, <code>filter</code>,
 <code>reduce</code>) usually say it better than any loop.</p>`,
@@ -194,12 +194,12 @@ solution:`function firstLongerThan(words, n) {
   return null;                     // fell through: nothing matched
 }`,
 tests:[{d:'iterates the words',re:'for\\s*\\('},{d:'compares strictly greater',re:'length\\s*>\\s*n'},{d:'returns null when nothing matches',re:'return\\s+null'}],
-behavior:`The last case checks "strictly": with n = 3, "abc" does not qualify but "abcd" does. Returning from inside the loop is the idiomatic early exit — it stops the iteration and answers in one move.`,
+behavior:`The last case checks "strictly": with n = 3, "abc" does not qualify but "abcd" does. Returning from inside the loop is the idiomatic early exit; it stops the iteration and answers in one move.`,
 hints:['Return as soon as you find a match; that ends the loop.','The fallback return sits after the loop, not inside it.','Strictly greater means > and not >=.']}]},
 
 {id:'js8',title:'Functions: the three forms',body:`
 <p>A function packages work under a name so it can be reused, tested and reasoned about. JavaScript has
-three ways to write one, and the differences are real — not stylistic.</p>
+three ways to write one, and the differences are real, not stylistic.</p>
 
 <div class="codeSample" data-hl>// 1. DECLARATION - hoisted completely; usable before it appears
 function add(a, b) { return a + b; }
@@ -258,7 +258,7 @@ function two(a, b) { return [a, b]; }
 two(1);                   // [1, undefined]   - no error
 two(1, 2, 3);             // [1, 2]           - no error</div>
 <p>That last behaviour is why calling a function with the wrong number of arguments fails silently in
-JavaScript and loudly in most other languages — and it is a large part of the case for TypeScript.</p>
+JavaScript and loudly in most other languages, and it is a large part of the case for TypeScript.</p>
 
 <h4>Return, and the semicolon trap</h4>
 <p>A function with no <code>return</code> returns <code>undefined</code>. And <code>return</code> is one
@@ -280,7 +280,7 @@ run:{call:'welcome',cases:[
  {name:'omitted (which IS undefined) triggers the default',args:['Ada'],expect:'Hello, Ada'},
  {name:'null does NOT trigger the default',args:['Ada',null],expect:'null, Ada'},
  {name:'an empty string does not trigger it either',args:['Ada',''],expect:', Ada'}]},
-prompt:`Write <code>function welcome(name, greeting = "Hello")</code> returning <code>"GREETING, NAME"</code> with a template literal. Use a real default parameter — do not write your own fallback, because the point of this exercise is that defaults fire on <code>undefined</code> and nothing else.`,
+prompt:`Write <code>function welcome(name, greeting = "Hello")</code> returning <code>"GREETING, NAME"</code> with a template literal. Use a real default parameter. Do not write your own fallback, because the point of this exercise is that defaults fire on <code>undefined</code> and nothing else.`,
 starter:`function welcome(name, greeting) {
   return null;
 }`,
@@ -288,8 +288,8 @@ solution:`function welcome(name, greeting = "Hello") {
   return \`\${greeting}, \${name}\`;
 }`,
 tests:[{d:'uses a default parameter',re:'greeting\\s*=\\s*"Hello"'},{d:'uses a template literal',re:'\`'},{d:'does not hand-roll a fallback',re:'\\|\\||\\?\\?',not:true}],
-behavior:`The last two cases are the lesson and they execute: null and "" are real values, so the default does not apply and you get "null, Ada" and ", Ada". A hand-rolled || fallback would wrongly rewrite both — which is precisely the bug default parameters avoid.`,
-hints:['Put the default in the parameter list, not in the body.','Template literals use backticks and ${ }.','Do not add || or ?? — they would change the null and "" behaviour.']},
+behavior:`The last two cases are the lesson and they execute: null and "" are real values, so the default does not apply and you get "null, Ada" and ", Ada". A hand-rolled || fallback would wrongly rewrite both, which is precisely the bug default parameters avoid.`,
+hints:['Put the default in the parameter list, not in the body.','Template literals use backticks and ${ }.','Do not add || or ??; they would change the null and "" behaviour.']},
 {title:'Collect any number of arguments',diff:'medium',lang:'js',
 run:{call:'longest',cases:[
  {name:'picks the longest',args:['hi','there','you'],expect:'there'},
@@ -312,7 +312,7 @@ behavior:`The tie case is executed: with > the first of two equal-length words i
 hints:['A rest parameter gathers all arguments into a real array.','Strictly greater keeps the first winner on a tie.','Initialising to "" handles the empty case for free.']}]},
 
 {id:'js9',title:'Writing functions people can read',body:`
-<p>The language part of functions is done. This lesson is the craft — the handful of habits that separate
+<p>The language part of functions is done. This lesson is the craft: the handful of habits that separate
 code you can change safely from code you are afraid of.</p>
 
 <h4>Early return beats nesting</h4>
@@ -345,7 +345,7 @@ function pay2(user, amount) {
 functions. A function that does one thing can be tested with one set of cases, reused somewhere else, and
 understood without reading its body.</p>
 <p>The related signal is <b>parameter count</b>. Beyond three or four, the call site becomes unreadable
-(<code>f(true, false, true)</code> — which is which?) and it usually means the function is doing too
+(<code>f(true, false, true)</code>: which is which?) and it usually means the function is doing too
 much. Pass an options object instead, so the call names its arguments.</p>
 
 <h4>Pure functions, and why they are worth preferring</h4>
@@ -357,20 +357,20 @@ let count = 0;
 function next() { return ++count; }        // depends on external state
 function save(x) { db.write(x); }          // has a side effect
 function now() { return Date.now(); }      // not deterministic</div>
-<p>Impure functions are necessary — a program that touches nothing does nothing. The point is to
+<p>Impure functions are necessary: a program that touches nothing does nothing. The point is to
 <b>concentrate</b> the impurity: keep the decisions pure and testable, and push the I/O to the edges.
 A pure function needs no mocks, no setup and no teardown to test.</p>
 
 <h4>Naming</h4>
 <p>Functions do things, so name them with verbs: <code>calculateTotal</code>, <code>isExpired</code>,
-<code>hasPermission</code>, <code>toCents</code>. Booleans read best as questions —
+<code>hasPermission</code>, <code>toCents</code>. Booleans read best as questions:
 <code>if (isExpired(token))</code> needs no comment. And avoid names that lie: a function called
 <code>getUser</code> that also creates one has misled every future reader.</p>
 
 <h4>Side effects, stated up front</h4>
 <p>If a function mutates its argument, say so in the name (<code>sortInPlace</code>) or do not do it.
 Silently modifying an object the caller passed in is the source of bugs that appear far from their
-cause — the caller's data changed and nothing at the call site suggests it could have.</p>`,
+cause: the caller's data changed and nothing at the call site suggests it could have.</p>`,
 docs:[['MDN — Functions guide','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions'],['Refactoring: guard clauses','https://refactoring.com/catalog/replaceNestedConditionalWithGuardClauses.html']],
 exs:[
 {title:'Rewrite with guard clauses',diff:'easy',lang:'js',
@@ -394,7 +394,7 @@ solution:`function pay(user, amount) {
   return "ok";                                  // the happy path, at the margin
 }`,
 tests:[{d:'guards on a missing user first',re:'!\\s*user'},{d:'guards on inactive',re:'user\\.active'},{d:'rejects non-positive amounts',re:'amount\\s*<=\\s*0'},{d:'checks the balance',re:'balance\\s*<\\s*amount'}],
-behavior:`Order is executed, not merely described: a null user is checked before any property is read, so the inactive test cannot throw. The boundary cases matter too — an amount of exactly 0 is invalid, and a balance of exactly the amount succeeds.`,
+behavior:`Order is executed, not merely described: a null user is checked before any property is read, so the inactive test cannot throw. The boundary cases matter too: an amount of exactly 0 is invalid, and a balance of exactly the amount succeeds.`,
 hints:['Check the null user first, or reading user.active will throw.','Each guard returns immediately, so no else is needed.','Non-positive means <= 0, and insufficient means balance < amount.']},
 {title:'An options object, defaulted properly',diff:'medium',lang:'js',
 run:{call:'summarize',cases:[
@@ -418,7 +418,7 @@ solution:`function summarize(text, options = {}) {
   return clean.slice(0, maxLength).trimEnd() + suffix;
 }`,
 tests:[{d:'guards on non-string input',re:'typeof'},{d:'defaults each option as it destructures',re:'maxLength\\s*='},{d:'trims before measuring',re:'\\.trim\\('},{d:'does not end the cut on a space',re:'trimEnd'}],
-behavior:`Compare the call sites this signature buys: summarize(text) reads clean, summarize(text, { maxLength: 4 }) names its argument — against a hypothetical summarize(text, 4, "…", true) where no reader knows which value is which. The boundary cases execute the craft details: exactly-at-the-limit text is untouched, padding never counts against the budget, and the trimEnd stops "one two …" from shipping with a floating space.`,
-hints:['Default the whole parameter with options = {}, then each field as you destructure it.','Trim first — the padding case expects whitespace not to count.','Slice, then trimEnd, then append the suffix; that order settles the mid-space case.']}]}
+behavior:`Compare the call sites this signature buys: summarize(text) reads clean, summarize(text, { maxLength: 4 }) names its argument, against a hypothetical summarize(text, 4, "…", true) where no reader knows which value is which. The boundary cases execute the craft details: exactly-at-the-limit text is untouched, padding never counts against the budget, and the trimEnd stops "one two …" from shipping with a floating space.`,
+hints:['Default the whole parameter with options = {}, then each field as you destructure it.','Trim first: the padding case expects whitespace not to count.','Slice, then trimEnd, then append the suffix; that order settles the mid-space case.']}]}
 
 ]});

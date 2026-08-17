@@ -23,10 +23,10 @@ Docker (and Compose) runs containers on **one machine**. Real systems need more:
 - **Zero-downtime updates.** Roll out a new version gradually, roll back instantly if it's bad.
 - **Service discovery & load balancing at scale.** Stable names and traffic spreading across many
   replicas on many hosts.
-- **Declarative desired state.** "I want 5 healthy replicas of this image" — and have the system
+- **Declarative desired state.** Say "I want 5 healthy replicas of this image" and have the system
   continuously make reality match, forever.
 
-That job — **orchestrating containers across a cluster** — is exactly what **Kubernetes** does.
+That job, **orchestrating containers across a cluster**, is exactly what **Kubernetes** does.
 
 ## How your Docker knowledge maps to Kubernetes
 
@@ -48,7 +48,7 @@ next course:
 | `docker logs` / `exec` / `inspect` | `kubectl logs` / `exec` / `describe` |
 
 Notice the pattern: Kubernetes takes each single-machine Docker idea and makes it **declarative,
-scalable, and self-healing across a cluster.** You're not starting over — you're leveling up the same
+scalable, and self-healing across a cluster.** You're not starting over; you're leveling up the same
 concepts.
 
 ## The mindset shift ahead
@@ -61,13 +61,13 @@ concepts.
 
 ## Where to go next
 
-Start the **Kubernetes course**. It opens exactly where this one ends — with the images you now know
-how to build — and teaches you to run them at scale: Pods, Deployments, Services, config, storage,
+Start the **Kubernetes course**. It opens exactly where this one ends (with the images you now know
+how to build) and teaches you to run them at scale: Pods, Deployments, Services, config, storage,
 then production practices (probes, resources, RBAC, network policy), packaging (Helm, Kustomize,
 CI/CD), advanced platform features (ingress, autoscaling, operators), a capstone app, and CKA/CKAD
 exam alignment.
 
-Keep Docker handy — you'll build images throughout the Kubernetes course. The two tools are partners:
+Keep Docker handy: you'll build images throughout the Kubernetes course. The two tools are partners:
 **Docker builds; Kubernetes operates.**
 
 ## Course recap — the one-paragraph mental model
@@ -76,7 +76,7 @@ Keep Docker handy — you'll build images throughout the Kubernetes course. The 
 `Dockerfile`, stored in a **registry**) and runs it as a lightweight **container** that shares the
 host OS kernel. You persist data in **volumes**, connect containers over **networks** (talking by
 name), compose multi-container apps declaratively, and harden images with multi-stage builds,
-non-root users, and no baked-in secrets. Everything that follows in Kubernetes is these same ideas —
+non-root users, and no baked-in secrets. Everything that follows in Kubernetes is these same ideas,
 made declarative, scalable, and self-healing across a whole cluster.
 
 ## Check yourself
@@ -92,5 +92,5 @@ made declarative, scalable, and self-healing across a whole cluster.
 
 ---
 
-**You've finished the Docker course.** Open the **Kubernetes course** next — it assumes exactly what
+**You've finished the Docker course.** Open the **Kubernetes course** next; it assumes exactly what
 you now know. Use the sidebar to revisit any module, and the search box to find a concept fast.

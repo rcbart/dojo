@@ -46,16 +46,16 @@ spec:
 ```
 
 Probe mechanisms: `httpGet` (2xx/3xx = pass), `tcpSocket` (port open = pass), `exec` (command exit 0
-= pass). This is the direct evolution of Docker's `HEALTHCHECK` — now with the readiness concept that
+= pass). This is the direct evolution of Docker's `HEALTHCHECK`, now with the readiness concept that
 enables zero-downtime rollouts (Module 2).
 
 ## Resource requests & limits
 
 Every container should declare:
 
-- **requests** — the amount of CPU/memory it *needs*. The **scheduler** uses requests to decide which
+- **requests**: the amount of CPU/memory it *needs*. The **scheduler** uses requests to decide which
   node has room. Guaranteed to the pod.
-- **limits** — the *maximum* it may use. Exceed the **memory** limit → the container is **OOM-killed**
+- **limits**: the *maximum* it may use. Exceed the **memory** limit → the container is **OOM-killed**
   (137). Exceed the **CPU** limit → it's **throttled** (slowed), not killed.
 
 ```yaml
@@ -75,9 +75,9 @@ Every container should declare:
 Kubernetes assigns each pod a **Quality of Service** class, which decides who gets evicted first when
 a node runs low:
 
-- **Guaranteed** — requests == limits for all resources. Last to be evicted.
-- **Burstable** — has requests < limits. Evicted after BestEffort.
-- **BestEffort** — no requests/limits set. **Evicted first.** (Never run important workloads
+- **Guaranteed**: requests == limits for all resources. Last to be evicted.
+- **Burstable**: has requests < limits. Evicted after BestEffort.
+- **BestEffort**: no requests/limits set. **Evicted first.** (Never run important workloads
   BestEffort.)
 
 Setting sensible requests/limits is thus both a scheduling and a reliability decision.
@@ -121,14 +121,14 @@ kubectl delete deploy probed
 ### Experiment: liveness restart
 
 Add a liveness probe hitting a path that returns 500, and watch `kubectl get pod` show the
-RESTARTS counter climb as Kubernetes restarts the "wedged" container — while a readiness-only failure
+RESTARTS counter climb as Kubernetes restarts the "wedged" container, while a readiness-only failure
 would just remove it from Service traffic without restarting.
 
 ## Practitioner rules
 
-- **Always set readiness probes** — they make rollouts safe (bad pods never receive traffic) and are
+- **Always set readiness probes**: they make rollouts safe (bad pods never receive traffic) and are
   why a broken deploy doesn't cause an outage.
-- **Set liveness probes carefully** — too aggressive and you restart healthy-but-busy pods. Point
+- **Set liveness probes carefully**: too aggressive and you restart healthy-but-busy pods. Point
   them at a cheap health endpoint.
 - **Always set requests** (for scheduling) and **memory limits** (to contain leaks). Be cautious with
   CPU limits (throttling can hurt latency).
@@ -136,13 +136,13 @@ would just remove it from Service traffic without restarting.
 
 ## Check yourself
 
-1. Liveness vs readiness — what does each do on failure? *(Liveness restarts the container; readiness
+1. Liveness vs readiness: what does each do on failure? *(Liveness restarts the container; readiness
    removes the pod from Service traffic until it passes.)*
-2. What is a startup probe for? *(Protecting slow-starting apps — it delays liveness/readiness until
+2. What is a startup probe for? *(Protecting slow-starting apps: it delays liveness/readiness until
    the app has booted.)*
 3. requests vs limits? *(Requests = what the scheduler guarantees/places on; limits = the max;
    exceeding memory limit → OOM-kill, CPU limit → throttle.)*
-4. Which QoS class is evicted first? *(BestEffort — pods with no requests/limits.)*
+4. Which QoS class is evicted first? *(BestEffort, pods with no requests/limits.)*
 5. Why does setting readiness probes make rollouts safe? *(New pods only receive traffic once ready,
    so a broken version never serves users and can't cause downtime.)*
 

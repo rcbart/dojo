@@ -1,15 +1,15 @@
 # 9 — The Kubernetes Gateway API
 
-*The modern, portable way to configure ingress — and increasingly the recommended one. Concepts +
+*The modern, portable way to configure ingress, and increasingly the recommended one. Concepts +
 a lab. ~20 min.*
 
 ---
 
 Istio has two ways to configure traffic entering the mesh:
 
-1. **Istio's own API** — the `Gateway` + `VirtualService` you learned in Module 3. Istio-specific,
+1. **Istio's own API**: the `Gateway` + `VirtualService` you learned in Module 3. Istio-specific,
    very feature-rich.
-2. **The Kubernetes Gateway API** — a *standard*, cross-vendor set of resources that Istio (and
+2. **The Kubernetes Gateway API**: a *standard*, cross-vendor set of resources that Istio (and
    Envoy Gateway, Contour, Cilium, etc.) all implement. Same YAML works across implementations.
 
 The Gateway API is the CNCF-standard successor to the old `Ingress` resource, and Istio fully
@@ -25,9 +25,9 @@ splits responsibilities between teams.
 | **HTTPRoute** | app teams | Routing rules: match paths/headers → backend Services |
 
 Note the clean split: infra owns the **Gateway** (the door), app teams own their **HTTPRoute** (their
-routes) — the main reason the standard was designed this way.
+routes). That split is the main reason the standard was designed this way.
 
-> **Careful — same word, two meanings.** Istio's `Gateway` (networking.istio.io) and the Gateway
+> **Careful: same word, two meanings.** Istio's `Gateway` (networking.istio.io) and the Gateway
 > API's `Gateway` (gateway.networking.k8s.io) are *different resources*. This module means the
 > Kubernetes **Gateway API** one.
 
@@ -96,7 +96,7 @@ curl -s http://localhost:8080/productpage | grep -o "<title>.*</title>"
 # → <title>Simple Bookstore App</title>
 ```
 
-Same result as Module 3 — different, portable API.
+Same result as Module 3, via a different, portable API.
 
 ### Traffic splitting with Gateway API
 
@@ -114,24 +114,24 @@ rules:
 ```
 
 For advanced Istio-only features (fault injection, mirroring, some policies), you may still reach
-for a VirtualService — Istio lets you mix both. But basic ingress and splits are fully covered by
+for a VirtualService; Istio lets you mix both. But basic ingress and splits are fully covered by
 the standard API.
 
 ## Which should you use?
 
-- **Gateway API** — new projects, portability across meshes/gateways, clean team split. The
+- **Gateway API**: new projects, portability across meshes/gateways, clean team split. The
   recommended default going forward.
-- **Istio Gateway + VirtualService** — when you need Istio's richer L7 features not yet in the
+- **Istio Gateway + VirtualService**: when you need Istio's richer L7 features not yet in the
   standard, or you're maintaining existing config.
 
 They interoperate, so it's not an all-or-nothing choice.
 
 ## Check yourself
 
-1. What problem does the Gateway API solve that Istio's own API doesn't? *(Portability — a standard
+1. What problem does the Gateway API solve that Istio's own API doesn't? *(Portability: a standard
    API implemented by many gateways/meshes, with a clean infra/app ownership split.)*
 2. Which Gateway API resource do app teams write? *(HTTPRoute.)*
-3. Istio `Gateway` vs Gateway API `Gateway` — same thing? *(No — different resources in different API
+3. Istio `Gateway` vs Gateway API `Gateway`: same thing? *(No, they are different resources in different API
    groups that happen to share the name.)*
 4. How do you do a weighted canary in an HTTPRoute? *(Multiple `backendRefs` with `weight` values.)*
 5. When might you still use a VirtualService? *(For Istio-only L7 features like fault injection or

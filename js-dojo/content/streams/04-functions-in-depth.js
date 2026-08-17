@@ -6,7 +6,7 @@ engine is actually doing. That picture is two structures: a <b>stack</b> of call
 scopes.</p>
 
 <h4>The call stack</h4>
-<p>Every function call pushes a <b>frame</b> — the function, its arguments, its local variables and where
+<p>Every function call pushes a <b>frame</b>: the function, its arguments, its local variables and where
 to return to. When the function returns, its frame pops. JavaScript has <b>one</b> stack, which is what
 "single-threaded" means in practice.</p>
 <div class="codeSample" data-hl>function a() { b(); }
@@ -22,12 +22,12 @@ a();
 // read a stack trace TOP-DOWN: the top line is where it broke, and each
 // line below it is who called the line above.</div>
 <p>The stack is finite. Recursion that never terminates fills it and throws
-<code>RangeError: Maximum call stack size exceeded</code> — a message that means "infinite recursion"
+<code>RangeError: Maximum call stack size exceeded</code>, a message that means "infinite recursion"
 far more often than it means "my data was too deep".</p>
 
 <h4>The scope chain</h4>
 <p><b>Scope</b> is where a name is visible. When code reads a name, the engine looks in the current
-scope, then the scope that <i>contains it in the source</i>, and outward until it reaches global — then
+scope, then the scope that <i>contains it in the source</i>, and outward until it reaches global, then
 throws <code>ReferenceError</code>.</p>
 <div class="codeSample" data-hl>const g = "global";
 function outer() {
@@ -84,12 +84,12 @@ solution:`function lookUp(outerNames, middleNames, innerNames, name) {
   return "ReferenceError";                           // fell off the chain
 }`,
 tests:[{d:'searches the innermost scope first',re:'innerNames'},{d:'then the enclosing scope',re:'middleNames'},{d:'then the outer scope',re:'outerNames'},{d:'throws off the end of the chain',re:'"ReferenceError"'}],
-behavior:`The shadowing case executes the ordering: with the same name in all three, the innermost must win — which is exactly what shadowing means. Searching outward-in instead would return "outer" and pass the other four cases, so order is what this exercise actually checks.`,
+behavior:`The shadowing case executes the ordering: with the same name in all three, the innermost must win, which is exactly what shadowing means. Searching outward-in instead would return "outer" and pass the other four cases, so order is what this exercise actually checks.`,
 hints:['Three checks in order, innermost first.','includes() tells you whether a name is in a scope.','Reaching the end of the chain is a ReferenceError, not undefined.']}},
 
 {id:'js15',title:'Closures',body:`
 <p>A <b>closure</b> is a function together with the scope it was created in. The function keeps that scope
-alive after the enclosing call has returned — which sounds exotic and is really just the scope chain plus
+alive after the enclosing call has returned, which sounds exotic and is really just the scope chain plus
 one rule: <b>a scope survives as long as something can still reach it.</b></p>
 
 <div class="codeSample" data-hl>function makeCounter() {
@@ -135,7 +135,7 @@ for (let i = 0; i &lt; 3; i++) setTimeout(() =&gt; console.log(i));
 // 0, 1, 2 - let creates a NEW BINDING PER ITERATION, so each closure
 //           captured a different i.</div>
 <p>This is the clearest demonstration of what closures capture: <b>a binding, not a value</b>. The
-callbacks did not copy <code>i</code> — they kept a reference to the variable, and read it when they
+callbacks did not copy <code>i</code>; they kept a reference to the variable, and read it when they
 finally ran.</p>
 
 <h4>The cost</h4>
@@ -180,7 +180,7 @@ run:{call:'makeAdders',cases:[
  {name:'a single adder',args:[1,0],expect:[0]},
  {name:'none',args:[0,5],expect:[]},
  {name:'the captured values are distinct, not all the last one',args:[4,0],expect:[0,1,2,3]}]},
-prompt:`Write <code>function makeAdders(n, base)</code> that builds <code>n</code> functions — the <code>i</code>th adds <code>i</code> to its argument — then calls each one with <code>base</code> and returns the results as an array. Each function must capture its own <code>i</code>.`,
+prompt:`Write <code>function makeAdders(n, base)</code> that builds <code>n</code> functions (the <code>i</code>th adds <code>i</code> to its argument), then calls each one with <code>base</code> and returns the results as an array. Each function must capture its own <code>i</code>.`,
 starter:`function makeAdders(n, base) {
   return [];
 }`,
@@ -201,7 +201,7 @@ run:{call:'runMemo',cases:[
  {name:'one value repeated many times computes once',args:[[5,5,5,5]],expect:{results:[25,25,25,25],computed:1}},
  {name:'no calls at all',args:[[]],expect:{results:[],computed:0}},
  {name:'zero is cached like any other key',args:[[0,0]],expect:{results:[0,0],computed:1}}]},
-prompt:`Write <code>function makeSquarer()</code> returning an object <code>{ square, computed }</code> where <code>square(n)</code> returns <code>n * n</code> but only does the multiplication <b>once per distinct input</b> — later calls with the same number come from a cache held in a closure. <code>computed()</code> returns how many multiplications actually happened. Then write <code>function runMemo(inputs)</code> that creates one squarer, calls <code>square</code> on each input, and returns <code>{ results, computed }</code>.`,
+prompt:`Write <code>function makeSquarer()</code> returning an object <code>{ square, computed }</code> where <code>square(n)</code> returns <code>n * n</code> but only does the multiplication <b>once per distinct input</b>; later calls with the same number come from a cache held in a closure. <code>computed()</code> returns how many multiplications actually happened. Then write <code>function runMemo(inputs)</code> that creates one squarer, calls <code>square</code> on each input, and returns <code>{ results, computed }</code>.`,
 starter:`function makeSquarer() {
   return { square: null, computed: null };
 }
@@ -228,10 +228,10 @@ function runMemo(inputs) {
 }`,
 tests:[{d:'holds a cache in the closure',re:'new\\s+Map|\\{\\s*\\}'},{d:'checks the cache before computing',re:'\\.has\\(|in\\s+cache'},{d:'counts only real computations',re:'count\\+\\+|count\\s*\\+='},{d:'creates one squarer',re:'makeSquarer\\(\\)'}],
 behavior:`The last case is the one that separates a correct memoiser from a plausible one: 0 * 0 is 0, which is falsy, so a cache check written as "if (cache.get(n)) return ..." recomputes it every time and reports 2 instead of 1. Use has() to ask whether a key exists rather than whether its value is truthy. The cache and the counter both live in the closure, so nothing outside can reach or reset them.`,
-hints:['Declare the cache and the counter in makeSquarer, before the inner function.','Use Map.has to test for presence — a cached value of 0 is falsy.','Increment the counter only on the path that actually multiplies.']}]},
+hints:['Declare the cache and the counter in makeSquarer, before the inner function.','Use Map.has to test for presence; a cached value of 0 is falsy.','Increment the counter only on the path that actually multiplies.']}]},
 
 {id:'js16',title:'this: five rules, in order',body:`
-<p><code>this</code> is decided <b>at call time</b>, by <i>how</i> the function was called — not where it
+<p><code>this</code> is decided <b>at call time</b>, by <i>how</i> the function was called, not where it
 was written. Once you know the five rules and their precedence, the behaviour becomes entirely
 predictable.</p>
 
@@ -260,7 +260,7 @@ setTimeout(user.greet, 100);     // same problem - passed WITHOUT the dot
 setTimeout(() =&gt; user.greet(), 100);        // fixed: the dot survives
 setTimeout(user.greet.bind(user), 100);     // fixed: bound permanently</div>
 <p>This is the single most common <code>this</code> bug, and it appears wherever a method is passed as a
-callback — event listeners, timers, array methods, React class components.</p>
+callback: event listeners, timers, array methods, React class components.</p>
 
 <h4>Arrows: the rule that overrides the others</h4>
 <div class="codeSample" data-hl>const timer = {
@@ -288,7 +288,7 @@ fn.bind(thisArg, a)         // returns a NEW function, permanently bound.
                             // does NOT invoke. binding is irreversible -
                             // calling .bind again on the result has no effect.</div>
 <p>You will read these constantly in older code. In new code, spread has largely replaced
-<code>apply</code> and arrows have largely replaced <code>bind</code> — but <code>bind</code> remains the
+<code>apply</code> and arrows have largely replaced <code>bind</code>, but <code>bind</code> remains the
 right tool when a method must be detached from its object and keep working.</p>`,
 docs:[['MDN — this','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this'],['MDN — Function.prototype.bind','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind'],['MDN — Arrow functions and this','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions#cannot_be_used_as_methods']],
 ex:{title:'Which rule applies?',diff:'easy',lang:'js',
@@ -316,19 +316,19 @@ solution:`function thisIs(callStyle) {
   }
 }`,
 tests:[{d:'new binding',re:'"new"'},{d:'explicit binding covers both call and bind',re:'"bind"'},{d:'method call',re:'"method"'},{d:'arrows inherit',re:'"arrow"'}],
-behavior:`Seven cases execute. The two worth holding on to: a detached plain call gives undefined in strict mode and modules — which is every modern file — and an arrow has no own this at all, so none of the other four rules can apply to it.`,
+behavior:`Seven cases execute. The two worth holding on to: a detached plain call gives undefined in strict mode and modules (which is every modern file), and an arrow has no own this at all, so none of the other four rules can apply to it.`,
 hints:['A switch with one case per rule.','call and bind are the same rule and share a return.','Modules are always strict, so a plain call gives undefined rather than the global object.']}},
 
 {id:'js17',title:'Recursion, and knowing when to stop',body:`
 <p>A <b>recursive</b> function calls itself. It is the natural shape for anything defined in terms of
-smaller versions of itself — trees, nested objects, directory walks, parsing.</p>
+smaller versions of itself: trees, nested objects, directory walks, parsing.</p>
 
 <div class="codeSample" data-hl>function factorial(n) {
   if (n &lt;= 1) return 1;        // BASE CASE - stops the recursion
   return n * factorial(n - 1); // RECURSIVE CASE - moves TOWARD the base
 }</div>
 <p>Two parts, and both are mandatory. A missing base case, or a recursive call that does not move toward
-it, gives you <code>RangeError: Maximum call stack size exceeded</code> — which almost always means a
+it, gives you <code>RangeError: Maximum call stack size exceeded</code>, which almost always means a
 logic error rather than genuinely deep data.</p>
 
 <h4>Where it genuinely wins</h4>
@@ -347,7 +347,7 @@ function countLeaves(node) {
 proportional to the length, and is harder to read than <code>reduce</code>. Recursion earns its cost when
 the <i>data</i> is recursive.</p>
 <p><b>Naive recursion over overlapping subproblems.</b> The textbook <code>fib(n)</code> recomputes the
-same values exponentially many times — <code>fib(40)</code> makes over 300 million calls. Memoise it with
+same values exponentially many times: <code>fib(40)</code> makes over 300 million calls. Memoise it with
 a closure, or write the loop.</p>
 <div class="codeSample" data-hl>const fib = (() =&gt; {
   const memo = new Map();                    // private, via closure
@@ -361,10 +361,10 @@ a closure, or write the loop.</p>
 })();</div>
 
 <h4>The depth limit is real</h4>
-<p>JavaScript engines allow somewhere around 10,000 frames — the exact number varies by engine, platform
+<p>JavaScript engines allow somewhere around 10,000 frames; the exact number varies by engine, platform
 and frame size, so never depend on it. Tail-call optimisation is in the specification and, in practice,
 implemented only by Safari, so <b>you cannot rely on deep recursion in JavaScript at all</b>. When depth
-is genuinely unbounded — an untrusted directory tree, arbitrary nested JSON — convert to an iterative
+is genuinely unbounded (an untrusted directory tree, arbitrary nested JSON), convert to an iterative
 version with an explicit array as the stack.</p>
 <div class="codeSample" data-hl>function countIterative(root) {
   let n = 0;
@@ -398,7 +398,7 @@ solution:`function deepSum(items) {
   return total;
 }`,
 tests:[{d:'detects nested arrays',re:'Array\\.isArray'},{d:'calls itself',re:'deepSum\\s*\\('},{d:'accumulates a total',re:'\\+='}],
-behavior:`Six cases execute, including empty arrays at several depths — the base case here is implicit: an empty array runs no iterations and returns the initial 0, so no explicit guard is needed. Array.isArray is what decides recurse-or-add, since typeof would report "object" for both.`,
+behavior:`Six cases execute, including empty arrays at several depths. The base case here is implicit: an empty array runs no iterations and returns the initial 0, so no explicit guard is needed. Array.isArray is what decides recurse-or-add, since typeof would report "object" for both.`,
 hints:['Array.isArray tells you whether to recurse.','The empty array is the base case, and it works for free.','Accumulate into a total declared before the loop.']},
 {title:'Convert recursion to iteration',diff:'medium',lang:'js',
 run:{call:'depth',cases:[
@@ -421,13 +421,13 @@ solution:`function depth(items) {
   return deepest;
 }`,
 tests:[{d:'checks for nested arrays',re:'Array\\.isArray'},{d:'takes the deepest branch',re:'Math\\.max'},{d:'adds a level when recursing',re:'1\\s*\\+\\s*depth'}],
-behavior:`The last case executes the branching rule: [1,[2],[[3]]] has branches of depth 2 and 3, so the answer is 3 — taking the first or the last rather than the maximum would pass the simpler cases and fail here. The empty array returns the initial 1 without a special branch.`,
-hints:['Start at 1 — the array you were given is itself one level.','Only recurse into elements that are arrays.','Keep the maximum across all branches, not the last one.']}]}
+behavior:`The last case executes the branching rule: [1,[2],[[3]]] has branches of depth 2 and 3, so the answer is 3; taking the first or the last rather than the maximum would pass the simpler cases and fail here. The empty array returns the initial 1 without a special branch.`,
+hints:['Start at 1: the array you were given is itself one level.','Only recurse into elements that are arrays.','Keep the maximum across all branches, not the last one.']}]}
 ,
 
 {id:'jsfp',title:'Pure functions, immutability and composition',body:`
 <p>This lesson is a way of writing functions that makes the rest of the course easier: code that is
-trivial to test, safe to move, and immune to a whole family of bugs. None of it is new syntax — it is a
+trivial to test, safe to move, and immune to a whole family of bugs. None of it is new syntax; it is a
 set of decisions about the syntax you already have.</p>
 
 <h4>Pure functions</h4>
@@ -441,7 +441,7 @@ let total = 0;
 function addToTotal(x) { total += x; }     // shared state: order now matters
 function stamp(order) { order.date = Date.now(); }  // mutates its INPUT
                                             // and depends on the clock</div>
-<p>The payoff is concrete: a pure function is tested with a call and an assertion — no setup, no mocks,
+<p>The payoff is concrete: a pure function is tested with a call and an assertion: no setup, no mocks,
 no reset between tests. The executable exercises in this course are all pure functions, and that is
 <i>why</i> they can be graded by just calling them.</p>
 
@@ -459,7 +459,7 @@ COPY:     map, filter, slice, concat, toSorted, toReversed
 
 items.sort(byDate)      // reordered the CALLER'S array - surprise at a distance
 items.toSorted(byDate)  // a sorted copy; the original is untouched</div>
-<p>Shallow copies share nested objects — <code>{ ...user }</code> copies one level. That is usually fine,
+<p>Shallow copies share nested objects: <code>{ ...user }</code> copies one level. That is usually fine,
 because the discipline is per-level: copy what you change, at the level you change it.</p>
 
 <h4>Composition: small functions, assembled</h4>
@@ -473,7 +473,7 @@ sorted(names(active(users)))     // reads inside-out, runs left to right
 // which is the actual argument for writing them small.</div>
 <p>You do not need a functional-programming library to benefit from this. The habit is smaller: keep
 calculations pure, push mutation and I/O to the edges, and let the impure edge be thin. Most of a
-well-shaped program turns out to be pure functions with a small crust of side effects — and the crust is
+well-shaped program turns out to be pure functions with a small crust of side effects, and the crust is
 where the debugging streams spend their time, which is no coincidence.</p>`,
 docs:[['MDN — Array.prototype.toSorted','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toSorted'],['MDN — Spread syntax','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax'],['Wikipedia — Pure function','https://en.wikipedia.org/wiki/Pure_function']],
 ex:{title:'Update without mutating',diff:'medium',lang:'js',
@@ -482,7 +482,7 @@ run:{call:'promoteAll',cases:[
  {name:'extra properties survive the copy',args:[[{name:'Cy',role:'dev',logins:2,team:'core'}]],expect:{promoted:[{name:'Cy',role:'admin',logins:3,team:'core'}],original:[{name:'Cy',role:'dev',logins:2,team:'core'}]}},
  {name:'an empty list is fine',args:[[]],expect:{promoted:[],original:[]}},
  {name:'two users promoted, neither touched',args:[[{name:'Bo',role:'dev',logins:0},{name:'Ida',role:'ops',logins:9}]],expect:{promoted:[{name:'Bo',role:'admin',logins:1},{name:'Ida',role:'admin',logins:10}],original:[{name:'Bo',role:'dev',logins:0},{name:'Ida',role:'ops',logins:9}]}}]},
-prompt:`Write <code>function promoteAll(users)</code> returning <code>{ promoted, original }</code>: <code>promoted</code> is a <b>new</b> array of <b>new</b> objects with <code>role</code> set to <code>"admin"</code> and <code>logins</code> increased by one; <code>original</code> is the very array you were given, handed back as-is. That second half is the mutation check — the grader inspects the input <i>after</i> your function ran, so an implementation that mutates convicts itself with its own return value.`,
+prompt:`Write <code>function promoteAll(users)</code> returning <code>{ promoted, original }</code>: <code>promoted</code> is a <b>new</b> array of <b>new</b> objects with <code>role</code> set to <code>"admin"</code> and <code>logins</code> increased by one; <code>original</code> is the very array you were given, handed back as-is. That second half is the mutation check: the grader inspects the input <i>after</i> your function ran, so an implementation that mutates convicts itself with its own return value.`,
 starter:`function promoteAll(users) {
   return { promoted: users, original: users };
 }`,
@@ -494,7 +494,7 @@ solution:`function promoteAll(users) {
   // its evidence right in the original you hand back.
 }`,
 tests:[{d:'maps to new objects',re:'\\.map\\('},{d:'spreads each user into a copy',re:'\\.\\.\\.\\s*user'},{d:'overrides the role',re:'"admin"'},{d:'does not assign onto the input',re:'user\\.(role|logins)\\s*[+]?=',not:true}],
-behavior:`Every case checks the input twice: once through the promoted copies, and once through original — the same array your function received, examined after it ran. A mutating implementation returns an original whose users are already admins with bumped logins, and fails on real evidence of the side effect, not on style. The copying implementation leaves logins exactly where it found them.`,
+behavior:`Every case checks the input twice: once through the promoted copies, and once through original, the same array your function received, examined after it ran. A mutating implementation returns an original whose users are already admins with bumped logins, and fails on real evidence of the side effect, not on style. The copying implementation leaves logins exactly where it found them.`,
 hints:['map gives you the new array; a spread literal gives you each new object.','Properties written after the spread override the copied ones.','If your original comes back already promoted, you mutated the input.']}}
 
 

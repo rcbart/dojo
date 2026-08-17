@@ -32,12 +32,12 @@ a substitute for validating what comes in.</p>
 
 <h4>What it buys you</h4>
 <p><b>Errors at write time.</b> A misspelt property, a wrong argument order, a function that returns
-<code>undefined</code> on one branch — found as you type rather than in production.</p>
+<code>undefined</code> on one branch, all found as you type rather than in production.</p>
 <p><b>Refactoring you can trust.</b> Rename a field and the compiler lists every use. In plain JavaScript
 that is a search-and-hope.</p>
 <p><b>Documentation that cannot rot.</b> A signature states what a function needs and returns, and it is
 checked, unlike a comment.</p>
-<p><b>Autocomplete that is actually right</b> — the editor knows the shape rather than guessing from
+<p><b>Autocomplete that is actually right.</b> The editor knows the shape rather than guessing from
 usage.</p>
 
 <h4>What it costs</h4>
@@ -91,11 +91,11 @@ solution:`function caughtBy(problem) {
   }
 }`,
 tests:[{d:'typos are a compile-time catch',re:'"typo-in-property"'},{d:'boundary data needs a runtime check',re:'"bad-api-response"'},{d:'names the two mechanisms',re:'"runtime check"'},{d:'has a default',re:'default'}],
-behavior:`Seven cases execute, and the split is the whole lesson. Everything in the second group crosses a boundary — a network response, an environment variable, a form — where the types were erased before the program ran. Believing TypeScript covers those is the most common and most expensive misunderstanding about it.`,
+behavior:`Seven cases execute, and the split is the whole lesson. Everything in the second group crosses a boundary (a network response, an environment variable, a form) where the types were erased before the program ran. Believing TypeScript covers those is the most common and most expensive misunderstanding about it.`,
 hints:['Group by whether the data crosses a boundary into your program.','Types are erased at compile time, so they cannot check anything arriving at runtime.','Everything unrecognised returns unknown.']}},
 
 {id:'js51',title:'The type system, from primitives to generics',body:`
-<p>The syntax is small. The mental model — <b>structural</b> typing — is the part worth slowing down
+<p>The syntax is small. The mental model, <b>structural</b> typing, is the part worth slowing down
 for.</p>
 
 <div class="codeSample" data-hl>let n: number = 42;
@@ -197,7 +197,7 @@ solution:`function typeFor(need) {
   }
 }`,
 tests:[{d:'a fixed set is a union',re:'union of literals'},{d:'a generic when output follows input',re:'"generic"'},{d:'Omit hides a field',re:'"Omit"'},{d:'the default prefers inference',re:'let it be inferred'}],
-behavior:`Eight cases execute. The default is deliberate advice rather than a fallback: most values should be inferred, and over-annotating is the commonest way a TypeScript codebase becomes noisy. The union-of-literals answer is the highest-value one in daily use — it turns a misspelt status from a silent bug into a compile error.`,
+behavior:`Eight cases execute. The default is deliberate advice rather than a fallback: most values should be inferred, and over-annotating is the commonest way a TypeScript codebase becomes noisy. The union-of-literals answer is the highest-value one in daily use: it turns a misspelt status from a silent bug into a compile error.`,
 hints:['One case per construct, with a default that recommends inference.','A union of string literals is what replaces a loosely-typed status string.','Partial makes everything optional; Omit removes a named field.']},
 {title:'Does this argument satisfy the constraint?',diff:'hard',lang:'js',
 run:{call:'satisfies',cases:[
@@ -208,7 +208,7 @@ run:{call:'satisfies',cases:[
  {name:'nothing required is always satisfied',args:[[],['anything']],expect:{ok:true,missing:[]}},
  {name:'an empty argument satisfies nothing',args:[['name'],[]],expect:{ok:false,missing:['name']}},
  {name:'order does not matter, only presence',args:[['a','b'],['b','a']],expect:{ok:true,missing:[]}}]},
-prompt:`Write <code>function satisfies(requiredProps, actualProps)</code> modelling structural typing. Return <code>{ ok, missing }</code>. Every property in <code>requiredProps</code> must be present in <code>actualProps</code> — but <b>extra</b> properties are fine, and order is irrelevant. <code>missing</code> lists the absent ones in the order they were required.`,
+prompt:`Write <code>function satisfies(requiredProps, actualProps)</code> modelling structural typing. Return <code>{ ok, missing }</code>. Every property in <code>requiredProps</code> must be present in <code>actualProps</code>, but <b>extra</b> properties are fine, and order is irrelevant. <code>missing</code> lists the absent ones in the order they were required.`,
 starter:`function satisfies(requiredProps, actualProps) {
   return { ok: true, missing: [] };
 }`,
@@ -217,8 +217,8 @@ solution:`function satisfies(requiredProps, actualProps) {
   return { ok: missing.length === 0, missing };   // extras are IGNORED
 }`,
 tests:[{d:'compares required against actual',re:'requiredProps'},{d:'ignores extra properties',re:'actualProps\\.includes|includes\\('},{d:'reports whether anything is missing',re:'length\\s*===\\s*0|length\\s*>\\s*0'}],
-behavior:`Seven cases execute and three of them define structural typing precisely. Extra properties must pass — that is the whole difference from nominal typing, and it is why a plain object can be handed to a function expecting an interface it never declared. Order must not matter. And an empty requirement is satisfied by anything, including nothing, which is why the check has to run over the required list rather than the actual one.`,
-hints:['Filter the REQUIRED list for anything the actual list lacks — not the other way round.','Extras never fail; only absences do.','An empty required list produces an empty missing list for free.']}]},
+behavior:`Seven cases execute and three of them define structural typing precisely. Extra properties must pass: that is the whole difference from nominal typing, and it is why a plain object can be handed to a function expecting an interface it never declared. Order must not matter. And an empty requirement is satisfied by anything, including nothing, which is why the check has to run over the required list rather than the actual one.`,
+hints:['Filter the REQUIRED list for anything the actual list lacks, not the other way round.','Extras never fail; only absences do.','An empty required list produces an empty missing list for free.']}]},
 
 {id:'js52',title:'Narrowing, unknown, and typing a boundary you can trust',body:`
 <p>Where TypeScript earns its keep is in forcing you to handle the case you would otherwise forget: the
@@ -291,7 +291,7 @@ Anywhere data enters, validate; everywhere else, let the types work.</p>
 <h4>Adding types to existing JavaScript</h4>
 <p>Do it incrementally. Turn on <code>allowJs</code> and <code>checkJs</code> so JSDoc comments are
 type-checked without renaming a single file. Then convert file by file, leaves first, with
-<code>strict</code> on for new files. Do not attempt a whole-codebase rewrite in one branch — it will not
+<code>strict</code> on for new files. Do not attempt a whole-codebase rewrite in one branch: it will not
 merge, and the types you write while fighting a rebase are not the types you want.</p>`,
 docs:[['TypeScript — narrowing','https://www.typescriptlang.org/docs/handbook/2/narrowing.html'],['TypeScript — migrating from JavaScript','https://www.typescriptlang.org/docs/handbook/migrating-from-javascript.html'],['Zod','https://zod.dev/']],
 exs:[
@@ -320,8 +320,8 @@ solution:`function narrowWith(situation) {
   }
 }`,
 tests:[{d:'typeof for primitives',re:'"typeof"'},{d:'instanceof for classes',re:'"instanceof"'},{d:'Array.isArray for arrays',re:'Array\\.isArray'},{d:'a tag for discriminated unions',re:'switch on the tag'}],
-behavior:`Seven cases execute. The second and third exist because typeof is useless for both — a Date and an array both report "object", which is the same limitation the JavaScript types lesson covered. The default names the escape hatch: when nothing built in narrows your case, a type predicate (arg is T) lets you write the check once and have the compiler trust it everywhere.`,
-hints:['typeof only distinguishes primitives; objects need something else.','A discriminated union is narrowed by switching on its tag field.','The default is the custom option — a function returning "arg is T".']},
+behavior:`Seven cases execute. The second and third exist because typeof is useless for both: a Date and an array both report "object", which is the same limitation the JavaScript types lesson covered. The default names the escape hatch: when nothing built in narrows your case, a type predicate (arg is T) lets you write the check once and have the compiler trust it everywhere.`,
+hints:['typeof only distinguishes primitives; objects need something else.','A discriminated union is narrowed by switching on its tag field.','The default is the custom option: a function returning "arg is T".']},
 {title:'Validate at the boundary, then trust the types',diff:'hard',lang:'js',
 run:{call:'parseUser',cases:[
  {name:'a valid payload',args:[{id:1,name:'Ada'}],expect:{ok:true,value:{id:1,name:'Ada'},errors:[]}},
@@ -332,7 +332,7 @@ run:{call:'parseUser',cases:[
  {name:'an array is not an object either',args:[[1,2]],expect:{ok:false,value:null,errors:['body must be an object']}},
  {name:'an invalid optional field is refused, not dropped',args:[{id:1,name:'Ada',email:42}],expect:{ok:false,value:null,errors:['email must be a string']}},
  {name:'every problem is reported at once',args:[{id:'x'}],expect:{ok:false,value:null,errors:['id must be a number','name must be a string']}}]},
-prompt:`Write <code>function parseUser(body)</code> — the runtime half of a typed boundary. Return <code>{ ok, value, errors }</code>. If <code>body</code> is not a plain object (<code>null</code> and arrays are not) the only error is <code>"body must be an object"</code>. Otherwise: <code>id</code> must be a number (&rarr; <code>"id must be a number"</code>), <code>name</code> must be a string (&rarr; <code>"name must be a string"</code>), and <code>email</code>, <b>if present</b>, must be a string (&rarr; <code>"email must be a string"</code>). Report every problem in that order. On success, <code>value</code> contains only the fields that were present.`,
+prompt:`Write <code>function parseUser(body)</code>, the runtime half of a typed boundary. Return <code>{ ok, value, errors }</code>. If <code>body</code> is not a plain object (<code>null</code> and arrays are not) the only error is <code>"body must be an object"</code>. Otherwise: <code>id</code> must be a number (&rarr; <code>"id must be a number"</code>), <code>name</code> must be a string (&rarr; <code>"name must be a string"</code>), and <code>email</code>, <b>if present</b>, must be a string (&rarr; <code>"email must be a string"</code>). Report every problem in that order. On success, <code>value</code> contains only the fields that were present.`,
 starter:`function parseUser(body) {
   return { ok: true, value: null, errors: [] };
 }`,
@@ -355,7 +355,7 @@ solution:`function parseUser(body) {
   return { ok: true, value, errors: [] };
 }`,
 tests:[{d:'rejects a non-object body',re:'body must be an object'},{d:'excludes null and arrays',re:'Array\\.isArray'},{d:'requires a real number for id',re:'typeof\\s+body\\.id\\s*!==\\s*"number"'},{d:'only validates email when present',re:'!==\\s*undefined'},{d:'collects every error',re:'errors\\.push'}],
-behavior:`Eight cases execute and four of them break a plausible implementation. typeof null is "object" and typeof [] is "object", so both need explicit exclusion — the same 1995 bug from the types lesson, now with security consequences. The string "1" must fail: this is exactly the assertion "as User" would have waved through. An invalid optional field must be an ERROR rather than silently dropped, or a client sending email: 42 gets a success response and no email. And the final case requires collecting every problem so the caller fixes their request once.`,
-hints:['Reject non-objects first, and remember typeof null and typeof [] are both "object".','An optional field is validated only when it is not undefined — but if it IS present and wrong, that is an error.','Build the output object from the fields that were actually present, not from a fixed shape.']}]}
+behavior:`Eight cases execute and four of them break a plausible implementation. typeof null is "object" and typeof [] is "object", so both need explicit exclusion: the same 1995 bug from the types lesson, now with security consequences. The string "1" must fail: this is exactly the assertion "as User" would have waved through. An invalid optional field must be an ERROR rather than silently dropped, or a client sending email: 42 gets a success response and no email. And the final case requires collecting every problem so the caller fixes their request once.`,
+hints:['Reject non-objects first, and remember typeof null and typeof [] are both "object".','An optional field is validated only when it is not undefined, but if it IS present and wrong, that is an error.','Build the output object from the fields that were actually present, not from a fixed shape.']}]}
 
 ]});

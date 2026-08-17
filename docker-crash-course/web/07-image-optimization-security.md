@@ -13,7 +13,7 @@ module is the practitioner content that pays for itself fastest.
 
 Your app needs a lot of tooling to *build* (compilers, dev dependencies) but almost none to *run*.
 A **multi-stage build** uses one stage to build and a second, clean stage to hold only the final
-artifact — so the build tools never ship.
+artifact, so the build tools never ship.
 
 ```dockerfile
 # ---- stage 1: build ----
@@ -29,7 +29,7 @@ FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html   # copy ONLY the built output
 ```
 
-The final image is just nginx + your built files — none of Node, npm, or source. Multi-stage builds
+The final image is just nginx + your built files: none of Node, npm, or source. Multi-stage builds
 routinely cut image size by 80–95%. **This is the top technique to know.**
 
 ## Pick a small, appropriate base
@@ -37,8 +37,8 @@ routinely cut image size by 80–95%. **This is the top technique to know.**
 - `node:20` (~1 GB) vs `node:20-slim` (~200 MB) vs `node:20-alpine` (~150 MB). Prefer **slim** or
   **alpine** unless you hit a compatibility issue.
 - **`distroless`** images (Google) contain your app and its runtime but **no shell or package
-  manager** — tiny and hard to attack.
-- **`scratch`** is an empty base — for static binaries (e.g. Go), the whole image can be a few MB.
+  manager**, making them tiny and hard to attack.
+- **`scratch`** is an empty base; for static binaries (e.g. Go), the whole image can be a few MB.
 
 ## Order layers for cache (recap + why it matters here)
 
@@ -51,7 +51,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
  && rm -rf /var/lib/apt/lists/*      # clean up in the SAME layer, or the files still ship
 ```
 
-(Deleting files in a *later* layer doesn't shrink the image — the earlier layer still contains
+(Deleting files in a *later* layer doesn't shrink the image, because the earlier layer still contains
 them.)
 
 ## Security essentials
@@ -64,7 +64,7 @@ them.)
   ```
 - **Never bake secrets into images.** Passwords/keys in a `Dockerfile`, `ENV`, or copied `.env` are
   baked into layers *forever* and visible with `docker history`. Pass secrets at **run time**
-  (env vars, mounted files, secret managers) — never build time.
+  (env vars, mounted files, secret managers), never build time.
 - **Use `.dockerignore`** so `.env`, `.git`, and keys never enter the build context.
 - **Pin base image versions** (and ideally digests) so a moving `latest` can't slip in changes or
   vulnerabilities.
@@ -72,7 +72,7 @@ them.)
   ```bash
   docker scout cves myapp:1.0        # Docker's built-in vulnerability scan
   ```
-- **Minimize installed packages** — every package is attack surface. Fewer tools = smaller + safer.
+- **Minimize installed packages**: every package is attack surface. Fewer tools = smaller + safer.
 
 ## Lab: shrink and harden an image
 
@@ -107,12 +107,12 @@ docker images | grep site      # compare sizes — 'good' is a fraction of 'naiv
 
 ### Experiments
 
-1. **Scan both.** `docker scout cves site:naive` vs `site:good` — the smaller image has far fewer
+1. **Scan both.** `docker scout cves site:naive` vs `site:good`. The smaller image has far fewer
    CVEs (less software = less risk).
 2. **Prove secrets leak.** Add `ENV SECRET=hunter2` to a Dockerfile, build, then `docker history
-   --no-trunc <image>` — the secret is visible. Never do this in reality.
-3. **Non-root check.** `docker run --rm site:good whoami` (may need a shell image) vs a root image —
-   confirm the runtime user.
+   --no-trunc <image>`: the secret is visible. Never do this in reality.
+3. **Non-root check.** `docker run --rm site:good whoami` (may need a shell image) vs a root image
+   to confirm the runtime user.
 
 ## Your turn (challenge)
 
@@ -130,7 +130,7 @@ LEAK=$(docker history --no-trunc safe:1.0 2>/dev/null | grep -ci "password\|secr
 ## Check yourself
 
 1. What does a multi-stage build achieve? *(Builds in one stage, ships only the final artifact in a
-   clean stage — dramatically smaller, no build tools in the image.)*
+   clean stage: dramatically smaller, no build tools in the image.)*
 2. Why delete apt caches in the *same* `RUN` layer? *(Deleting in a later layer doesn't shrink the
    image; the earlier layer still contains the files.)*
 3. Why never put secrets in a Dockerfile/ENV? *(They're baked into layers permanently and visible via

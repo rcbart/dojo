@@ -17,14 +17,14 @@ Everything is an option on this one command. The ones you'll use daily:
 
 | Option | Meaning |
 |--------|---------|
-| `-d` | Detached — run in the background |
+| `-d` | Detached: run in the background |
 | `--name X` | Name the container (else you get a random name) |
 | `-p H:C` | Publish host port H → container port C |
 | `-e KEY=val` | Set an environment variable inside the container |
 | `-v ...` | Mount a volume / bind mount (Module 4) |
 | `--rm` | Delete the container automatically when it exits |
-| `-it` | Interactive + TTY — for shells and interactive programs |
-| `--restart` | Restart policy (e.g. `unless-stopped`) — Module 10 |
+| `-it` | Interactive + TTY, for shells and interactive programs |
+| `--restart` | Restart policy (e.g. `unless-stopped`); see Module 10 |
 
 ## Foreground vs detached
 
@@ -50,7 +50,7 @@ docker stats                  # live CPU/memory/network usage, Ctrl-C to exit
 docker top web                # processes running inside
 ```
 
-`docker logs` and `docker inspect` are your first two debugging tools — reach for them whenever a
+`docker logs` and `docker inspect` are your first two debugging tools: reach for them whenever a
 container misbehaves.
 
 ## Running commands inside a container
@@ -84,7 +84,7 @@ docker ps -a                  # see what's around
 docker container prune        # remove all stopped containers
 docker image prune            # remove dangling (untagged) images
 docker system df              # how much disk Docker is using
-docker system prune           # remove unused data (asks first) — careful
+docker system prune           # remove unused data (asks first); careful
 ```
 
 ## Guided exercise
@@ -105,7 +105,7 @@ docker logs -f site           # Ctrl-C to stop following
 docker exec -it site bash
 echo "<h1>Hello from my container</h1>" > /usr/share/nginx/html/index.html
 exit
-# refresh the browser — your text appears
+# refresh the browser; your text appears
 
 # 5. stop, restart (note: your edit persists across restart), then remove
 docker stop site && docker start site     # edit still there (same container)
@@ -114,7 +114,7 @@ docker rm -f site                          # now it's gone entirely
 
 ### The key lesson from step 5
 
-Your edit survived `stop`/`start` (same container's writable layer) but vanished with `rm` — because
+Your edit survived `stop`/`start` (same container's writable layer) but vanished with `rm`, because
 a container's changes live in its **throwaway writable layer**, not the image. **Containers are
 ephemeral.** Anything you need to keep must go in a **volume** (Module 4). This is the single most
 important mental shift for using containers correctly.
@@ -122,7 +122,7 @@ important mental shift for using containers correctly.
 ## Your turn (challenge)
 
 Without copying the guided exercise: run a **detached** Redis container named `cache`, confirm it's
-healthy by running a command *inside* it, then remove it — in four commands.
+healthy by running a command *inside* it, then remove it, in four commands.
 
 **Verify you succeeded:**
 ```bash
@@ -137,13 +137,13 @@ docker rm -f cache >/dev/null
 
 1. Difference between `docker run` and `docker exec`? *(`run` creates a new container from an image;
    `exec` runs a command in an already-running container.)*
-2. What does `-d` do, and when do you want it? *(Detached/background — for long-running services.)*
+2. What does `-d` do, and when do you want it? *(Detached/background: for long-running services.)*
 3. Your first two debugging commands when a container misbehaves? *(`docker logs` and `docker
    inspect`.)*
 4. Why did the in-container edit survive `start` but not `rm`? *(It lived in the container's writable
    layer; removing the container deletes that layer.)*
-5. What does `docker system prune` do? *(Removes unused Docker data — stopped containers, dangling
-   images, etc. — to reclaim disk.)*
+5. What does `docker system prune` do? *(Removes unused Docker data, such as stopped containers and dangling
+   images, to reclaim disk.)*
 
 ---
 

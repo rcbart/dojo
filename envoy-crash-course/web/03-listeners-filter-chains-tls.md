@@ -9,13 +9,13 @@ Lab files: [`labs/03-tls/`](../labs/03-tls/).
 ## Listeners, in depth
 
 A **listener** is a bound socket (address + port) plus the pipeline that processes what arrives
-there. You can have many listeners — e.g. `:80` (HTTP), `:443` (HTTPS), `:15001` (a mesh
+there. You can have many listeners, e.g. `:80` (HTTP), `:443` (HTTPS), `:15001` (a mesh
 sidecar's intercept port). Key parts:
 
-- **`address.socket_address`** — the IP and port to bind. `0.0.0.0` = all interfaces.
-- **`filter_chains`** — one or more processing pipelines. A listener with several filter chains
+- **`address.socket_address`**: the IP and port to bind. `0.0.0.0` = all interfaces.
+- **`filter_chains`**: one or more processing pipelines. A listener with several filter chains
   chooses *which one* to use per connection via **`filter_chain_match`** (below).
-- **`listener_filters`** — a special early stage that runs *before* the filter chain is chosen,
+- **`listener_filters`**: a special early stage that runs *before* the filter chain is chosen,
   used to peek at the connection (e.g. read the TLS SNI or the original destination) so Envoy can
   match the right chain.
 
@@ -33,7 +33,7 @@ chain's network filter is the **HTTP Connection Manager**. Swap that for the **T
 ## Filter-chain matching (one listener, many behaviors)
 
 A single listener can host multiple filter chains and pick one per connection using
-`filter_chain_match`. The most common match key is **SNI** — the hostname the client requested
+`filter_chain_match`. The most common match key is **SNI**, the hostname the client requested
 inside the TLS handshake (Server Name Indication). This is how one `:443` listener serves
 different certs/backends for `api.example.com` vs `www.example.com`:
 
@@ -47,7 +47,7 @@ filter_chains:
   filters: [ ...route to web backends... ]
 ```
 
-Other match keys: destination port, source IP ranges, ALPN protocols. You don't need these yet —
+Other match keys: destination port, source IP ranges, ALPN protocols. You don't need these yet;
 just know that "how does one port serve many sites?" is answered by filter-chain matching on SNI.
 
 ## TLS: the `transport_socket`
@@ -55,10 +55,10 @@ just know that "how does one port serve many sites?" is answered by filter-chain
 Where a filter chain *processes* the decoded stream, the **`transport_socket`** controls how
 bytes are *encrypted on the wire*. Two directions:
 
-- **`DownstreamTlsContext`** — TLS toward **clients** (Envoy is the TLS *server*; it presents a
+- **`DownstreamTlsContext`**: TLS toward **clients** (Envoy is the TLS *server*; it presents a
   cert). This is **TLS termination**: HTTPS in, decrypted, then plain HTTP to the backend.
-- **`UpstreamTlsContext`** — TLS toward **backends** (Envoy is the TLS *client*; it verifies the
-  backend's cert). This is **TLS origination** — used when the backend requires HTTPS, and it's
+- **`UpstreamTlsContext`**: TLS toward **backends** (Envoy is the TLS *client*; it verifies the
+  backend's cert). This is **TLS origination**, used when the backend requires HTTPS, and it's
   the basis of mesh **mTLS** (Module 09), where both directions use certs.
 
 Default (no transport socket) is plaintext, which is what Lab 02 used.
@@ -79,11 +79,11 @@ chmod +x gen-certs.sh
 ./gen-certs.sh          # writes cert.pem and key.pem (CN=localhost, valid 1 year)
 ```
 
-> If `chmod` says `No such file or directory`, you're not in `labs/03-tls/` — the `ls` above
+> If `chmod` says `No such file or directory`, you're not in `labs/03-tls/`; the `ls` above
 > should list `gen-certs.sh`. `cd` into the right folder and try again.
 
 Self-signed certs are perfect for learning; real deployments use a CA (Let's Encrypt, an internal
-PKI, or — in a mesh — the mesh's own CA).
+PKI, or, in a mesh, the mesh's own CA).
 
 ### 2. Read the TLS bit of the config
 
@@ -105,7 +105,7 @@ filter_chains:
     ...
 ```
 
-Everything under `filters:` (the HCM, routes, router) is *identical* to Lab 02 — TLS is a
+Everything under `filters:` (the HCM, routes, router) is *identical* to Lab 02; TLS is a
 separate concern layered *under* the HTTP processing. That separation (transport vs application)
 is a recurring Envoy theme.
 
@@ -124,7 +124,7 @@ Now start this lab:
 docker compose up
 ```
 
-If you see `port is already allocated`, another lab is still running — `docker compose down` it,
+If you see `port is already allocated`, another lab is still running; `docker compose down` it,
 then `docker compose up` here again.
 
 > **Seeing `curl: (35) ... wrong version number`?** That means you're hitting a *plaintext* server
@@ -149,7 +149,7 @@ The `-k` tells curl to accept the self-signed cert (it isn't signed by a trusted
 > Simplest of all is to just open <https://localhost:10000> in a browser and click past the
 > self-signed warning.
 >
-> Installing a modern curl works too, but note Homebrew's curl is **keg-only** — after
+> Installing a modern curl works too, but note Homebrew's curl is **keg-only**: after
 > `brew install curl` the plain `curl` command still runs Apple's LibreSSL one (`curl -V` shows
 > which). Call the Homebrew build by full path, or put it first on your PATH:
 > ```bash
@@ -166,7 +166,7 @@ curl -kv https://localhost:10000 2>&1 | grep -Ei "subject|issuer|SSL connection"
 openssl s_client -connect localhost:10000 -servername localhost </dev/null 2>/dev/null | openssl x509 -noout -subject -dates
 ```
 
-You'll see the `CN=localhost` cert and that Envoy negotiated TLS. The **backend never saw TLS** —
+You'll see the `CN=localhost` cert and that Envoy negotiated TLS. The **backend never saw TLS**:
 Envoy terminated it and spoke plain HTTP inward. Confirm in the `docker compose` logs: the backend
 logs a normal HTTP request.
 
@@ -187,11 +187,11 @@ logs a normal HTTP request.
    swap it for `tcp_proxy` and it's an L4 forwarder.)*
 2. How does one `:443` listener serve two different sites with different certs? *(multiple filter
    chains selected by `filter_chain_match` on SNI.)*
-3. `DownstreamTlsContext` vs `UpstreamTlsContext`? *(TLS toward clients — Envoy is the server; vs
-   TLS toward backends — Envoy is the client.)*
+3. `DownstreamTlsContext` vs `UpstreamTlsContext`? *(TLS toward clients (Envoy is the server); vs
+   TLS toward backends (Envoy is the client).)*
 4. What is "TLS termination"? *(Envoy decrypts client HTTPS and forwards plain HTTP upstream.)*
 5. Which part of the config handles encryption, and which handles HTTP routing? *(the
-   `transport_socket` vs the HCM `filters` — transport vs application, kept separate.)*
+   `transport_socket` vs the HCM `filters`: transport vs application, kept separate.)*
 
 ---
 

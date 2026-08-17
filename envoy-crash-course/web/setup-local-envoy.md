@@ -1,17 +1,17 @@
 # Setup — run and test Envoy locally
 
 *Do this once. In ~10 minutes you'll have Envoy running on your own machine and a request flowing
-through it. No prior setup assumed — every step spelled out for macOS, Windows, and Linux.*
+through it. No prior setup assumed: every step spelled out for macOS, Windows, and Linux.*
 
 > **This course is hands-on, on your own machine.** The site you're reading gives you the lessons
-> and quizzes, but the real work happens in your own terminal — installing tools, running
+> and quizzes, but the real work happens in your own terminal: installing tools, running
 > containers, and breaking things you can then fix. This setup page gets your machine ready; do it
 > before the first lab.
-> The labs also use ready-made config files from the repo — grab them once with
+> The labs also use ready-made config files from the repo; grab them once with
 > `git clone https://github.com/rcbart/dojo.git && cd dojo/envoy-crash-course`.
 
 You don't install Envoy directly. You run it as a **Docker container**, which means you install one
-tool (Docker) and everything else — Envoy itself, the practice backend — is pulled automatically.
+tool (Docker) and everything else (Envoy itself, the practice backend) is pulled automatically.
 
 ---
 
@@ -26,7 +26,7 @@ animating (that means the engine is running). Apple Silicon and Intel are both s
 
 **Windows**
 : Download **Docker Desktop** from the same link and run the installer. If prompted, allow it to
-enable **WSL 2** (the Windows Subsystem for Linux) — accept and reboot if asked. Launch Docker
+enable **WSL 2** (the Windows Subsystem for Linux); accept and reboot if asked. Launch Docker
 Desktop and wait for it to say "Engine running." Run all commands in this course from **PowerShell**
 or **Windows Terminal**.
 
@@ -56,7 +56,7 @@ docker run --rm hello-world
 ```
 
 If you see "Hello from Docker!", you're ready. If it errors, Docker Desktop probably isn't started
-yet — launch it and wait for the running indicator, then retry.
+yet; launch it and wait for the running indicator, then retry.
 
 > **`curl` too.** The course tests requests with `curl`. It's preinstalled on macOS, modern
 > Windows 10/11, and most Linux. Check with `curl --version`; on Linux install via
@@ -65,7 +65,7 @@ yet — launch it and wait for the running indicator, then retry.
 ## Step 3 — Get the lab files
 
 The course ships small lab folders (an `envoy.yaml` and a `docker-compose.yaml` each). Open a
-terminal **in the course folder** — the one that contains this guide and a `labs/` directory. If
+terminal **in the course folder**, the one that contains this guide and a `labs/` directory. If
 you're not sure where you are:
 
 ```bash
@@ -93,7 +93,7 @@ docker compose up
 
 What happens: Docker downloads the Envoy image (`envoyproxy/envoy:v1.38-latest`) and a tiny echo
 backend the first time (a few seconds to a minute), then starts both. You'll see Envoy's logs
-streaming in this terminal. **Leave this terminal running** — it's Envoy. The logs here are also
+streaming in this terminal. **Leave this terminal running**; it's Envoy. The logs here are also
 where you'll watch requests arrive.
 
 ## Step 5 — Send a request through Envoy
@@ -111,7 +111,7 @@ hello from the backend
 ```
 
 That response came *from the backend, through Envoy*. You just proxied your first request. Watch
-the first terminal — you'll see a log line appear for the request you just made.
+the first terminal; you'll see a log line appear for the request you just made.
 
 ## Step 6 — Peek at Envoy's admin interface
 
@@ -123,7 +123,7 @@ curl -s localhost:9901/server_info | head    # version, uptime, state
 ```
 
 Or open <http://localhost:9901> in your browser to click around. (This admin port is safe here
-because it's local — never expose it publicly in production.)
+because it's local; never expose it publicly in production.)
 
 ## Step 7 — Stop and clean up
 
@@ -134,10 +134,10 @@ docker compose down
 ```
 
 That's the full loop: `docker compose up` to start a lab, `curl` to test it, `Ctrl-C` +
-`docker compose down` to stop. **Every lab in this course works exactly this way** — only the
+`docker compose down` to stop. **Every lab in this course works exactly this way**: only the
 config inside changes.
 
-> **⚠️ Run only one lab at a time — bring the previous lab down before starting the next.** Every
+> **⚠️ Run only one lab at a time; bring the previous lab down before starting the next.** Every
 > lab uses the same ports (`10000` and `9901`), so a still-running lab will collide with the next
 > one. Before moving on, go to the lab you were in and run `docker compose down`. If you forget,
 > you'll see tell-tale errors like `port is already allocated` when starting, or
@@ -158,7 +158,7 @@ config inside changes.
 then retry. On Linux, make sure the `docker` service is up (`sudo systemctl start docker`).
 
 **`curl localhost:10000` hangs or says "connection refused"**
-: Envoy isn't up yet or isn't listening. Check the first terminal — wait until logs stop scrolling
+: Envoy isn't up yet or isn't listening. Check the first terminal; wait until logs stop scrolling
 and you see it's serving. Make sure `docker compose up` didn't exit with an error.
 
 **"port is already allocated" / "address already in use"**
@@ -166,7 +166,7 @@ and you see it's serving. Make sure `docker compose up` didn't exit with an erro
 map a different host port (e.g. `"20000:10000"`) and curl that port instead.
 
 **Envoy exits immediately with a config error**
-: It printed why — usually a typo in `envoy.yaml`. The message names the field. Envoy refuses to
+: It printed why: usually a typo in `envoy.yaml`. The message names the field. Envoy refuses to
 start on invalid config (a feature, not a bug). Re-check recent edits.
 
 **Windows: `curl` behaves oddly in PowerShell**
@@ -174,16 +174,16 @@ start on invalid config (a feature, not a bug). Re-check recent edits.
 or run inside WSL.
 
 **The image download is slow the first time**
-: Normal — Docker caches it. Subsequent `up`s are instant.
+: Normal: Docker caches it. Subsequent `up`s are instant.
 
 ## Check yourself
 
-1. What single tool do you actually install to run Envoy? *(Docker — Envoy itself comes as a
+1. What single tool do you actually install to run Envoy? *(Docker; Envoy itself comes as a
    container image.)*
 2. What does `docker compose up` do in a lab folder? *(Downloads and starts Envoy plus the backend
    defined in that folder.)*
 3. How do you send a test request through Envoy? *(`curl localhost:10000` from a second terminal.)*
-4. What does `curl localhost:9901/ready` tell you? *(Whether Envoy itself is up and serving —
+4. What does `curl localhost:9901/ready` tell you? *(Whether Envoy itself is up and serving;
    it returns LIVE.)*
 5. How do you stop and clean up a lab? *(Ctrl-C in the Envoy terminal, then `docker compose
    down`.)*

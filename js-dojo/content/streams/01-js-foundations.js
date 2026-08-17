@@ -2,7 +2,7 @@ STREAMS.push({icon:'🟨',title:'JavaScript Foundations',blurb:'Assuming nothing
 
 {id:'js1',title:'What JavaScript is, and where it runs',body:`
 <p>🌱 <b>Starting from zero.</b> A <b>program</b> is a list of instructions. A <b>programming language</b> is
-the notation you write them in. Something has to read that notation and carry the instructions out — for
+the notation you write them in. Something has to read that notation and carry the instructions out. For
 JavaScript, that something is called an <b>engine</b>, and you almost certainly already have several.</p>
 
 <h4>One language, several places to run it</h4>
@@ -27,7 +27,7 @@ it belongs to the language or to the host.</p>
 <p><b>ECMAScript</b> is the official specification; <b>JavaScript</b> is what everyone calls the language
 that implements it. A new edition ships every year. The one people mention constantly is <b>ES2015</b>
 (also called ES6), because it added <code>let</code>, <code>const</code>, arrow functions, classes,
-promises and modules — enough at once that material written before it looks like a different language.</p>
+promises and modules, enough at once that material written before it looks like a different language.</p>
 <p>Everything in this course is modern JavaScript. Where an older form still appears in real codebases,
 it is called out so you can read it, not so you write it.</p>
 
@@ -44,7 +44,7 @@ console.log("hello");
 
 // 3. NODE, interactively — type  node  with no arguments, get a prompt.
 //    Ctrl-D or .exit to leave.</div>
-<p><code>console.log</code> prints a value where you can see it — the browser's console panel, or the
+<p><code>console.log</code> prints a value where you can see it: the browser's console panel, or the
 terminal under Node. It is not part of the language either (both hosts happen to provide it), and it is
 the single most-used debugging tool in existence. A whole stream later in this course is about the tools
 that are better than it.</p>
@@ -54,7 +54,7 @@ that are better than it.</p>
 that produces a value. <code>2 + 2</code> is an expression; <code>let x = 2 + 2;</code> is a statement
 containing one. The distinction returns repeatedly, because some places in JavaScript accept only one of
 the two.</p>
-<p>Semicolons end statements, and JavaScript will insert them for you if you leave them out — a feature
+<p>Semicolons end statements, and JavaScript will insert them for you if you leave them out, a feature
 called <b>automatic semicolon insertion</b>. It is correct nearly always and wrong in a few specific
 cases, which is why teams pick one convention and let a formatter enforce it. This course uses
 semicolons.</p>
@@ -65,8 +65,8 @@ semicolons.</p>
 /* a block comment,
    spanning lines */</div>
 <p>Write comments that say <b>why</b>, not <b>what</b>. The code already states what it does; what it
-cannot state is the reason it does it that way, and that is the thing the next reader — usually you, in
-six months — actually needs.</p>`,
+cannot state is the reason it does it that way, and that is the thing the next reader (usually you, in
+six months) actually needs.</p>`,
 docs:[['MDN — What is JavaScript?','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Introduction'],['Node.js — introduction','https://nodejs.org/en/learn/getting-started/introduction-to-nodejs'],['TC39 — the ECMAScript standard','https://tc39.es/ecma262/']],
 ex:{title:'Language, browser, or Node?',diff:'easy',lang:'js',
 run:{call:'provides',cases:[
@@ -119,7 +119,7 @@ symbol      Symbol("id")                   unique keys, rarely needed early
 object      {}, [], function(){}, new Date()
             EVERYTHING else. arrays and functions are objects too.</div>
 <p>The first seven are <b>primitives</b>: immutable single values, compared by their content. The eighth
-is everything else, compared by <b>identity</b> — which is why <code>{} === {}</code> is <code>false</code>
+is everything else, compared by <b>identity</b>, which is why <code>{} === {}</code> is <code>false</code>
 even though the two look identical. They are two different objects that happen to have the same
 contents.</p>
 
@@ -200,7 +200,7 @@ hints:['Check for null with === before using typeof.','Array.isArray is the only
 
 {id:'js3',title:'Variables: let, const and the one to avoid',body:`
 <p>A <b>variable</b> is a name bound to a value. JavaScript has three ways to create one, and the
-difference between them is not style — it is scope, mutability, and how errors surface.</p>
+difference between them is not style: it is scope, mutability, and how errors surface.</p>
 
 <h4>The rule, stated first</h4>
 <div class="codeSample" data-hl>const   DEFAULT. use this unless you have a reason not to.
@@ -211,7 +211,7 @@ you know something reassigns it, and you can find out what. That is real informa
 
 <h4>What <code>const</code> actually protects</h4>
 <p>This is the most common misunderstanding of the three. <code>const</code> makes the <b>binding</b>
-constant — the name cannot be pointed at a different value. It says nothing about the value itself:</p>
+constant: the name cannot be pointed at a different value. It says nothing about the value itself:</p>
 <div class="codeSample" data-hl>const n = 1;
 n = 2;                    // TypeError: Assignment to constant variable
 
@@ -260,7 +260,7 @@ them: <b>errors that arrive where the problem is</b>.</p>
 <h4>Naming</h4>
 <p>Names may contain letters, digits, <code>_</code> and <code>$</code>, and may not start with a digit.
 Convention is <code>camelCase</code> for variables and functions, <code>PascalCase</code> for classes, and
-<code>UPPER_SNAKE_CASE</code> for genuine constants. Names are the cheapest documentation available —
+<code>UPPER_SNAKE_CASE</code> for genuine constants. Names are the cheapest documentation available:
 <code>d</code> tells the next reader nothing, and <code>daysUntilExpiry</code> tells them everything.</p>`,
 docs:[['MDN — let','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let'],['MDN — const','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const'],['MDN — Hoisting','https://developer.mozilla.org/en-US/docs/Glossary/Hoisting']],
 ex:{title:'What does const actually prevent?',diff:'easy',lang:'js',
@@ -291,7 +291,7 @@ hints:['Three permitted operations, everything else false.','const controls the 
 
 {id:'js4',title:'Operators, coercion and equality',body:`
 <p>This lesson explains more surprising JavaScript behaviour than any other in the course. JavaScript
-converts values between types automatically — <b>coercion</b> — and the rules are consistent, learnable,
+converts values between types automatically (<b>coercion</b>), and the rules are consistent, learnable,
 and occasionally absurd.</p>
 
 <h4>The operators, quickly</h4>
@@ -320,7 +320,7 @@ const fixed = Number("5") + 3;   // 8</div>
 
 <h4>Truthiness</h4>
 <p>Anywhere a boolean is expected, JavaScript coerces. <b>Exactly eight values are falsy</b> and
-everything else is truthy — memorise the short list:</p>
+everything else is truthy. Memorise the short list:</p>
 <div class="codeSample" data-hl>FALSY:   false   0   -0   0n   ""   null   undefined   NaN
 TRUTHY:  everything else, including:
            "0"        a non-empty string
@@ -360,7 +360,7 @@ user.address.city       // TypeError if address is undefined
 user.address?.city      // undefined, no throw
 user.getName?.()        // calls it only if it exists</div>
 <p>Reach for <code>??</code> whenever a default is involved and <code>0</code> or <code>""</code> could be
-a legitimate value — which is most of the time.</p>`,
+a legitimate value, which is most of the time.</p>`,
 docs:[['MDN — Equality comparisons','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Equality_comparisons_and_sameness'],['MDN — Falsy','https://developer.mozilla.org/en-US/docs/Glossary/Falsy'],['MDN — Nullish coalescing','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing']],
 exs:[
 {title:'Which values are falsy?',diff:'easy',lang:'js',
@@ -373,7 +373,7 @@ run:{call:'isFalsy',cases:[
  {name:'the string "0" is TRUTHY',args:['0'],expect:false},
  {name:'an empty array is TRUTHY',args:[[]],expect:false},
  {name:'an empty object is TRUTHY',args:[{}],expect:false}]},
-prompt:`Write <code>function isFalsy(value)</code> returning <code>true</code> when the value is falsy. Do not write out the list — let JavaScript's own coercion answer, and negate it.`,
+prompt:`Write <code>function isFalsy(value)</code> returning <code>true</code> when the value is falsy. Do not write out the list; let JavaScript's own coercion answer, and negate it.`,
 starter:`function isFalsy(value) {
   return false;
 }`,
@@ -382,7 +382,7 @@ solution:`function isFalsy(value) {
 }`,
 tests:[{d:'uses coercion rather than a hardcoded list',re:'!\\s*value'},{d:'does not hardcode a result',re:'return\\s+(true|false)\\s*;',not:true}],
 behavior:`All eight cases run, including the three that catch people out: "0", [] and {} are all truthy, because only the eight listed values are falsy and none of them is a non-empty string or an object.`,
-hints:['A single ! both coerces to boolean and inverts.','Do not enumerate the falsy values — the language already knows them.','!!value gives you the truthiness; !value gives you its opposite.']},
+hints:['A single ! both coerces to boolean and inverts.','Do not enumerate the falsy values; the language already knows them.','!!value gives you the truthiness; !value gives you its opposite.']},
 {title:'Default only when genuinely absent',diff:'medium',lang:'js',
 run:{call:'withDefault',cases:[
  {name:'undefined falls back',args:[undefined,3000],expect:3000},
@@ -399,7 +399,7 @@ solution:`function withDefault(value, fallback) {
   return value ?? fallback;   // ?? checks NULLISH, not falsy
 }`,
 tests:[{d:'uses nullish coalescing rather than ||',re:'\\?\\?'},{d:'does not use the falsy-based fallback',re:'\\|\\|',not:true}],
-behavior:`The three middle cases are the whole lesson and they are executed: writing value || fallback passes the first two tests and fails on 0, "" and false — a bug that appears the day someone legitimately configures a port of 0 or an empty prefix.`,
+behavior:`The three middle cases are the whole lesson and they are executed: writing value || fallback passes the first two tests and fails on 0, "" and false: a bug that appears the day someone legitimately configures a port of 0 or an empty prefix.`,
 hints:['|| falls back on any falsy value; ?? falls back only on null and undefined.','The whole body is a single return.','0 and "" must survive.']},
 {title:'Normalise a form submission',diff:'hard',lang:'js',
 run:{call:'normalise',cases:[
@@ -410,7 +410,7 @@ run:{call:'normalise',cases:[
  {name:'an empty name becomes null too',args:[{name:'   ',age:'1'}],expect:{name:null,age:1}},
  {name:'missing fields are null',args:[{}],expect:{name:null,age:null}},
  {name:'a negative age is still a number',args:[{name:'x',age:'-3'}],expect:{name:'x',age:-3}}]},
-prompt:`Every value from an HTML form arrives as a <b>string</b>. Write <code>function normalise(form)</code> returning <code>{ name, age }</code> where <code>name</code> is the trimmed string or <code>null</code> when blank or missing, and <code>age</code> is a real number or <code>null</code> when blank, missing or not numeric. An age of <code>"0"</code> must become the number <code>0</code>, not <code>null</code> — this is the trap the whole lesson has been building to.`,
+prompt:`Every value from an HTML form arrives as a <b>string</b>. Write <code>function normalise(form)</code> returning <code>{ name, age }</code> where <code>name</code> is the trimmed string or <code>null</code> when blank or missing, and <code>age</code> is a real number or <code>null</code> when blank, missing or not numeric. An age of <code>"0"</code> must become the number <code>0</code>, not <code>null</code>. This is the trap the whole lesson has been building to.`,
 starter:`function normalise(form) {
   return { name: null, age: null };
 }`,
@@ -427,7 +427,7 @@ solution:`function normalise(form) {
   return { name, age };
 }`,
 tests:[{d:'trims the name',re:'\\.trim\\(\\)'},{d:'guards the empty string before converting',re:'!==\\s*""|===\\s*""'},{d:'converts with Number',re:'Number\\s*\\('},{d:'rejects NaN and Infinity',re:'Number\\.isFinite'}],
-behavior:`Seven cases execute and three of them fail a naive implementation. Number("") is 0, so without the empty guard a blank age silently becomes zero. A truthiness check on the converted value would throw away a legitimate 0. And "abc" converts to NaN, which is a number by typeof and useless by every other measure — Number.isFinite is what catches it.`,
+behavior:`Seven cases execute and three of them fail a naive implementation. Number("") is 0, so without the empty guard a blank age silently becomes zero. A truthiness check on the converted value would throw away a legitimate 0. And "abc" converts to NaN, which is a number by typeof and useless by every other measure; Number.isFinite is what catches it.`,
 hints:['Handle the missing key with ?? before calling trim.','Check for the empty string BEFORE converting, because Number("") is 0.','Number.isFinite rejects NaN and Infinity in one test, and 0 passes it.']}]},
 
 {id:'js5',title:'Strings and numbers in practice',body:`
@@ -452,7 +452,7 @@ s[2]                        // "H"   index access
 s.at(-1)                    // " "   negative indexes count from the end
 
 // EVERY one of these returns a NEW string. none modifies s.</div>
-<p>Immutability is the thing to internalise. <code>s.trim()</code> on its own line does nothing at all —
+<p>Immutability is the thing to internalise. <code>s.trim()</code> on its own line does nothing at all;
 you must use or assign the result. It compiles, it runs, and it is a real bug.</p>
 
 <h4>Template literals</h4>
@@ -486,7 +486,7 @@ JSON field typed by a user arrives as text. Convert explicitly at the boundary a
 because <code>Number("")</code> is <code>0</code> and <code>Number("abc")</code> is <code>NaN</code>, and
 both will flow silently through arithmetic.</p>
 <p><b>Never use floats for money.</b> <code>0.1 + 0.2</code> is not <code>0.3</code>, and the error
-compounds. Work in the smallest unit — cents, pence — as integers, and format for display only at the
+compounds. Work in the smallest unit (cents, pence) as integers, and format for display only at the
 very edge.</p>
 <div class="codeSample" data-hl>// a safe numeric parse, which you will write many times:
 function toNumber(text) {
@@ -508,7 +508,7 @@ run:{call:'toNumber',cases:[
  {name:'the empty string is rejected, not treated as 0',args:[''],expect:null},
  {name:'whitespace only is rejected',args:['   '],expect:null},
  {name:'Infinity is rejected',args:['Infinity'],expect:null}]},
-prompt:`Write <code>function toNumber(text)</code> that returns the number when <code>text</code> is entirely numeric, and <code>null</code> otherwise. The empty string and whitespace must return <code>null</code> — <b>not</b> <code>0</code> — and <code>"Infinity"</code> must be rejected too.`,
+prompt:`Write <code>function toNumber(text)</code> that returns the number when <code>text</code> is entirely numeric, and <code>null</code> otherwise. The empty string and whitespace must return <code>null</code>, <b>not</b> <code>0</code>, and <code>"Infinity"</code> must be rejected too.`,
 starter:`function toNumber(text) {
   return null;
 }`,
@@ -519,7 +519,7 @@ solution:`function toNumber(text) {
 }`,
 tests:[{d:'the empty string is rejected before conversion',re:'trim\\(\\)\\s*===\\s*""'},{d:'uses strict Number conversion',re:'Number\\s*\\(\\s*text\\s*\\)'},{d:'rejects NaN and Infinity',re:'Number\\.isFinite'}],
 behavior:`Nine cases run. Two are the point: Number("") is 0, so an empty form field would silently become zero without the explicit guard; and Number("Infinity") is a finite-looking success that Number.isFinite correctly rejects. parseInt would also wrongly accept "42abc".`,
-hints:['Handle the empty/whitespace case first — Number("") is 0.','Number() is strict where parseInt is lenient; you want strict here.','Number.isFinite rejects both NaN and Infinity in one check.']},
+hints:['Handle the empty/whitespace case first: Number("") is 0.','Number() is strict where parseInt is lenient; you want strict here.','Number.isFinite rejects both NaN and Infinity in one check.']},
 {title:'Format a name safely',diff:'medium',lang:'js',
 run:{call:'greet',cases:[
  {name:'a normal name',args:['Ada'],expect:'Hello, Ada!'},
@@ -535,7 +535,7 @@ solution:`function greet(name) {
   return \`Hello, \${clean === "" ? "stranger" : clean}!\`;
 }`,
 tests:[{d:'uses a template literal',re:'\`'},{d:'trims the input',re:'\\.trim\\(\\)'},{d:'falls back for an empty name',re:'"stranger"'}],
-behavior:`greet("  Ada  ") is "Hello, Ada!" and greet("   ") is "Hello, stranger!". Note that trim() returns a new string — assigning its result is what makes this work, since strings are immutable.`,
+behavior:`greet("  Ada  ") is "Hello, Ada!" and greet("   ") is "Hello, stranger!". Note that trim() returns a new string; assigning its result is what makes this work, since strings are immutable.`,
 hints:['Assign the trimmed value; trim() does not modify the original.','A ternary inside the template literal handles the fallback.','Remember the exclamation mark.']}]}
 
 ]});

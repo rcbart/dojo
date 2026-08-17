@@ -1,4 +1,4 @@
-STREAMS.push({icon:'🔌',title:'APIs & REST',blurb:'Consume APIs with HttpClient and Jackson; design REST APIs properly — verbs, status codes, versioning, pagination.',lessons:[
+STREAMS.push({icon:'🔌',title:'APIs & REST',blurb:'Consume APIs with HttpClient and Jackson; design REST APIs properly: verbs, status codes, versioning, pagination.',lessons:[
 {id:'api1',title:'REST principles',body:`
 <p>REST models your domain as <b>resources</b> (nouns) addressed by URLs, manipulated with the standard HTTP verbs. The uniform interface is the point: any developer can predict your API.</p>
 <div class="codeSample">GET    /accounts            → list (200)
@@ -8,15 +8,15 @@ PUT    /accounts/42         → replace (200)
 PATCH  /accounts/42         → partial update (200)
 DELETE /accounts/42         → delete (204)
 GET    /accounts/42/holdings → nested resource</div>
-<p>Rules of thumb: plural nouns, never verbs in paths (<code>/getAccount</code> ✗); GET is safe &amp; cacheable; PUT and DELETE are <b>idempotent</b> (same call twice = same result); statelessness — each request carries its own auth.</p>
+<p>Rules of thumb: plural nouns, never verbs in paths (<code>/getAccount</code> ✗); GET is safe &amp; cacheable; PUT and DELETE are <b>idempotent</b> (same call twice = same result); statelessness: each request carries its own auth.</p>
 <h4>The idea behind the constraint</h4>
-<p>REST's value is not the verbs — it is that <b>the interface is uniform across every API that follows
+<p>REST's value is not the verbs; it is that <b>the interface is uniform across every API that follows
 it</b>. A developer who has never seen your service can guess that <code>GET /accounts/42</code> reads an
 account and that <code>DELETE</code> on the same URL removes it. That predictability is the entire return
 on the discipline, which is why the rules are worth following even where a bespoke design would be
 marginally more convenient.</p>
 <p>The mental shift is from <b>procedures to resources</b>. Not "what operations does my service offer?"
-but "what things does it manage, and what are their addresses?" — the verbs are already decided.</p>
+but "what things does it manage, and what are their addresses?" The verbs are already decided.</p>
 
 <h4>The three properties that make HTTP work</h4>
 <div class="codeSample" data-hl>SAFE        does not change anything.        GET, HEAD, OPTIONS
@@ -31,10 +31,10 @@ IDEMPOTENT  same call N times == same call once.  GET, PUT, DELETE
 CACHEABLE   the response may be stored and reused.  GET mostly
             -> ETag / If-None-Match turns a repeat read into a 304.</div>
 <p>Note what idempotent does not mean: it is about the <i>resulting state</i>, not the response. Two
-<code>DELETE</code>s leave the resource equally gone — the second may return 404, and that is fine.</p>
+<code>DELETE</code>s leave the resource equally gone; the second may return 404, and that is fine.</p>
 
 <h4>PUT vs PATCH, which people get wrong constantly</h4>
-<p><code>PUT</code> <b>replaces</b> the resource with the body you sent — so a field you omitted is a field
+<p><code>PUT</code> <b>replaces</b> the resource with the body you sent, so a field you omitted is a field
 you deleted. That is the semantics, and clients that send partial bodies to <code>PUT</code> are silently
 wiping data. <code>PATCH</code> applies a partial change, and because "partial" needs a format, the careful
 version specifies one (JSON Merge Patch, RFC 7396, is the pragmatic choice).</p>
@@ -51,8 +51,8 @@ handling, every monitor, and every cache.</p>
 <h4>Where the purity stops being useful</h4>
 <p>Some operations are genuinely not CRUD on a noun. "Cancel this order" is a real business action with
 rules, and contorting it into <code>PATCH /orders/42 {"status":"cancelled"}</code> hides the fact that
-cancelling is not the same as setting a field. Modelling it as a sub-resource —
-<code>POST /orders/42/cancellations</code> — keeps the interface saying what actually happens. And HATEOAS, the level of REST
+cancelling is not the same as setting a field. Modelling it as a sub-resource,
+<code>POST /orders/42/cancellations</code>, keeps the interface saying what actually happens. And HATEOAS, the level of REST
 almost nobody implements, is worth knowing about so you can say clearly that you have chosen not to.</p>`,
 docs:[['REST — MDN glossary','https://developer.mozilla.org/en-US/docs/Glossary/REST'],['HTTP methods — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods']],
 ex:{title:'Design the endpoints',lang:'http',
@@ -90,7 +90,7 @@ DELETE /portfolios/p1/positions/x9 → 204
 # 6)
 GET /portfolios/does-not-exist → 404`}},
 {id:'api2',title:'Consuming APIs: HttpClient',body:`
-<p>Since Java 11 the JDK ships a real HTTP client — no libraries needed for straightforward calls:</p>
+<p>Since Java 11 the JDK ships a real HTTP client: no libraries needed for straightforward calls:</p>
 <div class="codeSample" data-hl>HttpClient client = HttpClient.newHttpClient();
 
 HttpRequest request = HttpRequest.newBuilder()
@@ -109,10 +109,10 @@ if (response.statusCode() == 200) {
 // async variant returns CompletableFuture:
 client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
       .thenApply(HttpResponse::body);</div>
-<p>POST bodies use <code>.POST(HttpRequest.BodyPublishers.ofString(json))</code>. Always check <code>statusCode()</code> — the client does not throw on 4xx/5xx.</p>
+<p>POST bodies use <code>.POST(HttpRequest.BodyPublishers.ofString(json))</code>. Always check <code>statusCode()</code>: the client does not throw on 4xx/5xx.</p>
 
 <h4>That last point is the one that bites</h4>
-<p>A 404 or a 500 is a <b>successful HTTP exchange</b> as far as the client is concerned — you asked, the
+<p>A 404 or a 500 is a <b>successful HTTP exchange</b> as far as the client is concerned: you asked, the
 server answered. <code>send()</code> throws only for transport-level failures: connection refused,
 DNS failure, timeout, TLS problems. So code that never inspects <code>statusCode()</code> will happily
 parse an error page as if it were data, and the bug surfaces much later as a confusing
@@ -120,7 +120,7 @@ deserialization failure rather than "the API returned 503".</p>
 
 <h4>Reuse the client, always</h4>
 <p><code>HttpClient</code> is immutable, thread-safe, and holds the connection pool. Creating one per
-request throws away connection reuse and leaks threads under load. <b>Build one and share it</b> —
+request throws away connection reuse and leaks threads under load. <b>Build one and share it</b>,
 typically a single instance for the lifetime of the application.</p>
 <div class="codeSample" data-hl>private static final HttpClient CLIENT = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(5))       // connect only
@@ -133,7 +133,7 @@ HttpRequest req = HttpRequest.newBuilder()
         .header("Accept", "application/json")
         .build();</div>
 <p>Two defaults worth knowing. There is <b>no request timeout unless you set one</b>, so a hung server
-hangs your thread indefinitely — a leading cause of thread-pool exhaustion. And redirects are
+hangs your thread indefinitely, a leading cause of thread-pool exhaustion. And redirects are
 <b>not</b> followed by default, which surprises people migrating from other clients.</p>
 
 <h4>Timeouts are two different things</h4>
@@ -144,17 +144,17 @@ entirely.</p>
 
 <h4>Sync, async, and back-pressure</h4>
 <p><code>send()</code> blocks. <code>sendAsync()</code> returns a <code>CompletableFuture</code> and is
-the right choice for fan-out — fetching thirty resources concurrently without thirty blocked threads.
+the right choice for fan-out: fetching thirty resources concurrently without thirty blocked threads.
 The discipline it demands is <b>bounding the concurrency</b>: firing a thousand async requests at once
 will exhaust the pool or the remote service. Batch them.</p>
 <p><code>BodyHandlers</code> decide how the response is materialised. <code>ofString()</code> is
-convenient and reads everything into memory — fine for JSON, wrong for a large download, where
+convenient and reads everything into memory: fine for JSON, wrong for a large download, where
 <code>ofFile()</code> or <code>ofInputStream()</code> streams instead.</p>
 
 <h4>What the JDK client deliberately does not do</h4>
 <p>No retries, no circuit breaking, no automatic JSON binding, no rate limiting. Those are your job or a
 library's. Retrying is the one people most often need and most often get wrong: retry only idempotent
-requests (GET, PUT, DELETE — never a bare POST), use exponential backoff with jitter, cap the attempts,
+requests (GET, PUT, DELETE; never a bare POST), use exponential backoff with jitter, cap the attempts,
 and honour <code>Retry-After</code> when the server sends it.</p>`,
 docs:[['HttpClient — API docs','https://docs.oracle.com/en/java/javase/21/docs/api/java.net.http/java/net/http/HttpClient.html'],['Java HTTP Client — Baeldung','https://www.baeldung.com/java-9-http-client']],
 ex:{title:'Call an API',
@@ -213,7 +213,7 @@ mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);</div
 <p>Field-name mismatches are handled with <code>@JsonProperty("user_name")</code>. In Spring Boot, an ObjectMapper is auto-configured and used behind every <code>@RequestBody</code>/<code>@ResponseBody</code>.</p>
 
 <h4>Reuse the ObjectMapper</h4>
-<p>It is thread-safe once configured, and constructing one is expensive — it builds and caches
+<p>It is thread-safe once configured, and constructing one is expensive: it builds and caches
 serializers per type. Creating a mapper per request throws that cache away every time. <b>One shared
 instance</b>, configured at startup.</p>
 
@@ -235,7 +235,7 @@ missing module.</p>
 <h4>Records, and why constructors matter</h4>
 <p>Jackson historically needed a no-arg constructor plus setters, which pushed people toward mutable
 DTOs. Modern Jackson deserialises <b>records</b> and other immutable types directly by using the
-canonical constructor, so your DTOs can be immutable — which is what you want for objects crossing a
+canonical constructor, so your DTOs can be immutable, which is what you want for objects crossing a
 boundary. If parameter names are stripped at compile time, you may still need
 <code>@JsonProperty</code> on the components or the <code>-parameters</code> compiler flag.</p>
 
@@ -245,7 +245,7 @@ format, and the coupling runs both ways: their rename becomes your refactor, and
 becomes their public API. A separate DTO plus an explicit mapping step costs a little code and buys
 independent evolution.</p>
 <p>It also closes a security hole. Deserialising an arbitrary payload onto a domain object lets a caller
-set fields you never intended to expose — the <b>mass assignment</b> problem. If the JSON contains
+set fields you never intended to expose: the <b>mass assignment</b> problem. If the JSON contains
 <code>"role":"admin"</code> and your entity has a <code>role</code> field, Jackson will happily set it.
 Use <code>@JsonIgnore</code>, or better, a DTO that simply has no such field.</p>
 <p><b>And never enable default typing</b> (<code>enableDefaultTyping()</code>). Letting the payload
@@ -297,7 +297,7 @@ public class Json {
 }`}},
 {id:'api4',title:'Designing good REST: idempotency & error contracts',body:`
 <p>Two things separate professional APIs from amateur ones:</p>
-<p><b>Idempotency.</b> GET/PUT/DELETE must be idempotent — retrying is safe. POST isn't, so payment-grade APIs accept an <code>Idempotency-Key</code> header: same key → same result, no double charge. As an API-platform owner this is your bread and butter.</p>
+<p><b>Idempotency.</b> GET/PUT/DELETE must be idempotent: retrying is safe. POST isn't, so payment-grade APIs accept an <code>Idempotency-Key</code> header: same key → same result, no double charge. As an API-platform owner this is your bread and butter.</p>
 <p><b>A consistent error contract.</b> Clients should parse one error shape everywhere. RFC 9457 (Problem Details) is the standard:</p>
 <div class="codeSample">HTTP/1.1 422 Unprocessable Entity
 Content-Type: application/problem+json
@@ -313,7 +313,7 @@ Content-Type: application/problem+json
 <h4>Why idempotency is a networking problem, not a preference</h4>
 <p>The scenario is unavoidable: a client sends a payment request, and the response never arrives. The
 client cannot distinguish "the request never landed" from "it succeeded and the response was lost". Both
-look identical. So it must either retry — and risk charging twice — or not retry, and risk losing a
+look identical. So it must either retry (and risk charging twice) or not retry, and risk losing a
 payment that never happened.</p>
 <p>An idempotency key resolves it. The client generates a unique key per <i>logical operation</i> and sends
 it with every attempt; the server records the key with the result and returns the stored result for any
@@ -336,19 +336,19 @@ Idempotency-Key: 9f2c1a...        &lt;- generated by the CLIENT, once,
 <h4>The error contract, and why consistency beats cleverness</h4>
 <p>Without a standard shape, each endpoint invents its own and clients end up with a parser per route. RFC
 9457's <code>application/problem+json</code> gives one shape everywhere:
-<code>type</code> (a URI identifying the error class — the field clients should branch on),
+<code>type</code> (a URI identifying the error class, the field clients should branch on),
 <code>title</code>, <code>status</code>, <code>detail</code> (human-readable, and safe to change), and
 <code>instance</code>.</p>
 <p>Three rules for what goes in it. <b>Machine-readable first</b>: clients branch on
 <code>type</code> and status, never on the prose in <code>detail</code>. <b>Actionable</b>: say which
-field, and what was wrong with it — add an <code>errors</code> array for validation, since one 422 per
+field, and what was wrong with it; add an <code>errors</code> array for validation, since one 422 per
 form field is a poor experience. <b>Nothing internal</b>: stack traces, SQL fragments and class names are
-reconnaissance. Log them against a correlation id and return the id instead — which also turns a customer
+reconnaissance. Log them against a correlation id and return the id instead, which also turns a customer
 support ticket into a single log query.</p>
 
 <h4>The rest of what separates a professional API</h4>
 <p><b>Versioning</b> decided before launch, not after the first breaking change. <b>Pagination on every
-collection</b> — an unpaginated list endpoint is an outage waiting for the customer with 50,000 records,
+collection</b>: an unpaginated list endpoint is an outage waiting for the customer with 50,000 records,
 and cursor pagination beats offset once the data is large or changing. <b>Rate limits that are visible</b>
 via <code>RateLimit</code> headers and a <code>Retry-After</code> on 429, so clients can back off properly
 instead of hammering you. And <b>documentation generated from the code</b> (OpenAPI), because
@@ -368,7 +368,7 @@ public class Errors {
     }
 }`,
 tests:[{d:'ProblemDetail record with 4 fields',re:'record\\s+ProblemDetail\\s*\\(\\s*String\\s+type\\s*,\\s*String\\s+title\\s*,\\s*int\\s+status\\s*,\\s*String\\s+detail\\s*\\)'},{d:'notFound uses 404',re:'notFound[\\s\\S]*?404'},{d:'validation uses 422 (not 400)',re:'validation[\\s\\S]*?422'},{d:'Detail strings are composed',re:'\\+\\s*id|field\\s*\\+'}],
-behavior:`1. notFound("portfolio","p1") → status 404, detail "portfolio p1 does not exist". 2. validation("email","must not be blank") → 422, detail "email: must not be blank". 3. Both carry their type URLs. 4. Records are immutable — no setters anywhere.`,
+behavior:`1. notFound("portfolio","p1") → status 404, detail "portfolio p1 does not exist". 2. validation("email","must not be blank") → 422, detail "email: must not be blank". 3. Both carry their type URLs. 4. Records are immutable: no setters anywhere.`,
 hints:['Factories just call the record constructor with the right constants.','404 = the resource address is wrong; 422 = the address was fine, the payload semantics were not.','Compose detail with simple concatenation: <code>resource + " " + id + " does not exist"</code>.'],
 solution:`record ProblemDetail(String type, String title, int status, String detail) {}
 
@@ -393,13 +393,13 @@ prompt:`Write <code>function isIdempotent(method)</code> returning whether repea
 starter:`function isIdempotent(method) {\n  return false;\n}`,
 solution:`function isIdempotent(method) {\n  return ["GET","HEAD","PUT","DELETE","OPTIONS","TRACE"]\n    .includes(String(method).toUpperCase());\n}`,
 tests:[{d:'the method list is checked',re:'includes|indexOf'},{d:'PUT is included',re:'PUT'},{d:'POST is absent from the list',re:'^(?!.*"POST")'},{d:'comparison is case-insensitive',re:'toUpperCase|toLowerCase|i\\)'}],
-behavior:`Six cases execute. Idempotent does not mean safe: DELETE changes state, and it is idempotent because deleting twice leaves the same world as deleting once — the second call returning 404 is a different response, not a different effect. PATCH is the interesting exclusion: "set status to shipped" is idempotent, "add 10 to the balance" is not, and since PATCH bodies can express either, the method cannot promise it. This matters because it decides what a client or proxy may safely retry — and everything that is not idempotent needs an idempotency key instead, which is the next lesson\x27s subject.`,
-hints:['Six methods are idempotent; two common ones are not.','Normalise the case before comparing — methods arrive from the wire in any form.','Ask "if this ran twice, would the end state differ?" rather than "does it change anything?"']}]},
+behavior:`Six cases execute. Idempotent does not mean safe: DELETE changes state, and it is idempotent because deleting twice leaves the same world as deleting once; the second call returning 404 is a different response, not a different effect. PATCH is the interesting exclusion: "set status to shipped" is idempotent, "add 10 to the balance" is not, and since PATCH bodies can express either, the method cannot promise it. This matters because it decides what a client or proxy may safely retry, and everything that is not idempotent needs an idempotency key instead, which is the next lesson\x27s subject.`,
+hints:['Six methods are idempotent; two common ones are not.','Normalise the case before comparing; methods arrive from the wire in any form.','Ask "if this ran twice, would the end state differ?" rather than "does it change anything?"']}]},
 {id:'api5',title:'Advanced REST: versioning, pagination, rate limits',body:`
 <p>Running an API <i>platform</i> means designing for change and scale:</p>
 <ul>
-<li><b>Versioning</b>: URL (<code>/v2/accounts</code> — visible, cache-friendly) or header (<code>Accept: application/vnd.dojo.v2+json</code> — purist). Pick one, document a deprecation policy with dates, send <code>Sunset</code>/<code>Deprecation</code> headers before removal.</li>
-<li><b>Pagination</b>: offset (<code>?page=2&amp;size=50</code> — simple, drifts under writes) vs cursor (<code>?cursor=abc&amp;limit=50</code> — stable, opaque token). Return total/next metadata.</li>
+<li><b>Versioning</b>: URL (<code>/v2/accounts</code>; visible, cache-friendly) or header (<code>Accept: application/vnd.dojo.v2+json</code>; purist). Pick one, document a deprecation policy with dates, send <code>Sunset</code>/<code>Deprecation</code> headers before removal.</li>
+<li><b>Pagination</b>: offset (<code>?page=2&amp;size=50</code>; simple, drifts under writes) vs cursor (<code>?cursor=abc&amp;limit=50</code>; stable, opaque token). Return total/next metadata.</li>
 <li><b>Rate limiting</b>: answer <code>429 Too Many Requests</code> with <code>Retry-After</code> and <code>X-RateLimit-Remaining</code> style headers.</li>
 <li><b>Caching &amp; concurrency</b>: <code>ETag</code> + <code>If-None-Match</code> (304), and optimistic locking with <code>If-Match</code> → <code>412 Precondition Failed</code>.</li>
 </ul>
@@ -415,7 +415,7 @@ ETag: "33a64df5"
 <b>unstable</b>: if a row is inserted while a client pages through, every subsequent page shifts and an
 item is silently skipped or repeated. And it is <b>slow</b>: <code>OFFSET 100000</code> makes the
 database walk and discard a hundred thousand rows on every request.</p>
-<p>A cursor encodes <i>where you stopped</i> — typically the last id or sort key — so the next query is
+<p>A cursor encodes <i>where you stopped</i>, typically the last id or sort key, so the next query is
 an indexed range scan of constant cost, and inserts elsewhere cannot shift your window. The trade is
 that you lose "jump to page 47", which most APIs never genuinely needed. Keep the cursor opaque
 (base64 an internal structure) so you can change what is inside it without breaking clients.</p>
@@ -428,18 +428,18 @@ Accept: application/vnd.acme.v2+json   media type — "purer", far more awkward
 ?version=2                        query — easy, but caches and logs treat it
                                        as a different resource inconsistently</div>
 <p>The more important discipline is <b>not needing a new version</b>. Adding an optional field, adding
-an endpoint, adding an enum value a client can ignore — all backward compatible. Removing a field,
-renaming one, tightening validation or changing a default — all breaking. Version when you break, and
+an endpoint, adding an enum value a client can ignore: all backward compatible. Removing a field,
+renaming one, tightening validation or changing a default: all breaking. Version when you break, and
 run the old version until the clients you care about have moved, with usage metrics telling you when
 that is.</p>
 
 <h4>Rate limits should be legible</h4>
 <p>Return <b>429</b> with <code>Retry-After</code>, and expose the budget continuously rather than only
-at the moment of failure — <code>RateLimit-Limit</code>, <code>RateLimit-Remaining</code>,
+at the moment of failure: <code>RateLimit-Limit</code>, <code>RateLimit-Remaining</code>,
 <code>RateLimit-Reset</code>. A client that can see its remaining budget can slow down; one that only
 learns at rejection can only retry and make it worse.</p>
 <p>Limit per <i>credential</i>, not per IP: many legitimate users share an IP, and one abusive client
-should not take out a corporate NAT. And prefer a token bucket to a fixed window — a fixed window lets
+should not take out a corporate NAT. And prefer a token bucket to a fixed window; a fixed window lets
 a caller spend the whole quota in the last second of one window and again in the first second of the
 next, producing exactly the burst you were trying to prevent.</p>`,
 docs:[['API versioning — Postman guide','https://www.postman.com/api-platform/api-versioning/'],['RFC 6585 — 429 status','https://www.rfc-editor.org/rfc/rfc6585'],['HTTP caching & ETag — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag']],
@@ -473,7 +473,7 @@ If-None-Match: "x1"
 # 5)
 HTTP/1.1 304 Not Modified`}},
 {id:'api6',title:'API specs & publishing: OpenAPI',body:`
-<p>An API without a machine-readable spec is folklore. <b>OpenAPI 3</b> is the contract format: one YAML/JSON document describing every path, parameter, schema and response — from which docs, client SDKs, mock servers and contract tests are all generated.</p>
+<p>An API without a machine-readable spec is folklore. <b>OpenAPI 3</b> is the contract format: one YAML/JSON document describing every path, parameter, schema and response, from which docs, client SDKs, mock servers and contract tests are all generated.</p>
 <div class="codeSample">openapi: 3.0.3
 info: { title: Portfolio API, version: 2.1.0 }
 paths:
@@ -499,20 +499,20 @@ components:
 <p><b>Code-first</b>: add <code>springdoc-openapi-starter-webmvc-ui</code> and your running Boot app self-publishes the spec at <code>/v3/api-docs</code> with interactive docs at <code>/swagger-ui.html</code>; enrich with <code>@Operation</code>/<code>@ApiResponse</code> annotations. <b>Spec-first</b> flips it: design the YAML in review, then generate server stubs and client SDKs with <code>openapi-generator</code>. <b>Publishing as a platform owner</b> means: the spec is versioned in git and diffed in PRs (breaking-change review!), a developer portal hosts per-version docs, SDKs are generated per release, and the deprecation headers you learned in the versioning lesson are documented in the spec itself.</p>
 
 <h4>Code-first or spec-first, and how to choose</h4>
-<p><b>Code-first</b> keeps the spec in sync automatically, because it is generated from the same annotations that implement the endpoint — no drift, and near-zero effort. Its weakness is that the API is designed by whoever writes the controller, one endpoint at a time, and the document only exists after the code does.</p>
-<p><b>Spec-first</b> makes the contract a reviewable artefact <i>before</i> implementation: consumers can comment, mocks can be generated for parallel front-end work, and server stubs enforce the agreed shape. Its weakness is drift — a spec nobody regenerates from is folklore again within a quarter — so it only works when generation is wired into the build.</p>
+<p><b>Code-first</b> keeps the spec in sync automatically, because it is generated from the same annotations that implement the endpoint: no drift, and near-zero effort. Its weakness is that the API is designed by whoever writes the controller, one endpoint at a time, and the document only exists after the code does.</p>
+<p><b>Spec-first</b> makes the contract a reviewable artefact <i>before</i> implementation: consumers can comment, mocks can be generated for parallel front-end work, and server stubs enforce the agreed shape. Its weakness is drift (a spec nobody regenerates from is folklore again within a quarter), so it only works when generation is wired into the build.</p>
 <p>The practical rule: spec-first for public or cross-team APIs where the contract is a negotiation, code-first for internal services where speed matters more and the consumer is down the hall.</p>
 
 <h4>What a good spec carries beyond paths</h4>
 <ul>
 <li><b>Schemas with constraints</b>, not just types: formats, ranges, required fields, enums. Generated clients and validators use them, and they are the difference between documentation and a contract.</li>
-<li><b>Error responses</b>, modelled explicitly — ideally as <code>application/problem+json</code> (RFC 9457), so failures have a defined shape rather than being an undocumented surprise.</li>
+<li><b>Error responses</b>, modelled explicitly, ideally as <code>application/problem+json</code> (RFC 9457), so failures have a defined shape rather than being an undocumented surprise.</li>
 <li><b>Examples</b> on requests and responses. They are what a human actually reads, and they power mock servers.</li>
 <li><b>Security schemes</b>, so the spec states which scopes or schemes each operation needs.</li>
 </ul>
 
 <h4>The spec as a change-control mechanism</h4>
-<p>The reason to keep the document in git is that a diff becomes reviewable: adding an optional field is additive, removing a field or tightening a type is breaking, and a reviewer can see which one a pull request contains. Tooling can enforce it — <code>oasdiff</code> and similar will fail a build on a breaking change — which turns "we did not realise anyone used that field" into a conversation before release rather than an incident after it. Pair that with the deprecation headers from the versioning lesson and the whole lifecycle is documented in one place that clients and generators both read.</p>`,
+<p>The reason to keep the document in git is that a diff becomes reviewable: adding an optional field is additive, removing a field or tightening a type is breaking, and a reviewer can see which one a pull request contains. Tooling can enforce it (<code>oasdiff</code> and similar will fail a build on a breaking change), which turns "we did not realise anyone used that field" into a conversation before release rather than an incident after it. Pair that with the deprecation headers from the versioning lesson and the whole lifecycle is documented in one place that clients and generators both read.</p>`,
 docs:[['OpenAPI specification','https://spec.openapis.org/oas/v3.0.3'],['springdoc-openapi','https://springdoc.org/'],['openapi-generator','https://openapi-generator.tech/']],
 ex:{title:'Write the contract',lang:'yaml',
 prompt:`Write an OpenAPI 3.0.3 snippet: <code>info</code> with title <code>Ledger API</code> version <code>1.0.0</code>; path <code>/entries/{id}</code> with a <code>get</code> operation (<code>operationId: getEntry</code>), a required path parameter <code>id</code> of type string, a <code>"200"</code> response whose <code>application/json</code> content references <code>#/components/schemas/Entry</code>, and a <code>"404"</code>; components schema <code>Entry</code>: object with required <code>[id, amountCents]</code>, properties id (string) and amountCents (integer).`,
@@ -528,8 +528,8 @@ components:
     # Entry
 `,
 tests:[{d:'info block correct',re:'title:\\s*Ledger API[\\s\\S]*?version:\\s*(")?1\\.0\\.0'},{d:'Path with the id template',re:'/entries/\\{id\\}:'},{d:'operationId getEntry',re:'operationId:\\s*getEntry'},{d:'Required path parameter',re:'in:\\s*path[\\s\\S]*?required:\\s*true|required:\\s*true[\\s\\S]*?in:\\s*path'},{d:'200 references the Entry schema',re:'\\$ref:\\s*["\\x27]?#/components/schemas/Entry'},{d:'Entry schema with required fields',re:'Entry:[\\s\\S]*?required:[\\s\\S]*?amountCents[\\s\\S]*?type:\\s*integer'}],
-behavior:`1. Valid OpenAPI shape: paths -> /entries/{id} -> get -> parameters + responses. 2. The path parameter is declared in: path, required: true, schema type string. 3. "200" content -> application/json -> schema -> $ref to the component. 4. "404" present. 5. Entry declares required [id, amountCents]; amountCents is integer (cents, not float — your money lesson applies to contracts too).`,
-hints:['Path parameters live in a parameters: list under the operation; each needs name, in: path, required: true, schema.','Responses keys are quoted status codes; the body nests content -> application/json -> schema.','Reuse via $ref: "#/components/schemas/Entry" — duplicated inline schemas are how specs rot.'],
+behavior:`1. Valid OpenAPI shape: paths -> /entries/{id} -> get -> parameters + responses. 2. The path parameter is declared in: path, required: true, schema type string. 3. "200" content -> application/json -> schema -> $ref to the component. 4. "404" present. 5. Entry declares required [id, amountCents]; amountCents is integer (cents, not float; your money lesson applies to contracts too).`,
+hints:['Path parameters live in a parameters: list under the operation; each needs name, in: path, required: true, schema.','Responses keys are quoted status codes; the body nests content -> application/json -> schema.','Reuse via $ref: "#/components/schemas/Entry"; duplicated inline schemas are how specs rot.'],
 solution:`openapi: 3.0.3
 info:
   title: Ledger API
@@ -569,12 +569,12 @@ components:
 <p>Headers are the API's control plane. The ones you will set and read daily:</p>
 <ul>
 <li><b>Auth</b>: <code>Authorization: Bearer &lt;token&gt;</code> (JWTs), <code>Authorization: Basic &lt;base64&gt;</code>, or API keys in <code>X-API-Key</code>.</li>
-<li><b>Content negotiation</b>: <code>Content-Type</code> (what I am SENDING), <code>Accept</code> (what I want BACK) — mixing these up is the #1 415/406 generator.</li>
-<li><b>Tracing</b>: <code>X-Request-Id</code> / <code>traceparent</code> — propagate them; they are how you follow one request across services in logs.</li>
+<li><b>Content negotiation</b>: <code>Content-Type</code> (what I am SENDING), <code>Accept</code> (what I want BACK); mixing these up is the #1 415/406 generator.</li>
+<li><b>Tracing</b>: <code>X-Request-Id</code> / <code>traceparent</code>. Propagate them; they are how you follow one request across services in logs.</li>
 <li><b>Caching &amp; concurrency</b>: <code>ETag</code>, <code>If-None-Match</code>, <code>If-Match</code>, <code>Cache-Control</code> (your api5 lesson).</li>
 <li><b>Platform ops</b>: <code>Retry-After</code>, <code>X-RateLimit-*</code>, <code>Idempotency-Key</code>, CORS (<code>Origin</code> → <code>Access-Control-Allow-Origin</code>).</li>
 </ul>
-<p>And <b>curl</b> — the lingua franca of API debugging:</p>
+<p>And <b>curl</b>, the lingua franca of API debugging:</p>
 <div class="codeSample">curl https://api.dojo.dev/health                          # GET
 curl -i  ...          # include response headers      -v  ... # full handshake + headers both ways
 curl -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" https://api.dojo.dev/me
@@ -586,7 +586,7 @@ curl -X POST https://api.dojo.dev/users \\
 curl -X PUT ... -d @payload.json                           # body from a file
 curl -o out.json -w "%{http_code}\\n" ...                  # save body, print status
 curl -L ...                                                # follow redirects</div>
-<p>Debugging ritual: reproduce with curl first — it strips away SDKs, retries and frameworks until only the HTTP truth remains. If curl works and your code doesn't, diff the headers with <code>-v</code>.</p>
+<p>Debugging ritual: reproduce with curl first: it strips away SDKs, retries and frameworks until only the HTTP truth remains. If curl works and your code doesn't, diff the headers with <code>-v</code>.</p>
 
 <h4>The headers that decide whether your request works at all</h4>
 <p><code>Content-Type</code> describes what you are <i>sending</i>; <code>Accept</code> describes what you
@@ -594,7 +594,7 @@ want <i>back</i>. Confusing them produces the two most-searched status codes in 
 Unsupported Media Type</b> means the server does not accept what you sent, <b>406 Not Acceptable</b> means
 it cannot produce what you asked for. Neither is about authentication, and both are read as "the API is
 broken" by people who have not internalised the distinction.</p>
-<p><code>Authorization</code> is a request header and never a query parameter — a token in a URL lands in
+<p><code>Authorization</code> is a request header and never a query parameter: a token in a URL lands in
 browser history, proxy logs and the <code>Referer</code> sent to the next site. If you find yourself
 putting a credential in a query string, that is the signal to stop.</p>
 
@@ -612,7 +612,7 @@ pipeline reporting only its last command's status.</p>
 <p>Reproduce with curl before touching the code. An SDK adds retries, default headers, connection pooling
 and its own serialisation, so a failure inside it has half a dozen candidate causes. curl removes all of
 them and leaves the HTTP truth. If curl succeeds and your client does not, run both with headers visible
-and <b>diff them</b> — the difference is nearly always a header you did not know your SDK was setting.</p>`,
+and <b>diff them</b>: the difference is nearly always a header you did not know your SDK was setting.</p>`,
 docs:[['HTTP headers — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers'],['curl docs','https://curl.se/docs/manpage.html'],['Everything curl (book)','https://everything.curl.dev/']],
 ex:{title:'curl drill',lang:'shell',
 prompt:`One per numbered line: (1) GET <code>https://api.dojo.dev/me</code> with a bearer token from <code>$TOKEN</code> and <code>Accept: application/json</code>, (2) POST <code>{"name": "Ada"}</code> to <code>https://api.dojo.dev/users</code> with the right Content-Type, (3) the same GET as (1) but showing <b>response headers</b> too, (4) fetch <code>https://api.dojo.dev/report</code> saving the body to <code>report.json</code> while printing the status code, (5) which header pair the server/client use for conditional caching (name both, comma-separated).`,
@@ -628,7 +628,7 @@ starter:`# 1)
 `,
 tests:[{d:'Bearer + Accept headers via -H',re:'-H\\s+"Authorization:\\s*Bearer\\s+\\$TOKEN"[\\s\\S]*?-H\\s+"Accept:\\s*application/json"|-H\\s+"Accept:\\s*application/json"[\\s\\S]*?-H\\s+"Authorization:\\s*Bearer\\s+\\$TOKEN"'},{d:'POST with JSON Content-Type and -d body',re:'-H\\s+"Content-Type:\\s*application/json"[\\s\\S]*?-d\\s+.\\{"name":\\s*"Ada"\\}'},{d:'-i (or -v) to show response headers',re:'curl\\s+(-i|-v)\\b'},{d:'-o file with -w status code',re:'-o\\s+report\\.json[\\s\\S]*?-w\\s+"%\\{http_code\\}'},{d:'ETag / If-None-Match pair',re:'ETag\\s*,\\s*If-None-Match|If-None-Match\\s*,\\s*ETag'}],
 behavior:`1. (1) curl -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" https://api.dojo.dev/me. 2. (2) curl -X POST (or just -d) with Content-Type application/json and the -d body. 3. (3) same plus -i. 4. (4) curl -o report.json -w "%{http_code}\\n" https://api.dojo.dev/report. 5. (5) ETag, If-None-Match.`,
-hints:['Each header is its own -H "Name: value" flag — curl does not merge them for you.','-d implies POST; adding -X POST is fine and explicit. Content-Type tells the server how to parse -d.','-i prints response headers with the body; -v additionally shows what YOU sent — the debugging gold.'],
+hints:['Each header is its own -H "Name: value" flag; curl does not merge them for you.','-d implies POST; adding -X POST is fine and explicit. Content-Type tells the server how to parse -d.','-i prints response headers with the body; -v additionally shows what YOU sent: the debugging gold.'],
 solution:`# 1)
 curl -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" https://api.dojo.dev/me
 

@@ -42,11 +42,11 @@ For long-running services use `unless-stopped` or `always`.
 docker run -d --memory 512m --cpus 1.5 --name api myapi
 ```
 
-- `--memory 512m` — hard cap; the container is killed (OOM) if it exceeds it.
-- `--cpus 1.5` — at most 1.5 CPU cores' worth.
+- `--memory 512m`: hard cap; the container is killed (OOM) if it exceeds it.
+- `--cpus 1.5`: at most 1.5 CPU cores' worth.
 
 Without limits, a runaway container can starve everything else. Setting requests/limits is mandatory
-in production — and, again, a core Kubernetes concept (Module: resources).
+in production, and, again, a core Kubernetes concept (Module: resources).
 
 ## Logging — where output goes
 
@@ -72,7 +72,7 @@ docker events                    # stream of daemon events (starts, dies, OOMs)
 
 If it exits immediately, you can't `exec` in. Options:
 
-- `docker logs <c>` — the crash reason is almost always here.
+- `docker logs <c>`: the crash reason is almost always here.
 - Override the entrypoint to get a shell instead of the app:
   ```bash
   docker run -it --entrypoint sh myimage       # explore the image's filesystem
@@ -84,14 +84,14 @@ If it exits immediately, you can't `exec` in. Options:
 - **"It exited immediately."** A container lives only as long as its main process. If `CMD` runs and
   returns (e.g. a script that finishes), the container stops. Long-running services must stay in the
   foreground.
-- **Editing files then losing them.** Changes in the writable layer vanish on `rm` — use volumes.
+- **Editing files then losing them.** Changes in the writable layer vanish on `rm`; use volumes.
 - **`localhost` inside a container is the container**, not your host or another container. Use the
   service/container name on a shared network, or `host.docker.internal` to reach the host from a
   container (Desktop).
-- **Port already allocated.** Another process/container owns the host port — change the host side of
+- **Port already allocated.** Another process/container owns the host port. Change the host side of
   `-p`.
 - **Image changes not taking effect.** You rebuilt but ran the old tag, or the cache served a stale
-  layer — rebuild with the right tag (`--no-cache` to force).
+  layer. Rebuild with the right tag (`--no-cache` to force).
 
 ## Lab: diagnose a broken container
 
@@ -117,13 +117,13 @@ docker rm -f boom web
 ## Check yourself
 
 1. What does a HEALTHCHECK add over "the container is running"? *(It tests the app itself, so Docker
-   knows healthy vs unhealthy — the basis of K8s probes.)*
+   knows healthy vs unhealthy: the basis of K8s probes.)*
 2. Which restart policy suits a long-running service? *(`unless-stopped` or `always`.)*
-3. Where should containerized apps write their logs? *(stdout/stderr — the platform captures and
+3. Where should containerized apps write their logs? *(stdout/stderr; the platform captures and
    ships them.)*
-4. A container exits immediately. First command to run? *(`docker logs <c>` — the crash reason is
+4. A container exits immediately. First command to run? *(`docker logs <c>`, since the crash reason is
    usually there; `docker ps -a` shows the exit code.)*
-5. What does exit code 137 usually mean? *(OOM-killed / SIGKILL — often a memory limit exceeded.)*
+5. What does exit code 137 usually mean? *(OOM-killed / SIGKILL, often a memory limit exceeded.)*
 
 ---
 

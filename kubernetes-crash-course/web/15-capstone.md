@@ -1,6 +1,6 @@
 # 15 — Capstone: deploy a multi-service app
 
-*Put it all together. You'll deploy a real multi-tier app — frontend, API, database — with config,
+*Put it all together. You'll deploy a real multi-tier app (frontend, API, database) with config,
 secrets, storage, health, autoscaling, and ingress. ~45 min. Needs your kind cluster (with
 ingress-nginx + metrics-server from Modules 12–13).*
 
@@ -20,7 +20,7 @@ it, verify it.
              config (ConfigMap) + secrets (Secret) feed api & db
 ```
 
-A classic three-tier app: a web frontend, an API, and a database — each with the production
+A classic three-tier app: a web frontend, an API, and a database, each with the production
 trimmings you learned.
 
 ## Step 1 — namespace and config
@@ -153,7 +153,7 @@ kubectl get statefulset db; kubectl get pvc
 ```
 
 If all three tiers respond and the killed pod self-heals, **you've deployed a production-shaped app**
-— config/secrets externalized, data persisted, health-checked, autoscaled, and fronted by a single
+with config/secrets externalized, data persisted, health-checked, autoscaled, and fronted by a single
 ingress.
 
 ## Step 7 — challenge tasks (do these yourself)
@@ -167,7 +167,7 @@ To cement mastery, extend it without step-by-step help:
 5. **Generate load** on the api and watch the HPA scale it.
 6. **Build and deploy your own image (full loop).** Using `docker buildx` (Docker course, module 8),
    build a **multi-arch** image of a tiny app of your own, push it to a registry, then point the api
-   Deployment at it with `kubectl set image` and watch the readiness-gated rollout — the complete
+   Deployment at it with `kubectl set image` and watch the readiness-gated rollout: the complete
    build → push → deploy loop spanning both courses.
 
 ## Clean up
@@ -179,7 +179,7 @@ kubectl delete namespace shop          # removes everything in one shot
 
 ## Check yourself
 
-1. Which object type did the database use, and why? *(StatefulSet — stable identity + its own
+1. Which object type did the database use, and why? *(StatefulSet: stable identity + its own
    persistent storage.)*
 2. How did the API get its config and its DB password? *(ConfigMap via envFrom; the password from a
    Secret via secretKeyRef.)*
@@ -187,7 +187,7 @@ kubectl delete namespace shop          # removes everything in one shot
    api ClusterIP Services.)*
 4. What proved self-healing? *(Deleting an api pod; the Deployment created a replacement
    automatically.)*
-5. Which piece would make a bad rollout safe? *(Readiness probes — new pods only get traffic once
+5. Which piece would make a bad rollout safe? *(Readiness probes: new pods only get traffic once
    ready, so a broken version can't cause an outage.)*
 
 ---

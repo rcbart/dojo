@@ -1,10 +1,10 @@
-STREAMS.push({icon:'🍪',iam:true,sec:'Sessions, cookies & web login',title:'Sessions, Cookies & Web Login Security',blurb:'How a browser stays logged in — and how that gets attacked. Cookies and their security flags, CSRF defenses, session fixation, where NOT to store tokens, and logout done properly (front- vs back-channel, revocation).',lessons:[
+STREAMS.push({icon:'🍪',iam:true,sec:'Sessions, cookies & web login',title:'Sessions, Cookies & Web Login Security',blurb:'How a browser stays logged in, and how that gets attacked. Cookies and their security flags, CSRF defenses, session fixation, where NOT to store tokens, and logout done properly (front- vs back-channel, revocation).',lessons:[
 
 {id:'ss1',title:'Sessions & cookies: staying logged in',body:`
-<p>HTTP is stateless — each request stands alone. A <b>session</b> bridges requests: on login the server creates a session and hands the browser a <b>cookie</b> holding an opaque session id. The browser returns that cookie on every request, and the server looks up who you are. (Token-based auth stores a signed token instead, but the cookie mechanics are the same.)</p>
+<p>HTTP is stateless: each request stands alone. A <b>session</b> bridges requests: on login the server creates a session and hands the browser a <b>cookie</b> holding an opaque session id. The browser returns that cookie on every request, and the server looks up who you are. (Token-based auth stores a signed token instead, but the cookie mechanics are the same.)</p>
 <!--flow:ss1-session-->
 <h4>Form login and the session cookie — step by step</h4>
-<div class="flowDia"><svg viewBox="0 0 700 344" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Form login and the session cookie"><defs><marker id="ss1-session-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="ss1-session-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="ss1-session-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="ss1-session-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="42" x2="74" y2="312" class="fdLife"/><line x1="350" y1="42" x2="350" y2="312" class="fdLife"/><line x1="626" y1="42" x2="626" y2="312" class="fdLife"/><rect x="34.300000000000004" y="8" width="79.39999999999999" height="34" rx="8" class="fdActor"/><text x="74" y="29.5" class="fdActorT">Browser</text><rect x="311" y="8" width="78" height="34" rx="8" class="fdActor"/><text x="350" y="29.5" class="fdActorT">Server</text><rect x="561.7" y="8" width="128.6" height="34" rx="8" class="fdActor"/><text x="626" y="29.5" class="fdActorT">Session store</text><line x1="77" y1="90" x2="345" y2="90" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss1-session-ah-front)"/><text x="227" y="81" class="fdLabel">POST /login — credentials</text><circle cx="92" cy="90" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="93.5" class="fdNumT" style="fill:var(--accent)">1</text><rect x="191.8" y="107" width="316.4" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="358" y="122" class="fdSelfT">verify password hash; mint random session id</text><circle cx="191.8" cy="118" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="191.8" y="121.5" class="fdNumT" style="fill:var(--muted)">2</text><line x1="353" y1="156" x2="621" y2="156" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ss1-session-ah-back)"/><text x="503" y="147" class="fdLabel">save sid → {user, expiry}</text><circle cx="368" cy="156" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="368" y="159.5" class="fdNumT" style="fill:var(--accent2)">3</text><line x1="347" y1="186" x2="79" y2="186" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#ss1-session-ah-front)"/><text x="197" y="177" class="fdLabel">Set-Cookie: sid=… HttpOnly Secure SameSite</text><circle cx="332" cy="186" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="332" y="189.5" class="fdNumT" style="fill:var(--accent)">4</text><line x1="77" y1="216" x2="345" y2="216" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss1-session-ah-front)"/><text x="227" y="207" class="fdLabel">GET /account — cookie attached automatically</text><circle cx="92" cy="216" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="219.5" class="fdNumT" style="fill:var(--accent)">5</text><line x1="353" y1="246" x2="621" y2="246" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ss1-session-ah-back)"/><text x="503" y="237" class="fdLabel">look up sid</text><circle cx="368" cy="246" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="368" y="249.5" class="fdNumT" style="fill:var(--accent2)">6</text><line x1="347" y1="276" x2="79" y2="276" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#ss1-session-ah-front)"/><text x="197" y="267" class="fdLabel">200 — personalised page</text><circle cx="332" cy="276" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="332" y="279.5" class="fdNumT" style="fill:var(--accent)">7</text><text x="350" y="294" class="fdNote">“Automatically” is the superpower AND the flaw — it is what CSRF abuses.</text><line x1="18" y1="330" x2="44" y2="330" stroke="var(--accent)" class="fdArrow"/><text x="50" y="334" class="fdLegend">front channel (via the browser)</text><line x1="271.29999999999995" y1="330" x2="297.29999999999995" y2="330" stroke="var(--accent2)" class="fdArrow"/><text x="303.29999999999995" y="334" class="fdLegend">back channel (server to server)</text></svg></div>
+<div class="flowDia"><svg viewBox="0 0 700 344" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Form login and the session cookie"><defs><marker id="ss1-session-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="ss1-session-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="ss1-session-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="ss1-session-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="42" x2="74" y2="312" class="fdLife"/><line x1="350" y1="42" x2="350" y2="312" class="fdLife"/><line x1="626" y1="42" x2="626" y2="312" class="fdLife"/><rect x="34.300000000000004" y="8" width="79.39999999999999" height="34" rx="8" class="fdActor"/><text x="74" y="29.5" class="fdActorT">Browser</text><rect x="311" y="8" width="78" height="34" rx="8" class="fdActor"/><text x="350" y="29.5" class="fdActorT">Server</text><rect x="561.7" y="8" width="128.6" height="34" rx="8" class="fdActor"/><text x="626" y="29.5" class="fdActorT">Session store</text><line x1="77" y1="90" x2="345" y2="90" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss1-session-ah-front)"/><text x="227" y="81" class="fdLabel">POST /login — credentials</text><circle cx="92" cy="90" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="93.5" class="fdNumT" style="fill:var(--accent)">1</text><rect x="191.8" y="107" width="316.4" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="358" y="122" class="fdSelfT">verify password hash; mint random session id</text><circle cx="191.8" cy="118" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="191.8" y="121.5" class="fdNumT" style="fill:var(--muted)">2</text><line x1="353" y1="156" x2="621" y2="156" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ss1-session-ah-back)"/><text x="503" y="147" class="fdLabel">save sid → {user, expiry}</text><circle cx="368" cy="156" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="368" y="159.5" class="fdNumT" style="fill:var(--accent2)">3</text><line x1="347" y1="186" x2="79" y2="186" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#ss1-session-ah-front)"/><text x="197" y="177" class="fdLabel">Set-Cookie: sid=… HttpOnly Secure SameSite</text><circle cx="332" cy="186" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="332" y="189.5" class="fdNumT" style="fill:var(--accent)">4</text><line x1="77" y1="216" x2="345" y2="216" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss1-session-ah-front)"/><text x="227" y="207" class="fdLabel">GET /account — cookie attached automatically</text><circle cx="92" cy="216" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="219.5" class="fdNumT" style="fill:var(--accent)">5</text><line x1="353" y1="246" x2="621" y2="246" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ss1-session-ah-back)"/><text x="503" y="237" class="fdLabel">look up sid</text><circle cx="368" cy="246" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="368" y="249.5" class="fdNumT" style="fill:var(--accent2)">6</text><line x1="347" y1="276" x2="79" y2="276" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#ss1-session-ah-front)"/><text x="197" y="267" class="fdLabel">200 — personalised page</text><circle cx="332" cy="276" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="332" y="279.5" class="fdNumT" style="fill:var(--accent)">7</text><text x="350" y="294" class="fdNote">“Automatically” is the superpower AND the flaw; it is what CSRF abuses.</text><line x1="18" y1="330" x2="44" y2="330" stroke="var(--accent)" class="fdArrow"/><text x="50" y="334" class="fdLegend">front channel (via the browser)</text><line x1="271.29999999999995" y1="330" x2="297.29999999999995" y2="330" stroke="var(--accent2)" class="fdArrow"/><text x="303.29999999999995" y="334" class="fdLegend">back channel (server to server)</text></svg></div>
 <ol class="fdSteps">
 <li><b>Browser → Server:</b> POST /login — credentials <i>(front channel)</i></li>
 <li><b>Server:</b> verify password hash; mint random session id</li>
@@ -17,7 +17,7 @@ STREAMS.push({icon:'🍪',iam:true,sec:'Sessions, cookies & web login',title:'Se
 <!--/flow:ss1-session-->
 <div class="codeSample">Set-Cookie: session=abc123        &lt;- server issues it on login
 Cookie: session=abc123            &lt;- browser sends it back automatically</div>
-<p>The session id must be long, random, and unguessable — it is the only thing standing between an attacker and your account. The next lessons harden the cookie that carries it.</p>
+<p>The session id must be long, random, and unguessable; it is the only thing standing between an attacker and your account. The next lessons harden the cookie that carries it.</p>
 
 <h4>What the server has to keep</h4>
 <div class="codeSample" data-hl>SERVER-SIDE SESSION            the cookie holds only an opaque id
@@ -34,14 +34,14 @@ practical middle ground most teams land on: a server-side session for the browse
 store in something shared and fast.</p>
 
 <h4>The properties that make a session id safe</h4>
-<p><b>Entropy</b> — at least 128 bits from a cryptographic RNG, never a counter, a hash of the username,
-or anything derived from time. <b>Opacity</b> — it should mean nothing; if an attacker can infer
+<p><b>Entropy</b>: at least 128 bits from a cryptographic RNG, never a counter, a hash of the username,
+or anything derived from time. <b>Opacity</b>: it should mean nothing; if an attacker can infer
 structure they can hunt for valid ids. And <b>rotation on privilege change</b>: issue a new id at login
 and at any elevation, which is what defeats fixation in the next lesson.</p>
 
 <h4>Two lifetimes, not one</h4>
 <p>An <b>idle timeout</b> ends a session after inactivity; an <b>absolute lifetime</b> ends it regardless.
-You want both — idle alone means a session kept warm by a background tab lives forever. And record
+You want both; idle alone means a session kept warm by a background tab lives forever. And record
 <code>authAt</code>: knowing <i>when</i> the user last actually authenticated is what lets you demand
 re-authentication before something irreversible, rather than trusting a session that began nine hours
 ago.</p>`,
@@ -65,9 +65,9 @@ hints:['String concatenation with + builds the value.','The literal in the middl
 {id:'ss2',title:'Cookie security flags',body:`
 <p>A session cookie without flags is a liability. Three flags do most of the defending:</p>
 <ul>
-<li><b>HttpOnly</b> — JavaScript cannot read the cookie, so a cross-site scripting (XSS) bug cannot steal the session.</li>
-<li><b>Secure</b> — the cookie is sent only over HTTPS, never in cleartext.</li>
-<li><b>SameSite</b> — controls whether the cookie rides along on cross-site requests. <code>Lax</code> is a sensible default; <code>Strict</code> is tightest; <code>None</code> (which requires Secure) is only for deliberate cross-site use. SameSite is a strong CSRF defense.</li>
+<li><b>HttpOnly</b>: JavaScript cannot read the cookie, so a cross-site scripting (XSS) bug cannot steal the session.</li>
+<li><b>Secure</b>: the cookie is sent only over HTTPS, never in cleartext.</li>
+<li><b>SameSite</b>: controls whether the cookie rides along on cross-site requests. <code>Lax</code> is a sensible default; <code>Strict</code> is tightest; <code>None</code> (which requires Secure) is only for deliberate cross-site use. SameSite is a strong CSRF defense.</li>
 </ul>
 <div class="codeSample">Set-Cookie: session=abc123; HttpOnly; Secure; SameSite=Lax</div>
 
@@ -96,12 +96,12 @@ __Host-      a name PREFIX the browser enforces: Secure, Path=/, no Domain.
 
 <h4>The judgement calls</h4>
 <p><b>Lax versus Strict</b> is a real trade, not a "more secure is better" choice. Strict breaks the
-ordinary case of arriving from an external link and finding yourself logged out — which pushes users
+ordinary case of arriving from an external link and finding yourself logged out, which pushes users
 toward "remember me forever" settings that are worse. Lax is the sensible default; use Strict for
 genuinely sensitive apps where the friction is acceptable.</p>
 <p><b>SameSite is not a complete CSRF defence.</b> It is a strong mitigation that arrived recently, is
 enforced by the browser rather than your server, and does nothing for same-site attacks. Keep the
-synchronizer token as well — defence in depth, and the next lesson covers why.</p>
+synchronizer token as well: defence in depth, and the next lesson covers why.</p>
 <p><b>Domain is the flag that quietly widens blast radius.</b> Setting <code>Domain=example.com</code>
 to share a session between <code>app.</code> and <code>www.</code> also shares it with
 <code>staging.</code>, <code>legacy.</code> and anything else on the domain. An XSS on the least
@@ -109,7 +109,7 @@ important subdomain then reaches the most important session. Prefer host-only co
 <code>__Host-</code> unless sharing is a deliberate requirement.</p>`,
 docs:[['SameSite cookies — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'],['Secure cookie attributes — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html#cookies']],
 ex:{title:'Harden the cookie',
-prompt:`Write class <code>SecureCookie</code> with <code>static String build(String sid)</code> that returns <code>session=&lt;sid&gt;; HttpOnly; Secure; SameSite=Lax</code> — the session cookie with all three protective flags.`,
+prompt:`Write class <code>SecureCookie</code> with <code>static String build(String sid)</code> that returns <code>session=&lt;sid&gt;; HttpOnly; Secure; SameSite=Lax</code>, the session cookie with all three protective flags.`,
 starter:`public class SecureCookie {
     static String build(String sid) {
         return null;
@@ -125,7 +125,7 @@ behavior:`build("abc123") returns "session=abc123; HttpOnly; Secure; SameSite=La
 hints:['Concatenate the flags after the session value, separated by "; ".','The three flags are HttpOnly, Secure, and SameSite=Lax.','Only the session id is dynamic; the flags are fixed text.']}},
 
 {id:'ss3',title:'CSRF: the confused-deputy attack',body:`
-<p><b>CSRF</b> (Cross-Site Request Forgery) abuses the fact that browsers attach your cookies automatically. A malicious page can make <i>your</i> browser POST to your bank — and the bank sees a fully authenticated request it cannot tell apart from a real one. Your browser is the confused deputy.</p>
+<p><b>CSRF</b> (Cross-Site Request Forgery) abuses the fact that browsers attach your cookies automatically. A malicious page can make <i>your</i> browser POST to your bank, and the bank sees a fully authenticated request it cannot tell apart from a real one. Your browser is the confused deputy.</p>
 <!--flow:ss3-csrf-->
 <h4>CSRF: the confused deputy — step by step</h4>
 <div class="flowDia"><svg viewBox="0 0 700 314" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CSRF: the confused deputy"><defs><marker id="ss3-csrf-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="ss3-csrf-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="ss3-csrf-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="ss3-csrf-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="42" x2="74" y2="282" class="fdLife"/><line x1="350" y1="42" x2="350" y2="282" class="fdLife"/><line x1="626" y1="42" x2="626" y2="282" class="fdLife"/><rect x="-2.5999999999999943" y="8" width="153.2" height="34" rx="8" class="fdActor"/><text x="74" y="29.5" class="fdActorT">Victim’s browser</text><rect x="302.1" y="8" width="95.8" height="34" rx="8" class="fdActor"/><text x="350" y="29.5" class="fdActorT">evil.site</text><rect x="582.2" y="8" width="87.6" height="34" rx="8" class="fdActor"/><text x="626" y="29.5" class="fdActorT">bank.com</text><line x1="77" y1="90" x2="621" y2="90" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss3-csrf-ah-front)"/><text x="365" y="81" class="fdLabel">logs in — session cookie set</text><circle cx="92" cy="90" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="93.5" class="fdNumT" style="fill:var(--accent)">1</text><line x1="14" y1="116" x2="686" y2="116" class="fdPhase"/><text x="350" y="120" class="fdPhaseT">later, in another tab</text><line x1="77" y1="150" x2="345" y2="150" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss3-csrf-ah-front)"/><text x="227" y="141" class="fdLabel">visits evil.site</text><circle cx="92" cy="150" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="153.5" class="fdNumT" style="fill:var(--accent)">2</text><line x1="347" y1="180" x2="79" y2="180" stroke="var(--bad)" class="fdArrow" stroke-dasharray="7 4" marker-end="url(#ss3-csrf-ah-attack)"/><text x="197" y="171" class="fdLabel fdLabelBad">page auto-submits a hidden form → bank.com</text><circle cx="332" cy="180" r="9" class="fdNum" style="stroke:var(--bad)"/><text x="332" y="183.5" class="fdNumT" style="fill:var(--bad)">3</text><line x1="77" y1="210" x2="621" y2="210" stroke="var(--bad)" class="fdArrow" stroke-dasharray="7 4" marker-end="url(#ss3-csrf-ah-attack)"/><text x="365" y="201" class="fdLabel fdLabelBad">POST /transfer — cookie attached AUTOMATICALLY</text><circle cx="92" cy="210" r="9" class="fdNum" style="stroke:var(--bad)"/><text x="92" y="213.5" class="fdNumT" style="fill:var(--bad)">4</text><rect x="349.79999999999995" y="227" width="336.2" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="525.9" y="242" class="fdSelfT">valid session, valid request shape… money moves</text><circle cx="349.79999999999995" cy="238" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="349.79999999999995" y="241.5" class="fdNumT" style="fill:var(--muted)">5</text><text x="350" y="264" class="fdNote">The browser was deputised. Defences: SameSite, CSRF tokens, origin checks.</text><line x1="18" y1="300" x2="44" y2="300" stroke="var(--accent)" class="fdArrow"/><text x="50" y="304" class="fdLegend">front channel (via the browser)</text><line x1="271.29999999999995" y1="300" x2="297.29999999999995" y2="300" stroke="var(--bad)" class="fdArrow" stroke-dasharray="7 4"/><text x="303.29999999999995" y="304" class="fdLegend">attack path</text></svg></div>
@@ -143,7 +143,7 @@ hints:['Concatenate the flags after the session value, separated by "; ".','The 
 <p>The mechanism people miss: the browser attaches your cookies to a request <b>based on where the
 request is going, not where it came from</b>. So a form on <code>evil.example</code> that posts to
 <code>bank.example/transfer</code> arrives fully authenticated. The attacker never sees the response and
-never needs to — the side effect is the attack.</p>
+never needs to; the side effect is the attack.</p>
 <div class="codeSample" data-hl>&lt;!-- on evil.example, auto-submitted --&gt;
 &lt;form action="https://bank.example/transfer" method="POST"&gt;
   &lt;input name="to" value="attacker"&gt;&lt;input name="amount" value="5000"&gt;
@@ -157,7 +157,7 @@ credentials it holds, tricked into acting for someone else's intent.</p>
 <h4>The defences, and what each assumes</h4>
 <ul>
 <li><b>Synchronizer token.</b> A random value in the form and in the session; the server compares them.
-Works because an attacker's page <i>cannot read</i> your token — the same-origin policy forbids it.</li>
+Works because an attacker's page <i>cannot read</i> your token; the same-origin policy forbids it.</li>
 <li><b>Double-submit cookie.</b> Same token in a cookie and a form field, compared without server state.
 Convenient, and weaker: a subdomain you do not control can set cookies on the parent domain.</li>
 <li><b>SameSite.</b> Browser-enforced, and the reason CSRF has receded. But it is a browser default, not
@@ -170,7 +170,7 @@ a guarantee you control.</li>
 <code>text/plain</code>. <b>A secret in the URL.</b> It leaks through referrers and history.</p>
 
 <h4>When it does not apply</h4>
-<p>CSRF is an attack on <b>ambient credentials</b> — anything the browser attaches automatically. An API
+<p>CSRF is an attack on <b>ambient credentials</b>: anything the browser attaches automatically. An API
 that authenticates with an <code>Authorization: Bearer</code> header is not vulnerable, because nothing
 attaches that header for you. This is precisely the trade the BFF pattern makes: moving tokens out of
 the browser removes token theft and reintroduces CSRF, because you are back on cookies.</p>`,
@@ -192,11 +192,11 @@ behavior:`valid("t1","t1") is true; valid("t1","t2") is false; valid(null,null) 
 hints:['Check for null before calling equals to avoid a NullPointerException.','Compare the two tokens with equals, not ==.','Both the null guard and the match must hold, so join them with &&.']}},
 
 {id:'ss4',title:'Session fixation & token storage',body:`
-<p>Two classic mistakes. <b>Session fixation</b>: an attacker plants a known session id in your browser before you log in, and if the server keeps that id after authentication, the attacker now shares your session. The fix is one line of discipline — <b>regenerate the session id at login</b> (and at privilege changes), so the pre-login id becomes useless.</p>
+<p>Two classic mistakes. <b>Session fixation</b>: an attacker plants a known session id in your browser before you log in, and if the server keeps that id after authentication, the attacker now shares your session. The fix is one line of discipline: <b>regenerate the session id at login</b> (and at privilege changes), so the pre-login id becomes useless.</p>
 <p><b>Token storage in browsers</b>: it is tempting to keep an access token in <code>localStorage</code>, but anything JavaScript can read, an XSS bug can steal. The safer home for a session credential is an <b>HttpOnly cookie</b>, which script cannot touch. Rule of thumb: never put a bearer token where page JavaScript can read it.</p>
 
 <h4>Fixation, precisely</h4>
-<p>The attacker does not steal a session — they <b>supply</b> one. They obtain a valid session id, plant
+<p>The attacker does not steal a session; they <b>supply</b> one. They obtain a valid session id, plant
 it in the victim's browser (a link with the id, a subdomain setting the cookie, an XSS), and wait for the
 victim to log in. If the server keeps the same id across the login, the attacker's pre-known id is now an
 authenticated session.</p>
@@ -219,7 +219,7 @@ obfuscation changes that, and no framework "secure storage" helper in a browser 
 private than the others.</p>
 <p>The real ranking is of outcomes: an HttpOnly cookie means XSS can <i>act</i> as the user while the page
 is open; localStorage means XSS <i>walks away with</i> a credential usable from anywhere until it
-expires. Same vulnerability, very different blast radius — which is the entire argument for the BFF
+expires. Same vulnerability, very different blast radius, which is the entire argument for the BFF
 pattern.</p>
 
 <h4>The three moments a session id must change</h4>
@@ -233,7 +233,7 @@ server or it is a visual effect.</p>
 <h4>Two clocks, not one</h4>
 <p>A session needs an <b>idle timeout</b> (inactive for N minutes) and an <b>absolute lifetime</b> (valid
 for at most N hours regardless of activity). Idle timeout alone means a stolen session that is kept warm by
-the attacker never expires at all — the absolute lifetime is what bounds that, and it is the one people
+the attacker never expires at all; the absolute lifetime is what bounds that, and it is the one people
 omit because it occasionally logs out an active user.</p>
 
 <h4>Storage, ranked</h4>
@@ -243,7 +243,7 @@ attacker can read later; <b>sessionStorage</b>; and <b>localStorage</b>, which p
 any script that runs on the page.</p>
 <p>The useful framing is blast radius rather than prevention. With an HttpOnly cookie, an XSS bug lets
 an attacker act as the user <i>while the page is open</i>. With localStorage, the same bug lets them walk
-away with a credential usable from anywhere until it expires. Same vulnerability, very different aftermath —
+away with a credential usable from anywhere until it expires. Same vulnerability, very different aftermath,
 and neither is fixed by storage choice, which is why the BFF pattern, where the browser holds no token at
 all, is the structural answer rather than a preference.</p>`,
 docs:[['Session fixation — OWASP','https://owasp.org/www-community/attacks/Session_fixation'],['Token storage — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html#local-storage']],
@@ -257,11 +257,11 @@ solution:`function safe(place) {
   return place === "httponly-cookie";
 }`,
 tests:[{d:'an HttpOnly cookie is safe',re:'"httponly-cookie"'},{d:'does not bless localStorage',re:'"localstorage"',not:true}],
-behavior:`Anything JavaScript can read is exposed to XSS, so only the HttpOnly cookie passes. Note the trade this makes: a cookie is sent automatically, so you now need CSRF protection — safety here is a swap of one problem for a better-understood one.`,
+behavior:`Anything JavaScript can read is exposed to XSS, so only the HttpOnly cookie passes. Note the trade this makes: a cookie is sent automatically, so you now need CSRF protection: safety here is a swap of one problem for a better-understood one.`,
 hints:['Only one storage location is acceptable here.','Use === to compare against the single safe value.','Everything not explicitly safe returns false.']}},
 
 {id:'ss5',title:'Logout & session revocation',body:`
-<p>Logging out must actually <b>end</b> the session server-side, not just delete the cookie — a stolen id is worthless only once the server forgets it. Remove the session from the store (or add its token to a denylist) so any further use is rejected.</p>
+<p>Logging out must actually <b>end</b> the session server-side, not just delete the cookie: a stolen id is worthless only once the server forgets it. Remove the session from the store (or add its token to a denylist) so any further use is rejected.</p>
 <p>In SSO the picture is bigger. <b>Front-channel logout</b> uses the browser to notify each app (hidden iframes/redirects) that the shared session ended; <b>back-channel logout</b> has the identity provider call each app server-to-server, which is more reliable because it does not depend on the browser being open. Either way, the goal is the same: one logout invalidates the sessions everywhere.</p>
 
 <h4>Logout is three different operations wearing one word</h4>
@@ -278,14 +278,14 @@ these, and a system that implements only the first while implying the third is a
 // which looks broken, and worse, was never actually a logout.</div>
 
 <h4>Why deleting the cookie is not enough</h4>
-<p>The cookie is a <i>copy</i> of a reference, not the session. Anything that captured it — an XSS
-payload, a proxy log, a shared machine's history — still holds a working credential, and the server will
+<p>The cookie is a <i>copy</i> of a reference, not the session. Anything that captured it (an XSS
+payload, a proxy log, a shared machine's history) still holds a working credential, and the server will
 keep honouring it until it expires. <b>Logout has to change server state</b>: delete the session record,
 or add the token to a denylist keyed by its <code>jti</code> until its own <code>exp</code> passes.</p>
 <p>This is where stateless JWTs bite. A self-contained access token is valid because it verifies, not
 because a server says so, and there is no record to delete. The options are all compromises: keep access
 tokens short (minutes) and accept a revocation lag; maintain a denylist (which reintroduces the state
-JWTs were meant to remove); or check a revocation list at the gateway only. Choose deliberately —
+JWTs were meant to remove); or check a revocation list at the gateway only. Choose deliberately:
 "logout" that leaves a valid token alive for an hour is a decision, and it should be one you made on
 purpose.</p>
 
@@ -295,10 +295,10 @@ have no common lifetime. Killing the IdP session stops <i>new</i> logins; it doe
 applications already holding their own.</p>
 <p><b>Front-channel logout</b> drives the browser through hidden iframes to each app's logout URL. It is
 simple and it is dying: third-party cookie blocking means those iframes increasingly load without the
-app's cookies, so the logout silently does nothing — and it fails silently, which is the worst property a
+app's cookies, so the logout silently does nothing, and it fails silently, which is the worst property a
 security control can have.</p>
 <p><b>Back-channel logout</b> has the IdP POST a signed <b>logout token</b> to each app server-to-server.
-No browser involvement, works when the tab is closed, and delivery is observable — but every app must
+No browser involvement, works when the tab is closed, and delivery is observable, but every app must
 expose an endpoint, validate the token (including that it carries the <code>events</code> claim and
 <b>no</b> <code>nonce</code>), map <code>sid</code> or <code>sub</code> to its own sessions, and be
 reachable at that moment.</p>
@@ -307,7 +307,7 @@ reachable at that moment.</p>
 <p>Complete single logout is rarely achieved, because it requires every participant to be correct and
 available simultaneously. The pragmatic posture: short application sessions so failures self-heal,
 back-channel logout where it matters, <b>and a separate, reliable "revoke everything" path</b> for the
-case that actually counts — a compromised account. That path is not the logout button; it is an
+case that actually counts: a compromised account. That path is not the logout button; it is an
 administrative action that invalidates the sessions, revokes the refresh tokens, and forces
 re-authentication everywhere, and it should be tested.</p>`,
 docs:[['Logout — OIDC','https://openid.net/specs/openid-connect-rpinitiated-1_0.html'],['Back-channel logout — OIDC','https://openid.net/specs/openid-connect-backchannel-1_0.html']],
@@ -333,10 +333,10 @@ hints:['Set has a remove method that deletes the element.','After removing, cont
 {id:'ss6',title:'Single Logout: why it is hard and how the mechanisms work',body:`
 <p>Single Sign-On is a pleasant illusion. One login event silently created <i>N</i> independent
 application sessions, and the user has no idea. Logout is where the illusion collapses, because now all
-<i>N</i> must be found and ended — and there is no reliable way to reach them all.</p>
+<i>N</i> must be found and ended, and there is no reliable way to reach them all.</p>
 <!--flow:ss6-slo-backchannel-->
 <h4>OIDC back-channel logout — step by step</h4>
-<div class="flowDia"><svg viewBox="0 0 720 290" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OIDC back-channel logout"><defs><marker id="ss6-slo-backchannel-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="ss6-slo-backchannel-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="ss6-slo-backchannel-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="ss6-slo-backchannel-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="42" x2="74" y2="258" class="fdLife"/><line x1="264.66666666666663" y1="42" x2="264.66666666666663" y2="258" class="fdLife"/><line x1="455.3333333333333" y1="42" x2="455.3333333333333" y2="258" class="fdLife"/><line x1="646" y1="42" x2="646" y2="258" class="fdLife"/><rect x="34.300000000000004" y="8" width="79.39999999999999" height="34" rx="8" class="fdActor"/><text x="74" y="29.5" class="fdActorT">Browser</text><rect x="225.66666666666663" y="8" width="78" height="34" rx="8" class="fdActor"/><text x="264.66666666666663" y="29.5" class="fdActorT">App A</text><rect x="411.5333333333333" y="8" width="87.6" height="34" rx="8" class="fdActor"/><text x="455.3333333333333" y="29.5" class="fdActorT">OP (IdP)</text><rect x="607" y="8" width="78" height="34" rx="8" class="fdActor"/><text x="646" y="29.5" class="fdActorT">App B</text><line x1="77" y1="90" x2="450.3333333333333" y2="90" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss6-slo-backchannel-ah-front)"/><text x="279.66666666666663" y="81" class="fdLabel">user logs out at the OP</text><circle cx="92" cy="90" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="93.5" class="fdNumT" style="fill:var(--accent)">1</text><line x1="452.3333333333333" y1="120" x2="269.66666666666663" y2="120" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ss6-slo-backchannel-ah-back)"/><text x="345" y="111" class="fdLabel">POST logout_token (signed JWT: sub, sid)</text><circle cx="437.3333333333333" cy="120" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="437.3333333333333" y="123.5" class="fdNumT" style="fill:var(--accent2)">2</text><line x1="458.3333333333333" y1="150" x2="641" y2="150" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ss6-slo-backchannel-ah-back)"/><text x="565.6666666666666" y="141" class="fdLabel">POST logout_token</text><circle cx="473.3333333333333" cy="150" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="473.3333333333333" y="153.5" class="fdNumT" style="fill:var(--accent2)">3</text><rect x="113.06666666666663" y="167" width="303.2" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="272.66666666666663" y="182" class="fdSelfT">verify token; kill the server-side session</text><circle cx="113.06666666666663" cy="178" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="113.06666666666663" y="181.5" class="fdNumT" style="fill:var(--muted)">4</text><rect x="442.40000000000003" y="203" width="263.6" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="582.2" y="218" class="fdSelfT">same — no browser involvement needed</text><circle cx="442.40000000000003" cy="214" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="442.40000000000003" y="217.5" class="fdNumT" style="fill:var(--muted)">5</text><text x="360" y="240" class="fdNote">The front-channel variant uses hidden iframes — increasingly broken by third-party-cookie blocking.</text><line x1="18" y1="276" x2="44" y2="276" stroke="var(--accent)" class="fdArrow"/><text x="50" y="280" class="fdLegend">front channel (via the browser)</text><line x1="271.29999999999995" y1="276" x2="297.29999999999995" y2="276" stroke="var(--accent2)" class="fdArrow"/><text x="303.29999999999995" y="280" class="fdLegend">back channel (server to server)</text></svg></div>
+<div class="flowDia"><svg viewBox="0 0 720 290" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OIDC back-channel logout"><defs><marker id="ss6-slo-backchannel-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="ss6-slo-backchannel-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="ss6-slo-backchannel-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="ss6-slo-backchannel-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="42" x2="74" y2="258" class="fdLife"/><line x1="264.66666666666663" y1="42" x2="264.66666666666663" y2="258" class="fdLife"/><line x1="455.3333333333333" y1="42" x2="455.3333333333333" y2="258" class="fdLife"/><line x1="646" y1="42" x2="646" y2="258" class="fdLife"/><rect x="34.300000000000004" y="8" width="79.39999999999999" height="34" rx="8" class="fdActor"/><text x="74" y="29.5" class="fdActorT">Browser</text><rect x="225.66666666666663" y="8" width="78" height="34" rx="8" class="fdActor"/><text x="264.66666666666663" y="29.5" class="fdActorT">App A</text><rect x="411.5333333333333" y="8" width="87.6" height="34" rx="8" class="fdActor"/><text x="455.3333333333333" y="29.5" class="fdActorT">OP (IdP)</text><rect x="607" y="8" width="78" height="34" rx="8" class="fdActor"/><text x="646" y="29.5" class="fdActorT">App B</text><line x1="77" y1="90" x2="450.3333333333333" y2="90" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss6-slo-backchannel-ah-front)"/><text x="279.66666666666663" y="81" class="fdLabel">user logs out at the OP</text><circle cx="92" cy="90" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="93.5" class="fdNumT" style="fill:var(--accent)">1</text><line x1="452.3333333333333" y1="120" x2="269.66666666666663" y2="120" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ss6-slo-backchannel-ah-back)"/><text x="345" y="111" class="fdLabel">POST logout_token (signed JWT: sub, sid)</text><circle cx="437.3333333333333" cy="120" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="437.3333333333333" y="123.5" class="fdNumT" style="fill:var(--accent2)">2</text><line x1="458.3333333333333" y1="150" x2="641" y2="150" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ss6-slo-backchannel-ah-back)"/><text x="565.6666666666666" y="141" class="fdLabel">POST logout_token</text><circle cx="473.3333333333333" cy="150" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="473.3333333333333" y="153.5" class="fdNumT" style="fill:var(--accent2)">3</text><rect x="113.06666666666663" y="167" width="303.2" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="272.66666666666663" y="182" class="fdSelfT">verify token; kill the server-side session</text><circle cx="113.06666666666663" cy="178" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="113.06666666666663" y="181.5" class="fdNumT" style="fill:var(--muted)">4</text><rect x="442.40000000000003" y="203" width="263.6" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="582.2" y="218" class="fdSelfT">same — no browser involvement needed</text><circle cx="442.40000000000003" cy="214" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="442.40000000000003" y="217.5" class="fdNumT" style="fill:var(--muted)">5</text><text x="360" y="240" class="fdNote">The front-channel variant uses hidden iframes, increasingly broken by third-party-cookie blocking.</text><line x1="18" y1="276" x2="44" y2="276" stroke="var(--accent)" class="fdArrow"/><text x="50" y="280" class="fdLegend">front channel (via the browser)</text><line x1="271.29999999999995" y1="276" x2="297.29999999999995" y2="276" stroke="var(--accent2)" class="fdArrow"/><text x="303.29999999999995" y="280" class="fdLegend">back channel (server to server)</text></svg></div>
 <ol class="fdSteps">
 <li><b>Browser → OP (IdP):</b> user logs out at the OP <i>(front channel)</i></li>
 <li><b>OP (IdP) → App A:</b> POST logout_token (signed JWT: sub, sid) <i>(back channel)</i></li>
@@ -351,12 +351,12 @@ request.</p>
 
 <h4>Three different things called "logout"</h4>
 <ul>
-<li><b>Local logout</b> — end the session at <i>this</i> application. Easy, and usually all that
+<li><b>Local logout</b>: end the session at <i>this</i> application. Easy, and usually all that
 actually happens. The user is then baffled to find that clicking the app again logs them straight back
 in, because the IdP session is untouched.</li>
-<li><b>IdP logout</b> — end the session at the identity provider, so the <i>next</i> app that redirects
+<li><b>IdP logout</b>: end the session at the identity provider, so the <i>next</i> app that redirects
 there prompts for credentials. Apps already logged in stay logged in.</li>
-<li><b>Single Logout (SLO)</b> — end the IdP session <i>and</i> every application session it produced.
+<li><b>Single Logout (SLO)</b>: end the IdP session <i>and</i> every application session it produced.
 This is the one that is hard.</li>
 </ul>
 <p>Most "logout is broken" reports are really a mismatch between what the user expected and which of
@@ -372,7 +372,7 @@ and redirects back:</p>
 
 // the id_token_hint matters: without it the IdP cannot tell WHICH session to
 // end, and must either prompt the user or refuse.</div>
-<p>This ends the local session and the IdP session. It does nothing about the other applications — for
+<p>This ends the local session and the IdP session. It does nothing about the other applications; for
 that the IdP has to notify them, and there are two ways to do it.</p>
 
 <h4>Front-channel logout: through the browser</h4>
@@ -409,11 +409,11 @@ logout_token=eyJhbGciOiJSUzI1NiIs...
   "sid": "session-abc",                      // the specific session
   "events": { "http://schemas.openid.net/event/backchannel-logout": {} } }
 
-// MUST NOT contain a nonce claim — that would mark it as an ID token,
+// MUST NOT contain a nonce claim; that would mark it as an ID token,
 // and an attacker could otherwise submit an ID token as a logout token.</div>
 <p>It is more reliable, and it introduces its own problem: <b>the application must be able to find and
 kill the session from the token alone.</b> That means indexing sessions by <code>sid</code> or
-<code>sub</code> — and an app using stateless JWT sessions has nothing to delete. Back-channel logout
+<code>sub</code>, and an app using stateless JWT sessions has nothing to delete. Back-channel logout
 effectively requires server-side session state, or a revocation list the app checks.</p>
 <p>Note the asymmetry with front-channel: back-channel reaches the <i>server</i>, but the user's browser
 may still hold a valid cookie for an app the notification failed to reach.</p>
@@ -432,7 +432,7 @@ access tokens valid until they expire. Logging out does not un-issue a token.</l
 <h4>What to do instead</h4>
 <p>Given that SLO is unreliable, the practical posture is to reduce how much it needs to accomplish:</p>
 <ul>
-<li><b>Short access token lifetimes</b> — five to fifteen minutes — so the post-logout window is
+<li><b>Short access token lifetimes</b> (five to fifteen minutes), so the post-logout window is
 small.</li>
 <li><b>Revoke the refresh token and the grant</b> at logout. This is the one that actually stops
 continued access, since without it a refresh quietly mints a new access token.</li>
@@ -447,7 +447,7 @@ federated login fast, and they are exactly what makes logout unreliable. You can
 property without the second.</p>`,
 docs:[['OpenID Connect RP-Initiated Logout 1.0','https://openid.net/specs/openid-connect-rpinitiated-1_0.html'],['OpenID Connect Back-Channel Logout 1.0','https://openid.net/specs/openid-connect-backchannel-1_0.html'],['OpenID Connect Front-Channel Logout 1.0','https://openid.net/specs/openid-connect-frontchannel-1_0.html'],['RFC 7009 — OAuth 2.0 Token Revocation','https://www.rfc-editor.org/rfc/rfc7009']],
 ex:{title:'Validate a back-channel logout token',
-prompt:`Write <code>LogoutToken</code> with three methods. <code>static boolean valid(String iss, String expectedIss, String aud, String clientId, boolean hasLogoutEvent, boolean hasNonce)</code> requires the issuer and audience to match the expected values, the logout event to be present, and <code>hasNonce</code> to be <b>false</b> — a nonce marks the JWT as an ID token, and accepting one would let an attacker submit an ID token as a logout token. <code>static boolean notReplayed(java.util.Set&lt;String&gt; seenJtis, String jti)</code> is true only for a non-null jti not already seen. <code>static String sessionKey(String sid, String sub)</code> returns <code>sid</code> when it is non-null, otherwise <code>sub</code>, otherwise null — the key the app uses to find the session it must kill.`,
+prompt:`Write <code>LogoutToken</code> with three methods. <code>static boolean valid(String iss, String expectedIss, String aud, String clientId, boolean hasLogoutEvent, boolean hasNonce)</code> requires the issuer and audience to match the expected values, the logout event to be present, and <code>hasNonce</code> to be <b>false</b>: a nonce marks the JWT as an ID token, and accepting one would let an attacker submit an ID token as a logout token. <code>static boolean notReplayed(java.util.Set&lt;String&gt; seenJtis, String jti)</code> is true only for a non-null jti not already seen. <code>static String sessionKey(String sid, String sub)</code> returns <code>sid</code> when it is non-null, otherwise <code>sub</code>, otherwise null, the key the app uses to find the session it must kill.`,
 starter:`import java.util.*;
 
 public class LogoutToken {
@@ -463,8 +463,8 @@ public class LogoutToken {
     }
 }`,
 tests:[{d:'the issuer must match',re:'iss\\s*!=\\s*null|expectedIss\\s*\\.\\s*equals|iss\\s*\\.\\s*equals'},{d:'the audience must match this client',re:'clientId|aud'},{d:'the logout event must be present',re:'hasLogoutEvent'},{d:'a nonce disqualifies the token',re:'!\\s*hasNonce|hasNonce\\s*==\\s*false'},{d:'replayed jtis are rejected',re:'contains\\s*\\(\\s*jti\\s*\\)'},{d:'a null jti is rejected',re:'jti\\s*!=\\s*null|jti\\s*==\\s*null'},{d:'sid is preferred over sub',re:'sid\\s*!=\\s*null|null\\s*!=\\s*sid'}],
-behavior:`valid("https://idp","https://idp","app-a","app-a",true,false) is true. It is false when the issuer or audience differ, when the logout event is absent, and above all when hasNonce is true — the specification forbids a nonce precisely so that an ID token cannot be replayed to the logout endpoint to sign a user out, or worse. notReplayed(new HashSet<>(), "j1") is true; a jti already in the set, or a null jti, is false. sessionKey("sess-1","u-1") returns sess-1, since sid identifies the specific session; sessionKey(null,"u-1") returns u-1, which logs the user out of every session; sessionKey(null,null) returns null and the app cannot act.`,
-hints:['Join the checks with &&, guarding the two string comparisons for null first.','<code>return jti != null &amp;&amp; seenJtis != null &amp;&amp; !seenJtis.contains(jti);</code>','A nested ternary is enough for sessionKey — prefer sid, fall back to sub.'],
+behavior:`valid("https://idp","https://idp","app-a","app-a",true,false) is true. It is false when the issuer or audience differ, when the logout event is absent, and above all when hasNonce is true: the specification forbids a nonce precisely so that an ID token cannot be replayed to the logout endpoint to sign a user out, or worse. notReplayed(new HashSet<>(), "j1") is true; a jti already in the set, or a null jti, is false. sessionKey("sess-1","u-1") returns sess-1, since sid identifies the specific session; sessionKey(null,"u-1") returns u-1, which logs the user out of every session; sessionKey(null,null) returns null and the app cannot act.`,
+hints:['Join the checks with &&, guarding the two string comparisons for null first.','<code>return jti != null &amp;&amp; seenJtis != null &amp;&amp; !seenJtis.contains(jti);</code>','A nested ternary is enough for sessionKey: prefer sid, fall back to sub.'],
 solution:`import java.util.*;
 
 public class LogoutToken {
@@ -500,7 +500,7 @@ failures, and a debugging session goes badly until you know which one you are lo
 <code>https</code> versions of the same host. The same-origin policy says script on one origin cannot read
 responses from another.</p>
 <p>Note precisely what it does <i>not</i> say: it does not stop the request being <b>sent</b>, and it does
-not stop cookies riding along. That gap is the whole reason CSRF exists — the attacker's page can cause a
+not stop cookies riding along. That gap is the whole reason CSRF exists: the attacker's page can cause a
 state-changing request with your cookies attached, it simply cannot read the answer. Which is why the
 defence for CSRF is SameSite and tokens, not CORS.</p>
 
@@ -518,9 +518,9 @@ OPTIONS /token                       Access-Control-Request-Method: POST
    Access-Control-Allow-Methods: POST
    Access-Control-Allow-Headers: authorization
    Access-Control-Max-Age: 600       // cache the preflight, or you double every call</div>
-<p>This matters for identity because the endpoints an SPA calls directly — <code>/token</code> for a PKCE
+<p>This matters for identity because the endpoints an SPA calls directly (<code>/token</code> for a PKCE
 public client, <code>/.well-known/openid-configuration</code>, <code>jwks_uri</code>, sometimes
-<code>/userinfo</code> — all need CORS headers, and an <code>Authorization</code> header forces a
+<code>/userinfo</code>) all need CORS headers, and an <code>Authorization</code> header forces a
 preflight on every one of them.</p>
 
 <h4>Credentials change the rules</h4>
@@ -528,7 +528,7 @@ preflight on every one of them.</p>
 the server must send <code>Access-Control-Allow-Credentials: true</code>, and
 <code>Access-Control-Allow-Origin</code> <b>may not be <code>*</code></b>. It must name a single origin.</p>
 <p>The dangerous workaround is to reflect whatever <code>Origin</code> arrives back in the header. That
-technically satisfies the browser — and it means <i>every</i> site on the internet can read your API's
+technically satisfies the browser, and it means <i>every</i> site on the internet can read your API's
 responses with the victim's cookies attached. Reflecting an origin is only safe against an explicit
 allowlist, and "allowlist" must mean exact strings, not a <code>startsWith("https://example")</code> that
 also matches <code>https://example.attacker.com</code>.</p>
@@ -540,7 +540,7 @@ reading their data; it does nothing to protect your API from a determined caller
 needs real authentication and authorization behind it.</p>
 <p>Which is the underrated argument for the <b>BFF pattern</b> from the OAuth stream. Keep the browser
 talking to its own origin and let a small backend hold the tokens. The entire CORS-plus-credentials
-minefield then stops being your problem — along with token storage in the browser.</p>`,
+minefield then stops being your problem, along with token storage in the browser.</p>`,
 docs:[['MDN — Cross-Origin Resource Sharing','https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS'],['Fetch Standard — CORS protocol','https://fetch.spec.whatwg.org/#http-cors-protocol'],['OWASP — CORS misconfiguration','https://owasp.org/www-community/attacks/CORS_OriginHeaderScrutiny']],
 ex:{title:'Decide whether a credentialed read is allowed',lang:'js',
 run:{call:'corsAllowsCredentialedRead',cases:[{name:'an allowlisted origin, echoed exactly, with credentials on',args:[['https://app.example.com'],'https://app.example.com','https://app.example.com',true],expect:true},{name:'wildcard plus credentials is refused by the browser',args:[['https://app.example.com'],'https://app.example.com','*',true],expect:false},{name:'reflecting an origin that is not on the allowlist',args:[['https://app.example.com'],'https://evil.example.com','https://evil.example.com',true],expect:false},{name:'allowlisted, but the server did not allow credentials',args:[['https://app.example.com'],'https://app.example.com','https://app.example.com',false],expect:false},{name:'header names a different origin than the caller',args:[['https://app.example.com'],'https://app.example.com','https://other.example.com',true],expect:false}]},
@@ -555,7 +555,7 @@ solution:`function corsAllowsCredentialedRead(allowlist, requestOrigin, allowOri
   return allowCredentials === true;
 }`,
 tests:[{d:'the origin is checked against an allowlist',re:'allowlist\\s*\\.\\s*includes|indexOf\\s*\\(\\s*requestOrigin'},{d:'the wildcard is rejected outright',re:'["\\x27]\\*["\\x27]'},{d:'the header must name the requesting origin',re:'allowOriginHeader\\s*!==\\s*requestOrigin|allowOriginHeader\\s*===\\s*requestOrigin'},{d:'credentials must be explicitly allowed',re:'allowCredentials\\s*===\\s*true|allowCredentials\\s*==='}],
-behavior:`Five real cases. The wildcard case is the specification's own guard: a browser refuses Access-Control-Allow-Origin: * on a credentialed request, precisely so that an API cannot accidentally publish authenticated responses to every origin. The reflected-origin case is the misconfiguration that shows up in real audits — the server echoes whatever Origin it receives, the browser is satisfied, and any site the victim visits can read their data. The allowlist must hold exact origins: a prefix check on "https://example" also accepts https://example.attacker.com.`,
-hints:['Four independent conditions; any one failing is a refusal.','The wildcard has a special rule of its own — check it before comparing strings.','Exact string membership in the allowlist. A prefix test is a vulnerability, not a shortcut.']}}
+behavior:`Five real cases. The wildcard case is the specification's own guard: a browser refuses Access-Control-Allow-Origin: * on a credentialed request, precisely so that an API cannot accidentally publish authenticated responses to every origin. The reflected-origin case is the misconfiguration that shows up in real audits: the server echoes whatever Origin it receives, the browser is satisfied, and any site the victim visits can read their data. The allowlist must hold exact origins: a prefix check on "https://example" also accepts https://example.attacker.com.`,
+hints:['Four independent conditions; any one failing is a refusal.','The wildcard has a special rule of its own; check it before comparing strings.','Exact string membership in the allowlist. A prefix test is a vulnerability, not a shortcut.']}}
 
 ]});

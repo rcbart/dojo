@@ -1,6 +1,6 @@
 STREAMS.push({icon:'🧰',title:'Time, Testing, Reflection & the JVM',blurb:'Serialization, the java.time API, JUnit 5 & Mockito, annotations/reflection, and how the JVM actually works.',lessons:[
 {id:'dep1b',title:'Serialization & deserialization',body:`
-<p><b>Serialization</b> turns an object graph into bytes; <b>deserialization</b> turns bytes back into objects. Java ships a native mechanism — worth knowing, and worth knowing why the industry moved past it:</p>
+<p><b>Serialization</b> turns an object graph into bytes; <b>deserialization</b> turns bytes back into objects. Java ships a native mechanism, worth knowing, and worth knowing why the industry moved past it:</p>
 <div class="codeSample" data-hl>public class Session implements Serializable {              // marker interface
     private static final long serialVersionUID = 1L;        // version the format!
     private String userId;
@@ -15,12 +15,12 @@ try (var out = new ObjectOutputStream(Files.newOutputStream(path))) {
 try (var in = new ObjectInputStream(Files.newInputStream(path))) {
     Session s = (Session) in.readObject();                  // password field is null now
 }</div>
-<p>What to know cold: <code>Serializable</code> is a marker (no methods); <code>serialVersionUID</code> pins compatibility — omit it and any class change breaks old data with <code>InvalidClassException</code>; <code>transient</code> excludes secrets/caches; the whole reachable object graph gets serialized (a stray reference drags the world in).</p>
-<p><b>The security warning that is now exam material</b>: deserializing untrusted bytes is remote code execution waiting to happen (gadget chains) — never <code>readObject</code> external input; use serialization filters (<code>ObjectInputFilter</code>) if you must. Which is why modern systems serialize through explicit formats instead: JSON via Jackson (your api3 lesson), or Protobuf/Avro for compact schema-versioned data. Records + Jackson is the modern default; native serialization survives mainly in caches, session replication, and legacy RPC.</p>
+<p>What to know cold: <code>Serializable</code> is a marker (no methods); <code>serialVersionUID</code> pins compatibility: omit it and any class change breaks old data with <code>InvalidClassException</code>; <code>transient</code> excludes secrets/caches; the whole reachable object graph gets serialized (a stray reference drags the world in).</p>
+<p><b>The security warning that is now exam material</b>: deserializing untrusted bytes is remote code execution waiting to happen (gadget chains): never <code>readObject</code> external input; use serialization filters (<code>ObjectInputFilter</code>) if you must. Which is why modern systems serialize through explicit formats instead: JSON via Jackson (your api3 lesson), or Protobuf/Avro for compact schema-versioned data. Records + Jackson is the modern default; native serialization survives mainly in caches, session replication, and legacy RPC.</p>
 
 <h4>Why the industry moved away from native serialization</h4>
 <p>Three reasons, in order of weight. <b>Security</b>: <code>readObject</code> constructs arbitrary types
-before your code sees anything, so an attacker who controls the bytes controls what gets built — the gadget
+before your code sees anything, so an attacker who controls the bytes controls what gets built: the gadget
 chain problem, which is why the JDK added <code>ObjectInputFilter</code> and why the standing advice is never
 to deserialize untrusted input at all. <b>Coupling</b>: the format is your class structure, so a rename is
 a breaking change to data at rest. <b>Interoperability</b>: nothing outside the JVM can read it.</p>
@@ -33,7 +33,7 @@ at the same time. The rules that hold across formats:</p>
 <ul>
 <li><b>Adding an optional field is safe.</b> Old readers ignore it; new readers default it.</li>
 <li><b>Removing or renaming a field is not.</b> Deprecate, stop writing it, wait for consumers, then
-remove — the same expand-and-contract shape as a database migration.</li>
+remove, the same expand-and-contract shape as a database migration.</li>
 <li><b>Never reuse a field number or a name</b> for a different meaning. Protobuf makes this explicit with
 <code>reserved</code>; JSON leaves you to remember.</li>
 <li><b>Tolerant readers win.</b> A consumer that ignores unknown fields lets producers move first, which is
@@ -45,7 +45,7 @@ what makes independent deployment possible at all.</li>
 supported everywhere, at the cost of size and no schema unless you add one. <b>Protobuf or Avro</b> earn
 their keep on high-volume internal traffic and event streams, where a schema registry gives you
 compatibility checks in CI rather than incidents in production. The deciding question is rarely
-performance — it is whether you need a contract that a machine can enforce.</p>`,
+performance; it is whether you need a contract that a machine can enforce.</p>`,
 docs:[['Serializable — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Serializable.html'],['Serialization filtering — Oracle','https://docs.oracle.com/en/java/javase/21/core/serialization-filtering1.html'],['OWASP: insecure deserialization','https://owasp.org/www-community/vulnerabilities/Deserialization_of_untrusted_data']],
 ex:{title:'Round-trip a session',
 prompt:`Write <code>class Session implements java.io.Serializable</code> with <code>private static final long serialVersionUID = 1L</code>, fields <code>String userId</code> and <code>transient char[] secret</code>, and a constructor for both. Then <code>class SessionStore</code> with <code>static void save(Session s, java.nio.file.Path p) throws Exception</code> using <code>ObjectOutputStream</code> over <code>Files.newOutputStream</code> in try-with-resources, and <code>static Session load(java.nio.file.Path p) throws Exception</code> using <code>ObjectInputStream</code> + a cast.`,
@@ -65,8 +65,8 @@ class SessionStore {
     }
 }`,
 tests:[{d:'Implements Serializable',re:'class\\s+Session\\s+implements\\s+Serializable'},{d:'serialVersionUID declared',re:'private\\s+static\\s+final\\s+long\\s+serialVersionUID\\s*=\\s*1L\\s*;'},{d:'Secret is transient',re:'transient\\s+char\\[\\]\\s+secret'},{d:'writeObject in try-with-resources',re:'try\\s*\\(\\s*var\\s+\\w+\\s*=\\s*new\\s+ObjectOutputStream[\\s\\S]*?writeObject\\s*\\(\\s*s\\s*\\)'},{d:'readObject with cast',re:'\\(\\s*Session\\s*\\)\\s*\\w+\\.readObject\\s*\\(\\s*\\)'}],
-behavior:`1. save then load round-trips userId intact. 2. The loaded session's secret is null — transient fields are skipped, which is exactly right for credentials. 3. Changing Session's fields without changing serialVersionUID keeps old files readable (compatible changes); the UID is the contract. 4. Both streams close via try-with-resources.`,
-hints:['The marker interface has nothing to implement — the fields and UID are the work.','save: <code>try (var out = new ObjectOutputStream(Files.newOutputStream(p))) { out.writeObject(s); }</code>','load mirrors it with ObjectInputStream and a cast: <code>return (Session) in.readObject();</code>'],
+behavior:`1. save then load round-trips userId intact. 2. The loaded session's secret is null; transient fields are skipped, which is exactly right for credentials. 3. Changing Session's fields without changing serialVersionUID keeps old files readable (compatible changes); the UID is the contract. 4. Both streams close via try-with-resources.`,
+hints:['The marker interface has nothing to implement; the fields and UID are the work.','save: <code>try (var out = new ObjectOutputStream(Files.newOutputStream(p))) { out.writeObject(s); }</code>','load mirrors it with ObjectInputStream and a cast: <code>return (Session) in.readObject();</code>'],
 solution:`import java.io.*;
 import java.nio.file.*;
 
@@ -109,10 +109,10 @@ Duration dur = Duration.ofMinutes(90);                       // time-based
 DateTimeFormatter f = DateTimeFormatter.ofPattern("dd MMM yyyy");
 String s = d.format(f);
 LocalDate parsed = LocalDate.parse("2026-07-16");  // ISO by default</div>
-<p>Rules: store <code>Instant</code> (UTC) in databases, apply zones only at display; <code>Period</code> for calendar amounts, <code>Duration</code> for exact time; never forget the return value — <code>d.plusDays(1)</code> without assignment is a no-op bug.</p>
+<p>Rules: store <code>Instant</code> (UTC) in databases, apply zones only at display; <code>Period</code> for calendar amounts, <code>Duration</code> for exact time; never forget the return value: <code>d.plusDays(1)</code> without assignment is a no-op bug.</p>
 <h4>Why the old API had to be replaced</h4>
 <p>It is worth knowing what was wrong, because the fixes explain the new design. <code>Date</code> was
-<b>mutable</b>, so passing one to a method meant that method could change it under you — and it was shared
+<b>mutable</b>, so passing one to a method meant that method could change it under you, and it was shared
 across threads with no safety. <code>Calendar</code> had months numbered from zero, so December was 11 and
 off-by-one errors were the norm. <code>SimpleDateFormat</code> was not thread-safe, and being stateless in
 appearance, it was routinely stored in a static field, which produced corrupted dates under load and
@@ -142,12 +142,12 @@ Period          calendar amount (years/months/days). "1 month"
 <p><b>Forgetting the return value.</b> Every method returns a new object; <code>d.plusDays(1);</code> as a
 statement does nothing at all and compiles cleanly. It is the most common java.time bug and the easiest to
 miss in review.</p>
-<p><b>Period and Duration disagree, correctly.</b> Adding one month to 31 January gives 28 February —
+<p><b>Period and Duration disagree, correctly.</b> Adding one month to 31 January gives 28 February;
 month lengths vary. Adding 30 days gives 2 March. Both are right; only one is what you meant. And across a
 daylight-saving boundary, adding <code>Period.ofDays(1)</code> keeps the wall-clock time while
 <code>Duration.ofHours(24)</code> shifts it by an hour.</p>
 <p><b>Storing local times.</b> A meeting stored as an <code>Instant</code> is wrong if the government moves
-the clocks after you scheduled it — the user meant "9am on the 3rd in Berlin", so store the local time and
+the clocks after you scheduled it; the user meant "9am on the 3rd in Berlin", so store the local time and
 the zone id, and resolve to an instant at use. Conversely, an event that already happened is an
 <code>Instant</code>, always.</p>
 <p><b>Zone ids, not offsets.</b> <code>ZoneId.of("Europe/Berlin")</code> carries the DST rules;
@@ -157,8 +157,8 @@ political decision, so keep the tzdata in your JDK and containers current.</p>
 <h4>The one change that makes time testable</h4>
 <p>Inject a <code>Clock</code> rather than calling <code>now()</code> directly. Every
 <code>now()</code> method accepts one, so production passes <code>Clock.systemUTC()</code> and tests pass
-<code>Clock.fixed(...)</code>. That single habit removes an entire category of untestable code — expiry
-windows, rate limits, scheduling — and it costs one constructor parameter.</p>`,
+<code>Clock.fixed(...)</code>. That single habit removes an entire category of untestable code (expiry
+windows, rate limits, scheduling), and it costs one constructor parameter.</p>`,
 docs:[['java.time — dev.java','https://dev.java/learn/date-time/'],['DateTimeFormatter — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/format/DateTimeFormatter.html']],
 ex:{title:'Dates done right',
 prompt:`Write <code>Dates</code> with: <code>static int ageYears(java.time.LocalDate birth)</code> using <code>Period.between</code> to now; <code>static java.time.LocalDate paymentDue(java.time.LocalDate invoice)</code> returning invoice date + 30 days; and <code>static String pretty(java.time.LocalDate d)</code> formatting with pattern <code>"dd MMM yyyy"</code>.`,
@@ -179,8 +179,8 @@ public class Dates {
     }
 }`,
 tests:[{d:'Period.between for age',re:'Period\\.between\\s*\\('},{d:'getYears() extracts the years',re:'getYears\\s*\\(\\s*\\)'},{d:'plusDays(30) for the due date',re:'plusDays\\s*\\(\\s*30\\s*\\)'},{d:'Formatter with the exact pattern',re:'ofPattern\\s*\\(\\s*"dd MMM yyyy"\\s*\\)'}],
-behavior:`1. ageYears(LocalDate.now().minusYears(30)) == 30. 2. paymentDue(2026-01-31) == 2026-03-02 (plusDays handles month lengths). 3. pretty(LocalDate.of(2026,7,16)) equals "16 Jul 2026". 4. paymentDue RETURNS the new date — LocalDate is immutable.`,
-hints:['<code>return Period.between(birth, LocalDate.now()).getYears();</code>','<code>return invoice.plusDays(30);</code> — remember to return it; the original is untouched.','<code>return d.format(DateTimeFormatter.ofPattern("dd MMM yyyy"));</code>'],
+behavior:`1. ageYears(LocalDate.now().minusYears(30)) == 30. 2. paymentDue(2026-01-31) == 2026-03-02 (plusDays handles month lengths). 3. pretty(LocalDate.of(2026,7,16)) equals "16 Jul 2026". 4. paymentDue RETURNS the new date; LocalDate is immutable.`,
+hints:['<code>return Period.between(birth, LocalDate.now()).getYears();</code>','<code>return invoice.plusDays(30);</code>. Remember to return it; the original is untouched.','<code>return d.format(DateTimeFormatter.ofPattern("dd MMM yyyy"));</code>'],
 solution:`import java.time.*;
 import java.time.format.DateTimeFormatter;
 
@@ -238,7 +238,7 @@ when(orderCalculator.total(any())).thenReturn(new Money(100));
 // verify BEHAVIOUR that matters, not every interaction
 verify(paymentGateway).charge(argThat(c -&gt; c.amount().equals(expected)));
 verifyNoMoreInteractions(paymentGateway);   // use sparingly: it is brittle</div>
-<p>The rule of thumb: mock things that are slow, non-deterministic, or outside your process — clocks,
+<p>The rule of thumb: mock things that are slow, non-deterministic, or outside your process: clocks,
 networks, payment providers, the filesystem. Mocking your own value objects and calculators produces
 tests that pass while the system is broken.</p>
 
@@ -246,7 +246,7 @@ tests that pass while the system is broken.</p>
 <p><b>Time</b> and <b>randomness</b> make tests flaky, and both are fixable by injection. Take a
 <code>Clock</code> rather than calling <code>Instant.now()</code>, and a <code>Random</code> with a
 fixed seed. <code>Clock.fixed(...)</code> in a test turns "expires tomorrow" from a guess into an
-assertion — and it lets you test the boundary, which is where date bugs live.</p>
+assertion, and it lets you test the boundary, which is where date bugs live.</p>
 
 <h4>JUnit 5 features worth using</h4>
 <div class="codeSample" data-hl>@ParameterizedTest                  // one test, many cases — beats copy-paste
@@ -299,7 +299,7 @@ class BankAccountTest {
     }
 }`}},
 {id:'dep4',title:'Annotations & reflection',body:`
-<p>Annotations are structured metadata; reflection reads types at runtime. Together they power Spring, JUnit, Jackson — every framework you've met in this dojo.</p>
+<p>Annotations are structured metadata; reflection reads types at runtime. Together they power Spring, JUnit, Jackson: every framework you've met in this dojo.</p>
 <div class="codeSample" data-hl>@Retention(RetentionPolicy.RUNTIME)   // keep it visible at runtime
 @Target(ElementType.METHOD)          // only on methods
 public @interface Audited {
@@ -316,11 +316,11 @@ for (Method m : Service.class.getDeclaredMethods()) {
     Audited a = m.getAnnotation(Audited.class);
     if (a != null) System.out.println(m.getName() + " audited as " + a.value());
 }</div>
-<p>Without <code>RUNTIME</code> retention, <code>getAnnotation</code> returns null — the single most common custom-annotation bug. Reflection can reach almost anything, but it is slow and unchecked: frameworks cache it; application code should rarely need it.</p>
+<p>Without <code>RUNTIME</code> retention, <code>getAnnotation</code> returns null, the single most common custom-annotation bug. Reflection can reach almost anything, but it is slow and unchecked: frameworks cache it; application code should rarely need it.</p>
 <h4>Why the two are always discussed together</h4>
 <p>Separately they are unremarkable: an annotation is inert metadata, and reflection is a slow way to do
 what a normal method call does better. Together they are the mechanism behind every framework you have
-used in this course — <b>you declare intent, and something else discovers it and supplies behaviour</b>.
+used in this course: <b>you declare intent, and something else discovers it and supplies behaviour</b>.
 JUnit finds your <code>@Test</code> methods this way. Spring finds beans and transactional methods. Jackson
 finds property names.</p>
 <p>Seeing that once removes the magic permanently: no framework has access to a mechanism you do not. What
@@ -341,7 +341,7 @@ RUNTIME  in the class file AND readable via reflection. what frameworks
 that silently does nothing where it was put.</p>
 
 <h4>A clear look at the costs</h4>
-<p>Reflection is slower than direct invocation — lookups are expensive, and while modern JITs optimise
+<p>Reflection is slower than direct invocation: lookups are expensive, and while modern JITs optimise
 repeated calls well, the discovery phase is not free. It also <b>defeats the compiler</b>: a field renamed
 by a refactoring tool leaves a string somewhere that no longer matches, and you find out at runtime. And
 it can breach encapsulation, which is why the module system (later in this course) restricts deep
@@ -353,7 +353,7 @@ usually a design that does not need to.</p>
 
 <h4>The modern alternatives</h4>
 <p>Two directions have replaced a lot of runtime reflection. <b>Annotation processors</b> read the same
-annotations at compile time and generate real code — fast, checked, debuggable, and the basis of MapStruct
+annotations at compile time and generate real code: fast, checked, debuggable, and the basis of MapStruct
 and Micronaut. And <b>method handles</b> / <code>VarHandle</code> give reflective flexibility at close to
 direct-call speed. Worth knowing they exist before you write a reflection-heavy library.</p>`,
 docs:[['Annotations — dev.java','https://dev.java/learn/annotations/'],['Reflection API — Oracle','https://docs.oracle.com/javase/tutorial/reflect/index.html']],
@@ -372,7 +372,7 @@ class AuditScanner {
     }
 }`,
 tests:[{d:'RUNTIME retention (or getAnnotation returns null!)',re:'@Retention\\s*\\(\\s*RetentionPolicy\\.RUNTIME\\s*\\)'},{d:'Method target',re:'@Target\\s*\\(\\s*ElementType\\.METHOD\\s*\\)'},{d:'Annotation with String value()',re:'@interface\\s+Audited\\s*\\{[\\s\\S]*?String\\s+value\\s*\\(\\s*\\)'},{d:'Scans getDeclaredMethods',re:'getDeclaredMethods\\s*\\(\\s*\\)'},{d:'Reads via getAnnotation',re:'getAnnotation\\s*\\(\\s*Audited\\.class\\s*\\)'}],
-behavior:`1. A class with @Audited("transfers") on method transfer() yields ["transfer:transfers"]. 2. Un-annotated methods are skipped (getAnnotation null-check). 3. Without RUNTIME retention the scanner would find nothing — that is the point of the lesson.`,
+behavior:`1. A class with @Audited("transfers") on method transfer() yields ["transfer:transfers"]. 2. Un-annotated methods are skipped (getAnnotation null-check). 3. Without RUNTIME retention the scanner would find nothing; that is the point of the lesson.`,
 hints:['Annotation declaration: <code>public @interface Audited { String value(); }</code> with the two meta-annotations above it.','Loop: <code>for (Method m : c.getDeclaredMethods())</code>','Null-check the lookup: <code>Audited a = m.getAnnotation(Audited.class); if (a != null) out.add(m.getName() + ":" + a.value());</code>'],
 solution:`import java.lang.annotation.*;
 import java.lang.reflect.Method;
@@ -399,9 +399,9 @@ class AuditScanner {
 {id:'dep4b',title:'Annotation mastery: meta-annotations & mini-frameworks',body:`
 <p>Beyond the basics, annotations become a design tool:</p>
 <ul>
-<li><b>Meta-annotations</b>: <code>@Repeatable</code> (apply the same annotation twice — needs a container annotation), <code>@Inherited</code> (subclasses see the superclass's class-level annotation), <code>@Documented</code> (shows in javadoc).</li>
-<li><b>Composed annotations</b>: annotate an annotation to bundle behavior — that is literally how Spring works: <code>@RestController</code> is itself annotated <code>@Controller</code> + <code>@ResponseBody</code>; you can build <code>@AdminEndpoint</code> = <code>@RestController</code> + <code>@PreAuthorize("hasRole('ADMIN')")</code>.</li>
-<li><b>Elements</b> can be primitives, String, Class, enums, other annotations, and arrays of those — with <code>default</code> values. A single element named <code>value</code> enables the shorthand <code>@Audited("x")</code>.</li>
+<li><b>Meta-annotations</b>: <code>@Repeatable</code> (apply the same annotation twice; needs a container annotation), <code>@Inherited</code> (subclasses see the superclass's class-level annotation), <code>@Documented</code> (shows in javadoc).</li>
+<li><b>Composed annotations</b>: annotate an annotation to bundle behavior. That is literally how Spring works: <code>@RestController</code> is itself annotated <code>@Controller</code> + <code>@ResponseBody</code>; you can build <code>@AdminEndpoint</code> = <code>@RestController</code> + <code>@PreAuthorize("hasRole('ADMIN')")</code>.</li>
+<li><b>Elements</b> can be primitives, String, Class, enums, other annotations, and arrays of those, with <code>default</code> values. A single element named <code>value</code> enables the shorthand <code>@Audited("x")</code>.</li>
 <li><b>Runtime vs compile time</b>: reflection (as here) reads at runtime; annotation processors (Lombok, MapStruct) generate code at compile time.</li>
 </ul>
 <div class="codeSample" data-hl>@Repeatable(Roles.class)
@@ -417,8 +417,8 @@ class Backoffice {}
 Role[] roles = Backoffice.class.getAnnotationsByType(Role.class);  // both!</div>
 <h4>The move that turns annotations into a design tool</h4>
 <p>Everything above is machinery; the reason to learn it is that it lets you express a policy <b>once</b>
-and apply it declaratively. Instead of six lines of audit code repeated in forty methods — which someone
-will eventually forget — there is one annotation and one implementation, and the omission is visible
+and apply it declaratively. Instead of six lines of audit code repeated in forty methods (which someone
+will eventually forget), there is one annotation and one implementation, and the omission is visible
 because the annotation is missing.</p>
 <p>The composed-annotation pattern is worth internalising because it is exactly how the frameworks are
 built, all the way down:</p>
@@ -436,7 +436,7 @@ public @interface AdminEndpoint {}
 // one annotation now carries a routing convention AND a security policy.
 // change the policy in one place and every admin endpoint follows.</div>
 <p>Spring resolves meta-annotations recursively, so this needs no code at all. Note that plain Java does
-<b>not</b> — <code>getAnnotation()</code> looks only at what is directly present, so outside a framework
+<b>not</b>: <code>getAnnotation()</code> looks only at what is directly present, so outside a framework
 you must walk the annotations on the annotation yourself.</p>
 
 <h4><code>@Inherited</code>, and why it disappoints</h4>
@@ -447,7 +447,7 @@ classes under any circumstances. Frameworks work around this by searching the hi
 is why Spring's <code>AnnotatedElementUtils</code> exists and finds things plain reflection will not.</p>
 
 <h4>What annotations cannot do</h4>
-<p>The element types are restricted — primitives, <code>String</code>, <code>Class</code>, enums, other
+<p>The element types are restricted: primitives, <code>String</code>, <code>Class</code>, enums, other
 annotations, and arrays of those. No arbitrary objects, and <b>no nulls</b>, so an "absent" value has to be
 signalled by a default like <code>""</code>. Values must be compile-time constants, which is why you see
 <code>Class</code> literals and string expressions (like Spring's SpEL) rather than lambdas.</p>
@@ -455,8 +455,8 @@ signalled by a default like <code>""</code>. Values must be compile-time constan
 <h4>When not to reach for one</h4>
 <p>Annotations move behaviour away from the code it affects. That is their value and their cost: a reader
 looking at the method cannot see what else happens to it, and a typo in an annotation-driven behaviour
-fails silently. Use them for genuinely cross-cutting, orthogonal concerns — auditing, transactions,
-security, serialisation — and not as a way to configure business logic, where an ordinary parameter is
+fails silently. Use them for genuinely cross-cutting, orthogonal concerns (auditing, transactions,
+security, serialisation) and not as a way to configure business logic, where an ordinary parameter is
 clearer and the compiler is on your side.</p>`,
 docs:[['Annotations in depth — dev.java','https://dev.java/learn/annotations/'],['Repeating annotations — Oracle','https://docs.oracle.com/javase/tutorial/java/annotations/repeating.html'],['Spring composed annotations','https://docs.spring.io/spring-framework/reference/core/beans/classpath-scanning.html#beans-meta-annotations']],
 ex:{title:'Build a mini validation framework',
@@ -474,8 +474,8 @@ class MiniValidator {
     }
 }`,
 tests:[{d:'RUNTIME retention on @Required',re:'@Retention\\s*\\(\\s*RetentionPolicy\\.RUNTIME\\s*\\)[\\s\\S]*?@interface\\s+Required'},{d:'FIELD target',re:'@Target\\s*\\(\\s*ElementType\\.FIELD\\s*\\)'},{d:'message element with default',re:'String\\s+message\\s*\\(\\s*\\)\\s+default\\s+"is required"'},{d:'Scans getDeclaredFields',re:'getDeclaredFields\\s*\\(\\s*\\)'},{d:'setAccessible before reading',re:'setAccessible\\s*\\(\\s*true\\s*\\)'},{d:'Null check drives the violation',re:'field\\.get\\s*\\(\\s*o\\s*\\)|f\\.get\\s*\\(\\s*o\\s*\\)'}],
-behavior:`1. An object with @Required private String name = null yields ["name is required"]. 2. Non-null annotated fields produce no violation. 3. Fields without @Required are ignored entirely. 4. A field annotated @Required(message = "must be set") yields "field must be set" — the element overrides the default. 5. This is the exact mechanism (plus caching) behind Bean Validation's @NotNull.`,
-hints:['Annotation: three lines of meta + <code>@interface Required { String message() default "is required"; }</code>','Loop shape: <code>for (Field f : o.getClass().getDeclaredFields()) { Required r = f.getAnnotation(Required.class); if (r == null) continue; ... }</code>','Private fields need <code>f.setAccessible(true);</code> before <code>f.get(o)</code> — then <code>if (f.get(o) == null) out.add(f.getName() + " " + r.message());</code>'],
+behavior:`1. An object with @Required private String name = null yields ["name is required"]. 2. Non-null annotated fields produce no violation. 3. Fields without @Required are ignored entirely. 4. A field annotated @Required(message = "must be set") yields "field must be set"; the element overrides the default. 5. This is the exact mechanism (plus caching) behind Bean Validation's @NotNull.`,
+hints:['Annotation: three lines of meta + <code>@interface Required { String message() default "is required"; }</code>','Loop shape: <code>for (Field f : o.getClass().getDeclaredFields()) { Required r = f.getAnnotation(Required.class); if (r == null) continue; ... }</code>','Private fields need <code>f.setAccessible(true);</code> before <code>f.get(o)</code>; then <code>if (f.get(o) == null) out.add(f.getName() + " " + r.message());</code>'],
 solution:`import java.lang.annotation.*;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -505,9 +505,9 @@ class MiniValidator {
 <ul>
 <li><b>Compilation</b>: javac → bytecode (.class) → JVM interprets, then the <b>JIT</b> compiles hot paths to native code (why Java "warms up").</li>
 <li><b>Memory</b>: objects live on the <b>heap</b> (shared, GC-managed); each thread has a <b>stack</b> of frames holding locals and references. Deep/infinite recursion → <code>StackOverflowError</code>; heap exhaustion → <code>OutOfMemoryError</code>.</li>
-<li><b>GC</b>: generational — most objects die young (eden/survivor), long-lived ones get promoted. Modern collectors: G1 (default), ZGC (low-pause). You tune with flags, not System.gc().</li>
+<li><b>GC</b>: generational: most objects die young (eden/survivor), long-lived ones get promoted. Modern collectors: G1 (default), ZGC (low-pause). You tune with flags, not System.gc().</li>
 <li><b>Common flags</b>: <code>-Xmx2g</code> max heap, <code>-Xms2g</code> initial heap, <code>-XX:+UseZGC</code>, <code>-XX:+HeapDumpOnOutOfMemoryError</code>.</li>
-<li><b>Interning</b>: string literals share one pooled instance — <code>"a" == "a"</code> is true but never rely on it; <code>equals()</code> always.</li>
+<li><b>Interning</b>: string literals share one pooled instance: <code>"a" == "a"</code> is true but never rely on it; <code>equals()</code> always.</li>
 </ul>
 <div class="codeSample">jps                    # JVM processes
 jstack &lt;pid&gt;           # thread dump — find deadlocks
@@ -515,14 +515,14 @@ jmap -heap &lt;pid&gt;       # heap summary
 jcmd &lt;pid&gt; GC.heap_info</div>
 <h4>Why "compiled and interpreted" is the interesting part</h4>
 <p>Java's odd-sounding hybrid is what makes it fast in long-running processes. Bytecode starts interpreted,
-which is slow but requires no analysis. Meanwhile the JVM <b>profiles</b> — which branches are taken, which
-types actually appear at each call site — and once a method is hot, the JIT compiles it to native code
+which is slow but requires no analysis. Meanwhile the JVM <b>profiles</b> (which branches are taken, which
+types actually appear at each call site), and once a method is hot, the JIT compiles it to native code
 using that evidence.</p>
 <p>The result is optimisation a static compiler cannot perform: an interface call that has only ever seen
 one implementation is compiled as a direct call and inlined; branches never taken are compiled away. If the
 assumption later proves wrong, the JVM <b>deoptimises</b> and recompiles. This is why Java frequently beats
-naively-written C++ in long-running services, and why the first thousand requests are slower than the rest
-— the "warm-up" everyone mentions.</p>
+naively-written C++ in long-running services, and why the first thousand requests are slower than the rest,
+the "warm-up" everyone mentions.</p>
 <div class="codeSample" data-hl>// two practical consequences:
 // 1. BENCHMARKS. timing a loop in main() measures the interpreter and
 //    a half-optimised JIT. use JMH, which warms up properly. hand-rolled
@@ -537,7 +537,7 @@ freed automatically as calls return. So <code>StackOverflowError</code> is a run
 <code>OutOfMemoryError: Java heap space</code> is either a genuine capacity problem or a leak.</p>
 <p>And "leak" in Java means <b>an unintended reference</b>, not forgotten frees. The usual culprits are a
 static collection that only grows, a cache with no eviction, a listener never unregistered, and a
-<code>ThreadLocal</code> not cleared on a pooled thread. The tool is a heap dump — take it with
+<code>ThreadLocal</code> not cleared on a pooled thread. The tool is a heap dump: take it with
 <code>-XX:+HeapDumpOnOutOfMemoryError</code> and open it in Eclipse MAT, which will name the retaining
 path.</p>
 <p>Also worth knowing that the heap is not all of it: metaspace, thread stacks, code cache and direct byte
@@ -546,16 +546,16 @@ gets OOM-killed by the kernel with nothing in the application log.</p>
 
 <h4>GC, and the only tuning advice that survives contact</h4>
 <p>Generational collection exploits one empirical fact: <b>most objects die young</b>. New objects go in
-eden, survivors are copied a few times, and the persistent minority are promoted to the old generation —
+eden, survivors are copied a few times, and the persistent minority are promoted to the old generation,
 so the common case is collecting a small region where almost everything is garbage, which is cheap.</p>
 <p>The practical guidance is short. Do not call <code>System.gc()</code>. Do not copy JVM flags from a blog.
-Choose a collector by requirement — <b>G1</b> is a good default, <b>ZGC</b> when pause time matters more
-than throughput, <b>Parallel</b> for batch throughput — then <b>measure before changing anything else</b>.
+Choose a collector by requirement (<b>G1</b> is a good default, <b>ZGC</b> when pause time matters more
+than throughput, <b>Parallel</b> for batch throughput), then <b>measure before changing anything else</b>.
 Most "GC problems" are allocation problems, and the fix is in your code.</p>
 
 <h4>The tools to reach for at 3am</h4>
 <p><code>jcmd &lt;pid&gt; help</code> lists everything a live JVM will tell you. <code>jstack</code> for a
-thread dump when things are hung — take three, thirty seconds apart, and look for threads stuck in the same
+thread dump when things are hung: take three, thirty seconds apart, and look for threads stuck in the same
 place. <b>JFR</b> (<code>jcmd &lt;pid&gt; JFR.start</code>) is the one worth learning properly: continuous,
 low-overhead profiling you can leave running in production and inspect afterwards in JDK Mission
 Control.</p>`,
@@ -578,7 +578,7 @@ starter:`# 1)
 `,
 tests:[{d:'StackOverflowError for recursion',re:'StackOverflowError'},{d:'OutOfMemoryError for heap exhaustion',re:'OutOfMemoryError'},{d:'-Xmx2g',re:'-Xmx2[gG]'},{d:'heap / stack answers',re:'[Hh]eap[\\s\\S]*[Ss]tack'},{d:'jstack for thread dumps',re:'jstack'},{d:'HeapDumpOnOutOfMemoryError flag',re:'HeapDumpOnOutOfMemoryError'}],
 behavior:`1. (1) StackOverflowError. 2. (2) OutOfMemoryError. 3. (3) -Xmx2g. 4. (4) heap. 5. (5) stack. 6. (6) jstack <pid>. 7. (7) -XX:+HeapDumpOnOutOfMemoryError.`,
-hints:['Recursion eats stack frames; allocation eats heap — the two errors mirror the two memory areas.','Heap flags start with -Xm…: -Xms initial, -Xmx max.','The j-tools: jps lists, jstack dumps threads, jmap inspects the heap.'],
+hints:['Recursion eats stack frames; allocation eats heap; the two errors mirror the two memory areas.','Heap flags start with -Xm…: -Xms initial, -Xmx max.','The j-tools: jps lists, jstack dumps threads, jmap inspects the heap.'],
 solution:`# 1)
 StackOverflowError
 

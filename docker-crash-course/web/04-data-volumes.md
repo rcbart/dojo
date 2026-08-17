@@ -1,6 +1,6 @@
 # 4 — Data: volumes & bind mounts
 
-*Containers are throwaway — so where does data live? Concepts + a lab. ~25 min. Requires Docker.*
+*Containers are throwaway, so where does data live? Concepts + a lab. ~25 min. Requires Docker.*
 
 ---
 
@@ -16,7 +16,7 @@ to store data *outside* the container, in **volumes** or **bind mounts**.
 | **Named volume** | Managed by Docker, on the host | Databases, persistent app data |
 | **Bind mount** | A specific folder on your host | Live-editing source in dev; config files |
 
-## Named volumes — the default for persistence
+## Named volumes: the default for persistence
 
 A **volume** is storage Docker manages for you, living on the host but referenced by name. It
 survives container removal, can be shared between containers, and is the **recommended** way to
@@ -44,10 +44,10 @@ docker volume inspect appdata
 docker volume rm appdata          # only when no container uses it
 ```
 
-## Bind mounts — map a host folder in
+## Bind mounts: map a host folder in
 
 A **bind mount** maps an exact folder on *your machine* into the container. Changes flow both ways
-in real time — perfect for **development**, where you want the container to see your code as you
+in real time, perfect for **development**, where you want the container to see your code as you
 edit it.
 
 ```bash
@@ -55,13 +55,13 @@ edit it.
 docker run -d --name dev -p 8080:80 -v "$(pwd)":/usr/share/nginx/html:ro nginx
 ```
 
-- `"$(pwd)"` — the current host directory (use the full path on Windows).
-- `:ro` — read-only inside the container (drop it for read-write).
+- `"$(pwd)"`: the current host directory (use the full path on Windows).
+- `:ro`: read-only inside the container (drop it for read-write).
 
-Edit a file in that folder and refresh the browser — the change is instant, no rebuild. That's the
+Edit a file in that folder and refresh the browser: the change is instant, no rebuild. That's the
 dev superpower of bind mounts.
 
-## Volume vs bind mount — which when?
+## Volume vs bind mount: which when?
 
 - **Named volume** → **production data** you want Docker to manage and persist (databases, uploads).
   Portable, backed up as a unit, not tied to a host path.
@@ -98,14 +98,14 @@ docker run -d --name pg -e POSTGRES_PASSWORD=secret -v pgdata:/var/lib/postgresq
 docker exec -it pg psql -U postgres -c "CREATE TABLE t(x int); INSERT INTO t VALUES(42);"
 docker rm -f pg                                   # destroy the container
 docker run -d --name pg -e POSTGRES_PASSWORD=secret -v pgdata:/var/lib/postgresql/data postgres:16
-docker exec -it pg psql -U postgres -c "SELECT * FROM t;"   # → 42 — data survived!
+docker exec -it pg psql -U postgres -c "SELECT * FROM t;"   # → 42: data survived!
 docker rm -f pg && docker volume rm pgdata
 ```
 
 ## Your turn (challenge)
 
 Create a named volume `notes`, write a line into it from one container, then read that same line
-from a **different** container — proving the data is independent of any single container.
+from a **different** container, proving the data is independent of any single container.
 
 **Verify you succeeded:**
 ```bash
@@ -118,8 +118,8 @@ docker volume rm notes >/dev/null
 ## Check yourself
 
 1. Why can't important data live in the container itself? *(The writable layer is deleted when the
-   container is removed — containers are ephemeral.)*
-2. Named volume vs bind mount — the core difference? *(A volume is Docker-managed storage referenced
+   container is removed; containers are ephemeral.)*
+2. Named volume vs bind mount: the core difference? *(A volume is Docker-managed storage referenced
    by name; a bind mount maps a specific host folder.)*
 3. Which do you use for a production database? *(A named volume.)*
 4. Which is ideal for live-editing code in development? *(A bind mount.)*

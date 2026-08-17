@@ -1,19 +1,19 @@
-STREAMS.push({icon:'🏆',tournament:true,title:'Coding Challenges: The Tournament',blurb:'Interview-style problems in three ranked rounds — Easy, Medium, Hard. Enter after Fundamentals; return often.',lessons:[
+STREAMS.push({icon:'🏆',tournament:true,title:'Coding Challenges: The Tournament',blurb:'Interview-style problems in three ranked rounds: Easy, Medium, Hard. Enter after Fundamentals; return often.',lessons:[
 {id:'ch1',title:'Easy round',body:`
-<p>Warm-up bouts. Easy problems test whether the fundamentals are automatic: hash lookups, pointer discipline, clean loops. In an interview these are the first 10 minutes — the goal is not just solving them but solving them <i>cleanly while talking</i>.</p>
+<p>Warm-up bouts. Easy problems test whether the fundamentals are automatic: hash lookups, pointer discipline, clean loops. In an interview these are the first 10 minutes; the goal is not just solving them but solving them <i>cleanly while talking</i>.</p>
 <p>Approach ritual (use it on every problem in this tournament): restate the problem in one sentence → name the brute force and its complexity → name the pattern that beats it → code → walk one example and one edge case out loud.</p>
 
 <h4>Why "easy" is misleading</h4>
 <p>Easy means the <i>pattern</i> is easy once you see it. It does not mean the interview is easy, because
 easies are where communication habits are established. An interviewer who watches you solve two-sum in
 silence has learned almost nothing about you; one who watches you say "brute force is O(n²) nested
-loops — I can trade space for time with a map of complements, O(n) time and O(n) space" has learned
+loops; I can trade space for time with a map of complements, O(n) time and O(n) space" has learned
 the thing they are actually there to find out.</p>
 
 <h4>The fundamentals being tested</h4>
 <div class="codeSample" data-hl>HASH LOOKUP        "have I seen X?" in O(1). the single most valuable
                    structure in interviews. complement lookups, frequency
-                   counts, dedup, grouping — all the same move.
+                   counts, dedup, grouping: all the same move.
 
 POINTER DISCIPLINE two indices moving with intent: start/end converging,
                    fast/slow for cycles, a window that grows and shrinks.
@@ -25,7 +25,7 @@ CLEAN LOOPS        one job per loop, no mutation you cannot explain, and
                    finds off-by-one errors before the interviewer does.</div>
 
 <h4>The edge cases that come up every time</h4>
-<p>Reach for these unprompted — noticing them is worth more than speed: <b>empty</b> input,
+<p>Reach for these unprompted (noticing them is worth more than speed): <b>empty</b> input,
 <b>one</b> element, <b>all identical</b> elements, <b>negative</b> numbers where you assumed positive,
 <b>duplicates</b> where you assumed uniqueness, and <b>integer overflow</b> on sums or on
 <code>(lo + hi) / 2</code>. That last one is a genuine classic: use
@@ -45,8 +45,8 @@ public class TwoSum {
     }
 }`,
 tests:[{d:'Uses a HashMap',re:'new\\s+HashMap<'},{d:'Checks the complement',re:'target\\s*-\\s*nums\\[\\s*\\w+\\s*\\]'},{d:'Single pass (one loop)',re:'for\\s*\\([\\s\\S]*?for\\s*\\(',not:true},{d:'Stores value→index as it goes',re:'\\.put\\s*\\(\\s*nums\\[\\s*\\w+\\s*\\]\\s*,\\s*\\w+\\s*\\)'}],
-behavior:`1. twoSum([2,7,11,15], 9) == [0,1]. 2. twoSum([3,2,4], 6) == [1,2] (not [0,0] — check-before-put prevents self-pairing). 3. twoSum([3,3], 6) == [0,1]. 4. O(n) time, one traversal.`,
-hints:['For each i: does the map already contain target - nums[i]? If yes, done.','Check BEFORE putting nums[i] — that ordering handles the duplicate-value cases correctly.','Map shape: value → its index.'],
+behavior:`1. twoSum([2,7,11,15], 9) == [0,1]. 2. twoSum([3,2,4], 6) == [1,2] (not [0,0]; check-before-put prevents self-pairing). 3. twoSum([3,3], 6) == [0,1]. 4. O(n) time, one traversal.`,
+hints:['For each i: does the map already contain target - nums[i]? If yes, done.','Check BEFORE putting nums[i]; that ordering handles the duplicate-value cases correctly.','Map shape: value → its index.'],
 solution:`import java.util.*;
 
 public class TwoSum {
@@ -63,14 +63,14 @@ public class TwoSum {
     }
 }`},
 {title:'Valid palindrome',
-prompt:`<b>Easy.</b> Write <code>static boolean isPalindrome(String s)</code>: considering only letters and digits and ignoring case, does the string read the same both ways? Two pointers from the ends, skipping non-alphanumerics with <code>Character.isLetterOrDigit</code>, comparing with <code>Character.toLowerCase</code>. No cleaned-copy allocation — do it in place on the indices.`,
+prompt:`<b>Easy.</b> Write <code>static boolean isPalindrome(String s)</code>: considering only letters and digits and ignoring case, does the string read the same both ways? Two pointers from the ends, skipping non-alphanumerics with <code>Character.isLetterOrDigit</code>, comparing with <code>Character.toLowerCase</code>. No cleaned-copy allocation: do it in place on the indices.`,
 starter:`public class Palindrome {
     static boolean isPalindrome(String s) {
         return false;
     }
 }`,
 tests:[{d:'Two pointers from both ends',re:'\\w+\\s*=\\s*0[\\s\\S]*?\\w+\\s*=\\s*s\\.length\\s*\\(\\s*\\)\\s*-\\s*1'},{d:'Skips non-alphanumerics',re:'Character\\.isLetterOrDigit'},{d:'Case-insensitive compare',re:'Character\\.toLowerCase'},{d:'No cleaned-string allocation',re:'replaceAll|toCharArray\\(\\)\\.length|StringBuilder',not:true}],
-behavior:`1. isPalindrome("A man, a plan, a canal: Panama") == true. 2. isPalindrome("race a car") == false. 3. isPalindrome(" ") == true (nothing to compare). 4. O(n) time, O(1) space — the skipping happens inside the main loop, not via a preprocessing pass.`,
+behavior:`1. isPalindrome("A man, a plan, a canal: Panama") == true. 2. isPalindrome("race a car") == false. 3. isPalindrome(" ") == true (nothing to compare). 4. O(n) time, O(1) space: the skipping happens inside the main loop, not via a preprocessing pass.`,
 hints:['Outer loop while lo < hi; inner skips: <code>while (lo < hi && !Character.isLetterOrDigit(s.charAt(lo))) lo++;</code> and mirrored for hi.','Compare lowercased chars; on mismatch return false immediately.','Advance both pointers after a successful match.'],
 solution:`public class Palindrome {
     static boolean isPalindrome(String s) {
@@ -95,8 +95,8 @@ starter:`public class Merge {
     }
 }`,
 tests:[{d:'Result sized a+b',re:'new\\s+int\\[\\s*a\\.length\\s*\\+\\s*b\\.length\\s*\\]'},{d:'Head-vs-head comparison',re:'a\\[\\s*\\w+\\s*\\]\\s*<=?\\s*b\\[\\s*\\w+\\s*\\]'},{d:'Drains the leftovers',re:'while\\s*\\(\\s*\\w+\\s*<\\s*a\\.length\\s*\\)[\\s\\S]*?while\\s*\\(\\s*\\w+\\s*<\\s*b\\.length\\s*\\)'},{d:'No Arrays.sort cheating',re:'Arrays\\.sort',not:true}],
-behavior:`1. merge([1,3,5], [2,4,6]) == [1,2,3,4,5,6]. 2. merge([], [1,2]) == [1,2]. 3. merge([1,1], [1]) == [1,1,1] (duplicates preserved). 4. O(n+m) — each element examined exactly once.`,
-hints:['Three indices: i into a, j into b, k into the result.','Main loop while both have elements: take the smaller head, advance its index and k.','Then two drain loops — only one of them will actually run.'],
+behavior:`1. merge([1,3,5], [2,4,6]) == [1,2,3,4,5,6]. 2. merge([], [1,2]) == [1,2]. 3. merge([1,1], [1]) == [1,1,1] (duplicates preserved). 4. O(n+m): each element examined exactly once.`,
+hints:['Three indices: i into a, j into b, k into the result.','Main loop while both have elements: take the smaller head, advance its index and k.','Then two drain loops; only one of them will actually run.'],
 solution:`public class Merge {
     static int[] merge(int[] a, int[] b) {
         int[] out = new int[a.length + b.length];
@@ -136,7 +136,7 @@ prompt:`<b>Easy.</b> Write <code>static long factorial(int n)</code> computing n
 starter:`public class Factorial {\n    static long factorial(int n) {\n        return 0;\n    }\n}`,
 tests:[{d:'Method signature returns long',re:'static\\s+long\\s+factorial\\s*\\(\\s*int\\s+n\\s*\\)'},{d:'Accumulates a product',re:'\\*=\\s*\\w+|result\\s*=\\s*result\\s*\\*'},{d:'Loops over the range',re:'for\\s*\\('}],
 behavior:`1. factorial(0) == 1. 2. factorial(5) == 120. 3. factorial(20) == 2432902008176640000. 4. The result variable starts at 1.`,
-hints:['Start <code>long result = 1;</code>.','<code>for (int i = 2; i <= n; i++) result *= i;</code>','Return result — the empty loop for n<=1 correctly yields 1.'],
+hints:['Start <code>long result = 1;</code>.','<code>for (int i = 2; i <= n; i++) result *= i;</code>','Return result; the empty loop for n<=1 correctly yields 1.'],
 solution:`public class Factorial {\n    static long factorial(int n) {\n        long result = 1;\n        for (int i = 2; i <= n; i++) {\n            result *= i;\n        }\n        return result;\n    }\n}`},
 {title:'Count vowels',
 prompt:`<b>Easy.</b> Write <code>static int vowels(String s)</code> counting a, e, i, o, u case-insensitively, using <code>"aeiou".indexOf(...)</code> to test each lowercased char.`,
@@ -149,11 +149,11 @@ solution:`public class Vowels {\n    static int vowels(String s) {\n        int 
 prompt:`<b>Easy.</b> Write <code>static boolean isPrime(int n)</code>: false for n &lt; 2, else trial-divide only up to <code>i * i &lt;= n</code> (the sqrt optimization).`,
 starter:`public class Primes {\n    static boolean isPrime(int n) {\n        return false;\n    }\n}`,
 tests:[{d:'Method signature',re:'static\\s+boolean\\s+isPrime\\s*\\(\\s*int\\s+n\\s*\\)'},{d:'Handles n < 2',re:'n\\s*<\\s*2'},{d:'Loops only to sqrt',re:'\\w+\\s*\\*\\s*\\w+\\s*<=\\s*n'},{d:'Divisibility test',re:'%\\s*\\w+\\s*==\\s*0'}],
-behavior:`1. isPrime(2) == true, isPrime(17) == true. 2. isPrime(1) == false, isPrime(0) == false, isPrime(-3) == false. 3. isPrime(15) == false. 4. Loops to sqrt(n), not n — O(sqrt n).`,
+behavior:`1. isPrime(2) == true, isPrime(17) == true. 2. isPrime(1) == false, isPrime(0) == false, isPrime(-3) == false. 3. isPrime(15) == false. 4. Loops to sqrt(n), not n: O(sqrt n).`,
 hints:['Guard: <code>if (n < 2) return false;</code>','<code>for (int i = 2; i * i <= n; i++) if (n % i == 0) return false;</code>','Return true if no divisor found.'],
 solution:`public class Primes {\n    static boolean isPrime(int n) {\n        if (n < 2) return false;\n        for (int i = 2; i * i <= n; i++) {\n            if (n % i == 0) return false;\n        }\n        return true;\n    }\n}`},
 {title:'Reverse an integer',
-prompt:`<b>Easy.</b> Write <code>static int reverseInt(int x)</code> reversing the digits (123 -> 321, -120 -> -21). Return 0 if the result overflows a 32-bit int — accumulate in a <code>long</code> and check bounds.`,
+prompt:`<b>Easy.</b> Write <code>static int reverseInt(int x)</code> reversing the digits (123 -> 321, -120 -> -21). Return 0 if the result overflows a 32-bit int: accumulate in a <code>long</code> and check bounds.`,
 starter:`public class ReverseInt {\n    static int reverseInt(int x) {\n        return 0;\n    }\n}`,
 tests:[{d:'Method signature',re:'static\\s+int\\s+reverseInt\\s*\\(\\s*int\\s+x\\s*\\)'},{d:'Peels digits with %10',re:'%\\s*10'},{d:'Builds with *10',re:'\\*\\s*10'},{d:'Guards overflow with long or MAX_VALUE',re:'long|Integer\\.MAX_VALUE'}],
 behavior:`1. reverseInt(123) == 321. 2. reverseInt(-120) == -21. 3. reverseInt(1534236469) == 0 (overflow). 4. Sign is preserved naturally by % on negatives.`,
@@ -164,7 +164,7 @@ prompt:`<b>Easy.</b> Write <code>static boolean hasDuplicate(int[] a)</code> ret
 starter:`import java.util.*;\n\npublic class Dup {\n    static boolean hasDuplicate(int[] a) {\n        return false;\n    }\n}`,
 tests:[{d:'Method signature',re:'static\\s+boolean\\s+hasDuplicate\\s*\\(\\s*int\\[\\]\\s+a\\s*\\)'},{d:'Uses a HashSet',re:'new\\s+HashSet<'},{d:'Uses add result or contains',re:'\\.add\\s*\\(|\\.contains\\s*\\('}],
 behavior:`1. hasDuplicate([1,2,3,1]) == true. 2. hasDuplicate([1,2,3]) == false. 3. hasDuplicate([]) == false. 4. O(n): Set.add returns false when the element was already present.`,
-hints:['<code>Set&lt;Integer&gt; seen = new HashSet&lt;&gt;();</code>','<code>if (!seen.add(x)) return true;</code> — add returns false on a duplicate.','Return false after the loop.'],
+hints:['<code>Set&lt;Integer&gt; seen = new HashSet&lt;&gt;();</code>','<code>if (!seen.add(x)) return true;</code>; add returns false on a duplicate.','Return false after the loop.'],
 solution:`import java.util.*;\n\npublic class Dup {\n    static boolean hasDuplicate(int[] a) {\n        Set<Integer> seen = new HashSet<>();\n        for (int x : a) {\n            if (!seen.add(x)) return true;\n        }\n        return false;\n    }\n}`},
 {title:'Missing number',
 prompt:`<b>Easy.</b> An array holds n distinct numbers from the range 0..n with exactly one missing. Write <code>static int missing(int[] a)</code> using the sum formula: expected <code>n*(n+1)/2</code> minus the actual sum.`,
@@ -192,14 +192,14 @@ prompt:`<b>Easy.</b> Write <code>static void moveZeroes(int[] a)</code> that mov
 starter:`public class MoveZeroes {\n    static void moveZeroes(int[] a) {\n    }\n}`,
 tests:[{d:'Void in-place signature',re:'static\\s+void\\s+moveZeroes\\s*\\(\\s*int\\[\\]\\s+a\\s*\\)'},{d:'Write index advances on non-zero',re:'!=\\s*0'},{d:'Writes into a[w]',re:'a\\[\\s*\\w+\\+\\+\\s*\\]\\s*=|a\\[\\s*\\w+\\s*\\]\\s*='},{d:'No extra array allocation',re:'new\\s+int\\[',not:true}],
 behavior:`1. [0,1,0,3,12] becomes [1,3,12,0,0]. 2. [0,0] becomes [0,0]. 3. [1,2] unchanged. 4. Relative order of non-zeroes preserved; O(1) extra space.`,
-hints:['First pass: copy each non-zero to a[write++].','Second pass: fill a[write..end] with 0.','No new array — everything happens inside a.'],
+hints:['First pass: copy each non-zero to a[write++].','Second pass: fill a[write..end] with 0.','No new array: everything happens inside a.'],
 solution:`public class MoveZeroes {\n    static void moveZeroes(int[] a) {\n        int w = 0;\n        for (int x : a) {\n            if (x != 0) a[w++] = x;\n        }\n        while (w < a.length) a[w++] = 0;\n    }\n}`},
 {title:'Best time to buy and sell stock',
 prompt:`<b>Easy.</b> Prices by day; buy once and sell later. Write <code>static int maxProfit(int[] prices)</code> in one pass: track the minimum price so far and the best profit (<code>price - minSoFar</code>). Return 0 if no profit is possible.`,
 starter:`public class Stock {\n    static int maxProfit(int[] prices) {\n        return 0;\n    }\n}`,
 tests:[{d:'Method signature',re:'static\\s+int\\s+maxProfit\\s*\\(\\s*int\\[\\]\\s+prices\\s*\\)'},{d:'Tracks a running minimum',re:'Math\\.min'},{d:'Tracks best profit',re:'Math\\.max'}],
 behavior:`1. maxProfit([7,1,5,3,6,4]) == 5 (buy 1, sell 6). 2. maxProfit([7,6,4,3,1]) == 0 (only losses). 3. maxProfit([2]) == 0. 4. Single O(n) pass.`,
-hints:['Keep <code>int min = prices[0];</code> and <code>int best = 0;</code>.','Each day: <code>best = Math.max(best, p - min); min = Math.min(min, p);</code>','Update best before (or with) min — you can only sell after buying.'],
+hints:['Keep <code>int min = prices[0];</code> and <code>int best = 0;</code>.','Each day: <code>best = Math.max(best, p - min); min = Math.min(min, p);</code>','Update best before (or with) min: you can only sell after buying.'],
 solution:`public class Stock {\n    static int maxProfit(int[] prices) {\n        int min = Integer.MAX_VALUE, best = 0;\n        for (int p : prices) {\n            best = Math.max(best, p - min);\n            min = Math.min(min, p);\n        }\n        return best;\n    }\n}`},
 {title:'Majority element',
 prompt:`<b>Easy.</b> An element appears more than n/2 times. Write <code>static int majority(int[] a)</code> using <b>Boyer-Moore voting</b>: keep a candidate and a count; matching values increment, others decrement, and on zero adopt a new candidate. O(n) time, O(1) space.`,
@@ -226,8 +226,8 @@ solution:`public class FibIter {\n    static long fibonacci(int n) {\n        if
 prompt:`<b>Easy.</b> Write <code>static int wordCount(String s)</code> returning the number of whitespace-separated words, treating runs of spaces and leading/trailing spaces correctly (a blank string is 0 words). Use <code>trim</code> + <code>split</code> on <code>\\\\s+</code>.`,
 starter:`public class WordCount {\n    static int wordCount(String s) {\n        return 0;\n    }\n}`,
 tests:[{d:'Method signature',re:'static\\s+int\\s+wordCount\\s*\\(\\s*String\\s+s\\s*\\)'},{d:'Blank guard',re:'isBlank\\s*\\(\\s*\\)|trim\\s*\\(\\s*\\)\\.isEmpty'},{d:'Splits on whitespace',re:'split\\s*\\(\\s*"\\\\\\\\s\\+"'}],
-behavior:`1. wordCount("the quick brown fox") == 4. 2. wordCount("  hello   world  ") == 2. 3. wordCount("") == 0 and wordCount("   ") == 0. 4. Multiple spaces collapse — the regex split handles it.`,
-hints:['Guard first: <code>if (s.isBlank()) return 0;</code> — avoids counting one empty token.','<code>return s.trim().split("\\\\s+").length;</code>','trim removes the leading/trailing whitespace that would create empty tokens.'],
+behavior:`1. wordCount("the quick brown fox") == 4. 2. wordCount("  hello   world  ") == 2. 3. wordCount("") == 0 and wordCount("   ") == 0. 4. Multiple spaces collapse; the regex split handles it.`,
+hints:['Guard first: <code>if (s.isBlank()) return 0;</code>, which avoids counting one empty token.','<code>return s.trim().split("\\\\s+").length;</code>','trim removes the leading/trailing whitespace that would create empty tokens.'],
 solution:`public class WordCount {\n    static int wordCount(String s) {\n        if (s.isBlank()) return 0;\n        return s.trim().split("\\\\s+").length;\n    }\n}`}
 
 ]},
@@ -249,19 +249,19 @@ correctly determines the whole solution:</p>
 "count pairs summing to T"           complement lookup in a map       O(n)
 "nested structure, undo choices"     backtracking with a path stack   exponential, pruned</div>
 <p>Say the pattern out loud before writing anything. If you cannot name it, you are about to write the
-brute force — which is fine as a stated starting point, and fatal as a silent one.</p>
+brute force, which is fine as a stated starting point, and fatal as a silent one.</p>
 
 <h4>The three in this round, and why each is instructive</h4>
 <ul>
-<li><b>Group anagrams</b> — the canonical-key idea. Anagrams are equal <i>after normalisation</i>, so
+<li><b>Group anagrams</b>: the canonical-key idea. Anagrams are equal <i>after normalisation</i>, so
 sorting each word's characters produces a key that collides exactly when you want it to. The general
 lesson: when equality is not literal, invent a key that makes it literal. Sorting costs O(k log k) per
 word; a 26-slot character count is O(k) and faster for long words.</li>
-<li><b>Search in a rotated sorted array</b> — binary search survives a broken invariant. The array is
+<li><b>Search in a rotated sorted array</b>: binary search survives a broken invariant. The array is
 not sorted, but at every split <b>one half always is</b>, and you can tell which by comparing the
 endpoints. Recognising that a weakened invariant still supports the algorithm is the transferable
 insight.</li>
-<li><b>Product of array except self</b> — the constraint (no division) is the hint. Forbidding division
+<li><b>Product of array except self</b>: the constraint (no division) is the hint. Forbidding division
 forces you to see the answer as prefix-product times suffix-product, which is one left pass and one
 right pass. When an interviewer bans the obvious tool, they are telling you the intended structure.</li>
 </ul>
@@ -271,7 +271,7 @@ right pass. When an interviewer bans the obvious tool, they are telling you the 
 coding, did you notice the edge cases unprompted (empty input, single element, duplicates, integer
 overflow), and did you test your own code rather than announcing it was done. A working solution with
 no stated complexity often scores below a nearly-working one with clear reasoning.</p>
-<p><b>The recovery move.</b> When stuck, say what you know — "brute force is O(n²) because I re-scan
+<p><b>The recovery move.</b> When stuck, say what you know: "brute force is O(n²) because I re-scan
 for every element; I want to avoid re-scanning, so I need something that remembers what I have seen,
 which suggests a map". That sentence is the actual skill, and it frequently produces the answer.</p>`,
 docs:[['Binary search — API note on Arrays.binarySearch','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Arrays.html'],['Collectors.groupingBy — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Collectors.html']],
@@ -287,7 +287,7 @@ public class Anagrams {
 }`,
 tests:[{d:'Sorted-chars canonical key',re:'toCharArray\\s*\\(\\s*\\)[\\s\\S]*?Arrays\\.sort'},{d:'Buckets via computeIfAbsent',re:'computeIfAbsent\\s*\\([^)]*->\\s*new\\s+ArrayList'},{d:'Returns the map values',re:'new\\s+ArrayList<>\\s*\\(\\s*\\w+\\.values\\s*\\(\\s*\\)\\s*\\)'}],
 behavior:`1. group(["eat","tea","tan","ate","nat","bat"]) yields buckets {eat,tea,ate}, {tan,nat}, {bat} (any order). 2. group([""]) == [[""]]. 3. Two words land together iff their sorted characters are identical. 4. O(n · k log k) where k is max word length.`,
-hints:['Key building: <code>char[] cs = w.toCharArray(); Arrays.sort(cs); String key = new String(cs);</code>','<code>map.computeIfAbsent(key, k -> new ArrayList<>()).add(w);</code> — bucket-or-create in one line.','The return is just the values: <code>new ArrayList&lt;&gt;(map.values())</code>.'],
+hints:['Key building: <code>char[] cs = w.toCharArray(); Arrays.sort(cs); String key = new String(cs);</code>','<code>map.computeIfAbsent(key, k -> new ArrayList<>()).add(w);</code>, bucket-or-create in one line.','The return is just the values: <code>new ArrayList&lt;&gt;(map.values())</code>.'],
 solution:`import java.util.*;
 
 public class Anagrams {
@@ -303,14 +303,14 @@ public class Anagrams {
     }
 }`},
 {title:'Search in rotated sorted array',
-prompt:`<b>Medium.</b> A sorted array was rotated at an unknown pivot ([4,5,6,7,0,1,2]). Write <code>static int search(int[] nums, int target)</code> returning the index or -1 in <b>O(log n)</b>: binary search where each step determines which half is properly sorted (<code>nums[lo] &lt;= nums[mid]</code>?) and whether the target lies inside that sorted half — then discard the other.`,
+prompt:`<b>Medium.</b> A sorted array was rotated at an unknown pivot ([4,5,6,7,0,1,2]). Write <code>static int search(int[] nums, int target)</code> returning the index or -1 in <b>O(log n)</b>: binary search where each step determines which half is properly sorted (<code>nums[lo] &lt;= nums[mid]</code>?) and whether the target lies inside that sorted half; then discard the other.`,
 starter:`public class Rotated {
     static int search(int[] nums, int target) {
         return -1;
     }
 }`,
 tests:[{d:'Binary search skeleton',re:'while\\s*\\(\\s*lo\\s*<=\\s*hi\\s*\\)[\\s\\S]*?mid'},{d:'Detects the sorted half',re:'nums\\[\\s*lo\\s*\\]\\s*<=\\s*nums\\[\\s*mid\\s*\\]'},{d:'Range test inside the sorted half',re:'nums\\[\\s*lo\\s*\\]\\s*<=\\s*target|target\\s*<=\\s*nums\\[\\s*hi\\s*\\]'},{d:'No linear scan',re:'for\\s*\\(\\s*int\\s+\\w+\\s*=\\s*0\\s*;\\s*\\w+\\s*<\\s*nums\\.length',not:true}],
-behavior:`1. search([4,5,6,7,0,1,2], 0) == 4. 2. search([4,5,6,7,0,1,2], 3) == -1. 3. search([1], 1) == 0. 4. Works when the array is not rotated at all (pivot 0). 5. Strictly O(log n) — every iteration halves the range.`,
+behavior:`1. search([4,5,6,7,0,1,2], 0) == 4. 2. search([4,5,6,7,0,1,2], 3) == -1. 3. search([1], 1) == 0. 4. Works when the array is not rotated at all (pivot 0). 5. Strictly O(log n): every iteration halves the range.`,
 hints:['Compute mid; if nums[mid] == target, done.','If the LEFT half is sorted (nums[lo] <= nums[mid]): target in [nums[lo], nums[mid]) → hi = mid - 1, else lo = mid + 1.','Otherwise the RIGHT half is sorted: mirror the range test with (nums[mid], nums[hi]].'],
 solution:`public class Rotated {
     static int search(int[] nums, int target) {
@@ -330,15 +330,15 @@ solution:`public class Rotated {
     }
 }`},
 {title:'Product of array except self',
-prompt:`<b>Medium.</b> Write <code>static int[] productExceptSelf(int[] nums)</code>: each output element is the product of every input element except its own — <b>without using division</b> and in O(n). Two sweeps: left-to-right filling each slot with the product of everything BEFORE it, then right-to-left multiplying in the product of everything AFTER it (carried in a single running variable).`,
+prompt:`<b>Medium.</b> Write <code>static int[] productExceptSelf(int[] nums)</code>: each output element is the product of every input element except its own, <b>without using division</b> and in O(n). Two sweeps: left-to-right filling each slot with the product of everything BEFORE it, then right-to-left multiplying in the product of everything AFTER it (carried in a single running variable).`,
 starter:`public class Products {
     static int[] productExceptSelf(int[] nums) {
         return null;
     }
 }`,
 tests:[{d:'Prefix sweep',re:'for\\s*\\(\\s*int\\s+\\w+\\s*=\\s*0\\s*;[\\s\\S]*?out\\[\\s*\\w+\\s*\\]'},{d:'Suffix sweep runs backwards',re:'for\\s*\\(\\s*int\\s+\\w+\\s*=\\s*(nums\\.length|\\w+)\\s*-\\s*1\\s*;[^;]*>=\\s*0'},{d:'No division',re:'/\\s*nums\\[',not:true},{d:'Running suffix variable',re:'suffix\\s*\\*=|right\\s*\\*='}],
-behavior:`1. productExceptSelf([1,2,3,4]) == [24,12,8,6]. 2. productExceptSelf([-1,1,0,-3,3]) == [0,0,9,0,0] (zeros handled naturally — no division means no special-casing). 3. O(n) time, O(1) extra space beyond the output.`,
-hints:['Pass 1: out[i] = product of nums[0..i-1]; start a prefix variable at 1.','Pass 2 from the end: multiply out[i] by a suffix variable, then fold nums[i] into the suffix.','Division-based solutions die on zeros — that is why the constraint exists.'],
+behavior:`1. productExceptSelf([1,2,3,4]) == [24,12,8,6]. 2. productExceptSelf([-1,1,0,-3,3]) == [0,0,9,0,0] (zeros handled naturally: no division means no special-casing). 3. O(n) time, O(1) extra space beyond the output.`,
+hints:['Pass 1: out[i] = product of nums[0..i-1]; start a prefix variable at 1.','Pass 2 from the end: multiply out[i] by a suffix variable, then fold nums[i] into the suffix.','Division-based solutions die on zeros; that is why the constraint exists.'],
 solution:`public class Products {
     static int[] productExceptSelf(int[] nums) {
         int n = nums.length;
@@ -390,7 +390,7 @@ prompt:`<b>Medium.</b> Write <code>static java.util.List&lt;Integer&gt; topKFreq
 starter:`import java.util.*;\n\npublic class TopKFreq {\n    static List<Integer> topKFrequent(int[] nums, int k) {\n        return null;\n    }\n}`,
 tests:[{d:'Method signature',re:'static\\s+List<Integer>\\s+topKFrequent'},{d:'Frequency map',re:'merge\\s*\\(|getOrDefault'},{d:'Heap ordered by frequency',re:'PriorityQueue<>\\s*\\(\\s*Comparator\\.comparingInt'},{d:'Bounds to k',re:'size\\s*\\(\\s*\\)\\s*>\\s*k'}],
 behavior:`1. topKFrequent([1,1,1,2,2,3], 2) contains 1 and 2 (any order). 2. topKFrequent([1], 1) == [1]. 3. O(n log k) via the bounded heap.`,
-hints:['Build freq with map.merge(x, 1, Integer::sum).','Heap comparator: Comparator.comparingInt(freq::get) — a min-heap by count.','Offer each key, poll when size exceeds k; drain the heap into a list.'],
+hints:['Build freq with map.merge(x, 1, Integer::sum).','Heap comparator: Comparator.comparingInt(freq::get), a min-heap by count.','Offer each key, poll when size exceeds k; drain the heap into a list.'],
 solution:`import java.util.*;\n\npublic class TopKFreq {\n    static List<Integer> topKFrequent(int[] nums, int k) {\n        Map<Integer, Integer> freq = new HashMap<>();\n        for (int x : nums) freq.merge(x, 1, Integer::sum);\n        PriorityQueue<Integer> heap = new PriorityQueue<>(Comparator.comparingInt(freq::get));\n        for (int key : freq.keySet()) {\n            heap.offer(key);\n            if (heap.size() > k) heap.poll();\n        }\n        return new ArrayList<>(heap);\n    }\n}`},
 {title:'Subarray sum equals K',
 prompt:`<b>Medium.</b> Write <code>static int subarraySum(int[] nums, int k)</code> counting contiguous subarrays that sum to k. Use a running prefix sum and a HashMap of prefix -> count (seed 0 -> 1); each step add the count of <code>sum - k</code>.`,
@@ -404,14 +404,14 @@ prompt:`<b>Medium.</b> Write <code>static int longestConsecutive(int[] nums)</co
 starter:`import java.util.*;\n\npublic class Consec {\n    static int longestConsecutive(int[] nums) {\n        return 0;\n    }\n}`,
 tests:[{d:'Method signature',re:'static\\s+int\\s+longestConsecutive\\s*\\(\\s*int\\[\\]\\s+nums\\s*\\)'},{d:'Uses a HashSet',re:'new\\s+HashSet<'},{d:'Only starts a run when predecessor absent',re:'!\\s*\\w+\\.contains\\s*\\(\\s*\\w+\\s*-\\s*1\\s*\\)'},{d:'Extends the run',re:'contains\\s*\\(\\s*\\w+\\s*\\+\\s*1\\s*\\)'}],
 behavior:`1. longestConsecutive([100,4,200,1,3,2]) == 4 (1,2,3,4). 2. longestConsecutive([0,3,7,2,5,8,4,6,0,1]) == 9. 3. Empty array == 0. 4. The predecessor check keeps it O(n) despite the nested while.`,
-hints:['Load all numbers into a HashSet.','For each x, only if the set lacks x-1 do you count upward — that makes each run counted once.','Walk x+1, x+2, ... while present and track the max length.'],
+hints:['Load all numbers into a HashSet.','For each x, only if the set lacks x-1 do you count upward; that makes each run counted once.','Walk x+1, x+2, ... while present and track the max length.'],
 solution:`import java.util.*;\n\npublic class Consec {\n    static int longestConsecutive(int[] nums) {\n        Set<Integer> set = new HashSet<>();\n        for (int x : nums) set.add(x);\n        int best = 0;\n        for (int x : set) {\n            if (!set.contains(x - 1)) {\n                int cur = x, len = 1;\n                while (set.contains(cur + 1)) { cur++; len++; }\n                best = Math.max(best, len);\n            }\n        }\n        return best;\n    }\n}`},
 {title:'Rotate array by k',
 prompt:`<b>Medium.</b> Write <code>static void rotate(int[] nums, int k)</code> rotating right by k <b>in place</b> using the reverse trick: reverse the whole array, then reverse the first k and the rest. Remember <code>k %= n</code>.`,
 starter:`public class Rotate {\n    static void rotate(int[] nums, int k) {\n    }\n    static void reverse(int[] a, int lo, int hi) {\n    }\n}`,
 tests:[{d:'Void in-place signature',re:'static\\s+void\\s+rotate\\s*\\(\\s*int\\[\\]\\s+nums\\s*,\\s*int\\s+k\\s*\\)'},{d:'Normalizes k',re:'k\\s*%=\\s*\\w+'},{d:'Uses a reverse helper three times',re:'reverse\\s*\\([\\s\\S]*?reverse\\s*\\([\\s\\S]*?reverse\\s*\\('}],
 behavior:`1. [1,2,3,4,5,6,7] with k=3 becomes [5,6,7,1,2,3,4]. 2. k larger than n wraps via the modulo. 3. O(n) time, O(1) space. 4. Three reversals produce the rotation.`,
-hints:['k %= nums.length first — rotating by n is a no-op.','reverse(nums, 0, n-1); reverse(nums, 0, k-1); reverse(nums, k, n-1).','The helper swaps from both ends inward.'],
+hints:['k %= nums.length first: rotating by n is a no-op.','reverse(nums, 0, n-1); reverse(nums, 0, k-1); reverse(nums, k, n-1).','The helper swaps from both ends inward.'],
 solution:`public class Rotate {\n    static void rotate(int[] nums, int k) {\n        int n = nums.length;\n        k %= n;\n        reverse(nums, 0, n - 1);\n        reverse(nums, 0, k - 1);\n        reverse(nums, k, n - 1);\n    }\n    static void reverse(int[] a, int lo, int hi) {\n        while (lo < hi) {\n            int t = a[lo];\n            a[lo] = a[hi];\n            a[hi] = t;\n            lo++; hi--;\n        }\n    }\n}`},
 {title:'Find all anagram indices',
 prompt:`<b>Medium.</b> Write <code>static java.util.List&lt;Integer&gt; findAnagrams(String s, String p)</code> returning the start indices of every substring of s that is an anagram of p, using a fixed-size sliding window over two 26-count arrays compared with <code>Arrays.equals</code>.`,
@@ -442,7 +442,7 @@ behavior:`1. uniquePaths(3, 7) == 28. 2. uniquePaths(3, 2) == 3. 3. uniquePaths(
 hints:['One row of n ones represents the top row (only one path along an edge).','For each subsequent row, dp[j] += dp[j-1] folds in the path from the left.','The answer is dp[n-1].'],
 solution:`import java.util.*;\n\npublic class UniquePaths {\n    static int uniquePaths(int m, int n) {\n        int[] dp = new int[n];\n        Arrays.fill(dp, 1);\n        for (int i = 1; i < m; i++) {\n            for (int j = 1; j < n; j++) {\n                dp[j] += dp[j - 1];\n            }\n        }\n        return dp[n - 1];\n    }\n}`},
 {title:'Jump game',
-prompt:`<b>Medium.</b> Each element is a max jump length from that index. Write <code>static boolean canJump(int[] nums)</code> returning whether you can reach the last index — greedy: track the farthest reachable index and fail if you ever stand beyond it.`,
+prompt:`<b>Medium.</b> Each element is a max jump length from that index. Write <code>static boolean canJump(int[] nums)</code> returning whether you can reach the last index. Greedy: track the farthest reachable index and fail if you ever stand beyond it.`,
 starter:`public class JumpGame {\n    static boolean canJump(int[] nums) {\n        return false;\n    }\n}`,
 tests:[{d:'Method signature',re:'static\\s+boolean\\s+canJump\\s*\\(\\s*int\\[\\]\\s+nums\\s*\\)'},{d:'Tracks farthest reach',re:'Math\\.max\\s*\\(\\s*\\w+\\s*,\\s*\\w+\\s*\\+\\s*nums\\['},{d:'Fails when unreachable',re:'>\\s*\\w+[\\s\\S]*?return\\s+false'}],
 behavior:`1. canJump([2,3,1,1,4]) == true. 2. canJump([3,2,1,0,4]) == false (stuck at the 0). 3. canJump([0]) == true. 4. O(n) greedy.`,
@@ -453,7 +453,7 @@ prompt:`<b>Medium.</b> Write <code>static int maxSubArray(int[] nums)</code> ret
 starter:`public class Kadane {\n    static int maxSubArray(int[] nums) {\n        return 0;\n    }\n}`,
 tests:[{d:'Method signature',re:'static\\s+int\\s+maxSubArray\\s*\\(\\s*int\\[\\]\\s+nums\\s*\\)'},{d:'Extend-or-restart',re:'Math\\.max\\s*\\(\\s*nums\\[\\s*\\w+\\s*\\]\\s*,\\s*\\w+\\s*\\+\\s*nums\\['},{d:'Tracks the best',re:'Math\\.max\\s*\\(\\s*\\w+\\s*,\\s*\\w+\\s*\\)'}],
 behavior:`1. maxSubArray([-2,1,-3,4,-1,2,1,-5,4]) == 6 ([4,-1,2,1]). 2. maxSubArray([1]) == 1. 3. maxSubArray([-3,-1,-2]) == -1 (best single element). 4. O(n) one pass.`,
-hints:['cur = Math.max(nums[i], cur + nums[i]) — restart when the running sum hurts.','best = Math.max(best, cur) each step.','Seed both from nums[0].'],
+hints:['cur = Math.max(nums[i], cur + nums[i]); restart when the running sum hurts.','best = Math.max(best, cur) each step.','Seed both from nums[0].'],
 solution:`public class Kadane {\n    static int maxSubArray(int[] nums) {\n        int cur = nums[0], best = nums[0];\n        for (int i = 1; i < nums.length; i++) {\n            cur = Math.max(nums[i], cur + nums[i]);\n            best = Math.max(best, cur);\n        }\n        return best;\n    }\n}`},
 {title:'Sort colors (Dutch flag)',
 prompt:`<b>Medium.</b> An array holds only 0, 1, 2. Write <code>static void sortColors(int[] nums)</code> sorting it <b>in one pass</b> with three pointers (lo, mid, hi): 0 swaps to the front, 2 swaps to the back, 1 stays.`,
@@ -466,11 +466,11 @@ solution:`public class SortColors {\n    static void sortColors(int[] nums) {\n 
 prompt:`<b>Medium.</b> A matrix has each row sorted and each row starts after the previous row ends. Write <code>static boolean searchMatrix(int[][] m, int target)</code> treating it as one sorted array of length rows*cols and doing a single <b>binary search</b> with index math (mid/cols, mid%cols).`,
 starter:`public class Search2D {\n    static boolean searchMatrix(int[][] m, int target) {\n        return false;\n    }\n}`,
 tests:[{d:'Method signature',re:'static\\s+boolean\\s+searchMatrix\\s*\\(\\s*int\\[\\]\\[\\]\\s+m\\s*,\\s*int\\s+target\\s*\\)'},{d:'Binary search loop',re:'while\\s*\\(\\s*lo\\s*<=\\s*hi\\s*\\)'},{d:'Maps flat index to row/col',re:'/\\s*cols[\\s\\S]*?%\\s*cols|%\\s*cols[\\s\\S]*?/\\s*cols'}],
-behavior:`1. searchMatrix([[1,3,5,7],[10,11,16,20],[23,30,34,60]], 3) == true. 2. same matrix, target 13 == false. 3. O(log(rows*cols)) — one binary search over the virtual flat array.`,
+behavior:`1. searchMatrix([[1,3,5,7],[10,11,16,20],[23,30,34,60]], 3) == true. 2. same matrix, target 13 == false. 3. O(log(rows*cols)): one binary search over the virtual flat array.`,
 hints:['rows = m.length, cols = m[0].length; search indices 0..rows*cols-1.','Convert a flat index: value = m[mid / cols][mid % cols].','Standard binary search comparisons from there.'],
 solution:`public class Search2D {\n    static boolean searchMatrix(int[][] m, int target) {\n        int rows = m.length, cols = m[0].length;\n        int lo = 0, hi = rows * cols - 1;\n        while (lo <= hi) {\n            int mid = (lo + hi) / 2;\n            int val = m[mid / cols][mid % cols];\n            if (val == target) return true;\n            if (val < target) lo = mid + 1;\n            else hi = mid - 1;\n        }\n        return false;\n    }\n}`},
 {title:'Set matrix zeroes',
-prompt:`<b>Medium.</b> Write <code>static void setZeroes(int[][] m)</code>: if a cell is 0, set its entire row and column to 0. First pass records which rows and columns contain a zero (two Sets); second pass writes the zeroes — never read-and-write in the same sweep.`,
+prompt:`<b>Medium.</b> Write <code>static void setZeroes(int[][] m)</code>: if a cell is 0, set its entire row and column to 0. First pass records which rows and columns contain a zero (two Sets); second pass writes the zeroes; never read-and-write in the same sweep.`,
 starter:`import java.util.*;\n\npublic class SetZeroes {\n    static void setZeroes(int[][] m) {\n    }\n}`,
 tests:[{d:'Void in-place signature',re:'static\\s+void\\s+setZeroes\\s*\\(\\s*int\\[\\]\\[\\]\\s+m\\s*\\)'},{d:'Records rows and cols to zero',re:'new\\s+HashSet<'},{d:'Second pass applies zeroes',re:'contains\\s*\\('}],
 behavior:`1. [[1,1,1],[1,0,1],[1,1,1]] becomes [[1,0,1],[0,0,0],[1,0,1]]. 2. A zero in the corner clears its row and column. 3. Two passes prevent a freshly written zero from cascading incorrectly.`,
@@ -480,7 +480,7 @@ solution:`import java.util.*;\n\npublic class SetZeroes {\n    static void setZe
 ]},
 {id:'ch3',title:'Hard round',body:`
 <p>The final bracket. Hards stack multiple insights, or demand a data structure assembled from parts.
-Interviewers rarely expect a flawless solve — they expect <b>structured thinking under pressure</b>:
+Interviewers rarely expect a flawless solve; they expect <b>structured thinking under pressure</b>:
 brute force stated, invariants named, code that stays clean while the problem fights back. Take these
 slowly, use Next Step without shame; a hard solved after two hints teaches more than an easy solved in
 silence.</p>
@@ -491,7 +491,7 @@ silence.</p>
                       frequency map PLUS a shrink condition. each part is
                       familiar; the composition is not.
 
-BUILT DATA STRUCTURE  no library type fits, so you assemble one — LRU cache is
+BUILT DATA STRUCTURE  no library type fits, so you assemble one: LRU cache is
                       a hash map plus a doubly linked list; a median stream is
                       two heaps facing each other.
 
@@ -516,7 +516,7 @@ partial from a weak one:</p>
 <li><b>Get the brute force on the board first.</b> A stated O(n²) with correct logic beats an
 unfinished O(n) with none, and it gives you something to optimise from rather than a blank page.</li>
 <li><b>Say what you are trading.</b> "I can make this O(n) with O(n) extra space" is a design decision,
-not a concession — interviewers want to hear the axis you are moving along.</li>
+not a concession; interviewers want to hear the axis you are moving along.</li>
 <li><b>Test on the smallest failing case.</b> When output is wrong, shrink the input until it fits in
 your head. Two elements, then three. Debugging a ten-element trace by eye is how the remaining time
 disappears.</li>
@@ -526,19 +526,19 @@ are and often earns exactly the nudge you needed.</li>
 </ul>
 <p><b>The one habit worth taking from this round:</b> when a hard defeats you, do not just read the
 solution. Identify which of the four categories above it was, and what the one insight that cracked it
-was. That is what transfers — the specific problem almost never reappears, and the category does.</p>`,
+was. That is what transfers: the specific problem almost never reappears, and the category does.</p>`,
 docs:[['PriorityQueue — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html'],['Invariant-based reasoning — CP-Algorithms','https://cp-algorithms.com/']],
 exs:[
 {title:'Trapping rain water',
-prompt:`<b>Hard.</b> Given bar heights, compute the total water trapped after rain. Write <code>static int trap(int[] h)</code> with the O(n)/O(1) <b>two-pointer</b> solution: track <code>leftMax</code> and <code>rightMax</code>; whichever side has the smaller max is the binding constraint — water above the current bar on that side is <code>max - h[i]</code>, then move that pointer inward.`,
+prompt:`<b>Hard.</b> Given bar heights, compute the total water trapped after rain. Write <code>static int trap(int[] h)</code> with the O(n)/O(1) <b>two-pointer</b> solution: track <code>leftMax</code> and <code>rightMax</code>; whichever side has the smaller max is the binding constraint: water above the current bar on that side is <code>max - h[i]</code>, then move that pointer inward.`,
 starter:`public class Rain {
     static int trap(int[] h) {
         return 0;
     }
 }`,
 tests:[{d:'Two pointers with left/right maxes',re:'leftMax[\\s\\S]*?rightMax'},{d:'Compares the maxes to pick a side',re:'leftMax\\s*<=?\\s*rightMax|leftMax\\s*<\\s*rightMax'},{d:'Accumulates max - height',re:'\\+=\\s*(leftMax|rightMax)\\s*-\\s*h\\[\\s*\\w+\\s*\\]'},{d:'No O(n) extra arrays',re:'new\\s+int\\[\\s*h\\.length\\s*\\]',not:true}],
-behavior:`1. trap([0,1,0,2,1,0,1,3,2,1,2,1]) == 6. 2. trap([4,2,0,3,2,5]) == 9. 3. trap([1,2,3]) == 0 (monotonic traps nothing). 4. The invariant: when leftMax <= rightMax, the water level at the left pointer is EXACTLY leftMax — the right side is guaranteed at least as tall somewhere.`,
-hints:['Advance the side whose max is smaller — its water line is already decided.','Per step on the left: <code>leftMax = Math.max(leftMax, h[lo]); water += leftMax - h[lo]; lo++;</code> (mirror for right).','Updating max BEFORE adding water makes the subtraction never negative — no branch needed.'],
+behavior:`1. trap([0,1,0,2,1,0,1,3,2,1,2,1]) == 6. 2. trap([4,2,0,3,2,5]) == 9. 3. trap([1,2,3]) == 0 (monotonic traps nothing). 4. The invariant: when leftMax <= rightMax, the water level at the left pointer is EXACTLY leftMax; the right side is guaranteed at least as tall somewhere.`,
+hints:['Advance the side whose max is smaller; its water line is already decided.','Per step on the left: <code>leftMax = Math.max(leftMax, h[lo]); water += leftMax - h[lo]; lo++;</code> (mirror for right).','Updating max BEFORE adding water makes the subtraction never negative; no branch needed.'],
 solution:`public class Rain {
     static int trap(int[] h) {
         int lo = 0, hi = h.length - 1;
@@ -567,7 +567,7 @@ public class MergeK {
     }
 }`,
 tests:[{d:'PriorityQueue ordered by value',re:'new\\s+PriorityQueue<>\\s*\\(\\s*Comparator\\.comparingInt\\s*\\('},{d:'Seeded with each non-empty head',re:'for\\s*\\([\\s\\S]*?isEmpty\\s*\\(\\s*\\)[\\s\\S]*?offer|for\\s*\\([\\s\\S]*?size\\s*\\(\\s*\\)\\s*>\\s*0[\\s\\S]*?offer'},{d:'Poll-then-advance loop',re:'while\\s*\\(\\s*!\\s*\\w+\\.isEmpty\\s*\\(\\s*\\)\\s*\\)[\\s\\S]*?poll\\s*\\(\\s*\\)'},{d:'Pushes the successor from the same list',re:'\\+\\s*1[\\s\\S]*?offer|offer[\\s\\S]*?\\+\\s*1'}],
-behavior:`1. mergeK([[1,4,5],[1,3,4],[2,6]]) == [1,1,2,3,4,4,5,6]. 2. Empty inner lists are skipped safely; mergeK of all-empty == []. 3. The heap never holds more than K entries — that is where O(N log K) comes from (vs O(N log N) for concatenate-and-sort).`,
+behavior:`1. mergeK([[1,4,5],[1,3,4],[2,6]]) == [1,1,2,3,4,4,5,6]. 2. Empty inner lists are skipped safely; mergeK of all-empty == []. 3. The heap never holds more than K entries; that is where O(N log K) comes from (vs O(N log N) for concatenate-and-sort).`,
 hints:['Heap entries: <code>new int[]{value, whichList, indexInList}</code>.','Seed: for each list i with size > 0, offer {list.get(0), i, 0}.','Loop: poll the min into the result; if elementIndex+1 exists in that list, offer the successor.'],
 solution:`import java.util.*;
 
@@ -593,7 +593,7 @@ public class MergeK {
     }
 }`},
 {title:'LRU cache from scratch',
-prompt:`<b>Hard.</b> No LinkedHashMap this time (you earned that shortcut in the Data Structures stream) — build the real thing: <code>class LruCache</code> with <code>LruCache(int capacity)</code>, <code>int get(int key)</code> (-1 if absent) and <code>void put(int key, int value)</code>, both <b>O(1)</b>, using a <code>HashMap&lt;Integer, Node&gt;</code> plus a hand-rolled <b>doubly linked list</b> with sentinel head/tail nodes: get/put move the node to the front; put beyond capacity evicts the back.`,
+prompt:`<b>Hard.</b> No LinkedHashMap this time (you earned that shortcut in the Data Structures stream). Build the real thing: <code>class LruCache</code> with <code>LruCache(int capacity)</code>, <code>int get(int key)</code> (-1 if absent) and <code>void put(int key, int value)</code>, both <b>O(1)</b>, using a <code>HashMap&lt;Integer, Node&gt;</code> plus a hand-rolled <b>doubly linked list</b> with sentinel head/tail nodes: get/put move the node to the front; put beyond capacity evicts the back.`,
 starter:`import java.util.*;
 
 public class LruCache {
@@ -624,8 +624,8 @@ public class LruCache {
     }
 }`,
 tests:[{d:'Doubly linked removal (both directions relinked)',re:'prev\\.next\\s*=\\s*\\w+\\.next[\\s\\S]*?next\\.prev\\s*=\\s*\\w+\\.prev|n\\.prev\\.next\\s*=\\s*n\\.next'},{d:'Insertion at the front behind the head sentinel',re:'head\\.next[\\s\\S]*?head\\.next\\s*='},{d:'get refreshes recency (remove + addFront)',re:'int\\s+get[\\s\\S]*?remove\\s*\\([\\s\\S]*?addFront\\s*\\('},{d:'Eviction from tail.prev with map cleanup',re:'tail\\.prev[\\s\\S]*?map\\.remove\\s*\\('},{d:'Capacity check drives eviction',re:'size\\s*\\(\\s*\\)\\s*>\\s*capacity|map\\.size\\s*\\(\\s*\\)\\s*>\\s*capacity'}],
-behavior:`1. capacity 2: put(1,1), put(2,2), get(1)==1, put(3,3) → evicts key 2 (1 was refreshed by the get), get(2)==-1, get(3)==3. 2. put on an existing key updates the value AND refreshes recency. 3. Every operation is O(1): map lookup + constant pointer surgery. 4. Sentinels mean zero null-checks in the pointer code — that is why they exist.`,
-hints:['Write the two private helpers first: remove(n) unlinks n; addFront(n) splices n between head and head.next. Everything else composes them.','get: look up, if present remove + addFront, return value.','put: if key exists, update value + refresh; else insert new node front + map.put; then if map.size() > capacity, evict tail.prev (remove from BOTH the list and the map — forgetting the map is the classic bug).'],
+behavior:`1. capacity 2: put(1,1), put(2,2), get(1)==1, put(3,3) → evicts key 2 (1 was refreshed by the get), get(2)==-1, get(3)==3. 2. put on an existing key updates the value AND refreshes recency. 3. Every operation is O(1): map lookup + constant pointer surgery. 4. Sentinels mean zero null-checks in the pointer code; that is why they exist.`,
+hints:['Write the two private helpers first: remove(n) unlinks n; addFront(n) splices n between head and head.next. Everything else composes them.','get: look up, if present remove + addFront, return value.','put: if key exists, update value + refresh; else insert new node front + map.put; then if map.size() > capacity, evict tail.prev (remove from BOTH the list and the map; forgetting the map is the classic bug).'],
 solution:`import java.util.*;
 
 public class LruCache {
@@ -700,11 +700,11 @@ behavior:`1. longestValid("(()") == 2. 2. longestValid(")()())") == 4. 3. longes
 hints:['Push -1 first as the base.','On (, push the index. On ), pop; if the stack is now empty push this index as a new base, else best = Math.max(best, i - stack.peek()).','The stack holds the boundary just before each valid run.'],
 solution:`import java.util.*;\n\npublic class LongestValid {\n    static int longestValid(String s) {\n        Deque<Integer> stack = new ArrayDeque<>();\n        stack.push(-1);\n        int best = 0;\n        for (int i = 0; i < s.length(); i++) {\n            if (s.charAt(i) == '(') stack.push(i);\n            else {\n                stack.pop();\n                if (stack.isEmpty()) stack.push(i);\n                else best = Math.max(best, i - stack.peek());\n            }\n        }\n        return best;\n    }\n}`},
 {title:'Edit distance',
-prompt:`<b>Hard.</b> Write <code>static int editDistance(String a, String b)</code> (Levenshtein) via 2D DP: dp[i][j] = min edits to turn the first i chars of a into the first j of b — match copies the diagonal, else 1 + min(insert, delete, replace).`,
+prompt:`<b>Hard.</b> Write <code>static int editDistance(String a, String b)</code> (Levenshtein) via 2D DP: dp[i][j] = min edits to turn the first i chars of a into the first j of b: match copies the diagonal, else 1 + min(insert, delete, replace).`,
 starter:`public class EditDistance {\n    static int editDistance(String a, String b) {\n        return 0;\n    }\n}`,
 tests:[{d:'Method signature',re:'static\\s+int\\s+editDistance\\s*\\(\\s*String\\s+a\\s*,\\s*String\\s+b\\s*\\)'},{d:'2D table sized +1',re:'new\\s+int\\[\\s*a\\.length\\s*\\(\\s*\\)\\s*\\+\\s*1\\s*\\]\\[\\s*b\\.length\\s*\\(\\s*\\)\\s*\\+\\s*1\\s*\\]'},{d:'Three-way min on mismatch',re:'Math\\.min\\s*\\([\\s\\S]*?Math\\.min'},{d:'Offset char comparison',re:'charAt\\s*\\(\\s*i\\s*-\\s*1\\s*\\)'}],
 behavior:`1. editDistance("horse", "ros") == 3. 2. editDistance("intention", "execution") == 5. 3. editDistance("", "abc") == 3 (row/col base cases). 4. O(m*n) time and space.`,
-hints:['Initialise dp[i][0]=i and dp[0][j]=j — cost of pure inserts/deletes.','Match: dp[i][j]=dp[i-1][j-1]. Mismatch: 1 + min of the three neighbours.','Answer is dp[a.length()][b.length()].'],
+hints:['Initialise dp[i][0]=i and dp[0][j]=j, the cost of pure inserts/deletes.','Match: dp[i][j]=dp[i-1][j-1]. Mismatch: 1 + min of the three neighbours.','Answer is dp[a.length()][b.length()].'],
 solution:`public class EditDistance {\n    static int editDistance(String a, String b) {\n        int[][] dp = new int[a.length() + 1][b.length() + 1];\n        for (int i = 0; i <= a.length(); i++) dp[i][0] = i;\n        for (int j = 0; j <= b.length(); j++) dp[0][j] = j;\n        for (int i = 1; i <= a.length(); i++) {\n            for (int j = 1; j <= b.length(); j++) {\n                if (a.charAt(i - 1) == b.charAt(j - 1)) dp[i][j] = dp[i - 1][j - 1];\n                else dp[i][j] = 1 + Math.min(dp[i - 1][j - 1], Math.min(dp[i - 1][j], dp[i][j - 1]));\n            }\n        }\n        return dp[a.length()][b.length()];\n    }\n}`},
 {title:'Sliding window maximum',
 prompt:`<b>Hard.</b> Write <code>static int[] maxSlidingWindow(int[] nums, int k)</code> returning the max of each length-k window in O(n) using a <b>monotonic deque</b> of indices (front holds the current max; evict out-of-window and smaller-tail indices).`,

@@ -7,7 +7,7 @@ cluster. Heavily tested on CKA/CKAD.*
 
 Kubernetes security has layers. This module covers the three you'll use constantly: **RBAC** (who
 can run which commands), **ServiceAccounts + SecurityContext** (pod identity and privilege), and
-**NetworkPolicy** (which pods may reach which). The theme is **least privilege** — grant the minimum
+**NetworkPolicy** (which pods may reach which). The theme is **least privilege**: grant the minimum
 needed.
 
 ## RBAC — who can do what
@@ -23,7 +23,7 @@ deployments, read secrets…). Four object types, in two pairs:
 | **ClusterRoleBinding** | whole cluster | "grant this ClusterRole cluster-wide" |
 
 A **Role/ClusterRole** defines *permissions*; a **Binding** attaches them to a *subject* (a user,
-group, or ServiceAccount). Permissions are **purely additive** — there are no "deny" rules; you grant
+group, or ServiceAccount). Permissions are **purely additive**: there are no "deny" rules; you grant
 only what's needed.
 
 ```yaml
@@ -60,7 +60,7 @@ kubectl auth can-i create deployments --as=system:serviceaccount:dev:myapp -n de
 
 A **ServiceAccount** is the identity a *pod* uses to talk to the Kubernetes API. Every pod gets one
 (`default` if unspecified). You bind RBAC to ServiceAccounts to control what an app may do. Best
-practice: give each app its **own** ServiceAccount with the **minimum** permissions — never rely on
+practice: give each app its **own** ServiceAccount with the **minimum** permissions; never rely on
 the `default` account with broad access.
 
 ```yaml
@@ -82,14 +82,14 @@ Constrain what the container itself can do on the node:
         drop: ["ALL"]              # drop Linux capabilities
 ```
 
-These mirror the Docker security lessons (non-root, least privilege) — now enforced by the platform.
+These mirror the Docker security lessons (non-root, least privilege), now enforced by the platform.
 Production clusters often require them via **Pod Security Standards** (the `restricted` profile).
 
 ## NetworkPolicy — which pods may talk
 
-By default, **every pod can reach every other pod** — flat and open. A **NetworkPolicy** restricts
+By default, **every pod can reach every other pod**: flat and open. A **NetworkPolicy** restricts
 that, per label selector. The critical gotcha: policies are **allow-lists that only take effect once
-one selects a pod** — and the moment a pod is selected by *any* policy, everything not explicitly
+one selects a pod**, and the moment a pod is selected by *any* policy, everything not explicitly
 allowed is **denied**.
 
 ```yaml
@@ -141,9 +141,9 @@ kubectl delete namespace dev
 
 ## Practitioner rules
 
-- **Least privilege everywhere** — narrow Roles, per-app ServiceAccounts, drop capabilities, non-root.
-- **RBAC is additive** — grant, never rely on "deny." Audit with `kubectl auth can-i --list`.
-- **Default-deny NetworkPolicies** then allow specific flows — the secure baseline.
+- **Least privilege everywhere**: narrow Roles, per-app ServiceAccounts, drop capabilities, non-root.
+- **RBAC is additive**: grant, never rely on "deny." Audit with `kubectl auth can-i --list`.
+- **Default-deny NetworkPolicies** then allow specific flows: the secure baseline.
 - **Never mount the default ServiceAccount token** into pods that don't need API access
   (`automountServiceAccountToken: false`).
 
@@ -151,7 +151,7 @@ kubectl delete namespace dev
 
 1. Role vs RoleBinding? *(A Role defines permissions; a RoleBinding grants them to a subject like a
    ServiceAccount.)*
-2. Are there "deny" rules in RBAC? *(No — RBAC is purely additive; you grant only what's needed.)*
+2. Are there "deny" rules in RBAC? *(No: RBAC is purely additive; you grant only what's needed.)*
 3. What is a ServiceAccount for? *(It's the identity a pod uses to talk to the Kubernetes API; bind
    RBAC to it.)*
 4. What's the default pod-to-pod network posture, and how do you restrict it? *(All pods can reach

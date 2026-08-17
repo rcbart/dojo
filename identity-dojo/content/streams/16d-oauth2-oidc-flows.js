@@ -1,10 +1,10 @@
-STREAMS.push({iam:true,sec:'OAuth 2.0 & OpenID Connect',icon:'🔓',title:'OAuth 2.0 & OpenID Connect',blurb:'Every OAuth 2.0 flow from first principles — authorization code, PKCE, client credentials, device, refresh — plus OpenID Connect on top (ID tokens, discovery, UserInfo, nonce). The protocol that issues the tokens.',lessons:[
+STREAMS.push({iam:true,sec:'OAuth 2.0 & OpenID Connect',icon:'🔓',title:'OAuth 2.0 & OpenID Connect',blurb:'Every OAuth 2.0 flow from first principles (authorization code, PKCE, client credentials, device, refresh), plus OpenID Connect on top (ID tokens, discovery, UserInfo, nonce). The protocol that issues the tokens.',lessons:[
 
 {id:'oa1',title:'The roles & the Authorization Code flow',body:`
 <p>OAuth 2.0 is a <b>delegated authorization</b> protocol: it lets an app get a <i>limited</i> access token to call an API on a user's behalf, <b>without the user's password</b>. Four roles:</p>
 <ul>
 <li><b>Resource Owner</b> — the user who owns the data.</li>
-<li><b>Client</b> — the app that wants access (public or confidential — see Identity Foundations).</li>
+<li><b>Client</b> — the app that wants access (public or confidential; see Identity Foundations).</li>
 <li><b>Authorization Server (AS)</b> — the IdP that authenticates the user and issues tokens. Two key endpoints: <code>/authorize</code> (front channel) and <code>/token</code> (back channel).</li>
 <li><b>Resource Server</b> — the API that accepts the access token.</li>
 </ul>
@@ -15,20 +15,20 @@ STREAMS.push({iam:true,sec:'OAuth 2.0 & OpenID Connect',icon:'🔓',title:'OAuth
 <ol class="fdSteps">
 <li>The user clicks <i>“Log in with Example”</i> in the client app.</li>
 <li>The client redirects the browser to the AS <code>/authorize</code> endpoint with what it wants (<b>front channel</b>).</li>
-<li>The user logs in and consents at the AS — the client never sees the password.</li>
-<li>The AS redirects back to the client's <code>redirect_uri</code> with a short-lived <b>authorization code</b> (front channel — the code is useless alone).</li>
-<li>The client's backend exchanges that code for tokens at <code>/token</code>, authenticating itself and presenting the PKCE verifier (<b>back channel</b> — private).</li>
+<li>The user logs in and consents at the AS; the client never sees the password.</li>
+<li>The AS redirects back to the client's <code>redirect_uri</code> with a short-lived <b>authorization code</b> (front channel; the code is useless alone).</li>
+<li>The client's backend exchanges that code for tokens at <code>/token</code>, authenticating itself and presenting the PKCE verifier (<b>back channel</b>, private).</li>
 <li>The AS returns the access token (plus refresh and ID tokens if requested). Tokens never travel through the browser.</li>
 <li>The client calls the API with <code>Authorization: Bearer …</code>.</li>
 <li>The API validates the token and returns the user's data.</li>
 </ol>
-<p><b>CSRF protection on the redirect is mandatory — but <code>state</code> is no longer the only way to
+<p><b>CSRF protection on the redirect is mandatory, but <code>state</code> is no longer the only way to
 get it.</b> RFC 9700 (the OAuth 2.0 Security BCP) says clients MUST prevent CSRF at the redirection
 endpoint, and gives three acceptable mechanisms: a client using <b>PKCE</b> MAY rely on the protection
 PKCE already provides; in OpenID Connect flows the <b>nonce</b> provides it; <i>otherwise</i> a one-time
 CSRF token carried in <code>state</code> and bound to the user agent MUST be used.</p>
 <p>So the modern reading is: PKCE is the CSRF defence, and <code>state</code> is how you carry
-application state — where to send the user back to — rather than a security parameter you must always
+application state (where to send the user back to) rather than a security parameter you must always
 populate. It is still shown below because plenty of deployments use it exactly that way, and because a
 client that cannot rely on PKCE (the AS does not support it) still needs it.</p>
 <div class="codeSample" data-hl>GET https://as.example.com/authorize
@@ -50,9 +50,9 @@ gets a value that has already been used, expires in seconds, and cannot be excha
 factor they do not hold.</p>
 
 <h4>Front channel and back channel, precisely</h4>
-<p>The <b>front channel</b> is anything routed through the user's browser — the <code>/authorize</code>
+<p>The <b>front channel</b> is anything routed through the user's browser: the <code>/authorize</code>
 request and the redirect back. It is visible, modifiable and untrusted. The <b>back channel</b> is a direct
-server-to-server HTTPS call — the <code>/token</code> request — where the client authenticates and nobody
+server-to-server HTTPS call (the <code>/token</code> request) where the client authenticates and nobody
 in between can read the response. Tokens belong in the back channel. Once you hold that distinction, most
 OAuth security advice stops needing to be memorised: it is nearly all "do not put that in the front
 channel".</p>
@@ -65,7 +65,7 @@ channel".</p>
   &amp;code_challenge=...&amp;code_challenge_method=S256   // PKCE
   &amp;state=...                              // app state, and CSRF where PKCE is unavailable</div>
 <p>Two of these cause most integration failures. <code>redirect_uri</code> is matched as an <b>exact
-string</b> against the registered list — a trailing slash, a different port in development, or an added
+string</b> against the registered list: a trailing slash, a different port in development, or an added
 query parameter is a mismatch, and that strictness is deliberate: every relaxation of it has produced a
 real attack. And the <b>code is single-use</b>. If one is presented twice the authorization server should
 treat it as a theft signal and revoke the whole grant, not merely refuse the second attempt.</p>`,
@@ -95,13 +95,13 @@ public class AuthorizeUrl {
 }`}},
 
 {id:'oaclient',title:'What a client is: registration, secrets & creation',body:`
-<p>In OAuth the word <b>client</b> does not mean the user or the browser — it means the <b>application</b> asking for access (a web app, a mobile app, a backend service). Before it can ask for a single token, the client must be <b>registered</b> with the authorization server (AS), which is how the AS knows it and decides how much to trust it.</p>
-<p><b>What registration produces.</b> The AS issues a <code>client_id</code> — a public identifier, not a secret — and records the client's allowed <b>redirect URIs</b> (an exact allowlist, so codes can only be sent back to URLs you pre-approved). For a <b>confidential client</b> it also issues a <code>client_secret</code>: a shared secret the client uses to prove its identity at the token endpoint. A <b>public client</b> (a SPA or mobile app) cannot keep a secret — anyone can read the bundle or decompile the app — so it gets <b>no secret</b> and relies on PKCE instead.</p>
+<p>In OAuth the word <b>client</b> does not mean the user or the browser; it means the <b>application</b> asking for access (a web app, a mobile app, a backend service). Before it can ask for a single token, the client must be <b>registered</b> with the authorization server (AS), which is how the AS knows it and decides how much to trust it.</p>
+<p><b>What registration produces.</b> The AS issues a <code>client_id</code> (a public identifier, not a secret) and records the client's allowed <b>redirect URIs</b> (an exact allowlist, so codes can only be sent back to URLs you pre-approved). For a <b>confidential client</b> it also issues a <code>client_secret</code>: a shared secret the client uses to prove its identity at the token endpoint. A <b>public client</b> (a SPA or mobile app) cannot keep a secret (anyone can read the bundle or decompile the app), so it gets <b>no secret</b> and relies on PKCE instead.</p>
 <div class="codeSample">Register app  ─▶  client_id: "s6BhdRkqt3"   (public)
                   client_secret: "gX1...9f"   (confidential clients only — shown ONCE)
                   redirect_uris: ["https://app.example.com/callback"]</div>
 <p><b>How clients are created.</b> Two ways: manually in the AS dashboard/admin console (you register the app and copy the id and secret), or programmatically via <b>Dynamic Client Registration</b> (RFC 7591), where a client is created through an API and the AS returns the credentials in the response.</p>
-<p><b>How the secret is shared — and protected.</b> The AS generates the secret at registration and displays it <b>once</b>; you store it in a secret manager or environment variable, <b>never in source control or front-end code</b>, and rotate it periodically. Stronger clients skip the shared secret entirely: <b>private_key_jwt</b> (the client signs a JWT with its private key; the AS verifies with the client's public key — no shared secret to leak) or <b>mTLS</b> client certificates. So client authentication runs from "nothing" (public + PKCE) to a shared <code>client_secret</code> to asymmetric keys, in increasing order of assurance.</p>
+<p><b>How the secret is shared and protected.</b> The AS generates the secret at registration and displays it <b>once</b>; you store it in a secret manager or environment variable, <b>never in source control or front-end code</b>, and rotate it periodically. Stronger clients skip the shared secret entirely: <b>private_key_jwt</b> (the client signs a JWT with its private key; the AS verifies with the client's public key, so there is no shared secret to leak) or <b>mTLS</b> client certificates. So client authentication runs from "nothing" (public + PKCE) to a shared <code>client_secret</code> to asymmetric keys, in increasing order of assurance.</p>
 
 <h4>Client authentication is more than a secret</h4>
 <p>A shared <code>client_secret</code> is the weakest of the options the specification allows, because it is a symmetric credential that both parties hold: it appears in configuration, in CI variables, in the authorization server's database, and in whatever place a developer pasted it during setup. Two better mechanisms exist and are worth asking for:</p>
@@ -115,7 +115,7 @@ public class AuthorizeUrl {
 <p>The registered redirect URIs are the list of places an authorization code may be delivered, and the specification requires <b>exact string matching</b> for a reason: every relaxation has produced real attacks. Wildcards in the host let a subdomain takeover receive codes. Allowing a path prefix lets an open redirect on that path forward the code onward. Permitting arbitrary query parameters allows the same. The rule is to register complete, exact URIs, keep the list short, and never add <code>http://</code> entries outside of loopback for native apps.</p>
 
 <h4>Dynamic registration, and the metadata that comes with it</h4>
-<p>Dynamic Client Registration (RFC 7591) exists because some ecosystems cannot pre-register everyone by hand — native apps registering per installation, or a federation where participants join continuously. Open registration is a spam and abuse surface, so real deployments gate it with an initial access token, or replace it with the software-statement and trust-chain mechanisms of OpenID Federation. Whichever route, registration is where the client's <b>metadata</b> is fixed: its grant types, response types, scopes, token endpoint auth method and JWKS location. That metadata is the authorization server's model of what this client is allowed to do — which makes registration a security decision, not an onboarding formality.</p>`,
+<p>Dynamic Client Registration (RFC 7591) exists because some ecosystems cannot pre-register everyone by hand: native apps registering per installation, or a federation where participants join continuously. Open registration is a spam and abuse surface, so real deployments gate it with an initial access token, or replace it with the software-statement and trust-chain mechanisms of OpenID Federation. Whichever route, registration is where the client's <b>metadata</b> is fixed: its grant types, response types, scopes, token endpoint auth method and JWKS location. That metadata is the authorization server's model of what this client is allowed to do, which makes registration a security decision, not an onboarding formality.</p>`,
 docs:[['Client registration (RFC 6749 §2)','https://www.rfc-editor.org/rfc/rfc6749#section-2'],['Dynamic Client Registration (RFC 7591)','https://www.rfc-editor.org/rfc/rfc7591'],['Client authentication (OIDC)','https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication']],
 ex:{title:'Pick the client credential',
 prompt:`Write class <code>Client</code> with two static methods. <code>String credential(String clientType)</code>: <code>"spa"</code>→<code>"none (PKCE)"</code>, <code>"mobile"</code>→<code>"none (PKCE)"</code>, <code>"server"</code>→<code>"client_secret"</code>, <code>"backend-high-security"</code>→<code>"private_key_jwt"</code>, else <code>"unknown"</code>. <code>boolean confidential(String clientType)</code>: true only for <code>"server"</code> or <code>"backend-high-security"</code> (the clients that can keep a secret).`,
@@ -142,11 +142,11 @@ solution:`public class Client {
     }
 }`,
 tests:[{d:'a SPA is a public client using PKCE, no secret',re:'"spa".*?"none \\(PKCE\\)"',flags:'s'},{d:'a server uses a client_secret',re:'"server".*?"client_secret"',flags:'s'},{d:'high-security backends use private_key_jwt',re:'"backend-high-security".*?"private_key_jwt"',flags:'s'},{d:'confidential = server or high-security',re:'equals\\s*\\(\\s*"server"\\s*\\)\\s*\\|\\|'},{d:'unknown default',re:'"unknown"'}],
-behavior:`credential("spa") is "none (PKCE)", credential("server") is "client_secret", credential("backend-high-security") is "private_key_jwt". confidential("server") is true; confidential("spa") is false — a public client cannot keep a secret, which is exactly why it uses PKCE.`,
+behavior:`credential("spa") is "none (PKCE)", credential("server") is "client_secret", credential("backend-high-security") is "private_key_jwt". confidential("server") is true; confidential("spa") is false: a public client cannot keep a secret, which is exactly why it uses PKCE.`,
 hints:['A client is the application, not the user; it is registered with the authorization server first.','Public clients (spa, mobile) hold no secret and use PKCE; confidential clients (server) authenticate with a secret or a key.','confidential() is true only for the two server-side types.']}},
 {id:'oa2',title:'PKCE — securing public clients',body:`
 <p>A <b>public client</b> (SPA, mobile app) can't keep a secret, so it can't prove it's the same app that started the flow. Without protection, an attacker who intercepts the authorization code could redeem it. <b>PKCE</b> (Proof Key for Code Exchange, "pixy") fixes this and is now recommended for <i>all</i> clients.</p>
-<p>How it works — a one-time secret the client makes up per flow:</p>
+<p>How it works: a one-time secret the client makes up per flow:</p>
 <ul>
 <li><b>code_verifier</b> — a high-entropy random string the client generates and keeps.</li>
 <li><b>code_challenge</b> — <code>base64url(SHA-256(code_verifier))</code>, sent on the <code>/authorize</code> request along with <code>code_challenge_method=S256</code>.</li>
@@ -161,11 +161,11 @@ String challenge = Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
 
 <h4>The attack, told as a story</h4>
 <p>A mobile app starts a login. The authorization server needs to send the code back, so the app registered
-a custom URL scheme — <code>myapp://callback</code>. On some platforms, <b>any app can claim that
+a custom URL scheme, <code>myapp://callback</code>. On some platforms, <b>any app can claim that
 scheme</b>. A malicious app installed on the same phone registers it too, the operating system hands it the
 redirect, and it now holds a valid authorization code for your user.</p>
 <p>Before PKCE, that code was enough. A public client has no secret, so the token endpoint could not tell
-the malicious app from the real one — both presented the same <code>client_id</code> and a valid code, and
+the malicious app from the real one: both presented the same <code>client_id</code> and a valid code, and
 both got tokens.</p>
 
 <h4>The fix: a secret invented per flow</h4>
@@ -186,11 +186,11 @@ enough.</p>
 
 <h4>Why <code>plain</code> exists and must not be used</h4>
 <p>The spec permits <code>code_challenge_method=plain</code>, where the challenge <i>is</i> the verifier.
-That protects nothing against anyone who saw the authorization request — which is precisely the attacker
+That protects nothing against anyone who saw the authorization request, which is precisely the attacker
 this defends against. <b>Always <code>S256</code></b>, and a server should refuse <code>plain</code>.</p>
 <p>Related, and subtler: the <b>downgrade attack</b>. If an attacker can strip the
 <code>code_challenge</code> from the request, an authorization server that treats PKCE as optional will
-issue a code with no challenge attached — and the protection silently disappears. A server that requires
+issue a code with no challenge attached, and the protection silently disappears. A server that requires
 PKCE for public clients closes it; a client cannot.</p>
 
 <h4>Three parameters people confuse</h4>
@@ -209,12 +209,12 @@ code_verifier    PKCE. proves the redeemer started the flow. never
 
 <h4>It is no longer just for mobile</h4>
 <p>PKCE was designed for native apps and is now <b>required for every client</b> using the authorization
-code flow under OAuth 2.1 — including confidential ones with a secret. The reason is that a client secret
+code flow under OAuth 2.1, including confidential ones with a secret. The reason is that a client secret
 protects the <i>token request</i> and does nothing about a code stolen in transit, whereas PKCE binds the
 code itself to the flow that created it. The two defend different things, so you want both.</p>`,
 docs:[['RFC 7636 — PKCE','https://www.rfc-editor.org/rfc/rfc7636'],['oauth.net — PKCE','https://oauth.net/2/pkce/']],
 ex:{title:'Compute the PKCE code_challenge',
-prompt:`Write <code>Pkce</code> with: <code>static String verifier()</code> returning a base64url (no padding) string of <b>32 random bytes</b> from <code>SecureRandom</code>; and <code>static String challenge(String verifier)</code> returning <code>base64url(SHA-256(verifier))</code> — use <code>MessageDigest.getInstance("SHA-256")</code>, hash <code>verifier.getBytes("US-ASCII")</code>, and encode with <code>Base64.getUrlEncoder().withoutPadding()</code>. Declare <code>throws Exception</code>.`,
+prompt:`Write <code>Pkce</code> with: <code>static String verifier()</code> returning a base64url (no padding) string of <b>32 random bytes</b> from <code>SecureRandom</code>; and <code>static String challenge(String verifier)</code> returning <code>base64url(SHA-256(verifier))</code>; use <code>MessageDigest.getInstance("SHA-256")</code>, hash <code>verifier.getBytes("US-ASCII")</code>, and encode with <code>Base64.getUrlEncoder().withoutPadding()</code>. Declare <code>throws Exception</code>.`,
 starter:`import java.security.*;
 import java.util.Base64;
 
@@ -228,7 +228,7 @@ public class Pkce {
 }`,
 tests:[{d:'random verifier from SecureRandom',re:'new\\s+SecureRandom\\s*\\('},{d:'hashes with SHA-256',re:'MessageDigest\\.getInstance\\s*\\(\\s*"SHA-256"\\s*\\)'},{d:'hashes the verifier bytes',re:'\\.digest\\s*\\('},{d:'base64url without padding',re:'getUrlEncoder\\s*\\(\\s*\\)\\s*\\.\\s*withoutPadding'}],
 behavior:`verifier() returns a different high-entropy string each call. challenge(v) is deterministic for a given v and is the base64url SHA-256 of it (S256 method). The verifier stays on the client; only the challenge is sent on /authorize, so an intercepted code cannot be redeemed without the verifier.`,
-hints:['verifier: <code>byte[] b=new byte[32]; new SecureRandom().nextBytes(b); return Base64.getUrlEncoder().withoutPadding().encodeToString(b);</code>','challenge: hash then encode — <code>md.digest(verifier.getBytes("US-ASCII"))</code>.','Always base64URL (not standard base64) and drop padding.'],
+hints:['verifier: <code>byte[] b=new byte[32]; new SecureRandom().nextBytes(b); return Base64.getUrlEncoder().withoutPadding().encodeToString(b);</code>','challenge: hash then encode using <code>md.digest(verifier.getBytes("US-ASCII"))</code>.','Always base64URL (not standard base64) and drop padding.'],
 solution:`import java.security.*;
 import java.util.Base64;
 
@@ -266,7 +266,7 @@ now required on <i>every</i> authorization code flow, so it is worth knowing com
 <!--/flow:oa2b-pkce-->
 
 <h4>The attack it was invented for</h4>
-<p>PKCE came from mobile. A native app cannot hold a client secret — anyone can unpack the binary — and
+<p>PKCE came from mobile. A native app cannot hold a client secret (anyone can unpack the binary), and
 it receives its authorization code through a <b>custom URL scheme</b> like
 <code>myapp://callback</code>. On mobile platforms of the time, <i>any</i> installed app could register
 that same scheme. Nothing verified ownership.</p>
@@ -286,11 +286,11 @@ front, and revealed only at redemption.</p>
 
 <h4>The second attack: code injection</h4>
 <p>Less discussed and the reason PKCE now applies to confidential clients too. Here the attacker does
-not steal your code — they feed you <i>theirs</i>.</p>
+not steal your code; they feed you <i>theirs</i>.</p>
 <p>The attacker begins their own legitimate authorization flow and obtains a code for <i>their</i>
 account. They then inject that code into a victim's session, so the victim's client redeems it and ends
 up logged in as, or linked to, the attacker's account. Data the victim then uploads goes to the
-attacker's account. A client secret does nothing here — the client is genuine, it is the code that is
+attacker's account. A client secret does nothing here: the client is genuine, it is the code that is
 foreign. PKCE stops it because the victim's client holds a verifier that does not match the challenge
 the attacker's code was bound to.</p>
 
@@ -326,7 +326,7 @@ STEP 5 — AS verifies
     and the code is unused, unexpired, and issued to this client
   -> 200 { "access_token": "...", "token_type": "Bearer", ... }</div>
 <p>The asymmetry is the whole design. The <b>challenge</b> travels through the browser, where it may be
-observed — and that is harmless, because SHA-256 cannot be reversed. The <b>verifier</b> travels only on
+observed, and that is harmless, because SHA-256 cannot be reversed. The <b>verifier</b> travels only on
 the direct back-channel POST, once, at the end.</p>
 
 <h4>state and PKCE are not the same thing</h4>
@@ -346,7 +346,7 @@ verifier, and the protection is gone. Always <code>S256</code>; a server should 
 <code>plain</code> outright.</li>
 <li><b>The downgrade attack.</b> If a server accepts a redemption with no <code>code_verifier</code>
 when a challenge <i>was</i> registered, an attacker simply omits it. The server must remember that a
-challenge was stored and <b>require</b> the verifier — absence is failure, not a skipped optional
+challenge was stored and <b>require</b> the verifier; absence is failure, not a skipped optional
 check.</li>
 <li><b>A reused or weak verifier.</b> Generate it fresh per flow from a cryptographic random source, at
 least 43 characters. A verifier derived from a timestamp, a session id or a counter is guessable, and
@@ -357,13 +357,13 @@ lifetime of the flow, is the right place.</li>
 </ol>
 
 <h4>When to use it</h4>
-<p>Always. The old guidance — "PKCE is for public clients" — is obsolete: OAuth 2.1 requires it on every
+<p>Always. The old guidance ("PKCE is for public clients") is obsolete: OAuth 2.1 requires it on every
 authorization code request, because the code-injection attack applies regardless of whether the client
 holds a secret. It costs one hash, and there is no scenario where an authorization code flow is
 better off without it.</p>`,
 docs:[['RFC 7636 — Proof Key for Code Exchange','https://www.rfc-editor.org/rfc/rfc7636'],['OAuth 2.0 Security BCP — authorization code injection','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics#name-authorization-code-injection'],['RFC 8252 — OAuth 2.0 for Native Apps','https://www.rfc-editor.org/rfc/rfc8252'],['The OAuth 2.1 Authorization Framework (draft)','https://datatracker.ietf.org/doc/draft-ietf-oauth-v2-1/']],
 ex:{title:'The authorization server side of PKCE',
-prompt:`Implement the verification an authorization server performs. Write <code>PkceServer</code> with three methods. <code>static boolean methodAllowed(String method)</code> accepts only <code>"S256"</code>, rejecting <code>"plain"</code> and null. <code>static boolean verifierWellFormed(String verifier)</code> requires a non-null verifier whose length is between 43 and 128 inclusive. <code>static boolean redeem(String storedChallenge, String presentedVerifier, java.util.function.Function&lt;String,String&gt; sha256Base64Url)</code> returns true only when a challenge was stored, a well-formed verifier was presented, and hashing the verifier reproduces the stored challenge — and it must return <b>false</b> when a challenge was stored but no verifier was presented, which is the downgrade attack.`,
+prompt:`Implement the verification an authorization server performs. Write <code>PkceServer</code> with three methods. <code>static boolean methodAllowed(String method)</code> accepts only <code>"S256"</code>, rejecting <code>"plain"</code> and null. <code>static boolean verifierWellFormed(String verifier)</code> requires a non-null verifier whose length is between 43 and 128 inclusive. <code>static boolean redeem(String storedChallenge, String presentedVerifier, java.util.function.Function&lt;String,String&gt; sha256Base64Url)</code> returns true only when a challenge was stored, a well-formed verifier was presented, and hashing the verifier reproduces the stored challenge, and it must return <b>false</b> when a challenge was stored but no verifier was presented, which is the downgrade attack.`,
 starter:`import java.util.function.Function;
 
 public class PkceServer {
@@ -379,7 +379,7 @@ public class PkceServer {
     }
 }`,
 tests:[{d:'only S256 is accepted',re:'"S256"\\s*\\.\\s*equals|equals\\s*\\(\\s*"S256"'},{d:'the verifier has a minimum length',re:'43'},{d:'the verifier has a maximum length',re:'128'},{d:'a null verifier is rejected',re:'verifier\\s*==\\s*null|null\\s*==\\s*verifier'},{d:'a missing verifier fails the downgrade check',re:'presentedVerifier\\s*==\\s*null|null\\s*==\\s*presentedVerifier'},{d:'the stored challenge is required',re:'storedChallenge\\s*==\\s*null|null\\s*==\\s*storedChallenge'},{d:'the presented verifier is hashed before comparison',re:'sha256Base64Url\\s*\\.\\s*apply\\s*\\('},{d:'the hash is compared to the stored challenge',re:'equals\\s*\\('}],
-behavior:`methodAllowed("S256") is true; methodAllowed("plain") is false, because with plain the challenge is the verifier and anyone who saw the authorization request already has it. verifierWellFormed of a 43-character string is true, of a 42-character one false, and of a 129-character one false. redeem returns true when the hash of the presented verifier equals the stored challenge. It returns false when presentedVerifier is null even though a challenge was stored — that is the downgrade attack, where the attacker simply omits the parameter and hopes the check is treated as optional. It also returns false when no challenge was stored at all.`,
+behavior:`methodAllowed("S256") is true; methodAllowed("plain") is false, because with plain the challenge is the verifier and anyone who saw the authorization request already has it. verifierWellFormed of a 43-character string is true, of a 42-character one false, and of a 129-character one false. redeem returns true when the hash of the presented verifier equals the stored challenge. It returns false when presentedVerifier is null even though a challenge was stored: that is the downgrade attack, where the attacker simply omits the parameter and hopes the check is treated as optional. It also returns false when no challenge was stored at all.`,
 hints:['<code>return "S256".equals(method);</code>','Length bounds are inclusive on both ends: <code>&gt;= 43 &amp;&amp; &lt;= 128</code>.','Guard both the stored challenge and the presented verifier before hashing, then <code>storedChallenge.equals(sha256Base64Url.apply(presentedVerifier))</code>.'],
 solution:`import java.util.function.Function;
 
@@ -404,7 +404,7 @@ public class PkceServer {
 }`}},
 
 {id:'oa3',title:'Exchanging the code for tokens',body:`
-<p>Step 4 of the flow: the client's <b>backend</b> takes the authorization code and calls the AS <code>/token</code> endpoint over the <b>back channel</b> (a direct, private POST — never the browser). This is where the actual tokens come out.</p>
+<p>Step 4 of the flow: the client's <b>backend</b> takes the authorization code and calls the AS <code>/token</code> endpoint over the <b>back channel</b> (a direct, private POST, never the browser). This is where the actual tokens come out.</p>
 <p>The request is a <code>application/x-www-form-urlencoded</code> body:</p>
 <ul>
 <li><code>grant_type=authorization_code</code></li>
@@ -424,7 +424,7 @@ Content-Type: application/x-www-form-urlencoded
 grant_type=authorization_code&code=AUTH_CODE&redirect_uri=https%3A%2F%2Fapp%2Fcb&client_id=app123&code_verifier=ORIGINAL_VERIFIER</div>
 
 <h4>What the exchange is really for</h4>
-<p>It is worth asking why this step exists at all — why not have the authorization server return tokens
+<p>It is worth asking why this step exists at all: why not have the authorization server return tokens
 directly to the browser and skip a round trip? That was the Implicit flow, and it is deprecated, because
 of what the two channels can and cannot protect.</p>
 <div class="codeSample" data-hl>FRONT CHANNEL (via the browser redirect)
@@ -443,7 +443,7 @@ clients) proves.</p>
 
 <h4>The checks the AS runs, and what each stops</h4>
 <ul>
-<li><b>Is the code known, unexpired, and unused?</b> Codes are single-use and short-lived — the spec
+<li><b>Is the code known, unexpired, and unused?</b> Codes are single-use and short-lived; the spec
 recommends a maximum of ten minutes. A second redemption must not only fail; RFC 9700 says the AS SHOULD
 revoke every token already issued from that code, because a replay means someone else has it.</li>
 <li><b>Was it issued to <i>this</i> client?</b> Otherwise a malicious client could redeem a code intended
@@ -455,7 +455,7 @@ party is the one that started the flow.</li>
 </ul>
 
 <h4>Reading the response properly</h4>
-<p>The response is JSON, and <code>Cache-Control: no-store</code> matters — these are credentials, and
+<p>The response is JSON, and <code>Cache-Control: no-store</code> matters: these are credentials, and
 caching them anywhere is a leak. Beyond the tokens themselves:</p>
 <div class="codeSample" data-hl>{ "access_token": "...", "token_type": "Bearer", "expires_in": 300,
   "refresh_token": "...", "id_token": "...", "scope": "orders:read" }
@@ -500,7 +500,7 @@ public class TokenRequest {
 }`}},
 
 {id:'oa4',title:'Client Credentials — machine to machine',body:`
-<p>Not every flow has a user. When a <b>backend service</b> calls another service on <i>its own</i> behalf — a cron job, a microservice — there is no browser and no one to log in. That's the <b>Client Credentials</b> grant: the client authenticates <i>as itself</i> and gets an access token for itself.</p>
+<p>Not every flow has a user. When a <b>backend service</b> calls another service on <i>its own</i> behalf (a cron job, a microservice), there is no browser and no one to log in. That's the <b>Client Credentials</b> grant: the client authenticates <i>as itself</i> and gets an access token for itself.</p>
 <!--flow:oa4-clientcreds-->
 <h4>Client Credentials flow — step by step</h4>
 <div class="flowDia"><svg viewBox="0 0 640 246" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Client Credentials flow"><defs><marker id="oa4-clientcreds-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="oa4-clientcreds-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="oa4-clientcreds-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="oa4-clientcreds-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="54" x2="74" y2="234" class="fdLife"/><line x1="320" y1="54" x2="320" y2="234" class="fdLife"/><line x1="566" y1="54" x2="566" y2="234" class="fdLife"/><rect x="34.300000000000004" y="8" width="79.39999999999999" height="46" rx="8" class="fdActor"/><text x="74" y="27" class="fdActorT">Service</text><text x="74" y="42" class="fdActorS">confidential client</text><rect x="227" y="8" width="186" height="46" rx="8" class="fdActor"/><text x="320" y="35.5" class="fdActorT">Authorization Server</text><rect x="527" y="8" width="78" height="46" rx="8" class="fdActor"/><text x="566" y="35.5" class="fdActorT">API</text><line x1="77" y1="102" x2="315" y2="102" stroke="var(--accent2)" class="fdArrow" marker-end="url(#oa4-clientcreds-ah-back)"/><text x="212" y="93" class="fdLabel">POST /token — grant_type=client_credentials</text><circle cx="92" cy="102" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="92" y="105.5" class="fdNumT" style="fill:var(--accent2)">1</text><rect x="135.4" y="119" width="369.2" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="328" y="134" class="fdSelfT">authenticate the CLIENT itself (secret / key / mTLS)</text><circle cx="135.4" cy="130" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="135.4" y="133.5" class="fdNumT" style="fill:var(--muted)">2</text><line x1="317" y1="168" x2="79" y2="168" stroke="var(--accent2)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#oa4-clientcreds-ah-back)"/><text x="182" y="159" class="fdLabel">access token — no refresh token</text><circle cx="302" cy="168" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="302" y="171.5" class="fdNumT" style="fill:var(--accent2)">3</text><line x1="77" y1="198" x2="561" y2="198" stroke="var(--accent2)" class="fdArrow" marker-end="url(#oa4-clientcreds-ah-back)"/><text x="335" y="189" class="fdLabel">call with Bearer token</text><circle cx="92" cy="198" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="92" y="201.5" class="fdNumT" style="fill:var(--accent2)">4</text><text x="320" y="216" class="fdNote">No user, no browser, no consent — back channel only.</text></svg></div>
@@ -524,12 +524,12 @@ Content-Type: application/x-www-form-urlencoded
 grant_type=client_credentials&scope=orders%3Aread</div>
 
 <h4>The conceptual shift: no user in the picture</h4>
-<p>Every flow so far has had a user at the centre — someone to authenticate, someone to consent, someone
+<p>Every flow so far has had a user at the centre: someone to authenticate, someone to consent, someone
 whose data is being reached. Client Credentials removes all three. There is no resource owner because the
 <b>client is the resource owner</b>: it is asking for access to something it owns, on its own behalf.</p>
 <p>Which is why the pieces you are used to disappear. No redirect, because there is no browser and nobody
 to look at a consent screen. No ID token, because there is no authentication event to describe. No
-refresh token, because the client can simply authenticate again whenever it likes — RFC 6749 says a
+refresh token, because the client can simply authenticate again whenever it likes; RFC 6749 says a
 refresh token SHOULD NOT be issued here, and a client asking for one has usually misunderstood the
 grant.</p>
 <div class="codeSample" data-hl>authorization code:  "this USER lets this APP read their orders"
@@ -548,7 +548,7 @@ reason too: a service needs to call another service <i>during a user's request</
 context is awkward, so it uses its own service token instead.</p>
 <p>The consequence is that the downstream service sees only "orders-service called me" and has lost the
 information it needs to authorize properly. The user's identity, their permissions, and any consent are
-gone — so the downstream must either trust the caller completely, or accept an unauthenticated user-id
+gone, so the downstream must either trust the caller completely, or accept an unauthenticated user-id
 header, which is not authorization at all. The correct tool is <b>token exchange</b> (RFC 8693), covered
 in the service-to-service stream, which produces a token for the downstream audience that still carries
 the subject.</p>
@@ -570,7 +570,7 @@ is exchanged for a token. No stored secret at all, which is the end state worth 
 <h4>And the operational trap</h4>
 <p>These tokens are fetched by code, in a loop. <b>Cache them until shortly before expiry.</b> A service
 that requests a fresh token per outbound call will hammer the authorization server, get rate-limited, and
-take an outage caused entirely by its own token acquisition — a genuinely common production failure. Add
+take an outage caused entirely by its own token acquisition, a genuinely common production failure. Add
 jitter, so a fleet restarting together does not stampede.</p>`,
 docs:[['RFC 6749 §4.4 — Client Credentials','https://www.rfc-editor.org/rfc/rfc6749#section-4.4'],['oauth.net — Client Credentials','https://oauth.net/2/grant-types/client-credentials/']],
 ex:{title:'Client credentials request',
@@ -587,8 +587,8 @@ public class ClientCreds {
     }
 }`,
 tests:[{d:'client_credentials grant',re:'grant_type=client_credentials'},{d:'requests scopes',re:'&scope=|scope='},{d:'URL-encodes the scope',re:'URLEncoder\\.encode\\s*\\('},{d:'client authenticates with Basic',re:'"Basic "\\s*\\+'},{d:'base64 of id:secret',re:'Base64\\.getEncoder\\s*\\(\\s*\\)'}],
-behavior:`body("orders:read") is "grant_type=client_credentials&scope=orders%3Aread". basicAuth("svc","secret") is "Basic c3ZjOnNlY3JldA==". No user is involved — the token represents the service itself; there is no refresh or ID token.`,
-hints:['<code>return "grant_type=client_credentials&scope=" + URLEncoder.encode(scope, "UTF-8");</code>','Basic auth: base64 of <code>clientId + ":" + clientSecret</code>, prefixed with "Basic ".','Only confidential clients can do this safely — the secret must stay server-side.'],
+behavior:`body("orders:read") is "grant_type=client_credentials&scope=orders%3Aread". basicAuth("svc","secret") is "Basic c3ZjOnNlY3JldA==". No user is involved: the token represents the service itself; there is no refresh or ID token.`,
+hints:['<code>return "grant_type=client_credentials&scope=" + URLEncoder.encode(scope, "UTF-8");</code>','Basic auth: base64 of <code>clientId + ":" + clientSecret</code>, prefixed with "Basic ".','Only confidential clients can do this safely; the secret must stay server-side.'],
 solution:`import java.net.URLEncoder;
 import java.util.Base64;
 
@@ -618,7 +618,7 @@ public class ClientCreds {
 <ul>
 <li><code>grant_type=refresh_token</code> with the stored <code>refresh_token</code> → a new access token (and often a new refresh token).</li>
 <li><b>Refresh token rotation</b> — good AS's issue a new refresh token each time and invalidate the old one; if an attacker replays a used refresh token, the AS detects the reuse and revokes the whole chain.</li>
-<li>Refresh tokens are high-value — store them securely (confidential clients: server-side; public clients: rotation + sender-constraining).</li>
+<li>Refresh tokens are high-value; store them securely (confidential clients: server-side; public clients: rotation + sender-constraining).</li>
 </ul>
 <p>The lifecycle in one line: <b>authenticate once → short access tokens for calls → refresh to renew → refresh expires or is revoked → log in again.</b></p>
 <div class="codeSample" data-hl>POST /token
@@ -626,7 +626,7 @@ grant_type=refresh_token&refresh_token=STORED_REFRESH&scope=orders%3Aread
 // response: a new (shorter-lived) access_token, and usually a rotated refresh_token</div>
 
 <h4>Why refresh tokens exist at all</h4>
-<p>Two goals pull in opposite directions. <b>Short access tokens</b> limit the damage from a leak — a token
+<p>Two goals pull in opposite directions. <b>Short access tokens</b> limit the damage from a leak: a token
 that expires in five minutes is nearly worthless to a thief. <b>Not asking the user to log in every five
 minutes</b> is a hard product requirement.</p>
 <p>The refresh token resolves it by splitting the credential in two: a short-lived one that travels widely
@@ -671,12 +671,12 @@ anyone can see.</p>
 
 <h4>The lifetimes worth thinking about</h4>
 <p>There are three, and only naming two is a common mistake. <b>Access token lifetime</b> is your
-revocation lag. <b>Refresh token lifetime</b> is the idle timeout — how long an inactive user stays signed
+revocation lag. <b>Refresh token lifetime</b> is the idle timeout: how long an inactive user stays signed
 in. And the <b>absolute session lifetime</b> caps the whole grant regardless of activity, which is the one
 teams forget: without it, a user who keeps refreshing stays authenticated for ever, and so does whoever
 stole their refresh token.</p>
 <p>Rotation is the fallback, not the goal. If the refresh token can be <b>sender-constrained</b> with DPoP
-or mTLS, do that instead — a bound token cannot be replayed at all, so there is no collision to detect.
+or mTLS, do that instead; a bound token cannot be replayed at all, so there is no collision to detect.
 OAuth 2.1 requires one or the other for public clients precisely because a bare bearer refresh token in a
 browser is the worst credential in the system.</p>`,
 docs:[['RFC 6749 §6 — Refreshing an Access Token','https://www.rfc-editor.org/rfc/rfc6749#section-6'],['oauth.net — Refresh Tokens','https://oauth.net/2/grant-types/refresh-token/']],
@@ -691,7 +691,7 @@ public class Refresh {
 }`,
 tests:[{d:'refresh_token grant',re:'grant_type=refresh_token'},{d:'sends the refresh token',re:'&refresh_token='},{d:'may narrow scope',re:'&scope='},{d:'URL-encodes values',re:'URLEncoder\\.encode\\s*\\('}],
 behavior:`body("REFRESH","orders:read") is "grant_type=refresh_token&refresh_token=REFRESH&scope=orders%3Aread". The AS returns a new access token; with rotation, also a new refresh token, and the old one stops working.`,
-hints:['<code>"grant_type=refresh_token"</code> then append the encoded refresh_token and scope.','You may request the same or narrower scope on refresh, never broader.','Treat the refresh token like a password — it can mint access tokens.'],
+hints:['<code>"grant_type=refresh_token"</code> then append the encoded refresh_token and scope.','You may request the same or narrower scope on refresh, never broader.','Treat the refresh token like a password; it can mint access tokens.'],
 solution:`import java.net.URLEncoder;
 
 public class Refresh {
@@ -703,7 +703,7 @@ public class Refresh {
 }`}},
 
 {id:'oa6',title:'OpenID Connect: authentication on top of OAuth',body:`
-<p>OAuth 2.0 is about <b>authorization</b> (access to APIs). It does <i>not</i>, by itself, tell an app <b>who the user is</b> — using an access token to identify a user is a known anti-pattern. <b>OpenID Connect (OIDC)</b> is a thin <b>authentication</b> layer on top of OAuth that adds exactly that.</p>
+<p>OAuth 2.0 is about <b>authorization</b> (access to APIs). It does <i>not</i>, by itself, tell an app <b>who the user is</b>; using an access token to identify a user is a known anti-pattern. <b>OpenID Connect (OIDC)</b> is a thin <b>authentication</b> layer on top of OAuth that adds exactly that.</p>
 <!--flow:oa6-oidc-->
 <h4>OpenID Connect on top of OAuth — step by step</h4>
 <div class="flowDia"><svg viewBox="0 0 680 368" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OpenID Connect on top of OAuth"><defs><marker id="oa6-oidc-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="oa6-oidc-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="oa6-oidc-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="oa6-oidc-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="54" x2="74" y2="336" class="fdLife"/><line x1="340" y1="54" x2="340" y2="336" class="fdLife"/><line x1="606" y1="54" x2="606" y2="336" class="fdLife"/><rect x="34.300000000000004" y="8" width="79.39999999999999" height="46" rx="8" class="fdActor"/><text x="74" y="35.5" class="fdActorT">Browser</text><rect x="283.9" y="8" width="112.19999999999999" height="46" rx="8" class="fdActor"/><text x="340" y="35.5" class="fdActorT">Client (RP)</text><rect x="533.5" y="8" width="145" height="46" rx="8" class="fdActor"/><text x="606" y="27" class="fdActorT">OpenID Provider</text><text x="606" y="42" class="fdActorS">the AS, speaking OIDC</text><line x1="343" y1="102" x2="601" y2="102" stroke="var(--accent)" class="fdArrow" marker-end="url(#oa6-oidc-ah-front)"/><text x="488" y="93" class="fdLabel">/authorize — scope=openid + nonce</text><circle cx="358" cy="102" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="358" y="105.5" class="fdNumT" style="fill:var(--accent)">1</text><rect x="521.2" y="119" width="144.8" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="601.6" y="134" class="fdSelfT">user authenticates</text><circle cx="521.2" cy="130" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="521.2" y="133.5" class="fdNumT" style="fill:var(--muted)">2</text><line x1="603" y1="168" x2="345" y2="168" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#oa6-oidc-ah-front)"/><text x="458" y="159" class="fdLabel">code</text><circle cx="588" cy="168" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="588" y="171.5" class="fdNumT" style="fill:var(--accent)">3</text><line x1="343" y1="198" x2="601" y2="198" stroke="var(--accent2)" class="fdArrow" marker-end="url(#oa6-oidc-ah-back)"/><text x="488" y="189" class="fdLabel">POST /token</text><circle cx="358" cy="198" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="358" y="201.5" class="fdNumT" style="fill:var(--accent2)">4</text><line x1="603" y1="228" x2="345" y2="228" stroke="var(--accent2)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#oa6-oidc-ah-back)"/><text x="458" y="219" class="fdLabel">ID token + access token</text><circle cx="588" cy="228" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="588" y="231.5" class="fdNumT" style="fill:var(--accent2)">5</text><rect x="188.4" y="245" width="303.2" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="348" y="260" class="fdSelfT">verify ID token: sig, iss, aud, exp, nonce</text><circle cx="188.4" cy="256" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="188.4" y="259.5" class="fdNumT" style="fill:var(--muted)">6</text><line x1="343" y1="294" x2="601" y2="294" stroke="var(--accent2)" class="fdArrow" marker-end="url(#oa6-oidc-ah-back)"/><text x="488" y="285" class="fdLabel">GET /userinfo — Bearer</text><circle cx="358" cy="294" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="358" y="297.5" class="fdNumT" style="fill:var(--accent2)">7</text><line x1="603" y1="324" x2="345" y2="324" stroke="var(--accent2)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#oa6-oidc-ah-back)"/><text x="458" y="315" class="fdLabel">claims (profile, email…)</text><circle cx="588" cy="324" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="588" y="327.5" class="fdNumT" style="fill:var(--accent2)">8</text><line x1="18" y1="354" x2="44" y2="354" stroke="var(--accent)" class="fdArrow"/><text x="50" y="358" class="fdLegend">front channel (via the browser)</text><line x1="271.29999999999995" y1="354" x2="297.29999999999995" y2="354" stroke="var(--accent2)" class="fdArrow"/><text x="303.29999999999995" y="358" class="fdLegend">back channel (server to server)</text></svg></div>
@@ -733,13 +733,13 @@ scope=openid%20profile%20email &nonce=RANDOM
 GET /userinfo    Authorization: Bearer ACCESS_TOKEN</div>
 
 <h4>The confusion OIDC was invented to end</h4>
-<p>OAuth answers "may this app access that resource?". It does not answer "who is this person?" — and for
+<p>OAuth answers "may this app access that resource?". It does not answer "who is this person?", and for
 years everyone pretended it did. The pattern was: get an access token, call the provider's profile endpoint,
 and treat whatever came back as the logged-in user.</p>
 <p>That is broken, and the reason is worth understanding rather than memorising. <b>An access token is a
 bearer credential meant for an API.</b> It does not say who obtained it, it is not audience-restricted to
 your application, and it carries no proof that it was issued in response to <i>your</i> login request. An
-attacker who obtains an access token for a different app — from a malicious app the same user installed —
+attacker who obtains an access token for a different app (from a malicious app the same user installed)
 can present it to your profile lookup, which will happily describe that user, and you will log them in as
 someone else. This is the <b>confused deputy</b> again, and it had a real name in the wild: the token
 substitution attack.</p>
@@ -768,7 +768,7 @@ the user is reintroduces the attack OIDC exists to prevent.</p>
 
 <h4>Discovery, and why it matters more than it looks</h4>
 <p><code>/.well-known/openid-configuration</code> publishes every endpoint, the supported algorithms, and
-the <code>jwks_uri</code>. A client configured with just an issuer URL fetches the rest — which means key
+the <code>jwks_uri</code>. A client configured with just an issuer URL fetches the rest, which means key
 rotation is a non-event, because the client re-fetches the JWKS when it sees an unfamiliar <code>kid</code>.
 Hard-coding endpoints and keys is how an integration breaks on the day the provider rotates.</p>
 
@@ -797,7 +797,7 @@ starter:`public class Oidc {
     }
 }`,
 tests:[{d:'checks the audience (client_id)',re:'expectedAud\\s*\\.\\s*equals\\s*\\(\\s*aud\\s*\\)'},{d:'checks the nonce (replay protection)',re:'expectedNonce\\s*\\.\\s*equals\\s*\\(\\s*nonce\\s*\\)'},{d:'checks expiry',re:'expEpoch\\s*>\\s*now|now\\s*<\\s*expEpoch'},{d:'UserInfo uses the access token as Bearer',re:'"Bearer "\\s*\\+\\s*accessToken'}],
-behavior:`idTokenOk passes only when the ID token is for this client (aud), carries the nonce from this login, and is unexpired. userInfo("AT") returns "Bearer AT" — note the ID token authenticates the user, while the access token is what calls the API/UserInfo.`,
+behavior:`idTokenOk passes only when the ID token is for this client (aud), carries the nonce from this login, and is unexpired. userInfo("AT") returns "Bearer AT"; note the ID token authenticates the user, while the access token is what calls the API/UserInfo.`,
 hints:['Combine the three checks: <code>expectedAud.equals(aud) &amp;&amp; expectedNonce.equals(nonce) &amp;&amp; expEpoch &gt; now</code>.','The nonce check binds the ID token to the exact login request the client started.','UserInfo is called with the ACCESS token, not the ID token.'],
 solution:`public class Oidc {
     static boolean idTokenOk(String aud, String nonce, long expEpoch,
@@ -811,7 +811,7 @@ solution:`public class Oidc {
 
 {id:'oadisc',title:'Discovery: metadata, JWKS, and why endpoints are never hardcoded',body:`
 <p>Every flow so far has said "the client sends the code to the token endpoint" without saying how the
-client <i>knows</i> where that is. The naive answer — paste the URLs into a config file — is how a
+client <i>knows</i> where that is. The naive answer (paste the URLs into a config file) is how a
 provider migration turns into an outage, and how a key rotation turns into every login failing at once.
 The protocol's answer is a <b>metadata document</b>: one signed-by-TLS JSON file, published at a
 well-known path, that tells a client everything it needs to talk to this authorization server.</p>
@@ -830,7 +830,7 @@ well-known path, that tells a client everything it needs to talk to this authori
 <h4>Two well-known paths, one idea</h4>
 <p>OpenID Connect Discovery publishes <code>/.well-known/openid-configuration</code>; OAuth 2.0
 Authorization Server Metadata (RFC 8414) publishes <code>/.well-known/oauth-authorization-server</code>.
-The contents overlap heavily — endpoints, supported algorithms, supported scopes, the JWKS location:</p>
+The contents overlap heavily (endpoints, supported algorithms, supported scopes, the JWKS location):</p>
 <div class="codeSample" data-hl>GET https://id.example.com/.well-known/openid-configuration
 
 { "issuer":                 "https://id.example.com",
@@ -846,7 +846,7 @@ that works in single-tenant testing and breaks the day you go multi-tenant.</p>
 
 <h4>The issuer is the identity of the server, and it must match exactly</h4>
 <p>The single most important validation in this lesson: <b>the <code>issuer</code> value inside the
-document must be identical, character for character, to the issuer you resolved it from</b> — and later,
+document must be identical, character for character, to the issuer you resolved it from</b>, and later,
 to the <code>iss</code> claim of every token you accept from it. Not "the same host". Not "equal after
 normalising the trailing slash". Identical.</p>
 <p>Without that check, an attacker who can get your client to fetch metadata from a URL of their choosing
@@ -860,7 +860,7 @@ defence that makes it structurally impossible rather than merely unlikely.</p>
 <li><b>Cache the key set</b> — never fetch it per request. A verifier that fetches on every token turns
 your identity provider into your own denial-of-service target, and its availability into yours.</li>
 <li><b>Select by <code>kid</code></b>, the key id in the token header. On an unknown <code>kid</code>,
-refresh once — rate-limited — and fail if it is still unknown. That single behaviour is what makes key
+refresh once, rate-limited, and fail if it is still unknown. That single behaviour is what makes key
 rotation invisible to users.</li>
 <li><b>Never follow a URL from the token itself.</b> A <code>jku</code> or <code>x5u</code> header naming
 where to find the key is an attacker telling you which key to trust. Keys come from metadata you resolved
@@ -873,7 +873,7 @@ usual answer.</p>
 <h4>What to validate before you trust a document</h4>
 <p>Metadata arrives over TLS and is trusted on that basis, so the checks are about consistency rather than
 signatures. The issuer must match exactly. Every endpoint must be <code>https</code>, on a host you
-expect. The algorithms offered must intersect with the ones your policy permits — and the decision uses
+expect. The algorithms offered must intersect with the ones your policy permits, and the decision uses
 <i>your</i> list, never theirs. A provider advertising <code>HS256</code> does not make it acceptable
 to you.</p>
 <p>Then cache the document with its own TTL and re-resolve periodically. Endpoints do move. That is the
@@ -881,7 +881,7 @@ entire point of not hardcoding them.</p>`,
 docs:[['OpenID Connect Discovery 1.0','https://openid.net/specs/openid-connect-discovery-1_0.html'],['RFC 8414 — OAuth 2.0 Authorization Server Metadata','https://www.rfc-editor.org/rfc/rfc8414'],['RFC 9207 — the iss parameter and mix-up defence','https://www.rfc-editor.org/rfc/rfc9207']],
 ex:{title:'Accept a metadata document',lang:'js',
 run:{call:'acceptMetadata',cases:[{name:'exact issuer match over https',args:['https://id.example.com','https://id.example.com','https://id.example.com/token'],expect:true},{name:'issuer points somewhere else — the mix-up attack',args:['https://id.example.com','https://evil.example.com','https://evil.example.com/token'],expect:false},{name:'trailing slash makes it a different issuer',args:['https://id.example.com','https://id.example.com/','https://id.example.com/token'],expect:false},{name:'a plaintext token endpoint is never acceptable',args:['https://id.example.com','https://id.example.com','http://id.example.com/token'],expect:false},{name:'a missing issuer field is not a pass',args:['https://id.example.com',null,'https://id.example.com/token'],expect:false}]},
-prompt:`Write <code>function acceptMetadata(fetchedFromIssuer, metadataIssuer, tokenEndpoint)</code> returning <code>true</code> only when the document's <code>issuer</code> is <b>identical</b> to the issuer it was resolved from, and the token endpoint is an <code>https://</code> URL. Any missing value is a rejection. Do not normalise, trim or lowercase anything — exact comparison is the security property.`,
+prompt:`Write <code>function acceptMetadata(fetchedFromIssuer, metadataIssuer, tokenEndpoint)</code> returning <code>true</code> only when the document's <code>issuer</code> is <b>identical</b> to the issuer it was resolved from, and the token endpoint is an <code>https://</code> URL. Any missing value is a rejection. Do not normalise, trim or lowercase anything; exact comparison is the security property.`,
 starter:`function acceptMetadata(fetchedFromIssuer, metadataIssuer, tokenEndpoint) {
   return false;
 }`,
@@ -892,11 +892,11 @@ solution:`function acceptMetadata(fetchedFromIssuer, metadataIssuer, tokenEndpoi
   return tokenEndpoint.startsWith("https://");
 }`,
 tests:[{d:'missing values are rejected',re:'!fetchedFromIssuer|== *null|!metadataIssuer'},{d:'the issuer is compared exactly',re:'metadataIssuer\\s*!==\\s*fetchedFromIssuer|fetchedFromIssuer\\s*!==\\s*metadataIssuer|metadataIssuer\\s*===\\s*fetchedFromIssuer'},{d:'the token endpoint must be https',re:'startsWith\\s*\\(\\s*["\\x27]https://|https://'},{d:'no normalisation is applied',re:'^(?!.*toLowerCase)',flags:'s'}],
-behavior:`All five cases run for real. The trailing-slash case is the one worth staring at: https://id.example.com/ is a different issuer from https://id.example.com, and a verifier that "helpfully" normalises them has quietly accepted that two distinct issuer strings are the same server — which is the assumption the mix-up attack needs. The evil-issuer case is the attack in its plainest form: fetch metadata from a URL the attacker influenced, and every endpoint in the flow is theirs. The http case fails because a plaintext token endpoint means the code and client secret cross the network in the clear.`,
-hints:['Reject anything missing first — a null issuer must never pass.','Compare with !== on the raw strings. Resist the urge to trim or lowercase.','The endpoint check is a prefix test on the string.']}},
+behavior:`All five cases run for real. The trailing-slash case is the one worth staring at: https://id.example.com/ is a different issuer from https://id.example.com, and a verifier that "helpfully" normalises them has quietly accepted that two distinct issuer strings are the same server, which is the assumption the mix-up attack needs. The evil-issuer case is the attack in its plainest form: fetch metadata from a URL the attacker influenced, and every endpoint in the flow is theirs. The http case fails because a plaintext token endpoint means the code and client secret cross the network in the clear.`,
+hints:['Reject anything missing first; a null issuer must never pass.','Compare with !== on the raw strings. Resist the urge to trim or lowercase.','The endpoint check is a prefix test on the string.']}},
 
 {id:'oa7',title:'Device flow & the legacy grants',body:`
-<p>Two more flows round out the picture — one modern, two you should <b>recognize but avoid</b>.</p>
+<p>Two more flows round out the picture: one modern, two you should <b>recognize but avoid</b>.</p>
 <!--flow:oa7-device-->
 <h4>Device Authorization flow — step by step</h4>
 <div class="flowDia"><svg viewBox="0 0 700 302" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Device Authorization flow"><defs><marker id="oa7-device-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="oa7-device-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="oa7-device-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="oa7-device-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="54" x2="74" y2="270" class="fdLife"/><line x1="350" y1="54" x2="350" y2="270" class="fdLife"/><line x1="626" y1="54" x2="626" y2="270" class="fdLife"/><rect x="30.200000000000003" y="8" width="87.6" height="46" rx="8" class="fdActor"/><text x="74" y="27" class="fdActorT">TV / CLI</text><text x="74" y="42" class="fdActorS">no keyboard, no browser</text><rect x="257" y="8" width="186" height="46" rx="8" class="fdActor"/><text x="350" y="35.5" class="fdActorT">Authorization Server</text><rect x="565.8" y="8" width="120.39999999999999" height="46" rx="8" class="fdActor"/><text x="626" y="35.5" class="fdActorT">User’s phone</text><line x1="77" y1="102" x2="345" y2="102" stroke="var(--accent2)" class="fdArrow" marker-end="url(#oa7-device-ah-back)"/><text x="227" y="93" class="fdLabel">POST /device_authorization</text><circle cx="92" cy="102" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="92" y="105.5" class="fdNumT" style="fill:var(--accent2)">1</text><line x1="347" y1="132" x2="79" y2="132" stroke="var(--accent2)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#oa7-device-ah-back)"/><text x="197" y="123" class="fdLabel">device_code + user_code + verification_uri</text><circle cx="332" cy="132" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="332" y="135.5" class="fdNumT" style="fill:var(--accent2)">2</text><rect x="14" y="149" width="177.79999999999998" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="110.89999999999999" y="164" class="fdSelfT">shows the code and a QR</text><circle cx="14" cy="160" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="14" y="163.5" class="fdNumT" style="fill:var(--muted)">3</text><line x1="623" y1="198" x2="355" y2="198" stroke="var(--accent)" class="fdArrow" marker-end="url(#oa7-device-ah-front)"/><text x="473" y="189" class="fdLabel">user opens URI, types code, logs in</text><circle cx="608" cy="198" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="608" y="201.5" class="fdNumT" style="fill:var(--accent)">4</text><line x1="77" y1="228" x2="345" y2="228" stroke="var(--accent2)" class="fdArrow" marker-end="url(#oa7-device-ah-back)"/><text x="227" y="219" class="fdLabel">polls /token with device_code</text><circle cx="92" cy="228" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="92" y="231.5" class="fdNumT" style="fill:var(--accent2)">5</text><line x1="347" y1="258" x2="79" y2="258" stroke="var(--accent2)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#oa7-device-ah-back)"/><text x="197" y="249" class="fdLabel">…authorization_pending… then tokens</text><circle cx="332" cy="258" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="332" y="261.5" class="fdNumT" style="fill:var(--accent2)">6</text><line x1="18" y1="288" x2="44" y2="288" stroke="var(--accent2)" class="fdArrow"/><text x="50" y="292" class="fdLegend">back channel (server to server)</text><line x1="271.29999999999995" y1="288" x2="297.29999999999995" y2="288" stroke="var(--accent)" class="fdArrow"/><text x="303.29999999999995" y="292" class="fdLegend">front channel (via the browser)</text></svg></div>
@@ -948,7 +948,7 @@ and the authentication happens somewhere comfortable. Nothing secret is ever typ
 
 <h4>The attack it invites</h4>
 <p>Device flow has a phishing variant worth knowing: an attacker starts a device flow for <i>their</i>
-client, then sends the victim the legitimate <code>verification_uri</code> and code — "enter this code to
+client, then sends the victim the legitimate <code>verification_uri</code> and code: "enter this code to
 finish setting up your account". The victim authenticates on a genuine page and approves, and the tokens go
 to the attacker's device.</p>
 <p>The mitigations are all about making the consent screen say what is really happening: show <b>what is being authorised and
@@ -958,7 +958,7 @@ control.</p>
 
 <h4>The two grants to recognise and never write</h4>
 <p><b>Implicit</b> (<code>response_type=token</code>) returned the access token directly in the URL
-fragment. That put a credential in browser history, in the Referer header, and in any script on the page —
+fragment. That put a credential in browser history, in the Referer header, and in any script on the page,
 and it existed only because browsers once could not make cross-origin token requests. CORS solved that, so
 the reason is gone. Authorization Code with PKCE replaces it entirely.</p>
 <p><b>ROPC</b> (<code>grant_type=password</code>) has the application collect the user's actual username and
@@ -994,7 +994,7 @@ public class DeviceFlow {
 }`,
 tests:[{d:'uses the device_code grant URN',re:'grant_type=urn:ietf:params:oauth:grant-type:device_code'},{d:'sends the device_code',re:'&device_code='},{d:'sends the client_id',re:'&client_id='},{d:'keeps polling while pending',re:'"authorization_pending"\\s*\\.\\s*equals|equals\\s*\\(\\s*"authorization_pending"'},{d:'also handles slow_down',re:'"slow_down"'}],
 behavior:`pollBody("DEV","tvapp") is "grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=DEV&client_id=tvapp". keepPolling("authorization_pending") and keepPolling("slow_down") are true; keepPolling("access_denied") is false (stop). This is the modern flow for TVs/CLIs; Implicit and ROPC are deprecated.`,
-hints:['The grant type is a URN string — include it verbatim.','<code>return "authorization_pending".equals(error) || "slow_down".equals(error);</code>','On any other error (expired_token, access_denied) stop polling.'],
+hints:['The grant type is a URN string; include it verbatim.','<code>return "authorization_pending".equals(error) || "slow_down".equals(error);</code>','On any other error (expired_token, access_denied) stop polling.'],
 solution:`import java.net.URLEncoder;
 
 public class DeviceFlow {
@@ -1009,13 +1009,13 @@ public class DeviceFlow {
 }`}},
 
 {id:'oa8',title:'Native & mobile apps',body:`
-<p>Phone and desktop apps are <b>public clients</b> — the binary ships to users, so it can't hold a secret. The correct, secure flow is <b>Authorization Code + PKCE</b>, opened in the device's <b>system browser</b> — never an embedded WebView.</p>
+<p>Phone and desktop apps are <b>public clients</b>: the binary ships to users, so it can't hold a secret. The correct, secure flow is <b>Authorization Code + PKCE</b>, opened in the device's <b>system browser</b>, never an embedded WebView.</p>
 <p><b>Why the system browser (not a WebView)?</b> A WebView is controlled by the app, so it can read the user's password, defeats SSO (no shared cookies), and blocks passkeys/security keys. The system browser keeps the credentials away from the app and reuses the device's login session for true SSO.</p>
-<p><b>Getting the redirect back into the app</b> — three options, best last:</p>
+<p><b>Getting the redirect back into the app</b>: three options, best last:</p>
 <ul>
 <li><b>Custom URI scheme</b> (<code>com.example.app:/callback</code>) — simple, but another app can register the same scheme and hijack the code. Always pair with PKCE.</li>
 <li><b>Loopback</b> (<code>http://127.0.0.1:PORT</code>) — for desktop apps; the app runs a tiny local listener.</li>
-<li><b>Claimed HTTPS redirect</b> — iOS <b>Universal Links</b> / Android <b>App Links</b>: a real <code>https://</code> URL your domain proves it owns, which the OS routes straight to your app. <b>Not hijackable — preferred.</b></li>
+<li><b>Claimed HTTPS redirect</b> — iOS <b>Universal Links</b> / Android <b>App Links</b>: a real <code>https://</code> URL your domain proves it owns, which the OS routes straight to your app. <b>Not hijackable; preferred.</b></li>
 </ul>
 <div class="codeSample">Native app — Authorization Code + PKCE in the system browser
  1. App makes a PKCE verifier + challenge, opens the SYSTEM BROWSER at /authorize
@@ -1028,23 +1028,23 @@ public class DeviceFlow {
 <p>Use a vetted library (<b>AppAuth</b> for iOS/Android) rather than hand-rolling. Store refresh tokens in the platform secure store (Keychain / Keystore), keep access tokens short, and consider sender-constraining (DPoP) since mobile tokens live on devices you don't control.</p>
 
 <h4>Why a custom scheme is weaker than it looks</h4>
-<p>Nothing stops a second application on the device from registering <code>com.example.app:/callback</code>. On some platforms the resolution of a collision is undefined; on others it goes to whichever app registered most recently. A malicious app that wins the race receives the authorization code that was meant for you. PKCE is what makes that theft useless — the attacker has the code but not the verifier, so the exchange fails — which is precisely why PKCE is mandatory for native clients rather than advisory.</p>
-<p>Claimed HTTPS links close the hole entirely: the operating system verifies your domain's ownership through a file served over TLS at a well-known path, so no other app can claim the URL. The cost is real setup — hosting the association file, matching bundle identifiers and signing fingerprints — which is why so many apps ship the weaker option and rely on PKCE alone.</p>
+<p>Nothing stops a second application on the device from registering <code>com.example.app:/callback</code>. On some platforms the resolution of a collision is undefined; on others it goes to whichever app registered most recently. A malicious app that wins the race receives the authorization code that was meant for you. PKCE is what makes that theft useless: the attacker has the code but not the verifier, so the exchange fails, which is precisely why PKCE is mandatory for native clients rather than advisory.</p>
+<p>Claimed HTTPS links close the hole entirely: the operating system verifies your domain's ownership through a file served over TLS at a well-known path, so no other app can claim the URL. The cost is real setup (hosting the association file, matching bundle identifiers and signing fingerprints), which is why so many apps ship the weaker option and rely on PKCE alone.</p>
 
 <h4>Where the tokens live on a device</h4>
-<p>The platform secure store — Keychain on iOS, Keystore-backed storage on Android — is the only acceptable place for a refresh token, and it is worth knowing what it does and does not protect. It protects against another app reading the value and, with the right flags, against extraction from a backup or from a device that is merely stolen and locked. It does not protect against a compromised or rooted device, and it does not stop the token being used by malware running inside your own app's process.</p>
+<p>The platform secure store (Keychain on iOS, Keystore-backed storage on Android) is the only acceptable place for a refresh token, and it is worth knowing what it does and does not protect. It protects against another app reading the value and, with the right flags, against extraction from a backup or from a device that is merely stolen and locked. It does not protect against a compromised or rooted device, and it does not stop the token being used by malware running inside your own app's process.</p>
 <p>That residual risk is what <b>sender-constrained tokens</b> address: with DPoP or mTLS binding, a stolen refresh token cannot be used without the private key it is bound to, and on modern devices that key can be generated inside hardware and made non-exportable. Combine it with refresh token rotation and reuse detection and a theft becomes detectable as well as difficult.</p>
 
 <h4>Practical rules for shipping</h4>
 <ul>
-<li><b>Use AppAuth</b> or the platform's own authentication session API rather than opening a browser by hand — the details of ephemeral sessions, cancellation and interception are easy to get subtly wrong.</li>
+<li><b>Use AppAuth</b> or the platform's own authentication session API rather than opening a browser by hand: the details of ephemeral sessions, cancellation and interception are easy to get subtly wrong.</li>
 <li><b>Never embed a client secret</b> in the binary. It is extractable in minutes, and a secret every user holds is not a secret.</li>
 <li><b>Handle the cancel path.</b> Users dismiss the browser; an app that hangs on a pending authorization looks broken.</li>
 <li><b>Log out means revoke.</b> Deleting the token locally leaves it valid at the authorization server, so call the revocation endpoint as well.</li>
 </ul>`,
 docs:[['RFC 8252 — OAuth for Native Apps','https://www.rfc-editor.org/rfc/rfc8252'],['AppAuth','https://appauth.io/'],['Apple Universal Links','https://developer.apple.com/ios/universal-links/'],['Android App Links','https://developer.android.com/training/app-links']],
 ex:{title:'Build a mobile authorize URL (public client + PKCE)',
-prompt:`Write <code>MobileAuthorize</code> with <code>static String build(String base, String clientId, String appLinkRedirect, String scope, String state, String codeChallenge)</code> returning the <code>/authorize</code> URL for a native app: <code>response_type=code</code>, then URL-encoded <code>client_id</code>, <code>redirect_uri</code> (the App/Universal Link), <code>scope</code>, <code>state</code>, and <code>code_challenge</code>, plus <code>code_challenge_method=S256</code>. <b>Do not include a client_secret</b> — a mobile app is a public client. Declare <code>throws Exception</code>.`,
+prompt:`Write <code>MobileAuthorize</code> with <code>static String build(String base, String clientId, String appLinkRedirect, String scope, String state, String codeChallenge)</code> returning the <code>/authorize</code> URL for a native app: <code>response_type=code</code>, then URL-encoded <code>client_id</code>, <code>redirect_uri</code> (the App/Universal Link), <code>scope</code>, <code>state</code>, and <code>code_challenge</code>, plus <code>code_challenge_method=S256</code>. <b>Do not include a client_secret</b>: a mobile app is a public client. Declare <code>throws Exception</code>.`,
 starter:`import java.net.URLEncoder;
 
 public class MobileAuthorize {
@@ -1054,7 +1054,7 @@ public class MobileAuthorize {
 }`,
 tests:[{d:'authorization code flow',re:'response_type=code'},{d:'uses the app-link redirect',re:'&redirect_uri='},{d:'sends the PKCE challenge',re:'&code_challenge='},{d:'declares S256',re:'code_challenge_method=S256'},{d:'no client secret (public client)',re:'client_secret',not:true},{d:'URL-encodes values',re:'URLEncoder\\.encode\\s*\\('}],
 behavior:`build(...) returns "…?response_type=code&client_id=…&redirect_uri=…&scope=…&state=…&code_challenge=…&code_challenge_method=S256" with no client_secret anywhere. This is opened in the system browser; PKCE is what secures the public client, and the App Link redirect is what stops another app from stealing the code.`,
-hints:['Same shape as the web /authorize URL, plus <code>&code_challenge=</code> and <code>&code_challenge_method=S256</code>.','A native app is a PUBLIC client — never put a secret in it; PKCE replaces the secret.','The redirect should be a claimed https App/Universal Link so only your app receives the code.'],
+hints:['Same shape as the web /authorize URL, plus <code>&code_challenge=</code> and <code>&code_challenge_method=S256</code>.','A native app is a PUBLIC client: never put a secret in it; PKCE replaces the secret.','The redirect should be a claimed https App/Universal Link so only your app receives the code.'],
 solution:`import java.net.URLEncoder;
 
 public class MobileAuthorize {
@@ -1082,7 +1082,7 @@ you had to know to look for.</p>
 <ul>
 <li><b>The Implicit grant</b> (<code>response_type=token</code>). It returned an access token directly
 in the URL fragment, so the token passed through browser history, referrer headers and any script on the
-page — and there was no way to authenticate the client. Authorization Code with PKCE does the same job
+page, and there was no way to authenticate the client. Authorization Code with PKCE does the same job
 without any of that.</li>
 <li><b>The Resource Owner Password Credentials grant</b> (ROPC). The app collects the user's password
 and posts it to the token endpoint: credential forwarding, with everything that implies. It cannot
@@ -1116,7 +1116,7 @@ or mTLS) or rotated on every use with reuse detection.</li>
 <h4>What is unchanged</h4>
 <p>Worth stating plainly, because "2.1" sounds more disruptive than it is. Authorization Code,
 Client Credentials, Refresh, Device Authorization Grant: all still present and unchanged. Token
-formats, scopes, the endpoints, OpenID Connect on top — all the same. There is <b>no protocol
+formats, scopes, the endpoints, OpenID Connect on top: all the same. There is <b>no protocol
 incompatibility</b>: an OAuth 2.1 client talks to an OAuth 2.0 server perfectly well, provided that
 server supports PKCE, which practically all of them now do.</p>
 
@@ -1126,9 +1126,9 @@ knowing where the boundary is:</p>
 <ul>
 <li><b>It is still not authentication.</b> An access token remains a statement about authorization.
 OpenID Connect is still what you use to learn who the user is.</li>
-<li><b>Token storage in browsers</b> is out of scope — that is the browser-based apps BCP and the BFF
+<li><b>Token storage in browsers</b> is out of scope; that is the browser-based apps BCP and the BFF
 pattern.</li>
-<li><b>Authorization semantics</b> — what a scope means, whether the user owns the record — remain
+<li><b>Authorization semantics</b> (what a scope means, whether the user owns the record) remain
 entirely yours. OAuth never had an opinion on that, and still does not.</li>
 </ul>
 
@@ -1138,7 +1138,7 @@ entirely yours. OAuth never had an opinion on that, and still does not.</li>
 <li>Is every authorization code request using PKCE with <code>S256</code>? (Not <code>plain</code>.)</li>
 <li>Are redirect URIs matched by exact string comparison, with no wildcard entries registered?</li>
 <li>Are refresh tokens rotated with reuse detection, or key-bound?</li>
-<li>Is any implicit or password grant still enabled — including for that one legacy client nobody has
+<li>Is any implicit or password grant still enabled, including for that one legacy client nobody has
 migrated?</li>
 <li>Does any code path accept a token from a query parameter?</li>
 </ol>
@@ -1187,12 +1187,12 @@ function refreshOk(rotatedWithReuseDetection, senderConstrained) {
   return rotatedWithReuseDetection || senderConstrained;
 }`,
 tests:[{d:'the implicit grant is removed',re:'"implicit"'},{d:'the password grant is removed',re:'"password"'},{d:'authorization code remains',re:'"authorization_code"'},{d:'only S256 is accepted for PKCE',re:'"S256"'},{d:'wildcard redirect registrations are refused',re:'indexOf\\s*\\(\\s*"\\*"\\s*\\)'},{d:'redirect matching is exact',re:'registered\\s*===\\s*presented'},{d:'either refresh protection suffices',re:'\\|\\|'}],
-behavior:`Eight grant types are executed, including an unknown value and null — so a default that fails open is caught rather than merely unmatched by a regex. pkceOk("plain") is false because plain offers no protection against an attacker who observed the challenge, and a registered redirect of "https://app.example.com/*" is rejected however it is presented.`,
+behavior:`Eight grant types are executed, including an unknown value and null, so a default that fails open is caught rather than merely unmatched by a regex. pkceOk("plain") is false because plain offers no protection against an attacker who observed the challenge, and a registered redirect of "https://app.example.com/*" is rejected however it is presented.`,
 hints:['A switch listing the four permitted grants, defaulting to false, handles the removed ones and null together.','<code>return method === "S256";</code>','Reject the wildcard registration first, then compare with ===.']}},
 
 {id:'oa8b',title:'Browser-based apps and the BFF pattern',body:`
-<p>A single-page app needs to call an API on the user's behalf. The obvious design — run the OAuth flow
-in JavaScript, keep the access token in the browser, attach it to fetch calls — is what most tutorials
+<p>A single-page app needs to call an API on the user's behalf. The obvious design (run the OAuth flow
+in JavaScript, keep the access token in the browser, attach it to fetch calls) is what most tutorials
 show, and it is no longer the recommended approach. Understanding why leads to the pattern that
 replaced it.</p>
 <!--flow:oa8b-bff-->
@@ -1242,17 +1242,17 @@ browser  --token in JS-->  API       browser --cookie--> BFF --token--> API
 // the user while the page is open, but it cannot steal a durable credential.</div>
 <p>The BFF is a confidential client: it has a real secret, so it can use the strongest client
 authentication, and it holds refresh tokens where they belong. The browser's session cookie should be
-<code>HttpOnly</code>, <code>Secure</code> and <code>SameSite=Lax</code> or stricter — invisible to
+<code>HttpOnly</code>, <code>Secure</code> and <code>SameSite=Lax</code> or stricter, invisible to
 JavaScript by construction.</p>
 
 <h4>What this does and does not buy</h4>
 <p>Be precise, because BFF is sometimes oversold. It <b>eliminates token theft</b>: there is no durable
 credential in the browser to exfiltrate, so an XSS that fires once cannot grant lasting access. It does
-<b>not</b> eliminate XSS damage — injected script can still call the BFF with the user's cookie and act
+<b>not</b> eliminate XSS damage: injected script can still call the BFF with the user's cookie and act
 as them while the page is open. The difference is between an attacker who has a token they can use from
 anywhere for an hour, and an attacker confined to a live session in the victim's browser.</p>
 <p>The costs are real: you now operate a server component, and because the browser authenticates with a
-cookie, you have reintroduced <b>CSRF</b> — which cookie-based apps have always had to handle.
+cookie, you have reintroduced <b>CSRF</b>, which cookie-based apps have always had to handle.
 <code>SameSite</code> cookies plus a per-session CSRF token on state-changing requests is the standard
 answer.</p>
 
@@ -1300,7 +1300,7 @@ hints:['Three readable stores joined by ||, everything else false.','The dangero
 {id:'oa9',title:'Opaque vs JWT tokens & the split-token pattern',body:`
 <p>Access tokens come in two styles, and the choice has real consequences:</p>
 <ul>
-<li><b>By-value (JWT)</b> — the token <i>contains</i> the claims, signed. Any resource server verifies it <b>offline</b> (just check the signature) — fast, no call back to the issuer. Downsides: it's <b>readable</b> by anyone who holds it (base64, not secret), it's <b>bigger</b>, and it's <b>hard to revoke</b> before it expires (it's valid until <code>exp</code>).</li>
+<li><b>By-value (JWT)</b> — the token <i>contains</i> the claims, signed. Any resource server verifies it <b>offline</b> (just check the signature): fast, no call back to the issuer. Downsides: it's <b>readable</b> by anyone who holds it (base64, not secret), it's <b>bigger</b>, and it's <b>hard to revoke</b> before it expires (it's valid until <code>exp</code>).</li>
 <li><b>By-reference (opaque)</b> — the token is just a <b>random string</b> with no data in it. To use it, the resource server calls the Authorization Server's <b>introspection</b> endpoint (RFC 7662) to ask "is this active, and what are its claims?" Upsides: <b>instant revocation</b> (the AS just stops saying "active"), <b>nothing leaks</b> to the client, and it's small. Downside: a network call per validation (cache it).</li>
 </ul>
 <p><b>The split-token / phantom-token pattern</b> gives you both. The client only ever sees an <b>opaque</b> token; at the edge, the <b>API gateway</b> introspects (or exchanges) it and forwards a short-lived <b>JWT</b> to the internal microservices:</p>
@@ -1332,7 +1332,7 @@ a network call per request      no call, no dependency, no latency</div>
 <h4>Introspection is a real dependency</h4>
 <p>Opaque tokens sound obviously safer until you count the calls. Every request to every service now makes a
 synchronous call to the authorization server before it can do anything. That is latency on every hop, load
-on the AS proportional to your total traffic, and — the part that matters — <b>the authorization server is
+on the AS proportional to your total traffic, and, the part that matters, <b>the authorization server is
 now in the availability path of your entire estate</b>. When it is slow, everything is slow. When it is
 down, nothing works.</p>
 <p>Caching introspection responses helps and reintroduces the staleness you were avoiding: a cached
@@ -1365,7 +1365,7 @@ calls where the audience is narrow, the lifetime is short, and the availability 
 lag. <b>Split</b> when you have both problems and a gateway already.</p>
 <p>And the sentence that settles most arguments: <b>a JWT's expiry is your revocation policy</b>. If a
 fifteen-minute window between disabling an account and its tokens dying is acceptable, JWTs are fine. If it
-is not, no amount of design makes them fine — you need a lookup somewhere, and the only question is where
+is not, no amount of design makes them fine: you need a lookup somewhere, and the only question is where
 you put it.`,
 docs:[['RFC 7662 — Token Introspection','https://www.rfc-editor.org/rfc/rfc7662'],['Phantom Token pattern','https://curity.io/resources/learn/phantom-token-pattern/'],['Split Token pattern','https://curity.io/resources/learn/split-token-pattern/']],
 ex:{title:'Introspect an opaque token',
@@ -1385,8 +1385,8 @@ public class Introspect {
     }
 }`,
 tests:[{d:'posts the token',re:'token='},{d:'URL-encodes the token',re:'URLEncoder\\.encode\\s*\\('},{d:'authenticates with Basic',re:'"Basic "\\s*\\+'},{d:'base64 client credentials',re:'Base64\\.getEncoder\\s*\\(\\s*\\)'},{d:'active AND not expired',re:'active\\s*&&\\s*expEpoch\\s*>\\s*now'}],
-behavior:`body("abc") is "token=abc&token_type_hint=access_token". basicAuth("api","secret") is "Basic YXBpOnNlY3JldA==". isActive(true, future, now) is true; isActive(false,...) or an expired token is false. Introspection is what makes opaque tokens work — and what makes instant revocation possible.`,
-hints:['The introspection request is a form POST: <code>token=…</code> (URL-encoded) plus an optional <code>token_type_hint</code>.','The caller (resource server) authenticates too — reuse the Basic auth pattern.','A token is usable only if the AS says <code>active</code> AND it has not expired.'],
+behavior:`body("abc") is "token=abc&token_type_hint=access_token". basicAuth("api","secret") is "Basic YXBpOnNlY3JldA==". isActive(true, future, now) is true; isActive(false,...) or an expired token is false. Introspection is what makes opaque tokens work, and what makes instant revocation possible.`,
+hints:['The introspection request is a form POST: <code>token=…</code> (URL-encoded) plus an optional <code>token_type_hint</code>.','The caller (resource server) authenticates too; reuse the Basic auth pattern.','A token is usable only if the AS says <code>active</code> AND it has not expired.'],
 solution:`import java.net.URLEncoder;
 import java.util.Base64;
 
@@ -1404,7 +1404,7 @@ public class Introspect {
 }`}},
 
 {id:'oa10',title:'Choosing a flow: the decision guide',body:`
-<p>Every OAuth flow exists for a specific situation. Here is the full map — <b>what each is for, and when to use it</b>:</p>
+<p>Every OAuth flow exists for a specific situation. Here is the full map of <b>what each is for, and when to use it</b>:</p>
 <ul>
 <li><b>Authorization Code + PKCE</b> — <i>any app acting for a user</i>: server web apps, SPAs, and mobile/native. <b>The default for user login.</b></li>
 <li><b>Client Credentials</b> — <i>machine-to-machine</i>, no user (a backend/daemon calling an API as itself).</li>
@@ -1430,17 +1430,17 @@ public class Introspect {
  Considering Implicit or ROPC? → don't — they're deprecated</div>
 
 <h4>The decision, as three questions</h4>
-<p>The list above is a map; in practice you get to the answer with three questions in order. <b>Is a user involved?</b> No means Client Credentials, and nothing else. <b>Can the device show a browser and take input?</b> No means the Device grant (a TV, a CLI on a headless box) or CIBA when the user has a registered second device and the request originates elsewhere, such as a call centre. <b>Can the client keep a secret?</b> A server-side app can, and authenticates itself at the token endpoint — ideally with <code>private_key_jwt</code> or mTLS rather than a shared string. A browser app or a mobile app cannot, whatever it looks like: anything shipped to a user's device is public, which is what PKCE exists to compensate for.</p>
+<p>The list above is a map; in practice you get to the answer with three questions in order. <b>Is a user involved?</b> No means Client Credentials, and nothing else. <b>Can the device show a browser and take input?</b> No means the Device grant (a TV, a CLI on a headless box) or CIBA when the user has a registered second device and the request originates elsewhere, such as a call centre. <b>Can the client keep a secret?</b> A server-side app can, and authenticates itself at the token endpoint, ideally with <code>private_key_jwt</code> or mTLS rather than a shared string. A browser app or a mobile app cannot, whatever it looks like: anything shipped to a user's device is public, which is what PKCE exists to compensate for.</p>
 <p>That is the whole decision for new systems, and it collapses to one sentence: <b>Authorization Code with PKCE unless there is no user, in which case Client Credentials.</b> Everything else is a special case with a specific justification.</p>
 
 <h4>Why the deprecated ones are deprecated</h4>
 <p><b>Implicit</b> returned the access token in the URL fragment, where it landed in browser history, in referrer headers and in any script on the page, with no client authentication and no way to bind the response to the request. PKCE plus the code flow gives the same capability without any of that. <b>ROPC</b> has the application collect the user's password directly, which defeats the entire purpose of federation: it trains users to type their corporate password into third-party forms, cannot support MFA properly, and cannot be used with an external IdP at all. Both are removed in OAuth 2.1. When you meet them, they are almost always a migration artefact, and the migration is the work.</p>
 
 <h4>Refresh tokens are not a flow</h4>
-<p>Worth stating because the list above puts them side by side: a refresh token is not a way to <i>obtain</i> authorization, it is a way to keep one alive. It is issued by another grant and exchanged at the token endpoint, and its security properties are entirely about what happens if it leaks — which is why public clients must have rotation with reuse detection, and why a refresh token with no rotation, no expiry and no binding is a password that never changes.</p>`,
+<p>Worth stating because the list above puts them side by side: a refresh token is not a way to <i>obtain</i> authorization, it is a way to keep one alive. It is issued by another grant and exchanged at the token endpoint, and its security properties are entirely about what happens if it leaks, which is why public clients must have rotation with reuse detection, and why a refresh token with no rotation, no expiry and no binding is a password that never changes.</p>`,
 docs:[['OAuth 2.0 grant types','https://oauth.net/2/grant-types/'],['OAuth 2.1 (consolidated best practice)','https://oauth.net/2.1/'],['RFC 9126 — CIBA / decoupled','https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html']],
 ex:{title:'Recommend the right flow',
-prompt:`Write <code>FlowChooser</code> with: <code>static String recommend(String scenario)</code> returning the grant to use — <code>"authorization_code+pkce"</code> for <code>"web-app"</code>, <code>"spa"</code>, or <code>"mobile"</code>; <code>"client_credentials"</code> for <code>"service"</code> or <code>"backend-daemon"</code>; <code>"device_code"</code> for <code>"tv"</code>, <code>"cli"</code>, or <code>"iot"</code>; and <code>"authorization_code+pkce"</code> for anything else (safe default); and <code>static boolean deprecated(String grant)</code> returning true for <code>"implicit"</code> or <code>"password"</code>.`,
+prompt:`Write <code>FlowChooser</code> with: <code>static String recommend(String scenario)</code> returning the grant to use: <code>"authorization_code+pkce"</code> for <code>"web-app"</code>, <code>"spa"</code>, or <code>"mobile"</code>; <code>"client_credentials"</code> for <code>"service"</code> or <code>"backend-daemon"</code>; <code>"device_code"</code> for <code>"tv"</code>, <code>"cli"</code>, or <code>"iot"</code>; and <code>"authorization_code+pkce"</code> for anything else (safe default); and <code>static boolean deprecated(String grant)</code> returning true for <code>"implicit"</code> or <code>"password"</code>.`,
 starter:`public class FlowChooser {
     static String recommend(String scenario) {
         return null;
@@ -1481,12 +1481,12 @@ you recompute it to confirm the message was not forged.</p>
           ◀─client_id/secret, or exchange SAML metadata + cert──
 Later:    Provider ──signed token/assertion──▶ Your app
           Your app verifies the signature using the provider's PUBLISHED public key (JWKS/metadata)</div>
-<p><b>Unsolicited assertions.</b> Normally your app <i>starts</i> the flow (SP-initiated), so it can match the response to its own request. An <b>unsolicited assertion</b> is the opposite: the identity provider pushes a signed assertion to your app <i>without</i> a preceding request — this is SAML <b>IdP-initiated SSO</b> (OIDC deliberately has no such flow). It is convenient (a portal launches the app for the user) but riskier: there is <b>no request to correlate to</b> (no in-response-to / state), so it is more exposed to <b>replay</b> and to an assertion being injected from elsewhere.</p>
-<p><b>Defending unsolicited assertions.</b> Accept them only from a <b>pre-configured, trusted IdP</b>; verify the <b>signature</b> against that IdP's known key; enforce the <b>audience/recipient</b> so an assertion minted for another service is rejected; enforce a short validity window (<code>NotOnOrAfter</code>) to bound replay; and <b>track assertion IDs</b> so the same one cannot be replayed. When you can, prefer SP-initiated flows — the request you send is itself a defense.</p>
+<p><b>Unsolicited assertions.</b> Normally your app <i>starts</i> the flow (SP-initiated), so it can match the response to its own request. An <b>unsolicited assertion</b> is the opposite: the identity provider pushes a signed assertion to your app <i>without</i> a preceding request: this is SAML <b>IdP-initiated SSO</b> (OIDC deliberately has no such flow). It is convenient (a portal launches the app for the user) but riskier: there is <b>no request to correlate to</b> (no in-response-to / state), so it is more exposed to <b>replay</b> and to an assertion being injected from elsewhere.</p>
+<p><b>Defending unsolicited assertions.</b> Accept them only from a <b>pre-configured, trusted IdP</b>; verify the <b>signature</b> against that IdP's known key; enforce the <b>audience/recipient</b> so an assertion minted for another service is rejected; enforce a short validity window (<code>NotOnOrAfter</code>) to bound replay; and <b>track assertion IDs</b> so the same one cannot be replayed. When you can, prefer SP-initiated flows; the request you send is itself a defense.</p>
 <h4>Verifying what arrives, in both directions</h4>
 <p>An integration has two trust paths and teams routinely secure only one. <b>Inbound tokens and
 assertions</b> are verified against the provider's published keys. <b>Inbound webhooks</b> are verified
-against the shared secret — and that check needs three parts, not one: recompute the HMAC over the exact
+against the shared secret, and that check needs three parts, not one: recompute the HMAC over the exact
 raw body before any parsing, compare it in <b>constant time</b>, and reject anything whose timestamp is
 outside a short window so a captured-and-replayed call is refused.</p>
 <p>The subtlety that breaks implementations is the raw body. Parsing JSON and re-serialising it changes
@@ -1500,7 +1500,7 @@ timetable.</li>
 <li><b>Certificate expiry in SAML.</b> Metadata certificates expire, and the failure is a total outage for
 that integration on a date that was knowable years in advance. Refresh metadata automatically and alert
 well before the date.</li>
-<li><b>Secret rotation on your side.</b> Support two valid secrets at once, or rotation requires downtime —
+<li><b>Secret rotation on your side.</b> Support two valid secrets at once, or rotation requires downtime,
 which is why it never happens.</li>
 </ul>
 <p>The rule for both directions is the same: <b>discover keys, do not embed them</b>, and treat every
@@ -1516,7 +1516,7 @@ solution:`function accept(signatureValid, audienceOk, withinWindow, notReplayed)
   return signatureValid && audienceOk && withinWindow && notReplayed;
 }`,
 tests:[{d:'the signature must verify',re:'signatureValid\\s*&&'},{d:'the audience must be you',re:'audienceOk'},{d:'it must be within its validity window',re:'withinWindow'},{d:'and it must not be a replay',re:'notReplayed'}],
-behavior:`Each of the four is executed as its own failing case. "The signature verified" is the one people stop at, and it is the weakest of the four on its own — a correctly signed assertion for another party, or one you have already seen, is not yours to accept.`,
+behavior:`Each of the four is executed as its own failing case. "The signature verified" is the one people stop at, and it is the weakest of the four on its own: a correctly signed assertion for another party, or one you have already seen, is not yours to accept.`,
 hints:['Four conditions joined with &&.','A valid signature alone proves origin, not that the assertion is for you.','Replay protection means remembering the assertion id until it expires.']}},
 
 {id:'oa12',title:'OpenID Federation: trust at ecosystem scale',body:`
@@ -1546,7 +1546,7 @@ because trust is transitive through the anchor rather than pairwise. Onboarding 
 becomes a registration with the authority, not N integrations.</p>
 
 <h4>Metadata policy: authorities constrain, they do not just vouch</h4>
-<p>Vouching alone would be weak — it would say a participant is real, not that it behaves. So each
+<p>Vouching alone would be weak: it would say a participant is real, not that it behaves. So each
 statement in the chain can carry a <b>metadata policy</b> that constrains what the subordinate is
 allowed to declare about itself, and policies <b>compose downward and can only narrow</b>:</p>
 <div class="codeSample" data-hl>anchor policy      token_endpoint_auth_methods_supported:
@@ -1555,19 +1555,19 @@ allowed to declare about itself, and policies <b>compose downward and can only n
 
 entity declares    token_endpoint_auth_method: "client_secret_basic"
                    -> REJECTED. the entity cannot widen what the anchor allowed.</div>
-<p>This is how an ecosystem enforces a security baseline — the FAPI requirements from the threats
-stream, for example — on participants it does not operate. A member cannot opt into weaker client
+<p>This is how an ecosystem enforces a security baseline (the FAPI requirements from the threats
+stream, for example) on participants it does not operate. A member cannot opt into weaker client
 authentication, because the policy is applied during chain resolution, not left to the member to enforce on itself.</p>
 
 <h4>Automatic registration</h4>
 <p>Because the chain proves who a client is and what it is permitted to declare, an OP can accept a
-client it has never registered — the client presents its entity identifier, the OP resolves the chain,
+client it has never registered: the client presents its entity identifier, the OP resolves the chain,
 applies policy, and proceeds. That removes the manual onboarding step that makes large ecosystems
 impractical, and it is the practical reason the specification exists.</p>
 
 <h4>The trade-offs</h4>
 <ul>
-<li><b>The anchor is absolute.</b> Compromise it and the entire ecosystem is compromised — the trust
+<li><b>The anchor is absolute.</b> Compromise it and the entire ecosystem is compromised: the trust
 anchor lesson's point at maximum stakes. Anchor keys belong offline, with a rehearsed rotation.</li>
 <li><b>Resolution costs.</b> Chains must be fetched, verified and cached, and stale caches mean an
 expelled participant is still accepted. Cache TTL is again a security parameter.</li>
@@ -1580,11 +1580,11 @@ often.</li>
 </ul>
 <p>Where you will meet it: research and education federations, national health and government
 ecosystems, open banking schemes, and increasingly the digital wallet ecosystem, where a verifier must
-accept credentials from issuers it has never contacted. It is also worth recognising the shape — SAML
+accept credentials from issuers it has never contacted. It is also worth recognising the shape: SAML
 solved the same problem with metadata aggregates and eduGAIN, less elegantly and rather earlier.</p>`,
 docs:[['OpenID Federation 1.0','https://openid.net/specs/openid-federation-1_0.html'],['OpenID Federation — entity statements and trust chains','https://openid.net/specs/openid-federation-1_0.html#name-trust-chain'],['GEANT / eduGAIN — interfederation','https://edugain.org/']],
 ex:{title:'Resolve a trust chain and apply policy',
-prompt:`Write <code>Federation</code> with three methods. <code>static boolean chainTrusted(java.util.List&lt;String&gt; chainIssuers, java.util.Set&lt;String&gt; anchors)</code> is true only when the chain is non-empty and its <b>last</b> element is an anchor you hold. <code>static boolean policyAllows(java.util.Set&lt;String&gt; allowedByPolicy, String declared)</code> requires the declared value to be within the policy set — an entity may not widen what the authority permitted. <code>static boolean acceptEntity(java.util.List&lt;String&gt; chainIssuers, java.util.Set&lt;String&gt; anchors, java.util.Set&lt;String&gt; allowedByPolicy, String declaredAuthMethod)</code> requires both.`,
+prompt:`Write <code>Federation</code> with three methods. <code>static boolean chainTrusted(java.util.List&lt;String&gt; chainIssuers, java.util.Set&lt;String&gt; anchors)</code> is true only when the chain is non-empty and its <b>last</b> element is an anchor you hold. <code>static boolean policyAllows(java.util.Set&lt;String&gt; allowedByPolicy, String declared)</code> requires the declared value to be within the policy set; an entity may not widen what the authority permitted. <code>static boolean acceptEntity(java.util.List&lt;String&gt; chainIssuers, java.util.Set&lt;String&gt; anchors, java.util.Set&lt;String&gt; allowedByPolicy, String declaredAuthMethod)</code> requires both.`,
 starter:`import java.util.*;
 
 public class Federation {
@@ -1600,7 +1600,7 @@ public class Federation {
     }
 }`,
 tests:[{d:'an empty chain is rejected',re:'isEmpty\\s*\\(\\s*\\)'},{d:'the chain must terminate at an anchor',re:'anchors\\s*\\.\\s*contains\\s*\\('},{d:'the last element is the anchor',re:'size\\s*\\(\\s*\\)\\s*-\\s*1'},{d:'policy membership is checked',re:'allowedByPolicy\\s*\\.\\s*contains\\s*\\('},{d:'a null declaration is rejected',re:'declared\\s*!=\\s*null|declared\\s*==\\s*null'},{d:'acceptance requires both checks',re:'chainTrusted\\s*\\('},{d:'and the policy check',re:'policyAllows\\s*\\('}],
-behavior:`chainTrusted(List.of("entity","intermediate","anchor-a"), Set.of("anchor-a")) is true, and the same chain against Set.of("anchor-b") is false — the chain must terminate somewhere you decided to believe out of band, which is why an anchor compromise takes the whole ecosystem with it. An empty chain is false. policyAllows(Set.of("private_key_jwt","tls_client_auth"), "client_secret_basic") is false: policies compose downward and can only narrow, so a member cannot opt into weaker client authentication by declaring it. acceptEntity requires both, which is what lets an OP accept a client it has never registered.`,
+behavior:`chainTrusted(List.of("entity","intermediate","anchor-a"), Set.of("anchor-a")) is true, and the same chain against Set.of("anchor-b") is false: the chain must terminate somewhere you decided to believe out of band, which is why an anchor compromise takes the whole ecosystem with it. An empty chain is false. policyAllows(Set.of("private_key_jwt","tls_client_auth"), "client_secret_basic") is false: policies compose downward and can only narrow, so a member cannot opt into weaker client authentication by declaring it. acceptEntity requires both, which is what lets an OP accept a client it has never registered.`,
 hints:['The anchor is the last element: <code>chainIssuers.get(chainIssuers.size() - 1)</code>.','Guard the declared value before calling contains.','Compose the third method from the first two.'],
 solution:`import java.util.*;
 

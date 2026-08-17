@@ -18,16 +18,16 @@
 # Dev Dojo 🥋
 
 An interactive, self-contained learning platform for software engineering. **29 training tracks,
-207 lessons, and 374 hands-on exercises** run entirely in the browser — an in-editor coding
+207 lessons, and 374 hands-on exercises** run entirely in the browser: an in-editor coding
 exercise on every lesson, a belt progression, **spaced-repetition review**, a **difficulty-filtered practice hub**, a domain
 glossary with click-to-explain terms, tournaments, and end-to-end capstone projects.
 
-It began as a Java course (JavaDojo) — which is why this repository was once named for it — and now spans the full stack: the Java language and JVM,
+It began as a Java course (JavaDojo, which is why this repository was once named for it) and now spans the full stack: the Java language and JVM,
 computer science & algorithms, web/HTTP, front-end (React), APIs, databases & SQL, concurrency,
 security & cryptography, DevOps, architecture, and a senior ("dan") track. Identity & access has its
 own course (below).
 
-**Identity & access now lives in its own course.** It grew past 130 lessons — 40% of Dev Dojo — which
+**Identity & access now lives in its own course.** It grew past 130 lessons (40% of Dev Dojo), which
 unbalanced a course meant to cover software engineering broadly. It is now
 [**Identity Dojo**](identity-dojo/README.md): 14 streams covering the identity lifecycle, OAuth 2.0/2.1
 and OIDC, SAML, WebAuthn/FIDO2 internals, Active Directory and Kerberos, zero trust, and a Running
@@ -47,7 +47,7 @@ fails.)*
 
 - **Guided onboarding** — a **🚀 Getting started** page (how to set up your environment and how
   grading really works) and a **🗺️ Learning path** (a recommended white→black-belt route).
-- **Every lesson** ends with an exercise in the built-in editor. **How grading works:** most exercises (~79%, all the Java ones) are checked by **regex against the shape of your answer** —
+- **Every lesson** ends with an exercise in the built-in editor. **How grading works:** most exercises (~79%, all the Java ones) are checked by **regex against the shape of your answer**;
   they verify you wrote the right construct, not that your code runs correctly. Real execution is
   available where the environment allows it: **SQL** runs against sample datasets in the built-in
   engine and **JavaScript** in a sandboxed Web Worker (~4% of exercises, graded on actual results),
@@ -62,8 +62,8 @@ fails.)*
 - **🧠 Quick check** — multiple-choice questions with instant feedback: not just "wrong", but which
   answer was right, why it is right, and why the option you picked is not. **Options are shuffled per
   lesson visit**, so the answer position can never be memorised. Dev Dojo now carries **397 hand-authored
-  questions across 129 lessons** — each with a written explanation of why the right answer is right and
-  why every distractor is wrong — plus 9 auto-generated from the exercise specs. Identity Dojo carries a
+  questions across 129 lessons** (each with a written explanation of why the right answer is right and
+  why every distractor is wrong), plus 9 auto-generated from the exercise specs. Identity Dojo carries a
   further 327 and JS Dojo 192. Extending the hand-authored bank to the remaining lessons is an open item.
 - **📖 Glossary** — 11 domains / 360 terms, collapsible and searchable, doubling as the in-lesson
   click-to-explain source.
@@ -73,7 +73,7 @@ fails.)*
 
 ## Architecture
 
-Three decoupled layers — content is pure data, a vanilla-JS runtime renders it, and a build step
+Three decoupled layers: content is pure data, a vanilla-JS runtime renders it, and a build step
 fuses everything into one offline file. An optional Node/SQLite backend adds accounts and progress.
 
 ```mermaid
@@ -108,11 +108,11 @@ flowchart TD
 ```
 
 **The engine is unit-tested.** `node --test engine/test/engine.test.js` runs 22 tests against the shared
-runtime's pure logic — regex grading and its failure modes, the Web Worker sandbox preamble, quiz option
+runtime's pure logic: regex grading and its failure modes, the Web Worker sandbox preamble, quiz option
 shuffling, difficulty rating, and HTML escaping. They run in CI before any course is built, because a bug
 in the engine breaks all three at once. Two of them exist because a real bug shipped: every hand-authored
 quiz once had its answer at option A, and two exercise regexes did not match their own reference
-solutions. Writing them found a third — `esc()` threw on `undefined`, which would blank a panel rather
+solutions. Writing them found a third: `esc()` threw on `undefined`, which would blank a panel rather
 than render nothing.
 
 **How grading works (honestly).** The headline number to be careful with is the **content checks**
@@ -120,7 +120,7 @@ badge: `scripts/verify.js` runs 1866 assertions proving every exercise's referen
 own regex checks and that ids are unique. A separate gate, `scripts/verify-exec.js`, goes further for the
 exercises that are executed: it loads each reference solution and calls it with that exercise's own cases,
 so a solution that does not actually produce the expected result fails the build. That is a **content integrity gate, not a test suite for a
-running product** — it says the material is internally consistent, not that a learner's code is
+running product**; it says the material is internally consistent, not that a learner's code is
 correct.
 
 Grading itself splits three ways:
@@ -141,7 +141,7 @@ execution is the most valuable open improvement to the platform.
 *The home page: belt progression per domain, and the "how to learn & retain" guide.*
 
 ![A lesson with the live SQL runner](docs/img/sql-runner.png)
-*A SQL lesson — the in-editor exercise, "What your code must do", and the Compile & Run panel. SQL is
+*A SQL lesson: the in-editor exercise, "What your code must do", and the Compile & Run panel. SQL is
 graded by running it against sample data and comparing result sets.*
 
 ![Glossary with click-to-explain](docs/img/glossary.png)
@@ -195,7 +195,7 @@ node scripts/verify.js   # validate all content (target: 0 failures)
 node build.js            # produce dist/index.html (+ devdojo.html copy)
 ```
 
-The build output is a single, dependency-free HTML file — open `devdojo.html` directly in a browser,
+The build output is a single, dependency-free HTML file; open `devdojo.html` directly in a browser,
 or host `dist/index.html` on any static host. Generated files are gitignored; only source is
 versioned.
 
@@ -224,7 +224,7 @@ apostrophes and `\u` sequences. Always run `node scripts/verify.js` after editin
 
 Five companion courses on their own lighter pipeline (markdown → `web/build.py` → one interactive
 HTML file each), all live on the same Pages site and gated in CI by `scripts/verify-cloudnative.js`
-(80 pages, 374 quiz questions, every answer explained — right and wrong options alike):
+(80 pages, 374 quiz questions, every answer explained, right and wrong options alike):
 
 - [**Cloud-Native Fundamentals**](https://rcbart.github.io/dojo/fundamentals/) — the map before the
   machines: the path of a request, load balancers, API gateways, CDNs, DNS in depth, TLS, queues &
@@ -232,7 +232,7 @@ HTML file each), all live on the same Pages site and gated in CI by `scripts/ver
 - [**Docker**](https://rcbart.github.io/dojo/docker/) ·
   [**Kubernetes**](https://rcbart.github.io/dojo/kubernetes/) ·
   [**Envoy**](https://rcbart.github.io/dojo/envoy/) ·
-  [**Istio**](https://rcbart.github.io/dojo/istio/) — hands-on on your own machine; each starts
+  [**Istio**](https://rcbart.github.io/dojo/istio/): hands-on on your own machine; each starts
   with a step-by-step local setup guide, and Envoy ships runnable lab configs in `envoy-crash-course/labs/`.
 - `ml-dojo` — a machine-learning curriculum (Python via Pyodide). It forked the engine and shares
   nothing with this repo, so it now lives in its own repository: https://github.com/rcbart/ml-dojo

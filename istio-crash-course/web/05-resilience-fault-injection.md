@@ -1,12 +1,12 @@
 # 5 — Resilience & fault injection
 
-*Make the mesh survive failure — and deliberately cause failure to test it. Concepts + a lab. ~25
+*Make the mesh survive failure, and deliberately cause failure to test it. Concepts + a lab. ~25
 min. Uses Bookinfo.*
 
 ---
 
 Distributed systems fail constantly: a service is slow, a pod dies mid-request, the network blips.
-Istio lets you add resilience as configuration and — just as important — **inject faults on purpose**
+Istio lets you add resilience as configuration and, just as important, **inject faults on purpose**
 to check your resilience actually works.
 
 ## Timeouts — don't wait forever
@@ -36,7 +36,7 @@ http:
 ```
 
 Retries + multiple healthy pods make a single transient failure invisible to the caller. (Careful:
-retries multiply load — keep `attempts` modest and only retry idempotent calls.)
+retries multiply load; keep `attempts` modest and only retry idempotent calls.)
 
 ## Circuit breaking — stop hammering a sick service
 
@@ -56,9 +56,9 @@ spec:
 ```
 
 - **`connectionPool`** limits how many concurrent requests/connections a destination gets. Exceed
-  it and new requests fail fast (a 503) instead of piling up — that's the circuit "tripping."
+  it and new requests fail fast (a 503) instead of piling up. That's the circuit "tripping."
 - **`outlierDetection`** watches real responses and **ejects** a pod that returns repeated errors,
-  routing around it — the same passive health checking from the Envoy course.
+  routing around it: the same passive health checking from the Envoy course.
 
 ## Fault injection — break things on purpose
 
@@ -89,7 +89,7 @@ http:
   - destination: { host: ratings, subset: v1 }
 ```
 
-The backend never sees these — Istio's proxy fabricates the delay/error. This is chaos engineering
+The backend never sees these; Istio's proxy fabricates the delay/error. This is chaos engineering
 as config.
 
 ## Lab: inject a fault and watch it surface
@@ -102,18 +102,18 @@ kubectl apply -f samples/bookinfo/networking/virtual-service-ratings-test-delay.
 ```
 
 Now load <http://localhost:8080/productpage> as jason. The page is **slow and the reviews section
-shows an error** — because `reviews:v2` has a hard-coded 10s timeout calling `ratings`, but a
+shows an error**, because `reviews:v2` has a hard-coded 10s timeout calling `ratings`, but a
 *3-retry × 2s* budget elsewhere trips first. You just discovered a real timeout bug using fault
 injection, exactly as the Istio tutorial intends.
 
 Fix-test loop: add a `timeout` or adjust retries in the VirtualService, re-apply, reload, and watch
-the behavior change — all without redeploying a single service.
+the behavior change, all without redeploying a single service.
 
 ### Experiment: abort injection
 
 Apply an abort fault (500 at 50%) to `ratings` for jason (edit the delay sample's `fault` block to
 use `abort`), reload repeatedly, and watch the reviews stars appear/disappear as half the ratings
-calls fail — confirming how the UI degrades under partial failure.
+calls fail, confirming how the UI degrades under partial failure.
 
 ## Reset
 
@@ -123,14 +123,14 @@ kubectl apply -f samples/bookinfo/networking/virtual-service-all-v1.yaml
 
 ## Check yourself
 
-1. Where do you set a request timeout — VirtualService or DestinationRule? *(VirtualService.)*
-2. What does `outlierDetection` do? *(Ejects a pod that returns repeated errors, routing around it —
+1. Where do you set a request timeout, VirtualService or DestinationRule? *(VirtualService.)*
+2. What does `outlierDetection` do? *(Ejects a pod that returns repeated errors, routing around it:
    passive health checking.)*
 3. What's the risk of aggressive retries? *(They multiply load; only retry idempotent calls, keep
    attempts modest.)*
 4. What is fault injection for? *(Deliberately adding delays/errors to verify callers handle failure
-   — chaos testing — without touching real services.)*
-5. Does the backend see an injected fault? *(No — the proxy fabricates the delay/abort.)*
+   (chaos testing) without touching real services.)*
+5. Does the backend see an injected fault? *(No; the proxy fabricates the delay/abort.)*
 
 ---
 

@@ -21,7 +21,7 @@ server.listen(3000, () =&gt; console.log("listening on 3000"));</div>
 
 <h4>Three facts that explain most beginner bugs</h4>
 <p><b>You must call <code>res.end()</code>.</b> Exactly once, on every path. Miss it on an error branch and
-that request hangs until the client times out — and the connection stays open, so enough of them exhaust
+that request hangs until the client times out, and the connection stays open, so enough of them exhaust
 your server. Call it twice and Node throws <code>ERR_STREAM_WRITE_AFTER_END</code>.</p>
 <p><b>Headers must be written before the body.</b> Once any body byte is sent the headers are gone, and
 <code>writeHead</code> throws <code>ERR_HTTP_HEADERS_SENT</code>. This is why error handling has to check
@@ -66,7 +66,7 @@ async function readBody(req, limitBytes = 1_000_000) {
 <h4>When to use a framework</h4>
 <p>Express, Fastify and Hono give you routing, body parsing, middleware and error handling that you would
 otherwise write and get subtly wrong. Use one for real work. Write the raw version once so that when the
-framework misbehaves you know what it is doing underneath — which is the same argument as learning
+framework misbehaves you know what it is doing underneath, which is the same argument as learning
 prototypes before classes.</p>`,
 docs:[['Node — http','https://nodejs.org/api/http.html'],['MDN — URL','https://developer.mozilla.org/en-US/docs/Web/API/URL'],['Node — anatomy of an HTTP transaction','https://nodejs.org/en/learn/modules/anatomy-of-an-http-transaction']],
 exs:[
@@ -78,7 +78,7 @@ run:{call:'routeKey',cases:[
  {name:'the root path keeps its slash',args:['GET','/'],expect:'GET /'},
  {name:'the method is upper-cased',args:['post','/users'],expect:'POST /users'},
  {name:'a hash fragment never reaches the server, but is stripped anyway',args:['GET','/users#top'],expect:'GET /users'}]},
-prompt:`Write <code>function routeKey(method, url)</code> returning <code>"METHOD /path"</code>. Upper-case the method, drop any query string and hash, and remove a trailing slash — except on the root path <code>"/"</code>, which keeps it.`,
+prompt:`Write <code>function routeKey(method, url)</code> returning <code>"METHOD /path"</code>. Upper-case the method, drop any query string and hash, and remove a trailing slash, except on the root path <code>"/"</code>, which keeps it.`,
 starter:`function routeKey(method, url) {
   return null;
 }`,
@@ -90,7 +90,7 @@ solution:`function routeKey(method, url) {
   return method.toUpperCase() + " " + path;
 }`,
 tests:[{d:'strips the query string',re:'split\\s*\\(\\s*"\\?"'},{d:'upper-cases the method',re:'toUpperCase'},{d:'protects the root path',re:'length\\s*>\\s*1'}],
-behavior:`Six cases execute, and the root-path case is the one that catches a naive trailing-slash strip: removing it unconditionally turns "/" into "", which then matches no route at all. Note that a real router should use the URL class rather than splitting strings — this exercise splits so the pieces are visible.`,
+behavior:`Six cases execute, and the root-path case is the one that catches a naive trailing-slash strip: removing it unconditionally turns "/" into "", which then matches no route at all. Note that a real router should use the URL class rather than splitting strings; this exercise splits so the pieces are visible.`,
 hints:['Split off the query first, then the hash.','Only remove a trailing slash when the path is longer than one character.','Concatenate the upper-cased method, a space, and the path.']},
 {title:'Bound the request body',diff:'medium',lang:'js',
 run:{call:'acceptBody',cases:[
@@ -112,8 +112,8 @@ solution:`function acceptBody(chunkSizes, limitBytes) {
   return { ok: true, bytes };
 }`,
 tests:[{d:'accumulates the running total',re:'bytes\\s*\\+='},{d:'compares strictly greater than the limit',re:'>\\s*limitBytes'},{d:'returns early on refusal',re:'return\\s*\\{\\s*ok:\\s*false'}],
-behavior:`Five cases execute. The fourth is the security point: a client sending three 2000-byte chunks must be cut off after the first, reporting 2000 rather than 6000 — summing everything and checking at the end means you already buffered the whole attack payload. The boundary cases pin that exactly-at-the-limit is accepted and one byte over is not.`,
-hints:['Check the total inside the loop, after each addition.','Return as soon as the limit is exceeded — do not finish the loop.','Exactly equal to the limit is still acceptable, so compare with >.']}]},
+behavior:`Five cases execute. The fourth is the security point: a client sending three 2000-byte chunks must be cut off after the first, reporting 2000 rather than 6000. Summing everything and checking at the end means you already buffered the whole attack payload. The boundary cases pin that exactly-at-the-limit is accepted and one byte over is not.`,
+hints:['Check the total inside the loop, after each addition.','Return as soon as the limit is exceeded; do not finish the loop.','Exactly equal to the limit is still acceptable, so compare with >.']}]},
 
 {id:'js45',title:'Routing, middleware and validation',body:`
 <p>A real server does the same handful of things on every request: work out which handler to run, do the
@@ -204,7 +204,7 @@ solution:`function resolveRoute(routes, method, path) {
   return { status: 404, allow: null };           // the path itself is unknown
 }`,
 tests:[{d:'finds the methods registered for this path',re:'filter'},{d:'an exact match succeeds',re:'status:\\s*200'},{d:'a known path with a wrong method is 405',re:'405'},{d:'builds the Allow header',re:'join\\s*\\(\\s*", "'}],
-behavior:`Five cases execute. The distinction being tested is one most hand-rolled routers get wrong: returning 404 when the path exists but the method does not hides a client bug that 405 plus an Allow header explains immediately. The order of the checks matters — an exact match has to be tested before the path-only fallback.`,
+behavior:`Five cases execute. The distinction being tested is one most hand-rolled routers get wrong: returning 404 when the path exists but the method does not hides a client bug that 405 plus an Allow header explains immediately. The order of the checks matters: an exact match has to be tested before the path-only fallback.`,
 hints:['Filter the routes down to those whose path matches, then read their methods.','Check for an exact method match before deciding between 405 and 404.','The Allow header is the methods joined with a comma and a space.']},
 {title:'Validate a request body properly',diff:'hard',lang:'js',
 run:{call:'validateUser',cases:[
@@ -216,7 +216,7 @@ run:{call:'validateUser',cases:[
  {name:'an out-of-range age is reported',args:[{name:'Ada',age:200}],expect:{ok:false,errors:['age must be a whole number between 0 and 150']}},
  {name:'an unknown field is refused, not ignored',args:[{name:'Ada',role:'admin'}],expect:{ok:false,errors:['unknown field: role']}},
  {name:'every problem is reported at once, in a fixed order',args:[{age:'x',role:'admin'}],expect:{ok:false,errors:['name is required','age must be a whole number between 0 and 150','unknown field: role']}}]},
-prompt:`Write <code>function validateUser(body)</code> returning <code>{ ok, errors }</code>. <code>name</code> is required and must be a non-blank string (&rarr; <code>"name is required"</code>). <code>age</code> is optional, and when present must be a whole number from 0 to 150 (&rarr; <code>"age must be a whole number between 0 and 150"</code>) — the <b>string</b> <code>"36"</code> is not a number. Any key other than <code>name</code> and <code>age</code> is an error (&rarr; <code>"unknown field: KEY"</code>). Report every problem, in that order.`,
+prompt:`Write <code>function validateUser(body)</code> returning <code>{ ok, errors }</code>. <code>name</code> is required and must be a non-blank string (&rarr; <code>"name is required"</code>). <code>age</code> is optional, and when present must be a whole number from 0 to 150 (&rarr; <code>"age must be a whole number between 0 and 150"</code>); the <b>string</b> <code>"36"</code> is not a number. Any key other than <code>name</code> and <code>age</code> is an error (&rarr; <code>"unknown field: KEY"</code>). Report every problem, in that order.`,
 starter:`function validateUser(body) {
   return { ok: true, errors: [] };
 }`,
@@ -242,8 +242,8 @@ solution:`function validateUser(body) {
   return { ok: errors.length === 0, errors };
 }`,
 tests:[{d:'checks the name is a non-blank string',re:'typeof\\s+name\\s*!==\\s*"string"|trim\\(\\)'},{d:'only validates age when it was supplied',re:'!==\\s*undefined'},{d:'requires a real number, not a numeric string',re:'typeof\\s+age\\s*!==\\s*"number"|Number\\.isInteger'},{d:'rejects unknown fields',re:'unknown field'},{d:'collects every error',re:'errors\\.push'}],
-behavior:`Eight cases execute and three of them are genuine security or correctness traps. The string "36" must fail: JSON gives you real types, so accepting a string here means a client controls whether your comparisons are numeric or lexicographic. The unknown-field case is mass assignment — silently ignoring { role: "admin" } is fine until someone spreads the body into a database write. And the last case requires collecting every error rather than returning at the first, so a client fixes their request once instead of six times.`,
-hints:['Check the type before the value — typeof "36" is "string", not "number".','An optional field is only validated when it is not undefined.','Walk Object.keys to find fields you did not expect, and push an error for each.']}]},
+behavior:`Eight cases execute and three of them are genuine security or correctness traps. The string "36" must fail: JSON gives you real types, so accepting a string here means a client controls whether your comparisons are numeric or lexicographic. The unknown-field case is mass assignment: silently ignoring { role: "admin" } is fine until someone spreads the body into a database write. And the last case requires collecting every error rather than returning at the first, so a client fixes their request once instead of six times.`,
+hints:['Check the type before the value: typeof "36" is "string", not "number".','An optional field is only validated when it is not undefined.','Walk Object.keys to find fields you did not expect, and push an error for each.']}]},
 
 {id:'js46',title:'Authentication, headers and shipping it safely',body:`
 <p>The last layer: proving who is calling, and the response headers that protect the people using your
@@ -261,7 +261,7 @@ const token = auth.slice("Bearer ".length);
 // exp. decoding is not verifying, and a token minted by your own issuer
 // for a DIFFERENT service must be rejected here.</div>
 <p>Timing matters when comparing secrets. An API key checked with <code>===</code> leaks, through response
-timing, how many characters matched — use <code>crypto.timingSafeEqual</code> on equal-length buffers.</p>
+timing, how many characters matched; use <code>crypto.timingSafeEqual</code> on equal-length buffers.</p>
 
 <h4>The headers that belong on every response</h4>
 <div class="codeSample" data-hl>strict-transport-security: max-age=31536000; includeSubDomains
@@ -276,7 +276,7 @@ cache-control:            no-store          // on anything authenticated
 // and REMOVE the ones that help an attacker:
 res.removeHeader("x-powered-by");            // "Express" tells them what to
                                               // look up CVEs for</div>
-<p>Set these once in middleware, not per route — a header applied by hand is a header someone forgets on
+<p>Set these once in middleware, not per route. A header applied by hand is a header someone forgets on
 the endpoint that needed it most. Helmet does this for Express in one line.</p>
 
 <h4>CORS, from the server side</h4>
@@ -300,7 +300,7 @@ falling back to IP only when there is nothing better
 
 <h4>Before it goes live</h4>
 <p><b>Graceful shutdown</b> on <code>SIGTERM</code>: stop accepting connections, finish in-flight
-requests, close the database, then exit — otherwise every deploy drops requests.
+requests, close the database, then exit; otherwise every deploy drops requests.
 <b>Timeouts</b> on everything outbound, because a hung dependency becomes a hung server.
 <b>Health endpoints</b> split into liveness and readiness, with liveness <i>not</i> checking the database
 so a brief outage does not restart every instance at once. <b>Structured JSON logs</b> to stdout with a
@@ -353,12 +353,12 @@ solution:`function respond(req) {
   return { status: 200, headers: withCache };
 }`,
 tests:[{d:'401 carries the challenge header',re:'www-authenticate'},{d:'distinguishes 403 from 401',re:'403'},{d:'rejects the wrong content type',re:'415'},{d:'bounds the body size',re:'413'},{d:'sets nosniff on every response',re:'x-content-type-options'}],
-behavior:`Six cases execute and two of them exist purely to pin the ORDER. The fourth has a body of 99999999 bytes and the wrong content type, and must return 415 — you reject a payload you cannot parse before measuring it. The sixth has no credential, the wrong role, the wrong type and an enormous body, and must still return 401: authentication comes first, because everything after it is a statement about a caller you have not identified. A 401 without www-authenticate is also non-compliant, which is why that header is checked separately.`,
+behavior:`Six cases execute and two of them exist purely to pin the ORDER. The fourth has a body of 99999999 bytes and the wrong content type, and must return 415: you reject a payload you cannot parse before measuring it. The sixth has no credential, the wrong role, the wrong type and an enormous body, and must still return 401: authentication comes first, because everything after it is a statement about a caller you have not identified. A 401 without www-authenticate is also non-compliant, which is why that header is checked separately.`,
 hints:['Build the shared header object once and spread it into each response.','The order is authenticate, authorise, then validate the request itself.','The 401 is the only response without cache-control, so return it before adding that header.']}]}
 ,
 
 {id:'jssec',title:'Security in JavaScript: injection, pollution and the supply chain',body:`
-<p>The server lesson covered the headers and the rate limits. This lesson is the layer under that — the
+<p>The server lesson covered the headers and the rate limits. This lesson is the layer under that: the
 handful of JavaScript-specific ways applications actually get owned, and the habits that close them. None
 of them require a security team to apply; all of them have appeared in real incident reports.</p>
 
@@ -381,7 +381,7 @@ a bug or an incident.</p>
 <h4>Prototype pollution: the JavaScript-only one</h4>
 <p>The objects stream showed that every plain object inherits from <code>Object.prototype</code>. So if an
 attacker can write to <i>that</i>, they poison every object in the process. The way in is any code that
-copies user-supplied keys into objects — deep merges, config patchers, query-string parsers.</p>
+copies user-supplied keys into objects: deep merges, config patchers, query-string parsers.</p>
 <div class="codeSample" data-hl>// attacker sends: {"__proto__": {"isAdmin": true}}
 merge(config, userPatch)          // a naive merge walks INTO __proto__
 ({}).isAdmin                      // true - EVERY object now says so
@@ -399,12 +399,12 @@ npm ci                           # installs EXACTLY the lockfile - no drift
 npm audit                        # known-CVE check; noisy but free</div>
 <p>The lockfile is a security file: it pins the exact bytes you audited. Commit it, install with
 <code>npm ci</code> in CI, and treat a surprise lockfile diff in a pull request with the suspicion you
-would give a binary blob. And the cheapest defense of all is <b>fewer dependencies</b> — every package is
+would give a binary blob. And the cheapest defense of all is <b>fewer dependencies</b>: every package is
 code you now ship but did not read.</p>
 
 <h4>Secrets</h4>
 <p>Secrets live in the environment (<code>process.env</code>, from the runtime lesson), never in code, and
-never in logs — the logging lesson's redaction rules exist mostly for this. A token that reaches a log
+never in logs; the logging lesson's redaction rules exist mostly for this. A token that reaches a log
 file has left your control: logs are copied, shipped to third parties, and kept for years.</p>`,
 docs:[['OWASP — Top 10','https://owasp.org/www-project-top-ten/'],['OWASP — prototype pollution','https://cheatsheetseries.owasp.org/cheatsheets/Prototype_Pollution_Prevention_Cheat_Sheet.html'],['npm — audit','https://docs.npmjs.com/cli/commands/npm-audit']],
 ex:{title:'Vet a patch before merging it',diff:'hard',lang:'js',
@@ -415,7 +415,7 @@ run:{call:'vetPatch',cases:[
  {name:'constructor smuggled deep inside is found',args:[JSON.parse('{"profile":{"constructor":{"prototype":{"isAdmin":true}}}}')],expect:'reject: constructor'},
  {name:'prototype as a key is rejected too',args:[JSON.parse('{"prototype":{"x":1}}')],expect:'reject: prototype'},
  {name:'dangerous keys inside arrays are found',args:[{items:[{ok:1},JSON.parse('{"__proto__":{"a":1}}')]}],expect:'reject: __proto__'}]},
-prompt:`Write <code>function vetPatch(patch)</code> that walks an incoming object (objects, arrays, any depth) looking for the three pollution keys: <code>__proto__</code>, <code>constructor</code>, <code>prototype</code>. Return <code>"reject: "</code> plus the first dangerous key found (depth-first, in key order), or <code>"ok"</code> if the patch is clean. Use <code>Object.keys</code> to read keys — it sees own properties only, which is exactly the attack surface.`,
+prompt:`Write <code>function vetPatch(patch)</code> that walks an incoming object (objects, arrays, any depth) looking for the three pollution keys: <code>__proto__</code>, <code>constructor</code>, <code>prototype</code>. Return <code>"reject: "</code> plus the first dangerous key found (depth-first, in key order), or <code>"ok"</code> if the patch is clean. Use <code>Object.keys</code> to read keys: it sees own properties only, which is exactly the attack surface.`,
 starter:`function vetPatch(patch) {
   return "ok";
 }`,
@@ -434,7 +434,7 @@ solution:`function vetPatch(patch) {
   return hit ? "reject: " + hit : "ok";
 }`,
 tests:[{d:'bans __proto__',re:'__proto__'},{d:'bans constructor and prototype',re:'constructor'},{d:'reads own keys only',re:'Object\\.keys'},{d:'recurses into nested values',re:'walk\\s*\\(|vetPatch\\s*\\('}],
-behavior:`The dangerous cases are built with JSON.parse in the test data for a reason: a literal {__proto__: ...} in source code would silently set the object's prototype, but JSON.parse creates it as an ordinary own property — which is exactly how the attack arrives over the network, and exactly what Object.keys exposes. The walker refuses the patch before any merge happens, which is cheaper than cleaning up a poisoned Object.prototype ever is.`,
+behavior:`The dangerous cases are built with JSON.parse in the test data for a reason: a literal {__proto__: ...} in source code would silently set the object's prototype, but JSON.parse creates it as an ordinary own property, which is exactly how the attack arrives over the network, and exactly what Object.keys exposes. The walker refuses the patch before any merge happens, which is cheaper than cleaning up a poisoned Object.prototype ever is.`,
 hints:['Recurse: a function inside vetPatch that calls itself on object values.','Arrays are objects too - Object.keys gives their indices, so one walker handles both.','Return the key from the recursion so the first find wins.']}}
 
 

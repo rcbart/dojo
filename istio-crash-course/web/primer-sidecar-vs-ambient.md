@@ -7,13 +7,13 @@ Module 8.*
 ---
 
 Istio needs proxies on your traffic to do its job. There are two designs for *where those proxies
-sit*. Same goals (encryption, routing, resilience, metrics) — different plumbing and different
+sit*. Same goals (encryption, routing, resilience, metrics), but different plumbing and different
 cost.
 
 ## Sidecar mode — a proxy inside every pod
 
 The classic model. Alongside every copy of every service, Istio injects a **full Envoy proxy** into
-the same pod. (A "pod" is Kubernetes' smallest unit — think "a running copy of your service.")
+the same pod. (A "pod" is Kubernetes' smallest unit; think "a running copy of your service.")
 That proxy is called a **sidecar** because it rides along next to your app like a motorcycle
 sidecar.
 
@@ -36,11 +36,11 @@ at thousands, it adds up.
 The newer, "sidecar-less" design. Istio pulls the proxy *out* of your pods and splits the work into
 two layers:
 
-- **ztunnel** ("zero-trust tunnel") — a lightweight agent that runs **once per node** (a node is a
+- **ztunnel** ("zero-trust tunnel"): a lightweight agent that runs **once per node** (a node is a
   worker machine that hosts many pods). It's written in Rust and handles the cheap, universal
   part: **encrypting traffic (mTLS) and basic L4 routing** for all pods on that node. Turning it on
   requires **no pod restarts**.
-- **waypoint proxy** — a **full Envoy**, added only for the namespaces/services that need the
+- **waypoint proxy**: a **full Envoy**, added only for the namespaces/services that need the
   richer **L7 features** (HTTP routing rules, traffic splitting, L7 authorization). You deploy one
   only where you actually need it.
 
@@ -52,7 +52,7 @@ two layers:
       [ waypoint (Envoy) ]  ← added only where L7 features are needed
 ```
 
-So Envoy is still the L7 engine — it's just no longer sitting in every single pod. You pay for the
+So Envoy is still the L7 engine; it's just no longer sitting in every single pod. You pay for the
 heavy proxy only where it earns its keep.
 
 ## How they compare
@@ -68,23 +68,23 @@ heavy proxy only where it earns its keep.
 
 ## Which does this course use?
 
-**Sidecar first.** It's the clearest way to *see* the mesh — you can literally watch a second
+**Sidecar first.** It's the clearest way to *see* the mesh: you can literally watch a second
 container appear inside your pod. Modules 2–7 use sidecar mode. Then **Module 8** teaches ambient
 properly, now that you know what the proxy underneath is actually doing. The concepts you learn
-(mTLS, VirtualService, authorization) apply to **both** modes — only the plumbing differs.
+(mTLS, VirtualService, authorization) apply to **both** modes; only the plumbing differs.
 
 ## Check yourself
 
-1. In sidecar mode, where does the proxy live? *(Inside every pod, next to the app — a full Envoy
+1. In sidecar mode, where does the proxy live? *(Inside every pod, next to the app, as a full Envoy
    sidecar.)*
-2. In ambient mode, what are the two proxy layers and what does each do? *(ztunnel — per-node,
-   handles mTLS/L4 cheaply; waypoint — a full Envoy added per-namespace/service for L7 features.)*
+2. In ambient mode, what are the two proxy layers and what does each do? *(ztunnel is per-node and
+   handles mTLS/L4 cheaply; waypoint is a full Envoy added per-namespace/service for L7 features.)*
 3. A big advantage of ambient's ztunnel when you turn it on? *(It encrypts traffic with no pod
    restarts, and costs less than a proxy per pod.)*
-4. Is Envoy still involved in ambient mode? *(Yes — the waypoint proxy is Envoy; it's just not in
+4. Is Envoy still involved in ambient mode? *(Yes; the waypoint proxy is Envoy, just not in
    every pod.)*
-5. Do Istio concepts like mTLS and VirtualService apply to both modes? *(Yes — only the plumbing
-   differs; the concepts carry over.)*
+5. Do Istio concepts like mTLS and VirtualService apply to both modes? *(Yes; only the plumbing
+   differs, and the concepts carry over.)*
 
 ---
 

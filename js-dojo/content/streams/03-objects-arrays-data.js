@@ -2,8 +2,8 @@ STREAMS.push({icon:'📦',title:'Objects, Arrays & Data',blurb:'The structures e
 
 {id:'js10',title:'Objects: properties, access and references',body:`
 <p>An <b>object</b> is a collection of key/value pairs. Keys are strings (or symbols); values are
-anything. Almost everything in JavaScript that is not a primitive is an object — arrays, functions,
-dates, errors — so this lesson underpins most of the rest.</p>
+anything. Almost everything in JavaScript that is not a primitive is an object (arrays, functions,
+dates, errors), so this lesson underpins most of the rest.</p>
 
 <div class="codeSample" data-hl>const user = {
   name: "Ada",
@@ -81,7 +81,7 @@ run:{call:'cityOf',cases:[
  {name:'no address at all',args:[{}],expect:'unknown'},
  {name:'a null user',args:[null],expect:'unknown'},
  {name:'an empty city string falls back too',args:[{address:{city:''}}],expect:'unknown'}]},
-prompt:`Write <code>function cityOf(user)</code> returning <code>user.address.city</code>, or <code>"unknown"</code> when any part of that path is missing — including a <code>null</code> user and an empty-string city. Use optional chaining; it must not throw.`,
+prompt:`Write <code>function cityOf(user)</code> returning <code>user.address.city</code>, or <code>"unknown"</code> when any part of that path is missing, including a <code>null</code> user and an empty-string city. Use optional chaining; it must not throw.`,
 starter:`function cityOf(user) {
   return null;
 }`,
@@ -90,7 +90,7 @@ solution:`function cityOf(user) {
   return city ? city : "unknown";     // "" is falsy, so it falls back too
 }`,
 tests:[{d:'uses optional chaining',re:'\\?\\.'},{d:'falls back to unknown',re:'"unknown"'}],
-behavior:`Five cases execute, including a null user that would throw without optional chaining. Note the last one: an empty city string must also fall back, which is why a truthiness check is right here and ?? would be wrong — the opposite of the earlier lesson, because here "" is not a value you want to keep.`,
+behavior:`Five cases execute, including a null user that would throw without optional chaining. Note the last one: an empty city string must also fall back, which is why a truthiness check is right here and ?? would be wrong: the opposite of the earlier lesson, because here "" is not a value you want to keep.`,
 hints:['?. after each step stops the chain at the first null or undefined.','A null user needs the ?. on the very first access.','An empty string is falsy, so a plain truthiness test handles it.']},
 {title:'Copy without sharing',diff:'medium',lang:'js',
 run:{call:'renameCopy',cases:[
@@ -106,10 +106,10 @@ solution:`function renameCopy(user, newName) {
 }`,
 tests:[{d:'spreads the original',re:'\\.\\.\\.\\s*user'},{d:'overrides the name',re:'name:\\s*newName'},{d:'does not mutate the argument',re:'user\\.name\\s*=',not:true}],
 behavior:`Order matters inside the literal: spreading first and overriding after is what applies your change. Reversing them would let the original name win. This is the standard shape for an immutable update, and it is exactly how React state updates are written.`,
-hints:['Spread the original into a new object literal.','Put the override AFTER the spread or it will be overwritten.','Never assign to user.name — that would mutate the caller’s object.']}]},
+hints:['Spread the original into a new object literal.','Put the override AFTER the spread or it will be overwritten.','Never assign to user.name; that would mutate the caller’s object.']}]},
 
 {id:'js11',title:'Arrays and the methods that replace loops',body:`
-<p>An array is an ordered, zero-indexed list — and an object underneath, which is why
+<p>An array is an ordered, zero-indexed list, and an object underneath, which is why
 <code>typeof []</code> is <code>"object"</code>. Its methods are where most real JavaScript data work
 happens.</p>
 
@@ -165,7 +165,7 @@ function top2(list) { return [...list].sort((a,b) =&gt; b-a)[0]; }  // safe</div
 // and clearer. clarity first; reach for the loop when it IS clearer.</div>
 
 <h4>Two behaviours worth knowing</h4>
-<p><code>forEach</code> cannot <code>break</code> and ignores return values — if you want to stop early
+<p><code>forEach</code> cannot <code>break</code> and ignores return values; if you want to stop early
 use <code>some</code>, <code>find</code> or a <code>for...of</code>. And array "holes" (from
 <code>new Array(3)</code> or deleting an element) are skipped by <code>map</code> and
 <code>forEach</code> but not by <code>for...of</code>, which is one more reason to avoid creating
@@ -197,7 +197,7 @@ run:{call:'topThree',cases:[
  {name:'an empty array',args:[[]],expect:[]},
  {name:'handles duplicates',args:[[5,5,5,1]],expect:[5,5,5]},
  {name:'negatives sort correctly',args:[[-1,-10,3]],expect:[3,-1,-10]}]},
-prompt:`Write <code>function topThree(numbers)</code> returning the three largest values, highest first. It must <b>not</b> modify the array it is given, and it must sort numerically — the default <code>sort()</code> compares as strings.`,
+prompt:`Write <code>function topThree(numbers)</code> returning the three largest values, highest first. It must <b>not</b> modify the array it is given, and it must sort numerically: the default <code>sort()</code> compares as strings.`,
 starter:`function topThree(numbers) {
   return [];
 }`,
@@ -229,12 +229,12 @@ solution:`function summarise(items) {
   return [...totals].sort((a, b) => b[1] - a[1]);   // stable, so ties hold
 }`,
 tests:[{d:'accumulates per category',re:'\\.set\\('},{d:'reads the running total',re:'\\.get\\('},{d:'sorts by the total',re:'b\\[1\\]\\s*-\\s*a\\[1\\]|sort'},{d:'returns pairs',re:'\\[\\s*\\.\\.\\.'}],
-behavior:`Six cases execute and two of them decide the implementation. The tie case only passes because Map keeps insertion order and Array.prototype.sort is stable — a plain object would give you no ordering guarantee for the keys. The empty case falls out with no special branch.`,
+behavior:`Six cases execute and two of them decide the implementation. The tie case only passes because Map keeps insertion order and Array.prototype.sort is stable; a plain object would give you no ordering guarantee for the keys. The empty case falls out with no special branch.`,
 hints:['A Map accumulates the totals and remembers first-seen order.','Default the running total to 0 with ?? before adding.','Spread the Map into pairs, then sort by the second element descending.']}]},
 
 {id:'js12',title:'Destructuring, spread and rest',body:`
 <p>Three pieces of syntax that appear in almost every modern JavaScript file. They are not new
-capabilities — they are shorter ways to express things you already know — but code that avoids them looks
+capabilities (they are shorter ways to express things you already know), but code that avoids them looks
 a decade old.</p>
 
 <h4>Destructuring: unpacking into variables</h4>
@@ -282,7 +282,7 @@ in a parameter list, it <b>collects</b> (rest). On the <b>right</b>, or inside a
 
 <h4>The limit worth remembering</h4>
 <p>Spread copies are <b>shallow</b>. <code>{ ...user }</code> gives you a new top-level object whose
-nested objects are still the same references — so mutating <code>copy.address.city</code> changes the
+nested objects are still the same references, so mutating <code>copy.address.city</code> changes the
 original. For a true deep copy use <code>structuredClone</code>.</p>`,
 docs:[['MDN — Destructuring assignment','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment'],['MDN — Spread syntax','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax'],['MDN — Rest parameters','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters']],
 exs:[
@@ -301,7 +301,7 @@ solution:`function withoutPassword(user) {
   return safe;
 }`,
 tests:[{d:'uses rest destructuring',re:'\\.\\.\\.\\s*safe|\\.\\.\\.\\s*rest'},{d:'names the field being removed',re:'password'},{d:'does not delete from the original',re:'delete\\s+user',not:true}],
-behavior:`Four cases execute, including one where the field is absent — rest destructuring handles that without a guard. Note the last case: only password is removed, so a token still passes through. Using delete would have mutated the caller's object instead of returning a new one.`,
+behavior:`Four cases execute, including one where the field is absent; rest destructuring handles that without a guard. Note the last case: only password is removed, so a token still passes through. Using delete would have mutated the caller's object instead of returning a new one.`,
 hints:['Destructure the unwanted key by name, then collect the rest.','The rest variable is the object you return.','delete would work but mutates what you were given.']},
 {title:'Merge configuration correctly',diff:'medium',lang:'js',
 run:{call:'resolve',cases:[
@@ -317,11 +317,11 @@ solution:`function resolve(defaults, options) {
   return { ...defaults, ...options };   // later spread wins, per key
 }`,
 tests:[{d:'spreads the defaults first',re:'\\.\\.\\.\\s*defaults'},{d:'spreads the options after',re:'\\.\\.\\.\\s*options'}],
-behavior:`The last case executes the trap: spreading gives per-key override by presence, so an explicit port of 0 survives. Writing this with || per field — options.port || defaults.port — would silently replace 0 with 80, which is the same falsy-versus-nullish bug from the operators lesson.`,
+behavior:`The last case executes the trap: spreading gives per-key override by presence, so an explicit port of 0 survives. Writing this with || per field (options.port || defaults.port) would silently replace 0 with 80, which is the same falsy-versus-nullish bug from the operators lesson.`,
 hints:['Both objects spread into one literal.','Whichever is spread LAST wins on conflicting keys.','No per-field logic is needed at all.']}]},
 
 {id:'js13',title:'Map, Set and JSON',body:`
-<p>Plain objects and arrays cover most needs. Three other tools cover the rest — and JSON is how data
+<p>Plain objects and arrays cover most needs. Three other tools cover the rest, and JSON is how data
 leaves your program, with a short list of things it destroys on the way out.</p>
 
 <h4><code>Map</code>: a dictionary with real keys</h4>
@@ -340,7 +340,7 @@ for (const [k, v] of m) { }   // iterates in INSERTION order
 const o = {};
 o[42] = "x";  Object.keys(o);   // ["42"] - the number became a string</div>
 <p>Choose <code>Map</code> when keys are not strings, when you add and remove frequently, when insertion
-order matters, or when the keys come from user input — a plain object inherits from
+order matters, or when the keys come from user input: a plain object inherits from
 <code>Object.prototype</code>, so a key of <code>"constructor"</code> or <code>"__proto__"</code> behaves
 strangely. Choose a plain object for fixed, known-at-write-time shapes, and because it serialises to JSON
 where a <code>Map</code> does not.</p>
@@ -376,7 +376,7 @@ object contains a date, and then it fails in a way nobody notices until a compar
 
 <h4><code>JSON.parse</code> throws</h4>
 <p>Unlike most of JavaScript, malformed JSON is an exception, not <code>undefined</code>. Anything parsed
-from a network response, a file, or user input needs a <code>try</code>/<code>catch</code> — a topic the
+from a network response, a file, or user input needs a <code>try</code>/<code>catch</code>, a topic the
 errors stream takes properly.</p>`,
 docs:[['MDN — Map','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map'],['MDN — Set','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set'],['MDN — JSON','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON']],
 exs:[
@@ -408,7 +408,7 @@ run:{call:'safeParse',cases:[
  {name:'truncated JSON returns null',args:['{"a":'],expect:null},
  {name:'an empty string returns null',args:[''],expect:null},
  {name:'the literal null parses to null',args:['null'],expect:null}]},
-prompt:`Write <code>function safeParse(text)</code> that returns the parsed value, or <code>null</code> when the text is not valid JSON. <code>JSON.parse</code> throws on malformed input — catch it rather than letting it escape.`,
+prompt:`Write <code>function safeParse(text)</code> that returns the parsed value, or <code>null</code> when the text is not valid JSON. <code>JSON.parse</code> throws on malformed input; catch it rather than letting it escape.`,
 starter:`function safeParse(text) {
   return null;
 }`,
@@ -420,13 +420,13 @@ solution:`function safeParse(text) {
   }
 }`,
 tests:[{d:'calls JSON.parse',re:'JSON\\.parse'},{d:'catches the failure',re:'catch'}],
-behavior:`Three malformed inputs execute, each of which throws a SyntaxError without the catch. Note the last case: the string "null" is valid JSON that parses to null, so a valid parse and a failed one produce the same answer here — a real ambiguity, and the reason production code usually returns { ok, value } instead.`,
+behavior:`Three malformed inputs execute, each of which throws a SyntaxError without the catch. Note the last case: the string "null" is valid JSON that parses to null, so a valid parse and a failed one produce the same answer here: a real ambiguity, and the reason production code usually returns { ok, value } instead.`,
 hints:['Wrap the parse in try/catch.','catch { } without a binding is legal modern JavaScript.','Return null from the catch block, not from after the try.']}]}
 ,
 
 {id:'jsdate',title:'Dates, times and Intl',body:`
 <p>Dates look easy and are the most reliable source of production bugs in this stream. The reason is that
-a moment in time is one thing, and a human's description of it — "March 3rd, in Sydney" — is another, and
+a moment in time is one thing, and a human's description of it ("March 3rd, in Sydney") is another, and
 JavaScript's <code>Date</code> mixes the two in ways you have to learn once, properly.</p>
 
 <h4>What a Date actually is</h4>
@@ -439,7 +439,7 @@ new Date("2026-03-03T10:00:00Z")   // the Z means UTC. ALWAYS send this form.
 d.toISOString()          // "2026-03-03T10:00:00.000Z"  - UTC, for machines
 d.toLocaleString()       // "3/3/2026, 9:00 PM"         - the USER'S zone</div>
 <p>That is the whole model: <b>store and transmit UTC instants, format for humans at the very edge</b>.
-The bug class this prevents — a birthday shifting a day depending on who views it — comes from doing
+The bug class this prevents (a birthday shifting a day depending on who views it) comes from doing
 either job in the wrong place.</p>
 
 <h4>The traps, named</h4>
@@ -479,7 +479,7 @@ run:{call:'daysBetween',cases:[
  {name:'partial days round DOWN',args:['2026-03-01T00:00:00Z','2026-03-02T18:00:00Z'],expect:1},
  {name:'an invalid date returns null, not NaN',args:['garbage','2026-03-01T00:00:00Z'],expect:null},
  {name:'both invalid is also null',args:['x','y'],expect:null}]},
-prompt:`Write <code>function daysBetween(a, b)</code> taking two ISO strings and returning the number of <b>whole</b> days between the instants, regardless of order. Parse with <code>new Date(...)</code>, and return <code>null</code> when either fails to parse — remember that an invalid Date does not throw, it poisons every calculation after it with <code>NaN</code>.`,
+prompt:`Write <code>function daysBetween(a, b)</code> taking two ISO strings and returning the number of <b>whole</b> days between the instants, regardless of order. Parse with <code>new Date(...)</code>, and return <code>null</code> when either fails to parse; remember that an invalid Date does not throw, it poisons every calculation after it with <code>NaN</code>.`,
 starter:`function daysBetween(a, b) {
   return 0;
 }`,
@@ -492,8 +492,8 @@ solution:`function daysBetween(a, b) {
   return Math.floor(ms / 86400000);    // 1000*60*60*24, whole days only
 }`,
 tests:[{d:'parses both inputs as Dates',re:'new\\s+Date'},{d:'detects an invalid date',re:'isNaN'},{d:'is order-independent',re:'Math\\.abs'},{d:'rounds down to whole days',re:'Math\\.floor'}],
-behavior:`Six cases execute. The invalid-date pair is the production one: new Date("garbage") is not an exception, it is a value whose getTime() is NaN, and NaN divided, floored and compared stays NaN — so a guard at the boundary is the only place to catch it, exactly like toNumber in the foundations stream.`,
-hints:['getTime() on an invalid Date is NaN — check both before any arithmetic.','Subtracting Dates yields milliseconds; Math.abs removes the order problem.','86,400,000 milliseconds make a day; floor keeps only whole ones.']}}
+behavior:`Six cases execute. The invalid-date pair is the production one: new Date("garbage") is not an exception, it is a value whose getTime() is NaN, and NaN divided, floored and compared stays NaN, so a guard at the boundary is the only place to catch it, exactly like toNumber in the foundations stream.`,
+hints:['getTime() on an invalid Date is NaN; check both before any arithmetic.','Subtracting Dates yields milliseconds; Math.abs removes the order problem.','86,400,000 milliseconds make a day; floor keeps only whole ones.']}}
 
 
 ]});

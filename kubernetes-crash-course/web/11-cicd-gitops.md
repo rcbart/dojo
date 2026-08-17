@@ -6,7 +6,7 @@ Concepts + a lab-style walkthrough. ~25 min.*
 ---
 
 You now know how to deploy by hand. In production, deploys are **automated**: a pipeline builds your
-image, pushes it, and updates the cluster — triggered by a git push, with no human running `kubectl`.
+image, pushes it, and updates the cluster, triggered by a git push, with no human running `kubectl`.
 This module covers the pipeline and the modern **GitOps** approach.
 
 ## The pipeline: build → push → deploy
@@ -23,10 +23,10 @@ Every code change flows through the same stages:
    CD: update the Kubernetes manifests to the new image  →  apply to cluster  →  verify rollout
 ```
 
-- **CI (Continuous Integration)** — build the Docker image, run tests, push to a registry. Tag with
+- **CI (Continuous Integration)**: build the Docker image, run tests, push to a registry. Tag with
   the **git commit SHA** so every image traces to exact source (the tagging discipline from the
   Docker course).
-- **CD (Continuous Delivery/Deployment)** — update the Deployment to the new image tag and roll it
+- **CD (Continuous Delivery/Deployment)**: update the Deployment to the new image tag and roll it
   out (Module 2's rolling update + readiness probes = zero downtime).
 
 ## A concrete CI pipeline (GitHub Actions)
@@ -57,9 +57,9 @@ succeed (and it auto-fails if the new pods never become ready).
 
 ## Two deployment models: push vs pull (GitOps)
 
-- **Push-based CD** (above) — the pipeline has cluster credentials and runs `kubectl`/`helm` *to* the
+- **Push-based CD** (above): the pipeline has cluster credentials and runs `kubectl`/`helm` *to* the
   cluster. Simple, but the CI system holds cluster-admin-grade credentials and the cluster can drift from git.
-- **Pull-based CD = GitOps** — a controller *inside* the cluster (**Argo CD** or **Flux**)
+- **Pull-based CD = GitOps**: a controller *inside* the cluster (**Argo CD** or **Flux**)
   continuously **pulls** the desired manifests from a git repo and reconciles the cluster to match.
   Git becomes the single source of truth.
 
@@ -74,7 +74,7 @@ succeed (and it auto-fails if the new pods never become ready).
 
 Benefits: **git is the source of truth** (every change is a reviewed, audited commit); **rollback = git
 revert**; the cluster **self-corrects drift**; and no external system needs cluster credentials. It's
-literally Kubernetes' reconciliation idea (Module 0) applied to *deployment* — declare desired state
+literally Kubernetes' reconciliation idea (Module 0) applied to *deployment*: declare desired state
 in git, a controller makes reality match.
 
 ## Lab: simulate the deploy step locally
@@ -104,9 +104,9 @@ and triggers a rollback, all without a human.
 ## Practitioner rules
 
 - **Tag images by git SHA** (never `latest`) so deploys are traceable and rollbacks precise.
-- **Gate deploys on `rollout status`** — fail fast, auto-rollback on bad releases.
-- **Keep manifests in git** (Helm/Kustomize) — reviewed, versioned, auditable.
-- **Prefer GitOps (Argo CD/Flux)** for production — git as truth, drift auto-corrected, no CI holding
+- **Gate deploys on `rollout status`**: fail fast, auto-rollback on bad releases.
+- **Keep manifests in git** (Helm/Kustomize): reviewed, versioned, auditable.
+- **Prefer GitOps (Argo CD/Flux)** for production: git as truth, drift auto-corrected, no CI holding
   cluster keys.
 - **Store credentials as CI secrets**, never in the repo.
 
@@ -114,13 +114,13 @@ and triggers a rollback, all without a human.
 
 1. What are the CI and CD halves? *(CI builds/tests/pushes the image; CD updates the cluster to the
    new image and rolls it out.)*
-2. Why tag images with the git SHA? *(Traceability to exact source and precise rollbacks — never use
+2. Why tag images with the git SHA? *(Traceability to exact source and precise rollbacks; never use
    `latest`.)*
 3. Push-based vs pull-based (GitOps) CD? *(Push: the pipeline runs kubectl into the cluster. Pull: a
    controller in the cluster syncs it to git.)*
 4. In GitOps, what is the source of truth and how do you roll back? *(Git; roll back with a git
    revert, which the controller reconciles.)*
-5. What makes an automated deploy safe against a bad image? *(Gating on `kubectl rollout status` —
+5. What makes an automated deploy safe against a bad image? *(Gating on `kubectl rollout status`: a
    readiness-gated rollout fails and triggers a rollback.)*
 
 ---

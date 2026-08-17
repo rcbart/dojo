@@ -1,13 +1,13 @@
 # 10 — Kustomize
 
-*Template-free customization built into kubectl — per-environment configs without duplication.
+*Template-free customization built into kubectl: per-environment configs without duplication.
 Concepts + a lab. ~25 min. Needs your kind cluster.*
 
 ---
 
 **Kustomize** is the other way to manage per-environment manifests. Where Helm uses *templates with
 placeholders*, Kustomize uses **overlays**: you keep plain, valid YAML as a **base**, then layer
-small **patches** on top for each environment. No templating language — it's built right into
+small **patches** on top for each environment. No templating language: it's built right into
 `kubectl` (`kubectl apply -k`).
 
 ## The idea: base + overlays
@@ -23,7 +23,7 @@ small **patches** on top for each environment. No templating language — it's b
 ```
 
 Each environment references the base and applies only its *differences*. No copy-paste, no template
-syntax — just YAML patching YAML.
+syntax, just YAML patching YAML.
 
 ## The base
 
@@ -85,7 +85,7 @@ kubectl apply -k overlays/dev          # the dev variant
 ```
 
 `configMapGenerator`/`secretGenerator` even hash config content into the name, so changing config
-triggers a rollout automatically — a neat built-in.
+triggers a rollout automatically, a neat built-in.
 
 ## Lab: two environments from one base
 
@@ -143,7 +143,7 @@ One base, two environments, zero duplication or templating.
 | Built into kubectl | No (separate tool) | **Yes** (`-k`) |
 
 **Rule of thumb:** Helm to *package and distribute* apps (especially third-party); Kustomize to
-*customize* your own manifests per environment simply. Many teams use **both** — e.g. render a Helm
+*customize* your own manifests per environment simply. Many teams use **both**, e.g. render a Helm
 chart, then Kustomize-patch it. Both are on the CKA.
 
 ## Check yourself
@@ -152,7 +152,7 @@ chart, then Kustomize-patch it. Both are on the CKA.
    templates with placeholders and logic.)*
 2. What is a base vs an overlay? *(The base is the complete common manifests; an overlay layers
    environment-specific patches on top.)*
-3. How do you apply a Kustomize overlay? *(`kubectl apply -k <overlay-dir>` — it's built into
+3. How do you apply a Kustomize overlay? *(`kubectl apply -k <overlay-dir>`; it's built into
    kubectl.)*
 4. Name two purpose-built Kustomize fields. *(Any of: namePrefix, commonLabels, images, replicas,
    configMapGenerator, secretGenerator.)*

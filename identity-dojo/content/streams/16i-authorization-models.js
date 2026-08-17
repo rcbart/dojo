@@ -1,7 +1,7 @@
-STREAMS.push({icon:'🧩',iam:true,sec:'Authorization models',title:'Authorization Models',blurb:'Once you know who someone is, how do you decide what they can do? ACLs, RBAC (roles), ABAC (attributes/policy), ReBAC (relationships), and policy engines — plus least privilege, separation of duties, and the PDP/PEP split.',lessons:[
+STREAMS.push({icon:'🧩',iam:true,sec:'Authorization models',title:'Authorization Models',blurb:'Once you know who someone is, how do you decide what they can do? ACLs, RBAC (roles), ABAC (attributes/policy), ReBAC (relationships), and policy engines, plus least privilege, separation of duties, and the PDP/PEP split.',lessons:[
 
 {id:'az1',title:'From ACLs to roles (RBAC)',body:`
-<p>The simplest model is an <b>Access Control List</b> (ACL): each resource keeps a list of who may do what. It is precise but explodes — thousands of users times thousands of resources becomes unmanageable.</p>
+<p>The simplest model is an <b>Access Control List</b> (ACL): each resource keeps a list of who may do what. It is precise but explodes: thousands of users times thousands of resources becomes unmanageable.</p>
 <p><b>RBAC</b> (Role-Based Access Control) adds a layer of indirection: users get <b>roles</b> (admin, editor, viewer), and roles carry <b>permissions</b>. You manage a handful of roles instead of millions of user-resource pairs, and onboarding is just "assign a role." It is the default model in most enterprises for good reason.</p>
 <div class="codeSample" data-hl>// a permission check reduces to: does this user hold a role that grants it?
 boolean allowed = user.roles().contains("admin");</div>
@@ -11,7 +11,7 @@ boolean allowed = user.roles().contains("admin");</div>
 it is O(users x objects) to administer. Onboarding one person means touching every object they need;
 offboarding means finding every object that mentions them, and missing one is a permanent orphaned
 grant.</p>
-<p>RBAC inserts a level of indirection — <b>users get roles, roles carry permissions</b> — which turns
+<p>RBAC inserts a level of indirection (<b>users get roles, roles carry permissions</b>), which turns
 onboarding into a single assignment. That is the whole gain, and the whole cost: you can no longer
 answer "who can read this file?" by looking at the file.</p>
 <div class="codeSample" data-hl>ACL          alice: read, bob: write        on EACH object
@@ -25,7 +25,7 @@ RBAC         alice -> "editor" -> {read, write}
 // because per-object precision is exactly what those need.</div>
 
 <h4>The distinction to keep straight</h4>
-<p>A <b>permission</b> is a verb on a resource — <code>invoice:read</code>. A <b>role</b> is a named
+<p>A <b>permission</b> is a verb on a resource: <code>invoice:read</code>. A <b>role</b> is a named
 bundle of permissions. A <b>group</b> is a collection of people. Roles and groups get used
 interchangeably and should not be: "who is in Finance?" is an HR question, "what may Finance do?" is a
 security question, and collapsing them means every org-chart change silently becomes a permissions
@@ -33,17 +33,17 @@ change nobody reviewed.</p>
 
 <h4>Where ACLs are still the right answer</h4>
 <p>RBAC replaced ACLs for organisational permissions and never replaced them for <b>per-object sharing</b>.
-When a user shares one document with one colleague, no role expresses that — the grant genuinely belongs to
+When a user shares one document with one colleague, no role expresses that; the grant genuinely belongs to
 the object. Every file-sharing product works this way, and trying to model it as roles produces one role
 per document, which is the reductio of role explosion.</p>
 <p>So real systems are hybrids: coarse organisational access from roles, fine per-object access from lists
-or relationships. Knowing which question you are answering — "what may this job function do?" versus "who
-may touch this specific thing?" — tells you which model you are in.</p>
+or relationships. Knowing which question you are answering ("what may this job function do?" versus "who
+may touch this specific thing?") tells you which model you are in.</p>
 
 <h4>The question RBAC makes harder</h4>
 <p>Indirection cuts both ways. With an ACL, "who can read this file?" is answered by reading the file's
 list. With RBAC the answer requires walking backwards from permission to roles to every user and group
-holding them — and that reverse question is the one auditors, incident responders and customers actually
+holding them, and that reverse question is the one auditors, incident responders and customers actually
 ask.</p>
 <p>If your system cannot answer it on demand, that is not a reporting gap; it is a sign that access reviews
 are people approving role names they cannot evaluate. It is also the specific problem the relationship-based
@@ -52,7 +52,7 @@ model in the next lessons is built to solve.</p>
 <h4>Deny, and why RBAC mostly avoids it</h4>
 <p>ACLs commonly support explicit deny entries, which are seductive and produce systems nobody can reason
 about: once allow and deny both exist, the answer depends on precedence rules a reader has to hold in their
-head. Most RBAC implementations are deliberately <b>allow-only</b> — you hold a permission or you do not —
+head. Most RBAC implementations are deliberately <b>allow-only</b> (you hold a permission or you do not)
 and handle exclusions through separation-of-duties constraints instead, which are checked at assignment
 time rather than at every decision. That is a simplicity worth defending; when you meet a model with deny
 rules, find out immediately how conflicts resolve.</p>`,
@@ -73,7 +73,7 @@ public class Rbac {
 }`,
 tests:[{d:'checks membership of the admin role',re:'roles\\.contains\\s*\\(\\s*"admin"\\s*\\)'},{d:'does not hardcode true',re:'return\\s+true\\s*;',not:true}],
 behavior:`isAdmin(Set.of("editor","admin")) is true; isAdmin(Set.of("viewer")) is false. RBAC turns a permission check into a role-membership check.`,
-hints:['A Java Set has a contains method that returns a boolean.','Return the result of roles.contains("admin") directly.','No if statement is needed — the contains call already yields the boolean.']}},
+hints:['A Java Set has a contains method that returns a boolean.','Return the result of roles.contains("admin") directly.','No if statement is needed; the contains call already yields the boolean.']}},
 
 {id:'az2',title:'RBAC in depth: roles to permissions',body:`
 <p>Roles are only useful if they map to concrete <b>permissions</b>. A viewer can read; an editor can read and write; an admin can read, write, and delete. Keeping that mapping in one place means a policy change is one edit, not a hunt across the codebase.</p>
@@ -85,9 +85,9 @@ so a new role is created rather than the model revisited. Repeat for five years 
 <code>Finance-EU-ReadOnly-Q3</code> and eight hundred siblings, several of which are functionally
 identical under different names.</p>
 <p>Two forces drive it: <b>exceptions</b> (one person needs one extra thing) and <b>dimensions</b>
-(region, environment, business unit, seniority — each multiplying the count). The fix for the first is a
+(region, environment, business unit, seniority, each multiplying the count). The fix for the first is a
 separate exception mechanism with an expiry, not a new permanent role. The fix for the second is
-recognising that <b>a dimension is an attribute, not a role</b> — which is exactly the argument for ABAC
+recognising that <b>a dimension is an attribute, not a role</b>, which is exactly the argument for ABAC
 in the next lesson.</p>
 
 <h4>Hierarchy, and where it misleads</h4>
@@ -97,7 +97,7 @@ fails on the case that matters: an auditor needs broad <i>read</i> and no <i>wri
 three levels up appears nowhere near the role you are inspecting.</p>
 
 <h4>The number that matters</h4>
-<p>For any person, the reviewable figure is <b>effective permissions</b> — the flattened union across
+<p>For any person, the reviewable figure is <b>effective permissions</b>: the flattened union across
 every role and group, direct and inherited. If your system cannot produce that for one user on demand,
 you cannot answer the only question an auditor will ask, and your access reviews are people approving
 names they do not understand.</p>
@@ -106,7 +106,7 @@ names they do not understand.</p>
 <p>The most common way to get this wrong is to derive roles from the application's user interface: a role
 per page, or per feature flag. Those roles change whenever the product changes, and they mean nothing to
 the manager who has to approve them during a review.</p>
-<p>Roles derived from <b>job functions</b> — what a person is employed to do — are stable across releases
+<p>Roles derived from <b>job functions</b> (what a person is employed to do) are stable across releases
 and reviewable by someone who understands the business rather than the codebase. The test is whether a
 non-engineer can read the role name and say confidently whether this person should have it. "Claims
 Adjuster" passes. "invoice-page-write" does not.</p>
@@ -117,13 +117,13 @@ Adjuster" passes. "invoice-page-write" does not.</p>
 individual applications. Adding an application then means composing a new technical role into an existing
 business role, rather than granting every person something new.</p>
 <p>This is also what makes joiners work: a <b>birthright</b> business role attached to a job title grants a
-sensible default on day one, and everything beyond it is <b>requestable</b> — approved, time-bound, and
+sensible default on day one, and everything beyond it is <b>requestable</b>: approved, time-bound, and
 expiring on its own. The distinction matters because standing access accumulates and time-bound access does
 not.</p>
 
 <h4>Ownership, or the review is theatre</h4>
 <p>Every role needs a named owner who can say what it is for and whether it is still correct. Without one,
-access reviews become a manager approving a list of names they cannot evaluate — which is worse than no
+access reviews become a manager approving a list of names they cannot evaluate, which is worse than no
 review, because it produces an audit artefact asserting that someone checked.</p>
 <p>Two numbers tell you whether the model is healthy: the ratio of roles to users, which should fall as the
 organisation grows rather than rise, and the proportion of grants that are time-bound rather than standing.
@@ -151,7 +151,7 @@ behavior:`permissions("viewer") is "read", permissions("editor") is "read,write"
 hints:['A switch on role keeps the whole mapping in one readable place.','Higher roles simply list more comma-separated permissions.','Unknown roles fall through to the default returning an empty string.']}},
 
 {id:'az3',title:'ABAC: attributes & policy',body:`
-<p><b>ABAC</b> (Attribute-Based Access Control) decides using <i>attributes</i> of the user, the resource, the action, and the context — not just a role. "An employee may view a record <b>in their own department</b>," "a manager may approve amounts <b>under their limit</b>," "access only <b>during business hours</b>." Rules like these are impossible to express as roles alone.</p>
+<p><b>ABAC</b> (Attribute-Based Access Control) decides using <i>attributes</i> of the user, the resource, the action, and the context, not just a role. "An employee may view a record <b>in their own department</b>," "a manager may approve amounts <b>under their limit</b>," "access only <b>during business hours</b>." Rules like these are impossible to express as roles alone.</p>
 <p>ABAC is more expressive than RBAC but harder to reason about, so teams often combine them: RBAC for the coarse "can this kind of user do this kind of thing," ABAC for the fine "on this specific resource, right now." The rule is written as a boolean policy over the attributes.</p>
 
 <h4>The four attribute categories</h4>
@@ -166,7 +166,7 @@ permit if subject.department == resource.department
        and action == "read"
        and environment.network == "corporate"</div>
 <p>The expressive gain is real: this policy covers every department without enumerating any of them, and
-adding a department requires no policy change at all. That is the thing RBAC cannot do — it would need a
+adding a department requires no policy change at all. That is the thing RBAC cannot do; it would need a
 role per department, per action.</p>
 
 <h4>What you pay for it</h4>
@@ -174,14 +174,14 @@ role per department, per action.</p>
 <li><b>You cannot enumerate access.</b> "Who can read this document?" is no longer a lookup; it is a
 question about every possible subject against a predicate. Auditors ask this question.</li>
 <li><b>Attributes must be trustworthy and fresh.</b> The policy is only as good as
-<code>subject.clearance</code>, which comes from a directory that may be stale — and if attributes
+<code>subject.clearance</code>, which comes from a directory that may be stale, and if attributes
 arrive in a token, they are as old as the token.</li>
 <li><b>Debugging is harder.</b> A denial has no single cause; it has a failing conjunct, and finding it
 requires the engine to tell you which one.</li>
 </ul>
 
 <h4>The hybrid that most estates actually run</h4>
-<p>RBAC for the coarse gate — may this <i>kind</i> of user reach this endpoint at all — and ABAC for the
+<p>RBAC for the coarse gate (may this <i>kind</i> of user reach this endpoint at all) and ABAC for the
 fine one, where ownership, tenant and context decide. That maps neatly onto the split in the data-level
 lesson: roles at the edge, attributes next to the data. It also keeps the enumerable part enumerable,
 which is what keeps reviews possible.`,
@@ -203,13 +203,13 @@ behavior:`permit("sales","sales",false) is true (same department); permit("sales
 hints:['Compare the two department strings with equals.','Combine the department match with ownership using the || operator.','Either condition being true should grant access.']}},
 
 {id:'az4',title:'ReBAC & policy engines',body:`
-<p>Some questions are about <b>relationships</b>: "can this user view this document?" depends on whether the document was <i>shared with</i> them, who <i>owns</i> it, and which <i>group</i> they belong to. <b>ReBAC</b> (Relationship-Based Access Control) models permissions as a graph of relations — the approach behind Google&#8217;s Zanzibar and open-source <b>OpenFGA</b>.</p>
-<p>To keep policy out of scattered <code>if</code> statements, teams externalize it to a <b>policy engine</b>: the app asks "is this allowed?" and the engine answers from declarative rules. <b>OPA</b> (with the Rego language) and <b>AWS Cedar</b> are the common choices. This is <b>PBAC</b> — Policy-Based Access Control — and it lets security rules evolve without redeploying the app.</p>
+<p>Some questions are about <b>relationships</b>: "can this user view this document?" depends on whether the document was <i>shared with</i> them, who <i>owns</i> it, and which <i>group</i> they belong to. <b>ReBAC</b> (Relationship-Based Access Control) models permissions as a graph of relations, the approach behind Google&#8217;s Zanzibar and open-source <b>OpenFGA</b>.</p>
+<p>To keep policy out of scattered <code>if</code> statements, teams externalize it to a <b>policy engine</b>: the app asks "is this allowed?" and the engine answers from declarative rules. <b>OPA</b> (with the Rego language) and <b>AWS Cedar</b> are the common choices. This is <b>PBAC</b>, Policy-Based Access Control, and it lets security rules evolve without redeploying the app.</p>
 
 <h4>Why relationships, not attributes</h4>
 <p>ReBAC answers a question the other models cannot phrase: access that exists <i>because of a link
 between two objects</i>. "Ada can edit this document because she is an editor of the folder that contains
-it" is not a role and not an attribute — it is a path through a graph.</p>
+it" is not a role and not an attribute; it is a path through a graph.</p>
 <div class="codeSample" data-hl>RBAC   is the user in a role?                      set membership
 ABAC   do the attributes satisfy a predicate?     boolean over fields
 ReBAC  is there a PATH from user to object?       graph traversal
@@ -224,7 +224,7 @@ app usually should not.</p>
 
 <h4>Externalising policy: what you gain and lose</h4>
 <p><b>Gain:</b> policy stops being scattered <code>if</code> statements across services that drift apart.
-It becomes reviewable, testable, versioned, and consistent — and one place can answer "why was this
+It becomes reviewable, testable, versioned, and consistent, and one place can answer "why was this
 denied?"</p>
 <p><b>Lose:</b> a runtime dependency on the critical path of every request. That forces a decision you
 must make deliberately: what happens when the engine is unreachable? Fail closed and an authorization
@@ -255,12 +255,12 @@ hints:['Ownership is an equals check between user and owner.','A shared relation
 
 {id:'az5',title:'PDP/PEP, least privilege & separation of duties',body:`
 <p>Two architectural terms show up everywhere in authorization. The <b>PDP</b> (Policy Decision Point) is the brain that answers "allow or deny"; the <b>PEP</b> (Policy Enforcement Point) is the gate in front of the resource that <i>asks</i> the PDP and enforces the answer. Separating them means one consistent decision engine guards many enforcement points.</p>
-<p>Two principles govern good policy. <b>Least privilege</b>: grant the minimum access needed, for the shortest time. <b>Separation of duties</b> (SoD): no single person should hold a conflicting combination — the one who <i>creates</i> a payment must not also <i>approve</i> it. SoD is a cornerstone of fraud prevention and audit.</p>
+<p>Two principles govern good policy. <b>Least privilege</b>: grant the minimum access needed, for the shortest time. <b>Separation of duties</b> (SoD): no single person should hold a conflicting combination: the one who <i>creates</i> a payment must not also <i>approve</i> it. SoD is a cornerstone of fraud prevention and audit.</p>
 
 <h4>Why splitting the decision from the enforcement matters</h4>
 <p>Left alone, authorization logic grows where the code is: an <code>if</code> in a controller, a check in
 a template, a filter in a query, a rule in a background job. Each is correct in isolation. Collectively
-they are a policy nobody can state, spread across a codebase nobody can audit — and the question "who
+they are a policy nobody can state, spread across a codebase nobody can audit, and the question "who
 can approve a refund?" becomes a code search rather than a lookup.</p>
 <p>PDP/PEP is the response. <b>One place decides</b> (the Policy Decision Point) and <b>many places
 enforce</b> (Policy Enforcement Points). That single move buys three things you cannot get otherwise:
@@ -280,7 +280,7 @@ PAP  policy ADMINISTRATION point - where humans author and version policy
 <p>Centralising the decision introduces a dependency in the request path of everything. If the PDP is
 slow, all of it is slow; if the PDP is down, all of it is down. That is why real deployments embed the
 PDP as a library or sidecar rather than a remote service, distribute policy as data, and cache decisions
-carefully — noting that a cached <i>permit</i> is a revocation you have not honoured yet.</p>
+carefully, noting that a cached <i>permit</i> is a revocation you have not honoured yet.</p>
 
 <h4>Least privilege, stated precisely</h4>
 <p>"Grant the minimum needed" is true but unactionable, because nobody knows what is needed. The version
@@ -288,14 +288,14 @@ you can implement has three parts: <b>minimum scope</b> (this resource, not the 
 <b>minimum duration</b> (elevate for the task, expire automatically), and <b>minimum blast radius</b>
 (read where read suffices; separate production from everything else).</p>
 <p>The practical technique is to start from denial and let usage data pull the grant open: deny by
-default, log what was refused, and grant against evidence. Working the other way — grant broadly, trim
-later — never converges, because nothing forces the trim.</p>
+default, log what was refused, and grant against evidence. Working the other way (grant broadly, trim
+later) never converges, because nothing forces the trim.</p>
 
 <h4>Separation of duties, and its two enforcement moments</h4>
 <p>SoD says no single person should hold both halves of a value-moving transaction: create and approve a
 payment, amend and approve payroll, write and deploy code, grant and use access. It is an anti-fraud
 control inherited from accounting, not a defence against outsiders.</p>
-<p>Enforce it <b>preventively</b> at request time — block the grant that would create the conflict — and
+<p>Enforce it <b>preventively</b> at request time (block the grant that would create the conflict) and
 <b>detectively</b> by scanning existing holdings, because most real conflicts arrive sideways: access
 granted directly in a system, or a role definition that quietly changed under its members. Where the
 conflict is unavoidable (small teams), the answer is a documented mitigating control with an owner and an
@@ -335,16 +335,16 @@ Invoice get(long id) {
     return repo.findById(id);   // any customer, any invoice
 }</div>
 <p>Change the <code>4417</code> in the URL to <code>4418</code> and you are reading another customer's
-invoice. This is <b>IDOR</b> — insecure direct object reference — known in the API world as <b>broken
+invoice. This is <b>IDOR</b> (insecure direct object reference), known in the API world as <b>broken
 object-level authorization</b>, and it sits at the top of the OWASP API Security Top 10 for a simple
 reason: the role check passed, the test suite passed, and nothing looked wrong.</p>
-<p>It is worth being clear about why it is so persistent. The endpoint check is <i>visible</i> — it is
+<p>It is worth being clear about why it is so persistent. The endpoint check is <i>visible</i>: it is
 an annotation, it is in the design doc, a reviewer notices when it is missing. The object check is
 invisible: its absence looks exactly like working code.</p>
 
 <h4>Guessable ids are not the problem</h4>
-<p>The usual first reaction is to replace sequential ids with UUIDs. That is worth doing — it stops
-casual enumeration and it keeps your customer count out of your URLs — but it is <b>not an
+<p>The usual first reaction is to replace sequential ids with UUIDs. That is worth doing (it stops
+casual enumeration and it keeps your customer count out of your URLs), but it is <b>not an
 authorization control</b>. It only makes the reference harder to guess, and references leak constantly:
 in shared links, referral logs, exports, support tickets, and to any former employee who saw them.
 <b>An unguessable identifier is obscurity; an ownership check is security.</b> Do both, and never let
@@ -352,11 +352,11 @@ the first substitute for the second.</p>
 
 <h4>Filter in the query, do not check after</h4>
 <p>There are two places to enforce ownership, and only one of them scales:</p>
-<div class="codeSample" data-hl>// FRAGILE — fetch first, check after. Every new call site must remember.
+<div class="codeSample" data-hl>// FRAGILE: fetch first, check after. Every new call site must remember.
 Invoice inv = repo.findById(id);
 if (inv.tenantId != currentTenant) throw new Forbidden();
 
-// SAFE — the constraint is part of the query. Wrong tenant simply finds nothing.
+// SAFE: the constraint is part of the query. Wrong tenant simply finds nothing.
 Invoice inv = repo.findByIdAndTenantId(id, currentTenant);
 
 // and for lists, the filter must be in the WHERE clause, never applied afterwards
@@ -365,7 +365,7 @@ SELECT * FROM invoices WHERE tenant_id = ? AND status = ?</div>
 the constraint into the data access layer makes the safe path the default one: a repository that
 <i>cannot</i> fetch across tenants cannot leak across tenants.</p>
 <p>Two extra failure modes worth naming. <b>Lists and search</b> are frequently forgotten while the
-detail endpoint is carefully guarded — and a search that ignores the tenant filter leaks in bulk.
+detail endpoint is carefully guarded, and a search that ignores the tenant filter leaks in bulk.
 And <b>counts and aggregates</b> leak too: telling a user that a search matched 4,000 records reveals
 information even if it returns none of them.</p>
 
@@ -374,7 +374,7 @@ information even if it returns none of them.</p>
 <i>different parts</i> of it. A support agent reads the order but not the full card number; a manager
 sees a direct report's salary while a peer does not.</p>
 <p>The dangerous habit is serialising the whole entity and trusting the UI to hide things. The UI is
-not an authorization boundary — the JSON already contains the field, and anyone can open developer
+not an authorization boundary: the JSON already contains the field, and anyone can open developer
 tools. <b>Mask or omit at the point of serialisation</b>, driven by the caller's permissions. The same
 applies in reverse for writes: accepting a whole object and copying it onto an entity lets a caller set
 fields they should never control, which is how <code>"role":"admin"</code> ends up in a profile
@@ -382,13 +382,13 @@ update.</p>
 
 <h4>Where the check belongs</h4>
 <p>A gateway can enforce endpoint authorization, because it can see the route and the token. It cannot
-enforce object authorization, because it does not know who owns record 4417 — only the service holding
+enforce object authorization, because it does not know who owns record 4417; only the service holding
 the data does. So the split is structural, not stylistic: <b>coarse checks at the edge, ownership
 checks next to the data.</b> Any design that pushes all authorization to the perimeter has, by
 construction, no answer to IDOR.</p>`,
 docs:[['OWASP API Security Top 10 — API1:2023 Broken Object Level Authorization','https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/'],['OWASP — Insecure Direct Object Reference Prevention Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html'],['PostgreSQL — Row Security Policies','https://www.postgresql.org/docs/current/ddl-rowsecurity.html']],
 ex:{title:'Ownership checks and field masking',
-prompt:`Write <code>DataAuthz</code> with three methods. <code>static boolean canRead(String callerTenant, String recordTenant)</code> returns true only when both are non-null and equal — the ownership check that role-based rules never perform. <code>static String scopedQuery(String base)</code> returns <code>base + " AND tenant_id = ?"</code>, putting the constraint in the query rather than checking after the fetch. <code>static String maskCard(String pan, boolean fullAccess)</code> returns <code>pan</code> unchanged when <code>fullAccess</code> is true; otherwise it returns <code>"****"</code> plus the <b>last 4 characters</b>. Return <code>"****"</code> if <code>pan</code> is null or shorter than 4.`,
+prompt:`Write <code>DataAuthz</code> with three methods. <code>static boolean canRead(String callerTenant, String recordTenant)</code> returns true only when both are non-null and equal: the ownership check that role-based rules never perform. <code>static String scopedQuery(String base)</code> returns <code>base + " AND tenant_id = ?"</code>, putting the constraint in the query rather than checking after the fetch. <code>static String maskCard(String pan, boolean fullAccess)</code> returns <code>pan</code> unchanged when <code>fullAccess</code> is true; otherwise it returns <code>"****"</code> plus the <b>last 4 characters</b>. Return <code>"****"</code> if <code>pan</code> is null or shorter than 4.`,
 starter:`public class DataAuthz {
     static boolean canRead(String callerTenant, String recordTenant) {
         return false;
@@ -401,7 +401,7 @@ starter:`public class DataAuthz {
     }
 }`,
 tests:[{d:'ownership requires a caller tenant',re:'callerTenant\\s*[=!]=\\s*null|null\\s*[=!]=\\s*callerTenant'},{d:'the two tenants are compared by value',re:'equals\\s*\\('},{d:'the tenant filter is part of the query',re:'AND\\s+tenant_id\\s*=\\s*\\?'},{d:'full access returns the unmasked value',re:'fullAccess'},{d:'masked output hides all but the last digits',re:'"\\*\\*\\*\\*"'},{d:'the last four characters are kept',re:'length\\s*\\(\\s*\\)\\s*-\\s*4'}],
-behavior:`canRead("t1","t1") is true; canRead("t1","t2"), canRead(null,"t1") and canRead("t1",null) are all false — this is the check that stops changing 4417 to 4418 in the URL from returning someone else's record. scopedQuery("SELECT * FROM invoices WHERE status = ?") appends AND tenant_id = ?, so a wrong tenant finds nothing rather than being caught afterwards by a check somebody might forget to write. maskCard("4111111111111234", true) returns the full value; with false it returns ****1234; maskCard(null, false) and maskCard("12", false) return ****.`,
+behavior:`canRead("t1","t1") is true; canRead("t1","t2"), canRead(null,"t1") and canRead("t1",null) are all false: this is the check that stops changing 4417 to 4418 in the URL from returning someone else's record. scopedQuery("SELECT * FROM invoices WHERE status = ?") appends AND tenant_id = ?, so a wrong tenant finds nothing rather than being caught afterwards by a check somebody might forget to write. maskCard("4111111111111234", true) returns the full value; with false it returns ****1234; maskCard(null, false) and maskCard("12", false) return ****.`,
 hints:['<code>return callerTenant != null &amp;&amp; callerTenant.equals(recordTenant);</code>','Simple concatenation: <code>return base + " AND tenant_id = ?";</code>','Guard the length before slicing: <code>pan.substring(pan.length() - 4)</code>.'],
 solution:`public class DataAuthz {
     static boolean canRead(String callerTenant, String recordTenant) {
@@ -434,7 +434,7 @@ Ada       Platform   Deploy    deploy:write    the production cluster
 // she joins Platform on day one and inherits whatever Platform holds.</div>
 <p>The payoff is administrative. Access follows the org chart, joiners get the right access by being
 put in the right group, and leavers lose it by removal in one place. The cost is that <b>nobody can
-easily say what Ada can actually do</b> — her access is the union of every group she is in, transitively,
+easily say what Ada can actually do</b>: her access is the union of every group she is in, transitively,
 which no single screen shows.</p>
 
 <h4>Nesting, and the two things it breaks</h4>
@@ -442,7 +442,7 @@ which no single screen shows.</p>
 <code>Platform-Oncall</code>, so membership is <b>transitive</b>: you must walk the whole graph, not
 just direct membership.</p>
 <p>Two consequences. First, <b>cycles</b>. Nothing stops A containing B while B contains A, and a naive
-recursive walk hangs forever. Any real implementation tracks visited nodes — which is a graph traversal
+recursive walk hangs forever. Any real implementation tracks visited nodes, which is a graph traversal
 problem, not an authorization one, and it is exactly where hand-rolled code fails.</p>
 <p>Second, <b>surprise inheritance</b>. Adding a group to a widely-used parent silently grants its
 access to everyone above it in the tree. Most accidental over-permissioning happens this way: nobody
@@ -460,11 +460,11 @@ granted anything to anybody, someone just nested a group.</p>
 <code>Finance-EU-ReadOnly-Q3</code> and thousands of siblings. Symptoms: nobody knows which group to
 request, so people ask for the one a colleague has; access reviews become unreadable; and the same
 effective permission exists under five names. The countermeasure is to derive membership from
-<i>attributes</i> where you can — dynamic groups whose membership is a rule over department and
-location — so the group is computed rather than curated.</p>
+<i>attributes</i> where you can (dynamic groups whose membership is a rule over department and
+location), so the group is computed rather than curated.</p>
 <p><b>Token bloat.</b> The instinct is to put every group in the token as a claim. Users in hundreds of
 groups then produce headers that exceed proxy limits, and things fail in ways that look nothing like an
-authorization problem — truncated headers, 431 responses, intermittent failures for exactly the
+authorization problem: truncated headers, 431 responses, intermittent failures for exactly the
 long-tenured employees with the most access. The fixes: emit only the groups relevant to the audience,
 send group ids rather than distinguished names, or send none and have the API look them up.</p>
 
@@ -473,12 +473,12 @@ send group ids rather than distinguished names, or send none and have the API lo
 distinction gets muddy because a directory group is often mapped directly onto a role, but it matters
 in review: "who is in Finance?" is an HR question, and "what may Finance do?" is a security question.
 Collapsing them means every org-chart change becomes a permissions change nobody reviewed.</p>
-<p>And in reviews, the number that matters is <b>effective permissions</b> — the flattened union across
+<p>And in reviews, the number that matters is <b>effective permissions</b>: the flattened union across
 every group, nested or direct. If your system cannot produce that for one person on demand, you cannot
 answer the only question an auditor will ask.</p>`,
 docs:[['Microsoft Entra — Dynamic membership rules','https://learn.microsoft.com/en-us/entra/identity/users/groups-dynamic-membership'],['Microsoft Entra — Configure group claims (and the token size problem)','https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/how-to-connect-fed-group-claims'],['NIST SP 800-53 AC-2 — Account Management','https://csrc.nist.gov/projects/risk-management/sp800-53-controls/release-search#!/control?version=5.1&number=AC-2']],
 ex:{title:'Flatten nested groups without hanging on a cycle',
-prompt:`Write <code>Groups</code> with <code>static java.util.Set&lt;String&gt; effective(String group, java.util.Map&lt;String, java.util.List&lt;String&gt;&gt; children)</code> returning the group plus every group reachable through nesting. Walk iteratively with a stack or queue, and keep a <b>visited</b> set so a cycle terminates instead of looping forever. Return an empty set if <code>group</code> is null. Then <code>static boolean memberOf(String group, String target, java.util.Map&lt;String, java.util.List&lt;String&gt;&gt; children)</code>, true when <code>target</code> is in the effective set — the transitive check a direct-membership lookup misses.`,
+prompt:`Write <code>Groups</code> with <code>static java.util.Set&lt;String&gt; effective(String group, java.util.Map&lt;String, java.util.List&lt;String&gt;&gt; children)</code> returning the group plus every group reachable through nesting. Walk iteratively with a stack or queue, and keep a <b>visited</b> set so a cycle terminates instead of looping forever. Return an empty set if <code>group</code> is null. Then <code>static boolean memberOf(String group, String target, java.util.Map&lt;String, java.util.List&lt;String&gt;&gt; children)</code>, true when <code>target</code> is in the effective set: the transitive check a direct-membership lookup misses.`,
 starter:`import java.util.*;
 
 public class Groups {
@@ -490,8 +490,8 @@ public class Groups {
     }
 }`,
 tests:[{d:'a null group yields an empty set',re:'group\\s*==\\s*null|null\\s*==\\s*group'},{d:'tracks visited groups so cycles terminate',re:'seen|visited'},{d:'walks the nesting with a stack or queue',re:'ArrayDeque|Stack|LinkedList|Queue'},{d:'loops until the frontier is empty',re:'while\\s*\\('},{d:'looks up the children of each group',re:'children\\s*\\.\\s*get(OrDefault)?\\s*\\('},{d:'handles a group with no children',re:'getOrDefault|!=\\s*null'},{d:'transitive membership reuses the flatten',re:'effective\\s*\\('}],
-behavior:`With children = {"A":["B"], "B":["C"]}, effective("A") returns {A, B, C} — nesting is transitive, so a direct-membership check on A would wrongly miss C. effective(null) returns an empty set. With a cycle, children = {"A":["B"], "B":["A"]}, effective("A") returns {A, B} and terminates rather than recursing forever, which is the failure mode of hand-rolled traversals. memberOf("A","C",children) is true; memberOf("C","A",children) is false, because nesting has a direction.`,
-hints:['Seed a stack with the starting group and a <code>seen</code> set, then loop while the stack is non-empty.','Add to <code>seen</code> as you pop; skip anything already there — that is what makes a cycle terminate.','<code>children.getOrDefault(g, List.of())</code> avoids a null check for leaf groups.'],
+behavior:`With children = {"A":["B"], "B":["C"]}, effective("A") returns {A, B, C}: nesting is transitive, so a direct-membership check on A would wrongly miss C. effective(null) returns an empty set. With a cycle, children = {"A":["B"], "B":["A"]}, effective("A") returns {A, B} and terminates rather than recursing forever, which is the failure mode of hand-rolled traversals. memberOf("A","C",children) is true; memberOf("C","A",children) is false, because nesting has a direction.`,
+hints:['Seed a stack with the starting group and a <code>seen</code> set, then loop while the stack is non-empty.','Add to <code>seen</code> as you pop; skip anything already there; that is what makes a cycle terminate.','<code>children.getOrDefault(g, List.of())</code> avoids a null check for leaf groups.'],
 solution:`import java.util.*;
 
 public class Groups {
@@ -516,8 +516,8 @@ public class Groups {
 }`}},
 
 {id:'az8',title:'When policies collide: combining rules',body:`
-<p>One policy is easy. Real systems evaluate many at once — an organisation-wide rule, a team rule, a
-resource rule, something a compliance team added last year — and several will apply to the same
+<p>One policy is easy. Real systems evaluate many at once (an organisation-wide rule, a team rule, a
+resource rule, something a compliance team added last year), and several will apply to the same
 request, sometimes disagreeing. What the system does then is a design decision, and leaving it
 implicit is how "we definitely blocked that" turns out to be false.</p>
 
@@ -526,13 +526,13 @@ implicit is how "we definitely blocked that" turns out to be false.</p>
 <li><b>Deny-overrides.</b> If any policy says deny, the answer is deny, whatever else permits. The
 safe default and the right choice almost always: a prohibition should not be defeatable by adding
 another rule somewhere else.</li>
-<li><b>Permit-overrides.</b> Any permit wins. Occasionally justified — a break-glass rule that must cut
-through everything — but as a general setting it means one careless broad grant silently undoes every
+<li><b>Permit-overrides.</b> Any permit wins. Occasionally justified (a break-glass rule that must cut
+through everything), but as a general setting it means one careless broad grant silently undoes every
 restriction you have.</li>
 <li><b>First-applicable.</b> Evaluate in order; the first policy that matches decides. Predictable and
 easy to debug, but the outcome now depends on ordering, so inserting a rule in the wrong place changes
 unrelated decisions.</li>
-<li><b>Specificity wins.</b> The most specific matching rule decides — a rule about one document beats
+<li><b>Specificity wins.</b> The most specific matching rule decides: a rule about one document beats
 a rule about the folder. Intuitive for humans, and the hardest to implement, because "more specific"
 must be defined precisely and total.</li>
 </ul>
@@ -550,8 +550,8 @@ first-applicable -> depends entirely on evaluation order</div>
 <p>Separate from combining, and just as important: what happens when <i>no</i> policy applies? The
 answer must be <b>deny</b>. Default-permit means every resource anyone forgets to write a rule for is
 public, and that is a mistake you discover from the outside.</p>
-<p>So a well-behaved decision has three possible outcomes, not two — <b>permit</b>, <b>deny</b>, and
-<b>not-applicable</b> — and the last collapses to deny at the enforcement point. Keeping them distinct
+<p>So a well-behaved decision has three possible outcomes, not two: <b>permit</b>, <b>deny</b>, and
+<b>not-applicable</b>; the last collapses to deny at the enforcement point. Keeping them distinct
 in the engine is what lets you tell "a rule deliberately blocked this" apart from "no rule covered
 this," which are very different bugs.</p>
 
@@ -560,12 +560,12 @@ this," which are very different bugs.</p>
 under deny-overrides it cannot be overridden by any later grant. An <b>absence of permit</b> is merely
 a gap, and a gap can be filled by anyone who adds a policy.</p>
 <p>That is why explicit denies are the right tool for things that must never happen regardless of who
-gets creative later — contractors must never read payroll, nobody reads a legal hold. Use them
+gets creative later: contractors must never read payroll, nobody reads a legal hold. Use them
 sparingly, though: a large body of denies interacting with a large body of permits becomes impossible
 to reason about, and the resulting system fails in the direction of blocking legitimate work.</p>
 
 <h4>Make the decision explainable</h4>
-<p>The single most valuable feature of a policy engine is not the decision — it is <b>which policy
+<p>The single most valuable feature of a policy engine is not the decision; it is <b>which policy
 decided</b>. Without it, debugging is guesswork, and the standard response to an unexplained denial is
 to add a broad permit until it works, which is how policy sets rot.</p>
 <div class="codeSample" data-hl>{ "decision": "DENY",
@@ -579,7 +579,7 @@ defects live in the interactions, so the cases worth writing down are the ones w
 disagree.</p>`,
 docs:[['XACML 3.0 — rule-combining algorithms','https://docs.oasis-open.org/xacml/3.0/xacml-3.0-core-spec-os-en.html#_Toc325047267'],['AWS — Policy evaluation logic (explicit deny always wins)','https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html'],['Open Policy Agent — Policy language','https://www.openpolicyagent.org/docs/latest/policy-language/']],
 ex:{title:'Combine decisions, deny-overrides, default deny',
-prompt:`Model a decision as one of the strings <code>"PERMIT"</code>, <code>"DENY"</code> or <code>"NA"</code> (not applicable). Write <code>PolicyCombiner</code> with <code>static String denyOverrides(java.util.List&lt;String&gt; decisions)</code>: return <code>"DENY"</code> if any decision is DENY; otherwise <code>"PERMIT"</code> if any is PERMIT; otherwise <code>"NA"</code>, including when the list is null or empty. Then <code>static boolean enforce(String decision)</code>, which permits <b>only</b> on <code>"PERMIT"</code> — so NA collapses to denied at the enforcement point.`,
+prompt:`Model a decision as one of the strings <code>"PERMIT"</code>, <code>"DENY"</code> or <code>"NA"</code> (not applicable). Write <code>PolicyCombiner</code> with <code>static String denyOverrides(java.util.List&lt;String&gt; decisions)</code>: return <code>"DENY"</code> if any decision is DENY; otherwise <code>"PERMIT"</code> if any is PERMIT; otherwise <code>"NA"</code>, including when the list is null or empty. Then <code>static boolean enforce(String decision)</code>, which permits <b>only</b> on <code>"PERMIT"</code>, so NA collapses to denied at the enforcement point.`,
 starter:`import java.util.*;
 
 public class PolicyCombiner {
@@ -591,8 +591,8 @@ public class PolicyCombiner {
     }
 }`,
 tests:[{d:'a null or empty policy set is not applicable',re:'decisions\\s*==\\s*null|isEmpty\\s*\\(\\s*\\)'},{d:'any deny wins',re:'"DENY"'},{d:'otherwise a permit is honoured',re:'"PERMIT"'},{d:'no applicable policy returns NA',re:'"NA"'},{d:'deny is checked before permit',re:'contains\\s*\\(\\s*"DENY"\\s*\\)|equals\\s*\\(\\s*"DENY"'},{d:'enforcement permits only on an explicit permit',re:'"PERMIT"\\s*\\.\\s*equals|equals\\s*\\(\\s*"PERMIT"'}],
-behavior:`denyOverrides(List.of("PERMIT","PERMIT","DENY")) returns DENY — a single prohibition cannot be outvoted, which is why this is the safe default. denyOverrides(List.of("NA","PERMIT")) returns PERMIT. denyOverrides(List.of("NA","NA")), denyOverrides(List.of()) and denyOverrides(null) all return NA, keeping "a rule blocked this" distinguishable from "no rule covered this". enforce("PERMIT") is true; enforce("DENY") and enforce("NA") are both false, so a resource nobody wrote a policy for is closed rather than public.`,
-hints:['Handle null and empty first, returning "NA".','<code>if (decisions.contains("DENY")) return "DENY";</code> then the same for "PERMIT".','<code>return "PERMIT".equals(decision);</code> — anything else, including NA, denies.'],
+behavior:`denyOverrides(List.of("PERMIT","PERMIT","DENY")) returns DENY: a single prohibition cannot be outvoted, which is why this is the safe default. denyOverrides(List.of("NA","PERMIT")) returns PERMIT. denyOverrides(List.of("NA","NA")), denyOverrides(List.of()) and denyOverrides(null) all return NA, keeping "a rule blocked this" distinguishable from "no rule covered this". enforce("PERMIT") is true; enforce("DENY") and enforce("NA") are both false, so a resource nobody wrote a policy for is closed rather than public.`,
+hints:['Handle null and empty first, returning "NA".','<code>if (decisions.contains("DENY")) return "DENY";</code> then the same for "PERMIT".','<code>return "PERMIT".equals(decision);</code>: anything else, including NA, denies.'],
 solution:`import java.util.*;
 
 public class PolicyCombiner {
@@ -617,7 +617,7 @@ a document they should not see, is a genuinely difficult systems problem. Google
 reference answer, and the reasoning generalises to any centralised authorization service.</p>
 
 <h4>The data model</h4>
-<p>Everything is a <b>relation tuple</b> — a subject, a relation, and an object. Nothing else:</p>
+<p>Everything is a <b>relation tuple</b>: a subject, a relation, and an object. Nothing else:</p>
 <div class="codeSample" data-hl>doc:readme#viewer@user:ada              ada can view the readme
 doc:readme#parent@folder:eng           the readme lives in the eng folder
 group:eng#member@user:bob              bob is in the eng group
@@ -625,7 +625,7 @@ folder:eng#viewer@group:eng#member     eng members can view the eng folder
 
 // so: can bob view the readme? not stated anywhere. it is DERIVED by
 // walking parent -> folder viewer -> group member -> bob.</div>
-<p>Permissions are computed, not stored, which is what makes the model expressive — and what makes
+<p>Permissions are computed, not stored, which is what makes the model expressive, and what makes
 every check a traversal.</p>
 
 <h4>The three hard problems</h4>
@@ -643,7 +643,7 @@ t3  Bob's check hits a replica that has t2 but NOT t1
 // the reverse also matters: revoking access must not be overtaken by a
 // stale cache that still says "permitted".</div>
 <p>Eventual consistency is unacceptable here, and full strong consistency everywhere is too slow. The
-resolution is a <b>consistency token</b> — Zanzibar calls it a <i>zookie</i> — handed back when content
+resolution is a <b>consistency token</b> (Zanzibar calls it a <i>zookie</i>) handed back when content
 is written and presented with the later check. It means "evaluate against a snapshot at least this
 recent". The client does not need a global clock; it just carries a token forward, and the system
 guarantees it will not answer from an older state.</p>
@@ -653,7 +653,7 @@ substitution is where correctness is usually lost.</p>
 
 <h4>The centralisation trade</h4>
 <p>A central authorization service buys consistent policy, one audit trail, and one place to answer
-"who can see this?" — a question most estates genuinely cannot answer. It costs you a <b>hard runtime
+"who can see this?" (a question most estates genuinely cannot answer). It costs you a <b>hard runtime
 dependency on the critical path of every request</b>. That is the trade to weigh, and the
 mitigations are the familiar ones: aggressive caching, and a deliberate decision about what happens
 when the service is unreachable. Fail closed, and an authorization outage is a total outage.</p>
@@ -666,13 +666,13 @@ one service owns the data           many services must agree on one answer
 "who can see this?" is answerable   the answer is currently unknowable</div>
 <p>The sensible default: <b>most applications do not need Zanzibar</b>, and a tenant-scoped query with an
 ownership check is the right answer. Reach for a relationship graph when users themselves grant access
-to each other in patterns you cannot enumerate in advance — which is exactly the case document sharing,
+to each other in patterns you cannot enumerate in advance, which is exactly the case document sharing,
 repositories and collaboration tools have.</p>
 <p>And if you do build on this model, the property to protect is not expressiveness but <b>the
 guarantee that a revocation is never overtaken by a stale read</b>. Everything else is optimisation.</p>`,
 docs:[['Google — Zanzibar: Consistent, Global Authorization System','https://research.google/pubs/pub48190/'],['OpenFGA — Modeling guides','https://openfga.dev/docs/modeling'],['SpiceDB — Consistency and zookies','https://authzed.com/docs/spicedb/concepts/consistency']],
 ex:{title:'Zookies and the new-enemy problem',
-prompt:`Write <code>Zanzibar</code> with three methods. <code>static boolean freshEnough(long snapshotAt, long zookieAt)</code> is true only when the replica's snapshot is at or after the token's timestamp. <code>static boolean check(boolean tupleGrantsAccess, long snapshotAt, long zookieAt)</code> returns false whenever the snapshot is too old — <b>even if the tuple currently says access is granted</b>, because a stale replica may not yet know about a revocation. <code>static boolean needsRelationshipGraph(boolean userDrivenSharing, boolean rolesMapCleanly)</code> is true only when sharing is user-driven and roles do not map cleanly.`,
+prompt:`Write <code>Zanzibar</code> with three methods. <code>static boolean freshEnough(long snapshotAt, long zookieAt)</code> is true only when the replica's snapshot is at or after the token's timestamp. <code>static boolean check(boolean tupleGrantsAccess, long snapshotAt, long zookieAt)</code> returns false whenever the snapshot is too old, <b>even if the tuple currently says access is granted</b>, because a stale replica may not yet know about a revocation. <code>static boolean needsRelationshipGraph(boolean userDrivenSharing, boolean rolesMapCleanly)</code> is true only when sharing is user-driven and roles do not map cleanly.`,
 starter:`public class Zanzibar {
     static boolean freshEnough(long snapshotAt, long zookieAt) {
         return false;
@@ -685,7 +685,7 @@ starter:`public class Zanzibar {
     }
 }`,
 tests:[{d:'the snapshot must be at least as recent as the token',re:'snapshotAt\\s*>=\\s*zookieAt|zookieAt\\s*<=\\s*snapshotAt'},{d:'a stale snapshot denies regardless of the tuple',re:'freshEnough\\s*\\('},{d:'the tuple still has to grant access',re:'tupleGrantsAccess'},{d:'user-driven sharing is required',re:'userDrivenSharing'},{d:'clean role mapping means you do not need this',re:'!\\s*rolesMapCleanly|rolesMapCleanly\\s*==\\s*false'}],
-behavior:`freshEnough(100, 100) and freshEnough(101, 100) are true; freshEnough(99, 100) is false. check(true, 99, 100) is false — this is the whole point: the replica says access is granted, but it is older than the write the client already observed, so it may not yet know Bob was removed from the group. Answering from it is the new-enemy problem, where each write was correct and only the order was lost. check(true, 100, 100) is true, and check(false, 100, 100) is false. needsRelationshipGraph(true, false) is true, while needsRelationshipGraph(true, true) and needsRelationshipGraph(false, false) are false: most applications do not need this, and a tenant-scoped query with an ownership check is the right answer.`,
+behavior:`freshEnough(100, 100) and freshEnough(101, 100) are true; freshEnough(99, 100) is false. check(true, 99, 100) is false; this is the whole point: the replica says access is granted, but it is older than the write the client already observed, so it may not yet know Bob was removed from the group. Answering from it is the new-enemy problem, where each write was correct and only the order was lost. check(true, 100, 100) is true, and check(false, 100, 100) is false. needsRelationshipGraph(true, false) is true, while needsRelationshipGraph(true, true) and needsRelationshipGraph(false, false) are false: most applications do not need this, and a tenant-scoped query with an ownership check is the right answer.`,
 hints:['One comparison for freshness; note it is &gt;=, not &gt;.','In check, test freshness first and deny before even looking at the tuple.','Two conditions, the second negated.'],
 solution:`public class Zanzibar {
     static boolean freshEnough(long snapshotAt, long zookieAt) {
@@ -703,7 +703,7 @@ solution:`public class Zanzibar {
 }`}},
 
 {id:'az10',title:'Operating policy: testing, shadow mode and the denial nobody can explain',body:`
-<p>Every lesson so far in this stream has been about <i>expressing</i> authorization — roles, attributes,
+<p>Every lesson so far in this stream has been about <i>expressing</i> authorization: roles, attributes,
 relationships, combining rules. This one is about <b>running</b> it, which is a different discipline and the
 one that decides whether your model survives contact with production. A policy engine is not a library you
 install; it is a system that answers thousands of questions per second, that everyone depends on, that
@@ -712,7 +712,7 @@ almost nobody can read, and that fails in a way users experience as "the button 
 <h4>The denial nobody can explain</h4>
 <p>Here is the failure that defines the discipline. A user is refused. They raise a ticket. Support cannot
 say why. The engineer on call opens the policy, reads forty rules across three files, and cannot say why
-either — because the decision depended on the user's group memberships at that instant, an attribute
+either, because the decision depended on the user's group memberships at that instant, an attribute
 fetched from a directory, and a rule written by someone who left.</p>
 <p>The fix is not a better policy language. It is to make the engine <b>return its reasoning with its
 answer</b>. A decision should carry the rule that produced it, the inputs it used and the effect it applied:</p>
@@ -721,7 +721,7 @@ answer</b>. A decision should carry the rule that produced it, the inputs it use
   "inputs": { "role": "dev", "env": "prod", "oncall": false },
   "policy_version": "2026-08-14.3" }       // WHICH version of the policy</div>
 <p>That single field turns an unanswerable ticket into a ten-second lookup, and it is the difference between
-an authorization system you can operate and one you can only fear. Log every decision this way — deny
+an authorization system you can operate and one you can only fear. Log every decision this way: deny
 <i>and</i> allow, because "why was this permitted?" is the question an auditor asks after an incident.</p>
 
 <h4>Policy is code, so test it like code</h4>
@@ -736,24 +736,24 @@ holds:</p>
 cannot approve their own expense. Every negative test is a control you can prove.</li>
 <li><b>The separation-of-duties invariants</b>: no single identity can both create and approve the same
 payment, whatever roles it accumulates.</li>
-<li><b>The default.</b> A request that matches nothing must be denied — and there should be a test that
+<li><b>The default.</b> A request that matches nothing must be denied, and there should be a test that
 fails loudly if a future edit makes the default permissive.</li>
 </ul>
 
 <h4>Shadow mode: the only safe way to change a policy</h4>
-<p>A policy change is a change to who can do what, applied to everyone at once, with no gradual rollout —
+<p>A policy change is a change to who can do what, applied to everyone at once, with no gradual rollout,
 unless you build one. <b>Shadow mode</b> is that rollout: run the new policy alongside the old, enforce the
 <i>old</i> answer, and log every case where the two disagree.</p>
 <p>After a day you have a list of exactly who would have been newly denied. That list is the review. It
-routinely contains a team nobody thought about — the batch job running as a service account, the
-integration that authenticates as a former employee — and finding them in a log is enormously cheaper than
+routinely contains a team nobody thought about (the batch job running as a service account, the
+integration that authenticates as a former employee), and finding them in a log is enormously cheaper than
 finding them in an incident. Only when the disagreement list is empty, or entirely expected, do you switch
 to enforcing.</p>
 
 <h4>The operational properties nobody specifies until they hurt</h4>
 <ul>
 <li><b>Latency.</b> Authorization sits in every request. A remote PDP adds a network hop to every call, which
-is why decisions get cached — and caching a decision means a revoked permission stays live for the cache
+is why decisions get cached, and caching a decision means a revoked permission stays live for the cache
 lifetime. That TTL is a security parameter, not a performance one.</li>
 <li><b>Availability.</b> If the PDP is unreachable, do you fail open or closed? Closed is correct and it
 means the PDP's uptime is now your application's uptime. That is an argument for distributing policy to
@@ -765,11 +765,11 @@ old. "How stale can this input be before the decision is wrong?" is a question w
 rather than discovering.</li>
 </ul>
 <p>The summary a senior engineer should be able to give: <b>a policy you cannot test, explain or roll out
-gradually is not a policy — it is a liability with a syntax.</b></p>`,
+gradually is not a policy; it is a liability with a syntax.</b></p>`,
 docs:[['OPA — policy testing','https://www.openpolicyagent.org/docs/latest/policy-testing/'],['AWS Cedar — policy validation','https://docs.cedarpolicy.com/'],['Google SRE Workbook — canarying releases','https://sre.google/workbook/canarying-releases/']],
 ex:{title:'Return the reason with the decision',lang:'js',
 run:{call:'decide',cases:[{name:'a matching allow rule is reported by id',args:[[{id:'r1',effect:'allow',when:{role:'admin'}},{id:'r2',effect:'deny',when:{env:'prod'}}],{role:'admin',env:'dev'}],expect:{allow:true,reason:'r1'}},{name:'deny overrides an earlier allow',args:[[{id:'r1',effect:'allow',when:{role:'admin'}},{id:'r2',effect:'deny',when:{env:'prod'}}],{role:'admin',env:'prod'}],expect:{allow:false,reason:'r2'}},{name:'nothing matches, so the default denies',args:[[{id:'r1',effect:'allow',when:{role:'admin'}}],{role:'guest'}],expect:{allow:false,reason:'no rule matched'}},{name:'an empty policy denies rather than permits',args:[[],{role:'admin'}],expect:{allow:false,reason:'no rule matched'}},{name:'a rule matches only when every condition holds',args:[[{id:'r1',effect:'allow',when:{role:'dev',oncall:true}}],{role:'dev',oncall:false}],expect:{allow:false,reason:'no rule matched'}}]},
-prompt:`Write <code>function decide(rules, req)</code> returning <code>{ allow, reason }</code>. A rule is <code>{ id, effect, when }</code> and matches when <b>every</b> key in <code>when</code> equals the same key in <code>req</code>. Deny wins: if any matching rule denies, return that rule's id. Otherwise return the id of the first matching allow. If nothing matches, deny with the reason <code>"no rule matched"</code>. The <code>reason</code> is the decision log — without it, a refused user is an unanswerable ticket.`,
+prompt:`Write <code>function decide(rules, req)</code> returning <code>{ allow, reason }</code>. A rule is <code>{ id, effect, when }</code> and matches when <b>every</b> key in <code>when</code> equals the same key in <code>req</code>. Deny wins: if any matching rule denies, return that rule's id. Otherwise return the id of the first matching allow. If nothing matches, deny with the reason <code>"no rule matched"</code>. The <code>reason</code> is the decision log; without it, a refused user is an unanswerable ticket.`,
 starter:`function decide(rules, req) {
   return { allow: false, reason: "" };
 }`,
@@ -785,6 +785,6 @@ solution:`function decide(rules, req) {
                    : { allow: false, reason: "no rule matched" };      // default deny
 }`,
 tests:[{d:'every condition in a rule must match',re:'every\\s*\\(|for\\s*\\(.*of\\s+Object\\.keys'},{d:'a matching deny returns immediately',re:'["\x27]deny["\x27]'},{d:'the deciding rule id is returned',re:'reason:\\s*r\\.id|reason:\\s*allowedBy'},{d:'the default is deny with a stated reason',re:'no rule matched'}],
-behavior:`Five cases execute. The last one is the one that catches a partial-match bug: a rule requiring role dev AND oncall true must not fire for an on-call-false developer, and a solution using "some" instead of "every" quietly grants it. The empty-policy case encodes the most important default in authorization — no rules means no permission, never "nothing to stop you". And note what the reason field does to operations: every one of these outcomes is explainable in one line to a user, a support agent or an auditor, which is the difference between a policy you can run and one you can only apologise for.`,
-hints:['A rule matches only when EVERY condition in its when block matches the request.','Deny wins, so return as soon as a matching deny is found.','Remember the first matching allow rather than returning it immediately — a later deny must still win.']}}
+behavior:`Five cases execute. The last one is the one that catches a partial-match bug: a rule requiring role dev AND oncall true must not fire for an on-call-false developer, and a solution using "some" instead of "every" quietly grants it. The empty-policy case encodes the most important default in authorization: no rules means no permission, never "nothing to stop you". And note what the reason field does to operations: every one of these outcomes is explainable in one line to a user, a support agent or an auditor, which is the difference between a policy you can run and one you can only apologise for.`,
+hints:['A rule matches only when EVERY condition in its when block matches the request.','Deny wins, so return as soon as a matching deny is found.','Remember the first matching allow rather than returning it immediately; a later deny must still win.']}}
 ]});

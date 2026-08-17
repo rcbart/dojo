@@ -18,7 +18,7 @@ hypothesis, confirm it. This module gives you the toolkit and a repeatable proce
 | **Cluster events** | `kubectl get events --sort-by=.lastTimestamp` | A timeline of what happened recently |
 
 **`kubectl describe` (read the Events section) and `kubectl logs` resolve the large majority of
-issues.** Learn to read Events — they're written in plain English and usually name the problem.
+issues.** Learn to read Events: they're written in plain English and usually name the problem.
 
 ## Decode the common pod statuses
 
@@ -32,13 +32,13 @@ issues.** Learn to read Events — they're written in plain English and usually 
 | `Running` but `0/1` READY | Readiness probe failing | `describe` probe events; `logs`; is the app actually up? |
 | `Terminating` (stuck) | Finalizer / graceful shutdown hanging | Check finalizers, PodDisruptionBudgets |
 
-Memorize this table — it maps a symptom directly to a cause. It's also exam gold.
+Memorize this table: it maps a symptom directly to a cause. It's also exam gold.
 
 ## The debugging method (apply every time)
 
-1. **`kubectl get pods -o wide`** — what's wrong and where?
-2. **`kubectl describe pod <name>`** — read the **Events** (bottom). Usually the answer.
-3. **`kubectl logs <name>` (add `--previous` if it restarted)** — the app's own words.
+1. **`kubectl get pods -o wide`**: what's wrong and where?
+2. **`kubectl describe pod <name>`**: read the **Events** (bottom). Usually the answer.
+3. **`kubectl logs <name>` (add `--previous` if it restarted)**: the app's own words.
 4. **Narrow the layer:** pod? → Service/Endpoints? → Ingress? Check each in turn.
 5. **Reproduce/inspect live:** `kubectl exec -it <pod> -- sh` to test from inside; `kubectl run
    tmp --rm -it --image=busybox -- sh` to test networking/DNS from a scratch pod.
@@ -54,7 +54,7 @@ kubectl run net --rm -it --image=busybox --restart=Never -- sh
 #            wget -qO- <service>:<port> (reachable?)
 ```
 
-Empty endpoints is the #1 Service bug — the Service's `selector` doesn't match the pods' labels.
+Empty endpoints is the #1 Service bug: the Service's `selector` doesn't match the pods' labels.
 
 ## Metrics (resource usage)
 
@@ -65,7 +65,7 @@ kubectl top nodes                # per-node usage (needs metrics-server)
 kubectl top pods -A              # per-pod usage
 ```
 
-(`kubectl top` powers autoscaling too — Module 13. On kind, install metrics-server to enable it.)
+(`kubectl top` powers autoscaling too; see Module 13. On kind, install metrics-server to enable it.)
 
 ## Lab: diagnose three broken things
 
@@ -95,17 +95,17 @@ Each follows the same method: get → describe/Events → logs → confirm cause
 ## Practitioner rules
 
 - **Events first.** `describe` before guessing. The cluster usually tells you what's wrong.
-- **`--previous` for crash loops** — the current container may be too young to have logs.
+- **`--previous` for crash loops**: the current container may be too young to have logs.
 - **Empty endpoints = label/selector mismatch.** Check it whenever a Service "doesn't work."
 - **Test from a scratch pod** to isolate DNS/network issues from app issues.
 
 ## Check yourself
 
 1. Your two primary debugging commands? *(`kubectl describe` (read Events) and `kubectl logs`.)*
-2. `CrashLoopBackOff` — which log flag do you need and why? *(`--previous` — to see the crashed
+2. `CrashLoopBackOff`: which log flag do you need and why? *(`--previous`, to see the crashed
    instance's logs, since the current one may have just restarted.)*
 3. A Service has no endpoints. Most likely cause? *(Its selector doesn't match the pods' labels.)*
-4. A pod is `Pending`. Where do you look and for what? *(`describe` Events — insufficient resources,
+4. A pod is `Pending`. Where do you look and for what? *(`describe` Events: insufficient resources,
    taints/affinity, or an unbound PVC.)*
 5. What does `kubectl top pods` need to work? *(The metrics-server installed in the cluster.)*
 

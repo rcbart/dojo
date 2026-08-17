@@ -1,13 +1,13 @@
 # 11 — Hands-on challenges & projects
 
-*Where knowledge becomes skill. Six graded, real-world builds — no step-by-step. Each has clear
+*Where knowledge becomes skill. Six graded, real-world builds, with no step-by-step. Each has clear
 acceptance criteria, a self-check command to verify you passed, and a solution to peek at only after
 you try. ~90 min total. Requires Docker.*
 
 ---
 
 Reading and following labs builds recognition; **building things yourself, from a spec, builds
-competence** — the kind interviewers and jobs actually test. Do these in order; each pulls together
+competence**, the kind interviewers and jobs actually test. Do these in order; each pulls together
 several modules. Try hard before opening a solution.
 
 > **How to use this module.** Read the goal + acceptance criteria, build it yourself, then run the
@@ -74,7 +74,7 @@ CMD ["/app"]
 ```bash
 docker build -t tiny:1.0 .
 ```
-*(A static Go binary on Alpine is only a few MB — the build tools never ship.)*
+*(A static Go binary on Alpine is only a few MB; the build tools never ship.)*
 
 ---
 
@@ -170,7 +170,7 @@ docker build -t hard:1.0 .
 - **Destroy the container** entirely, start a fresh one on the same volume.
 - The row is still there.
 
-**Verify:** *(the steps below ARE the test — the final SELECT must return 42)*
+**Verify:** *(the steps below ARE the test: the final SELECT must return 42)*
 ```bash
 docker rm -f pg 2>/dev/null; docker volume rm c5 2>/dev/null
 docker run -d --name pg -e POSTGRES_PASSWORD=x -v c5:/var/lib/postgresql/data postgres:16 >/dev/null
@@ -182,7 +182,7 @@ sleep 6; docker exec pg psql -U postgres -tAc "SELECT x FROM t;" | grep -q 42 \
 docker rm -f pg >/dev/null; docker volume rm c5 >/dev/null
 ```
 
-**Solution:** the Verify block *is* the solution — the key idea is mounting the **same named volume**
+**Solution:** the Verify block *is* the solution. The key idea is mounting the **same named volume**
 (`-v c5:/var/lib/postgresql/data`) into the replacement container, so the data (in the volume, not
 the container) persists.
 
@@ -221,22 +221,22 @@ docker buildx rm multi
 ## Where to go from here
 
 If you completed all six unaided, you can containerize apps, optimize and secure images, run
-multi-service stacks, persist data, and publish portable images — the working toolkit of a Docker
+multi-service stacks, persist data, and publish portable images: the working toolkit of a Docker
 practitioner. For more reps: containerize a project of your own (your language, your app), then take
 it into the **Kubernetes course** and run it at scale.
 
 ## Check yourself
 
 1. Why do these challenges build skill that labs alone don't? *(You build from a spec without
-   step-by-step guidance — the way real work and interviews test you.)*
+   step-by-step guidance, the way real work and interviews test you.)*
 2. In Challenge 2, what made the image tiny? *(A multi-stage build shipping only the final binary on
-   a slim base — no build tools.)*
+   a slim base, with no build tools.)*
 3. In Challenge 3, what gave the database persistence and readiness? *(A named volume for its data
    and a healthcheck reporting healthy.)*
 4. In Challenge 5, why did the data survive destroying the container? *(It lived in a named volume
    mounted into the replacement container, not in the container's writable layer.)*
 5. In Challenge 6, what does a multi-arch image let you do? *(Publish one tag that runs on both amd64
-   and arm64 — publish once, run anywhere.)*
+   and arm64: publish once, run anywhere.)*
 
 ---
 

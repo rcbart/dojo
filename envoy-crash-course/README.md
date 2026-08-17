@@ -13,27 +13,27 @@ reading about it.
 ## Who this is for
 
 You have used a terminal and know roughly what an HTTP request is (a client asks a server for
-something over a network). You do **not** need to know Envoy, proxies, Go, or Kubernetes — each
+something over a network). You do **not** need to know Envoy, proxies, Go, or Kubernetes; each
 idea is introduced before it is used. Some later modules touch Kubernetes; those explain the
 minimum you need as you go.
 
 ## What you need installed
 
-- **Docker** (Desktop or Engine) — the only hard requirement for the standalone modules
+- **Docker** (Desktop or Engine): the only hard requirement for the standalone modules
   (0–7). Check with `docker --version`.
-- **curl** — almost certainly already on your machine (`curl --version`).
+- **curl**: almost certainly already on your machine (`curl --version`).
 - For the platform modules (8–9): **kind** (Kubernetes-in-Docker) and **kubectl**. Install
   instructions are in those modules; you can read them without installing if you prefer.
 
 > **Version note.** Labs use the Docker image `envoyproxy/envoy:v1.38-latest` (Envoy's current
 > stable line as of this writing) and Envoy's **v3 configuration API**, which is the stable,
 > long-lived config format. If a newer stable minor exists when you read this, you can bump the
-> tag (e.g. `v1.39-latest`) — the v3 config in these labs is unchanged. Pin a tag in real
+> tag (e.g. `v1.39-latest`); the v3 config in these labs is unchanged. Pin a tag in real
 > deployments; never run `:latest` unpinned in production.
 
 ## How to work through it
 
-Read the modules in order — each builds on the last. Do the labs; they are short (a few
+Read the modules in order; each builds on the last. Do the labs; they are short (a few
 commands each) and are where the understanding actually sticks. Every lab is **self-contained
 and safe**: it runs local containers on high ports and cleans up at the end. Nothing touches
 your system config.
@@ -57,9 +57,9 @@ your system config.
 
 ## The one-sentence summary you'll understand by the end
 
-> Envoy is a programmable L7 proxy whose entire behavior is described by config — **listeners**
+> Envoy is a programmable L7 proxy whose entire behavior is described by config: **listeners**
 > accept connections, **filter chains** process the bytes/requests, and the **router** sends each
-> request to a **cluster** of backend **endpoints** — and that config can be delivered statically
+> request to a **cluster** of backend **endpoints**; and that config can be delivered statically
 > from a file or dynamically from a control plane over **xDS**, which is exactly how service
 > meshes and gateways drive fleets of Envoys.
 

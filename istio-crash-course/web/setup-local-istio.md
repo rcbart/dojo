@@ -5,7 +5,7 @@ installed, a demo app running inside the mesh, and a dashboard showing traffic. 
 out. Requires a machine with ~8 GB RAM free.*
 
 > **This course is hands-on, on your own machine.** The site you're reading gives you the lessons
-> and quizzes, but the real work happens in your own terminal — installing tools, running
+> and quizzes, but the real work happens in your own terminal: installing tools, running
 > containers, and breaking things you can then fix. This setup page gets your machine ready; do it
 > before the first lab.
 
@@ -63,7 +63,7 @@ the `bin` folder to your PATH.)*
 
 ## Step 4 — Install Istio (demo profile)
 
-The **demo profile** installs everything with relaxed resource needs — perfect for learning.
+The **demo profile** installs everything with relaxed resource needs, perfect for learning.
 
 ```bash
 istioctl install --set profile=demo -y
@@ -98,7 +98,7 @@ kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
 kubectl get pods      # each app pod shows 2/2 — your container + the injected Envoy sidecar
 ```
 
-That **2/2** is the whole point: two containers per pod — your app *and* its sidecar proxy.
+That **2/2** is the whole point: two containers per pod, your app *and* its sidecar proxy.
 
 ## Step 7 — Send traffic and confirm it works
 
@@ -122,7 +122,7 @@ istioctl dashboard kiali               # opens Kiali in your browser
 ```
 
 Kiali draws a live map of which service calls which. (Generate some traffic first so there's
-something to see — re-run the curl from Step 7 a few times.)
+something to see; re-run the curl from Step 7 a few times.)
 
 ## Step 9 — Clean up when done
 
@@ -150,17 +150,17 @@ app; if not, `kubectl rollout restart deployment` in `default` re-injects.
 
 **`istioctl dashboard kiali` won't open**
 : Make sure the addons applied and Kiali is Running (`kubectl get pods -n istio-system`). The
-command holds the terminal open (it's port-forwarding) — leave it running and use the browser tab.
+command holds the terminal open (it's port-forwarding); leave it running and use the browser tab.
 
 **Everything is slow the first time**
-: Normal — Kubernetes and Istio images download once, then cache.
+: Normal; Kubernetes and Istio images download once, then cache.
 
 ## Check yourself
 
 1. What does Istio run on top of, and what tool makes a local cluster? *(Kubernetes; kind makes a
    throwaway local cluster.)*
 2. What does `istioctl install --set profile=demo` install? *(The control plane, istiod, plus
-   gateways — the demo profile for learning.)*
+   gateways: the demo profile for learning.)*
 3. What does labelling a namespace `istio-injection=enabled` do? *(New pods there automatically get
    an Envoy sidecar injected.)*
 4. Why do the app pods show `2/2` containers? *(Your app container plus the injected sidecar

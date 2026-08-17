@@ -20,7 +20,7 @@ docker compose down       # stop and remove it
 ```
 
 Compose automatically creates a **private network** for the stack (so services reach each other by
-name) and manages volumes — the manual steps from Modules 4–5, done for you.
+name) and manages volumes: the manual steps from Modules 4–5, done for you.
 
 ## A complete example
 
@@ -56,12 +56,12 @@ volumes:
 
 Read it top-down:
 
-- **`services`** — each becomes a container. The **service name** (`api`, `db`, `cache`) is also its
-  **hostname** on the auto-created network — that's why `api` reaches the database at `db:5432`.
-- **`build: .`** vs **`image:`** — build from a local Dockerfile, or pull a prebuilt image.
-- **`depends_on`** — start order (db and cache before api). *Note: it waits for start, not for
-  "ready" — for true readiness you add healthchecks, Module 10.*
-- **`volumes:`** (top level) — declares named volumes the services mount.
+- **`services`**: each becomes a container. The **service name** (`api`, `db`, `cache`) is also its
+  **hostname** on the auto-created network, which is why `api` reaches the database at `db:5432`.
+- **`build: .`** vs **`image:`**: build from a local Dockerfile, or pull a prebuilt image.
+- **`depends_on`**: start order (db and cache before api). *Note: it waits for start, not for
+  "ready"; for true readiness you add healthchecks, Module 10.*
+- **`volumes:`** (top level): declares named volumes the services mount.
 
 ## The everyday Compose commands
 
@@ -76,7 +76,7 @@ docker compose down            # stop + remove containers and network
 docker compose down -v         # ...and delete named volumes too (data gone!)
 ```
 
-Compose is **project-scoped** to the folder — everything is namespaced so multiple stacks don't
+Compose is **project-scoped** to the folder: everything is namespaced so multiple stacks don't
 collide.
 
 ## Lab: run a real two-service app
@@ -117,27 +117,27 @@ docker compose logs redis               # see redis output
 docker compose down                     # tear it all down cleanly
 ```
 
-You just ran a multi-container app with networking and a bind mount — in two commands.
+You just ran a multi-container app with networking and a bind mount, in two commands.
 
 ### Experiments
 
-1. **Scale a service.** `docker compose up -d --scale redis=3` — three redis containers; Compose
+1. **Scale a service.** `docker compose up -d --scale redis=3` gives you three redis containers; Compose
    load-names them. (Stateless services scale trivially; stateful ones need care.)
-2. **Change and reload.** Edit `html/index.html`, `curl` again — instant (bind mount). Change the
-   published port to `8090:80`, `docker compose up -d` — Compose reconciles just that.
+2. **Change and reload.** Edit `html/index.html`, `curl` again: instant (bind mount). Change the
+   published port to `8090:80`, then `docker compose up -d`, and Compose reconciles just that.
 3. **Persist data.** Add a `db` service with a `pgdata` volume (from the example above), `up`, write
-   a row, `down` (without `-v`), `up` again — data survives; `down -v` — data gone.
+   a row, `down` (without `-v`), `up` again: data survives. With `down -v`, data is gone.
 
 ## Why Compose matters for Kubernetes
 
 A Compose file is a **declarative** description of a whole app: "here are my services, their config,
-and how they connect — make it so." That's the exact mindset Kubernetes uses, just at cluster scale
+and how they connect; make it so." That's the exact mindset Kubernetes uses, just at cluster scale
 with more power. Many teams prototype with Compose, then translate to Kubernetes manifests. Learning
 Compose is a gentle on-ramp to the declarative thinking the next course is built on.
 
 ## Your turn (challenge)
 
-Write a `compose.yaml` with two services — `web` (nginx on host port 8087) and `cache` (redis) —
+Write a `compose.yaml` with two services, `web` (nginx on host port 8087) and `cache` (redis),
 where `web` can resolve `cache` by name. Bring it up, prove both, tear it down.
 
 **Verify you succeeded:**
@@ -152,14 +152,14 @@ docker compose down >/dev/null 2>&1
 ## Check yourself
 
 1. What does `docker compose up` do that saves you effort? *(Starts all services, and auto-creates
-   their network and volumes — no long `docker run` commands.)*
+   their network and volumes: no long `docker run` commands.)*
 2. How does the `api` service reach the database? *(By the service name `db` as a hostname on the
    auto-created network.)*
-3. What does `depends_on` guarantee — and not guarantee? *(Start order; not that the dependency is
-   actually *ready* — use healthchecks for that.)*
-4. What's the danger of `docker compose down -v`? *(The `-v` deletes named volumes — you lose the
+3. What does `depends_on` guarantee, and not guarantee? *(Start order; not that the dependency is
+   actually *ready*. Use healthchecks for that.)*
+4. What's the danger of `docker compose down -v`? *(The `-v` deletes named volumes, so you lose the
    data.)*
-5. Why is Compose good preparation for Kubernetes? *(It's declarative — you describe the desired
+5. Why is Compose good preparation for Kubernetes? *(It's declarative: you describe the desired
    stack and Compose makes it so, the same mindset Kubernetes uses.)*
 
 ---

@@ -5,7 +5,7 @@ cluster.*
 
 ---
 
-Pods are disposable — they come and go, and each gets a **new IP** every time. So you can never rely
+Pods are disposable: they come and go, and each gets a **new IP** every time. So you can never rely
 on a pod's IP. A **Service** solves this: it's a **stable name and address** that automatically load
 -balances across a changing set of pods.
 
@@ -57,7 +57,7 @@ Every Service gets an in-cluster DNS name. From any pod, you can reach it as:
    web.default.svc.cluster.local       (fully-qualified)
 ```
 
-So an app connects to `http://web` or `web:80` — no IPs, ever. This is exactly the "talk by name"
+So an app connects to `http://web` or `web:80`. No IPs, ever. This is exactly the "talk by name"
 model from Docker Compose, scaled to a cluster. **Service discovery = labels + DNS.**
 
 ## Lab: expose a Deployment and load-balance
@@ -102,7 +102,7 @@ Ingress.)
 - The Service has a stable virtual IP (**ClusterIP**).
 - **kube-proxy** on each node programs rules so traffic to that IP is spread across the current
   matching pod IPs.
-- An **EndpointSlice** object tracks which pod IPs currently match the selector — updated live as
+- An **EndpointSlice** object tracks which pod IPs currently match the selector, updated live as
   pods come and go. That's how the Service always points at healthy, current pods.
 
 You don't manage any of this; you just create the Service.

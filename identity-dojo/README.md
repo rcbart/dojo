@@ -9,7 +9,7 @@
 
 # Identity Dojo 🛂
 
-A self-contained course on identity and access management — **14 streams, 149 lessons, 159 hands-on
+A self-contained course on identity and access management: **14 streams, 149 lessons, 159 hands-on
 exercises**, in a single offline HTML file. Split out of [Dev Dojo](../README.md) once the domain grew
 large enough to stand on its own.
 
@@ -18,7 +18,7 @@ large enough to stand on its own.
 Most identity material starts at the protocol and assumes the vocabulary. This one is sequenced so
 that **concepts are grounded before the protocols that assume them**:
 
-- you meet "token" as a defined thing — opaque vs structured, role vs format — before any lesson uses one
+- you meet "token" as a defined thing (opaque vs structured, role vs format) before any lesson uses one
 - you learn that **SSO is a user experience** before learning the protocols that produce it, and that
   federation and delegation are the mechanisms underneath
 - you see the actor cast **once**, mapped across SAML, OIDC and OAuth, rather than three times under
@@ -58,7 +58,7 @@ node scripts/verify.js         # content integrity gate (target: 0 failures)
 Open `dist/index.html` directly in a browser, or host it on any static host.
 
 Identity Dojo owns everything in this directory except the runtime, which comes from the shared
-[`../engine`](../engine/README.md) — one engine, used by every course in the repo, rather than a fork
+[`../engine`](../engine/README.md): one engine, used by every course in the repo, rather than a fork
 per course. That is the course's **only** external dependency: to lift Identity Dojo into its own
 repository, vendor or submodule `engine/` and change the `ENGINE` constant at the top of `build.js`.
 Nothing else moves.
@@ -67,23 +67,23 @@ Nothing else moves.
 
 The **content checks** badge counts assertions in `scripts/verify.js` proving every reference solution
 matches its own regex checks and that ids are unique. That is a **content integrity gate, not a test
-suite** — it says the material is internally consistent, not that a learner's code is correct.
+suite**; it says the material is internally consistent, not that a learner's code is correct.
 
 Grading splits two ways. **47 of 159 exercises (30%) are graded by real execution**: they are pure-logic
 problems written in JavaScript, and your function is called with real inputs in a sandboxed Web Worker
-with its return value compared against expected values — 229 executed cases in total. Every failure mode
+with its return value compared against expected values, 229 executed cases in total. Every failure mode
 is its own named case, so an implementation that skips the audience check or fails open on an unknown
 input fails a test rather than slipping past a pattern match.
 
 The remaining **112 exercises are Java, graded by regex structural checks**: they verify you wrote the
 expected construct, not that your code runs. Every one ships a **Run locally** panel with the exact
 commands, and that is the ground truth. Raising the share of real execution further is the most valuable
-open improvement — the candidates are the ~40 remaining exercises whose logic is not Java-specific.
+open improvement; the candidates are the ~40 remaining exercises whose logic is not Java-specific.
 
 ## Accuracy
 
 Lessons cite primary sources (RFCs, W3C, NIST) throughout. Specific claims have been spot-checked
-against those sources, which caught three real errors — WebAuthn's BE/BS flags being Level 3 rather
+against those sources, which caught three real errors: WebAuthn's BE/BS flags being Level 3 rather
 than Level 2, the RFC 8693 rule that nested `act` claims are informational and must not drive access
 decisions, and the krbtgt double-rotation being Active Directory behaviour rather than something
 RFC 4120 specifies. **The remaining content has not been reviewed by an independent expert**, so treat

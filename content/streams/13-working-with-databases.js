@@ -1,11 +1,11 @@
 STREAMS.push({icon:'🗄️',title:'Working with Databases',blurb:'From your first CREATE TABLE and SELECT to JDBC, transactions, Flyway migrations, and query performance.',lessons:[
 {id:'db0',title:'Databases 101: tables, keys & constraints',body:`
-<p>Before SQL tricks, the mental model. A <b>relational database</b> stores data in <b>tables</b>: named columns with fixed types, one <b>row</b> per fact. The engine (we use <b>PostgreSQL</b> throughout) enforces your rules so bad data physically cannot enter — that enforcement is what separates a database from a spreadsheet.</p>
+<p>Before SQL tricks, the mental model. A <b>relational database</b> stores data in <b>tables</b>: named columns with fixed types, one <b>row</b> per fact. The engine (we use <b>PostgreSQL</b> throughout) enforces your rules so bad data physically cannot enter; that enforcement is what separates a database from a spreadsheet.</p>
 <ul>
-<li><b>Primary key (PK)</b> — the column that uniquely identifies each row. The modern default: <code>id BIGSERIAL PRIMARY KEY</code> (an auto-incrementing 64-bit int). Every table gets one; no exceptions in this dojo.</li>
-<li><b>Foreign key (FK)</b> — a column pointing at another table's PK: <code>author_id BIGINT REFERENCES authors(id)</code>. The engine rejects orphans: no book can claim author 999 if author 999 doesn't exist. Relationships are data, not conventions.</li>
-<li><b>Column types</b> you'll actually use: <code>TEXT</code> / <code>VARCHAR(n)</code>, <code>BIGINT</code> / <code>INT</code>, <code>NUMERIC(12,2)</code> for money (never float — the BigDecimal lesson's argument, in SQL), <code>BOOLEAN</code>, <code>DATE</code> / <code>TIMESTAMPTZ</code>.</li>
-<li><b>Constraints</b> — declared rules: <code>NOT NULL</code> (value required), <code>UNIQUE</code> (no duplicates), <code>CHECK (price_cents &gt;= 0)</code> (arbitrary predicates), <code>DEFAULT now()</code> (fill when omitted).</li>
+<li><b>Primary key (PK)</b>: the column that uniquely identifies each row. The modern default: <code>id BIGSERIAL PRIMARY KEY</code> (an auto-incrementing 64-bit int). Every table gets one; no exceptions in this dojo.</li>
+<li><b>Foreign key (FK)</b>: a column pointing at another table's PK: <code>author_id BIGINT REFERENCES authors(id)</code>. The engine rejects orphans: no book can claim author 999 if author 999 doesn't exist. Relationships are data, not conventions.</li>
+<li><b>Column types</b> you'll actually use: <code>TEXT</code> / <code>VARCHAR(n)</code>, <code>BIGINT</code> / <code>INT</code>, <code>NUMERIC(12,2)</code> for money (never float; the BigDecimal lesson's argument, in SQL), <code>BOOLEAN</code>, <code>DATE</code> / <code>TIMESTAMPTZ</code>.</li>
+<li><b>Constraints</b> are declared rules: <code>NOT NULL</code> (value required), <code>UNIQUE</code> (no duplicates), <code>CHECK (price_cents &gt;= 0)</code> (arbitrary predicates), <code>DEFAULT now()</code> (fill when omitted).</li>
 </ul>
 <div class="codeSample">CREATE TABLE authors (
   id         BIGSERIAL PRIMARY KEY,
@@ -21,10 +21,10 @@ CREATE TABLE books (
   price_cents BIGINT NOT NULL CHECK (price_cents &gt;= 0),
   published   DATE
 );</div>
-<p>Read a schema like a sentence: "a book <i>must</i> have an existing author, a title, and a non-negative price; an email can appear once." Design tip that prevents years of pain: model the <b>one-to-many</b> direction consciously — the FK always lives on the many side (many books → one author).</p>`,
+<p>Read a schema like a sentence: "a book <i>must</i> have an existing author, a title, and a non-negative price; an email can appear once." Design tip that prevents years of pain: model the <b>one-to-many</b> direction consciously: the FK always lives on the many side (many books → one author).</p>`,
 docs:[['PostgreSQL tutorial — tables','https://www.postgresql.org/docs/current/ddl-basics.html'],['Constraints','https://www.postgresql.org/docs/current/ddl-constraints.html'],['Data types','https://www.postgresql.org/docs/current/datatype.html']],
 ex:{title:'Design a schema',lang:'sql',
-prompt:`Write two CREATE TABLE statements for a tiny store: (1) <code>customers</code> — <code>id BIGSERIAL PRIMARY KEY</code>, <code>email TEXT NOT NULL UNIQUE</code>, <code>name TEXT NOT NULL</code>, <code>created_at TIMESTAMPTZ NOT NULL DEFAULT now()</code>. (2) <code>orders</code> — <code>id BIGSERIAL PRIMARY KEY</code>, a <code>customer_id</code> column that is <code>BIGINT NOT NULL</code> and <b>REFERENCES customers(id)</b>, <code>total_cents BIGINT NOT NULL</code> with a <b>CHECK that it is &gt;= 0</b>, and <code>placed_on DATE NOT NULL</code>.`,
+prompt:`Write two CREATE TABLE statements for a tiny store: (1) <code>customers</code>: <code>id BIGSERIAL PRIMARY KEY</code>, <code>email TEXT NOT NULL UNIQUE</code>, <code>name TEXT NOT NULL</code>, <code>created_at TIMESTAMPTZ NOT NULL DEFAULT now()</code>. (2) <code>orders</code>: <code>id BIGSERIAL PRIMARY KEY</code>, a <code>customer_id</code> column that is <code>BIGINT NOT NULL</code> and <b>REFERENCES customers(id)</b>, <code>total_cents BIGINT NOT NULL</code> with a <b>CHECK that it is &gt;= 0</b>, and <code>placed_on DATE NOT NULL</code>.`,
 starter:`-- customers
 
 
@@ -48,37 +48,37 @@ CREATE TABLE orders (
 );
 `,
 tests:[{d:'customers: BIGSERIAL primary key',re:'create\\s+table\\s+customers[\\s\\S]*?id\\s+bigserial\\s+primary\\s+key',flags:'is'},{d:'email is NOT NULL and UNIQUE',re:'email\\s+text\\s+not\\s+null\\s+unique',flags:'is'},{d:'created_at defaults to now()',re:'created_at\\s+timestamptz\\s+not\\s+null\\s+default\\s+now\\s*\\(\\s*\\)',flags:'is'},{d:'orders.customer_id is a NOT NULL foreign key',re:'customer_id\\s+bigint\\s+not\\s+null\\s+references\\s+customers\\s*\\(\\s*id\\s*\\)',flags:'is'},{d:'CHECK keeps totals non-negative',re:'check\\s*\\(\\s*total_cents\\s*>=\\s*0\\s*\\)',flags:'is'},{d:'placed_on required',re:'placed_on\\s+date\\s+not\\s+null',flags:'is'}],
-behavior:`1. INSERT INTO customers(email, name) VALUES ('a@x.dev', 'Ada') succeeds — id and created_at fill themselves. 2. A second customer with email 'a@x.dev' is rejected (UNIQUE). 3. An order for customer_id 999 with no such customer is rejected (FK). 4. An order with total_cents -5 is rejected (CHECK). 5. The FK sits on orders — the many side of one-customer-many-orders.`,
-hints:['Column definitions read: name TYPE constraint constraint... — order of constraints on one line is flexible.','The FK is inline: customer_id BIGINT NOT NULL REFERENCES customers(id) — no separate CONSTRAINT clause needed at this scale.','DEFAULT now() means the INSERT simply omits the column — the engine stamps it.']}},
+behavior:`1. INSERT INTO customers(email, name) VALUES ('a@x.dev', 'Ada') succeeds: id and created_at fill themselves. 2. A second customer with email 'a@x.dev' is rejected (UNIQUE). 3. An order for customer_id 999 with no such customer is rejected (FK). 4. An order with total_cents -5 is rejected (CHECK). 5. The FK sits on orders, the many side of one-customer-many-orders.`,
+hints:['Column definitions read: name TYPE constraint constraint...; the order of constraints on one line is flexible.','The FK is inline: customer_id BIGINT NOT NULL REFERENCES customers(id); no separate CONSTRAINT clause needed at this scale.','DEFAULT now() means the INSERT simply omits the column; the engine stamps it.']}},
 
 {id:'db0b',title:'SQL basics: reading with SELECT',body:`
 <p>SELECT is 80% of the SQL you will ever run. The clause order is fixed, and the engine applies them in a logical order worth memorizing: <code>FROM</code> → <code>WHERE</code> → <code>SELECT</code> list → <code>ORDER BY</code> → <code>LIMIT</code>.</p>
-<div class="codeSample">SELECT title, price_cents          -- which columns (or * for all — fine in psql, sloppy in code)
+<div class="codeSample">SELECT title, price_cents          -- which columns (or * for all: fine in psql, sloppy in code)
 FROM books
 WHERE price_cents &lt; 2000           -- rows must pass the predicate
-  AND published IS NOT NULL        -- NULL needs IS / IS NOT — never  = NULL
+  AND published IS NOT NULL        -- NULL needs IS / IS NOT, never  = NULL
 ORDER BY price_cents DESC, title   -- sort key, then tiebreaker; DESC per key
 LIMIT 10 OFFSET 20;                -- page 3 of 10-per-page</div>
-<p>The WHERE toolbox: <code>=</code> <code>&lt;&gt;</code> <code>&lt;</code> <code>&gt;=</code>; <code>IN ('a','b')</code>; <code>BETWEEN 10 AND 20</code> (inclusive); <code>LIKE 'Effective%'</code> (<code>%</code> any run, <code>_</code> one char; <code>ILIKE</code> = case-insensitive in Postgres); <code>IS NULL</code>. Strings take <b>single quotes</b> in SQL — double quotes mean identifiers.</p>
+<p>The WHERE toolbox: <code>=</code> <code>&lt;&gt;</code> <code>&lt;</code> <code>&gt;=</code>; <code>IN ('a','b')</code>; <code>BETWEEN 10 AND 20</code> (inclusive); <code>LIKE 'Effective%'</code> (<code>%</code> any run, <code>_</code> one char; <code>ILIKE</code> = case-insensitive in Postgres); <code>IS NULL</code>. Strings take <b>single quotes</b> in SQL; double quotes mean identifiers.</p>
 <p>Two more first-week essentials:</p>
 <ul>
-<li><b>DISTINCT</b> — <code>SELECT DISTINCT author_id FROM books</code>: the unique set, not every row.</li>
-<li><b>Aggregates</b> — <code>COUNT(*)</code>, <code>SUM(x)</code>, <code>AVG(x)</code>, <code>MIN</code>/<code>MAX</code> collapse rows into one answer: <code>SELECT COUNT(*), AVG(price_cents) FROM books WHERE author_id = 3;</code> — grouping per author arrives with GROUP BY in the next lesson's queries.</li>
+<li><b>DISTINCT</b>: <code>SELECT DISTINCT author_id FROM books</code>: the unique set, not every row.</li>
+<li><b>Aggregates</b>: <code>COUNT(*)</code>, <code>SUM(x)</code>, <code>AVG(x)</code>, <code>MIN</code>/<code>MAX</code> collapse rows into one answer: <code>SELECT COUNT(*), AVG(price_cents) FROM books WHERE author_id = 3;</code>; grouping per author arrives with GROUP BY in the next lesson's queries.</li>
 </ul>
-<p>Why <code>NULL = NULL</code> is not true: NULL means <i>unknown</i>, and "is unknown equal to unknown?" is itself unknown — three-valued logic. WHERE keeps only rows where the predicate is <i>true</i>, so unknowns silently drop. When a query "loses" rows, check for a NULL comparison first.</p>
+<p>Why <code>NULL = NULL</code> is not true: NULL means <i>unknown</i>, and "is unknown equal to unknown?" is itself unknown: three-valued logic. WHERE keeps only rows where the predicate is <i>true</i>, so unknowns silently drop. When a query "loses" rows, check for a NULL comparison first.</p>
 
 <h4>Why the logical order matters more than the written order</h4>
 <p>You write <code>SELECT</code> first and the engine evaluates it fourth. That single fact explains two
 things beginners find arbitrary. An alias defined in the <code>SELECT</code> list cannot be used in
 <code>WHERE</code>, because the alias does not exist yet when the filter runs. And <code>WHERE</code>
-filters rows before grouping while <code>HAVING</code> filters after it — which is why one takes raw
+filters rows before grouping while <code>HAVING</code> filters after it, which is why one takes raw
 columns and the other takes aggregates.</p>
 
 <h4>NULL is not a value, and it changes comparisons</h4>
 <p><code>NULL</code> means <i>unknown</i>, so any comparison with it is unknown rather than false. That is
 why <code>WHERE email = NULL</code> matches nothing at all and <code>IS NULL</code> is required. The same
 logic bites in negation: <code>WHERE status &lt;&gt; 'shipped'</code> silently excludes rows where status
-is NULL, because unknown is not "different". If those rows should be included, say so —
+is NULL, because unknown is not "different". If those rows should be included, say so:
 <code>OR status IS NULL</code>.</p>
 
 <h4>Habits that keep a query well-behaved</h4>
@@ -88,7 +88,7 @@ whenever the table does, silently.</li>
 <li><b><code>LIMIT</code> while exploring.</b> A stray query against a large table is the easiest way to
 inconvenience a shared database.</li>
 <li><b><code>ORDER BY</code> is not optional if order matters.</b> Without it the engine may return rows
-in any order, and the order it happens to return today is not a promise — it changes when the plan
+in any order, and the order it happens to return today is not a promise; it changes when the plan
 changes.</li>
 <li><b><code>DISTINCT</code> is usually a symptom.</b> Duplicates in a result set most often mean a join
 matched more rows than you expected; removing them hides the cause rather than fixing it.</li>
@@ -127,11 +127,11 @@ SELECT * FROM books WHERE published IS NULL;
 SELECT COUNT(*), AVG(price_cents) FROM books;
 `,
 tests:[{d:'Q1: select every column',re:'1\\)[\\s\\S]*?select\\s+\\*\\s+from\\s+books\\s*;',flags:'is'},{d:'Q2: filtered + sorted ascending',re:'2\\)[\\s\\S]*?select\\s+title\\s+from\\s+books\\s+where\\s+price_cents\\s*<\\s*1500\\s+order\\s+by\\s+title',flags:'is'},{d:'Q3: top-5 by price descending',re:'3\\)[\\s\\S]*?order\\s+by\\s+price_cents\\s+desc\\s+limit\\s+5',flags:'is'},{d:'Q4: LIKE prefix pattern in single quotes',re:'4\\)[\\s\\S]*?like\\s+\\x27Java%\\x27',flags:'is'},{d:'Q5: IS NULL, not = NULL',re:'5\\)[\\s\\S]*?published\\s+is\\s+null',flags:'is'},{d:'= NULL never appears',re:'=\\s*null',not:true,flags:'is'},{d:'Q6: COUNT and AVG together',re:'6\\)[\\s\\S]*?count\\s*\\(\\s*\\*\\s*\\)\\s*,\\s*avg\\s*\\(\\s*price_cents\\s*\\)',flags:'is'}],
-behavior:`1. Q1 returns every row, every column. 2. Q2 returns one column, cheap books first alphabetically. 3. Q3 returns exactly 5 rows, priciest first. 4. Q4 matches 'Java Concurrency' but not 'Effective Java' — % only trails. 5. Q5 finds the unpublished books; a = NULL version would return zero rows silently. 6. Q6 returns exactly ONE row with two numbers — aggregates collapse the table.`,
-hints:['Clause order is fixed: SELECT ... FROM ... WHERE ... ORDER BY ... LIMIT — the engine will not accept WHERE after ORDER BY.','SQL string literals use single quotes: LIKE \'Java%\'.','NULL checks are IS NULL / IS NOT NULL — the = operator returns unknown, and WHERE drops unknowns.']}},
+behavior:`1. Q1 returns every row, every column. 2. Q2 returns one column, cheap books first alphabetically. 3. Q3 returns exactly 5 rows, priciest first. 4. Q4 matches 'Java Concurrency' but not 'Effective Java'; % only trails. 5. Q5 finds the unpublished books; a = NULL version would return zero rows silently. 6. Q6 returns exactly ONE row with two numbers; aggregates collapse the table.`,
+hints:['Clause order is fixed: SELECT ... FROM ... WHERE ... ORDER BY ... LIMIT; the engine will not accept WHERE after ORDER BY.','SQL string literals use single quotes: LIKE \'Java%\'.','NULL checks are IS NULL / IS NOT NULL; the = operator returns unknown, and WHERE drops unknowns.']}},
 
 {id:'db0c',title:'SQL basics: writing data',body:`
-<p>Four verbs change data. Two of them can destroy a table in one line — respect the WHERE clause.</p>
+<p>Four verbs change data. Two of them can destroy a table in one line; respect the WHERE clause.</p>
 <div class="codeSample">-- INSERT: single, multi-row, and read-back
 INSERT INTO books (author_id, title, price_cents) VALUES (1, 'Effective Java', 4500);
 INSERT INTO books (author_id, title, price_cents) VALUES
@@ -139,7 +139,7 @@ INSERT INTO books (author_id, title, price_cents) VALUES
   (2, 'Clean Code',    3900);
 INSERT INTO books (author_id, title, price_cents)
   VALUES (2, 'Refactoring', 4700)
-  RETURNING id;                      -- Postgres: get the generated id back — no second query
+  RETURNING id;                      -- Postgres: get the generated id back, no second query
 
 -- UPDATE: SET what, WHERE which
 UPDATE books SET price_cents = 3990 WHERE id = 7;
@@ -148,8 +148,8 @@ UPDATE books SET price_cents = price_cents * 0.9   -- expressions read the OLD v
 
 -- DELETE
 DELETE FROM books WHERE id = 7;</div>
-<p><b>The missing-WHERE catastrophe</b>: <code>UPDATE books SET price_cents = 0</code> — no WHERE — updates <b>every row</b>, instantly, no confirmation. Same for DELETE. Professional habits: write the WHERE first; run a <code>SELECT COUNT(*)</code> with the same WHERE to preview the blast radius; do risky writes inside <code>BEGIN; ... ROLLBACK/COMMIT;</code> so you can look before it sticks (transactions get their own lesson soon).</p>
-<p>Omitted columns take their <code>DEFAULT</code> (so <code>id</code> and <code>created_at</code> fill themselves) or NULL if none — and a <code>NOT NULL</code> column without a default makes the INSERT fail, which is the schema doing its job. <code>RETURNING</code> works on UPDATE and DELETE too: change-and-see in one round trip.</p>
+<p><b>The missing-WHERE catastrophe</b>: <code>UPDATE books SET price_cents = 0</code> (no WHERE) updates <b>every row</b>, instantly, no confirmation. Same for DELETE. Professional habits: write the WHERE first; run a <code>SELECT COUNT(*)</code> with the same WHERE to preview the blast radius; do risky writes inside <code>BEGIN; ... ROLLBACK/COMMIT;</code> so you can look before it sticks (transactions get their own lesson soon).</p>
+<p>Omitted columns take their <code>DEFAULT</code> (so <code>id</code> and <code>created_at</code> fill themselves) or NULL if none, and a <code>NOT NULL</code> column without a default makes the INSERT fail, which is the schema doing its job. <code>RETURNING</code> works on UPDATE and DELETE too: change-and-see in one round trip.</p>
 
 <h4>UPDATE and DELETE are the same statement with a different verb</h4>
 <p>Both take a <code>WHERE</code>, both default to <i>every row</i> when it is missing, and both are
@@ -164,7 +164,7 @@ SELECT COUNT(*) FROM books WHERE price_cents = 0;  -- 3. did it do what you mean
 COMMIT;                                            --    or ROLLBACK;</div>
 
 <h4>What the database does for you when you leave a column out</h4>
-<p>An omitted column takes its <code>DEFAULT</code>, or <code>NULL</code> when there is none — which is why
+<p>An omitted column takes its <code>DEFAULT</code>, or <code>NULL</code> when there is none, which is why
 <code>id</code> and <code>created_at</code> fill themselves. A <code>NOT NULL</code> column with no default
 makes the insert fail, and that failure is the schema doing its job: it is telling you the row would have
 been meaningless. Resist the urge to make such columns nullable to quiet the error.</p>
@@ -173,11 +173,11 @@ been meaningless. Resist the urge to make such columns nullable to quiet the err
 <p><code>RETURNING</code> gives you the affected rows in the same round trip, and it works on
 <code>INSERT</code>, <code>UPDATE</code> and <code>DELETE</code>. That matters more than convenience:
 fetching a generated id with a second <code>SELECT</code> is a race, because another statement can run in
-between. One statement that both changes and reports has no gap in it — the same reasoning as the upsert
+between. One statement that both changes and reports has no gap in it, the same reasoning as the upsert
 lesson later in this stream.</p>`,
 docs:[['INSERT','https://www.postgresql.org/docs/current/sql-insert.html'],['UPDATE','https://www.postgresql.org/docs/current/sql-update.html'],['DELETE','https://www.postgresql.org/docs/current/sql-delete.html']],
 ex:{title:'Write-path drill',lang:'sql',
-prompt:`Against <code>books(id, author_id, title, price_cents, published)</code>, one statement per numbered comment: (1) insert a book: author 1, title <code>Effective Java</code>, price 4500 — naming the three columns; (2) one INSERT adding <b>two</b> books for author 2: <code>Clean Code</code> at 3900 and <code>Refactoring</code> at 4700 (multi-row VALUES); (3) insert author 3's <code>DDIA</code> at 5200 and <b>return the generated id</b> (RETURNING); (4) set the price of book id 7 to 3990; (5) apply a 10% discount to <b>every book by author 1</b> (price = price * 0.9, WHERE required); (6) delete all books priced 0.`,
+prompt:`Against <code>books(id, author_id, title, price_cents, published)</code>, one statement per numbered comment: (1) insert a book: author 1, title <code>Effective Java</code>, price 4500, naming the three columns; (2) one INSERT adding <b>two</b> books for author 2: <code>Clean Code</code> at 3900 and <code>Refactoring</code> at 4700 (multi-row VALUES); (3) insert author 3's <code>DDIA</code> at 5200 and <b>return the generated id</b> (RETURNING); (4) set the price of book id 7 to 3990; (5) apply a 10% discount to <b>every book by author 1</b> (price = price * 0.9, WHERE required); (6) delete all books priced 0.`,
 starter:`-- 1)
 
 -- 2)
@@ -211,12 +211,12 @@ UPDATE books SET price_cents = price_cents * 0.9 WHERE author_id = 1;
 DELETE FROM books WHERE price_cents = 0;
 `,
 tests:[{d:'Q1: INSERT names its columns',re:'1\\)[\\s\\S]*?insert\\s+into\\s+books\\s*\\(\\s*author_id\\s*,\\s*title\\s*,\\s*price_cents\\s*\\)\\s*values',flags:'is'},{d:'Q2: one statement, two value tuples',re:'2\\)[\\s\\S]*?values[\\s\\S]*?\\(\\s*2\\s*,[\\s\\S]*?\\)\\s*,\\s*\\(\\s*2\\s*,',flags:'is'},{d:'Q3: RETURNING id fetches the generated key',re:'3\\)[\\s\\S]*?insert[\\s\\S]*?returning\\s+id',flags:'is'},{d:'Q4: targeted update by primary key',re:'4\\)[\\s\\S]*?update\\s+books\\s+set\\s+price_cents\\s*=\\s*3990\\s+where\\s+id\\s*=\\s*7',flags:'is'},{d:'Q5: expression update reads the old value, scoped by WHERE',re:'5\\)[\\s\\S]*?set\\s+price_cents\\s*=\\s*price_cents\\s*\\*\\s*0?\\.9\\s+where\\s+author_id\\s*=\\s*1',flags:'is'},{d:'Q6: DELETE is scoped',re:'6\\)[\\s\\S]*?delete\\s+from\\s+books\\s+where\\s+price_cents\\s*=\\s*0',flags:'is'},{d:'Every UPDATE and DELETE carries a WHERE',re:'(update|delete)(?![\\s\\S]*?where)[^;]*;',not:true,flags:'i'}],
-behavior:`1. Q1 inserts one row; id, published fill from defaults (serial, NULL). 2. Q2 is ONE statement inserting two rows atomically — both or neither. 3. Q3 returns the new id in the same round trip Java would otherwise need a second query for. 4-5. Both UPDATEs touch exactly the rows their WHERE names; Q5 reads each row's old price in the expression. 6. The DELETE removes only zero-priced rows. 7. No UPDATE or DELETE in this exercise lacks a WHERE — the habit being drilled.`,
-hints:['Multi-row insert: VALUES (..., ...), (..., ...) — commas between parenthesized tuples.','RETURNING id goes after the closing VALUES parenthesis, before the semicolon.','Q5 needs no SELECT first: SET price_cents = price_cents * 0.9 evaluates per matched row.']}},
+behavior:`1. Q1 inserts one row; id, published fill from defaults (serial, NULL). 2. Q2 is ONE statement inserting two rows atomically: both or neither. 3. Q3 returns the new id in the same round trip Java would otherwise need a second query for. 4-5. Both UPDATEs touch exactly the rows their WHERE names; Q5 reads each row's old price in the expression. 6. The DELETE removes only zero-priced rows. 7. No UPDATE or DELETE in this exercise lacks a WHERE, the habit being drilled.`,
+hints:['Multi-row insert: VALUES (..., ...), (..., ...): commas between parenthesized tuples.','RETURNING id goes after the closing VALUES parenthesis, before the semicolon.','Q5 needs no SELECT first: SET price_cents = price_cents * 0.9 evaluates per matched row.']}},
 
 
 {id:'db1',title:'SQL essentials',body:`
-<p>Every persistence framework compiles down to SQL — you cannot debug what you cannot read. The core moves:</p>
+<p>Every persistence framework compiles down to SQL; you cannot debug what you cannot read. The core moves:</p>
 <div class="codeSample">SELECT id, owner, balance_cents
 FROM   accounts
 WHERE  balance_cents &gt; 10000
@@ -234,7 +234,7 @@ LEFT JOIN  -- keep left rows even with no match (NULLs fill the right side)</div
 <p>Execution order (not writing order!): FROM → JOIN → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT. WHERE filters rows before grouping; HAVING filters after. If you remember one thing: JOIN + GROUP BY answers 80% of real reporting questions.</p>
 <h4>The mental shift: describe the result, not the steps</h4>
 <p>SQL is declarative. You state what you want the answer to look like and the database's planner decides
-how to get it — which index to use, which table to scan, in what order to join. That is why the same
+how to get it: which index to use, which table to scan, in what order to join. That is why the same
 query can be instant on one dataset and catastrophic on another, and why <b>reading a query plan</b>
 (<code>EXPLAIN</code>) is the actual skill. The syntax is a week's work; understanding what the planner
 will do with it is the career.</p>
@@ -254,7 +254,7 @@ most beginner errors at a stroke:</p>
 
 <h4>The join distinction that silently changes answers</h4>
 <p><code>INNER JOIN</code> keeps only matching rows, so an account with no transactions vanishes from the
-report entirely. <code>LEFT JOIN</code> keeps it with <code>NULL</code>s on the right — and then
+report entirely. <code>LEFT JOIN</code> keeps it with <code>NULL</code>s on the right, and then
 <code>COUNT(t.id)</code> correctly returns 0 while <code>COUNT(*)</code> wrongly returns 1, because it
 counts the row that exists.</p>
 <p>The related trap: putting a condition on the right-hand table in <code>WHERE</code> rather than in the
@@ -263,19 +263,19 @@ counts the row that exists.</p>
 <code>ON</code>.</p>
 
 <h4>NULL is not a value</h4>
-<p>It means "unknown", and it propagates. <code>NULL = NULL</code> is not true, it is unknown — so
+<p>It means "unknown", and it propagates. <code>NULL = NULL</code> is not true, it is unknown, so
 comparisons need <code>IS NULL</code>. Aggregates skip it (<code>AVG</code> over 10 rows with 3 nulls
 divides by 7, which may or may not be what you wanted). And <code>NOT IN</code> against a subquery
 containing a single NULL returns no rows at all, which is a genuinely nasty silent bug.</p>
 
 <h4>Two habits worth forming now</h4>
-<p><b>Qualify your columns</b> (<code>a.id</code>, not <code>id</code>) in anything with a join — it is
+<p><b>Qualify your columns</b> (<code>a.id</code>, not <code>id</code>) in anything with a join; it is
 self-documenting and it stops a query breaking when someone adds a column with the same name to the other
 table. And <b>never <code>SELECT *</code> in application code</b>: it fetches data you do not need over
 the wire, breaks when the schema changes, and prevents the index-only scans that make queries fast.</p>`,
 docs:[['SQL tutorial — PostgreSQL docs','https://www.postgresql.org/docs/current/tutorial-sql.html'],['SQL joins visualized — Atlassian','https://www.atlassian.com/data/sql/sql-join-types-explained-visually']],
 ex:{title:'Write the queries',lang:'sql',data:'shop',
-prompt:`Given tables <code>users(id, name)</code> and <code>orders(id, user_id, total_cents, created_at)</code>, write: (1) the 5 most recent orders (all columns, newest first), (2) each user's name and their order count — <b>including users with zero orders</b> (which JOIN?) — grouped and aliased <code>order_count</code>, (3) names of users whose lifetime total exceeds 50000 cents (JOIN + GROUP BY + HAVING).`,
+prompt:`Given tables <code>users(id, name)</code> and <code>orders(id, user_id, total_cents, created_at)</code>, write: (1) the 5 most recent orders (all columns, newest first), (2) each user's name and their order count, <b>including users with zero orders</b> (which JOIN?), grouped and aliased <code>order_count</code>, (3) names of users whose lifetime total exceeds 50000 cents (JOIN + GROUP BY + HAVING).`,
 starter:`-- 1)
 
 
@@ -286,7 +286,7 @@ starter:`-- 1)
 `,
 tests:[{d:'ORDER BY created_at DESC LIMIT 5',re:'ORDER\\s+BY\\s+created_at\\s+DESC[\\s\\S]*?LIMIT\\s+5','flags':'is'},{d:'LEFT JOIN to keep zero-order users',re:'LEFT\\s+JOIN','flags':'is'},{d:'COUNT aliased as order_count',re:'COUNT\\s*\\([^)]*\\)\\s+AS\\s+order_count','flags':'is'},{d:'GROUP BY present',re:'GROUP\\s+BY','flags':'is'},{d:'HAVING with SUM over 50000',re:'HAVING\\s+SUM\\s*\\(\\s*total_cents\\s*\\)\\s*>\\s*50000','flags':'is'}],
 behavior:`1. (1) SELECT * FROM orders ORDER BY created_at DESC LIMIT 5. 2. (2) LEFT JOIN from users to orders (COUNT(o.id), not COUNT(*), so zero-order users show 0), GROUP BY the user. 3. (3) INNER JOIN + GROUP BY + HAVING SUM(total_cents) > 50000. 4. HAVING (not WHERE) because the condition is on an aggregate.`,
-hints:['Recent-N pattern: ORDER BY the timestamp DESC, then LIMIT.','"Including zero" is the LEFT JOIN tell — and COUNT(o.id) counts only matched rows, so unmatched users get 0.','Aggregate conditions cannot live in WHERE — that is exactly what HAVING is for.'],
+hints:['Recent-N pattern: ORDER BY the timestamp DESC, then LIMIT.','"Including zero" is the LEFT JOIN tell, and COUNT(o.id) counts only matched rows, so unmatched users get 0.','Aggregate conditions cannot live in WHERE; that is exactly what HAVING is for.'],
 solution:`-- 1)
 SELECT * FROM orders
 ORDER BY created_at DESC
@@ -327,13 +327,13 @@ LEFT JOIN departments d ON d.id = e.dept_id; -- keeps employees with no dept
 <li><b>RIGHT</b> = LEFT flipped. Most people just reorder the tables and use LEFT.</li>
 <li><b>FULL OUTER</b> = "keep everything, both sides." Nothing is dropped.</li>
 <li><b>CROSS</b> = "every pairing." No ON clause. Use on purpose (e.g. all sizes x all colors); by accident it explodes row counts.</li>
-<li><b>SELF</b> = same table twice — an employee row joined to its manager row.</li>
+<li><b>SELF</b> = same table twice: an employee row joined to its manager row.</li>
 </ul>
-<p><b>Semi-join and anti-join</b> answer "does a match exist?" without duplicating rows. A <b>semi-join</b> keeps left rows that <i>have</i> a match — written with <code>EXISTS</code> or <code>IN</code>. An <b>anti-join</b> keeps left rows with <i>no</i> match — written with <code>NOT EXISTS</code>, or the classic <code>LEFT JOIN ... WHERE right.id IS NULL</code> ("find the orphans").</p>
+<p><b>Semi-join and anti-join</b> answer "does a match exist?" without duplicating rows. A <b>semi-join</b> keeps left rows that <i>have</i> a match, written with <code>EXISTS</code> or <code>IN</code>. An <b>anti-join</b> keeps left rows with <i>no</i> match, written with <code>NOT EXISTS</code>, or the classic <code>LEFT JOIN ... WHERE right.id IS NULL</code> ("find the orphans").</p>
 <p>One caution: <b>NATURAL JOIN</b> auto-matches every column that shares a name. It reads short but breaks silently when someone adds a same-named column, so most teams avoid it and write the <code>ON</code> explicitly.</p>`,
 docs:[['JOINs visualized — Atlassian','https://www.atlassian.com/data/sql/sql-join-types-explained-visually'],['SELECT / JOIN reference','https://www.postgresql.org/docs/current/sql-select.html'],['EXISTS & subqueries','https://www.postgresql.org/docs/current/functions-subquery.html']],
 ex:{title:'Join drill',lang:'sql',data:'org',
-prompt:`Tables: <code>employees(id, name, dept_id, manager_id)</code> and <code>departments(id, name)</code>. One query per numbered comment: (1) each employee with their department name, <b>matches only</b> (INNER); (2) <b>every</b> employee including those with no department (LEFT JOIN); (3) departments that have <b>no</b> employees — the anti-join pattern (LEFT JOIN then WHERE the employee id IS NULL); (4) every employee paired with every department (CROSS JOIN); (5) each employee alongside their manager's name — a SELF JOIN of employees to itself on <code>manager_id</code>; (6) everything from both tables, keeping unmatched rows on either side (FULL OUTER JOIN).`,
+prompt:`Tables: <code>employees(id, name, dept_id, manager_id)</code> and <code>departments(id, name)</code>. One query per numbered comment: (1) each employee with their department name, <b>matches only</b> (INNER); (2) <b>every</b> employee including those with no department (LEFT JOIN); (3) departments that have <b>no</b> employees: the anti-join pattern (LEFT JOIN then WHERE the employee id IS NULL); (4) every employee paired with every department (CROSS JOIN); (5) each employee alongside their manager's name, a SELF JOIN of employees to itself on <code>manager_id</code>; (6) everything from both tables, keeping unmatched rows on either side (FULL OUTER JOIN).`,
 starter:`-- 1) INNER
 
 -- 2) LEFT
@@ -404,7 +404,7 @@ SAVEPOINT sp1;   -- a checkpoint you can ROLLBACK TO
 GRANT SELECT ON tags TO reader;   -- give a privilege
 REVOKE SELECT ON tags FROM reader;-- take it back</div>
 <p>Plain-terms cheat sheet: <b>DDL</b> = the building (create/alter/drop the tables). <b>DML</b> = the furniture (put rows in, move them, take them out). <b>TCL</b> = the "undo/commit" bracket around your DML. <b>DCL</b> = the keys to the doors (who may do what).</p>
-<p>Two safety notes worth burning in: <code>TRUNCATE</code> and <code>DROP</code> are DDL and in many databases cannot be rolled back the way DML can — treat them like a shredder. And every <code>UPDATE</code>/<code>DELETE</code> needs a <code>WHERE</code> unless you truly mean "all rows."</p>
+<p>Two safety notes worth burning in: <code>TRUNCATE</code> and <code>DROP</code> are DDL and in many databases cannot be rolled back the way DML can; treat them like a shredder. And every <code>UPDATE</code>/<code>DELETE</code> needs a <code>WHERE</code> unless you truly mean "all rows."</p>
 <p>Reading queries, you also lean on these <b>clauses</b> (parts of a SELECT, not standalone commands): <code>WHERE</code> (filter rows) → <code>GROUP BY</code> (bucket rows) → <code>HAVING</code> (filter buckets) → <code>ORDER BY</code> (sort) → <code>LIMIT/OFFSET</code> (paginate), plus <code>DISTINCT</code>, <code>JOIN</code>, and the set operators <code>UNION</code> / <code>INTERSECT</code> / <code>EXCEPT</code> that stack whole result sets.</p>`,
 docs:[['SQL commands — PostgreSQL','https://www.postgresql.org/docs/current/sql-commands.html'],['GRANT / privileges','https://www.postgresql.org/docs/current/sql-grant.html'],['Transactions','https://www.postgresql.org/docs/current/tutorial-transactions.html']],
 ex:{title:'One command from each family',lang:'sql',
@@ -454,7 +454,7 @@ behavior:`1. Q1 defines the structure (DDL). 2. Q2 changes the structure (DDL). 
 hints:['DDL defines structure: CREATE, ALTER, DROP, TRUNCATE. DML changes rows: INSERT, UPDATE, DELETE, SELECT.','TCL groups changes: wrap the UPDATE in BEGIN and COMMIT so it applies all-or-nothing.','DCL controls access: GRANT gives a privilege, REVOKE takes it back.']}},
 
 {id:'db1c',title:'Writing complex queries: CASE, the 1/0 tricks, CTEs & windows',body:`
-<p>Real reporting queries are built from a handful of power tools. The most useful — and most puzzling when you first meet it — is turning a <b>condition into a number</b> so you can add conditions up.</p>
+<p>Real reporting queries are built from a handful of power tools. The most useful, and most puzzling when you first meet it, is turning a <b>condition into a number</b> so you can add conditions up.</p>
 <p><b>The 1/0 idiom.</b> SQL cannot <code>SUM</code> a true/false directly, so you convert each row to 1 or 0 with <code>CASE</code>, then sum:</p>
 <div class="codeSample">-- count paid vs unpaid in ONE row (conditional aggregation)
 SELECT
@@ -464,13 +464,13 @@ FROM orders;
 
 -- same idea with COUNT: CASE returns NULL for non-matches, COUNT ignores NULL
 SELECT COUNT(CASE WHEN status = 'paid' THEN 1 END) AS paid FROM orders;</div>
-<p>This "conditional aggregation" is how you pivot rows into columns (paid vs unpaid, by month, by region) in a single pass — far cheaper than one query per bucket.</p>
-<p><b>WHERE 1=1 and WHERE 1=0.</b> These constant conditions look odd but are idioms. <code>WHERE 1=1</code> is always true — a no-op placeholder so code that builds a query can append <code>AND ...</code> filters without worrying whether it is the first one. <code>WHERE 1=0</code> is always false — it returns <b>no rows</b>, handy for <code>CREATE TABLE copy AS SELECT * FROM orders WHERE 1=0</code> to clone just the structure, or as a safe stub while you build a statement.</p>
+<p>This "conditional aggregation" is how you pivot rows into columns (paid vs unpaid, by month, by region) in a single pass, far cheaper than one query per bucket.</p>
+<p><b>WHERE 1=1 and WHERE 1=0.</b> These constant conditions look odd but are idioms. <code>WHERE 1=1</code> is always true: a no-op placeholder so code that builds a query can append <code>AND ...</code> filters without worrying whether it is the first one. <code>WHERE 1=0</code> is always false: it returns <b>no rows</b>, handy for <code>CREATE TABLE copy AS SELECT * FROM orders WHERE 1=0</code> to clone just the structure, or as a safe stub while you build a statement.</p>
 <div class="codeSample">SELECT * FROM orders
 WHERE 1 = 1            -- always-true anchor
   AND status = 'paid'  -- filters appended freely
   AND amount_cents &gt; 1000;</div>
-<p><b>Subqueries</b> nest one query in another: a scalar subquery returns one value, <code>IN (SELECT ...)</code> / <code>EXISTS (SELECT ...)</code> test membership, and a subquery in <code>FROM</code> becomes a derived table. <b>CTEs</b> (<code>WITH name AS (...)</code>) are the readable alternative — name a result once, then use it like a table:</p>
+<p><b>Subqueries</b> nest one query in another: a scalar subquery returns one value, <code>IN (SELECT ...)</code> / <code>EXISTS (SELECT ...)</code> test membership, and a subquery in <code>FROM</code> becomes a derived table. <b>CTEs</b> (<code>WITH name AS (...)</code>) are the readable alternative. Name a result once, then use it like a table:</p>
 <div class="codeSample">WITH totals AS (
   SELECT user_id, SUM(amount_cents) AS spent
   FROM orders
@@ -478,7 +478,7 @@ WHERE 1 = 1            -- always-true anchor
 )
 SELECT user_id, spent FROM totals WHERE spent &gt; 100000;</div>
 <p><b>Window functions</b> compute across a set of rows <i>without</i> collapsing them (unlike GROUP BY). <code>ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC)</code> numbers each user's orders newest-first; swap in <code>SUM(...) OVER (...)</code> for running totals, or <code>RANK()</code> / <code>LAG()</code> for rankings and row-to-row comparisons.</p>
-<p>Two more everyday helpers: <code>COALESCE(x, 0)</code> substitutes a value for NULL, and <code>NULLIF(count, 0)</code> turns 0 into NULL so a division becomes NULL instead of a divide-by-zero error — the safe-average trick.</p>`,
+<p>Two more everyday helpers: <code>COALESCE(x, 0)</code> substitutes a value for NULL, and <code>NULLIF(count, 0)</code> turns 0 into NULL so a division becomes NULL instead of a divide-by-zero error, the safe-average trick.</p>`,
 docs:[['CASE expression','https://www.postgresql.org/docs/current/functions-conditional.html'],['WITH / CTEs','https://www.postgresql.org/docs/current/queries-with.html'],['Window functions','https://www.postgresql.org/docs/current/tutorial-window.html']],
 ex:{title:'Complex-query drill',lang:'sql',
 prompt:`Table <code>orders(id, user_id, status, amount_cents, created_at)</code>. One query per numbered comment: (1) in one row, count paid and unpaid orders using <code>SUM(CASE WHEN ... THEN 1 ELSE 0 END)</code> aliased <code>paid</code> and <code>unpaid</code>; (2) count only paid orders using the <code>COUNT(CASE WHEN status = 'paid' THEN 1 END)</code> form; (3) select paid orders using the <code>WHERE 1 = 1 AND ...</code> dynamic-filter idiom; (4) a CTE named <code>totals</code> that sums <code>amount_cents</code> per <code>user_id</code>, then select the users whose <code>spent</code> exceeds 100000; (5) number each user's orders newest-first with <code>ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC)</code> aliased <code>rn</code>; (6) compute a safe average with <code>SUM(amount_cents) / NULLIF(COUNT(*), 0)</code>.`,
@@ -539,7 +539,7 @@ counter. The obvious code is check, then act:</p>
 -- ...application decides...
 INSERT INTO contacts (email, name) VALUES ('ada@example.com', 'Ada');</div>
 <p>That is a <b>race</b>. Two workers run the SELECT at the same moment, both find nothing, both insert,
-and one gets a unique-violation — or worse, there is no unique constraint and you now have two Adas. The
+and one gets a unique-violation; or worse, there is no unique constraint and you now have two Adas. The
 gap between deciding and doing is where the bug lives, and no amount of application locking closes it as
 cheaply as letting the database do both in one statement.</p>
 <p>That statement is an <b>upsert</b>.</p>
@@ -562,7 +562,7 @@ still have both versions available, so the update can pick from either side.</p>
 
 <h4>Bite 1: it needs a real constraint, and the target must match it exactly</h4>
 <p><code>ON CONFLICT (email)</code> does not mean "if a row with this email exists". It means "if this
-insert violates the unique index on <code>email</code>". No unique constraint, no conflict — the insert
+insert violates the unique index on <code>email</code>". No unique constraint, no conflict: the insert
 simply succeeds and you get a duplicate, silently. If the index is partial
 (<code>WHERE deleted_at IS NULL</code>) or on an expression (<code>lower(email)</code>), the conflict
 target must name the same thing, or the database refuses with <i>there is no unique or exclusion
@@ -577,7 +577,7 @@ it is a reward for having designed them.</p>
 <p>Update only the columns this writer is authoritative for, and leave the rest alone. The subtler version
 is <b>ordering</b>: a delayed job carrying older data will happily overwrite newer data, because the
 database has no idea which version is fresher. If your rows carry a timestamp or a version, guard the
-update with it — <code>WHERE contacts.updated_at &lt; EXCLUDED.updated_at</code> — and a stale write
+update with it (<code>WHERE contacts.updated_at &lt; EXCLUDED.updated_at</code>), and a stale write
 becomes a no-op instead of data loss.</p>
 
 <h4>Bite 3: the lost update hiding in a counter</h4>
@@ -588,7 +588,7 @@ read 500 and both write 501, and one view is gone. Compute from the current row 
 the database serialises it for you.</p>
 
 <h4>Bite 4: DO NOTHING returns nothing</h4>
-<p><code>ON CONFLICT DO NOTHING</code> is the tidy way to ignore duplicates — and it returns <b>no row</b>
+<p><code>ON CONFLICT DO NOTHING</code> is the tidy way to ignore duplicates, and it returns <b>no row</b>
 when it does nothing, so <code>RETURNING id</code> gives you an empty result exactly when the row already
 existed. Code that expects an id then fails on the second run and works on the first, which is a delightful
 bug to receive at 3am. If you need the id either way, use <code>DO UPDATE SET id = EXCLUDED.id</code> as a
@@ -600,7 +600,7 @@ no-op touch, or select afterwards.</p>
 batch by key and the deadlock disappears.</li>
 <li><b>Sequence gaps are normal.</b> A failed insert attempt still consumed an identity value; gaps mean
 nothing is wrong.</li>
-<li><b>MERGE is not a drop-in.</b> In several engines it is not concurrency-safe in the way people assume —
+<li><b>MERGE is not a drop-in.</b> In several engines it is not concurrency-safe in the way people assume:
 in PostgreSQL, MERGE can still raise a unique violation under concurrent inserts where
 <code>ON CONFLICT</code> would not.</li>
 <li><b>Every conflicting upsert writes a dead row</b>, so a high-churn upsert table needs vacuum attention
@@ -608,10 +608,10 @@ that an insert-only table does not.</li>
 </ul>
 <p>The summary worth carrying: an upsert removes a race you cannot otherwise close, and in exchange it asks
 you to be explicit about <b>which writer owns which column</b> and <b>which version is newer</b>. Those two
-questions were always there — the check-then-insert version just let you avoid answering them.</p>`,
+questions were always there; the check-then-insert version just let you avoid answering them.</p>`,
 docs:[['PostgreSQL — INSERT ... ON CONFLICT','https://www.postgresql.org/docs/current/sql-insert.html#SQL-ON-CONFLICT'],['SQLite — UPSERT','https://www.sqlite.org/lang_upsert.html'],['MySQL — INSERT ... ON DUPLICATE KEY UPDATE','https://dev.mysql.com/doc/refman/8.4/en/insert-on-duplicate.html']],
 exs:[{title:'Write the upsert',lang:'sql',diff:'medium',
-prompt:`One statement per numbered line, PostgreSQL syntax, table <code>contacts(email UNIQUE, name, views, updated_at)</code>. (1) Insert <code>('ada@example.com','Ada')</code> into <code>(email, name)</code> and on a conflict on <code>email</code> update <code>name</code> from the proposed row — use <code>ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name</code>. (2) The same insert but ignoring duplicates entirely — <code>ON CONFLICT (email) DO NOTHING</code>. (3) Increment <code>views</code> atomically on conflict, computing from the existing row rather than a value from your application: <code>SET views = contacts.views + 1</code>. (4) Guard against a stale write by only updating when the incoming row is newer — add <code>WHERE contacts.updated_at &lt; EXCLUDED.updated_at</code>.`,
+prompt:`One statement per numbered line, PostgreSQL syntax, table <code>contacts(email UNIQUE, name, views, updated_at)</code>. (1) Insert <code>('ada@example.com','Ada')</code> into <code>(email, name)</code> and on a conflict on <code>email</code> update <code>name</code> from the proposed row: use <code>ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name</code>. (2) The same insert but ignoring duplicates entirely: <code>ON CONFLICT (email) DO NOTHING</code>. (3) Increment <code>views</code> atomically on conflict, computing from the existing row rather than a value from your application: <code>SET views = contacts.views + 1</code>. (4) Guard against a stale write by only updating when the incoming row is newer: add <code>WHERE contacts.updated_at &lt; EXCLUDED.updated_at</code>.`,
 starter:`1.
 2.
 3.
@@ -623,7 +623,7 @@ solution:`1. INSERT INTO contacts (email, name) VALUES ('ada@example.com', 'Ada'
 4. INSERT INTO contacts (email, name, updated_at) VALUES ('ada@example.com', 'Ada', now()) ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name WHERE contacts.updated_at < EXCLUDED.updated_at;
 `,
 tests:[{d:'the conflict target names the unique column',re:'1\\.[^\\n]*ON CONFLICT\\s*\\(\\s*email\\s*\\)',flags:'i'},{d:'the update reads from the proposed row',re:'1\\.[^\\n]*EXCLUDED\\.name',flags:'i'},{d:'DO NOTHING ignores the duplicate',re:'2\\.[^\\n]*DO NOTHING',flags:'i'},{d:'the counter is computed from the existing row, not the application',re:'3\\.[^\\n]*contacts\\.views\\s*\\+\\s*1',flags:'i'},{d:'the stale-write guard compares timestamps',re:'4\\.[^\\n]*WHERE[^\\n]*updated_at\\s*<\\s*EXCLUDED\\.updated_at',flags:'i'}],
-behavior:`1. A second run updates instead of raising a unique violation — that is the race closed. 2. DO NOTHING is tidy and silent, and the silence is the trap: RETURNING id gives you an empty result precisely when the row already existed, so code that needs the id works the first time and fails the second. 3. contacts.views + 1 is computed inside the statement, so two concurrent upserts produce 502 rather than both writing 501. Passing a number your application calculated is the lost update this exercise exists to prevent. 4. Without the WHERE guard, a delayed job carrying older data overwrites newer data and nothing anywhere reports a problem. With it, the stale write becomes a no-op. Note that every one of these depends on a UNIQUE constraint on email actually existing — without it there is no conflict to detect and you quietly accumulate duplicates.`,
+behavior:`1. A second run updates instead of raising a unique violation; that is the race closed. 2. DO NOTHING is tidy and silent, and the silence is the trap: RETURNING id gives you an empty result precisely when the row already existed, so code that needs the id works the first time and fails the second. 3. contacts.views + 1 is computed inside the statement, so two concurrent upserts produce 502 rather than both writing 501. Passing a number your application calculated is the lost update this exercise exists to prevent. 4. Without the WHERE guard, a delayed job carrying older data overwrites newer data and nothing anywhere reports a problem. With it, the stale write becomes a no-op. Note that every one of these depends on a UNIQUE constraint on email actually existing; without it there is no conflict to detect and you quietly accumulate duplicates.`,
 hints:['EXCLUDED is the row you tried to insert; the table name refers to the row already there.','For the counter, read from the table side, not from a value you computed.','The stale-write guard is a WHERE on the DO UPDATE, comparing the two versions.']},
 {title:'Merge safely: newer wins, nulls do not clobber',lang:'js',diff:'hard',
 run:{call:'upsertRow',cases:[{name:'no existing row — the incoming row is inserted as-is',args:[null,{id:1,name:'Ada',createdAt:100,updatedAt:100}],expect:{id:1,name:'Ada',createdAt:100,updatedAt:100}},{name:'newer incoming wins, but createdAt is preserved',args:[{id:1,email:'a@x.com',name:'Ada',createdAt:100,updatedAt:200},{id:1,email:'a@x.com',name:'Ada Lovelace',createdAt:999,updatedAt:300}],expect:{id:1,email:'a@x.com',name:'Ada Lovelace',createdAt:100,updatedAt:300}},{name:'a stale write is rejected outright',args:[{id:1,email:'a@x.com',name:'Ada',createdAt:100,updatedAt:200},{id:1,name:'OLD',createdAt:1,updatedAt:150}],expect:{id:1,email:'a@x.com',name:'Ada',createdAt:100,updatedAt:200}},{name:'equal timestamps keep what is already there',args:[{id:1,email:'a@x.com',name:'Ada',createdAt:100,updatedAt:200},{id:1,name:'TIE',createdAt:1,updatedAt:200}],expect:{id:1,email:'a@x.com',name:'Ada',createdAt:100,updatedAt:200}},{name:'a null in the incoming row must not erase a real value',args:[{id:1,email:'a@x.com',name:'Ada',createdAt:100,updatedAt:200},{id:1,email:null,name:'Ada L',createdAt:1,updatedAt:300}],expect:{id:1,email:'a@x.com',name:'Ada L',createdAt:100,updatedAt:300}}]},
@@ -643,12 +643,12 @@ solution:`function upsertRow(existing, incoming) {
   return merged;
 }`,
 tests:[{d:'an absent existing row is an insert',re:'!existing|existing\\s*==\\s*null'},{d:'a stale or equal timestamp is rejected',re:'updatedAt\\s*<=\\s*|>\\s*existing\\.updatedAt'},{d:'createdAt is protected',re:'createdAt'},{d:'null and undefined are skipped',re:'null|undefined'},{d:'neither input is mutated',re:'\\.\\.\\.existing|Object\\.assign\\s*\\(\\s*\\{'}],
-behavior:`Five cases execute. The stale-write case is the one that matters most in production: a delayed job carrying older data arrives after a newer update, and without the timestamp guard it silently overwrites good data with bad — nothing errors, nothing logs, and you find out from a customer. The equal-timestamps case forces a decision rather than an accident; keeping what is already there is the conservative choice and it must be deliberate. The null case is the mirror image of the clobbering problem in the lesson: a partial payload from an importer that omits a field should not erase it, which is exactly what SET email = EXCLUDED.email would do. And note the createdAt rule — a row can only be created once, so no writer arriving later is authoritative about when that happened.`,
-hints:['Three rules, applied in order: insert, reject, then merge field by field.','Strictly greater — decide what equal timestamps mean and encode it.','Copy into a new object so the caller\'s rows are untouched.']}]},
+behavior:`Five cases execute. The stale-write case is the one that matters most in production: a delayed job carrying older data arrives after a newer update, and without the timestamp guard it silently overwrites good data with bad: nothing errors, nothing logs, and you find out from a customer. The equal-timestamps case forces a decision rather than an accident; keeping what is already there is the conservative choice and it must be deliberate. The null case is the mirror image of the clobbering problem in the lesson: a partial payload from an importer that omits a field should not erase it, which is exactly what SET email = EXCLUDED.email would do. And note the createdAt rule: a row can only be created once, so no writer arriving later is authoritative about when that happened.`,
+hints:['Three rules, applied in order: insert, reject, then merge field by field.','Strictly greater: decide what equal timestamps mean and encode it.','Copy into a new object so the caller\'s rows are untouched.']}]},
 
 {id:'dbmig',title:'Migrating data between databases',body:`
-<p>A rite of passage in real jobs: move data from an old schema into a new one — during a rewrite, a merger, or when normalizing a messy legacy table. This is <b>ETL</b> in miniature: <b>Extract</b> from the source, <b>Transform</b> to fit the target, <b>Load</b> into the new tables. SQL does it in one statement with <code>INSERT ... SELECT</code>.</p>
-<p>Here is the synthetic data you will migrate. A denormalized legacy table with real-world mess — a NULL email, a duplicate, and mixed-case addresses:</p>
+<p>A rite of passage in real jobs: move data from an old schema into a new one: during a rewrite, a merger, or when normalizing a messy legacy table. This is <b>ETL</b> in miniature: <b>Extract</b> from the source, <b>Transform</b> to fit the target, <b>Load</b> into the new tables. SQL does it in one statement with <code>INSERT ... SELECT</code>.</p>
+<p>Here is the synthetic data you will migrate. A denormalized legacy table with real-world mess: a NULL email, a duplicate, and mixed-case addresses:</p>
 <div class="codeSample">legacy_customers                                    customers  (new, empty)
 id | full_name    | email_addr        | country     id | name        | email
 ---+--------------+-------------------+--------     ---+-------------+------------------
@@ -661,8 +661,8 @@ id | full_name    | email_addr        | country     id | name        | email
 
 <h4>Idempotency is what makes a migration survivable</h4>
 <p>A migration that cannot be re-run is a migration you must get right first time, at 2am, with the old
-system already off. Making the load idempotent — <code>ON CONFLICT DO NOTHING</code>, or a natural key with
-a unique constraint — means a partial failure is fixed by running it again rather than by hand-repairing
+system already off. Making the load idempotent (<code>ON CONFLICT DO NOTHING</code>, or a natural key with
+a unique constraint) means a partial failure is fixed by running it again rather than by hand-repairing
 half-loaded tables. That single property changes the risk profile of the whole exercise.</p>
 
 <h4>Reconcile, do not assume</h4>
@@ -684,7 +684,7 @@ dual-write while the new one catches up, verify, and only then switch reads. A b
 with no rollback, and the moment you need one is the moment you cannot get it.</p>`,
 docs:[['INSERT ... SELECT','https://www.postgresql.org/docs/current/sql-insert.html'],['ON CONFLICT (upsert)','https://www.postgresql.org/docs/current/sql-insert.html#SQL-ON-CONFLICT'],['Data migration — overview','https://en.wikipedia.org/wiki/Data_migration']],
 ex:{title:'Migrate legacy_customers into customers',lang:'sql',
-prompt:`Source <code>legacy_customers(id, full_name, email_addr, country)</code>; target <code>customers(id, name, email)</code> where <code>email</code> is UNIQUE. One statement per numbered comment: (1) copy every row that <b>has</b> an email into <code>customers</code>, mapping <code>full_name</code>→<code>name</code> and <code>LOWER(email_addr)</code>→<code>email</code>, skipping NULL emails (<code>INSERT INTO ... SELECT ... FROM legacy_customers WHERE email_addr IS NOT NULL</code>); (2) make it repeatable by de-duplicating on the unique email with <code>ON CONFLICT (email) DO NOTHING</code> — add it to the same insert; (3) verify the result with <code>SELECT COUNT(*) FROM customers</code>.`,
+prompt:`Source <code>legacy_customers(id, full_name, email_addr, country)</code>; target <code>customers(id, name, email)</code> where <code>email</code> is UNIQUE. One statement per numbered comment: (1) copy every row that <b>has</b> an email into <code>customers</code>, mapping <code>full_name</code>→<code>name</code> and <code>LOWER(email_addr)</code>→<code>email</code>, skipping NULL emails (<code>INSERT INTO ... SELECT ... FROM legacy_customers WHERE email_addr IS NOT NULL</code>); (2) make it repeatable by de-duplicating on the unique email with <code>ON CONFLICT (email) DO NOTHING</code>: add it to the same insert; (3) verify the result with <code>SELECT COUNT(*) FROM customers</code>.`,
 starter:`-- 1) transform-and-copy (rename columns, lowercase email, skip NULLs)
 --    ...with 2) ON CONFLICT (email) DO NOTHING on the same statement
 
@@ -701,7 +701,7 @@ ON CONFLICT (email) DO NOTHING;
 SELECT COUNT(*) FROM customers;
 `,
 tests:[{d:'INSERT ... SELECT from the legacy table',re:'insert\\s+into\\s+customers[\\s\\S]*?select[\\s\\S]*?from\\s+legacy_customers',flags:'is'},{d:'lowercases the email during transform',re:'lower\\s*\\(\\s*email_addr\\s*\\)',flags:'is'},{d:'filters out NULL emails',re:'where\\s+email_addr\\s+is\\s+not\\s+null',flags:'is'},{d:'idempotent load via ON CONFLICT DO NOTHING',re:'on\\s+conflict\\s*\\(\\s*email\\s*\\)\\s+do\\s+nothing',flags:'is'},{d:'verifies with a COUNT',re:'select\\s+count\\s*\\(\\s*\\*\\s*\\)\\s+from\\s+customers',flags:'is'}],
-behavior:`After running, customers has 3 rows: Ada (ada@example.com), Bo (bo@example.com), Di (di@example.com). Cy is skipped (NULL email); the second Bo collides on the unique lowercased email and is dropped by ON CONFLICT. Re-running the migration changes nothing — that is idempotency, and it is why the load is safe to repeat.`,
+behavior:`After running, customers has 3 rows: Ada (ada@example.com), Bo (bo@example.com), Di (di@example.com). Cy is skipped (NULL email); the second Bo collides on the unique lowercased email and is dropped by ON CONFLICT. Re-running the migration changes nothing; that is idempotency, and it is why the load is safe to repeat.`,
 hints:['INSERT INTO target (cols) SELECT expr, ... FROM source WHERE ... copies and transforms in one shot.','Rename by position: the SELECT list lines up with the target column list, and LOWER() transforms the email.','ON CONFLICT (email) DO NOTHING makes the load idempotent so retries and the lowercased duplicate do not error or double-insert.']}},
 {id:'db2',title:'JDBC & PreparedStatement',body:`
 <p>JDBC is the floor everything stands on (JPA, jOOQ, Spring Data). Three objects: <code>Connection</code> → <code>PreparedStatement</code> → <code>ResultSet</code>, all AutoCloseable:</p>
@@ -720,9 +720,9 @@ try (Connection con = dataSource.getConnection();
 
 // writes: executeUpdate returns affected row count
 int rows = ps.executeUpdate();</div>
-<p><b>Never concatenate user input into SQL</b> — <code>"WHERE owner = '" + name + "'"</code> is SQL injection, the #1 web vulnerability for two decades. PreparedStatement sends parameters separately from the query text, making injection structurally impossible. In real apps the Connection comes from a pool (HikariCP — Spring Boot's default).</p>
+<p><b>Never concatenate user input into SQL</b>: <code>"WHERE owner = '" + name + "'"</code> is SQL injection, the #1 web vulnerability for two decades. PreparedStatement sends parameters separately from the query text, making injection structurally impossible. In real apps the Connection comes from a pool (HikariCP, Spring Boot's default).</p>
 <h4>Why parameters are not string escaping</h4>
-<p>The usual explanation — "it escapes quotes for you" — undersells it and leads people to think a careful
+<p>The usual explanation ("it escapes quotes for you") undersells it and leads people to think a careful
 escaping function is equivalent. It is not. A prepared statement sends the <b>query text</b> and the
 <b>parameter values</b> to the database as separate things. The parser sees the SQL <i>before</i> any
 value exists, so the structure of the statement is fixed and no value can alter it.</p>
@@ -735,7 +735,7 @@ value exists, so the structure of the statement is fixed and no value can alter 
    -> looks for a customer literally named  x' OR '1'='1
    -> finds none. there is no injection to prevent - it is not possible.</div>
 <p>The limit worth knowing: only <i>values</i> can be parameters. A table name, a column name or the
-direction of an <code>ORDER BY</code> cannot be — so dynamic sorting must be validated against an
+direction of an <code>ORDER BY</code> cannot be, so dynamic sorting must be validated against an
 allowlist you control, never interpolated.</p>
 
 <h4>The rest of what <code>PreparedStatement</code> buys</h4>
@@ -750,13 +750,13 @@ int[] counts = ps.executeBatch();     // one network round trip
 
 <h4>Resources, and why try-with-resources is not optional</h4>
 <p><code>Connection</code>, <code>PreparedStatement</code> and <code>ResultSet</code> all hold resources
-outside the JVM's control — a socket, a server-side cursor, a slot in the pool. A leaked connection is not
+outside the JVM's control: a socket, a server-side cursor, a slot in the pool. A leaked connection is not
 collected by the garbage collector in any useful sense; it is simply gone from the pool, and the
 application dies later with "unable to acquire connection" pointing at innocent code. Nest the
 try-with-resources blocks as shown and the problem cannot occur.</p>
 
 <h4>Pooling, in one paragraph</h4>
-<p>Opening a connection means a TCP handshake, authentication and session setup — tens of milliseconds,
+<p>Opening a connection means a TCP handshake, authentication and session setup: tens of milliseconds,
 which is often more than the query. A pool keeps them open and hands them out, so
 <code>getConnection()</code> is a borrow and <code>close()</code> is a return, not a real close. The
 counter-intuitive part is sizing: <b>bigger pools are usually slower</b>, because the database has a
@@ -782,7 +782,7 @@ public class AccountDao {
     }
 }`,
 tests:[{d:'Uses a PreparedStatement',re:'prepareStatement\\s*\\('},{d:'Parameter placeholder ? in SQL',re:'balance_cents\\s*>\\s*\\?'},{d:'Binds with setLong(1, ...)',re:'setLong\\s*\\(\\s*1\\s*,\\s*cents\\s*\\)'},{d:'Connection+statement in try-with-resources',re:'try\\s*\\(\\s*Connection\\s+\\w+\\s*=\\s*ds\\.getConnection\\s*\\(\\s*\\)'},{d:'Iterates rs.next()',re:'while\\s*\\(\\s*\\w+\\.next\\s*\\(\\s*\\)\\s*\\)'},{d:'No SQL string concatenation',re:'"\\s*\\+\\s*cents|cents\\s*\\+\\s*"',not:true}],
-behavior:`1. Returns each owner from the result set in order. 2. cents is bound as a parameter — the SQL string is a constant. 3. Connection, PreparedStatement and ResultSet all close automatically, even on exception. 4. Works against any DataSource (pooled in production).`,
+behavior:`1. Returns each owner from the result set in order. 2. cents is bound as a parameter; the SQL string is a constant. 3. Connection, PreparedStatement and ResultSet all close automatically, even on exception. 4. Works against any DataSource (pooled in production).`,
 hints:['Resources chain in ONE try header, comma-separated: connection, then prepareStatement.','Bind before executing: <code>ps.setLong(1, cents);</code> then <code>ps.executeQuery()</code> in a nested try.','Collect: <code>while (rs.next()) out.add(rs.getString("owner"));</code>'],
 solution:`import javax.sql.DataSource;
 import java.sql.*;
@@ -811,7 +811,7 @@ public class AccountDao {
     }
 }`}},
 {id:'db3',title:'Transactions: all or nothing',body:`
-<p>A transfer that debits one account and fails before crediting the other must undo the debit — that is a <b>transaction</b>: ACID (Atomic, Consistent, Isolated, Durable).</p>
+<p>A transfer that debits one account and fails before crediting the other must undo the debit; that is a <b>transaction</b>: ACID (Atomic, Consistent, Isolated, Durable).</p>
 <div class="codeSample" data-hl>try (Connection con = ds.getConnection()) {
     con.setAutoCommit(false);                    // start the transaction
     try {
@@ -823,7 +823,7 @@ public class AccountDao {
         throw e;
     }
 }</div>
-<p>In Spring, <code>@Transactional</code> wraps this via a proxy — with famous pitfalls: it only works on <b>public methods called from another bean</b> (self-invocation bypasses the proxy), and by default rolls back on unchecked exceptions only. Isolation levels trade correctness for concurrency: READ_COMMITTED (common default) → REPEATABLE_READ → SERIALIZABLE; know that lost updates need locking (<code>SELECT ... FOR UPDATE</code>) or optimistic versioning (<code>@Version</code> in JPA).</p>
+<p>In Spring, <code>@Transactional</code> wraps this via a proxy, with famous pitfalls: it only works on <b>public methods called from another bean</b> (self-invocation bypasses the proxy), and by default rolls back on unchecked exceptions only. Isolation levels trade correctness for concurrency: READ_COMMITTED (common default) → REPEATABLE_READ → SERIALIZABLE; know that lost updates need locking (<code>SELECT ... FOR UPDATE</code>) or optimistic versioning (<code>@Version</code> in JPA).</p>
 <h4>ACID, one letter at a time</h4>
 <p>The acronym gets recited more than understood, and the useful part is knowing which letter the database
 gives you for free and which you have to ask for.</p>
@@ -839,7 +839,7 @@ responsibility to know about.</p>
 
 <h4>What each level actually permits</h4>
 <p><b>READ COMMITTED</b> (the common default) stops you reading uncommitted data, but two identical
-queries in the same transaction can return different results because someone committed in between — a
+queries in the same transaction can return different results because someone committed in between: a
 <i>non-repeatable read</i>. <b>REPEATABLE READ</b> fixes that for rows you have read, but new rows
 matching your condition can still appear (<i>phantoms</i>). <b>SERIALIZABLE</b> makes concurrent
 transactions behave as if they ran one at a time, at the cost of blocking or aborting more of them.</p>
@@ -859,8 +859,8 @@ think-time is unacceptable. Pessimistic suits short, hot, high-contention update
 
 <h4>Keeping transactions small</h4>
 <p>A transaction holds locks and an undo history for its entire life, so its duration is a direct cost to
-every other writer. The rules follow from that: <b>never do I/O inside one</b> — no HTTP calls, no waiting
-on a queue, certainly no waiting on a human — and open it as late and close it as early as the work
+every other writer. The rules follow from that: <b>never do I/O inside one</b> (no HTTP calls, no waiting
+on a queue, certainly no waiting on a human), and open it as late and close it as early as the work
 allows. A transaction that spans a call to a payment provider will, on the day that provider is slow, take
 your database down.</p>
 <p>Which also raises the question this design cannot answer: if the payment succeeds and the commit then
@@ -879,8 +879,8 @@ public class TransferDao {
     }
 }`,
 tests:[{d:'Turns autocommit off',re:'setAutoCommit\\s*\\(\\s*false\\s*\\)'},{d:'Debit update with placeholders',re:'balance_cents\\s*=\\s*balance_cents\\s*-\\s*\\?'},{d:'Credit update too',re:'balance_cents\\s*=\\s*balance_cents\\s*\\+\\s*\\?'},{d:'Commits on success',re:'\\.commit\\s*\\(\\s*\\)'},{d:'Rolls back in catch and rethrows',re:'catch[\\s\\S]*?rollback\\s*\\(\\s*\\)[\\s\\S]*?throw'}],
-behavior:`1. Success path: both updates then commit — the two balances change together. 2. If the credit throws, rollback undoes the debit — money is never destroyed. 3. The exception is rethrown after rollback (never swallowed). 4. Connection still closes via try-with-resources in every path.`,
-hints:['Structure: outer try-with-resources for the connection; inner try/catch for commit/rollback.','Each statement: prepare, setLong(1, cents), setLong(2, id), executeUpdate().','catch (SQLException e) { con.rollback(); throw e; } — rollback then rethrow, both matter.'],
+behavior:`1. Success path: both updates then commit: the two balances change together. 2. If the credit throws, rollback undoes the debit: money is never destroyed. 3. The exception is rethrown after rollback (never swallowed). 4. Connection still closes via try-with-resources in every path.`,
+hints:['Structure: outer try-with-resources for the connection; inner try/catch for commit/rollback.','Each statement: prepare, setLong(1, cents), setLong(2, id), executeUpdate().','catch (SQLException e) { con.rollback(); throw e; }: rollback then rethrow, both matter.'],
 solution:`import javax.sql.DataSource;
 import java.sql.*;
 
@@ -919,21 +919,21 @@ public class TransferDao {
 <div class="codeSample">-- V2__add_status_to_accounts.sql
 ALTER TABLE accounts
   ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE';</div>
-<p>Rules that keep production safe: <b>never edit an applied migration</b> (checksums are verified — write a new V-script instead), naming is <code>V&lt;version&gt;__&lt;description&gt;.sql</code> (two underscores), and destructive changes deploy in phases (add column → backfill → switch reads → drop old) so old and new app versions coexist during a rolling deploy — the zero-downtime discipline from the deployment stream applied to data.</p>
+<p>Rules that keep production safe: <b>never edit an applied migration</b> (checksums are verified; write a new V-script instead), naming is <code>V&lt;version&gt;__&lt;description&gt;.sql</code> (two underscores), and destructive changes deploy in phases (add column → backfill → switch reads → drop old) so old and new app versions coexist during a rolling deploy, the zero-downtime discipline from the deployment stream applied to data.</p>
 <h4>Why migrations exist at all</h4>
 <p>Application code is versioned, reviewed and deployed identically everywhere. Schemas, historically, were
-not — someone ran a statement against production, wrote it in a wiki, and the staging database drifted
+not: someone ran a statement against production, wrote it in a wiki, and the staging database drifted
 until nobody could say what any environment actually contained. Migrations apply the same discipline to
 the schema: <b>every change is a file, in the repository, reviewed, applied in order, and recorded</b>.</p>
 <p>The history table is what makes that work. On startup Flyway compares the scripts on the classpath
-against what it has already applied, runs what is new, and <b>verifies the checksum of what is not</b> —
+against what it has already applied, runs what is new, and <b>verifies the checksum of what is not</b>,
 which is why editing an applied migration fails the build. That check is a feature: it is the difference
 between a versioned schema and a folder of SQL.</p>
 
 <h4>The one that actually causes outages: expand and contract</h4>
 <p>During any rolling deploy, old and new application code run <b>at the same time</b>, against
 <b>one</b> database. So the real constraint is not "does this migration work?" but "is this schema valid
-for both versions of the code simultaneously?" — and that rules out most single-step changes.</p>
+for both versions of the code simultaneously?", and that rules out most single-step changes.</p>
 <div class="codeSample" data-hl>-- renaming a column, done safely, over three releases:
 R1  ADD the new column, nullable. code WRITES BOTH, READS the old.
     backfill existing rows in batches.
@@ -945,7 +945,7 @@ ALTER TABLE accounts RENAME COLUMN owner TO owner_name;
 -- every instance of the old code breaks the instant this runs.
 -- this is the single most common self-inflicted deployment outage.</div>
 <p>The same shape applies to dropping a column, tightening a constraint, or changing a type: add, migrate,
-switch, remove — each step deployable and reversible on its own.</p>
+switch, remove (each step deployable and reversible on its own).</p>
 
 <h4>The operations people learn the hard way</h4>
 <p><b>Locking.</b> Some statements take a lock that blocks all writes for the duration. Adding a column
@@ -971,7 +971,7 @@ starter:`-- 1) filename:
 -- 3) the index:
 `,
 tests:[{d:'Correct V4__ naming (two underscores)',re:'V4__\\w+\\.sql'},{d:'CREATE TABLE audit_log',re:'CREATE\\s+TABLE\\s+audit_log','flags':'is'},{d:'BIGSERIAL primary key',re:'id\\s+BIGSERIAL\\s+PRIMARY\\s+KEY','flags':'is'},{d:'NOT NULL constraints present',re:'actor\\s+VARCHAR\\(100\\)\\s+NOT\\s+NULL','flags':'is'},{d:'Default timestamp',re:'DEFAULT\\s+now\\(\\)','flags':'is'},{d:'Named index on actor',re:'CREATE\\s+INDEX\\s+idx_audit_actor\\s+ON\\s+audit_log\\s*\\(\\s*actor\\s*\\)','flags':'is'}],
-behavior:`1. Filename matches V4__<description>.sql exactly — V4_create_audit_log.sql (one underscore) would be silently ignored by Flyway. 2. Table DDL has all four columns with the stated constraints. 3. CREATE INDEX idx_audit_actor ON audit_log(actor). 4. This file, once applied, is immutable — changes go in V5.`,
+behavior:`1. Filename matches V4__<description>.sql exactly; V4_create_audit_log.sql (one underscore) would be silently ignored by Flyway. 2. Table DDL has all four columns with the stated constraints. 3. CREATE INDEX idx_audit_actor ON audit_log(actor). 4. This file, once applied, is immutable; changes go in V5.`,
 hints:['Two underscores between version and description: V4__create_audit_log.sql.','Column list is comma-separated inside CREATE TABLE ( ... );','Index syntax: CREATE INDEX <name> ON <table>(<column>);'],
 solution:`-- 1) filename:
 V4__create_audit_log.sql
@@ -990,9 +990,9 @@ CREATE INDEX idx_audit_actor ON audit_log(actor);`}},
 <p>The four database problems you will actually meet:</p>
 <ul>
 <li><b>N+1 queries</b>: load 100 orders, then lazily fetch each order's user = 101 queries. Tells: page slow, logs full of identical SELECTs. Fix: <code>JOIN FETCH</code> in JPQL, <code>@EntityGraph</code>, or a hand-written join.</li>
-<li><b>Missing indexes</b>: every WHERE/JOIN/ORDER BY column on a big table is an index candidate. Verify with <code>EXPLAIN ANALYZE</code> — "Seq Scan" on millions of rows is your smoking gun. Indexes cost write speed; don't index everything.</li>
-<li><b>Connection pool exhaustion</b>: the pool (HikariCP, default ~10) runs dry when transactions are held too long — keep transactions short, never do HTTP calls inside one.</li>
-<li><b>Unbounded queries</b>: always paginate (<code>LIMIT/OFFSET</code> or keyset <code>WHERE id &gt; ?</code> — remember cursor pagination from the REST stream? Same idea, one layer down).</li>
+<li><b>Missing indexes</b>: every WHERE/JOIN/ORDER BY column on a big table is an index candidate. Verify with <code>EXPLAIN ANALYZE</code>: "Seq Scan" on millions of rows is your smoking gun. Indexes cost write speed; don't index everything.</li>
+<li><b>Connection pool exhaustion</b>: the pool (HikariCP, default ~10) runs dry when transactions are held too long; keep transactions short, never do HTTP calls inside one.</li>
+<li><b>Unbounded queries</b>: always paginate (<code>LIMIT/OFFSET</code> or keyset <code>WHERE id &gt; ?</code>; remember cursor pagination from the REST stream? Same idea, one layer down).</li>
 </ul>
 <div class="codeSample">-- JPQL fix for N+1:
 SELECT o FROM Order o JOIN FETCH o.user WHERE o.status = 'OPEN'
@@ -1002,13 +1002,13 @@ EXPLAIN ANALYZE SELECT * FROM orders WHERE user_id = 42;
 -- Seq Scan on orders (cost=0.00..421337) ← add the index!</div>
 
 <h4>Finding the problem before guessing at it</h4>
-<p>Every item above has a symptom you can look for rather than a habit you adopt on faith. N+1 shows as a burst of identical SELECTs differing only in the id — turn on SQL logging in a test and <b>count the statements</b>, because an assertion on query count is the only regression test that reliably catches it coming back. Missing indexes show as <code>Seq Scan</code> over a large table in <code>EXPLAIN ANALYZE</code>; note the difference between <code>EXPLAIN</code>, which shows the plan the optimiser intends, and <code>EXPLAIN ANALYZE</code>, which runs the query and shows what actually happened, including how far the row estimates were out. Pool exhaustion shows as a timeout waiting for a connection while the database itself is idle — the queue is in your process, not in the database.</p>
+<p>Every item above has a symptom you can look for rather than a habit you adopt on faith. N+1 shows as a burst of identical SELECTs differing only in the id; turn on SQL logging in a test and <b>count the statements</b>, because an assertion on query count is the only regression test that reliably catches it coming back. Missing indexes show as <code>Seq Scan</code> over a large table in <code>EXPLAIN ANALYZE</code>; note the difference between <code>EXPLAIN</code>, which shows the plan the optimiser intends, and <code>EXPLAIN ANALYZE</code>, which runs the query and shows what actually happened, including how far the row estimates were out. Pool exhaustion shows as a timeout waiting for a connection while the database itself is idle: the queue is in your process, not in the database.</p>
 
 <h4>What an index costs</h4>
-<p>An index is a second, ordered copy of the columns it covers. Reads get faster; every insert, update and delete must now maintain that copy, and the storage is real. Three refinements are worth knowing: a <b>composite</b> index is usable for a prefix of its columns and not for a suffix, so the column order is a design decision rather than a detail; a <b>covering</b> index that includes the selected columns lets the database answer from the index alone; and a <b>low-selectivity</b> index — a boolean, a status with three values — often will not be used at all, because scanning is cheaper than jumping.</p>
+<p>An index is a second, ordered copy of the columns it covers. Reads get faster; every insert, update and delete must now maintain that copy, and the storage is real. Three refinements are worth knowing: a <b>composite</b> index is usable for a prefix of its columns and not for a suffix, so the column order is a design decision rather than a detail; a <b>covering</b> index that includes the selected columns lets the database answer from the index alone; and a <b>low-selectivity</b> index (a boolean, a status with three values) often will not be used at all, because scanning is cheaper than jumping.</p>
 
 <h4>Transactions, and the calls that must not be inside them</h4>
-<p>A connection is held for the entire transaction, so transaction duration is pool consumption. An HTTP call inside a transaction pins a connection for the remote service's timeout, and a downstream slowdown then drains the pool and takes the whole application with it — a dependency failure converted into an outage by structure. Keep transactions to the database work: do the remote call before or after, and if the two must be consistent, that is a saga or an outbox, not a longer transaction.</p>
+<p>A connection is held for the entire transaction, so transaction duration is pool consumption. An HTTP call inside a transaction pins a connection for the remote service's timeout, and a downstream slowdown then drains the pool and takes the whole application with it: a dependency failure converted into an outage by structure. Keep transactions to the database work: do the remote call before or after, and if the two must be consistent, that is a saga or an outbox, not a longer transaction.</p>
 <p>The same logic makes keyset pagination worth the effort. <code>OFFSET 100000</code> makes the database produce and discard a hundred thousand rows on every page, so the last page of a report is the slowest query in the system; <code>WHERE id &gt; ?</code> with a limit reads exactly one page regardless of depth.</p>`,
 docs:[['N+1 problem — Vlad Mihalcea','https://vladmihalcea.com/n-plus-1-query-problem/'],['Postgres EXPLAIN','https://www.postgresql.org/docs/current/using-explain.html'],['HikariCP','https://github.com/brettwooldridge/HikariCP']],
 ex:{title:'Performance triage',lang:'text',

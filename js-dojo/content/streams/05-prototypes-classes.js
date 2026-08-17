@@ -25,7 +25,7 @@ Object.hasOwn(dog, "speak")               // false - inherited, not own
 "speak" in dog                            // true  - 'in' searches the CHAIN</div>
 <p>The distinction between <b>own</b> and <b>inherited</b> is the one that matters in practice.
 <code>Object.keys</code>, <code>JSON.stringify</code> and spread copy only <b>own</b> properties, so
-inherited methods vanish from a spread copy — a genuinely surprising result until you know the rule.</p>
+inherited methods vanish from a spread copy, a genuinely surprising result until you know the rule.</p>
 
 <h4>Writing does not follow the chain</h4>
 <div class="codeSample" data-hl>dog.speak = () =&gt; "woof";     // creates an OWN property on dog.
@@ -55,7 +55,7 @@ const rex = new Dog("Rex");
 //   2. link its prototype to Dog.prototype
 //   3. call Dog with \`this\` set to the new object
 //   4. return it (unless the function returns its own object)</div>
-<p>Class syntax does exactly this, with better ergonomics. Nothing new was added to the language — which
+<p>Class syntax does exactly this, with better ergonomics. Nothing new was added to the language, which
 is why a <code>class</code> is still a function, and <code>typeof Dog</code> is <code>"function"</code>.</p>
 
 <h4>Two warnings</h4>
@@ -82,12 +82,12 @@ solution:`function lookup(ownKeys, protoKeys, key) {
   return "undefined";                                 // end of the chain
 }`,
 tests:[{d:'checks own properties first',re:'ownKeys'},{d:'then the prototype',re:'protoKeys'},{d:'missing keys are undefined',re:'"undefined"'}],
-behavior:`The shadowing case executes the ordering: with the key in both, "own" must win — checking the prototype first would pass the other four and fail that one. The last case shows an object with no own properties still resolving through its prototype.`,
+behavior:`The shadowing case executes the ordering: with the key in both, "own" must win; checking the prototype first would pass the other four and fail that one. The last case shows an object with no own properties still resolving through its prototype.`,
 hints:['Two checks in order, own first.','includes() answers whether a key is present.','Falling off the end gives undefined, not an error.']}},
 
 {id:'js23',title:'Classes',body:`
 <p><code>class</code> is <b>syntax over prototypes</b>. Everything it does could be written with
-constructor functions, and knowing that is what lets you debug it — but the syntax is clearer, and it is
+constructor functions, and knowing that is what lets you debug it, but the syntax is clearer, and it is
 what modern code uses.</p>
 
 <div class="codeSample" data-hl>class Account {
@@ -117,7 +117,7 @@ a.balance;                          // 175 - via the getter, no parentheses
 a.#balance;                         // SyntaxError - private outside the class</div>
 
 <h4>What the syntax actually adds</h4>
-<p><b>Private fields</b> (<code>#</code>) are genuinely new — they cannot be reached from outside at all,
+<p><b>Private fields</b> (<code>#</code>) are genuinely new: they cannot be reached from outside at all,
 unlike the old underscore convention which was a request rather than a rule. Everything else is
 ergonomics: methods land on the prototype automatically, and <code>new</code> is enforced.</p>
 <div class="codeSample" data-hl>Account("Ada");        // TypeError: cannot be invoked without 'new'
@@ -147,8 +147,8 @@ fn(50);                       // TypeError - detached, so \`this\` is undefined
 
 setTimeout(() =&gt; a.deposit(50), 100);      // the dot survives
 setTimeout(a.deposit.bind(a), 100);        // or bind it</div>
-<p>Class syntax makes this <i>louder</i> — you get a clear <code>TypeError</code> rather than a silent
-write to the global object — but the rule is unchanged: <code>this</code> comes from the call.</p>`,
+<p>Class syntax makes this <i>louder</i> (you get a clear <code>TypeError</code> rather than a silent
+write to the global object), but the rule is unchanged: <code>this</code> comes from the call.</p>`,
 docs:[['MDN — Classes','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes'],['MDN — Private properties','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_properties'],['MDN — static','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/static']],
 exs:[
 {title:'A class with private state',diff:'easy',lang:'js',
@@ -213,7 +213,7 @@ run:{call:'runQueue',cases:[
  {name:'space freed by taking can be reused',args:[[['add','a'],['add','b'],['take'],['add','c']],2],expect:{out:['a'],size:2,dropped:0}},
  {name:'a capacity of zero drops everything',args:[[['add','a'],['add','b']],0],expect:{out:[],size:0,dropped:2}},
  {name:'no operations at all',args:[[],3],expect:{out:[],size:0,dropped:0}}]},
-prompt:`Write <code>class BoundedQueue</code> with a private items array and a private capacity set in the constructor. <code>add(item)</code> appends and returns <code>true</code>, or returns <code>false</code> without adding when the queue is full. <code>take()</code> removes and returns the oldest item, or <code>null</code> when empty. A <code>size</code> getter reports the current count. Then write <code>function runQueue(ops, capacity)</code> that creates one queue, applies each operation — <code>["add", value]</code> or <code>["take"]</code> — and returns <code>{ out, size, dropped }</code>, where <code>out</code> collects every value returned by <code>take</code> and <code>dropped</code> counts the refused adds.`,
+prompt:`Write <code>class BoundedQueue</code> with a private items array and a private capacity set in the constructor. <code>add(item)</code> appends and returns <code>true</code>, or returns <code>false</code> without adding when the queue is full. <code>take()</code> removes and returns the oldest item, or <code>null</code> when empty. A <code>size</code> getter reports the current count. Then write <code>function runQueue(ops, capacity)</code> that creates one queue, applies each operation (<code>["add", value]</code> or <code>["take"]</code>) and returns <code>{ out, size, dropped }</code>, where <code>out</code> collects every value returned by <code>take</code> and <code>dropped</code> counts the refused adds.`,
 starter:`class BoundedQueue {
 }
 function runQueue(ops, capacity) {
@@ -249,7 +249,7 @@ function runQueue(ops, capacity) {
   return { out, size: q.size, dropped };
 }`,
 tests:[{d:'holds the items privately',re:'#items'},{d:'holds the capacity privately',re:'#capacity'},{d:'refuses when full',re:'>=\\s*this\\.#capacity|length\\s*>='},{d:'takes from the front',re:'shift\\(\\)'},{d:'exposes a size getter',re:'get\\s+size'}],
-behavior:`Six scenarios execute your class through runQueue, so the private fields, the capacity check, the empty case and the getter all have to work together. Two cases are deliberately awkward: a capacity of 0 must refuse every add rather than dividing by anything or throwing, and taking from an empty queue must return null, which runQueue then stores — so treating null as "nothing happened" and skipping it fails the third case. Note that shift() removes from the front, which is what makes this a queue rather than a stack.`,
+behavior:`Six scenarios execute your class through runQueue, so the private fields, the capacity check, the empty case and the getter all have to work together. Two cases are deliberately awkward: a capacity of 0 must refuse every add rather than dividing by anything or throwing, and taking from an empty queue must return null, which runQueue then stores, so treating null as "nothing happened" and skipping it fails the third case. Note that shift() removes from the front, which is what makes this a queue rather than a stack.`,
 hints:['Both the items array and the capacity should be private fields.','add() returns a boolean so the caller can count refusals; it should not throw.','take() uses shift() for first-in-first-out, and returns null rather than undefined when empty.']}]},
 
 {id:'js24',title:'Inheritance, and when not to use it',body:`
@@ -279,7 +279,7 @@ creates the object, so touching <code>this</code> first is a <code>ReferenceErro
 <code>super()</code> entirely in a subclass constructor is the same error.</p>
 
 <h4>Overriding, and the substitution rule</h4>
-<p>A subclass may replace a method — but callers holding an <code>Animal</code> reference must not be
+<p>A subclass may replace a method, but callers holding an <code>Animal</code> reference must not be
 surprised. If <code>Dog.speak()</code> throws where <code>Animal.speak()</code> returned a string, or
 demands arguments the parent did not, you have broken every function that accepts an
 <code>Animal</code>. That constraint (the Liskov substitution principle) is what makes inheritance safe,
@@ -311,7 +311,7 @@ and the substitution really holds.</p>
 <h4>Deep hierarchies are the failure mode</h4>
 <p>Three or more levels and a change at the top ripples unpredictably, while understanding any single
 class means reading four files. In JavaScript this matters more than in Java, because there is no
-compiler-enforced contract to lean on and no interfaces to program against — so the discipline has to
+compiler-enforced contract to lean on and no interfaces to program against, so the discipline has to
 come from you.</p>
 
 <h4>Extending built-ins</h4>
@@ -335,7 +335,7 @@ solution:`function decide(isA, substitutable, alreadyDeep) {
   return "compose";                 // the safe default in every other case
 }`,
 tests:[{d:'requires a genuine is-a',re:'isA\\s*&&'},{d:'requires substitutability',re:'substitutable'},{d:'refuses to deepen an existing hierarchy',re:'!\\s*alreadyDeep'},{d:'composition is the default',re:'"compose"'}],
-behavior:`All five combinations execute, and the fourth is the one worth noticing: even a textbook is-a relationship should compose when the hierarchy is already deep, because the cost of another level outweighs the reuse. Composition being the default is the whole point — inheritance has to earn its place.`,
+behavior:`All five combinations execute, and the fourth is the one worth noticing: even a textbook is-a relationship should compose when the hierarchy is already deep, because the cost of another level outweighs the reuse. Composition being the default is the whole point: inheritance has to earn its place.`,
 hints:['Three conditions must all hold for inheritance.','The third is negated: deep hierarchies argue against inheriting.','Every other path returns compose.']}},
 
 {id:'js25',title:'Iterators, symbols and making your own objects work',body:`
@@ -345,7 +345,7 @@ anything work with <code>for...of</code>, spread and destructuring.</p>
 
 <h4>Symbols, briefly</h4>
 <p>A <b>symbol</b> is a unique value usable as a property key. Two symbols are never equal, even with the
-same description, so a symbol key cannot collide with anything — which is why the language uses them for
+same description, so a symbol key cannot collide with anything, which is why the language uses them for
 its own hooks.</p>
 <div class="codeSample" data-hl>Symbol("id") === Symbol("id")     // false - always unique
 
@@ -356,7 +356,7 @@ Symbol.toStringTag   // customises Object.prototype.toString</div>
 
 <h4>The iterable protocol</h4>
 <p>An object is <b>iterable</b> if it has a <code>[Symbol.iterator]</code> method returning an
-<b>iterator</b> — an object with a <code>next()</code> that returns
+<b>iterator</b>: an object with a <code>next()</code> that returns
 <code>{ value, done }</code>.</p>
 <div class="codeSample" data-hl>const range = {
   from: 1, to: 3,
@@ -390,7 +390,7 @@ const first = naturals().next().value;   // 1, and nothing else computed</div>
 this API" as a sequence without materialising it, which the Node streams lesson builds on directly.</p>
 
 <h4>Making a plain object iterable</h4>
-<p>Objects are not iterable by default — deliberately, since it is ambiguous whether you meant keys,
+<p>Objects are not iterable by default. This is deliberate, since it is ambiguous whether you meant keys,
 values or entries. Say which:</p>
 <div class="codeSample" data-hl>for (const k of Object.keys(obj)) { }
 for (const [k, v] of Object.entries(obj)) { }
@@ -404,7 +404,7 @@ run:{call:'collect',cases:[
  {name:'an empty range',args:[3,1],expect:[]},
  {name:'includes negatives',args:[-2,0],expect:[-2,-1,0]},
  {name:'a longer range',args:[1,5],expect:[1,2,3,4,5]}]},
-prompt:`Write <code>function makeRange(from, to)</code> returning an object that is <b>iterable</b> — it must implement <code>[Symbol.iterator]</code> — yielding every integer from <code>from</code> to <code>to</code> inclusive. Then write <code>function collect(from, to)</code> that spreads it into an array. When <code>from</code> exceeds <code>to</code>, the range is empty.`,
+prompt:`Write <code>function makeRange(from, to)</code> returning an object that is <b>iterable</b> (it must implement <code>[Symbol.iterator]</code>), yielding every integer from <code>from</code> to <code>to</code> inclusive. Then write <code>function collect(from, to)</code> that spreads it into an array. When <code>from</code> exceeds <code>to</code>, the range is empty.`,
 starter:`function makeRange(from, to) {
   return {};
 }
@@ -428,7 +428,7 @@ hints:['A generator method inside the object literal is the shortest correct imp
 
 {id:'jsgen',title:'Generators in practice, and async iteration',body:`
 <p>The last lesson introduced generators as a shortcut for writing iterators. This one is about what they
-are actually <i>for</i> — because a generator is not just less machinery, it is a function that can
+are actually <i>for</i>, because a generator is not just less machinery, it is a function that can
 <b>pause</b>, and a function that can pause turns out to solve several problems that nothing else in the
 language solves as cleanly.</p>
 
@@ -443,7 +443,7 @@ g.next()                // logs "one",  returns { value: 1, done: false }
 g.next()                // logs "two",  returns { value: 2, done: false }
 g.next()                // logs "done", returns { value: undefined, done: true }</div>
 <p>Each <code>next()</code> runs the body <i>to the next yield</i> and stops. All the local variables
-survive between calls — the function's whole state is parked, not rebuilt. That is what
+survive between calls: the function's whole state is parked, not rebuilt. That is what
 <code>for...of</code> and spread are driving when they consume one.</p>
 
 <h4>Delegation, and stopping early</h4>
@@ -462,11 +462,11 @@ for (const l of lines()) {
   if (l === "b") break;    // break calls the generator's return() -
 }                          // the finally runs. "cleanup" logs here.</div>
 <p>That <code>finally</code> detail is why generators can safely hold resources: a consumer that stops
-early — <code>break</code>, a thrown error, a <code>return</code> — still triggers the cleanup, the same
+early (<code>break</code>, a thrown error, a <code>return</code>) still triggers the cleanup, the same
 guarantee <code>try/finally</code> gives ordinary code.</p>
 
 <h4>Async iteration: the same idea, awaited</h4>
-<p>A sequence where each item takes time — pages of an API, chunks of a file — combines both machines
+<p>A sequence where each item takes time (pages of an API, chunks of a file) combines both machines
 you now know: the iterator protocol and promises.</p>
 <div class="codeSample" data-hl>async function* pages(url) {
   while (url) {
@@ -482,13 +482,13 @@ for await (const item of pages("/api/items")) {
   if (looksRight(item)) break;       // stop - and NO further pages are fetched
 }</div>
 <p>The consumer reads like a plain loop, but each step awaits a promise, later pages are only requested
-if the loop keeps going, and Node's streams implement exactly this protocol — <code>for await</code>
+if the loop keeps going, and Node's streams implement exactly this protocol: <code>for await</code>
 over a file stream is the reading pattern the Node streams lesson builds on.</p>
 
 <h4>When to reach for one</h4>
 <p>A plain array is still right for a handful of items you already have. Generators earn their place when
-the sequence is <b>large, expensive, or endless</b> — lines of a file, pages of an API, retry delays,
-walks over a tree — because laziness means you only pay for what the consumer actually takes.</p>`,
+the sequence is <b>large, expensive, or endless</b> (lines of a file, pages of an API, retry delays,
+walks over a tree), because laziness means you only pay for what the consumer actually takes.</p>`,
 docs:[['MDN — function*','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*'],['MDN — for await...of','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of'],['MDN — yield*','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/yield*']],
 ex:{title:'Chunk a list with a generator',diff:'medium',lang:'js',
 run:{call:'chunks',cases:[
@@ -497,7 +497,7 @@ run:{call:'chunks',cases:[
  {name:'a size beyond the list is one chunk',args:[[1,2,3],10],expect:[[1,2,3]]},
  {name:'size one wraps every element',args:[['a','b','c'],1],expect:[['a'],['b'],['c']]},
  {name:'an empty list yields nothing',args:[[],3],expect:[]}]},
-prompt:`Write a <b>generator</b> <code>function* chunkGen(list, size)</code> that yields successive slices of <code>list</code>, each <code>size</code> long (the last may be shorter) — then write <code>function chunks(list, size)</code> that returns <code>[...chunkGen(list, size)]</code>. The generator is the machine; the spread is one possible consumer.`,
+prompt:`Write a <b>generator</b> <code>function* chunkGen(list, size)</code> that yields successive slices of <code>list</code>, each <code>size</code> long (the last may be shorter). Then write <code>function chunks(list, size)</code> that returns <code>[...chunkGen(list, size)]</code>. The generator is the machine; the spread is one possible consumer.`,
 starter:`function* chunkGen(list, size) {
   // yield slices here
 }
@@ -513,7 +513,7 @@ function chunks(list, size) {
   return [...chunkGen(list, size)];      // spread drives next() to done
 }`,
 tests:[{d:'declares a generator',re:'function\\s*\\*'},{d:'yields each chunk',re:'yield\\s'},{d:'slices without mutating',re:'\\.slice\\('},{d:'a consumer materialises it',re:'\\.\\.\\.|Array\\.from'}],
-behavior:`Five cases execute the whole protocol: the spread in chunks() calls next() until done, and each yield hands out one slice. The generator itself never builds the full result — the same chunkGen could feed a for...of that stops after the first chunk of a million-element list, and would compute exactly one slice.`,
+behavior:`Five cases execute the whole protocol: the spread in chunks() calls next() until done, and each yield hands out one slice. The generator itself never builds the full result; the same chunkGen could feed a for...of that stops after the first chunk of a million-element list, and would compute exactly one slice.`,
 hints:['Step the index by size, not by one.','slice(i, i + size) is safely clipped at the end of the list.','chunks() just spreads the generator - the exercise is the yield loop.']}}
 
 

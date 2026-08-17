@@ -1,4 +1,4 @@
-STREAMS.push({icon:'🔍',title:'Debugging in the Browser',blurb:'The tools that replace console.log: the Sources panel and every kind of breakpoint, the scope and call-stack panes, blackboxing and source maps, the Network panel and how to read a request, storage and cookies — and a full walkthrough of tracing an OAuth/OIDC redirect flow end to end.',lessons:[
+STREAMS.push({icon:'🔍',title:'Debugging in the Browser',blurb:'The tools that replace console.log: the Sources panel and every kind of breakpoint, the scope and call-stack panes, blackboxing and source maps, the Network panel and how to read a request, storage and cookies, plus a full walkthrough of tracing an OAuth/OIDC redirect flow end to end.',lessons:[
 
 {id:'js30',title:'The Sources panel and breakpoints',body:`
 <p>A breakpoint pauses execution and lets you inspect <b>every variable in scope at that moment</b>. That
@@ -62,8 +62,8 @@ with the state intact. Tick "Pause on caught exceptions" as well when something 
 
 <h4>Why this beats logging</h4>
 <p>A log answers the one question you thought of, after a reload, and only for values you can serialise.
-A breakpoint answers <b>every</b> question about that moment — including ones you only think of once you
-are looking — and lets you walk the call stack to see how you got there. Logging is still useful for
+A breakpoint answers <b>every</b> question about that moment, including ones you only think of once you
+are looking, and lets you walk the call stack to see how you got there. Logging is still useful for
 things you cannot pause on: production, timing-sensitive code, or a bug you can only reproduce once.</p>`,
 docs:[['Chrome DevTools — debug JavaScript','https://developer.chrome.com/docs/devtools/javascript'],['Chrome DevTools — breakpoints','https://developer.chrome.com/docs/devtools/javascript/breakpoints'],['MDN — Firefox Debugger','https://firefox-source-docs.mozilla.org/devtools-user/debugger/']],
 ex:{title:'Choose the right breakpoint',diff:'easy',lang:'js',
@@ -91,7 +91,7 @@ solution:`function breakpointFor(situation) {
   }
 }`,
 tests:[{d:'conditional for a single record',re:'"conditional"'},{d:'logpoint for logging without editing',re:'"logpoint"'},{d:'DOM breakpoint for element changes',re:'"dom"'},{d:'XHR breakpoint to find the caller',re:'"xhr"'},{d:'pause on exceptions for an unknown throw',re:'"pause-on-exceptions"'}],
-behavior:`Seven situations execute. The three worth memorising are conditional (a loop with one bad record), XHR (what triggered this request) and pause-on-exceptions (where is this thrown) — between them they cover most of the debugging that otherwise turns into scattering log statements.`,
+behavior:`Seven situations execute. The three worth memorising are conditional (a loop with one bad record), XHR (what triggered this request) and pause-on-exceptions (where is this thrown). Between them they cover most of the debugging that otherwise turns into scattering log statements.`,
 hints:['One case per breakpoint type, with a default.','A logpoint logs and continues; a conditional pauses selectively.','The plain line breakpoint is the fallback for everything else.']}},
 
 {id:'js31',title:'Scope, call stack, blackboxing and source maps',body:`
@@ -108,13 +108,13 @@ Global     window / globalThis
 // the Closure group is the one you cannot get any other way. it makes
 // the closures stream concrete: you can SEE the captured binding and
 // watch it change between iterations.</div>
-<p>Anything visible here can be typed into the Console while paused — the Console evaluates <b>in the
+<p>Anything visible here can be typed into the Console while paused: the Console evaluates <b>in the
 paused frame's scope</b>, so you can call functions, read closure variables and test a fix before
 editing anything.</p>
 
 <h4>Walking the call stack</h4>
 <p>Clicking a frame moves you to it and <b>re-populates the Scope pane with that frame's state</b>. So
-when a function receives a bad argument, you do not guess where it came from — you click the caller and
+when a function receives a bad argument, you do not guess where it came from; you click the caller and
 look at what it passed. Two more items on the right-click menu are worth knowing: <b>Restart frame</b>
 re-runs the current function from the top without reloading the page, and <b>Copy stack trace</b> gets
 you the whole thing for a bug report.</p>
@@ -135,7 +135,7 @@ default.</p>
 <h4>Source maps</h4>
 <p>The JavaScript running in production is bundled, minified and often transpiled, so a stack trace points
 at <code>main.4f2a.js:1:28471</code>. A <b>source map</b> is a separate file mapping those positions back
-to your original files, and DevTools applies it automatically — so you set breakpoints in your real
+to your original files, and DevTools applies it automatically, so you set breakpoints in your real
 source and see your real variable names.</p>
 <div class="codeSample" data-hl>// when the map is missing or wrong, the symptoms are recognisable:
 //   breakpoints do not bind, or bind to the wrong line
@@ -172,12 +172,12 @@ solution:`function diagnoseSourceMap(hasSourceMappingComment, mapFileReachable, 
   return "look elsewhere";              // the maps are fine; the bug is not here
 }`,
 tests:[{d:'checks for the sourceMappingURL comment first',re:'!\\s*hasSourceMappingComment'},{d:'then whether the map can be fetched',re:'!\\s*mapFileReachable'},{d:'then whether it matches the bundle',re:'!\\s*mapMatchesBundle'},{d:'otherwise the problem is elsewhere',re:'"look elsewhere"'}],
-behavior:`The guards run in the order you would actually check them: no point testing whether a map is stale before confirming one is referenced at all. The final case is the hardest to accept — when the tooling is fine, stop debugging the tooling.`,
+behavior:`The guards run in the order you would actually check them: no point testing whether a map is stale before confirming one is referenced at all. The final case is the hardest to accept: when the tooling is fine, stop debugging the tooling.`,
 hints:['Guard clauses in the order you would check them in real life.','The comment must exist before the file can matter.','All three fine means the source maps are not your problem.']}},
 
 {id:'js32',title:'The Network panel',body:`
 <p>Most "JavaScript bugs" in a real application are data problems. Before debugging the code that
-processes a response, confirm what the response actually was — and the Network panel is where that takes
+processes a response, confirm what the response actually was, and the Network panel is where that takes
 thirty seconds.</p>
 
 <h4>Setting it up</h4>
@@ -266,8 +266,8 @@ solution:`function triage(status) {
   }
 }`,
 tests:[{d:'distinguishes a failed connection',re:'"failed"'},{d:'names CORS as a server-side fix',re:'"cors"'},{d:'separates 401 from 403',re:'401'},{d:'403 is a different problem',re:'403'},{d:'429 means back off',re:'429'}],
-behavior:`Note that the switch mixes a string and numbers, and switch uses === — so "401" as a string would not match 401. Eight cases execute. The 401/403 split is the one that saves the most time: one means the credential did not arrive, the other means it arrived and was not enough, and they lead to completely different investigations.`,
-hints:['A switch handles both the string and numeric cases.','401 and 403 mean different things and must not share a branch.','The default covers success — the bug is then in the body or your parsing.']}},
+behavior:`Note that the switch mixes a string and numbers, and switch uses ===, so "401" as a string would not match 401. Eight cases execute. The 401/403 split is the one that saves the most time: one means the credential did not arrive, the other means it arrived and was not enough, and they lead to completely different investigations.`,
+hints:['A switch handles both the string and numeric cases.','401 and 403 mean different things and must not share a branch.','The default covers success: the bug is then in the body or your parsing.']}},
 
 {id:'js33',title:'Storage, cookies, and tracing an OAuth flow end to end',body:`
 <p>This lesson puts the whole panel set to work on the flow that most often needs it. If you have worked
@@ -285,7 +285,7 @@ storage first; it takes five seconds and settles the question.</p>
 
 <h4>Tracing the redirect flow</h4>
 <p><b>Turn on Preserve log before you start.</b> Without it every navigation wipes the panel and you see
-only the final hop — which is the reason most people find these flows impossible to debug.</p>
+only the final hop, which is the reason most people find these flows impossible to debug.</p>
 <div class="codeSample" data-hl>1. GET /authorize?...      to the authorization server (a NAVIGATION)
      check the query: response_type=code, client_id, redirect_uri,
      scope, state, code_challenge, code_challenge_method=S256
@@ -327,9 +327,9 @@ loops back to login     the session cookie is not being set: check
 
 <h4>Two DevTools tricks specific to this</h4>
 <p><b>XHR breakpoint on <code>/token</code></b> pauses right before the exchange, with the call stack
-showing which component triggered it — the fastest way to catch a double redemption.</p>
+showing which component triggered it, the fastest way to catch a double redemption.</p>
 <p><b>Decode the tokens.</b> Copy the <code>id_token</code> from the Network response and decode it
-locally — <code>JSON.parse(atob(t.split(".")[1]))</code> in the Console works and, unlike pasting into a
+locally: <code>JSON.parse(atob(t.split(".")[1]))</code> in the Console works and, unlike pasting into a
 website, does not hand a live credential to a third party. Check <code>iss</code>, <code>aud</code>,
 <code>exp</code> and <code>nonce</code>. Decoding is not verifying; the signature is the server's job.</p>
 <p>And the security note that belongs here: <b>never paste a real token into an online decoder.</b> It is
@@ -388,7 +388,7 @@ solution:`function decodePayload(token) {
   }
 }`,
 tests:[{d:'splits on the dot',re:'split\\s*\\(\\s*"\\."'},{d:'requires exactly three segments',re:'length\\s*!==\\s*3'},{d:'decodes the middle segment',re:'parts\\[1\\]|\\[1\\]'},{d:'guards against bad input',re:'catch'}],
-behavior:`Five cases execute, including two that throw without the try/catch — atob rejects invalid base64 and JSON.parse rejects the result. This is the Console one-liner from the lesson, hardened. It reads a token without sending it anywhere, which is the entire reason not to use an online decoder on a live credential.`,
+behavior:`Five cases execute, including two that throw without the try/catch: atob rejects invalid base64 and JSON.parse rejects the result. This is the Console one-liner from the lesson, hardened. It reads a token without sending it anywhere, which is the entire reason not to use an online decoder on a live credential.`,
 hints:['A JWT is three dot-separated segments; the payload is the middle one.','atob decodes base64, and it throws on invalid input.','Wrap the decode and parse together in one try/catch.']},
 {title:'Judge the decoded claims',diff:'hard',lang:'js',
 run:{call:'checkClaims',cases:[
@@ -400,7 +400,7 @@ run:{call:'checkClaims',cases:[
  {name:'a missing exp counts as expired',args:[{iss:'https://as.example',aud:'app1',nonce:'n-1'},{issuer:'https://as.example',clientId:'app1',now:1755300000,nonce:'n-1'}],expect:'expired'},
  {name:'a replayed nonce is caught',args:[{iss:'https://as.example',aud:'app1',exp:1755303600,nonce:'stale'},{issuer:'https://as.example',clientId:'app1',now:1755300000,nonce:'n-1'}],expect:'nonce mismatch'},
  {name:'no expected nonce means none is checked',args:[{iss:'https://as.example',aud:'app1',exp:1755303600},{issuer:'https://as.example',clientId:'app1',now:1755300000}],expect:'accept'}]},
-prompt:`Write <code>function checkClaims(claims, expected)</code> — the checklist the lesson runs in the Console, executed. Check in order and return at the first failure: <code>claims.iss</code> must equal <code>expected.issuer</code> (&rarr; <code>"wrong issuer"</code>); <code>claims.aud</code>, which may be a string <b>or an array</b>, must include <code>expected.clientId</code> (&rarr; <code>"wrong audience"</code>); <code>claims.exp</code> must be strictly greater than <code>expected.now</code>, with a missing exp counting as expired (&rarr; <code>"expired"</code>); and when <code>expected.nonce</code> is present, <code>claims.nonce</code> must match it (&rarr; <code>"nonce mismatch"</code>). Otherwise return <code>"accept"</code>.`,
+prompt:`Write <code>function checkClaims(claims, expected)</code>, the checklist the lesson runs in the Console, executed. Check in order and return at the first failure: <code>claims.iss</code> must equal <code>expected.issuer</code> (&rarr; <code>"wrong issuer"</code>); <code>claims.aud</code>, which may be a string <b>or an array</b>, must include <code>expected.clientId</code> (&rarr; <code>"wrong audience"</code>); <code>claims.exp</code> must be strictly greater than <code>expected.now</code>, with a missing exp counting as expired (&rarr; <code>"expired"</code>); and when <code>expected.nonce</code> is present, <code>claims.nonce</code> must match it (&rarr; <code>"nonce mismatch"</code>). Otherwise return <code>"accept"</code>.`,
 starter:`function checkClaims(claims, expected) {
   return "accept";
 }`,
@@ -413,7 +413,7 @@ solution:`function checkClaims(claims, expected) {
   return "accept";
 }`,
 tests:[{d:'checks the issuer',re:'\\.iss\\b'},{d:'normalises aud to an array',re:'Array\\.isArray'},{d:'compares exp against now',re:'\\.exp\\b'},{d:'verifies the nonce when one is expected',re:'nonce'}],
-behavior:`Eight cases execute the four checks the lesson names, in order, guard-clause style. Two deserve attention: exp equal to now is already expired (a token is valid strictly before its expiry), and a missing exp fails the same check — !(undefined > now) is true, so absence of an expiry reads as expired rather than as immortal. That inversion — unprovable freshness is staleness — is the safe default everywhere in identity.`,
+behavior:`Eight cases execute the four checks the lesson names, in order, guard-clause style. Two deserve attention: exp equal to now is already expired (a token is valid strictly before its expiry), and a missing exp fails the same check: !(undefined > now) is true, so absence of an expiry reads as expired rather than as immortal. That inversion (unprovable freshness is staleness) is the safe default everywhere in identity.`,
 hints:['Guard clauses in the order given: iss, aud, exp, nonce.','Normalise aud with Array.isArray, then one includes() covers both shapes.','Write the exp check as !(claims.exp > expected.now) so a missing exp also fails it.']}]}
 
 ]});

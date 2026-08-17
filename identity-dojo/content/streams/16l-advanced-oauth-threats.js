@@ -1,7 +1,7 @@
 STREAMS.push({icon:'🛡️',iam:true,sec:'Advanced OAuth & threats',title:'Advanced OAuth 2.0 & OIDC Threats',blurb:'The hard edges of OAuth in production: token introspection and revocation, the JWT validation checklist, PAR/JAR/RAR, DPoP and mTLS-bound (sender-constrained) tokens, and a catalog of attacks with the defenses from the OAuth Security BCP.',lessons:[
 
 {id:'ao1',title:'Introspection & revocation',body:`
-<p>Opaque access tokens carry no data, so a resource server validates them by calling the authorization server&#8217;s <b>introspection</b> endpoint (RFC 7662), which replies with <code>active: true/false</code> plus metadata. <b>Revocation</b> (RFC 7009) lets a client proactively kill a token or refresh token — on logout, or when a device is lost.</p>
+<p>Opaque access tokens carry no data, so a resource server validates them by calling the authorization server&#8217;s <b>introspection</b> endpoint (RFC 7662), which replies with <code>active: true/false</code> plus metadata. <b>Revocation</b> (RFC 7009) lets a client proactively kill a token or refresh token: on logout, or when a device is lost.</p>
 <!--flow:ao1-introspection-->
 <h4>Token introspection — step by step</h4>
 <div class="flowDia"><svg viewBox="0 0 600 252" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Token introspection"><defs><marker id="ao1-introspection-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="ao1-introspection-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="ao1-introspection-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="ao1-introspection-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="54" x2="74" y2="240" class="fdLife"/><line x1="526" y1="54" x2="526" y2="240" class="fdLife"/><rect x="35" y="8" width="78" height="46" rx="8" class="fdActor"/><text x="74" y="27" class="fdActorT">API</text><text x="74" y="42" class="fdActorS">resource server</text><rect x="433" y="8" width="186" height="46" rx="8" class="fdActor"/><text x="526" y="35.5" class="fdActorT">Authorization Server</text><rect x="14" y="89" width="329.59999999999997" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="186.79999999999998" y="104" class="fdSelfT">opaque token arrives — nothing to read locally</text><circle cx="14" cy="100" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="14" y="103.5" class="fdNumT" style="fill:var(--muted)">1</text><line x1="77" y1="138" x2="521" y2="138" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ao1-introspection-ah-back)"/><text x="315" y="129" class="fdLabel">POST /introspect — token + API’s OWN credentials</text><circle cx="92" cy="138" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="92" y="141.5" class="fdNumT" style="fill:var(--accent2)">2</text><line x1="523" y1="168" x2="79" y2="168" stroke="var(--accent2)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#ao1-introspection-ah-back)"/><text x="285" y="159" class="fdLabel">{active:true, sub, scope, exp, aud}</text><circle cx="508" cy="168" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="508" y="171.5" class="fdNumT" style="fill:var(--accent2)">3</text><rect x="14" y="185" width="329.59999999999997" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="186.79999999999998" y="200" class="fdSelfT">cache briefly; treat active:false as a hard no</text><circle cx="14" cy="196" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="14" y="199.5" class="fdNumT" style="fill:var(--muted)">4</text><text x="300" y="222" class="fdNote">Freshness you can revoke, at the price of a network hop — the JWT trade-off inverted.</text></svg></div>
@@ -23,13 +23,13 @@ STREAMS.push({icon:'🛡️',iam:true,sec:'Advanced OAuth & threats',title:'Adva
 POST /revoke                RFC 7009 - "stop honouring this"
   token=...&token_type_hint=refresh_token
   -> 200, ALWAYS. even for an unknown token.</div>
-<p>Two details people get wrong. <b>Introspection endpoints must be authenticated</b> — an open one is
+<p>Two details people get wrong. <b>Introspection endpoints must be authenticated</b>: an open one is
 an oracle that lets anyone test stolen tokens for validity, and leaks scopes and subjects. And
 <b>revocation returns 200 even for a token it has never seen</b>, deliberately: distinguishing "revoked"
 from "unknown" would turn the endpoint into a token-existence oracle.</p>
 
 <h4>The single field that matters</h4>
-<p><code>active</code> is the answer. It is not merely "unexpired" — it is the server asserting the token
+<p><code>active</code> is the answer. It is not merely "unexpired"; it is the server asserting the token
 is currently honoured: issued by it, not expired, not revoked, and the grant behind it still standing.
 A response of <code>{"active": false}</code> carries no other claims, on purpose, so a rejected token
 reveals nothing.</p>
@@ -41,14 +41,14 @@ avoid. The common resolution is the <b>split-token</b> (or phantom-token) patter
 outside world gets revocability; the inside gets offline verification.</p>
 
 <h4>What revocation does not do</h4>
-<p>Revoking a refresh token does not invalidate access tokens already issued from it — those remain valid
+<p>Revoking a refresh token does not invalidate access tokens already issued from it; those remain valid
 until <code>exp</code>. And revoking one token is not the same as revoking the <b>grant</b>; only the
 latter stops future refreshes. "Remove this app's access" means the grant. This is the same gap CAE
 exists to close.</p>`,
 docs:[['Token introspection (RFC 7662)','https://www.rfc-editor.org/rfc/rfc7662'],['Token revocation (RFC 7009)','https://www.rfc-editor.org/rfc/rfc7009']],
 ex:{title:'Interpret an introspection response',lang:'js',
 run:{call:'active',cases:[{name:'found and not expired',args:[true,false],expect:true},{name:'found but expired',args:[true,true],expect:false},{name:'not found',args:[false,false],expect:false},{name:'not found and expired',args:[false,true],expect:false}]},
-prompt:`Write <code>function active(found, expired)</code> returning <code>true</code> only when the token was found in the authorization server's store <b>and</b> has not expired. Everything else is <code>active: false</code> — introspection deliberately reveals nothing more.`,
+prompt:`Write <code>function active(found, expired)</code> returning <code>true</code> only when the token was found in the authorization server's store <b>and</b> has not expired. Everything else is <code>active: false</code>. Introspection deliberately reveals nothing more.`,
 starter:`function active(found, expired) {
   return false;
 }`,
@@ -57,7 +57,7 @@ solution:`function active(found, expired) {
 }`,
 tests:[{d:'the token must exist',re:'found\\s*&&'},{d:'and must not be expired',re:'!\\s*expired'}],
 behavior:`All four combinations are executed. Note what the response does NOT do: a revoked, unknown or malformed token all return the same flat active:false, so an attacker learns nothing from probing.`,
-hints:['Two conditions: it exists, and it has not expired.','Use ! for "not expired".','Anything else is inactive — one answer for every failure mode.']}},
+hints:['Two conditions: it exists, and it has not expired.','Use ! for "not expired".','Anything else is inactive: one answer for every failure mode.']}},
 
 {id:'ao2',title:'The JWT validation checklist',body:`
 <p>A self-contained JWT access token is only trustworthy if you check it properly. Verifying the signature is necessary but <b>not sufficient</b>. The core checklist: the signature verifies against the issuer&#8217;s key; the <code>iss</code> (issuer) is exactly who you expect; the <code>aud</code> (audience) names <i>your</i> API; and the token is <b>within its lifetime</b> (<code>exp</code> in the future, <code>nbf</code> in the past).</p>
@@ -78,7 +78,7 @@ hints:['Two conditions: it exists, and it has not expired.','Use ! for "not expi
 9  scope/claims  only NOW do the claims mean anything.</div>
 <p>The ordering is not cosmetic. Steps 1&ndash;3 establish that the payload is <i>authentic</i>; every
 step after that is reading data you have proven came from the issuer. Reading claims before verifying
-the signature — even to decide which key to use — is how <code>alg:none</code> and key-confusion
+the signature, even to decide which key to use, is how <code>alg:none</code> and key-confusion
 attacks land.</p>
 
 <h4>The two that are almost always wrong</h4>
@@ -91,7 +91,7 @@ clocks rather than the validator.</p>
 
 <h4>What the checklist cannot tell you</h4>
 <p>A token can pass all nine checks and still be the wrong basis for a decision. It proves <i>who issued
-it</i> and <i>who it is for</i> — not that the issuer had authority over the claim, nor that the subject
+it</i> and <i>who it is for</i>, not that the issuer had authority over the claim, nor that the subject
 owns the record being requested. Signature validity is authentication of the token; it is not
 authorization.</p>`,
 docs:[['JWT best practices (RFC 8725)','https://www.rfc-editor.org/rfc/rfc8725'],['JWT access tokens (RFC 9068)','https://www.rfc-editor.org/rfc/rfc9068']],
@@ -107,11 +107,11 @@ solution:`function ok(iss, aud, exp, now) {
       && exp > now;
 }`,
 tests:[{d:'issuer must match exactly',re:'"https://as\\.example\\.com"'},{d:'audience must be this API',re:'"orders-api"'},{d:'must not be expired',re:'exp\\s*>\\s*now'}],
-behavior:`The third case is the one that matters: a perfectly valid token minted by the same issuer for billing-api is rejected here. Skipping the audience check is how one compromised service becomes access to every service — and here it fails a named test rather than a pattern match.`,
+behavior:`The third case is the one that matters: a perfectly valid token minted by the same issuer for billing-api is rejected here. Skipping the audience check is how one compromised service becomes access to every service, and here it fails a named test rather than a pattern match.`,
 hints:['Three conditions joined with &&.','Compare strings with === in JavaScript.','Expiry is strict: exp must be greater than now, not equal.']}},
 
 {id:'ao3',title:'PAR, JAR/JARM & RAR',body:`
-<p>Newer OAuth extensions harden the request itself. <b>PAR</b> (Pushed Authorization Requests) sends the request parameters to the server <i>first</i>, over a back channel, so nothing sensitive rides in the browser URL. <b>JAR/JARM</b> sign the request and response objects so they cannot be tampered with. <b>RAR</b> (Rich Authorization Requests) replaces coarse scopes with structured <b>authorization details</b> — "transfer up to 500 EUR from account X" instead of a blunt <code>payments</code> scope.</p>
+<p>Newer OAuth extensions harden the request itself. <b>PAR</b> (Pushed Authorization Requests) sends the request parameters to the server <i>first</i>, over a back channel, so nothing sensitive rides in the browser URL. <b>JAR/JARM</b> sign the request and response objects so they cannot be tampered with. <b>RAR</b> (Rich Authorization Requests) replaces coarse scopes with structured <b>authorization details</b>: "transfer up to 500 EUR from account X" instead of a blunt <code>payments</code> scope.</p>
 <!--flow:ao3-par-->
 <h4>Pushed Authorization Requests — step by step</h4>
 <div class="flowDia"><svg viewBox="0 0 620 254" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pushed Authorization Requests"><defs><marker id="ao3-par-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="ao3-par-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="ao3-par-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="ao3-par-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="42" x2="74" y2="222" class="fdLife"/><line x1="546" y1="42" x2="546" y2="222" class="fdLife"/><rect x="35" y="8" width="78" height="34" rx="8" class="fdActor"/><text x="74" y="29.5" class="fdActorT">Client</text><rect x="453" y="8" width="186" height="34" rx="8" class="fdActor"/><text x="546" y="29.5" class="fdActorT">Authorization Server</text><line x1="77" y1="90" x2="541" y2="90" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ao3-par-ah-back)"/><text x="325" y="81" class="fdLabel">POST /par — full authz request, client-authenticated</text><circle cx="92" cy="90" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="92" y="93.5" class="fdNumT" style="fill:var(--accent2)">1</text><line x1="543" y1="120" x2="79" y2="120" stroke="var(--accent2)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#ao3-par-ah-back)"/><text x="295" y="111" class="fdLabel">request_uri — short-lived, one-time</text><circle cx="528" cy="120" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="528" y="123.5" class="fdNumT" style="fill:var(--accent2)">2</text><line x1="77" y1="150" x2="541" y2="150" stroke="var(--accent)" class="fdArrow" marker-end="url(#ao3-par-ah-front)"/><text x="325" y="141" class="fdLabel">/authorize?request_uri=… (tiny, tamper-proof)</text><circle cx="92" cy="150" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="153.5" class="fdNumT" style="fill:var(--accent)">3</text><rect x="250" y="167" width="356" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="436" y="182" class="fdSelfT">parameters were already vetted on the back channel</text><circle cx="250" cy="178" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="250" y="181.5" class="fdNumT" style="fill:var(--muted)">4</text><text x="310" y="204" class="fdNote">The browser now carries a reference, not the request — nothing left to tamper with.</text><line x1="18" y1="240" x2="44" y2="240" stroke="var(--accent2)" class="fdArrow"/><text x="50" y="244" class="fdLegend">back channel (server to server)</text><line x1="271.29999999999995" y1="240" x2="297.29999999999995" y2="240" stroke="var(--accent)" class="fdArrow"/><text x="303.29999999999995" y="244" class="fdLegend">front channel (via the browser)</text></svg></div>
@@ -122,11 +122,11 @@ hints:['Three conditions joined with &&.','Compare strings with === in JavaScrip
 <li><b>Authorization Server:</b> parameters were already vetted on the back channel</li>
 </ol>
 <!--/flow:ao3-par-->
-<p>Together they push OAuth toward fine-grained, tamper-resistant authorization — the direction profiles like FAPI (financial-grade) require.</p>
+<p>Together they push OAuth toward fine-grained, tamper-resistant authorization, the direction profiles like FAPI (financial-grade) require.</p>
 
 <h4>What each one moves, and why</h4>
 <p>All three exist because the classic authorization request travels <b>through the browser as a query
-string</b> — visible, loggable, and modifiable by anyone who can influence the URL.</p>
+string</b>: visible, loggable, and modifiable by anyone who can influence the URL.</p>
 <div class="codeSample" data-hl>PAR   (RFC 9126)  push the parameters to the AS over the BACK channel first,
                   get a request_uri handle, send only that through the browser.
   POST /par  client_id=..&scope=..&redirect_uri=..  ->  {"request_uri":"urn:...:6esc"}
@@ -144,7 +144,7 @@ RAR   (RFC 9396)  replace coarse scopes with a structured authorization_details
 
 <h4>Why RAR matters more than it looks</h4>
 <p>Scopes are a flat list of strings, so they can only express <i>categories</i> of permission. The
-moment consent needs to name an amount, a recipient or a single document, scopes run out —
+moment consent needs to name an amount, a recipient or a single document, scopes run out,
 and the usual workaround is to invent scope strings like <code>payment:50:GB29NWBK</code>, which is a
 structured object badly encoded. RAR makes the structure explicit, which in turn makes the consent
 screen able to say what the user is actually approving.</p>
@@ -154,7 +154,7 @@ between the client and the authorization server should be able to change what th
 <h4>When you need them</h4>
 <p>For an ordinary web app with read scopes, PKCE and exact redirect matching are enough. Reach for these
 when the request parameters are sensitive, when a regulator requires non-repudiation, or when consent
-must be fine-grained — which in practice means payments, health data, and anything under an open
+must be fine-grained, which in practice means payments, health data, and anything under an open
 banking regime.`,
 docs:[['PAR (RFC 9126)','https://www.rfc-editor.org/rfc/rfc9126'],['RAR (RFC 9396)','https://www.rfc-editor.org/rfc/rfc9396']],
 ex:{title:'What each extension is for',
@@ -183,7 +183,7 @@ hints:['A switch mapping each acronym to its one-line purpose works well.','PAR 
 <p>The acceptance rule follows directly: a bearer token is fine on its own, but a sender-constrained token must be accompanied by a valid proof of possession. If the proof is missing or wrong, a stolen copy is worthless.</p>
 
 <h4>Start with what "bearer" actually means</h4>
-<p>The word is doing real work. A <b>bearer</b> instrument belongs to whoever is holding it — like cash,
+<p>The word is doing real work. A <b>bearer</b> instrument belongs to whoever is holding it, like cash,
 or a cinema ticket. Nobody checks that the holder is the person it was issued to, because the instrument
 carries no notion of an owner. That is the entire security model of an ordinary access token.</p>
 <p>Which means the question a resource server asks is embarrassingly weak:</p>
@@ -199,7 +199,7 @@ each one is a full account compromise until the token expires.</p>
 
 <h4>The idea: tie the token to a key</h4>
 <p>Sender-constraining adds one requirement. When the token is issued, it records <b>which key its
-rightful holder controls</b>. From then on, presenting the token is not enough — you must also
+rightful holder controls</b>. From then on, presenting the token is not enough; you must also
 demonstrate you hold that key.</p>
 <p>The mechanism is the same one used everywhere else in this course: <b>you prove possession of a
 private key by signing something with it</b>. The verifier compares the key you signed with against the
@@ -213,16 +213,16 @@ somebody else's ticket.</p>
 // steal the token without the key, and you have a ticket you cannot use</div>
 
 <h4>Two ways to hold that key</h4>
-<p><b>mTLS</b> uses the client's TLS certificate — the key already proven during the handshake. Strong
+<p><b>mTLS</b> uses the client's TLS certificate, the key already proven during the handshake. Strong
 and hardware-friendly, but it needs a PKI, and client certificates fail in browsers and through most
 proxies.</p>
 <p><b>DPoP</b> has the application generate its own key pair and sign a small proof per request. No PKI,
-no infrastructure, works anywhere ordinary HTTPS works — which is why it is the practical option for
+no infrastructure, works anywhere ordinary HTTPS works, which is why it is the practical option for
 SPAs, mobile apps and public clients generally.</p>
 
 <h4>What this does and does not buy</h4>
 <p>It shrinks the value of a <i>stolen</i> token to nearly nothing. It does not help if the attacker took
-the key as well — a compromised process holds both. And it does nothing about a token that was correctly
+the key as well: a compromised process holds both. And it does nothing about a token that was correctly
 issued to a party who then misuses it, or about a missing audience check.</p>
 <p><b>Treat it as the last layer, not the first.</b> Short lifetimes, audience restriction and not
 logging tokens come first; sender-constraining is what remains after those, and it is the difference
@@ -245,7 +245,7 @@ hints:['Both halves are required, so use &&.','A proof means nothing if the toke
 {id:'ao4b',title:'DPoP in depth: proving you hold the key',body:`
 <p>Every bearer token shares one weakness: possession is the whole of the entitlement. Steal it from a
 log, a proxy, a browser or a crash dump, and you are indistinguishable from the legitimate client.
-<b>DPoP</b> — Demonstrating Proof-of-Possession, RFC 9449 — removes that property, and it does so
+<b>DPoP</b> (Demonstrating Proof-of-Possession, RFC 9449) removes that property, and it does so
 without requiring the client certificates that kept mTLS out of reach for most applications.</p>
 <!--flow:ao4b-dpop-->
 <h4>DPoP: proof-of-possession per request — step by step</h4>
@@ -290,7 +290,7 @@ remember it.</p>
 
 <h4>The cnf claim: where the binding actually lives</h4>
 <p>The access token itself must record which key it is bound to, or a resource server has nothing to
-compare against. That is the <b>confirmation claim</b>, <code>cnf</code>, holding <code>jkt</code> — the
+compare against. That is the <b>confirmation claim</b>, <code>cnf</code>, holding <code>jkt</code>, the
 base64url SHA-256 thumbprint of the client's public JWK:</p>
 <div class="codeSample" data-hl>// inside the access token, issued by the authorization server
 { "sub": "ada", "aud": "orders-api", "exp": 1767225600,
@@ -299,18 +299,18 @@ base64url SHA-256 thumbprint of the client's public JWK:</p>
 // the resource server's check:
 //   thumbprint( proof.header.jwk )  ==  token.cnf.jkt   ?
 // if not, the presenter does not hold the key this token was issued to.</div>
-<p>The same <code>cnf</code> mechanism carries mTLS binding too, using <code>x5t#S256</code> instead —
+<p>The same <code>cnf</code> mechanism carries mTLS binding too, using <code>x5t#S256</code> instead,
 so "sender-constrained" is one concept with two key types, not two unrelated features.</p>
 
 <h4>What the resource server must do</h4>
 <ol>
 <li>Parse the <code>DPoP</code> header; confirm <code>typ</code> is <code>dpop+jwt</code> and the
-algorithm is one you accept — never <code>none</code>, never a symmetric algorithm.</li>
+algorithm is one you accept: never <code>none</code>, never a symmetric algorithm.</li>
 <li>Verify the proof's signature <b>using the JWK in its own header</b>. This feels circular and is
 not: it proves the sender holds that private key. Trust comes from step 4.</li>
 <li>Check <code>htm</code> and <code>htu</code> match the request you are actually serving.</li>
 <li><b>Compute the thumbprint of that JWK and compare it to <code>cnf.jkt</code> in the access
-token.</b> This is the step that matters — without it the proof proves only that someone owns some key.</li>
+token.</b> This is the step that matters; without it the proof proves only that someone owns some key.</li>
 <li>Check <code>ath</code> equals the hash of the presented access token.</li>
 <li>Check <code>iat</code> is recent, and that <code>jti</code> has not been seen before.</li>
 </ol>
@@ -322,18 +322,18 @@ still works, and the token is still effectively a bearer token.</p>
 against the same endpoint. Two defences, used together:</p>
 <ul>
 <li><b>A replay cache.</b> Store each <code>jti</code> for the acceptance window and reject repeats.
-Cheap for one server, awkward across a fleet — it needs shared state, which is precisely what
+Cheap for one server, awkward across a fleet: it needs shared state, which is precisely what
 stateless tokens were meant to avoid.</li>
 <li><b>Server-provided nonces.</b> The server returns <code>DPoP-Nonce</code> and a
 <code>use_dpop_nonce</code> error; the client retries including that nonce in the proof. Now the server
-chooses the value, so a proof cannot be minted in advance or replayed after the nonce rotates — and no
+chooses the value, so a proof cannot be minted in advance or replayed after the nonce rotates, and no
 per-request storage is needed.</li>
 </ul>
 <p>Clock skew is the practical operational issue: proofs are short-lived by design, so a client whose
 clock is minutes out fails everything. Allow a small, bounded window and log rejections clearly.</p>
 
 <h4>Binding the refresh token too</h4>
-<p>Constraining access tokens while leaving the refresh token bearer would be pointless — a stolen
+<p>Constraining access tokens while leaving the refresh token bearer would be pointless: a stolen
 refresh token simply mints new access tokens. For a public client, DPoP binds the refresh token as
 well, and the same key must be proven at the token endpoint. Rotating the key means re-authenticating.</p>
 
@@ -353,7 +353,7 @@ it does not fix a missing audience check, an unvalidated redirect URI, or a toke
 Treat it as the last layer, not the first.</p>`,
 docs:[['RFC 9449 — OAuth 2.0 Demonstrating Proof of Possession (DPoP)','https://www.rfc-editor.org/rfc/rfc9449'],['RFC 7638 — JSON Web Key (JWK) Thumbprint','https://www.rfc-editor.org/rfc/rfc7638'],['RFC 8705 — OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens','https://www.rfc-editor.org/rfc/rfc8705'],['RFC 7800 — Proof-of-Possession Key Semantics for JWTs (the cnf claim)','https://www.rfc-editor.org/rfc/rfc7800']],
 ex:{title:'Verify a DPoP proof against the token binding',
-prompt:`Write <code>Dpop</code> with four methods. <code>static boolean bindingMatches(String jwkThumbprint, String cnfJkt)</code> returns true only when both are non-null and equal — the step that ties the proof to the token, and the one implementations forget. <code>static boolean requestMatches(String htm, String htu, String method, String uri)</code> requires all four non-null, with <code>htm</code> equal to <code>method</code> and <code>htu</code> equal to <code>uri</code>. <code>static boolean fresh(long iat, long now, long windowSeconds)</code> is true when <code>now - iat</code> is between <code>0</code> and <code>windowSeconds</code> inclusive. <code>static boolean accept(String jwkThumbprint, String cnfJkt, String htm, String htu, String method, String uri, long iat, long now, java.util.Set&lt;String&gt; seenJtis, String jti)</code> requires all of the above plus a <code>jti</code> not already in <code>seenJtis</code>, using a 60-second window.`,
+prompt:`Write <code>Dpop</code> with four methods. <code>static boolean bindingMatches(String jwkThumbprint, String cnfJkt)</code> returns true only when both are non-null and equal: the step that ties the proof to the token, and the one implementations forget. <code>static boolean requestMatches(String htm, String htu, String method, String uri)</code> requires all four non-null, with <code>htm</code> equal to <code>method</code> and <code>htu</code> equal to <code>uri</code>. <code>static boolean fresh(long iat, long now, long windowSeconds)</code> is true when <code>now - iat</code> is between <code>0</code> and <code>windowSeconds</code> inclusive. <code>static boolean accept(String jwkThumbprint, String cnfJkt, String htm, String htu, String method, String uri, long iat, long now, java.util.Set&lt;String&gt; seenJtis, String jti)</code> requires all of the above plus a <code>jti</code> not already in <code>seenJtis</code>, using a 60-second window.`,
 starter:`import java.util.*;
 
 public class Dpop {
@@ -401,7 +401,7 @@ public class Dpop {
 }`}},
 
 {id:'ao5',title:'Attack catalog & defenses',body:`
-<p>The OAuth 2.0 Security Best Current Practice catalogs the attacks worth knowing — and each has a standard defense:</p>
+<p>The OAuth 2.0 Security Best Current Practice catalogs the attacks worth knowing, and each has a standard defense:</p>
 <ul>
 <li><b>CSRF on the redirect</b> → the <code>state</code> parameter (random, checked on return).</li>
 <li><b>Token/code replay</b> → short lifetimes and a one-time <code>nonce</code>.</li>
@@ -417,7 +417,7 @@ authorization code lands on their server. The fix is not validation-by-blocklist
 <b>allow-list of exact redirect URIs</b>, and never reflecting a user-supplied URL into a redirect.</p>
 
 <p><b>2. Mix-up attack.</b> An app that supports several IdPs is tricked into sending the code from
-IdP&nbsp;A to IdP&nbsp;B's token endpoint — where B, a legitimate IdP, has no idea it did not issue it, but
+IdP&nbsp;A to IdP&nbsp;B's token endpoint, where B, a legitimate IdP, has no idea it did not issue it, but
 an <i>attacker-controlled</i> IdP happily keeps it. Defence: track which IdP each authorization request
 went to, and check the <code>iss</code> returned in the response matches. This is why RFC 9207 added an
 explicit <code>iss</code> parameter to the authorization response.</p>
@@ -428,7 +428,7 @@ session is now linked to the attacker's account, and anything they upload goes t
 <code>state</code>, bound to the user's session, checked on return.</p>
 
 <p><b>4. Authorization code injection.</b> Distinct from CSRF: the attacker injects a code obtained
-elsewhere into a legitimate flow. A client secret does not help — the client is genuine. <b>PKCE</b> is
+elsewhere into a legitimate flow. A client secret does not help: the client is genuine. <b>PKCE</b> is
 the defence, because the victim's client holds a verifier that does not match the challenge the
 attacker's code was bound to.</p>
 
@@ -437,12 +437,12 @@ storage. Defence in layers: short lifetimes, audience restriction, and sender-co
 mTLS so possession of the token alone is not enough.</p>
 
 <p><b>6. Refresh token reuse.</b> A stolen refresh token is the most valuable credential in the system.
-Defence: <b>rotation with reuse detection</b> — if an old token is presented again, assume theft and
+Defence: <b>rotation with reuse detection</b>. If an old token is presented again, assume theft and
 revoke the whole family, since either the legitimate client or the attacker is replaying.</p>
 
 <p><b>7. Consent phishing.</b> No protocol flaw at all: the attacker registers a plausible app, sends a
 genuine consent link, and the user grants real scopes to a malicious client. Defence is
-organisational — app allow-listing, publisher verification, scope review, and admin consent for
+organisational: app allow-listing, publisher verification, scope review, and admin consent for
 sensitive scopes. <b>This is now a leading enterprise attack, and no amount of protocol hardening
 addresses it.</b></p>
 
@@ -459,7 +459,7 @@ token replay              short exp + aud + DPoP/mTLS
 refresh reuse             rotation with reuse detection
 consent phishing          nothing in the protocol - governance
 alg confusion             algorithm pinned by the verifier</div>
-<p>Notice the shape of the table: <b>every protocol defence is a binding</b> — of the response to the
+<p>Notice the shape of the table: <b>every protocol defence is a binding</b>: of the response to the
 request, the code to the client, the token to a key. The one row with no protocol answer is the one
 that attacks the human, and it is the one growing fastest.</p>`,
 docs:[['OAuth 2.0 Security BCP','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['Redirect URI validation','https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2']],
@@ -485,7 +485,7 @@ tests:[{d:'CSRF is countered by state',re:'"csrf".*?"state parameter"',flags:'s'
 behavior:`against("csrf") is "state parameter", against("replay") is "nonce", against("code-interception") is "pkce", against("open-redirect") is "exact redirect_uri match". Each defense binds a step to something an attacker cannot forge.`,
 hints:['A switch maps each attack name to its standard mitigation.','state stops CSRF, nonce stops replay, PKCE stops code interception, exact URI matching stops open redirects.','Anything unlisted returns unknown.']}},
 {id:'ao6',title:'Refresh token rotation & reuse detection',body:`
-<p>Refresh tokens are long-lived, so a stolen one is a serious prize — it mints fresh access tokens indefinitely. Two mechanisms bound that risk.</p>
+<p>Refresh tokens are long-lived, so a stolen one is a serious prize: it mints fresh access tokens indefinitely. Two mechanisms bound that risk.</p>
 <!--flow:ao6-rotation-->
 <h4>Refresh rotation and reuse detection — step by step</h4>
 <div class="flowDia"><svg viewBox="0 0 700 356" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Refresh rotation and reuse detection"><defs><marker id="ao6-rotation-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="ao6-rotation-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="ao6-rotation-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="ao6-rotation-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="54" x2="74" y2="324" class="fdLife"/><line x1="350" y1="54" x2="350" y2="324" class="fdLife"/><line x1="626" y1="54" x2="626" y2="324" class="fdLife"/><rect x="-6.699999999999989" y="8" width="161.39999999999998" height="46" rx="8" class="fdActor"/><text x="74" y="35.5" class="fdActorT">Legitimate client</text><rect x="257" y="8" width="186" height="46" rx="8" class="fdActor"/><text x="350" y="35.5" class="fdActorT">Authorization Server</text><rect x="582.2" y="8" width="87.6" height="46" rx="8" class="fdActor"/><text x="626" y="27" class="fdActorT">Attacker</text><text x="626" y="42" class="fdActorS">stole RT₁ earlier</text><line x1="77" y1="102" x2="345" y2="102" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ao6-rotation-ah-back)"/><text x="227" y="93" class="fdLabel">refresh with RT₁</text><circle cx="92" cy="102" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="92" y="105.5" class="fdNumT" style="fill:var(--accent2)">1</text><line x1="347" y1="132" x2="79" y2="132" stroke="var(--accent2)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#ao6-rotation-ah-back)"/><text x="197" y="123" class="fdLabel">new AT + RT₂ — RT₁ is now “used”</text><circle cx="332" cy="132" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="332" y="135.5" class="fdNumT" style="fill:var(--accent2)">2</text><line x1="14" y1="158" x2="686" y2="158" class="fdPhase"/><text x="350" y="162" class="fdPhaseT">the stolen copy surfaces</text><line x1="623" y1="192" x2="355" y2="192" stroke="var(--bad)" class="fdArrow" stroke-dasharray="7 4" marker-end="url(#ao6-rotation-ah-attack)"/><text x="473" y="183" class="fdLabel fdLabelBad">refresh with RT₁ — a USED token</text><circle cx="608" cy="192" r="9" class="fdNum" style="stroke:var(--bad)"/><text x="608" y="195.5" class="fdNumT" style="fill:var(--bad)">3</text><rect x="185.20000000000002" y="209" width="329.59999999999997" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="358" y="224" class="fdSelfT">reuse detected → revoke the whole token family</text><circle cx="185.20000000000002" cy="220" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="185.20000000000002" y="223.5" class="fdNumT" style="fill:var(--muted)">4</text><line x1="353" y1="258" x2="621" y2="258" stroke="var(--bad)" class="fdArrow" stroke-dasharray="7 4" marker-end="url(#ao6-rotation-ah-attack)"/><text x="503" y="249" class="fdLabel fdLabelBad">invalid_grant</text><circle cx="368" cy="258" r="9" class="fdNum" style="stroke:var(--bad)"/><text x="368" y="261.5" class="fdNumT" style="fill:var(--bad)">5</text><line x1="77" y1="288" x2="345" y2="288" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ao6-rotation-ah-back)"/><text x="227" y="279" class="fdLabel">RT₂ is dead too → full re-authentication</text><circle cx="92" cy="288" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="92" y="291.5" class="fdNumT" style="fill:var(--accent2)">6</text><text x="350" y="306" class="fdNote">One theft costs one re-login — and produces a loud, unambiguous signal.</text><line x1="18" y1="342" x2="44" y2="342" stroke="var(--accent2)" class="fdArrow"/><text x="50" y="346" class="fdLegend">back channel (server to server)</text><line x1="271.29999999999995" y1="342" x2="297.29999999999995" y2="342" stroke="var(--bad)" class="fdArrow" stroke-dasharray="7 4"/><text x="303.29999999999995" y="346" class="fdLegend">attack path</text></svg></div>
@@ -505,9 +505,9 @@ hints:['A switch maps each attack name to its standard mitigation.','state stops
 <h4>Why refresh tokens are the crown jewels</h4>
 <p>Access tokens expire in minutes, which is what makes them survivable when leaked. A refresh token is
 the opposite: it is long-lived by design, and its whole purpose is to mint new access tokens without
-the user present. Steal one and you have durable, silent access — no login, no MFA prompt, nothing in
+the user present. Steal one and you have durable, silent access: no login, no MFA prompt, nothing in
 the authentication logs.</p>
-<p>That leaves an awkward problem. A public client — a SPA or a mobile app — cannot keep a secret, so it
+<p>That leaves an awkward problem. A public client (a SPA or a mobile app) cannot keep a secret, so it
 cannot prove it is the rightful holder. Two tokens, one stolen, and the server sees identical requests
 from both.</p>
 
@@ -536,7 +536,7 @@ client.</p>
 <p><b>Lost writes.</b> If the client redeems a token but the response never arrives, it now holds a dead
 token and has no way back. Handle the failure explicitly, or the user's session simply stops working.</p>
 <p><b>Rotation is the fallback, not the goal.</b> If you can sender-constrain the refresh token with
-DPoP or mTLS, do that instead — a bound token cannot be replayed at all, so there is no collision to
+DPoP or mTLS, do that instead: a bound token cannot be replayed at all, so there is no collision to
 detect. OAuth 2.1 requires one or the other precisely because a bare bearer refresh token in a public
 client is the highest-value credential in the system.</p>`,
 docs:[['Refresh token rotation — OAuth Security BCP','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['Token revocation (RFC 7009)','https://www.rfc-editor.org/rfc/rfc7009']],
@@ -559,17 +559,17 @@ solution:`public class RefreshRotation {
     }
 }`,
 tests:[{d:'current token rotates; old token triggers family revocation',re:'isCurrent\\s*\\?\\s*"rotate: issue new, revoke old"\\s*:\\s*"reuse detected: revoke the family"'},{d:'rotation is required for public clients',re:'equals\\s*\\(\\s*"public"\\s*\\)'}],
-behavior:`onUse(true) returns "rotate: issue new, revoke old"; onUse(false) returns "reuse detected: revoke the family" — the self-detecting response to a replayed refresh token. rotationRequired("public") is true: SPAs and mobile apps must rotate.`,
+behavior:`onUse(true) returns "rotate: issue new, revoke old"; onUse(false) returns "reuse detected: revoke the family", the self-detecting response to a replayed refresh token. rotationRequired("public") is true: SPAs and mobile apps must rotate.`,
 hints:['Each refresh token is single-use: using the current one rotates it; seeing an old one means compromise.','On reuse, revoke the whole token family to force a fresh login.','Public clients cannot protect a long-lived secret, so rotation is required for them.']}},
 
 {id:'ao7',title:'FAPI: what a hardened OAuth profile looks like',body:`
 <p>Plain OAuth 2.0 is a framework with a great many optional parts. That flexibility is why it is
 everywhere, and it is also why two conformant deployments can differ enormously in security. When the
-stakes are high — moving money, releasing health records — "conformant" is not a useful bar.</p>
+stakes are high (moving money, releasing health records), "conformant" is not a useful bar.</p>
 <p>A <b>profile</b> fixes this by removing choices. <b>FAPI</b> (Financial-grade API, from the OpenID
 Foundation) is the best-known one: a named set of mandatory requirements, with a certification suite
 that proves an implementation actually meets them. It is worth studying even if you never need it,
-because it is the industry's considered answer to "what does maximum-assurance OAuth look like?" — and
+because it is the industry's considered answer to "what does maximum-assurance OAuth look like?", and
 every requirement is a lesson already covered here, made compulsory.</p>
 
 <h4>What a profile is</h4>
@@ -585,17 +585,17 @@ floor for everyone; FAPI raises the ceiling for regulated deployments.</p>
 <h4>The requirements, and the attack each one answers</h4>
 <ul>
 <li><b>PKCE with S256, always.</b> Authorization code interception and injection.</li>
-<li><b>Sender-constrained access tokens</b> — mTLS-bound or DPoP. A stolen token is inert without the
+<li><b>Sender-constrained access tokens</b>: mTLS-bound or DPoP. A stolen token is inert without the
 key. Baseline OAuth's bearer semantics are simply not permitted.</li>
-<li><b>Strong client authentication</b> — <code>private_key_jwt</code> or mTLS. No shared
+<li><b>Strong client authentication</b>: <code>private_key_jwt</code> or mTLS. No shared
 <code>client_secret</code>, so there is no symmetric secret to leak from either side.</li>
 <li><b>PAR</b> (pushed authorization requests). The client sends the request parameters to the
 authorization server over the back channel first and receives a handle; the browser then carries only
 that handle. Request parameters never appear in a URL, so they cannot be tampered with or logged.</li>
-<li><b>JAR</b> (JWT-secured authorization request) — the request object is <i>signed</i>, so the
+<li><b>JAR</b> (JWT-secured authorization request): the request object is <i>signed</i>, so the
 authorization server can prove the client authored those parameters, not an attacker who rewrote a
 redirect.</li>
-<li><b>JARM</b> (JWT-secured authorization response) — the response is signed too, closing the mirror
+<li><b>JARM</b> (JWT-secured authorization response): the response is signed too, closing the mirror
 attack where a response is tampered with on the way back.</li>
 <li><b>Exact redirect URI matching</b>, and no open redirects anywhere in the flow.</li>
 <li><b>Short-lived authorization codes</b>, one-time use, bound to the client.</li>
@@ -613,7 +613,7 @@ FAPI 2.0 Message Signing      adds non-repudiation: requests AND responses are
                               deny what was sent
                               -> payment initiation, high-value transactions</div>
 <p>The distinction is worth understanding because it is not about strength but about <i>evidence</i>.
-The baseline protects the exchange. Message signing produces an artefact that survives the exchange —
+The baseline protects the exchange. Message signing produces an artefact that survives the exchange:
 a signed record that stands up in a dispute months later. That is a legal requirement, not a
 cryptographic one, which is why it is a separate level rather than simply "more secure".</p>
 
@@ -636,7 +636,7 @@ test suite.</p>
 <h4>Grant Management: treating the grant as a thing you can manage</h4>
 <p>Ordinary OAuth has a blind spot. A user consents, tokens are issued, and after that <b>nobody can
 enumerate what was actually granted</b>. Ask "which permissions does this bank's app currently hold for me,
-and when were they given?" and the protocol has no answer — the grant exists only as a consequence of tokens
+and when were they given?" and the protocol has no answer: the grant exists only as a consequence of tokens
 that were minted at some point.</p>
 <p>That is tolerable for a photo-sharing app and not tolerable under open banking, where a regulator expects
 a customer to see and withdraw individual consents. The <b>Grant Management API</b> (a FAPI 2.0 extension)
@@ -656,7 +656,7 @@ DELETE /grants/{grant_id}    -> revoke THIS grant, and every token from it
 //   incremental consent stops silently REPLACING the previous grant
 //   revocation is per-grant, not "log out everywhere"</div>
 <p>The problem it removes is subtle and real. Without it, an app asking for one extra scope starts a fresh
-authorization that may <b>replace</b> everything previously granted — so a user who declines the new
+authorization that may <b>replace</b> everything previously granted, so a user who declines the new
 permission can lose the ones they had already agreed to, with nothing in the protocol saying that happened.
 <code>update</code> versus <code>replace</code> makes that an explicit, auditable choice.</p>
 <p>You will meet this in regulated finance rather than in general-purpose OAuth, and it is worth recognising
@@ -664,7 +664,7 @@ because it is the direction the mature end of the ecosystem is moving: consent a
 record rather than a side effect of a redirect.`,
 docs:[['FAPI 2.0 Security Profile','https://openid.net/specs/fapi-security-profile-2_0-final.html'],['FAPI 2.0 Message Signing','https://openid.net/specs/fapi-message-signing-2_0.html'],['RFC 9126 — Pushed Authorization Requests','https://www.rfc-editor.org/rfc/rfc9126'],['RFC 9101 — JWT-Secured Authorization Request (JAR)','https://www.rfc-editor.org/rfc/rfc9101'],['OpenID Foundation — certification','https://openid.net/certification/']],
 ex:{title:'Check a deployment against the FAPI baseline',
-prompt:`Write <code>Fapi</code> with three methods. <code>static boolean clientAuthOk(String method)</code> accepts only <code>"private_key_jwt"</code> and <code>"tls_client_auth"</code>, rejecting <code>"client_secret_basic"</code>, <code>"client_secret_post"</code>, <code>"none"</code> and null — no shared secret is permitted. <code>static boolean tokenBindingOk(String binding)</code> accepts only <code>"mtls"</code> and <code>"dpop"</code>, rejecting <code>"bearer"</code> and null. <code>static boolean baselineCompliant(boolean pkceS256, boolean par, String clientAuth, String tokenBinding, boolean exactRedirect)</code> is true only when every requirement holds.`,
+prompt:`Write <code>Fapi</code> with three methods. <code>static boolean clientAuthOk(String method)</code> accepts only <code>"private_key_jwt"</code> and <code>"tls_client_auth"</code>, rejecting <code>"client_secret_basic"</code>, <code>"client_secret_post"</code>, <code>"none"</code> and null: no shared secret is permitted. <code>static boolean tokenBindingOk(String binding)</code> accepts only <code>"mtls"</code> and <code>"dpop"</code>, rejecting <code>"bearer"</code> and null. <code>static boolean baselineCompliant(boolean pkceS256, boolean par, String clientAuth, String tokenBinding, boolean exactRedirect)</code> is true only when every requirement holds.`,
 starter:`public class Fapi {
     static boolean clientAuthOk(String method) {
         return false;
@@ -678,7 +678,7 @@ starter:`public class Fapi {
     }
 }`,
 tests:[{d:'private_key_jwt is accepted',re:'"private_key_jwt"'},{d:'mTLS client auth is accepted',re:'"tls_client_auth"'},{d:'shared-secret client auth is refused',re:'default|return\\s+false'},{d:'mTLS-bound tokens are accepted',re:'"mtls"'},{d:'DPoP-bound tokens are accepted',re:'"dpop"'},{d:'plain bearer tokens are refused',re:'default|return\\s+false'},{d:'PKCE is required',re:'pkceS256'},{d:'PAR is required',re:'\\bpar\\b'},{d:'exact redirect matching is required',re:'exactRedirect'},{d:'every requirement must hold',re:'&&'}],
-behavior:`clientAuthOk("private_key_jwt") and clientAuthOk("tls_client_auth") are true; clientAuthOk("client_secret_basic") and clientAuthOk(null) are false, because a shared secret exists in two places and can leak from either. tokenBindingOk("dpop") and tokenBindingOk("mtls") are true; tokenBindingOk("bearer") is false, since bearer semantics are exactly what the profile removes. baselineCompliant(true,true,"private_key_jwt","dpop",true) is true, and flipping any single argument to a weaker value makes it false — a profile is only as strong as its weakest permitted option, which is the whole reason profiles remove options rather than recommend them.`,
+behavior:`clientAuthOk("private_key_jwt") and clientAuthOk("tls_client_auth") are true; clientAuthOk("client_secret_basic") and clientAuthOk(null) are false, because a shared secret exists in two places and can leak from either. tokenBindingOk("dpop") and tokenBindingOk("mtls") are true; tokenBindingOk("bearer") is false, since bearer semantics are exactly what the profile removes. baselineCompliant(true,true,"private_key_jwt","dpop",true) is true, and flipping any single argument to a weaker value makes it false: a profile is only as strong as its weakest permitted option, which is the whole reason profiles remove options rather than recommend them.`,
 hints:['Two switch statements, each with two accepting cases and <code>default: return false;</code>.','Guard null before switching, or return false in the default arm after a null check.','Compose the last method from the two checks plus the three booleans, joined with &&.'],
 solution:`public class Fapi {
     static boolean clientAuthOk(String method) {
@@ -713,7 +713,7 @@ solution:`public class Fapi {
 
 {id:'ao8',title:'Continuous Access Evaluation: revocation that arrives in seconds',body:`
 <p>The token lesson left an unresolved tension. Self-contained tokens verify offline, which is why they
-scale — and it is also why you cannot revoke one. The standard mitigation is a short lifetime, so the
+scale, and it is also why you cannot revoke one. The standard mitigation is a short lifetime, so the
 industry settled on "your access ends within fifteen minutes". For a user who was just fired, or a
 device that just failed a compliance check, fifteen minutes is a long time.</p>
 <p><b>Continuous Access Evaluation</b> is the answer that does not require giving up offline
@@ -736,12 +736,12 @@ CAE
      · device fell out of compliance · network location changed
   the resource server then rejects the affected token immediately.</div>
 <p>The token has not changed and is still cryptographically valid. What changed is that the verifier now
-holds a fact that overrides it — the same shape as a certificate revocation list, arriving by push
+holds a fact that overrides it, the same shape as a certificate revocation list, arriving by push
 rather than poll.</p>
 
 <h4>How the event gets there</h4>
 <p>The delivery mechanism is standardised as <b>Shared Signals</b>: a <b>Security Event Token</b> (a JWT
-carrying an event rather than an identity) delivered over a subscription. Two profiles matter — CAEP
+carrying an event rather than an identity) delivered over a subscription. Two profiles matter: CAEP
 for access changes, and RISC for account-level compromise signals shared between providers.</p>
 <div class="codeSample" data-hl>// a Security Event Token: a JWT whose payload is an EVENT
 { "iss": "https://idp.example.com",
@@ -774,15 +774,15 @@ rejecting? Both are defensible; not having chosen is not.</li>
 <h4>The trade, plainly</h4>
 <p>CAE narrows the revocation window from minutes to seconds, and for high-value sessions that is worth
 real effort. But notice what it costs: <b>the resource server becomes stateful</b>, which is precisely
-the property self-contained tokens were adopted to avoid. It is not a free win but a considered trade —
+the property self-contained tokens were adopted to avoid. It is not a free win but a considered trade:
 you accept some state in exchange for near-real-time control.</p>
 <p>So the sensible posture is layered rather than either/or: short lifetimes as the floor that works
 everywhere, CAE on top for the sessions and events where seconds matter, and grant revocation as the
 thing that actually stops continued access. And it remains true that no mechanism recalls a token
-already in flight — CAE shortens the window; it does not close it.</p>`,
+already in flight: CAE shortens the window; it does not close it.</p>`,
 docs:[['OpenID — Continuous Access Evaluation Profile (CAEP)','https://openid.net/specs/openid-caep-specification-1_0.html'],['RFC 8417 — Security Event Token (SET)','https://www.rfc-editor.org/rfc/rfc8417'],['OpenID — Shared Signals Framework','https://openid.net/specs/openid-sharedsignals-framework-1_0.html'],['RFC 8935 — Push-Based Delivery of Security Event Tokens','https://www.rfc-editor.org/rfc/rfc8935']],
 ex:{title:'Apply a revocation event',
-prompt:`Write <code>Caep</code> with three methods. <code>static boolean eventTrusted(String iss, String expectedIss, String aud, String selfId, java.util.Set&lt;String&gt; seenJtis, String jti)</code> requires a matching issuer and audience and an unseen <code>jti</code> — an unauthenticated revocation endpoint is a denial-of-service tool. <code>static boolean stillValid(boolean signatureValid, boolean notExpired, java.util.Set&lt;String&gt; revokedSubjects, String sub)</code> returns true only when the token verifies, has not expired, and the subject is <b>not</b> in the revocation set. <code>static boolean canParticipate(boolean keepsRevocationState)</code> returns that flag: a purely stateless verifier cannot do CAE at all.`,
+prompt:`Write <code>Caep</code> with three methods. <code>static boolean eventTrusted(String iss, String expectedIss, String aud, String selfId, java.util.Set&lt;String&gt; seenJtis, String jti)</code> requires a matching issuer and audience and an unseen <code>jti</code>: an unauthenticated revocation endpoint is a denial-of-service tool. <code>static boolean stillValid(boolean signatureValid, boolean notExpired, java.util.Set&lt;String&gt; revokedSubjects, String sub)</code> returns true only when the token verifies, has not expired, and the subject is <b>not</b> in the revocation set. <code>static boolean canParticipate(boolean keepsRevocationState)</code> returns that flag: a purely stateless verifier cannot do CAE at all.`,
 starter:`import java.util.*;
 
 public class Caep {
@@ -799,8 +799,8 @@ public class Caep {
     }
 }`,
 tests:[{d:'the event issuer must match',re:'iss\\s*!=\\s*null|expectedIss'},{d:'the event audience must be this service',re:'selfId'},{d:'replayed events are rejected',re:'contains\\s*\\(\\s*jti\\s*\\)'},{d:'the signature still has to verify',re:'signatureValid'},{d:'expiry still applies',re:'notExpired'},{d:'a revoked subject is rejected',re:'revokedSubjects'},{d:'participation requires keeping state',re:'return\\s+keepsRevocationState'}],
-behavior:`eventTrusted("https://idp","https://idp","orders-api","orders-api", new HashSet<>(), "evt-1") is true; a mismatched issuer or audience, or a jti already seen, is false — a revocation event changes access, so it must be verified as rigorously as a token or it becomes a way for anyone to sign your users out. stillValid(true, true, Set.of(), "u-1") is true, while stillValid(true, true, Set.of("u-1"), "u-1") is false: the token is still cryptographically valid and still unexpired, and the verifier now holds a fact that overrides it. canParticipate(false) is false, which is the real cost of CAE — the resource server becomes stateful, the very property self-contained tokens were adopted to avoid.`,
-hints:['Four conditions in eventTrusted: issuer, audience, non-null jti, and not already seen.','stillValid needs all three: signature, expiry, and absence from the revocation set.','The last method genuinely just returns its argument — that is the point being made.'],
+behavior:`eventTrusted("https://idp","https://idp","orders-api","orders-api", new HashSet<>(), "evt-1") is true; a mismatched issuer or audience, or a jti already seen, is false: a revocation event changes access, so it must be verified as rigorously as a token or it becomes a way for anyone to sign your users out. stillValid(true, true, Set.of(), "u-1") is true, while stillValid(true, true, Set.of("u-1"), "u-1") is false: the token is still cryptographically valid and still unexpired, and the verifier now holds a fact that overrides it. canParticipate(false) is false, which is the real cost of CAE: the resource server becomes stateful, the very property self-contained tokens were adopted to avoid.`,
+hints:['Four conditions in eventTrusted: issuer, audience, non-null jti, and not already seen.','stillValid needs all three: signature, expiry, and absence from the revocation set.','The last method genuinely just returns its argument: that is the point being made.'],
 solution:`import java.util.*;
 
 public class Caep {
@@ -829,19 +829,19 @@ is a design flaw hiding in plain sight: whichever of those five APIs is weakest 
 that works at the other four.</p>
 
 <h4>The failure, concretely</h4>
-<p>The reporting service is compromised — a log leak, a debug endpoint, an SSRF, take your pick. The
+<p>The reporting service is compromised: a log leak, a debug endpoint, an SSRF, take your pick. The
 attacker now has bearer tokens belonging to real users. Those tokens carry
 <code>scope: "reports.read payments.write"</code> because the client needed both, and they are accepted by
 the payments API, which is well-written, well-tested and entirely uninvolved in the breach. The blast
 radius of the weakest service became the union of everything the client was allowed to do.</p>
-<p>The obvious answer — "the payments API should check the scope" — does not help. The scope
+<p>The obvious answer ("the payments API should check the scope") does not help. The scope
 <i>is</i> present and valid. Scope answers <b>what</b> may be done; it does not answer <b>where</b> the
 token may be presented.</p>
 
 <h4>The resource parameter (RFC 8707)</h4>
 <p><b>Resource indicators</b> let the client name the API it intends to call, on the authorization request
 and again on the token request. The authorization server issues a token whose <code>aud</code> is that
-resource — and only that resource:</p>
+resource, and only that resource:</p>
 <div class="codeSample" data-hl>POST /token
   grant_type=authorization_code&code=...
   &resource=https://api.payments.example.com     <- the intended audience
@@ -853,7 +853,7 @@ resource — and only that resource:</p>
 // need to call two APIs? two token requests, from the same grant.
 // need to narrow an existing token? RFC 8693 token exchange, downscoped.</div>
 <p>The mechanism is only half the story, though. A resource indicator is <b>worthless unless the resource
-server validates <code>aud</code></b> — and audience validation is the check most often skipped, because a
+server validates <code>aud</code></b>, and audience validation is the check most often skipped, because a
 token that verifies cryptographically and carries the right scope <i>looks</i> correct. Both halves are
 required: the AS must issue narrowly, and every RS must refuse tokens not addressed to it.</p>
 
@@ -869,7 +869,7 @@ hop instead.</li>
 </ul>
 
 <h4>The cost, stated plainly</h4>
-<p>More token requests, more caching logic in clients, and more configuration on the authorization server —
+<p>More token requests, more caching logic in clients, and more configuration on the authorization server:
 resources must be registered, and clients must be told which they may request. Providers differ: some
 implement <code>resource</code>, some use a non-standard <code>audience</code> parameter, some derive the
 audience from scope naming conventions. The principle survives the variation: <b>a token should be usable
@@ -877,7 +877,7 @@ in exactly one place, and that place should check that it is the one</b>.</p>`,
 docs:[['RFC 8707 — Resource Indicators for OAuth 2.0','https://www.rfc-editor.org/rfc/rfc8707'],['RFC 8693 — OAuth 2.0 Token Exchange','https://www.rfc-editor.org/rfc/rfc8693'],['RFC 9700 — OAuth 2.0 Security Best Current Practice','https://www.rfc-editor.org/rfc/rfc9700']],
 ex:{title:'Validate the audience at the resource server',lang:'js',
 run:{call:'tokenUsableAt',cases:[{name:'a single-string audience naming this API',args:['https://api.billing.example.com','https://api.billing.example.com'],expect:true},{name:'an array audience containing this API',args:[['https://api.billing.example.com','https://api.reports.example.com'],'https://api.reports.example.com'],expect:true},{name:'a token minted for a different API',args:['https://api.billing.example.com','https://api.payments.example.com'],expect:false},{name:'no audience claim at all is not a pass',args:[null,'https://api.billing.example.com'],expect:false},{name:'an empty array names nobody',args:[[],'https://api.billing.example.com'],expect:false}]},
-prompt:`Write <code>function tokenUsableAt(tokenAud, resourceId)</code> returning <code>true</code> only when the token's <code>aud</code> names this resource. <code>aud</code> may be a string <b>or</b> an array of strings — the JWT specification permits both, and handling only one is a real-world bug. A missing audience is a rejection, never a wildcard.`,
+prompt:`Write <code>function tokenUsableAt(tokenAud, resourceId)</code> returning <code>true</code> only when the token's <code>aud</code> names this resource. <code>aud</code> may be a string <b>or</b> an array of strings: the JWT specification permits both, and handling only one is a real-world bug. A missing audience is a rejection, never a wildcard.`,
 starter:`function tokenUsableAt(tokenAud, resourceId) {
   return false;
 }`,
@@ -887,14 +887,14 @@ solution:`function tokenUsableAt(tokenAud, resourceId) {
   return tokenAud === resourceId;
 }`,
 tests:[{d:'a missing audience is rejected',re:'!tokenAud|tokenAud\\s*==\\s*null'},{d:'the array form is handled',re:'Array\\s*\\.\\s*isArray'},{d:'array membership is checked',re:'includes\\s*\\(\\s*resourceId|indexOf\\s*\\(\\s*resourceId'},{d:'the string form is compared exactly',re:'tokenAud\\s*===\\s*resourceId|resourceId\\s*===\\s*tokenAud'}],
-behavior:`Five real cases. The array case is the one that bites: aud is defined as a string OR an array of strings, so a verifier written against the single-string form quietly rejects every multi-audience token — or, worse, a verifier written as a substring test accepts https://api.billing.example.com.attacker.net. The null case is the one that matters most: treating a missing audience as "no restriction" turns every token in your estate into a token for this API, which is precisely the situation resource indicators exist to end.`,
+behavior:`Five real cases. The array case is the one that bites: aud is defined as a string OR an array of strings, so a verifier written against the single-string form quietly rejects every multi-audience token; or, worse, a verifier written as a substring test accepts https://api.billing.example.com.attacker.net. The null case is the one that matters most: treating a missing audience as "no restriction" turns every token in your estate into a token for this API, which is precisely the situation resource indicators exist to end.`,
 hints:['Two shapes to handle: a string and an array of strings.','Array.isArray tells you which branch you are in.','Missing means refuse. A token with no audience is not a token for everyone.']}},
 
 {id:'ao10',title:'Cross-device flows: QR login, device code and consent phishing',body:`
 <p>Three flows share one shape: the device that <b>gets</b> access is not the device that
 <b>authenticates</b>. The device flow puts a code on a TV and asks you to type it on your phone. QR login
 shows a code on a laptop that a phone app scans. CIBA sends a push to a phone while a call-centre agent
-waits. Each solves a real problem — no keyboard, no browser, no shared session — and each introduces the
+waits. Each solves a real problem (no keyboard, no browser, no shared session), and each introduces the
 same structural weakness.</p>
 
 <h4>The weakness: consent without context</h4>
@@ -906,11 +906,11 @@ has no connection to the one that will be granted access.</p>
 victim to complete it</b>:</p>
 <div class="codeSample" data-hl>1. attacker starts a device-code flow for a real client, real IdP
 2. IdP returns:  user_code = WDJB-MJHT   verification_uri = https://id.example.com/device
-3. attacker emails the victim: "IT security check — go to id.example.com/device, enter WDJB-MJHT"
+3. attacker emails the victim: "IT security check: go to id.example.com/device, enter WDJB-MJHT"
 4. victim authenticates AT THE REAL IdP, sees a real consent screen, approves
 5. attacker polls the token endpoint and receives the victim's tokens
 
-// nothing was spoofed. no password was captured. MFA was satisfied — by the victim,
+// nothing was spoofed. no password was captured. MFA was satisfied, by the victim,
 // for a session the attacker started. the phishing-resistant part was never bypassed;
 // it was never the target.</div>
 <p>QR-jacking is the same attack with a picture: an attacker's QR code, displayed on a page the victim
@@ -920,7 +920,7 @@ asks for broad scopes, and the consent screen is real, so nothing looks wrong.</
 <h4>Why passkeys do not save you here</h4>
 <p>Worth being precise, because it is a common misreading. WebAuthn is phishing-resistant because the
 credential is bound to an origin, so it cannot be replayed at a fake site. In a cross-device attack there
-<i>is</i> no fake site — the user authenticates at the genuine origin, with the genuine authenticator, and
+<i>is</i> no fake site: the user authenticates at the genuine origin, with the genuine authenticator, and
 the ceremony succeeds exactly as designed. What was phished is the <b>authorization</b>, not the credential.</p>
 
 <h4>The defences, in order of effectiveness</h4>
@@ -929,7 +929,7 @@ the ceremony succeeds exactly as designed. What was phished is the <b>authorizat
 devices. Enabling it for every client, as many providers do by default, hands the attacker a starting
 point.</li>
 <li><b>Bind the code to the approving user's action.</b> Requiring the user to <i>type</i> a short code
-displayed on the initiating device — rather than tapping "approve" — means an attacker must get their code
+displayed on the initiating device, rather than tapping "approve", means an attacker must get their code
 in front of the victim and persuade them to enter it, which is a visible, describable act.</li>
 <li><b>Show what and where.</b> The consent screen should name the client, the scopes, and the requesting
 device's location or network. "Approve sign-in for Smart TV in Warsaw" is a question a user can answer.</li>
@@ -937,17 +937,17 @@ device's location or network. "Approve sign-in for Smart TV in Warsaw" is a ques
 <li><b>Exclude high-value scopes.</b> Admin, payment and consent-granting scopes should require a
 same-device flow, unconditionally.</li>
 <li><b>Proximity where the platform offers it.</b> FIDO's hybrid transport uses Bluetooth proximity between
-the two devices, which is the only defence here that is not advisory — it makes remote approval physically
+the two devices, which is the only defence here that is not advisory: it makes remote approval physically
 impossible.</li>
 </ul>
 <p>The general principle, and it outlives all three protocols: <b>consent is only meaningful when the user
 can see what they are consenting to and knows why they were asked</b>. Cross-device flows remove both, so
-whatever you can add back — a code they must type, a device they must recognise, a scope you refuse to
-grant this way — is the whole of the security.</p>`,
+whatever you can add back (a code they must type, a device they must recognise, a scope you refuse to
+grant this way) is the whole of the security.</p>`,
 docs:[['OAuth 2.0 Cross-Device Flows Best Current Practice','https://datatracker.ietf.org/doc/draft-ietf-oauth-cross-device-security/'],['RFC 8628 — OAuth 2.0 Device Authorization Grant','https://www.rfc-editor.org/rfc/rfc8628'],['Microsoft — device code phishing','https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-device-code']],
 ex:{title:'Gate a cross-device approval',lang:'js',
 run:{call:'approveCrossDevice',cases:[{name:'the right code, entered in time, ordinary scope',args:['WDJB-MJHT','WDJB-MJHT',30,300,false],expect:true},{name:'a code the user did not get from this device',args:['AAAA-BBBB','WDJB-MJHT',30,300,false],expect:false},{name:'the code expired before approval',args:['WDJB-MJHT','WDJB-MJHT',301,300,false],expect:false},{name:'a high-value scope may never be approved cross-device',args:['WDJB-MJHT','WDJB-MJHT',30,300,true],expect:false},{name:'tapping approve without entering a code',args:['','WDJB-MJHT',30,300,false],expect:false}]},
-prompt:`Write <code>function approveCrossDevice(enteredCode, expectedCode, secondsElapsed, maxAgeSeconds, highValueScope)</code> returning <code>true</code> only when the user typed the exact expected code, within <code>maxAgeSeconds</code>, for a scope that is not high-value. A high-value scope is refused <b>regardless</b> of everything else — check it first.`,
+prompt:`Write <code>function approveCrossDevice(enteredCode, expectedCode, secondsElapsed, maxAgeSeconds, highValueScope)</code> returning <code>true</code> only when the user typed the exact expected code, within <code>maxAgeSeconds</code>, for a scope that is not high-value. A high-value scope is refused <b>regardless</b> of everything else: check it first.`,
 starter:`function approveCrossDevice(enteredCode, expectedCode, secondsElapsed, maxAgeSeconds, highValueScope) {
   return false;
 }`,
@@ -957,6 +957,6 @@ solution:`function approveCrossDevice(enteredCode, expectedCode, secondsElapsed,
   return secondsElapsed <= maxAgeSeconds;
 }`,
 tests:[{d:'high-value scopes are refused first',re:'highValueScope'},{d:'an empty entry is not an approval',re:'!enteredCode|enteredCode\\s*===\\s*["\\x27]["\\x27]'},{d:'the code must match exactly',re:'enteredCode\\s*!==\\s*expectedCode|enteredCode\\s*===\\s*expectedCode'},{d:'expiry is enforced',re:'secondsElapsed\\s*<=?\\s*maxAgeSeconds|secondsElapsed\\s*>'}],
-behavior:`Five cases run. The empty-code case encodes the design point of the whole lesson: an approval that requires only a tap can be obtained by an attacker who sends a push at the right moment, while an approval that requires typing a code shown on the initiating device requires the attacker to get that code in front of the victim — a step the victim can notice and describe afterwards. The high-value case is deliberately unconditional: some scopes should have no cross-device path at all, so the check comes before anything else and cannot be reasoned around by a correct code. Expiry is a rate-limit on the whole attack: a code alive for five minutes gives the attacker five minutes to write a convincing email.`,
-hints:['One check is unconditional and comes first.','An empty string is not a match — reject falsy input before comparing.','Elapsed time within the maximum is the last condition, not the first.']}}
+behavior:`Five cases run. The empty-code case encodes the design point of the whole lesson: an approval that requires only a tap can be obtained by an attacker who sends a push at the right moment, while an approval that requires typing a code shown on the initiating device requires the attacker to get that code in front of the victim, a step the victim can notice and describe afterwards. The high-value case is deliberately unconditional: some scopes should have no cross-device path at all, so the check comes before anything else and cannot be reasoned around by a correct code. Expiry is a rate-limit on the whole attack: a code alive for five minutes gives the attacker five minutes to write a convincing email.`,
+hints:['One check is unconditional and comes first.','An empty string is not a match: reject falsy input before comparing.','Elapsed time within the maximum is the last condition, not the first.']}}
 ]});

@@ -1,6 +1,6 @@
 # 0 — What Kubernetes is
 
-*No lab — the mental model that anchors everything. ~12 min read.*
+*No lab: the mental model that anchors everything. ~12 min read.*
 
 ---
 
@@ -28,7 +28,7 @@ status:                    # ACTUAL state — what Kubernetes observes (it fills
 ```
 
 **`spec` = your desired state; `status` = reality.** A controller's whole job is to drive `status`
-toward `spec`. Learn this shape once and every object — Pod, Service, ConfigMap, Ingress — reads the
+toward `spec`. Learn this shape once and every object (Pod, Service, ConfigMap, Ingress) reads the
 same way.
 
 ## The objects you'll learn (the map)
@@ -59,7 +59,7 @@ which pods to send traffic to. This loose coupling is everywhere:
 ```
 
 Add a pod with that label and the Service instantly includes it; no wiring. **Labels + selectors**
-are how almost everything connects — internalize this early.
+are how almost everything connects. Internalize this early.
 
 ## Namespaces — dividing the cluster
 
@@ -70,9 +70,9 @@ namespace.
 
 ## Imperative vs declarative (two ways to work)
 
-- **Imperative** — direct commands: `kubectl create deployment web --image=nginx`. Fast for
+- **Imperative**: direct commands like `kubectl create deployment web --image=nginx`. Fast for
   learning and one-offs.
-- **Declarative** — write YAML and `kubectl apply -f file.yaml`. Reproducible, version-controlled,
+- **Declarative**: write YAML and `kubectl apply -f file.yaml`. Reproducible, version-controlled,
   reviewable. **This is how real teams work** (and how GitOps/CI-CD deploy).
 
 The course uses imperative to explore quickly, then declarative for anything real. Both submit to the
@@ -99,11 +99,11 @@ Every module answers one of these.
 
 1. What do `spec` and `status` mean on an object? *(`spec` = your desired state; `status` = the
    actual state Kubernetes observes.)*
-2. How do objects like Services find their Pods? *(Labels and selectors — Services select pods by
+2. How do objects like Services find their Pods? *(Labels and selectors: Services select pods by
    label, not by ID/IP.)*
 3. What is a namespace? *(A virtual sub-cluster for organizing objects; names are unique within
    one.)*
-4. Imperative vs declarative — which do real teams use? *(Declarative — YAML applied with `kubectl
+4. Imperative vs declarative: which do real teams use? *(Declarative: YAML applied with `kubectl
    apply`, version-controlled.)*
 5. Describe the reconciliation loop in one sentence. *(Controllers continuously drive actual state
    toward the desired state, fixing any drift.)*

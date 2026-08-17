@@ -12,12 +12,12 @@ others (or servers, or Kubernetes) pull from. This is the "ship" in build–ship
 
 A registry hosts named, tagged images. The big ones:
 
-- **Docker Hub** (`docker.io`) — the default public registry; where `nginx`, `postgres`, etc. live.
+- **Docker Hub** (`docker.io`): the default public registry, where `nginx`, `postgres`, etc. live.
 - **GitHub Container Registry** (`ghcr.io`), **GitLab**, cloud registries (**ECR**, **GCR/Artifact
-  Registry**, **ACR**) — often used for private/team images.
+  Registry**, **ACR**), often used for private/team images.
 - **Self-hosted** registries for full control.
 
-When you `docker pull nginx`, you're really pulling `docker.io/library/nginx:latest` — the registry
+When you `docker pull nginx`, you're really pulling `docker.io/library/nginx:latest`; the registry
 and tag are just defaulted.
 
 ## Image names decoded
@@ -29,10 +29,10 @@ A fully-qualified name has four parts:
    registry    namespace    repo      tag
 ```
 
-- **registry** — where it lives (defaults to `docker.io`).
-- **namespace** — the user/org (e.g. your Docker Hub username).
-- **repository** — the image name.
-- **tag** — the version label (defaults to `latest`).
+- **registry**: where it lives (defaults to `docker.io`).
+- **namespace**: the user/org (e.g. your Docker Hub username).
+- **repository**: the image name.
+- **tag**: the version label (defaults to `latest`).
 
 To push somewhere, your image must be **tagged** with that destination's name.
 
@@ -52,16 +52,16 @@ docker push YOURNAME/myapp:1.0
 docker pull YOURNAME/myapp:1.0
 ```
 
-`docker tag` doesn't copy the image — it adds another name pointing at the same layers. Push uploads
+`docker tag` doesn't copy the image; it adds another name pointing at the same layers. Push uploads
 only layers the registry doesn't already have (layer sharing again).
 
 ## Tagging strategy (a practitioner habit)
 
 Give each build **multiple** meaningful tags:
 
-- A **version** tag (`1.4.2`) — immutable, what you deploy.
-- A **moving** tag (`1.4`, `stable`) — points at the latest patch.
-- Often the **git commit SHA** — perfectly traceable to source.
+- A **version** tag (`1.4.2`): immutable, what you deploy.
+- A **moving** tag (`1.4`, `stable`) that points at the latest patch.
+- Often the **git commit SHA**, perfectly traceable to source.
 
 ```bash
 docker tag myapp:build YOURNAME/myapp:1.4.2
@@ -70,7 +70,7 @@ docker tag myapp:build YOURNAME/myapp:$(git rev-parse --short HEAD)
 docker push -a YOURNAME/myapp        # push all tags of this repo
 ```
 
-**Avoid deploying `latest`** — it's ambiguous and makes rollbacks and debugging painful. Deploy
+**Avoid deploying `latest`**: it's ambiguous and makes rollbacks and debugging painful. Deploy
 specific version tags (or digests).
 
 ## Lab: push and pull your own image
@@ -107,7 +107,7 @@ docker rm -f registry
 
 ## Why this matters for Kubernetes
 
-Kubernetes never builds images — it **pulls them from a registry** and runs them. Every Deployment
+Kubernetes never builds images; it **pulls them from a registry** and runs them. Every Deployment
 you write later references an image by `registry/namespace/repo:tag`. Private registries need
 Kubernetes **imagePullSecrets**. The tagging discipline you learn here directly determines how clean
 your Kubernetes rollouts and rollbacks are.
@@ -118,10 +118,10 @@ your Kubernetes rollouts and rollbacks are.
    pull from.)*
 2. Decode `ghcr.io/acme/api:1.4.2`. *(registry `ghcr.io`, namespace `acme`, repo `api`, tag
    `1.4.2`.)*
-3. Does `docker tag` copy the image? *(No — it adds another name pointing at the same layers.)*
+3. Does `docker tag` copy the image? *(No; it adds another name pointing at the same layers.)*
 4. Why avoid deploying `latest`? *(It's ambiguous and makes rollbacks/debugging hard; deploy specific
    version tags.)*
-5. Does Kubernetes build images? *(No — it pulls prebuilt images from a registry and runs them.)*
+5. Does Kubernetes build images? *(No; it pulls prebuilt images from a registry and runs them.)*
 
 ---
 

@@ -1,7 +1,7 @@
 STREAMS.push({icon:'🟩',title:'The Node Runtime',blurb:'JavaScript outside the browser: what Node actually is and what it adds, its event loop phases and how they differ from the browser, the process object and lifecycle, reading configuration from the environment and the command line, and shutting down cleanly.',lessons:[
 
 {id:'js38',title:'What Node is, and what it adds',body:`
-<p><b>Node.js is the V8 engine — the same one inside Chrome — packaged with a set of libraries for things
+<p><b>Node.js is the V8 engine (the same one inside Chrome) packaged with a set of libraries for things
 a browser deliberately will not let you do.</b> The language is identical. What changes is the
 surroundings: no DOM, no <code>window</code>, and in their place files, sockets, processes and the
 operating system.</p>
@@ -15,7 +15,7 @@ crypto    hashing, keys     (there is no origin - you ARE the machine)
 process   env, args, exit
 child_process, worker_threads, net, dns, zlib, stream ...</div>
 <p>That last removal matters more than it looks. A browser sandboxes your code because it downloaded that
-code from a stranger. Node does not, because <b>you</b> chose to run it — which is exactly why installing
+code from a stranger. Node does not, because <b>you</b> chose to run it, which is exactly why installing
 an untrusted npm package is a serious act, and why the supply-chain warning in the modules stream is not
 theoretical.</p>
 
@@ -84,11 +84,11 @@ solution:`function availableIn(api) {
   }
 }`,
 tests:[{d:'fs is Node',re:'"fs"'},{d:'document is the browser',re:'"document"'},{d:'fetch is in both',re:'"fetch"'},{d:'has a default',re:'default'}],
-behavior:`Nine cases execute. The "both" group is the one that has changed: fetch was browser-only for a decade and has been in Node since v18, which is why older tutorials tell you to install node-fetch. setTimeout is in both but not identical — Node returns a Timeout object with .unref(), where the browser returns a number.`,
+behavior:`Nine cases execute. The "both" group is the one that has changed: fetch was browser-only for a decade and has been in Node since v18, which is why older tutorials tell you to install node-fetch. setTimeout is in both but not identical: Node returns a Timeout object with .unref(), where the browser returns a number.`,
 hints:['Group the cases by host and let them fall through to a shared return.','fetch is now in both runtimes, despite what older material says.','Anything you were not told about returns unknown.']}},
 
 {id:'js39',title:'Node’s event loop, and the phases',body:`
-<p>The event loop from the async stream applies here too — one thread, callbacks queued by the host — but
+<p>The event loop from the async stream applies here too (one thread, callbacks queued by the host), but
 Node's version has <b>named phases</b>, and knowing them explains ordering that otherwise looks
 arbitrary.</p>
 
@@ -125,7 +125,7 @@ console.log("2");
 <h4>Blocking is worse here than in a browser</h4>
 <p>A browser freezing blocks one user. <b>A Node server blocking blocks every connected client.</b> There
 is one loop for all of them, so a synchronous 200ms operation on a server handling 100 requests per second
-is not a slow endpoint — it is an outage.</p>
+is not a slow endpoint; it is an outage.</p>
 <div class="codeSample" data-hl>// the usual culprits, all of them synchronous:
 fs.readFileSync(hugeFile)          // use the promises API instead
 JSON.parse(veryLargeString)        // unavoidable - so bound the size
@@ -135,7 +135,7 @@ a regex with catastrophic backtracking   // ReDoS - a real DoS vector
 a tight loop over a million rows   // move it to a worker_thread</div>
 <p>Node keeps a small <b>thread pool</b> (four threads by default, set by
 <code>UV_THREADPOOL_SIZE</code>) for file I/O and some crypto, which is why the asynchronous forms of
-those really do run elsewhere. Network I/O does not use the pool at all — it is genuinely
+those really do run elsewhere. Network I/O does not use the pool at all; it is genuinely
 event-driven.</p>
 
 <h4>CPU work belongs somewhere else</h4>
@@ -161,7 +161,7 @@ solution:`function nodeOrder(kinds) {
   return order.flatMap(k => kinds.filter(x => x === k));   // stable per group
 }`,
 tests:[{d:'lists the queues in priority order',re:'"nextTick"'},{d:'promises come after nextTick',re:'"promise"'},{d:'filters per group',re:'filter'},{d:'flattens the groups together',re:'flatMap|\\.\\.\\.'}],
-behavior:`Five cases execute. The fourth pins stability — two nextTicks keep their order because filter preserves it. Writing this as a sort with a priority lookup also works; anything that reorders within a group does not. Note that the real timeout-vs-immediate ordering at the top level is non-deterministic, which is why this exercise fixes an order rather than pretending otherwise.`,
+behavior:`Five cases execute. The fourth pins stability: two nextTicks keep their order because filter preserves it. Writing this as a sort with a priority lookup also works; anything that reorders within a group does not. Note that the real timeout-vs-immediate ordering at the top level is non-deterministic, which is why this exercise fixes an order rather than pretending otherwise.`,
 hints:['Put the queue names in an array in priority order.','filter each group out of the input, which preserves relative order.','flatMap joins the groups into one flat array.']},
 {title:'Is this operation safe on the event loop?',diff:'hard',lang:'js',
 run:{call:'auditLoop',cases:[
@@ -171,7 +171,7 @@ run:{call:'auditLoop',cases:[
  {name:'a long async wait is fine: it is not on the loop',args:[[{name:'httpCall',sync:false,ms:2000,cpu:false}]],expect:{safe:true,offenders:[]}},
  {name:'several offenders are all reported, in order',args:[[{name:'a',sync:true,ms:1,cpu:false},{name:'b',sync:false,ms:1,cpu:false},{name:'c',sync:false,ms:99,cpu:true}]],expect:{safe:false,offenders:['a','c']}},
  {name:'nothing to audit',args:[[]],expect:{safe:true,offenders:[]}}]},
-prompt:`Write <code>function auditLoop(operations)</code> that flags anything which would block Node's event loop. An operation blocks if it is <b>synchronous</b> (<code>sync: true</code>) <b>or</b> it is CPU-bound (<code>cpu: true</code>) — regardless of how long it takes. A long <code>ms</code> on an asynchronous, non-CPU operation is <b>fine</b>, because the waiting happens off the loop. Return <code>{ safe, offenders }</code> where <code>offenders</code> lists the names in input order.`,
+prompt:`Write <code>function auditLoop(operations)</code> that flags anything which would block Node's event loop. An operation blocks if it is <b>synchronous</b> (<code>sync: true</code>) <b>or</b> it is CPU-bound (<code>cpu: true</code>), regardless of how long it takes. A long <code>ms</code> on an asynchronous, non-CPU operation is <b>fine</b>, because the waiting happens off the loop. Return <code>{ safe, offenders }</code> where <code>offenders</code> lists the names in input order.`,
 starter:`function auditLoop(operations) {
   return { safe: true, offenders: [] };
 }`,
@@ -182,8 +182,8 @@ solution:`function auditLoop(operations) {
   return { safe: offenders.length === 0, offenders };
 }`,
 tests:[{d:'flags synchronous operations',re:'op\\.sync|\\.sync'},{d:'flags CPU-bound operations',re:'op\\.cpu|\\.cpu'},{d:'combines them with OR',re:'\\|\\|'},{d:'reports whether anything was found',re:'length\\s*===\\s*0|length\\s*>\\s*0'}],
-behavior:`Six cases execute, and two of them are the whole lesson. The 2000ms HTTP call is SAFE — Node hands the wait to the operating system and the loop carries on serving other requests, so duration alone tells you nothing. The 50ms CPU operation is UNSAFE despite being shorter, because it occupies the single thread for all 50ms. Any implementation that filters on ms passes the easy cases and fails both of these.`,
-hints:['The test is sync OR cpu — the duration is a distraction.','A long await is not blocking; a short busy loop is.','safe is simply whether the offenders list came back empty.']}]},
+behavior:`Six cases execute, and two of them are the whole lesson. The 2000ms HTTP call is SAFE: Node hands the wait to the operating system and the loop carries on serving other requests, so duration alone tells you nothing. The 50ms CPU operation is UNSAFE despite being shorter, because it occupies the single thread for all 50ms. Any implementation that filters on ms passes the easy cases and fails both of these.`,
+hints:['The test is sync OR cpu; the duration is a distraction.','A long await is not blocking; a short busy loop is.','safe is simply whether the offenders list came back empty.']}]},
 
 {id:'js40',title:'process, configuration and the command line',body:`
 <p><code>process</code> is Node's window onto the operating system: how the program was started, what
@@ -216,7 +216,7 @@ const { values, positionals } = parseArgs({
 
 <h4>Environment variables, and the two rules</h4>
 <p><b>They are always strings.</b> <code>process.env.PORT</code> is <code>"3000"</code>, not
-<code>3000</code>, and <code>process.env.DEBUG</code> is the string <code>"false"</code> — which is
+<code>3000</code>, and <code>process.env.DEBUG</code> is the string <code>"false"</code>, which is
 <b>truthy</b>. That single confusion turns feature flags on in production more often than any other
 mistake in this lesson.</p>
 <p><b>Validate at startup, not at use.</b> Read and check every variable the program needs the moment it
@@ -270,8 +270,8 @@ solution:`function readPort(env) {
   return n;
 }`,
 tests:[{d:'defaults when absent',re:'3000'},{d:'converts the string',re:'Number\\s*\\('},{d:'requires a whole number',re:'Number\\.isInteger'},{d:'checks the upper bound',re:'65535'}],
-behavior:`Seven cases execute. Two are boundaries that a loose check misses: 0 is a number and a perfectly good integer, but not a usable port, and 65535 must be accepted while 70000 must not — so the comparison has to be inclusive at the top. Distinguishing "absent" (use the default) from "present but wrong" (refuse to start) is the part that matters operationally.`,
-hints:['Check for absent and empty before converting — they mean "use the default".','Number.isInteger rejects both NaN and 8080.5 in one test.','The valid range is 1 to 65535 inclusive.']},
+behavior:`Seven cases execute. Two are boundaries that a loose check misses: 0 is a number and a perfectly good integer, but not a usable port, and 65535 must be accepted while 70000 must not, so the comparison has to be inclusive at the top. Distinguishing "absent" (use the default) from "present but wrong" (refuse to start) is the part that matters operationally.`,
+hints:['Check for absent and empty before converting: they mean "use the default".','Number.isInteger rejects both NaN and 8080.5 in one test.','The valid range is 1 to 65535 inclusive.']},
 {title:'Validate the whole configuration at boot',diff:'hard',lang:'js',
 run:{call:'loadConfig',cases:[
  {name:'a complete valid configuration',args:[{DATABASE_URL:'postgres://x',PORT:'8080',DEBUG:'true'}],expect:{ok:true,config:{databaseUrl:'postgres://x',port:8080,debug:true},errors:[]}},
@@ -308,12 +308,12 @@ solution:`function loadConfig(env) {
   return { ok: true, config: { databaseUrl, port, debug }, errors: [] };
 }`,
 tests:[{d:'collects errors rather than throwing on the first',re:'errors\\.push'},{d:'requires the database url',re:'DATABASE_URL'},{d:'validates the port range',re:'65535'},{d:'compares DEBUG to the exact string',re:'===\\s*"true"'},{d:'returns null config on failure',re:'config:\\s*null'}],
-behavior:`Six cases execute, and three of them separate a real implementation from a plausible one. The string "false" is truthy, so writing debug as Boolean(env.DEBUG) turns debugging on in production — the third case catches exactly that. The last case requires collecting ALL errors rather than returning at the first: an operator restarting a service wants one message listing everything wrong, not six deploys each revealing the next problem. And a valid default port must survive an unrelated failure elsewhere.`,
-hints:['Accumulate into an errors array instead of returning early — you want every problem at once.','DEBUG is true only when it is exactly the string "true"; every other string is false.','Apply the PORT default when the variable is absent, and validate it only when it is present.']}]}
+behavior:`Six cases execute, and three of them separate a real implementation from a plausible one. The string "false" is truthy, so writing debug as Boolean(env.DEBUG) turns debugging on in production; the third case catches exactly that. The last case requires collecting ALL errors rather than returning at the first: an operator restarting a service wants one message listing everything wrong, not six deploys each revealing the next problem. And a valid default port must survive an unrelated failure elsewhere.`,
+hints:['Accumulate into an errors array instead of returning early: you want every problem at once.','DEBUG is true only when it is exactly the string "true"; every other string is false.','Apply the PORT default when the variable is absent, and validate it only when it is present.']}]}
 ,
 
 {id:'jsemit',title:'EventEmitter: the pattern under everything',body:`
-<p>Nearly every object you meet in Node — servers, sockets, streams, <code>process</code> itself — is an
+<p>Nearly every object you meet in Node (servers, sockets, streams, <code>process</code> itself) is an
 <b>EventEmitter</b>. It is the third async shape after callbacks and promises, and it exists because some
 things are not one result but <b>many occurrences</b>: a request arrives, then another, then another. A
 promise can settle once; an emitter can fire forever.</p>
@@ -329,7 +329,7 @@ bus.once("boot", () =&gt; console.log("first time only"));
 bus.emit("order", 42);       // calls BOTH listeners, in registration order,
                              // SYNCHRONOUSLY - emit returns after they ran
 bus.off("order", handler);   // unsubscribe needs the SAME function reference</div>
-<p>Two details there bite people. <code>emit</code> is synchronous — the listeners have all run before the
+<p>Two details there bite people. <code>emit</code> is synchronous: the listeners have all run before the
 next line. And <code>off</code> compares by reference, so an anonymous arrow you did not save cannot be
 removed later.</p>
 
@@ -357,7 +357,7 @@ collected while the subscription lives. Subscribing is <i>allocating</i>; treat 
 needs a matching release.</p>
 
 <h4>What it is underneath</h4>
-<p>Strip the class away and an emitter is a map from event names to arrays of functions — <code>on</code>
+<p>Strip the class away and an emitter is a map from event names to arrays of functions: <code>on</code>
 pushes, <code>emit</code> loops, <code>off</code> filters, <code>once</code> removes after the first call.
 The exercise has you build exactly that, because having built one, no emitter behavior will surprise you
 again.</p>`,
@@ -395,7 +395,7 @@ solution:`function runEvents(script) {
   return log;
 }`,
 tests:[{d:'keeps listeners per event name',re:'listeners\\[event\\]'},{d:'once listeners carry a flag',re:'once'},{d:'off filters by label',re:'\\.filter\\('},{d:'emit walks listeners in order',re:'for\\s*\\(.*of\\s'}],
-behavior:`Six cases execute the contract Node's real emitter keeps: registration order is preserved, once-listeners survive exactly one emit, off removes without disturbing the others, and emitting with no listeners is silently fine. The solution snapshots the listener array before looping — the same choice Node makes, so a listener added during an emit does not fire in that same emit.`,
+behavior:`Six cases execute the contract Node's real emitter keeps: registration order is preserved, once-listeners survive exactly one emit, off removes without disturbing the others, and emitting with no listeners is silently fine. The solution snapshots the listener array before looping, the same choice Node makes, so a listener added during an emit does not fire in that same emit.`,
 hints:['Store { label, once } records so once and on share one array.','After an emit, filter out the listeners whose once flag is set.','off filters by label; emit into a missing event should touch nothing.']}}
 
 

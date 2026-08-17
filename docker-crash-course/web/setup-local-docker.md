@@ -4,7 +4,7 @@
 spelled out for macOS, Windows, and Linux. No prior experience assumed.*
 
 > **This course is hands-on, on your own machine.** The site you're reading gives you the lessons
-> and quizzes, but the real work happens in your own terminal — installing tools, running
+> and quizzes, but the real work happens in your own terminal: installing tools, running
 > containers, and breaking things you can then fix. This setup page gets your machine ready; do it
 > before the first lab.
 
@@ -19,7 +19,7 @@ steady (engine running). Apple Silicon and Intel both supported.
 
 **Windows**
 : Download **Docker Desktop** and run the installer. Allow it to enable **WSL 2** (Windows
-Subsystem for Linux) if prompted — accept and reboot if asked. Launch Docker Desktop; wait for
+Subsystem for Linux) if prompted; accept and reboot if asked. Launch Docker Desktop; wait for
 "Engine running." Run course commands in **PowerShell** or **Windows Terminal**.
 
 **Linux**
@@ -55,12 +55,12 @@ docker run -d --name web -p 8080:80 nginx
 
 Breaking that down (you'll learn each flag in the modules):
 
-- `-d` — **detached**: run in the background.
-- `--name web` — give the container a friendly name.
-- `-p 8080:80` — **publish** the container's port 80 to your machine's port 8080.
-- `nginx` — the image to run (pulled automatically if not present).
+- `-d`: **detached**, run in the background.
+- `--name web`: give the container a friendly name.
+- `-p 8080:80`: **publish** the container's port 80 to your machine's port 8080.
+- `nginx`: the image to run (pulled automatically if not present).
 
-Open <http://localhost:8080> in your browser — you'll see the nginx welcome page, served from
+Open <http://localhost:8080> in your browser and you'll see the nginx welcome page, served from
 inside a container. Check it's running and read its logs:
 
 ```bash

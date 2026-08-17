@@ -5,7 +5,7 @@ kind cluster.*
 
 ---
 
-Pods are ephemeral — delete one and its container filesystem is gone (same lesson as Docker). For
+Pods are ephemeral: delete one and its container filesystem is gone (same lesson as Docker). For
 databases and any data that must **survive** pod restarts and rescheduling, Kubernetes has a storage
 system: **PersistentVolumes**, **PersistentVolumeClaims**, and **StorageClasses**, plus
 **StatefulSets** for stateful apps.
@@ -15,11 +15,11 @@ system: **PersistentVolumes**, **PersistentVolumeClaims**, and **StorageClasses*
 Kubernetes separates "**I need storage**" from "**here is the actual disk**," so app authors don't
 worry about infrastructure:
 
-- **PersistentVolume (PV)** — a piece of *actual* storage in the cluster (a cloud disk, an NFS share,
+- **PersistentVolume (PV)**: a piece of *actual* storage in the cluster (a cloud disk, an NFS share,
   a local path). Usually provisioned automatically.
-- **PersistentVolumeClaim (PVC)** — a *request* for storage ("I need 5Gi, read-write"). A pod mounts
+- **PersistentVolumeClaim (PVC)**: a *request* for storage ("I need 5Gi, read-write"). A pod mounts
   the **claim**, not a specific disk.
-- **StorageClass** — a *template* describing **how** to provision storage on demand (which disk type,
+- **StorageClass**: a *template* describing **how** to provision storage on demand (which disk type,
   parameters). This enables **dynamic provisioning**: create a PVC and a matching PV is created for
   you automatically.
 
@@ -63,8 +63,8 @@ spec:
       claimName: data
 ```
 
-**Access modes** to know: `ReadWriteOnce` (one node RW — most block storage), `ReadOnlyMany`,
-`ReadWriteMany` (many nodes RW — needs shared storage like NFS).
+**Access modes** to know: `ReadWriteOnce` (one node RW; most block storage), `ReadOnlyMany`,
+`ReadWriteMany` (many nodes RW; needs shared storage like NFS).
 
 ## Lab: prove persistence across pod deletion
 
@@ -80,17 +80,17 @@ kubectl exec writer -- cat /data/note.txt  # → persisted   (survived!)
 kubectl delete pod writer; kubectl delete pvc data
 ```
 
-The data lived in the PV (via the PVC), not the pod — so it outlived the pod.
+The data lived in the PV (via the PVC), not the pod, so it outlived the pod.
 
 ## StatefulSets — for stateful apps
 
 A Deployment's pods are interchangeable and share nothing. But a database cluster needs each replica
 to have a **stable identity** and its **own persistent storage**. That's a **StatefulSet**:
 
-- **Stable network identity** — pods are named predictably: `db-0`, `db-1`, `db-2` (not random).
-- **Stable per-pod storage** — each replica gets its **own** PVC (`data-db-0`, `data-db-1`…) that
+- **Stable network identity**: pods are named predictably: `db-0`, `db-1`, `db-2` (not random).
+- **Stable per-pod storage**: each replica gets its **own** PVC (`data-db-0`, `data-db-1`…) that
   sticks with that identity across restarts.
-- **Ordered, graceful** rollout/scaling — pods start/stop in order (0,1,2…), which databases often
+- **Ordered, graceful** rollout/scaling: pods start/stop in order (0,1,2…), which databases often
   require.
 
 ```yaml
@@ -130,24 +130,24 @@ kubectl delete statefulset db          # note: PVCs are retained by default (dat
 kubectl get pvc                        # still there — delete manually if you truly want them gone
 ```
 
-Notice deleting the StatefulSet **keeps the PVCs** — Kubernetes protects data by default.
+Notice deleting the StatefulSet **keeps the PVCs**: Kubernetes protects data by default.
 
 ## When to use what
 
-- **Deployment** — stateless apps (web servers, APIs). Pods are cattle.
-- **StatefulSet** — databases, queues, anything needing stable identity + own storage.
-- **emptyDir volume** (not shown) — scratch space that lives only as long as the pod (caches, temp).
+- **Deployment**: stateless apps (web servers, APIs). Pods are cattle.
+- **StatefulSet**: databases, queues, anything needing stable identity + own storage.
+- **emptyDir volume** (not shown): scratch space that lives only as long as the pod (caches, temp).
 
 ## Check yourself
 
 1. What's the difference between a PV and a PVC? *(A PV is the actual storage; a PVC is a request for
    storage that a pod mounts. The PVC binds to a PV.)*
-2. What does a StorageClass enable? *(Dynamic provisioning — creating a matching PV automatically when
+2. What does a StorageClass enable? *(Dynamic provisioning: creating a matching PV automatically when
    a PVC is made.)*
 3. Why use a StatefulSet instead of a Deployment for a database? *(Stable pod identities, each with
    its own persistent storage, and ordered rollout.)*
 4. What creates a separate PVC per StatefulSet pod? *(`volumeClaimTemplates`.)*
-5. What happens to PVCs when you delete a StatefulSet? *(They're retained by default — data is
+5. What happens to PVCs when you delete a StatefulSet? *(They're retained by default: data is
    protected; delete them manually if intended.)*
 
 ---
