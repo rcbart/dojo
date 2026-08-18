@@ -1,6 +1,6 @@
-# 1 — Architecture: istiod + the proxies
+# 1: Architecture: istiod + the proxies
 
-*No lab — this is the map. Once you can trace how your YAML becomes proxy behavior, every later
+*No lab; this is the map. Once you can trace how your YAML becomes proxy behavior, every later
 module reads itself. ~15 min.*
 
 ---
@@ -23,39 +23,39 @@ module reads itself. ~15 min.*
 ```
 
 You apply Istio objects to Kubernetes. **istiod** watches them, computes the right Envoy
-configuration, and streams it (plus TLS certificates) to every proxy over **xDS**. The proxies —
-the **data plane** — carry the actual traffic.
+configuration, and streams it (plus TLS certificates) to every proxy over **xDS**. The proxies,
+the **data plane**, carry the actual traffic.
 
-## istiod — the control plane, up close
+## istiod: the control plane, up close
 
 `istiod` is a single component that bundles three jobs (they used to be separate: Pilot, Citadel,
 Galley):
 
 - **Configuration (Pilot).** Watches the Kubernetes API for your Istio objects *and* for services
   and pods coming/going. It converts all of that into Envoy config and pushes updates to every
-  proxy via **xDS** — live, no restarts. This is the bulk of what istiod does.
+  proxy via **xDS**: live, no restarts. This is the bulk of what istiod does.
 - **Certificate Authority (Citadel).** Issues each workload a cryptographic **identity** as an
   X.509 certificate (using the **SPIFFE** standard), and rotates these certs automatically. This is
-  what makes automatic **mTLS** possible — every proxy has a verifiable identity.
+  what makes automatic **mTLS** possible: every proxy has a verifiable identity.
 - **Sidecar injection (webhook).** A Kubernetes "mutating admission webhook": when a pod is created
   in an injection-enabled namespace, istiod automatically edits the pod spec to add the Envoy
   sidecar container. That's why your pods came up as `2/2`.
 
 One process, three hats. In production you run a few replicas of it for high availability.
 
-## The data plane — Envoy, in two roles
+## The data plane: Envoy, in two roles
 
 Same Envoy binary, two placements:
 
-- **Sidecar proxy** — one Envoy per pod, intercepting that pod's traffic (sidecar mode).
-- **Gateway proxy** — standalone Envoys at the mesh edge (the **ingress gateway** for traffic
+- **Sidecar proxy**: one Envoy per pod, intercepting that pod's traffic (sidecar mode).
+- **Gateway proxy**: standalone Envoys at the mesh edge (the **ingress gateway** for traffic
   coming in, **egress gateway** for traffic going out).
 
 Both are just Envoy, configured entirely by istiod. You never write their config directly.
 
 ## How a sidecar hijacks your app's traffic (the clever bit)
 
-Your application code makes a normal network call — it has no idea Istio exists. So how does the
+Your application code makes a normal network call; it has no idea Istio exists. So how does the
 traffic reach the sidecar? When the sidecar is injected, an **init container** programs the pod's
 **iptables** rules so that:
 
@@ -79,7 +79,7 @@ Follow `productpage` calling `reviews`:
    **AuthorizationPolicy**, decrypts, and hands the plain request to the reviews app.
 4. The response returns the same way; **both sidecars record metrics/traces** for the hop.
 
-Every call in the mesh is really *sidecar-to-sidecar*, encrypted, observed, and policy-checked —
+Every call in the mesh is really *sidecar-to-sidecar*, encrypted, observed, and policy-checked,
 with your apps none the wiser.
 
 ## Ambient mode architecture (preview)
@@ -91,7 +91,7 @@ Module 8.
 
 ## The Istio object model (what you'll actually write)
 
-All Istio config is **Kubernetes Custom Resources** (CRDs) — YAML you `kubectl apply`. The families:
+All Istio config is **Kubernetes Custom Resources** (CRDs): YAML you `kubectl apply`. The families:
 
 | Object | Purpose | Module |
 |--------|---------|--------|
@@ -113,11 +113,11 @@ You'll meet the top five constantly. Everything else is refinement.
    iptables rules that transparently redirect in/outbound traffic into Envoy.)*
 3. What does istiod stream to the proxies, and over what? *(Envoy config and certificates, over
    xDS.)*
-4. In the mesh, a call from A to B is really between what? *(A's sidecar and B's sidecar — encrypted
+4. In the mesh, a call from A to B is really between what? *(A's sidecar and B's sidecar, encrypted
    and policy-checked.)*
-5. What form do all Istio config objects take? *(Kubernetes Custom Resources — YAML you apply, like
+5. What form do all Istio config objects take? *(Kubernetes Custom Resources: YAML you apply, like
    VirtualService and DestinationRule.)*
 
 ---
 
-**Next:** [2 — Lab: install & inspect the mesh →](./02-lab-install-and-inject.md)
+**Next:** [2: Lab: install & inspect the mesh →](./02-lab-install-and-inject.md)

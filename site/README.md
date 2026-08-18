@@ -2,7 +2,7 @@
 
 The public face of JavaDojo: landing page, accounts, a professional registration flow,
 an admin console, and the auth-gated dojo app with **progress that syncs to your account**.
-Deliberately separate from the learning code — nothing in `src/` or `content/` knows this
+Deliberately separate from the learning code, nothing in `src/` or `content/` knows this
 layer exists. No third-party dependencies: Node's standard library + built-in SQLite only.
 
 ```
@@ -29,14 +29,14 @@ An existing `data/users.json` from the previous JSON-store version is migrated i
 |------------------|---------------------------------------------------------|
 | `/`              | landing page + sign-in                                  |
 | `/register.html` | full registration (username, password, email, phone, personalization) |
-| `/app`           | the dojo — redirects to sign-in unless authenticated    |
+| `/app`           | the dojo, redirects to sign-in unless authenticated    |
 | `/account.html`  | profile: display name, email, phone, level, goal        |
 | `/admin.html`    | user management + per-user progress (admin only)        |
 
 ## Data model (SQLite, `site/db.js`)
 
-- `users` — username (PK), display_name, email (unique when set), phone, salt, hash, role, active, level, goal, created
-- `progress` — (username, exercise_key) PK, done, completed_at, data; `ON DELETE CASCADE` with users
+- `users`: username (PK), display_name, email (unique when set), phone, salt, hash, role, active, level, goal, created
+- `progress`: (username, exercise_key) PK, done, completed_at, data; `ON DELETE CASCADE` with users
 
 Progress syncs both ways: on entering `/app`, the dojo pulls server progress, merges it with the
 browser's localStorage (done never regresses, latest `completedAt` wins), and pushes local changes
@@ -72,4 +72,4 @@ WCAG AA contrast, visible focus rings, and `prefers-reduced-motion` respected.
 Run behind Caddy/nginx for TLS with `JD_SECURE_COOKIES=1`. SQLite is fine for a single instance; to scale
 out, move to Postgres (schema already designed in `BACKEND_PLAN.md`) and sessions to Redis, add email
 verification, then optionally replace this server with the Spring Boot backend from `LAUNCH_GUIDE.md`
-Phase 2 — its routes and semantics were chosen to match this one.
+Phase 2, its routes and semantics were chosen to match this one.

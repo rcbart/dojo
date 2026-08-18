@@ -26,6 +26,7 @@ const script = read('src/config.js') + '\n'
   + engine('glossary.js')   // must precede app.js: merges terms into KW at load
   + engine('grade.js')
   + engine('feedback.js')
+  + engine('icons.js')   // must precede app.js: ico() is called during render
   + engine('app.js')
   + data
   + engine('boot.js');
@@ -35,7 +36,7 @@ const html = engine('shell.html')
   .replace('@@SCRIPT@@', () => script.replace(/<\/script/gi, '<\\/script')) /* SCRIPT-SAFE: a literal </script> inside content would terminate the inline tag */
   .replace(/<title>[^<]*<\/title>/,
     () => { const m = read('src/config.js').match(/pageTitle:\s*'([^']+)'/);
-            return m ? `<title>${m[1]}</title>` : '<title>Dev Dojo — Master software engineering</title>'; });
+            return m ? `<title>${m[1]}</title>` : '<title>Dev Dojo: Master software engineering</title>'; });
 
 fs.mkdirSync(path.join(ROOT, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'dist/index.html'), html);

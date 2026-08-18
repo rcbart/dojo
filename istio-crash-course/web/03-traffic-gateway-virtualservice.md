@@ -1,4 +1,4 @@
-# 3 — Ingress: Gateway & VirtualService
+# 3: Ingress: Gateway & VirtualService
 
 *Concepts + a lab getting outside traffic into the mesh and routing it. ~25 min. Uses the Bookinfo
 app from Setup.*
@@ -7,15 +7,15 @@ app from Setup.*
 
 Two objects do most traffic work in Istio, and they answer two different questions:
 
-- **Gateway** — "**let traffic in**." It configures an edge Envoy (the ingress gateway) to accept
+- **Gateway**: "**let traffic in**." It configures an edge Envoy (the ingress gateway) to accept
   connections on a port/host/protocol. It's the front door, nothing more.
-- **VirtualService** — "**where does this traffic go?**" The routing rules: match on host/path/
+- **VirtualService**: "**where does this traffic go?**" The routing rules: match on host/path/
   headers and send to a service (optionally a specific version, with rewrites, splits, retries).
 
 A Gateway without a VirtualService is an open door with no directions. You almost always use them
 together.
 
-## Gateway — the front door
+## Gateway: the front door
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -35,9 +35,9 @@ spec:
 ```
 
 This says: on the ingress gateway, open port 80 for HTTP, for any host. It does **not** say where
-requests go — that's the VirtualService's job.
+requests go; that's the VirtualService's job.
 
-## VirtualService — the routing rules
+## VirtualService: the routing rules
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -63,13 +63,13 @@ spec:
 
 Key ideas:
 
-- **`hosts`** — which incoming hostnames these rules apply to.
-- **`gateways`** — bind to a Gateway (for ingress). Omit it / use `mesh` and the rules apply to
-  *internal* service-to-service traffic instead — VirtualServices work east-west too, not just at
+- **`hosts`**: which incoming hostnames these rules apply to.
+- **`gateways`**: bind to a Gateway (for ingress). Omit it / use `mesh` and the rules apply to
+  *internal* service-to-service traffic instead; VirtualServices work east-west too, not just at
   the edge.
-- **`http[].match`** — ordered rules on uri/headers/method/query. **First match wins** (same as raw
+- **`http[].match`**: ordered rules on uri/headers/method/query. **First match wins** (same as raw
   Envoy).
-- **`route[].destination.host`** — the target Kubernetes Service (and optionally a `subset` = a
+- **`route[].destination.host`**: the target Kubernetes Service (and optionally a `subset` = a
   version; Module 4).
 
 ## Lab: expose Bookinfo to the outside
@@ -96,7 +96,7 @@ curl -s "http://localhost:8080/productpage" | grep -o "<title>.*</title>"
 ```
 
 You just reached an in-mesh app from outside, through the ingress gateway. Open
-<http://localhost:8080/productpage> in a browser and refresh a few times — note the **Book Reviews**
+<http://localhost:8080/productpage> in a browser and refresh a few times, and note the **Book Reviews**
 box sometimes shows stars, sometimes not: that's the three `reviews` versions being hit
 round-robin. We'll take control of that in Module 4.
 
@@ -109,18 +109,18 @@ curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:8080/"          # 404
 curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:8080/productpage" # 200 — matched
 ```
 
-Only the paths you listed are reachable — the gateway is a controlled front door, not a wide-open
+Only the paths you listed are reachable: the gateway is a controlled front door, not a wide-open
 proxy.
 
 ### Experiments
 
 1. **Add a path.** Edit the VirtualService to also expose `prefix: /api/v1/products` responses (it
-   already is) — try changing a `prefix` to something wrong, re-apply, and watch that route 404.
+   already is), then try changing a `prefix` to something wrong, re-apply, and watch that route 404.
 2. **Host-based routing.** Change `hosts` to `bookinfo.local` and re-run curl with
-   `-H "Host: bookinfo.local"`. Only requests with that Host now match — how one gateway serves many
+   `-H "Host: bookinfo.local"`. Only requests with that Host now match, which is how one gateway serves many
    sites.
 3. **`istioctl analyze` a mistake.** Point the VirtualService `gateways` at a name that doesn't
-   exist, apply, and run `istioctl analyze` — it flags the dangling reference.
+   exist, apply, and run `istioctl analyze`: it flags the dangling reference.
 
 ## Check yourself
 
@@ -135,4 +135,4 @@ proxy.
 
 ---
 
-**Next:** [4 — DestinationRule & canary releases →](./04-traffic-destinationrule-canary.md)
+**Next:** [4: DestinationRule & canary releases →](./04-traffic-destinationrule-canary.md)

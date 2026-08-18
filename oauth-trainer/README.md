@@ -4,7 +4,7 @@ A hands-on **command-line tool for learning the building blocks of OAuth 2.0 / O
 built in Java, one phase at a time, on the plain JDK so nothing is hidden behind a library.
 
 > **Phase 1 (this release): key generation.** Generate an **RSA-2048** or **EC P-256** signing key
-> pair (or both) and export each as a **JSON Web Key (JWK)** — the format an OAuth Authorization
+> pair (or both) and export each as a **JSON Web Key (JWK)**, the format an OAuth Authorization
 > Server publishes to sign tokens and that clients use to verify them.
 
 ---
@@ -18,7 +18,7 @@ trust them. Signing needs a **key pair**:
 - the **public key** verifies them (published for everyone at a "JWKS" endpoint).
 
 Those keys are shared in a standard JSON shape called a **JWK** (RFC 7517). Phase 1 is about
-producing correct JWKs and understanding exactly what's inside them — because everything later
+producing correct JWKs and understanding exactly what's inside them, because everything later
 (signing, verifying, token validation) builds on these keys.
 
 ## What Phase 1 produces
@@ -33,12 +33,12 @@ For each key type it writes **two files**:
 RSA and EC are the two dominant JWT signing families:
 
 - **RSA-2048** → JWS algorithm **RS256**. The classic default; larger keys/signatures.
-- **EC P-256** → JWS algorithm **ES256**. Modern elliptic-curve keys — far smaller for the same
+- **EC P-256** → JWS algorithm **ES256**. Modern elliptic-curve keys, far smaller for the same
   security level.
 
 ## Build
 
-**With a JDK only (no Maven needed — Phase 1 has zero dependencies):**
+**With a JDK only (no Maven needed: Phase 1 has zero dependencies):**
 
 ```bash
 ./build.sh
@@ -113,13 +113,13 @@ A public EC JWK looks like:
 
 | Field | Meaning |
 |-------|---------|
-| `kty` | **Key type** — `RSA` or `EC`. |
-| `use` | **Use** — `sig` means this key is for signatures (vs `enc` for encryption). |
-| `alg` | **Algorithm** — the JWS signing algorithm: `RS256` (RSA) or `ES256` (EC P-256). |
-| `kid` | **Key ID** — a stable identifier so a verifier can pick the right key. Here it's the **RFC 7638 thumbprint**: a SHA-256 fingerprint of the key, so the same key always gets the same id. |
+| `kty` | **Key type**: `RSA` or `EC`. |
+| `use` | **Use**, `sig` means this key is for signatures (vs `enc` for encryption). |
+| `alg` | **Algorithm**, the JWS signing algorithm: `RS256` (RSA) or `ES256` (EC P-256). |
+| `kid` | **Key ID**, a stable identifier so a verifier can pick the right key. Here it's the **RFC 7638 thumbprint**: a SHA-256 fingerprint of the key, so the same key always gets the same id. |
 | `n`, `e` | **RSA** public key: the modulus (`n`) and public exponent (`e`, usually `AQAB` = 65537). |
 | `d`, `p`, `q`, `dp`, `dq`, `qi` | **RSA** private parameters (only in the private JWK). |
-| `crv` | **EC** curve name — `P-256`. |
+| `crv` | **EC** curve name: `P-256`. |
 | `x`, `y` | **EC** public point coordinates (32 bytes each for P-256). |
 | `d` | **EC** private key scalar (only in the private JWK). |
 
@@ -186,13 +186,13 @@ matching public key.
 
 ## Roadmap
 
-- **Phase 1 — Key generation (done).** RSA-2048 / EC P-256 → public + private JWK files.
-- **Phase 2 — Build a JWT with custom claims (done).** The `sign` command constructs a token with
+- **Phase 1: Key generation (done).** RSA-2048 / EC P-256 → public + private JWK files.
+- **Phase 2: Build a JWT with custom claims (done).** The `sign` command constructs a token with
   `iss`, `sub`, `aud`, `exp`, and a custom `role` claim. The plain-English explanation of every
   claim is delivered as a lesson in the JavaDojo *OAuth, JWT & JOSE* module (`jose2`).
-- **Phase 3 — Sign the JWT, RS256 vs ES256 (done).** `sign` signs the same token with each
+- **Phase 3: Sign the JWT, RS256 vs ES256 (done).** `sign` signs the same token with each
   algorithm and prints the **token size** and average **signing time** for each (see above).
-- **Next — Verify & JWE.** A `verify` command (fetch a JWKS from a local well-known endpoint, select
+- **Next: Verify & JWE.** A `verify` command (fetch a JWKS from a local well-known endpoint, select
   the JWK by `kid`, check signature + claims) and a `jwe` command (encrypt with RSA-OAEP + A256GCM)
   — both already taught, with runnable exercises, in the JavaDojo module.
 

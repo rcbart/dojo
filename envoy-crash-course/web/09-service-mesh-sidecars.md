@@ -1,7 +1,7 @@
-# 09 — Service mesh & sidecars
+# 09: Service mesh & sidecars
 
 *The largest-scale way Envoy is deployed. Concepts + an optional hands-on with Istio. ~25 min.
-The lab needs the Module 08 kind cluster + `istioctl` (optional — the concepts stand alone).*
+The lab needs the Module 08 kind cluster + `istioctl` (optional; the concepts stand alone).*
 
 ---
 
@@ -15,13 +15,13 @@ Give **every** service instance its own Envoy, sitting directly beside it. The a
 only to its local Envoy (localhost); the Envoy handles the real network. Because *both* ends of
 every call are Envoys, the mesh can uniformly provide, with **zero application code**:
 
-- **mTLS everywhere** — every hop is mutually-authenticated TLS. Services get encryption + identity
+- **mTLS everywhere**: every hop is mutually-authenticated TLS. Services get encryption + identity
   for free (the `UpstreamTlsContext`/`DownstreamTlsContext` from Module 03, automated).
-- **Traffic policy** — retries, timeouts, circuit breaking, canary/traffic-splitting (Module 05),
+- **Traffic policy**: retries, timeouts, circuit breaking, canary/traffic-splitting (Module 05),
   applied by config, per route, across the whole fleet.
-- **Observability** — consistent metrics, logs, and distributed traces for *every* call (Module
+- **Observability**: consistent metrics, logs, and distributed traces for *every* call (Module
   06), since every hop passes through an Envoy.
-- **Authorization** — allow/deny which service may call which, by identity.
+- **Authorization**: allow/deny which service may call which, by identity.
 
 The mesh has the two halves you already know: the **data plane** (all those Envoys) and the
 **control plane** (which programs them via xDS). The dominant control plane is **Istio** (its
@@ -33,10 +33,10 @@ mesh too, but uses its *own* Rust micro-proxy rather than Envoy.
 Classic meshes inject a full Envoy **sidecar** container into every pod. That model buys a lot but costs
 CPU/memory per pod and adds a hop of latency. Istio's newer **ambient mode** splits the job:
 
-- **Sidecar mode** — one Envoy per pod. Full L7 features everywhere; higher per-pod overhead.
-- **Ambient mode** — no per-pod sidecar. A per-node L4 proxy called **ztunnel** (written in Rust)
+- **Sidecar mode**: one Envoy per pod. Full L7 features everywhere; higher per-pod overhead.
+- **Ambient mode**: no per-pod sidecar. A per-node L4 proxy called **ztunnel** (written in Rust)
   handles mTLS + L4 for all pods on the node cheaply; L7 features (HTTP routing, retries, L7
-  policy) are added only where needed via a **waypoint proxy** — *which is a full Envoy*, typically
+  policy) are added only where needed via a **waypoint proxy**, *which is a full Envoy*, typically
   one per namespace. So Envoy is still the L7 engine; it's just no longer in every pod.
 
 The trade-off: ambient cuts resource use and latency dramatically and simplifies upgrades, at the
@@ -47,7 +47,7 @@ are Envoy-powered at L7.
 
 In sidecar mode, an init container programs iptables so the pod's outbound and inbound traffic is
 transparently redirected to the Envoy's ports (commonly `:15001` outbound, `:15006` inbound). The
-app is unaware — it thinks it's talking directly to the other service; really every packet detours
+app is unaware: it thinks it's talking directly to the other service; really every packet detours
 through the local Envoy, which applies mTLS and policy, then forwards. `istiod` streams each
 sidecar its config over xDS, keyed by the pod's identity and the mesh's routing rules.
 
@@ -55,14 +55,14 @@ sidecar its config over xDS, keyed by the pod's identity and the mesh's routing 
 
 On top of (or alongside) the Gateway API, Istio adds CRDs that become Envoy config:
 
-- **VirtualService** — routing rules (match → destination, weighted splits, retries, faults) —
+- **VirtualService**: routing rules (match → destination, weighted splits, retries, faults),
   Module 04/05 concepts as mesh YAML.
-- **DestinationRule** — per-destination policy: load-balancer choice, connection pools, outlier
-  detection, subsets (versions) — Module 05 concepts.
-- **PeerAuthentication / AuthorizationPolicy** — mTLS mode and who-may-call-whom.
-- **Gateway** (Istio's own, or the k8s Gateway API) — edge ingress.
+- **DestinationRule**: per-destination policy: load-balancer choice, connection pools, outlier
+  detection, subsets (versions), all Module 05 concepts.
+- **PeerAuthentication / AuthorizationPolicy**: mTLS mode and who-may-call-whom.
+- **Gateway** (Istio's own, or the k8s Gateway API): edge ingress.
 
-A canary is then just a VirtualService weighting 95% to `v1` / 5% to `v2` — Envoy does the split on
+A canary is then just a VirtualService weighting 95% to `v1` / 5% to `v2`; Envoy does the split on
 every sidecar.
 
 ## Optional lab: install Istio and inject a sidecar
@@ -90,7 +90,7 @@ istioctl proxy-config clusters  deploy/echo      # its clusters (CDS)
 istioctl proxy-config secret    deploy/echo      # its mTLS certs (SDS)
 ```
 
-Add a `VirtualService` splitting traffic between two versions and you've built a canary — all of it
+Add a `VirtualService` splitting traffic between two versions and you've built a canary: all of it
 just Envoy config generated by `istiod` and pushed via xDS. Clean up with
 `kind delete cluster --name envoy-lab`.
 
@@ -98,7 +98,7 @@ just Envoy config generated by `istiod` and pushed via xDS. Clean up with
 
 A mesh earns its complexity when you have **many** services needing uniform mTLS, traffic policy,
 and observability without touching each app. For a handful of services, an edge gateway (Module 08)
-plus per-app retries is often enough. Meshes do a lot but are not free — start at the edge, add a
+plus per-app retries is often enough. Meshes do a lot but are not free: start at the edge, add a
 mesh when the cross-cutting needs justify it. Ambient mode exists precisely to lower that cost.
 
 ## Check yourself
@@ -107,12 +107,12 @@ mesh when the cross-cutting needs justify it. Ambient mode exists precisely to l
    service-to-service traffic, not just the edge.)*
 2. Name three things a mesh gives you with no app code changes. *(mTLS everywhere, traffic policy
    /retries/canary, uniform observability; also authz.)*
-3. Sidecar vs ambient mode — the key difference? *(A full Envoy per pod vs a per-node Rust L4
+3. Sidecar vs ambient mode: the key difference? *(A full Envoy per pod vs a per-node Rust L4
    proxy (ztunnel) plus per-namespace Envoy waypoints for L7.)*
 4. How does a sidecar intercept the app's traffic transparently? *(iptables redirects in/outbound
    traffic to the local Envoy's ports; the app is unaware.)*
-5. What programs all those sidecars? *(The control plane — e.g. istiod — via xDS.)*
+5. What programs all those sidecars? *(The control plane, e.g. istiod, via xDS.)*
 
 ---
 
-**Next:** [10 — Debugging, gotchas & next steps →](./10-debugging-gotchas-next-steps.md)
+**Next:** [10: Debugging, gotchas & next steps →](./10-debugging-gotchas-next-steps.md)

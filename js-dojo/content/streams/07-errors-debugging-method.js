@@ -35,7 +35,7 @@ catch (e) { throw new Error("loading the dashboard failed", { cause: e }); }
 <h4>Messages that help</h4>
 <p>A good message names <b>what was being attempted</b>, <b>with what</b>, and <b>what went wrong</b>.
 "Invalid input" tells the next reader nothing. "Expected port to be a number between 1 and 65535, got
-'abc'" tells them everything, including the value — and the value is the part people leave out.</p>
+'abc'" tells them everything, including the value, and the value is the part people leave out.</p>
 <p>The exception: never put secrets, tokens or personal data in a message. Errors end up in logs,
 in monitoring systems, and sometimes in front of users.</p>
 
@@ -56,7 +56,7 @@ catch (e) {
 <p>Custom types let callers branch on <b>what kind</b> of failure occurred without matching on message
 strings, which break the moment someone improves the wording. Set <code>name</code> explicitly:
 it is inherited, so without that line your subclass reports itself as <code>"Error"</code> in every log.</p>`,
-docs:[['MDN — Error','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error'],['MDN — Error.cause','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause'],['MDN — Error types','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors']],
+docs:[['MDN (Error)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error'],['MDN (Error.cause)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause'],['MDN (Error types)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors']],
 ex:{title:'Diagnose from the error type',diff:'easy',lang:'js',
 run:{call:'diagnose',cases:[
  {name:'a TypeError points at a wrong assumption',args:['TypeError'],expect:'something you assumed existed did not'},
@@ -78,12 +78,12 @@ solution:`function diagnose(errorName) {
   }
 }`,
 tests:[{d:'handles TypeError',re:'"TypeError"'},{d:'handles ReferenceError',re:'"ReferenceError"'},{d:'handles SyntaxError',re:'"SyntaxError"'},{d:'has a default for custom errors',re:'default'}],
-behavior:`The default case matters more than it looks: a custom error class is the common case in real applications, and the type alone tells you nothing — which is exactly why setting a meaningful name and attaching structured fields is worth the four lines.`,
+behavior:`The default case matters more than it looks: a custom error class is the common case in real applications, and the type alone tells you nothing, which is exactly why setting a meaningful name and attaching structured fields is worth the four lines.`,
 hints:['A switch with one case per built-in type.','The default covers custom error classes.','TypeError is the one you will see most often.']}},
 
 {id:'js27',title:'throw, try, catch, finally',body:`
 <p>Throwing unwinds the stack until something catches it. Nothing between the throw and the catch
-continues — which is the point, and also the hazard.</p>
+continues, which is the point, and also the hazard.</p>
 
 <div class="codeSample" data-hl>try {
   risky();
@@ -96,7 +96,7 @@ continues — which is the point, and also the hazard.</p>
 <h4>What <code>finally</code> guarantees, and its one trap</h4>
 <p><code>finally</code> runs whether the block succeeded, threw, or returned. That makes it the right
 place for releasing a lock, closing a handle or clearing a flag. The trap is that a
-<code>return</code> inside <code>finally</code> <b>overrides</b> everything — including an in-flight
+<code>return</code> inside <code>finally</code> <b>overrides</b> everything, including an in-flight
 exception, which it silently discards:</p>
 <div class="codeSample" data-hl>function bad() {
   try { throw new Error("boom"); }
@@ -117,12 +117,12 @@ try {
   throw e;                                      // I do not. not mine.
 }</div>
 <p>A catch block that neither recovers, nor adds context, nor re-throws has <b>removed information</b> from
-the program. If you cannot say what the handler does about the failure, do not write it — let the error
+the program. If you cannot say what the handler does about the failure, do not write it; let the error
 travel to somewhere that can.</p>
 
 <h4>Where the boundaries go</h4>
 <p>Catch at <b>boundaries</b>, not everywhere. A request handler, a job runner, a UI event handler, a CLI
-entry point: these are places where a failure has a defined response — return a 500, retry the job, show
+entry point: these are places where a failure has a defined response: return a 500, retry the job, show
 a message, exit non-zero. Deep utility functions should generally throw and say why.</p>
 
 <h4>Errors are for exceptional cases</h4>
@@ -133,10 +133,10 @@ function find2(id) { return row ?? null; }         // often better
 // throwing is right when continuing would be WRONG:
 //   invalid arguments, a broken invariant, an unusable configuration
 // returning null/Result is right when absence is a normal answer.</div>
-<p>The cost of throwing is that it is invisible in the signature — nothing tells a caller a function can
+<p>The cost of throwing is that it is invisible in the signature: nothing tells a caller a function can
 throw, and JavaScript has no checked exceptions. So document it, or return a value the type system (or
 the reader) can see.</p>`,
-docs:[['MDN — try...catch','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch'],['MDN — throw','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/throw']],
+docs:[['MDN, try...catch','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch'],['MDN, throw','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/throw']],
 exs:[
 {title:'Catch only what you understand',diff:'easy',lang:'js',
 run:{call:'parseOrRethrow',cases:[
@@ -179,7 +179,7 @@ solution:`function withCleanup(shouldFail) {
   return out;               // the return lives OUTSIDE finally
 }`,
 tests:[{d:'uses try',re:'try\\s*\\{'},{d:'catches the failure',re:'catch'},{d:'cleans up in finally',re:'finally'},{d:'does not return from finally',re:'finally\\s*\\{[^}]*return',not:true}],
-behavior:`Both paths execute twice, and every call must end in "|cleaned" — accumulating into a variable declared OUTSIDE the function would pass the first call and fail the third. The regex check for a return inside finally is deliberate: returning there would discard the exception entirely and make the failure invisible, which is the trap this lesson exists to prevent.`,
+behavior:`Both paths execute twice, and every call must end in "|cleaned"; accumulating into a variable declared OUTSIDE the function would pass the first call and fail the third. The regex check for a return inside finally is deliberate: returning there would discard the exception entirely and make the failure invisible, which is the trap this lesson exists to prevent.`,
 hints:['Accumulate into a variable declared before the try.','finally runs on both paths, so put the cleanup there.','Return after the whole try/catch/finally, never inside finally.']}]},
 
 {id:'js28',title:'Async errors, and why they escape',body:`
@@ -230,8 +230,8 @@ p.then(() =&gt; { throw new Error("x"); });        // unhandled
 // 4. Promise.all - one rejection wins and the OTHERS keep running.
 //    their failures become unhandled rejections of their own.
 await Promise.allSettled(tasks);                // when partials are fine</div>
-<p>Since Node 15, an <b>unhandled rejection terminates the process</b>. That is the correct default — a
-program in an unknown state should stop — but it means a forgotten <code>await</code> is now a crash
+<p>Since Node 15, an <b>unhandled rejection terminates the process</b>. That is the correct default (a
+program in an unknown state should stop), but it means a forgotten <code>await</code> is now a crash
 rather than a warning.</p>
 
 <h4>The last line of defence</h4>
@@ -247,9 +247,9 @@ program's state is unknown; continuing risks corrupting data in ways far worse t
 
 <h4>Async stack traces</h4>
 <p>Modern V8 stitches asynchronous frames together, so an <code>await</code> chain gives you a trace that
-crosses the boundary. Callback-based code does not — which is one more practical reason to convert old
+crosses the boundary. Callback-based code does not, which is one more practical reason to convert old
 APIs to promises rather than living with them.</p>`,
-docs:[['MDN — Using promises: error handling','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises#error_handling'],['Node — unhandledRejection','https://nodejs.org/api/process.html#event-unhandledrejection'],['V8 — async stack traces','https://v8.dev/blog/fast-async']],
+docs:[['MDN (Using promises: error handling)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises#error_handling'],['Node (unhandledRejection)','https://nodejs.org/api/process.html#event-unhandledrejection'],['V8 (async stack traces)','https://v8.dev/blog/fast-async']],
 ex:{title:'Will this error be caught?',diff:'easy',lang:'js',
 run:{call:'caught',cases:[
  {name:'a synchronous throw inside try',args:['sync-throw'],expect:true},
@@ -274,11 +274,11 @@ solution:`function caught(scenario) {
   }
 }`,
 tests:[{d:'a synchronous throw is caught',re:'"sync-throw"'},{d:'an awaited rejection is caught',re:'"await-reject"'},{d:'a handled chain is caught',re:'"then-catch"'},{d:'everything else escapes',re:'default'}],
-behavior:`Seven scenarios execute. The three that escape are the three that appear in real code most often — a throw inside a timer, a promise nobody awaited, and an async callback handed to forEach — and since Node 15 the last two terminate the process rather than warning.`,
+behavior:`Seven scenarios execute. The three that escape are the three that appear in real code most often (a throw inside a timer, a promise nobody awaited, and an async callback handed to forEach), and since Node 15 the last two terminate the process rather than warning.`,
 hints:['Only three scenarios are caught; list them and default the rest.','await is what brings a rejection back onto your own stack.','forEach discards the promises its callback returns.']}},
 
 {id:'js29',title:'Reading a stack trace, and the debugging method',body:`
-<p>Debugging is a skill with a procedure, and most people never learn the procedure — they read the code
+<p>Debugging is a skill with a procedure, and most people never learn the procedure: they read the code
 and guess. Guessing works on small bugs and fails completely on the ones that matter.</p>
 
 <h4>Reading the trace</h4>
@@ -293,13 +293,13 @@ and guess. Guessing works on small bugs and fails completely on the ones that ma
 // the first line IN YOUR CODE is usually where to look, even when
 // the top frames are inside a library.</div>
 <p>Read the message precisely. <i>Cannot read properties of undefined (reading 'city')</i> does not mean
-<code>city</code> is undefined — it means <b>the thing you read <code>city</code> from</b> was undefined.
+<code>city</code> is undefined; it means <b>the thing you read <code>city</code> from</b> was undefined.
 That distinction points at a different line, and misreading it is the single most common wasted hour in
 JavaScript.</p>
 
 <h4>The method</h4>
 <p><b>1. Reproduce it.</b> A bug you cannot trigger on demand cannot be verified as fixed. Get to a
-reliable reproduction before changing anything — this is the step people skip and the one that decides
+reliable reproduction before changing anything; this is the step people skip and the one that decides
 how long the rest takes.</p>
 <p><b>2. Read the error properly.</b> Type, message, first frame in your code. Do not skim it.</p>
 <p><b>3. Form one hypothesis.</b> A specific, falsifiable statement: "<code>user.address</code> is
@@ -335,9 +335,9 @@ console.count("hit")             // how many times did this run?
 // and: log OBJECTS, not interpolated strings.
 console.log("user:", user);      // inspectable, expandable
 console.log(\`user: \${user}\`);    // "user: [object Object]" - useless</div>
-<p>All of these beat a bare <code>log</code>, and all of them are beaten by a breakpoint — which is the
+<p>All of these beat a bare <code>log</code>, and all of them are beaten by a breakpoint, which is the
 next stream.</p>`,
-docs:[['MDN — Console API','https://developer.mozilla.org/en-US/docs/Web/API/console'],['MDN — Error.prototype.stack','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/Stack'],['git bisect','https://git-scm.com/docs/git-bisect']],
+docs:[['MDN, Console API','https://developer.mozilla.org/en-US/docs/Web/API/console'],['MDN, Error.prototype.stack','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/Stack'],['git bisect','https://git-scm.com/docs/git-bisect']],
 exs:[
 {title:'Find the failing frame',diff:'easy',lang:'js',
 run:{call:'firstOwnFrame',cases:[
@@ -356,7 +356,7 @@ solution:`function firstOwnFrame(frames, libraryMarker) {
   return "no application frame";
 }`,
 tests:[{d:'scans the frames in order',re:'for\\s*\\('},{d:'skips library frames',re:'includes\\s*\\(\\s*libraryMarker'},{d:'reports when there is none',re:'"no application frame"'}],
-behavior:`Order is executed: the frames must be scanned top-down, because the first application frame is the one to open. This is exactly what DevTools blackboxing automates — hiding library frames so the top of the trace is your own code.`,
+behavior:`Order is executed: the frames must be scanned top-down, because the first application frame is the one to open. This is exactly what DevTools blackboxing automates: hiding library frames so the top of the trace is your own code.`,
 hints:['Scan in order and return the first non-library frame.','includes() tests whether a frame is from a library.','Falling through the loop means every frame was a library frame.']},
 {title:'Bisect a range',diff:'medium',lang:'js',
 run:{call:'bisectSteps',cases:[
@@ -365,7 +365,7 @@ run:{call:'bisectSteps',cases:[
  {name:'eight take three',args:[8],expect:3},
  {name:'a thousand commits take ten',args:[1000],expect:10},
  {name:'rounds up for non-powers of two',args:[5],expect:3}]},
-prompt:`Write <code>function bisectSteps(n)</code> returning how many halvings are needed to isolate one item among <code>n</code> — that is, <code>Math.ceil(Math.log2(n))</code>. One candidate needs zero steps.`,
+prompt:`Write <code>function bisectSteps(n)</code> returning how many halvings are needed to isolate one item among <code>n</code>: that is, <code>Math.ceil(Math.log2(n))</code>. One candidate needs zero steps.`,
 starter:`function bisectSteps(n) {
   return 0;
 }`,
@@ -373,7 +373,7 @@ solution:`function bisectSteps(n) {
   return Math.ceil(Math.log2(n));   // log2(1) is 0, so the base case is free
 }`,
 tests:[{d:'uses a base-2 logarithm',re:'Math\\.log2'},{d:'rounds up to a whole step',re:'Math\\.ceil'}],
-behavior:`The 1000 case is the argument for the technique: ten steps to find one bad commit among a thousand. That is why git bisect is worth reaching for the moment you have no hypothesis — it converts an unbounded search into a bounded one.`,
+behavior:`The 1000 case is the argument for the technique: ten steps to find one bad commit among a thousand. That is why git bisect is worth reaching for the moment you have no hypothesis; it converts an unbounded search into a bounded one.`,
 hints:['Halving repeatedly is a base-2 logarithm.','A partial step still costs a whole step, so round up.','log2(1) is 0, which gives the single-candidate case for free.']}]}
 
 ]});

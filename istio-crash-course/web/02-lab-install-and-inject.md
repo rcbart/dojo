@@ -1,4 +1,4 @@
-# 2 — Lab: install & inspect the mesh
+# 2: Lab: install & inspect the mesh
 
 *Hands-on. You'll confirm Istio is running, see a sidecar get injected, and use `istioctl` to look
 at the Envoy config istiod generated. ~20 min. Assumes you finished the Setup page.*
@@ -31,7 +31,7 @@ kubectl -n default run demo --image=nginx --restart=Never
 kubectl -n default get pod demo            # READY 2/2  — app + istio-proxy
 ```
 
-The difference — `1/1` vs `2/2` — is the injector webhook adding an Envoy container. Prove it:
+The difference (`1/1` vs `2/2`) is the injector webhook adding an Envoy container. Prove it:
 
 ```bash
 kubectl -n default get pod demo -o jsonpath='{.spec.containers[*].name}'
@@ -56,7 +56,7 @@ is a red flag (Module 10).
 
 ## 4. Look at the Envoy config istiod generated
 
-You wrote no Envoy config — istiod did. Inspect what a sidecar actually received. Pick the
+You wrote no Envoy config; istiod did. Inspect what a sidecar actually received. Pick the
 `productpage` pod:
 
 ```bash
@@ -68,7 +68,7 @@ istioctl proxy-config clusters  $PP        # upstream services it knows about
 istioctl proxy-config endpoints $PP        # the actual pod IPs behind each service
 ```
 
-Everything you learned in the Envoy course (listeners → routes → clusters → endpoints) is here —
+Everything you learned in the Envoy course (listeners → routes → clusters → endpoints) is here,
 except **you never wrote it**. istiod discovered every service in the cluster and generated it.
 Notice clusters for `reviews`, `details`, `ratings`, etc., each with real endpoint IPs.
 
@@ -98,31 +98,31 @@ for i in $(seq 1 20); do
 kubectl exec $PP -c istio-proxy -- curl -s localhost:15000/stats | grep -E "reviews.*upstream_rq_total"
 ```
 
-You're looking at the exact Envoy stats from the Envoy course — now auto-generated inside a mesh.
+You're looking at the exact Envoy stats from the Envoy course, now auto-generated inside a mesh.
 
 ## Experiments
 
 1. **Break injection ordering.** Deploy an app to a namespace *before* labelling it, note `1/1`,
-   then label it and `kubectl rollout restart` the deployment — it comes back `2/2`. Injection
+   then label it and `kubectl rollout restart` the deployment: it comes back `2/2`. Injection
    happens at pod *creation*, so existing pods must be recreated.
 2. **Diff two proxies.** Run `istioctl proxy-config clusters` for `productpage` vs `ratings`. They
-   differ — each proxy only gets the config relevant to its workload, computed by istiod.
-3. **Trigger `analyze`.** Run `istioctl analyze -n default` — it scans your config for problems and
+   differ, because each proxy only gets the config relevant to its workload, computed by istiod.
+3. **Trigger `analyze`.** Run `istioctl analyze -n default`: it scans your config for problems and
    prints warnings. You'll use this constantly (Module 10).
 
 ## Check yourself
 
 1. What single thing controls whether a pod gets a sidecar? *(The namespace's
    `istio-injection=enabled` label, applied before the pod is created.)*
-2. What does `2/2` vs `1/1` tell you? *(Two containers — app + injected istio-proxy — vs no
+2. What does `2/2` vs `1/1` tell you? *(Two containers (app + injected istio-proxy) vs no
    sidecar.)*
 3. What does `istioctl proxy-status` show? *(Each proxy and whether it's SYNCED with istiod's latest
    config.)*
 4. Who wrote the listeners/routes/clusters you saw with `istioctl proxy-config`? *(istiod generated
-   them from discovered services — you didn't.)*
+   them from discovered services; you didn't.)*
 5. What identity format does each workload get? *(A SPIFFE URI, e.g.
    spiffe://cluster.local/ns/default/sa/…, used for mTLS and authz.)*
 
 ---
 
-**Next:** [3 — Ingress: Gateway & VirtualService →](./03-traffic-gateway-virtualservice.md)
+**Next:** [3: Ingress: Gateway & VirtualService →](./03-traffic-gateway-virtualservice.md)

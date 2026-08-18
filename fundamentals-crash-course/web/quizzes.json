@@ -11,7 +11,7 @@
    "answer": 1,
    "why": "North–south crosses your edge (users, partners → your system); east–west stays inside (service to service). The tools differ: CDN/LB/gateway for north–south, service mesh for east–west.",
    "whyWrong": [
-    "Both directions can and should be encrypted — encryption isn't what the terms describe.",
+    "Both directions can and should be encrypted, encryption isn't what the terms describe.",
     "",
     "Direction of data transfer isn't the distinction; both kinds carry both.",
     "The IP version is irrelevant to the north–south/east–west split."
@@ -43,11 +43,11 @@
     "It's arbitrary; the order doesn't matter"
    ],
    "answer": 1,
-   "why": "The CDN is the outermost ring because a cache hit at the edge means your origin — including the load balancer — never sees the request. The cheapest request is the one that never arrives.",
+   "why": "The CDN is the outermost ring because a cache hit at the edge means your origin, including the load balancer, never sees the request. The cheapest request is the one that never arrives.",
    "whyWrong": [
     "Age has nothing to do with placement; jobs determine order.",
     "",
-    "Load balancers terminate TLS routinely — that's not the reason.",
+    "Load balancers terminate TLS routinely, that's not the reason.",
     "The order is the point: each ring exists to shed work from the rings behind it."
    ]
   }
@@ -62,9 +62,9 @@
     "L7 requires special hardware"
    ],
    "answer": 1,
-   "why": "L4 forwards bytes between addresses without understanding them — fast and protocol-agnostic. L7 parses the protocol, so it can send /api/ one way and /images/ another, retry a GET, or split traffic for a canary.",
+   "why": "L4 forwards bytes between addresses without understanding them, fast and protocol-agnostic. L7 parses the protocol, so it can send /api/ one way and /images/ another, retry a GET, or split traffic for a canary.",
    "whyWrong": [
-    "L7 does more work per request — it's the slower, smarter one.",
+    "L7 does more work per request, it's the slower, smarter one.",
     "",
     "L4 balancers sit at the public edge of most large systems.",
     "Both are ordinary software; Envoy does both on any machine."
@@ -90,7 +90,7 @@
   {
    "q": "Your /healthz handler checks that the database is reachable. During a 30-second database blip, what does the load balancer do to your fleet?",
    "options": [
-    "Nothing — health checks don't run that often",
+    "Nothing, health checks don't run that often",
     "It removes every server at once, because they all fail the same dependency check, turning a wobble into an outage",
     "It doubles the traffic to compensate",
     "It restarts the database"
@@ -98,10 +98,10 @@
    "answer": 1,
    "why": "Every server reports the same dependency failure simultaneously, so the balancer drains the entire pool. Health checks should verify what the server itself controls; dependency health belongs in separate signals.",
    "whyWrong": [
-    "Checks typically run every few seconds — well within a 30-second blip.",
+    "Checks typically run every few seconds, well within a 30-second blip.",
     "",
     "Balancers don't create capacity or traffic; they only distribute what arrives.",
-    "A load balancer has no idea the database exists — it only sees the check fail."
+    "A load balancer has no idea the database exists, it only sees the check fail."
    ]
   }
  ],
@@ -115,10 +115,10 @@
     "Recalculating cart totals"
    ],
    "answer": 2,
-   "why": "Cross-cutting policy — authn at the edge, quotas, routing, TLS, observability — is exactly the front desk's job: every service would otherwise implement it identically.",
+   "why": "Cross-cutting policy, authn at the edge, quotas, routing, TLS, observability, is exactly the front desk's job: every service would otherwise implement it identically.",
    "whyWrong": [
     "Aggregation is an application; that's what a backend-for-frontend service is for.",
-    "Tier-based behavior is business logic — it changes when the product changes, so it belongs in a service someone owns.",
+    "Tier-based behavior is business logic, it changes when the product changes, so it belongs in a service someone owns.",
     "",
     "Money math is core business logic; the gateway should never know what a cart is."
    ]
@@ -127,12 +127,12 @@
    "q": "What was the ESB, and why does it come up in gateway discussions?",
    "options": [
     "An early load balancer that couldn't do TLS",
-    "The enterprise service bus — middleware that gradually absorbed business logic until nobody could change anything; the cautionary tale for gateways",
+    "The enterprise service bus, middleware that gradually absorbed business logic until nobody could change anything; the cautionary tale for gateways",
     "A Kubernetes component replaced by Ingress",
     "A CDN feature for APIs"
    ],
    "answer": 1,
-   "why": "The ESB ate a generation of architectures by centralizing logic in shared middleware. A gateway that accumulates orchestration and business rules is rebuilding it in YAML — which is why the should-not list exists.",
+   "why": "The ESB ate a generation of architectures by centralizing logic in shared middleware. A gateway that accumulates orchestration and business rules is rebuilding it in YAML, which is why the should-not list exists.",
    "whyWrong": [
     "It wasn't a load balancer; it was integration middleware.",
     "",
@@ -143,15 +143,15 @@
   {
    "q": "When does an INTERNAL gateway earn its place?",
    "options": [
-    "Always — every microservice should sit behind one",
+    "Always, every microservice should sit behind one",
     "When a domain inside the company (say, a payments platform) is consumed by many other teams and needs stable routes, quotas, and an audit trail",
     "Whenever you install a service mesh",
     "When the external gateway is overloaded"
    ],
    "answer": 1,
-   "why": "An internal gateway makes sense when part of your system is effectively a product with internal customers. Short of that, an external gateway plus a mesh covers most architectures — an internal gateway earlier is premature machinery.",
+   "why": "An internal gateway makes sense when part of your system is effectively a product with internal customers. Short of that, an external gateway plus a mesh covers most architectures, an internal gateway earlier is premature machinery.",
    "whyWrong": [
-    "Per-service gateways everywhere is overhead without a matching problem — the mesh already handles east–west concerns.",
+    "Per-service gateways everywhere is overhead without a matching problem, the mesh already handles east–west concerns.",
     "",
     "A mesh reduces the need for internal gateways by providing mTLS, retries, and telemetry between services.",
     "Capacity problems are solved by scaling the gateway, not adding a differently-purposed one."
@@ -162,17 +162,17 @@
   {
    "q": "A response marked Cache-Control: public contains the logged-in user's account details. What happens?",
    "options": [
-    "Nothing — CDNs know not to cache personal data",
+    "Nothing: CDNs know not to cache personal data",
     "The edge may cache it and serve one user's account page to other users: a data breach",
     "The response gets slower",
     "The CDN encrypts it extra"
    ],
    "answer": 1,
-   "why": "Shared caches do what the headers say. 'public' on a per-user response invites the edge to store it under a key other users will hit. Personal responses need private/no-store — and a review process for cache headers.",
+   "why": "Shared caches do what the headers say. 'public' on a per-user response invites the edge to store it under a key other users will hit. Personal responses need private/no-store, and a review process for cache headers.",
    "whyWrong": [
     "CDNs cannot know what's personal; the headers are the contract, and they said public.",
     "",
-    "Speed isn't the issue — disclosure is.",
+    "Speed isn't the issue, disclosure is.",
     "Encryption on the wire doesn't help; the cache serves the decrypted response to the wrong person."
    ]
   },
@@ -181,13 +181,13 @@
    "options": [
     "Shorter names load faster",
     "The hash hides the code from competitors",
-    "A new deploy produces a new URL, so old cached copies never conflict — caching can be maximal and invalidation becomes unnecessary",
+    "A new deploy produces a new URL, so old cached copies never conflict, caching can be maximal and invalidation becomes unnecessary",
     "It's required by JavaScript modules"
    ],
    "answer": 2,
    "why": "Versioned URLs dissolve the invalidation problem: the immutable file is cached for a year, and 'updating' is just referencing a new name. Rollback is the old name. Nothing needs purging, ever.",
    "whyWrong": [
-    "The name is longer, not shorter — and length is irrelevant.",
+    "The name is longer, not shorter, and length is irrelevant.",
     "The content is exactly as public as before; the hash is a version stamp, not obfuscation.",
     "",
     "No module system requires hashed names; build tools add them for caching."
@@ -202,7 +202,7 @@
     "Serving yesterday's leaderboard to millions"
    ],
    "answer": 2,
-   "why": "A balance-after-write is a strong-consistency read: it must come from the system of record. A cache is by definition allowed to be stale — that's the deal that makes it fast.",
+   "why": "A balance-after-write is a strong-consistency read: it must come from the system of record. A cache is by definition allowed to be stale, that's the deal that makes it fast.",
    "whyWrong": [
     "Static images for a global audience are the CDN's founding use case.",
     "Identical cacheable content under read spike is exactly what edge caching absorbs.",
@@ -221,7 +221,7 @@
     "Because messages expire"
    ],
    "answer": 1,
-   "why": "Redelivery after failures is part of the contract — exactly-once is a marketing word. Handlers keyed on 'have I already processed order 4412?' make duplicates harmless; handlers that charge on every delivery make them incidents.",
+   "why": "Redelivery after failures is part of the contract, exactly-once is a marketing word. Handlers keyed on 'have I already processed order 4412?' make duplicates harmless; handlers that charge on every delivery make them incidents.",
    "whyWrong": [
     "Idempotence is about correctness under redelivery, not throughput.",
     "",
@@ -240,9 +240,9 @@
    "answer": 1,
    "why": "The cache was hiding that load; simultaneous expiry returns it as a spike. Jittered TTLs spread the refreshes, and serve-stale-while-revalidate collapses 5,000 refreshes into one.",
    "whyWrong": [
-    "Nothing was breached — no attacker is involved, just an expiry.",
+    "Nothing was breached, no attacker is involved, just an expiry.",
     "",
-    "The database sized for cached traffic meets uncached traffic — that's exactly the outage.",
+    "The database sized for cached traffic meets uncached traffic, that's exactly the outage.",
     "Memory is fine; the pattern is about expiry timing, not leaks."
    ]
   },
@@ -251,13 +251,13 @@
    "options": [
     "Browsers can't send files to application servers",
     "It's more secure because the URL is secret forever",
-    "Application servers then never carry file traffic — the service issues a short-lived scoped link, stores the key, and stays out of the byte path",
+    "Application servers then never carry file traffic, the service issues a short-lived scoped link, stores the key, and stays out of the byte path",
     "Object storage is the only place TLS works for files"
    ],
    "answer": 2,
    "why": "Pass URLs, not bytes: the pre-signed link is short-lived and permission-scoped, the heavy transfer happens between the user and storage built for it, and your expensive stateless servers do what they're good at.",
    "whyWrong": [
-    "Browsers upload to app servers fine — it's just a waste of your compute and bandwidth.",
+    "Browsers upload to app servers fine, it's just a waste of your compute and bandwidth.",
     "Pre-signed URLs are deliberately short-lived; their security comes from scope and expiry, not permanent secrecy.",
     "",
     "TLS works everywhere; that's not the differentiator."
@@ -269,29 +269,29 @@
    "q": "You updated a DNS record to point at the new server, but half your users still reach the old one hours later. Why?",
    "options": [
     "DNS servers are slow to process changes",
-    "Resolvers cached the old answer and will keep it until its TTL expires — and some ignore TTLs entirely",
+    "Resolvers cached the old answer and will keep it until its TTL expires, and some ignore TTLs entirely",
     "The new server rejected the record",
     "You need to restart the old server"
    ],
    "answer": 1,
    "why": "DNS scales by caching at every step, and a cached answer lives for its TTL regardless of what you changed upstream. That's why migrations lower TTLs the day before, and why serious failover uses anycast instead of racing caches.",
    "whyWrong": [
-    "Authoritative servers pick up the change quickly — the delay lives in everyone else's caches.",
+    "Authoritative servers pick up the change quickly, the delay lives in everyone else's caches.",
     "",
     "Servers don't accept or reject DNS records; DNS is resolved by clients, not targets.",
     "The old server has no say in where names point."
    ]
   },
   {
-   "q": "Your DNS host says “CNAME www to us” — but the same record on the bare domain example.com is rejected. Why?",
+   "q": "Your DNS host says “CNAME www to us”, but the same record on the bare domain example.com is rejected. Why?",
    "options": [
     "Bare domains can't be aliased for security reasons",
-    "A CNAME must be alone, and the zone apex must hold SOA and NS records — so a CNAME there is structurally illegal; ALIAS/ANAME is the provider workaround",
+    "A CNAME must be alone, and the zone apex must hold SOA and NS records, so a CNAME there is structurally illegal; ALIAS/ANAME is the provider workaround",
     "The registrar needs 24 hours to enable it",
     "CNAMEs only work on subdomains longer than 3 characters"
    ],
    "answer": 1,
-   "why": "A CNAME says 'everything about this name lives elsewhere' and tolerates no coexisting records — but the apex can't be empty of SOA/NS, since those make it a zone. ALIAS/ANAME fakes it: the provider resolves the target and serves plain A records.",
+   "why": "A CNAME says 'everything about this name lives elsewhere' and tolerates no coexisting records, but the apex can't be empty of SOA/NS, since those make it a zone. ALIAS/ANAME fakes it: the provider resolves the target and serves plain A records.",
    "whyWrong": [
     "It's a structural rule from the record's semantics, not a security policy.",
     "",
@@ -304,13 +304,13 @@
    "options": [
     "Redirects the user's browser to the target URL",
     "Copies the target's IP address into your zone",
-    "Tells the resolver to restart its question with the target name — so your record keeps tracking the target's address changes automatically",
+    "Tells the resolver to restart its question with the target name, so your record keeps tracking the target's address changes automatically",
     "Forwards the network traffic through the target server"
    ],
    "answer": 2,
-   "why": "A CNAME names a NAME, not an address. The resolver re-asks its question about the target — which is exactly why CDNs say 'CNAME to us': they can renumber freely and your record never changes.",
+   "why": "A CNAME names a NAME, not an address. The resolver re-asks its question about the target, which is exactly why CDNs say 'CNAME to us': they can renumber freely and your record never changes.",
    "whyWrong": [
-    "Nothing HTTP happens — the browser never sees the alias; the redirect illusion is purely inside resolution.",
+    "Nothing HTTP happens, the browser never sees the alias; the redirect illusion is purely inside resolution.",
     "No copying takes place; if it did, the target's changes would strand you with stale addresses.",
     "",
     "No traffic touches the alias target's servers unless the addresses ultimately resolve there."
@@ -320,14 +320,14 @@
    "q": "dig returns NXDOMAIN for a record you created two minutes ago. What most likely happened?",
    "options": [
     "The record needs 24–48 hours to propagate",
-    "You queried before creating it, and the resolver negative-cached the miss — NXDOMAIN answers are cached too, for the SOA's negative TTL",
+    "You queried before creating it, and the resolver negative-cached the miss: NXDOMAIN answers are cached too, for the SOA's negative TTL",
     "NXDOMAIN means the DNS server is down",
     "New records always fail until the zone is reloaded manually"
    ],
    "answer": 1,
-   "why": "Misses are cached like hits: query a name before it exists and that resolver remembers 'does not exist' for the negative TTL. Ask a different resolver (dig @1.1.1.1) or wait it out — and next time, create before you query.",
+   "why": "Misses are cached like hits: query a name before it exists and that resolver remembers 'does not exist' for the negative TTL. Ask a different resolver (dig @1.1.1.1) or wait it out, and next time, create before you query.",
    "whyWrong": [
-    "Nothing propagates — caches expire on their own timers, and a fresh record is visible immediately to any resolver that hasn't cached a miss.",
+    "Nothing propagates, caches expire on their own timers, and a fresh record is visible immediately to any resolver that hasn't cached a miss.",
     "",
     "A dead server yields SERVFAIL or a timeout; NXDOMAIN is an authoritative 'no such name'.",
     "Authoritative servers serve new records immediately; no manual reload ritual exists."
@@ -344,11 +344,11 @@
     "The certificate expired"
    ],
    "answer": 1,
-   "why": "Browsers fetch missing intermediates automatically; most other clients validate exactly the chain the server presents. Serving the full chain fixes every client at once — this is the classic asymmetric TLS bug.",
+   "why": "Browsers fetch missing intermediates automatically; most other clients validate exactly the chain the server presents. Serving the full chain fixes every client at once, this is the classic asymmetric TLS bug.",
    "whyWrong": [
     "curl speaks TLS fine; it's just honest about broken chains.",
     "",
-    "Java validates the same standard chains — it simply doesn't repair yours.",
+    "Java validates the same standard chains, it simply doesn't repair yours.",
     "An expired certificate fails everywhere, browsers included."
    ]
   },
@@ -356,7 +356,7 @@
    "q": "What does it mean to choose where TLS terminates?",
    "options": [
     "Choosing when the certificate expires",
-    "Choosing which component decrypts the traffic — and therefore where plaintext begins inside your system",
+    "Choosing which component decrypts the traffic, and therefore where plaintext begins inside your system",
     "Choosing the cipher suite",
     "Choosing between HTTP and HTTPS"
    ],
@@ -366,7 +366,7 @@
     "Expiry is a certificate property, unrelated to the termination point.",
     "",
     "Cipher choice happens at every TLS hop regardless of where you terminate.",
-    "That choice is whether to use TLS at all — termination is about where it ends."
+    "That choice is whether to use TLS at all, termination is about where it ends."
    ]
   },
   {
@@ -374,14 +374,14 @@
    "options": [
     "Short certificates are cryptographically stronger",
     "Free certificates skip validation",
-    "Short lifetimes bound the damage of a stolen key and force renewal to be automated — which eliminates the expired-cert-on-a-Saturday outage",
+    "Short lifetimes bound the damage of a stolen key and force renewal to be automated, which eliminates the expired-cert-on-a-Saturday outage",
     "Multi-year certificates are no longer legal"
    ],
    "answer": 2,
-   "why": "The 90-day design is deliberate: a leaked key ages out fast, and no human renews certificates 4+ times a year by hand — so automation stops being optional, and automated renewal is precisely what prevents expiry outages.",
+   "why": "The 90-day design is deliberate: a leaked key ages out fast, and no human renews certificates 4+ times a year by hand, so automation stops being optional, and automated renewal is precisely what prevents expiry outages.",
    "whyWrong": [
     "The cryptography is identical; lifetime is policy, not strength.",
-    "ACME validates domain control exactly as paid CAs do — that's what the HTTP-01/DNS-01 challenges are.",
+    "ACME validates domain control exactly as paid CAs do, that's what the HTTP-01/DNS-01 challenges are.",
     "",
     "Long-lived certs still exist; browsers cap acceptance (about 13 months), but that's a trust-store policy, not law."
    ]

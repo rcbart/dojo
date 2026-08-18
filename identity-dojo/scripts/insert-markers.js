@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// insert-markers.js — one-time helper: place empty <!--flow:ID--> marker pairs
+// insert-markers.js, one-time helper: place empty <!--flow:ID--> marker pairs
 // into the stream files, right after the FIRST paragraph of the target lesson
 // body. gen-flows.js then fills them. Idempotent: skips ids already present.
 const fs = require('fs');

@@ -1,4 +1,4 @@
-# 08 — Envoy on Kubernetes
+# 08: Envoy on Kubernetes
 
 *Where Envoy actually lives in modern infra. Concepts + a real kind + Envoy Gateway lab. ~30 min.
 Requires Docker, `kind`, `kubectl`, and `helm`.*
@@ -11,11 +11,11 @@ You rarely deploy raw Envoy on Kubernetes by hand. Instead a **control plane** w
 Kubernetes API and configures Envoy for you via xDS (Module 07). Envoy shows up on Kubernetes in
 three shapes:
 
-1. **Ingress / API gateway** — one pool of Envoys at the cluster edge, routing outside traffic to
+1. **Ingress / API gateway**: one pool of Envoys at the cluster edge, routing outside traffic to
    Services. Implemented by **Envoy Gateway**, **Contour**, **Gloo**, or Istio's ingress gateway.
-2. **Service-mesh sidecar** — an Envoy injected next to *every* pod, handling that pod's traffic
+2. **Service-mesh sidecar**: an Envoy injected next to *every* pod, handling that pod's traffic
    (Module 09).
-3. **Standalone Deployment** — you run Envoy as a normal Deployment with a hand-written config in a
+3. **Standalone Deployment**: you run Envoy as a normal Deployment with a hand-written config in a
    ConfigMap. Rare, but shows the plumbing.
 
 ## The Gateway API (the modern way)
@@ -98,7 +98,7 @@ kubectl scale deployment/echo --replicas=4
 kubectl get endpoints echo         # 4 endpoints; Envoy Gateway pushes them to Envoy via EDS
 ```
 
-This is Module 07 made real: you didn't edit an Envoy config — you changed a Kubernetes object, the
+This is Module 07 made real: you didn't edit an Envoy config; you changed a Kubernetes object, the
 control plane noticed, and it streamed new endpoints to the data-plane Envoy.
 
 ### Clean up
@@ -113,7 +113,7 @@ kind delete cluster --name envoy-lab
    a different Service, apply, and curl with the header. Same routing power as Module 04, expressed
    as Gateway API YAML.
 2. **Two teams, one gateway.** Add a second HTTPRoute (different path prefix, different Service) to
-   the same Gateway — demonstrating the platform-owns-Gateway / apps-own-Routes split.
+   the same Gateway, demonstrating the platform-owns-Gateway / apps-own-Routes split.
 3. **Watch the generated Envoy config.** `kubectl -n envoy-gateway-system port-forward` the Envoy
    admin port and `curl .../config_dump` to see the LDS/RDS/CDS your YAML produced.
 
@@ -123,12 +123,12 @@ kind delete cluster --name envoy-lab
    standalone Deployment.)*
 2. Why did the Gateway API replace `Ingress`? *(Typed resources + a clean split between
    infra-owned Gateways and app-owned Routes; no annotation soup.)*
-3. Which Gateway API resource do app teams write? *(HTTPRoute — the routing rules.)*
+3. Which Gateway API resource do app teams write? *(HTTPRoute: the routing rules.)*
 4. What does Envoy Gateway actually do with your Gateway/HTTPRoute YAML? *(Translates it into Envoy
    xDS config and programs the data-plane Envoys.)*
 5. When you scale a Deployment, how does Envoy learn the new pods? *(The control plane pushes
-   updated endpoints via EDS — no config edit.)*
+   updated endpoints via EDS, no config edit.)*
 
 ---
 
-**Next:** [09 — Service mesh & sidecars →](./09-service-mesh-sidecars.md)
+**Next:** [09: Service mesh & sidecars →](./09-service-mesh-sidecars.md)

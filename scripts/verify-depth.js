@@ -3,19 +3,19 @@
 //
 // History, because the metric matters more than the number:
 //
-//   v1 — a flat 150 words. It reported ZERO thin lessons in IdentityDojo while
+//   v1, a flat 150 words. It reported ZERO thin lessons in IdentityDojo while
 //        eight foundational lessons sat under 300 and a whole stream averaged
 //        under 250. The threshold was not wrong, it was measuring the wrong
 //        thing: thinness is relative to what surrounds it.
 //
-//   v2 — 50% of the course MEAN. Better, and it surfaced 57 lessons the flat
+//   v2, 50% of the course MEAN. Better, and it surfaced 57 lessons the flat
 //        check had called fine. But the mean has two faults here. It is dragged
 //        DOWN by the very lessons you are looking for, so the check is most
 //        lenient exactly when a course has the most thin lessons. And it is
 //        dragged UP by long lessons, so improving the course raises the bar and
-//        the count never settles — fixing one lesson can flag three more.
+//        the count never settles, fixing one lesson can flag three more.
 //
-//   v3 — 50% of the course MEDIAN, which is what this script uses. The median
+//   v3, 50% of the course MEDIAN, which is what this script uses. The median
 //        is not moved by a handful of very short or very long lessons, so the
 //        floor describes the typical lesson and stays still while the course
 //        grows.
@@ -52,7 +52,7 @@ for (const [name, dir] of COURSES) {
   const floor = Math.round(med * RATIO);
   const thin = lessons.filter(l => l.w < floor).sort((a, b) => a.w - b.w);
 
-  for (const l of thin) console.error(`THIN ${name} ${l.id} — ${l.w}w < ${floor}w — ${l.title}`);
+  for (const l of thin) console.error(`THIN ${name} ${l.id}, ${l.w}w < ${floor}w, ${l.title}`);
   failures += thin.length;
 
   if (REPORT || thin.length) {

@@ -1,6 +1,6 @@
 'use strict';
 /**
- * JavaDojo local database — SQLite via Node's built-in node:sqlite (Node 22.5+).
+ * JavaDojo local database: SQLite via Node's built-in node:sqlite (Node 22.5+).
  * All statements are parameterized; no string-built SQL anywhere.
  * File: site/data/dojo.db (gitignored). Migrates legacy site/data/users.json once.
  */
@@ -57,7 +57,7 @@ db.exec(`
 
   /* Lesson ratings. Phase 1 stores the signal only; the comment column exists
      now so phase 2 (written feedback) is an UPDATE rather than a migration.
-     One row per user per lesson — re-rating overwrites rather than appends,
+     One row per user per lesson, re-rating overwrites rather than appends,
      because the question is "what do you think of this lesson", not "what did
      you think each time you visited". */
   CREATE TABLE IF NOT EXISTS ratings (
@@ -141,7 +141,7 @@ exports.listUsers = () => stmts.listAll.all().map(r => ({
 /* ------------------------------- ratings -------------------------------- */
 
 /* Phase 1 created ratings.rating as NOT NULL. Phase 2 lets someone leave a
-   comment without rating, so the column has to be nullable — and SQLite cannot
+   comment without rating, so the column has to be nullable, and SQLite cannot
    drop NOT NULL in place. Rebuild once, preserving rows. */
 (() => {
   const cols = db.prepare('PRAGMA table_info(ratings)').all();
@@ -166,7 +166,7 @@ exports.listUsers = () => stmts.listAll.all().map(r => ({
 
 const rStmts = {
   /* A comment-only submission must not wipe an existing rating, and re-rating
-     must not wipe an existing comment — hence COALESCE on both sides. An
+     must not wipe an existing comment, hence COALESCE on both sides. An
      explicitly cleared comment arrives as '' and is stored as NULL below. */
   upsert: db.prepare(`INSERT INTO ratings (username, lesson_key, rating, comment, updated_at)
     VALUES (?, ?, ?, ?, ?)
@@ -178,7 +178,7 @@ const rStmts = {
       updated_at = excluded.updated_at`),
   mine: db.prepare('SELECT lesson_key, rating, comment, updated_at FROM ratings WHERE username = ?'),
   /* Rows with a comment but no rating count toward comments, never toward the
-     score — otherwise written feedback would silently read as neutral. */
+     score, otherwise written feedback would silently read as neutral. */
   totals: db.prepare(`SELECT lesson_key,
       COALESCE(SUM(rating =  1), 0) AS up,
       COALESCE(SUM(rating =  0), 0) AS neutral,
@@ -211,7 +211,7 @@ exports.getRatings = username => {
   return out;
 };
 
-/** Aggregate across all users — the point of collecting this at all. */
+/** Aggregate across all users, the point of collecting this at all. */
 exports.ratingTotals = () => rStmts.totals.all().map(r => ({
   lesson: r.lesson_key, up: r.up, neutral: r.neutral, down: r.down,
   rated: r.rated, comments: r.comments, total: r.total,

@@ -18,7 +18,7 @@ a directory dump         every password hash        force reset, assume cracked
 an admin account         everything, including the  worst case: the attacker can
                          ability to hide the trail  mint their own access</div>
 <p>Two of these are categorically different. A <b>signing key</b> compromise means an attacker can mint
-valid tokens for anyone — no login required, nothing in your authentication logs. An <b>admin account</b>
+valid tokens for anyone: no login required, nothing in your authentication logs. An <b>admin account</b>
 compromise means they can enroll their own authenticator, add a federated IdP, or create a client, all
 of which survive the password reset you are about to do.</p>
 
@@ -26,7 +26,7 @@ of which survive the password reset you are about to do.</p>
 <p>A structured token is valid because it verifies, not because a database says so. So:</p>
 <ul>
 <li><b>Access tokens cannot be recalled.</b> They stay valid until <code>exp</code>. Your real lever is
-that they are short-lived — which is why the 5-to-15-minute lifetime is an incident-response decision,
+that they are short-lived, which is why the 5-to-15-minute lifetime is an incident-response decision,
 not a performance one.</li>
 <li><b>Refresh tokens and grants can be revoked</b>, and this is what actually stops continued access.
 Revoking the token alone is not enough; revoke the <b>grant</b>.</li>
@@ -37,7 +37,7 @@ expire", that is the finding, and you learn it during the incident rather than b
 
 <h4>Signing key rotation under duress</h4>
 <p>Normal rotation is graceful: publish the new key in JWKS, wait for caches to pick it up, then start
-signing with it. Emergency rotation cannot wait, and the conflict is real — remove the compromised key
+signing with it. Emergency rotation cannot wait, and the conflict is real: remove the compromised key
 immediately and every legitimately-issued token fails too.</p>
 <div class="codeSample" data-hl>EMERGENCY KEY ROTATION
  1. generate + publish the new key alongside the old   (JWKS holds both)
@@ -53,26 +53,26 @@ refetching rather than failing closed forever.</p>
 
 <h4>The containment order</h4>
 <ol>
-<li><b>Stop the bleeding</b> — disable the account, revoke grants, rotate the secret. Before you
+<li><b>Stop the bleeding</b>: disable the account, revoke grants, rotate the secret. Before you
 understand it fully.</li>
-<li><b>Preserve evidence</b> — snapshot the logs before anything rotates them out. Identity logs are
+<li><b>Preserve evidence</b>: snapshot the logs before anything rotates them out. Identity logs are
 frequently the shortest-retention logs in an organisation, which is discovered at the worst time.</li>
-<li><b>Find persistence</b> — this is the step people skip. An attacker with a session enrolled their
+<li><b>Find persistence</b>: this is the step people skip. An attacker with a session enrolled their
 own MFA authenticator, added an API key, registered an OAuth client, or created a federated trust.
 Resetting the password removes none of it. <b>Enumerate every credential and trust attached to the
 account, and every one created during the window.</b></li>
-<li><b>Assess reach</b> — what did that identity touch, and what did it authorise?</li>
-<li><b>Restore</b> — re-enroll, re-issue, force re-authentication.</li>
+<li><b>Assess reach</b>: what did that identity touch, and what did it authorise?</li>
+<li><b>Restore</b>: re-enroll, re-issue, force re-authentication.</li>
 </ol>
 
 <h4>What to prepare in advance</h4>
 <p>All of the above is much easier if it exists before the incident: a documented emergency revocation
 runbook, break-glass accounts that are phishing-resistant and monitored, identity log retention long
 enough to investigate with, the ability to answer "what is currently issued to this user" in one place,
-and a rehearsed key rotation. The rotation especially — an untested emergency procedure is a hope.</p>`,
-docs:[['NIST SP 800-61 — Computer Security Incident Handling Guide','https://csrc.nist.gov/pubs/sp/800/61/r2/final'],['RFC 7009 — OAuth 2.0 Token Revocation','https://www.rfc-editor.org/rfc/rfc7009'],['CISA — Identity and access management guidance','https://www.cisa.gov/resources-tools/resources/identity-and-access-management-recommended-best-practices-administrators']],
+and a rehearsed key rotation. The rotation especially: an untested emergency procedure is a hope.</p>`,
+docs:[['NIST SP 800-61: Computer Security Incident Handling Guide','https://csrc.nist.gov/pubs/sp/800/61/r2/final'],['RFC 7009 (OAuth 2.0 Token Revocation)','https://www.rfc-editor.org/rfc/rfc7009'],['CISA (Identity and access management guidance)','https://www.cisa.gov/resources-tools/resources/identity-and-access-management-recommended-best-practices-administrators']],
 ex:{title:'Blast radius and the containment plan',
-prompt:`Write <code>IncidentResponse</code> with three methods. <code>static String blastRadius(String leaked)</code> returns <code>"total"</code> for <code>"signing-key"</code> and <code>"admin-account"</code>, <code>"durable-user"</code> for <code>"refresh-token"</code> and <code>"session-cookie"</code>, <code>"transient-user"</code> for <code>"access-token"</code>, <code>"application"</code> for <code>"client-secret"</code> and <code>"api-key"</code>, and <code>"unknown"</code> otherwise including null. <code>static boolean revocationStops(String leaked)</code> returns <b>false</b> for <code>"access-token"</code> — a self-contained token cannot be recalled — and true for everything else with a known blast radius. <code>static boolean mustHuntPersistence(String leaked)</code> is true only when the blast radius is <code>"total"</code>, because that is where an attacker could enroll their own credentials.`,
+prompt:`Write <code>IncidentResponse</code> with three methods. <code>static String blastRadius(String leaked)</code> returns <code>"total"</code> for <code>"signing-key"</code> and <code>"admin-account"</code>, <code>"durable-user"</code> for <code>"refresh-token"</code> and <code>"session-cookie"</code>, <code>"transient-user"</code> for <code>"access-token"</code>, <code>"application"</code> for <code>"client-secret"</code> and <code>"api-key"</code>, and <code>"unknown"</code> otherwise including null. <code>static boolean revocationStops(String leaked)</code> returns <b>false</b> for <code>"access-token"</code> (a self-contained token cannot be recalled) and true for everything else with a known blast radius. <code>static boolean mustHuntPersistence(String leaked)</code> is true only when the blast radius is <code>"total"</code>, because that is where an attacker could enroll their own credentials.`,
 starter:`public class IncidentResponse {
     static String blastRadius(String leaked) {
         return null;
@@ -118,8 +118,8 @@ solution:`public class IncidentResponse {
 }`}},
 
 {id:'run2',title:'Migrating an identity estate without an outage',body:`
-<p>Almost nobody builds identity on a blank page. The real work is moving an existing estate — hundreds
-of applications, years of accounts, a legacy IdP nobody fully understands — onto something better,
+<p>Almost nobody builds identity on a blank page. The real work is moving an existing estate (hundreds
+of applications, years of accounts, a legacy IdP nobody fully understands) onto something better,
 while everyone keeps logging in. It is the least glamorous and most commonly failed part of the job.</p>
 
 <h4>The constraint that shapes everything</h4>
@@ -159,7 +159,7 @@ options, in order of preference:</p>
 <li><b>Lazy migration ("just-in-time rehash").</b> Import the old hashes as-is. On each successful
 login, verify with the old algorithm, then immediately rehash with the new one and discard the old.
 Users notice nothing, and the population migrates itself. After a cutoff, force a reset for whoever is
-left — usually inactive accounts you did not want anyway.</li>
+left, usually inactive accounts you did not want anyway.</li>
 <li><b>Nested hashing.</b> Store <code>newAlgo(oldHash)</code> so you can verify without the old
 implementation. Works, but complicates verification forever.</li>
 <li><b>Forced reset.</b> Reliable, and a support and abandonment disaster at any scale. Also trains
@@ -175,16 +175,16 @@ applications stored the old identifier, every account must be re-linked. Get thi
 successfully to an empty account, which reads as data loss and generates far more panic than an outage.</p>
 <p>The safe approach: build the mapping table <i>before</i> cutover, have the new IdP assert the legacy
 identifier as an additional claim during the overlap, and let applications migrate their key on first
-login. Never rely on email as the join — it is the thing most likely to have changed.</p>
+login. Never rely on email as the join: it is the thing most likely to have changed.</p>
 
 <h4>How to sequence</h4>
 <p>Migrate in order of <i>recoverability</i>, not importance: an internal low-traffic app first, so the
 first real cutover teaches you what your runbook got wrong. Then broad-but-simple. Then the crown
-jewels, last, when the process is boring. And keep the old path warm — a cutover you cannot reverse
+jewels, last, when the process is boring. And keep the old path warm: a cutover you cannot reverse
 within an hour is not a cutover, it is a commitment.</p>`,
-docs:[['OWASP — Password Storage Cheat Sheet (upgrading hashes)','https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html'],['Martin Fowler — Strangler Fig Application','https://martinfowler.com/bliki/StranglerFigApplication.html'],['W3C — WebAuthn RP ID','https://www.w3.org/TR/webauthn-2/#rp-id']],
+docs:[['OWASP: Password Storage Cheat Sheet (upgrading hashes)','https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html'],['Martin Fowler (Strangler Fig Application)','https://martinfowler.com/bliki/StranglerFigApplication.html'],['W3C (WebAuthn RP ID)','https://www.w3.org/TR/webauthn-2/#rp-id']],
 ex:{title:'Lazy password migration and identifier mapping',
-prompt:`Write <code>Migration</code> with three methods. <code>static boolean verifyLegacy(String storedAlgo, String presented, java.util.function.BiPredicate&lt;String,String&gt; legacyCheck, java.util.function.BiPredicate&lt;String,String&gt; modernCheck)</code> uses <code>modernCheck</code> when <code>storedAlgo</code> is <code>"argon2"</code> and <code>legacyCheck</code> otherwise, returning false if <code>presented</code> is null. <code>static boolean shouldRehash(String storedAlgo, boolean loginSucceeded)</code> is true only when the login succeeded and the stored algorithm is not already <code>"argon2"</code> — that is the just-in-time upgrade. <code>static String resolveUser(String legacyId, String newSub, java.util.Map&lt;String,String&gt; mapping)</code> returns <code>newSub</code> when non-null, else the mapped value for <code>legacyId</code>, else null.`,
+prompt:`Write <code>Migration</code> with three methods. <code>static boolean verifyLegacy(String storedAlgo, String presented, java.util.function.BiPredicate&lt;String,String&gt; legacyCheck, java.util.function.BiPredicate&lt;String,String&gt; modernCheck)</code> uses <code>modernCheck</code> when <code>storedAlgo</code> is <code>"argon2"</code> and <code>legacyCheck</code> otherwise, returning false if <code>presented</code> is null. <code>static boolean shouldRehash(String storedAlgo, boolean loginSucceeded)</code> is true only when the login succeeded and the stored algorithm is not already <code>"argon2"</code>: that is the just-in-time upgrade. <code>static String resolveUser(String legacyId, String newSub, java.util.Map&lt;String,String&gt; mapping)</code> returns <code>newSub</code> when non-null, else the mapped value for <code>legacyId</code>, else null.`,
 starter:`import java.util.*;
 import java.util.function.BiPredicate;
 
@@ -227,7 +227,7 @@ public class Migration {
 }`}},
 
 {id:'run3',title:'The IdP is the blast radius: availability and break-glass',body:`
-<p>Federation concentrates authentication into one system on purpose — one place for MFA, one place to
+<p>Federation concentrates authentication into one system on purpose: one place for MFA, one place to
 deprovision. The unavoidable corollary is that <b>the IdP becomes a single point of failure for
 everything</b>. When it is down, nobody logs into anything: not the app, not the monitoring, not the
 ticketing system you would use to coordinate the response.</p>
@@ -245,18 +245,18 @@ the directory behind it    everything                   immediate and total
 
 // the shape of it: existing sessions survive, new ones do not. an outage
 // therefore looks small for the first hour and then grows.</div>
-<p>Two design consequences follow. <b>Cache JWKS aggressively</b> and serve stale keys on fetch failure
-— a verifier that hard-fails when it cannot reach JWKS turns an IdP blip into a total outage of every
+<p>Two design consequences follow. <b>Cache JWKS aggressively</b> and serve stale keys on fetch failure:
+a verifier that hard-fails when it cannot reach JWKS turns an IdP blip into a total outage of every
 API. And <b>longer sessions degrade more gracefully</b>, which is a genuine tension with the short
 lifetimes that incident response wants. Name the trade-off rather than pretending it does not exist.</p>
 
 <h4>Break-glass accounts</h4>
 <p>You need a way in when the IdP is unavailable or compromised. That means a small number of accounts
-that <i>do not depend on it</i> — and they are dangerous by construction, so the controls carry the
+that <i>do not depend on it</i>, and they are dangerous by construction, so the controls carry the
 weight:</p>
 <ul>
-<li><b>Excluded from conditional access and federation</b> — otherwise they fail exactly when needed.</li>
-<li><b>Phishing-resistant</b> — a hardware key, or credentials split between two people.</li>
+<li><b>Excluded from conditional access and federation</b>: otherwise they fail exactly when needed.</li>
+<li><b>Phishing-resistant</b>: a hardware key, or credentials split between two people.</li>
 <li><b>Stored physically</b>, in a safe, not in the password manager that requires SSO to open.</li>
 <li><b>Alerted on every use</b>, to a channel that does not require the IdP to read.</li>
 <li><b>Tested quarterly.</b> An untested break-glass account has usually expired, been disabled by a
@@ -264,13 +264,13 @@ cleanup script, or lost its password.</li>
 </ul>
 <p>The recursive failure is the one to design out: your emergency credentials must not live behind the
 thing they exist to bypass. Password manager behind SSO, alerting into a chat tool behind SSO,
-documentation in a wiki behind SSO — all common, all useless during the incident.</p>
+documentation in a wiki behind SSO: all common, all useless during the incident.</p>
 
 <h4>Degraded modes worth having</h4>
 <ol>
 <li><b>Serve stale JWKS</b> rather than failing verification.</li>
 <li><b>Extend session lifetime</b> during an incident, deliberately and reversibly.</li>
-<li><b>Read-only mode</b> — accept existing sessions, defer anything requiring re-authentication.</li>
+<li><b>Read-only mode</b>: accept existing sessions, defer anything requiring re-authentication.</li>
 <li><b>A second region or a standby IdP</b> if the business case justifies it, remembering that
 identity data replication is itself a security boundary.</li>
 </ol>
@@ -278,12 +278,12 @@ identity data replication is itself a security boundary.</li>
 <h4>The questions to answer before you need to</h4>
 <p>How does an on-call engineer reach production if the IdP is down? Does your incident channel require
 SSO? Can you extend session lifetimes without a deploy? Does verification survive a JWKS outage? When
-was break-glass last tested, and by whom? If any answer is unknown, that is the work — and it is
+was break-glass last tested, and by whom? If any answer is unknown, that is the work, and it is
 cheaper to find out now than at 3am, when nobody can log in to look it up.</p>`,
-docs:[['Google SRE — Managing Critical State','https://sre.google/sre-book/managing-critical-state/'],['Microsoft — Manage emergency access accounts','https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/security-emergency-access'],['RFC 7517 — JSON Web Key Set','https://www.rfc-editor.org/rfc/rfc7517']],
+docs:[['Google SRE (Managing Critical State)','https://sre.google/sre-book/managing-critical-state/'],['Microsoft (Manage emergency access accounts)','https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/security-emergency-access'],['RFC 7517 (JSON Web Key Set)','https://www.rfc-editor.org/rfc/rfc7517']],
 ex:{title:'Survive a JWKS outage',lang:'js',
 run:{call:'verifyWithCache',cases:[{name:'JWKS reachable and signature valid',args:[true,true,true],expect:true},{name:'JWKS down but keys cached',args:[false,true,true],expect:true},{name:'JWKS down and no cache',args:[false,false,true],expect:false},{name:'cached keys but bad signature',args:[false,true,false],expect:false},{name:'reachable but bad signature',args:[true,true,false],expect:false}]},
-prompt:`Write <code>function verifyWithCache(jwksReachable, haveCachedKeys, signatureValid)</code> that returns <code>true</code> only when the signature is valid <b>and</b> you have keys to check it with — either freshly fetched or cached. A JWKS outage must not take your API down, but it must never make you accept an unverified token either.`,
+prompt:`Write <code>function verifyWithCache(jwksReachable, haveCachedKeys, signatureValid)</code> that returns <code>true</code> only when the signature is valid <b>and</b> you have keys to check it with: either freshly fetched or cached. A JWKS outage must not take your API down, but it must never make you accept an unverified token either.`,
 starter:`function verifyWithCache(jwksReachable, haveCachedKeys, signatureValid) {
   return false;
 }`,
@@ -293,8 +293,8 @@ solution:`function verifyWithCache(jwksReachable, haveCachedKeys, signatureValid
   return haveKeys && signatureValid;
 }`,
 tests:[{d:'cached keys are an acceptable source',re:'jwksReachable\\s*\\|\\|\\s*haveCachedKeys'},{d:'the signature must still verify',re:'signatureValid'},{d:'combines availability AND validity',re:'&&'}],
-behavior:`The middle case is the whole lesson: JWKS down, keys cached, signature good — still true, so a provider outage does not become your outage. The last two cases prove the failure stays closed: no keys, or a bad signature, is a rejection. Caching keys with a long TTL and refreshing on an unknown kid is the single highest-value availability fix in a resource server.`,
-hints:['Availability of keys is an OR; correctness is an AND.','A cached key set is a legitimate source — that is the point of caching it.','Never return true when signatureValid is false, whatever the outage.']}},
+behavior:`The middle case is the whole lesson: JWKS down, keys cached, signature good: still true, so a provider outage does not become your outage. The last two cases prove the failure stays closed: no keys, or a bad signature, is a rejection. Caching keys with a long TTL and refreshing on an unknown kid is the single highest-value availability fix in a resource server.`,
+hints:['Availability of keys is an OR; correctness is an AND.','A cached key set is a legitimate source: that is the point of caching it.','Never return true when signatureValid is false, whatever the outage.']}},
 
 {id:'run4',title:'What to measure, what to log, what never to log',body:`
 <p>Identity is unusually measurable and unusually badly measured. Most teams watch uptime and nothing
@@ -322,19 +322,19 @@ SECURITY
   break-glass usage                       should be zero, alert on non-zero
   token validation failures by reason     a spike in "bad signature" is not routine</div>
 <p><b>Time to deprovision</b> is the one to instrument first if you instrument nothing else. It is the
-number audits actually fail on, and it is usually far worse than anyone assumes — measure it before
+number audits actually fail on, and it is usually far worse than anyone assumes: measure it before
 claiming it.</p>
 
 <h4>SLOs worth setting</h4>
 <p>Two are genuinely useful: <b>login success rate</b> above some threshold (with the denominator
-defined carefully — abandoned logins are not failures), and <b>authentication latency</b> at p95. Both
+defined carefully: abandoned logins are not failures), and <b>authentication latency</b> at p95. Both
 are user-visible, both degrade before an outage, and both give you a budget conversation rather than an
 argument about whether the IdP was "up".</p>
 
 <h4>What to log</h4>
 <p>Every authentication decision needs enough context to reconstruct it: who, when, from where, which
 method, which client, which session, and <b>why it failed</b>. That last one is where most identity
-logging is useless — "login failed" tells an investigator nothing.</p>
+logging is useless: "login failed" tells an investigator nothing.</p>
 <div class="codeSample" data-hl>{ "event": "auth.failed",
   "sub": "u-4817",
   "client_id": "orders-web",
@@ -350,24 +350,24 @@ through three systems.</p>
 
 <h4>What must never be logged</h4>
 <ul>
-<li><b>Passwords</b> — including in failed-login events, where they end up most often, and including
+<li><b>Passwords</b>: including in failed-login events, where they end up most often, and including
 "near misses" people log while debugging.</li>
 <li><b>Whole tokens.</b> A log containing access tokens is a credential store with no access control.
 Log a prefix or a hash.</li>
-<li><b>Authorization codes, PKCE verifiers, session cookies, API keys, capability URLs</b> — same
+<li><b>Authorization codes, PKCE verifiers, session cookies, API keys, capability URLs</b>: same
 reasoning.</li>
 <li><b>Biometric templates</b>, ever.</li>
 </ul>
 <p>The recurring pattern is a middleware that dumps request headers on error. It is invisible until an
-incident, when you discover your log platform — which has broader access than production — has been
+incident, when you discover your log platform (which has broader access than production) has been
 accumulating bearer tokens for two years. Redact at the logging layer, not at each call site, so it
 cannot be forgotten.</p>
 <p>And treat <b>identity log retention</b> as a security decision. These logs are often the shortest-
 retained and the first needed; an investigation that can only see seven days cannot establish when an
 attacker first got in.</p>`,
-docs:[['OWASP — Logging Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html'],['Google SRE — Service Level Objectives','https://sre.google/sre-book/service-level-objectives/'],['RFC 9068 — JWT Profile for OAuth 2.0 Access Tokens','https://www.rfc-editor.org/rfc/rfc9068']],
+docs:[['OWASP (Logging Cheat Sheet)','https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html'],['Google SRE (Service Level Objectives)','https://sre.google/sre-book/service-level-objectives/'],['RFC 9068 (JWT Profile for OAuth 2.0 Access Tokens)','https://www.rfc-editor.org/rfc/rfc9068']],
 ex:{title:'Redact before logging',
-prompt:`Write <code>AuthLog</code> with three methods. <code>static boolean loggable(String field)</code> returns false for <code>"password"</code>, <code>"access_token"</code>, <code>"refresh_token"</code>, <code>"code_verifier"</code>, <code>"session_cookie"</code> and <code>"biometric_template"</code>, and true for anything else including null-safe handling. <code>static String redact(String field, String value)</code> returns the value unchanged when the field is loggable; otherwise it returns the first 6 characters plus <code>"..."</code>, or <code>"[redacted]"</code> when the value is null or shorter than 6. <code>static boolean investigable(java.util.Set&lt;String&gt; fields)</code> requires the set to contain <code>"reason"</code> and <code>"correlation_id"</code> — the two fields that make a failure reconstructable.`,
+prompt:`Write <code>AuthLog</code> with three methods. <code>static boolean loggable(String field)</code> returns false for <code>"password"</code>, <code>"access_token"</code>, <code>"refresh_token"</code>, <code>"code_verifier"</code>, <code>"session_cookie"</code> and <code>"biometric_template"</code>, and true for anything else including null-safe handling. <code>static String redact(String field, String value)</code> returns the value unchanged when the field is loggable; otherwise it returns the first 6 characters plus <code>"..."</code>, or <code>"[redacted]"</code> when the value is null or shorter than 6. <code>static boolean investigable(java.util.Set&lt;String&gt; fields)</code> requires the set to contain <code>"reason"</code> and <code>"correlation_id"</code>: the two fields that make a failure reconstructable.`,
 starter:`import java.util.*;
 
 public class AuthLog {
@@ -382,7 +382,7 @@ public class AuthLog {
     }
 }`,
 tests:[{d:'passwords are never logged',re:'"password"'},{d:'access tokens are never logged',re:'"access_token"'},{d:'PKCE verifiers are never logged',re:'"code_verifier"'},{d:'biometric templates are never logged',re:'"biometric_template"'},{d:'other fields are loggable',re:'return\\s+true'},{d:'redaction keeps only a short prefix',re:'substring\\s*\\(\\s*0\\s*,\\s*6\\s*\\)'},{d:'short or missing values are fully redacted',re:'"\\[redacted\\]"'},{d:'the failure reason must be present',re:'"reason"'},{d:'a correlation id must be present',re:'"correlation_id"'}],
-behavior:`loggable("client_id") and loggable("method") are true; loggable("password") and loggable("access_token") are false. redact("client_id","orders-web") returns orders-web unchanged. redact("access_token","eyJhbGciOiJSUzI1NiJ9...") returns eyJhbG..., which is enough to correlate an incident without putting a working credential in a log platform that usually has broader access than production. redact("password", null) returns [redacted]. investigable(Set.of("sub","reason","correlation_id")) is true, while a set missing either is false — "login failed" with no reason tells an investigator nothing, and without a correlation id you cannot follow one login across the app, the IdP and back.`,
+behavior:`loggable("client_id") and loggable("method") are true; loggable("password") and loggable("access_token") are false. redact("client_id","orders-web") returns orders-web unchanged. redact("access_token","eyJhbGciOiJSUzI1NiJ9...") returns eyJhbG..., which is enough to correlate an incident without putting a working credential in a log platform that usually has broader access than production. redact("password", null) returns [redacted]. investigable(Set.of("sub","reason","correlation_id")) is true, while a set missing either is false: "login failed" with no reason tells an investigator nothing, and without a correlation id you cannot follow one login across the app, the IdP and back.`,
 hints:['A switch listing the six forbidden fields, returning false, with <code>default: return true;</code>.','Check <code>loggable</code> first in redact, then guard the length before slicing.','<code>fields != null &amp;&amp; fields.contains("reason") &amp;&amp; fields.contains("correlation_id")</code>'],
 solution:`import java.util.*;
 
@@ -415,7 +415,7 @@ public class AuthLog {
 
 {id:'run5',title:'Testing identity: the part everyone skips',body:`
 <p>Authentication is the one code path every user takes and almost nobody tests properly. The reasons
-are understandable — it spans systems you do not control, it involves a browser, and the happy path
+are understandable: it spans systems you do not control, it involves a browser, and the happy path
 "works on my machine". The result is that identity bugs are found in production by users who cannot log
 in.</p>
 
@@ -442,7 +442,7 @@ INTEGRATION — against a MOCK IdP you control
 END-TO-END — a real IdP in a test tenant, a small number of cases
   one happy path per client type. that is enough: E2E is for wiring,
   not for logic.</div>
-<p>The temptation is to invert this — a few E2E tests and nothing underneath. It is the wrong shape:
+<p>The temptation is to invert this: a few E2E tests and nothing underneath. It is the wrong shape:
 E2E tests are slow, flaky and prove only that the wiring is connected, while the bugs that matter are
 in validation logic that a unit test catches in milliseconds.</p>
 
@@ -450,15 +450,15 @@ in validation logic that a unit test catches in milliseconds.</p>
 <p>The happy path breaks loudly and someone notices. The dangerous cases are the ones that fail
 <i>open</i>, and each is a one-line test:</p>
 <ul>
-<li>A token with the right signature but the <b>wrong audience</b> — is it rejected?</li>
-<li>A token with <code>"alg":"none"</code> — rejected?</li>
+<li>A token with the right signature but the <b>wrong audience</b>: is it rejected?</li>
+<li>A token with <code>"alg":"none"</code>: rejected?</li>
 <li>An <b>expired</b> token, and one expiring exactly now.</li>
-<li>A code redemption with the <b>verifier omitted</b> — the PKCE downgrade.</li>
-<li>A <b>reused</b> refresh token — does reuse detection fire?</li>
-<li>A record belonging to <b>another tenant</b> — the IDOR test, which almost nobody writes.</li>
-<li>A <b>missing</b> scope claim entirely — deny, not allow.</li>
+<li>A code redemption with the <b>verifier omitted</b>: the PKCE downgrade.</li>
+<li>A <b>reused</b> refresh token: does reuse detection fire?</li>
+<li>A record belonging to <b>another tenant</b>: the IDOR test, which almost nobody writes.</li>
+<li>A <b>missing</b> scope claim entirely: deny, not allow.</li>
 </ul>
-<p>If a bug of this class ever reaches production, the fix is not just the patch — it is the test, so
+<p>If a bug of this class ever reaches production, the fix is not just the patch; it is the test, so
 the failure mode cannot return.</p>
 
 <h4>Mock IdPs and test data</h4>
@@ -466,11 +466,11 @@ the failure mode cannot return.</p>
 what a real IdP will not: tokens that are expired, malformed, wrongly-audienced or wrongly-signed, on
 demand and deterministically.</p>
 <p>Two rules. <b>Never point tests at production</b>, and never let a production key exist anywhere test
-code can reach. And <b>never disable authentication in a test environment</b> — the "auth off in dev"
+code can reach. And <b>never disable authentication in a test environment</b>: the "auth off in dev"
 switch has a habit of shipping, and it means the path you tested is not the path you run.</p>
 <p>Finally, if you take away one habit: <b>write the test when you write the check</b>. Every validation
 step in the token checklist is a test case, and the checklist is only real if something enforces it.</p>`,
-docs:[['OWASP — Web Security Testing Guide: Authentication','https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/04-Authentication_Testing/'],['OAuth 2.0 Security Best Current Practice','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['Martin Fowler — The Practical Test Pyramid','https://martinfowler.com/articles/practical-test-pyramid.html']],
+docs:[['OWASP, Web Security Testing Guide: Authentication','https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/04-Authentication_Testing/'],['OAuth 2.0 Security Best Current Practice','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['Martin Fowler, The Practical Test Pyramid','https://martinfowler.com/articles/practical-test-pyramid.html']],
 ex:{title:'The negative-path checklist',
 prompt:`Write <code>AuthTests</code> with three methods. <code>static boolean isNegativeCase(String scenario)</code> returns true for <code>"wrong-audience"</code>, <code>"alg-none"</code>, <code>"expired"</code>, <code>"pkce-downgrade"</code>, <code>"refresh-reuse"</code>, <code>"cross-tenant"</code> and <code>"missing-scope"</code>, and false otherwise including null. <code>static String level(String scenario)</code> returns <code>"unit"</code> for <code>"wrong-audience"</code>, <code>"alg-none"</code> and <code>"expired"</code>, <code>"integration"</code> for <code>"pkce-downgrade"</code> and <code>"refresh-reuse"</code>, and <code>"e2e"</code> for <code>"happy-path"</code>; anything else returns <code>"unit"</code>, because the default belongs at the cheapest level. <code>static boolean suiteAdequate(java.util.Set&lt;String&gt; covered)</code> requires <code>"wrong-audience"</code>, <code>"expired"</code> and <code>"cross-tenant"</code> to all be present.`,
 starter:`import java.util.*;
@@ -487,8 +487,8 @@ public class AuthTests {
     }
 }`,
 tests:[{d:'wrong audience is a negative case',re:'"wrong-audience"'},{d:'alg none is a negative case',re:'"alg-none"'},{d:'the PKCE downgrade is a negative case',re:'"pkce-downgrade"'},{d:'cross-tenant access is a negative case',re:'"cross-tenant"'},{d:'validation cases belong at unit level',re:'"unit"'},{d:'flow cases belong at integration level',re:'"integration"'},{d:'the happy path is the e2e case',re:'"e2e"'},{d:'the suite must cover the IDOR case',re:'contains\\s*\\(\\s*"cross-tenant"\\s*\\)'}],
-behavior:`isNegativeCase("wrong-audience") and isNegativeCase("cross-tenant") are true; isNegativeCase("happy-path") and isNegativeCase(null) are false. level("expired") is unit, because token validation needs no network and is the cheapest place to catch a fail-open bug. level("refresh-reuse") is integration, since it needs a mock IdP to issue and reuse a token. level("happy-path") is e2e — end-to-end tests prove the wiring is connected, not that the logic is right. suiteAdequate(Set.of("wrong-audience","expired","cross-tenant")) is true; dropping cross-tenant makes it false, and that is the test almost nobody writes even though IDOR tops the API security risks.`,
-hints:['One switch for the seven negative scenarios, another for the level mapping.','The level default is "unit", not "unknown" — push tests down the pyramid.','<code>covered != null &amp;&amp; covered.containsAll(...)</code> also works for the last one.'],
+behavior:`isNegativeCase("wrong-audience") and isNegativeCase("cross-tenant") are true; isNegativeCase("happy-path") and isNegativeCase(null) are false. level("expired") is unit, because token validation needs no network and is the cheapest place to catch a fail-open bug. level("refresh-reuse") is integration, since it needs a mock IdP to issue and reuse a token. level("happy-path") is e2e: end-to-end tests prove the wiring is connected, not that the logic is right. suiteAdequate(Set.of("wrong-audience","expired","cross-tenant")) is true; dropping cross-tenant makes it false, and that is the test almost nobody writes even though IDOR tops the API security risks.`,
+hints:['One switch for the seven negative scenarios, another for the level mapping.','The level default is "unit", not "unknown": push tests down the pyramid.','<code>covered != null &amp;&amp; covered.containsAll(...)</code> also works for the last one.'],
 solution:`import java.util.*;
 
 public class AuthTests {
@@ -566,12 +566,12 @@ token validates, user is wrong   keyed on email instead of sub
 403 AFTER a successful login     authorization, not authentication. stop
                                  looking at the IdP.</div>
 <p>That last row is worth internalising. "Login is broken" reported by a user very often means
-<i>authorization</i> is broken — they authenticated fine and then could not see something. The two
+<i>authorization</i> is broken: they authenticated fine and then could not see something. The two
 have entirely different owners and entirely different fixes.</p>
 
 <h4>The five questions that resolve most incidents</h4>
 <ol>
-<li><b>Everyone, or one user?</b> One user points at data — their account state, their group
+<li><b>Everyone, or one user?</b> One user points at data: their account state, their group
 membership, their enrolled factors. Everyone points at configuration or a key.</li>
 <li><b>New users only, or existing sessions too?</b> Existing sessions surviving means the
 <i>authorization</i> path broke, not verification. Both broken means keys or the directory.</li>
@@ -587,7 +587,7 @@ random, and it is invisible unless you check.</li>
 <ul>
 <li><b>Decode the token.</b> Look at <code>iss</code>, <code>aud</code>, <code>exp</code>,
 <code>sub</code> and <code>kid</code> with your own eyes. Most "the token is invalid" incidents are
-visible in ten seconds this way — usually an <code>aud</code> naming a different service, or a
+visible in ten seconds this way, usually an <code>aud</code> naming a different service, or a
 <code>kid</code> not in the JWKS.</li>
 <li><b>Fetch the JWKS yourself</b> and check the <code>kid</code> is there. A rotated key with a stale
 cache is a classic.</li>
@@ -600,14 +600,14 @@ error it returns to the browser, which is deliberately vague to avoid leaking in
 </ul>
 
 <h4>The expiry class of bug</h4>
-<p>A large share of identity incidents have no trigger at all on your side — something simply reached
+<p>A large share of identity incidents have no trigger at all on your side. Something simply reached
 its expiry: a signing certificate, a SAML metadata certificate, a client secret, a TLS certificate, a
 CRL. These fail suddenly, completely, and at whatever hour they were issued years earlier. The
 diagnostic tell is that nothing changed and it broke anyway. The fix is monitoring expiry dates as a
 first-class alert, well before the day.</p>`,
-docs:[['OAuth 2.0 error responses (RFC 6749 §5.2)','https://www.rfc-editor.org/rfc/rfc6749#section-5.2'],['MDN — Set-Cookie SameSite','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'],['jwt.io — decode a token','https://jwt.io/']],
+docs:[['OAuth 2.0 error responses (RFC 6749 §5.2)','https://www.rfc-editor.org/rfc/rfc6749#section-5.2'],['MDN, Set-Cookie SameSite','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'],['jwt.io, decode a token','https://jwt.io/']],
 ex:{title:'Triage from the symptom',
-prompt:`Write <code>Triage</code> with three methods. <code>static String suspect(String symptom)</code> maps a symptom to where to look: <code>"invalid-redirect-uri"</code> and <code>"invalid-client"</code> return <code>"client-registration"</code>; <code>"login-loop"</code> and <code>"missing-state"</code> return <code>"cookies"</code>; <code>"invalid-grant"</code> and <code>"bad-signature"</code> return <code>"token-exchange"</code>; <code>"403-after-login"</code> returns <code>"authorization"</code>; anything else returns <code>"unknown"</code>. <code>static boolean idpSideIssue(boolean allUsers, boolean allApps)</code> is true only when both are true. <code>static boolean likelyExpiry(boolean nothingChanged, boolean brokeSuddenly)</code> is true only when both hold — the signature of a certificate or secret reaching its expiry.`,
+prompt:`Write <code>Triage</code> with three methods. <code>static String suspect(String symptom)</code> maps a symptom to where to look: <code>"invalid-redirect-uri"</code> and <code>"invalid-client"</code> return <code>"client-registration"</code>; <code>"login-loop"</code> and <code>"missing-state"</code> return <code>"cookies"</code>; <code>"invalid-grant"</code> and <code>"bad-signature"</code> return <code>"token-exchange"</code>; <code>"403-after-login"</code> returns <code>"authorization"</code>; anything else returns <code>"unknown"</code>. <code>static boolean idpSideIssue(boolean allUsers, boolean allApps)</code> is true only when both are true. <code>static boolean likelyExpiry(boolean nothingChanged, boolean brokeSuddenly)</code> is true only when both hold: the signature of a certificate or secret reaching its expiry.`,
 starter:`public class Triage {
     static String suspect(String symptom) {
         return null;
@@ -620,8 +620,8 @@ starter:`public class Triage {
     }
 }`,
 tests:[{d:'redirect errors point at the registration',re:'"client-registration"'},{d:'login loops point at cookies',re:'"cookies"'},{d:'grant errors point at the token exchange',re:'"token-exchange"'},{d:'a 403 after login is authorization',re:'"authorization"'},{d:'unknown symptoms fall through',re:'"unknown"'},{d:'an IdP-side issue affects everyone everywhere',re:'allUsers\\s*&&\\s*allApps|allApps\\s*&&\\s*allUsers'},{d:'expiry is suspected when nothing changed',re:'nothingChanged'}],
-behavior:`suspect("invalid-redirect-uri") returns client-registration, because redirect URIs are matched by exact string and a trailing slash is enough to break it. suspect("login-loop") returns cookies: the app cannot set or read its own cookie, usually SameSite or a domain mismatch. suspect("403-after-login") returns authorization — the user authenticated perfectly well, so the IdP is the wrong place to look, which is the most commonly misdiagnosed case. idpSideIssue(true,true) is true; if only one app is affected it is that client's registration, and if only one user is affected it is their account data. likelyExpiry(true,true) is true: nothing changed and it broke anyway is the signature of a certificate or secret reaching its expiry.`,
-hints:['One switch with four groups of cases and a default of "unknown".','Both flags must be true for an IdP-side conclusion — narrow either one and the answer changes.','likelyExpiry is a single && of its two arguments.'],
+behavior:`suspect("invalid-redirect-uri") returns client-registration, because redirect URIs are matched by exact string and a trailing slash is enough to break it. suspect("login-loop") returns cookies: the app cannot set or read its own cookie, usually SameSite or a domain mismatch. suspect("403-after-login") returns authorization: the user authenticated perfectly well, so the IdP is the wrong place to look, which is the most commonly misdiagnosed case. idpSideIssue(true,true) is true; if only one app is affected it is that client's registration, and if only one user is affected it is their account data. likelyExpiry(true,true) is true: nothing changed and it broke anyway is the signature of a certificate or secret reaching its expiry.`,
+hints:['One switch with four groups of cases and a default of "unknown".','Both flags must be true for an IdP-side conclusion: narrow either one and the answer changes.','likelyExpiry is a single && of its two arguments.'],
 solution:`public class Triage {
     static String suspect(String symptom) {
         if (symptom == null) return "unknown";
@@ -652,13 +652,13 @@ solution:`public class Triage {
 }`}},
 
 {id:'run7',title:'"3am, I got paged": working an identity incident',body:`
-<p>Everything so far has been method. This is the shape of the night itself — what the first ten
+<p>Everything so far has been method. This is the shape of the night itself: what the first ten
 minutes look like, what to do in what order, and the specific traps of identity incidents that other
 outages do not have.</p>
 
 <h4>The first thing to establish: outage or attack?</h4>
 <p>They demand opposite reflexes. An <b>outage</b> wants you to restore service fast. An <b>attack</b>
-wants you to preserve evidence and contain before restoring — and restoring carelessly can destroy the
+wants you to preserve evidence and contain before restoring, and restoring carelessly can destroy the
 only record of what happened, or hand access straight back.</p>
 <div class="codeSample" data-hl>LOOKS LIKE AN OUTAGE            LOOKS LIKE AN ATTACK
 everyone equally affected       a few accounts, oddly chosen
@@ -689,7 +689,7 @@ support flood that otherwise consumes the responder.</li>
 <li><b>Your tools are behind the thing that is broken.</b> The runbook is in the wiki behind SSO, the
 alert went to the chat tool behind SSO, the password manager needs SSO. Check this on a quiet day.</li>
 <li><b>The fix invalidates everyone.</b> Rotating a signing key logs out the entire company. Sometimes
-correct — but it converts a partial outage into a total one, so do it deliberately, not reflexively.</li>
+correct, but it converts a partial outage into a total one, so do it deliberately, not reflexively.</li>
 <li><b>Restarting hides the evidence.</b> A rolling restart clears in-memory session state and the
 attacker's foothold with it, along with your ability to see what they did.</li>
 <li><b>The blast radius exceeds your team.</b> Identity failure takes down systems owned by people who
@@ -699,32 +699,32 @@ key or created a client, a reset changes nothing. Hunt persistence before declar
 </ul>
 
 <h4>A worked example</h4>
-<p><b>02:47</b> — page: login success rate has fallen from 99.4% to 12%.</p>
-<p><b>02:49</b> — scope. Every app. New logins fail; existing sessions still work. So verification of
+<p><b>02:47</b>: page: login success rate has fallen from 99.4% to 12%.</p>
+<p><b>02:49</b>: scope. Every app. New logins fail; existing sessions still work. So verification of
 new tokens is failing, or the IdP cannot issue them. Not authorization.</p>
-<p><b>02:52</b> — what changed? No deploys. Vendor status page green. Someone checks certificate
+<p><b>02:52</b>: what changed? No deploys. Vendor status page green. Someone checks certificate
 expiries: the IdP's token-signing certificate expired at 02:00 UTC.</p>
-<p><b>02:55</b> — outage, not attack: uniform, coincides with an expiry, nothing created. Switch to
+<p><b>02:55</b>: outage, not attack: uniform, coincides with an expiry, nothing created. Switch to
 restore-fast.</p>
-<p><b>02:58</b> — communicate: "New logins are failing. If you are already signed in you are
+<p><b>02:58</b>: communicate: "New logins are failing. If you are already signed in you are
 unaffected. ETA 30 minutes." That single message prevents most of the incoming.</p>
-<p><b>03:10</b> — renew the certificate, publish it, confirm the new <code>kid</code> is in JWKS.</p>
-<p><b>03:20</b> — relying parties still failing: they cached the old JWKS. Force refetch where possible;
+<p><b>03:10</b>: renew the certificate, publish it, confirm the new <code>kid</code> is in JWKS.</p>
+<p><b>03:20</b>: relying parties still failing: they cached the old JWKS. Force refetch where possible;
 otherwise the cache TTL is the recovery time, which is now a documented finding.</p>
-<p><b>03:40</b> — recovered. Nobody was logged out, because existing sessions were never affected.</p>
+<p><b>03:40</b>: recovered. Nobody was logged out, because existing sessions were never affected.</p>
 <p><b>The follow-ups are the point:</b> alert on certificate expiry at 30 days, not at expiry; cap JWKS
 cache TTL and serve stale on failure; document that certificate renewal is a change requiring the same
 care as a deploy. An incident that produces no change to the system will happen again.</p>
 
 <h4>Afterwards</h4>
 <p>Blameless review, and one identity-specific addition to the usual questions: <b>what would have made
-this five minutes shorter?</b> For identity the answer is almost always the same small set — a metric
+this five minutes shorter?</b> For identity the answer is almost always the same small set: a metric
 that would have shown it sooner, an expiry alert, a runbook not behind SSO, or a rehearsed key
 rotation. Those are the actions. "Be more careful" is not.</p>`,
-docs:[['Google SRE — Managing Incidents','https://sre.google/sre-book/managing-incidents/'],['Google SRE — Postmortem Culture','https://sre.google/sre-book/postmortem-culture/'],['NIST SP 800-61 — Incident Handling','https://csrc.nist.gov/pubs/sp/800/61/r2/final']],
+docs:[['Google SRE (Managing Incidents)','https://sre.google/sre-book/managing-incidents/'],['Google SRE (Postmortem Culture)','https://sre.google/sre-book/postmortem-culture/'],['NIST SP 800-61 (Incident Handling)','https://csrc.nist.gov/pubs/sp/800/61/r2/final']],
 ex:{title:'Compromise or outage?',lang:'js',
 run:{call:'posture',cases:[{name:'everyone failing, nothing created',args:[true,false],expect:'outage'},{name:'new artifacts appearing',args:[false,true],expect:'compromise'},{name:'uniform failure AND new artifacts still means compromise',args:[true,true],expect:'compromise'},{name:'neither signal',args:[false,false],expect:'investigate'}]},
-prompt:`Write <code>function posture(uniformFailure, newArtifactsCreated)</code> that returns <code>"compromise"</code> whenever new artifacts are appearing (new clients, keys, federation trusts) — <b>even if</b> everything is also failing uniformly — <code>"outage"</code> when the failure is uniform and nothing is being created, and <code>"investigate"</code> otherwise.`,
+prompt:`Write <code>function posture(uniformFailure, newArtifactsCreated)</code> that returns <code>"compromise"</code> whenever new artifacts are appearing (new clients, keys, federation trusts), <b>even if</b> everything is also failing uniformly, <code>"outage"</code> when the failure is uniform and nothing is being created, and <code>"investigate"</code> otherwise.`,
 starter:`function posture(uniformFailure, newArtifactsCreated) {
   return null;
 }`,
@@ -735,7 +735,7 @@ solution:`function posture(uniformFailure, newArtifactsCreated) {
   return "investigate";
 }`,
 tests:[{d:'new artifacts mean compromise',re:'"compromise"'},{d:'uniform failure with no creation is an outage',re:'"outage"'},{d:'anything else needs investigation',re:'"investigate"'}],
-behavior:`The third case is the whole point and it is executed: an attacker establishing persistence often breaks things on the way, so "everything is down" does not rule out a compromise. Order your checks so creation is evaluated first — an outage response (restart, roll back, restore) destroys exactly the evidence an intrusion investigation needs.`,
+behavior:`The third case is the whole point and it is executed: an attacker establishing persistence often breaks things on the way, so "everything is down" does not rule out a compromise. Order your checks so creation is evaluated first: an outage response (restart, roll back, restore) destroys exactly the evidence an intrusion investigation needs.`,
 hints:['Check the compromise signal first so it cannot be masked.','Uniform failure alone, with nothing being created, points at an outage.','Everything else stays open as "investigate" rather than guessing.']}},
 
 {id:'run8',title:'Changing identity safely: rollout, rollback and continuity',body:`
@@ -765,20 +765,20 @@ than a rollback, and you should know that before you start.</p>
 <ol>
 <li><b>Additive first.</b> Publish the new key alongside the old; accept both the old and new
 identifier; support the new and old client auth method. Only remove the old thing after the new one is
-proven — a two-phase change with a gap is what makes a revert possible at all.</li>
+proven: a two-phase change with a gap is what makes a revert possible at all.</li>
 <li><b>Ring by ring.</b> Yourself, then your team, then a friendly department, then everyone. Identity
 affects every human in the organisation, so a 1% rollout is still hundreds of people.</li>
-<li><b>Watch the right signal.</b> Login success rate, not CPU. And watch it per client — an aggregate
+<li><b>Watch the right signal.</b> Login success rate, not CPU. And watch it per client: an aggregate
 stays green while one app is completely broken.</li>
 <li><b>Never change two things at once.</b> Rotating a key during an IdP upgrade means you cannot tell
 which one broke it, and you cannot revert one without the other.</li>
 <li><b>Have the revert command written down before you start</b>, and know how long it takes to take
-effect — cache TTLs mean "revert" is rarely instant.</li>
+effect: cache TTLs mean "revert" is rarely instant.</li>
 </ol>
 
 <h4>The authorization change is the dangerous one</h4>
 <p>An authentication change fails loudly. An authorization change can fail <i>silently and open</i>: a
-policy edit that grants more than intended produces no errors, no alerts and no user complaints —
+policy edit that grants more than intended produces no errors, no alerts and no user complaints:
 everything works, for everyone, including people who should not have access.</p>
 <p>So authorization changes need a different discipline: diff the <i>effective</i> permissions before
 and after, not the policy text; test the negative cases explicitly (the cross-tenant read, the
@@ -801,9 +801,9 @@ the plan whether you like it or not.</li>
 </ul>
 <p>Test the answers rather than documenting them. A continuity plan nobody has exercised is a
 description of what you hope would happen.</p>`,
-docs:[['Google SRE — Release Engineering','https://sre.google/sre-book/release-engineering/'],['Microsoft — Entra ID resilience guidance','https://learn.microsoft.com/en-us/entra/architecture/resilience-overview'],['W3C — WebAuthn RP ID','https://www.w3.org/TR/webauthn-2/#rp-id']],
+docs:[['Google SRE (Release Engineering)','https://sre.google/sre-book/release-engineering/'],['Microsoft (Entra ID resilience guidance)','https://learn.microsoft.com/en-us/entra/architecture/resilience-overview'],['W3C (WebAuthn RP ID)','https://www.w3.org/TR/webauthn-2/#rp-id']],
 ex:{title:'Is this change reversible?',
-prompt:`Write <code>ChangeSafety</code> with three methods. <code>static boolean reversible(String change)</code> returns false for <code>"rp-id-change"</code>, <code>"password-rehash"</code> and <code>"sub-format-change"</code> — each leaves state that outlives a revert — and true otherwise. <code>static boolean additiveRollout(boolean newAcceptedAlongsideOld, boolean oldRemovedImmediately)</code> is true only when the new value is accepted alongside the old and the old is <b>not</b> removed immediately. <code>static boolean needsEffectiveDiff(String changeType)</code> returns true for <code>"authorization"</code>, because an over-permissive policy fails silently and produces no errors, no alerts and no complaints.`,
+prompt:`Write <code>ChangeSafety</code> with three methods. <code>static boolean reversible(String change)</code> returns false for <code>"rp-id-change"</code>, <code>"password-rehash"</code> and <code>"sub-format-change"</code> (each leaves state that outlives a revert) and true otherwise. <code>static boolean additiveRollout(boolean newAcceptedAlongsideOld, boolean oldRemovedImmediately)</code> is true only when the new value is accepted alongside the old and the old is <b>not</b> removed immediately. <code>static boolean needsEffectiveDiff(String changeType)</code> returns true for <code>"authorization"</code>, because an over-permissive policy fails silently and produces no errors, no alerts and no complaints.`,
 starter:`public class ChangeSafety {
     static boolean reversible(String change) {
         return false;
@@ -816,7 +816,7 @@ starter:`public class ChangeSafety {
     }
 }`,
 tests:[{d:'an RP ID change is irreversible',re:'"rp-id-change"'},{d:'a password rehash is irreversible',re:'"password-rehash"'},{d:'a subject format change is irreversible',re:'"sub-format-change"'},{d:'other changes are reversible',re:'return\\s+true'},{d:'the new value must be accepted alongside the old',re:'newAcceptedAlongsideOld'},{d:'the old value must not be removed immediately',re:'!\\s*oldRemovedImmediately|oldRemovedImmediately\\s*==\\s*false'},{d:'authorization changes need an effective diff',re:'"authorization"'}],
-behavior:`reversible("key-rotation") is true, since publishing a new key alongside the old is a two-phase change with a gap to revert into. reversible("rp-id-change") is false: every passkey registered under the old RP ID is permanently unusable, and no config revert brings them back. reversible("password-rehash") is false because hashing is one-way. additiveRollout(true,false) is true — publish the new thing, keep accepting the old, remove it only once the new one is proven. additiveRollout(true,true) is false, which is the common mistake that makes a revert impossible. needsEffectiveDiff("authorization") is true: an authentication change fails loudly, but a policy that grants more than intended produces no errors at all, so you must diff effective permissions rather than policy text.`,
+behavior:`reversible("key-rotation") is true, since publishing a new key alongside the old is a two-phase change with a gap to revert into. reversible("rp-id-change") is false: every passkey registered under the old RP ID is permanently unusable, and no config revert brings them back. reversible("password-rehash") is false because hashing is one-way. additiveRollout(true,false) is true: publish the new thing, keep accepting the old, remove it only once the new one is proven. additiveRollout(true,true) is false, which is the common mistake that makes a revert impossible. needsEffectiveDiff("authorization") is true: an authentication change fails loudly, but a policy that grants more than intended produces no errors at all, so you must diff effective permissions rather than policy text.`,
 hints:['A switch listing the three irreversible changes returning false, defaulting to true.','Both conditions in additiveRollout, the second negated.','<code>return "authorization".equals(changeType);</code>'],
 solution:`public class ChangeSafety {
     static boolean reversible(String change) {
@@ -842,7 +842,7 @@ solution:`public class ChangeSafety {
 
 {id:'run9',title:'Evaluating and recommending an identity solution',body:`
 <p>At some point the question stops being technical and becomes "what should we buy, and can you
-justify it?" This lesson is a framework for answering that well — the questions that actually
+justify it?" This lesson is a framework for answering that well: the questions that actually
 discriminate between options, the ones vendors would rather you did not ask, and how to present a
 recommendation a decision-maker can act on.</p>
 
@@ -860,13 +860,13 @@ one answer eliminates most of the market immediately, and the products are genui
 workforce IAM optimises for governance and lifecycle, CIAM for conversion, scale and privacy consent.
 A workforce tool used for a consumer product is a common and expensive mistake.</li>
 <li><b>What do your applications speak <i>today</i>?</b> Not what you wish. Inventory it: OIDC, SAML,
-and then the awkward tail — header-based auth behind a proxy, Kerberos/IWA on the intranet, direct LDAP
+and then the awkward tail: header-based auth behind a proxy, Kerberos/IWA on the intranet, direct LDAP
 binds, an app with a hardcoded password. <b>The tail determines the project, not the modern majority.</b>
 Ask every vendor how they handle your three worst applications, by name.</li>
 <li><b>Where does identity data come from, and who is authoritative?</b> HR system, AD, several
-directories that disagree. If nothing is authoritative today, no product fixes that — it is your work,
+directories that disagree. If nothing is authoritative today, no product fixes that: it is your work,
 and it happens before or during any migration.</li>
-<li><b>What is the scale and shape?</b> Users, peak logins per second (not average — Monday 09:00 is
+<li><b>What is the scale and shape?</b> Users, peak logins per second (not average: Monday 09:00 is
 the number), tenant count for B2B, growth. Shape matters more than size: 10,000 employees is a
 different system from 10 million consumers with a seasonal spike.</li>
 <li><b>What does security actually require?</b> Phishing-resistant MFA, sender-constrained tokens,
@@ -877,13 +877,13 @@ and above all <b>audit evidence in a form your auditor accepts</b>. "It has repo
 as "it produces the artefact we are asked for each quarter".</li>
 <li><b>What are the operational commitments?</b> SLA and its credits, DR posture and tested RTO, data
 residency, support responsiveness at 3am, and the maintenance windows they impose on you.</li>
-<li><b>What does it cost — really?</b> Per monthly-active-user or per named user (a huge difference for
+<li><b>What does it cost, really?</b> Per monthly-active-user or per named user (a huge difference for
 consumer products), tier cliffs, and specifically <b>which security features are gated behind the
 enterprise tier</b>. Charging extra for SSO, MFA or audit logs is common; price the configuration you
 will actually need, not the entry tier.</li>
 <li><b>How do you get out?</b> Can you export users, group memberships, application configuration and
-audit history in a usable form? Credentials will <i>not</i> come with you — passwords are hashed with
-their scheme, and passkeys are bound to their RP ID — so any exit means re-enrollment. Knowing that
+audit history in a usable form? Credentials will <i>not</i> come with you (passwords are hashed with
+their scheme, and passkeys are bound to their RP ID), so any exit means re-enrollment. Knowing that
 before you sign is worth a great deal.</li>
 <li><b>Who runs it, and do they exist?</b> A product that assumes a dedicated IAM team is the wrong
 product for two engineers who also own three other systems.</li>
@@ -891,8 +891,8 @@ product for two engineers who also own three other systems.</li>
 
 <h4>Build versus buy</h4>
 <p>Apply the same scrutiny in both directions. <b>Building authentication is almost always a false economy</b>: the
-protocol is the easy part, and the long tail — MFA, recovery, session management, bot defence, audit,
-compliance, keeping pace with the security BCP — is a permanent team. Most "we built our own" estates
+protocol is the easy part, and the long tail (MFA, recovery, session management, bot defence, audit,
+compliance, keeping pace with the security BCP) is a permanent team. Most "we built our own" estates
 are quietly worse and quietly expensive.</p>
 <p>The legitimate exceptions are narrow: identity <i>is</i> the product; scale or unit economics make
 per-user pricing untenable; or the model is genuinely unusual and no vendor fits. Even then the usual
@@ -920,7 +920,7 @@ SCORED (weighted — only for options that pass every gate)
 break:</p>
 <ul>
 <li>Integrate <b>the worst application</b>, not the easy one.</li>
-<li>Import a realistic slice of <b>real, messy</b> user data — duplicates included.</li>
+<li>Import a realistic slice of <b>real, messy</b> user data, duplicates included.</li>
 <li>Perform an <b>export</b>, and check what you actually get back.</li>
 <li>Raise a genuine <b>support ticket</b> and time the response.</li>
 <li>Test one <b>failure mode</b>: what does an outage look like from an application's perspective?</li>
@@ -934,12 +934,12 @@ happens if you do nothing. That last one is often the strongest argument, and it
 left out.</p>
 <p>And name the uncomfortable things explicitly: concentration risk, the re-enrollment that any future
 exit requires, the tail of applications that will not federate, and the headcount the operating model
-assumes. A recommendation that hides these is not saving anyone trouble — it is deferring it to the
+assumes. A recommendation that hides these is not saving anyone trouble; it is deferring it to the
 person who inherits the decision.</p>`,
-docs:[['NIST SP 800-63-3 — Digital Identity Guidelines (requirements framing)','https://pages.nist.gov/800-63-3/sp800-63-3.html'],['OpenID Foundation — certification (verifying vendor claims)','https://openid.net/certification/'],['RFC 7644 — SCIM Protocol (provisioning interoperability)','https://www.rfc-editor.org/rfc/rfc7644']],
+docs:[['NIST SP 800-63-3: Digital Identity Guidelines (requirements framing)','https://pages.nist.gov/800-63-3/sp800-63-3.html'],['OpenID Foundation (certification (verifying vendor claims))','https://openid.net/certification/'],['RFC 7644: SCIM Protocol (provisioning interoperability)','https://www.rfc-editor.org/rfc/rfc7644']],
 ex:{title:'Gate first, then score',lang:'js',
 run:{call:'evaluate',cases:[{name:'all gates pass, score is returned',args:[true,55],expect:55},{name:'a failed gate disqualifies',args:[false,55],expect:-1},{name:'a failed gate still disqualifies a perfect score',args:[false,100],expect:-1}]},
-prompt:`Write three functions. <code>passesGates(handlesLegacyTail, meetsResidency, producesAuditEvidence, phishingResistantMfa)</code> requires <b>all four</b> — a gate is not scored, it is pass or fail. <code>score(migrationEffortInverse, operationalEase, costEase, governance, devExperience)</code> returns <code>3*migrationEffortInverse + 3*operationalEase + 2*costEase + 2*governance + devExperience</code>. <code>evaluate(gates, weightedScore)</code> returns the score when the gates pass and <code>-1</code> otherwise, so a failed gate can never be averaged away.`,
+prompt:`Write three functions. <code>passesGates(handlesLegacyTail, meetsResidency, producesAuditEvidence, phishingResistantMfa)</code> requires <b>all four</b>: a gate is not scored, it is pass or fail. <code>score(migrationEffortInverse, operationalEase, costEase, governance, devExperience)</code> returns <code>3*migrationEffortInverse + 3*operationalEase + 2*costEase + 2*governance + devExperience</code>. <code>evaluate(gates, weightedScore)</code> returns the score when the gates pass and <code>-1</code> otherwise, so a failed gate can never be averaged away.`,
 starter:`function passesGates(handlesLegacyTail, meetsResidency, producesAuditEvidence, phishingResistantMfa) {
   return false;
 }
@@ -967,7 +967,7 @@ function evaluate(gates, weightedScore) {
   return gates ? weightedScore : -1;
 }`,
 tests:[{d:'every gate must pass',re:'handlesLegacyTail\\s*&&'},{d:'residency is a gate',re:'meetsResidency'},{d:'audit evidence is a gate',re:'producesAuditEvidence'},{d:'phishing-resistant MFA is a gate',re:'phishingResistantMfa'},{d:'migration effort carries the heaviest weight',re:'3\\s*\\*\\s*migrationEffortInverse'},{d:'operational burden is weighted equally',re:'3\\s*\\*\\s*operationalEase'},{d:'a failed gate disqualifies rather than scores',re:'-1'}],
-behavior:`evaluate(true,55) is 55 and evaluate(false,55) is -1 — executed for real, so returning a low score instead of -1 actually fails. score(5,5,5,5,5) is 55: migration effort and operational burden carry triple weight because they are the largest real costs and the most consistently underestimated, while licence price and developer experience dominate most evaluations for no good reason.`,
+behavior:`evaluate(true,55) is 55 and evaluate(false,55) is -1, executed for real, so returning a low score instead of -1 actually fails. score(5,5,5,5,5) is 55: migration effort and operational burden carry triple weight because they are the largest real costs and the most consistently underestimated, while licence price and developer experience dominate most evaluations for no good reason.`,
 hints:['Four conditions joined with &&, no scoring involved.','Write the weighted sum literally so the weights are visible in the code.','<code>return gates ? weightedScore : -1;</code>']}},
 
 {id:'run10',title:'Detecting identity attacks: what ITDR actually watches',body:`
@@ -975,7 +975,7 @@ hints:['Four conditions joined with &&, no scoring involved.','Write the weighte
 starts after something is visibly broken. This one covers the gap between them, which is where most real
 attacks live: <b>nothing is broken, nothing has been reported, and someone is signing in as your finance
 director.</b></p>
-<p>The industry name for the discipline is <b>ITDR</b> — Identity Threat Detection and Response. Strip the
+<p>The industry name for the discipline is <b>ITDR</b>: Identity Threat Detection and Response. Strip the
 acronym and it is a simple observation: identity has become the primary attack surface, most intrusions now
 begin with a valid credential rather than an exploit, and the tooling built for malware does not look at
 logins at all.</p>
@@ -983,7 +983,7 @@ logins at all.</p>
 <h4>Why the classic controls miss this</h4>
 <p>An attacker with a valid session is, to every system in your estate, a user. No malware runs. No
 vulnerability is exploited. The endpoint agent sees a browser, the WAF sees an authenticated request, and
-the access logs show a successful login — because it <i>was</i> a successful login. What separates the
+the access logs show a successful login, because it <i>was</i> a successful login. What separates the
 attacker from the employee is not the credential; it is the <b>pattern of use</b>. Detection therefore has
 to be behavioural, and it has to happen where identity events are, which is the IdP.</p>
 
@@ -1021,21 +1021,21 @@ confirmed        -> disable the account, revoke grants, rotate its secrets
 // a disabled executive account costs a phone call to your CISO.</div>
 <p>This is where <b>CAEP and Shared Signals</b> earn their place. A revocation is only as fast as its slowest
 consumer, and a stateless resource server will honour a stolen access token until it expires no matter what
-your IdP decided. Push-based signals turn "revoked in principle" into "revoked in seconds" — without them,
+your IdP decided. Push-based signals turn "revoked in principle" into "revoked in seconds"; without them,
 your response time is your token lifetime.</p>
 
 <h4>What makes the difference in practice</h4>
-<p>Three unglamorous things, in order. <b>The logs have to exist and be complete</b> — every authentication,
+<p>Three unglamorous things, in order. <b>The logs have to exist and be complete</b>: every authentication,
 success and failure, with device, location, method and client, correlated by a request id. Most detections
 fail because a field was never collected. <b>The signals have to be tuned</b>, because an alert that fires
 daily and is dismissed daily is not a control; measure the dismissal rate and treat a high one as a defect
 in the rule. And <b>the response has to be rehearsed</b>: the first time you revoke every session for a
 compromised user should not be during a real incident, which is exactly why the break-glass and testing
 lessons in this stream exist.</p>`,
-docs:[['CISA — detecting identity-based attacks','https://www.cisa.gov/resources-tools/resources/identity-and-access-management-recommended-best-practices'],['OpenID Shared Signals & CAEP','https://openid.net/wg/sse/'],['MITRE ATT&CK — Valid Accounts (T1078)','https://attack.mitre.org/techniques/T1078/']],
+docs:[['CISA, detecting identity-based attacks','https://www.cisa.gov/resources-tools/resources/identity-and-access-management-recommended-best-practices'],['OpenID Shared Signals & CAEP','https://openid.net/wg/sse/'],['MITRE ATT&CK, Valid Accounts (T1078)','https://attack.mitre.org/techniques/T1078/']],
 ex:{title:'Impossible travel, executed',lang:'js',
-run:{call:'impossibleTravel',cases:[{name:'London to Sydney in an hour',args:[5000,60,900],expect:true},{name:'a plausible domestic trip',args:[100,120,900],expect:false},{name:'the same location is never impossible',args:[0,0,900],expect:false},{name:'two places at once — the divide-by-zero case',args:[50,0,900],expect:true},{name:'exactly at the speed limit is allowed',args:[900,60,900],expect:false}]},
-prompt:`Write <code>function impossibleTravel(distanceKm, minutesApart, maxKmh)</code> returning <code>true</code> when the implied speed between two authentications exceeds <code>maxKmh</code>. Zero distance is never impossible. Two logins from different places at the <b>same instant</b> are impossible — and that is the case that divides by zero, so handle it before you compute a speed.`,
+run:{call:'impossibleTravel',cases:[{name:'London to Sydney in an hour',args:[5000,60,900],expect:true},{name:'a plausible domestic trip',args:[100,120,900],expect:false},{name:'the same location is never impossible',args:[0,0,900],expect:false},{name:'two places at once, the divide-by-zero case',args:[50,0,900],expect:true},{name:'exactly at the speed limit is allowed',args:[900,60,900],expect:false}]},
+prompt:`Write <code>function impossibleTravel(distanceKm, minutesApart, maxKmh)</code> returning <code>true</code> when the implied speed between two authentications exceeds <code>maxKmh</code>. Zero distance is never impossible. Two logins from different places at the <b>same instant</b> are impossible, and that is the case that divides by zero, so handle it before you compute a speed.`,
 starter:`function impossibleTravel(distanceKm, minutesApart, maxKmh) {
   return false;
 }`,
@@ -1045,6 +1045,6 @@ solution:`function impossibleTravel(distanceKm, minutesApart, maxKmh) {
   return distanceKm / (minutesApart / 60) > maxKmh;
 }`,
 tests:[{d:'zero distance is not a detection',re:'distanceKm\\s*<=\\s*0|distanceKm\\s*===\\s*0'},{d:'the zero-time case is handled before dividing',re:'minutesApart\\s*<=\\s*0|minutesApart\\s*===\\s*0'},{d:'speed is distance over time',re:'distanceKm\\s*/'},{d:'the threshold is compared, not hardcoded',re:'maxKmh'}],
-behavior:`Five cases execute. The zero-minutes case is the one that matters and the one most implementations get wrong: two authentications with the same timestamp from different cities is the strongest version of this signal, and a naive implementation divides by zero, produces Infinity, and — by luck — still returns true. Luck is not a detection. The boundary case is a reminder that exactly-at-the-limit should be a deliberate choice rather than an accident, because at scale that boundary decides how many real travellers you interrupt. And note what this function is not: a verdict. It is one input to a risk score, because the same output is produced by a VPN, and locking out a legitimate user is also an incident.`,
-hints:['Two guards come before any arithmetic.','Speed is distance divided by time in hours — minutes need converting.','Decide deliberately whether exactly at the limit counts, then encode that choice.']}}
+behavior:`Five cases execute. The zero-minutes case is the one that matters and the one most implementations get wrong: two authentications with the same timestamp from different cities is the strongest version of this signal, and a naive implementation divides by zero, produces Infinity, and, by luck, still returns true. Luck is not a detection. The boundary case is a reminder that exactly-at-the-limit should be a deliberate choice rather than an accident, because at scale that boundary decides how many real travellers you interrupt. And note what this function is not: a verdict. It is one input to a risk score, because the same output is produced by a VPN, and locking out a legitimate user is also an incident.`,
+hints:['Two guards come before any arithmetic.','Speed is distance divided by time in hours; minutes need converting.','Decide deliberately whether exactly at the limit counts, then encode that choice.']}}
 ]});

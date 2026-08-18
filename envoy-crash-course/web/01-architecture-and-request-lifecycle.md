@@ -1,6 +1,6 @@
-# 01 — Architecture & the request lifecycle
+# 01: Architecture & the request lifecycle
 
-*No lab — this is the map. Once you can trace one request through Envoy's objects, the config in
+*No lab: this is the map. Once you can trace one request through Envoy's objects, the config in
 every later module reads itself. ~15 min.*
 
 ---
@@ -56,15 +56,15 @@ Narrated:
 1. **The listener accepts the TCP connection** on `0.0.0.0:10000`. A listener is bound to an
    address+port and owns one or more filter chains.
 2. **The filter chain runs its network (L4) filters.** For HTTP traffic the one that matters is the
-   **HTTP Connection Manager (HCM)** — a network filter that turns the raw byte stream into
+   **HTTP Connection Manager (HCM)**, a network filter that turns the raw byte stream into
    structured HTTP requests (handling HTTP/1.1, HTTP/2, HTTP/3). Everything HTTP happens *inside*
    the HCM.
-3. **Inside the HCM, the HTTP filters run in order.** This is a second, HTTP-level pipeline —
+3. **Inside the HCM, the HTTP filters run in order.** This is a second, HTTP-level pipeline:
    e.g. `cors`, then `jwt_authn` (verify a token), then finally the **router** filter. Each
    filter can inspect or modify the request, or short-circuit it (e.g. auth rejects with 401).
 4. **The router filter consults the route configuration.** The route table is a set of
    **virtual hosts** and **routes**; the router finds the first route whose match (path prefix,
-   headers, method…) fits — say `prefix: /api/` → `cluster: users_svc` — possibly rewriting the
+   headers, method…) fits (say `prefix: /api/` → `cluster: users_svc`), possibly rewriting the
    path, adding headers, or applying a timeout/retry policy.
 5. **The chosen cluster load-balances to one endpoint.** The cluster `users_svc` knows its
    endpoints (either from static config or discovered dynamically). It picks one per its
@@ -77,7 +77,7 @@ Two independent pipelines are the key insight: the **network filter chain** (L4,
 connection) and, inside the HCM, the **HTTP filter chain** (L7, operates on each request). Most of
 your day-to-day config lives in the HTTP filters and the route table.
 
-## Downstream vs upstream — learn this vocabulary now
+## Downstream vs upstream: learn this vocabulary now
 
 Envoy's docs and stats use two words constantly:
 
@@ -94,13 +94,13 @@ naturally once this clicks: requests received from clients vs connections open t
 
 There are two ways Envoy gets its listeners/routes/clusters:
 
-- **Static** — you write it all in a YAML file (`static_resources:`) and Envoy loads it at
+- **Static**: you write it all in a YAML file (`static_resources:`) and Envoy loads it at
   startup. Simple, great for learning and small setups. **This is what Modules 02–06 use.**
-- **Dynamic (xDS)** — Envoy asks a **control plane** over a gRPC/REST API ("give me my
+- **Dynamic (xDS)**: Envoy asks a **control plane** over a gRPC/REST API ("give me my
   listeners… my clusters… my endpoints…") and receives updates live, with no restart. This is
   how meshes and gateways manage fleets. **Module 07** covers it.
 
-The key fact: the *objects are the same* either way — a cluster is a cluster whether it came from a
+The key fact: the *objects are the same* either way: a cluster is a cluster whether it came from a
 file or a control-plane push. Master the static objects first and dynamic config is just "the
 same objects, delivered over the network."
 
@@ -110,10 +110,10 @@ Not essential for using Envoy, but it explains its performance and some behavior
 
 - Envoy runs a small number of **worker threads** (by default, one per CPU core). Each worker has
   its own **event loop** (built on libevent) and handles connections with **non-blocking,
-  asynchronous I/O** — one thread juggles thousands of connections without blocking on any.
+  asynchronous I/O**: one thread juggles thousands of connections without blocking on any.
 - Connections are **not shared** between workers (a "share nothing" design), which avoids locks
   on the hot path and scales linearly with cores.
-- A separate **main thread** handles the admin interface, xDS updates, and stats flushing — so
+- A separate **main thread** handles the admin interface, xDS updates, and stats flushing, so
   config changes don't stall request processing.
 
 Practical consequence: some stats and connection-pool behaviors are *per worker*, which
@@ -138,12 +138,12 @@ That's the whole game. Everything else is options on these four questions.
    *(listener → filter chain → route → cluster → endpoint.)*
 2. What does the HTTP Connection Manager do, and where does it sit? *(A network filter that parses
    the byte stream into HTTP requests and hosts the HTTP filter chain.)*
-3. Is the browser upstream or downstream? *(Downstream — it's the client side.)*
+3. Is the browser upstream or downstream? *(Downstream: it's the client side.)*
 4. Name the two independent filter pipelines. *(The L4 network filter chain, and the L7 HTTP
    filter chain inside the HCM.)*
-5. What changes between static and dynamic config — the objects, or the delivery? *(Only the
+5. What changes between static and dynamic config: the objects, or the delivery? *(Only the
    delivery; the objects are identical.)*
 
 ---
 
-**Next:** [02 — Lab: your first Envoy (static config) →](./02-lab-first-static-config.md)
+**Next:** [02: Lab: your first Envoy (static config) →](./02-lab-first-static-config.md)

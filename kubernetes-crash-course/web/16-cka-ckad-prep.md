@@ -1,4 +1,4 @@
-# 16 — CKA / CKAD exam prep
+# 16: CKA / CKAD exam prep
 
 *Turn this course into a certification. What the exams test, how they map to what you've learned, and
 the speed techniques that decide pass/fail. ~25 min read.*
@@ -6,7 +6,7 @@ the speed techniques that decide pass/fail. ~25 min read.*
 ---
 
 The **CKA** (Certified Kubernetes Administrator) and **CKAD** (Certified Kubernetes Application
-Developer) are the industry-standard, **hands-on** certifications. They're not multiple-choice — you
+Developer) are the industry-standard, **hands-on** certifications. They're not multiple-choice: you
 get a live cluster and a terminal and must **perform tasks** under time pressure. Everything in this
 course maps to them.
 
@@ -19,7 +19,7 @@ course maps to them.
 | Emphasis | Cluster ops, networking, storage, **troubleshooting** | Building/deploying/configuring apps |
 | Duration | 2 hours | 2 hours |
 
-Both are open-book against the **official docs only** (kubernetes.io) — so speed navigating docs and
+Both are open-book against the **official docs only** (kubernetes.io), so speed navigating docs and
 `kubectl` matters more than memorization.
 
 ## CKA domains (v1.x, current) and where you learned them
@@ -32,7 +32,7 @@ Both are open-book against the **official docs only** (kubernetes.io) — so spe
 | Storage (StorageClasses, PV/PVC) | **10%** | 5 |
 | **Troubleshooting** | **30%** | 8 (and everywhere) |
 
-Note troubleshooting is the **biggest** slice — Module 8 is your highest-value review.
+Note troubleshooting is the **biggest** slice: Module 8 is your highest-value review.
 
 ## CKAD domains (current) and where you learned them
 
@@ -46,7 +46,7 @@ Note troubleshooting is the **biggest** slice — Module 8 is your highest-value
 
 ## The #1 exam skill: generate YAML fast with `--dry-run`
 
-You do **not** hand-write YAML from scratch in the exam — you generate it and edit. Master this:
+You do **not** hand-write YAML from scratch in the exam: you generate it and edit. Master this:
 
 ```bash
 # generate a Deployment manifest without creating it
@@ -77,7 +77,7 @@ export now="--force --grace-period=0"  # fast pod deletes
 kubectl config set-context --current --namespace=<the-task-namespace>   # per question!
 ```
 
-Enable `kubectl` completion, and **always set the namespace the question specifies** — a right answer
+Enable `kubectl` completion, and **always set the namespace the question specifies**; a right answer
 in the wrong namespace scores zero.
 
 ## Time-savers to memorize
@@ -86,14 +86,14 @@ in the wrong namespace scores zero.
 - **Edit live objects:** `kubectl edit deploy web` for quick changes.
 - **Scale/rollout imperatively:** `kubectl scale`, `kubectl set image`, `kubectl rollout undo`.
 - **Label/annotate imperatively:** `kubectl label pod x env=prod`.
-- **Find docs by search** on kubernetes.io — bookmark the tasks pages for NetworkPolicy, probes,
+- **Find docs by search** on kubernetes.io: bookmark the tasks pages for NetworkPolicy, probes,
   volumes (you copy-paste and adapt these).
-- **Don't polish** — get it working, verify, move on. Flag hard questions and return.
+- **Don't polish**: get it working, verify, move on. Flag hard questions and return.
 
 ## A practice regimen
 
 1. **Redo every lab in this course from memory**, generating YAML with `--dry-run`.
-2. **Time yourself** — aim for a few minutes per task.
+2. **Time yourself**: aim for a few minutes per task.
 3. **Drill troubleshooting** (Module 8): have a friend break something, you fix it. It's 30% of CKA.
 4. **Take a timed mock exam** (killer.sh comes with the exam registration) before the real thing.
 5. **Practice the capstone (Module 15)** end-to-end until it's fluent.
@@ -105,13 +105,13 @@ in the wrong namespace scores zero.
 - RBAC (`kubectl auth can-i`), ServiceAccounts (Module 7).
 - Services & DNS, Ingress, NetworkPolicy (Modules 3, 12, 7).
 - PV/PVC/StorageClass (Module 5).
-- **Troubleshooting method** (Module 8) — describe → logs → fix.
+- **Troubleshooting method** (Module 8): describe → logs → fix.
 
 ## Check yourself
 
-1. What kind of exams are the CKA/CKAD? *(Hands-on, performance-based — you perform tasks on a live
+1. What kind of exams are the CKA/CKAD? *(Hands-on, performance-based: you perform tasks on a live
    cluster, open-book against kubernetes.io.)*
-2. Which CKA domain is largest, and which course module targets it? *(Troubleshooting, 30% — Module
+2. Which CKA domain is largest, and which course module targets it? *(Troubleshooting, 30%; Module
    8.)*
 3. The single most important exam-speed command pattern? *(`kubectl ... --dry-run=client -o yaml` to
    generate manifests, then edit/apply.)*
@@ -120,4 +120,4 @@ in the wrong namespace scores zero.
 
 ---
 
-**Next:** [17 — Debugging, gotchas & next steps →](./17-debugging-next-steps.md)
+**Next:** [17: Debugging, gotchas & next steps →](./17-debugging-next-steps.md)

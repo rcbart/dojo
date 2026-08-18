@@ -1,4 +1,4 @@
-# 4 — DestinationRule & canary releases
+# 4: DestinationRule & canary releases
 
 *The payoff module: safely shifting traffic between versions. Concepts + a hands-on canary. ~25
 min. Uses Bookinfo (which has three `reviews` versions).*
@@ -12,7 +12,7 @@ They work as a team:
 - **VirtualService = the "where."** Routing decisions: which service, which **subset** (version),
   what weights/splits, matches, rewrites.
 - **DestinationRule = the "how."** Policy applied *after* a destination is chosen: load-balancing
-  algorithm, connection pool limits, outlier detection — **and — the piece everything else leans on — it defines the `subsets`**
+  algorithm, connection pool limits, outlier detection, **and (the piece everything else leans on) it defines the `subsets`**
   (named versions) that a VirtualService can route to.
 
 > A VirtualService can't send traffic to "v2" until a DestinationRule has *defined* what "v2" means
@@ -44,23 +44,23 @@ Now "v2" is a thing a VirtualService can target.
 
 ## Lab: pin, split, then canary `reviews`
 
-### Step 0 — apply the DestinationRules
+### Step 0: apply the DestinationRules
 
 ```bash
 kubectl apply -f samples/bookinfo/networking/destination-rule-all.yaml
 ```
 
-### Step 1 — pin everyone to v1 (no more random stars)
+### Step 1: pin everyone to v1 (no more random stars)
 
 ```bash
 kubectl apply -f samples/bookinfo/networking/virtual-service-all-v1.yaml
 ```
 
 That file routes every service to its v1 subset. Refresh
-<http://localhost:8080/productpage> (keep the port-forward from Module 3 running) — the reviews box
+<http://localhost:8080/productpage> (keep the port-forward from Module 3 running); the reviews box
 now **always** shows the v1 look (no stars), every time. You've taken control of versioning.
 
-### Step 2 — a 50/50 canary split
+### Step 2: a 50/50 canary split
 
 Apply a VirtualService that weights `reviews` traffic between v1 and v3:
 
@@ -80,10 +80,10 @@ http:
 ```
 
 Refresh the page repeatedly: about **half** the loads show v3 (red stars), half show v1 (none).
-That's a **canary** — a controlled percentage on the new version. To roll out, you'd shift 50 → 90
+That's a **canary**: a controlled percentage on the new version. To roll out, you'd shift 50 → 90
 → 100; to abort, back to 0. Traffic percentage, not luck.
 
-### Step 3 — route by identity (header-based)
+### Step 3: route by identity (header-based)
 
 Send only a specific user to v2 while everyone else stays on v1:
 
@@ -121,7 +121,7 @@ spec:
 ```
 
 Policy can be set for the whole host or per subset. Load-balancing and connection pools here are the
-same primitives from the Envoy course — Istio just exposes them declaratively.
+same primitives from the Envoy course; Istio just exposes them declaratively.
 
 ## Reset when done
 
@@ -144,4 +144,4 @@ kubectl apply -f samples/bookinfo/networking/virtual-service-all-v1.yaml   # bac
 
 ---
 
-**Next:** [5 — Resilience & fault injection →](./05-resilience-fault-injection.md)
+**Next:** [5: Resilience & fault injection →](./05-resilience-fault-injection.md)

@@ -1,16 +1,16 @@
-# Primer — The cluster, at a glance
+# Primer: The cluster, at a glance
 
 *A gentle map of what's inside a Kubernetes cluster before we start using it. ~8 min. You don't need
-to memorize this — just recognize the pieces when they come up.*
+to memorize this; just recognize the pieces when they come up.*
 
 ---
 
 A Kubernetes **cluster** is a set of machines (**nodes**) working as one. The nodes split into two
 kinds, matching the data-plane/control-plane idea you may know from the service-mesh world:
 
-- **The control plane** — the **brain**. Makes decisions: what should run where, and keeps reality
+- **The control plane**: the **brain**. Makes decisions: what should run where, and keeps reality
   matching your desired state.
-- **The worker nodes** — the **muscle**. Actually run your containers.
+- **The worker nodes**: the **muscle**. Actually run your containers.
 
 ```
    ┌──────────────── CONTROL PLANE (the brain) ────────────────┐
@@ -30,10 +30,10 @@ kinds, matching the data-plane/control-plane idea you may know from the service-
 
 | Component | Plain-English job |
 |-----------|-------------------|
-| **API server** | The front door. *Everything* talks to it — `kubectl`, the nodes, every component. You submit desired state here. |
+| **API server** | The front door. *Everything* talks to it, `kubectl`, the nodes, every component. You submit desired state here. |
 | **etcd** | The cluster's database. Stores the entire desired + actual state (the single source of truth). |
 | **Scheduler** | Decides *which node* each new pod should run on, based on resources and rules. |
-| **Controller manager** | Runs the control loops (reconciliation) — e.g. "keep 3 replicas alive." |
+| **Controller manager** | Runs the control loops (reconciliation), e.g. "keep 3 replicas alive." |
 
 When you `kubectl apply` a file, it goes to the **API server**, which saves it in **etcd**. The
 **scheduler** picks nodes for new pods; **controllers** keep everything matching your spec.
@@ -56,9 +56,9 @@ You want to run an app. Roughly:
 4. Each node's **kubelet** sees "you own this Pod," tells the **container runtime** to pull the image
    and start the container.
 5. **kube-proxy** wires up networking so a **Service** can reach those pods.
-6. Controllers keep watching — if a pod dies, back to step 2. Forever.
+6. Controllers keep watching: if a pod dies, back to step 2. Forever.
 
-That loop — submit desired state, controllers reconcile, kubelets execute — *is* Kubernetes. Every
+That loop (submit desired state, controllers reconcile, kubelets execute) *is* Kubernetes. Every
 module adds a new kind of object you submit to the API server.
 
 ## The good news for learning
@@ -72,13 +72,13 @@ unreachable" → you can't submit anything. You'll meet these in the troubleshoo
 
 1. What are the two kinds of nodes and their roles? *(Control plane = the brain (decisions); worker
    nodes = the muscle (run containers).)*
-2. What does the API server do? *(It's the front door — everything talks to it; you submit desired
+2. What does the API server do? *(It's the front door: everything talks to it; you submit desired
    state there.)*
-3. What is etcd? *(The cluster's database — the single source of truth for all state.)*
+3. What is etcd? *(The cluster's database, the single source of truth for all state.)*
 4. What does the scheduler decide? *(Which node each new pod runs on.)*
 5. What does the kubelet do? *(Runs on each node and ensures its assigned pods are actually
    running.)*
 
 ---
 
-**Next:** [Primer — Core concepts & glossary (keep it open as you go) →](./primer-core-concepts.md)
+**Next:** [Primer: Core concepts & glossary (keep it open as you go) →](./primer-core-concepts.md)

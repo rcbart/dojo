@@ -15,14 +15,14 @@ JavaScript and Node from the ground up, **assuming nothing**, in a single offlin
 course in this repository, built on the same [shared engine](../engine/README.md) as
 [Dev Dojo](../README.md) and [Identity Dojo](../identity-dojo/README.md).
 
-> **All 16 streams are built.** **64 lessons, 106 exercises, 618 executed cases, 0 failures** — and
+> **All 16 streams are built.** **64 lessons, 106 exercises, 618 executed cases, 0 failures**, and
 > every exercise is graded by real execution, not by pattern-matching. Exercises are tagged
 > `easy` / `medium` / `hard` and ramp within each lesson; the 25 hard ones are small realistic problems
 > written so that a plausible-but-wrong implementation fails a **named** case.
 
 ## Why this course exists
 
-Dev Dojo teaches Java in depth and JavaScript almost not at all — its React stream teaches React while
+Dev Dojo teaches Java in depth and JavaScript almost not at all; its React stream teaches React while
 assuming the language underneath it. This course fills that gap, and it does so where the platform is
 strongest: **JavaScript is the only language the engine can execute for real**, in a sandboxed Web
 Worker, so every exercise here is graded by calling your function with real inputs and checking what it
@@ -37,8 +37,8 @@ Concepts are grounded **before** anything that depends on them:
 - **the event loop** before a single promise, so async stops being folklore
 - **prototypes** before classes, because classes are sugar over them
 
-Everything that surprises people about JavaScript — `0.1 + 0.2`, `typeof null`, `this`, hoisting,
-`==`, why `[] + {}` is a string — is taken apart until it stops being surprising. Nothing is
+Everything that surprises people about JavaScript (`0.1 + 0.2`, `typeof null`, `this`, hoisting,
+`==`, why `[] + {}` is a string) is taken apart until it stops being surprising. Nothing is
 hand-waved as "just how JavaScript is".
 
 ## The streams
@@ -65,12 +65,12 @@ hand-waved as "just how JavaScript is".
 ## How the exercises are pitched
 
 Every lesson averages ~460 words with worked, concrete examples rather than definitions, and its exercises
-**ramp in difficulty** — each one is tagged `easy`, `medium` or `hard`, which drives the built-in Practice
+**ramp in difficulty**: each one is tagged `easy`, `medium` or `hard`, which drives the built-in Practice
 filter:
 
-- **easy** — one idea, applied directly. Classify a value, pick the right construct.
-- **medium** — two or three ideas combined, with a case that punishes the obvious shortcut.
-- **hard** — a small realistic problem: normalise a form submission where `Number("")` is `0` and a
+- **easy**: one idea, applied directly. Classify a value, pick the right construct.
+- **medium**: two or three ideas combined, with a case that punishes the obvious shortcut.
+- **hard**: a small realistic problem: normalise a form submission where `Number("")` is `0` and a
   legitimate `0` must survive; memoise with a closure where a cached `0` breaks a truthy cache check;
   plan a retry with exponential backoff and get the off-by-one right; build a bounded queue with private
   fields; compare two semver strings where `"1.10.0"` must outrank `"1.9.0"`.
@@ -80,7 +80,7 @@ The hard tier is written so that a plausible-looking implementation fails a **na
 
 ## Quizzes
 
-Every one of the 64 lessons carries **at least 3 hand-authored questions — 192 in total**, ordered within
+Every one of the 64 lessons carries **at least 3 hand-authored questions, 192 in total**, ordered within
 each lesson from recall to reasoning to judgement. Each one explains why the right answer is right *and*
 why every distractor is wrong, and options are shuffled per visit so the answer position cannot be
 memorised.
@@ -105,7 +105,7 @@ matters. Three controls, in order of importance:
    There is no network path out.
 2. **Globals removed before execution.** `importScripts`, `XMLHttpRequest`, `WebSocket`, `EventSource`,
    `indexedDB`, `caches`, `Worker` and (unless the exercise mocks it) `fetch` are deleted from the worker
-   scope before a single line of submitted code runs — defence in depth, and it turns a silent attempt
+   scope before a single line of submitted code runs: defence in depth, and it turns a silent attempt
    into an immediate `TypeError`.
 3. **Worker isolation and a hard timeout.** A worker has no DOM, no `document`, no page cookies and no
    access to the page's storage. Execution is capped at 3 seconds, so an infinite loop terminates the
@@ -113,21 +113,21 @@ matters. Three controls, in order of importance:
 
 **Stated honestly:** `script-src` must allow `'unsafe-inline'`, because the entire course is one
 self-contained offline file with no external origin to load from. That is the deliberate trade for
-working offline from `file://`. No remote origin is permitted, so nothing can be pulled in — the risk
+working offline from `file://`. No remote origin is permitted, so nothing can be pulled in; the risk
 `'unsafe-inline'` normally carries is injection into a page that also loads untrusted content, and this
 page loads nothing at all.
 
 **Web Crypto is deliberately not used.** `crypto.subtle` is only exposed in secure contexts, which makes
 it unavailable or inconsistent when the file is opened directly from disk. Exercises that touch
-cryptography work on the parts that are pure logic — base64url encoding, JWT assembly, claim validation,
-canonical ordering, constant-time comparison — which are exactly the parts people get wrong anyway.
+cryptography work on the parts that are pure logic (base64url encoding, JWT assembly, claim validation,
+canonical ordering, constant-time comparison), which are exactly the parts people get wrong anyway.
 
 ## Repository layout
 
 JS Dojo lives inside [`rcbart/dojo`](https://github.com/rcbart/dojo) alongside Dev Dojo
 and Identity Dojo, sharing one `engine/`. That is deliberate: three courses, one runtime, one place to fix
 a bug. Because the only coupling is the `ENGINE` constant at the top of `build.js`, lifting this course
-into its own repository is a copy rather than a fork — see the README section on the engine.
+into its own repository is a copy rather than a fork; see the README section on the engine.
 
 ## How grading works (honestly)
 

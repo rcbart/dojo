@@ -1,4 +1,4 @@
-# 05 — Clusters, load balancing & resilience
+# 05: Clusters, load balancing & resilience
 
 *How Envoy picks a healthy backend and survives failures. Concepts + a two-backend lab. ~25 min.
 Requires Docker.*
@@ -15,37 +15,37 @@ does this request go?", clusters answer "*which instance*, and what if it's down
 
 The cluster `type` sets how the endpoint list is populated:
 
-- **`STATIC`** — endpoints are literal IP:ports in the config.
-- **`STRICT_DNS`** — Envoy resolves a DNS name and uses *all* returned A records, re-resolving
+- **`STATIC`**: endpoints are literal IP:ports in the config.
+- **`STRICT_DNS`**: Envoy resolves a DNS name and uses *all* returned A records, re-resolving
   periodically. Perfect for Docker/Kubernetes service names (what our labs use).
-- **`LOGICAL_DNS`** — like STRICT but keeps one connection, re-resolving lazily (for huge
+- **`LOGICAL_DNS`**: like STRICT but keeps one connection, re-resolving lazily (for huge
   fleets / a single virtual IP).
-- **`EDS`** — Endpoint Discovery Service: endpoints pushed dynamically over xDS by a control plane
+- **`EDS`**: Endpoint Discovery Service: endpoints pushed dynamically over xDS by a control plane
   (Module 07). This is how meshes keep up with pods coming and going.
 
 ## Load balancing policies (`lb_policy`)
 
 Once there are several healthy endpoints, `lb_policy` picks one per request:
 
-- **`ROUND_ROBIN`** — rotate evenly. Simple, predictable.
-- **`LEAST_REQUEST`** — send to the endpoint with the fewest in-flight requests. Usually the best
+- **`ROUND_ROBIN`**: rotate evenly. Simple, predictable.
+- **`LEAST_REQUEST`**: send to the endpoint with the fewest in-flight requests. Usually the best
   default under uneven load.
-- **`RANDOM`** — pick at random; cheap, decent at scale.
-- **`RING_HASH` / `MAGLEV`** — consistent hashing on a key (e.g. a header or cookie) for **session
+- **`RANDOM`**: pick at random; cheap, decent at scale.
+- **`RING_HASH` / `MAGLEV`**: consistent hashing on a key (e.g. a header or cookie) for **session
   affinity** ("sticky" routing to the same backend).
 
 ## Resilience: three layers that keep bad backends out
 
-**1. Active health checks** — Envoy proactively probes each endpoint (`http_health_check` hits a
+**1. Active health checks**: Envoy proactively probes each endpoint (`http_health_check` hits a
 path on an interval). Fail enough probes → the endpoint is marked unhealthy and gets no traffic
 until it recovers. Proactive: catches a sick backend *before* a user hits it.
 
-**2. Outlier detection (passive health checking)** — Envoy watches *real* traffic and **ejects**
+**2. Outlier detection (passive health checking)**: Envoy watches *real* traffic and **ejects**
 an endpoint that returns too many consecutive 5xx / connection errors, for a cooldown
 (`base_ejection_time`), then tentatively returns it. Reactive: catches failures the health check
 path doesn't.
 
-**3. Timeouts & retries (per route)** — a `timeout` caps how long Envoy waits; a `retry_policy`
+**3. Timeouts & retries (per route)**: a `timeout` caps how long Envoy waits; a `retry_policy`
 re-sends a failed idempotent request to *another* endpoint (`retry_on: 5xx,reset,
 connect-failure`). Retries + multiple endpoints = a single bad instance becomes invisible to the
 caller.
@@ -99,14 +99,14 @@ curl -s localhost:9901/clusters | grep -E "health_flags|::cx_"
 
 1. What does a cluster represent? *(An upstream service: its endpoints + how to balance and
    health-check them.)*
-2. STRICT_DNS vs EDS — when each? *(DNS name resolved by Envoy vs endpoints pushed by a control
+2. STRICT_DNS vs EDS: when each? *(DNS name resolved by Envoy vs endpoints pushed by a control
    plane over xDS; EDS for dynamic mesh environments.)*
 3. Active vs passive health checking? *(Active = Envoy probes a path proactively; passive =
    outlier detection ejects on real 5xx/errors.)*
-4. Which lb_policy gives session affinity? *(RING_HASH / MAGLEV — consistent hashing on a key.)*
+4. Which lb_policy gives session affinity? *(RING_HASH / MAGLEV: consistent hashing on a key.)*
 5. How do a timeout + retry_policy + multiple endpoints hide a single failing backend? *(Envoy
    caps the wait, then retries the request on a different healthy endpoint.)*
 
 ---
 
-**Next:** [06 — Observability & the admin interface →](./06-observability-and-admin.md)
+**Next:** [06: Observability & the admin interface →](./06-observability-and-admin.md)

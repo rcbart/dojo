@@ -1,4 +1,4 @@
-# 04 — HTTP routing & filters
+# 04: HTTP routing & filters
 
 *The heart of everyday Envoy work. Concepts + a lab exercising real routing rules and an HTTP
 filter. ~25 min. Requires Docker.*
@@ -25,30 +25,30 @@ route_config
 
 A route's `match` can test, in increasing specificity:
 
-- **`prefix: "/api/"`** — path starts with this. The workhorse.
-- **`path: "/healthz"`** — exact path.
-- **`safe_regex: {...}`** — regex on the path (use sparingly; slower).
-- **`headers: [...]`** — require header values (exact, prefix, regex, presence). Great for
+- **`prefix: "/api/"`**: path starts with this. The workhorse.
+- **`path: "/healthz"`**: exact path.
+- **`safe_regex: {...}`**: regex on the path (use sparingly; slower).
+- **`headers: [...]`**: require header values (exact, prefix, regex, presence). Great for
   canaries (`x-canary: yes`), API versions, auth gating.
-- **`query_parameters: [...]`** — match on `?foo=bar`.
+- **`query_parameters: [...]`**: match on `?foo=bar`.
 
 **Order matters: Envoy takes the first route that matches.** So specific routes go above the
 catch-all `prefix: "/"`. Getting a "wrong backend" is nearly always a route-order bug.
 
 ### What to do when it matches
 
-- **`route: { cluster: X }`** — forward to a cluster. Plus options:
-  - **`prefix_rewrite` / `regex_rewrite`** — change the path before sending upstream
+- **`route: { cluster: X }`**: forward to a cluster. Plus options:
+  - **`prefix_rewrite` / `regex_rewrite`**: change the path before sending upstream
     (e.g. strip `/api`).
-  - **`host_rewrite_literal`** — change the `Host` header sent upstream.
-  - **`timeout`, `retry_policy`** — per-route resilience (Module 05).
-  - **`request_headers_to_add`, `response_headers_to_add`** — header manipulation (also settable
+  - **`host_rewrite_literal`**: change the `Host` header sent upstream.
+  - **`timeout`, `retry_policy`**: per-route resilience (Module 05).
+  - **`request_headers_to_add`, `response_headers_to_add`**: header manipulation (also settable
     at the virtual-host and route-config levels).
-- **`redirect: {...}`** — send a 301/302 (change scheme to https, rewrite path/host).
-- **`direct_response: {...}`** — Envoy answers itself without any backend (health checks, canned
+- **`redirect: {...}`**: send a 301/302 (change scheme to https, rewrite path/host).
+- **`direct_response: {...}`**: Envoy answers itself without any backend (health checks, canned
   errors, maintenance pages).
 
-## HTTP filters — the request pipeline
+## HTTP filters: the request pipeline
 
 Inside the HCM, `http_filters` is an **ordered** list; each request passes through them before
 the **router** (which must be last). A filter can read, modify, delay, or reject a request. The
@@ -61,12 +61,12 @@ ones you'll actually meet:
 | `jwt_authn` | Verify a JWT (auth) and reject invalid tokens |
 | `ext_authz` | Call an **external** authorization service (allow/deny per request) |
 | `ratelimit` / `local_ratelimit` | Global (via a service) or local request rate limiting |
-| `fault` | Inject latency or aborts — for **resilience testing** (chaos) |
+| `fault` | Inject latency or aborts, for **resilience testing** (chaos) |
 | `compressor` | gzip/brotli response compression |
 | `lua` / `wasm` | Custom logic in Lua or WebAssembly |
 | `ext_proc` | Stream requests to an external processor to mutate them |
 
-You compose behavior by stacking filters — e.g. `cors → jwt_authn → ratelimit → router`. Each is
+You compose behavior by stacking filters, e.g. `cors → jwt_authn → ratelimit → router`. Each is
 just another `typed_config` block.
 
 ## Lab: routing rules + a fault filter
@@ -112,20 +112,20 @@ curl -s localhost:10000/api/anything
 # reaches the backend as "/" because prefix_rewrite stripped /api
 ```
 
-**6. Fault injection — deliberate failure.** The `fault` filter aborts `/flaky` with 503 half the
+**6. Fault injection: deliberate failure.** The `fault` filter aborts `/flaky` with 503 half the
 time. Hammer it and watch the mix:
 ```bash
 for i in $(seq 1 10); do curl -s -o /dev/null -w "%{http_code}\n" localhost:10000/flaky; done
 # ~5x 200 and ~5x 503 — Envoy injected the failures, the backend never saw them
 ```
 This is how teams test that *callers* handle failures (retries, fallbacks) without breaking a real
-backend — chaos engineering as config.
+backend; it is chaos engineering as config.
 
 ### Experiment
 
 Reorder the routes: move the catch-all `prefix: "/"` route to the **top** of the list, restart,
 and re-test `/healthz`. It now returns the backend's echo instead of `ok`, because the catch-all
-matched first. Put it back. This is the single most common Envoy routing mistake — **specific
+matched first. Put it back. This is the single most common Envoy routing mistake: **specific
 routes above general ones.**
 
 ## Check yourself
@@ -137,9 +137,9 @@ routes above general ones.**
    itself vs tells the client to go elsewhere with a 3xx.)*
 4. Why must the `router` filter be last? *(It forwards upstream; filters before it must run
    first.)*
-5. What is the `fault` filter for? *(Injecting latency/aborts to test resilience — chaos
-   testing — without touching real backends.)*
+5. What is the `fault` filter for? *(Injecting latency/aborts to test resilience (chaos
+   testing) without touching real backends.)*
 
 ---
 
-**Next:** [4b — Rate limiting & ext_authz →](./11-rate-limiting-ext-authz.md)
+**Next:** [4b: Rate limiting & ext_authz →](./11-rate-limiting-ext-authz.md)

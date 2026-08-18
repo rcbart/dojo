@@ -3,7 +3,7 @@ STREAMS.push({icon:'⏳',title:'The Event Loop & Asynchronous JavaScript',blurb:
 {id:'js18',title:'The event loop: how single-threaded code waits',body:`
 <p>JavaScript has <b>one call stack</b>. It can do exactly one thing at a time. Yet a browser stays
 responsive while downloading, and a Node server handles thousands of connections. Understanding how is
-the foundation for everything else in this stream — and for debugging anything asynchronous.</p>
+the foundation for everything else in this stream, and for debugging anything asynchronous.</p>
 
 <h4>The trick: the engine is not the whole runtime</h4>
 <div class="codeSample" data-hl>  YOUR CODE                    THE HOST (browser or Node)
@@ -22,7 +22,7 @@ the waiting happens elsewhere.</p>
 
 <h4>The consequence: your code is never interrupted</h4>
 <p>A function runs to completion before any callback can start. That is why JavaScript has no data races
-on shared variables — an enormous simplification — and it is also why a slow synchronous function
+on shared variables (an enormous simplification), and it is also why a slow synchronous function
 <b>blocks everything</b>:</p>
 <div class="codeSample" data-hl>// in a browser: the page freezes. no clicks, no scrolling, no rendering.
 // in Node: every other request waits.
@@ -32,7 +32,7 @@ for (let i = 0; i &lt; 5e9; i++) { }
 // stack while waiting". CPU-heavy work occupies the stack, so it blocks
 // no matter how many promises you wrap it in.</div>
 
-<h4>Two queues, not one — and microtasks always win</h4>
+<h4>Two queues, not one: and microtasks always win</h4>
 <div class="codeSample" data-hl>MACROTASKS   setTimeout, setInterval, I/O events, UI events
 MICROTASKS   promise callbacks (.then / await), queueMicrotask
 
@@ -54,9 +54,9 @@ timers completely.</p>
 
 <h4><code>setTimeout(fn, 0)</code> is a minimum, not a promise</h4>
 <p>The delay says "not before this many milliseconds". If the stack is busy, or earlier callbacks are
-queued, it runs later — and browsers clamp nested timeouts to about 4ms. Never use a timer for
+queued, it runs later, and browsers clamp nested timeouts to about 4ms. Never use a timer for
 correctness; use it to yield.</p>`,
-docs:[['MDN — The event loop','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model'],['MDN — Microtask guide','https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide'],['Node — the event loop','https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick']],
+docs:[['MDN (The event loop)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model'],['MDN (Microtask guide)','https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide'],['Node (the event loop)','https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick']],
 ex:{title:'Predict the output order',diff:'easy',lang:'js',
 run:{call:'order',cases:[
  {name:'synchronous first, then microtask, then macrotask',args:[['sync','timeout','promise']],expect:['sync','promise','timeout']},
@@ -64,7 +64,7 @@ run:{call:'order',cases:[
  {name:'synchronous code always goes first',args:[['promise','sync']],expect:['sync','promise']},
  {name:'relative order within a category is preserved',args:[['timeout','timeout','promise']],expect:['promise','timeout','timeout']},
  {name:'only synchronous work',args:[['sync','sync']],expect:['sync','sync']}]},
-prompt:`Write <code>function order(kinds)</code> that takes labels — <code>"sync"</code>, <code>"promise"</code> (a microtask) or <code>"timeout"</code> (a macrotask) — and returns them in the order they would actually run. All synchronous first, then all microtasks, then all macrotasks; within a category, keep the original order.`,
+prompt:`Write <code>function order(kinds)</code> that takes labels: <code>"sync"</code>, <code>"promise"</code> (a microtask) or <code>"timeout"</code> (a macrotask). It returns them in the order they would actually run. All synchronous first, then all microtasks, then all macrotasks; within a category, keep the original order.`,
 starter:`function order(kinds) {
   return [];
 }`,
@@ -80,7 +80,7 @@ hints:['Three filters, then concatenate in priority order.','filter keeps the or
 
 {id:'js19',title:'Callbacks, and the problem they created',body:`
 <p>Before promises, "run this when the work finishes" meant passing a function. The pattern still exists
-everywhere — every event listener is a callback — so it is worth understanding on its own terms, along
+everywhere (every event listener is a callback), so it is worth understanding on its own terms, along
 with the two problems that motivated everything after it.</p>
 
 <div class="codeSample" data-hl>// the Node convention: error FIRST, result second
@@ -88,7 +88,7 @@ fs.readFile("a.txt", "utf8", function (err, data) {
   if (err) return handle(err);     // check err first, ALWAYS
   console.log(data);
 });</div>
-<p>The error-first convention exists because a callback cannot <code>throw</code> to its caller — by the
+<p>The error-first convention exists because a callback cannot <code>throw</code> to its caller: by the
 time it runs, the caller's stack frame is long gone. That single fact drives the rest of this lesson.</p>
 
 <h4>Problem 1: nesting</h4>
@@ -103,7 +103,7 @@ time it runs, the caller's stack frame is long gone. That single fact drives the
   });
 });</div>
 <p>Sequential steps become horizontal nesting. Adding a step means re-indenting the ones below it, and
-the error path is duplicated per level. This is what "callback hell" refers to — not that callbacks are
+the error path is duplicated per level. This is what "callback hell" refers to: not that callbacks are
 bad, but that they compose badly.</p>
 
 <h4>Problem 2: errors do not propagate</h4>
@@ -123,7 +123,7 @@ across an asynchronous boundary.</b> Promises exist largely to give errors a pat
 <p><b>Called twice, or never.</b> Nothing enforces that a callback runs exactly once. A poorly written
 API that invokes yours twice will silently run your continuation twice. Promises fix this by definition:
 a promise settles once and stays settled.</p>
-<p><b>Zalgo — sometimes sync, sometimes async.</b> A function that calls back immediately on a cache hit
+<p><b>Zalgo, sometimes sync, sometimes async.</b> A function that calls back immediately on a cache hit
 and asynchronously on a miss has two different orderings, and the bug only appears on one path. Promise
 callbacks are <i>always</i> asynchronous, which removes the whole class.</p>
 
@@ -131,7 +131,7 @@ callbacks are <i>always</i> asynchronous, which removes the whole class.</p>
 <p>For things that happen <b>many times</b>: event listeners, streams, observers. A promise represents
 <i>one</i> future value, so it is the wrong shape for a click handler. The rule: one-shot work becomes a
 promise, repeated work stays a callback.</p>`,
-docs:[['MDN — Callback function','https://developer.mozilla.org/en-US/docs/Glossary/Callback_function'],['Node — asynchronous flow control','https://nodejs.org/en/learn/asynchronous-work/javascript-asynchronous-programming-and-callbacks']],
+docs:[['MDN, Callback function','https://developer.mozilla.org/en-US/docs/Glossary/Callback_function'],['Node, asynchronous flow control','https://nodejs.org/en/learn/asynchronous-work/javascript-asynchronous-programming-and-callbacks']],
 ex:{title:'Handle the error-first convention',diff:'easy',lang:'js',
 run:{call:'settle',cases:[
  {name:'an error is reported',args:[{message:'nope'},null],expect:'error: nope'},
@@ -139,7 +139,7 @@ run:{call:'settle',cases:[
  {name:'the error wins even when a result is present',args:[{message:'nope'},'data'],expect:'error: nope'},
  {name:'no error and no result',args:[null,null],expect:'ok: null'},
  {name:'undefined error behaves like no error',args:[undefined,'data'],expect:'ok: data'}]},
-prompt:`Write <code>function settle(err, result)</code> modelling an error-first callback body. When <code>err</code> is present return <code>"error: MESSAGE"</code> using <code>err.message</code>; otherwise return <code>"ok: RESULT"</code> — and when the result is <code>null</code>, the text should read <code>"ok: null"</code>.`,
+prompt:`Write <code>function settle(err, result)</code> modelling an error-first callback body. When <code>err</code> is present return <code>"error: MESSAGE"</code> using <code>err.message</code>; otherwise return <code>"ok: RESULT"</code>. When the result is <code>null</code>, the text should read <code>"ok: null"</code>.`,
 starter:`function settle(err, result) {
   return null;
 }`,
@@ -153,7 +153,7 @@ hints:['Guard on the error before touching the result.','Template literals conve
 
 {id:'js20',title:'Promises',body:`
 <p>A <b>promise</b> is an object representing a value that is not available yet. It replaces "pass me a
-callback" with "here is a handle you can attach callbacks to" — and that inversion is what makes
+callback" with "here is a handle you can attach callbacks to", and that inversion is what makes
 composition and error propagation possible.</p>
 
 <h4>Three states, one transition</h4>
@@ -174,7 +174,7 @@ p.then(value =&gt; { ... })          // on fulfilment
 
 Promise.resolve(1);   // an already-fulfilled promise
 Promise.reject(new Error("x"));   // an already-rejected one</div>
-<p>You rarely write <code>new Promise</code> — it is for wrapping an old callback API. Everything modern
+<p>You rarely write <code>new Promise</code>; it is for wrapping an old callback API. Everything modern
 already returns one.</p>
 
 <h4>Chaining is what solves the nesting</h4>
@@ -201,14 +201,14 @@ Promise.allSettled([a, b, c])  // waits for all; never rejects. gives
 Promise.race([a, b])           // first to SETTLE, fulfil or reject
 Promise.any([a, b])            // first to FULFIL; rejects only if all do</div>
 <p>Choose by intent: <code>all</code> when you need every result and any failure is fatal;
-<code>allSettled</code> when partial success is useful — which, for a dashboard fetching six widgets, it
+<code>allSettled</code> when partial success is useful, which, for a dashboard fetching six widgets, it
 usually is.</p>
 
 <h4>The rule that keeps promises safe</h4>
 <p><b>Always terminate a chain with <code>catch</code>, or return the promise to someone who will.</b> An
 unhandled rejection is a warning in browsers and, since Node 15, <b>crashes the process</b>. A promise
 you neither return nor catch is a silent failure waiting to happen.</p>`,
-docs:[['MDN — Using promises','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises'],['MDN — Promise','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise'],['MDN — Promise.allSettled','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled']],
+docs:[['MDN (Using promises)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises'],['MDN (Promise)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise'],['MDN (Promise.allSettled)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled']],
 exs:[
 {title:'Choose the right combinator',diff:'easy',lang:'js',
 run:{call:'combinator',cases:[
@@ -239,7 +239,7 @@ run:{call:'doubleLater',cases:[
  {name:'zero',args:[0],expect:0},
  {name:'negatives',args:[-3],expect:-6},
  {name:'decimals',args:[1.5],expect:3}]},
-prompt:`Write <code>async function doubleLater(n)</code> that resolves a promise carrying <code>n</code>, awaits it, and returns double the value. The point is to see an <code>async</code> function's return value be unwrapped for you — the grader awaits whatever you return.`,
+prompt:`Write <code>async function doubleLater(n)</code> that resolves a promise carrying <code>n</code>, awaits it, and returns double the value. The point is to see an <code>async</code> function's return value be unwrapped for you; the grader awaits whatever you return.`,
 starter:`async function doubleLater(n) {
   return 0;
 }`,
@@ -248,11 +248,11 @@ solution:`async function doubleLater(n) {
   return value * 2;                          // an async fn returns a PROMISE
 }`,
 tests:[{d:'is an async function',re:'async\\s+function'},{d:'awaits a promise',re:'await'},{d:'doubles the awaited value',re:'\\*\\s*2'}],
-behavior:`This executes for real: your async function returns a promise, the runner awaits it, and the resolved number is compared. An async function always returns a promise even when the body returns a plain value — which is why await works on it and why forgetting await elsewhere gives you a Promise object instead of your data.`,
+behavior:`This executes for real: your async function returns a promise, the runner awaits it, and the resolved number is compared. An async function always returns a promise even when the body returns a plain value, which is why await works on it and why forgetting await elsewhere gives you a Promise object instead of your data.`,
 hints:['Mark the function async so you can use await inside it.','Promise.resolve(n) gives you a promise already carrying n.','Return the doubled value; the async wrapper turns it into a promise.']}]},
 
 {id:'js21',title:'async/await, and the mistakes it invites',body:`
-<p><code>async</code>/<code>await</code> is syntax over promises. Nothing new happens underneath — but
+<p><code>async</code>/<code>await</code> is syntax over promises. Nothing new happens underneath, but
 asynchronous code regains the shape of ordinary code, including <code>try</code>/<code>catch</code>.</p>
 
 <div class="codeSample" data-hl>// the promise chain
@@ -276,7 +276,7 @@ async function load(id) {
 
 <h4>Two rules</h4>
 <p><b>An <code>async</code> function always returns a promise</b>, even when its body returns a number.
-<b><code>await</code> pauses only that function</b> — the stack unwinds, the event loop keeps going, and
+<b><code>await</code> pauses only that function</b>: the stack unwinds, the event loop keeps going, and
 everything else in the program continues.</p>
 
 <h4>Mistake 1: accidental sequencing</h4>
@@ -313,7 +313,7 @@ if (isAdmin(u)) { }              // ALWAYS true: an object is truthy.
 the check pass unconditionally, silently. Linters catch it and it still reaches production regularly.</p>
 
 <h4>Mistake 4: swallowing errors</h4>
-<p>A rejected promise you never <code>await</code> or <code>catch</code> is an unhandled rejection —
+<p>A rejected promise you never <code>await</code> or <code>catch</code> is an unhandled rejection,
 which crashes Node. Either <code>await</code> it, <code>catch</code> it, or deliberately mark it
 fire-and-forget with an attached <code>.catch()</code>. "I do not care about the result" and "I do not
 care whether it failed" are different statements, and only the second is usually wrong.</p>
@@ -327,7 +327,7 @@ await fetch(url, { signal: ac.signal });    // rejects with AbortError
 
 // a timeout without cancellation leaves the original request running:
 await Promise.race([work(), rejectAfter(5000)]);   // useful, but leaky</div>`,
-docs:[['MDN — async function','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function'],['MDN — await','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await'],['MDN — AbortController','https://developer.mozilla.org/en-US/docs/Web/API/AbortController']],
+docs:[['MDN (async function)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function'],['MDN (await)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await'],['MDN (AbortController)','https://developer.mozilla.org/en-US/docs/Web/API/AbortController']],
 exs:[
 {title:'Sequential or concurrent?',diff:'easy',lang:'js',
 run:{call:'strategy',cases:[
@@ -346,7 +346,7 @@ solution:`function strategy(dependsOnPrevious, rateLimited) {
 }`,
 tests:[{d:'a dependency forces sequencing',re:'dependsOnPrevious'},{d:'a rate limit means batching',re:'rateLimited'},{d:'otherwise run concurrently',re:'"concurrent"'}],
 behavior:`The last case executes the precedence: a dependency wins even when a rate limit is also present, because correctness constrains ordering and a rate limit only constrains throughput. Checking the rate limit first would pass three cases and fail that one.`,
-hints:['Check the dependency first — it is the stronger constraint.','Guard clauses in priority order.','Independent and unlimited is the fast path.']},
+hints:['Check the dependency first; it is the stronger constraint.','Guard clauses in priority order.','Independent and unlimited is the fast path.']},
 {title:'Run work concurrently',diff:'medium',lang:'js',
 run:{call:'totalOf',cases:[
  {name:'sums the resolved values',args:[[1,2,3]],expect:6},
@@ -362,7 +362,7 @@ solution:`async function totalOf(values) {
   return results.reduce((sum, v) => sum + v, 0);   // initial 0 for []
 }`,
 tests:[{d:'is async',re:'async'},{d:'awaits all of them together',re:'Promise\\.all'},{d:'maps values to promises',re:'\\.map\\('},{d:'sums with an initial accumulator',re:'\\.reduce\\('}],
-behavior:`Promise.all on an empty array resolves immediately to [], and reduce's initial 0 turns that into 0 rather than a TypeError. Awaiting inside a loop instead would produce the same answer here but would serialise the work — correct, and needlessly slow.`,
+behavior:`Promise.all on an empty array resolves immediately to [], and reduce's initial 0 turns that into 0 rather than a TypeError. Awaiting inside a loop instead would produce the same answer here but would serialise the work: correct, and needlessly slow.`,
 hints:['map each value to a promise, then hand the array to Promise.all.','await the whole thing at once rather than one at a time.','reduce needs its initial value for the empty case.']},
 {title:'Retry with exponential backoff',diff:'hard',lang:'js',
 run:{call:'attemptPlan',cases:[
@@ -390,7 +390,7 @@ solution:`function attemptPlan(succeedOnAttempt, maxAttempts, baseDelay) {
   return { attempts: maxAttempts, delays };   // gave up
 }`,
 tests:[{d:'loops up to the attempt limit',re:'maxAttempts'},{d:'stops on success',re:'succeedOnAttempt'},{d:'doubles the delay',re:'\\*=\\s*2|\\*\\s*2'},{d:'collects the waits',re:'delays\\.push'}],
-behavior:`Six cases execute and three of them catch off-by-one errors. There are always exactly one fewer delays than attempts, because you never wait after the last one — the first case proves it (one attempt, no delays) and the third pins the give-up path (4 attempts, 3 delays). Real retry code adds jitter to these numbers so a fleet of clients does not retry in lockstep and stampede the service they are waiting for.`,
+behavior:`Six cases execute and three of them catch off-by-one errors. There are always exactly one fewer delays than attempts, because you never wait after the last one; the first case proves it (one attempt, no delays) and the third pins the give-up path (4 attempts, 3 delays). Real retry code adds jitter to these numbers so a fleet of clients does not retry in lockstep and stampede the service they are waiting for.`,
 hints:['Count attempts from 1 so the comparison with succeedOnAttempt reads naturally.','Push a delay only when another attempt will follow.','Double the delay after pushing it, not before.']}]}
 
 ]});

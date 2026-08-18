@@ -3,7 +3,7 @@
 Copy the skeleton below when adding a lesson to any of the three courses. It encodes what the gates check
 and what the existing material already does, so a lesson written to this shape needs no rework.
 
-The **feedback block is not in the template** — the engine renders a rating control and a comment box at
+The **feedback block is not in the template**, the engine renders a rating control and a comment box at
 the end of every lesson automatically, for every course. You do not add it, and you cannot forget it.
 
 ---
@@ -46,14 +46,14 @@ hints:['A nudge toward the shape.','A nudge toward the trap.','The name of the t
 **Body**
 
 - [ ] **At or above the course median.** DevDojo ~510 words, IdentityDojo ~655, JSDojo ~455. The floor is
-      half the course median — 255 / 338 / 226 — and `scripts/verify-depth.js` fails the build below it.
+      half the course median, 255 / 338 / 226, and `scripts/verify-depth.js` fails the build below it.
       Aim for the median, not the floor: a lesson written to the minimum is the next one to be flagged.
 - [ ] **Sentences average under ~19 words.** Nothing over 50. Check with the readability script before
       committing.
-- [ ] `<h4>` sections. Three to five. Each one a claim, not a label — "Why there is a code at all" beats
+- [ ] `<h4>` sections. Three to five. Each one a claim, not a label: "Why there is a code at all" beats
       "The authorization code".
 - [ ] Opens on a problem. Definitions land better once the reader wants one.
-- [ ] Contains at least one **honest limit** — where this fails, what it costs, when not to use it.
+- [ ] Contains at least one **honest limit**, where this fails, what it costs, when not to use it.
 - [ ] No backticks or `${` inside the template literal. Escape `<` and `>` in prose as `&lt;` `&gt;`.
 
 **Docs**
@@ -67,7 +67,7 @@ hints:['A nudge toward the shape.','A nudge toward the trap.','The name of the t
 - [ ] **Executed where the platform allows it.** `lang:'js'` plus a `run` spec means the learner's function
       is called with real inputs. Prefer this over a regex check whenever the idea is language-agnostic.
 - [ ] **Named cases, not `case 1`.** The name is what the learner reads when it fails.
-- [ ] **At least one case that catches the plausible-but-wrong implementation** — the off-by-one, the
+- [ ] **At least one case that catches the plausible-but-wrong implementation**, the off-by-one, the
       missing guard, the `startsWith` where an exact match was meant. This is the single highest-value part
       of an exercise.
 - [ ] `behavior` explains what each case proves. `hints` has three, escalating, never the answer.
@@ -103,7 +103,7 @@ node scripts/verify-depth.js             # every lesson clears its course floor
 
 Rendered automatically at the end of every lesson, in every course:
 
-- a **rating control** — thumbs up, neutral, down;
+- a **rating control**, thumbs up, neutral, down;
 - a **comment box** whose question adapts to the rating (what worked / what stopped making sense / what
   would have been clearer), saved on explicit submit;
 - a **prompt on "Next lesson"** if the lesson is unrated, inline and skippable.

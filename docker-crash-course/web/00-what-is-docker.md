@@ -1,6 +1,6 @@
-# 0 — What Docker is (and why it exists)
+# 0: What Docker is (and why it exists)
 
-*No lab — the mental model. ~10 min read.*
+*No lab: the mental model. ~10 min read.*
 
 ---
 
@@ -13,21 +13,21 @@ maps out the whole Docker world so the later hands-on modules have a frame.
 
 ## The three things Docker gives you
 
-1. **Build** — turn your app into an **image** using a recipe file (a `Dockerfile`). Reproducible:
+1. **Build**: turn your app into an **image** using a recipe file (a `Dockerfile`). Reproducible:
    the same Dockerfile builds the same image anywhere.
-2. **Ship** — push images to a **registry** (like Docker Hub), a shared library others can pull
+2. **Ship**: push images to a **registry** (like Docker Hub), a shared library others can pull
    from. This is how an image built on your laptop runs unchanged on a server.
-3. **Run** — start **containers** from images, locally or in production, with resource limits,
+3. **Run**: start **containers** from images, locally or in production, with resource limits,
    networking, and storage you control.
 
-Build, ship, run — the whole Docker lifecycle. Kubernetes (later) is about the "run" part at massive
+Build, ship, run: the whole Docker lifecycle. Kubernetes (later) is about the "run" part at massive
 scale.
 
 ## The pieces and how they fit
 
 | Piece | What it is |
 |-------|-----------|
-| **Docker CLI** | The `docker` command you type — your interface to everything |
+| **Docker CLI** | The `docker` command you type: your interface to everything |
 | **Docker daemon** (`dockerd`) | The background service that actually builds images and runs containers |
 | **Image** | The read-only blueprint of an app + environment |
 | **Container** | A running instance of an image |
@@ -46,7 +46,7 @@ Docker is split in two: the **CLI** (what you type) talks to the **daemon** (the
 the work) over an API. Usually both run on your machine, but the daemon could be remote. Practical
 consequences:
 
-- If the daemon isn't running, every command fails with "cannot connect to the Docker daemon" —
+- If the daemon isn't running, every command fails with "cannot connect to the Docker daemon":
   start Docker Desktop / the docker service.
 - The daemon, not the CLI, holds your images and containers. `docker ps` asks the daemon what it's
   running.
@@ -55,7 +55,7 @@ consequences:
 
 Docker popularized containers, but the **image format** and **runtime** are now open standards under
 the **OCI** (Open Container Initiative). That's why images you build with Docker also run on other
-runtimes (containerd, CRI-O, Podman) and on Kubernetes — which doesn't even use Docker directly
+runtimes (containerd, CRI-O, Podman) and on Kubernetes, which doesn't even use Docker directly
 anymore, but runs the same OCI images. **Learn Docker images once, and they run everywhere in the
 cloud-native world.** This is the payoff that connects this course to Kubernetes.
 
@@ -63,7 +63,7 @@ cloud-native world.** This is the payoff that connects this course to Kubernetes
 
 - **Docker** = build and run containers, typically on **one machine**. Great for development,
   building images, and simple deployments.
-- **Kubernetes** = orchestrate **thousands** of containers across **many machines** — scheduling,
+- **Kubernetes** = orchestrate **thousands** of containers across **many machines**: scheduling,
   scaling, healing, networking them as a fleet. It runs the very images Docker builds.
 
 You build with Docker; you operate at scale with Kubernetes. This course makes you fluent in the
@@ -93,4 +93,4 @@ Every module answers one of these.
 
 ---
 
-**Next:** [1 — Images & layers →](./01-images-and-layers.md)
+**Next:** [1: Images & layers →](./01-images-and-layers.md)

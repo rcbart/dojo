@@ -3,7 +3,7 @@
    sandboxed Web Worker that executes JavaScript, the in-browser SQL engine,
    the opt-in local Java runner, and the AI-assisted simulation.
 
-   Extracted from app.js because this is where correctness lives — five paths
+   Extracted from app.js because this is where correctness lives, five paths
    with different trust levels, tested by engine/test and documented in
    ARCHITECTURE. Everything here is called at runtime, so load order relative
    to app.js does not matter; it is placed before for readability. */
@@ -52,7 +52,7 @@ Respond with ONLY valid JSON, no markdown fences:
  "passed": true|false,
  "feedback": "2-4 sentences: what's right, what's wrong, one concrete next suggestion. Do NOT give the full solution."}`;
   try{
-    if(!window.cowork||!window.cowork.askClaude)throw new Error('AI runner unavailable in this preview — structural checks only.');
+    if(!window.cowork||!window.cowork.askClaude)throw new Error('AI runner unavailable in this preview, structural checks only.');
     const raw=await window.cowork.askClaude(prompt,[]);
     const out=extractJson(raw);
     if(out){
@@ -84,7 +84,7 @@ Respond with ONLY valid JSON, no markdown fences:
           `<div class="aiBox"><h4>🤖 Feedback</h4>${esc(out.feedback||'')}</div>`;
       }else{
         th='<h4 style="margin:10px 0 4px">Test run</h4>'+
-          (out.tests||[]).map(t=>`<div class="tcase ${t.pass?'ok':'bad'}">${t.pass?'✔':'✘'} ${esc(t.name)}${t.note?' — '+esc(t.note):''}</div>`).join('')+
+          (out.tests||[]).map(t=>`<div class="tcase ${t.pass?'ok':'bad'}">${t.pass?'✔':'✘'} ${esc(t.name)}${t.note?', '+esc(t.note):''}</div>`).join('')+
           `<div class="aiBox"><h4>🤖 Feedback</h4>${esc(out.feedback||'')}</div>`;
       }
       box.outerHTML=th;
@@ -98,20 +98,20 @@ Respond with ONLY valid JSON, no markdown fences:
         completeExercise(l,sid,ei,exs);
       }else if(out.compiles!==false&&aiPass&&!allLocal){
         document.getElementById('io-tests').insertAdjacentHTML('beforeend',
-          '<div class="aiBox hint"><h4>⚠ Almost there</h4>All behavior tests pass, but one or more structural checks above are still failing — they enforce the specific technique this lesson teaches. Fix those and run again to complete the lesson.</div>');
+          '<div class="aiBox hint"><h4>⚠ Almost there</h4>All behavior tests pass, but one or more structural checks above are still failing, they enforce the specific technique this lesson teaches. Fix those and run again to complete the lesson.</div>');
       }
     }else{
       const allLocal=checks.length&&checks.every(c=>c.pass);
       document.getElementById('aiOut').innerHTML='<h4>🤖 Feedback</h4>'+
         esc(typeof raw==='string'?raw:JSON.stringify(raw))+
-        (allLocal?'<br><br><b>All structural checks pass — lesson marked complete.</b>':'');
-      con.innerHTML=cline('Runner returned unstructured feedback — see Test Results tab.','warn');
+        (allLocal?'<br><br><b>All structural checks pass, lesson marked complete.</b>':'');
+      con.innerHTML=cline('Runner returned unstructured feedback, see Test Results tab.','warn');
       setTab('tests');
       if(allLocal)completeExercise(l,sid,ei,exs);
     }
   }catch(e){
     const allLocal=checks.length&&checks.every(c=>c.pass);
-    document.getElementById('aiOut').innerHTML=esc(e.message)+(allLocal?' All structural checks passed — marking complete.':'');
+    document.getElementById('aiOut').innerHTML=esc(e.message)+(allLocal?' All structural checks passed, marking complete.':'');
     con.innerHTML=cline(esc(e.message),'warn');
     setTab('tests');
     if(allLocal)completeExercise(l,sid,ei,exs);
@@ -141,7 +141,7 @@ function gradeSql(l,e,sid,ei,exs,code){
   for(let i=0;i<n;i++){
     const rq=refQ[i],mq=myQ[i];
     if(!rq){results.push({pass:false,name:'Query '+(i+1),note:'unexpected extra query'});allPass=false;continue;}
-    if(!mq){results.push({pass:false,name:'Query '+(i+1),note:'missing — this exercise expects '+refQ.length+' quer'+(refQ.length>1?'ies':'y')});allPass=false;continue;}
+    if(!mq){results.push({pass:false,name:'Query '+(i+1),note:'missing, this exercise expects '+refQ.length+' quer'+(refQ.length>1?'ies':'y')});allPass=false;continue;}
     let refRows=null,myRows=null,err=null;
     try{refRows=window.SQLDB.run(JSON.parse(JSON.stringify(db)),rq);}catch(x){refRows=null;}
     try{myRows=window.SQLDB.run(JSON.parse(JSON.stringify(db)),mq);}catch(x){err=x.message;}
@@ -149,12 +149,12 @@ function gradeSql(l,e,sid,ei,exs,code){
     const ordered=/order\s+by/i.test(rq);
     const pass=!!refRows&&canonRows(myRows,ordered)===canonRows(refRows,ordered);
     results.push({pass,name:'Query '+(i+1)+' returns the correct rows',
-      note:pass?'':((myRows?myRows.length:0)+' row(s) returned, expected '+(refRows?refRows.length:'?')+' — check columns, filter'+(ordered?', and order':'')) });
+      note:pass?'':((myRows?myRows.length:0)+' row(s) returned, expected '+(refRows?refRows.length:'?')+', check columns, filter'+(ordered?', and order':'')) });
     if(!pass)allPass=false;
   }
   tests.innerHTML='<h4 style="margin:8px 0 4px">Executed against sample data ('+esc(e.data)+')</h4>'+
-    results.map(c=>`<div class="tcase ${c.pass?'ok':'bad'}">${c.pass?'✔':'✘'} ${esc(c.name)}${c.note?' — '+esc(c.note):''}</div>`).join('')+
-    `<div class="aiBox"><h4>🗄️ Real execution</h4>Your SQL ran in the in-browser engine against the <b>${esc(e.data)}</b> dataset and its result set was compared to the reference — this is real execution, not a pattern match. Open “Sample data” below to inspect the rows.</div>`;
+    results.map(c=>`<div class="tcase ${c.pass?'ok':'bad'}">${c.pass?'✔':'✘'} ${esc(c.name)}${c.note?', '+esc(c.note):''}</div>`).join('')+
+    `<div class="aiBox"><h4>🗄️ Real execution</h4>Your SQL ran in the in-browser engine against the <b>${esc(e.data)}</b> dataset and its result set was compared to the reference, this is real execution, not a pattern match. Open “Sample data” below to inspect the rows.</div>`;
   con.innerHTML=cline('$ dojo sql --dataset '+e.data,'dim')+cline(allPass?'All queries returned the expected rows.':'Some queries did not match the expected result set.',allPass?'ok':'err');
   setTab('tests');markTab('console',allPass?'#16a34a':'#dc2626');
   if(allPass)completeExercise(l,sid,ei,exs);
@@ -208,8 +208,8 @@ function gradeJs(l,e,sid,ei,exs,code){
     try{if(w)w.terminate();}catch(_){}
     const allPass=!fatal&&results.length>0&&results.every(r=>r.pass);
     tests.innerHTML='<h4 style="margin:8px 0 4px">Executed in a sandboxed Web Worker</h4>'+
-      (fatal?`<div class="tcase bad">✘ ${esc(fatal)}</div>`:results.map(c=>`<div class="tcase ${c.pass?'ok':'bad'}">${c.pass?'✔':'✘'} ${esc(c.name)}${c.note?' — '+esc(c.note):''}</div>`).join(''))+
-      `<div class="aiBox"><h4>▶ Real execution</h4>Your function was called with real inputs in an isolated worker and its output compared to expected values — real execution, not a pattern match.</div>`;
+      (fatal?`<div class="tcase bad">✘ ${esc(fatal)}</div>`:results.map(c=>`<div class="tcase ${c.pass?'ok':'bad'}">${c.pass?'✔':'✘'} ${esc(c.name)}${c.note?', '+esc(c.note):''}</div>`).join(''))+
+      `<div class="aiBox"><h4>▶ Real execution</h4>Your function was called with real inputs in an isolated worker and its output compared to expected values, real execution, not a pattern match.</div>`;
     con.innerHTML=cline('$ run '+e.run.call+'()','dim')+cline(allPass?'All cases passed.':(fatal||'Failures above.'),allPass?'ok':'err');
     markTab('console',allPass?'#16a34a':'#dc2626');
     if(allPass)completeExercise(l,sid,ei,exs);
@@ -256,13 +256,13 @@ async function gradeJavaViaRunner(l,e,sid,ei,exs,code){
   const out=String(data.output||'');
   if(data.ok===false&&data.stage==='compile'){
     con.innerHTML=cline('$ javac *.java','dim')+out.split('\n').map(x=>cline(esc(x),'err')).join('')+cline('BUILD FAILED','err');
-    tests.innerHTML='<h4 style="margin:8px 0 4px">Compilation (local JDK)</h4><div class="tcase bad">✘ your code did not compile — see the Console tab</div>';
+    tests.innerHTML='<h4 style="margin:8px 0 4px">Compilation (local JDK)</h4><div class="tcase bad">✘ your code did not compile, see the Console tab</div>';
     setTab('console');markTab('tests','#dc2626');if(btn)btn.disabled=false;return true;
   }
   const caseLines=out.split('\n').filter(x=>/^(PASS|FAIL) /.test(x));
   const mr=out.match(/DOJO_RESULT\s+(\d+)\/(\d+)/);
   const p=mr?parseInt(mr[1],10):0,t=mr?parseInt(mr[2],10):0,allPass=t>0&&p===t;
-  tests.innerHTML='<h4 style="margin:8px 0 4px">Executed with the local JDK — real compile &amp; run</h4>'+
+  tests.innerHTML='<h4 style="margin:8px 0 4px">Executed with the local JDK, real compile &amp; run</h4>'+
     caseLines.map(x=>{const ok=x.indexOf('PASS')===0;return '<div class="tcase '+(ok?'ok':'bad')+'">'+(ok?'✔':'✘')+' '+esc(x.replace(/^(PASS|FAIL) /,''))+'</div>';}).join('')+
     '<div class="aiBox"><h4>▶ Real execution</h4>Compiled and ran on your machine; '+p+'/'+t+' assertions passed.</div>';
   con.innerHTML=cline('$ javac *.java && java DojoTest','dim')+cline(esc(out),allPass?'ok':'err');

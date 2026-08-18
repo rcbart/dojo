@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// gen-flows.js — bake generated auth-flow diagrams into the stream files.
+// gen-flows.js, bake generated auth-flow diagrams into the stream files.
 //
 // Reads every spec in scripts/flows/, renders it with flowdia.js, and
 // replaces the content between <!--flow:ID--> and <!--/flow:ID--> markers
@@ -33,7 +33,7 @@ for (const [file, list] of byFile) {
       console.error(`MISSING MARKERS for ${spec.id} in ${file}`);
       errors++; continue;
     }
-    const head = spec.bare ? '' : `<h4>${spec.title} — step by step</h4>\n`;
+    const head = spec.bare ? '' : `<h4>${spec.title}, step by step</h4>\n`;
     const steps = spec.bare ? '' : '\n' + renderSteps(spec);
     src = src.slice(0, a + open.length) + '\n' + head + render(spec) + steps + '\n' + src.slice(b);
     wrote++;
@@ -41,7 +41,7 @@ for (const [file, list] of byFile) {
   fs.writeFileSync(p, src);
 }
 
-// orphan markers (marker in a file with no spec) — warn so they get cleaned up
+// orphan markers (marker in a file with no spec), warn so they get cleaned up
 const known = new Set(specs.map(s => s.id));
 for (const f of fs.readdirSync(STREAMS).filter(f => f.endsWith('.js'))) {
   const src = fs.readFileSync(path.join(STREAMS, f), 'utf8');

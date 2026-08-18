@@ -1,4 +1,4 @@
-# 3 — Building images with Dockerfiles
+# 3: Building images with Dockerfiles
 
 *The core practitioner skill: packaging your own app. Concepts + a build-it-yourself lab. ~30 min.
 Requires Docker.*
@@ -16,7 +16,7 @@ steps top to bottom, each producing a layer, and hands you a finished image. Thi
 | `FROM` | The base image to start from (always first) |
 | `WORKDIR` | Set the working directory for later steps |
 | `COPY` | Copy files from your machine into the image |
-| `RUN` | Execute a command at **build time** (install deps, compile) — creates a layer |
+| `RUN` | Execute a command at **build time** (install deps, compile); creates a layer |
 | `ENV` | Set an environment variable (persists into the running container) |
 | `EXPOSE` | Document which port the app listens on (informational) |
 | `CMD` | The **default command** to run when a container starts |
@@ -46,7 +46,7 @@ docker run --rm -p 3000:3000 myapp:1.0
 ## The single most important idea: build cache & layer order
 
 Docker caches each layer. On rebuild, it reuses a cached layer **if that step's inputs haven't
-changed** — and once one layer misses the cache, every layer after it rebuilds too. So **order your
+changed**, and once one layer misses the cache, every layer after it rebuilds too. So **order your
 Dockerfile from least-changing to most-changing.**
 
 That's why the example copies `package*.json` and runs `npm install` **before** copying the rest of
@@ -57,7 +57,7 @@ the source:
 - Your **source code** changes constantly → put `COPY . .` late, so editing code only invalidates
   the cheap final layers.
 
-Get this backwards (copy everything, then install) and *every* code edit re-runs `npm install` —
+Get this backwards (copy everything, then install) and *every* code edit re-runs `npm install`:
 slow. This ordering trick is the #1 Dockerfile skill.
 
 ## CMD vs ENTRYPOINT (the classic confusion)
@@ -71,7 +71,7 @@ slow. This ordering trick is the #1 Dockerfile skill.
 Use `CMD` alone for simple apps; use `ENTRYPOINT` when the image is really "a command" that takes
 arguments.
 
-## `.dockerignore` — keep junk out of the build
+## `.dockerignore`: keep junk out of the build
 
 The build context ("`.`") gets sent to the daemon. Exclude things you don't want copied (and that
 would bust the cache or bloat the image) with a `.dockerignore` file:
@@ -84,7 +84,7 @@ node_modules
 Dockerfile
 ```
 
-Always add one — it speeds builds and avoids leaking secrets like `.env` into images.
+Always add one; it speeds builds and avoids leaking secrets like `.env` into images.
 
 ## Lab: build your own image
 
@@ -122,18 +122,18 @@ curl localhost:8000        # → Hello from my own Docker image!
 
 ### Experiments
 
-1. **Watch the cache.** Rebuild without changes (`docker build -t hello-py:1.0 .`) — every step says
-   `CACHED`, instant. Now edit `app.py`'s message and rebuild — only the layers from `COPY app.py`
+1. **Watch the cache.** Rebuild without changes (`docker build -t hello-py:1.0 .`): every step says
+   `CACHED`, instant. Now edit `app.py`'s message and rebuild: only the layers from `COPY app.py`
    onward rebuild.
-2. **Override CMD.** `docker run --rm hello-py:1.0 python --version` — runs a different command
+2. **Override CMD.** `docker run --rm hello-py:1.0 python --version`: runs a different command
    because `CMD` is easily overridden.
-3. **Add a `.dockerignore`** with `__pycache__` and rebuild — cleaner context.
+3. **Add a `.dockerignore`** with `__pycache__` and rebuild: cleaner context.
 
 ## Your turn (challenge)
 
 Write a `Dockerfile` for a tiny Python web app of your own that serves the text `my dockerfile
 works` on port 8000, build it as `mine:1.0`, and prove it. Order your instructions so a code edit
-does **not** re-run dependency install (even though this app has none — practice the habit).
+does **not** re-run dependency install (even though this app has none; practice the habit).
 
 **Verify you succeeded:**
 ```bash
@@ -152,11 +152,11 @@ second build is fully `CACHED`.)*
    layer is reused unless deps change; source edits don't trigger a reinstall.)*
 3. `CMD` vs `ENTRYPOINT`? *(`CMD` is an easily-overridden default command; `ENTRYPOINT` is a fixed
    executable that takes run-time args as its arguments.)*
-4. What is `.dockerignore` for? *(Excluding files from the build context — faster builds, no leaked
+4. What is `.dockerignore` for? *(Excluding files from the build context: faster builds, no leaked
    secrets/junk.)*
 5. What does `-t` do in `docker build -t name:tag .`? *(Names and tags the resulting image; `.` is
    the build context.)*
 
 ---
 
-**Next:** [4 — Data: volumes & bind mounts →](./04-data-volumes.md)
+**Next:** [4: Data: volumes & bind mounts →](./04-data-volumes.md)

@@ -3,7 +3,7 @@
   {
    "q": "What single tool do you actually install to run Envoy for this course?",
    "options": [
-    "Docker — Envoy itself comes as a container image you don't install directly",
+    "Docker: Envoy itself comes as a container image you don't install directly",
     "The Envoy binary, compiled from source",
     "Kubernetes",
     "A web browser only"
@@ -12,7 +12,7 @@
    "why": "You install Docker; it pulls the envoyproxy/envoy image and the practice backend automatically. Nothing else touches your system.",
    "whyWrong": [
     "",
-    "Compiling Envoy is a heavyweight Bazel build the course never asks for — Docker pulls a prebuilt image instead.",
+    "Compiling Envoy is a heavyweight Bazel build the course never asks for: Docker pulls a prebuilt image instead.",
     "Kubernetes doesn't appear until Module 08, and even then the labs don't have you install it.",
     "A browser can't run containers; you need Docker to actually execute Envoy."
    ]
@@ -29,7 +29,7 @@
    "why": "Each lab folder has a docker-compose.yaml describing Envoy and a backend. 'up' pulls the images (first time) and runs them together.",
    "whyWrong": [
     "",
-    "Nothing is deleted — 'down' removes only that lab's containers, and 'up' just starts them.",
+    "Nothing is deleted, 'down' removes only that lab's containers, and 'up' just starts them.",
     "Docker must already be installed; compose is a feature of Docker, not its installer.",
     "Everything runs locally on your machine; nothing is uploaded anywhere."
    ]
@@ -46,9 +46,9 @@
    "why": "The listener is bound to port 10000. Keep Envoy running in one terminal and curl it from another; you'll see a matching log line appear.",
    "whyWrong": [
     "",
-    "Restarting changes nothing — Envoy is already running and just waiting for a request.",
+    "Restarting changes nothing: Envoy is already running and just waiting for a request.",
     "Editing config doesn't generate traffic; you need an actual client request like curl.",
-    "9901 is the admin interface, not the traffic port — and it should never be exposed publicly."
+    "9901 is the admin interface, not the traffic port, and it should never be exposed publicly."
    ]
   },
   {
@@ -90,16 +90,16 @@
   {
    "q": "When you put a proxy in the middle, one direct connection becomes how many conversations?",
    "options": [
-    "Two — you-to-proxy and proxy-to-server, stitched together to feel like one",
-    "One — the proxy just watches the existing connection",
-    "Zero — the proxy removes the need to connect",
-    "Four — one for each direction on each side"
+    "Two, you-to-proxy and proxy-to-server, stitched together to feel like one",
+    "One, the proxy just watches the existing connection",
+    "Zero, the proxy removes the need to connect",
+    "Four, one for each direction on each side"
    ],
    "answer": 0,
    "why": "The proxy holds two separate conversations: it receives your request, then makes its own request to the real server, then relays the reply back to you.",
    "whyWrong": [
     "",
-    "The proxy isn't a passive observer — it terminates your connection and opens its own to the server.",
+    "The proxy isn't a passive observer, it terminates your connection and opens its own to the server.",
     "Connections still happen; the proxy adds a hop, it doesn't remove the network.",
     "Each side is one two-way conversation; requests and responses share the same connection."
    ]
@@ -113,7 +113,7 @@
     "Designing the website's visual layout"
    ],
    "answer": 0,
-   "why": "The middle is a great place to do work every request needs — so you build it once in the proxy instead of into every server or client.",
+   "why": "The middle is a great place to do work every request needs, so you build it once in the proxy instead of into every server or client.",
    "whyWrong": [
     "",
     "Business logic stays in the application; the proxy handles cross-cutting network concerns.",
@@ -133,7 +133,7 @@
    "why": "Forward = sits in front of clients reaching the internet (filtering, hiding who's browsing). Reverse = sits in front of servers, taking outside traffic to the right backend.",
    "whyWrong": [
     "",
-    "Speed doesn't define them — the difference is whose side of the conversation each one represents.",
+    "Speed doesn't define them, the difference is whose side of the conversation each one represents.",
     "Either kind can speak HTTP or HTTPS; the protocol isn't what distinguishes them.",
     "They sit on opposite sides: one fronts clients going out, the other fronts servers taking traffic in."
    ]
@@ -141,18 +141,18 @@
   {
    "q": "Which kind of proxy is Envoy, and why does it fit this course?",
    "options": [
-    "A reverse proxy — it fronts your backend services to route, balance, secure, and observe incoming traffic",
-    "A forward proxy — it filters employees' web browsing",
-    "Neither — Envoy is a database",
+    "A reverse proxy, it fronts your backend services to route, balance, secure, and observe incoming traffic",
+    "A forward proxy, it filters employees' web browsing",
+    "Neither: Envoy is a database",
     "Both, but only when running on Windows"
    ],
    "answer": 0,
-   "why": "Envoy is a powerful, programmable reverse proxy. Routing incoming traffic to a fleet of services, load balancing, terminating HTTPS, retrying failures — that's the reverse-proxy job.",
+   "why": "Envoy is a powerful, programmable reverse proxy. Routing incoming traffic to a fleet of services, load balancing, terminating HTTPS, retrying failures, that's the reverse-proxy job.",
    "whyWrong": [
     "",
-    "Filtering outbound browsing is the classic forward-proxy job — the opposite of what this course covers.",
+    "Filtering outbound browsing is the classic forward-proxy job, the opposite of what this course covers.",
     "Envoy stores no application data; it moves requests between clients and your services.",
-    "Envoy's role has nothing to do with the OS — and its job is reverse proxying regardless."
+    "Envoy's role has nothing to do with the OS, and its job is reverse proxying regardless."
    ]
   }
  ],
@@ -160,7 +160,7 @@
   {
    "q": "What core problem does a service mesh exist to solve?",
    "options": [
-    "It moves repetitive networking concerns — security, retries, metrics, routing — out of every app and into shared infrastructure",
+    "It moves repetitive networking concerns, security, retries, metrics, routing, out of every app and into shared infrastructure",
     "It makes individual services run faster on the CPU",
     "It replaces the need for any backend services",
     "It stores all of a company's data in one place"
@@ -170,7 +170,7 @@
    "whyWrong": [
     "",
     "A mesh adds a proxy hop, so if anything it costs a little latency; the win is uniformity, not speed.",
-    "Your services still do all the real work — the mesh only handles the traffic between them.",
+    "Your services still do all the real work, the mesh only handles the traffic between them.",
     "Data storage is a database concern; a mesh carries requests, it doesn't keep them."
    ]
   },
@@ -186,7 +186,7 @@
    "why": "The service talks to its local sidecar proxy, and the proxy handles the real network. Because a proxy sits on both ends of every call, the mesh can add features uniformly.",
    "whyWrong": [
     "",
-    "It's a proxy process, not a data replica — it forwards traffic rather than storing anything.",
+    "It's a proxy process, not a data replica, it forwards traffic rather than storing anything.",
     "It's software sharing the pod's existing CPU, not extra hardware.",
     "No physical wiring involved; the sidecar intercepts traffic in software on the same host."
    ]
@@ -204,7 +204,7 @@
    "whyWrong": [
     "",
     "You've got it backwards: the proxies carry the data, and the control plane does the thinking.",
-    "The split is the whole point — one part moves packets, a separate part programs it.",
+    "The split is the whole point, one part moves packets, a separate part programs it.",
     "Both planes are mesh infrastructure; your app and database sit outside the mesh's own layers."
    ]
   },
@@ -220,16 +220,16 @@
    "why": "Istio, Consul, Gloo, App Mesh and others drive Envoy as the thing on the wire, via the standard xDS API. Learn Envoy and you understand the engine inside nearly all of them.",
    "whyWrong": [
     "",
-    "Envoy is what Istio programs, not a competitor to it — istiod is the brain, Envoy is the muscle.",
+    "Envoy is what Istio programs, not a competitor to it, istiod is the brain, Envoy is the muscle.",
     "Envoy carries requests between services; it stores nothing.",
-    "Envoy is the most common mesh data plane — the engine inside Istio, Consul Connect, and others."
+    "Envoy is the most common mesh data plane, the engine inside Istio, Consul Connect, and others."
    ]
   },
   {
    "q": "Does every system need a full service mesh?",
    "options": [
-    "No — an edge gateway plus basic retries often suffices; a mesh pays off once you have many services",
-    "Yes — no system can run without a mesh",
+    "No, an edge gateway plus basic retries often suffices; a mesh pays off once you have many services",
+    "Yes, no system can run without a mesh",
     "Only systems written in Go can use one",
     "A mesh is required by Kubernetes"
    ],
@@ -238,7 +238,7 @@
    "whyWrong": [
     "",
     "Plenty of systems run fine with just an edge proxy; a mesh is a scale tool, not a prerequisite.",
-    "Meshes are language-agnostic — that's the selling point; the proxy doesn't care what wrote the request.",
+    "Meshes are language-agnostic, that's the selling point; the proxy doesn't care what wrote the request.",
     "Kubernetes runs happily without any mesh; a mesh is an optional layer on top."
    ]
   }
@@ -264,17 +264,17 @@
   {
    "q": "What can an L7 (application-layer) proxy do that an L4 (transport-layer) proxy cannot?",
    "options": [
-    "Read and act on the actual HTTP request — its path, headers, and method",
+    "Read and act on the actual HTTP request, its path, headers, and method",
     "Forward raw TCP connections faster",
     "Use less memory per connection",
     "Run without any configuration at all"
    ],
    "answer": 0,
-   "why": "L4 only sees bytes flowing between IP:port pairs. L7 parses the protocol (HTTP/gRPC), so it can make decisions based on the URL path, headers, and method — Envoy's superpower.",
+   "why": "L4 only sees bytes flowing between IP:port pairs. L7 parses the protocol (HTTP/gRPC), so it can make decisions based on the URL path, headers, and method: Envoy's superpower.",
    "whyWrong": [
     "",
     "Raw TCP forwarding speed is the L4 proxy's advantage, not something L7 adds.",
-    "Parsing HTTP costs more memory, not less — the tradeoff buys smarts.",
+    "Parsing HTTP costs more memory, not less, the tradeoff buys smarts.",
     "Both kinds need configuration; L7 typically needs more of it, not none."
    ]
   },
@@ -291,7 +291,7 @@
    "whyWrong": [
     "",
     "Reversed: config flows from the control plane down to Envoy, which moves the actual traffic.",
-    "They're deliberately separate roles — Envoy consumes config, it never computes it.",
+    "They're deliberately separate roles: Envoy consumes config, it never computes it.",
     "The planes describe infrastructure roles, not who initiates a request."
    ]
   },
@@ -304,11 +304,11 @@
     "Firewall, router, and switch"
    ],
    "answer": 0,
-   "why": "It's the same tool in all three — only the topology and who configures it differ: at the front door (edge), next to every service (sidecar/mesh), or between internal tiers (middle proxy).",
+   "why": "It's the same tool in all three, only the topology and who configures it differ: at the front door (edge), next to every service (sidecar/mesh), or between internal tiers (middle proxy).",
    "whyWrong": [
     "",
     "Those are build-toolchain roles; Envoy is a proxy, not a development tool.",
-    "Envoy is always the middleman — it's neither the app tiers nor the data store.",
+    "Envoy is always the middleman, it's neither the app tiers nor the data store.",
     "Those are network hardware boxes; Envoy's three roles are all proxy topologies."
    ]
   },
@@ -321,12 +321,12 @@
     "It can only be used inside Kubernetes"
    ],
    "answer": 0,
-   "why": "A control plane can reprogram thousands of Envoys continuously — add a route, change a backend, rotate a cert — without restarting. That's the reason service meshes chose Envoy.",
+   "why": "A control plane can reprogram thousands of Envoys continuously, add a route, change a backend, rotate a cert, without restarting. That's the reason service meshes chose Envoy.",
    "whyWrong": [
     "",
-    "C++ vs C isn't the story — nginx is plenty fast; the difference is how config gets updated.",
+    "C++ vs C isn't the story, nginx is plenty fast; the difference is how config gets updated.",
     "Envoy needs config like any proxy; the point is that config can arrive live over xDS.",
-    "Envoy predates its Kubernetes fame and runs anywhere — VMs, bare metal, Docker."
+    "Envoy predates its Kubernetes fame and runs anywhere: VMs, bare metal, Docker."
    ]
   }
  ],
@@ -343,7 +343,7 @@
    "why": "A connection arrives at a listener, flows through a filter chain, the router reads the route table to pick a cluster, and the cluster load-balances to one endpoint. That sentence is Envoy.",
    "whyWrong": [
     "",
-    "That runs backwards — clusters and endpoints are chosen last, after routing, not first.",
+    "That runs backwards, clusters and endpoints are chosen last, after routing, not first.",
     "Routing happens inside the listener's filter chain, not before the connection is accepted.",
     "The endpoint is the final destination; nothing starts there."
    ]
@@ -368,16 +368,16 @@
   {
    "q": "Is a browser connecting to Envoy considered upstream or downstream?",
    "options": [
-    "Downstream — it is on the client side, the one that connected TO Envoy",
-    "Upstream — it is on the backend side",
-    "Neither — browsers are not part of Envoy's model",
+    "Downstream, it is on the client side, the one that connected TO Envoy",
+    "Upstream, it is on the backend side",
+    "Neither, browsers are not part of Envoy's model",
     "Both at the same time"
    ],
    "answer": 0,
    "why": "Downstream = the client side (who connected to Envoy). Upstream = the backend side (who Envoy connects to). So 'downstream_rq_total' counts requests received from clients.",
    "whyWrong": [
     "",
-    "Upstream is the backend side — where Envoy sends requests, not where they come from.",
+    "Upstream is the backend side, where Envoy sends requests, not where they come from.",
     "Anything that connects to Envoy is in the model, and a browser is a downstream client.",
     "A single peer sits on one side: the browser connects TO Envoy, making it downstream only."
    ]
@@ -394,16 +394,16 @@
    "why": "The network (L4) filter chain operates on the connection; inside the HCM, the HTTP (L7) filter chain operates on each request. Most of your day-to-day config lives in the HTTP filters and route table.",
    "whyWrong": [
     "",
-    "Envoy has no firewall pair; the split is by protocol layer — connection vs request.",
+    "Envoy has no firewall pair; the split is by protocol layer, connection vs request.",
     "Static vs dynamic is about config delivery, not the filter pipelines.",
     "Logging is one feature, not a pipeline; the two chains are L4 network and L7 HTTP filters."
    ]
   },
   {
-   "q": "Between static and dynamic (xDS) config, what actually changes — the objects or the delivery?",
+   "q": "Between static and dynamic (xDS) config, what actually changes, the objects or the delivery?",
    "options": [
-    "Only the delivery — a cluster is a cluster whether it came from a file or a control-plane push",
-    "Only the objects — dynamic config uses completely different resource types",
+    "Only the delivery, a cluster is a cluster whether it came from a file or a control-plane push",
+    "Only the objects, dynamic config uses completely different resource types",
     "Both the objects and the delivery are entirely different",
     "Nothing changes; static and dynamic are just two names for the same file"
    ],
@@ -411,9 +411,9 @@
    "why": "The objects (listeners, routes, clusters, endpoints) are identical either way. Master the static objects first and dynamic config is just 'the same objects, delivered over the network.'",
    "whyWrong": [
     "",
-    "The resource types are identical either way — an xDS cluster is the same object as a file cluster.",
+    "The resource types are identical either way, an xDS cluster is the same object as a file cluster.",
     "Only delivery changes; the listener/route/cluster/endpoint objects stay the same.",
-    "They're genuinely different delivery mechanisms — file at boot vs streamed at runtime."
+    "They're genuinely different delivery mechanisms, file at boot vs streamed at runtime."
    ]
   }
  ],
@@ -458,14 +458,14 @@
     "It forwards the request upstream, so every other filter must get to act before it",
     "It is the slowest filter and should run when nothing else is waiting",
     "Envoy sorts filters alphabetically and 'router' comes last",
-    "It has to run first, not last — the premise is wrong"
+    "It has to run first, not last, the premise is wrong"
    ],
    "answer": 0,
    "why": "The router applies the route decision and sends the request to a backend. Any filter that wants to inspect or modify the request (auth, CORS, etc.) must run before that hand-off.",
    "whyWrong": [
     "",
     "Filter order is about semantics, not speed scheduling.",
-    "Order is exactly what you write in http_filters — Envoy never sorts it.",
+    "Order is exactly what you write in http_filters: Envoy never sorts it.",
     "If it ran first, no other filter could touch the request before it left for the backend."
    ]
   },
@@ -482,23 +482,23 @@
    "whyWrong": [
     "",
     "TLS to backends is configured on the cluster's transport_socket, not its discovery type.",
-    "That's the opposite — STRICT_DNS follows DNS answers and can yield several endpoints.",
+    "That's the opposite: STRICT_DNS follows DNS answers and can yield several endpoints.",
     "Health checking is a separate cluster setting; the discovery type doesn't touch it."
    ]
   },
   {
    "q": "If two routes both match a request, which one wins?",
    "options": [
-    "The first one listed — route order matters",
+    "The first one listed, route order matters",
     "The most specific one, regardless of order",
     "The last one listed",
     "Envoy returns an error when two routes match"
    ],
    "answer": 0,
-   "why": "Envoy takes the first matching route. That's why specific routes (like /healthz) must go ABOVE the catch-all prefix: / — the single most common routing bug.",
+   "why": "Envoy takes the first matching route. That's why specific routes (like /healthz) must go ABOVE the catch-all prefix: /, the single most common routing bug.",
    "whyWrong": [
     "",
-    "Envoy does no specificity ranking — it's strictly top-to-bottom order.",
+    "Envoy does no specificity ranking, it's strictly top-to-bottom order.",
     "The last one never gets a look once an earlier route matches.",
     "Overlapping routes are normal and legal; the first match simply wins."
    ]
@@ -508,7 +508,7 @@
   {
    "q": "What single filter turns a listener into an HTTP listener?",
    "options": [
-    "The HTTP Connection Manager — swap it for tcp_proxy and the listener becomes an L4 forwarder",
+    "The HTTP Connection Manager, swap it for tcp_proxy and the listener becomes an L4 forwarder",
     "The router filter",
     "The transport_socket",
     "The admin filter"
@@ -517,7 +517,7 @@
    "why": "A listener is protocol-agnostic. Its filter chain's network filter decides behavior: http_connection_manager makes it L7/HTTP; tcp_proxy makes it a dumb-but-fast L4 forwarder.",
    "whyWrong": [
     "",
-    "The router is an HTTP filter that lives INSIDE the HCM — it needs the HCM to exist first.",
+    "The router is an HTTP filter that lives INSIDE the HCM, it needs the HCM to exist first.",
     "The transport_socket handles TLS on the connection; it doesn't parse HTTP.",
     "There is no admin filter; the admin interface is a separate server entirely."
    ]
@@ -527,14 +527,14 @@
    "options": [
     "Multiple filter chains, selected per connection by filter_chain_match on the SNI hostname",
     "One filter chain that guesses the site from the request body",
-    "It cannot — you need a separate listener per site",
+    "It cannot, you need a separate listener per site",
     "By running two copies of Envoy on the same port"
    ],
    "answer": 0,
    "why": "SNI (Server Name Indication) is the hostname the client requests inside the TLS handshake. filter_chain_match on server_names picks the matching chain (and its cert/backend).",
    "whyWrong": [
     "",
-    "The cert must be chosen during the TLS handshake — before any request body exists to read.",
+    "The cert must be chosen during the TLS handshake, before any request body exists to read.",
     "One listener handles it fine; that's exactly what filter_chain_match is for.",
     "Two processes can't bind the same port; SNI matching within one listener is the mechanism."
    ]
@@ -553,7 +553,7 @@
     "",
     "HTTP version negotiation is separate config; both contexts work with either version.",
     "Every TLS connection encrypts and decrypts on both ends; the contexts differ by which side Envoy plays.",
-    "They're distinct types with distinct roles — presenting a cert as server vs verifying one as client."
+    "They're distinct types with distinct roles, presenting a cert as server vs verifying one as client."
    ]
   },
   {
@@ -569,14 +569,14 @@
    "whyWrong": [
     "",
     "Termination means accepting and completing TLS, not rejecting it.",
-    "Backend-side decryption is TLS passthrough — the opposite arrangement.",
+    "Backend-side decryption is TLS passthrough, the opposite arrangement.",
     "TLS is fully active on the client side; it just ends at Envoy instead of the backend."
    ]
   },
   {
    "q": "Which part of the config handles encryption, and which handles HTTP routing?",
    "options": [
-    "The transport_socket handles encryption; the HCM filters handle HTTP routing — transport vs application, kept separate",
+    "The transport_socket handles encryption; the HCM filters handle HTTP routing, transport vs application, kept separate",
     "The route_config handles both",
     "The cluster handles encryption; the listener handles routing",
     "The admin interface handles both"
@@ -586,7 +586,7 @@
    "whyWrong": [
     "",
     "route_config only maps requests to clusters; it never touches crypto.",
-    "Backwards — encryption lives in the listener's transport_socket, routing in the HCM.",
+    "Backwards, encryption lives in the listener's transport_socket, routing in the HCM.",
     "The admin interface observes Envoy; it doesn't process or encrypt traffic."
    ]
   }
@@ -604,7 +604,7 @@
    "why": "First match wins. Put specific routes above general ones; a catch-all prefix: / at the top will silently shadow everything below it.",
    "whyWrong": [
     "",
-    "Envoy never ranks by specificity — order in the list is the only tiebreaker.",
+    "Envoy never ranks by specificity, order in the list is the only tiebreaker.",
     "Later routes are shadowed the moment an earlier one matches.",
     "Route selection is fully deterministic: top to bottom, first hit."
    ]
@@ -618,12 +618,12 @@
     "Only the response status code"
    ],
    "answer": 0,
-   "why": "match can test exact path, safe_regex, headers (exact/prefix/regex/presence), and query_parameters — enabling canaries, API versioning, and auth gating.",
+   "why": "match can test exact path, safe_regex, headers (exact/prefix/regex/presence), and query_parameters, enabling canaries, API versioning, and auth gating.",
    "whyWrong": [
     "",
-    "Client IP alone isn't a route matcher — and matching is far richer than any one field.",
+    "Client IP alone isn't a route matcher, and matching is far richer than any one field.",
     "There's no time-of-day matcher in route config.",
-    "Routing happens before the backend answers — the response status doesn't exist yet."
+    "Routing happens before the backend answers, the response status doesn't exist yet."
    ]
   },
   {
@@ -638,7 +638,7 @@
    "why": "direct_response = Envoy serves a canned body with no backend (health checks, maintenance pages). redirect = a 301/302 sending the client somewhere else.",
    "whyWrong": [
     "",
-    "One serves content itself; the other bounces the client — different actions entirely.",
+    "One serves content itself; the other bounces the client, different actions entirely.",
     "Both work regardless of protocol; HTTPS vs HTTP has nothing to do with it.",
     "You've swapped them: redirect sends the 3xx, direct_response serves the body."
    ]
@@ -655,7 +655,7 @@
    "why": "The router is the hand-off to the backend. Filters like cors, jwt_authn, and fault must run before that hand-off to inspect, modify, or reject the request.",
    "whyWrong": [
     "",
-    "Access logging is the HCM's job, not the router's — and it isn't why the router goes last.",
+    "Access logging is the HCM's job, not the router's, and it isn't why the router goes last.",
     "You choose the order explicitly; Envoy never alphabetizes filters.",
     "First would ship the request upstream before auth, CORS, or fault filters ever ran."
    ]
@@ -669,10 +669,10 @@
     "Compressing responses"
    ],
    "answer": 0,
-   "why": "The fault filter deliberately delays or aborts a percentage of matching requests, so teams can verify that CALLERS handle failures (retries, fallbacks) — chaos engineering as config.",
+   "why": "The fault filter deliberately delays or aborts a percentage of matching requests, so teams can verify that CALLERS handle failures (retries, fallbacks), chaos engineering as config.",
    "whyWrong": [
     "",
-    "Nothing repairs config at runtime — bad YAML simply fails to load.",
+    "Nothing repairs config at runtime, bad YAML simply fails to load.",
     "Retries live in the route's retry_policy; fault does the opposite, injecting failures.",
     "Compression is the compressor filter's job; fault only delays or aborts requests."
    ]
@@ -688,18 +688,18 @@
     "A TLS certificate"
    ],
    "answer": 0,
-   "why": "If routes answer 'where does this request go?', clusters answer 'which instance, and what if it's down?' — a named group of endpoints plus load-balancing and health policy.",
+   "why": "If routes answer 'where does this request go?', clusters answer 'which instance, and what if it's down?', a named group of endpoints plus load-balancing and health policy.",
    "whyWrong": [
     "",
     "One server is just an endpoint; a cluster is the named group plus its policies.",
-    "Listening ports belong to listeners — clusters describe where traffic goes out, not in.",
+    "Listening ports belong to listeners, clusters describe where traffic goes out, not in.",
     "Certs live in transport_sockets and SDS; a cluster may reference one but isn't one."
    ]
   },
   {
    "q": "When would you use STRICT_DNS vs EDS for endpoint discovery?",
    "options": [
-    "STRICT_DNS resolves a DNS name locally; EDS receives endpoints pushed by a control plane over xDS — EDS for dynamic mesh environments",
+    "STRICT_DNS resolves a DNS name locally; EDS receives endpoints pushed by a control plane over xDS: EDS for dynamic mesh environments",
     "STRICT_DNS is for HTTPS; EDS is for HTTP",
     "They are identical",
     "STRICT_DNS is dynamic; EDS is static"
@@ -708,7 +708,7 @@
    "why": "STRICT_DNS is great for Docker/K8s service names Envoy can resolve itself. EDS is how a control plane keeps up with pods appearing and disappearing in a mesh.",
    "whyWrong": [
     "",
-    "Discovery type and TLS are orthogonal — either can carry either protocol.",
+    "Discovery type and TLS are orthogonal, either can carry either protocol.",
     "They differ fundamentally: local DNS resolution vs control-plane push.",
     "Backwards: EDS is the dynamic, push-based one; STRICT_DNS just re-polls DNS."
    ]
@@ -727,13 +727,13 @@
     "",
     "Both styles can watch HTTP or TCP; the real split is probing vs reacting to live traffic.",
     "Active checks repeat on an interval forever, and passive ejection runs continuously.",
-    "They're separate, complementary mechanisms — probe ahead vs react to real failures."
+    "They're separate, complementary mechanisms, probe ahead vs react to real failures."
    ]
   },
   {
    "q": "Which load-balancing policy gives you session affinity (sticky routing)?",
    "options": [
-    "RING_HASH or MAGLEV — consistent hashing on a key like a header or cookie",
+    "RING_HASH or MAGLEV, consistent hashing on a key like a header or cookie",
     "ROUND_ROBIN",
     "RANDOM",
     "LEAST_REQUEST"
@@ -742,7 +742,7 @@
    "why": "Consistent-hashing policies (RING_HASH/MAGLEV) send requests with the same key to the same backend. Round-robin, random, and least-request spread traffic without affinity.",
    "whyWrong": [
     "",
-    "Round-robin deliberately rotates through endpoints — the opposite of stickiness.",
+    "Round-robin deliberately rotates through endpoints, the opposite of stickiness.",
     "Random picks a fresh endpoint every time; the same user lands anywhere.",
     "Least-request follows load, so the same key goes wherever is idle, not to one home."
    ]
@@ -760,7 +760,7 @@
    "whyWrong": [
     "",
     "Envoy doesn't serve stale responses on failure; caching is a separate concern entirely.",
-    "Envoy stays up and routes around the failure — that's the whole point of resilience config.",
+    "Envoy stays up and routes around the failure, that's the whole point of resilience config.",
     "A 503 is what the retry policy prevents; it only surfaces if every attempt fails."
    ]
   }
@@ -775,10 +775,10 @@
     "/healthz"
    ],
    "answer": 0,
-   "why": "/config_dump returns the entire effective config as JSON — invaluable for confirming what Envoy actually loaded, especially when debugging xDS.",
+   "why": "/config_dump returns the entire effective config as JSON, invaluable for confirming what Envoy actually loaded, especially when debugging xDS.",
    "whyWrong": [
     "",
-    "/ready just says whether Envoy can serve traffic — a one-word liveness answer.",
+    "/ready just says whether Envoy can serve traffic, a one-word liveness answer.",
     "/quitquitquit shuts Envoy down; definitely not a read-only inspection endpoint.",
     "/healthz is a path you'd route for app health checks, not an admin config viewer."
    ]
@@ -795,7 +795,7 @@
    "why": "The admin interface is powerful and unauthenticated. Anyone who reaches it can read your config and even shut Envoy down. Bind it to 127.0.0.1 in production.",
    "whyWrong": [
     "",
-    "Performance isn't the issue — the danger is unauthenticated read and control access.",
+    "Performance isn't the issue, the danger is unauthenticated read and control access.",
     "It serves plain HTTP by default; the concern is exposure, not protocol.",
     "Traffic on 9901 is tiny; the risk is what an attacker can do with it, not bandwidth."
    ]
@@ -830,25 +830,25 @@
    "whyWrong": [
     "",
     "User-agent details are a different log field; flags describe Envoy's view of the outcome.",
-    "Envoy never sees inside the backend — it can't know what queries ran.",
+    "Envoy never sees inside the backend, it can't know what queries ran.",
     "Memory usage lives in /stats and /memory, not in per-request access logs."
    ]
   },
   {
    "q": "How much application code do you change to get distributed tracing across an Envoy mesh?",
    "options": [
-    "None — it's Envoy config on each hop, since every request already passes through a proxy",
+    "None, it's Envoy config on each hop, since every request already passes through a proxy",
     "You must add tracing libraries to every service",
     "You must rewrite each service in a supported language",
     "Tracing is impossible with Envoy"
    ],
    "answer": 0,
-   "why": "Because the proxy sits on every hop, enabling a tracing block and a sampling rate gives end-to-end traces with no app code changes — a major reason teams adopt Envoy.",
+   "why": "Because the proxy sits on every hop, enabling a tracing block and a sampling rate gives end-to-end traces with no app code changes, a major reason teams adopt Envoy.",
    "whyWrong": [
     "",
-    "Instrumentation libraries are the pre-mesh approach — the proxy on every hop replaces them.",
+    "Instrumentation libraries are the pre-mesh approach, the proxy on every hop replaces them.",
     "Tracing is language-agnostic because the proxy, not the app, emits the spans.",
-    "Far from impossible — turnkey tracing is one of Envoy's flagship features."
+    "Far from impossible, turnkey tracing is one of Envoy's flagship features."
    ]
   }
  ],
@@ -862,12 +862,12 @@
     "Use less CPU"
    ],
    "answer": 0,
-   "why": "xDS (the 'x Discovery Service' APIs) let Envoy subscribe to config from an external source and update live — the foundation of managing fleets of proxies.",
+   "why": "xDS (the 'x Discovery Service' APIs) let Envoy subscribe to config from an external source and update live, the foundation of managing fleets of proxies.",
    "whyWrong": [
     "",
     "Envoy always needs config; xDS changes where it comes from, not whether it exists.",
     "TLS works fine with static config; xDS is about delivery, not protocols.",
-    "xDS adds a little overhead if anything — the win is live updates, not efficiency."
+    "xDS adds a little overhead if anything, the win is live updates, not efficiency."
    ]
   },
   {
@@ -883,25 +883,25 @@
    "whyWrong": [
     "",
     "Endpoints is right, but the other letters stand for Listeners, Clusters, Routes, and Secrets.",
-    "Errors, retries, and stats have no discovery services — xDS delivers config resources.",
+    "Errors, retries, and stats have no discovery services, xDS delivers config resources.",
     "Those are machine metrics; xDS delivers Envoy config objects, not telemetry."
    ]
   },
   {
    "q": "What is ADS and why would you prefer it?",
    "options": [
-    "Aggregated Discovery Service — all resources over one ordered stream, avoiding update races between separate streams",
-    "Automatic DNS Service — it resolves hostnames faster",
-    "Admin Debug Service — a richer version of the admin port",
-    "Asynchronous Data Store — a database for Envoy stats"
+    "Aggregated Discovery Service, all resources over one ordered stream, avoiding update races between separate streams",
+    "Automatic DNS Service, it resolves hostnames faster",
+    "Admin Debug Service, a richer version of the admin port",
+    "Asynchronous Data Store, a database for Envoy stats"
    ],
    "answer": 0,
    "why": "Delivering LDS/RDS/CDS/EDS over separate streams can cause ordering races (e.g. a route referencing a cluster that hasn't arrived). ADS serializes them on one stream.",
    "whyWrong": [
     "",
-    "ADS has nothing to do with DNS — the A is 'Aggregated': one stream for all resource types.",
+    "ADS has nothing to do with DNS, the A is 'Aggregated': one stream for all resource types.",
     "The admin port is unrelated; ADS is part of the xDS config protocol.",
-    "Nothing is stored — ADS is a delivery channel, not a database."
+    "Nothing is stored: ADS is a delivery channel, not a database."
    ]
   },
   {
@@ -917,7 +917,7 @@
    "whyWrong": [
     "",
     "The YAML file is static config, not a plane; Docker just runs the containers.",
-    "Both ports belong to the same Envoy — the planes are separate programs, not separate ports.",
+    "Both ports belong to the same Envoy, the planes are separate programs, not separate ports.",
     "They're deliberately separate processes, usually on separate machines, talking over gRPC."
    ]
   },
@@ -930,11 +930,11 @@
     "Envoy deletes its config and starts empty"
    ],
    "answer": 0,
-   "why": "Graceful rejection is a key safety property of xDS: a bad push doesn't take you down. If a change 'did nothing,' it was often rejected — check the update_rejected stats.",
+   "why": "Graceful rejection is a key safety property of xDS: a bad push doesn't take you down. If a change 'did nothing,' it was often rejected, check the update_rejected stats.",
    "whyWrong": [
     "",
     "Envoy validates before applying; a bad push never brings the process down.",
-    "Invalid updates are never applied — that's precisely the failure xDS guards against.",
+    "Invalid updates are never applied, that's precisely the failure xDS guards against.",
     "The last good config stays active; Envoy never reverts to empty."
    ]
   }
@@ -960,7 +960,7 @@
   {
    "q": "Why did the Gateway API replace the older Kubernetes Ingress resource?",
    "options": [
-    "Typed resources plus a clean split between infra-owned Gateways and app-owned Routes — no annotation soup",
+    "Typed resources plus a clean split between infra-owned Gateways and app-owned Routes, no annotation soup",
     "It is faster at forwarding packets",
     "Ingress only worked with nginx",
     "Gateway API removed the need for any controller"
@@ -970,17 +970,17 @@
    "whyWrong": [
     "",
     "Forwarding speed depends on the proxy underneath, which is the same either way.",
-    "Ingress had many implementations — that was the problem: each needed its own annotations.",
+    "Ingress had many implementations, that was the problem: each needed its own annotations.",
     "A controller is still required; the API defines intent, and something must implement it."
    ]
   },
   {
    "q": "Which Gateway API resource do application teams typically write?",
    "options": [
-    "HTTPRoute — the routing rules that attach to a Gateway",
-    "GatewayClass — which controller implements gateways",
-    "Node — a cluster machine",
-    "PersistentVolume — storage"
+    "HTTPRoute, the routing rules that attach to a Gateway",
+    "GatewayClass, which controller implements gateways",
+    "Node, a cluster machine",
+    "PersistentVolume, storage"
    ],
    "answer": 0,
    "why": "App teams own HTTPRoute (match paths/headers → their Service). The platform team owns the Gateway (entry point, ports, TLS) and the GatewayClass (which controller).",
@@ -1003,7 +1003,7 @@
    "why": "Envoy Gateway is a control plane: it watches your Gateway API objects and generates the corresponding Envoy xDS (listeners, routes, clusters) for the proxies it manages.",
    "whyWrong": [
     "",
-    "No images are built — the same Envoy image runs; only its config changes.",
+    "No images are built, the same Envoy image runs; only its config changes.",
     "It stores nothing passively; watching and translating into xDS is its entire job.",
     "The YAML is declarative data describing intent, not an executable script."
    ]
@@ -1011,7 +1011,7 @@
   {
    "q": "When you scale a Deployment from 2 to 4 replicas, how does Envoy learn about the new pods?",
    "options": [
-    "The control plane pushes updated endpoints via EDS — no config edit needed",
+    "The control plane pushes updated endpoints via EDS, no config edit needed",
     "You must manually restart Envoy",
     "You edit the envoy.yaml file and redeploy",
     "Envoy never learns; you must recreate the Gateway"
@@ -1020,7 +1020,7 @@
    "why": "This is Module 07 made real: you change a Kubernetes object, the control plane notices, and streams new endpoints to the data-plane Envoy over EDS. No file editing.",
    "whyWrong": [
     "",
-    "No restart needed — endpoint updates stream in live over EDS.",
+    "No restart needed, endpoint updates stream in live over EDS.",
     "There's no file to edit; the control plane generates config from cluster state.",
     "The Gateway object is untouched; only the endpoint set behind the Service changed."
    ]
@@ -1036,10 +1036,10 @@
     "It replaces Kubernetes entirely"
    ],
    "answer": 0,
-   "why": "A mesh applies Envoy's routing, resilience, security, and observability to EVERY internal call by giving each workload its own proxy — not just the front door.",
+   "why": "A mesh applies Envoy's routing, resilience, security, and observability to EVERY internal call by giving each workload its own proxy, not just the front door.",
    "whyWrong": [
     "",
-    "Hardware isn't the distinction — topology is: a proxy at every workload vs one at the door.",
+    "Hardware isn't the distinction, topology is: a proxy at every workload vs one at the door.",
     "A mesh handles whatever its proxies understand, including plain HTTP and raw TCP.",
     "A mesh runs ON Kubernetes (or VMs); it complements the orchestrator, never replaces it."
    ]
@@ -1053,11 +1053,11 @@
     "A new programming language for your services"
    ],
    "answer": 0,
-   "why": "Because both ends of every call are Envoys, the mesh uniformly provides encryption+identity, traffic management, telemetry, and authorization — all by config, not app code.",
+   "why": "Because both ends of every call are Envoys, the mesh uniformly provides encryption+identity, traffic management, telemetry, and authorization, all by config, not app code.",
    "whyWrong": [
     "",
     "Sharding is a data-layer design problem; the mesh only touches traffic between services.",
-    "A mesh consumes extra compute for its proxies — it gives features, not capacity.",
+    "A mesh consumes extra compute for its proxies, it gives features, not capacity.",
     "Services keep their languages; the mesh's whole pitch is being language-agnostic."
    ]
   },
@@ -1075,7 +1075,7 @@
     "",
     "Both modes carry ordinary TCP traffic; the difference is where the proxies live.",
     "Envoy remains as the L7 waypoint; only the per-pod copies go away.",
-    "They're distinct architectures — per-pod proxies vs a shared per-node layer plus waypoints."
+    "They're distinct architectures, per-pod proxies vs a shared per-node layer plus waypoints."
    ]
   },
   {
@@ -1090,7 +1090,7 @@
    "why": "An init container programs iptables so every packet detours through the local Envoy (commonly :15001 outbound, :15006 inbound). The app thinks it's talking straight to the peer.",
    "whyWrong": [
     "",
-    "No rebuild needed — transparency is the point; the redirect happens at the network layer.",
+    "No rebuild needed, transparency is the point; the redirect happens at the network layer.",
     "Envoy never touches app code; iptables reroutes the packets underneath it.",
     "The sidecar is local to the pod; traffic detours within the pod, not across the internet."
    ]
@@ -1098,7 +1098,7 @@
   {
    "q": "What programs all those sidecar Envoys?",
    "options": [
-    "The control plane — e.g. istiod — via xDS",
+    "The control plane, e.g. istiod, via xDS",
     "Each app configures its own sidecar",
     "A human edits every sidecar's YAML by hand",
     "They are not configured at all"
@@ -1109,7 +1109,7 @@
     "",
     "Apps are unaware of their sidecar; configuration comes from outside, not from the workload.",
     "Hand-editing thousands of sidecars is exactly what xDS automation exists to avoid.",
-    "Sidecars are richly configured — routes, certs, and endpoints all streamed via xDS."
+    "Sidecars are richly configured, routes, certs, and endpoints all streamed via xDS."
    ]
   }
  ],
@@ -1123,10 +1123,10 @@
     "The operating system kernel logs"
    ],
    "answer": 0,
-   "why": "The access log has the response code and a short flag explaining WHY the request ended that way — usually the answer before you look anywhere else.",
+   "why": "The access log has the response code and a short flag explaining WHY the request ended that way, usually the answer before you look anywhere else.",
    "whyWrong": [
     "",
-    "Reading backend code is a last resort — the proxy's log usually names the failure directly.",
+    "Reading backend code is a last resort, the proxy's log usually names the failure directly.",
     "Build logs tell you about image creation, nothing about a live request.",
     "Kernel logs sit far below the layer where routing and upstream errors live."
    ]
@@ -1134,7 +1134,7 @@
   {
    "q": "You get an 'NR' response flag. What are two likely causes?",
    "options": [
-    "No route matched — a bad or wrongly-ordered match, or the Host isn't in the virtual_host domains",
+    "No route matched, a bad or wrongly-ordered match, or the Host isn't in the virtual_host domains",
     "The backend is out of memory, or the disk is full",
     "TLS certificate expired, or the port is wrong",
     "Too many retries, or a circuit breaker tripped"
@@ -1143,7 +1143,7 @@
    "why": "NR = no route configured. Either your match is wrong / sits below a catch-all, or the request's Host header isn't covered by any virtual_host's domains.",
    "whyWrong": [
     "",
-    "Backend resource problems would still route — you'd see UT or a 5xx, not NR.",
+    "Backend resource problems would still route, you'd see UT or a 5xx, not NR.",
     "TLS or port problems fail after routing succeeds; NR means no route ever matched.",
     "Retry exhaustion and circuit breaking have their own flags; NR is purely a routing miss."
    ]
@@ -1151,7 +1151,7 @@
   {
    "q": "You get a 'UH' response flag. What should you check?",
    "options": [
-    "/clusters — endpoint health, ejection state, the cluster address, and health checks",
+    "/clusters, endpoint health, ejection state, the cluster address, and health checks",
     "The client's browser version",
     "The route ordering only",
     "The admin port number"
@@ -1161,20 +1161,20 @@
    "whyWrong": [
     "",
     "UH is server-side: the request routed fine but found no healthy endpoint to use.",
-    "Routing already succeeded — UH means the chosen cluster has nothing healthy in it.",
+    "Routing already succeeded: UH means the chosen cluster has nothing healthy in it.",
     "The admin port is where you'd look (/clusters), not the thing that's broken."
    ]
   },
   {
    "q": "Your xDS change 'did nothing.' What most likely happened?",
    "options": [
-    "Envoy rejected an invalid update and kept the last good config — check the update_rejected stats/logs",
+    "Envoy rejected an invalid update and kept the last good config, check the update_rejected stats/logs",
     "Envoy silently deleted the change",
     "Kubernetes blocked the request",
     "The change applied but curl cached the old response forever"
    ],
    "answer": 0,
-   "why": "A bad push is rejected so it can't take you down. 'My change did nothing' usually means 'my change was invalid' — look for *.update_rejected in the stats.",
+   "why": "A bad push is rejected so it can't take you down. 'My change did nothing' usually means 'my change was invalid', look for *.update_rejected in the stats.",
    "whyWrong": [
     "",
     "Envoy doesn't delete pushed config; it refuses invalid updates and counts the rejection.",
@@ -1194,7 +1194,7 @@
    "why": "That chain IS Envoy. A listener binds a port, the filter chain's HCM runs HTTP filters ending in the router, which uses the route table to pick a cluster, which balances to an endpoint.",
    "whyWrong": [
     "",
-    "Clusters come after routing — nothing starts at the cluster.",
+    "Clusters come after routing, nothing starts at the cluster.",
     "The endpoint is the destination, the last link in the chain, never the first.",
     "Routes are consulted inside the listener's HTTP processing, not before the listener."
    ]
@@ -1205,24 +1205,24 @@
    "q": "Ten Envoy sidecars each run a local rate limit of 100 rps. What is the actual cap on total traffic to the backend?",
    "options": [
     "100 rps",
-    "1,000 rps — local limits are per proxy instance; a global promise needs a shared rate limit service with one counter",
+    "1,000 rps, local limits are per proxy instance; a global promise needs a shared rate limit service with one counter",
     "10 rps",
     "Unlimited"
    ],
    "answer": 1,
    "why": "'Local' means each Envoy owns its own token bucket. Ten buckets of 100 = 1,000. Customer-facing quotas ('1,000/hour per API key') require the global filter and a central counting service.",
    "whyWrong": [
-    "That would require the proxies to share a bucket — exactly what local limiting doesn't do.",
+    "That would require the proxies to share a bucket, exactly what local limiting doesn't do.",
     "",
     "Limits don't divide across instances; they multiply.",
-    "Each instance does enforce its own 100 — traffic isn't unlimited, just 10× the naïve reading."
+    "Each instance does enforce its own 100, traffic isn't unlimited, just 10× the naïve reading."
    ]
   },
   {
    "q": "Why is enforcing authentication in an ext_authz filter better than middleware in every service?",
    "options": [
     "It's faster than any library",
-    "The filter runs before routing for every request, so no endpoint can forget the check — enforcement is structural, not a per-team convention",
+    "The filter runs before routing for every request, so no endpoint can forget the check, enforcement is structural, not a per-team convention",
     "It eliminates the need for tokens",
     "It encrypts the requests"
    ],
@@ -1231,7 +1231,7 @@
    "whyWrong": [
     "Speed is comparable; the win is coverage, not latency.",
     "",
-    "Tokens are still validated — by the check service; ext_authz is how the answer is enforced.",
+    "Tokens are still validated, by the check service; ext_authz is how the answer is enforced.",
     "TLS handles encryption; ext_authz handles decisions."
    ]
   },
@@ -1239,12 +1239,12 @@
    "q": "Why does the conventional filter order put authentication BEFORE rate limiting?",
    "options": [
     "Alphabetical convention",
-    "So limits can count identities (API keys, users) instead of IPs — an attacker has many IPs, but a free-tier key is one key no matter the botnet",
+    "So limits can count identities (API keys, users) instead of IPs, an attacker has many IPs, but a free-tier key is one key no matter the botnet",
     "Rate limiting doesn't work first",
     "To make 401s faster than 429s"
    ],
    "answer": 1,
-   "why": "Order is policy: authenticate first and the limiter's descriptors can be who is calling rather than where from — which is the difference between a quota and a speed bump.",
+   "why": "Order is policy: authenticate first and the limiter's descriptors can be who is calling rather than where from, which is the difference between a quota and a speed bump.",
    "whyWrong": [
     "Filter order is explicit configuration with semantic meaning.",
     "",

@@ -20,7 +20,7 @@ import "./setup.js";                              // run it, import nothing</div
 <p><b>Its own scope.</b> A top-level <code>const</code> is private to the file unless exported. No more
 accidental globals.</p>
 <p><b>Always strict mode.</b> No opt-in required, and no sloppy-mode surprises.</p>
-<p><b>Evaluated once.</b> Importing the same module from ten files runs it once and shares one instance —
+<p><b>Evaluated once.</b> Importing the same module from ten files runs it once and shares one instance,
 which is what makes a module a natural singleton, for better and worse.</p>
 <p><b>Static structure.</b> Imports are resolved <i>before</i> any code runs, which is what enables
 tree-shaking and lets tools know your dependency graph without executing anything.</p>
@@ -37,8 +37,8 @@ const mod = await import("./heavy.js");      // returns a PROMISE
 // which is how route-based code splitting works in every framework.</div>
 
 <h4>Named or default?</h4>
-<p><b>Prefer named exports.</b> They are checked at build time — a typo is an error rather than
-<code>undefined</code> — they autocomplete, they are greppable, and every importer uses the same name so
+<p><b>Prefer named exports.</b> They are checked at build time (a typo is an error rather than
+<code>undefined</code>), they autocomplete, they are greppable, and every importer uses the same name so
 the codebase stays searchable. A default export can be renamed to anything by each importer, which
 quietly makes a symbol impossible to find.</p>
 
@@ -53,11 +53,11 @@ import data from "./d.json" with { type: "json" };   // import attributes
 // bundler breaks the first time it runs natively.</div>
 
 <h4>Circular imports</h4>
-<p>A imports B and B imports A. ESM handles it without crashing — the second import gets a partially
-initialised module — but that usually means reading a binding that is still in its temporal dead zone,
+<p>A imports B and B imports A. ESM handles it without crashing (the second import gets a partially
+initialised module), but that usually means reading a binding that is still in its temporal dead zone,
 producing a <code>ReferenceError</code> or, worse, an <code>undefined</code> that flows onward. Treat a
 cycle as a design signal: extract the shared piece into a third module.</p>`,
-docs:[['MDN — JavaScript modules','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules'],['MDN — import','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import'],['Node — ECMAScript modules','https://nodejs.org/api/esm.html']],
+docs:[['MDN (JavaScript modules)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules'],['MDN (import)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import'],['Node (ECMAScript modules)','https://nodejs.org/api/esm.html']],
 ex:{title:'Resolve a module specifier',diff:'easy',lang:'js',
 run:{call:'specifierKind',cases:[
  {name:'a relative path',args:['./math.js'],expect:'relative'},
@@ -80,12 +80,12 @@ solution:`function specifierKind(spec) {
 }`,
 tests:[{d:'detects relative specifiers',re:'"\\./"'},{d:'detects absolute paths',re:'"/"'},{d:'detects URLs',re:'"http"'},{d:'bare specifiers are the fallback',re:'"bare"'}],
 behavior:`Order is executed rather than described: "./math.js" does not start with "/" so the two checks happen to be independent here, but "../lib" and a leading "/" are easy to confuse if you test the shorter prefix first. Scoped packages like @scope/pkg are bare specifiers, which is what the fourth case pins down.`,
-hints:['startsWith answers each of these directly.','Check the two-character relative prefixes before the single-character absolute one.','Everything unrecognised is a bare specifier — a package name.']}},
+hints:['startsWith answers each of these directly.','Check the two-character relative prefixes before the single-character absolute one.','Everything unrecognised is a bare specifier: a package name.']}},
 
 {id:'js35',title:'CommonJS, and the two-module-system problem',body:`
 <p>Node existed for six years before the language had modules, so it invented its own system:
 <b>CommonJS</b>. Millions of packages use it, so you will read it and occasionally have to interoperate
-with it — which is where the difficulty lives.</p>
+with it, which is where the difficulty lives.</p>
 
 <div class="codeSample" data-hl>// math.js  (CommonJS)
 function add(a, b) { return a + b; }
@@ -124,7 +124,7 @@ package.json  "type": "commonjs"   -> .js files are CJS  (the default)
 
 <h4>Interop, warts and all</h4>
 <p><b>ESM can import CommonJS.</b> It works, and it gives you the whole <code>module.exports</code> object
-as the default export — so named imports may or may not exist depending on whether Node's static analysis
+as the default export, so named imports may or may not exist depending on whether Node's static analysis
 could detect them.</p>
 <p><b>CommonJS could not <code>require</code> ESM</b> for years, because <code>require</code> is
 synchronous and ESM loading is asynchronous. The workaround was dynamic <code>await import()</code>.
@@ -134,14 +134,14 @@ asymmetry is why so many packages still ship both formats.</p>
 <h4>Where the pain shows up</h4>
 <p>A package's <code>exports</code> field can offer different entry points per format, per environment
 (browser, node), per condition (import, require, types). Get it wrong and consumers see confusing
-resolution errors — which is why "dual-package" publishing is one of the genuinely fiddly parts of the
+resolution errors, which is why "dual-package" publishing is one of the genuinely fiddly parts of the
 ecosystem, and why new projects should simply be ESM-only unless they must support old consumers.</p>
 
 <h4>What to write</h4>
 <p><b>ESM, for anything new.</b> It is the standard, it works in browsers and Node, and it enables
 tree-shaking. Learn CommonJS to read existing code, understand the error messages, and know why a package
 you depend on behaves oddly.</p>`,
-docs:[['Node — CommonJS modules','https://nodejs.org/api/modules.html'],['Node — determining module system','https://nodejs.org/api/packages.html#determining-module-system'],['Node — package entry points','https://nodejs.org/api/packages.html#package-entry-points']],
+docs:[['Node (CommonJS modules)','https://nodejs.org/api/modules.html'],['Node (determining module system)','https://nodejs.org/api/packages.html#determining-module-system'],['Node (package entry points)','https://nodejs.org/api/packages.html#package-entry-points']],
 ex:{title:'Which module system is this file?',diff:'easy',lang:'js',
 run:{call:'moduleSystem',cases:[
  {name:'.mjs is always ESM',args:['app.mjs','commonjs'],expect:'esm'},
@@ -150,7 +150,7 @@ run:{call:'moduleSystem',cases:[
  {name:'.js follows type: commonjs',args:['app.js','commonjs'],expect:'commonjs'},
  {name:'.js with no type field defaults to CommonJS',args:['app.js',''],expect:'commonjs'},
  {name:'the extension beats the package type',args:['app.mjs','module'],expect:'esm'}]},
-prompt:`Write <code>function moduleSystem(filename, packageType)</code>. A <code>.mjs</code> extension is always <code>"esm"</code> and <code>.cjs</code> is always <code>"commonjs"</code>, whatever the package says. Otherwise a <code>packageType</code> of <code>"module"</code> means <code>"esm"</code>, and anything else — including an empty string — means <code>"commonjs"</code>.`,
+prompt:`Write <code>function moduleSystem(filename, packageType)</code>. A <code>.mjs</code> extension is always <code>"esm"</code> and <code>.cjs</code> is always <code>"commonjs"</code>, whatever the package says. Otherwise a <code>packageType</code> of <code>"module"</code> means <code>"esm"</code>, and anything else, including an empty string, means <code>"commonjs"</code>.`,
 starter:`function moduleSystem(filename, packageType) {
   return null;
 }`,
@@ -160,7 +160,7 @@ solution:`function moduleSystem(filename, packageType) {
   return packageType === "module" ? "esm" : "commonjs";  // default is CJS
 }`,
 tests:[{d:'.mjs is always ESM',re:'"\\.mjs"'},{d:'.cjs is always CommonJS',re:'"\\.cjs"'},{d:'otherwise the package type decides',re:'"module"'}],
-behavior:`The last case executes the precedence: a .mjs file inside a "type": "module" package is still ESM, but so is a .mjs file inside a CommonJS one — the extension is unconditional. The fifth case pins the default: no type field means CommonJS, which is why "Cannot use import statement outside a module" is the error people hit first.`,
+behavior:`The last case executes the precedence: a .mjs file inside a "type": "module" package is still ESM, but so is a .mjs file inside a CommonJS one: the extension is unconditional. The fifth case pins the default: no type field means CommonJS, which is why "Cannot use import statement outside a module" is the error people hit first.`,
 hints:['Check the explicit extensions first; they override everything.','Only .js files consult the package type.','The default when there is no type field is CommonJS.']}},
 
 {id:'js36',title:'package.json, npm and semver',body:`
@@ -219,7 +219,7 @@ npm ci         reads the LOCKFILE ONLY, deletes node_modules, installs
 <h4>Scripts</h4>
 <p><code>npm run x</code> executes the <code>x</code> script with <code>node_modules/.bin</code> on the
 PATH, which is why you can write <code>eslint .</code> without a global install. <code>npx</code> runs a
-binary from a package without installing it permanently — convenient, and worth a moment's thought before
+binary from a package without installing it permanently: convenient, and worth a moment's thought before
 you point it at an unfamiliar package name.</p>
 
 <h4>Supply chain, briefly and seriously</h4>
@@ -227,9 +227,9 @@ you point it at an unfamiliar package name.</p>
 hundreds of transitive packages from hundreds of authors. The practical mitigations: audit what you add
 and prefer fewer, well-maintained dependencies; use <code>npm ci</code> so builds are reproducible;
 <code>npm audit</code> and Dependabot for known vulnerabilities; and <code>--ignore-scripts</code> when
-installing something you have reason to be careful about. <b>Typosquatting is real</b> — check the name
+installing something you have reason to be careful about. <b>Typosquatting is real</b>: check the name
 character by character before installing something you have not used before.</p>`,
-docs:[['npm — package.json','https://docs.npmjs.com/cli/v10/configuring-npm/package-json'],['Semantic Versioning','https://semver.org/'],['npm — npm ci','https://docs.npmjs.com/cli/v10/commands/npm-ci']],
+docs:[['npm, package.json','https://docs.npmjs.com/cli/v10/configuring-npm/package-json'],['Semantic Versioning','https://semver.org/'],['npm, npm ci','https://docs.npmjs.com/cli/v10/commands/npm-ci']],
 exs:[
 {title:'Does this version satisfy the range?',diff:'easy',lang:'js',
 run:{call:'caretAllows',cases:[
@@ -249,7 +249,7 @@ solution:`function caretAllows(wantMajor, wantMinor, wantPatch, haveMajor, haveM
   return havePatch >= wantPatch;                       // same minor: compare patch
 }`,
 tests:[{d:'the major must match',re:'haveMajor\\s*!==\\s*wantMajor'},{d:'compares the minor',re:'haveMinor'},{d:'compares the patch',re:'havePatch\\s*>=\\s*wantPatch'}],
-behavior:`Six comparisons execute, including both directions of the minor check. The last case is the one a naive implementation fails: 4.18.9 has the right major and a patch that looks fine, but the minor went backwards — so the comparison has to be positional, not a single combined number.`,
+behavior:`Six comparisons execute, including both directions of the minor check. The last case is the one a naive implementation fails: 4.18.9 has the right major and a patch that looks fine, but the minor went backwards, so the comparison has to be positional, not a single combined number.`,
 hints:['Compare the components in order: major, then minor, then patch.','A differing major is an immediate no.','When the minors differ, the answer depends only on the minor.']},
 {title:'Which install command?',diff:'medium',lang:'js',
 run:{call:'installCommand',cases:[
@@ -279,7 +279,7 @@ run:{call:'compareVersions',cases:[
  {name:'a prerelease is BELOW its release',args:['1.2.3-beta','1.2.3'],expect:-1},
  {name:'the release is above the prerelease',args:['1.2.3','1.2.3-beta'],expect:1},
  {name:'two prereleases compare alphabetically',args:['1.2.3-alpha','1.2.3-beta'],expect:-1}]},
-prompt:`Write <code>function compareVersions(a, b)</code> returning <code>1</code> when <code>a</code> is newer, <code>-1</code> when it is older, and <code>0</code> when they are equal. Compare major, minor and patch <b>numerically</b> — <code>"1.10.0"</code> is newer than <code>"1.9.0"</code>, which string comparison gets wrong. A version with a prerelease suffix (<code>"1.2.3-beta"</code>) ranks <b>below</b> the same version without one, and two prereleases compare alphabetically.`,
+prompt:`Write <code>function compareVersions(a, b)</code> returning <code>1</code> when <code>a</code> is newer, <code>-1</code> when it is older, and <code>0</code> when they are equal. Compare major, minor and patch <b>numerically</b>: <code>"1.10.0"</code> is newer than <code>"1.9.0"</code>, which string comparison gets wrong. A version with a prerelease suffix (<code>"1.2.3-beta"</code>) ranks <b>below</b> the same version without one, and two prereleases compare alphabetically.`,
 starter:`function compareVersions(a, b) {
   return 0;
 }`,
@@ -299,7 +299,7 @@ solution:`function compareVersions(a, b) {
   return A.pre < B.pre ? -1 : 1;                      // alphabetical between them
 }`,
 tests:[{d:'splits off the prerelease suffix',re:'split\\s*\\(\\s*"-"'},{d:'converts the parts to numbers',re:'map\\s*\\(\\s*Number|Number\\('},{d:'compares the three components in order',re:'for\\s*\\(|nums\\[0\\]'},{d:'handles the prerelease ranking',re:'pre'}],
-behavior:`Eight comparisons execute. The fourth and fifth are the ones a string comparison fails: "1.10.0" < "1.9.0" is true as text, because "1" sorts before "9" character by character — converting to numbers is what fixes it, and it is the reason npm cannot simply sort version strings. The last three cover the prerelease rule that catches people out: 1.2.3-beta is NOT newer than 1.2.3, it is a candidate for it.`,
+behavior:`Eight comparisons execute. The fourth and fifth are the ones a string comparison fails: "1.10.0" < "1.9.0" is true as text, because "1" sorts before "9" character by character. Converting to numbers is what fixes it, and it is the reason npm cannot simply sort version strings. The last three cover the prerelease rule that catches people out: 1.2.3-beta is NOT newer than 1.2.3, it is a candidate for it.`,
 hints:['Split on "-" first to separate the version core from any prerelease label.','Map the dot-separated parts through Number so the comparison is numeric.','An empty prerelease means a full release, and a full release outranks any prerelease.']}]},
 
 {id:'js37',title:'Bundlers, transpilers and the rest of the toolchain',body:`
@@ -319,10 +319,10 @@ TEST RUNNER  Vitest, Jest, node:test.</div>
 
 <h4>Why bundle at all, when browsers support modules?</h4>
 <p>They do, and you could ship raw ESM. Bundling still wins for four reasons: <b>fewer requests</b> (a
-few hundred modules means a few hundred round trips), <b>tree-shaking</b> (unused exports removed —
+few hundred modules means a few hundred round trips), <b>tree-shaking</b> (unused exports removed,
 only possible because ESM is static), <b>non-JavaScript assets</b> (CSS, images, SVG imported as
 modules), and <b>bare specifiers</b>, which browsers cannot resolve without an import map.</p>
-<p>In development the calculation reverses, which is why Vite serves native ESM unbundled — the browser
+<p>In development the calculation reverses, which is why Vite serves native ESM unbundled: the browser
 requests only what a page needs and edits appear instantly, with no rebuild.</p>
 
 <h4>Tree-shaking, and what defeats it</h4>
@@ -336,7 +336,7 @@ requests only what a page needs and edits appear instantly, with no rebuild.</p>
 
 <h4>Source maps, again</h4>
 <p>Every transformation above moves your code further from what runs. Source maps are what let DevTools
-show you the original — which is why the debugging stream treats a broken map as a first-class problem
+show you the original, which is why the debugging stream treats a broken map as a first-class problem
 rather than an inconvenience.</p>
 
 <h4>The advice</h4>
@@ -345,12 +345,12 @@ sensible toolchain in one command; assembling one by hand teaches you configurat
 JavaScript.</p>
 <p><b>Add tools when you feel the problem</b> they solve, not preemptively. Every tool is a dependency,
 a configuration file, a thing that breaks on upgrade, and a thing the next person has to learn.</p>
-<p><b>Let the formatter win.</b> Prettier's value is not its output, it is that it ends the discussion —
+<p><b>Let the formatter win.</b> Prettier's value is not its output, it is that it ends the discussion,
 so do not configure it, and never argue with it in review.</p>
 <p><b>Read the errors.</b> Toolchain errors are verbose and usually accurate. "Cannot use import statement
 outside a module" and "Module not found" both mean exactly what they say, and both were covered two
 lessons ago.</p>`,
-docs:[['Vite','https://vitejs.dev/guide/'],['MDN — Introduction to client-side tooling','https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Client-side_tools/Overview'],['webpack — tree shaking','https://webpack.js.org/guides/tree-shaking/']],
+docs:[['Vite','https://vitejs.dev/guide/'],['MDN, Introduction to client-side tooling','https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Client-side_tools/Overview'],['webpack, tree shaking','https://webpack.js.org/guides/tree-shaking/']],
 ex:{title:'Which tool solves this?',diff:'easy',lang:'js',
 run:{call:'toolFor',cases:[
  {name:'too many network requests in production',args:['too-many-requests'],expect:'bundler'},
@@ -376,7 +376,7 @@ solution:`function toolFor(problem) {
   }
 }`,
 tests:[{d:'bundler for request count',re:'"bundler"'},{d:'transpiler for old browsers',re:'"transpiler"'},{d:'formatter for style',re:'"formatter"'},{d:'linter for likely bugs',re:'"linter"'},{d:'has a default',re:'default'}],
-behavior:`Seven cases execute, and the default carries the lesson: reaching for a tool before you can state the problem it solves is how a project accumulates eleven config files nobody can explain. Note that linter and formatter are separate answers — one finds mistakes, the other has no opinions worth arguing about.`,
+behavior:`Seven cases execute, and the default carries the lesson: reaching for a tool before you can state the problem it solves is how a project accumulates eleven config files nobody can explain. Note that linter and formatter are separate answers: one finds mistakes, the other has no opinions worth arguing about.`,
 hints:['One case per tool, with a default.','A linter finds likely bugs; a formatter only settles style.','The default should push back rather than name a tool.']}}
 
 ]});

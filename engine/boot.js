@@ -5,7 +5,8 @@ if(typeof DOJO_HOME!=='undefined'&&DOJO_HOME.pageTitle)document.title=DOJO_HOME.
 (function(){ if(typeof DOJO_HOME==='undefined')return;
   var lg=document.querySelector('header .logo');
   if(lg&&DOJO_HOME.name){ var parts=DOJO_HOME.name.split(' ');
-    lg.textContent=''; lg.appendChild(document.createTextNode((DOJO_HOME.icon||'\u{1F94B}')+' '+parts.slice(0,-1).join(' ')+' '));
+    lg.textContent=''; var mk=document.createElement('span'); mk.className='mark'; lg.appendChild(mk);
+    lg.appendChild(document.createTextNode(parts.slice(0,-1).join(' ')+' '));
     var sp=document.createElement('span'); sp.textContent=parts[parts.length-1]; lg.appendChild(sp); }
   var tip=document.querySelector('header .tip');
   if(tip)tip.textContent='Select or double-click any highlighted term in a lesson to see what it means.';
@@ -66,10 +67,10 @@ window.jwtTamper=(function(){
     el('jt-newsig').textContent=reqB64;
     el('jt-token').textContent=input+'.'+S.origSigB64;
     const st=el('jt-status');
-    if(valid){st.style.color='#22c55e';st.textContent='✔ Signature VALID — the payload matches what was signed.';}
-    else{st.style.color='#ef4444';st.textContent='✘ Signature INVALID — you changed the payload, so it no longer matches the signature: verification FAILS. Forging a matching signature would need the issuer’s private key, which an attacker doesn’t have.';}
+    if(valid){st.style.color='#22c55e';st.textContent='✔ Signature VALID, the payload matches what was signed.';}
+    else{st.style.color='#ef4444';st.textContent='✘ Signature INVALID, you changed the payload, so it no longer matches the signature: verification FAILS. Forging a matching signature would need the issuer’s private key, which an attacker doesn’t have.';}
     const d=el('jt-diff');
-    if(d)d.textContent=(S.origSigB64===reqB64)?'identical — payload untouched':'completely different — changing even one character of the payload changes the entire signature';
+    if(d)d.textContent=(S.origSigB64===reqB64)?'identical, payload untouched':'completely different, changing even one character of the payload changes the entire signature';
   }
   return {gen,edit};
 })();

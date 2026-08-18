@@ -1,22 +1,22 @@
-# 9 — Packaging with Helm
+# 9: Packaging with Helm
 
-*Kubernetes' package manager — install complex apps in one command, template your own. Concepts + a
+*Kubernetes' package manager: install complex apps in one command, template your own. Concepts + a
 lab. ~30 min. Needs your kind cluster + Helm installed.*
 
 ---
 
-Real apps are *many* manifests — Deployment, Service, ConfigMap, Ingress, and more — and you need
+Real apps are *many* manifests (Deployment, Service, ConfigMap, Ingress, and more), and you need
 different values per environment. Copy-pasting YAML doesn't scale. **Helm** is the package manager
 for Kubernetes: it bundles manifests into a reusable, parameterized **chart** you install, upgrade,
 and roll back as a unit.
 
 ## The vocabulary
 
-- **Chart** — a package: templated Kubernetes manifests + default values. Like an installable app.
-- **Values** — the parameters that fill in the templates (image tag, replicas, hostnames…). Override
+- **Chart**: a package of templated Kubernetes manifests + default values. Like an installable app.
+- **Values**: the parameters that fill in the templates (image tag, replicas, hostnames…). Override
   per environment.
-- **Release** — an installed instance of a chart in your cluster (with a name and revision history).
-- **Repository** — a place charts are hosted (many are OCI registries now).
+- **Release**: an installed instance of a chart in your cluster (with a name and revision history).
+- **Repository**: a place charts are hosted (many are OCI registries now).
 
 Think of it like `apt`/`brew` for Kubernetes: a chart is the package, values customize it, a release
 is what's installed.
@@ -35,7 +35,7 @@ helm rollback mydb 1               # revert to revision 1
 helm uninstall mydb                # remove the whole release
 ```
 
-One command deploys/updates/rolls back a complete app — that's the Helm payoff.
+One command deploys/updates/rolls back a complete app; that's the Helm payoff.
 
 ## Anatomy of a chart
 
@@ -107,10 +107,10 @@ prod) over one chart is the standard pattern.
 
 ## When to use Helm
 
-- **Installing third-party apps** (databases, ingress controllers, monitoring) — the ecosystem ships
+- **Installing third-party apps** (databases, ingress controllers, monitoring): the ecosystem ships
   Helm charts; it's the fastest path.
 - **Packaging *your* app** for repeatable, parameterized deploys across environments and clusters.
-- **When you need templating/logic** (conditionals, loops, computed values) — Helm's Go templates
+- **When you need templating/logic** (conditionals, loops, computed values): Helm's Go templates
   handle complex cases Kustomize can't.
 
 Helm and Kustomize (next module) solve overlapping problems differently; many teams use both.
@@ -121,7 +121,7 @@ Helm and Kustomize (next module) solve overlapping problems differently; many te
    values.)*
 2. Chart vs values vs release? *(Chart = the package; values = parameters that fill templates;
    release = an installed instance with revision history.)*
-3. What does `helm upgrade`/`rollback` give you? *(Versioned deploys — upgrade to new values/versions
+3. What does `helm upgrade`/`rollback` give you? *(Versioned deploys: upgrade to new values/versions
    and instantly revert to a prior revision.)*
 4. How do you deploy the same chart differently per environment? *(Separate values files (`-f
    values-prod.yaml`) or `--set` overrides.)*
@@ -130,4 +130,4 @@ Helm and Kustomize (next module) solve overlapping problems differently; many te
 
 ---
 
-**Next:** [10 — Kustomize →](./10-kustomize.md)
+**Next:** [10: Kustomize →](./10-kustomize.md)

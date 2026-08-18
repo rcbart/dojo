@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * DevDojo site server — landing, secure auth, admin, progress sync, and the dojo app.
+ * DevDojo site server, landing, secure auth, admin, progress sync, and the dojo app.
  * Standard library + Node's built-in node:sqlite only. No third-party dependencies.
  *
  *   node site/server.js                  # http://localhost:8080
@@ -187,7 +187,7 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=u
 /* ------------------------------ routing ------------------------------- */
 
 /* Opt-in local Java runner: write to a temp dir, compile with the host javac, and
-   (if there's a main) run it — with timeouts, an output cap, and cleanup. Never on
+   (if there's a main) run it, with timeouts, an output cap, and cleanup. Never on
    by default; executes user code, so it's for machines you control only. */
 function runJava(code, harness) {
   return new Promise(resolve => {
@@ -277,7 +277,7 @@ async function handle(req, res) {
   }
   if (p === '/api/run/java' && req.method === 'POST') {
     if (!LOCAL_RUNNER) return json(res, 404, { error: 'Local runner is off. Start the site with JD_LOCAL_RUNNER=1 and a JDK installed.' });
-    if (rateLimited('run:' + clientIp(req), 30, 60_000)) return json(res, 429, { error: 'Too many runs — slow down.' });
+    if (rateLimited('run:' + clientIp(req), 30, 60_000)) return json(res, 429, { error: 'Too many runs, slow down.' });
     let body; try { body = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
     const out = await runJava(str(body.code), typeof body.harness === 'string' ? body.harness : null);
     return json(res, 200, out);
@@ -340,7 +340,7 @@ async function handle(req, res) {
     if (!authed) return json(res, 401, { error: 'not signed in' });
     let body; try { body = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
     const lesson = body && body.lesson;
-    // A rating may be absent (comment only) — do not coerce that to 0.
+    // A rating may be absent (comment only), do not coerce that to 0.
     const rating = body && body.rating !== undefined && body.rating !== null ? Number(body.rating) : null;
     try {
       db.rateLesson(me.username, String(lesson), rating, body && body.comment);
@@ -395,7 +395,7 @@ async function handle(req, res) {
     if (!OPEN_APP && !authed) { res.writeHead(302, { Location: '/#signin' }); return res.end(); }
     let html;
     try { html = fs.readFileSync(DOJO_FILE, 'utf8'); }
-    catch (e) { return json(res, 503, { error: 'dojo build missing — run: node build.js' }); }
+    catch (e) { return json(res, 503, { error: 'dojo build missing, run: node build.js' }); }
     if (authed) {
       // Pass identity as JSON via a data attribute; the dojo reads it safely (no HTML built from user input).
       const payload = JSON.stringify({ displayName: me.displayName, level: me.profile.level, goal: me.profile.goal });
@@ -441,7 +441,7 @@ const DOJO_BRIDGE = `(function(){
   var el = document.getElementById('jd-identity');
   if (!el) return;
   var id; try { id = JSON.parse(el.textContent); } catch (e) { return; }
-  // Greet by name using textContent — never innerHTML — so any name is inert.
+  // Greet by name using textContent, never innerHTML, so any name is inert.
   function greet(){
     var h = document.querySelector('h1');
     if (h && /Welcome to the Dojo/.test(h.textContent)) h.textContent = 'Welcome to the Dojo, ' + id.displayName + ' \\uD83E\\uDD4B';
@@ -449,7 +449,7 @@ const DOJO_BRIDGE = `(function(){
   if (document.readyState !== 'loading') greet(); else document.addEventListener('DOMContentLoaded', greet);
 
   // Floating account bar (the dojo app has no sign-out of its own). Built with
-  // createElement + textContent + element.style only — CSP-safe, no innerHTML.
+  // createElement + textContent + element.style only: CSP-safe, no innerHTML.
   function accountBar(){
     if (document.getElementById('jd-acctbar')) return;
     var bar = document.createElement('div');
@@ -563,4 +563,4 @@ server.on('error', err => {
   throw err;
 });
 server.listen(PORT, () => console.log('DevDojo site on http://localhost:' + PORT
-  + (SECURE_COOKIES ? ' (secure cookies)' : ' (dev mode — set JD_SECURE_COOKIES=1 behind HTTPS)')));
+  + (SECURE_COOKIES ? ' (secure cookies)' : ' (dev mode, set JD_SECURE_COOKIES=1 behind HTTPS)')));

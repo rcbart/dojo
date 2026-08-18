@@ -1,4 +1,4 @@
-# 2 — Deployments & ReplicaSets
+# 2: Deployments & ReplicaSets
 
 *How you actually run apps: self-healing, scaling, and zero-downtime updates. Concepts + a lab. ~30
 min. Needs your kind cluster.*
@@ -46,7 +46,7 @@ spec:
         - containerPort: 80
 ```
 
-The `template` is a Pod spec — everything from Module 1, embedded. `selector` + `template.labels`
+The `template` is a Pod spec: everything from Module 1, embedded. `selector` + `template.labels`
 must agree; that's how the Deployment knows which pods are "its."
 
 ## Lab: create, scale, self-heal
@@ -66,10 +66,10 @@ kubectl get pods                     # still 5 — the ReplicaSet replaced it
 
 You declared 5; Kubernetes maintains 5 forever. That's the reconciliation loop doing its job.
 
-## Rolling updates — zero-downtime deploys
+## Rolling updates: zero-downtime deploys
 
 Change the image and Kubernetes rolls it out gradually: spin up new pods, wait for them ready, then
-retire old ones — so the app never fully goes down.
+retire old ones, so the app never fully goes down.
 
 ```bash
 # update the image (imperative) — or edit the YAML and re-apply
@@ -82,7 +82,7 @@ The behavior is controlled by the Deployment's **strategy** (`RollingUpdate` by 
 `maxSurge` (how many extra pods during rollout) and `maxUnavailable` (how many can be down). Defaults
 are safe.
 
-## Rollbacks — undo instantly
+## Rollbacks: undo instantly
 
 Shipped something broken? Roll back to the previous revision:
 
@@ -92,7 +92,7 @@ kubectl rollout undo deployment/web          # back to the previous one
 kubectl rollout undo deployment/web --to-revision=2
 ```
 
-Because old ReplicaSets are kept (scaled to 0), rollback is near-instant — a huge operational safety
+Because old ReplicaSets are kept (scaled to 0), rollback is near-instant, a huge operational safety
 net.
 
 ## Lab: a full rollout + rollback + failure
@@ -112,16 +112,16 @@ kubectl get pods                                          # healthy again
 ```
 
 Notice step 2's safety property: because new pods never became **ready**, the rollout didn't
-kill the old healthy ones — **no downtime from a bad deploy**. This is why readiness probes (Module
+kill the old healthy ones: **no downtime from a bad deploy**. This is why readiness probes (Module
 6) matter so much.
 
 ## Other workload controllers (brief)
 
 Deployments are for **stateless** apps. Know the siblings for later:
 
-- **StatefulSet** — stable identities/storage for stateful apps (databases) — Module 5.
-- **DaemonSet** — one pod on *every* node (log/metrics agents).
-- **Job / CronJob** — run-to-completion tasks and scheduled jobs.
+- **StatefulSet**: stable identities/storage for stateful apps (databases); see Module 5.
+- **DaemonSet**: one pod on *every* node (log/metrics agents).
+- **Job / CronJob**: run-to-completion tasks and scheduled jobs.
 
 All share the same declarative, self-healing model.
 
@@ -139,4 +139,4 @@ All share the same declarative, self-healing model.
 
 ---
 
-**Next:** [2b — Workloads beyond Deployments: DaemonSets, Jobs & CronJobs →](./19-workloads-beyond-deployments.md)
+**Next:** [2b: Workloads beyond Deployments: DaemonSets, Jobs & CronJobs →](./19-workloads-beyond-deployments.md)

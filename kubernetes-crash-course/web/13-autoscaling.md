@@ -1,11 +1,11 @@
-# 13 — Autoscaling
+# 13: Autoscaling
 
 *Let the cluster add and remove capacity on its own. Concepts + a lab. ~25 min. Needs your kind
 cluster + metrics-server.*
 
 ---
 
-You set a replica count in Module 2. But load changes — busy at noon, quiet at night. **Autoscaling**
+You set a replica count in Module 2. But load changes: busy at noon, quiet at night. **Autoscaling**
 makes Kubernetes adjust capacity automatically. There are three kinds, at three levels; know what
 each does.
 
@@ -17,14 +17,14 @@ each does.
 | **VPA** (Vertical Pod Autoscaler) | **each pod's requests/limits** (up/down) | observed usage |
 | **Cluster Autoscaler** | **number of nodes** | pending pods that don't fit |
 
-The one you'll use most — and the one on the exam — is the **HPA**: more traffic → more pods; less
+The one you'll use most, and the one on the exam, is the **HPA**: more traffic → more pods; less
 traffic → fewer. VPA right-sizes a pod's resources; the Cluster Autoscaler adds machines when pods
 can't be scheduled (cloud clusters).
 
 ## How the HPA works
 
 The HPA runs a control loop: it reads a metric (say average CPU across the pods), compares it to a
-**target**, and computes the replica count needed to hit that target — then scales the Deployment.
+**target**, and computes the replica count needed to hit that target, then scales the Deployment.
 
 ```
    desiredReplicas = ceil( currentReplicas × (currentMetric / targetMetric) )
@@ -89,15 +89,15 @@ kubectl get hpa php -w            # REPLICAS shrinks back toward 1
 kubectl delete hpa php; kubectl delete deploy php load 2>/dev/null; kubectl delete svc php
 ```
 
-Seeing REPLICAS rise and fall on its own is the payoff — the cluster right-sizes itself to demand.
+Seeing REPLICAS rise and fall on its own is the payoff: the cluster right-sizes itself to demand.
 
 ## Practitioner notes
 
 - **HPA needs requests + metrics-server.** Set CPU requests on anything you autoscale.
-- **min/max are guardrails** — set a sane `minReplicas` (availability) and `maxReplicas` (cost cap).
-- **Don't combine HPA and VPA on the same CPU/memory metric** — they fight. Use VPA for
+- **min/max are guardrails**: set a sane `minReplicas` (availability) and `maxReplicas` (cost cap).
+- **Don't combine HPA and VPA on the same CPU/memory metric**: they fight. Use VPA for
   right-sizing requests, HPA for replica count (often on different signals).
-- **Scale-down is deliberately slow** (stabilization window) to avoid thrashing — expect a delay.
+- **Scale-down is deliberately slow** (stabilization window) to avoid thrashing; expect a delay.
 - **Cluster Autoscaler** is a cloud concern (kind has fixed nodes) but conceptually: pending pods →
   add nodes.
 
@@ -115,4 +115,4 @@ Seeing REPLICAS rise and fall on its own is the payoff — the cluster right-siz
 
 ---
 
-**Next:** [14 — Operators & CRDs →](./14-operators-crds.md)
+**Next:** [14: Operators & CRDs →](./14-operators-crds.md)

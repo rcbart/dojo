@@ -3,7 +3,7 @@
   var $ = JD.$;
   var status = $('registerStatus');
 
-  // lightweight strength meter (length + variety) — guidance only, server enforces the rule
+  // lightweight strength meter (length + variety), guidance only, server enforces the rule
   function strength(pw) {
     var s = 0;
     if (pw.length >= 10) s++;
@@ -41,7 +41,7 @@
     });
     if (!res.ok) { JD.say(status, res.data.error || 'Registration failed', false); return; }
     JD.say(status, res.data.firstUser
-      ? 'Account created — as the first user you are the administrator. Redirecting…'
+      ? 'Account created, as the first user you are the administrator. Redirecting…'
       : 'Account created. Welcome to the dojo!', true);
     location.href = res.data.firstUser ? '/account.html' : '/app';
   });

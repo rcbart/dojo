@@ -1,32 +1,32 @@
-# 8 — Advanced builds: BuildKit, buildx & multi-platform
+# 8: Advanced builds: BuildKit, buildx & multi-platform
 
 *The modern build engine and how to produce images that run on any CPU. Concepts + labs. ~30 min.
 Requires Docker (BuildKit ships enabled in current versions).*
 
 ---
 
-`docker build` looks simple, but underneath, modern Docker uses a much more capable engine —
-**BuildKit** — driven by a client called **buildx**. Understanding it is what lets you build
+`docker build` looks simple, but underneath, modern Docker uses a much more capable engine,
+**BuildKit**, driven by a client called **buildx**. Understanding it is what lets you build
 **multi-architecture** images (Intel *and* Apple Silicon/ARM servers), pass **secrets** safely at
 build time, and cache dependencies far more aggressively. This is the advanced-build knowledge that
 separates senior practitioners.
 
-## BuildKit — the engine under `docker build`
+## BuildKit: the engine under `docker build`
 
 **BuildKit** is Docker's build backend (default in current Docker). Versus the old builder it gives
 you:
 
-- **Parallelism** — independent build stages run at the same time (multi-stage builds get faster).
-- **Better caching** — including external cache and fine-grained `RUN` cache mounts.
-- **Build secrets & SSH** — use credentials during a build *without baking them into the image*.
-- **Multi-platform output** — one build, images for several CPU architectures.
+- **Parallelism**: independent build stages run at the same time (multi-stage builds get faster).
+- **Better caching**, including external cache and fine-grained `RUN` cache mounts.
+- **Build secrets & SSH**: use credentials during a build *without baking them into the image*.
+- **Multi-platform output**: one build, images for several CPU architectures.
 
 You're already using it. **buildx** is the CLI front-end that exposes BuildKit's full power:
 `docker buildx build ...` (and plain `docker build` routes through it too).
 
 ## Why multi-platform matters
 
-CPUs come in architectures — **`amd64`** (Intel/AMD, most cloud servers and older laptops) and
+CPUs come in architectures: **`amd64`** (Intel/AMD, most cloud servers and older laptops) and
 **`arm64`** (Apple Silicon Macs, AWS Graviton, Raspberry Pi, and increasingly cloud). An image built
 for one **won't run** on the other. If you build on an Apple Silicon Mac and deploy to an amd64
 server, your image can fail with `exec format error`.
@@ -36,7 +36,7 @@ automatically pulls the right one. Publish once, run anywhere.
 
 ## Builders and the `docker-container` driver
 
-The default builder can't produce multi-platform images — you need a builder using the
+The default builder can't produce multi-platform images; you need a builder using the
 `docker-container` driver (which runs BuildKit in a helper container with emulation):
 
 ```bash
@@ -57,14 +57,14 @@ Key point: multi-platform results usually go straight to a **registry** (`--push
 local Docker image store holds one architecture at a time. Emulation (QEMU) lets one machine build
 for the "other" arch.
 
-Inspect the result — one tag, multiple architectures:
+Inspect the result, one tag with multiple architectures:
 
 ```bash
 docker buildx imagetools inspect YOURNAME/app:1.0
 # shows manifests for linux/amd64 and linux/arm64 under one tag
 ```
 
-## Build secrets — credentials without baking them in
+## Build secrets: credentials without baking them in
 
 Module 7 warned: never put secrets in a Dockerfile or `ENV` (they persist in layers). But sometimes
 a build *needs* a secret (a private package token). BuildKit's `--secret` mounts it **only for one
@@ -82,10 +82,10 @@ docker buildx build --secret id=npmtoken,src=./token.txt -t app .
 # the token is available during that RUN, but never stored in any layer
 ```
 
-Verify it's not in the image with `docker history` — it isn't. This is the *correct* way to use a
+Verify it's not in the image with `docker history`: it isn't. This is the *correct* way to use a
 credential at build time.
 
-## Cache mounts — stop re-downloading dependencies
+## Cache mounts: stop re-downloading dependencies
 
 A `RUN --mount=type=cache` persists a directory **across builds** (e.g. the package manager cache),
 so dependencies aren't re-fetched every time even when the layer rebuilds:
@@ -99,9 +99,9 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 COPY . .
 ```
 
-The npm download cache survives between builds — big speedups in CI.
+The npm download cache survives between builds, which means big speedups in CI.
 
-## `docker buildx bake` — declarative builds
+## `docker buildx bake`: declarative builds
 
 For multiple images/targets, `bake` builds them from a config file (like Compose, but for builds):
 
@@ -137,7 +137,7 @@ docker run --rm demo:arm            # prints aarch64 (arm64) even on an amd64 ho
 docker buildx rm multi
 ```
 
-*(Full multi-arch publishing needs a registry — swap in `--push -t YOURNAME/demo:multi` with your
+*(Full multi-arch publishing needs a registry. Swap in `--push -t YOURNAME/demo:multi` with your
 Docker Hub name to try the real thing, then `docker buildx imagetools inspect` it.)*
 
 ### Experiment: prove a build secret doesn't leak
@@ -152,17 +152,17 @@ rm token.txt
 
 ## Check yourself
 
-1. What is BuildKit? *(Docker's modern build engine — parallel stages, better caching, build
+1. What is BuildKit? *(Docker's modern build engine: parallel stages, better caching, build
    secrets, and multi-platform output; the default builder.)*
 2. Why build multi-platform images? *(amd64 and arm64 are incompatible; a multi-arch image runs on
    both, so you publish once and run anywhere.)*
 3. Why do multi-platform builds usually go straight to a registry with `--push`? *(The local image
    store holds one architecture at a time; the registry stores the multi-arch manifest.)*
 4. How do you use a credential at build time without leaking it? *(`RUN --mount=type=secret` with
-   `--secret` — available for that RUN only, never stored in a layer.)*
+   `--secret`; available for that RUN only, never stored in a layer.)*
 5. What does a `RUN --mount=type=cache` do? *(Persists a directory (e.g. the package cache) across
    builds so dependencies aren't re-downloaded each time.)*
 
 ---
 
-**Next:** [9 — Registries & distribution →](./09-registries-distribution.md)
+**Next:** [9: Registries & distribution →](./09-registries-distribution.md)
