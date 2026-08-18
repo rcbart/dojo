@@ -1,4 +1,4 @@
-# 1 — Images & layers
+# 1: Images & layers
 
 *How images actually work: the key to building fast, small images later. Concepts + a short
 inspect lab. ~20 min. Requires Docker.*
@@ -109,4 +109,4 @@ docker run --rm python@sha256:<the-digest> python --version
 
 ---
 
-**Next:** [2 — Lab: run & manage containers →](./02-lab-run-manage-containers.md)
+**Next:** [2: Lab: run & manage containers →](./02-lab-run-manage-containers.md)

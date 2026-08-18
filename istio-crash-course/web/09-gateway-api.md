@@ -1,4 +1,4 @@
-# 9 — The Kubernetes Gateway API
+# 9: The Kubernetes Gateway API
 
 *The modern, portable way to configure ingress, and increasingly the recommended one. Concepts +
 a lab. ~20 min.*
@@ -139,4 +139,4 @@ They interoperate, so it's not an all-or-nothing choice.
 
 ---
 
-**Next:** [10 — Debugging & next steps →](./10-debugging-gotchas.md)
+**Next:** [10: Debugging & next steps →](./10-debugging-gotchas.md)

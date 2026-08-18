@@ -50,7 +50,7 @@ remove more than you intended and breaks silently on upgrade.</p>
 <p><b>Starter version drift.</b> The starters work because the parent POM or BOM pins a tested set of
 versions. Overriding one library's version individually is how you reintroduce exactly the dependency
 hell starters exist to prevent.</p>`,
-docs:[['Spring Boot reference','https://docs.spring.io/spring-boot/index.html'],['Spring Initializr','https://start.spring.io'],['Building an Application with Spring Boot — guide','https://spring.io/guides/gs/spring-boot']],
+docs:[['Spring Boot reference','https://docs.spring.io/spring-boot/index.html'],['Spring Initializr','https://start.spring.io'],['Building an Application with Spring Boot (guide)','https://spring.io/guides/gs/spring-boot']],
 ex:{title:'Boot entry point',
 prompt:`Write the main class <code>DojoApplication</code> for a Boot app in package <code>com.example.dojo</code>: package declaration, the right annotation, and a main method that launches the application context.`,
 starter:`// package declaration?
@@ -97,7 +97,7 @@ public class DojoApplication {
 <h4>When the wiring goes wrong</h4>
 <p>Three errors cover most of it. <b>"No qualifying bean of type X"</b> means either nothing declares it or the class is outside the component scan; remember scanning starts at the <code>@SpringBootApplication</code> package and searches downward only. <b>"Expected single matching bean but found 2"</b> wants a <code>@Qualifier</code> or a <code>@Primary</code>. And <b>"Requested bean is currently in creation"</b> is a circular dependency, which is a design signal rather than a puzzle: the cycle usually means a responsibility sits in the wrong class, and <code>@Lazy</code> hides it rather than fixing it.</p>
 <p>When a bean you expect is missing, start the app with <code>--debug</code> and read the <b>condition evaluation report</b>: it lists every auto-configuration that matched, every one that did not, and the exact condition that failed. That report is the difference between debugging Spring and guessing at it.</p>`,
-docs:[['Spring annotation-based container config','https://docs.spring.io/spring-framework/reference/core/beans/annotation-config.html'],['Spring Boot auto-configuration','https://docs.spring.io/spring-boot/reference/using/auto-configuration.html'],['@Transactional proxying — Spring','https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html']],
+docs:[['Spring annotation-based container config','https://docs.spring.io/spring-framework/reference/core/beans/annotation-config.html'],['Spring Boot auto-configuration','https://docs.spring.io/spring-boot/reference/using/auto-configuration.html'],['@Transactional proxying (Spring)','https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html']],
 ex:{title:'Annotate the skeleton',
 prompt:`Fill in the right annotations (marked by comments) on this mini-app: the config class producing a <code>Clock</code> bean; a repository stereotype on <code>LedgerRepo</code>; a service stereotype plus <code>@Transactional</code> on <code>LedgerService.post()</code>; a REST controller mapped to <code>/api/ledger</code> whose <code>create</code> method answers POST, takes the body as a DTO, and returns 201 via <code>@ResponseStatus</code>; and an init hook method annotated to run after construction.`,
 starter:`import org.springframework.context.annotation.*;
@@ -231,7 +231,7 @@ is the correct behaviour, not an obstacle. The cycle is telling you the responsi
 The fix is to extract the shared concern into a third component, or to invert one direction with an event.
 Reaching for <code>@Lazy</code> or setter injection makes the failure go away and leaves the design
 problem in place.</p>`,
-docs:[['Spring IoC container — reference','https://docs.spring.io/spring-framework/reference/core/beans.html'],['Constructor injection — Baeldung','https://www.baeldung.com/constructor-injection-in-spring']],
+docs:[['Spring IoC container, reference','https://docs.spring.io/spring-framework/reference/core/beans.html'],['Constructor injection, Baeldung','https://www.baeldung.com/constructor-injection-in-spring']],
 ex:{title:'Wire it the right way',
 prompt:`Create <code>@Service class AuditService</code> with method <code>void log(String event)</code> (print it), and <code>@Service class TransferService</code> that depends on AuditService via <b>constructor injection into a final field</b> (no field @Autowired). TransferService has <code>void transfer(String from, String to, long cents)</code> that calls <code>audit.log(...)</code> with a message containing the three arguments.`,
 starter:`import org.springframework.stereotype.Service;
@@ -308,7 +308,7 @@ public class TimingAspect {
 <li><b>Keep pointcuts narrow.</b> An <code>execution(* com..*(..))</code> pointcut advises the entire application, including hot paths where the interception cost is now on every call.</li>
 </ul>
 <p>The judgement call: aspects are invisible at the call site, which is exactly their benefit and exactly their cost. Cross-cutting infrastructure (transactions, security, metrics, retries) earns the indirection. Business rules hidden in an aspect are a debugging session waiting to happen, because nothing in the method you are reading says they exist.</p>`,
-docs:[['Spring AOP — reference','https://docs.spring.io/spring-framework/reference/core/aop.html'],['Pointcut expressions — Spring','https://docs.spring.io/spring-framework/reference/core/aop/ataspectj/pointcuts.html']],
+docs:[['Spring AOP, reference','https://docs.spring.io/spring-framework/reference/core/aop.html'],['Pointcut expressions, Spring','https://docs.spring.io/spring-framework/reference/core/aop/ataspectj/pointcuts.html']],
 ex:{title:'A timing aspect',
 prompt:`Write <code>@Aspect @Component class TimingAspect</code> with an <code>@Around</code> advice on pointcut <code>execution(* com.example.svc.service..*(..))</code>: method <code>Object time(ProceedingJoinPoint pjp) throws Throwable</code> that records <code>System.nanoTime()</code>, calls <code>pjp.proceed()</code> in a try, and in a <b>finally</b> prints the signature and elapsed milliseconds, so timing is reported even when the method throws.`,
 starter:`import org.aspectj.lang.ProceedingJoinPoint;
@@ -410,7 +410,7 @@ pointcut narrow: <code>@annotation(...)</code> rather than a broad package expre
 applies only where someone opted in. Make sure exceptions from the aspect cannot silently swallow the
 business call. And document the annotation itself, because a reader who finds <code>@RequiresMfa</code>
 on a method has no other way to learn what it does.</p>`,
-docs:[['Meta-annotations & composed annotations — Spring','https://docs.spring.io/spring-framework/reference/core/beans/classpath-scanning.html#beans-meta-annotations'],['@annotation pointcut — Spring AOP','https://docs.spring.io/spring-framework/reference/core/aop/ataspectj/pointcuts.html']],
+docs:[['Meta-annotations & composed annotations, Spring','https://docs.spring.io/spring-framework/reference/core/beans/classpath-scanning.html#beans-meta-annotations'],['@annotation pointcut, Spring AOP','https://docs.spring.io/spring-framework/reference/core/aop/ataspectj/pointcuts.html']],
 ex:{title:'Build @Audited end to end',
 prompt:`(1) Declare <code>@interface Audited</code>: <code>@Target(ElementType.METHOD)</code>, <code>@Retention(RetentionPolicy.RUNTIME)</code>, element <code>String value()</code>. (2) Declare a composed <code>@interface TransactionalService</code>: TYPE target, RUNTIME retention, meta-annotated with <code>@Service</code> and <code>@Transactional</code>. (3) Write <code>@Aspect @Component class AuditAspect</code> with <code>@Around("@annotation(audited)")</code> advice <code>Object audit(ProceedingJoinPoint pjp, Audited audited)</code> that prints <code>"[AUDIT] " + audited.value()</code> then proceeds.`,
 starter:`import java.lang.annotation.*;
@@ -531,7 +531,7 @@ too much is a test that needs <code>MockMvc</code> to verify a business rule.</p
 <p>And return <b>DTOs, not entities</b>. Serialising a JPA entity exposes your schema, drags lazy
 associations into the response (or throws when the session has closed), and turns a database rename
 into a breaking API change.</p>`,
-docs:[['Building a RESTful Web Service — guide','https://spring.io/guides/gs/rest-service'],['Spring MVC annotated controllers','https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller.html']],
+docs:[['Building a RESTful Web Service (guide)','https://spring.io/guides/gs/rest-service'],['Spring MVC annotated controllers','https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller.html']],
 ex:{title:'A Positions API',
 prompt:`Write <code>PositionController</code>: <code>@RestController</code> mapped to <code>/api/positions</code>, with an in-memory <code>Map&lt;String, String&gt;</code>. Endpoints: <code>GET /{id}</code> returning <code>ResponseEntity&lt;String&gt;</code>: 200 with the value or 404 if absent; and <code>POST</code> taking <code>@RequestParam String id, @RequestParam String symbol</code>, storing it and returning the created value with status <code>201</code> via <code>@ResponseStatus</code>.`,
 starter:`import org.springframework.http.*;
@@ -643,7 +643,7 @@ commits unless you say <code>rollbackFor</code>. And it is proxy-based, so calli
 an ordering, it has stopped being readable; write the JPQL in <code>@Query</code>, or drop to a native
 query. Spring Data is at its best for the simple 80% and should be abandoned without guilt for the
 rest.</p>`,
-docs:[['Accessing Data with JPA — guide','https://spring.io/guides/gs/accessing-data-jpa'],['Spring Data JPA — query methods','https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html']],
+docs:[['Accessing Data with JPA, guide','https://spring.io/guides/gs/accessing-data-jpa'],['Spring Data JPA, query methods','https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html']],
 ex:{title:'Derive the queries',
 prompt:`Write interface <code>TradeRepository extends JpaRepository&lt;Trade, Long&gt;</code> with three <b>derived query methods</b> (signatures only, no bodies; it's an interface): find all trades by <code>symbol</code>, find trades with <code>amountCents</code> greater than a value, and find trades by symbol ordered by <code>executedAt</code> descending. Assume entity <code>Trade</code> has those properties. Then a <code>@Service TradeService</code> with constructor-injected repository and a <code>@Transactional</code> method <code>void reprice(Long id, long newAmount)</code> that loads via <code>findById(...).orElseThrow()</code> and sets the amount.`,
 starter:`import org.springframework.data.jpa.repository.JpaRepository;
@@ -877,7 +877,7 @@ class ApiErrors {
         return ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
     }
 }`}},
-{id:'spr7',title:'Spring Security & JWT — your home turf',body:`
+{id:'spr7',title:'Spring Security & JWT, your home turf',body:`
 <p>Spring Security is a filter chain in front of your controllers. Since Spring Security 6, configuration is a <code>SecurityFilterChain</code> bean:</p>
 <div class="codeSample" data-hl>@Configuration
 @EnableWebSecurity
@@ -1142,7 +1142,7 @@ fails, the data is committed and the reaction never happened, with nothing to re
 are therefore fine for cache eviction, metrics and in-app notifications, and not sufficient when another
 system must learn about the change. That is what the outbox pattern in the messaging lesson is for, and the
 distinction is worth making deliberately rather than discovering it in production.`,
-docs:[['Application events — Spring','https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events'],['@TransactionalEventListener — API','https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html'],['@Async — Spring','https://docs.spring.io/spring-framework/reference/integration/scheduling.html#scheduling-annotation-support-async']],
+docs:[['Application events (Spring)','https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events'],['@TransactionalEventListener (API)','https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html'],['@Async (Spring)','https://docs.spring.io/spring-framework/reference/integration/scheduling.html#scheduling-annotation-support-async']],
 ex:{title:'Announce, then react',
 prompt:`Build the pipeline: (1) <code>record UserRegistered(String userId, String email)</code>. (2) <code>@Service class RegistrationService</code> with constructor-injected <code>ApplicationEventPublisher</code> and <code>@Transactional void register(String userId, String email)</code> that calls <code>events.publishEvent(new UserRegistered(...))</code>. (3) <code>@Component class WelcomeListener</code> with an <code>@Async @EventListener</code> method <code>sendEmail(UserRegistered e)</code> and a <code>@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)</code> method <code>provision(UserRegistered e)</code>. (4) <code>@Configuration @EnableAsync class AsyncConfig</code>.`,
 starter:`import org.springframework.context.ApplicationEventPublisher;
@@ -1252,7 +1252,7 @@ tax.</p>
 events, long-lived subscriptions, and pipelines where a fast producer must be told to slow down. That is
 what Reactor expresses well and what virtual threads do not address at all. The realistic position for 2026:
 choose reactive for streams and demand signalling, not for concurrency.`,
-docs:[['Project Reactor reference','https://projectreactor.io/docs/core/release/reference/'],['Spring WebFlux reference','https://docs.spring.io/spring-framework/reference/web/webflux.html'],['Which operator do I need? — Reactor','https://projectreactor.io/docs/core/release/reference/#which-operator']],
+docs:[['Project Reactor reference','https://projectreactor.io/docs/core/release/reference/'],['Spring WebFlux reference','https://docs.spring.io/spring-framework/reference/web/webflux.html'],['Which operator do I need? (Reactor)','https://projectreactor.io/docs/core/release/reference/#which-operator']],
 ex:{title:'A non-blocking user endpoint',
 prompt:`Write <code>UserService</code> with: (1) <code>Flux&lt;String&gt; activeNames(Flux&lt;User&gt; users)</code>: <code>filter</code> active users, <code>map</code> to <code>getName()</code>, <code>take(50)</code>; (2) <code>Mono&lt;User&gt; byId(String id)</code>: call <code>repo.findById(id)</code> (returns <code>Mono&lt;User&gt;</code>) and use <code>switchIfEmpty</code> with <code>Mono.error(new IllegalStateException("not found"))</code>. Do <b>not</b> call <code>subscribe()</code> or <code>block()</code> anywhere; the framework subscribes.`,
 starter:`import reactor.core.publisher.Flux;
@@ -1336,7 +1336,7 @@ means one consumer and no horizontal scale.</p>
 <p>Finally, plan for the message you cannot process: a dead-letter queue plus an alert on its depth. Without
 one, a single malformed message either blocks the partition forever or is silently dropped, and both are
 discovered late.`,
-docs:[['Spring for Apache Kafka reference','https://docs.spring.io/spring-kafka/reference/'],['Kafka introduction','https://kafka.apache.org/intro'],['Transactional outbox — microservices.io','https://microservices.io/patterns/data/transactional-outbox.html']],
+docs:[['Spring for Apache Kafka reference','https://docs.spring.io/spring-kafka/reference/'],['Kafka introduction','https://kafka.apache.org/intro'],['Transactional outbox (microservices.io)','https://microservices.io/patterns/data/transactional-outbox.html']],
 ex:{title:'Publish & consume order events',
 prompt:`Write <code>OrderEvents</code>: (1) a field <code>KafkaTemplate&lt;String, String&gt; kafka</code>; (2) <code>void publish(String orderId, String payload)</code> that sends to topic <code>"orders"</code> with <code>orderId</code> as the <b>key</b> (ordering per order); (3) a consumer method <code>void onOrder(String payload)</code> annotated <code>@KafkaListener(topics = "orders", groupId = "billing")</code> that skips already-processed payloads using a <code>Set&lt;String&gt; processed</code> (idempotency) before calling <code>handle(payload)</code>.`,
 starter:`import java.util.HashSet;
@@ -1428,7 +1428,7 @@ node disagreeing slightly is harmless: reference data, compiled patterns, featur
 a millisecond and buys agreement, so it is right for anything a user must see consistently across
 instances. Many systems want both: a local cache in front of Redis, with a short local TTL to bound the
 disagreement.</p>`,
-docs:[['Caffeine — GitHub','https://github.com/ben-manes/caffeine'],['Spring cache abstraction','https://docs.spring.io/spring-framework/reference/integration/cache.html'],['Spring Boot caching guide','https://docs.spring.io/spring-boot/reference/io/caching.html']],
+docs:[['Caffeine (GitHub)','https://github.com/ben-manes/caffeine'],['Spring cache abstraction','https://docs.spring.io/spring-framework/reference/integration/cache.html'],['Spring Boot caching guide','https://docs.spring.io/spring-boot/reference/io/caching.html']],
 ex:{title:'Cache the user lookups',
 prompt:`Write <code>UserCacheConfig</code> annotated <code>@EnableCaching</code> containing a <code>@Bean</code> method returning a <code>CaffeineCacheManager</code> for cache <code>"users"</code> configured with <code>maximumSize(10_000)</code> and <code>expireAfterWrite(Duration.ofMinutes(10))</code>. Then a <code>UserService</code> with <code>@Cacheable(value = "users", key = "#id")</code> on <code>byId(long id)</code> and <code>@CacheEvict(value = "users", key = "#user.id")</code> on <code>update(User user)</code>.`,
 starter:`import java.time.Duration;

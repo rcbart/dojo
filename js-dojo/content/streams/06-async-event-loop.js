@@ -32,7 +32,7 @@ for (let i = 0; i &lt; 5e9; i++) { }
 // stack while waiting". CPU-heavy work occupies the stack, so it blocks
 // no matter how many promises you wrap it in.</div>
 
-<h4>Two queues, not one — and microtasks always win</h4>
+<h4>Two queues, not one: and microtasks always win</h4>
 <div class="codeSample" data-hl>MACROTASKS   setTimeout, setInterval, I/O events, UI events
 MICROTASKS   promise callbacks (.then / await), queueMicrotask
 
@@ -56,7 +56,7 @@ timers completely.</p>
 <p>The delay says "not before this many milliseconds". If the stack is busy, or earlier callbacks are
 queued, it runs later, and browsers clamp nested timeouts to about 4ms. Never use a timer for
 correctness; use it to yield.</p>`,
-docs:[['MDN — The event loop','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model'],['MDN — Microtask guide','https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide'],['Node — the event loop','https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick']],
+docs:[['MDN (The event loop)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model'],['MDN (Microtask guide)','https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide'],['Node (the event loop)','https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick']],
 ex:{title:'Predict the output order',diff:'easy',lang:'js',
 run:{call:'order',cases:[
  {name:'synchronous first, then microtask, then macrotask',args:[['sync','timeout','promise']],expect:['sync','promise','timeout']},
@@ -123,7 +123,7 @@ across an asynchronous boundary.</b> Promises exist largely to give errors a pat
 <p><b>Called twice, or never.</b> Nothing enforces that a callback runs exactly once. A poorly written
 API that invokes yours twice will silently run your continuation twice. Promises fix this by definition:
 a promise settles once and stays settled.</p>
-<p><b>Zalgo — sometimes sync, sometimes async.</b> A function that calls back immediately on a cache hit
+<p><b>Zalgo, sometimes sync, sometimes async.</b> A function that calls back immediately on a cache hit
 and asynchronously on a miss has two different orderings, and the bug only appears on one path. Promise
 callbacks are <i>always</i> asynchronous, which removes the whole class.</p>
 
@@ -131,7 +131,7 @@ callbacks are <i>always</i> asynchronous, which removes the whole class.</p>
 <p>For things that happen <b>many times</b>: event listeners, streams, observers. A promise represents
 <i>one</i> future value, so it is the wrong shape for a click handler. The rule: one-shot work becomes a
 promise, repeated work stays a callback.</p>`,
-docs:[['MDN — Callback function','https://developer.mozilla.org/en-US/docs/Glossary/Callback_function'],['Node — asynchronous flow control','https://nodejs.org/en/learn/asynchronous-work/javascript-asynchronous-programming-and-callbacks']],
+docs:[['MDN, Callback function','https://developer.mozilla.org/en-US/docs/Glossary/Callback_function'],['Node, asynchronous flow control','https://nodejs.org/en/learn/asynchronous-work/javascript-asynchronous-programming-and-callbacks']],
 ex:{title:'Handle the error-first convention',diff:'easy',lang:'js',
 run:{call:'settle',cases:[
  {name:'an error is reported',args:[{message:'nope'},null],expect:'error: nope'},
@@ -208,7 +208,7 @@ usually is.</p>
 <p><b>Always terminate a chain with <code>catch</code>, or return the promise to someone who will.</b> An
 unhandled rejection is a warning in browsers and, since Node 15, <b>crashes the process</b>. A promise
 you neither return nor catch is a silent failure waiting to happen.</p>`,
-docs:[['MDN — Using promises','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises'],['MDN — Promise','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise'],['MDN — Promise.allSettled','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled']],
+docs:[['MDN (Using promises)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises'],['MDN (Promise)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise'],['MDN (Promise.allSettled)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled']],
 exs:[
 {title:'Choose the right combinator',diff:'easy',lang:'js',
 run:{call:'combinator',cases:[
@@ -327,7 +327,7 @@ await fetch(url, { signal: ac.signal });    // rejects with AbortError
 
 // a timeout without cancellation leaves the original request running:
 await Promise.race([work(), rejectAfter(5000)]);   // useful, but leaky</div>`,
-docs:[['MDN — async function','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function'],['MDN — await','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await'],['MDN — AbortController','https://developer.mozilla.org/en-US/docs/Web/API/AbortController']],
+docs:[['MDN (async function)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function'],['MDN (await)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await'],['MDN (AbortController)','https://developer.mozilla.org/en-US/docs/Web/API/AbortController']],
 exs:[
 {title:'Sequential or concurrent?',diff:'easy',lang:'js',
 run:{call:'strategy',cases:[

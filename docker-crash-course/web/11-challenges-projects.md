@@ -1,4 +1,4 @@
-# 11 — Hands-on challenges & projects
+# 11: Hands-on challenges & projects
 
 *Where knowledge becomes skill. Six graded, real-world builds, with no step-by-step. Each has clear
 acceptance criteria, a self-check command to verify you passed, and a solution to peek at only after
@@ -16,7 +16,7 @@ several modules. Try hard before opening a solution.
 
 ---
 
-## Challenge 1 — Containerize a static site
+## Challenge 1: Containerize a static site
 
 **Goal:** package a one-page site into an image and serve it.
 
@@ -42,7 +42,7 @@ docker build -t mysite:1.0 .
 
 ---
 
-## Challenge 2 — Shrink an app with a multi-stage build
+## Challenge 2: Shrink an app with a multi-stage build
 
 **Goal:** produce a *small* image using a multi-stage build.
 
@@ -78,7 +78,7 @@ docker build -t tiny:1.0 .
 
 ---
 
-## Challenge 3 — A multi-service stack with Compose
+## Challenge 3: A multi-service stack with Compose
 
 **Goal:** run a web app + Redis + Postgres together with Compose, with persistence and a healthcheck.
 
@@ -126,7 +126,7 @@ volumes:
 
 ---
 
-## Challenge 4 — Harden an image
+## Challenge 4: Harden an image
 
 **Goal:** take a naive image and make it non-root and clean.
 
@@ -160,7 +160,7 @@ docker build -t hard:1.0 .
 
 ---
 
-## Challenge 5 — Data that survives
+## Challenge 5: Data that survives
 
 **Goal:** prove a database's data outlives its container.
 
@@ -188,7 +188,7 @@ the container) persists.
 
 ---
 
-## Challenge 6 (capstone) — Build & publish a multi-arch image
+## Challenge 6 (capstone): Build & publish a multi-arch image
 
 **Goal:** publish a real multi-architecture image to a registry. *(Needs a free Docker Hub account;
 use your username for `YOU`.)*
@@ -240,4 +240,4 @@ it into the **Kubernetes course** and run it at scale.
 
 ---
 
-**Next:** [12 — From Docker to Kubernetes →](./12-next-steps-kubernetes.md)
+**Next:** [12: From Docker to Kubernetes →](./12-next-steps-kubernetes.md)

@@ -1,4 +1,4 @@
-# 8 — Observability & troubleshooting
+# 8: Observability & troubleshooting
 
 *The highest-weighted CKA topic (30%) and the skill that defines a practitioner: diagnosing a broken
 cluster fast. Concepts + a lab. ~30 min. Needs your kind cluster.*
@@ -13,7 +13,7 @@ hypothesis, confirm it. This module gives you the toolkit and a repeatable proce
 | Signal | Command | Tells you |
 |--------|---------|-----------|
 | **State** | `kubectl get <res> -o wide` | What's running/pending/failing, on which node |
-| **Details + Events** | `kubectl describe <res> <name>` | *Why* — Events explain scheduling, pulls, probe failures |
+| **Details + Events** | `kubectl describe <res> <name>` | *Why*: Events explain scheduling, pulls, probe failures |
 | **Logs** | `kubectl logs <pod> [-c c] [--previous]` | What the app said (and `--previous` = the crashed instance) |
 | **Cluster events** | `kubectl get events --sort-by=.lastTimestamp` | A timeline of what happened recently |
 
@@ -24,10 +24,10 @@ issues.** Learn to read Events: they're written in plain English and usually nam
 
 | Status | Meaning | First move |
 |--------|---------|-----------|
-| `Pending` | Not scheduled | `describe` — insufficient CPU/memory? node selector/taint? PVC unbound? |
-| `ContainerCreating` (stuck) | Setup not finishing | `describe` — image pull, volume mount, or Secret/ConfigMap missing |
+| `Pending` | Not scheduled | `describe`, insufficient CPU/memory? node selector/taint? PVC unbound? |
+| `ContainerCreating` (stuck) | Setup not finishing | `describe`, image pull, volume mount, or Secret/ConfigMap missing |
 | `ImagePullBackOff` / `ErrImagePull` | Can't pull image | Check image name/tag; registry auth (imagePullSecrets) |
-| `CrashLoopBackOff` | Container keeps crashing | `logs --previous` — the app is erroring on start |
+| `CrashLoopBackOff` | Container keeps crashing | `logs --previous`, the app is erroring on start |
 | `OOMKilled` (in describe) | Hit memory limit | Raise the limit or fix the leak |
 | `Running` but `0/1` READY | Readiness probe failing | `describe` probe events; `logs`; is the app actually up? |
 | `Terminating` (stuck) | Finalizer / graceful shutdown hanging | Check finalizers, PodDisruptionBudgets |
@@ -111,4 +111,4 @@ Each follows the same method: get → describe/Events → logs → confirm cause
 
 ---
 
-**Next:** [8b — Reading kubectl output (healthy vs broken) →](./18-reading-kubectl-output.md)
+**Next:** [8b: Reading kubectl output (healthy vs broken) →](./18-reading-kubectl-output.md)

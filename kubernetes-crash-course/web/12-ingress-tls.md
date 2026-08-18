@@ -1,4 +1,4 @@
-# 12 — Ingress & TLS
+# 12: Ingress & TLS
 
 *HTTP routing from the outside world into your Services, with TLS. Concepts + a lab. ~30 min. Needs
 your kind cluster.*
@@ -135,4 +135,4 @@ expressive, role-oriented, and on the current CKA. Many controllers support both
 
 ---
 
-**Next:** [13 — Autoscaling →](./13-autoscaling.md)
+**Next:** [13: Autoscaling →](./13-autoscaling.md)

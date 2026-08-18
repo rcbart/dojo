@@ -1,4 +1,4 @@
-# 11 — CI/CD & GitOps
+# 11: CI/CD & GitOps
 
 *How real teams ship to Kubernetes: automated build → push → deploy, and Git as the source of truth.
 Concepts + a lab-style walkthrough. ~25 min.*
@@ -125,4 +125,4 @@ and triggers a rollback, all without a human.
 
 ---
 
-**Next:** [12 — Ingress & TLS →](./12-ingress-tls.md)
+**Next:** [12: Ingress & TLS →](./12-ingress-tls.md)

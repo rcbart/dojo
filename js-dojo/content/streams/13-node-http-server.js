@@ -68,7 +68,7 @@ async function readBody(req, limitBytes = 1_000_000) {
 otherwise write and get subtly wrong. Use one for real work. Write the raw version once so that when the
 framework misbehaves you know what it is doing underneath, which is the same argument as learning
 prototypes before classes.</p>`,
-docs:[['Node — http','https://nodejs.org/api/http.html'],['MDN — URL','https://developer.mozilla.org/en-US/docs/Web/API/URL'],['Node — anatomy of an HTTP transaction','https://nodejs.org/en/learn/modules/anatomy-of-an-http-transaction']],
+docs:[['Node (http)','https://nodejs.org/api/http.html'],['MDN (URL)','https://developer.mozilla.org/en-US/docs/Web/API/URL'],['Node (anatomy of an HTTP transaction)','https://nodejs.org/en/learn/modules/anatomy-of-an-http-transaction']],
 exs:[
 {title:'Parse the request line',diff:'easy',lang:'js',
 run:{call:'routeKey',cases:[
@@ -179,7 +179,7 @@ of your code should be able to assume the input is well-formed.</p>
 <p>The distinctions that carry information: <b>400 vs 422</b> is "I could not parse this" vs "I understood
 you and the answer is no", and <b>401 vs 403</b> is "you are nobody" vs "you are somebody without
 permission". Collapsing either pair sends clients on the wrong investigation.</p>`,
-docs:[['MDN — HTTP status codes','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status'],['RFC 9457 — Problem Details','https://www.rfc-editor.org/rfc/rfc9457'],['OWASP — mass assignment','https://cheatsheetseries.owasp.org/cheatsheets/Mass_Assignment_Cheat_Sheet.html']],
+docs:[['MDN (HTTP status codes)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status'],['RFC 9457 (Problem Details)','https://www.rfc-editor.org/rfc/rfc9457'],['OWASP (mass assignment)','https://cheatsheetseries.owasp.org/cheatsheets/Mass_Assignment_Cheat_Sheet.html']],
 exs:[
 {title:'404 or 405?',diff:'medium',lang:'js',
 run:{call:'resolveRoute',cases:[
@@ -305,7 +305,7 @@ requests, close the database, then exit; otherwise every deploy drops requests.
 <b>Health endpoints</b> split into liveness and readiness, with liveness <i>not</i> checking the database
 so a brief outage does not restart every instance at once. <b>Structured JSON logs</b> to stdout with a
 request id, and never the request body of an authenticated call.</p>`,
-docs:[['OWASP — REST security cheat sheet','https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html'],['MDN — HTTP security headers','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers'],['Node — crypto.timingSafeEqual','https://nodejs.org/api/crypto.html#cryptotimingsafeequala-b']],
+docs:[['OWASP (REST security cheat sheet)','https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html'],['MDN (HTTP security headers)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers'],['Node (crypto.timingSafeEqual)','https://nodejs.org/api/crypto.html#cryptotimingsafeequala-b']],
 exs:[
 {title:'Extract a bearer token',diff:'easy',lang:'js',
 run:{call:'bearerToken',cases:[
@@ -406,7 +406,7 @@ code you now ship but did not read.</p>
 <p>Secrets live in the environment (<code>process.env</code>, from the runtime lesson), never in code, and
 never in logs; the logging lesson's redaction rules exist mostly for this. A token that reaches a log
 file has left your control: logs are copied, shipped to third parties, and kept for years.</p>`,
-docs:[['OWASP — Top 10','https://owasp.org/www-project-top-ten/'],['OWASP — prototype pollution','https://cheatsheetseries.owasp.org/cheatsheets/Prototype_Pollution_Prevention_Cheat_Sheet.html'],['npm — audit','https://docs.npmjs.com/cli/commands/npm-audit']],
+docs:[['OWASP (Top 10)','https://owasp.org/www-project-top-ten/'],['OWASP (prototype pollution)','https://cheatsheetseries.owasp.org/cheatsheets/Prototype_Pollution_Prevention_Cheat_Sheet.html'],['npm (audit)','https://docs.npmjs.com/cli/commands/npm-audit']],
 ex:{title:'Vet a patch before merging it',diff:'hard',lang:'js',
 run:{call:'vetPatch',cases:[
  {name:'a clean patch is ok',args:[{name:'Ada',theme:'dark'}],expect:'ok'},

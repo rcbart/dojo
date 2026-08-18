@@ -1,4 +1,4 @@
-# 5 — Storage: volumes, PV/PVC & StatefulSets
+# 5: Storage: volumes, PV/PVC & StatefulSets
 
 *Where persistent data lives in a world of disposable pods. Concepts + a lab. ~30 min. Needs your
 kind cluster.*
@@ -82,7 +82,7 @@ kubectl delete pod writer; kubectl delete pvc data
 
 The data lived in the PV (via the PVC), not the pod, so it outlived the pod.
 
-## StatefulSets — for stateful apps
+## StatefulSets: for stateful apps
 
 A Deployment's pods are interchangeable and share nothing. But a database cluster needs each replica
 to have a **stable identity** and its **own persistent storage**. That's a **StatefulSet**:
@@ -152,4 +152,4 @@ Notice deleting the StatefulSet **keeps the PVCs**: Kubernetes protects data by 
 
 ---
 
-**Next:** [6 — Health checks & resource management →](./06-health-resources.md)
+**Next:** [6: Health checks & resource management →](./06-health-resources.md)

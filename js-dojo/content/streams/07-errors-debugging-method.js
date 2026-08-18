@@ -56,7 +56,7 @@ catch (e) {
 <p>Custom types let callers branch on <b>what kind</b> of failure occurred without matching on message
 strings, which break the moment someone improves the wording. Set <code>name</code> explicitly:
 it is inherited, so without that line your subclass reports itself as <code>"Error"</code> in every log.</p>`,
-docs:[['MDN — Error','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error'],['MDN — Error.cause','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause'],['MDN — Error types','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors']],
+docs:[['MDN (Error)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error'],['MDN (Error.cause)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause'],['MDN (Error types)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors']],
 ex:{title:'Diagnose from the error type',diff:'easy',lang:'js',
 run:{call:'diagnose',cases:[
  {name:'a TypeError points at a wrong assumption',args:['TypeError'],expect:'something you assumed existed did not'},
@@ -136,7 +136,7 @@ function find2(id) { return row ?? null; }         // often better
 <p>The cost of throwing is that it is invisible in the signature: nothing tells a caller a function can
 throw, and JavaScript has no checked exceptions. So document it, or return a value the type system (or
 the reader) can see.</p>`,
-docs:[['MDN — try...catch','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch'],['MDN — throw','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/throw']],
+docs:[['MDN, try...catch','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch'],['MDN, throw','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/throw']],
 exs:[
 {title:'Catch only what you understand',diff:'easy',lang:'js',
 run:{call:'parseOrRethrow',cases:[
@@ -249,7 +249,7 @@ program's state is unknown; continuing risks corrupting data in ways far worse t
 <p>Modern V8 stitches asynchronous frames together, so an <code>await</code> chain gives you a trace that
 crosses the boundary. Callback-based code does not, which is one more practical reason to convert old
 APIs to promises rather than living with them.</p>`,
-docs:[['MDN — Using promises: error handling','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises#error_handling'],['Node — unhandledRejection','https://nodejs.org/api/process.html#event-unhandledrejection'],['V8 — async stack traces','https://v8.dev/blog/fast-async']],
+docs:[['MDN (Using promises: error handling)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises#error_handling'],['Node (unhandledRejection)','https://nodejs.org/api/process.html#event-unhandledrejection'],['V8 (async stack traces)','https://v8.dev/blog/fast-async']],
 ex:{title:'Will this error be caught?',diff:'easy',lang:'js',
 run:{call:'caught',cases:[
  {name:'a synchronous throw inside try',args:['sync-throw'],expect:true},
@@ -337,7 +337,7 @@ console.log("user:", user);      // inspectable, expandable
 console.log(\`user: \${user}\`);    // "user: [object Object]" - useless</div>
 <p>All of these beat a bare <code>log</code>, and all of them are beaten by a breakpoint, which is the
 next stream.</p>`,
-docs:[['MDN — Console API','https://developer.mozilla.org/en-US/docs/Web/API/console'],['MDN — Error.prototype.stack','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/Stack'],['git bisect','https://git-scm.com/docs/git-bisect']],
+docs:[['MDN, Console API','https://developer.mozilla.org/en-US/docs/Web/API/console'],['MDN, Error.prototype.stack','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/Stack'],['git bisect','https://git-scm.com/docs/git-bisect']],
 exs:[
 {title:'Find the failing frame',diff:'easy',lang:'js',
 run:{call:'firstOwnFrame',cases:[

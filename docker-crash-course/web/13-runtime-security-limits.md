@@ -1,4 +1,4 @@
-# 10b — Runtime security & resource limits
+# 10b: Runtime security & resource limits
 
 *What actually contains a container at runtime (users, capabilities, cgroups) and the flags that keep one container from eating the host. ~12 min read.*
 
@@ -99,4 +99,4 @@ container and one that takes the host.
 
 ---
 
-**Next:** [11 — Hands-on challenges & projects →](./11-challenges-projects.md)
+**Next:** [11: Hands-on challenges & projects →](./11-challenges-projects.md)

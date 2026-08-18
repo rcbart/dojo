@@ -52,7 +52,7 @@ checked at startup: missing dependencies fail immediately rather than at first u
 rejected outright. Most applications still run on the classpath because the ecosystem migration is
 substantial and the payoff is largest for libraries; the JPMS lesson later in the course covers the trade
 in full.`,
-docs:[['Classpath — Oracle','https://docs.oracle.com/javase/8/docs/technotes/tools/unix/classpath.html'],['Using package members / imports — Oracle','https://docs.oracle.com/javase/tutorial/java/package/usepkgs.html'],['Maven Central search','https://central.sonatype.com/']],
+docs:[['Classpath, Oracle','https://docs.oracle.com/javase/8/docs/technotes/tools/unix/classpath.html'],['Using package members / imports, Oracle','https://docs.oracle.com/javase/tutorial/java/package/usepkgs.html'],['Maven Central search','https://central.sonatype.com/']],
 ex:{title:'Classpath forensics',lang:'shell',
 prompt:`Answer one per numbered line: (1) the command compiling <code>src/App.java</code> into <code>out/</code> with <code>lib/gson-2.11.0.jar</code> on the classpath, (2) the command running class <code>App</code> with both <code>out</code> and that jar on the classpath (macOS/Linux separator), (3) the import statement for <code>com.google.gson.Gson</code>, (4) the error you get at RUNTIME when a class present at compile time is missing from the runtime classpath, (5) the directory where Maven caches downloaded dependencies, (6) the term for dependencies your dependencies pull in.`,
 starter:`# 1)
@@ -237,7 +237,7 @@ module and only what it needs, and <code>-X</code> when you genuinely need to se
 what. Note that <code>mvn install</code> writes to a shared local repository: convenient locally, and a
 source of "works on my machine" when a stale artifact sits there; CI should not rely on it.</p>`,
 docs:[['Build Lifecycle','https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html'],['Dependency Mechanism & scopes','https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html']],
-ex:{title:'Lifecycle quiz — in commands',lang:'shell',
+ex:{title:'Lifecycle quiz, in commands',lang:'shell',
 prompt:`Write, one per line, the Maven commands to: (1) delete previous build output and run the full test suite, (2) run only the class <code>AuthTokenTest</code>, (3) print the dependency tree, (4) build the jar while skipping tests.`,
 starter:`# 1) clean + tests
 
@@ -484,7 +484,7 @@ screen.</li>
 correctly laid out project needs almost no configuration, and why a project that fought the convention
 carries pages of it. When a build file is unusually long, the first question is which convention it is
 working around.</p>`,
-docs:[['Standard directory layout — Maven','https://maven.apache.org/guides/introduction/introduction-to-the-standard-directory-layout.html'],['Maven wrapper','https://maven.apache.org/wrapper/'],['Spotless plugin','https://github.com/diffplug/spotless']],
+docs:[['Standard directory layout (Maven)','https://maven.apache.org/guides/introduction/introduction-to-the-standard-directory-layout.html'],['Maven wrapper','https://maven.apache.org/wrapper/'],['Spotless plugin','https://github.com/diffplug/spotless']],
 ex:{title:'Bootstrap checklist',lang:'shell',
 prompt:`One per numbered line: (1) the command that adds the Maven wrapper to a project, (2) the three most important <code>.gitignore</code> entries for a Maven + IntelliJ project (one line, space-separated), (3) the standard directory for production code of package <code>com.example.svc</code> (full path from project root), (4) the single command a new teammate should need after cloning, (5) which file pins the exact Maven version the wrapper uses.`,
 starter:`# 1)

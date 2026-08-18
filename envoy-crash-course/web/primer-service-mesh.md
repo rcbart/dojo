@@ -1,4 +1,4 @@
-# Primer — Service meshes in plain English
+# Primer: Service meshes in plain English
 
 *Context before you meet Envoy. No lab, no jargon assumed. ~10 min. If you finish this and think
 "so a service mesh needs some kind of smart proxy"; that proxy is Envoy, and the rest of the
@@ -110,4 +110,4 @@ course is to teach you the engine first; then a mesh is just that engine, everyw
 
 ---
 
-**Next:** [00 — What Envoy is (and why it exists) →](./00-what-is-envoy.md)
+**Next:** [00: What Envoy is (and why it exists) →](./00-what-is-envoy.md)

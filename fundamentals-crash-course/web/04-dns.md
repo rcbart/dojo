@@ -1,4 +1,4 @@
-# 4 — DNS in depth
+# 4: DNS in depth
 
 *The distributed phone book: how a name becomes an address, what every record type is actually for, and the rules (and workarounds) around CNAMEs. ~15 min read.*
 
@@ -149,4 +149,4 @@ Ask which of the three you have before touching anything.
 
 ---
 
-**Next:** [5 — TLS & certificates →](./05-tls.md)
+**Next:** [5: TLS & certificates →](./05-tls.md)

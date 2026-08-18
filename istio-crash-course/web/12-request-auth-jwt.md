@@ -1,4 +1,4 @@
-# 6b — Request authentication: JWTs at the mesh
+# 6b: Request authentication: JWTs at the mesh
 
 *mTLS proved which SERVICE is calling. This module proves which USER the request is for, and locks the two together. ~11 min read.*
 
@@ -95,4 +95,4 @@ the same as ever: read the response flag, find the deciding component, check its
 
 ---
 
-**Next:** [7 — Observability: Kiali & telemetry →](./07-observability-kiali-telemetry.md)
+**Next:** [7: Observability: Kiali & telemetry →](./07-observability-kiali-telemetry.md)

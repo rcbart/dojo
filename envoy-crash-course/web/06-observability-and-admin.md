@@ -1,4 +1,4 @@
-# 06 — Observability & the admin interface
+# 06: Observability & the admin interface
 
 *Envoy's superpower is that it sees every request. This module is how you look. Concepts +
 hands-on using the admin API of any lab you already have running. ~20 min.*
@@ -23,7 +23,7 @@ use constantly:
 | `GET /stats` | **All** metrics, in Prometheus-ish text |
 | `GET /stats/prometheus` | Metrics in Prometheus exposition format (for scraping) |
 | `GET /clusters` | Every endpoint's health, in-flight requests, ejection state |
-| `GET /config_dump` | The **entire effective config** as JSON — invaluable for xDS debugging |
+| `GET /config_dump` | The **entire effective config** as JSON, invaluable for xDS debugging |
 | `GET /listeners` | Bound listeners and their addresses |
 | `GET /server_info` | Version, uptime, state, hot-restart epoch |
 | `POST /logging?level=debug` | Change log level live, no restart |
@@ -117,4 +117,4 @@ setup (running a collector) is beyond this crash course, but know that it's conf
 
 ---
 
-**Next:** [07 — Dynamic config with xDS →](./07-dynamic-config-xds.md)
+**Next:** [07: Dynamic config with xDS →](./07-dynamic-config-xds.md)

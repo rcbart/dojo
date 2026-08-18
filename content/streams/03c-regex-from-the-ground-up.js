@@ -1,11 +1,11 @@
 STREAMS.push({icon:'🔍',title:'Regex from the Ground Up',blurb:'Pattern matching explained like you have never seen a regex: literals, character classes, quantifiers, anchors and groups: one idea at a time, up to real log parsing.',lessons:[
-{id:'rgx0',title:'What a regex is — from zero',body:`
+{id:'rgx0',title:'What a regex is, from zero',body:`
 <p>Forget the punctuation soup for a moment. Imagine handing a highlighter to a very fast, very literal assistant and asking them to mark things in a huge document. You can't point; you have to <b>describe</b> what to mark: "highlight every phone number", "every line that starts with ERROR", "every word ending in -ing". A <b>regular expression</b> (regex) is exactly that: <b>a written description of a text pattern</b>, in a compact language the computer understands. The regex is the description; the engine is the assistant; matches are the highlights.</p>
 <p>The language has one beautifully simple base rule: <b>ordinary characters describe themselves</b>. The regex <code>cat</code> means "a c, then an a, then a t": it matches the letters <i>cat</i> wherever they appear, including inside <i>education</i>. No magic yet: most characters in a regex are just literal text.</p>
 <p>The power comes from a handful of <b>special characters</b> that describe <i>kinds</i> of text instead of exact text. Meet the first two:</p>
 <ul>
-<li><b><code>.</code> — "any single character"</b>: the regex <code>c.t</code> matches <i>cat</i>, <i>cot</i>, <i>c9t</i>: c, then <i>anything</i>, then t.</li>
-<li><b><code>\\\\</code> — "the next character is literal"</b>: because <code>.</code> is special, describing a real dot needs an escape: <code>3\\\\.14</code> matches <i>3.14</i> but not <i>3914</i>. (The specials worth escaping when you mean them literally: <code>. ? * + ( ) [ ] { } | ^ $ \\\\</code>.)</li>
+<li><b><code>.</code>, "any single character"</b>: the regex <code>c.t</code> matches <i>cat</i>, <i>cot</i>, <i>c9t</i>: c, then <i>anything</i>, then t.</li>
+<li><b><code>\\\\</code>, "the next character is literal"</b>: because <code>.</code> is special, describing a real dot needs an escape: <code>3\\\\.14</code> matches <i>3.14</i> but not <i>3914</i>. (The specials worth escaping when you mean them literally: <code>. ? * + ( ) [ ] { } | ^ $ \\\\</code>.)</li>
 </ul>
 <p>In Java you'll use patterns two ways, and the difference matters from day one:</p>
 <div class="codeSample" data-hl>"education".matches("cat")        // false! matches() asks: does the WHOLE string fit?
@@ -16,7 +16,7 @@ STREAMS.push({icon:'🔍',title:'Regex from the Ground Up',blurb:'Pattern matchi
 // pattern with "anything before, anything after":
 "education".matches(".*cat.*")    // true — .* means "any characters, any amount"</div>
 <p>One Java wrinkle to absorb now, because it explains every doubled backslash you'll ever see: regex and Java string literals <b>both</b> use backslash as their escape character. The regex <code>\\\\.</code> (a literal dot) must be typed in Java source as <code>"\\\\\\\\."</code>: one layer for the string, one for the regex. When a pattern looks over-slashed, mentally halve them.</p>`,
-docs:[['Regular expressions — Oracle tutorial','https://docs.oracle.com/javase/tutorial/essential/regex/'],['String.matches — Javadoc','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#matches(java.lang.String)'],['regex101 — interactive playground','https://regex101.com/']],
+docs:[['Regular expressions (Oracle tutorial)','https://docs.oracle.com/javase/tutorial/essential/regex/'],['String.matches (Javadoc)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#matches(java.lang.String)'],['regex101 (interactive playground)','https://regex101.com/']],
 exs:[{title:'First descriptions',
 prompt:`Write class <code>FirstPatterns</code> with three static methods, each a single <code>return raw.matches(...)</code>. Remember <code>matches()</code> tests the <b>whole</b> string: (1) <code>boolean isCode(String raw)</code>: true for exactly an uppercase <code>A</code>, then any single character, then a digit written as the class <code>[0-9]</code> (pattern: <code>A.[0-9]</code>); (2) <code>boolean isPrice(String raw)</code>: true for exactly one digit, a <b>literal dot</b> (escaped!), then two digits: <code>[0-9]\\\\.[0-9][0-9]</code>, as a Java string that's <code>"[0-9]\\\\\\\\.[0-9][0-9]"</code>; (3) <code>boolean mentionsCat(String raw)</code>: true when <i>cat</i> appears <b>anywhere</b>: bracket it with <code>.*</code> on both sides.`,
 starter:`public class FirstPatterns {
@@ -80,7 +80,7 @@ shorthands for the common menus (memorize these three):
 {2,}   two or more</div>
 <p>Reading practice (sound these out before peeking): <code>\\\\d{4}-\\\\d{2}-\\\\d{2}</code> means "4 digits, dash, 2 digits, dash, 2 digits": a date like 2026-07-19. <code>[A-Z]\\\\w+</code> means "one capital, then one or more word chars": a capitalized word. <code>\\\\s*</code> means "any amount of whitespace, including none" (which is why it appears between things in forgiving parsers).</p>
 <p>One caution to file away: quantifiers are <b>greedy</b>: <code>.*</code> grabs as much as it can while still letting the rest of the pattern succeed. It rarely matters at this stage, but when a pattern someday matches "too much", greed is the first suspect (the fix, <code>.*?</code>, means "as little as possible").</p>`,
-docs:[['Character classes — Oracle','https://docs.oracle.com/javase/tutorial/essential/regex/char_classes.html'],['Quantifiers — Oracle','https://docs.oracle.com/javase/tutorial/essential/regex/quant.html'],['Predefined classes — Oracle','https://docs.oracle.com/javase/tutorial/essential/regex/pre_char_classes.html']],
+docs:[['Character classes (Oracle)','https://docs.oracle.com/javase/tutorial/essential/regex/char_classes.html'],['Quantifiers (Oracle)','https://docs.oracle.com/javase/tutorial/essential/regex/quant.html'],['Predefined classes (Oracle)','https://docs.oracle.com/javase/tutorial/essential/regex/pre_char_classes.html']],
 exs:[{title:'Kinds and amounts drill',
 prompt:`Write class <code>Shapes</code> with four static methods, each one <code>return raw.matches(...)</code>: (1) <code>boolean isPin(String raw)</code>, exactly four digits: <code>[0-9]{4}</code>; (2) <code>boolean isHandle(String raw)</code>, an <code>@</code>, then one lowercase letter, then two to fourteen more lowercase letters or digits: <code>@[a-z][a-z0-9]{2,14}</code>; (3) <code>boolean isHexColor(String raw)</code>, a <code>#</code> then exactly six characters from the menu <code>[0-9a-fA-F]</code>; (4) <code>boolean isShout(String raw)</code>, one or more uppercase letters followed by one or more <code>!</code>; remember <code>!</code> is not special, but write the plus signs where they belong: <code>[A-Z]+!+</code>.`,
 starter:`public class Shapes {
@@ -147,7 +147,7 @@ if (m.find()) {                       // find(): search anywhere (vs matches(): 
     m.group(0);                       // "ada@dojo.com" — group 0 is always the whole match
 }</div>
 <p>And one replacement superpower while the groups are fresh: <code>replaceAll</code> can refer back to them as <code>$1</code>, <code>$2</code>: <code>"2026-07-19".replaceAll("(\\\\d{4})-(\\\\d{2})-(\\\\d{2})", "$3/$2/$1")</code> → <i>19/07/2026</i>. Describe the structure once, then rearrange it.</p>`,
-docs:[['Boundary matchers — Oracle','https://docs.oracle.com/javase/tutorial/essential/regex/bounds.html'],['Groups & capturing — Oracle','https://docs.oracle.com/javase/tutorial/essential/regex/groups.html'],['Matcher — Javadoc','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Matcher.html']],
+docs:[['Boundary matchers (Oracle)','https://docs.oracle.com/javase/tutorial/essential/regex/bounds.html'],['Groups & capturing (Oracle)','https://docs.oracle.com/javase/tutorial/essential/regex/groups.html'],['Matcher (Javadoc)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Matcher.html']],
 exs:[{title:'Capture the pieces',
 prompt:`Write class <code>Pieces</code> with three static methods: (1) <code>boolean isAnswer(String raw)</code>: <code>return raw.matches("yes|no|maybe")</code> (alternation, whole string); (2) <code>String swapDate(String raw)</code>: <code>return raw.replaceAll(...)</code> turning every <code>YYYY-MM-DD</code> into <code>DD/MM/YYYY</code>: pattern <code>([0-9]{4})-([0-9]{2})-([0-9]{2})</code>, replacement <code>"$3/$2/$1"</code>; (3) <code>String firstUser(String raw)</code>: compile <code>@([a-z0-9]+)</code> into a <code>java.util.regex.Pattern</code>, get a <code>Matcher</code>, and return <code>m.group(1)</code> if <code>m.find()</code> else <code>null</code>, the captured name <b>without</b> the @.`,
 starter:`import java.util.regex.Matcher;
@@ -222,7 +222,7 @@ if (m.matches()) {
 "a1b2c3".replaceAll("\\d", "#");            // "a#b#c#"
 Pattern.quote("price (USD)");               // matches those literal chars</div>
 
-<h4>Compile once — the mistake that shows up in profiles</h4>
+<h4>Compile once: the mistake that shows up in profiles</h4>
 <p><code>"…".matches(regex)</code>, <code>replaceAll</code> and <code>split</code> compile the pattern on
 every single call. In a loop over a million log lines that is a million compilations, and it is one of the
 most common findings in a first CPU profile of a text-processing job. Hoist it:</p>
@@ -248,7 +248,7 @@ nested quantifiers such as <code>(a+)+</code> and the input is attacker-supplied
 exponentially many ways to match before giving up. Prefer possessive quantifiers or an anchored, specific
 pattern, and never build a pattern by concatenating untrusted input; <code>Pattern.quote</code> exists for
 exactly that.</p>`,
-docs:[['Pattern — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Pattern.html'],['Regex — dev.java tutorial','https://dev.java/learn/regex/'],['Matcher — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Matcher.html']],
+docs:[['Pattern (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Pattern.html'],['Regex (dev.java tutorial)','https://dev.java/learn/regex/'],['Matcher (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Matcher.html']],
 exs:[{title:'Log-line parser',
 prompt:`Write <code>LogParser</code> with a <code>private static final Pattern</code> named <code>LINE</code> using <b>named groups</b> <code>date</code>, <code>level</code>, <code>msg</code> to parse lines like <code>2026-07-17 ERROR disk is full</code> (date <code>\\d{4}-\\d{2}-\\d{2}</code>, level one of INFO/WARN/ERROR). Add <code>static String levelOf(String line)</code> that returns the level via <code>matches()</code> + <code>group("level")</code>, or <code>"UNKNOWN"</code> when the line doesn't match.`,
 starter:`import java.util.regex.Matcher;
@@ -303,7 +303,7 @@ hints:['split accepts a regex as its separator.','\\s* on both sides absorbs any
 <li><b>Catastrophic backtracking.</b> Patterns with nested quantifiers over overlapping menus (the shape <code>(a+)+b</code>) can take <i>exponential</i> time on input that ALMOST matches: 30 a's with no b freezes the thread. This is a real denial-of-service class (ReDoS). The input stream's rule compounds here: bound the input length before the regex runs, and keep quantified groups from overlapping.</li>
 </ul>
 <p>The closing principle: a regex is a description, and descriptions should stay <i>readable aloud</i>. When yours stops being sayable, split it into named groups (previous lesson), break the parse into steps, or admit it's a parser's job.</p>`,
-docs:[['Pattern flags — Javadoc','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Pattern.html#CASE_INSENSITIVE'],['String.split — Javadoc','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#split(java.lang.String)'],['OWASP — ReDoS','https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS']],
+docs:[['Pattern flags (Javadoc)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Pattern.html#CASE_INSENSITIVE'],['String.split (Javadoc)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#split(java.lang.String)'],['OWASP (ReDoS)','https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS']],
 exs:[{title:'Production habits drill',
 prompt:`Write class <code>Habits</code>: (1) a <code>private static final java.util.regex.Pattern WORD = Pattern.compile("[a-z]+", Pattern.CASE_INSENSITIVE)</code>: compiled once, flagged, shared; (2) <code>static String[] csv(String raw)</code>: <code>return raw.split(...)</code> splitting on commas with optional surrounding whitespace: the pattern <code>\\\\s*,\\\\s*</code> (in Java: <code>"\\\\\\\\s*,\\\\\\\\s*"</code>); (3) <code>static int countWords(String raw)</code>: use <code>WORD.matcher(raw)</code> and a <code>while (m.find())</code> loop incrementing a counter; (4) <code>static String dropDots(String raw)</code>: remove every literal dot using <code>replace(".", "")</code>, the <b>literal</b> method, not replaceAll.`,
 starter:`import java.util.regex.Matcher;

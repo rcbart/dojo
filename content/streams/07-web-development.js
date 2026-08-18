@@ -53,7 +53,7 @@ says what you want back, <code>Content-Type</code> describes what you are sendin
 <code>If-None-Match</code> turn a repeat request into a cheap <b>304 Not Modified</b> with no body at
 all. On the same mechanism, <code>If-Match</code> gives you optimistic concurrency: the update applies
 only if the resource has not changed since you read it.</p>`,
-docs:[['HTTP overview — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview'],['HTTP response status codes — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status']],
+docs:[['HTTP overview, MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview'],['HTTP response status codes, MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status']],
 ex:{title:'Speak raw HTTP',lang:'http',
 prompt:`Write a raw HTTP/1.1 request that creates a user: <code>POST</code> to path <code>/users</code> on host <code>api.dojo.dev</code>, declaring a JSON body (<code>Content-Type</code> header) and sending body <code>{"name": "Ada"}</code>. Then on the lines below it, write the <b>status line only</b> of the ideal response for: (a) success, (b) the same request with a malformed body, (c) missing auth token.`,
 starter:`# request:
@@ -142,7 +142,7 @@ literally a chain of servlet filters), so understanding the shape here makes tha
 here deliberately, because raw servlet code makes it easy and templating engines make it hard: they
 escape by default, which is a large part of why you should use one. Set the content type with a charset,
 escape all output, and prefer a template over string concatenation.</p>`,
-docs:[['Jakarta Servlet spec','https://jakarta.ee/specifications/servlet/'],['Intro to Servlets — Baeldung','https://www.baeldung.com/intro-to-servlets']],
+docs:[['Jakarta Servlet spec','https://jakarta.ee/specifications/servlet/'],['Intro to Servlets (Baeldung)','https://www.baeldung.com/intro-to-servlets']],
 ex:{title:'A greeting servlet',
 prompt:`Write <code>GreetServlet extends HttpServlet</code> mapped with <code>@WebServlet("/greet")</code>. In <code>doGet</code>: read parameter <code>name</code>; if it's null or blank respond with status <code>400</code> and text <code>missing name</code>; otherwise status <code>200</code>, content type <code>text/plain</code>, body <code>Hello, &lt;name&gt;!</code>.`,
 starter:`import jakarta.servlet.annotation.WebServlet;
@@ -238,7 +238,7 @@ the serialised response, but the split survives intact, and the naming in Spring
 <code>@Controller</code>/<code>@RestController</code> for the traffic cop, <code>@Service</code> for the
 model's behaviour, <code>@Repository</code> for its persistence. Those annotations are the pattern with
 labels attached; using them without the separation is decoration.</p>`,
-docs:[['MVC — MDN glossary','https://developer.mozilla.org/en-US/docs/Glossary/MVC'],['Spring MVC explained — spring.io','https://docs.spring.io/spring-framework/reference/web/webmvc.html']],
+docs:[['MVC, MDN glossary','https://developer.mozilla.org/en-US/docs/Glossary/MVC'],['Spring MVC explained, spring.io','https://docs.spring.io/spring-framework/reference/web/webmvc.html']],
 ex:{title:'Untangle to MVC',
 prompt:`Build a tiny MVC triple for a todo app: (1) Model: <code>record Todo(String id, String text, boolean done)</code> and class <code>TodoService</code> with a private list, <code>void add(Todo t)</code> and <code>java.util.List&lt;Todo&gt; open()</code> returning only not-done todos (stream, no HTTP imports anywhere). (2) View: class <code>TodoView</code> with <code>String render(java.util.List&lt;Todo&gt; todos)</code> returning one line per todo formatted <code>[ ] text</code>. (3) Controller: class <code>TodoController</code> that takes both in its constructor and has <code>String openTodosPage()</code> = render(service.open()).`,
 starter:`import java.util.*;
@@ -365,12 +365,12 @@ privilege change.</p>
 denylist the token) because deleting the cookie leaves any captured copy working until it expires.
 Rotate on privilege change, cap absolute session lifetime independently of activity, and make sure there
 is a tested path to revoke every session for a compromised account.</p>`,
-docs:[['HTTP cookies — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies'],['OWASP Session Management Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html'],['OWASP XSS Prevention','https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html']],
+docs:[['HTTP cookies (MDN)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies'],['OWASP Session Management Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html'],['OWASP XSS Prevention','https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html']],
 ex:{title:'Harden the cookie',
 prompt:`Write class <code>SessionIssuer</code> with <code>static String issue(String sessionId)</code> returning a complete <code>Set-Cookie</code> header <b>value</b> for cookie <code>SESSION</code> that is: HttpOnly, Secure, SameSite=Lax, Path=/ . Also add <code>static boolean looksSafe(String headerValue)</code> that returns true only if the value contains all four protections (use contains checks).`,
 starter:`public class SessionIssuer {
     static String issue(String sessionId) {
-        // "SESSION=<id>; ..." — add the four protections
+        // "SESSION=<id>; ...", add the four protections
         return null;
     }
 
@@ -403,7 +403,7 @@ solution:`public class SessionIssuer {
 <li><b>5xx Server error</b>: your side broke. <code>500 Internal Server Error</code>, <code>502 Bad Gateway</code>, <code>503 Service Unavailable</code>, <code>504 Gateway Timeout</code>.</li>
 </ul>
 <p>Two distinctions trip people up. <b>401 vs 403</b>: 401 means "I do not know who you are" (authenticate), 403 means "I know who you are and you still cannot" (authorization). <b>400 vs 422</b>: 400 is unparseable, 422 parsed fine but violates a business rule. And never hide failures behind <code>200</code> with an error in the body: clients, caches, and dashboards all trust the code, so a wrong code is a lie the whole system believes.</p>`,
-docs:[['HTTP status codes — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status'],['Status code registry — IANA','https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml']],
+docs:[['HTTP status codes, MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status'],['Status code registry, IANA','https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml']],
 exs:[{title:'Classify and name codes',
 prompt:`Write class <code>Http</code> with two static methods. <code>String category(int code)</code> returns the family: <code>"informational"</code> for 100&#8211;199, <code>"success"</code> for 200&#8211;299, <code>"redirect"</code> for 300&#8211;399, <code>"client error"</code> for 400&#8211;499, <code>"server error"</code> for 500&#8211;599, else <code>"unknown"</code>. <code>String reason(int code)</code> maps common codes: 200→<code>"OK"</code>, 201→<code>"Created"</code>, 204→<code>"No Content"</code>, 400→<code>"Bad Request"</code>, 401→<code>"Unauthorized"</code>, 403→<code>"Forbidden"</code>, 404→<code>"Not Found"</code>, 409→<code>"Conflict"</code>, 429→<code>"Too Many Requests"</code>, 500→<code>"Internal Server Error"</code>, else <code>"unknown"</code>.`,
 starter:`public class Http {
@@ -492,7 +492,7 @@ part of the request. Either omit it, or return an estimate labelled as one.</li>
 <li><b>Keep the ordering stable and explicit.</b> Pagination over an unspecified order is undefined
 behaviour that happens to work until the query plan changes.</li>
 </ul>`,
-docs:[['Web Linking (RFC 8288)','https://www.rfc-editor.org/rfc/rfc8288'],['Problem Details (RFC 7807)','https://www.rfc-editor.org/rfc/rfc7807'],['API design guide — Google','https://cloud.google.com/apis/design']],
+docs:[['Web Linking (RFC 8288)','https://www.rfc-editor.org/rfc/rfc8288'],['Problem Details (RFC 7807)','https://www.rfc-editor.org/rfc/rfc7807'],['API design guide (Google)','https://cloud.google.com/apis/design']],
 exs:[{title:'Pagination choice & error compliance',
 prompt:`Write class <code>Paging</code> with two static methods. <code>String style(String need)</code>: <code>"stable-large-dataset"</code>→<code>"cursor"</code>, <code>"jump-to-page"</code>→<code>"offset"</code>, else <code>"unknown"</code>. <code>boolean compliantErrors(String contentType)</code>: return true only when errors use the standard <code>"application/problem+json"</code> media type.`,
 starter:`public class Paging {
@@ -550,7 +550,7 @@ hints:['A page shorter than the limit means there is no page after it.','The cur
 <li><b>Give the laggards a name.</b> Migrations complete when someone owns each remaining consumer, not when the deadline passes.</li>
 </ul>
 <p>Internally, the same discipline is what makes expand-and-contract work: add the new field, migrate consumers, remove the old one: three deploys, no version bump, and no flag day.</p>`,
-docs:[['API versioning — Microsoft REST guidelines','https://github.com/microsoft/api-guidelines'],['Semantic Versioning','https://semver.org/'],['Sunset header (RFC 8594)','https://www.rfc-editor.org/rfc/rfc8594']],
+docs:[['API versioning (Microsoft REST guidelines)','https://github.com/microsoft/api-guidelines'],['Semantic Versioning','https://semver.org/'],['Sunset header (RFC 8594)','https://www.rfc-editor.org/rfc/rfc8594']],
 ex:{title:'Version placement & breaking changes',
 prompt:`Write class <code>Versioning</code> with two static methods. <code>String location(String strategy)</code>: <code>"uri"</code>→<code>"/v1/orders"</code>, <code>"header"</code>→<code>"Api-Version: 1"</code>, <code>"media-type"</code>→<code>"application/vnd.acme.v1+json"</code>, else <code>"unknown"</code>. <code>boolean breakingChange(String change)</code>: removing or renaming a field breaks clients: return true for <code>"remove-field"</code> or <code>"rename-field"</code>, false otherwise (e.g. adding a field).`,
 starter:`public class Versioning {

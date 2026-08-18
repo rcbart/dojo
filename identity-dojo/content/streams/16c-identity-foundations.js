@@ -59,16 +59,16 @@ solution:`public class Glossary {
 {id:'idf1',title:'Authentication vs authorization',body:`
 <p>These two words get mixed up constantly. They answer <b>different questions</b>:</p>
 <ul>
-<li><b>Authentication (authn)</b> — <i>who are you?</i> Proving identity (login).</li>
-<li><b>Authorization (authz)</b> — <i>what are you allowed to do?</i> Deciding access, <b>after</b> you're known.</li>
+<li><b>Authentication (authn)</b>: <i>who are you?</i> Proving identity (login).</li>
+<li><b>Authorization (authz)</b>: <i>what are you allowed to do?</i> Deciding access, <b>after</b> you're known.</li>
 </ul>
 <p>The nightclub analogy: <b>authentication</b> is the bouncer checking your ID at the door; <b>authorization</b> is your wristband deciding which rooms you can enter. You authenticate once; you're authorized many times.</p>
 <p>The core nouns:</p>
 <ul>
-<li><b>Identity</b> — the account/entity (a user, or a service/workload).</li>
-<li><b>Principal / Subject</b> — the specific "who" a request is acting as. In tokens this is the <code>sub</code> claim.</li>
-<li><b>Credentials</b> — what proves identity: a password, a private key, a client secret, a certificate.</li>
-<li><b>Factors &amp; MFA</b> — categories of proof: something you <i>know</i> (password), <i>have</i> (phone/security key), <i>are</i> (biometric). Multi-factor combines two+.</li>
+<li><b>Identity</b>: the account/entity (a user, or a service/workload).</li>
+<li><b>Principal / Subject</b>: the specific "who" a request is acting as. In tokens this is the <code>sub</code> claim.</li>
+<li><b>Credentials</b>: what proves identity: a password, a private key, a client secret, a certificate.</li>
+<li><b>Factors &amp; MFA</b>: categories of proof: something you <i>know</i> (password), <i>have</i> (phone/security key), <i>are</i> (biometric). Multi-factor combines two+.</li>
 </ul>
 <p>A request typically carries a credential; the server <b>authenticates</b> it to establish a principal, then <b>authorizes</b> the action against that principal's permissions. Mixing these up is a top source of security bugs, e.g. checking <i>who</i> but never <i>whether they're allowed</i>.</p>
 <div class="codeSample" data-hl>// authentication: verify a credential -> establish the principal
@@ -170,11 +170,11 @@ explains a pile of vocabulary that otherwise arrives unannounced.</p>
 
 <h4>Four things people call "identity" (they are not the same)</h4>
 <ul>
-<li><b>The person</b> — a real human, or a real machine. Exists whether or not any computer knows it.</li>
-<li><b>The identity</b> — the set of facts a system holds about that person. Abstract.</li>
-<li><b>The account</b> — the concrete record in one particular system. One person routinely has many
+<li><b>The person</b>: a real human, or a real machine. Exists whether or not any computer knows it.</li>
+<li><b>The identity</b>: the set of facts a system holds about that person. Abstract.</li>
+<li><b>The account</b>: the concrete record in one particular system. One person routinely has many
 accounts: a work account, a Google account, a customer account. Same person, different accounts.</li>
-<li><b>The identifier</b> — the string that names the account inside that system: a username, an email,
+<li><b>The identifier</b>: the string that names the account inside that system: a username, an email,
 a UUID, an employee number.</li>
 </ul>
 <p>Protocol specs say <b>subject</b> (the entity being described, the <code>sub</code> claim in a JWT)
@@ -183,20 +183,20 @@ and <b>principal</b> (the authenticated entity a system is currently acting for)
 
 <h4>The lifecycle, start to finish</h4>
 <ol>
-<li><b>Identity proofing</b> — establishing that the person is who they claim <i>in the real world</i>.
+<li><b>Identity proofing</b>: establishing that the person is who they claim <i>in the real world</i>.
 Checking a passport, verifying an employment record, confirming an email. This is not authentication;
 it happens once, before any account exists. Getting it wrong means you will perfectly authenticate an
 impostor forever.</li>
-<li><b>Registration / enrollment</b> — creating the account and assigning the identifier.</li>
-<li><b>Credential binding</b> — attaching a way to prove ownership of that account: setting a password,
+<li><b>Registration / enrollment</b>: creating the account and assigning the identifier.</li>
+<li><b>Credential binding</b>: attaching a way to prove ownership of that account: setting a password,
 registering a passkey, issuing a certificate. <b>Binding</b> is the actual link between the person and
 the identifier, and it is the step attackers target: a self-service password reset with a weak email
 check is a binding vulnerability, not an authentication one.</li>
-<li><b>Authentication</b> — every subsequent login. The person presents the bound credential and the
+<li><b>Authentication</b>: every subsequent login. The person presents the bound credential and the
 system confirms it matches. This is the only step most courses discuss.</li>
-<li><b>Ongoing changes ("mover")</b> — the person changes department, role, or name; entitlements must
+<li><b>Ongoing changes ("mover")</b>: the person changes department, role, or name; entitlements must
 follow.</li>
-<li><b>Deprovisioning ("leaver")</b> — the account is disabled and access ends. The unglamorous step
+<li><b>Deprovisioning ("leaver")</b>: the account is disabled and access ends. The unglamorous step
 that audits actually fail on: orphaned accounts belonging to people who left years ago.</li>
 </ol>
 <p>Steps 2, 5 and 6 together are <b>provisioning</b>, and the industry shorthand for the whole arc is
@@ -205,9 +205,9 @@ that audits actually fail on: orphaned accounts belonging to people who left yea
 <h4>Credential vs authenticator</h4>
 <p>These get used interchangeably and should not be. NIST is precise about it:</p>
 <ul>
-<li><b>Authenticator</b> — the <i>thing</i> that does the proving: a password, a phone running an
+<li><b>Authenticator</b>: the <i>thing</i> that does the proving: a password, a phone running an
 authenticator app, a security key, a fingerprint sensor. Something you know, have, or are.</li>
-<li><b>Credential</b> — the <i>binding record</i> that ties an authenticator to an identifier, stored by
+<li><b>Credential</b>: the <i>binding record</i> that ties an authenticator to an identifier, stored by
 the system: the row saying "account alice is proven by this password hash" or "…by this public key."</li>
 </ul>
 <p>So you <i>possess</i> an authenticator; the system <i>stores</i> a credential. When someone says
@@ -236,7 +236,7 @@ ambiguous until you ask <i>which step</i>: how carefully was the person proofed 
 the login (AAL)? Those are different scales for different steps. Second, <b>revocation</b>: "remove
 access" can mean disable the account, unbind a credential, or invalidate a live session, and only the
 lifecycle view makes it obvious those are three separate actions.</p>`,
-docs:[['NIST SP 800-63-3 — Digital Identity Guidelines (overview)','https://pages.nist.gov/800-63-3/sp800-63-3.html'],['NIST SP 800-63A — Enrollment & Identity Proofing','https://pages.nist.gov/800-63-3/sp800-63a.html'],['RFC 7644 — SCIM Protocol','https://www.rfc-editor.org/rfc/rfc7644']],
+docs:[['NIST SP 800-63-3 (Digital Identity Guidelines (overview))','https://pages.nist.gov/800-63-3/sp800-63-3.html'],['NIST SP 800-63A (Enrollment & Identity Proofing)','https://pages.nist.gov/800-63-3/sp800-63a.html'],['RFC 7644 (SCIM Protocol)','https://www.rfc-editor.org/rfc/rfc7644']],
 exs:[
 {title:'Sort the vocabulary: identifier, credential, authenticator, attribute',
 prompt:`Write <code>IdentityTerms</code> with <code>static String classify(String thing)</code> returning: <code>"identifier"</code> for <code>"email"</code> or <code>"username"</code>; <code>"authenticator"</code> for <code>"password"</code>, <code>"passkey"</code> or <code>"fingerprint"</code>; <code>"attribute"</code> for <code>"department"</code> or <code>"manager"</code>; and <code>"unknown"</code> for anything else, including <code>null</code>. Use a <code>switch</code> on the input. Then add <code>static boolean provesOwnership(String thing)</code> returning <code>true</code> only for authenticators, the only category that proves you own the account.`,
@@ -315,13 +315,13 @@ used interchangeably far too often. Separating them makes the rest of the domain
 
 <h4>The three words</h4>
 <ul>
-<li><b>Attribute</b> — a fact <i>at rest</i>, stored in a directory. <code>department = Platform</code>
+<li><b>Attribute</b>: a fact <i>at rest</i>, stored in a directory. <code>department = Platform</code>
 sitting in a database row. It is just data; nobody has vouched for it in transit.</li>
-<li><b>Claim</b> — a fact <i>in transit</i>, asserted by someone. When the IdP puts
+<li><b>Claim</b>: a fact <i>in transit</i>, asserted by someone. When the IdP puts
 <code>"department":"Platform"</code> into a token, the fact becomes a claim: a statement <i>by a
 specific issuer</i>. The word is deliberately humble: a claim is something asserted, and it is worth
 exactly as much as your trust in whoever asserted it.</li>
-<li><b>Assertion</b> — a <i>signed bundle</i> of claims about a subject, issued at a point in time. A
+<li><b>Assertion</b>: a <i>signed bundle</i> of claims about a subject, issued at a point in time. A
 SAML assertion is literally called that; an OIDC ID token is the same concept as a JWT.</li>
 </ul>
 <p>So the pipeline is: <b>attribute</b> (stored) &rarr; selected and asserted as a <b>claim</b> &rarr;
@@ -365,7 +365,7 @@ something if it does not.</p>
 signature on, and never trust an issuer for facts it has no authority over.</b> A token from a valid
 issuer claiming <code>"role":"admin"</code> means nothing if roles are your application's concept and
 the IdP has no business asserting them.</p>`,
-docs:[['RFC 7519 §4 — JWT registered claim names','https://www.rfc-editor.org/rfc/rfc7519#section-4'],['OpenID Connect Core — Standard Claims','https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims'],['IANA — JSON Web Token Claims registry','https://www.iana.org/assignments/jwt/jwt.xhtml']],
+docs:[['RFC 7519 §4 (JWT registered claim names)','https://www.rfc-editor.org/rfc/rfc7519#section-4'],['OpenID Connect Core (Standard Claims)','https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims'],['IANA (JSON Web Token Claims registry)','https://www.iana.org/assignments/jwt/jwt.xhtml']],
 ex:{title:'Claim checks: registered vs custom, and the identity key',
 prompt:`Write <code>Claims</code> with three methods. <code>static boolean isRegistered(String name)</code> returns <code>true</code> for the standard envelope claims <code>iss</code>, <code>sub</code>, <code>aud</code>, <code>exp</code>, <code>iat</code>, <code>nbf</code>, <code>jti</code> and <code>false</code> otherwise (including <code>null</code>); use <code>java.util.Set.of(...)</code> and <code>contains</code>. <code>static String identityKey()</code> returns the one claim you should key user records on. <code>static boolean expired(long exp, long now)</code> returns <code>true</code> when the token is no longer valid, remembering <code>exp</code> is an <b>expiry instant</b>, so a token is expired once <code>now</code> has reached it.`,
 starter:`import java.util.Set;
@@ -467,7 +467,7 @@ email address, which extends the same idea from the identifier to the contact de
 <p>And the caveat worth stating: pairwise stops correlation <i>by identifier</i>. It does nothing about an
 email address, a phone number or a device fingerprint shared between the same two parties. It is one
 control, not a privacy guarantee.</p>`,
-docs:[['OIDC Core — pairwise subject identifiers','https://openid.net/specs/openid-connect-core-1_0.html#PairwiseAlg'],['OIDC Core — sector identifier','https://openid.net/specs/openid-connect-registration-1_0.html#SectorIdentifierValidation'],['NIST SP 800-63C — federation and privacy','https://pages.nist.gov/800-63-3/sp800-63c.html']],
+docs:[['OIDC Core (pairwise subject identifiers)','https://openid.net/specs/openid-connect-core-1_0.html#PairwiseAlg'],['OIDC Core (sector identifier)','https://openid.net/specs/openid-connect-registration-1_0.html#SectorIdentifierValidation'],['NIST SP 800-63C (federation and privacy)','https://pages.nist.gov/800-63-3/sp800-63c.html']],
 ex:{title:'Public or pairwise?',lang:'js',
 run:{call:'subjectType',cases:[
  {name:'a consumer health app',args:['consumer','health',false],expect:'pairwise'},
@@ -579,8 +579,8 @@ endpoint and matched by the <code>kid</code> in the header. If this fails, stop.
 <li><b>Pin the algorithm.</b> Decide in advance that you accept <code>RS256</code> and reject whatever
 the header asks for otherwise. A verifier that obeys the token's own <code>alg</code> field can be
 handed <code>alg:none</code> and talked out of checking at all.</li>
-<li><b>Check <code>iss</code></b> — is this from the issuer I trust?</li>
-<li><b>Check <code>aud</code></b> — is this token meant for <i>me</i>? A valid token for a different
+<li><b>Check <code>iss</code></b>, is this from the issuer I trust?</li>
+<li><b>Check <code>aud</code></b>, is this token meant for <i>me</i>? A valid token for a different
 API is not a valid token for yours. Skipping this is how a token gets replayed across services.</li>
 <li><b>Check <code>exp</code></b> (and <code>nbf</code> if present) against the clock.</li>
 <li><i>Only then</i> read the claims and make an authorization decision.</li>
@@ -653,12 +653,12 @@ cookies apart properly: flags, CSRF, fixation and revocation. This paragraph exi
 something the first time you meet it.
 
 <h4>Two more words this lesson used before defining them</h4>
-<p><b>JWKS</b> — "JSON Web Key Set". When an issuer signs tokens with a private key, verifiers need the
+<p><b>JWKS</b>: "JSON Web Key Set". When an issuer signs tokens with a private key, verifiers need the
 matching <i>public</i> key. Publishing it at a well-known URL is how: a small JSON document listing the
 issuer's current public keys, each with a <code>kid</code> (key id) that the token's header names. A
 verifier fetches it once, caches it, and re-fetches when it sees a <code>kid</code> it does not recognise,
 which is what makes key rotation a non-event. The JOSE stream builds one.</p>
-<p><b>Refresh token</b> — an access token is deliberately short-lived so a leaked one expires quickly, but
+<p><b>Refresh token</b>: an access token is deliberately short-lived so a leaked one expires quickly, but
 sending the user back through login every few minutes is unacceptable. A refresh token is a second,
 longer-lived credential whose only purpose is to obtain a fresh access token, silently, over a back
 channel. It is therefore <b>higher value than the thing it replaces</b>, and the OAuth stream covers what
@@ -666,7 +666,7 @@ follows from that: rotation, reuse detection, and why a bare one in a browser is
 the system.</p>
 <p>Neither is needed to follow the rest of this stream. They appear here because a token lesson cannot
 reasonably avoid naming them, and this course does not leave a term hanging.</p>`,
-docs:[['RFC 7519 — JSON Web Token (JWT)','https://www.rfc-editor.org/rfc/rfc7519'],['RFC 6750 — Bearer Token Usage','https://www.rfc-editor.org/rfc/rfc6750'],['RFC 7662 — OAuth 2.0 Token Introspection','https://www.rfc-editor.org/rfc/rfc7662'],['RFC 9068 — JWT Profile for OAuth 2.0 Access Tokens','https://www.rfc-editor.org/rfc/rfc9068'],['jwt.io — paste a JWT and see it decoded','https://jwt.io/']],
+docs:[['RFC 7519 (JSON Web Token (JWT))','https://www.rfc-editor.org/rfc/rfc7519'],['RFC 6750 (Bearer Token Usage)','https://www.rfc-editor.org/rfc/rfc6750'],['RFC 7662 (OAuth 2.0 Token Introspection)','https://www.rfc-editor.org/rfc/rfc7662'],['RFC 9068 (JWT Profile for OAuth 2.0 Access Tokens)','https://www.rfc-editor.org/rfc/rfc9068'],['jwt.io (paste a JWT and see it decoded)','https://jwt.io/']],
 exs:[
 {title:'Read a JWT: split it and decode the claims',
 prompt:`A JWT is three base64url chunks joined by dots. Write <code>TokenReader</code> with: <code>static String[] parts(String jwt)</code> returning the three pieces; return <code>null</code> if <code>jwt</code> is null or does not split into exactly 3 parts (use <code>split("\\\\.")</code>); and <code>static String claims(String jwt)</code> returning the <b>decoded payload</b> (the middle part) as a String, or <code>null</code> if <code>parts</code> returned null. Decode with <code>java.util.Base64.getUrlDecoder()</code>; note it is the <b>URL</b> decoder, because JWTs use base64url, not plain base64.`,
@@ -738,7 +738,7 @@ revocation turns out to be.</p>
 </ul>
 <p>Two more terms you'll see everywhere:</p>
 <ul>
-<li><b>Bearer token</b> — "whoever <i>bears</i> (holds) it can use it," like cash. So it must be sent over TLS and kept secret. (Sender-constrained tokens, lesson 6, remove this risk.)</li>
+<li><b>Bearer token</b>: "whoever <i>bears</i> (holds) it can use it," like cash. So it must be sent over TLS and kept secret. (Sender-constrained tokens, lesson 6, remove this risk.)</li>
 <li><b>Front channel vs back channel.</b> The <b>front channel</b> goes through the user's browser (redirects, URL parameters): visible to the user, so never put secrets there. The <b>back channel</b> is a direct server-to-server call (the app's backend to the auth server): private, where secrets and tokens are safely exchanged. OAuth deliberately uses both (next stream).</li>
 </ul>
 <div class="codeSample" data-hl>// a token is presented on each request in the Authorization header
@@ -840,7 +840,7 @@ with. Most real systems end up in the middle on purpose: short-lived stateless t
 window is small, plus a stateful denylist for the small number of credentials that must die immediately.
 That is not indecision; it is buying revocation only where you actually need it, and paying the lookup only
 on that path.</p>`,
-docs:[['MDN — Authorization header','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization'],['RFC 6750 — Bearer Token Usage','https://www.rfc-editor.org/rfc/rfc6750']],
+docs:[['MDN, Authorization header','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization'],['RFC 6750, Bearer Token Usage','https://www.rfc-editor.org/rfc/rfc6750']],
 ex:{title:'Bearer header: build and parse',
 prompt:`Write <code>Bearer</code> with: <code>static String header(String token)</code> returning the header <b>value</b> <code>"Bearer " + token</code>; and <code>static String parse(String header)</code> that returns the token from a value like <code>"Bearer abc.def.ghi"</code>; return <code>null</code> if <code>header</code> is null or does not <code>startsWith("Bearer ")</code>, otherwise the substring after <code>"Bearer "</code>.`,
 starter:`public class Bearer {
@@ -871,19 +871,19 @@ names</i>. Learn the boxes once here and the protocol streams become translation
 
 <h4>The boxes</h4>
 <ul>
-<li><b>The subject</b> — the human (or workload) the whole exchange is about. In OAuth, when the
+<li><b>The subject</b>: the human (or workload) the whole exchange is about. In OAuth, when the
 subject is also the one granting permission, the spec calls them the <b>resource owner</b>: the person
 who <i>owns</i> the data an app wants and is therefore the only one who can authorise access to it.</li>
-<li><b>The app the user is using</b> — wants to log the user in, or to call an API for them. OAuth and
+<li><b>The app the user is using</b>: wants to log the user in, or to call an API for them. OAuth and
 OIDC call it the <b>client</b>; OIDC also calls it the <b>relying party (RP)</b> because it relies on
 someone else's authentication; SAML calls it the <b>service provider (SP)</b>.</li>
-<li><b>The authority</b> — holds the accounts, authenticates people, and issues signed statements.
+<li><b>The authority</b>: holds the accounts, authenticates people, and issues signed statements.
 SAML calls it the <b>identity provider (IdP)</b>; OAuth calls it the <b>authorization server (AS)</b>.
 Real products are usually both at once: Okta, Entra ID, Keycloak, Auth0, Google.</li>
-<li><b>The API being protected</b> — OAuth calls it the <b>resource server</b>. It holds the data,
+<li><b>The API being protected</b>: OAuth calls it the <b>resource server</b>. It holds the data,
 accepts access tokens, and enforces scopes. SAML has no equivalent, because SAML is about logging into
 applications, not about calling APIs.</li>
-<li><b>The signed statement</b> — SAML says <b>assertion</b> (XML), OIDC says <b>ID token</b> (a JWT),
+<li><b>The signed statement</b>: SAML says <b>assertion</b> (XML), OIDC says <b>ID token</b> (a JWT),
 OAuth says <b>access token</b>. Same idea, different envelope and different job.</li>
 </ul>
 
@@ -911,10 +911,10 @@ somewhere else, and all the API gets is a token to verify.</p>
 <p>An app cannot verify anything from an authority it has never heard of, so the two are wired together
 in advance. Two halves:</p>
 <ul>
-<li><b>Client registration</b> — the app is registered <i>at</i> the authority, receiving a
+<li><b>Client registration</b>: the app is registered <i>at</i> the authority, receiving a
 <code>client_id</code>, possibly a secret, and a list of allowed redirect URIs. This is the authority
 learning about the app.</li>
-<li><b>Discovery / metadata</b> — the app learns about the authority. OIDC publishes a discovery
+<li><b>Discovery / metadata</b>: the app learns about the authority. OIDC publishes a discovery
 document at <code>/.well-known/openid-configuration</code> listing every endpoint plus a
 <code>jwks_uri</code> holding the public signing keys; SAML publishes an equivalent metadata XML file
 containing the IdP's certificate.</li>
@@ -922,7 +922,7 @@ containing the IdP's certificate.</li>
 <p>Those public keys are the concrete thing that makes verification possible, which is exactly what
 the trust lessons build on. Wherever a later lesson says "the RP verifies the token," it means: fetch
 the keys from that published location, and check the signature against them.</p>`,
-docs:[['RFC 6749 §1.1 — OAuth 2.0 roles','https://www.rfc-editor.org/rfc/rfc6749#section-1.1'],['OpenID Connect Core — Terminology','https://openid.net/specs/openid-connect-core-1_0.html#Terminology'],['OIDC Discovery','https://openid.net/specs/openid-connect-discovery-1_0.html']],
+docs:[['RFC 6749 §1.1, OAuth 2.0 roles','https://www.rfc-editor.org/rfc/rfc6749#section-1.1'],['OpenID Connect Core, Terminology','https://openid.net/specs/openid-connect-core-1_0.html#Terminology'],['OIDC Discovery','https://openid.net/specs/openid-connect-discovery-1_0.html']],
 ex:{title:'Translate the cast between protocols',
 prompt:`Write <code>Actors</code> with <code>static String oauthName(String samlName)</code> translating SAML vocabulary to OAuth/OIDC: <code>"IdentityProvider"</code> becomes <code>"AuthorizationServer"</code>, <code>"ServiceProvider"</code> becomes <code>"Client"</code>, <code>"Assertion"</code> becomes <code>"IDToken"</code>, <code>"Principal"</code> becomes <code>"ResourceOwner"</code>, and anything else (including <code>null</code>) returns <code>"unmapped"</code>. Then <code>static boolean issuesTokens(String role)</code>, true only for <code>"AuthorizationServer"</code>: exactly one actor mints tokens, and everyone else only verifies or presents them.`,
 starter:`public class Actors {
@@ -1035,7 +1035,7 @@ SSO": SAML is a protocol that implements federation, which <i>delivers</i> SSO. 
 password": SSO means one <i>login event</i>; the credential could be a passkey and there may be no
 password anywhere. "Federation gives users one identity": it gives them one <i>authority</i>; they
 still have an account at each app, now populated from that authority.</p>`,
-docs:[['OIDC Discovery','https://openid.net/specs/openid-connect-discovery-1_0.html'],['RFC 6749 §1 — OAuth 2.0 is delegated authorization','https://www.rfc-editor.org/rfc/rfc6749#section-1'],['RFC 8693 — OAuth 2.0 Token Exchange (delegation vs impersonation)','https://www.rfc-editor.org/rfc/rfc8693#section-1.1'],['Okta — What is federated identity?','https://www.okta.com/identity-101/what-is-federated-identity/']],
+docs:[['OIDC Discovery','https://openid.net/specs/openid-connect-discovery-1_0.html'],['RFC 6749 §1 (OAuth 2.0 is delegated authorization)','https://www.rfc-editor.org/rfc/rfc6749#section-1'],['RFC 8693: OAuth 2.0 Token Exchange (delegation vs impersonation)','https://www.rfc-editor.org/rfc/rfc8693#section-1.1'],['Okta (What is federated identity?)','https://www.okta.com/identity-101/what-is-federated-identity/']],
 ex:{title:'Trust an issuer, find its keys',
 prompt:`Write <code>Federation</code> with: <code>static boolean issuerTrusted(String iss, java.util.Set&lt;String&gt; trustedIssuers)</code> returning whether <code>iss</code> is non-null and in <code>trustedIssuers</code>; and <code>static String jwksUri(String issuer)</code> returning the issuer's discovery keys URL: the <code>issuer</code> with any trailing <code>"/"</code> removed, then <code>"/.well-known/jwks.json"</code> appended (e.g. <code>"https://idp.example.com"</code> → <code>"https://idp.example.com/.well-known/jwks.json"</code>).`,
 starter:`import java.util.*;
@@ -1066,15 +1066,15 @@ public class Federation {
 {id:'idf4',title:'Clients: public vs confidential (private)',body:`
 <p>In OAuth/OIDC the app requesting tokens is the <b>client</b>. The single most important property of a client is whether it can <b>keep a secret</b>:</p>
 <ul>
-<li><b>Confidential client</b> (a.k.a. <b>private client</b>) — runs somewhere users can't extract its secrets: a <b>server-side backend</b>. It can authenticate to the authorization server with a <b>client secret</b> (or better, a key/certificate). Example: a Spring Boot backend, a daemon.</li>
-<li><b>Public client</b> — runs where the code/secret is visible to the user: a <b>SPA</b> (JavaScript in the browser), a <b>mobile app</b>, a desktop app. It <b>cannot</b> hold a secret (anyone can read it), so it authenticates differently: it proves itself per-request with <b>PKCE</b> (next stream) instead of a static secret.</li>
+<li><b>Confidential client</b> (a.k.a. <b>private client</b>), runs somewhere users can't extract its secrets: a <b>server-side backend</b>. It can authenticate to the authorization server with a <b>client secret</b> (or better, a key/certificate). Example: a Spring Boot backend, a daemon.</li>
+<li><b>Public client</b>: runs where the code/secret is visible to the user: a <b>SPA</b> (JavaScript in the browser), a <b>mobile app</b>, a desktop app. It <b>cannot</b> hold a secret (anyone can read it), so it authenticates differently: it proves itself per-request with <b>PKCE</b> (next stream) instead of a static secret.</li>
 </ul>
 <p>Why it matters: the flows and protections differ. Confidential clients may use flows that rely on a secret (like <b>client credentials</b>, for machine-to-machine); public clients must use <b>Authorization Code + PKCE</b> and never embed a secret.</p>
 <p><b>How confidential clients authenticate</b> (from weakest to strongest):</p>
 <ul>
-<li><code>client_secret_basic</code> / <code>client_secret_post</code> — a shared secret in the request (HTTP Basic or form field).</li>
-<li><code>private_key_jwt</code> — the client signs a short JWT with its <b>private key</b>; the server verifies with the client's public key. No shared secret to leak.</li>
-<li><code>tls_client_auth</code> (mTLS) — the client presents a <b>client certificate</b> during the TLS handshake. Strongest; ties the token to the client (lesson 6 / the S2S stream).</li>
+<li><code>client_secret_basic</code> / <code>client_secret_post</code>, a shared secret in the request (HTTP Basic or form field).</li>
+<li><code>private_key_jwt</code>, the client signs a short JWT with its <b>private key</b>; the server verifies with the client's public key. No shared secret to leak.</li>
+<li><code>tls_client_auth</code> (mTLS), the client presents a <b>client certificate</b> during the TLS handshake. Strongest; ties the token to the client (lesson 6 / the S2S stream).</li>
 </ul>
 <div class="codeSample" data-hl>// confidential client: HTTP Basic client authentication
 Authorization: Basic base64(client_id ":" client_secret)
@@ -1126,7 +1126,7 @@ produces a <code>client_id</code> (a public identifier, not a secret) and record
 the authorization server will send codes to. That allowlist is doing real security work: it is what stops an
 attacker starting a flow with your <code>client_id</code> and having the code delivered to their own
 server.</p>`,
-docs:[['RFC 6749 §2.1 — Client Types','https://www.rfc-editor.org/rfc/rfc6749#section-2.1'],['OAuth 2.0 client authentication','https://oauth.net/2/client-authentication/']],
+docs:[['RFC 6749 §2.1 (Client Types)','https://www.rfc-editor.org/rfc/rfc6749#section-2.1'],['OAuth 2.0 client authentication','https://oauth.net/2/client-authentication/']],
 ex:{title:'Classify the client, build its auth',
 prompt:`Write <code>ClientAuth</code> with: <code>static boolean isConfidential(String clientType)</code> returning whether <code>clientType</code> equals <code>"confidential"</code> (use <code>"confidential".equals(clientType)</code> so a null is safe); and <code>static String basicClientAuth(String clientId, String clientSecret)</code> that builds the confidential client's HTTP Basic value: base64-encode <code>clientId + ":" + clientSecret</code> with <code>java.util.Base64.getEncoder()</code> and return <code>"Basic " + encoded</code>.`,
 starter:`public class ClientAuth {
@@ -1156,11 +1156,11 @@ solution:`public class ClientAuth {
 authentication versus delegated authorization, then acting for a user across services, and acting as a
 user in support.</i></p>
 <ul>
-<li><b>Scope</b> — a named permission the app requests, e.g. <code>photos:read</code> or <code>calendar:write</code>. Scopes are a <b>space-separated</b> list. They bound what the resulting token can do (least privilege).</li>
-<li><b>Consent</b> — the authorization server shows you what the app is asking for ("Acme wants to read your photos") and you approve. Consent is why delegation is safe: <i>you</i> decide.</li>
-<li><b>Least privilege</b> — request only the scopes you need. A photo-printing app should ask for <code>photos:read</code>, not <code>photos:write</code> or your contacts.</li>
+<li><b>Scope</b>: a named permission the app requests, e.g. <code>photos:read</code> or <code>calendar:write</code>. Scopes are a <b>space-separated</b> list. They bound what the resulting token can do (least privilege).</li>
+<li><b>Consent</b>: the authorization server shows you what the app is asking for ("Acme wants to read your photos") and you approve. Consent is why delegation is safe: <i>you</i> decide.</li>
+<li><b>Least privilege</b>: request only the scopes you need. A photo-printing app should ask for <code>photos:read</code>, not <code>photos:write</code> or your contacts.</li>
 </ul>
-<p><b>Delegation vs impersonation</b> — a subtle but important distinction:</p>
+<p><b>Delegation vs impersonation</b>: a subtle but important distinction:</p>
 <ul>
 <li><b>Delegation</b>: the token says "app X, acting for user Y, may do Z." Both identities are present: the API knows a client is acting for a user.</li>
 <li><b>Impersonation</b>: the app simply <i>becomes</i> user Y: the API can't tell it isn't Y. More authority, more risk, and audited differently. (Token exchange, in the S2S stream, formalizes both.)</li>
@@ -1223,7 +1223,7 @@ apps their users have granted.</p>
 that needs it. It reduces the damage when your app is compromised, it raises consent rates because the
 screen is less alarming, and it is the one habit that makes the rest of this stream easier to reason
 about.</p>`,
-docs:[['RFC 6749 §3.3 — Access Token Scope','https://www.rfc-editor.org/rfc/rfc6749#section-3.3'],['oauth.net — Scopes','https://oauth.net/2/scope/']],
+docs:[['RFC 6749 §3.3, Access Token Scope','https://www.rfc-editor.org/rfc/rfc6749#section-3.3'],['oauth.net, Scopes','https://oauth.net/2/scope/']],
 ex:{title:'Parse scopes, enforce least privilege',
 prompt:`Write <code>Scopes</code> with: <code>static java.util.Set&lt;String&gt; parse(String scope)</code> that turns a space-separated scope string into a set: <code>trim()</code> then <code>split(" ")</code>, collect into a <code>HashSet</code>; and <code>static boolean covers(java.util.Set&lt;String&gt; granted, String required)</code> returning whether <code>granted.contains(required)</code>. (Split on a single space; scopes are space-delimited.)`,
 starter:`import java.util.*;
@@ -1318,7 +1318,7 @@ are worth knowing: issue <b>app-specific passwords</b> so the real credential is
 the protocol onto <b>OAuth with SASL</b>, which is how modern mail clients escaped the problem.</p>
 <p><b>The default:</b> redirect. Reach for credential forwarding only when there is genuinely no
 browser in the flow, and then treat the credential path as high-risk code.</p>`,
-docs:[['RFC 6749 §4.3 — Resource Owner Password Credentials (and its warnings)','https://www.rfc-editor.org/rfc/rfc6749#section-4.3'],['OAuth 2.0 Security BCP — why ROPC is deprecated','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics#name-resource-owner-password-cre'],['RFC 8252 — OAuth for Native Apps (use a system browser, not a webview)','https://www.rfc-editor.org/rfc/rfc8252'],['RFC 4513 — LDAP Authentication Methods (bind)','https://www.rfc-editor.org/rfc/rfc4513']],
+docs:[['RFC 6749 §4.3: Resource Owner Password Credentials (and its warnings)','https://www.rfc-editor.org/rfc/rfc6749#section-4.3'],['OAuth 2.0 Security BCP (why ROPC is deprecated)','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics#name-resource-owner-password-cre'],['RFC 8252: OAuth for Native Apps (use a system browser, not a webview)','https://www.rfc-editor.org/rfc/rfc8252'],['RFC 4513 (LDAP Authentication Methods (bind))','https://www.rfc-editor.org/rfc/rfc4513']],
 ex:{title:'Which style is this integration?',
 prompt:`Write <code>AuthDelegation</code> with <code>static String style(String method)</code> returning <code>"forwarding"</code> for <code>"ldap-bind"</code>, <code>"radius"</code> and <code>"ropc"</code>; <code>"redirect"</code> for <code>"saml"</code> and <code>"oidc"</code>; and <code>"unknown"</code> otherwise, including <code>null</code>. Then <code>static boolean appSeesPassword(String method)</code>, true only for the forwarding style, the single question that decides whether your application is inside the credential blast radius.`,
 starter:`public class AuthDelegation {
@@ -1381,14 +1381,14 @@ give app your password         app gets a token, never the password
 
 <h4>The three moving parts</h4>
 <ul>
-<li><b>Scope</b> — the named bound on what the resulting token may do:
+<li><b>Scope</b>: the named bound on what the resulting token may do:
 <code>photos:read</code>, <code>calendar:write</code>. The app <i>requests</i> scopes; the authority
 decides what to <i>grant</i>, and the two can differ. Least privilege lives here: a printing service
 asks for <code>photos:read</code>, never <code>photos:write</code>.</li>
-<li><b>Consent</b> — the authority shows the user what is being requested and the user approves. This
+<li><b>Consent</b>: the authority shows the user what is being requested and the user approves. This
 is the step that makes the whole thing legitimate: the user, not the app, decides. It is also why
 consent screens must name the app and list the scopes in language a human can evaluate.</li>
-<li><b>The grant</b> — the recorded fact that user Y approved app X for scopes Z. It persists after the
+<li><b>The grant</b>: the recorded fact that user Y approved app X for scopes Z. It persists after the
 token expires, which is what lets a refresh token get a new access token silently, and what the user is
 deleting when they hit "remove access."</li>
 </ul>
@@ -1420,7 +1420,7 @@ carries no reliable statement about who the user is, was minted for a different 
 token the app obtained for an entirely different user. Applications that "log the user in" by accepting
 an access token are exploitable. <b>OpenID Connect</b> exists to close exactly this gap by adding an
 ID token (an authentication statement) alongside OAuth's authorization.</p>`,
-docs:[['RFC 6749 §1 — OAuth 2.0: delegated authorization','https://www.rfc-editor.org/rfc/rfc6749#section-1'],['RFC 6749 §3.3 — Access token scope','https://www.rfc-editor.org/rfc/rfc6749#section-3.3'],['RFC 7009 — OAuth 2.0 Token Revocation','https://www.rfc-editor.org/rfc/rfc7009'],['OAuth 2.0 Security BCP','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics']],
+docs:[['RFC 6749 §1 (OAuth 2.0: delegated authorization)','https://www.rfc-editor.org/rfc/rfc6749#section-1'],['RFC 6749 §3.3 (Access token scope)','https://www.rfc-editor.org/rfc/rfc6749#section-3.3'],['RFC 7009 (OAuth 2.0 Token Revocation)','https://www.rfc-editor.org/rfc/rfc7009'],['OAuth 2.0 Security BCP','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics']],
 ex:{title:'Enforce a scope, and fail closed',
 prompt:`Write <code>Delegation</code> with three methods. <code>static java.util.Set&lt;String&gt; granted(String scope)</code> splits a space-separated scope string into a set, returning an <b>empty set</b> when <code>scope</code> is null or blank (never null, so callers cannot forget to check). <code>static boolean allowed(String scope, String required)</code> returns whether the required scope is present. <code>static boolean canAct(String scope, String required, boolean userOwnsResource)</code> returns true only when <b>both</b> the scope is granted <b>and</b> the user actually owns the resource: a scope bounds the app, it does not grant the user new rights.`,
 starter:`import java.util.*;
@@ -1487,9 +1487,9 @@ who is acting. Both facts survive.</li>
 <h4>Delegation vs impersonation, precisely</h4>
 <p>Two shapes, and the difference is whether the acting party is visible downstream:</p>
 <ul>
-<li><b>Delegation</b> — the token says "Ada, being acted for by orders-service." Both identities
+<li><b>Delegation</b>: the token says "Ada, being acted for by orders-service." Both identities
 present. The API can apply Ada's rights <i>and</i> know a service did it. Attribution survives.</li>
-<li><b>Impersonation</b> — the token simply says "Ada." The downstream cannot tell a service is
+<li><b>Impersonation</b>: the token simply says "Ada." The downstream cannot tell a service is
 involved. More authority, and the audit trail now claims Ada did something she never touched.</li>
 </ul>
 <p>OAuth Token Exchange encodes delegation with an <b>act</b> claim, which nests to record the whole
@@ -1528,7 +1528,7 @@ a worse token.</p>
 <p>The mechanics (the token-exchange grant, request parameters and response) are covered in the
 service-to-service stream. What matters here is the shape of the problem: <b>every hop needs its own
 audience, the subject must survive, and the acting party must be recorded.</b></p>`,
-docs:[['RFC 8693 — OAuth 2.0 Token Exchange','https://www.rfc-editor.org/rfc/rfc8693'],['RFC 8693 §4.1 — the act (actor) claim','https://www.rfc-editor.org/rfc/rfc8693#section-4.1'],['RFC 8693 §4.4 — the may_act claim','https://www.rfc-editor.org/rfc/rfc8693#section-4.4'],['NIST SP 800-207 — Zero Trust Architecture','https://csrc.nist.gov/pubs/sp/800/207/final']],
+docs:[['RFC 8693 (OAuth 2.0 Token Exchange)','https://www.rfc-editor.org/rfc/rfc8693'],['RFC 8693 §4.1 (the act (actor) claim)','https://www.rfc-editor.org/rfc/rfc8693#section-4.1'],['RFC 8693 §4.4 (the may_act claim)','https://www.rfc-editor.org/rfc/rfc8693#section-4.4'],['NIST SP 800-207 (Zero Trust Architecture)','https://csrc.nist.gov/pubs/sp/800/207/final']],
 ex:{title:'Delegation or impersonation? And may the actor act?',
 prompt:`Model the two shapes. Write <code>OnBehalfOf</code> with: <code>static String mode(String subject, String actor)</code> returning <code>"invalid"</code> if <code>subject</code> is null, <code>"impersonation"</code> if <code>actor</code> is null (nobody recorded as acting), and <code>"delegation"</code> otherwise. <code>static boolean mayAct(String allowedActor, String actor)</code> returns true only when both are non-null and equal: the may_act check, which must fail closed. <code>static String auditLine(String subject, String actor)</code> returns <code>subject + " (via " + actor + ")"</code> for delegation, or just <code>subject</code> when there is no actor to record.`,
 starter:`public class OnBehalfOf {
@@ -1574,9 +1574,9 @@ data access, and regulators treat it that way.</p>
 <h4>The two subjects</h4>
 <p>Everything good here follows from one modelling decision: <b>keep two identities, always</b>.</p>
 <ul>
-<li><b>Authenticated subject</b> — who actually logged in and holds the session. The support engineer.
+<li><b>Authenticated subject</b>: who actually logged in and holds the session. The support engineer.
 Never changes during the session.</li>
-<li><b>Effective subject</b> — whose data is being viewed and whose permissions apply. The customer.</li>
+<li><b>Effective subject</b>: whose data is being viewed and whose permissions apply. The customer.</li>
 </ul>
 <p>The naive implementation collapses these into one: mint the <i>customer</i> a session and hand it to
 the engineer. It is a few lines of code and it destroys everything downstream. The audit log now says
@@ -1604,7 +1604,7 @@ normally do.</p>
 <ul>
 <li><b>Read-only by default.</b> The overwhelming majority of support sessions only need to look.
 Writing should be a separate, rarer, more-approved capability.</li>
-<li><b>Deny the dangerous set always</b> — changing passwords or email, adding MFA factors, deleting the
+<li><b>Deny the dangerous set always</b>: changing passwords or email, adding MFA factors, deleting the
 account, exporting all data, viewing full payment details. Each is an account-takeover primitive.</li>
 <li><b>Never act as a privileged account.</b> Admins, other support staff, service accounts: excluded,
 or the feature becomes a ladder.</li>
@@ -1636,7 +1636,7 @@ HIGHEST RISK  write act-as     — separate approval, narrow allowlist, notify</
 <p>And one alternative that beats all of them when it fits: <b>ask the user to share their session</b>:
 a screen share, or a support link they generate themselves. Consent given directly by the person,
 in the moment, is stronger than any control you can build on your side.</p>`,
-docs:[['RFC 8693 §4.1 — the act (actor) claim','https://www.rfc-editor.org/rfc/rfc8693#section-4.1'],['OWASP — Logging & audit cheat sheet','https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html'],['NIST SP 800-53 AC-6 — Least Privilege','https://csrc.nist.gov/projects/risk-management/sp800-53-controls/release-search#!/control?version=5.1&number=AC-6']],
+docs:[['RFC 8693 §4.1 (the act (actor) claim)','https://www.rfc-editor.org/rfc/rfc8693#section-4.1'],['OWASP (Logging & audit cheat sheet)','https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html'],['NIST SP 800-53 AC-6 (Least Privilege)','https://csrc.nist.gov/projects/risk-management/sp800-53-controls/release-search#!/control?version=5.1&number=AC-6']],
 ex:{title:'A safe acting-as session',lang:'js',
 run:{call:'canDo',cases:[{name:'password change is always denied',args:['change-password',true],expect:false},{name:'email change is always denied',args:['change-email',true],expect:false},{name:'account deletion is always denied',args:['delete-account',true],expect:false},{name:'data export is always denied',args:['export-data',true],expect:false},{name:'an unapproved write is refused',args:['write:note',false],expect:false},{name:'an approved write is allowed',args:['write:note',true],expect:true},{name:'reads are the normal case',args:['view-orders',false],expect:true}]},
 prompt:`Write three functions. <code>permitted(actorRole, targetIsPrivileged)</code> returns <code>true</code> only when <code>actorRole</code> is <code>"support"</code> and the target is <b>not</b> privileged. <code>canDo(action, writeApproved)</code> returns <code>false</code> for the always-denied actions <code>"change-password"</code>, <code>"change-email"</code>, <code>"delete-account"</code> and <code>"export-data"</code>; otherwise it returns <code>writeApproved</code> when the action starts with <code>"write:"</code>, and <code>true</code> for anything else. <code>audit(authSubject, effectiveSubject, action)</code> returns <code>authSubject + " acting as " + effectiveSubject + ": " + action</code>.`,
@@ -1743,7 +1743,7 @@ and expensive error. The multi-tenancy lesson takes it properly.</p>
 answer until you know. For workforce the answer is yes, phishing-resistant, mandated. For consumers it is
 "offer it, incentivise it, trigger it on risk, and never let it block a purchase". Same question, same
 protocols, opposite conclusions.</p>`,
-docs:[['Gartner — CIAM','https://www.gartner.com/en/information-technology/glossary/customer-identity-and-access-management-ciam'],['NIST SP 800-63 — digital identity guidelines','https://pages.nist.gov/800-63-3/'],['GDPR — Art. 17 right to erasure','https://gdpr-info.eu/art-17-gdpr/']],
+docs:[['Gartner (CIAM)','https://www.gartner.com/en/information-technology/glossary/customer-identity-and-access-management-ciam'],['NIST SP 800-63 (digital identity guidelines)','https://pages.nist.gov/800-63-3/'],['GDPR (Art. 17 right to erasure)','https://gdpr-info.eu/art-17-gdpr/']],
 ex:{title:'Which discipline governs this decision?',lang:'js',
 run:{call:'population',cases:[
  {name:'deprovisioning within minutes of termination',args:['deprovision-on-termination'],expect:'workforce'},
@@ -1863,7 +1863,7 @@ mTLS between two services, removing one flat network segment.</li>
 <p>The service-to-service stream covers the machinery: mTLS, SPIFFE workload identity, mesh policy.
 The idea to carry there is this one: <b>identity replaced the network as the thing access decisions are
 made on.</b></p>`,
-docs:[['NIST SP 800-207 — Zero Trust Architecture','https://csrc.nist.gov/pubs/sp/800/207/final'],['NIST SP 800-207 §2 — the seven tenets','https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-207.pdf'],['CISA — Zero Trust Maturity Model','https://www.cisa.gov/zero-trust-maturity-model'],['Google BeyondCorp','https://cloud.google.com/beyondcorp']],
+docs:[['NIST SP 800-207 (Zero Trust Architecture)','https://csrc.nist.gov/pubs/sp/800/207/final'],['NIST SP 800-207 §2 (the seven tenets)','https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-207.pdf'],['CISA (Zero Trust Maturity Model)','https://www.cisa.gov/zero-trust-maturity-model'],['Google BeyondCorp','https://cloud.google.com/beyondcorp']],
 ex:{title:'A policy decision point that fails closed',
 prompt:`Write <code>ZeroTrust</code> with <code>static boolean permit(String subject, String requiredScope, java.util.Set&lt;String&gt; grantedScopes, boolean policyEngineReachable)</code> returning <code>true</code> only when <b>all</b> of these hold: the policy engine is reachable, <code>subject</code> is non-null (an unauthenticated request is never permitted), <code>grantedScopes</code> is non-null, and it contains <code>requiredScope</code>. Anything else denies. Then <code>static boolean trustNetwork(String sourceIp)</code>: return <code>false</code> unconditionally, whatever the address, because network location is never identity.`,
 starter:`import java.util.*;
@@ -1904,13 +1904,13 @@ precise about what you give up for that convenience, because most of the damage 
 <p>An API key is a <b>long-lived, opaque bearer token identifying an application rather than a
 person</b>. Every word there is load-bearing:</p>
 <ul>
-<li><b>Long-lived</b> — typically no expiry at all. Unlike an access token measured in minutes, a key
+<li><b>Long-lived</b>: typically no expiry at all. Unlike an access token measured in minutes, a key
 issued in 2019 is probably still valid.</li>
-<li><b>Opaque</b> — a random string that must be looked up. No claims, no signature, nothing to verify
+<li><b>Opaque</b>: a random string that must be looked up. No claims, no signature, nothing to verify
 offline.</li>
-<li><b>Bearer</b> — whoever holds it can use it. There is no proof of possession, no audience, no
+<li><b>Bearer</b>: whoever holds it can use it. There is no proof of possession, no audience, no
 binding to a caller.</li>
-<li><b>Identifies an application</b> — there is no user in the picture, so "who did this?" can only
+<li><b>Identifies an application</b>: there is no user in the picture, so "who did this?" can only
 ever be answered as "whichever integration holds this key."</li>
 </ul>
 <p>Compare it against an OAuth access token and the trade is clear: keys win on simplicity and
@@ -1944,7 +1944,7 @@ without breaking five of them, so it never gets rotated.</li>
 <p>If you are issuing keys, a handful of choices make the difference between a manageable credential and
 an incident:</p>
 <ol>
-<li><b>Give every key an identifiable prefix</b> — <code>sk_live_</code>, <code>ghp_</code>. It costs
+<li><b>Give every key an identifiable prefix</b>: <code>sk_live_</code>, <code>ghp_</code>. It costs
 nothing and lets secret scanners spot the key in a public repo and alert you before an attacker
 notices. It also tells an engineer at a glance what they are holding.</li>
 <li><b>Store only a hash.</b> Treat keys like passwords: hash at rest, compare on lookup. Your database
@@ -1968,7 +1968,7 @@ it, because then it is not a secret at all.</p>
 <p>The modern replacement for the long-lived key in cloud and CI is <b>workload identity federation</b>:
 the workload proves what it is and exchanges that for a short-lived token, so no static credential
 exists to leak. That is the next lesson but one.</p>`,
-docs:[['OWASP — Secrets Management Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html'],['GitHub — Secret scanning partner program','https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning'],['RFC 6750 §2.3 — why credentials do not belong in URIs','https://www.rfc-editor.org/rfc/rfc6750#section-2.3']],
+docs:[['OWASP (Secrets Management Cheat Sheet)','https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html'],['GitHub (Secret scanning partner program)','https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning'],['RFC 6750 §2.3 (why credentials do not belong in URIs)','https://www.rfc-editor.org/rfc/rfc6750#section-2.3']],
 ex:{title:'Issue and check an API key safely',
 prompt:`Write <code>ApiKeys</code> with three methods. <code>static boolean looksLikeOurKey(String key)</code> returns true only when <code>key</code> is non-null and starts with the prefix <code>"sk_live_"</code>, the prefix that lets secret scanners find leaked keys. <code>static boolean validPlacement(String header, String queryParam)</code> returns true only when the key arrived in the <code>header</code> (non-null) and <code>queryParam</code> is null, because a key in a URL leaks through logs and Referer headers. <code>static boolean matches(String presentedHash, String storedHash)</code> compares two hashes, returning false if either is null; you store a hash, never the key itself.`,
 starter:`public class ApiKeys {
@@ -2061,9 +2061,9 @@ the full secret to a log.</li>
 </ol>
 
 <h4>Two flavours worth distinguishing</h4>
-<p><b>Stored capabilities</b> — a random token in a database row recording what it grants and when it
+<p><b>Stored capabilities</b>: a random token in a database row recording what it grants and when it
 expires. Instantly revocable, requires a lookup. This is what password resets should be.</p>
-<p><b>Signed capabilities</b> — the parameters are in the URL along with an HMAC signature, so the
+<p><b>Signed capabilities</b>: the parameters are in the URL along with an HMAC signature, so the
 server verifies without storing anything. Cloud presigned URLs work this way. Stateless and scalable,
 but <i>not revocable</i> before expiry, which is exactly the structured-versus-opaque trade-off from the
 token lesson showing up again in a URL.</p>
@@ -2076,7 +2076,7 @@ https://files.example.com/report.pdf
 // change any parameter and the signature no longer matches</div>
 <p>Pick stored when you need revocation and an audit trail; pick signed when you need scale and can
 live with "valid until it expires."</p>`,
-docs:[['W3C TAG — Good Practices for Capability URLs','https://www.w3.org/TR/capability-urls/'],['MDN — Referrer-Policy','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy'],['OWASP — Forgot Password Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html']],
+docs:[['W3C TAG (Good Practices for Capability URLs)','https://www.w3.org/TR/capability-urls/'],['MDN (Referrer-Policy)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy'],['OWASP (Forgot Password Cheat Sheet)','https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html']],
 ex:{title:'Is this capability token strong enough?',lang:'js',
 run:{call:'strongEnough',cases:[{name:'128 bits of base64url-ish entropy',args:['a'.repeat(22)],expect:true},{name:'a short guessable token',args:['abc123'],expect:false},{name:'an empty token',args:[''],expect:false},{name:'a sequential id is not a capability',args:['1042'],expect:false}]},
 prompt:`Write <code>function strongEnough(token)</code> that returns <code>true</code> only when the token is at least <b>22 characters</b>, roughly 128 bits once base64url-encoded. In a capability URL the link <i>is</i> the credential, so anything guessable is an open door.`,
@@ -2102,8 +2102,8 @@ as identity rather than as cloud trivia.</p>
 <p>A <b>role</b> is a named bundle of permissions that nobody owns. It has two policies, and confusing
 them causes most of the pain:</p>
 <ul>
-<li><b>The trust policy</b> — <i>who is allowed to assume this role.</i> An identity question.</li>
-<li><b>The permission policy</b> — <i>what the role can do once assumed.</i> An authorization
+<li><b>The trust policy</b>: <i>who is allowed to assume this role.</i> An identity question.</li>
+<li><b>The permission policy</b>: <i>what the role can do once assumed.</i> An authorization
 question.</li>
 </ul>
 <p>Assuming the role returns a temporary credential (typically valid for an hour), and the caller's
@@ -2166,7 +2166,7 @@ require: nothing at all                  // ANY repo on GitHub, anywhere</div>
 federated trust, <b>the issuer check tells you the token is real; the subject check tells you it is
 the right one.</b> You need both, exactly as with <code>iss</code> and <code>aud</code> on any other
 token.</p>`,
-docs:[['AWS — The confused deputy problem and external IDs','https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html'],['AWS — Configuring OpenID Connect for CI providers','https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html'],['GitHub — Security hardening with OpenID Connect','https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect'],['RFC 8693 — OAuth 2.0 Token Exchange','https://www.rfc-editor.org/rfc/rfc8693']],
+docs:[['AWS: The confused deputy problem and external IDs','https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html'],['AWS: Configuring OpenID Connect for CI providers','https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html'],['GitHub (Security hardening with OpenID Connect)','https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect'],['RFC 8693 (OAuth 2.0 Token Exchange)','https://www.rfc-editor.org/rfc/rfc8693']],
 ex:{title:'Guard a role assumption',
 prompt:`Write <code>RoleAssumption</code> with three methods. <code>static boolean trusted(String callerId, java.util.Set&lt;String&gt; allowedCallers)</code> is the trust-policy check: true only when both arguments are non-null and the set contains the caller. <code>static boolean externalIdOk(String expected, String presented)</code> is the confused-deputy guard: true only when <code>expected</code> is non-null and equals <code>presented</code>; an unset expectation must never mean "anyone." <code>static boolean subjectAllowed(String requiredSub, String tokenSub)</code> requires an <b>exact</b> match of the federated token's subject, and returns false if either is null, so a trust policy that names only the issuer cannot let every repository in.`,
 starter:`import java.util.*;
@@ -2189,7 +2189,7 @@ solution:`import java.util.*;
 
 public class RoleAssumption {
     static boolean trusted(String callerId, Set<String> allowedCallers) {
-        // the trust policy answers "who may assume me" — an allow-list, nothing else
+        // the trust policy answers "who may assume me", an allow-list, nothing else
         return callerId != null && allowedCallers != null && allowedCallers.contains(callerId);
     }
     static boolean externalIdOk(String expected, String presented) {
@@ -2206,16 +2206,16 @@ public class RoleAssumption {
 {id:'idf6',title:'Validating a token & sender-constrained tokens',body:`
 <p>A resource server must <b>validate</b> every token before trusting it. Signature aside (covered in the JOSE stream), the mandatory claim checks are:</p>
 <ul>
-<li><b>iss (issuer)</b> — was it minted by an issuer you trust?</li>
-<li><b>aud (audience)</b> — is <i>this</i> API the intended recipient? A token for service A must be rejected by service B.</li>
-<li><b>exp (expiration)</b> — is it still within its lifetime? (and <b>nbf</b> — not before.)</li>
-<li><b>scope / roles</b> — does it permit this specific action? (lesson 5)</li>
+<li><b>iss (issuer)</b>: was it minted by an issuer you trust?</li>
+<li><b>aud (audience)</b>: is <i>this</i> API the intended recipient? A token for service A must be rejected by service B.</li>
+<li><b>exp (expiration)</b>, is it still within its lifetime? (and <b>nbf</b>, not before.)</li>
+<li><b>scope / roles</b>: does it permit this specific action? (lesson 5)</li>
 </ul>
 <p>Skipping <b>aud</b> is a classic mistake: a token leaked from one service could otherwise be replayed against another.</p>
 <p><b>Bearer vs sender-constrained tokens.</b> A plain <b>bearer</b> token is like cash: whoever steals it can use it. <b>Sender-constrained</b> (a.k.a. proof-of-possession) tokens are bound to a key only the legitimate client holds, so a stolen token is useless to a thief:</p>
 <ul>
-<li><b>mTLS-bound tokens</b> (RFC 8705) — the token is tied to the client's TLS certificate; the API checks the caller's cert matches.</li>
-<li><b>DPoP</b> (RFC 9449) — the client signs each request with a key; the token carries that key's thumbprint. Common for public clients (SPAs).</li>
+<li><b>mTLS-bound tokens</b> (RFC 8705), the token is tied to the client's TLS certificate; the API checks the caller's cert matches.</li>
+<li><b>DPoP</b> (RFC 9449), the client signs each request with a key; the token carries that key's thumbprint. Common for public clients (SPAs).</li>
 </ul>
 <p>Default to short-lived bearer tokens over TLS; reach for sender-constraint when tokens are high-value or the client is exposed.</p>
 <div class="codeSample" data-hl>// the non-negotiable claim checks, in order
@@ -2259,7 +2259,7 @@ about to validate.</p>
 <p>Every check above answers "is this token good?". None answers "is the party presenting it the party it
 was issued to?", because a bearer token has no answer to give. That is the gap sender-constraining
 closes, and the Advanced OAuth stream takes it apart in detail.`,
-docs:[['RFC 9068 — JWT access tokens','https://www.rfc-editor.org/rfc/rfc9068'],['RFC 8705 — mTLS-bound tokens','https://www.rfc-editor.org/rfc/rfc8705'],['RFC 9449 — DPoP','https://www.rfc-editor.org/rfc/rfc9449']],
+docs:[['RFC 9068 (JWT access tokens)','https://www.rfc-editor.org/rfc/rfc9068'],['RFC 8705 (mTLS-bound tokens)','https://www.rfc-editor.org/rfc/rfc8705'],['RFC 9449 (DPoP)','https://www.rfc-editor.org/rfc/rfc9449']],
 ex:{title:'The token validation checklist',
 prompt:`Write <code>TokenCheck</code> with <code>static boolean valid(String iss, String aud, long expEpoch, String expectedIss, String expectedAud, long nowEpoch)</code> that returns <code>true</code> only if: <code>expectedIss.equals(iss)</code>, <b>and</b> <code>expectedAud.equals(aud)</code>, <b>and</b> the token is not expired (<code>expEpoch &gt; nowEpoch</code>). Return <code>false</code> as soon as any check fails.`,
 starter:`public class TokenCheck {
@@ -2297,11 +2297,11 @@ solution:`public class TokenCheck {
 
 <h4>Three things that must be arranged in advance</h4>
 <ul>
-<li><b>Keys</b> — the app must know the IdP's public keys, which it fetches from a metadata or JWKS URL rather than having them pasted into config, so rotation does not require a deployment.</li>
-<li><b>Identifiers</b> — the app and the IdP must agree on what names the user. A stable subject identifier, not an email.</li>
-<li><b>Attributes</b> — which claims the IdP will release, since an app that needs a department or a group only gets it if the IdP is configured to send it. In enterprise deployments this negotiation is most of the integration work, and it is where "SSO is set up but nobody has the right permissions" comes from.</li>
+<li><b>Keys</b>: the app must know the IdP's public keys, which it fetches from a metadata or JWKS URL rather than having them pasted into config, so rotation does not require a deployment.</li>
+<li><b>Identifiers</b>: the app and the IdP must agree on what names the user. A stable subject identifier, not an email.</li>
+<li><b>Attributes</b>: which claims the IdP will release, since an app that needs a department or a group only gets it if the IdP is configured to send it. In enterprise deployments this negotiation is most of the integration work, and it is where "SSO is set up but nobody has the right permissions" comes from.</li>
 </ul>`,
-docs:[['Identity federation — Wikipedia','https://en.wikipedia.org/wiki/Federated_identity'],['SSO & federation basics','https://www.cloudflare.com/learning/access-management/what-is-federated-identity/']],
+docs:[['Identity federation (Wikipedia)','https://en.wikipedia.org/wiki/Federated_identity'],['SSO & federation basics','https://www.cloudflare.com/learning/access-management/what-is-federated-identity/']],
 ex:{title:'Who plays which role?',
 prompt:`Write class <code>Federation</code> with <code>static String role(String party)</code>: <code>"idp"</code>→<code>"vouches for the user"</code>, <code>"sp"</code>→<code>"relies on the idp"</code>, and <code>"unknown"</code> for anything else.`,
 starter:`public class Federation {
@@ -2324,23 +2324,23 @@ hints:['A two-case switch plus a default covers it.','The identity provider vouc
 {id:'idffed2',title:'Federation from the ground up: why & how',body:`
 <p>We met federation in plain English (the passport analogy). Now the ground-up version: <b>why</b> it exists and <b>how</b> it is actually built: the base every OAuth, OIDC and SAML lesson assumes.</p>
 <!--flow:idffed2-federation-->
-<h4>Federation: the canonical triangle — step by step</h4>
-<div class="flowDia"><svg viewBox="0 0 680 312" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Federation: the canonical triangle"><defs><marker id="idffed2-federation-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="idffed2-federation-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="idffed2-federation-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="idffed2-federation-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="54" x2="74" y2="300" class="fdLife"/><line x1="340" y1="54" x2="340" y2="300" class="fdLife"/><line x1="606" y1="54" x2="606" y2="300" class="fdLife"/><rect x="34.300000000000004" y="8" width="79.39999999999999" height="46" rx="8" class="fdActor"/><text x="74" y="35.5" class="fdActorT">Browser</text><rect x="301" y="8" width="78" height="46" rx="8" class="fdActor"/><text x="340" y="27" class="fdActorT">SP</text><text x="340" y="42" class="fdActorS">the app you want</text><rect x="567" y="8" width="78" height="46" rx="8" class="fdActor"/><text x="606" y="27" class="fdActorT">IdP</text><text x="606" y="42" class="fdActorS">who vouches for you</text><line x1="77" y1="102" x2="335" y2="102" stroke="var(--accent)" class="fdArrow" marker-end="url(#idffed2-federation-ah-front)"/><text x="222" y="93" class="fdLabel">access the app</text><circle cx="92" cy="102" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="105.5" class="fdNumT" style="fill:var(--accent)">1</text><line x1="343" y1="132" x2="601" y2="132" stroke="var(--accent)" class="fdArrow" marker-end="url(#idffed2-federation-ah-front)"/><text x="488" y="123" class="fdLabel">redirect: “please authenticate this person”</text><circle cx="358" cy="132" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="358" y="135.5" class="fdNumT" style="fill:var(--accent)">2</text><rect x="343" y="149" width="323" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="512.5" y="164" class="fdSelfT">user authenticates ONCE, here — and only here</text><circle cx="343" cy="160" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="343" y="163.5" class="fdNumT" style="fill:var(--muted)">3</text><line x1="603" y1="198" x2="345" y2="198" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#idffed2-federation-ah-front)"/><text x="458" y="189" class="fdLabel">signed assertion about the user</text><circle cx="588" cy="198" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="588" y="201.5" class="fdNumT" style="fill:var(--accent)">4</text><rect x="181.8" y="215" width="316.4" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="348" y="230" class="fdSelfT">trusts the signature — never sees a password</text><circle cx="181.8" cy="226" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="181.8" y="229.5" class="fdNumT" style="fill:var(--muted)">5</text><line x1="337" y1="264" x2="79" y2="264" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#idffed2-federation-ah-front)"/><text x="192" y="255" class="fdLabel">session — you are in</text><circle cx="322" cy="264" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="322" y="267.5" class="fdNumT" style="fill:var(--accent)">6</text><text x="340" y="282" class="fdNote">Every SSO protocol — SAML, OIDC — is a dialect of this one shape.</text></svg></div>
+<h4>Federation: the canonical triangle: step by step</h4>
+<div class="flowDia"><svg viewBox="0 0 680 312" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Federation: the canonical triangle"><defs><marker id="idffed2-federation-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="idffed2-federation-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="idffed2-federation-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="idffed2-federation-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="54" x2="74" y2="300" class="fdLife"/><line x1="340" y1="54" x2="340" y2="300" class="fdLife"/><line x1="606" y1="54" x2="606" y2="300" class="fdLife"/><rect x="34.300000000000004" y="8" width="79.39999999999999" height="46" rx="8" class="fdActor"/><text x="74" y="35.5" class="fdActorT">Browser</text><rect x="301" y="8" width="78" height="46" rx="8" class="fdActor"/><text x="340" y="27" class="fdActorT">SP</text><text x="340" y="42" class="fdActorS">the app you want</text><rect x="567" y="8" width="78" height="46" rx="8" class="fdActor"/><text x="606" y="27" class="fdActorT">IdP</text><text x="606" y="42" class="fdActorS">who vouches for you</text><line x1="77" y1="102" x2="335" y2="102" stroke="var(--accent)" class="fdArrow" marker-end="url(#idffed2-federation-ah-front)"/><text x="222" y="93" class="fdLabel">access the app</text><circle cx="92" cy="102" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="105.5" class="fdNumT" style="fill:var(--accent)">1</text><line x1="343" y1="132" x2="601" y2="132" stroke="var(--accent)" class="fdArrow" marker-end="url(#idffed2-federation-ah-front)"/><text x="488" y="123" class="fdLabel">redirect: “please authenticate this person”</text><circle cx="358" cy="132" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="358" y="135.5" class="fdNumT" style="fill:var(--accent)">2</text><rect x="343" y="149" width="323" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="512.5" y="164" class="fdSelfT">user authenticates ONCE, here, and only here</text><circle cx="343" cy="160" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="343" y="163.5" class="fdNumT" style="fill:var(--muted)">3</text><line x1="603" y1="198" x2="345" y2="198" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#idffed2-federation-ah-front)"/><text x="458" y="189" class="fdLabel">signed assertion about the user</text><circle cx="588" cy="198" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="588" y="201.5" class="fdNumT" style="fill:var(--accent)">4</text><rect x="181.8" y="215" width="316.4" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="348" y="230" class="fdSelfT">trusts the signature, never sees a password</text><circle cx="181.8" cy="226" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="181.8" y="229.5" class="fdNumT" style="fill:var(--muted)">5</text><line x1="337" y1="264" x2="79" y2="264" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#idffed2-federation-ah-front)"/><text x="192" y="255" class="fdLabel">session, you are in</text><circle cx="322" cy="264" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="322" y="267.5" class="fdNumT" style="fill:var(--accent)">6</text><text x="340" y="282" class="fdNote">Every SSO protocol: SAML, OIDC, is a dialect of this one shape.</text></svg></div>
 <ol class="fdSteps">
 <li><b>Browser → SP:</b> access the app <i>(front channel)</i></li>
 <li><b>SP → IdP:</b> redirect: “please authenticate this person” <i>(front channel)</i></li>
-<li><b>IdP:</b> user authenticates ONCE, here — and only here</li>
+<li><b>IdP:</b> user authenticates ONCE, here, and only here</li>
 <li><b>IdP → SP:</b> signed assertion about the user <i>(front channel)</i></li>
-<li><b>SP:</b> trusts the signature — never sees a password</li>
-<li><b>SP → Browser:</b> session — you are in <i>(front channel)</i></li>
+<li><b>SP:</b> trusts the signature, never sees a password</li>
+<li><b>SP → Browser:</b> session, you are in <i>(front channel)</i></li>
 </ol>
 <!--/flow:idffed2-federation-->
 <p><b>Why it is needed.</b> If every app stores its own passwords you get password sprawl and reuse, no single place to disable a leaver, no way for a partner or customer to bring an identity they already have, and a password honeypot in every app. Federation removes all four by letting apps <b>trust one authority</b> to authenticate the user.</p>
 <p><b>How it is implemented.</b> Three moving parts and three protocols:</p>
 <ul>
-<li><b>The authority</b> — the <b>Identity Provider (IdP)</b> authenticates the user and issues a <b>signed proof</b>: an <b>ID token</b> (a JWT) in OpenID Connect, or a signed XML <b>assertion</b> in SAML. <b>OAuth 2.0</b> underneath carries authorization (API access).</li>
-<li><b>The app</b> — the <b>Relying Party (RP) / Service Provider (SP)</b> receives that proof and <b>verifies</b> it rather than checking a password.</li>
-<li><b>The wiring</b> — <b>metadata / discovery</b> tells the RP where the IdP's endpoints and <b>public keys</b> live (a <code>jwks_uri</code> for OIDC, metadata XML for SAML), so the RP can find and check everything.</li>
+<li><b>The authority</b>: the <b>Identity Provider (IdP)</b> authenticates the user and issues a <b>signed proof</b>: an <b>ID token</b> (a JWT) in OpenID Connect, or a signed XML <b>assertion</b> in SAML. <b>OAuth 2.0</b> underneath carries authorization (API access).</li>
+<li><b>The app</b>: the <b>Relying Party (RP) / Service Provider (SP)</b> receives that proof and <b>verifies</b> it rather than checking a password.</li>
+<li><b>The wiring</b>: <b>metadata / discovery</b> tells the RP where the IdP's endpoints and <b>public keys</b> live (a <code>jwks_uri</code> for OIDC, metadata XML for SAML), so the RP can find and check everything.</li>
 </ul>
 <p>The safe shape is <b>SP-initiated</b>: the app starts the login by redirecting to the IdP, the user authenticates, and the IdP redirects back with a proof the app verifies and turns into a session. Because the app started it, it can correlate the response to its own request, a property the trust deep-dive builds on next.</p>
 
@@ -2357,7 +2357,7 @@ hints:['A two-case switch plus a default covers it.','The identity provider vouc
 <li><b>Certificate and key rotation</b> at the IdP breaks every relying party that pinned instead of discovering, the most common cause of a federation outage that "nobody changed anything" precedes.</li>
 <li><b>Session lifetime mismatch.</b> The app's session can outlive the IdP's, so a user disabled centrally stays signed in locally until the app's session expires. Short app sessions, or a revocation signal, are the answers.</li>
 </ul>`,
-docs:[['Federated identity — Wikipedia','https://en.wikipedia.org/wiki/Federated_identity'],['OIDC Core','https://openid.net/specs/openid-connect-core-1_0.html'],['SAML 2.0 overview','https://docs.oasis-open.org/security/saml/v2.0/']],
+docs:[['Federated identity (Wikipedia)','https://en.wikipedia.org/wiki/Federated_identity'],['OIDC Core','https://openid.net/specs/openid-connect-core-1_0.html'],['SAML 2.0 overview','https://docs.oasis-open.org/security/saml/v2.0/']],
 ex:{title:'Name the moving parts',
 prompt:`Write class <code>Federation</code> with <code>static String piece(String role)</code>: <code>"authority"</code>→<code>"IdP"</code>, <code>"app"</code>→<code>"relying party"</code>, <code>"proof"</code>→<code>"signed token or assertion"</code>, <code>"keys"</code>→<code>"published at JWKS or metadata"</code>, else <code>"unknown"</code>.`,
 starter:`public class Federation {
@@ -2383,7 +2383,7 @@ hints:['Federation removes password sprawl by making apps trust one authority.',
 <p>Federation only works if the relying party (RP) can be sure a proof really came from the identity provider (IdP), is meant for <i>this</i> app, and is fresh. That certainty is <b>trust</b>, and it is not a feeling; it is <b>configuration plus cryptography</b>. This lesson ties together the pieces you meet across the OAuth, SAML and PKI streams.</p>
 <p><b>1. Identification (set up once, out of band).</b> The RP <b>registers</b> with the IdP. In OAuth/OIDC it receives a <code>client_id</code> and, for a confidential client, a <code>client_secret</code>, and registers exact redirect URIs. In SAML the two sides exchange <b>metadata</b> containing an <b>X.509 certificate</b>. This is where the parties learn who each other are.</p>
 <p><b>2. Keys (the core asymmetry).</b> The IdP signs proofs with its <b>private</b> key and <b>publishes the matching public key</b>, at a <b>JWKS</b> endpoint (OIDC) or in SAML metadata. The RP verifies signatures with that public key. <b>Public keys are shared; private keys never leave their owner</b>, which is exactly why a forger who can read the public key still cannot mint a valid signature. For certificates, verification may walk a <b>PKI chain</b> to a trusted <b>CA</b>.</p>
-<p><b>2b. The trust anchor — where the regress stops.</b> Verification is a chain of "I believe this because of that," and every chain has to terminate somewhere in a thing you believe <i>because you decided to</i>. That terminus is the <b>trust anchor</b>: a key or certificate accepted as authoritative by configuration rather than by proof. It is the one link nothing else vouches for.</p>
+<p><b>2b. The trust anchor, where the regress stops.</b> Verification is a chain of "I believe this because of that," and every chain has to terminate somewhere in a thing you believe <i>because you decided to</i>. That terminus is the <b>trust anchor</b>: a key or certificate accepted as authoritative by configuration rather than by proof. It is the one link nothing else vouches for.</p>
 <p>The same idea wears different clothes in each stream: in OIDC the anchor is the <b>issuer URL plus its JWKS keys</b> you configured; in SAML it is the <b>IdP certificate in the metadata</b> you loaded; in PKI it is a <b>root CA certificate</b> in your truststore, self-signed by definition: a root is trusted <i>because it is in the store</i>, not because its signature proves anything. This is why "just fetch the keys from whatever URL the token names" is fatal: it lets the token choose its own anchor, and an attacker will happily point you at keys they control. <b>The anchor must be pinned by you, in advance, out of band.</b> Everything downstream is only as trustworthy as that one deliberate decision.</p>
 <p><b>3. How strongly the client proves itself</b> runs on a ladder: nothing (public client + PKCE) → a shared <code>client_secret</code> → <b>private_key_jwt</b> (the client signs with its own private key; no shared secret) → <b>mTLS</b>. Asymmetric methods are stronger because there is no shared secret to leak.</p>
 <p><b>4. Verification (enforced on every message).</b> A valid signature is necessary but not sufficient. The RP must also check the <b>issuer</b> (<code>iss</code> is the expected IdP), the <b>audience</b> (<code>aud</code>/recipient names this RP, so a proof minted for another app is rejected), <b>freshness</b> (<code>exp</code>/<code>NotOnOrAfter</code> and <code>nbf</code>, with small clock skew), and <b>anti-replay/correlation</b> (the <code>nonce</code> ties an ID token to this login; <code>state</code> blocks CSRF; SAML tracks assertion IDs).</p>
@@ -2411,8 +2411,8 @@ hints:['Trust is configuration (registration) plus cryptography (verifying a sig
 <p>Everything so far assumes a central authority (an IdP) vouches for you. <b>Decentralized identity</b>, also called self-sovereign identity (SSI), flips that: <b>you</b> hold your own credentials in a digital wallet and present them directly, with no IdP in the middle at sign-in time.</p>
 <p>Two building blocks:</p>
 <ul>
-<li><b>DID (Decentralized Identifier)</b> — an identifier you control (a URI like <code>did:example:123</code>) that resolves to a <b>DID document</b> containing your public keys. It is not issued or ownable by any one company.</li>
-<li><b>Verifiable Credential (VC)</b> — a tamper-evident, cryptographically signed claim (e.g. "over 18", "employed by Acme") <b>issued</b> by an authority, <b>held</b> by you in a wallet, and <b>presented</b> to whoever needs it.</li>
+<li><b>DID (Decentralized Identifier)</b>: an identifier you control (a URI like <code>did:example:123</code>) that resolves to a <b>DID document</b> containing your public keys. It is not issued or ownable by any one company.</li>
+<li><b>Verifiable Credential (VC)</b>: a tamper-evident, cryptographically signed claim (e.g. "over 18", "employed by Acme") <b>issued</b> by an authority, <b>held</b> by you in a wallet, and <b>presented</b> to whoever needs it.</li>
 </ul>
 <p>The model is a <b>trust triangle</b>: the <b>issuer</b> signs and gives you a credential; the <b>holder</b> (you) stores it in a wallet; the <b>verifier</b> checks the issuer signature, without calling the issuer. The standout property is <b>selective disclosure</b> (and zero-knowledge proofs): prove you are over 18 <i>without</i> revealing your birthdate.</p>
 <p>Versus federation: there is no central login and no IdP that sees every sign-in, which improves privacy and resilience. The caveat: the ecosystem (wallets, revocation, standards) is still maturing, so most production identity today is still federated, but VCs are showing up in digital IDs and know-your-customer flows.</p>
@@ -2521,7 +2521,7 @@ federation problem, now at ecosystem scale.</li>
 </ul>
 <p>Worth watching rather than adopting for most systems today. The habit to take away regardless is the
 predicate one: <b>ask for the narrowest fact that answers your question.</b></p>`,
-docs:[['OpenID for Verifiable Credential Issuance (OID4VCI)','https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html'],['OpenID for Verifiable Presentations (OID4VP)','https://openid.net/specs/openid-4-verifiable-presentations-1_0.html'],['ISO/IEC 18013-5 — mobile driving licence (mDL)','https://www.iso.org/standard/69084.html'],['W3C — Verifiable Credentials Data Model 2.0','https://www.w3.org/TR/vc-data-model-2.0/']],
+docs:[['OpenID for Verifiable Credential Issuance (OID4VCI)','https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html'],['OpenID for Verifiable Presentations (OID4VP)','https://openid.net/specs/openid-4-verifiable-presentations-1_0.html'],['ISO/IEC 18013-5, mobile driving licence (mDL)','https://www.iso.org/standard/69084.html'],['W3C, Verifiable Credentials Data Model 2.0','https://www.w3.org/TR/vc-data-model-2.0/']],
 ex:{title:'Ask for the predicate, not the data',
 prompt:`Write <code>Wallet</code> with three methods. <code>static String minimalClaim(String question)</code> returns the narrowest claim that answers it: <code>"age_over_18"</code> for <code>"is-adult"</code>, <code>"country"</code> for <code>"is-resident"</code>, <code>"has_licence"</code> for <code>"may-drive"</code>, and <code>"unknown"</code> otherwise including null, never <code>"birthdate"</code>. <code>static boolean disclosureMinimal(java.util.Set&lt;String&gt; disclosed, String required)</code> is true only when exactly the required claim was disclosed and nothing else. <code>static boolean presentationBound(String kbAud, String verifier, String kbNonce, String expectedNonce)</code> requires both to match, rejecting nulls.`,
 starter:`import java.util.*;

@@ -25,7 +25,7 @@ catch (IOException e) { throw new IllegalStateException("failed"); }  // cause L
 
 <h4>Reading a stack trace</h4>
 <p>Top line is what was thrown and where; each line below is the caller beneath it; <code>Caused by:</code> sections read the same way, and the <b>deepest</b> cause is usually the real one. Frames marked <code>... 24 more</code> are shared with the trace above. The habit that saves the most time: scroll to the last <code>Caused by</code> first, then find the topmost frame in <i>your</i> package; that is the line to open.</p>`,
-docs:[['Exceptions — Oracle Trail','https://docs.oracle.com/javase/tutorial/essential/exceptions/index.html'],['Checked vs unchecked — Baeldung','https://www.baeldung.com/java-checked-unchecked-exceptions']],
+docs:[['Exceptions, Oracle Trail','https://docs.oracle.com/javase/tutorial/essential/exceptions/index.html'],['Checked vs unchecked, Baeldung','https://www.baeldung.com/java-checked-unchecked-exceptions']],
 ex:{title:'Safe parsing',
 prompt:`Write <code>SafeParse</code> with <code>static int toIntOr(String s, int fallback)</code>: return the parsed int, or <code>fallback</code> if <code>s</code> is null or not a valid number. Catch only <code>NumberFormatException</code>; handle null with a plain check, not a catch.`,
 starter:`public class SafeParse {
@@ -113,7 +113,7 @@ Log where you handle it, not where you pass it on.</li>
 the normal path. A lookup that legitimately finds nothing should return <code>Optional</code>, not
 throw.</li>
 </ul>`,
-docs:[['Throwing exceptions — Oracle','https://docs.oracle.com/javase/tutorial/essential/exceptions/throwing.html'],['Custom exceptions — Baeldung','https://www.baeldung.com/java-new-custom-exception']],
+docs:[['Throwing exceptions, Oracle','https://docs.oracle.com/javase/tutorial/essential/exceptions/throwing.html'],['Custom exceptions, Baeldung','https://www.baeldung.com/java-new-custom-exception']],
 ex:{title:'Domain exception',
 prompt:`Create a <b>checked</b> exception <code>InsufficientFundsException extends Exception</code> with a message constructor. Then write class <code>Wallet</code> with private <code>long cents</code>, <code>void add(long amount)</code>, and <code>void spend(long amount) throws InsufficientFundsException</code> that throws it (with an informative message) when amount exceeds the balance.`,
 starter:`class InsufficientFundsException extends Exception {
@@ -182,7 +182,7 @@ class Session implements AutoCloseable {
 
 <h4>Where this generalises</h4>
 <p>Every long-lived scarce thing has this shape: file handles, sockets, database connections, locks, thread pools, tracing spans. The failure mode is always the same: a path that skips the release, invisible at low volume, fatal under load as the pool exhausts. Connection leaks in particular usually trace to a connection obtained outside a try-with-resources and returned only on the happy path. When you see <code>Timeout waiting for connection from pool</code>, this construct is what was missing.</p>`,
-docs:[['try-with-resources — Oracle','https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html'],['AutoCloseable — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html']],
+docs:[['try-with-resources, Oracle','https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html'],['AutoCloseable, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html']],
 ex:{title:'An auto-closing resource',
 prompt:`Write class <code>Connection implements AutoCloseable</code> with <code>boolean open</code> set true in the constructor, a method <code>String query(String sql)</code> that throws <code>IllegalStateException</code> if not open (else returns <code>"OK: " + sql</code>), and <code>close()</code> setting open to false. Then write <code>class Demo</code> with <code>static String run()</code> that uses <b>try-with-resources</b> to create a Connection, run one query, and return its result.`,
 starter:`class Connection implements AutoCloseable {
@@ -282,7 +282,7 @@ you lose the actual cause. try-with-resources closes in reverse order and attach
 <p><b>Never catch and ignore <code>InterruptedException</code>.</b> Catching it clears the interrupt flag,
 which destroys a cancellation signal the rest of the system is relying on. Restore it with
 <code>Thread.currentThread().interrupt()</code> or let it propagate.</p>`,
-docs:[['Multi-catch — Oracle','https://docs.oracle.com/javase/tutorial/essential/exceptions/catch.html'],['Exception chaining — Baeldung','https://www.baeldung.com/java-chained-exceptions']],
+docs:[['Multi-catch, Oracle','https://docs.oracle.com/javase/tutorial/essential/exceptions/catch.html'],['Exception chaining, Baeldung','https://www.baeldung.com/java-chained-exceptions']],
 ex:{title:'Wrap and translate',
 prompt:`Create unchecked <code>StorageException extends RuntimeException</code> with a <code>(String message, Throwable cause)</code> constructor. Write <code>class UserStore</code> with <code>String load(String id)</code> that calls the provided <code>raw(id)</code> helper inside a try, and uses <b>multi-catch</b> for <code>java.io.IOException | InterruptedException</code> to wrap either into a <code>StorageException</code> that keeps the cause. Do not swallow anything.`,
 starter:`class StorageException extends RuntimeException {
@@ -290,7 +290,7 @@ starter:`class StorageException extends RuntimeException {
 }
 
 public class UserStore {
-    // pretend low-level API — leave as is
+    // pretend low-level API, leave as is
     private String raw(String id) throws java.io.IOException, InterruptedException {
         return "user-" + id;
     }
@@ -345,7 +345,7 @@ public class UserStore {
 <h4>The boundary rule</h4>
 <p>Domain exceptions belong to the domain. Letting <code>SQLException</code> escape a repository, or a JSON parsing error escape a client, leaks the implementation into every caller and freezes your ability to change it: replacing the database then changes the exception every layer catches. Translate at the boundary: catch the technology-specific exception, wrap it in a domain one <b>with the original as the cause</b>, and let it travel. Spring's <code>DataAccessException</code> hierarchy is precisely this pattern applied to persistence, which is a good argument for it and a good model to copy.</p>
 <p>Finally, cost: filling in a stack trace is the expensive part of throwing. For an exception used as ordinary control flow at high frequency (rarely a good idea, but sometimes unavoidable in parsing), a constructor calling <code>super(msg, cause, false, false)</code> disables suppression and the stack trace, which makes it about as cheap as a return value.</p>`,
-docs:[['Creating exception classes — Oracle','https://docs.oracle.com/javase/tutorial/essential/exceptions/creating.html'],['Chained exceptions','https://docs.oracle.com/javase/tutorial/essential/exceptions/chained.html']],
+docs:[['Creating exception classes (Oracle)','https://docs.oracle.com/javase/tutorial/essential/exceptions/creating.html'],['Chained exceptions','https://docs.oracle.com/javase/tutorial/essential/exceptions/chained.html']],
 exs:[{title:'Writing an unchecked exception',
 prompt:`Create an unchecked exception <code>InsufficientFundsException</code> that <code>extends RuntimeException</code>, holds a <code>long shortfall</code> field, has a constructor <code>(String message, long shortfall)</code> that calls <code>super(message)</code> and stores the field, and exposes <code>long getShortfall()</code>. Then in class <code>Account</code>, method <code>void withdraw(long amount, long balance)</code> must <code>throw new InsufficientFundsException(...)</code> when <code>amount &gt; balance</code>, passing the shortfall <code>amount - balance</code>.`,
 starter:`public class Account {

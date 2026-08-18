@@ -1,4 +1,4 @@
-# 10 — Debugging & production practices
+# 10: Debugging & production practices
 
 *Running containers well, and fixing them when they break. Concepts + a lab. ~25 min. Requires
 Docker.*
@@ -8,7 +8,7 @@ Docker.*
 Getting a container to run is easy; running it *reliably* and diagnosing it when it fails is the
 practitioner skill. This module covers the production habits and the debugging toolkit.
 
-## Healthchecks — is the app actually working?
+## Healthchecks: is the app actually working?
 
 A container can be "running" while the app inside is broken (deadlocked, not listening). A
 **healthcheck** teaches Docker to test the app itself:
@@ -21,7 +21,7 @@ HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
 `docker ps` then shows `healthy`/`unhealthy`, and orchestrators use it to restart or route around
 bad containers. This is the direct ancestor of Kubernetes **liveness/readiness probes**.
 
-## Restart policies — survive crashes and reboots
+## Restart policies: survive crashes and reboots
 
 ```bash
 docker run -d --restart unless-stopped --name api myapi
@@ -36,7 +36,7 @@ docker run -d --restart unless-stopped --name api myapi
 
 For long-running services use `unless-stopped` or `always`.
 
-## Resource limits — don't let one container eat the host
+## Resource limits: don't let one container eat the host
 
 ```bash
 docker run -d --memory 512m --cpus 1.5 --name api myapi
@@ -48,7 +48,7 @@ docker run -d --memory 512m --cpus 1.5 --name api myapi
 Without limits, a runaway container can starve everything else. Setting requests/limits is mandatory
 in production, and, again, a core Kubernetes concept (Module: resources).
 
-## Logging — where output goes
+## Logging: where output goes
 
 Containers should log to **stdout/stderr** (not files inside the container). Docker captures that,
 and you read it with `docker logs`. In production, a logging **driver** ships those logs to a central
@@ -127,4 +127,4 @@ docker rm -f boom web
 
 ---
 
-**Next:** [10b — Runtime security & resource limits →](./13-runtime-security-limits.md)
+**Next:** [10b: Runtime security & resource limits →](./13-runtime-security-limits.md)

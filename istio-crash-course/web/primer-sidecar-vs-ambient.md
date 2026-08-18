@@ -1,4 +1,4 @@
-# Primer — Sidecar vs Ambient (the two ways Istio runs)
+# Primer: Sidecar vs Ambient (the two ways Istio runs)
 
 *A 6-minute orientation so the rest of the course isn't confusing. Istio has two "modes" for where
 its proxies live. You'll learn sidecar mode first (it's the clearest), and meet ambient properly in
@@ -10,7 +10,7 @@ Istio needs proxies on your traffic to do its job. There are two designs for *wh
 sit*. Same goals (encryption, routing, resilience, metrics), but different plumbing and different
 cost.
 
-## Sidecar mode — a proxy inside every pod
+## Sidecar mode: a proxy inside every pod
 
 The classic model. Alongside every copy of every service, Istio injects a **full Envoy proxy** into
 the same pod. (A "pod" is Kubernetes' smallest unit; think "a running copy of your service.")
@@ -31,7 +31,7 @@ full features everywhere.
 upgrading Istio means restarting every pod to update its sidecar. At a few services that's nothing;
 at thousands, it adds up.
 
-## Ambient mode — no sidecars, shared proxies instead
+## Ambient mode: no sidecars, shared proxies instead
 
 The newer, "sidecar-less" design. Istio pulls the proxy *out* of your pods and splits the work into
 two layers:
@@ -88,4 +88,4 @@ properly, now that you know what the proxy underneath is actually doing. The con
 
 ---
 
-**Next:** [0 — What Istio is →](./00-what-is-istio.md)
+**Next:** [0: What Istio is →](./00-what-is-istio.md)

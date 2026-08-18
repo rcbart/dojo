@@ -9,14 +9,14 @@ module.exports = [
     { id: 'st',  label: 'Session store' },
   ],
   steps: [
-    { n: 1, from: 'b', to: 'srv', label: 'POST /login — credentials', ch: 'front' },
+    { n: 1, from: 'b', to: 'srv', label: 'POST /login, credentials', ch: 'front' },
     { n: 2, self: 'srv', label: 'verify password hash; mint random session id' },
     { n: 3, from: 'srv', to: 'st', label: 'save sid → {user, expiry}', ch: 'back' },
     { n: 4, from: 'srv', to: 'b', label: 'Set-Cookie: sid=… HttpOnly Secure SameSite', ch: 'front', ret: true },
-    { n: 5, from: 'b', to: 'srv', label: 'GET /account — cookie attached automatically', ch: 'front' },
+    { n: 5, from: 'b', to: 'srv', label: 'GET /account, cookie attached automatically', ch: 'front' },
     { n: 6, from: 'srv', to: 'st', label: 'look up sid', ch: 'back' },
-    { n: 7, from: 'srv', to: 'b', label: '200 — personalised page', ch: 'front', ret: true },
-    { note: '“Automatically” is the superpower AND the flaw — it is what CSRF abuses.' },
+    { n: 7, from: 'srv', to: 'b', label: '200, personalised page', ch: 'front', ret: true },
+    { note: '“Automatically” is the superpower AND the flaw, it is what CSRF abuses.' },
   ] },
 
 { id: 'ss3-csrf', file: F, title: 'CSRF: the confused deputy', width: 700,
@@ -26,11 +26,11 @@ module.exports = [
     { id: 'bank', label: 'bank.com' },
   ],
   steps: [
-    { n: 1, from: 'b', to: 'bank', label: 'logs in — session cookie set', ch: 'front' },
+    { n: 1, from: 'b', to: 'bank', label: 'logs in, session cookie set', ch: 'front' },
     { phase: 'later, in another tab' },
     { n: 2, from: 'b', to: 'evil', label: 'visits evil.site', ch: 'front' },
     { n: 3, from: 'evil', to: 'b', label: 'page auto-submits a hidden form → bank.com', ch: 'attack', ret: true },
-    { n: 4, from: 'b', to: 'bank', label: 'POST /transfer — cookie attached AUTOMATICALLY', ch: 'attack' },
+    { n: 4, from: 'b', to: 'bank', label: 'POST /transfer, cookie attached AUTOMATICALLY', ch: 'attack' },
     { n: 5, self: 'bank', label: 'valid session, valid request shape… money moves' },
     { note: 'The browser was deputised. Defences: SameSite, CSRF tokens, origin checks.' },
   ] },
@@ -47,8 +47,8 @@ module.exports = [
     { n: 2, from: 'op', to: 'a1', label: 'POST logout_token (signed JWT: sub, sid)', ch: 'back' },
     { n: 3, from: 'op', to: 'a2', label: 'POST logout_token', ch: 'back' },
     { n: 4, self: 'a1', label: 'verify token; kill the server-side session' },
-    { n: 5, self: 'a2', label: 'same — no browser involvement needed' },
-    { note: 'The front-channel variant uses hidden iframes — increasingly broken by third-party-cookie blocking.' },
+    { n: 5, self: 'a2', label: 'same, no browser involvement needed' },
+    { note: 'The front-channel variant uses hidden iframes, increasingly broken by third-party-cookie blocking.' },
   ] },
 
 ];

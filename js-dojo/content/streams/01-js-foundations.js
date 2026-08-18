@@ -67,7 +67,7 @@ semicolons.</p>
 <p>Write comments that say <b>why</b>, not <b>what</b>. The code already states what it does; what it
 cannot state is the reason it does it that way, and that is the thing the next reader (usually you, in
 six months) actually needs.</p>`,
-docs:[['MDN — What is JavaScript?','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Introduction'],['Node.js — introduction','https://nodejs.org/en/learn/getting-started/introduction-to-nodejs'],['TC39 — the ECMAScript standard','https://tc39.es/ecma262/']],
+docs:[['MDN (What is JavaScript?)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Introduction'],['Node.js (introduction)','https://nodejs.org/en/learn/getting-started/introduction-to-nodejs'],['TC39 (the ECMAScript standard)','https://tc39.es/ecma262/']],
 ex:{title:'Language, browser, or Node?',diff:'easy',lang:'js',
 run:{call:'provides',cases:[
  {name:'document belongs to the browser',args:['document'],expect:'browser'},
@@ -174,7 +174,7 @@ typeof []            // "object"     <- arrays are objects
 typeof function(){}  // "function"   <- special-cased, though it IS an object
 
 Array.isArray([])    // true - the correct way to detect an array</div>`,
-docs:[['MDN — JavaScript data types','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Data_structures'],['MDN — typeof','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof'],['Why 0.1 + 0.2 !== 0.3','https://floating-point-gui.de/']],
+docs:[['MDN, JavaScript data types','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Data_structures'],['MDN, typeof','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof'],['Why 0.1 + 0.2 !== 0.3','https://floating-point-gui.de/']],
 ex:{title:'Classify a value',diff:'easy',lang:'js',
 run:{call:'describe',cases:[
  {name:'a number',args:[42],expect:'number'},
@@ -262,7 +262,7 @@ them: <b>errors that arrive where the problem is</b>.</p>
 Convention is <code>camelCase</code> for variables and functions, <code>PascalCase</code> for classes, and
 <code>UPPER_SNAKE_CASE</code> for genuine constants. Names are the cheapest documentation available:
 <code>d</code> tells the next reader nothing, and <code>daysUntilExpiry</code> tells them everything.</p>`,
-docs:[['MDN — let','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let'],['MDN — const','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const'],['MDN — Hoisting','https://developer.mozilla.org/en-US/docs/Glossary/Hoisting']],
+docs:[['MDN (let)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let'],['MDN (const)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const'],['MDN (Hoisting)','https://developer.mozilla.org/en-US/docs/Glossary/Hoisting']],
 ex:{title:'What does const actually prevent?',diff:'easy',lang:'js',
 run:{call:'allowed',cases:[
  {name:'reassigning a const binding is not allowed',args:['reassign-binding'],expect:false},
@@ -350,7 +350,7 @@ null === undefined// false
 // the rule: ALWAYS use ===. the single exception people accept is
 //   if (x == null)   which is true for BOTH null and undefined.</div>
 
-<h4><code>??</code> and <code>?.</code> — the two that remove real bugs</h4>
+<h4><code>??</code> and <code>?.</code>: the two that remove real bugs</h4>
 <div class="codeSample" data-hl>// || falls back on any FALSY value, which is usually not what you meant
 const port  = config.port || 3000;   // 0 becomes 3000. wrong.
 const port2 = config.port ?? 3000;   // only null/undefined fall back. right.
@@ -361,7 +361,7 @@ user.address?.city      // undefined, no throw
 user.getName?.()        // calls it only if it exists</div>
 <p>Reach for <code>??</code> whenever a default is involved and <code>0</code> or <code>""</code> could be
 a legitimate value, which is most of the time.</p>`,
-docs:[['MDN — Equality comparisons','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Equality_comparisons_and_sameness'],['MDN — Falsy','https://developer.mozilla.org/en-US/docs/Glossary/Falsy'],['MDN — Nullish coalescing','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing']],
+docs:[['MDN (Equality comparisons)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Equality_comparisons_and_sameness'],['MDN (Falsy)','https://developer.mozilla.org/en-US/docs/Glossary/Falsy'],['MDN (Nullish coalescing)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing']],
 exs:[
 {title:'Which values are falsy?',diff:'easy',lang:'js',
 run:{call:'isFalsy',cases:[
@@ -495,7 +495,7 @@ function toNumber(text) {
 }
 // note: Number.isFinite("42") is false - it does not coerce. that is
 // why the conversion happens first, on its own line.</div>`,
-docs:[['MDN — String','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String'],['MDN — Number','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number'],['MDN — Template literals','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals']],
+docs:[['MDN (String)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String'],['MDN (Number)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number'],['MDN (Template literals)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals']],
 exs:[
 {title:'Parse user input safely',diff:'easy',lang:'js',
 run:{call:'toNumber',cases:[

@@ -9,7 +9,7 @@ module.exports = [
     { id: 'idp', label: 'IdP' },
   ],
   steps: [
-    { n: 1, from: 'b', to: 'sp', label: 'GET /app — no session', ch: 'front' },
+    { n: 1, from: 'b', to: 'sp', label: 'GET /app, no session', ch: 'front' },
     { n: 2, from: 'sp', to: 'idp', label: '302: AuthnRequest (Redirect binding)', ch: 'front' },
     { n: 3, self: 'idp', label: 'user authenticates (or already has an IdP session)' },
     { n: 4, from: 'idp', to: 'sp', label: 'auto-POST: signed Response + Assertion', ch: 'front', ret: true },
@@ -41,10 +41,10 @@ module.exports = [
   ],
   steps: [
     { n: 1, from: 'idp', to: 'sp', label: 'redirect carrying a small artifact (a reference)', ch: 'front' },
-    { n: 2, from: 'sp', to: 'idp', label: 'ArtifactResolve — SOAP, mutually authenticated', ch: 'back' },
+    { n: 2, from: 'sp', to: 'idp', label: 'ArtifactResolve: SOAP, mutually authenticated', ch: 'back' },
     { n: 3, from: 'idp', to: 'sp', label: 'ArtifactResponse: the full Assertion', ch: 'back', ret: true },
     { n: 4, self: 'sp', label: 'verify & create the session' },
-    { note: 'The assertion itself never crosses the browser — only a one-time reference does.' },
+    { note: 'The assertion itself never crosses the browser, only a one-time reference does.' },
   ] },
 
 { id: 'sml5-slo', file: F, title: 'SP-initiated Single Logout', width: 720,
@@ -59,9 +59,9 @@ module.exports = [
     { n: 2, from: 'spa', to: 'idp', label: 'signed LogoutRequest', ch: 'front' },
     { n: 3, self: 'idp', label: 'ends the IdP session; finds other active SPs' },
     { n: 4, from: 'idp', to: 'spb', label: 'LogoutRequest (SOAP back channel or via browser)', ch: 'back' },
-    { n: 5, from: 'spb', to: 'idp', label: 'LogoutResponse — session B ended', ch: 'back', ret: true },
-    { n: 6, from: 'idp', to: 'spa', label: 'LogoutResponse — all done', ch: 'front', ret: true },
-    { note: 'One unreachable SP is why SLO is “best effort” — see the Sessions stream.' },
+    { n: 5, from: 'spb', to: 'idp', label: 'LogoutResponse, session B ended', ch: 'back', ret: true },
+    { n: 6, from: 'idp', to: 'spa', label: 'LogoutResponse, all done', ch: 'front', ret: true },
+    { note: 'One unreachable SP is why SLO is “best effort”, see the Sessions stream.' },
   ] },
 
 ];

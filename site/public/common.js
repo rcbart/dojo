@@ -3,17 +3,17 @@
    secure in-page login modal.
 
    Security notes:
-   - The modal is a same-page <dialog>, NOT window.open/iframe — there is no
+   - The modal is a same-page <dialog>, NOT window.open/iframe, there is no
      cross-window channel (no postMessage / window.opener) to exploit.
    - Login posts same-origin to /api/login; the session cookie is set HttpOnly
      by the server, so this script never reads or holds it.
    - The DOM is built with createElement/textContent only (no innerHTML), so
      server error strings can never inject markup.
-   - The post-auth redirect is a hard-coded same-origin path — never a value
-     from input or the URL — so it can't be abused as an open redirect. */
+   - The post-auth redirect is a hard-coded same-origin path, never a value
+     from input or the URL, so it can't be abused as an open redirect. */
 window.JD = (function () {
   function $(id) { return document.getElementById(id); }
-  var APP_PATH = '/app'; // fixed, same-origin — do not derive from input
+  var APP_PATH = '/app'; // fixed, same-origin, do not derive from input
 
   function wireToggles(root) {
     (root || document).querySelectorAll('.pw-toggle').forEach(function (btn) {
@@ -99,7 +99,7 @@ window.JD = (function () {
 
     // click on the backdrop (outside the card) closes
     dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
-    // clear the password whenever the dialog closes — never linger in the DOM
+    // clear the password whenever the dialog closes, never linger in the DOM
     dlg.addEventListener('close', function () { pass.value = ''; status.textContent = ''; });
 
     card.addEventListener('submit', async function (e) {
@@ -110,7 +110,7 @@ window.JD = (function () {
       pass.value = ''; // clear immediately, win or lose
       submit.disabled = false;
       if (!res.ok) { say(status, res.data.error || 'Sign in failed', false); pass.focus(); return; }
-      say(status, 'Welcome back, ' + res.data.user.displayName + ' — taking you in…', true);
+      say(status, 'Welcome back, ' + res.data.user.displayName + ', taking you in…', true);
       window.location.assign(APP_PATH); // fixed same-origin path only
     });
 

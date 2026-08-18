@@ -10,7 +10,7 @@
 //      and every entry is well-formed (>=2 options, answer in range, a why;
 //      whyWrong, when present, matches options and is empty at the answer);
 //   3. each page's trailing **Next:** link points at the NEXT page in PAGES
-//      order — the built sidebar's order — so GitHub readers and site
+//      order, the built sidebar's order, so GitHub readers and site
 //      visitors walk the same course.
 //
 // Run: node scripts/verify-cloudnative.js

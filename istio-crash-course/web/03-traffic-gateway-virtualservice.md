@@ -1,4 +1,4 @@
-# 3 — Ingress: Gateway & VirtualService
+# 3: Ingress: Gateway & VirtualService
 
 *Concepts + a lab getting outside traffic into the mesh and routing it. ~25 min. Uses the Bookinfo
 app from Setup.*
@@ -15,7 +15,7 @@ Two objects do most traffic work in Istio, and they answer two different questio
 A Gateway without a VirtualService is an open door with no directions. You almost always use them
 together.
 
-## Gateway — the front door
+## Gateway: the front door
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -37,7 +37,7 @@ spec:
 This says: on the ingress gateway, open port 80 for HTTP, for any host. It does **not** say where
 requests go; that's the VirtualService's job.
 
-## VirtualService — the routing rules
+## VirtualService: the routing rules
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -135,4 +135,4 @@ proxy.
 
 ---
 
-**Next:** [4 — DestinationRule & canary releases →](./04-traffic-destinationrule-canary.md)
+**Next:** [4: DestinationRule & canary releases →](./04-traffic-destinationrule-canary.md)

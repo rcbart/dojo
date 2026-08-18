@@ -1,4 +1,4 @@
-# 8 — Ambient mode (sidecarless)
+# 8: Ambient mode (sidecarless)
 
 *Istio's newer data-plane design: no sidecars. Concepts + a lab. ~25 min. Uses a **separate**
 ambient install, so ideally a fresh kind cluster.*
@@ -107,7 +107,7 @@ but only this namespace runs an Envoy, and only because it opted into L7.
 kind delete cluster --name istio-lab
 ```
 
-## Sidecar vs ambient — when to pick which
+## Sidecar vs ambient: when to pick which
 
 - **Sidecar**: simplest mental model, per-pod isolation, most mature. Good default for small/medium
   meshes and when you want full L7 everywhere.
@@ -131,4 +131,4 @@ proxies.
 
 ---
 
-**Next:** [9 — The Kubernetes Gateway API →](./09-gateway-api.md)
+**Next:** [9: The Kubernetes Gateway API →](./09-gateway-api.md)

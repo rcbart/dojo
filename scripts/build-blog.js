@@ -26,14 +26,14 @@ const OUT = path.resolve(process.argv[2] || 'dist-site');
 // Until both IDs are filled in, no comments block is emitted (the build stays valid).
 const GISCUS = {
   repo: 'rcbart/dojo',
-  repoId: '',       // looks like  R_kgDO...   (from giscus.app)
+  repoId: 'R_kgDOTyZDJg',
   category: 'Blog comments',
-  categoryId: '',   // looks like  DIC_kwDO...  (from giscus.app)
+  categoryId: 'DIC_kwDOTyZDJs4DDiLE',
 };
 const giscusBlock = () => (GISCUS.repoId && GISCUS.categoryId) ? `
 <section class="comments">
   <h2 style="font-size:20px;margin:44px 0 4px">Comments</h2>
-  <p style="color:var(--muted);font-size:13.5px;margin:0 0 14px">Signed with your GitHub account — identity required, drive-by anonymity not offered.</p>
+  <p style="color:var(--muted);font-size:13.5px;margin:0 0 14px">Signed with your GitHub account, identity required, drive-by anonymity not offered.</p>
   <script src="https://giscus.app/client.js"
         data-repo="${GISCUS.repo}"
         data-repo-id="${GISCUS.repoId}"
@@ -149,6 +149,15 @@ const page = (title, desc, body, root) => `<!doctype html>
   .post h2{margin:0 0 6px;font-size:23px} .post:hover h2{color:var(--accent-ink)}
   .post p{color:var(--muted);margin:6px 0 0;font-size:15.5px}
   footer{border-top:1px solid var(--line);margin-top:50px;padding-top:20px;color:var(--muted);font-size:14px}
+  .pill{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+        border-radius:999px;padding:3px 10px;vertical-align:2px;border:1px solid}
+  .pill.leadership{color:#9d174d;background:#fff1f2;border-color:#fbcfe8}
+  .pill.engineering{color:#115e59;background:#f0fdfa;border-color:#99f6e4}
+  .filters{display:flex;gap:8px;margin:6px 0 4px;flex-wrap:wrap}
+  .filters button{font:600 13.5px/1 inherit;color:var(--muted);background:var(--panel);
+        border:1px solid var(--line);border-radius:999px;padding:8px 15px;cursor:pointer}
+  .filters button:hover{color:var(--ink);border-color:#c9c9de}
+  .filters button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
 </style>
 </head>
 <body>
@@ -197,13 +206,44 @@ for (const p of posts) {
   fs.writeFileSync(path.join(OUT, 'blog', p.slug, 'index.html'), html);
 }
 
+const catOf = p => (p.meta.category || 'engineering').toLowerCase();
+const pill = c => `<span class="pill ${c}">${c === 'leadership' ? 'Leadership' : 'Engineering'}</span>`;
+
 const list = root => posts.map(p =>
-  `<a class="post" href="${root}blog/${p.slug}/"><h2>${esc(p.meta.title)}</h2>` +
+  `<a class="post" data-cat="${catOf(p)}" href="${root}blog/${p.slug}/">` +
+  `<h2>${esc(p.meta.title)} ${pill(catOf(p))}</h2>` +
   `<div class="pdate">${fmtDate(p.date)}</div><p>${esc(p.meta.description || '')}</p></a>`).join('\n');
+
+// Two labels, one page. At three posts a filter reads as intent; at thirty it
+// earns its keep; and when it graduates to real sections the metadata is here.
+const filterBar = () => {
+  const cats = [...new Set(posts.map(catOf))];
+  if (cats.length < 2) return '';
+  return `<div class="filters">
+  <button data-f="all" aria-pressed="true">All</button>
+  <button data-f="leadership" aria-pressed="false">Leadership</button>
+  <button data-f="engineering" aria-pressed="false">Engineering</button>
+</div>`;
+};
+const filterScript = () => posts.length ? `
+<scr` + `ipt>
+(function(){
+  var bar=document.querySelector('.filters'); if(!bar) return;
+  bar.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    var f=b.dataset.f;
+    bar.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});
+    document.querySelectorAll('.post').forEach(function(a){
+      a.style.display=(f==='all'||a.dataset.cat===f)?'':'none';
+    });
+  });
+})();
+</scr` + `ipt>` : '';
 
 fs.writeFileSync(path.join(OUT, 'blog', 'index.html'),
   page('Essays & proud scars · Ron Bar-Tor', 'Essays on engineering management, identity, and quality.',
-    `<h1>Essays &amp; proud scars</h1><div class="pdate">Engineering management, identity, and the occasional bug worth telling the whole story about.</div>` + list('/'), '/'));
+    `<h1>Essays &amp; proud scars</h1><div class="pdate">Engineering management, identity, and the occasional bug worth telling the whole story about.</div>`
+    + filterBar() + list('/') + filterScript(), '/'));
 
 // home page: fill @@POSTS@@ (latest 3, home-styled), @@NAVPOSTS@@ (sidebar
 // links, latest 5, title only) and @@YEAR@@
@@ -213,10 +253,19 @@ const navPosts = posts.length
   : '<span class="snone">first post coming soon</span>';
 const mainPosts = posts.length
   ? posts.slice(0, 3).map(p =>
-      `<a class="post" href="/blog/${p.slug}/"><div class="pdate">${fmtDate(p.date)}</div>` +
+      `<a class="post" data-cat="${catOf(p)}" href="/blog/${p.slug}/"><div class="pdate">${fmtDate(p.date)} ${pill(catOf(p))}</div>` +
       `<h3>${esc(p.meta.title)}</h3><p>${esc(p.meta.description || '')}</p></a>`).join('\n')
   : '<p class="secdesc">First post coming soon.</p>';
-const home = fs.readFileSync(path.join(ROOT, 'docs', 'home.html'), 'utf8')
+// The home page links each leadership principle to the post that proves it.
+// A link marked data-needs="<slug>" is only real once that post is published,
+// so drop it (and keep the principle) until the post exists. Publishing is a
+// git mv from blog/ to posts/, and the link reappears on the next build.
+const published = new Set(posts.map(p => p.slug));
+const dropUnpublished = html => html.replace(
+  /\s*<a class="receipt"[^>]*data-needs="([^"]+)"[^>]*>.*?<\/a>/g,
+  (whole, slug) => published.has(slug) ? whole : '');
+
+const home = dropUnpublished(fs.readFileSync(path.join(ROOT, 'docs', 'home.html'), 'utf8'))
   .replace('@@POSTS@@', mainPosts)
   .replace('@@NAVPOSTS@@', navPosts)
   .replace('@@YEAR@@', String(new Date().getFullYear()));

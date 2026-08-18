@@ -52,7 +52,7 @@
 <div class="wrap">
   <h1>Skills rubric &amp; self-assessment</h1>
   <p class="lead">An honest gauge of where you stand after the Docker, Kubernetes, Envoy, and Istio
-  courses. Tick only what you could do <b>unaided, from a blank terminal</b> — not "I saw it in a
+  courses. Tick only what you could do <b>unaided, from a blank terminal</b>, not "I saw it in a
   lesson." The verdict updates live.</p>
   <div class="rule">The hard rule: if you'd need to copy from notes or a lesson to do it, leave it
   unchecked. Recall isn't skill. The goal is a truthful read, useful for interviews or knowing what
@@ -84,7 +84,7 @@
   </section>
   <section class="t3" data-tier="3">
     <h2>Tier 3 · Advanced signals</h2>
-    <p class="d">Depth and breadth beyond the day job. These lean toward senior — but true seniority
+    <p class="d">Depth and breadth beyond the day job. These lean toward senior, but true seniority
     also needs real production scars a course can't give.</p>
     <div class="items"></div>
   </section>
@@ -112,7 +112,7 @@ const ITEMS = {
     ["Expose apps through an Ingress with TLS", "K8s 12"],
     ["Package an app with Helm and/or Kustomize per environment", "K8s 9–10"],
     ["Wire a CI/CD build→push→deploy pipeline gated on rollout status", "K8s 11"],
-    ["Diagnose a Service with no endpoints, a Pending pod, and a crash loop — symptom to cause", "K8s 8, 8b"],
+    ["Diagnose a Service with no endpoints, a Pending pod, and a crash loop (symptom to cause)", "K8s 8, 8b"],
     ["Enforce RBAC least-privilege and a default-deny NetworkPolicy", "K8s 7"],
     ["Configure an HPA and observe it scale under load", "K8s 13"],
     ["Deploy the multi-tier capstone (config, secrets, storage, probes, HPA, ingress) from scratch", "K8s 15"]
@@ -162,8 +162,8 @@ function updateVerdict(){
   let badge, sub;
   const totalChecked=c1.n+c2.n+c3.n;
   if(totalChecked===0){ badge="Not started"; sub="Tick the boxes below as you honestly self-assess."; }
-  else if(p1<0.7){ badge="Beginner"; sub="Foundations still forming — work through the Docker and Kubernetes fundamentals and their labs."; }
-  else if(p2<0.5){ badge="Advanced beginner"; sub="Solid basics. Now drill the production toolkit in Tier 2 — probes, rollouts, Helm/Kustomize, RBAC, ingress."; }
+  else if(p1<0.7){ badge="Beginner"; sub="Foundations still forming, work through the Docker and Kubernetes fundamentals and their labs."; }
+  else if(p2<0.5){ badge="Advanced beginner"; sub="Solid basics. Now drill the production toolkit in Tier 2, probes, rollouts, Helm/Kustomize, RBAC, ingress."; }
   else if(p2<0.85){ badge="Job-ready · junior→mid"; sub="You can build and run real workloads. Close the remaining Tier 2 gaps and you're interview-ready for most container/Kubernetes roles."; }
   else if(p3<0.5){ badge="Solid mid-level practitioner"; sub="Strong, employable, CKA/CKAD-capable. The Tier 3 items (mesh, operators, HA design) are your growth edge."; }
   else if(p3<0.9){ badge="Advanced · approaching senior"; sub="Broad and deep across containers, orchestration, and the mesh. Real production scars are the last mile to senior."; }
@@ -172,7 +172,7 @@ function updateVerdict(){
   document.getElementById("sub").textContent=sub;
   const note=document.getElementById("note");
   note.textContent="Checked "+totalChecked+" of "+(c1.total+c2.total+c3.total)+
-    " skills. Reminder: a rubric is a mirror, not a certificate — the real proof is doing the challenges and capstone unaided and explaining WHY each choice was made.";
+    " skills. Reminder: a rubric is a mirror, not a certificate, the real proof is doing the challenges and capstone unaided and explaining WHY each choice was made.";
 }
 function save(){ try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){} }
 function clearAll(){ state={}; save(); render(); }

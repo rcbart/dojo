@@ -4,13 +4,13 @@
 // exactly as the in-browser worker does.
 //
 // Why this exists: scripts/verify.js checks regex tests against solutions, and
-// the engine tests cover the runtime — neither can see an executed exercise
+// the engine tests cover the runtime, neither can see an executed exercise
 // whose cases disagree with its own solution. Writing this found four such
 // exercises that shipped: one whose args were an object where the runner needs
 // an array (every learner saw a TypeError), one with an off-by-one at a window
 // boundary, one whose case data contradicted its own prompt, and one that failed
 // six of its cases only because JSON.stringify made object key order
-// significant — a defect in the runtime rather than in the content.
+// significant, a defect in the runtime rather than in the content.
 //
 // Run: node scripts/verify-exec.js [courseDir ...]     (default: all three)
 const fs = require('fs');

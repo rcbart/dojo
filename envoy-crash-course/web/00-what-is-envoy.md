@@ -1,4 +1,4 @@
-# 00 — What Envoy is (and why it exists)
+# 00: What Envoy is (and why it exists)
 
 *No lab in this module; it builds the mental model everything else hangs on. ~10 min read.*
 
@@ -20,7 +20,7 @@ Why put something in the middle? Because that middle spot is a fantastic place t
 retries, timeouts, TLS encryption, authentication, rate limiting, and collecting metrics. Envoy
 does all of that, and it is configured entirely by data (YAML/JSON), not code.
 
-## "L7 proxy" — what the L7 means
+## "L7 proxy": what the L7 means
 
 Networks are described in layers. Two matter here:
 
@@ -66,7 +66,7 @@ The same Envoy binary plays different roles depending on *where you put it*:
 
 It's the *same tool*. The roles differ only in topology and who configures it.
 
-## Envoy vs nginx / HAProxy — why teams pick Envoy
+## Envoy vs nginx / HAProxy: why teams pick Envoy
 
 nginx and HAProxy are excellent, battle-tested proxies. Envoy's distinguishing traits, especially
 for modern microservice/cloud-native systems:
@@ -123,4 +123,4 @@ Before moving on, you should be able to answer:
 
 ---
 
-**Next:** [01 — Architecture & the request lifecycle →](./01-architecture-and-request-lifecycle.md)
+**Next:** [01: Architecture & the request lifecycle →](./01-architecture-and-request-lifecycle.md)

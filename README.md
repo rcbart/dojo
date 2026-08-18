@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/banner.svg" alt="Dev Dojo — master software engineering" width="100%">
+  <img src="docs/banner.svg" alt="Dev Dojo, master software engineering" width="100%">
 </p>
 
 <p align="center">
@@ -33,7 +33,7 @@ unbalanced a course meant to cover software engineering broadly. It is now
 and OIDC, SAML, WebAuthn/FIDO2 internals, Active Directory and Kerberos, zero trust, and a Running
 Identity stream on incident response, migration and operations. Same engine, separate build.
 
-**▶ Live:** https://roniam.dev/ — the portfolio home; https://rcbart.github.io/dojo/courses/ lists every course.
+**▶ Live:** https://roniam.dev/, the portfolio home; https://rcbart.github.io/dojo/courses/ lists every course.
 [**Dev Dojo**](https://rcbart.github.io/dojo/dev/) ·
 [**Identity Dojo**](https://rcbart.github.io/dojo/identity/) ·
 [**JS Dojo**](https://rcbart.github.io/dojo/js/). Each is a single,
@@ -45,7 +45,7 @@ fails.)*
 
 ## What's inside
 
-- **Guided onboarding** — a **🚀 Getting started** page (how to set up your environment and how
+- **Guided onboarding**: a **🚀 Getting started** page (how to set up your environment and how
   grading really works) and a **🗺️ Learning path** (a recommended white→black-belt route).
 - **Every lesson** ends with an exercise in the built-in editor. **How grading works:** most exercises (~79%, all the Java ones) are checked by **regex against the shape of your answer**;
   they verify you wrote the right construct, not that your code runs correctly. Real execution is
@@ -53,21 +53,21 @@ fails.)*
   engine and **JavaScript** in a sandboxed Web Worker (~4% of exercises, graded on actual results),
   and **Java** compiles and runs for real only if you start the optional local runner. Every exercise
   ships a **Run locally** panel with exact commands, which is the ground truth.
-- **Run it for real** — every exercise has a **🖥️ Run locally** panel with exact commands for your own
+- **Run it for real**: every exercise has a **🖥️ Run locally** panel with exact commands for your own
   dev environment, plus a **🔬 Dive deeper** panel that states honestly how it was graded.
-- **🔁 Review** — spaced repetition builds a review deck from your completed exercises and schedules
+- **🔁 Review**: spaced repetition builds a review deck from your completed exercises and schedules
   them on expanding intervals; the sidebar shows what's due.
-- **🎯 Practice** — every exercise is rated easy/medium/hard and filterable, giving a difficulty ramp
+- **🎯 Practice**: every exercise is rated easy/medium/hard and filterable, giving a difficulty ramp
   across the whole catalog.
-- **🧠 Quick check** — multiple-choice questions with instant feedback: not just "wrong", but which
+- **🧠 Quick check**: multiple-choice questions with instant feedback: not just "wrong", but which
   answer was right, why it is right, and why the option you picked is not. **Options are shuffled per
   lesson visit**, so the answer position can never be memorised. Dev Dojo now carries **397 hand-authored
   questions across 129 lessons** (each with a written explanation of why the right answer is right and
   why every distractor is wrong), plus 9 auto-generated from the exercise specs. Identity Dojo carries a
   further 327 and JS Dojo 192. Extending the hand-authored bank to the remaining lessons is an open item.
-- **📖 Glossary** — 11 domains / 360 terms, collapsible and searchable, doubling as the in-lesson
+- **📖 Glossary**: 11 domains / 360 terms, collapsible and searchable, doubling as the in-lesson
   click-to-explain source.
-- **Belts & capstones** — per-domain percentage belts (white → black), dan sub-tracks for advanced
+- **Belts & capstones**: per-domain percentage belts (white → black), dan sub-tracks for advanced
   topics, and a graded multi-step capstone. Streams
   flagged `tournament:true` or `project:true` are practice and don't count toward belts.
 
@@ -129,7 +129,7 @@ Grading itself splits three ways:
 |---|--:|---|
 | Regex structural checks | ~79% | That your answer contains the expected constructs. Not correctness. |
 | Real execution, in-browser | ~4% | SQL against sample data (`engine/sqlengine.js`, result sets compared); JavaScript in a sandboxed Web Worker (real return values). |
-| Real execution, opt-in | Java | Compiles and runs via the local runner (`site/` + `JD_LOCAL_RUNNER=1`) with a generated `DojoTest` harness — **off by default**. |
+| Real execution, opt-in | Java | Compiles and runs via the local runner (`site/` + `JD_LOCAL_RUNNER=1`) with a generated `DojoTest` harness, **off by default**. |
 
 So a green check on most exercises means "this looks right", not "this works". Every exercise has a
 **Run locally** panel with exact commands, and that is the ground truth. Raising the share of real
@@ -226,7 +226,7 @@ Five companion courses on their own lighter pipeline (markdown → `web/build.py
 HTML file each), all live on the same Pages site and gated in CI by `scripts/verify-cloudnative.js`
 (80 pages, 374 quiz questions, every answer explained, right and wrong options alike):
 
-- [**Cloud-Native Fundamentals**](https://rcbart.github.io/dojo/fundamentals/) — the map before the
+- [**Cloud-Native Fundamentals**](https://rcbart.github.io/dojo/fundamentals/), the map before the
   machines: the path of a request, load balancers, API gateways, CDNs, DNS in depth, TLS, queues &
   caches. Pure concepts, nothing to install.
 - [**Docker**](https://rcbart.github.io/dojo/docker/) ·
@@ -234,14 +234,14 @@ HTML file each), all live on the same Pages site and gated in CI by `scripts/ver
   [**Envoy**](https://rcbart.github.io/dojo/envoy/) ·
   [**Istio**](https://rcbart.github.io/dojo/istio/): hands-on on your own machine; each starts
   with a step-by-step local setup guide, and Envoy ships runnable lab configs in `envoy-crash-course/labs/`.
-- `ml-dojo` — a machine-learning curriculum (Python via Pyodide). It forked the engine and shares
+- `ml-dojo`: a machine-learning curriculum (Python via Pyodide). It forked the engine and shares
   nothing with this repo, so it now lives in its own repository: https://github.com/rcbart/ml-dojo
-- `oauth-trainer/` — a small Maven CLI for generating and signing JWKs
+- `oauth-trainer/`: a small Maven CLI for generating and signing JWKs
 
 ## Companion docs
 
-- `DEVDOJO_ROADMAP.md` — per-domain belt design and curriculum plan
-- `IAM_TOPICS.md` — the identity & access topic map
-- `LAUNCH_GUIDE.md` — hosting → backend → AI judge → sandboxed runner
-- `BACKEND_PLAN.md` — architecture for publishing Dev Dojo as a product
-- `MLDOJO_PLAN.md` — ml-dojo architecture and curriculum
+- `DEVDOJO_ROADMAP.md`, per-domain belt design and curriculum plan
+- `IAM_TOPICS.md`, the identity & access topic map
+- `LAUNCH_GUIDE.md`, hosting → backend → AI judge → sandboxed runner
+- `BACKEND_PLAN.md`, architecture for publishing Dev Dojo as a product
+- `MLDOJO_PLAN.md`, ml-dojo architecture and curriculum

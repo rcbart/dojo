@@ -1,4 +1,4 @@
-# 4 — ConfigMaps & Secrets
+# 4: ConfigMaps & Secrets
 
 *Separate configuration from images, the right way. Concepts + a lab. ~25 min. Needs your kind
 cluster.*
@@ -13,7 +13,7 @@ environment, and secrets would leak). Kubernetes injects config at run time via 
 This is the direct successor to Docker's `-e` env vars and mounted config files, now as first-class,
 reusable cluster objects.
 
-## ConfigMap — non-secret configuration
+## ConfigMap: non-secret configuration
 
 ```yaml
 apiVersion: v1
@@ -28,7 +28,7 @@ data:
     retries=3
 ```
 
-## Secret — sensitive data
+## Secret: sensitive data
 
 Secrets look like ConfigMaps but are for credentials. Create one easily:
 
@@ -135,4 +135,4 @@ Mount the ConfigMap as files, then edit the ConfigMap (`kubectl edit configmap a
 
 ---
 
-**Next:** [5 — Storage: volumes, PV/PVC & StatefulSets →](./05-storage-volumes-statefulsets.md)
+**Next:** [5: Storage: volumes, PV/PVC & StatefulSets →](./05-storage-volumes-statefulsets.md)

@@ -9,7 +9,7 @@
 //
 // What it proves, and what it does not: that every self-contained reference
 // solution is syntactically valid and type-checks as far as its dependencies
-// allow. It does not prove behaviour — that is what the Run locally panel and
+// allow. It does not prove behaviour, that is what the Run locally panel and
 // the opt-in local runner are for.
 //
 // Exercises are skipped, with a counted reason, when they legitimately cannot
@@ -33,7 +33,7 @@ const COURSES = ['.', 'identity-dojo', 'js-dojo'];
 const has = c => { try { cp.execSync(`command -v ${c}`, { stdio: 'ignore' }); return true; } catch { return false; } };
 const MODE = has('javac') ? 'javac' : (has('java') ? 'java-source' : null);
 if (!MODE) {
-  console.log('java-compile: no JDK or JRE on PATH — skipping (CI provides one)');
+  console.log('java-compile: no JDK or JRE on PATH, skipping (CI provides one)');
   process.exit(0);
 }
 const version = (cp.execSync(`${MODE === 'javac' ? 'javac' : 'java'} -version 2>&1`, { encoding: 'utf8' }).match(/\d+/) || ['?'])[0];
@@ -65,7 +65,7 @@ const typeName = src => {
 const THIRD_PARTY = /^import\s+(org\.junit|org\.springframework|com\.fasterxml|org\.slf4j|ch\.qos|jakarta\.|javax\.servlet|org\.mockito|io\.jsonwebtoken|com\.nimbusds|org\.apache|reactor\.|io\.micrometer)/m;
 
 /* The minimum JDK a solution's SYNTAX requires. An older compiler does not say
-   "records are a preview feature" — it says "class, interface, or enum
+   "records are a preview feature", it says "class, interface, or enum
    expected", which is indistinguishable from a genuine syntax error. So the
    level is derived from the source before compiling, not from the error. */
 function requiredJdk(src) {

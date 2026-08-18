@@ -71,7 +71,7 @@ function refreshBelt(){
   const nx=document.getElementById('beltNext');
   if(nx){
     const n=lessonsToNextBelt();
-    nx.textContent=n?(n.count+' to '+n.name.replace(/ 🖤/,'')):'Black belt — mastery!';
+    nx.textContent=n?(n.count+' to '+n.name.replace(/ 🖤/,'')):'Black belt, mastery!';
   }
 }
 function toast(msg){
@@ -103,7 +103,7 @@ function confettiHTML(n){
 }
 function showBeltUp(before,after,pct){
   const old=document.getElementById('beltUpOverlay');if(old)old.remove();
-  const note=store.persistent?'':'<div class="bNote">⚠ browser storage blocked — progress lasts for this session only</div>';
+  const note=store.persistent?'':'<div class="bNote">⚠ browser storage blocked, progress lasts for this session only</div>';
   const black=/Black belt/.test(after);
   const ov=document.createElement('div');
   ov.id='beltUpOverlay';ov.className='beltOverlay'+(black?' finalBelt':'');
@@ -113,7 +113,7 @@ function showBeltUp(before,after,pct){
     +'<div class="bBadge" aria-hidden="true"><div class="bBadgeStrip" style="background:'+(BELT_COLORS[after]||'#94a3b8')+'"><span class="bKnot"></span></div></div>'
     +'<div class="bKicker">'+(black?'⚫ Ultimate rank':'🥋 Rank up')+'</div>'
     +'<h2 class="bTitle">'+(black?'BLACK BELT!':'Belt up!')+'</h2>'
-    +'<p class="bSub">'+(black?'Mastery of the path — the dojo salutes you.':'Your training has paid off — you have been promoted.')+'</p>'
+    +'<p class="bSub">'+(black?'Mastery of the path, the dojo salutes you.':'Your training has paid off, you have been promoted.')+'</p>'
     +'<div class="bRow">'
       +'<div class="bCol">'+beltStrip(before)+'<div class="bName">'+esc(before)+'</div></div>'
       +'<div class="bArrow">→</div>'
@@ -141,7 +141,7 @@ function showDanUp(rank){
   ov.innerHTML='<div class="beltModal danModal" role="dialog" aria-modal="true" aria-label="Dan promotion">'
     +'<div class="bBurst">'+['⛩️','🥋','🖤','✨','🏮'].map((e,i)=>'<span class="bSpark s'+i+'">'+e+'</span>').join('')+'</div>'
     +'<h2>'+esc(name)+' earned!</h2>'
-    +'<p class="bSub">Beyond the black belt — a full senior discipline mastered.</p>'
+    +'<p class="bSub">Beyond the black belt, a full senior discipline mastered.</p>'
     +'<div class="bRow"><div class="bCol bNew"><div class="bStrip danStrip"><span class="bKnot"></span></div>'
     +'<div class="bName"><b>'+esc(name)+'</b> · '+rank+'/'+total+' disciplines</div></div></div>'
     +'<button class="bBtn danBtn" onclick="document.getElementById(\'beltUpOverlay\').remove()">Continue the path ⛩️</button>'
@@ -160,7 +160,7 @@ function completeLesson(l){
     renderNav();
     const st=STREAMS[cur.si];
     if(st.lessons.every(x=>store.lesson(x.id).done))showDanUp(danStreamsDone());
-    else toast('⛩️ <b>Dan lesson complete</b> — senior discipline in progress; the rank comes with the full stream.');
+    else toast('⛩️ <b>Dan lesson complete</b>, senior discipline in progress; the rank comes with the full stream.');
     return;
   }
   const isProject=cur&&STREAMS[cur.si]&&STREAMS[cur.si].project;
@@ -169,7 +169,7 @@ function completeLesson(l){
     const pb=document.getElementById('doneBanner');
     if(pb)pb.style.display='block';
     renderNav();
-    toast('🏗️ <b>Project milestone complete!</b> Real-world skill acquired — this is résumé material, no belt needed.');
+    toast('🏗️ <b>Project milestone complete!</b> Real-world skill acquired, this is résumé material, no belt needed.');
     return;
   }
   const isTournament=cur&&STREAMS[cur.si]&&STREAMS[cur.si].tournament;
@@ -178,7 +178,7 @@ function completeLesson(l){
     const banner=document.getElementById('doneBanner');
     if(banner)banner.style.display='block';
     renderNav();
-    toast('🏆 <b>Challenge conquered!</b> Tournament wins are dojo honor — the belt is earned in the main halls.');
+    toast('🏆 <b>Challenge conquered!</b> Tournament wins are dojo honor, the belt is earned in the main halls.');
     return;
   }
   const before=beltName();
@@ -188,37 +188,37 @@ function completeLesson(l){
   refreshBelt();renderNav();
   const after=beltName();
   const pct=Math.round(100*doneCount()/totalLessons());
-  const note=store.persistent?'':'<br><small>⚠ browser storage blocked — progress lasts for this session only</small>';
+  const note=store.persistent?'':'<br><small>⚠ browser storage blocked, progress lasts for this session only</small>';
   if(after!==before)showBeltUp(before,after,pct);
-  else toast('✅ Lesson complete — progress saved ('+doneCount()+'/'+totalLessons()+')'+note);
+  else toast('✅ Lesson complete, progress saved ('+doneCount()+'/'+totalLessons()+')'+note);
 }
 function renderNav(){
   const nav=document.getElementById('nav');nav.innerHTML='';
-  const home=document.createElement('div');home.className='streamHd';home.innerHTML='🏠 Overview';home.onclick=()=>{cur=null;renderHome();renderNav()};nav.appendChild(home);
-  const start=document.createElement('div');start.className='streamHd';start.innerHTML='🚀 Getting started';start.onclick=()=>{cur=null;renderGettingStarted();renderNav()};nav.appendChild(start);
-  const path=document.createElement('div');path.className='streamHd';path.innerHTML='🗺️ Learning path';path.onclick=()=>{cur=null;renderPath();renderNav()};nav.appendChild(path);
+  const home=document.createElement('div');home.className='streamHd';home.innerHTML=ico('🏠')+' Overview';home.onclick=()=>{cur=null;renderHome();renderNav()};nav.appendChild(home);
+  const start=document.createElement('div');start.className='streamHd';start.innerHTML=ico('🚀')+' Getting started';start.onclick=()=>{cur=null;renderGettingStarted();renderNav()};nav.appendChild(start);
+  const path=document.createElement('div');path.className='streamHd';path.innerHTML=ico('🗺️')+' Learning path';path.onclick=()=>{cur=null;renderPath();renderNav()};nav.appendChild(path);
   const dueN=(typeof reviewDueCount==='function')?reviewDueCount():0;
-  const rev=document.createElement('div');rev.className='streamHd';rev.innerHTML='🔁 Review'+(dueN?` <span class="dueBadge">${dueN}</span>`:'');rev.onclick=()=>{cur=null;renderReview();renderNav()};nav.appendChild(rev);
-  const prac=document.createElement('div');prac.className='streamHd';prac.innerHTML='🎯 Practice';prac.onclick=()=>{cur=null;renderPractice('all');renderNav()};nav.appendChild(prac);
-  const gloss=document.createElement('div');gloss.className='streamHd';gloss.innerHTML='📖 Glossary';gloss.onclick=()=>{cur=null;renderGlossary();renderNav()};nav.appendChild(gloss);
+  const rev=document.createElement('div');rev.className='streamHd';rev.innerHTML=ico('📑')+' Review'+(dueN?` <span class="dueBadge">${dueN}</span>`:'');rev.onclick=()=>{cur=null;renderReview();renderNav()};nav.appendChild(rev);
+  const prac=document.createElement('div');prac.className='streamHd';prac.innerHTML=ico('🎯')+' Practice';prac.onclick=()=>{cur=null;renderPractice('all');renderNav()};nav.appendChild(prac);
+  const gloss=document.createElement('div');gloss.className='streamHd';gloss.innerHTML=ico('📖')+' Glossary';gloss.onclick=()=>{cur=null;renderGlossary();renderNav()};nav.appendChild(gloss);
   STREAMS.forEach((s,si)=>{
     if(s.tournament&&!(STREAMS[si-1]&&STREAMS[si-1].tournament)){
       const dv=document.createElement('div');dv.className='navDivider';
-      dv.textContent='🏆 TOURNAMENTS — practice, no belt credit';
+      dv.textContent='🏆 TOURNAMENTS, practice, no belt credit';
       nav.appendChild(dv);
     }
     if(s.project&&!(STREAMS[si-1]&&STREAMS[si-1].project)){
       const dv=document.createElement('div');dv.className='navDivider';
-      dv.textContent='🏗️ PROJECTS — real-world builds, no belt credit';
+      dv.textContent='🏗️ PROJECTS, real-world builds, no belt credit';
       nav.appendChild(dv);
     }
     if(s.dan&&!(STREAMS[si-1]&&STREAMS[si-1].dan)){
       const dv=document.createElement('div');dv.className='navDivider danDivider';
-      dv.textContent='⛩️ DAN TRACK — senior engineering, beyond black belt';
+      dv.textContent='⛩️ DAN TRACK, senior engineering, beyond black belt';
       nav.appendChild(dv);
     }
     const hd=document.createElement('div');hd.className='streamHd';
-    hd.innerHTML=`${s.icon} ${s.title}<span class="pct">${streamDone(s)}/${s.lessons.length}</span>`;
+    hd.innerHTML=`${ico(s.icon)} ${s.title}<span class="pct">${streamDone(s)}/${s.lessons.length}</span>`;
     const box=document.createElement('div');box.className='lessons'+((cur&&cur.si===si)?' open':'');
     hd.onclick=()=>box.classList.toggle('open');
     let _lastSec=null;
@@ -234,7 +234,7 @@ function renderNav(){
     nav.appendChild(hd);nav.appendChild(box);
   });
 }
-/* Technology domains — streams are grouped into these sections on the home page.
+/* Technology domains, streams are grouped into these sections on the home page.
    Each entry lists the exact stream titles it contains, in display order. Any stream
    not matched here falls into a "More" section so nothing is ever hidden. */
 /* The course name, used in shared UI copy. A sibling dojo sets DOJO_HOME.name. */
@@ -263,13 +263,13 @@ function mergeIdentity(){
   if(idx.length<2)return;
   const first=idx[0];const lessons=[];
   idx.forEach(i=>{const s=STREAMS[i];(s.lessons||[]).forEach(l=>{l.sec=s.sec||s.title;lessons.push(l);});});
-  const merged={icon:'🛂',title:'Identity and Access',blurb:'The whole identity domain in one place — plain-English identity & federation, authentication & MFA, authorization models, sessions & web login, OAuth 2.0 & OIDC, tokens (JWT/JOSE), SAML, PKI, service-to-service & zero trust, enterprise directories, advanced OAuth threats, and governance. Grouped into sub-categories you graduate through from white to black belt.',lessons};
+  const merged={icon:'🛂',title:'Identity and Access',blurb:'The whole identity domain in one place, plain-English identity & federation, authentication & MFA, authorization models, sessions & web login, OAuth 2.0 & OIDC, tokens (JWT/JOSE), SAML, PKI, service-to-service & zero trust, enterprise directories, advanced OAuth threats, and governance. Grouped into sub-categories you graduate through from white to black belt.',lessons};
   for(let k=idx.length-1;k>=0;k--)STREAMS.splice(idx[k],1);
   STREAMS.splice(first,0,merged);
 }
 function streamCard(s,si){
   const d=streamDone(s),t=s.lessons.length;
-  return `<div class="card${s.tournament?' tour':(s.project?' proj':(s.dan?' dan':''))}" onclick="openLesson(${si},0)">${s.icon}${s.tournament?'<span class="tourBadge">🏆 TOURNAMENT</span>':(s.project?'<span class="projBadge">🏗️ PROJECT</span>':(s.dan?'<span class="danBadge">⛩️ DAN</span>':''))}<h3>${s.title}</h3><div class="meta">${s.blurb}</div><div class="meta" style="margin-top:6px">${d}/${t} ${s.tournament?'challenges · no belt credit':(s.project?'projects · no belt credit':(s.dan?'lessons · dan track':'lessons'))}</div><div class="bar"><i style="width:${t?Math.round(100*d/t):0}%${s.tournament?';background:#d97706':(s.project?';background:#0e9f6e':(s.dan?';background:linear-gradient(90deg,#111827,#b8860b)':''))}"></i></div></div>`;
+  return `<div class="card${s.tournament?' tour':(s.project?' proj':(s.dan?' dan':''))}" onclick="openLesson(${si},0)">${ico(s.icon,'cardIc')}${s.tournament?'<span class="tourBadge">🏆 TOURNAMENT</span>':(s.project?'<span class="projBadge">🏗️ PROJECT</span>':(s.dan?'<span class="danBadge">⛩️ DAN</span>':''))}<h3>${s.title}</h3><div class="meta">${s.blurb}</div><div class="meta" style="margin-top:6px">${d}/${t} ${s.tournament?'challenges · no belt credit':(s.project?'projects · no belt credit':(s.dan?'lessons · dan track':'lessons'))}</div><div class="bar"><i style="width:${t?Math.round(100*d/t):0}%${s.tournament?';background:#d97706':(s.project?';background:#0e9f6e':(s.dan?';background:linear-gradient(90deg,#111827,#b8860b)':''))}"></i></div></div>`;
 }
 // per-domain belt: percentage of the domain's belt-eligible lessons completed
 function domainBelt(done,total){
@@ -304,13 +304,13 @@ function renderHome(){
       const done=beltIdx.reduce((a,si)=>a+streamDone(STREAMS[si]),0);
       const tot=beltIdx.reduce((a,si)=>a+STREAMS[si].lessons.length,0);
       const bn=domainBelt(done,tot);
-      head=`<span class="domainLeft">${beltStrip(bn)}${dom.icon} ${dom.name}</span><span class="domainCount">${bn} · ${done}/${tot}</span>`;
+      head=`<span class="domainLeft">${beltStrip(bn)}${ico(dom.icon)} ${dom.name}</span><span class="domainCount">${bn} · ${done}/${tot}</span>`;
     } else {
-      head=`<span class="domainLeft">${dom.icon} ${dom.name}</span><span class="domainCount">${nStreams} streams · ${nLessons} lessons</span>`;
+      head=`<span class="domainLeft">${ico(dom.icon)} ${dom.name}</span><span class="domainCount">${nStreams} streams · ${nLessons} lessons</span>`;
     }
     let inner='';
     if(mainIdx.length) inner+=`<div class="grid">${mainIdx.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;
-    if(danIdx.length) inner+=`<div class="danTrackHd">⛩️ ${dom.name} · Dan track — advanced topics (post-black, no belt credit)</div><div class="grid">${danIdx.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;
+    if(danIdx.length) inner+=`<div class="danTrackHd">⛩️ ${dom.name} · Dan track, advanced topics (post-black, no belt credit)</div><div class="grid">${danIdx.map(si=>streamCard(STREAMS[si],si)).join('')}</div>`;
     sections+=`<details class="domainSec"${started?' open':''}><summary class="domainHd">${head}<span class="domainMeta">${nStreams} stream${nStreams===1?'':'s'} · ${nLessons} lessons</span></summary>${inner}</details>`;
   }
   const extra=STREAMS.map((s,si)=>si).filter(si=>!placed.has(si));
@@ -322,28 +322,28 @@ function renderHome(){
   // config; the defaults below are Dev Dojo's.
   const HOME=(typeof DOJO_HOME!=="undefined")?DOJO_HOME:{
     name:'Dev Dojo',
-    title:'Welcome to Dev Dojo 🥋',
-    intro:STREAMS.length+' training tracks take you from fundamentals to mastery across software engineering — Java &amp; the JVM, computer science &amp; algorithms, web/HTTP &amp; front-end (React), APIs &amp; Spring, databases &amp; SQL, concurrency, security, DevOps, and senior-level architecture, all grouped by domain below.'
+    title:'Welcome to Dev Dojo',
+    intro:STREAMS.length+' training tracks take you from fundamentals to mastery across software engineering: Java &amp; the JVM, computer science &amp; algorithms, web/HTTP &amp; front-end (React), APIs &amp; Spring, databases &amp; SQL, concurrency, security, DevOps, and senior-level architecture, all grouped by domain below.'
   };
   m.innerHTML=`<div class="home">
-  <h1>${HOME.title}</h1>
-  <div class="startBanner">New here? Start with <a href="javascript:void(0)" onclick="cur=null;renderGettingStarted();renderNav()"><b>🚀 Getting started</b></a> to set up your environment and get the full depth, then follow the <a href="javascript:void(0)" onclick="cur=null;renderPath();renderNav()"><b>🗺️ Learning path</b></a>.</div>
-  <p>${HOME.intro} Every lesson ends with an exercise in the built-in editor. <b>Most exercises are graded on the shape of your answer, not on running it</b> — regex checks that you used the right construct. SQL and JavaScript do execute for real; Java runs for real if you start the optional local runner. Every exercise has a <b>Run locally</b> panel with exact commands — that is the ground truth. Stuck? <b>Next Step</b> gives a progressive hint, and <b>Show me the solution</b> is always there — no judgment.</p>
-  <p><b>Tip:</b> select or double-click any keyword or term — in a lesson or your own code — and a popup explains it, drawing on the ${GLOSS.reduce((a,d)=>a+d.groups.reduce((b,g)=>b+g.terms.length,0),0)} terms in the glossary.</p>
+  <h1 class="pageTitle">${HOME.title}</h1>
+  <div class="startBanner">New here? Start with <a href="javascript:void(0)" onclick="cur=null;renderGettingStarted();renderNav()"><b>${ico('🚀')} Getting started</b></a> to set up your environment and get the full depth, then follow the <a href="javascript:void(0)" onclick="cur=null;renderPath();renderNav()"><b>${ico('🗺️')} Learning path</b></a>.</div>
+  <p>${HOME.intro} Every lesson ends with an exercise in the built-in editor. <b>Most exercises are graded on the shape of your answer, not on running it</b>, regex checks that you used the right construct. SQL and JavaScript do execute for real; Java runs for real if you start the optional local runner. Every exercise has a <b>Run locally</b> panel with exact commands, that is the ground truth. Stuck? <b>Next Step</b> gives a progressive hint, and <b>Show me the solution</b> is always there, no judgment.</p>
+  <p><b>Tip:</b> select or double-click any keyword or term, in a lesson or your own code, and a popup explains it, drawing on the ${GLOSS.reduce((a,d)=>a+d.groups.reduce((b,g)=>b+g.terms.length,0),0)} terms in the glossary.</p>
   <div class="gsCard">
-  <h2>How to get the most out of ${HOME.name} — learn &amp; retain</h2>
+  <h2>How to get the most out of ${HOME.name}: learn &amp; retain</h2>
   <ol>
-    <li><b>Follow the path, earn the belt.</b> Work a domain top-to-bottom via the <b>🗺️ Learning path</b>; the belt bar tracks your progress white → black.</li>
-    <li><b>Struggle first.</b> Try the exercise before revealing anything — use <b>💡 Next Step</b> for a nudge, and only then <b>👀 the solution</b>. The effort is what makes it stick.</li>
-    <li><b>Run it for real.</b> Use the <b>🖥️ Run-locally</b> panel or in-app execution to confirm behavior — reading a solution is not the same as making it work.</li>
-    <li><b>Check yourself.</b> Take the <b>🧠 Quick check</b> quiz on each lesson; getting one slightly wrong and seeing why is where a lot of the learning happens.</li>
-    <li><b>Come back tomorrow.</b> Do your <b>🔁 Review</b> daily — spaced repetition resurfaces cards right before you'd forget them. This is the single biggest lever for retention.</li>
-    <li><b>Ramp the difficulty.</b> Once the basics click, use <b>🎯 Practice</b> to grind Easy → Hard.</li>
+    <li><b>Follow the path, earn the belt.</b> Work a domain top-to-bottom via the <b>${ico('🗺️')} Learning path</b>; the belt bar tracks your progress white → black.</li>
+    <li><b>Struggle first.</b> Try the exercise before revealing anything, use <b>Next Step</b> for a nudge, and only then <b>the solution</b>. The effort is what makes it stick.</li>
+    <li><b>Run it for real.</b> Use the <b>${ico('🖥️')} Run-locally</b> panel or in-app execution to confirm behavior, reading a solution is not the same as making it work.</li>
+    <li><b>Check yourself.</b> Take the <b>Quick check</b> quiz on each lesson; getting one slightly wrong and seeing why is where a lot of the learning happens.</li>
+    <li><b>Come back tomorrow.</b> Do your <b>${ico('📑')} Review</b> daily, spaced repetition resurfaces cards right before you'd forget them. This is the single biggest lever for retention.</li>
+    <li><b>Ramp the difficulty.</b> Once the basics click, use <b>${ico('🎯')} Practice</b> to grind Easy → Hard.</li>
     <li><b>Teach it back.</b> After each lesson, say the idea in one plain sentence. If you can teach it, you own it.</li>
   </ol>
   </div>
   <div class="scaleBar">${STREAMS.length} streams · ${STREAMS.reduce((a,s)=>a+s.lessons.length,0)} lessons · ${STREAMS.reduce((a,s)=>a+s.lessons.reduce((b,l)=>b+((l.exs||(l.ex?[l.ex]:[])).length),0),0)} hands-on exercises</div>
-  <p style="font-size:12px;color:var(--muted)">System status: AI test runner ${(window.cowork&&window.cowork.askClaude)?'✅ connected':'⚠️ unavailable — completion falls back to structural checks'} · progress storage ${store.persistent?'✅ persistent':'⚠️ session-only (browser storage is blocked here; progress lasts until this view closes)'}</p>
+  <p style="font-size:12px;color:var(--muted)">System status: AI test runner ${(window.cowork&&window.cowork.askClaude)?'✅ connected':'⚠️ unavailable, completion falls back to structural checks'} · progress storage ${store.persistent?'✅ persistent':'⚠️ session-only (browser storage is blocked here; progress lasts until this view closes)'}</p>
   ${sections}</div>`;
 }
 /* ============================== LESSON ============================== */
@@ -359,7 +359,7 @@ function openLesson(si,li,ei){
   const sid=e?exSid(l,exs,ei):null;
   const saved=sid?store.lesson(sid):{};
   const m=document.getElementById('main');
-  m.innerHTML=`<div class="crumb">${s.icon} ${s.title}${l.sec?' · '+l.sec:''} · Lesson ${li+1} of ${s.lessons.length}</div>
+  m.innerHTML=`<div class="crumb">${ico(s.icon)} ${s.title}${l.sec?' · '+l.sec:''} · Lesson ${li+1} of ${s.lessons.length}</div>
   <h1 class="lessonTitle">${l.title}</h1>
   <div class="lessonBody">${l.body}</div>
   ${l.docs&&l.docs.length?`<div class="docs"><b>📚 References:</b><br>${l.docs.map(d=>`<a href="${d[1]}" target="_blank" rel="noopener">${d[0]} ↗</a>`).join('')}</div>`:''}
@@ -386,10 +386,10 @@ function openLesson(si,li,ei){
         <div class="ioTab active" id="tab-tests">Test Results<span class="dot" id="dot-tests" style="display:none"></span></div>
         <div class="ioTab" id="tab-console">Console<span class="dot" id="dot-console" style="display:none"></span></div>
       </div>
-      <div class="ioBody" id="io-tests"><span style="color:var(--muted);font-size:12.5px">No runs yet — hit ▶ Compile &amp; Run Tests.</span></div>
+      <div class="ioBody" id="io-tests"><span style="color:var(--muted);font-size:12.5px">No runs yet, hit ▶ Compile &amp; Run Tests.</span></div>
       <div class="ioBody" id="io-console" style="display:none"><div class="cLine dim">— compiler and program output will appear here —</div></div>
     </div>
-    <div class="doneBanner" id="doneBanner">✅ Lesson complete — nice work! Pick the next lesson in the sidebar.</div>
+    <div class="doneBanner" id="doneBanner">✅ Lesson complete, nice work! Pick the next lesson in the sidebar.</div>
     <div class="solution" id="solBox" hidden><div class="codeSample">${highlight(e.solution)}</div></div>
     ${depthPanels(s,l,e)}
   </div>`:''}
@@ -419,8 +419,8 @@ function completeExercise(l,sid,ei,exs){
   }else{
     const isTour=cur&&STREAMS[cur.si]&&STREAMS[cur.si].tournament;
     const solved=exs.filter((x,i)=>store.lesson(exSid(l,exs,i)).done).length;
-    if(isTour)toast('🏆 <b>Challenge solved!</b> '+solved+'/'+exs.length+' in this round — 🎲 Random or pick another anytime');
-    else toast('✅ Exercise '+(ei+1)+' of '+exs.length+' complete — pick the next one in the tabs above');
+    if(isTour)toast('🏆 <b>Challenge solved!</b> '+solved+'/'+exs.length+' in this round, 🎲 Random or pick another anytime');
+    else toast('✅ Exercise '+(ei+1)+' of '+exs.length+' complete, pick the next one in the tabs above');
     const t=document.getElementById('extab-'+ei);
     if(t){t.classList.add('done');t.innerHTML='✅ Exercise '+(ei+1);}
   }
@@ -565,13 +565,13 @@ function localRunHtml(s,l,e){
 <pre class="runbox">docker run --rm -e POSTGRES_PASSWORD=pw -p 5432:5432 postgres:16
 psql postgresql://postgres:pw@localhost:5432/postgres
 -- create the tables named in the prompt, insert a few rows, then run your query</pre>
-<p>No Docker? Any Postgres, MySQL or even SQLite works — the syntax in these lessons is standard SQL.</p>`;
+<p>No Docker? Any Postgres, MySQL or even SQLite works, the syntax in these lessons is standard SQL.</p>`;
   } else if(lang==='shell'){
     steps=`<p>These are real commands. Try them in a throwaway directory so nothing important is at risk:</p>
 <pre class="runbox">mkdir /tmp/play && cd /tmp/play && git init
 # then run each command and watch exactly what changes</pre>`;
   } else if(lang==='text'){
-    steps=`<p>This is a short-answer / mental-model check — there is no code to execute. Compare your reasoning against the solution, and follow the references below to go deeper.</p>`;
+    steps=`<p>This is a short-answer / mental-model check, there is no code to execute. Compare your reasoning against the solution, and follow the references below to go deeper.</p>`;
   } else if(lang==='js'||lang==='jsx'){
     steps=`<p>These run in a Node or React project. To try a React component for real:</p>
 <pre class="runbox">npm create vite@latest my-app -- --template react
@@ -592,7 +592,7 @@ javac ${esc(cls)}.java && java ${esc(cls)}
 // or explore interactively, no main needed:
 jshell ${esc(cls)}.java</pre>
 <p>To grade it the way ${DOJO_NAME} does, add <b>JUnit 5</b> and turn the "expected behavior" above into <code>assertEquals</code> checks.</p>
-<p><b>Or compile &amp; run it right here</b> — if you started the site with a local JDK and <code>JD_LOCAL_RUNNER=1</code>:</p>
+<p><b>Or compile &amp; run it right here</b>: if you started the site with a local JDK and <code>JD_LOCAL_RUNNER=1</code>:</p>
 <button class="glossBtn" type="button" onclick="runJavaLocal()">▶ Compile &amp; run with local JDK</button>
 <div id="javaRun" class="sqlResult"></div>`;
   }
@@ -601,8 +601,8 @@ jshell ${esc(cls)}.java</pre>
 function diveDeeperHtml(s,l,e){
   const docs=(l.docs&&l.docs.length)?`<p><b>Read the source:</b> ${l.docs.map(d=>`<a href="${d[1]}" target="_blank" rel="noopener">${esc(d[0])} ↗</a>`).join(' · ')}</p>`:'';
   return `<details class="depth"><summary>🔬 Dive deeper</summary><div class="depthBody">
-<p><b>How this is graded.</b> The check looks for the right constructs in your code, and in the app Claude runs the tests like a compiler. That verifies structure and logic, not every runtime edge — so for real confidence, run it locally (above) and try to break it.</p>
-<p><b>Push further.</b> Change the inputs and predict the output before running. Add an edge case the prompt did not mention. Then say the idea aloud in one sentence — if you can teach it, you own it.</p>
+<p><b>How this is graded.</b> The check looks for the right constructs in your code, and in the app Claude runs the tests like a compiler. That verifies structure and logic, not every runtime edge, so for real confidence, run it locally (above) and try to break it.</p>
+<p><b>Push further.</b> Change the inputs and predict the output before running. Add an edge case the prompt did not mention. Then say the idea aloud in one sentence, if you can teach it, you own it.</p>
 ${docs}
 </div></details>`;
 }
@@ -618,7 +618,7 @@ function runJavaLocal(){
       const head=d.ok?('✔ '+(d.stage==='run'?'compiled &amp; ran':'compiled')):('✘ '+esc(d.stage||'error')+' failed');
       out.innerHTML='<div class="sqlMeta">'+head+'</div><pre class="runbox">'+esc(d.output||'(no output)')+'</pre>';
     })
-    .catch(err=>{ out.innerHTML='<div class="sqlMeta">Local runner unavailable — start the site with <code>JD_LOCAL_RUNNER=1 node site/server.js</code> and a JDK installed, or use the commands above. <span style="color:var(--muted)">('+esc(String(err))+')</span></div>'; });
+    .catch(err=>{ out.innerHTML='<div class="sqlMeta">Local runner unavailable, start the site with <code>JD_LOCAL_RUNNER=1 node site/server.js</code> and a JDK installed, or use the commands above. <span style="color:var(--muted)">('+esc(String(err))+')</span></div>'; });
 }
 
 /* ---- live in-browser SQL runner (real execution on sample datasets) ---- */
@@ -629,7 +629,7 @@ function sqlTableHtml(name,tbl){
     +`<tbody>${tbl.rows.map(r=>`<tr>${tbl.cols.map(c=>`<td>${esc(sqlFmt(r[c]))}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
 }
 function sqlResultHtml(rows){
-  if(!rows.length)return '<div class="sqlMeta">✔ ran successfully — 0 rows</div>';
+  if(!rows.length)return '<div class="sqlMeta">✔ ran successfully, 0 rows</div>';
   const cols=Object.keys(rows[0]);
   return `<table class="sqlTbl"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead>`
     +`<tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${esc(sqlFmt(r[c]))}</td>`).join('')}</tr>`).join('')}</tbody></table>`
@@ -637,8 +637,8 @@ function sqlResultHtml(rows){
 }
 function sqlRunPanel(dsName){
   const db=window.SQL_DATASETS[dsName];
-  return `<details class="depth sqlPanel" open><summary>🗄️ Sample data — run your query for real</summary><div class="depthBody">
-  <p>Your SQL runs against this live sample database, entirely in your browser (a small built-in engine — no server, works offline):</p>
+  return `<details class="depth sqlPanel" open><summary>🗄️ Sample data, run your query for real</summary><div class="depthBody">
+  <p>Your SQL runs against this live sample database, entirely in your browser (a small built-in engine, no server, works offline):</p>
   <div class="sqlData">${Object.keys(db).map(t=>sqlTableHtml(t,db[t])).join('')}</div>
   <button class="primary" type="button" onclick="runSqlExercise('${dsName}')">▶ Run query on sample data</button>
   <div id="sqlResult" class="sqlResult"><div class="sqlMeta">Write a SELECT above and press Run to see real rows.</div></div>
@@ -649,7 +649,7 @@ function runSqlExercise(dsName){
   const db=window.SQL_DATASETS[dsName]; if(!db){out.innerHTML='<div class="sqlErr">sample data unavailable</div>';return;}
   const src=((document.getElementById('ed')||{}).value||'').replace(/\/\*[\s\S]*?\*\//g,' ').replace(/--[^\n]*/g,' ');
   const stmts=src.split(';').map(s=>s.trim()).filter(Boolean).filter(s=>/^select/i.test(s));
-  if(!stmts.length){out.innerHTML='<div class="sqlMeta">No SELECT found — write one (INSERT/UPDATE/DDL are not executed by the sample runner).</div>';return;}
+  if(!stmts.length){out.innerHTML='<div class="sqlMeta">No SELECT found, write one (INSERT/UPDATE/DDL are not executed by the sample runner).</div>';return;}
   let html='';
   stmts.forEach((s,i)=>{
     try{ const rows=window.SQLDB.run(JSON.parse(JSON.stringify(db)),s); html+=`${stmts.length>1?`<div class="sqlQ">Query ${i+1}</div>`:''}${sqlResultHtml(rows)}`; }
@@ -662,25 +662,25 @@ function runSqlExercise(dsName){
 function renderGettingStarted(){
   const m=document.getElementById('main');
   m.innerHTML=`<div class="home">
-  <h1>🚀 Getting started with ${DOJO_NAME}</h1>
+  <h1 class="pageTitle">${ico('🚀')} Getting started with ${DOJO_NAME}</h1>
   <p>${DOJO_NAME} runs entirely in your browser and every lesson ends with a hands-on exercise. This page shows how your work is checked, what to install to get the <b>full depth</b>, and how to run any exercise in your own dev environment when you want real, compiler-verified feedback.</p>
 
   <div class="gsCard">
   <h2>How your work is checked (be honest with yourself)</h2>
-  <p>When you hit <b>Compile &amp; Run Tests</b>, ${DOJO_NAME} does two things: it checks your code contains the right constructs, and — in the app — it asks Claude to execute the tests like a compiler plus JUnit and report pass/fail per test. That is great for fast feedback and learning, but it is <b>not a real compiler</b>. It can miss a runtime edge case, and a correct solution written in an unusual way can occasionally be marked wrong.</p>
-  <p><b>The fix for real depth:</b> every exercise now has a <b>🖥️ Run this on your own machine</b> panel with the exact commands. SQL exercises execute against real sample data in your browser, and pure-JavaScript exercises run in a sandboxed Web Worker — both graded on real behavior. Java exercises can even <b>compile &amp; run in-app</b> if you start the site with a local JDK and <code>JD_LOCAL_RUNNER=1</code>.</p>
+  <p>When you hit <b>Compile &amp; Run Tests</b>, ${DOJO_NAME} does two things: it checks your code contains the right constructs, and, in the app, it asks Claude to execute the tests like a compiler plus JUnit and report pass/fail per test. That is great for fast feedback and learning, but it is <b>not a real compiler</b>. It can miss a runtime edge case, and a correct solution written in an unusual way can occasionally be marked wrong.</p>
+  <p><b>The fix for real depth:</b> every exercise now has a <b>🖥️ Run this on your own machine</b> panel with the exact commands. SQL exercises execute against real sample data in your browser, and pure-JavaScript exercises run in a sandboxed Web Worker, both graded on real behavior. Java exercises can even <b>compile &amp; run in-app</b> if you start the site with a local JDK and <code>JD_LOCAL_RUNNER=1</code>.</p>
   </div>
 
   <div class="gsCard">
   <h2>Set up your environment</h2>
-  <p>You do not need all of this on day one — install a tool when a track calls for it. Each line notes what it unlocks.</p>
+  <p>You do not need all of this on day one, install a tool when a track calls for it. Each line notes what it unlocks.</p>
   <ul>
-    <li><b>JDK 21+</b> — the Java compiler and runtime. Unlocks running every Java exercise locally (<code>javac</code>, <code>java</code>, <code>jshell</code>). Get it from Adoptium (Temurin) or <code>sdkman</code>. <i>This is the one to install first.</i></li>
-    <li><b>An IDE</b> — IntelliJ IDEA (Community) or VS Code with the Java extensions. Real autocomplete, debugging, and JUnit runs.</li>
-    <li><b>Git</b> — to actually try the Git &amp; version-control lessons; make a throwaway repo and experiment.</li>
-    <li><b>Node.js 22+</b> — needed only to run this site with accounts/progress (<code>node site/server.js</code>) and to rebuild the app (<code>node build.js</code>).</li>
-    <li><b>Docker</b> — spins up a real Postgres for the SQL lessons, and is the backbone of the Docker / Kubernetes / Istio / Envoy courses.</li>
-    <li><b>Maven or Gradle</b> — to build the Spring Boot, API and larger Java projects for real.</li>
+    <li><b>JDK 21+</b>: the Java compiler and runtime. Unlocks running every Java exercise locally (<code>javac</code>, <code>java</code>, <code>jshell</code>). Get it from Adoptium (Temurin) or <code>sdkman</code>. <i>This is the one to install first.</i></li>
+    <li><b>An IDE</b>: IntelliJ IDEA (Community) or VS Code with the Java extensions. Real autocomplete, debugging, and JUnit runs.</li>
+    <li><b>Git</b>: to actually try the Git &amp; version-control lessons; make a throwaway repo and experiment.</li>
+    <li><b>Node.js 22+</b>: needed only to run this site with accounts/progress (<code>node site/server.js</code>) and to rebuild the app (<code>node build.js</code>).</li>
+    <li><b>Docker</b>: spins up a real Postgres for the SQL lessons, and is the backbone of the Docker / Kubernetes / Istio / Envoy courses.</li>
+    <li><b>Maven or Gradle</b>: to build the Spring Boot, API and larger Java projects for real.</li>
   </ul>
   </div>
 
@@ -692,7 +692,7 @@ function renderGettingStarted(){
 
   <div class="gsCard">
   <h2>Where to go next</h2>
-  <p>New here? Follow the <a href="javascript:void(0)" onclick="cur=null;renderPath();renderNav()"><b>🗺️ Learning path</b></a> for a recommended order from white to black belt. Confused by a term? The <a href="javascript:void(0)" onclick="cur=null;renderGlossary();renderNav()"><b>📖 Glossary</b></a> defines everything, and you can select any highlighted term inside a lesson to see its definition inline.</p>
+  <p>New here? Follow the <a href="javascript:void(0)" onclick="cur=null;renderPath();renderNav()"><b>${ico('🗺️')} Learning path</b></a> for a recommended order from white to black belt. Confused by a term? The <a href="javascript:void(0)" onclick="cur=null;renderGlossary();renderNav()"><b>📖 Glossary</b></a> defines everything, and you can select any highlighted term inside a lesson to see its definition inline.</p>
   </div>
   </div>`;
   m.scrollTop=0;
@@ -703,17 +703,17 @@ function renderPath(){
   const m=document.getElementById('main');
   const step=(n,belt,title,body)=>`<div class="pathStep"><div class="pathNum">${n}</div><div class="pathBody"><div class="pathBelt">${belt}</div><h3>${esc(title)}</h3><p>${body}</p></div></div>`;
   m.innerHTML=`<div class="home">
-  <h1>🗺️ Learning path</h1>
-  <p>${DOJO_NAME} is large on purpose, but you do not have to wander. This is a recommended route from beginner to senior. Finish the belt lessons in a domain to earn its belt; the dan sub-tracks and the Projects/Tournaments are where you cement it. Jump around once you know the basics — this is a suggestion, not a cage.</p>
+  <h1 class="pageTitle">${ico('🗺️')} Learning path</h1>
+  <p>${DOJO_NAME} is large on purpose, but you do not have to wander. This is a recommended route from beginner to senior. Finish the belt lessons in a domain to earn its belt; the dan sub-tracks and the Projects/Tournaments are where you cement it. Jump around once you know the basics, this is a suggestion, not a cage.</p>
   <div class="pathWrap">
-  ${step(1,'⬜ White','Start here','Read <b>🚀 Getting started</b>, install a JDK, and skim the <b>Glossary</b>. Then begin <b>Java Fundamentals</b> — variables, control flow, objects, collections.')}
+  ${step(1,'⬜ White','Start here','Read <b>Getting started</b>, install a JDK, and skim the <b>Glossary</b>. Then begin <b>Java Fundamentals</b>, variables, control flow, objects, collections.')}
   ${step(2,'🟡 Yellow','Core Java','Finish <b>Java Fundamentals</b> (including <i>Inside the JVM</i>), <b>Exception Handling</b>, and <b>Generics from the Ground Up</b>. This is the language spine everything else assumes.')}
-  ${step(3,'🟠 Orange','Computer science','Do <b>Data Structures &amp; Algorithms</b> — collections, Big-O, trees, and BFS/DFS/Dijkstra traversal. Interview-critical and used everywhere.')}
+  ${step(3,'🟠 Orange','Computer science','Do <b>Data Structures &amp; Algorithms</b>, collections, Big-O, trees, and BFS/DFS/Dijkstra traversal. Interview-critical and used everywhere.')}
   ${step(4,'🟢 Green','How programs talk','Take <b>Web &amp; HTTP</b>, <b>APIs &amp; REST</b>, and <b>Working with Databases</b> (SQL joins, the command map, complex queries). Now you can build real services.')}
-  ${step(5,'🔵 Blue','Frameworks &amp; concurrency','Add <b>Spring Boot</b>, <b>Concurrency &amp; Multithreading</b> (start with <i>threads vs processes</i>), and <b>Modern Java</b>. Run these locally — concurrency especially rewards a real JVM.')}
+  ${step(5,'🔵 Blue','Frameworks &amp; concurrency','Add <b>Spring Boot</b>, <b>Concurrency &amp; Multithreading</b> (start with <i>threads vs processes</i>), and <b>Modern Java</b>. Run these locally, concurrency especially rewards a real JVM.')}
   ${step(6,'🟣 Purple','Security &amp; identity','Work through <b>Identity and Access</b> end to end: foundations &amp; federation, authn/MFA, authorization models, sessions, OAuth/OIDC, tokens, SAML, PKI, and the advanced/governance sub-tracks.')}
   ${step(7,'🟤 Brown','Ship it','Learn <b>Build Tools</b>, <b>Git</b>, <b>Deploying to the Web</b>, and <b>CI/CD</b>. Pair these with the standalone Docker &amp; Kubernetes courses in your own environment.')}
-  ${step(8,'⚫ Black','Senior craft','Enter the <b>Senior (Dan)</b> tracks — System Design, Failure-First Distributed Systems, Working with Real Code — then prove it in <b>Real-World Projects</b> and the <b>Tournament</b>.')}
+  ${step(8,'⚫ Black','Senior craft','Enter the <b>Senior (Dan)</b> tracks, System Design, Failure-First Distributed Systems, Working with Real Code, then prove it in <b>Real-World Projects</b> and the <b>Tournament</b>.')}
   </div>
   <p style="margin-top:16px">Ready? <a href="javascript:void(0)" onclick="cur=null;renderHome();renderNav()"><b>Back to all tracks →</b></a></p>
   </div>`;
@@ -747,7 +747,7 @@ function srsGrade(sid,good){
 }
 function reviewCard(d){
   return `<div class="revCard">
-    <div class="revMeta">${d.icon} ${esc(d.lessonTitle)}${d.reps?` · reviewed ${d.reps}×`:''}</div>
+    <div class="revMeta">${ico(d.icon)} ${esc(d.lessonTitle)}${d.reps?` · reviewed ${d.reps}×`:''}</div>
     <div class="revTitle">${esc(d.exTitle)}</div>
     <div class="revPrompt">${d.prompt}</div>
     <div class="revBtns">
@@ -764,16 +764,16 @@ function renderReview(){
   const upcoming=deck.filter(d=>d.due>now).sort((a,b)=>a.due-b.due);
   let body;
   if(!deck.length){
-    body=`<div class="reviewEmpty">No completed exercises yet. Finish a few lessons and they'll appear here for review — spaced out so they stick.</div>`;
+    body=`<div class="reviewEmpty">No completed exercises yet. Finish a few lessons and they'll appear here for review, spaced out so they stick.</div>`;
   } else if(!due.length){
     const nx=upcoming[0];
     body=`<div class="reviewEmpty">✅ Nothing due right now. Your review deck has <b>${deck.length}</b> card${deck.length>1?'s':''}; next one is due in <b>${nx?srsFmtIn(nx.due-now):'—'}</b>.</div>`;
   } else {
-    body=`<p><b>${due.length}</b> card${due.length>1?'s':''} due. Try to recall the solution first; open the lesson if you need to. Then rate yourself — <b>Good</b> schedules it further out, <b>Again</b> brings it back soon.</p>`
+    body=`<p><b>${due.length}</b> card${due.length>1?'s':''} due. Try to recall the solution first; open the lesson if you need to. Then rate yourself, <b>Good</b> schedules it further out, <b>Again</b> brings it back soon.</p>`
       + due.map(reviewCard).join('')
       + (upcoming.length?`<div class="reviewEmpty" style="margin-top:14px">+ ${upcoming.length} more scheduled later (next in ${srsFmtIn(upcoming[0].due-now)}).</div>`:'');
   }
-  m.innerHTML=`<div class="home"><h1>🔁 Review</h1>
+  m.innerHTML=`<div class="home"><h1 class="pageTitle">${ico('📑')} Review</h1>
   <p style="color:var(--muted)">Spaced repetition resurfaces what you've learned right before you'd forget it. Cards are built automatically from the exercises you've completed and scheduled with expanding intervals (1 → 3 → 7 → 16 → 35 days…).</p>
   ${body}</div>`;
   m.scrollTop=0;
@@ -822,10 +822,10 @@ function renderPractice(filter){
   const counts={easy:0,medium:0,hard:0};items.forEach(i=>counts[i.d]++);
   const shown=filter==='all'?items:items.filter(i=>i.d===filter);
   const tab=(k,label,n)=>`<button class="pracTab ${filter===k?'active':''}" onclick="renderPractice('${k}')">${label} <span class="pcount">${n}</span></button>`;
-  m.innerHTML=`<div class="home"><h1>🎯 Practice by difficulty</h1>
-  <p style="color:var(--muted)">Every exercise across ${DOJO_NAME}, rated by difficulty. Filter to build a ramp — grind 🟢 Easy to warm up, or jump to 🔴 Hard for interview-grade problems. Ratings are auto-derived from each solution.</p>
+  m.innerHTML=`<div class="home"><h1 class="pageTitle">${ico('🎯')} Practice by difficulty</h1>
+  <p style="color:var(--muted)">Every exercise across ${DOJO_NAME}, rated by difficulty. Filter to build a ramp, grind 🟢 Easy to warm up, or jump to 🔴 Hard for interview-grade problems. Ratings are auto-derived from each solution.</p>
   <div class="pracTabs">${tab('all','All',items.length)}${tab('easy','🟢 Easy',counts.easy)}${tab('medium','🟡 Medium',counts.medium)}${tab('hard','🔴 Hard',counts.hard)}</div>
-  <div class="pracList">${shown.map(i=>`<div class="pracRow" onclick="openLesson(${i.si},${i.li},${i.ei})"><span class="diffDot d-${i.d}" title="${i.d}"></span><span class="pracDone">${i.done?'✅':'○'}</span><span class="pracIcon">${i.icon}</span><span class="pracTitle">${esc(i.title)}</span><span class="pracLesson">${esc(i.lesson)}</span></div>`).join('')}</div>
+  <div class="pracList">${shown.map(i=>`<div class="pracRow" onclick="openLesson(${i.si},${i.li},${i.ei})"><span class="diffDot d-${i.d}" title="${i.d}"></span><span class="pracDone">${i.done?'✅':'○'}</span><span class="pracIcon">${ico(i.icon)}</span><span class="pracTitle">${esc(i.title)}</span><span class="pracLesson">${esc(i.lesson)}</span></div>`).join('')}</div>
   </div>`;
   m.scrollTop=0;
 }
@@ -836,7 +836,7 @@ function renderPractice(filter){
    made them solvable without reading the question. Permutes options and whyWrong in
    lockstep and remaps answer, so quizPick() stays correct with no other changes.
    Re-shuffles on every lesson visit, so position can never be memorised.
-   Returns new question objects — the source data in l.quiz is never mutated. */
+   Returns new question objects, the source data in l.quiz is never mutated. */
 function shuffleQuiz(qs){
   if(!qs||!qs.length)return qs||null;
   return qs.map(function(q){
@@ -870,6 +870,6 @@ function quizPick(qi,oi){
     const picked=q.options[oi];
     const ww=(q.whyWrong&&q.whyWrong[oi])?q.whyWrong[oi]:('“'+picked+'” is not the best fit here.');
     w.innerHTML='✘ <b>The correct answer is “'+esc(correct)+'.”</b> '+esc(q.why||'')
-      +'<span class="quizWrongPick">You picked “'+esc(picked)+'” — '+esc(ww)+'</span>';
+      +'<span class="quizWrongPick">You picked “'+esc(picked)+'”, '+esc(ww)+'</span>';
   }
 }

@@ -1,4 +1,4 @@
-# 5b — Egress & ServiceEntry: the traffic that leaves
+# 5b: Egress & ServiceEntry: the traffic that leaves
 
 *The mesh knows every service inside it, and nothing about the internet. This module is about calls that leave the cluster. ~10 min read.*
 
@@ -90,4 +90,4 @@ partner contract, or SOC's allowlist asks for it by name, not before.
 
 ---
 
-**Next:** [6 — Security: mTLS & authorization →](./06-security-mtls-authz.md)
+**Next:** [6: Security: mTLS & authorization →](./06-security-mtls-authz.md)

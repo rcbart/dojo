@@ -1,4 +1,4 @@
-# 6 — Health checks & resource management
+# 6: Health checks & resource management
 
 *Production essentials: teach Kubernetes when a pod is healthy and how much it may consume. Concepts
 + a lab. ~30 min. Needs your kind cluster.*
@@ -10,7 +10,7 @@ whether your app is actually working) and **resource requests/limits** (so the s
 well and no pod starves the node). These are heavily tested on the CKA/CKAD, and they're daily
 practitioner work.
 
-## Probes — is the app really OK?
+## Probes: is the app really OK?
 
 A container can be "running" while the app inside is broken. **Probes** let the kubelet test the app
 and act. Three kinds:
@@ -148,4 +148,4 @@ would just remove it from Service traffic without restarting.
 
 ---
 
-**Next:** [6b — Scheduling & disruptions →](./20-scheduling-disruptions.md)
+**Next:** [6b: Scheduling & disruptions →](./20-scheduling-disruptions.md)

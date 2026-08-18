@@ -1,4 +1,4 @@
-# 2 — Lab: run & manage containers
+# 2: Lab: run & manage containers
 
 *Hands-on. The everyday commands you'll use constantly. ~25 min. Requires Docker.*
 
@@ -147,4 +147,4 @@ docker rm -f cache >/dev/null
 
 ---
 
-**Next:** [3 — Building images with Dockerfiles →](./03-dockerfiles.md)
+**Next:** [3: Building images with Dockerfiles →](./03-dockerfiles.md)

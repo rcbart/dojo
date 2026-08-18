@@ -1,4 +1,4 @@
-# 0 — What Docker is (and why it exists)
+# 0: What Docker is (and why it exists)
 
 *No lab: the mental model. ~10 min read.*
 
@@ -93,4 +93,4 @@ Every module answers one of these.
 
 ---
 
-**Next:** [1 — Images & layers →](./01-images-and-layers.md)
+**Next:** [1: Images & layers →](./01-images-and-layers.md)

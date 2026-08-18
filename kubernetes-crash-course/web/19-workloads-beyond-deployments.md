@@ -1,4 +1,4 @@
-# 2b — Workloads beyond Deployments: DaemonSets, Jobs & CronJobs
+# 2b: Workloads beyond Deployments: DaemonSets, Jobs & CronJobs
 
 *A Deployment answers "keep N copies running forever." This module is for every workload where that's the wrong sentence. ~11 min read.*
 
@@ -128,4 +128,4 @@ pods." Learn the opinions, and the objects stop being a list to memorize.
 
 ---
 
-**Next:** [3 — Services & networking →](./03-services-networking.md)
+**Next:** [3: Services & networking →](./03-services-networking.md)

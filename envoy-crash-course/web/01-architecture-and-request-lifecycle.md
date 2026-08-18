@@ -1,4 +1,4 @@
-# 01 — Architecture & the request lifecycle
+# 01: Architecture & the request lifecycle
 
 *No lab: this is the map. Once you can trace one request through Envoy's objects, the config in
 every later module reads itself. ~15 min.*
@@ -77,7 +77,7 @@ Two independent pipelines are the key insight: the **network filter chain** (L4,
 connection) and, inside the HCM, the **HTTP filter chain** (L7, operates on each request). Most of
 your day-to-day config lives in the HTTP filters and the route table.
 
-## Downstream vs upstream — learn this vocabulary now
+## Downstream vs upstream: learn this vocabulary now
 
 Envoy's docs and stats use two words constantly:
 
@@ -146,4 +146,4 @@ That's the whole game. Everything else is options on these four questions.
 
 ---
 
-**Next:** [02 — Lab: your first Envoy (static config) →](./02-lab-first-static-config.md)
+**Next:** [02: Lab: your first Envoy (static config) →](./02-lab-first-static-config.md)

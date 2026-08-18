@@ -57,7 +57,7 @@ import data from "./d.json" with { type: "json" };   // import attributes
 initialised module), but that usually means reading a binding that is still in its temporal dead zone,
 producing a <code>ReferenceError</code> or, worse, an <code>undefined</code> that flows onward. Treat a
 cycle as a design signal: extract the shared piece into a third module.</p>`,
-docs:[['MDN — JavaScript modules','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules'],['MDN — import','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import'],['Node — ECMAScript modules','https://nodejs.org/api/esm.html']],
+docs:[['MDN (JavaScript modules)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules'],['MDN (import)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import'],['Node (ECMAScript modules)','https://nodejs.org/api/esm.html']],
 ex:{title:'Resolve a module specifier',diff:'easy',lang:'js',
 run:{call:'specifierKind',cases:[
  {name:'a relative path',args:['./math.js'],expect:'relative'},
@@ -141,7 +141,7 @@ ecosystem, and why new projects should simply be ESM-only unless they must suppo
 <p><b>ESM, for anything new.</b> It is the standard, it works in browsers and Node, and it enables
 tree-shaking. Learn CommonJS to read existing code, understand the error messages, and know why a package
 you depend on behaves oddly.</p>`,
-docs:[['Node — CommonJS modules','https://nodejs.org/api/modules.html'],['Node — determining module system','https://nodejs.org/api/packages.html#determining-module-system'],['Node — package entry points','https://nodejs.org/api/packages.html#package-entry-points']],
+docs:[['Node (CommonJS modules)','https://nodejs.org/api/modules.html'],['Node (determining module system)','https://nodejs.org/api/packages.html#determining-module-system'],['Node (package entry points)','https://nodejs.org/api/packages.html#package-entry-points']],
 ex:{title:'Which module system is this file?',diff:'easy',lang:'js',
 run:{call:'moduleSystem',cases:[
  {name:'.mjs is always ESM',args:['app.mjs','commonjs'],expect:'esm'},
@@ -229,7 +229,7 @@ and prefer fewer, well-maintained dependencies; use <code>npm ci</code> so build
 <code>npm audit</code> and Dependabot for known vulnerabilities; and <code>--ignore-scripts</code> when
 installing something you have reason to be careful about. <b>Typosquatting is real</b>: check the name
 character by character before installing something you have not used before.</p>`,
-docs:[['npm — package.json','https://docs.npmjs.com/cli/v10/configuring-npm/package-json'],['Semantic Versioning','https://semver.org/'],['npm — npm ci','https://docs.npmjs.com/cli/v10/commands/npm-ci']],
+docs:[['npm, package.json','https://docs.npmjs.com/cli/v10/configuring-npm/package-json'],['Semantic Versioning','https://semver.org/'],['npm, npm ci','https://docs.npmjs.com/cli/v10/commands/npm-ci']],
 exs:[
 {title:'Does this version satisfy the range?',diff:'easy',lang:'js',
 run:{call:'caretAllows',cases:[
@@ -350,7 +350,7 @@ so do not configure it, and never argue with it in review.</p>
 <p><b>Read the errors.</b> Toolchain errors are verbose and usually accurate. "Cannot use import statement
 outside a module" and "Module not found" both mean exactly what they say, and both were covered two
 lessons ago.</p>`,
-docs:[['Vite','https://vitejs.dev/guide/'],['MDN — Introduction to client-side tooling','https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Client-side_tools/Overview'],['webpack — tree shaking','https://webpack.js.org/guides/tree-shaking/']],
+docs:[['Vite','https://vitejs.dev/guide/'],['MDN, Introduction to client-side tooling','https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Client-side_tools/Overview'],['webpack, tree shaking','https://webpack.js.org/guides/tree-shaking/']],
 ex:{title:'Which tool solves this?',diff:'easy',lang:'js',
 run:{call:'toolFor',cases:[
  {name:'too many network requests in production',args:['too-many-requests'],expect:'bundler'},

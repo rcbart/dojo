@@ -1,4 +1,4 @@
-# 3 — CDNs
+# 3: CDNs
 
 *The copy shop at the edge: what caching actually buys you, cache keys, invalidation, and when a CDN is the wrong tool. ~10 min read.*
 
@@ -87,4 +87,4 @@ cached, and what your `Cache-Control` headers *actually said*, before blaming th
 
 ---
 
-**Next:** [4 — DNS in depth →](./04-dns.md)
+**Next:** [4: DNS in depth →](./04-dns.md)

@@ -1,4 +1,4 @@
-# 1 — Load balancers
+# 1: Load balancers
 
 *The traffic cop: what it balances, how it decides, and why health checks are the real feature. ~12 min read.*
 
@@ -96,4 +96,4 @@ component (the API gateway) or the application itself.
 
 ---
 
-**Next:** [2 — API gateways →](./02-api-gateways.md)
+**Next:** [2: API gateways →](./02-api-gateways.md)

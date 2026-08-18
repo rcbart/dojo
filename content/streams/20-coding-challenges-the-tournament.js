@@ -33,7 +33,7 @@ CLEAN LOOPS        one job per loop, no mutation you cannot explain, and
 <p><b>A note on the ritual.</b> It feels artificial for an easy problem, which is exactly why it is
 worth practising here. Under pressure on a hard problem you will do what you rehearsed, and nobody
 invents structured communication for the first time in the final round.</p>`,
-docs:[['Big-O cheat sheet','https://www.bigocheatsheet.com/'],['HashMap — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/HashMap.html']],
+docs:[['Big-O cheat sheet','https://www.bigocheatsheet.com/'],['HashMap (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/HashMap.html']],
 exs:[
 {title:'Two Sum',
 prompt:`<b>Easy.</b> Given an int array and a target, return the indices of the two numbers that add to the target (exactly one solution exists, may not reuse an element). Brute force is O(n²); write <code>static int[] twoSum(int[] nums, int target)</code> in <b>one pass with a HashMap</b> of value→index: for each element, first check whether its complement is already in the map.`,
@@ -274,7 +274,7 @@ no stated complexity often scores below a nearly-working one with clear reasonin
 <p><b>The recovery move.</b> When stuck, say what you know: "brute force is O(n²) because I re-scan
 for every element; I want to avoid re-scanning, so I need something that remembers what I have seen,
 which suggests a map". That sentence is the actual skill, and it frequently produces the answer.</p>`,
-docs:[['Binary search — API note on Arrays.binarySearch','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Arrays.html'],['Collectors.groupingBy — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Collectors.html']],
+docs:[['Binary search, API note on Arrays.binarySearch','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Arrays.html'],['Collectors.groupingBy, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Collectors.html']],
 exs:[
 {title:'Group anagrams',
 prompt:`<b>Medium.</b> Write <code>static java.util.List&lt;java.util.List&lt;String&gt;&gt; group(String[] words)</code>: bucket words that are anagrams of each other. Canonical key = the word's characters sorted (<code>char[]</code> + <code>Arrays.sort</code> + <code>new String</code>); buckets in a <code>HashMap&lt;String, List&lt;String&gt;&gt;</code> via <code>computeIfAbsent</code>; return the bucket values.`,
@@ -527,7 +527,7 @@ are and often earns exactly the nudge you needed.</li>
 <p><b>The one habit worth taking from this round:</b> when a hard defeats you, do not just read the
 solution. Identify which of the four categories above it was, and what the one insight that cracked it
 was. That is what transfers: the specific problem almost never reappears, and the category does.</p>`,
-docs:[['PriorityQueue — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html'],['Invariant-based reasoning — CP-Algorithms','https://cp-algorithms.com/']],
+docs:[['PriorityQueue, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html'],['Invariant-based reasoning, CP-Algorithms','https://cp-algorithms.com/']],
 exs:[
 {title:'Trapping rain water',
 prompt:`<b>Hard.</b> Given bar heights, compute the total water trapped after rain. Write <code>static int trap(int[] h)</code> with the O(n)/O(1) <b>two-pointer</b> solution: track <code>leftMax</code> and <code>rightMax</code>; whichever side has the smaller max is the binding constraint: water above the current bar on that side is <code>max - h[i]</code>, then move that pointer inward.`,

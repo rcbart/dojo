@@ -1,4 +1,4 @@
-# Setup — a local Kubernetes cluster
+# Setup: a local Kubernetes cluster
 
 *Do this once. In ~15 minutes you'll have a real multi-node Kubernetes cluster on your laptop,
 `kubectl` talking to it, Helm installed, and your first app deployed. Every step spelled out.
@@ -14,7 +14,7 @@ with **kind** (Kubernetes-IN-Docker): free, fast, and disposable. You'll install
 
 ---
 
-## Step 1 — Prerequisites
+## Step 1: Prerequisites
 
 **Docker**: already installed if you did the Docker course. Verify: `docker run --rm hello-world`.
 
@@ -34,7 +34,7 @@ with **kind** (Kubernetes-IN-Docker): free, fast, and disposable. You'll install
 > `kubectl` works within one minor version of the cluster. Commands here are stable across recent
 > versions.
 
-## Step 2 — Create a multi-node cluster
+## Step 2: Create a multi-node cluster
 
 A one-node cluster works, but a **multi-node** one lets you see real scheduling. Save this as
 `kind-config.yaml`:
@@ -59,7 +59,7 @@ kubectl get nodes -o wide          # one control-plane + two workers, all Ready
 You now have a real Kubernetes cluster: one **control plane** node (the brain) and two **worker**
 nodes (where your containers run). Module 1 explains each.
 
-## Step 3 — Meet `kubectl`
+## Step 3: Meet `kubectl`
 
 `kubectl` ("cube-cuttle" or "cube-control") is how you interact with the cluster. The pattern is
 `kubectl <verb> <resource>`:
@@ -71,7 +71,7 @@ kubectl get namespaces             # the cluster's namespaces
 kubectl api-resources | head       # the kinds of objects the cluster understands
 ```
 
-## Step 4 — Deploy your first app
+## Step 4: Deploy your first app
 
 Two ways: a quick imperative command, or a declarative file. Start imperative to see something run:
 
@@ -96,7 +96,7 @@ kubectl port-forward deployment/web 8080:80
 curl localhost:8080 | grep -o "<title>.*</title>"    # → nginx welcome
 ```
 
-## Step 5 — See the self-healing (the "wow" moment)
+## Step 5: See the self-healing (the "wow" moment)
 
 Kubernetes constantly keeps reality matching your desired state. Delete a pod and watch it come
 back:
@@ -110,7 +110,7 @@ kubectl get pods                   # a replacement is already being created — 
 You asked for 3 replicas; Kubernetes maintains 3 forever, healing failures automatically. That's the
 core idea of the whole system.
 
-## Step 6 — Clean up
+## Step 6: Clean up
 
 ```bash
 kind delete cluster --name k8s-lab    # removes the entire cluster
@@ -150,4 +150,4 @@ Events.
 
 ---
 
-**Next:** [Primer — Why Kubernetes? →](./primer-why-kubernetes.md)
+**Next:** [Primer: Why Kubernetes? →](./primer-why-kubernetes.md)

@@ -1,4 +1,4 @@
-# 02 — Lab: your first Envoy (static config)
+# 02: Lab: your first Envoy (static config)
 
 *Hands-on. You'll run Envoy in Docker, proxy a real request through it, and understand every line
 of the config. ~20 min. Requires Docker.*
@@ -148,7 +148,7 @@ clusters:
 - **`load_assignment.endpoints`**: the actual backend address(es). This is the `endpoint` noun
   from Module 01.
 
-## Experiments (do these — they cement the model)
+## Experiments (do these: they cement the model)
 
 1. **Watch the request flow.** Keep `docker compose up` in view and run `curl localhost:10000` a
    few times. Each produces an access-log line in Envoy's output. That's step 6 of the lifecycle
@@ -201,4 +201,4 @@ module adds capability to *these same objects*.
 
 ---
 
-**Next:** [03 — Listeners, filter chains & TLS →](./03-listeners-filter-chains-tls.md)
+**Next:** [03: Listeners, filter chains & TLS →](./03-listeners-filter-chains-tls.md)

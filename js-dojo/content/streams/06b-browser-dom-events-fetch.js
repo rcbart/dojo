@@ -57,7 +57,7 @@ list.append(frag);                     // one layout, not N</div>
 pointing at the same element see each other's changes, and the event loop (from the async stream)
 explains why the page repaints only <i>after</i> your handler returns. Nothing here is a new language;
 it is the same JavaScript, holding a live page instead of your own data.</p>`,
-docs:[['MDN — Introduction to the DOM','https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction'],['MDN — querySelector','https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector'],['MDN — textContent vs innerHTML','https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent']],
+docs:[['MDN (Introduction to the DOM)','https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction'],['MDN (querySelector)','https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector'],['MDN (textContent vs innerHTML)','https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent']],
 ex:{title:'Choose the safe DOM operation',diff:'easy',lang:'js',
 run:{call:'domCall',cases:[
  {name:'user text goes in as text',args:['show-user-text'],expect:'textContent'},
@@ -135,7 +135,7 @@ keydown   has e.key        DOMContentLoaded   the tree is ready
 // and the golden rule from the event-loop stream applies: a handler
 // that computes for 300ms freezes the page for 300ms. handlers finish
 // fast, or hand the work off.</div>`,
-docs:[['MDN — Introduction to events','https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/Events'],['MDN — Event bubbling','https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/Event_bubbling'],['MDN — closest','https://developer.mozilla.org/en-US/docs/Web/API/Element/closest']],
+docs:[['MDN (Introduction to events)','https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/Events'],['MDN (Event bubbling)','https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/Event_bubbling'],['MDN (closest)','https://developer.mozilla.org/en-US/docs/Web/API/Element/closest']],
 exs:[
 {title:'Which listeners fire, and in what order?',diff:'medium',lang:'js',
 run:{call:'bubblePath',cases:[
@@ -230,7 +230,7 @@ that server for permission, and blocks the response unless it grants it via
 is deliberately <i>invisible</i> to your code (a generic <code>TypeError</code>, so scripts cannot probe
 where you are logged in), and <b>it is not fetch being broken</b>; the server stream shows the other
 side of this handshake. <code>curl</code> works and the browser refuses: that is CORS, every time.</p>`,
-docs:[['MDN — Using the Fetch API','https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch'],['MDN — Response','https://developer.mozilla.org/en-US/docs/Web/API/Response'],['MDN — CORS','https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS']],
+docs:[['MDN (Using the Fetch API)','https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch'],['MDN (Response)','https://developer.mozilla.org/en-US/docs/Web/API/Response'],['MDN (CORS)','https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS']],
 exs:[
 {title:'Classify the outcome of a fetch',diff:'medium',lang:'js',
 run:{call:'outcome',cases:[
@@ -322,7 +322,7 @@ try {
 } finally {
   submitBtn.disabled = false;    // ALWAYS runs - success, failure, or throw
 }</div>`,
-docs:[['MDN — Your first form','https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Your_first_form'],['MDN — FormData','https://developer.mozilla.org/en-US/docs/Web/API/FormData'],['MDN — Constraint validation','https://developer.mozilla.org/en-US/docs/Web/HTML/Constraint_validation']],
+docs:[['MDN (Your first form)','https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Your_first_form'],['MDN (FormData)','https://developer.mozilla.org/en-US/docs/Web/API/FormData'],['MDN (Constraint validation)','https://developer.mozilla.org/en-US/docs/Web/HTML/Constraint_validation']],
 ex:{title:'Validate a signup form',diff:'hard',lang:'js',
 run:{call:'validateSignup',cases:[
  {name:'a valid form has no errors',args:[{email:'ada@example.com',age:'36',start:'2026-01-01',end:'2026-02-01'}],expect:{}},

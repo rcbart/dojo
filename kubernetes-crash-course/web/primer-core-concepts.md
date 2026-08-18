@@ -1,4 +1,4 @@
-# Primer — Core concepts & glossary
+# Primer: Core concepts & glossary
 
 *Read this if any word feels assumed. It defines the background terms (node, cluster, instance,
 control plane, API, and friends) in plain English, so nothing later leaves you lost. ~10 min. Skim
@@ -114,4 +114,4 @@ module is fuzzy. Every concept here appears, in context, in the modules that fol
 
 ---
 
-**Next:** [0 — What Kubernetes is →](./00-what-is-kubernetes.md)
+**Next:** [0: What Kubernetes is →](./00-what-is-kubernetes.md)

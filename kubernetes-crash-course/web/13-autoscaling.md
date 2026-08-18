@@ -1,4 +1,4 @@
-# 13 — Autoscaling
+# 13: Autoscaling
 
 *Let the cluster add and remove capacity on its own. Concepts + a lab. ~25 min. Needs your kind
 cluster + metrics-server.*
@@ -115,4 +115,4 @@ Seeing REPLICAS rise and fall on its own is the payoff: the cluster right-sizes 
 
 ---
 
-**Next:** [14 — Operators & CRDs →](./14-operators-crds.md)
+**Next:** [14: Operators & CRDs →](./14-operators-crds.md)

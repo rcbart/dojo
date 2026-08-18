@@ -1,4 +1,4 @@
-# Primer — The cluster, at a glance
+# Primer: The cluster, at a glance
 
 *A gentle map of what's inside a Kubernetes cluster before we start using it. ~8 min. You don't need
 to memorize this; just recognize the pieces when they come up.*
@@ -30,10 +30,10 @@ kinds, matching the data-plane/control-plane idea you may know from the service-
 
 | Component | Plain-English job |
 |-----------|-------------------|
-| **API server** | The front door. *Everything* talks to it — `kubectl`, the nodes, every component. You submit desired state here. |
+| **API server** | The front door. *Everything* talks to it, `kubectl`, the nodes, every component. You submit desired state here. |
 | **etcd** | The cluster's database. Stores the entire desired + actual state (the single source of truth). |
 | **Scheduler** | Decides *which node* each new pod should run on, based on resources and rules. |
-| **Controller manager** | Runs the control loops (reconciliation) — e.g. "keep 3 replicas alive." |
+| **Controller manager** | Runs the control loops (reconciliation), e.g. "keep 3 replicas alive." |
 
 When you `kubectl apply` a file, it goes to the **API server**, which saves it in **etcd**. The
 **scheduler** picks nodes for new pods; **controllers** keep everything matching your spec.
@@ -81,4 +81,4 @@ unreachable" → you can't submit anything. You'll meet these in the troubleshoo
 
 ---
 
-**Next:** [Primer — Core concepts & glossary (keep it open as you go) →](./primer-core-concepts.md)
+**Next:** [Primer: Core concepts & glossary (keep it open as you go) →](./primer-core-concepts.md)

@@ -1,4 +1,4 @@
-# 17 — Debugging, gotchas & next steps
+# 17: Debugging, gotchas & next steps
 
 *The field guide you'll come back to. Concept-only. ~15 min.*
 
@@ -82,7 +82,7 @@ The ecosystem is huge; you now have the foundation to learn any of it:
 - **Run something real**: deploy a personal project to a managed cluster (GKE/EKS/AKS free tiers);
   the concepts transfer directly from kind.
 
-## Course recap — the one-paragraph mental model
+## Course recap: the one-paragraph mental model
 
 **Kubernetes** runs your **container images** across a cluster of nodes by **declarative desired
 state**: you submit objects (Pods via **Deployments**/**StatefulSets**, exposed by **Services** and

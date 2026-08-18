@@ -1,4 +1,4 @@
-# 12 — From Docker to Kubernetes
+# 12: From Docker to Kubernetes
 
 *The bridge module. What you've mastered, what Docker alone can't do, and exactly how each concept
 maps into Kubernetes. Concept-only. ~12 min.*
@@ -70,7 +70,7 @@ exam alignment.
 Keep Docker handy: you'll build images throughout the Kubernetes course. The two tools are partners:
 **Docker builds; Kubernetes operates.**
 
-## Course recap — the one-paragraph mental model
+## Course recap: the one-paragraph mental model
 
 **Docker** packages an app and its environment into a layered, read-only **image** (built from a
 `Dockerfile`, stored in a **registry**) and runs it as a lightweight **container** that shares the

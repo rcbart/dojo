@@ -47,7 +47,7 @@ node --inspect server.js        # breakpoints in your handlers
 server (with the <code>http</code> module from the HTTP stream, the config validation from the Node
 runtime stream and the structured logging from the testing stream) is the part worth doing on your own
 machine.</p>`,
-docs:[['Node — http server','https://nodejs.org/api/http.html'],['MDN — URL','https://developer.mozilla.org/en-US/docs/Web/API/URL'],['MDN — 302 vs 301','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/302'],['OWASP — unvalidated redirects','https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html']],
+docs:[['Node (http server)','https://nodejs.org/api/http.html'],['MDN (URL)','https://developer.mozilla.org/en-US/docs/Web/API/URL'],['MDN (302 vs 301)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/302'],['OWASP (unvalidated redirects)','https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html']],
 exs:[
 {title:'1. Validate a submitted URL',diff:'medium',lang:'js',
 run:{call:'validUrl',cases:[

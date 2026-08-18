@@ -1,4 +1,4 @@
-# 5 — Networking
+# 5: Networking
 
 *How containers talk to the world and to each other. Concepts + a lab. ~25 min. Requires Docker.*
 
@@ -125,4 +125,4 @@ docker rm -f redis >/dev/null; docker network rm appnet >/dev/null
 
 ---
 
-**Next:** [6 — Multi-container apps with Docker Compose →](./06-docker-compose.md)
+**Next:** [6: Multi-container apps with Docker Compose →](./06-docker-compose.md)

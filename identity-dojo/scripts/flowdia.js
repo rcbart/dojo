@@ -1,4 +1,4 @@
-// flowdia.js — sequence-diagram generator for auth-flow lessons.
+// flowdia.js, sequence-diagram generator for auth-flow lessons.
 //
 // Turns a small spec (actors + steps) into a self-contained inline <svg>
 // that inherits the site theme through CSS variables (see styles.css
@@ -110,7 +110,7 @@ function render(spec) {
       const cx = x(ix[s.self]);
       const lab = String(s.label).split('\n');
       const pw = Math.min(W - 2 * M, Math.max(...lab.map(t => t.length)) * 6.6 + 26);
-      // clamp the pill inside the canvas — edge actors would otherwise clip
+      // clamp the pill inside the canvas, edge actors would otherwise clip
       let px = cx;
       if (px - pw / 2 < M) px = M + pw / 2;
       if (px + pw / 2 > W - M) px = W - M - pw / 2;

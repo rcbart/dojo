@@ -1,4 +1,4 @@
-# 7 — Image optimization & security
+# 7: Image optimization & security
 
 *The difference between amateur and production images: small, fast, and secure. Concepts + a lab.
 ~30 min. Requires Docker.*
@@ -9,7 +9,7 @@ A working image isn't a good image. Production images should be **small** (fast 
 to attack), **cached well** (fast builds), and **secure** (no secrets, no root, few packages). This
 module is the practitioner content that pays for itself fastest.
 
-## Multi-stage builds — the big one
+## Multi-stage builds: the big one
 
 Your app needs a lot of tooling to *build* (compilers, dev dependencies) but almost none to *run*.
 A **multi-stage build** uses one stage to build and a second, clean stage to hold only the final
@@ -141,4 +141,4 @@ LEAK=$(docker history --no-trunc safe:1.0 2>/dev/null | grep -ci "password\|secr
 
 ---
 
-**Next:** [8 — Advanced builds: BuildKit, buildx & multi-arch →](./08-buildkit-buildx-multiplatform.md)
+**Next:** [8: Advanced builds: BuildKit, buildx & multi-arch →](./08-buildkit-buildx-multiplatform.md)

@@ -257,7 +257,7 @@ anomaly</b> alerting (a database credential appearing from an unfamiliar network
 and honeytoken credentials that exist only to be stolen and alert when used.</p>
 <p>And when a secret does leak: <b>rotate first, investigate second</b>. The investigation can take days;
 the exposure should not.</p>`,
-docs:[['Secrets management — Vault','https://developer.hashicorp.com/vault/docs/what-is-vault'],['Key management — NIST','https://csrc.nist.gov/projects/key-management']],
+docs:[['Secrets management, Vault','https://developer.hashicorp.com/vault/docs/what-is-vault'],['Key management, NIST','https://csrc.nist.gov/projects/key-management']],
 ex:{title:'Is a secret due for rotation?',lang:'js',
 run:{call:'rotateDue',cases:[{name:'due exactly at the maximum age',args:[90,90],expect:true},{name:'due past the maximum age',args:[91,90],expect:true},{name:'not yet due',args:[30,90],expect:false},{name:'brand new secret',args:[0,1],expect:false}]},
 prompt:`Write <code>function rotateDue(ageDays, maxDays)</code> that returns <code>true</code> when the secret&#8217;s age has <b>reached or exceeded</b> the maximum allowed age.`,
@@ -405,7 +405,7 @@ hints:['Three conditions joined with &&.','A pre-ticked box is not explicit cons
 
 <h4>From evidence to control</h4>
 <p>The reason to invest here is that in identity the audit trail is not documentation of the controls; it <i>is</i> several of them. Access reviews are evidenced by it. Deprovisioning is proved by it. "Least privilege" is measurable only if you can see what was actually used, which is what makes usage-derived recommendations possible. Detection (impossible travel, a burst of failures, a new admin, a first-time-seen client) reads the same stream. And the real test of the whole thing is a rehearsal: pick a real question ("which accounts did this compromised admin touch on Tuesday?") and try to answer it from the logs alone. Most teams discover a missing field the first time, which is much better than discovering it during an incident.</p>`,
-docs:[['Logging & monitoring — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html'],['NIST SP 800-63','https://pages.nist.gov/800-63-3/'],['SOC 2 overview','https://www.aicpa-cima.com/topic/audit-assurance/audit-and-assurance-greater-than-soc-2']],
+docs:[['Logging & monitoring (OWASP)','https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html'],['NIST SP 800-63','https://pages.nist.gov/800-63-3/'],['SOC 2 overview','https://www.aicpa-cima.com/topic/audit-assurance/audit-and-assurance-greater-than-soc-2']],
 ex:{title:'Map the requirement to the control',
 prompt:`Write class <code>Audit</code> with <code>static String control(String requirement)</code>: <code>"prove-who-did-what"</code>→<code>"immutable audit log"</code>, <code>"detect-attacks"</code>→<code>"SIEM alerting"</code>, <code>"periodic-access-review"</code>→<code>"IGA certification"</code>, <code>"remove-leaver-access"</code>→<code>"deprovisioning"</code>, and <code>"unknown"</code> otherwise.`,
 starter:`public class Audit {
@@ -492,7 +492,7 @@ list of names, they cannot, and asking anyway trains people that reviews are the
 user authority. Every problem above applies, faster, and with the added property that an agent's
 authority may be exercised in response to content it read. The governance answer is the same and more
 important: short-lived, narrowly scoped, owned, attributable, and expiring by default.</p>`,
-docs:[['OWASP — Non-Human Identities Top 10','https://owasp.org/www-project-non-human-identities-top-10/'],['NIST SP 800-53 AC-2 — Account Management','https://csrc.nist.gov/projects/risk-management/sp800-53-controls/release-search#!/control?version=5.1&number=AC-2'],['SPIFFE — workload identity','https://spiffe.io/docs/latest/spiffe-about/overview/'],['OWASP — Secrets Management Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html']],
+docs:[['OWASP (Non-Human Identities Top 10)','https://owasp.org/www-project-non-human-identities-top-10/'],['NIST SP 800-53 AC-2 (Account Management)','https://csrc.nist.gov/projects/risk-management/sp800-53-controls/release-search#!/control?version=5.1&number=AC-2'],['SPIFFE (workload identity)','https://spiffe.io/docs/latest/spiffe-about/overview/'],['OWASP (Secrets Management Cheat Sheet)','https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html']],
 ex:{title:'Can this non-human identity be governed?',lang:'js',
 run:{call:'governable',cases:[{name:'named owner, still employed, not expired',args:['ada',true,2000,1000],expect:true},{name:'no owner',args:['',true,2000,1000],expect:false},{name:'owner has left',args:['ada',false,2000,1000],expect:false},{name:'credential already expired',args:['ada',true,900,1000],expect:false}]},
 prompt:`Write <code>function governable(owner, ownerStillEmployed, expiresAt, now)</code> returning <code>true</code> only when the identity has a <b>non-empty named owner</b>, that owner <b>still works here</b>, and the credential <b>has not expired</b> (<code>expiresAt &gt; now</code>).`,

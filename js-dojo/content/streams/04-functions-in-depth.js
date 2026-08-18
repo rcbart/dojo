@@ -40,7 +40,7 @@ function outer() {
 }
 // inner sees outward. NOTHING sees inward - outer cannot read i.</div>
 
-<h4>Lexical scoping — the rule that makes closures work</h4>
+<h4>Lexical scoping: the rule that makes closures work</h4>
 <p>The chain is decided by <b>where the function is written</b>, not where it is called from. That is
 <b>lexical</b> (or static) scoping, and it is why you can determine what a function can see just by
 reading the source:</p>
@@ -65,7 +65,7 @@ function f() {
 function bad() { leaked = 1; }   // creates a GLOBAL in sloppy mode
 // "use strict" (and every module) makes this a ReferenceError instead,
 // which is why modern code never hits it.</div>`,
-docs:[['MDN — Scope','https://developer.mozilla.org/en-US/docs/Glossary/Scope'],['MDN — Call stack','https://developer.mozilla.org/en-US/docs/Glossary/Call_stack'],['MDN — Strict mode','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode']],
+docs:[['MDN (Scope)','https://developer.mozilla.org/en-US/docs/Glossary/Scope'],['MDN (Call stack)','https://developer.mozilla.org/en-US/docs/Glossary/Call_stack'],['MDN (Strict mode)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode']],
 ex:{title:'Trace the scope chain',diff:'easy',lang:'js',
 run:{call:'lookUp',cases:[
  {name:'found in the innermost scope',args:[['x'],['x','y'],['x','y','z'],'x'],expect:'inner'},
@@ -143,7 +143,7 @@ finally ran.</p>
 irrelevant and occasionally a memory leak: a callback that captures a scope containing a large array, and
 is registered on a long-lived event emitter, keeps that array reachable forever. The fix is to
 unregister the handler, or to extract only what you need before creating the closure.</p>`,
-docs:[['MDN — Closures','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures'],['MDN — let and per-iteration bindings','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let']],
+docs:[['MDN, Closures','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures'],['MDN, let and per-iteration bindings','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let']],
 exs:[
 {title:'Build a counter with private state',diff:'easy',lang:'js',
 run:{call:'runCounter',cases:[
@@ -290,7 +290,7 @@ fn.bind(thisArg, a)         // returns a NEW function, permanently bound.
 <p>You will read these constantly in older code. In new code, spread has largely replaced
 <code>apply</code> and arrows have largely replaced <code>bind</code>, but <code>bind</code> remains the
 right tool when a method must be detached from its object and keep working.</p>`,
-docs:[['MDN — this','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this'],['MDN — Function.prototype.bind','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind'],['MDN — Arrow functions and this','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions#cannot_be_used_as_methods']],
+docs:[['MDN (this)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this'],['MDN (Function.prototype.bind)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind'],['MDN (Arrow functions and this)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions#cannot_be_used_as_methods']],
 ex:{title:'Which rule applies?',diff:'easy',lang:'js',
 run:{call:'thisIs',cases:[
  {name:'new wins over everything',args:['new'],expect:'the new object'},
@@ -376,7 +376,7 @@ version with an explicit array as the stack.</p>
   }
   return n;                                // no depth limit, no RangeError
 }</div>`,
-docs:[['MDN — Recursion','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions#recursion'],['MDN — RangeError','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError']],
+docs:[['MDN, Recursion','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions#recursion'],['MDN, RangeError','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError']],
 exs:[
 {title:'Sum a nested structure',diff:'easy',lang:'js',
 run:{call:'deepSum',cases:[
@@ -475,7 +475,7 @@ sorted(names(active(users)))     // reads inside-out, runs left to right
 calculations pure, push mutation and I/O to the edges, and let the impure edge be thin. Most of a
 well-shaped program turns out to be pure functions with a small crust of side effects, and the crust is
 where the debugging streams spend their time, which is no coincidence.</p>`,
-docs:[['MDN — Array.prototype.toSorted','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toSorted'],['MDN — Spread syntax','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax'],['Wikipedia — Pure function','https://en.wikipedia.org/wiki/Pure_function']],
+docs:[['MDN (Array.prototype.toSorted)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toSorted'],['MDN (Spread syntax)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax'],['Wikipedia (Pure function)','https://en.wikipedia.org/wiki/Pure_function']],
 ex:{title:'Update without mutating',diff:'medium',lang:'js',
 run:{call:'promoteAll',cases:[
  {name:'the promoted copy changes, the original does not',args:[[{name:'Ada',role:'dev',logins:5}]],expect:{promoted:[{name:'Ada',role:'admin',logins:6}],original:[{name:'Ada',role:'dev',logins:5}]}},

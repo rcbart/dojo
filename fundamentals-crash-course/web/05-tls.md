@@ -1,4 +1,4 @@
-# 5 — TLS & certificates
+# 5: TLS & certificates
 
 *Trust for the pipe: what certificates actually prove, why chains break in exactly one way, and where decryption should happen. ~12 min read.*
 
@@ -95,4 +95,4 @@ accounts. The Identity Dojo service-to-service stream picks up exactly where thi
 
 ---
 
-**Next:** [6 — Queues, caches & the async path →](./06-queues-caches-async.md)
+**Next:** [6: Queues, caches & the async path →](./06-queues-caches-async.md)

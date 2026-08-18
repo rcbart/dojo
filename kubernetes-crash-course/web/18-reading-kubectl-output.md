@@ -1,4 +1,4 @@
-# 18 — Reading kubectl output (healthy vs broken)
+# 18: Reading kubectl output (healthy vs broken)
 
 *A practitioner reference. For each command you'll actually run, here's what **healthy** output
 looks like, what a common **broken** output looks like, and exactly how to read it. Bookmark this;
@@ -272,4 +272,4 @@ Once you can glance at a column and know "that's wrong," you debug in seconds in
 
 ---
 
-**Next:** [9 — Packaging with Helm →](./09-helm.md)
+**Next:** [9: Packaging with Helm →](./09-helm.md)

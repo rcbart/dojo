@@ -68,9 +68,9 @@ Every lesson averages ~460 words with worked, concrete examples rather than defi
 **ramp in difficulty**: each one is tagged `easy`, `medium` or `hard`, which drives the built-in Practice
 filter:
 
-- **easy** — one idea, applied directly. Classify a value, pick the right construct.
-- **medium** — two or three ideas combined, with a case that punishes the obvious shortcut.
-- **hard** — a small realistic problem: normalise a form submission where `Number("")` is `0` and a
+- **easy**: one idea, applied directly. Classify a value, pick the right construct.
+- **medium**: two or three ideas combined, with a case that punishes the obvious shortcut.
+- **hard**: a small realistic problem: normalise a form submission where `Number("")` is `0` and a
   legitimate `0` must survive; memoise with a closure where a cached `0` breaks a truthy cache check;
   plan a retry with exponential backoff and get the off-by-one right; build a bounded queue with private
   fields; compare two semver strings where `"1.10.0"` must outrank `"1.9.0"`.

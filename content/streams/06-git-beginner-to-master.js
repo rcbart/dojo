@@ -1,5 +1,5 @@
 STREAMS.push({icon:'🌿',title:'Git: Beginner to Master',blurb:'What version control actually is, one file through the full flow, then multiple files, remotes, branching, up to revert, rebase and the history-rewriting toolbox.',lessons:[
-{id:'git0',title:'What Git is — and why',body:`
+{id:'git0',title:'What Git is, and why',body:`
 <p><b>Git is a version control system</b>: a program that records snapshots of your project so you can see every change ever made, undo any of them, and work on several ideas in parallel without copies like <code>Main_final_v2_REALLY.java</code>. It was built by Linus Torvalds in 2005 to manage Linux; today it is effectively the only game in town.</p>
 <p><b>Why you need it</b> (even alone, even for one file): a complete history of who changed what and why, fearless experimentation (any state is recoverable), and, once remotes enter, the collaboration backbone of the entire industry. GitHub, GitLab, CI/CD, code review: all of it sits on git.</p>
 <p><b>The model, in four ideas:</b></p>
@@ -12,7 +12,7 @@ STREAMS.push({icon:'🌿',title:'Git: Beginner to Master',blurb:'What version co
 <div class="codeSample">working directory ──git add──▶ staging area ──git commit──▶ history (.git/)
    edit files          choose what ships          immutable snapshot chain
                                                   a3f9c21 ◀─ 7be02d4 ◀─ main ◀─ HEAD</div>`,
-docs:[['Pro Git (free book) — What is Git?','https://git-scm.com/book/en/v2/Getting-Started-What-is-Git%3F'],['Git glossary','https://git-scm.com/docs/gitglossary'],['Git objects — Pro Git internals','https://git-scm.com/book/en/v2/Git-Internals-Git-Objects']],
+docs:[['Pro Git (free book), What is Git?','https://git-scm.com/book/en/v2/Getting-Started-What-is-Git%3F'],['Git glossary','https://git-scm.com/docs/gitglossary'],['Git objects, Pro Git internals','https://git-scm.com/book/en/v2/Git-Internals-Git-Objects']],
 ex:{title:'Mental-model check',lang:'text',
 prompt:`One answer per numbered line: (1) does a commit store a full <code>snapshot</code> or a <code>diff</code>? (2) the area where changes wait between <code>git add</code> and <code>git commit</code> (two words), (3) the hidden folder holding the entire history (write it as the folder name), (4) a branch is best described as: a <code>copy</code> of the code or a <code>pointer</code> to a commit? (5) the name of the pointer that marks where you currently are (one word, caps ok), (6) true or false: you need a network connection to commit.`,
 starter:`1.
@@ -29,7 +29,7 @@ solution:`1. snapshot
 5. HEAD
 6. false
 `,
-tests:[{d:'Q1: snapshots, not diffs',re:'1\\.\\s*snapshot',flags:'is'},{d:'Q2: the staging area',re:'2\\.\\s*staging\\s*area',flags:'is'},{d:'Q3: .git folder',re:'3\\.\\s*\\.git\\b',flags:'is'},{d:'Q4: a branch is a pointer',re:'4\\.\\s*pointer',flags:'is'},{d:'Q5: HEAD',re:'5\\.\\s*head',flags:'is'},{d:'Q6: commits are local — false',re:'6\\.\\s*false',flags:'is'}],
+tests:[{d:'Q1: snapshots, not diffs',re:'1\\.\\s*snapshot',flags:'is'},{d:'Q2: the staging area',re:'2\\.\\s*staging\\s*area',flags:'is'},{d:'Q3: .git folder',re:'3\\.\\s*\\.git\\b',flags:'is'},{d:'Q4: a branch is a pointer',re:'4\\.\\s*pointer',flags:'is'},{d:'Q5: HEAD',re:'5\\.\\s*head',flags:'is'},{d:'Q6: commits are local, false',re:'6\\.\\s*false',flags:'is'}],
 behavior:`1. snapshot: git stores the whole tree per commit; diffs are derived on demand. 2. staging area (the index): the composition surface for the next commit. 3. .git: delete it and the project becomes just files again. 4. pointer, which is why branches cost nothing. 5. HEAD: where the next commit will attach. 6. false: history is fully local; only clone/fetch/pull/push touch the network.`,
 hints:['Two of the six answers (snapshot, pointer) correct the two most common wrong mental models about git.','The staging area is also called the index: same thing, two names.','Only four everyday commands need a network: clone, fetch, pull, push. Everything else is local.']}},
 
@@ -77,7 +77,7 @@ messages read that way and the line completes the sentence "this commit will…"
 obvious, say <b>why</b> in the body. The what is in the diff and always will be; the why exists only in
 your head until you write it down, and it is what the next person needs, including you in six months
 reading <code>git blame</code> on a line you do not remember writing.`,
-docs:[['git status','https://git-scm.com/docs/git-status'],['git diff','https://git-scm.com/docs/git-diff'],['Pro Git — recording changes','https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository']],
+docs:[['git status','https://git-scm.com/docs/git-status'],['git diff','https://git-scm.com/docs/git-diff'],['Pro Git (recording changes)','https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository']],
 ex:{title:'The single-file drill',lang:'shell',
 prompt:`You are in an empty folder with one file, <code>notes.txt</code>, already created. One command per numbered line: (1) turn the folder into a git repository, (2) show the state of the working tree, (3) stage <code>notes.txt</code>, (4) commit with message <code>Add notes</code>, (5) after editing the file, show the <b>unstaged</b> changes, (6) stage it and show what is <b>about to be committed</b> (two commands joined with <code>&amp;&amp;</code>), (7) commit with message <code>Update notes</code>, (8) show the compact one-line history.`,
 starter:`1.
@@ -147,7 +147,7 @@ leaked key.</p>
 <p>And note what <code>git add</code> actually records: the content <i>at that moment</i>. Edit the file
 afterwards and the later edit is not staged, which is why <code>git status</code> can show one file as both
 staged and modified. That is not a bug; it is the staging area doing exactly what it exists for.`,
-docs:[['git add (incl. -p)','https://git-scm.com/docs/git-add'],['git mv','https://git-scm.com/docs/git-mv'],['Pro Git — viewing history','https://git-scm.com/book/en/v2/Git-Basics-Viewing-the-Commit-History']],
+docs:[['git add (incl. -p)','https://git-scm.com/docs/git-add'],['git mv','https://git-scm.com/docs/git-mv'],['Pro Git (viewing history)','https://git-scm.com/book/en/v2/Git-Basics-Viewing-the-Commit-History']],
 ex:{title:'The two-file drill',lang:'shell',
 prompt:`Both <code>notes.txt</code> (modified) and <code>todo.txt</code> (brand new) have changes. One command per numbered line: (1) stage <b>only</b> <code>todo.txt</code>, (2) commit with message <code>Add todo list</code>, (3) stage <code>notes.txt</code> interactively, <b>hunk by hunk</b> (the -p flag), (4) commit with message <code>Update notes</code>, (5) show the history <b>with per-file statistics</b>, (6) rename <code>todo.txt</code> to <code>tasks.txt</code> the git way, (7) show the full changes introduced by the latest commit (one command, no arguments needed).`,
 starter:`1.
@@ -184,7 +184,7 @@ hints:['The whole point of lines 1-4: git add chooses WHAT each commit contains;
    origin/main (last known state)  ◀──fetch──  (new commits from teammates)
                 └── git merge origin/main   =   pull, decomposed</div>
 <p><b>main vs master</b>: both are just <i>names for the default branch</i>, nothing more. Git historically created <code>master</code>; since 2020 GitHub and most tooling default to <code>main</code>. Older repos and tutorials say master, newer ones main; the concept is identical, and <code>git init -b main</code> (or the <code>init.defaultBranch</code> config) picks the name at creation. When you see <code>origin/main</code>, read it as "the main branch, as the remote last told me it looks".</p>`,
-docs:[['Working with remotes — Pro Git','https://git-scm.com/book/en/v2/Git-Basics-Working-with-Remotes'],['git fetch','https://git-scm.com/docs/git-fetch'],['GitHub — the default branch','https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-branches-in-your-repository/changing-the-default-branch']],
+docs:[['Working with remotes, Pro Git','https://git-scm.com/book/en/v2/Git-Basics-Working-with-Remotes'],['git fetch','https://git-scm.com/docs/git-fetch'],['GitHub, the default branch','https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-branches-in-your-repository/changing-the-default-branch']],
 ex:{title:'Remotes drill',lang:'shell',
 prompt:`One answer per numbered line (commands unless stated otherwise): (1) copy the remote repository <code>git@github.com:acme/app.git</code> to your machine, (2) list the configured remotes with their URLs, (3) push the current new branch <code>feature/todo</code> to origin, <b>setting its upstream</b>, (4) download the remote's new commits <b>without changing any of your files</b>, (5) fetch-and-merge the remote's changes into your current branch in one command, (6) concept, not a command: the historical default branch name that <code>main</code> replaced (one word), (7) concept: after a fetch, the branch name that holds "main as the remote last reported it" (the full two-part name).`,
 starter:`1.
@@ -246,7 +246,7 @@ argument for continuous integration: merging main into your branch daily, or reb
 one large painful merge into a series of trivial ones.</p>
 <p>Delete branches after merging. A repository with two hundred stale branches makes it impossible to tell
 which represent work in progress, and git keeps the commits regardless.`,
-docs:[['Basic branching & merging — Pro Git','https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging'],['git switch','https://git-scm.com/docs/git-switch'],['git merge','https://git-scm.com/docs/git-merge']],
+docs:[['Basic branching & merging (Pro Git)','https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging'],['git switch','https://git-scm.com/docs/git-switch'],['git merge','https://git-scm.com/docs/git-merge']],
 ex:{title:'The branch cycle drill',lang:'shell',
 prompt:`One command per numbered line: (1) create <b>and switch to</b> branch <code>feature/tags</code> (the modern <code>switch</code> form), (2) stage <b>both</b> <code>notes.txt</code> and <code>tasks.txt</code> in one command naming them, (3) commit with message <code>Add tagging</code>, (4) switch back to <code>main</code>, (5) merge the feature branch in, (6) delete the merged branch, (7) show the history as a <b>graph</b>, one line per commit (two flags).`,
 starter:`1.
@@ -341,7 +341,7 @@ hints:['restore vs restore --staged: working copy vs staging area.','Pushed = sh
               \\      /                    straight line, new hashes C',D' —
      feature   ─C──D                      same content, rewritten history</div>
 <p>Choosing: <b>merge</b> when the branch is shared or the fork-point matters; <b>rebase</b> to keep an unpushed feature branch current and its history clean; <b>revert</b> when the mistake is already public. All three end with the same files; they differ in the story history tells.</p>`,
-docs:[['Rebasing — Pro Git','https://git-scm.com/book/en/v2/Git-Branching-Rebasing'],['Reset demystified — Pro Git','https://git-scm.com/book/en/v2/Git-Tools-Reset-Demystified'],['git cherry-pick','https://git-scm.com/docs/git-cherry-pick'],['git bisect','https://git-scm.com/docs/git-bisect']],
+docs:[['Rebasing, Pro Git','https://git-scm.com/book/en/v2/Git-Branching-Rebasing'],['Reset demystified, Pro Git','https://git-scm.com/book/en/v2/Git-Tools-Reset-Demystified'],['git cherry-pick','https://git-scm.com/docs/git-cherry-pick'],['git bisect','https://git-scm.com/docs/git-bisect']],
 ex:{title:'History-rewriting drill',lang:'shell',
 prompt:`One command per numbered line: (1) undo the <b>pushed</b> commit <code>abc123</code> the shared-history-safe way, (2) uncommit your <b>local</b> last commit but keep all its changes staged (you forgot a file), (3) replay your current feature branch onto the latest <code>main</code>, (4) open an interactive rebase over the last 4 commits to squash your "wip" commits, (5) copy commit <code>9f8e7d</code> from another branch onto this one, (6) start a bisect session, (7) during bisect, mark the current commit broken.`,
 starter:`1.
@@ -379,7 +379,7 @@ hints:['Line 1 vs line 2 is the whole lesson: pushed → forward fix (revert); l
 <li><b>git reflog</b>: the local record of everywhere HEAD has been. After a bad reset or rebase, the "lost" commit is almost always still here: copy its hash and recover it.</li>
 </ul>
 <p>The everyday investigation flow: <code>git log -S brokenFn</code> to find the change, <code>git show</code> that hash to read it, or <code>git blame</code> the file to pin the exact line, and <code>git reflog</code> when you need to undo an undo.</p>`,
-docs:[['git log','https://git-scm.com/docs/git-log'],['git blame','https://git-scm.com/docs/git-blame'],['Viewing history — Pro Git','https://git-scm.com/book/en/v2/Git-Basics-Viewing-the-Commit-History']],
+docs:[['git log','https://git-scm.com/docs/git-log'],['git blame','https://git-scm.com/docs/git-blame'],['Viewing history (Pro Git)','https://git-scm.com/book/en/v2/Git-Basics-Viewing-the-Commit-History']],
 ex:{title:'History-reading drill',lang:'shell',
 prompt:`One command per numbered line: (1) show a compact, graphical one-line history; (2) annotate every line of <code>app.js</code> with who last changed it; (3) show the full details and diff of commit <code>abc123</code>; (4) show the history of <code>app.js</code> following it across renames; (5) find the commits that added or removed the string <code>getToken</code> (pickaxe); (6) show the full patch for each commit touching <code>app.js</code>; (7) show the reflog to recover a commit lost after a bad reset.`,
 starter:`1.

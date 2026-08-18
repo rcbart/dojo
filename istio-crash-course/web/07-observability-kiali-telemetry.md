@@ -1,4 +1,4 @@
-# 7 — Observability: Kiali & telemetry
+# 7: Observability: Kiali & telemetry
 
 *Because every request passes through a proxy, Istio can show you the whole system for free.
 Concepts + a lab using the dashboards. ~20 min. Uses the add-ons from Setup Step 8.*
@@ -49,7 +49,7 @@ Make sure the add-ons are installed (Setup Step 8) and generate steady traffic f
 for i in $(seq 1 200); do curl -s http://localhost:8080/productpage >/dev/null; sleep 0.3; done &
 ```
 
-### Kiali — the service graph
+### Kiali: the service graph
 
 ```bash
 istioctl dashboard kiali        # opens Kiali; go to the Graph view, namespace "default"
@@ -60,7 +60,7 @@ showing live traffic**, request rates, and health colors. Padlock icons mark mTL
 Change the reviews split (Module 4) and watch the graph's arrows re-weight in real time. This single
 view is why teams love Istio: you *see* your architecture and its health.
 
-### Grafana — the metrics dashboards
+### Grafana: the metrics dashboards
 
 ```bash
 istioctl dashboard grafana      # open the "Istio Service Dashboard"
@@ -69,7 +69,7 @@ istioctl dashboard grafana      # open the "Istio Service Dashboard"
 Pick the `productpage` service and watch request volume, success rate, and latency percentiles:
 the golden signals, graphed.
 
-### Jaeger — a single request's path
+### Jaeger: a single request's path
 
 ```bash
 istioctl dashboard jaeger       # search service "productpage", find a trace
@@ -109,4 +109,4 @@ spec:
 
 ---
 
-**Next:** [8 — Ambient mode (sidecarless) →](./08-ambient-mode.md)
+**Next:** [8: Ambient mode (sidecarless) →](./08-ambient-mode.md)

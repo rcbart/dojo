@@ -72,6 +72,15 @@ jobs:
       - name: Verify the cloud-native path
         run: node scripts/verify-cloudnative.js
 
+      # Seventh gate: colour contrast. Two of the brand hues are unusable as
+      # text (violet #8b5cf6 is 4.23:1 on white, teal #0d9488 is 3.74:1), so the
+      # token set carries a darker -ink twin for every hue and the rule is: raw
+      # hue for fills and borders, -ink for text. This reads the tokens straight
+      # out of engine/styles.css and fails the build if any declared pairing
+      # drops under WCAG AA, so a palette edit can never make text unreadable.
+      - name: Check colour contrast
+        run: node scripts/verify-contrast.js
+
       - name: Build DevDojo
         run: node build.js
       - name: Build IdentityDojo

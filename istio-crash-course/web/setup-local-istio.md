@@ -1,4 +1,4 @@
-# Setup — run Istio locally
+# Setup: run Istio locally
 
 *Do this once. In ~15 minutes you'll have a real Kubernetes cluster on your laptop with Istio
 installed, a demo app running inside the mesh, and a dashboard showing traffic. Every step spelled
@@ -15,7 +15,7 @@ tools; everything else is pulled automatically.
 
 ---
 
-## Step 1 — Install the prerequisites
+## Step 1: Install the prerequisites
 
 You need **Docker**, **kind**, and **kubectl**.
 
@@ -32,7 +32,7 @@ running indicator. Verify: `docker run --rm hello-world`.
 : Follow <https://kind.sigs.k8s.io/docs/user/quick-start/>. On macOS: `brew install kind`. Verify:
 `kind version`.
 
-## Step 2 — Create a local Kubernetes cluster
+## Step 2: Create a local Kubernetes cluster
 
 ```bash
 kind create cluster --name istio-lab
@@ -42,7 +42,7 @@ kubectl get nodes                               # one node, status Ready
 
 You now have a one-node Kubernetes cluster running in Docker. `kubectl` is how you talk to it.
 
-## Step 3 — Download Istio and get `istioctl`
+## Step 3: Download Istio and get `istioctl`
 
 `istioctl` is Istio's own command-line installer/manager.
 
@@ -61,7 +61,7 @@ the `bin` folder to your PATH.)*
 > fetches the latest stable. If a newer version exists when you read this, the commands are
 > unchanged. Check <https://istio.io> for the newest release.
 
-## Step 4 — Install Istio (demo profile)
+## Step 4: Install Istio (demo profile)
 
 The **demo profile** installs everything with relaxed resource needs, perfect for learning.
 
@@ -76,7 +76,7 @@ This deploys **istiod** (the control-plane brain) plus ingress/egress gateways i
 kubectl get pods -n istio-system     # istiod + gateways, all Running
 ```
 
-## Step 5 — Turn on automatic sidecar injection
+## Step 5: Turn on automatic sidecar injection
 
 Tell Istio to inject an Envoy sidecar into every pod created in the `default` namespace:
 
@@ -87,7 +87,7 @@ kubectl get namespace -L istio-injection    # 'default' now shows enabled
 
 From now on, any pod you deploy into `default` automatically gets a proxy beside it.
 
-## Step 6 — Deploy the sample app (Bookinfo)
+## Step 6: Deploy the sample app (Bookinfo)
 
 Istio ships a demo microservices app called **Bookinfo** (a bookstore page: `productpage` calls
 `details`, `reviews`, and `ratings`; `reviews` has three versions). It's the standard way to see
@@ -100,7 +100,7 @@ kubectl get pods      # each app pod shows 2/2 — your container + the injected
 
 That **2/2** is the whole point: two containers per pod, your app *and* its sidecar proxy.
 
-## Step 7 — Send traffic and confirm it works
+## Step 7: Send traffic and confirm it works
 
 ```bash
 # run a throwaway curl pod inside the cluster to hit the productpage service
@@ -111,7 +111,7 @@ kubectl exec "$(kubectl get pod -l app=ratings -o jsonpath='{.items[0].metadata.
 
 If you see the title, traffic flowed through the mesh (app → sidecar → sidecar → app).
 
-## Step 8 — Open the dashboards (Kiali)
+## Step 8: Open the dashboards (Kiali)
 
 Install the observability add-ons (Kiali, Prometheus, Grafana, Jaeger) and open the service graph:
 
@@ -124,7 +124,7 @@ istioctl dashboard kiali               # opens Kiali in your browser
 Kiali draws a live map of which service calls which. (Generate some traffic first so there's
 something to see; re-run the curl from Step 7 a few times.)
 
-## Step 9 — Clean up when done
+## Step 9: Clean up when done
 
 ```bash
 kind delete cluster --name istio-lab   # deletes everything — cluster, Istio, apps
@@ -169,4 +169,4 @@ command holds the terminal open (it's port-forwarding); leave it running and use
 
 ---
 
-**Next:** [Primer — What is Istio? →](./primer-what-is-istio.md)
+**Next:** [Primer: What is Istio? →](./primer-what-is-istio.md)

@@ -1,4 +1,4 @@
-# 10 — Kustomize
+# 10: Kustomize
 
 *Template-free customization built into kubectl: per-environment configs without duplication.
 Concepts + a lab. ~25 min. Needs your kind cluster.*
@@ -137,7 +137,7 @@ One base, two environments, zero duplication or templating.
 | | Helm | Kustomize |
 |--|------|-----------|
 | Mechanism | Templates with `{{ }}` placeholders + logic | Overlays/patches on plain YAML |
-| Packaging/sharing | Strong — versioned charts, repos | Weaker — it's a customization tool, not a package registry |
+| Packaging/sharing | Strong, versioned charts, repos | Weaker, it's a customization tool, not a package registry |
 | Logic (conditionals/loops) | Yes | No (patches only) |
 | Learning curve | Templating language | Just YAML |
 | Built into kubectl | No (separate tool) | **Yes** (`-k`) |
@@ -161,4 +161,4 @@ chart, then Kustomize-patch it. Both are on the CKA.
 
 ---
 
-**Next:** [11 — CI/CD & GitOps →](./11-cicd-gitops.md)
+**Next:** [11: CI/CD & GitOps →](./11-cicd-gitops.md)

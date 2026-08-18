@@ -1,4 +1,4 @@
-# 05 — Clusters, load balancing & resilience
+# 05: Clusters, load balancing & resilience
 
 *How Envoy picks a healthy backend and survives failures. Concepts + a two-backend lab. ~25 min.
 Requires Docker.*
@@ -109,4 +109,4 @@ curl -s localhost:9901/clusters | grep -E "health_flags|::cx_"
 
 ---
 
-**Next:** [06 — Observability & the admin interface →](./06-observability-and-admin.md)
+**Next:** [06: Observability & the admin interface →](./06-observability-and-admin.md)

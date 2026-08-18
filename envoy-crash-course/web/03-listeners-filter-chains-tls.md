@@ -1,4 +1,4 @@
-# 03 — Listeners, filter chains & TLS
+# 03: Listeners, filter chains & TLS
 
 *Concepts + a TLS lab. You'll make Envoy speak HTTPS. ~20 min. Requires Docker + `openssl`.*
 
@@ -19,7 +19,7 @@ sidecar's intercept port). Key parts:
   used to peek at the connection (e.g. read the TLS SNI or the original destination) so Envoy can
   match the right chain.
 
-### TCP proxy vs HTTP proxy — the filter chain decides
+### TCP proxy vs HTTP proxy: the filter chain decides
 
 The listener itself is protocol-agnostic; what makes it "an HTTP listener" is that its filter
 chain's network filter is the **HTTP Connection Manager**. Swap that for the **TCP proxy** filter
@@ -195,4 +195,4 @@ logs a normal HTTP request.
 
 ---
 
-**Next:** [04 — HTTP routing & filters →](./04-http-routing-and-filters.md)
+**Next:** [04: HTTP routing & filters →](./04-http-routing-and-filters.md)

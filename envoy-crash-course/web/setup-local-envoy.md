@@ -1,4 +1,4 @@
-# Setup — run and test Envoy locally
+# Setup: run and test Envoy locally
 
 *Do this once. In ~10 minutes you'll have Envoy running on your own machine and a request flowing
 through it. No prior setup assumed: every step spelled out for macOS, Windows, and Linux.*
@@ -15,7 +15,7 @@ tool (Docker) and everything else (Envoy itself, the practice backend) is pulled
 
 ---
 
-## Step 1 — Install Docker
+## Step 1: Install Docker
 
 Docker runs Envoy in a small, isolated container so nothing touches your system.
 
@@ -39,7 +39,7 @@ curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker $USER   # so you can run docker without sudo — log out/in afterward
 ```
 
-## Step 2 — Verify Docker works
+## Step 2: Verify Docker works
 
 Open a terminal and run:
 
@@ -62,7 +62,7 @@ yet; launch it and wait for the running indicator, then retry.
 > Windows 10/11, and most Linux. Check with `curl --version`; on Linux install via
 > `sudo apt install curl` (Debian/Ubuntu) if missing.
 
-## Step 3 — Get the lab files
+## Step 3: Get the lab files
 
 The course ships small lab folders (an `envoy.yaml` and a `docker-compose.yaml` each). Open a
 terminal **in the course folder**, the one that contains this guide and a `labs/` directory. If
@@ -82,7 +82,7 @@ dir labs
 
 Everything below runs from inside one of those `labs/` subfolders.
 
-## Step 4 — Start Envoy (the first lab)
+## Step 4: Start Envoy (the first lab)
 
 Move into the first lab and bring it up:
 
@@ -96,7 +96,7 @@ backend the first time (a few seconds to a minute), then starts both. You'll see
 streaming in this terminal. **Leave this terminal running**; it's Envoy. The logs here are also
 where you'll watch requests arrive.
 
-## Step 5 — Send a request through Envoy
+## Step 5: Send a request through Envoy
 
 Open a **second** terminal (leave the first running Envoy) and run:
 
@@ -113,7 +113,7 @@ hello from the backend
 That response came *from the backend, through Envoy*. You just proxied your first request. Watch
 the first terminal; you'll see a log line appear for the request you just made.
 
-## Step 6 — Peek at Envoy's admin interface
+## Step 6: Peek at Envoy's admin interface
 
 Envoy exposes a built-in dashboard/API on port 9901. Try:
 
@@ -125,7 +125,7 @@ curl -s localhost:9901/server_info | head    # version, uptime, state
 Or open <http://localhost:9901> in your browser to click around. (This admin port is safe here
 because it's local; never expose it publicly in production.)
 
-## Step 7 — Stop and clean up
+## Step 7: Stop and clean up
 
 In the Envoy terminal press **Ctrl-C** to stop it. Then remove the containers:
 
@@ -190,4 +190,4 @@ or run inside WSL.
 
 ---
 
-**Next:** [Primer — What is a proxy? →](./primer-what-is-a-proxy.md)
+**Next:** [Primer: What is a proxy? →](./primer-what-is-a-proxy.md)

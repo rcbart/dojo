@@ -21,7 +21,7 @@ famous class of bug: a second line added later looks like it is inside the branc
 false when <code>count</code> is legitimately <code>0</code>, which is almost never what you meant. Write
 the comparison you actually mean.</p>
 
-<h4>The ternary — for values, not for logic</h4>
+<h4>The ternary: for values, not for logic</h4>
 <div class="codeSample" data-hl>const label = count === 1 ? "item" : "items";      // good: picks a VALUE
 
 // bad: a ternary doing work, and nested
@@ -62,7 +62,7 @@ user && user.name
 isValid() && save()      // save() only if isValid() is true
 
 // and why ?? exists: || falls back on 0 and "", ?? only on null/undefined</div>`,
-docs:[['MDN — if...else','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/if...else'],['MDN — switch','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/switch'],['MDN — Logical AND','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND']],
+docs:[['MDN (if...else)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/if...else'],['MDN (switch)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/switch'],['MDN (Logical AND)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND']],
 ex:{title:'Classify an HTTP method',diff:'easy',lang:'js',
 run:{call:'classify',cases:[
  {name:'GET is safe',args:['GET'],expect:'safe'},
@@ -152,7 +152,7 @@ or a non-unit step. Use <code>while</code> when the end condition is not a count
 is exhausted, retrying until success. And when you are <i>transforming</i> data rather than performing
 side effects, the array methods in the next stream (<code>map</code>, <code>filter</code>,
 <code>reduce</code>) usually say it better than any loop.</p>`,
-docs:[['MDN — Loops and iteration','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Loops_and_iteration'],['MDN — for...of','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...of'],['MDN — for...in','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...in']],
+docs:[['MDN (Loops and iteration)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Loops_and_iteration'],['MDN (for...of)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...of'],['MDN (for...in)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...in']],
 exs:[
 {title:'Sum with a loop',diff:'easy',lang:'js',
 run:{call:'sumPositive',cases:[
@@ -272,7 +272,7 @@ function fixed() {
     ok: true
   };
 }</div>`,
-docs:[['MDN — Functions','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions'],['MDN — Arrow functions','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions'],['MDN — Default parameters','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters']],
+docs:[['MDN (Functions)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions'],['MDN (Arrow functions)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions'],['MDN (Default parameters)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters']],
 exs:[
 {title:'Defaults apply to undefined only',diff:'easy',lang:'js',
 run:{call:'welcome',cases:[
@@ -371,7 +371,7 @@ A pure function needs no mocks, no setup and no teardown to test.</p>
 <p>If a function mutates its argument, say so in the name (<code>sortInPlace</code>) or do not do it.
 Silently modifying an object the caller passed in is the source of bugs that appear far from their
 cause: the caller's data changed and nothing at the call site suggests it could have.</p>`,
-docs:[['MDN — Functions guide','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions'],['Refactoring: guard clauses','https://refactoring.com/catalog/replaceNestedConditionalWithGuardClauses.html']],
+docs:[['MDN (Functions guide)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions'],['Refactoring: guard clauses','https://refactoring.com/catalog/replaceNestedConditionalWithGuardClauses.html']],
 exs:[
 {title:'Rewrite with guard clauses',diff:'easy',lang:'js',
 run:{call:'pay',cases:[

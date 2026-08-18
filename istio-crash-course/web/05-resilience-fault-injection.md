@@ -1,4 +1,4 @@
-# 5 — Resilience & fault injection
+# 5: Resilience & fault injection
 
 *Make the mesh survive failure, and deliberately cause failure to test it. Concepts + a lab. ~25
 min. Uses Bookinfo.*
@@ -9,7 +9,7 @@ Distributed systems fail constantly: a service is slow, a pod dies mid-request, 
 Istio lets you add resilience as configuration and, just as important, **inject faults on purpose**
 to check your resilience actually works.
 
-## Timeouts — don't wait forever
+## Timeouts: don't wait forever
 
 By default a request waits a long time for a slow backend, tying up resources. Cap it in the
 VirtualService:
@@ -21,7 +21,7 @@ http:
   timeout: 1s        # give up after 1 second, return an error to the caller
 ```
 
-## Retries — paper over transient failures
+## Retries: paper over transient failures
 
 Re-send a failed idempotent request to another instance before giving up:
 
@@ -38,7 +38,7 @@ http:
 Retries + multiple healthy pods make a single transient failure invisible to the caller. (Careful:
 retries multiply load; keep `attempts` modest and only retry idempotent calls.)
 
-## Circuit breaking — stop hammering a sick service
+## Circuit breaking: stop hammering a sick service
 
 Set in the **DestinationRule**. Two parts:
 
@@ -60,7 +60,7 @@ spec:
 - **`outlierDetection`** watches real responses and **ejects** a pod that returns repeated errors,
   routing around it: the same passive health checking from the Envoy course.
 
-## Fault injection — break things on purpose
+## Fault injection: break things on purpose
 
 The clever inverse of resilience: make Istio *inject* delays or errors so you can verify callers
 handle them. Set it in the VirtualService.
@@ -134,4 +134,4 @@ kubectl apply -f samples/bookinfo/networking/virtual-service-all-v1.yaml
 
 ---
 
-**Next:** [5b — Egress & ServiceEntry →](./11-egress-serviceentry.md)
+**Next:** [5b: Egress & ServiceEntry →](./11-egress-serviceentry.md)

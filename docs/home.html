@@ -14,7 +14,8 @@
     --bg:#f6f6fa; --panel:#ffffff; --ink:#191530; --muted:#5b5872; --line:#e4e4f0;
     --night:#130f26; --night2:#221a44;
     --amber:#f59e0b; --rose:#f43f5e; --violet:#8b5cf6; --teal:#0d9488; --cyan:#0284c7;
-    --accent-ink:#92400e;
+    --amber-ink:#92400e; --accent-ink:#92400e; --violet-ink:#6d28d9;
+    --rose-ink:#9f1239; --teal-ink:#115e59; --cyan-ink:#075985;
     --grad:linear-gradient(100deg,#f59e0b,#f43f5e 48%,#8b5cf6);
     --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
     --sidew:264px;
@@ -23,7 +24,7 @@
   html{scroll-behavior:smooth}
   body{margin:0;background:var(--bg);color:var(--ink);
        font:16.5px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-  a{color:var(--teal);text-decoration:none}
+  a{color:var(--teal-ink);text-decoration:none}
   a:hover{text-decoration:underline}
   .iam{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
 
@@ -35,7 +36,7 @@
   .brand:hover{text-decoration:none}
   .role{font-size:12.5px;color:#a89ee0;line-height:1.45;margin:2px 0 18px}
   .role b{color:#e8e3ff;font-weight:700}
-  .sgroup{font-size:11px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:#7f74b8;
+  .sgroup{font-size:11px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:#b9b0e0;
           margin:16px 0 6px}
   .snav{display:block;color:#cfc9ec;font-size:14px;font-weight:600;padding:6px 9px;border-radius:8px;
         line-height:1.35}
@@ -46,15 +47,15 @@
   .snav .ic{color:#9c92cf}
   .snav:hover .ic{color:#fff}
   .card h3 .ic{width:18px;height:18px;vertical-align:-3px;color:var(--c,var(--violet))}
-  .snav small{display:block;color:#8d84c0;font-weight:400;font-size:11.5px;margin-top:1px}
+  .snav small{display:block;color:#c9c2e8;font-weight:400;font-size:11.5px;margin-top:1px}
   .snav.post{font-weight:500;font-size:13px;color:#b9b0e6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .snone{display:block;color:#7f74b8;font-size:12.5px;padding:4px 9px;font-style:italic}
+  .snone{display:block;color:#b9b0e0;font-size:12.5px;padding:4px 9px;font-style:italic}
   .sfoot{margin-top:auto;padding-top:20px}
   .mailme{display:block;text-align:center;background:var(--grad);color:#130f26;font-weight:800;
           font-size:14.5px;padding:12px 14px;border-radius:10px;cursor:pointer}
   .mailme:hover{filter:brightness(1.08);text-decoration:none}
   .slinks{display:flex;gap:14px;justify-content:center;margin-top:12px;font-size:13px}
-  .slinks a{color:#a89ee0;font-weight:600} .slinks a:hover{color:#fff}
+  .slinks a{color:#c9c2e8;font-weight:600} .slinks a:hover{color:#fff}
 
   /* ---------- main column ---------- */
   main{margin-left:var(--sidew);padding:0 30px}
@@ -78,8 +79,9 @@
   .pull figcaption{margin-top:7px;font-size:13px;color:var(--muted)}
 
   section{padding:44px 0 6px}
-  .k{font-size:12px;font-weight:800;letter-spacing:2.2px;text-transform:uppercase}
-  .k.amber{color:var(--amber)} .k.rose{color:var(--rose)} .k.violet{color:var(--violet)} .k.teal{color:var(--teal)}
+  .k{font-size:13.5px;font-weight:700;letter-spacing:.1px;font-style:italic;font-family:var(--serif)}
+  .k.amber{color:var(--amber-ink)} .k.rose{color:var(--rose-ink)} .k.violet{color:var(--violet-ink)}
+  .k.teal{color:var(--teal-ink)} .k.cyan{color:var(--cyan-ink)}
   h2{font-family:var(--serif);font-size:29px;margin:6px 0 8px;font-weight:600}
   .secdesc{color:var(--muted);margin:0 0 24px;max-width:72ch}
   .secdesc b{color:var(--ink)}
@@ -87,8 +89,8 @@
   .alpha{border:1.5px solid var(--amber);background:color-mix(in srgb,var(--amber) 8%,var(--panel));
          border-radius:14px;padding:18px 22px;margin:0 0 24px;font-size:15px}
   .alpha b{color:var(--accent-ink)}
-  .alpha .k2{font-size:11.5px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:6px}
-  .alpha .mailme2{color:var(--teal);font-weight:700;cursor:pointer}
+  .alpha .k2{font-size:11.5px;font-weight:800;letter-spacing:.2px;color:var(--amber-ink);display:block;margin-bottom:6px}
+  .alpha .mailme2{color:var(--teal-ink);font-weight:700;cursor:pointer}
   .alpha .mailme2:hover{text-decoration:underline}
 
   .stats{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:14px;
@@ -107,11 +109,11 @@
         transition:transform .15s,box-shadow .15s}
   .card:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(25,21,48,.10)}
   .card h3{margin:0 0 4px;font-size:19px;font-family:var(--serif)}
-  .card .tag{font-size:11.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--c,var(--violet));margin-bottom:8px}
+  .card .tag{font-size:11.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--ci,var(--violet-ink));margin-bottom:8px}
   .card p{color:var(--muted);font-size:14px;margin:0 0 14px;flex:1}
   .card .nums{font-size:12px;color:var(--muted);margin-bottom:10px}
   .card .nums b{color:var(--ink)}
-  .card .go{font-weight:700;font-size:14px;color:var(--c,var(--violet))}
+  .card .go{font-weight:700;font-size:14px;color:var(--ci,var(--violet-ink))}
 
   .prin{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
   .p-card{border:1px solid var(--line);border-left:4px solid var(--c,var(--violet));border-radius:14px;
@@ -130,6 +132,7 @@
   .contact{background:var(--night);color:#cfc9ec;border-radius:16px;padding:30px 32px;margin:44px 0 0}
   .contact h2{color:#fff;margin-top:0}
   .contact p{max-width:64ch}
+  .contact .k{color:#fcd34d}
   .contact b{color:#fff}
   .contact .mailme{display:inline-block;margin-top:14px;padding:12px 24px}
 
@@ -152,6 +155,18 @@
     main{margin-left:0;padding:0 22px}
   }
   @media print{aside{display:none}main{margin-left:0}}
+
+  /* category pill on post cards; same recipe as the blog pages */
+  .pill{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+        border-radius:999px;padding:2px 9px;margin-left:6px;vertical-align:1px;border:1px solid}
+  .pill.leadership{color:#9d174d;background:#fff1f2;border-color:#fbcfe8}
+  .pill.engineering{color:#115e59;background:#f0fdfa;border-color:#99f6e4}
+  /* Each principle carries the thing that proves it. A principle on its own is
+     a claim; a principle with a link is a track record. */
+  .receipt{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;
+           font-weight:700;color:var(--violet-ink);text-decoration:none}
+  .receipt:hover{text-decoration:underline}
+  .receipt::before{content:'';width:14px;height:2px;background:currentColor;border-radius:2px;flex:none}
 </style>
 </head>
 <body>
@@ -164,6 +179,8 @@
   <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></symbol>
   <symbol id="i-net" viewBox="0 0 24 24"><circle cx="5" cy="6" r="2.5"/><circle cx="19" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M6.3 8.4 10.7 15.7"/><path d="M17.7 8.4 13.3 15.7"/><path d="M7.7 6h8.6"/></symbol>
   <symbol id="i-js" viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="19" height="19" rx="5"/><text x="12" y="16.3" font-size="9" font-weight="800" text-anchor="middle" fill="currentColor" stroke="none" font-family="-apple-system,Segoe UI,Roboto,sans-serif">JS</text></symbol>
+  <symbol id="i-belt" viewBox="0 0 24 24"><rect x="2.5" y="8.5" width="19" height="7" rx="1.6"/><path d="M9.5 8.5v7M14.5 8.5v7"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4.5 19.5l1-4L16.6 4.4a2.1 2.1 0 013 3L8.5 18.5l-4 1z"/><path d="M14.6 6.4l3 3"/></symbol>
 </defs></svg>
 
 <aside>
@@ -173,10 +190,13 @@
 
   <div class="sgroup">Start here</div>
   <a class="snav" href="#about"><svg class="ic"><use href="#i-user"/></svg>About</a>
+  <a class="snav" href="#identity"><svg class="ic"><use href="#i-shield"/></svg>Identity, my domain</a>
   <a class="snav" href="#principles"><svg class="ic"><use href="#i-scale"/></svg>How I lead</a>
+  <a class="snav" href="#writing"><svg class="ic"><use href="#i-pen"/></svg>Writing</a>
+  <a class="snav" href="#develop"><svg class="ic"><use href="#i-belt"/></svg>How I develop engineers<small>belts, and an honest rubric</small></a>
 
   <div class="sgroup">The dojos</div>
-  <a class="snav" href="/identity/"><svg class="ic"><use href="#i-shield"/></svg>Identity Dojo<small>OAuth, OIDC, SAML, WebAuthn, Kerberos</small></a>
+  <a class="snav" href="/identity/"><svg class="ic"><use href="#i-shield"/></svg>Identity Dojo<small>from wading in the shallow end to genuine mastery</small></a>
   <a class="snav" href="/dev/"><svg class="ic"><use href="#i-code"/></svg>Dev Dojo<small>software engineering, end to end, and side to side</small></a>
   <a class="snav" href="/js/"><svg class="ic"><use href="#i-js"/></svg>JS Dojo<small>JavaScript &amp; Node, executed for real</small></a>
   <a class="snav" href="/fundamentals/"><svg class="ic"><use href="#i-cloud"/></svg>Cloud-native path<small>fundamentals → Docker → Kubernetes → Envoy → Istio</small></a>
@@ -197,6 +217,7 @@
 </aside>
 
 <main><div class="col">
+
 
   <div class="alpha" style="margin:26px 0 0">
     <span class="k2">🧪 Alpha · volunteers wanted</span>
@@ -245,83 +266,10 @@
     from years of hands-on work in identity and platform engineering. When the problem needed my hands,
     it got them: the grading model, the CI gates, the protocol details a generator would happily get
     wrong. When the work was mechanical, I delegated it and reviewed the output, exactly as I would
-    with a team. The typing was delegated. The thinking wasn't. And the same <b>five CI gates</b> hold
+    with a team. The typing was delegated. The thinking wasn't. And the same <b>seven CI gates</b> hold
     every line to the bar, no matter who or what wrote it.</p>
   </div>
 
-  <section id="dojos">
-    <div class="k amber">Proof of work</div>
-    <h2>Don't take my word for it. Take the course.</h2>
-    <p class="secdesc">Tutorial hell is watching someone else code. The way out is doing the work, so
-    <b>every lesson here ends with an exercise you complete yourself</b>, in the page. Five learning
-    paths; the three core dojos compile to a single self-contained HTML file with <b>zero
-    dependencies</b>, so they run offline, from a USB stick if you like, while ML Dojo lives in its
-    own repository and the cloud-native path takes you from Docker to a running Istio mesh. Every push is gated by five CI checks, including one that executes every graded
-    exercise against its own reference solution. Free, no accounts, no tracking. Knowledge shared is
-    the whole point.</p>
-
-    <div class="stats">
-      <div class="stat"><b>59</b><span>tracks &amp; streams</span></div>
-      <div class="stat"><b>420</b><span>lessons</span></div>
-      <div class="stat"><b>639</b><span>hands-on exercises</span></div>
-      <div class="stat"><b>2,990</b><span>content-gate assertions</span></div>
-      <div class="stat"><b>0</b><span>dependencies</span></div>
-    </div>
-
-    <div class="cards">
-      <div class="card" style="--c:var(--rose)">
-        <div class="tag">Identity &amp; access</div>
-        <h3><svg class="ic"><use href="#i-shield"/></svg> Identity Dojo</h3>
-        <div class="nums"><b>14 streams · 149 lessons · 159 exercises</b></div>
-        <p>Identity and access is a huge field: so much to learn, so many problems to solve, so much
-        misdirection if you get it wrong. And it's changing at a rapid pace, we now have to manage AI
-        agents as if they were end users. My aim with this course is to cover and work through as
-        much of it as possible, from the ground up to the technical nitty-gritty.</p>
-        <a class="go" href="/identity/">Enter Identity Dojo →</a>
-      </div>
-      <div class="card" style="--c:var(--violet)">
-        <div class="tag">Software engineering</div>
-        <h3><svg class="ic"><use href="#i-code"/></svg> Dev Dojo</h3>
-        <div class="nums"><b>29 tracks · 207 lessons · 374 exercises</b></div>
-        <p>It might look eclectic. It isn't. This is a collection of the technologies, learnings
-        and challenges I've met across my career, arranged so someone can grow from newbie toward
-        senior engineer. It won't make you a senior engineer on its own, nothing but real experience
-        does, but it's a strong technical track to grow alongside it.</p>
-        <a class="go" href="/dev/">Enter Dev Dojo →</a>
-      </div>
-      <div class="card" style="--c:var(--amber)">
-        <div class="tag">JavaScript &amp; Node</div>
-        <h3><svg class="ic"><use href="#i-js"/></svg> JS Dojo</h3>
-        <div class="nums"><b>16 streams · 64 lessons · 106 exercises</b></div>
-        <p>This one exists so nothing else here can block you. Exercises across the site run on
-        JavaScript, so JS Dojo takes you from zero to comfortable, from the ground up, with every
-        exercise executed for real. It's the site's ethos in miniature: nothing is assumed,
-        everything is available.</p>
-        <a class="go" href="/js/">Enter JS Dojo →</a>
-      </div>
-      <div class="card" style="--c:var(--teal)">
-        <div class="tag">Machine learning</div>
-        <h3><svg class="ic"><use href="#i-net"/></svg> ML Dojo</h3>
-        <div class="nums"><b>the passion project · its own repository</b></div>
-        <p>Grad school introduced ML the way a cliff introduces the sea: head first. Support Vector
-        Machine sounded like a spaceship, nobody would tell me what an eigenvector was for, and one
-        lecturer swore Bayes' theorem was the only equation we'd ever need. He was wrong. So this
-        dojo removes the intimidation: every idea starts with plain English, and the math arrives
-        after, once you know what it's there for.</p>
-        <a class="go" href="/ml/">Enter ML Dojo →</a>
-      </div>
-      <div class="card" style="--c:var(--cyan)">
-        <div class="tag">Cloud-native infrastructure</div>
-        <h3><svg class="ic"><use href="#i-cloud"/></svg> Cloud-native path</h3>
-        <div class="nums"><b>5 courses · 80 modules · 374 quiz questions</b></div>
-        <p>The other side of being an engineer, the one nobody really talks about: everyday
-        operations. Code isn't done when it compiles, it's done when it's up, running and deployed.
-        This path teaches exactly that, beginner or senior, from your first container to a
-        production service mesh: package it, orchestrate it, proxy it, mesh it.</p>
-        <a class="go" href="/fundamentals/">Start the path →</a>
-      </div>
-    </div>
-  </section>
 
   <section id="identity">
     <div class="k rose">The IAM in roniam</div>
@@ -340,49 +288,55 @@
   </section>
 
   <section id="principles">
-    <div class="k violet">Management, practiced</div>
+    <div class="k violet">Learned the hard way</div>
     <h2>How I lead</h2>
     <p class="secdesc">This is what I believe and live. This is what I say and do with my teams.</p>
     <div class="prin">
-      <div class="p-card" style="--c:var(--amber)">
+      <div class="p-card" style="--c:var(--amber);--ci:var(--amber-ink)">
         <h3>“Build trust, then unleash.”</h3>
         <p>I can't do everything, and pretending otherwise helps nobody. So delegation starts with
         building trust, and then I unleash the engineers I work with on the problems themselves.
         That's how I get results, and it's how engineers grow, feel empowered, and love the work.</p>
+        <a class="receipt" href="/blog/art-of-delegation/" data-needs="art-of-delegation">The long version, written up</a>
       </div>
-      <div class="p-card" style="--c:var(--rose)">
+      <div class="p-card" style="--c:var(--rose);--ci:var(--rose-ink)">
         <h3>“Honest, direct, in every direction.”</h3>
         <p>Between me and my engineers, my managers, my peers, and the rest of the organization,
         communication has to be honest and direct, tuned to what works best for each person. When a
         call to action is needed, I call to action. I celebrate wins and I own failures. And when a
         problem arises, I don't just highlight the problem, I offer solutions.</p>
+        <a class="receipt" href="#ai">Where AI fits, and what I don't hand over</a>
       </div>
-      <div class="p-card" style="--c:var(--violet)">
+      <div class="p-card" style="--c:var(--violet);--ci:var(--violet-ink)">
         <h3>“People first, engineers second.”</h3>
         <p>I get to know my people and learn what makes them tick. That's how they grow, and how I
         let them be their best. I value their opinions, and I'm willing to change direction when
         someone passionately believes in something, as long as they can prove it with data.</p>
+        <a class="receipt" href="/blog/critical-but-not-core/" data-needs="critical-but-not-core">Leading a platform team through a re-org</a>
       </div>
-      <div class="p-card" style="--c:var(--teal)">
+      <div class="p-card" style="--c:var(--teal);--ci:var(--teal-ink)">
         <h3>“Don't let perfect be the enemy of good.”</h3>
         <p>Sometimes it's OK, and smart, to do something later. Deferring on purpose is a decision.
         Over and over again I've seen that trying to "boil the ocean" is a recipe for analysis
         paralysis, overcomplication, and failure to launch.</p>
+        <a class="receipt" href="/blog/sit-the-exam/" data-needs="sit-the-exam">Where I stopped, and why</a>
       </div>
-      <div class="p-card" style="--c:var(--cyan)">
+      <div class="p-card" style="--c:var(--cyan);--ci:var(--cyan-ink)">
         <h3>“I make smart bets. There are no guarantees.”</h3>
         <p>Built on data and experience, and it's hard to argue with the data. Most decisions won't
         sink us, so we commit to what the data tells us. Could it go wrong? Sure. But I don't walk
         through one-way doors.</p>
+        <a class="receipt" href="https://github.com/rcbart/dojo/blob/main/DESIGN_AND_TRADEOFFS.md">Every trade-off here, written down</a>
       </div>
-      <div class="p-card" style="--c:var(--amber)">
+      <div class="p-card" style="--c:var(--amber);--ci:var(--amber-ink)">
         <h3>“Never stop learning.”</h3>
         <p>Being the smartest in the room rings my alarms. Not because being smart is bad, but
         because it means the learning has stopped. The best version of my job is being surrounded by
         people who regularly teach me something, and the dojos exist because teaching is how I keep
         forcing myself to learn.</p>
+        <a class="receipt" href="#develop">Which is exactly why the dojos exist</a>
       </div>
-      <div class="p-card" style="--c:var(--rose)">
+      <div class="p-card" style="--c:var(--rose);--ci:var(--rose-ink)">
         <h3>“I deliver results, and I love impact.”</h3>
         <p>I love taking on new challenges, tackling hard problems, and solving real pain points. I
         work with the whole organization to deliver real results that exceed customer expectations,
@@ -399,6 +353,108 @@
     <p style="margin-top:16px"><a href="/blog/" style="font-weight:700">All posts →</a></p>
   </section>
 
+  <section id="develop">
+    <div class="k cyan">Learning by doing</div>
+    <h2>How I develop engineers</h2>
+    <p class="secdesc">Growing engineers is the part of this job I care most about, so I built the
+    thing I wish someone had handed me. Every dojo runs on <b>belts</b>, white to black, and what each belt asks for is
+    written down, not felt. You don't grow because you
+    read the lesson, you do it by doing the work, and then you deep dive. You not only understand
+    the mechanics and the syntax, you understand the <b>intent</b>, and you can apply it over and
+    over again, in the real world. That is the same rule I
+    use with a team: reading about it isn't doing it, and I would rather watch someone struggle
+    through an exercise than watch them watch me solve it.</p>
+
+
+    <a class="receipt" href="/skills-rubric.html">The skills rubric: an honest read of where you stand</a>
+
+    <p style="margin-top:18px">And I hold the material to the same bar I would hold a team to. Every
+    push runs seven checks, and one of them takes all <b>2,990 assertions</b> behind the graded
+    exercises and runs them against their own reference solutions. If a single one fails, the build
+    fails. That has stopped my own work more than once, which is the point of it. A bar you can wave
+    yourself through isn't a bar.</p>
+  </section>
+
+  <section id="dojos">
+    <div class="k amber">My contribution, your knowledge</div>
+    <h2>Take the course.</h2>
+    <p class="secdesc">Tutorial hell is watching someone explain things, and your gut telling you
+    they know the material. You do the exercises and still feel like you've only scratched the
+    surface. You went through the motions, but nothing more. Where's the real sense of achievement?
+    That's what these are built for: <b>every lesson here ends with an exercise you complete
+    yourself</b>, in the page, and it has to pass. Five learning
+    paths; the three core dojos compile to a single self-contained HTML file with <b>zero
+    dependencies</b>, so they run offline, from a USB stick if you like, while ML Dojo lives in its
+    own repository and the cloud-native path takes you from Docker to a running Istio mesh. Every push is gated by seven CI checks, including one that executes every graded
+    exercise against its own reference solution. Free, no accounts, no tracking. Knowledge shared is
+    the whole point.</p>
+
+    <div class="stats">
+      <div class="stat"><b>0</b><span>dependencies</span></div>
+      <div class="stat"><b>59</b><span>tracks &amp; streams</span></div>
+      <div class="stat"><b>420</b><span>lessons</span></div>
+      <div class="stat"><b>639</b><span>hands-on exercises</span></div>
+    </div>
+
+
+    <div class="cards">
+      <div class="card" style="--c:var(--rose);--ci:var(--rose-ink)">
+        <div class="tag">Identity &amp; access</div>
+        <h3><svg class="ic"><use href="#i-shield"/></svg> Identity Dojo</h3>
+        <div class="nums"><b>14 streams · 149 lessons · 159 exercises</b></div>
+        <p>Identity and access is a huge field: so much to learn, so many problems to solve, so much
+        misdirection if you get it wrong. And it's changing at a rapid pace, we now have to manage AI
+        agents as if they were end users. My aim with this course is to cover and work through as
+        much of it as possible, from the ground up to the technical nitty-gritty.</p>
+        <a class="go" href="/identity/">Enter Identity Dojo →</a>
+      </div>
+      <div class="card" style="--c:var(--violet);--ci:var(--violet-ink)">
+        <div class="tag">Software engineering</div>
+        <h3><svg class="ic"><use href="#i-code"/></svg> Dev Dojo</h3>
+        <div class="nums"><b>29 tracks · 207 lessons · 374 exercises</b></div>
+        <p>It might look eclectic. It isn't. This is a collection of the technologies, learnings
+        and challenges I've met across my career, arranged so someone can grow from newbie toward
+        senior engineer. It won't make you a senior engineer on its own, nothing but real experience
+        does, but it's a strong technical track to grow alongside it.</p>
+        <a class="go" href="/dev/">Enter Dev Dojo →</a>
+      </div>
+      <div class="card" style="--c:var(--amber);--ci:var(--amber-ink)">
+        <div class="tag">JavaScript &amp; Node</div>
+        <h3><svg class="ic"><use href="#i-js"/></svg> JS Dojo</h3>
+        <div class="nums"><b>16 streams · 64 lessons · 106 exercises</b></div>
+        <p>This one exists so nothing else here can block you. Exercises across the site run on
+        JavaScript, so JS Dojo takes you from zero to comfortable, from the ground up, with every
+        exercise executed for real. It's the site's ethos in miniature: nothing is assumed,
+        everything is available.</p>
+        <a class="go" href="/js/">Enter JS Dojo →</a>
+      </div>
+      <div class="card" style="--c:var(--teal);--ci:var(--teal-ink)">
+        <div class="tag">Machine learning</div>
+        <h3><svg class="ic"><use href="#i-net"/></svg> ML Dojo</h3>
+        <div class="nums"><b>the passion project · its own repository</b></div>
+        <p>Grad school introduced ML the way a cliff introduces the sea: head first. Support Vector
+        Machine sounded like a spaceship, nobody would tell me what an eigenvector was for, and one
+        lecturer swore Bayes' theorem was the only equation we'd ever need. He was wrong. So this
+        dojo removes the intimidation: every idea starts with plain English, and the math arrives
+        after, once you know what it's there for.</p>
+        <a class="go" href="/ml/">Enter ML Dojo →</a>
+      </div>
+      <div class="card" style="--c:var(--cyan);--ci:var(--cyan-ink)">
+        <div class="tag">Cloud-native infrastructure</div>
+        <h3><svg class="ic"><use href="#i-cloud"/></svg> Cloud-native path</h3>
+        <div class="nums"><b>5 courses · 80 modules · 374 quiz questions</b></div>
+        <p>The other side of being an engineer, the one nobody really talks about: everyday
+        operations. Code isn't done when it compiles, it's done when it's up, running and deployed.
+        This path teaches exactly that, beginner or senior, from your first container to a
+        production service mesh: package it, orchestrate it, proxy it, mesh it.</p>
+        <a class="go" href="/fundamentals/">Start the path →</a>
+      </div>
+    </div>
+  </section>
+
+
+
+
   <div class="contact" id="contact">
     <div class="k amber">Say hello</div>
     <h2>Let's build something.</h2>
@@ -413,7 +469,7 @@
     Spotted a mistake, or have a suggestion?
     <a href="https://github.com/rcbart/dojo/issues/new?template=bug_report.yml">Report an issue</a> ·
     <a href="https://github.com/rcbart/dojo/issues/new?template=suggestion.yml">Suggest an improvement</a> ·
-    <a class="mailme2" style="cursor:pointer;color:var(--teal);font-weight:600" data-sub="A suggestion for roniam.dev">or just write to me</a>.
+    <a class="mailme2" style="cursor:pointer;color:var(--teal-ink);font-weight:600" data-sub="A suggestion for roniam.dev">or just write to me</a>.
   </div>
 
   <footer>

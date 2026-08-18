@@ -2,8 +2,8 @@
    Per-lesson ratings and written comments: storage, the pure aggregate, the
    markup, and the prompt shown when moving to the next lesson.
 
-   Extracted from app.js so the feedback loop can grow — phase 3 ideas include
-   pairing ratings with exercise failure rates — without further enlarging the
+   Extracted from app.js so the feedback loop can grow, phase 3 ideas include
+   pairing ratings with exercise failure rates, without further enlarging the
    file that renders everything else. Depends on `store` from app.js at call
    time only. */
 /* ============================== LESSON RATINGS ==============================
@@ -16,7 +16,7 @@ const RATE={UP:1,NEUTRAL:0,DOWN:-1};
 const rateKey=id=>'rating:'+id;
 function getRating(id){const r=store.get()[rateKey(id)];return r&&typeof r.v==='number'?r.v:null;}
 function getComment(id){const r=store.get()[rateKey(id)];return r&&typeof r.c==='string'?r.c:'';}
-/* Phase 2: the written half. Submit is explicit — nothing is captured while
+/* Phase 2: the written half. Submit is explicit, nothing is captured while
    someone is still typing, and an empty box clears rather than storing "". */
 const COMMENT_MAX=2000;
 function saveComment(id,raw){
@@ -89,7 +89,7 @@ function commentMarkup(id){
   return `<div class="cmtBox" id="cmt-${id}">`+
     `<label class="cmtQ" for="cmtT-${id}">${esc(commentQuestion(id))}</label>`+
     `<textarea id="cmtT-${id}" class="cmtInput" rows="3" maxlength="${COMMENT_MAX}" `+
-      `placeholder="Optional. Specifics help more than praise — the line, the example, the step that lost you.">${esc(saved)}</textarea>`+
+      `placeholder="Optional. Specifics help more than praise, the line, the example, the step that lost you.">${esc(saved)}</textarea>`+
     `<div class="cmtRow">`+
       `<button class="cmtSend" onclick="submitComment('${id}')">${saved?'Update comment':'Submit comment'}</button>`+
       `<span class="cmtNote" id="cmtN-${id}">${saved?'Saved. Edit and submit again to change it.':'Stored with your account when signed in.'}</span>`+
@@ -100,7 +100,7 @@ function submitComment(id){
   if(!ta)return;
   const text=saveComment(id,ta.value);
   const note=document.getElementById('cmtN-'+id);
-  if(note)note.textContent=text?'Thanks — saved.':'Comment cleared.';
+  if(note)note.textContent=text?'Thanks, saved.':'Comment cleared.';
   const btn=ta.parentNode&&ta.parentNode.querySelector('.cmtSend');
   if(btn)btn.textContent=text?'Update comment':'Submit comment';
 }
@@ -108,7 +108,7 @@ function ratingMarkup(id){
   const cur=getRating(id);
   const btn=(v,icon,label)=>`<button class="rateBtn${cur===v?' on':''}" onclick="rateLesson('${id}',${v})" `+
     `aria-pressed="${cur===v}" title="${label}"><span aria-hidden="true">${icon}</span><span class="rateLbl">${label}</span></button>`;
-  return `<div class="rateRow">${cur===null?'<span class="rateAsk">Was this lesson useful?</span>':'<span class="rateAsk done">Thanks — rating saved.</span>'}`+
+  return `<div class="rateRow">${cur===null?'<span class="rateAsk">Was this lesson useful?</span>':'<span class="rateAsk done">Thanks, rating saved.</span>'}`+
     btn(RATE.UP,'&#128077;','Useful')+btn(RATE.NEUTRAL,'&#128528;','Neutral')+btn(RATE.DOWN,'&#128078;','Not useful')+`</div>`+
     commentMarkup(id);
 }
@@ -122,7 +122,7 @@ function nextLesson(si,li,id){
   if(!holder)return openLesson(si,li+1);
   const p=document.createElement('div');
   p.id='ratePrompt';p.className='ratePrompt';
-  p.innerHTML=`<b>Before you move on</b> — was this lesson useful?`+
+  p.innerHTML=`<b>Before you move on</b>, was this lesson useful?`+
     `<div class="rateRow">`+
     `<button class="rateBtn" onclick="rateLesson('${id}',1,true)"><span aria-hidden="true">&#128077;</span><span class="rateLbl">Useful</span></button>`+
     `<button class="rateBtn" onclick="rateLesson('${id}',0,true)"><span aria-hidden="true">&#128528;</span><span class="rateLbl">Neutral</span></button>`+

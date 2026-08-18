@@ -1,4 +1,4 @@
-# 2 — API gateways
+# 2: API gateways
 
 *The front desk: what belongs at the front door, what absolutely doesn't, and the internal vs external split. ~12 min read.*
 
@@ -96,4 +96,4 @@ at the edge is the OAuth/OIDC material from Identity Dojo, deployed to productio
 
 ---
 
-**Next:** [3 — CDNs →](./03-cdns.md)
+**Next:** [3: CDNs →](./03-cdns.md)

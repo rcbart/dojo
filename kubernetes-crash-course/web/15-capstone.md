@@ -1,4 +1,4 @@
-# 15 — Capstone: deploy a multi-service app
+# 15: Capstone: deploy a multi-service app
 
 *Put it all together. You'll deploy a real multi-tier app (frontend, API, database) with config,
 secrets, storage, health, autoscaling, and ingress. ~45 min. Needs your kind cluster (with
@@ -23,7 +23,7 @@ it, verify it.
 A classic three-tier app: a web frontend, an API, and a database, each with the production
 trimmings you learned.
 
-## Step 1 — namespace and config
+## Step 1: namespace and config
 
 ```bash
 kubectl create namespace shop
@@ -36,7 +36,7 @@ kubectl create secret generic db-secret \
   --from-literal=POSTGRES_PASSWORD=s3cret --from-literal=POSTGRES_DB=shop
 ```
 
-## Step 2 — the database (StatefulSet + storage)
+## Step 2: the database (StatefulSet + storage)
 
 ```bash
 cat <<'EOF' | kubectl apply -f -
@@ -76,7 +76,7 @@ kubectl rollout status statefulset/db
 *(Concepts used: StatefulSet, PVC via volumeClaimTemplates, Secret via envFrom, readiness probe,
 resources, headless Service.)*
 
-## Step 3 — the API (Deployment + Service + probes + HPA)
+## Step 3: the API (Deployment + Service + probes + HPA)
 
 ```bash
 cat <<'EOF' | kubectl apply -f -
@@ -110,7 +110,7 @@ kubectl autoscale deployment api --cpu-percent=60 --min=2 --max=8
 kubectl rollout status deployment/api
 ```
 
-## Step 4 — the frontend (Deployment + Service)
+## Step 4: the frontend (Deployment + Service)
 
 ```bash
 kubectl create deployment frontend --image=nginxdemos/hello --replicas=2
@@ -118,7 +118,7 @@ kubectl set resources deployment frontend --requests=cpu=50m,memory=32Mi
 kubectl expose deployment frontend --port=80
 ```
 
-## Step 5 — the Ingress (one front door, path routing)
+## Step 5: the Ingress (one front door, path routing)
 
 ```bash
 cat <<'EOF' | kubectl apply -f -
@@ -137,7 +137,7 @@ spec:
 EOF
 ```
 
-## Step 6 — verify the whole system
+## Step 6: verify the whole system
 
 ```bash
 kubectl get all                                  # everything: pods, deploys, statefulset, services, hpa
@@ -156,7 +156,7 @@ If all three tiers respond and the killed pod self-heals, **you've deployed a pr
 with config/secrets externalized, data persisted, health-checked, autoscaled, and fronted by a single
 ingress.
 
-## Step 7 — challenge tasks (do these yourself)
+## Step 7: challenge tasks (do these yourself)
 
 To cement mastery, extend it without step-by-step help:
 
@@ -192,4 +192,4 @@ kubectl delete namespace shop          # removes everything in one shot
 
 ---
 
-**Next:** [16 — CKA / CKAD exam prep →](./16-cka-ckad-prep.md)
+**Next:** [16: CKA / CKAD exam prep →](./16-cka-ckad-prep.md)

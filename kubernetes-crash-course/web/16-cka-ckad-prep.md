@@ -1,4 +1,4 @@
-# 16 — CKA / CKAD exam prep
+# 16: CKA / CKAD exam prep
 
 *Turn this course into a certification. What the exams test, how they map to what you've learned, and
 the speed techniques that decide pass/fail. ~25 min read.*
@@ -120,4 +120,4 @@ in the wrong namespace scores zero.
 
 ---
 
-**Next:** [17 — Debugging, gotchas & next steps →](./17-debugging-next-steps.md)
+**Next:** [17: Debugging, gotchas & next steps →](./17-debugging-next-steps.md)

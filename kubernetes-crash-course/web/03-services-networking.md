@@ -1,4 +1,4 @@
-# 3 — Services & networking
+# 3: Services & networking
 
 *How pods get stable names and how traffic reaches them. Concepts + a lab. ~30 min. Needs your kind
 cluster.*
@@ -47,7 +47,7 @@ spec:
   type: ClusterIP
 ```
 
-## Service DNS — talk by name
+## Service DNS: talk by name
 
 Every Service gets an in-cluster DNS name. From any pod, you can reach it as:
 
@@ -134,4 +134,4 @@ kubectl delete deployment hello && kubectl delete svc hello
 
 ---
 
-**Next:** [4 — ConfigMaps & Secrets →](./04-configmaps-secrets.md)
+**Next:** [4: ConfigMaps & Secrets →](./04-configmaps-secrets.md)

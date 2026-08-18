@@ -12,7 +12,7 @@
       body: JSON.stringify({ username: $('si-user').value, password: $('si-pass').value }),
     });
     if (!res.ok) { JD.say(status, res.data.error || 'Sign in failed', false); return; }
-    JD.say(status, 'Welcome back, ' + res.data.user.displayName + ' — taking you in…', true);
+    JD.say(status, 'Welcome back, ' + res.data.user.displayName + ', taking you in…', true);
     location.href = '/app';
   });
 

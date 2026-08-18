@@ -121,4 +121,4 @@ version of it.
 
 ---
 
-**Next:** [Primer — Service meshes in plain English →](./primer-service-mesh.md)
+**Next:** [Primer: Service meshes in plain English →](./primer-service-mesh.md)

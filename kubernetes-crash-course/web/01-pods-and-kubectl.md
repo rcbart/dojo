@@ -1,4 +1,4 @@
-# 1 — Pods & kubectl
+# 1: Pods & kubectl
 
 *Hands-on. The atom of Kubernetes and the tool you'll live in. ~25 min. Needs your kind cluster.*
 
@@ -40,7 +40,7 @@ spec:
 
 `spec.containers` lists the image(s) to run; this is where your Docker images plug in.
 
-## kubectl — the verbs you'll use constantly
+## kubectl: the verbs you'll use constantly
 
 `kubectl <verb> <resource> [name] [flags]`:
 
@@ -129,4 +129,4 @@ kubectl delete pod crasher
 
 ---
 
-**Next:** [2 — Deployments & ReplicaSets →](./02-deployments-replicasets.md)
+**Next:** [2: Deployments & ReplicaSets →](./02-deployments-replicasets.md)

@@ -1,4 +1,4 @@
-# 0 — The path of a request (the map for everything else)
+# 0: The path of a request (the map for everything else)
 
 *No installs, no labs: this whole course is the mental model the other four courses assume. ~10 min read.*
 
@@ -85,4 +85,4 @@ do. There are no labs here; the labs live in the four hands-on courses this one 
 
 ---
 
-**Next:** [1 — Load balancers →](./01-load-balancers.md)
+**Next:** [1: Load balancers →](./01-load-balancers.md)

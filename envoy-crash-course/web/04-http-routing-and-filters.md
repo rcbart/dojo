@@ -1,4 +1,4 @@
-# 04 — HTTP routing & filters
+# 04: HTTP routing & filters
 
 *The heart of everyday Envoy work. Concepts + a lab exercising real routing rules and an HTTP
 filter. ~25 min. Requires Docker.*
@@ -48,7 +48,7 @@ catch-all `prefix: "/"`. Getting a "wrong backend" is nearly always a route-orde
 - **`direct_response: {...}`**: Envoy answers itself without any backend (health checks, canned
   errors, maintenance pages).
 
-## HTTP filters — the request pipeline
+## HTTP filters: the request pipeline
 
 Inside the HCM, `http_filters` is an **ordered** list; each request passes through them before
 the **router** (which must be last). A filter can read, modify, delay, or reject a request. The
@@ -61,7 +61,7 @@ ones you'll actually meet:
 | `jwt_authn` | Verify a JWT (auth) and reject invalid tokens |
 | `ext_authz` | Call an **external** authorization service (allow/deny per request) |
 | `ratelimit` / `local_ratelimit` | Global (via a service) or local request rate limiting |
-| `fault` | Inject latency or aborts — for **resilience testing** (chaos) |
+| `fault` | Inject latency or aborts, for **resilience testing** (chaos) |
 | `compressor` | gzip/brotli response compression |
 | `lua` / `wasm` | Custom logic in Lua or WebAssembly |
 | `ext_proc` | Stream requests to an external processor to mutate them |
@@ -142,4 +142,4 @@ routes above general ones.**
 
 ---
 
-**Next:** [4b — Rate limiting & ext_authz →](./11-rate-limiting-ext-authz.md)
+**Next:** [4b: Rate limiting & ext_authz →](./11-rate-limiting-ext-authz.md)

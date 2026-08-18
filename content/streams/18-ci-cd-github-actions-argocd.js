@@ -11,7 +11,7 @@ STREAMS.push({icon:'🔁',title:'CI/CD: GitHub Actions & ArgoCD',blurb:'From "wh
         seconds     seconds       ~1 min          minutes             minutes         approval/auto</div>
 <p><b>Why it matters</b>: teams that deploy small changes frequently have <i>fewer</i> incidents, not more: each deploy carries less risk, and rollback is trivial because the previous artifact is one tag away. The DORA metrics (deploy frequency, lead time, change-failure rate, time-to-restore) all improve together.</p>
 <p>Vocabulary you will use in the next lessons: an <b>artifact</b> (the immutable build output), an <b>environment</b> (dev/staging/prod: same artifact, different config), a <b>gate</b> (a manual or automated check between environments), and <b>rollback</b> (redeploying the previous artifact; never "fix forward under pressure" as plan A).</p>`,
-docs:[['Continuous Delivery — Martin Fowler','https://martinfowler.com/bliki/ContinuousDelivery.html'],['DORA research: Accelerate metrics','https://dora.dev/guides/dora-metrics-four-keys/'],['CI — Martin Fowler','https://martinfowler.com/articles/continuousIntegration.html']],
+docs:[['Continuous Delivery, Martin Fowler','https://martinfowler.com/bliki/ContinuousDelivery.html'],['DORA research: Accelerate metrics','https://dora.dev/guides/dora-metrics-four-keys/'],['CI, Martin Fowler','https://martinfowler.com/articles/continuousIntegration.html']],
 ex:{title:'CI/CD literacy drill',lang:'text',
 prompt:`One answer per numbered line; this drill checks you can tell the practices apart: (1) the practice where every push runs build + tests on a shared branch (two words or the abbreviation), (2) in <b>continuous delivery</b>, who or what decides a release ships: <code>human</code> or <code>pipeline</code>? (3) in <b>continuous deployment</b>: <code>human</code> or <code>pipeline</code>? (4) the name for the immutable build output a pipeline produces (one word), (5) the safest first response to a bad production deploy: <code>rollback</code> or <code>hotfix</code>? (6) do small frequent deploys carry <code>more</code> or <code>less</code> risk per deploy than big rare ones?`,
 starter:`1.
@@ -257,7 +257,7 @@ do it at 3am, and does it survive the migration you just ran? If the answer to a
 have a forward-only deploy and should treat every release accordingly. The environments should differ only
 in <b>configuration</b> (same image, different variables), because an artefact rebuilt per environment is
 no longer the artefact you tested.`,
-docs:[['GitHub Environments & protection rules','https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment'],['Blue/green deployments — Fowler','https://martinfowler.com/bliki/BlueGreenDeployment.html'],['Canary release — Fowler','https://martinfowler.com/bliki/CanaryRelease.html']],
+docs:[['GitHub Environments & protection rules','https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment'],['Blue/green deployments, Fowler','https://martinfowler.com/bliki/BlueGreenDeployment.html'],['Canary release, Fowler','https://martinfowler.com/bliki/CanaryRelease.html']],
 ex:{title:'Strategy triage',lang:'text',
 prompt:`One answer per numbered line: (1) the strategy that replaces instances gradually behind a load balancer (one word), (2) the strategy that runs old and new stacks side by side and flips traffic at the router (two words, slash ok), (3) the strategy that sends a small % of real traffic to the new version first (one word), (4) staging tested image :abc123: does production <code>rebuild</code> or <code>reuse</code> that image? (5) the migration discipline that lets two app versions share one schema during a rolling deploy (hyphenated phrase: ______-then-______), (6) which is faster to execute: <code>rollback</code> or <code>revert</code>?`,
 starter:`1.
@@ -313,7 +313,7 @@ spec:
     syncOptions:
       - CreateNamespace=true</div>
 <p><code>prune</code> and <code>selfHeal</code> are the GitOps contract enforced: git says it → it exists; git doesn't → it goes; someone hand-edits the cluster → ArgoCD puts it back. "Drift" stops being a slow mystery and becomes a red OutOfSync badge.</p>`,
-docs:[['ArgoCD — core concepts','https://argo-cd.readthedocs.io/en/stable/core_concepts/'],['Application specification','https://argo-cd.readthedocs.io/en/stable/user-guide/application-specification/'],['OpenGitOps principles','https://opengitops.dev/']],
+docs:[['ArgoCD (core concepts)','https://argo-cd.readthedocs.io/en/stable/core_concepts/'],['Application specification','https://argo-cd.readthedocs.io/en/stable/user-guide/application-specification/'],['OpenGitOps principles','https://opengitops.dev/']],
 ex:{title:'Write an Application manifest',lang:'yaml',
 prompt:`Write the ArgoCD <code>Application</code> for a payments service: apiVersion <code>argoproj.io/v1alpha1</code>, kind <code>Application</code>, metadata name <code>payments</code> in namespace <code>argocd</code>. Spec: project <code>default</code>; source repo <code>https://github.com/acme/gitops</code>, targetRevision <code>main</code>, path <code>apps/payments</code>; destination server <code>https://kubernetes.default.svc</code>, namespace <code>payments</code>; and an <b>automated syncPolicy with both prune and selfHeal true</b>.`,
 starter:`apiVersion:
@@ -390,7 +390,7 @@ Anyone who kubectl-edits production creates drift, and the reconciler either fig
 <li><b>Secrets are not in git</b>, sealed or external, the one thing the declarative model cannot take
 literally.</li>
 </ul>`,
-docs:[['Kustomize — set image','https://kubectl.docs.kubernetes.io/references/kustomize/cmd/edit/setimage/'],['ArgoCD sync waves & hooks','https://argo-cd.readthedocs.io/en/stable/user_guide/sync-waves/'],['argocd CLI reference','https://argo-cd.readthedocs.io/en/stable/user_guide/commands/argocd_app/']],
+docs:[['Kustomize (set image)','https://kubectl.docs.kubernetes.io/references/kustomize/cmd/edit/setimage/'],['ArgoCD sync waves & hooks','https://argo-cd.readthedocs.io/en/stable/user_guide/sync-waves/'],['argocd CLI reference','https://argo-cd.readthedocs.io/en/stable/user_guide/commands/argocd_app/']],
 ex:{title:'argocd CLI drill',lang:'shell',
 prompt:`One command per numbered line, using the <code>argocd</code> CLI: (1) log in to server <code>argocd.acme.dev</code> (just the login command with the server host), (2) list all applications, (3) show the details/status of app <code>payments</code>, (4) trigger a sync of <code>payments</code>, (5) sync <code>payments</code> but only preview what would change (the diff, no apply; one command, it is not <code>sync</code>), (6) roll <code>payments</code> back to history id <code>7</code>.`,
 starter:`1.

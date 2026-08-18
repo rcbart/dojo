@@ -22,7 +22,7 @@ long fib(int n) {
 <li><b>The cache must not outlive the inputs.</b> A static memo keyed on user data is a memory leak, and one keyed on mutable objects is a correctness bug.</li>
 </ul>
 <p>Recognising the shape is the interview skill: "how many ways can you…", "minimum cost to…", "longest/best subsequence of…" with a choice at each step. Say the recurrence out loud before writing anything; the code is mechanical once the recurrence is right, and unfixable while it is wrong.</p>`,
-docs:[['Dynamic programming — CP-Algorithms','https://cp-algorithms.com/dynamic_programming/intro-to-dp.html'],['Memoization vs tabulation — Baeldung','https://www.baeldung.com/cs/tabulation-vs-memoization']],
+docs:[['Dynamic programming, CP-Algorithms','https://cp-algorithms.com/dynamic_programming/intro-to-dp.html'],['Memoization vs tabulation, Baeldung','https://www.baeldung.com/cs/tabulation-vs-memoization']],
 exs:[
 {title:'Memoized Fibonacci',
 prompt:`Write <code>Fib</code> computing the <b>nth Fibonacci number</b>: fib(0) = 0, fib(1) = 1, fib(n) = fib(n-1) + fib(n-2), so fib(10) == 55. Use a <code>private final java.util.Map&lt;Integer, Long&gt; memo = new java.util.HashMap&lt;&gt;()</code> and method <code>long fib(int n)</code>: base case n &le; 1, otherwise <code>memo.computeIfAbsent</code> with the recursive recurrence. fib(90) must return instantly (naive recursion would outlive the universe).`,
@@ -73,7 +73,7 @@ public class Stairs {
     }
 }`},
 {title:'Memoized Fibonacci, executed',lang:'js',diff:'medium',
-run:{call:'fib',cases:[{name:'the tenth number',args:[10],expect:55},{name:'base case zero',args:[0],expect:0},{name:'base case one',args:[1],expect:1},{name:'fib(50) returns instantly — proof the cache works',args:[50],expect:12586269025},{name:'fib(78) is still exact in a double',args:[78],expect:8944394323791464}]},
+run:{call:'fib',cases:[{name:'the tenth number',args:[10],expect:55},{name:'base case zero',args:[0],expect:0},{name:'base case one',args:[1],expect:1},{name:'fib(50) returns instantly, proof the cache works',args:[50],expect:12586269025},{name:'fib(78) is still exact in a double',args:[78],expect:8944394323791464}]},
 prompt:`Write <code>function fib(n, memo = {})</code> returning the nth Fibonacci number, caching each result so every subproblem is computed once. The <code>fib(50)</code> case is the real test: the naive recursion would make over 40 billion calls and time out, while the memoized version returns immediately.`,
 starter:`function fib(n, memo = {}) {
   return 0;
@@ -112,7 +112,7 @@ int minCoins(int[] coins, int amount) {
 
 <h4>Rolling the table: O(n) space to O(1)</h4>
 <p>When row <code>i</code> depends only on row <code>i-1</code>, you never need the whole table: keep two rows, or one row updated in the right direction. Fibonacci by tabulation needs two variables, not an array of n. This is the standard follow-up question after you produce a working table, and the answer is always the same: look at which previous entries the recurrence actually reads, and keep only those.</p>`,
-docs:[['Coin change — CP-Algorithms adjacent writeup','https://cp-algorithms.com/dynamic_programming/intro-to-dp.html'],['Bottom-up DP — Baeldung','https://www.baeldung.com/cs/tabulation-vs-memoization']],
+docs:[['Coin change, CP-Algorithms adjacent writeup','https://cp-algorithms.com/dynamic_programming/intro-to-dp.html'],['Bottom-up DP, Baeldung','https://www.baeldung.com/cs/tabulation-vs-memoization']],
 exs:[{title:'Coin change',
 prompt:`Write <code>Coins</code> with <code>static int minCoins(int[] coins, int amount)</code> returning the <b>fewest coins needed to make exactly amount</b>, with unlimited copies of each denomination, minCoins([1,2,5], 11) == 3 (5+5+1), or <b>-1 when the amount cannot be made</b>. Implement it exactly as the tabulation recipe: dp array of size amount+1 filled with the sentinel <code>amount + 1</code>, <code>dp[0] = 0</code>, double loop (amounts outer, coins inner), <code>Math.min</code> relaxation, and the -1 check at the end.`,
 starter:`import java.util.*;
@@ -187,7 +187,7 @@ int lcs(String a, String b) {
 
 <h4>Cost, and the family resemblance</h4>
 <p>Time and space are both O(m x n): a megabyte of table for two 1,000-character strings, which is fine, and 10&#185;&#178; entries for two one-megabyte files, which is not. Real diff tools use the rolling trick from the previous lesson (only the previous row is read) plus algorithms tuned for the common case where the inputs are mostly identical. Recognise the family by its signature: two sequences, a decision per pair of positions, and an answer built from the three neighbours above, left and diagonal.</p>`,
-docs:[['LCS — CP-Algorithms family','https://cp-algorithms.com/dynamic_programming/intro-to-dp.html'],['Edit distance & friends — Baeldung','https://www.baeldung.com/cs/levenshtein-distance-computation']],
+docs:[['LCS, CP-Algorithms family','https://cp-algorithms.com/dynamic_programming/intro-to-dp.html'],['Edit distance & friends, Baeldung','https://www.baeldung.com/cs/levenshtein-distance-computation']],
 exs:[{title:'LCS table',
 prompt:`Write <code>Lcs</code> with <code>static int length(String a, String b)</code> returning the length of the <b>longest common subsequence</b>, the longest sequence of characters appearing in both strings in the same order, not necessarily contiguously: length("abcde", "ace") == 3 ("ace"). Use the full 2D tabulation: <code>(a.length()+1) × (b.length()+1)</code> table, match case extending the diagonal, mismatch case taking the max of the two neighbors. Mind the index offset: <code>charAt(i - 1)</code>.`,
 starter:`public class Lcs {
@@ -214,7 +214,7 @@ solution:`public class Lcs {
     }
 }`},
 {title:'LCS length, executed',lang:'js',diff:'hard',
-run:{call:'lcs',cases:[{name:'the textbook pair: BCBA has length 4',args:['ABCBDAB','BDCABA'],expect:4},{name:'nothing in common',args:['abc','xyz'],expect:0},{name:'an empty string shares nothing',args:['','abc'],expect:0},{name:'identical strings share everything',args:['abcd','abcd'],expect:4},{name:'subsequence, not substring — gaps are allowed',args:['axbycz','abc'],expect:3}]},
+run:{call:'lcs',cases:[{name:'the textbook pair: BCBA has length 4',args:['ABCBDAB','BDCABA'],expect:4},{name:'nothing in common',args:['abc','xyz'],expect:0},{name:'an empty string shares nothing',args:['','abc'],expect:0},{name:'identical strings share everything',args:['abcd','abcd'],expect:4},{name:'subsequence, not substring, gaps are allowed',args:['axbycz','abc'],expect:3}]},
 prompt:`Write <code>function lcs(a, b)</code> returning the <b>length</b> of the longest common subsequence. Build the (m+1) by (n+1) table as in the lesson, with row 0 and column 0 representing the empty prefix. The last case is the one that defines the problem: <code>abc</code> appears inside <code>axbycz</code> with gaps, so the answer is 3.`,
 starter:`function lcs(a, b) {
   return 0;
@@ -273,7 +273,7 @@ int[] pairSum(int[] sorted, int target) {
 <li>"Best over every window of size k" points to a deque holding candidate maxima, the sliding window with a data structure inside it.</li>
 </ul>
 <p>Naming the pattern out loud is half of an interview answer, and the other half is stating the precondition it depends on. That is also the practical difference between someone who has memorised solutions and someone who can tell when the solution does not apply.</p>`,
-docs:[['Two pointers — CP-Algorithms adjacent','https://cp-algorithms.com/others/maximum_zero_submatrix.html'],['Sliding window pattern — Baeldung','https://www.baeldung.com/cs/sliding-window-algorithm']],
+docs:[['Two pointers, CP-Algorithms adjacent','https://cp-algorithms.com/others/maximum_zero_submatrix.html'],['Sliding window pattern, Baeldung','https://www.baeldung.com/cs/sliding-window-algorithm']],
 exs:[
 {title:'Longest unique substring',
 prompt:`Write <code>Windows</code> with <code>static int longestUnique(String s)</code> returning the length of the <b>longest substring with no repeated characters</b>: longestUnique("abcabcbb") == 3 ("abc"), longestUnique("") == 0. Use the sliding window with a <code>Map&lt;Character, Integer&gt;</code> of last-seen positions: advance <code>right</code> every step, jump <code>left</code> past duplicates (only when the duplicate is inside the window!), track the best width.`,

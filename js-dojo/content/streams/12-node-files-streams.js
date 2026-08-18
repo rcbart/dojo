@@ -62,7 +62,7 @@ try {
 localised and can change. The ones worth knowing: <b>ENOENT</b> no such file, <b>EACCES</b> permission
 denied, <b>EEXIST</b> already exists, <b>EISDIR</b> it is a directory, <b>ENOTEMPTY</b> directory not
 empty, <b>EMFILE</b> too many open files, which usually means you are leaking handles.</p>`,
-docs:[['Node — fs promises API','https://nodejs.org/api/fs.html#promises-api'],['Node — fs error codes','https://nodejs.org/api/errors.html#common-system-errors'],['Node — do not block the event loop','https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop']],
+docs:[['Node (fs promises API)','https://nodejs.org/api/fs.html#promises-api'],['Node (fs error codes)','https://nodejs.org/api/errors.html#common-system-errors'],['Node (do not block the event loop)','https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop']],
 exs:[
 {title:'Branch on the error code',diff:'easy',lang:'js',
 run:{call:'handleFsError',cases:[
@@ -143,7 +143,7 @@ const p = path.join(import.meta.dirname, "data", "seed.json");
 // NOT path.join("data", "seed.json"), which only works when someone
 // happens to run node from the right directory.</div>
 
-<h4>Path traversal — the vulnerability</h4>
+<h4>Path traversal: the vulnerability</h4>
 <p>If any part of a path comes from a user, they can try to escape the directory you meant. This is the
 file-system equivalent of SQL injection, and it is still one of the most commonly exploited web
 vulnerabilities.</p>
@@ -173,7 +173,7 @@ handling genuinely hostile input should also resolve links (<code>fs.realpath</c
 <p><b>Never trust a filename.</b> Prefer generating your own names (a UUID plus a validated extension)
 and storing the user's original name as metadata rather than as a path. That removes the entire class of
 problem instead of filtering it.</p>`,
-docs:[['Node — path','https://nodejs.org/api/path.html'],['OWASP — path traversal','https://owasp.org/www-community/attacks/Path_Traversal'],['Node — import.meta.dirname','https://nodejs.org/api/esm.html#importmetadirname']],
+docs:[['Node (path)','https://nodejs.org/api/path.html'],['OWASP (path traversal)','https://owasp.org/www-community/attacks/Path_Traversal'],['Node (import.meta.dirname)','https://nodejs.org/api/esm.html#importmetadirname']],
 ex:{title:'Contain a user-supplied path',diff:'hard',lang:'js',
 run:{call:'safeJoin',cases:[
  {name:'an ordinary filename is allowed',args:['/srv/uploads','photo.png'],expect:'/srv/uploads/photo.png'},
@@ -270,7 +270,7 @@ Buffer.byteLength("héllo")       // 6 - one more BYTE than characters
 <p>Streaming is more code and more ways to be wrong. For a 2KB config file, <code>readFile</code> is
 correct and clearer. Reach for a stream when the data is large, unbounded, or arriving over time: a log
 file, an upload, a database export, anything from the network.</p>`,
-docs:[['Node — stream','https://nodejs.org/api/stream.html'],['Node — backpressure guide','https://nodejs.org/en/learn/modules/backpressuring-in-streams'],['Node — Buffer','https://nodejs.org/api/buffer.html']],
+docs:[['Node (stream)','https://nodejs.org/api/stream.html'],['Node (backpressure guide)','https://nodejs.org/en/learn/modules/backpressuring-in-streams'],['Node (Buffer)','https://nodejs.org/api/buffer.html']],
 exs:[
 {title:'Stream or read whole?',diff:'medium',lang:'js',
 run:{call:'readStrategy',cases:[

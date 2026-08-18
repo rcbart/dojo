@@ -1,4 +1,4 @@
-# 4 — DestinationRule & canary releases
+# 4: DestinationRule & canary releases
 
 *The payoff module: safely shifting traffic between versions. Concepts + a hands-on canary. ~25
 min. Uses Bookinfo (which has three `reviews` versions).*
@@ -44,13 +44,13 @@ Now "v2" is a thing a VirtualService can target.
 
 ## Lab: pin, split, then canary `reviews`
 
-### Step 0 — apply the DestinationRules
+### Step 0: apply the DestinationRules
 
 ```bash
 kubectl apply -f samples/bookinfo/networking/destination-rule-all.yaml
 ```
 
-### Step 1 — pin everyone to v1 (no more random stars)
+### Step 1: pin everyone to v1 (no more random stars)
 
 ```bash
 kubectl apply -f samples/bookinfo/networking/virtual-service-all-v1.yaml
@@ -60,7 +60,7 @@ That file routes every service to its v1 subset. Refresh
 <http://localhost:8080/productpage> (keep the port-forward from Module 3 running); the reviews box
 now **always** shows the v1 look (no stars), every time. You've taken control of versioning.
 
-### Step 2 — a 50/50 canary split
+### Step 2: a 50/50 canary split
 
 Apply a VirtualService that weights `reviews` traffic between v1 and v3:
 
@@ -83,7 +83,7 @@ Refresh the page repeatedly: about **half** the loads show v3 (red stars), half 
 That's a **canary**: a controlled percentage on the new version. To roll out, you'd shift 50 → 90
 → 100; to abort, back to 0. Traffic percentage, not luck.
 
-### Step 3 — route by identity (header-based)
+### Step 3: route by identity (header-based)
 
 Send only a specific user to v2 while everyone else stays on v1:
 
@@ -144,4 +144,4 @@ kubectl apply -f samples/bookinfo/networking/virtual-service-all-v1.yaml   # bac
 
 ---
 
-**Next:** [5 — Resilience & fault injection →](./05-resilience-fault-injection.md)
+**Next:** [5: Resilience & fault injection →](./05-resilience-fault-injection.md)

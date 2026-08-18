@@ -1,4 +1,4 @@
-# Primer — Why Kubernetes? (in plain English)
+# Primer: Why Kubernetes? (in plain English)
 
 *Start here. Assumes you know what a container is (from the Docker course). ~10 min. If you finish
 thinking "I need something to babysit thousands of containers across many machines", that's
@@ -110,4 +110,4 @@ By the end you'll be a genuine practitioner, not just someone who's heard the wo
 
 ---
 
-**Next:** [Primer — The cluster, at a glance →](./primer-cluster-architecture.md)
+**Next:** [Primer: The cluster, at a glance →](./primer-cluster-architecture.md)

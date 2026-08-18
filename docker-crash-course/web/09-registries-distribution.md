@@ -1,4 +1,4 @@
-# 9 — Registries & distribution
+# 9: Registries & distribution
 
 *How images get from your machine to everyone else (and to Kubernetes). Concepts + a lab. ~20 min.
 Requires Docker + a free Docker Hub account for the push step.*
@@ -125,4 +125,4 @@ your Kubernetes rollouts and rollbacks are.
 
 ---
 
-**Next:** [10 — Debugging & production practices →](./10-debugging-production.md)
+**Next:** [10: Debugging & production practices →](./10-debugging-production.md)

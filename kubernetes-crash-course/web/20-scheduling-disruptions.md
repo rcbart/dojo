@@ -1,4 +1,4 @@
-# 6b — Scheduling & disruptions: placing pods, and surviving maintenance
+# 6b: Scheduling & disruptions: placing pods, and surviving maintenance
 
 *Where pods land, which pods die first, and how to make node maintenance boring. ~12 min read.*
 
@@ -119,4 +119,4 @@ If that's boring (pods reshuffle, dashboards stay green), this module is done it
 
 ---
 
-**Next:** [7 — Security: RBAC, ServiceAccounts & NetworkPolicies →](./07-security-rbac-netpol.md)
+**Next:** [7: Security: RBAC, ServiceAccounts & NetworkPolicies →](./07-security-rbac-netpol.md)

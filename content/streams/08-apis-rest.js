@@ -54,7 +54,7 @@ rules, and contorting it into <code>PATCH /orders/42 {"status":"cancelled"}</cod
 cancelling is not the same as setting a field. Modelling it as a sub-resource,
 <code>POST /orders/42/cancellations</code>, keeps the interface saying what actually happens. And HATEOAS, the level of REST
 almost nobody implements, is worth knowing about so you can say clearly that you have chosen not to.</p>`,
-docs:[['REST — MDN glossary','https://developer.mozilla.org/en-US/docs/Glossary/REST'],['HTTP methods — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods']],
+docs:[['REST, MDN glossary','https://developer.mozilla.org/en-US/docs/Glossary/REST'],['HTTP methods, MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods']],
 ex:{title:'Design the endpoints',lang:'http',
 prompt:`Design endpoints for a <b>portfolio</b> API (a portfolio has many <b>positions</b>). One per numbered line, format <code>VERB /path → status</code>: (1) list portfolios, (2) create a portfolio, (3) fetch portfolio <code>p1</code>, (4) replace portfolio <code>p1</code> entirely, (5) delete position <code>x9</code> inside portfolio <code>p1</code>, (6) the status for fetching a portfolio that doesn't exist.`,
 starter:`# 1)
@@ -156,7 +156,7 @@ convenient and reads everything into memory: fine for JSON, wrong for a large do
 library's. Retrying is the one people most often need and most often get wrong: retry only idempotent
 requests (GET, PUT, DELETE; never a bare POST), use exponential backoff with jitter, cap the attempts,
 and honour <code>Retry-After</code> when the server sends it.</p>`,
-docs:[['HttpClient — API docs','https://docs.oracle.com/en/java/javase/21/docs/api/java.net.http/java/net/http/HttpClient.html'],['Java HTTP Client — Baeldung','https://www.baeldung.com/java-9-http-client']],
+docs:[['HttpClient, API docs','https://docs.oracle.com/en/java/javase/21/docs/api/java.net.http/java/net/http/HttpClient.html'],['Java HTTP Client, Baeldung','https://www.baeldung.com/java-9-http-client']],
 ex:{title:'Call an API',
 prompt:`Write <code>ApiCaller</code> with <code>static String fetchUser(String id) throws Exception</code>: GET <code>https://api.dojo.dev/users/&lt;id&gt;</code> with header <code>Accept: application/json</code>; return the body on status 200, otherwise throw <code>RuntimeException</code> including the status code in the message.`,
 starter:`import java.net.URI;
@@ -250,7 +250,7 @@ set fields you never intended to expose: the <b>mass assignment</b> problem. If 
 Use <code>@JsonIgnore</code>, or better, a DTO that simply has no such field.</p>
 <p><b>And never enable default typing</b> (<code>enableDefaultTyping()</code>). Letting the payload
 declare its own Java types is a well-known remote-code-execution vector.</p>`,
-docs:[['Jackson databind — GitHub','https://github.com/FasterXML/jackson-databind'],['Jackson ObjectMapper — Baeldung','https://www.baeldung.com/jackson-object-mapper-tutorial']],
+docs:[['Jackson databind, GitHub','https://github.com/FasterXML/jackson-databind'],['Jackson ObjectMapper, Baeldung','https://www.baeldung.com/jackson-object-mapper-tutorial']],
 ex:{title:'Round-trip a record',
 prompt:`Define <code>record Position(String symbol, int quantity, double price)</code>. Write class <code>Json</code> with an ObjectMapper field, <code>Position parse(String json)</code> using <code>readValue</code>, <code>String write(Position p)</code> using <code>writeValueAsString</code>, and <code>double marketValue(String json)</code> that parses and returns quantity × price.`,
 starter:`import com.fasterxml.jackson.databind.ObjectMapper;
@@ -353,7 +353,7 @@ and cursor pagination beats offset once the data is large or changing. <b>Rate l
 via <code>RateLimit</code> headers and a <code>Retry-After</code> on 429, so clients can back off properly
 instead of hammering you. And <b>documentation generated from the code</b> (OpenAPI), because
 hand-maintained docs are wrong within a month.</p>`,
-docs:[['RFC 9457 Problem Details','https://www.rfc-editor.org/rfc/rfc9457.html'],['Idempotency — Stripe docs','https://docs.stripe.com/api/idempotent_requests']],
+docs:[['RFC 9457 Problem Details','https://www.rfc-editor.org/rfc/rfc9457.html'],['Idempotency (Stripe docs)','https://docs.stripe.com/api/idempotent_requests']],
 exs:[{title:'An error contract in Java',
 prompt:`Write <code>record ProblemDetail(String type, String title, int status, String detail)</code> and class <code>Errors</code> with two factories: <code>static ProblemDetail notFound(String resource, String id)</code> → status 404, title "Not found", detail "&lt;resource&gt; &lt;id&gt; does not exist", type "https://api.dojo.dev/errors/not-found"; and <code>static ProblemDetail validation(String field, String issue)</code> → status 422, title "Validation failed", detail "&lt;field&gt;: &lt;issue&gt;", type ".../validation".`,
 starter:`record ProblemDetail(String type, String title, int status, String detail) {}
@@ -442,7 +442,7 @@ learns at rejection can only retry and make it worse.</p>
 should not take out a corporate NAT. And prefer a token bucket to a fixed window; a fixed window lets
 a caller spend the whole quota in the last second of one window and again in the first second of the
 next, producing exactly the burst you were trying to prevent.</p>`,
-docs:[['API versioning — Postman guide','https://www.postman.com/api-platform/api-versioning/'],['RFC 6585 — 429 status','https://www.rfc-editor.org/rfc/rfc6585'],['HTTP caching & ETag — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag']],
+docs:[['API versioning (Postman guide)','https://www.postman.com/api-platform/api-versioning/'],['RFC 6585 (429 status)','https://www.rfc-editor.org/rfc/rfc6585'],['HTTP caching & ETag (MDN)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag']],
 ex:{title:'Platform design drill',lang:'http',
 prompt:`One per numbered line: (1) a URL-versioned request line listing v2 trades with <b>cursor</b> pagination (cursor <code>abc</code>, limit 50), (2) the status line a rate-limited client gets, (3) the response header telling them when to retry (60s), (4) the conditional request header a client sends to revalidate a cached ETag <code>"x1"</code>, (5) the status line when that cache is still fresh.`,
 starter:`# 1)
@@ -613,7 +613,7 @@ pipeline reporting only its last command's status.</p>
 and its own serialisation, so a failure inside it has half a dozen candidate causes. curl removes all of
 them and leaves the HTTP truth. If curl succeeds and your client does not, run both with headers visible
 and <b>diff them</b>: the difference is nearly always a header you did not know your SDK was setting.</p>`,
-docs:[['HTTP headers — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers'],['curl docs','https://curl.se/docs/manpage.html'],['Everything curl (book)','https://everything.curl.dev/']],
+docs:[['HTTP headers (MDN)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers'],['curl docs','https://curl.se/docs/manpage.html'],['Everything curl (book)','https://everything.curl.dev/']],
 ex:{title:'curl drill',lang:'shell',
 prompt:`One per numbered line: (1) GET <code>https://api.dojo.dev/me</code> with a bearer token from <code>$TOKEN</code> and <code>Accept: application/json</code>, (2) POST <code>{"name": "Ada"}</code> to <code>https://api.dojo.dev/users</code> with the right Content-Type, (3) the same GET as (1) but showing <b>response headers</b> too, (4) fetch <code>https://api.dojo.dev/report</code> saving the body to <code>report.json</code> while printing the status code, (5) which header pair the server/client use for conditional caching (name both, comma-separated).`,
 starter:`# 1)

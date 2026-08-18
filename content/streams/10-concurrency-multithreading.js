@@ -8,7 +8,7 @@ STREAMS.push({icon:'🧵',title:'Concurrency & Multithreading',blurb:'Threads, s
  └─ Thread 3  → own stack ┘</div>
 <p><b>Why use threads?</b> Two reasons. To use more than one CPU core at a time (real parallelism: a 4-core machine can run 4 threads at once), and to stay responsive (do slow I/O on one thread while another keeps the UI alive). The operating system rapidly switches threads on and off cores (a <b>context switch</b>), so even a single core can interleave many threads.</p>
 <p>The catch (and the reason the rest of this stream exists) is the shared heap. When two threads read and write the <i>same</i> object at the same time, you get <b>race conditions</b>: results that depend on unpredictable timing. Processes rarely have this problem because their memory is separate; threads have it constantly, which is why synchronization is the heart of concurrency. In Java, the JVM itself runs as one process, your program begins on the <code>main</code> thread, and you create more threads from there.</p>`,
-docs:[['Processes and threads — Oracle','https://docs.oracle.com/javase/tutorial/essential/concurrency/procthread.html'],['Thread (computing) — Wikipedia','https://en.wikipedia.org/wiki/Thread_(computing)']],
+docs:[['Processes and threads, Oracle','https://docs.oracle.com/javase/tutorial/essential/concurrency/procthread.html'],['Thread (computing), Wikipedia','https://en.wikipedia.org/wiki/Thread_(computing)']],
 ex:{title:'Process vs thread memory',
 prompt:`Write class <code>Threads</code> with two static methods. <code>String memory(String unit)</code>: <code>"process"</code>→<code>"isolated"</code>, <code>"thread"</code>→<code>"shared"</code>, else <code>"unknown"</code>. <code>boolean sharedAcrossThreads(String region)</code>: threads in one process share the <code>"heap"</code> but each has its own stack; return true only for <code>"heap"</code>.`,
 starter:`public class Threads {
@@ -91,7 +91,7 @@ code should use <code>ExecutorService</code> to decouple <i>what work exists</i>
 and the concurrent collections and synchronizers in <code>java.util.concurrent</code> rather than
 hand-rolled coordination. The rest of this stream builds up to that; this lesson is the layer underneath
 so the abstractions are not mysterious.</p>`,
-docs:[['Concurrency — dev.java','https://dev.java/learn/multithreading/'],['Thread — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html']],
+docs:[['Concurrency, dev.java','https://dev.java/learn/multithreading/'],['Thread, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html']],
 ex:{title:'Two workers, one wait',
 prompt:`Write class <code>Workers</code> with <code>static java.util.List&lt;String&gt; runBoth() throws InterruptedException</code>: create a thread-safe list (use <code>java.util.Collections.synchronizedList</code> over an ArrayList), create <b>two</b> threads from <b>Runnable lambdas</b> that each add their thread's name to the list, <code>start()</code> both, <code>join()</code> both, then return the list (it must contain 2 entries).`,
 starter:`import java.util.*;
@@ -182,7 +182,7 @@ it by reading your own class.</p>
 <p><b>Order your locks globally.</b> Deadlock needs two threads taking the same two locks in opposite
 order. A fixed acquisition order across the codebase makes it structurally impossible, and if you cannot
 state that order, that is the finding.</p>`,
-docs:[['Synchronization — Oracle','https://docs.oracle.com/javase/tutorial/essential/concurrency/sync.html'],['Java Memory Model — Baeldung','https://www.baeldung.com/java-volatile']],
+docs:[['Synchronization, Oracle','https://docs.oracle.com/javase/tutorial/essential/concurrency/sync.html'],['Java Memory Model, Baeldung','https://www.baeldung.com/java-volatile']],
 ex:{title:'Fix the racy counter',
 prompt:`Write <code>SafeCounter</code> with a private <code>int count</code>, <b>synchronized</b> methods <code>void increment()</code> and <code>int get()</code>, plus a <b>volatile boolean</b> field <code>running</code> (initially true) with method <code>void stop()</code> setting it false and <code>boolean isRunning()</code>. In a comment, state why volatile alone would not fix increment().`,
 starter:`public class SafeCounter {
@@ -210,7 +210,7 @@ solution:`public class SafeCounter {
 
     public boolean isRunning() { return running; }
 
-    // count++ is three steps (read, add, write) — not atomic.
+    // count++ is three steps (read, add, write), not atomic.
     // volatile only guarantees visibility of the latest write; two threads
     // can still both read 5 and both write 6, losing an update.
 }`}},
@@ -272,7 +272,7 @@ keeps running for them. Try-with-resources on Java 19+ handles this correctly an
 <p>Submitting a task to a pool and then <code>get()</code>-ing on a task that must run in that
 <i>same</i> pool will deadlock once the pool is saturated: the waiting task holds a thread the pending
 task needs. Keep dependent work off the pool it depends on.</p>`,
-docs:[['Executors — Oracle','https://docs.oracle.com/javase/tutorial/essential/concurrency/executors.html'],['ExecutorService — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html']],
+docs:[['Executors, Oracle','https://docs.oracle.com/javase/tutorial/essential/concurrency/executors.html'],['ExecutorService, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html']],
 ex:{title:'Pool the work',
 prompt:`Write <code>Pool</code> with <code>static int sumSquares(int n) throws Exception</code>: create a fixed pool of 4 threads, submit <b>n</b> <code>Callable</code> tasks where task i returns i*i (for i = 1..n), collect the <code>Future</code>s in a list, sum all <code>get()</code> results, <b>shutdown</b> the pool in a finally block, and return the sum.`,
 starter:`import java.util.*;
@@ -370,7 +370,7 @@ branch of the graph can keep running after you have stopped caring. Java 21's <b
 and virtual threads address exactly that, and for straightforward fan-out on a virtual thread, ordinary
 blocking calls are now both simpler and easier to debug. Reach for
 <code>CompletableFuture</code> when the composition itself is the point.</p>`,
-docs:[['CompletableFuture — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html'],['CompletableFuture guide — Baeldung','https://www.baeldung.com/java-completablefuture']],
+docs:[['CompletableFuture, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html'],['CompletableFuture guide, Baeldung','https://www.baeldung.com/java-completablefuture']],
 ex:{title:'Fan out, then combine',
 prompt:`Write <code>Async</code> with <code>static String profile(String id)</code>: start two async suppliers with <code>supplyAsync</code> (one returning <code>"user:" + id</code>, one returning <code>"roles:admin"</code>), combine them with <code>thenCombine</code> joining with <code>" | "</code>, add <code>exceptionally</code> returning <code>"profile unavailable"</code>, and return the result via <code>join()</code>.`,
 starter:`import java.util.concurrent.*;
@@ -461,7 +461,7 @@ exactly once.</p>
 <p><b>Prefer structure to primitives.</b> Most code that reaches for a latch actually wants
 <code>invokeAll</code> on an executor, or <code>CompletableFuture.allOf</code>. Reach for these when
 the higher-level tools genuinely do not fit.</p>`,
-docs:[['Concurrent collections — Oracle','https://docs.oracle.com/javase/tutorial/essential/concurrency/collections.html'],['java.util.concurrent — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/package-summary.html']],
+docs:[['Concurrent collections, Oracle','https://docs.oracle.com/javase/tutorial/essential/concurrency/collections.html'],['java.util.concurrent, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/package-summary.html']],
 ex:{title:'Thread-safe hit tracker',
 prompt:`Write <code>HitTracker</code> with an <code>AtomicLong total</code>, a <code>ConcurrentHashMap&lt;String, Long&gt; perPath</code>, method <code>void hit(String path)</code> that atomically increments both (use <code>merge</code> for the map), <code>long total()</code>, and <code>static void awaitAll(CountDownLatch latch) throws InterruptedException</code> that just awaits the latch (shows you know the primitive). No synchronized keyword anywhere.`,
 starter:`import java.util.concurrent.*;
@@ -558,7 +558,7 @@ replacement for passing context.</p>
 <p>Then <b>structured concurrency</b> completes the picture: subtasks forked in a scope are guaranteed to
 finish or be cancelled before the scope exits, so a failed fan-out cannot leave orphaned work running,
 the last piece of async that thread-per-request never handled well.</p>`,
-docs:[['Virtual threads — dev.java','https://dev.java/learn/new-features/virtual-threads/'],['JEP 444 — Virtual Threads','https://openjdk.org/jeps/444']],
+docs:[['Virtual threads, dev.java','https://dev.java/learn/new-features/virtual-threads/'],['JEP 444, Virtual Threads','https://openjdk.org/jeps/444']],
 ex:{title:'Fan out on virtual threads',
 prompt:`Write <code>VFanout</code> with <code>static java.util.List&lt;String&gt; fetchAll(java.util.List&lt;String&gt; ids) throws Exception</code>: open <code>Executors.newVirtualThreadPerTaskExecutor()</code> in a <b>try-with-resources</b>, submit one <code>Callable</code> per id returning <code>"data-" + id</code>, collect Futures, then build and return the results list via <code>get()</code>.`,
 starter:`import java.util.*;
@@ -603,7 +603,7 @@ public class VFanout {
 <li>Thread-naming and structured logging so a dump or log tells you <i>which</i> thread did what.</li>
 </ul>
 <p>The durable cure is design, not detection: minimize shared mutable state, prefer <b>immutability</b> and <b>thread confinement</b>, and guard any remaining shared state with a single, consistent locking discipline (always acquire multiple locks in the same order to prevent deadlock).</p>`,
-docs:[['jstack — Oracle','https://docs.oracle.com/en/java/javase/21/docs/specs/man/jstack.html'],['jcstress — OpenJDK','https://github.com/openjdk/jcstress'],['Java Memory Model (JLS 17.4)','https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4']],
+docs:[['jstack, Oracle','https://docs.oracle.com/en/java/javase/21/docs/specs/man/jstack.html'],['jcstress, OpenJDK','https://github.com/openjdk/jcstress'],['Java Memory Model (JLS 17.4)','https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4']],
 ex:{title:'Diagnose and pick the tool',
 prompt:`Write class <code>RaceDebug</code> with two static methods. <code>String classify(String symptom)</code>: <code>"intermittent-failure"</code>→<code>"race condition"</code>, <code>"threads-stuck-forever"</code>→<code>"deadlock"</code>, <code>"lost-updates"</code>→<code>"unsynchronized shared state"</code>, else <code>"unknown"</code>. <code>String tool(String need)</code>: <code>"inspect-thread-dump"</code>→<code>"jstack"</code>, <code>"stress-test-memory-model"</code>→<code>"jcstress"</code>, <code>"safe-counter"</code>→<code>"AtomicInteger"</code>, else <code>"unknown"</code>.`,
 starter:`public class RaceDebug {

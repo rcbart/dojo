@@ -5,7 +5,7 @@
    the rest of the runtime.
 
    Load order matters. The IIFE below merges glossary terms into KW at load, so
-   this file must be concatenated BEFORE app.js — which is why KW lives here
+   this file must be concatenated BEFORE app.js, which is why KW lives here
    rather than staying behind. */
 /* ============================== KEYWORDS ============================== */
 const TUT='https://docs.oracle.com/javase/tutorial/';
@@ -18,7 +18,7 @@ byte:['8-bit signed integer primitive (-128 to 127).',TUT+'java/nutsandbolts/dat
 case:['One branch of a switch statement or expression.',TUT+'java/nutsandbolts/switch.html'],
 catch:['Handles an exception thrown in the matching try block.',TUT+'essential/exceptions/catch.html'],
 char:['16-bit Unicode character primitive, e.g. \'A\'.',TUT+'java/nutsandbolts/datatypes.html'],
-class:['Declares a class — a blueprint bundling state (fields) and behavior (methods).',TUT+'java/javaOO/classes.html'],
+class:['Declares a class, a blueprint bundling state (fields) and behavior (methods).',TUT+'java/javaOO/classes.html'],
 continue:['Skips the rest of the current loop iteration and starts the next one.',TUT+'java/nutsandbolts/branch.html'],
 default:['Fallback branch in a switch; also declares a default method body in an interface.',TUT+'java/IandI/defaultmethods.html'],
 do:['Starts a do-while loop, which always runs its body at least once.',TUT+'java/nutsandbolts/while.html'],
@@ -27,14 +27,14 @@ else:['Branch executed when the if condition is false.',TUT+'java/nutsandbolts/i
 enum:['Declares a fixed set of named constants, each a singleton instance.',TUT+'java/javaOO/enum.html'],
 extends:['Declares inheritance: the subclass inherits members of the superclass. A class can extend only one class.',TUT+'java/IandI/subclasses.html'],
 final:['On a variable: assignable once. On a method: cannot be overridden. On a class: cannot be extended.',TUT+'java/IandI/final.html'],
-finally:['Block that always runs after try/catch — for cleanup. Prefer try-with-resources for closeables.',TUT+'essential/exceptions/finally.html'],
+finally:['Block that always runs after try/catch, for cleanup. Prefer try-with-resources for closeables.',TUT+'essential/exceptions/finally.html'],
 float:['32-bit floating point primitive; literal needs an f suffix (1.5f).',TUT+'java/nutsandbolts/datatypes.html'],
 for:['Classic counted loop, or enhanced for-each over arrays and Iterables: for (var x : list).',TUT+'java/nutsandbolts/for.html'],
 if:['Conditional branch: runs the block when the boolean expression is true.',TUT+'java/nutsandbolts/if.html'],
 implements:['Declares that a class provides the methods of an interface. A class can implement many interfaces.',TUT+'java/IandI/usinginterface.html'],
 import:['Makes a class or static member from another package usable without its full name.',TUT+'java/package/usepkgs.html'],
 instanceof:['Tests whether an object is of a given type; with pattern matching also binds it: if (o instanceof String s).','https://dev.java/learn/pattern-matching/'],
-int:['32-bit signed integer primitive — the default integer type.',TUT+'java/nutsandbolts/datatypes.html'],
+int:['32-bit signed integer primitive (the default integer type.)',TUT+'java/nutsandbolts/datatypes.html'],
 interface:['A contract of abstract methods (plus default/static methods) that classes implement. Basis of polymorphism and lambdas.',TUT+'java/IandI/createinterface.html'],
 long:['64-bit signed integer primitive; literal needs an L suffix (10_000_000_000L).',TUT+'java/nutsandbolts/datatypes.html'],
 new:['Instantiates an object: allocates it on the heap and runs the constructor.',TUT+'java/javaOO/objectcreation.html'],
@@ -55,14 +55,14 @@ transient:['Excludes a field from Java serialization.','https://docs.oracle.com/
 try:['Starts a block whose exceptions can be caught; try (resource) auto-closes AutoCloseables.',TUT+'essential/exceptions/try.html'],
 var:['Local variable type inference (Java 10+): the compiler infers the type from the initializer. Still statically typed.','https://dev.java/learn/language-basics/using-var/'],
 void:['Return type meaning the method returns nothing.',TUT+'java/javaOO/methods.html'],
-volatile:['Guarantees reads/writes of the field go to main memory — visibility across threads, not atomicity.',TUT+'essential/concurrency/atomic.html'],
+volatile:['Guarantees reads/writes of the field go to main memory, visibility across threads, not atomicity.',TUT+'essential/concurrency/atomic.html'],
 while:['Loop that runs while its condition stays true.',TUT+'java/nutsandbolts/while.html'],
 record:['Concise immutable data carrier (Java 16+): record Point(int x, int y) {} auto-generates constructor, accessors, equals, hashCode, toString.','https://dev.java/learn/records/'],
 sealed:['Restricts which classes may extend/implement this type, listed with permits (Java 17+).','https://dev.java/learn/sealed-classes/'],
 permits:['Lists the allowed subclasses of a sealed type.','https://dev.java/learn/sealed-classes/'],
 yield:['Returns a value from a switch expression block branch.','https://dev.java/learn/language-basics/switch-expression/'],
 stream:['Not a keyword but core API: a lazy pipeline of operations (filter, map, reduce) over data. See java.util.stream.','https://dev.java/learn/api/streams/'],
-Optional:['Container that may or may not hold a value — an explicit alternative to returning null.','https://dev.java/learn/api/streams/optionals/'],
+Optional:['Container that may or may not hold a value, an explicit alternative to returning null.','https://dev.java/learn/api/streams/optionals/'],
 String:['Immutable sequence of characters; the most used class in Java.',TUT+'java/data/strings.html'],
 null:['Literal meaning "no object". Dereferencing it throws NullPointerException.',TUT+'java/nutsandbolts/datatypes.html'],
 true:['Boolean literal.',TUT+'java/nutsandbolts/datatypes.html'],
@@ -74,7 +74,7 @@ function showTip(word,x,y){
   const k=KW[word]||KW[word.toLowerCase()];
   if(!k){tip.style.display='none';return}
   const link=/^https?:/.test(k[1]||'')?` <a href="${k[1]}" target="_blank" rel="noopener">Docs ↗</a>`:'';
-  tip.innerHTML=`<b>${esc(word)}</b> — ${esc(k[0])}${link}`;
+  tip.innerHTML=`<b>${esc(word)}</b>, ${esc(k[0])}${link}`;
   tip.style.display='block';
   tip.style.left=Math.min(x,innerWidth-360)+'px';
   tip.style.top=Math.min(y+14,innerHeight-120)+'px';
@@ -101,18 +101,18 @@ document.addEventListener('mouseup',e=>{
 const GLOSS_ALL=[
  {domain:'Identity & Access (IAM)',icon:'🛂',groups:[
    {h:'1 · The core distinction',terms:[
-     ['Authentication (authn)',`Proving who you are — the login step.`],
+     ['Authentication (authn)',`Proving who you are, the login step.`],
      ['Authorization (authz)',`Deciding what you may do, once you are known.`],
-     ['Identity',`The account or entity behind a request — a person or a workload.`],
+     ['Identity',`The account or entity behind a request, a person or a workload.`],
      ['Principal',`The specific "who" a request acts as; in tokens, the sub (subject) claim.`],
-     ['Subject',`Same as principal — the entity a token is about (the sub claim).`],
-     ['Credential',`The stored binding that ties an authenticator to an identifier — the record saying "this account is proven by this password hash or public key."`],
+     ['Subject',`Same as principal, the entity a token is about (the sub claim).`],
+     ['Credential',`The stored binding that ties an authenticator to an identifier, the record saying "this account is proven by this password hash or public key."`],
 ['Authenticator',`The thing you actually hold and present: a password, a passkey, a security key, a fingerprint. You possess an authenticator; the system stores a credential.`],
 ['Account',`The concrete record for a person in one particular system. One person routinely has many accounts.`],
 ['Identifier',`The string naming an account inside a system: a username, email, UUID or employee number.`],
 ['Identity proofing',`Establishing who a person is in the real world, once, before an account exists. Not authentication.`],
 ['Enrollment',`Creating the account and assigning its identifier, after proofing.`],
-['Credential binding',`Attaching an authenticator to an identifier. The step attackers target — a weak password-reset flow is a binding flaw, not an authentication one.`],
+['Credential binding',`Attaching an authenticator to an identifier. The step attackers target, a weak password-reset flow is a binding flaw, not an authentication one.`],
    ]},
    {h:'2 · The actors',terms:[
      ['Resource Owner',`The user who owns the data an app wants to reach.`],
@@ -126,29 +126,29 @@ const GLOSS_ALL=[
    ]},
    {h:'3 · Tokens & assertions',terms:[
      ['Transaction Token (Txn-Token)',`A short-lived, signed JWT carrying the identity and immutable context of one request as it passes through the internal call chain. Its aud is a trust DOMAIN rather than a single service, and it is explicitly neither an authentication credential nor an access token. Defined in an IETF draft, obtained via RFC 8693 token exchange.`],
-     ['Transaction Token Service (TTS)',`The single logical service in a trust domain permitted to mint transaction tokens. It validates the presented subject token, applies issuance policy, and decides the scope and context claims — which makes it both the control point and a dependency on the path of internal traffic.`],
-     ['Subject token',`In a token exchange, the token identifying WHO the work is being done for — usually the user's token, the one you were handed. Distinct from the actor token, which says who is asking.`],
-     ['Actor token',`In a token exchange, the token identifying WHO is asking for the new token — the calling service's own credential. Optional, and what turns an anonymous swap into a recorded delegation.`],
+     ['Transaction Token Service (TTS)',`The single logical service in a trust domain permitted to mint transaction tokens. It validates the presented subject token, applies issuance policy, and decides the scope and context claims, which makes it both the control point and a dependency on the path of internal traffic.`],
+     ['Subject token',`In a token exchange, the token identifying WHO the work is being done for, usually the user's token, the one you were handed. Distinct from the actor token, which says who is asking.`],
+     ['Actor token',`In a token exchange, the token identifying WHO is asking for the new token, the calling service's own credential. Optional, and what turns an anonymous swap into a recorded delegation.`],
      ['kid (key id)',`The key identifier in a JWS/JWT header, naming which key in the JWKS signed this token. Selecting the key by kid is what lets an issuer rotate keys without coordinating with any verifier.`],
-     ['Crypto agility',`The ability to change algorithm or key without changing the system — algorithms in a policy list rather than hardcoded, keys selected by kid, rotation as a routine drill. Measured by how long it would take you to stop using an algorithm, not by which one you use today.`],
-     ['Post-quantum cryptography (PQC)',`Algorithms designed to resist attack by a quantum computer — NIST's ML-KEM for key establishment, ML-DSA and SLH-DSA for signatures. Confidentiality is the urgent case ("harvest now, decrypt later"); short-lived signatures are far less exposed.`],
+     ['Crypto agility',`The ability to change algorithm or key without changing the system, algorithms in a policy list rather than hardcoded, keys selected by kid, rotation as a routine drill. Measured by how long it would take you to stop using an algorithm, not by which one you use today.`],
+     ['Post-quantum cryptography (PQC)',`Algorithms designed to resist attack by a quantum computer: NIST's ML-KEM for key establishment, ML-DSA and SLH-DSA for signatures. Confidentiality is the urgent case ("harvest now, decrypt later"); short-lived signatures are far less exposed.`],
      ['ML-KEM',`The NIST-standardised post-quantum key encapsulation mechanism (FIPS 203, formerly Kyber). Used in hybrid TLS key exchange today, because confidentiality is the urgent post-quantum case.`],
-     ['ML-DSA',`The NIST-standardised post-quantum signature algorithm (FIPS 204, formerly Dilithium). Relevant first to long-lived signed artefacts — certificates, firmware, credentials valid for years — rather than to five-minute access tokens.`],
+     ['ML-DSA',`The NIST-standardised post-quantum signature algorithm (FIPS 204, formerly Dilithium). Relevant first to long-lived signed artefacts, certificates, firmware, credentials valid for years, rather than to five-minute access tokens.`],
      ['SLH-DSA',`A NIST-standardised stateless hash-based signature scheme (FIPS 205, formerly SPHINCS+). Conservative and slow, with large signatures; chosen where a very long security lifetime matters more than size.`],
      ['Access token',`The key an app uses to call an API. Represents authorization, not identity.`],
      ['ID token',`OIDC proof of who the user is, issued to the client. A JWT. Not for calling APIs.`],
      ['Refresh token',`A long-lived token used to obtain new access tokens without a fresh login.`],
-     ['Assertion',`SAML signed XML statement about a user — its equivalent of an ID token.`],
-     ['JWT',`JSON Web Token — a signed, self-contained token whose claims you can read and verify.`],
+     ['Assertion',`SAML signed XML statement about a user, its equivalent of an ID token.`],
+     ['JWT',`JSON Web Token, a signed, self-contained token whose claims you can read and verify.`],
      ['Opaque token',`A random reference with no readable content; validated by calling the issuer introspection endpoint.`],
-     ['Claim',`A fact in transit, asserted by a specific issuer — worth exactly as much as your trust in that issuer for that kind of fact.`],
+     ['Claim',`A fact in transit, asserted by a specific issuer, worth exactly as much as your trust in that issuer for that kind of fact.`],
 ['Attribute',`A fact at rest, stored in a directory (department, manager, email). It becomes a claim when an issuer asserts it.`],
 ['Registered claim',`The standardized envelope claims: iss, sub, aud, exp, iat, nbf, jti. Everything else is issuer-defined.`],
 ['Attribute release',`The per-app policy deciding which stored attributes are allowed to become claims. Data minimization.`],
 ['Attribute mapping',`Translating attribute names between systems (sAMAccountName to preferred_username to username). Mismatches are the top cause of federations that log in fine but create broken user records.`],
 ['Structured token',`A self-contained token carrying its claims inside, verified offline via a signature. Fast, but public and hard to revoke. Contrast with an opaque token.`],
-['JWS',`JSON Web Signature — the signed compact form behind a normal JWT: three base64url parts, readable by anyone.`],
-['JWE',`JSON Web Encryption — the encrypted five-part compact form, for when the claims must not be readable.`],
+['JWS',`JSON Web Signature, the signed compact form behind a normal JWT: three base64url parts, readable by anyone.`],
+['JWE',`JSON Web Encryption, the encrypted five-part compact form, for when the claims must not be readable.`],
 ['PASETO',`A token format designed to remove the alg negotiation that made JWT footguns possible.`],
 ['Macaroon',`A token format whose holder can narrow its own permissions before passing it on.`],
 ['Token introspection',`Asking the issuer what an opaque token means, since it carries no readable claims (RFC 7662).`],
@@ -157,8 +157,8 @@ const GLOSS_ALL=[
      ['Sender-constrained token',`A token bound to a key only the real client has (mTLS-bound or DPoP), so a stolen copy is useless.`],
    ]},
    {h:'4 · Protocols & standards',terms:[
-     ['Workload identity federation',`Exchanging a platform-issued identity — a CI job's OIDC token, a Kubernetes service account, a mesh workload's SPIFFE identity — for short-lived credentials somewhere else, so no long-lived key is stored anywhere. The security boundary is the relying platform's trust policy, not the signature.`],
-     ['Identity broker (IdP proxy)',`A hub that is a relying party to many upstream identity providers and an identity provider to many downstream applications, turning n x m integrations into n + m. Also the one place cross-cutting policy, claim normalisation and audit can live — and a concentrated blast radius.`],
+     ['Workload identity federation',`Exchanging a platform-issued identity, a CI job's OIDC token, a Kubernetes service account, a mesh workload's SPIFFE identity, for short-lived credentials somewhere else, so no long-lived key is stored anywhere. The security boundary is the relying platform's trust policy, not the signature.`],
+     ['Identity broker (IdP proxy)',`A hub that is a relying party to many upstream identity providers and an identity provider to many downstream applications, turning n x m integrations into n + m. Also the one place cross-cutting policy, claim normalisation and audit can live, and a concentrated blast radius.`],
      ['Authorization Server Metadata',`The document at /.well-known/oauth-authorization-server (RFC 8414) or /.well-known/openid-configuration listing an authorization server's endpoints, supported algorithms and jwks_uri. Its issuer value must match, character for character, the issuer it was resolved from.`],
      ['Resource indicator',`The resource parameter (RFC 8707) naming the API a token is intended for, so the authorization server issues a token whose aud covers that API only. Worthless unless each resource server validates aud.`],
      ['OAuth 2.0',`The delegated authorization framework: lets an app act for a user without the user password.`],
@@ -171,13 +171,13 @@ const GLOSS_ALL=[
    ]},
    {h:'5 · Flows / grant types',terms:[
      ['Authorization Code flow',`The main flow for apps acting for a user: get a short code via the browser, then swap it for tokens on the back channel.`],
-     ['PKCE',`Proof Key for Code Exchange — protects the code flow for public clients so a stolen code cannot be redeemed.`],
+     ['PKCE',`Proof Key for Code Exchange, protects the code flow for public clients so a stolen code cannot be redeemed.`],
      ['Client Credentials flow',`Machine-to-machine flow with no user: the service authenticates as itself to get a token.`],
      ['Device flow',`For input-limited devices such as TVs and CLIs: the user approves on a phone using a code.`],
      ['Token Exchange',`Swapping one token for another, for example to call a downstream service on behalf of a user.`],
-     ['CIBA',`Client-Initiated Backchannel Authentication — the user approves on a separate device, no browser redirect.`],
+     ['CIBA',`Client-Initiated Backchannel Authentication, the user approves on a separate device, no browser redirect.`],
      ['Implicit flow',`A legacy flow that returned tokens directly in the browser. Deprecated; use code plus PKCE.`],
-     ['ROPC',`Resource Owner Password Credentials — the app collects the user password directly. Deprecated.`],
+     ['ROPC',`Resource Owner Password Credentials, the app collects the user password directly. Deprecated.`],
    ]},
    {h:'6 · Endpoints',terms:[
      ['/authorize',`Where a login or consent flow starts (front channel, in the browser).`],
@@ -191,20 +191,20 @@ const GLOSS_ALL=[
    {h:'7 · Core concepts',terms:[
      ['Trust domain',`A group of workloads sharing one set of security controls and policies, invoked only through published interfaces. The unit a transaction token is scoped to, and the boundary at which external authorization is exchanged for internal context.`],
      ['Call chain',`Every invocation across every workload caused by one incoming request. The thing a transaction token travels along, and the thing a single forwarded access token would over-authorise.`],
-     ['Workload',`A running instance of software executing for a specific purpose — a container, a service, a managed database. The non-human actor in service-to-service authorization.`],
-     ['Same-origin policy',`The browser rule that script on one origin (scheme + host + port) cannot read responses from another. It does not stop the request being sent or cookies being attached — which is the gap CSRF lives in.`],
+     ['Workload',`A running instance of software executing for a specific purpose, a container, a service, a managed database. The non-human actor in service-to-service authorization.`],
+     ['Same-origin policy',`The browser rule that script on one origin (scheme + host + port) cannot read responses from another. It does not stop the request being sent or cookies being attached, which is the gap CSRF lives in.`],
      ['CORS (Cross-Origin Resource Sharing)',`Server opt-in, enforced by browsers, that lets script on another origin READ a response. It governs reading, not sending, and not whether cookies ride along (that is SameSite). Because only browsers enforce it, it is never a substitute for authorization.`],
      ['Preflight request',`The OPTIONS request a browser sends before a cross-origin call that carries an Authorization header, a custom header or an unusual content type, asking the server whether the real request is permitted.`],
-     ['SameSite',`The cookie attribute deciding whether a cookie is attached to requests originating from another site — Strict, Lax or None (which requires Secure). The primary structural defence against CSRF.`],
+     ['SameSite',`The cookie attribute deciding whether a cookie is attached to requests originating from another site: Strict, Lax or None (which requires Secure). The primary structural defence against CSRF.`],
      ['Cross-device flow',`Any flow where the device gaining access is not the device that authenticates: the device grant, QR-code login, CIBA. Convenient where there is no keyboard or browser, and structurally weak because consent is given without context.`],
-     ['SSO',`Single Sign-On — a user experience, not a protocol: one login event, many apps. Achievable by a shared session cookie within one domain, or by federation across boundaries.`],
+     ['SSO',`Single Sign-On, a user experience, not a protocol: one login event, many apps. Achievable by a shared session cookie within one domain, or by federation across boundaries.`],
      ['Federation',`A trust architecture: an app stops authenticating users itself and accepts signed statements from an authority it trusts, usually across an organizational boundary. Delivers SSO as a side effect, but is worth doing for one app.`],
 ['Single Logout (SLO)',`Ending every session created by an SSO login. Unreliable in practice because one login event really created many independent app sessions.`],
      ['Trust',`A relying party accepting tokens or assertions signed by an authority it is configured to rely on.`],
 ['Trust anchor',`Where the chain of verification stops: a key or certificate accepted as authoritative by configuration rather than by proof. A JWKS you pinned, an IdP certificate in SAML metadata, a root CA in your truststore. Never let a token choose its own anchor.`],
      ['Consent',`The user explicitly approving what an app may access.`],
      ['Delegated authorization',`The core idea of OAuth: you let an app do a limited set of things for you without sharing your password, and you can revoke it. Answers "may this app do this for me?"`],
-['Delegated authentication',`Outsourcing the act of verifying a credential. Two very different styles: credential forwarding (LDAP bind, RADIUS, ROPC — your app holds the password) and redirect/federation (the user authenticates at the IdP and your app never sees a credential).`],
+['Delegated authentication',`Outsourcing the act of verifying a credential. Two very different styles: credential forwarding (LDAP bind, RADIUS, ROPC, your app holds the password) and redirect/federation (the user authenticates at the IdP and your app never sees a credential).`],
 ['Credential forwarding',`Delegated authentication where the app collects the password and relays it to a backend to check. Puts the app inside the credential blast radius, and cannot support MFA, passkeys or SSO.`],
 ['LDAP bind',`Verifying a password by attempting to bind to the directory as that user. The classic credential-forwarding pattern.`],
 ['On-behalf-of (OBO)',`One service calling another for a user, with a token audienced for the next hop that still names the user as subject and records who is acting.`],
@@ -212,16 +212,16 @@ const GLOSS_ALL=[
 ['may_act',`A claim naming who is permitted to act for this subject. Must fail closed: an absent may_act never means "anyone may act."`],
 ['Effective subject',`Whose data is being viewed and whose permissions apply, as distinct from the authenticated subject who actually logged in. Keeping the two separate is what makes support "act as user" auditable.`],
 ['Policy Decision Point (PDP)',`Where an access decision is computed from identity, resource, action and context.`],
-['Policy Enforcement Point (PEP)',`Where the decision is applied — a gateway, sidecar or middleware that intercepts the request and obeys the verdict.`],
+['Policy Enforcement Point (PEP)',`Where the decision is applied, a gateway, sidecar or middleware that intercepts the request and obeys the verdict.`],
 ['Fail closed',`Deny when you cannot decide: unreachable policy engine, unverifiable signature, unparseable claim. Failing open is what an attacker induces by overloading you.`],
-['cnf (confirmation claim)',`Records which key a sender-constrained token is bound to — jkt for a DPoP JWK thumbprint, x5t#S256 for an mTLS certificate. Comparing it to the presented key is what makes the token non-bearer.`],
+['cnf (confirmation claim)',`Records which key a sender-constrained token is bound to, jkt for a DPoP JWK thumbprint, x5t#S256 for an mTLS certificate. Comparing it to the presented key is what makes the token non-bearer.`],
 ['DPoP proof',`A short-lived JWT sent alongside the token on every request, carrying htm, htu, iat, jti and ath, signed with the client's private key.`],
 ['BFF (backend-for-frontend)',`A server-side component owned by the frontend that holds OAuth tokens, so the browser only ever gets an HttpOnly session cookie.`],
-['Capability URL',`A URL whose unguessable path or query IS the credential — password resets, share links, presigned downloads.`],
+['Capability URL',`A URL whose unguessable path or query IS the credential, password resets, share links, presigned downloads.`],
 ['IDOR / BOLA',`Insecure direct object reference: the role check passes but nobody verified the record belongs to the caller. Top of the OWASP API Security Top 10.`],
 ['Effective permissions',`The flattened union of everything a person can do across all groups, nested and direct. The number an access review actually needs.`],
 ['Deny-overrides',`A policy-combining algorithm where any deny wins, so a prohibition cannot be defeated by adding a permit elsewhere. The safe default.`],
-['Discoverable credential',`A WebAuthn credential stored on the authenticator itself, so it knows which accounts it holds — what makes usernameless login possible.`],
+['Discoverable credential',`A WebAuthn credential stored on the authenticator itself, so it knows which accounts it holds, what makes usernameless login possible.`],
 ['User verification (UV)',`The WebAuthn flag meaning the authenticator checked a PIN or biometric locally. Distinct from user presence (UP), which only means someone touched it.`],
 ['Phishing-resistant MFA',`A method where the authenticator itself checks who is asking, because the origin is part of the cryptographic operation: passkeys, security keys, smart cards.`],
 ['Number matching',`Requiring the user to type digits shown on the login screen into the push prompt, defeating blind approval and MFA fatigue.`],
@@ -230,22 +230,22 @@ const GLOSS_ALL=[
 ['Relation tuple',`Zanzibar's unit of authorization data: subject, relation, object. Permissions are derived by traversal, not stored.`],
 ['Zookie',`A consistency token returned on write and presented with a later check, meaning "evaluate against a snapshot at least this recent".`],
 ['New enemy problem',`A stale replica applies a later write without an earlier one, so a removed user sees newly added content. Each write was correct; the order was lost.`],
-['CAE',`Continuous Access Evaluation — the issuer pushes an event when access changes, so a long-lived token can be rejected in seconds instead of at expiry.`],
-['Security Event Token (SET)',`A JWT whose payload is an event rather than an identity (RFC 8417). Verify it as rigorously as a token — it changes access.`],
+['CAE',`Continuous Access Evaluation, the issuer pushes an event when access changes, so a long-lived token can be rejected in seconds instead of at expiry.`],
+['Security Event Token (SET)',`A JWT whose payload is an event rather than an identity (RFC 8417). Verify it as rigorously as a token, it changes access.`],
 ['OpenID Federation',`Trust proven on demand by a signed chain of entity statements up to a trust anchor, replacing pairwise registration in large ecosystems.`],
 ['Entity statement',`A signed statement a federation participant publishes about itself, and that its authority publishes about it. Chains of these are resolved to an anchor.`],
 ['Metadata policy',`Constraints an authority places on what a subordinate may declare about itself. Composes downward and can only narrow.`],
 ['OID4VCI / OID4VP',`OpenID protocols for issuing a verifiable credential into a wallet, and for a verifier requesting a presentation from it.`],
 ['Presentation definition',`A verifier's machine-readable description of what it needs. The wallet chooses which credential satisfies it and which claims to disclose.`],
-['mDL',`Mobile driving licence (ISO/IEC 18013-5) — a CBOR credential format designed to work offline over NFC or Bluetooth.`],
+['mDL',`Mobile driving licence (ISO/IEC 18013-5), a CBOR credential format designed to work offline over NFC or Bluetooth.`],
 ['Non-human identity (NHI)',`Service accounts, workloads, CI runners, bots and agents. They outnumber humans in most estates and inherit none of the joiner-mover-leaver lifecycle.`],
 ['Agent identity',`An autonomous caller acting for a user: the subject stays the user, the agent is recorded as the acting party, and authority is granted in advance and bounded.`],
-     ['Impersonation',`When a service simply acts as the user with no distinction — contrast with delegation.`],
+     ['Impersonation',`When a service simply acts as the user with no distinction, contrast with delegation.`],
      ['Least privilege',`Granting only the access truly needed, nothing more.`],
-     ['MFA',`Multi-factor authentication — requiring two or more independent factors.`],
+     ['MFA',`Multi-factor authentication, requiring two or more independent factors.`],
      ['Step-up authentication',`Asking for stronger proof only when an action is sensitive.`],
-     ['Public client',`An app that cannot keep a secret, such as a SPA or mobile app — must use PKCE.`],
-     ['Confidential client',`An app that can keep a secret, such as a server — authenticates to the token endpoint.`],
+     ['Public client',`An app that cannot keep a secret, such as a SPA or mobile app, must use PKCE.`],
+     ['Confidential client',`An app that can keep a secret, such as a server, authenticates to the token endpoint.`],
      ['Front channel',`Communication that passes through the user browser (redirects).`],
      ['Back channel',`Direct server-to-server communication the browser never sees.`],
      ['audience (aud)',`The claim naming who a token is for; a resource server must check it.`],
@@ -255,14 +255,14 @@ const GLOSS_ALL=[
      ['Session',`Server- or cookie-tracked state that remembers a logged-in user between requests.`],
    ]},
    {h:'8 · Threats & defenses',terms:[
-     ['Certificate pinning',`Requiring a presented chain to contain a specific pre-configured public key rather than accepting any certificate from any trusted CA. Pin the SubjectPublicKeyInfo hash, prefer an intermediate over the leaf, always hold a backup pin — a failed pin denies service in a way no server-side change can fix.`],
+     ['Certificate pinning',`Requiring a presented chain to contain a specific pre-configured public key rather than accepting any certificate from any trusted CA. Pin the SubjectPublicKeyInfo hash, prefer an intermediate over the leaf, always hold a backup pin, a failed pin denies service in a way no server-side change can fix.`],
      ['Subject collision',`Two upstream identity providers issuing the same subject identifier for different people. Only the (issuer, subject) pair is unique, so a broker or application keying on the raw subject alone will eventually merge two unrelated accounts.`],
      ['IdP mix-up',`An attack in which a client is induced to use one identity provider's endpoints while believing it is talking to another, typically by supplying attacker-controlled metadata. Defended by exact issuer comparison and the iss response parameter (RFC 9207).`],
-     ['Algorithm confusion',`Forging a token by changing its alg — most classically re-signing an RS256 token as HS256 using the issuer's public key as the HMAC secret. Defended by validating alg against your own policy list rather than dispatching on the header.`],
+     ['Algorithm confusion',`Forging a token by changing its alg, most classically re-signing an RS256 token as HS256 using the issuer's public key as the HMAC secret. Defended by validating alg against your own policy list rather than dispatching on the header.`],
      ['Consent phishing (illicit grant)',`Obtaining access by persuading a user to approve a genuine consent screen for an attacker's request, rather than by stealing a credential. Nothing is spoofed, MFA is satisfied honestly, and phishing-resistant authentication does not prevent it.`],
      ['SSRF',`Server-Side Request Forgery: making a server issue HTTP requests of the attacker's choosing. In identity systems it is a common route to internal metadata endpoints and to tokens the server holds.`],
      ['Device-code phishing',`Cross-device consent phishing: the attacker starts a device-grant flow and sends the resulting user_code to the victim, who authenticates at the real provider and approves the attacker's session.`],
-     ['CSRF',`Cross-Site Request Forgery — a malicious page makes your browser send an unintended authenticated request. Defended with the state parameter and anti-CSRF tokens.`],
+     ['CSRF',`Cross-Site Request Forgery, a malicious page makes your browser send an unintended authenticated request. Defended with the state parameter and anti-CSRF tokens.`],
      ['Replay attack',`Re-sending a captured token or message to impersonate someone. Defended with short expiries, nonces, and sender-constrained tokens.`],
      ['Token theft',`Stealing a bearer token to reuse it. Defended with short lifetimes, secure storage, and proof-of-possession.`],
      ['Phishing-resistant authentication',`Login methods that cannot be phished because the secret never leaves the device and is bound to the real site origin (passkeys and WebAuthn).`],
@@ -271,20 +271,20 @@ const GLOSS_ALL=[
    {h:'9 · Governance & lifecycle',terms:[
      ['Provisioning',`Creating and configuring user accounts and their access, often automated via SCIM.`],
      ['Deprovisioning',`Removing access when someone leaves or changes roles.`],
-     ['JML',`Joiner, Mover, Leaver — the employee identity lifecycle.`],
-     ['JIT provisioning',`Just-in-time — creating the account automatically on first successful login.`],
-     ['RBAC',`Role-Based Access Control — permissions granted through roles.`],
-     ['ABAC',`Attribute-Based Access Control — decisions from attributes and policy rules.`],
-     ['IGA',`Identity Governance and Administration — access requests, reviews, and certification.`],
-     ['PAM',`Privileged Access Management — securing and monitoring high-power accounts.`],
+     ['JML',`Joiner, Mover, Leaver, the employee identity lifecycle.`],
+     ['JIT provisioning',`Just-in-time, creating the account automatically on first successful login.`],
+     ['RBAC',`Role-Based Access Control, permissions granted through roles.`],
+     ['ABAC',`Attribute-Based Access Control, decisions from attributes and policy rules.`],
+     ['IGA',`Identity Governance and Administration, access requests, reviews, and certification.`],
+     ['PAM',`Privileged Access Management, securing and monitoring high-power accounts.`],
    ]},
  ]},
  {domain:'Service-to-Service & Zero Trust',icon:'🔗',groups:[
    {h:'Machine identity',terms:[
      ['SPIFFE',`A standard for giving workloads verifiable identities (SPIFFE IDs).`],
      ['SPIRE',`The reference implementation that attests workloads and issues SVIDs.`],
-     ['SVID',`SPIFFE Verifiable Identity Document — the X.509 cert or JWT a workload uses to prove who it is.`],
-     ['mTLS',`Mutual TLS — both client and server present certificates, so each proves its identity.`],
+     ['SVID',`SPIFFE Verifiable Identity Document, the X.509 cert or JWT a workload uses to prove who it is.`],
+     ['mTLS',`Mutual TLS, both client and server present certificates, so each proves its identity.`],
      ['Workload identity',`A non-human identity for a service or job, used instead of shared secrets.`],
      ['Attestation',`Proving what a workload is, from node or process properties, before issuing it an identity.`],
      ['Zero trust',`Never trust by network location; verify identity and authorize every request.`],
@@ -295,9 +295,9 @@ const GLOSS_ALL=[
      ['X.509',`The standard format for a public-key certificate binding a key to an identity.`],
      ['Certificate Authority (CA)',`A trusted issuer that signs certificates.`],
      ['Chain of trust',`A certificate is trusted because it chains up to a root CA you already trust.`],
-     ['CSR',`Certificate Signing Request — what you send a CA to get a certificate issued.`],
-     ['CRL',`Certificate Revocation List — a published list of revoked certificates.`],
-     ['OCSP',`Online Certificate Status Protocol — checks a single certificate revocation status in real time.`],
+     ['CSR',`Certificate Signing Request, what you send a CA to get a certificate issued.`],
+     ['CRL',`Certificate Revocation List, a published list of revoked certificates.`],
+     ['OCSP',`Online Certificate Status Protocol, checks a single certificate revocation status in real time.`],
      ['ACME',`The protocol behind automated certificate issuance, such as Let us Encrypt.`],
    ]},
  ]},
@@ -368,7 +368,7 @@ const GLOSS_ALL=[
      ['Header',`A key-value line carrying metadata on a request or response.`],
      ['Idempotency',`An operation that has the same effect whether done once or many times (safe to retry).`],
      ['Statelessness',`Each request stands alone; the server keeps no per-request memory of the client.`],
-     ['CORS',`Cross-Origin Resource Sharing: server opt-in, enforced by browsers, that lets script on another origin read a response. It governs reading the response, not sending the request — and it is not authorization, because only browsers enforce it.`],
+     ['CORS',`Cross-Origin Resource Sharing: server opt-in, enforced by browsers, that lets script on another origin read a response. It governs reading the response, not sending the request, and it is not authorization, because only browsers enforce it.`],
    ]},
    {h:'API design',terms:[
      ['REST',`An architectural style using HTTP verbs on resource URLs.`],
@@ -430,15 +430,15 @@ const GLOSS_ALL=[
  ]},
  {domain:'DevOps & Delivery',icon:'🚀',groups:[
    {h:'Reading production: the command line',terms:[
-     ['stdin / stdout / stderr',`The three streams every filter has: input, results, and a separate channel for diagnostics — separate so that warnings never contaminate the data flowing down a pipe.`],
+     ['stdin / stdout / stderr',`The three streams every filter has: input, results, and a separate channel for diagnostics, separate so that warnings never contaminate the data flowing down a pipe.`],
      ['Pipeline',`Two or more filters joined by |, running concurrently, with one program's stdout feeding the next one's stdin. Data streams through as it is produced, so file size stops being a memory limit.`],
-     ['Exit code',`The status a program returns: 0 for success, non-zero for failure. grep returns 1 for "ran fine, matched nothing" — which is why an empty result aborts a script running under set -e.`],
+     ['Exit code',`The status a program returns: 0 for success, non-zero for failure. grep returns 1 for "ran fine, matched nothing", which is why an empty result aborts a script running under set -e.`],
      ['SIGPIPE',`The signal delivered to a process that writes to a pipe whose reader has closed. It is why "grep pattern huge.log | head -5" returns instantly instead of reading the whole file.`],
      ['pipefail',`The shell option (set -o pipefail) that makes a pipeline fail if any stage failed. Without it a pipeline reports only its last command's status, so a broken first stage exits 0 and produces nothing.`],
-     ['Greedy matching',`The default behaviour of .* — match as much as possible. It is why s/.*=// deletes through the LAST delimiter on the line; the POSIX fix is a negated class such as [^=]*=.`],
+     ['Greedy matching',`The default behaviour of .*, match as much as possible. It is why s/.*=// deletes through the LAST delimiter on the line; the POSIX fix is a negated class such as [^=]*=.`],
      ['Associative array',`awk's string-keyed hash map. It turns group-by into one pass with memory proportional to the number of distinct keys, which is what makes awk, rather than grep or sed, the tool that aggregates.`],
      ['Percentile (p99)',`The value below which that share of observations fall. A mean describes the typical request and hides the tail; a p99 that moves tenfold while the median holds steady is the signature of a slow dependency on a small fraction of calls.`],
-     ['Nearest rank',`The simplest percentile definition: sort the values and take position ceil(p x n). Requires a numeric sort — a text sort ranks "99" above "1075" and quietly returns the wrong tail.`]
+     ['Nearest rank',`The simplest percentile definition: sort the values and take position ceil(p x n). Requires a numeric sort, a text sort ranks "99" above "1075" and quietly returns the wrong tail.`]
    ]},
    {h:'Pipeline & packaging',terms:[
      ['CI',`Continuous Integration: automatically build and test every change.`],
@@ -485,8 +485,8 @@ const GLOSS_ALL=[
    {h:'1 \u00b7 Values and types',terms:[
      ['Primitive',`One of the seven immutable single values: number, string, boolean, undefined, null, bigint, symbol. Everything else is an object.`],
      ['Coercion',`Automatic conversion between types. + concatenates if either side is a string; every other arithmetic operator converts to number.`],
-     ['Truthy / falsy',`Exactly eight values are falsy: false, 0, -0, 0n, "", null, undefined and NaN. Everything else — including "0", [] and {} — is truthy.`],
-     ['NaN',`"Not a number" — the failure value of a numeric operation. The only value not equal to itself; test with Number.isNaN.`],
+     ['Truthy / falsy',`Exactly eight values are falsy: false, 0, -0, 0n, "", null, undefined and NaN. Everything else, including "0", [] and {}, is truthy.`],
+     ['NaN',`"Not a number", the failure value of a numeric operation. The only value not equal to itself; test with Number.isNaN.`],
      ['Nullish coalescing (??)',`Falls back only on null and undefined, unlike || which falls back on any falsy value including 0 and "".`],
      ['Optional chaining (?.)',`Short-circuits to undefined instead of throwing when a link in a property path is null or undefined.`]]},
    {h:'2 \u00b7 Scope and functions',terms:[
@@ -498,7 +498,7 @@ const GLOSS_ALL=[
      ['Pure function',`Same input gives same output, and it touches nothing outside itself. Needs no mocks to test.`]]},
    {h:'3 \u00b7 Objects and prototypes',terms:[
      ['Prototype chain',`Property lookup follows a hidden link from object to object until it reaches null. Reading searches upward; writing always lands on the object itself.`],
-     ['Structural typing',`If the shape fits, it fits — nothing declares that it implements an interface. How TypeScript compares types.`],
+     ['Structural typing',`If the shape fits, it fits, nothing declares that it implements an interface. How TypeScript compares types.`],
      ['Shallow copy',`Spread and Object.assign copy only top-level properties; nested objects remain shared references. structuredClone copies deeply.`],
      ['Prototype pollution',`Merging untrusted data can set __proto__ and thereby add a property to every object in the program. Use Object.create(null) or a Map for untrusted keys.`],
      ['Iterable protocol',`An object with a [Symbol.iterator] method works with for...of, spread and destructuring.`]]},
@@ -519,10 +519,10 @@ const GLOSS_ALL=[
      ['Backpressure',`A slow writer signalling a fast reader to pause, so unwritten data does not pile up in memory. pipeline handles it for you.`],
      ['Event loop lag',`The gap between when a timer should have fired and when it did. The single most useful health metric a Node service can emit.`]]},
    {h:'6 \u00b7 Modules, tooling and types',terms:[
-     ['ESM',`ES modules: import/export, statically resolved before execution — which is what makes tree-shaking possible.`],
+     ['ESM',`ES modules: import/export, statically resolved before execution, which is what makes tree-shaking possible.`],
      ['CommonJS',`Node\u2019s original module system: require/module.exports, resolved dynamically at the moment of the call.`],
      ['Tree-shaking',`Dropping unused exports from a bundle. Only possible because ESM\u2019s dependency graph is known without running the code.`],
-     ['Semver',`MAJOR.MINOR.PATCH. ^ allows minor and patch but never crosses a major — except below 1.0, where it treats the minor as breaking.`],
+     ['Semver',`MAJOR.MINOR.PATCH. ^ allows minor and patch but never crosses a major, except below 1.0, where it treats the minor as breaking.`],
      ['Lockfile',`Records the exact version of every package in the tree. npm ci installs from it; npm install rewrites it.`],
      ['Type erasure',`TypeScript annotations are removed before the code runs, so there are no runtime type checks and every boundary still needs validation.`],
      ['Source map',`A file mapping bundled, minified positions back to your original source, so a stack trace names real files and variables.`]]},
@@ -544,7 +544,7 @@ const GLOSS_ALL=[
 /* Per-course glossary. A course sets DOJO_GLOSS_DOMAINS in its config to name the
    domains it actually teaches; without it, every domain is shown (DevDojo's case).
    This is why IdentityDojo does not list Java collections and JSDojo does not list
-   Kerberos — one shared vocabulary file, filtered per course. */
+   Kerberos, one shared vocabulary file, filtered per course. */
 const GLOSS=(typeof DOJO_GLOSS_DOMAINS!=="undefined"&&Array.isArray(DOJO_GLOSS_DOMAINS))
   ? GLOSS_ALL.filter(function(d){return DOJO_GLOSS_DOMAINS.indexOf(d.domain)>=0;})
   : GLOSS_ALL;
@@ -568,8 +568,8 @@ function renderGlossary(){
   const jump=GLOSS.map((d,i)=>`<a class="glossJump" href="javascript:void(0)" onclick="glossJumpTo(${i})">${d.icon} ${esc(d.domain)} <span class="glossJumpN">${termCount(d)}</span></a>`).join('');
   const body=GLOSS.map((d,i)=>`<details class="glossDom" id="gd${i}" open><summary class="glossSum">${d.icon} ${esc(d.domain)}<span class="glossDomN">${termCount(d)} terms</span></summary>${d.groups.map(g=>`<div class="glossGrp">${esc(g.h)}</div><dl class="glossList">${g.terms.map(t=>`<div class="glossItem"><dt>${esc(t[0])}</dt><dd>${esc(t[1])}</dd></div>`).join('')}</dl>`).join('')}</details>`).join('');
   m.innerHTML=`<div class="home glossary">
-  <h1>📖 Glossary</h1>
-  <p>${total} key terms across ${DOJO_NAME}, grouped by domain. In any lesson, <b>select or double-click a highlighted term</b> to see its definition inline — this page is the full reference. Use the filter to search, or the chips to jump to a domain.</p>
+  <h1 class="pageTitle">${ico('📖')} Glossary</h1>
+  <p>${total} key terms across ${DOJO_NAME}, grouped by domain. In any lesson, <b>select or double-click a highlighted term</b> to see its definition inline, this page is the full reference. Use the filter to search, or the chips to jump to a domain.</p>
   <div class="glossToolbar">
     <input id="glossSearch" class="glossSearch" placeholder="Filter ${total} terms…" oninput="filterGloss(this.value)" aria-label="Filter glossary terms">
     <button class="glossBtn" onclick="glossToggleAll(true)">Expand all</button>

@@ -1,4 +1,4 @@
-# 07 — Dynamic config with xDS
+# 07: Dynamic config with xDS
 
 *The idea that makes Envoy a platform, not just a proxy. Concepts + a hot-reload lab. ~25 min.
 Requires Docker.*
@@ -123,4 +123,4 @@ identical.
 
 ---
 
-**Next:** [08 — Envoy on Kubernetes →](./08-envoy-on-kubernetes.md)
+**Next:** [08: Envoy on Kubernetes →](./08-envoy-on-kubernetes.md)

@@ -20,7 +20,7 @@
   {
    "q": "What is a 'cluster'?",
    "options": [
-    "A group of nodes managed together by Kubernetes — control plane plus worker nodes",
+    "A group of nodes managed together by Kubernetes, control plane plus worker nodes",
     "A single powerful server",
     "A container image",
     "A network port"
@@ -37,13 +37,13 @@
   {
    "q": "What is a Pod?",
    "options": [
-    "The smallest thing Kubernetes runs — a wrapper around one or a few containers; roughly one running instance of your app",
+    "The smallest thing Kubernetes runs, a wrapper around one or a few containers; roughly one running instance of your app",
     "A physical machine",
     "A storage disk",
     "A cluster of nodes"
    ],
    "answer": 0,
-   "why": "You don't run containers directly in Kubernetes — you run Pods, which wrap the container(s) and give them an identity and networking.",
+   "why": "You don't run containers directly in Kubernetes, you run Pods, which wrap the container(s) and give them an identity and networking.",
    "whyWrong": [
     "",
     "That's a node; a pod is the small unit of work scheduled onto a node.",
@@ -60,10 +60,10 @@
     "You declare variables before using them"
    ],
    "answer": 0,
-   "why": "You state intent ('5 healthy replicas') and controllers continuously reconcile the cluster to match — the defining idea of Kubernetes.",
+   "why": "You state intent ('5 healthy replicas') and controllers continuously reconcile the cluster to match, the defining idea of Kubernetes.",
    "whyWrong": [
     "",
-    "Step-by-step commands are the imperative style — the opposite of declarative.",
+    "Step-by-step commands are the imperative style, the opposite of declarative.",
     "You write plain YAML describing objects, not code in a programming language.",
     "That's variable declaration in programming; here it means declaring desired cluster state."
    ]
@@ -90,7 +90,7 @@
   {
    "q": "In 'kubectl get pods', what does READY 0/1 with a rising RESTARTS count tell you?",
    "options": [
-    "The container keeps crashing — a crash loop; check logs --previous",
+    "The container keeps crashing, a crash loop; check logs --previous",
     "The pod is healthy and serving",
     "The image finished pulling",
     "The node is out of disk"
@@ -107,24 +107,24 @@
   {
    "q": "A Service's 'kubectl get endpoints' shows <none>. What does that mean?",
    "options": [
-    "The Service matches no pods — usually a selector/label mismatch; traffic has nowhere to go",
+    "The Service matches no pods, usually a selector/label mismatch; traffic has nowhere to go",
     "The Service is working perfectly",
     "The cluster is out of memory",
     "DNS is disabled"
    ],
    "answer": 0,
-   "why": "Empty endpoints mean the selector matched no (ready) pods. Compare the Service's selector to the pods' labels — the #1 Service bug.",
+   "why": "Empty endpoints mean the selector matched no (ready) pods. Compare the Service's selector to the pods' labels, the #1 Service bug.",
    "whyWrong": [
     "",
     "A working Service lists pod IPs in its endpoints; <none> means nothing is behind it.",
     "Memory pressure affects pods and nodes; endpoints only reflect selector/label matching.",
-    "DNS is separate — even with DNS fine, <none> endpoints means no matching ready pods."
+    "DNS is separate, even with DNS fine, <none> endpoints means no matching ready pods."
    ]
   },
   {
    "q": "Where in 'kubectl describe pod' is the most useful debugging information?",
    "options": [
-    "The Events section at the bottom — Warning lines name the cause",
+    "The Events section at the bottom: Warning lines name the cause",
     "The Labels section",
     "The IP address field",
     "The Age column"
@@ -135,7 +135,7 @@
     "",
     "Labels tell you how the pod is selected, not why it's failing.",
     "The IP rarely explains a failure; Events name the actual error.",
-    "Age just says how old the pod is — Events tell you what went wrong."
+    "Age just says how old the pod is: Events tell you what went wrong."
    ]
   },
   {
@@ -150,7 +150,7 @@
    "why": "kubectl top (and HPAs) read from the metrics-server. If it's missing, top errors and HPAs show <unknown>.",
    "whyWrong": [
     "",
-    "Pod health doesn't matter — the error means the Metrics API itself has no backend.",
+    "Pod health doesn't matter, the error means the Metrics API itself has no backend.",
     "An RBAC denial would say Forbidden, not that the API is unavailable.",
     "A NotReady node doesn't remove the Metrics API; a missing metrics-server does."
    ]
@@ -158,7 +158,7 @@
   {
    "q": "A PVC shows STATUS: Pending. What's wrong?",
    "options": [
-    "No PersistentVolume to bind to / no default StorageClass to provision one — and pods using it will also stay Pending",
+    "No PersistentVolume to bind to / no default StorageClass to provision one, and pods using it will also stay Pending",
     "The volume is full",
     "The pod crashed",
     "The image is missing"
@@ -186,7 +186,7 @@
    "why": "kind = Kubernetes IN Docker. It runs the control plane and workers as Docker containers so you get a full cluster on your laptop.",
    "whyWrong": [
     "",
-    "kind is local-only — its nodes are Docker containers on your machine, not cloud VMs.",
+    "kind is local-only, its nodes are Docker containers on your machine, not cloud VMs.",
     "kind creates clusters; it has nothing to do with editing files.",
     "You still use kubectl to talk to a kind cluster; kind just creates it."
    ]
@@ -228,10 +228,10 @@
   {
    "q": "What happened when you deleted one of the pods?",
    "options": [
-    "Kubernetes created a replacement to keep the desired 3 — self-healing",
+    "Kubernetes created a replacement to keep the desired 3, self-healing",
     "The deployment dropped to 2 permanently",
     "The whole cluster restarted",
-    "Nothing — the pod stayed deleted"
+    "Nothing, the pod stayed deleted"
    ],
    "answer": 0,
    "why": "You declared 3 replicas; the controller continuously reconciles to keep 3 healthy, so it replaced the deleted pod automatically.",
@@ -255,7 +255,7 @@
    "whyWrong": [
     "",
     "'everything' isn't a kubectl resource, and deleting objects still leaves the cluster running.",
-    "The nodes are containers, but that's not their name — and stopping isn't deleting.",
+    "The nodes are containers, but that's not their name, and stopping isn't deleting.",
     "Helm uninstalls releases inside a cluster; it can't remove the cluster itself."
    ]
   }
@@ -264,7 +264,7 @@
   {
    "q": "What problem does Kubernetes solve?",
    "options": [
-    "Running and managing many containers across many machines — scheduling, healing, scaling, discovery — automatically",
+    "Running and managing many containers across many machines, scheduling, healing, scaling, discovery, automatically",
     "Building container images faster",
     "Writing application code for you",
     "Replacing the need for servers"
@@ -275,7 +275,7 @@
     "",
     "Image building is Docker/CI territory; Kubernetes starts after the image exists.",
     "Kubernetes runs your code; it has no idea what's inside the containers.",
-    "Kubernetes needs servers (nodes) — it manages them, it doesn't eliminate them."
+    "Kubernetes needs servers (nodes), it manages them, it doesn't eliminate them."
    ]
   },
   {
@@ -291,7 +291,7 @@
    "whyWrong": [
     "",
     "Hand-run commands are the imperative approach this idea replaces.",
-    "Nothing is guessed — you state desired state explicitly in specs.",
+    "Nothing is guessed, you state desired state explicitly in specs.",
     "Desired state is the future you want; Kubernetes drives reality toward it."
    ]
   },
@@ -304,10 +304,10 @@
     "A billing report"
    ],
    "answer": 0,
-   "why": "Controllers continuously compare spec (desired) to status (actual) and act to close the gap — the heartbeat of Kubernetes.",
+   "why": "Controllers continuously compare spec (desired) to status (actual) and act to close the gap, the heartbeat of Kubernetes.",
    "whyWrong": [
     "",
-    "It never runs once and stops — the loop watches and corrects forever.",
+    "It never runs once and stops, the loop watches and corrects forever.",
     "Image builds happen outside the cluster; reconciliation is about running state.",
     "Reconciliation here means converging state, not accounting."
    ]
@@ -315,8 +315,8 @@
   {
    "q": "Does Kubernetes build your container images?",
    "options": [
-    "No — you build and push them; Kubernetes pulls and runs them",
-    "Yes — it builds from your Dockerfile on each node",
+    "No, you build and push them; Kubernetes pulls and runs them",
+    "Yes, it builds from your Dockerfile on each node",
     "Only for public images",
     "Only if you use Helm"
    ],
@@ -335,13 +335,13 @@
     "When you have multiple services needing availability, scale, and frequent deploys",
     "For a single small app on one server",
     "Only for companies with 10,000 employees",
-    "Never — Docker is always enough"
+    "Never: Docker is always enough"
    ],
    "answer": 0,
    "why": "A mesh of features earns its cost at scale. For one small app, simpler tools suffice; Kubernetes shines with many services and high availability needs.",
    "whyWrong": [
     "",
-    "For one small app the orchestration overhead outweighs the benefit — a single server or PaaS is simpler.",
+    "For one small app the orchestration overhead outweighs the benefit, a single server or PaaS is simpler.",
     "Team size isn't the trigger; service count, uptime needs, and deploy frequency are.",
     "Docker runs containers on one machine; it doesn't heal, scale, or schedule across a fleet."
    ]
@@ -360,7 +360,7 @@
    "why": "The control plane makes scheduling/reconciliation decisions; worker nodes actually run your pods.",
    "whyWrong": [
     "",
-    "It's a division of roles, not redundancy — the control plane usually doesn't run your app pods at all.",
+    "It's a division of roles, not redundancy, the control plane usually doesn't run your app pods at all.",
     "Frontend/backend describes your app tiers, not cluster machinery.",
     "Network exposure isn't the split; decision-making vs running workloads is."
    ]
@@ -368,7 +368,7 @@
   {
    "q": "What does the API server do?",
    "options": [
-    "It's the front door — everything talks to it; you submit desired state there",
+    "It's the front door, everything talks to it; you submit desired state there",
     "It runs your containers",
     "It stores container images",
     "It load-balances user traffic"
@@ -385,7 +385,7 @@
   {
    "q": "What is etcd?",
    "options": [
-    "The cluster's database — the single source of truth for all state",
+    "The cluster's database, the single source of truth for all state",
     "The container runtime",
     "The networking proxy",
     "The autoscaler"
@@ -396,7 +396,7 @@
     "",
     "The runtime (containerd) runs containers on nodes; etcd just stores state.",
     "That's kube-proxy; etcd never touches traffic.",
-    "Autoscalers are controllers that read state — etcd is where that state lives."
+    "Autoscalers are controllers that read state, etcd is where that state lives."
    ]
   },
   {
@@ -448,14 +448,14 @@
    "whyWrong": [
     "",
     "Logs and metrics live in your observability stack; spec and status are fields on every object.",
-    "If they were the same there'd be nothing to reconcile — the gap between them drives controllers.",
+    "If they were the same there'd be nothing to reconcile, the gap between them drives controllers.",
     "Backwards: spec is what you asked for, status is what actually exists."
    ]
   },
   {
    "q": "How do objects like Services find their Pods?",
    "options": [
-    "Labels and selectors — Services select pods by label, not by ID or IP",
+    "Labels and selectors: Services select pods by label, not by ID or IP",
     "By hard-coded pod IP addresses",
     "By pod creation order",
     "By asking the scheduler"
@@ -487,20 +487,20 @@
    ]
   },
   {
-   "q": "Imperative vs declarative — which do real teams use?",
+   "q": "Imperative vs declarative, which do real teams use?",
    "options": [
-    "Declarative — YAML applied with kubectl apply, version-controlled",
-    "Imperative — typing create/run commands for everything",
-    "Neither — they use a GUI only",
+    "Declarative: YAML applied with kubectl apply, version-controlled",
+    "Imperative, typing create/run commands for everything",
+    "Neither, they use a GUI only",
     "They avoid Kubernetes entirely"
    ],
    "answer": 0,
-   "why": "Declarative manifests are reproducible, reviewable, and git-tracked — the basis of CI/CD and GitOps. Imperative is for quick exploration.",
+   "why": "Declarative manifests are reproducible, reviewable, and git-tracked, the basis of CI/CD and GitOps. Imperative is for quick exploration.",
    "whyWrong": [
     "",
-    "Typed commands leave no reviewable record and can't be reproduced — fine for exploration only.",
+    "Typed commands leave no reviewable record and can't be reproduced, fine for exploration only.",
     "GUIs exist, but no serious team manages production by clicking; files in git win.",
-    "Plenty of teams run Kubernetes — the question is how they manage it."
+    "Plenty of teams run Kubernetes, the question is how they manage it."
    ]
   },
   {
@@ -515,7 +515,7 @@
    "why": "This never-ending control loop is why Kubernetes self-heals: any gap between desired and actual is continuously corrected.",
    "whyWrong": [
     "",
-    "It never stops — controllers watch continuously, which is why drift gets fixed at 3am.",
+    "It never stops, controllers watch continuously, which is why drift gets fixed at 3am.",
     "Controllers act on state changes on their own; no human command is required.",
     "Image builds are outside Kubernetes; the loop reconciles cluster state."
    ]
@@ -525,7 +525,7 @@
   {
    "q": "What is a Pod?",
    "options": [
-    "The smallest Kubernetes unit — one or a few tightly-coupled containers sharing an IP, storage, and lifecycle",
+    "The smallest Kubernetes unit, one or a few tightly-coupled containers sharing an IP, storage, and lifecycle",
     "A single physical server",
     "A cluster of nodes",
     "A Docker image"
@@ -552,14 +552,14 @@
    "whyWrong": [
     "",
     "There's no fixed number; two only happens when you add a sidecar.",
-    "Cores limit CPU, not container count — and pods stay small regardless.",
+    "Cores limit CPU, not container count, and pods stay small regardless.",
     "A pod with zero containers can't exist; running containers is its whole purpose."
    ]
   },
   {
    "q": "Why don't you create bare Pods in production?",
    "options": [
-    "They don't self-heal — use a Deployment that replaces them",
+    "They don't self-heal, use a Deployment that replaces them",
     "They cost extra money",
     "They can't use images",
     "They run only on the control plane"
@@ -585,15 +585,15 @@
    "why": "describe shows Events explaining scheduling/pull/probe issues; logs shows what the app said. Together they solve most problems.",
    "whyWrong": [
     "",
-    "Those aren't kubectl commands — building and pushing images happens with Docker/CI.",
+    "Those aren't kubectl commands, building and pushing images happens with Docker/CI.",
     "scale and expose change things; they don't show why a pod is unhealthy.",
-    "top shows resource usage and edit modifies objects — neither surfaces Events or app output."
+    "top shows resource usage and edit modifies objects, neither surfaces Events or app output."
    ]
   },
   {
    "q": "What does CrashLoopBackOff mean?",
    "options": [
-    "The container keeps crashing and being restarted — check its logs",
+    "The container keeps crashing and being restarted, check its logs",
     "The image is being pulled",
     "The pod is scheduled but idle",
     "The node ran out of disk"
@@ -602,7 +602,7 @@
    "why": "The container starts, exits/errs, and Kubernetes restarts it with growing backoff. 'kubectl logs --previous' shows why it died.",
    "whyWrong": [
     "",
-    "Pull problems show ImagePullBackOff or ErrImagePull — a different status.",
+    "Pull problems show ImagePullBackOff or ErrImagePull, a different status.",
     "An idle-but-fine pod shows Running; CrashLoop means repeated deaths.",
     "Disk pressure causes evictions, not restart loops."
    ]
@@ -621,7 +621,7 @@
    "why": "You manage the Deployment; it creates a ReplicaSet that keeps N identical pods alive. Updates create a new ReplicaSet.",
    "whyWrong": [
     "",
-    "Ownership flows downward from the Deployment — pods are at the bottom, not the top.",
+    "Ownership flows downward from the Deployment, pods are at the bottom, not the top.",
     "There's always a ReplicaSet in between; that's what makes rollouts and rollbacks work.",
     "The Deployment owns the ReplicaSet, not the other way around."
    ]
@@ -657,7 +657,7 @@
     "",
     "Stop-then-start is the Recreate strategy, which does cause downtime.",
     "Nodes are untouched during a rollout; only pods are replaced.",
-    "Only some pods exist twice briefly — never the cluster."
+    "Only some pods exist twice briefly, never the cluster."
    ]
   },
   {
@@ -669,11 +669,11 @@
     "Rollbacks are actually slow"
    ],
    "answer": 0,
-   "why": "Previous ReplicaSets remain (at 0 replicas). 'kubectl rollout undo' scales the old one back up and the new one down — near-instant.",
+   "why": "Previous ReplicaSets remain (at 0 replicas). 'kubectl rollout undo' scales the old one back up and the new one down, near-instant.",
    "whyWrong": [
     "",
     "No builds happen in-cluster; the old ReplicaSet still references the image sitting in the registry.",
-    "No backups involved — the old ReplicaSet was never deleted, just scaled to 0.",
+    "No backups involved, the old ReplicaSet was never deleted, just scaled to 0.",
     "Scaling an existing ReplicaSet up takes seconds; that's the point of keeping them."
    ]
   },
@@ -686,10 +686,10 @@
     "The cluster rolled back on its own immediately"
    ],
    "answer": 0,
-   "why": "A readiness-gated rolling update won't retire old pods until new ones are ready. Bad new pods stay out of service — no downtime.",
+   "why": "A readiness-gated rolling update won't retire old pods until new ones are ready. Bad new pods stay out of service, no downtime.",
    "whyWrong": [
     "",
-    "Kubernetes tried the bad image — the new pods just never passed readiness.",
+    "Kubernetes tried the bad image, the new pods just never passed readiness.",
     "The old pods were never deleted; the rollout paused before retiring them.",
     "Rolling back took a human 'rollout undo'; Kubernetes just stopped the rollout from progressing."
    ]
@@ -709,7 +709,7 @@
    "whyWrong": [
     "",
     "Pod IPs are plainly visible in kubectl output; the issue is they change.",
-    "Every pod gets its own IP — it just doesn't survive recreation.",
+    "Every pod gets its own IP, it just doesn't survive recreation.",
     "Pod IPs are routable across the whole cluster; instability, not reach, is the problem."
    ]
   },
@@ -743,7 +743,7 @@
    "whyWrong": [
     "",
     "They differ in exposure: one is unreachable from outside, the other gets an external IP.",
-    "Reversed — ClusterIP is the internal one.",
+    "Reversed: ClusterIP is the internal one.",
     "Any Service type can front any workload; databases usually stay internal anyway."
    ]
   },
@@ -759,7 +759,7 @@
    "why": "Every Service gets an in-cluster DNS name; apps connect to that name and Kubernetes resolves and load-balances it.",
    "whyWrong": [
     "",
-    "No scanning needed — cluster DNS resolves the Service name for you.",
+    "No scanning needed, cluster DNS resolves the Service name for you.",
     "Only the API server talks to etcd; apps use ordinary DNS lookups.",
     "MAC addresses never enter the picture; connections use DNS name to virtual IP."
    ]
@@ -786,7 +786,7 @@
   {
    "q": "Why not bake configuration into the image?",
    "options": [
-    "The same image should run everywhere; only config differs — and secrets would leak. Inject config at run time",
+    "The same image should run everywhere; only config differs, and secrets would leak. Inject config at run time",
     "Images can't hold text",
     "It makes builds faster",
     "Kubernetes forbids it"
@@ -795,7 +795,7 @@
    "why": "One image, many environments: inject per-environment config at run time so you don't rebuild per env or bake in secrets.",
    "whyWrong": [
     "",
-    "Images can hold any files — that's precisely the temptation to avoid.",
+    "Images can hold any files, that's precisely the temptation to avoid.",
     "Baking config in actually forces a rebuild per environment, slowing you down.",
     "Nothing stops you technically; it's a bad practice, not a rule."
    ]
@@ -812,7 +812,7 @@
    "why": "They work the same way, but Secrets hold credentials and should get tighter RBAC and etcd encryption at rest.",
    "whyWrong": [
     "",
-    "Neither is encrypted by default — and if either deserved it, it'd be Secrets.",
+    "Neither is encrypted by default, and if either deserved it, it'd be Secrets.",
     "They're distinct kinds precisely so Secrets can get stricter handling and RBAC.",
     "Both feed config into pods; image pull credentials are just one Secret use case."
    ]
@@ -820,18 +820,18 @@
   {
    "q": "Are Secret values encrypted by default?",
    "options": [
-    "No — only base64-encoded; add etcd encryption + RBAC, or an external manager",
-    "Yes — always AES-256 encrypted",
+    "No, only base64-encoded; add etcd encryption + RBAC, or an external manager",
+    "Yes, always AES-256 encrypted",
     "Yes, but only in production",
     "They are hashed, not stored"
    ],
    "answer": 0,
-   "why": "Base64 is encoding, not encryption — anyone with read access can decode it. Enable encryption at rest and restrict access.",
+   "why": "Base64 is encoding, not encryption, anyone with read access can decode it. Enable encryption at rest and restrict access.",
    "whyWrong": [
     "",
     "base64 is trivially reversible encoding; encryption at rest must be enabled explicitly.",
     "Kubernetes has no prod/dev mode; the default is the same everywhere.",
-    "Values are stored whole and retrievable — hashing would make them unusable by pods."
+    "Values are stored whole and retrievable, hashing would make them unusable by pods."
    ]
   },
   {
@@ -860,10 +860,10 @@
     "Both update instantly"
    ],
    "answer": 0,
-   "why": "Mounted ConfigMap/Secret files update in the pod (with a delay). Env vars are set once at start — change them by restarting the pod.",
+   "why": "Mounted ConfigMap/Secret files update in the pod (with a delay). Env vars are set once at start, change them by restarting the pod.",
    "whyWrong": [
     "",
-    "Exactly backwards — a process's environment can't change after start; mounted files can.",
+    "Exactly backwards, a process's environment can't change after start; mounted files can.",
     "Mounted files do refresh (after a kubelet sync delay).",
     "Env vars never update in place, and even file updates take up to a minute or so."
    ]
@@ -882,7 +882,7 @@
    "why": "PersistentVolume = real storage; PersistentVolumeClaim = a request. Pods mount the claim, decoupling apps from infrastructure.",
    "whyWrong": [
     "",
-    "Reversed — the Claim is the request, the Volume is the storage.",
+    "Reversed, the Claim is the request, the Volume is the storage.",
     "One is supply and the other demand; binding pairs them up.",
     "A PVC is a storage request object; pods mount it, but it isn't a workload."
    ]
@@ -890,7 +890,7 @@
   {
    "q": "What does a StorageClass enable?",
    "options": [
-    "Dynamic provisioning — creating a matching PV automatically when a PVC is made",
+    "Dynamic provisioning, creating a matching PV automatically when a PVC is made",
     "Faster networking",
     "Automatic backups",
     "Pod scheduling"
@@ -913,12 +913,12 @@
     "It scales faster"
    ],
    "answer": 0,
-   "why": "Databases need predictable names (db-0, db-1), each keeping its own PVC across restarts, and ordered start/stop — exactly what StatefulSets give.",
+   "why": "Databases need predictable names (db-0, db-1), each keeping its own PVC across restarts, and ordered start/stop, exactly what StatefulSets give.",
    "whyWrong": [
     "",
-    "Same pods, same cost — the difference is identity and storage semantics.",
+    "Same pods, same cost, the difference is identity and storage semantics.",
     "Every workload type runs container images.",
-    "StatefulSets scale one at a time, in order — deliberately slower than a Deployment."
+    "StatefulSets scale one at a time, in order, deliberately slower than a Deployment."
    ]
   },
   {
@@ -933,7 +933,7 @@
    "why": "volumeClaimTemplates makes the StatefulSet generate a dedicated PVC (data-db-0, data-db-1...) for each pod automatically.",
    "whyWrong": [
     "",
-    "A shared PVC is one disk for all pods — the opposite of per-pod storage, and often impossible with RWO volumes.",
+    "A shared PVC is one disk for all pods, the opposite of per-pod storage, and often impossible with RWO volumes.",
     "The headless Service gives stable DNS names, not storage.",
     "The scheduler places pods; it never creates claims."
    ]
@@ -941,7 +941,7 @@
   {
    "q": "What happens to PVCs when you delete a StatefulSet?",
    "options": [
-    "They're retained by default — data is protected; delete them manually if intended",
+    "They're retained by default, data is protected; delete them manually if intended",
     "They're deleted immediately with the data",
     "They convert to ConfigMaps",
     "They move to another namespace"
@@ -950,7 +950,7 @@
    "why": "Kubernetes keeps the PVCs (and data) when a StatefulSet is deleted, to avoid accidental data loss. You remove them explicitly.",
    "whyWrong": [
     "",
-    "Auto-deleting would destroy data on an accidental delete — that's why retention is the default.",
+    "Auto-deleting would destroy data on an accidental delete, that's why retention is the default.",
     "PVCs and ConfigMaps are unrelated kinds; no such conversion exists.",
     "Objects never move between namespaces; the PVCs stay right where they were."
    ]
@@ -958,7 +958,7 @@
  ],
  "06-health-resources": [
   {
-   "q": "Liveness vs readiness — what does each do on failure?",
+   "q": "Liveness vs readiness, what does each do on failure?",
    "options": [
     "Liveness restarts the container; readiness removes the pod from Service traffic until it passes",
     "Both restart the container",
@@ -970,14 +970,14 @@
    "whyWrong": [
     "",
     "Only liveness restarts; if readiness restarted too, a slow warmup would become a crash loop.",
-    "Probes take action — restarts and endpoint removal — not just log lines.",
+    "Probes take action, restarts and endpoint removal, not just log lines.",
     "Reversed: readiness gates traffic, liveness triggers restarts."
    ]
   },
   {
    "q": "What is a startup probe for?",
    "options": [
-    "Protecting slow-starting apps — it delays liveness/readiness until the app has booted",
+    "Protecting slow-starting apps, it delays liveness/readiness until the app has booted",
     "Restarting the node",
     "Scaling the deployment",
     "Encrypting traffic"
@@ -1003,7 +1003,7 @@
    "why": "The scheduler places pods by requests. Limits cap usage: exceeding memory kills the container (137); exceeding CPU throttles it.",
    "whyWrong": [
     "",
-    "Reversed — requests are the guaranteed floor used for scheduling, limits the ceiling.",
+    "Reversed, requests are the guaranteed floor used for scheduling, limits the ceiling.",
     "They can be equal (that's Guaranteed QoS) but they mean different things.",
     "Scheduling uses requests only; limits are enforced at runtime."
    ]
@@ -1011,7 +1011,7 @@
   {
    "q": "Which QoS class is evicted first when a node is low on resources?",
    "options": [
-    "BestEffort — pods with no requests/limits set",
+    "BestEffort, pods with no requests/limits set",
     "Guaranteed",
     "Burstable",
     "They're evicted at random"
@@ -1020,7 +1020,7 @@
    "why": "BestEffort (no requests/limits) is evicted first, then Burstable, then Guaranteed. Never run important workloads BestEffort.",
    "whyWrong": [
     "",
-    "Guaranteed (requests equal to limits) is protected longest — evicted last.",
+    "Guaranteed (requests equal to limits) is protected longest, evicted last.",
     "Burstable goes after BestEffort; it at least declared some requests.",
     "Eviction follows QoS class and usage-over-request, not chance."
    ]
@@ -1034,10 +1034,10 @@
     "They roll back automatically"
    ],
    "answer": 0,
-   "why": "A rolling update won't retire old pods until new ones report ready. A broken new version stays out of the Service — no outage.",
+   "why": "A rolling update won't retire old pods until new ones report ready. A broken new version stays out of the Service, no outage.",
    "whyWrong": [
     "",
-    "Probes don't speed anything up — if anything they delay traffic until the app is truly ready.",
+    "Probes don't speed anything up, if anything they delay traffic until the app is truly ready.",
     "Replica count is set by the Deployment or HPA; probes only gate traffic.",
     "A stuck rollout stays stuck until you run rollout undo; probes just contain the damage."
    ]
@@ -1056,7 +1056,7 @@
    "why": "Role/ClusterRole = a set of allowed verbs on resources; RoleBinding/ClusterRoleBinding attaches that to a user, group, or ServiceAccount.",
    "whyWrong": [
     "",
-    "Reversed — the Role is the permission list; the binding attaches it to someone.",
+    "Reversed, the Role is the permission list; the binding attaches it to someone.",
     "They're separate kinds on purpose: one Role can be bound to many subjects.",
     "A RoleBinding is pure RBAC config; it runs nothing."
    ]
@@ -1064,8 +1064,8 @@
   {
    "q": "Are there 'deny' rules in RBAC?",
    "options": [
-    "No — RBAC is purely additive; you grant only what's needed",
-    "Yes — deny rules override allows",
+    "No: RBAC is purely additive; you grant only what's needed",
+    "Yes, deny rules override allows",
     "Only ClusterRoles can deny",
     "Deny is the default for everything"
    ],
@@ -1074,8 +1074,8 @@
    "whyWrong": [
     "",
     "No RBAC rule can deny; anything not granted is simply refused.",
-    "ClusterRoles are just cluster-scoped allow lists — still no deny.",
-    "Ungranted actions are refused, but that's the absence of a grant — there are no deny rules to write."
+    "ClusterRoles are just cluster-scoped allow lists, still no deny.",
+    "Ungranted actions are refused, but that's the absence of a grant, there are no deny rules to write."
    ]
   },
   {
@@ -1108,7 +1108,7 @@
    "whyWrong": [
     "",
     "Default-deny only kicks in once a NetworkPolicy selects the pod; out of the box everything is open.",
-    "Namespaces don't isolate the network by default — cross-namespace traffic flows freely.",
+    "Namespaces don't isolate the network by default, cross-namespace traffic flows freely.",
     "Pods talk freely by default; policies are how you restrict that."
    ]
   },
@@ -1121,10 +1121,10 @@
     "kubectl get permissions"
    ],
    "answer": 0,
-   "why": "kubectl auth can-i answers yes/no for a verb+resource, optionally impersonating a user/ServiceAccount — the fastest RBAC check.",
+   "why": "kubectl auth can-i answers yes/no for a verb+resource, optionally impersonating a user/ServiceAccount, the fastest RBAC check.",
    "whyWrong": [
     "",
-    "Not a real command — the built-in check is auth can-i.",
+    "Not a real command, the built-in check is auth can-i.",
     "describe role shows the rules but makes you do the evaluation in your head.",
     "There's no 'permissions' resource to get."
    ]
@@ -1143,17 +1143,17 @@
    "why": "describe's Events explain scheduling/pull/probe problems in plain English; logs shows the app's output. They solve most issues.",
    "whyWrong": [
     "",
-    "kubectl doesn't build or push — images come from Docker/CI.",
+    "kubectl doesn't build or push, images come from Docker/CI.",
     "Those change the deployment; they don't reveal why something is broken.",
-    "top shows usage and edit changes specs — neither shows Events or app output."
+    "top shows usage and edit changes specs, neither shows Events or app output."
    ]
   },
   {
-   "q": "CrashLoopBackOff — which log flag do you need and why?",
+   "q": "CrashLoopBackOff, which log flag do you need and why?",
    "options": [
-    "--previous — to see the crashed instance's logs, since the current container may have just restarted",
-    "--follow — to stream forever",
-    "--all-containers — always required",
+    "--previous, to see the crashed instance's logs, since the current container may have just restarted",
+    "--follow, to stream forever",
+    "--all-containers, always required",
     "No flag works for crashes"
    ],
    "answer": 0,
@@ -1185,7 +1185,7 @@
   {
    "q": "A pod is Pending. Where do you look and for what?",
    "options": [
-    "kubectl describe Events — insufficient resources, taints/affinity, or an unbound PVC",
+    "kubectl describe Events, insufficient resources, taints/affinity, or an unbound PVC",
     "The application logs only",
     "The registry",
     "The Dockerfile"
@@ -1195,7 +1195,7 @@
    "whyWrong": [
     "",
     "A Pending pod has no running container, so there are no logs yet.",
-    "Registry issues appear after scheduling, as ImagePull errors — Pending happens before that.",
+    "Registry issues appear after scheduling, as ImagePull errors: Pending happens before that.",
     "The Dockerfile matters at build time; scheduling failures are about resources and constraints."
    ]
   },
@@ -1211,7 +1211,7 @@
    "why": "kubectl top reads live CPU/memory from the metrics-server. Without it (or on a fresh kind cluster) top returns an error.",
    "whyWrong": [
     "",
-    "top works on any cluster, local kind included — it just needs metrics-server.",
+    "top works on any cluster, local kind included, it just needs metrics-server.",
     "Helm could install metrics-server but isn't itself required.",
     "Ingress routes HTTP traffic; it has nothing to do with metrics."
    ]
@@ -1230,7 +1230,7 @@
    "why": "A chart bundles templated manifests and default values so a whole app can be installed, upgraded, and rolled back as one unit.",
    "whyWrong": [
     "",
-    "A chart is a directory of many templates plus values — far more than one file.",
+    "A chart is a directory of many templates plus values, far more than one file.",
     "Charts are packages on disk; installing one is what creates pods.",
     "Charts can be stored in registries, but the chart is the package, not the store."
    ]
@@ -1247,7 +1247,7 @@
    "why": "Like apt/brew: the chart is the package, values customize it, and each install is a named release you can upgrade or roll back.",
    "whyWrong": [
     "",
-    "Three distinct concepts — conflating them makes helm's commands confusing.",
+    "Three distinct concepts, conflating them makes helm's commands confusing.",
     "Reversed: the chart is the package; the release is the installed instance.",
     "Values are just configuration parameters; pods come from the rendered manifests."
    ]
@@ -1255,7 +1255,7 @@
   {
    "q": "What do 'helm upgrade' and 'helm rollback' give you?",
    "options": [
-    "Versioned deploys — upgrade to new values/versions and instantly revert to a prior revision",
+    "Versioned deploys, upgrade to new values/versions and instantly revert to a prior revision",
     "Faster image builds",
     "Automatic scaling",
     "A new cluster"
@@ -1274,7 +1274,7 @@
    "options": [
     "Separate values files (-f values-prod.yaml) or --set overrides",
     "Copy the chart and edit each copy",
-    "You can't — charts are fixed",
+    "You can't, charts are fixed",
     "Rebuild the image per environment"
    ],
    "answer": 0,
@@ -1282,7 +1282,7 @@
    "whyWrong": [
     "",
     "Copies drift apart and multiply your maintenance; values files exist to avoid this.",
-    "Parameterization is the whole point of charts — values override defaults freely.",
+    "Parameterization is the whole point of charts, values override defaults freely.",
     "Same image everywhere; only injected config should differ per environment."
    ]
   },
@@ -1317,7 +1317,7 @@
    "why": "Kustomize keeps manifests as plain YAML and layers patches; Helm uses Go templates with {{ }} placeholders and logic.",
    "whyWrong": [
     "",
-    "Neither uses a scripting language — Kustomize is pure YAML patching; Helm is the one adding template logic.",
+    "Neither uses a scripting language: Kustomize is pure YAML patching; Helm is the one adding template logic.",
     "Their approaches differ fundamentally: patching valid YAML vs rendering templates.",
     "No config tool builds images; that's Docker/CI."
    ]
@@ -1331,10 +1331,10 @@
     "A base is a running cluster"
    ],
    "answer": 0,
-   "why": "You maintain one valid base and small overlays (dev/prod) that reference it and apply only their differences — no duplication.",
+   "why": "You maintain one valid base and small overlays (dev/prod) that reference it and apply only their differences, no duplication.",
    "whyWrong": [
     "",
-    "Reversed — the base must be complete valid YAML; overlays hold just the diffs.",
+    "Reversed, the base must be complete valid YAML; overlays hold just the diffs.",
     "They're separate directories; the overlay references the base.",
     "Both are just directories of YAML on disk, not clusters."
    ]
@@ -1342,7 +1342,7 @@
   {
    "q": "How do you apply a Kustomize overlay?",
    "options": [
-    "kubectl apply -k <overlay-dir> — it's built into kubectl",
+    "kubectl apply -k <overlay-dir>, it's built into kubectl",
     "helm install -k",
     "kustomize deploy",
     "docker compose up"
@@ -1352,7 +1352,7 @@
    "whyWrong": [
     "",
     "Helm has no Kustomize mode; they're separate tools.",
-    "The standalone binary uses 'kustomize build' piped to kubectl — 'deploy' isn't a subcommand.",
+    "The standalone binary uses 'kustomize build' piped to kubectl, 'deploy' isn't a subcommand.",
     "Compose is Docker's single-machine tool; it doesn't talk to Kubernetes."
    ]
   },
@@ -1379,15 +1379,15 @@
     "For packaging/distributing apps and when you need templating logic like conditionals or loops",
     "For any simple label change",
     "Whenever you use kubectl",
-    "Never — Kustomize replaces Helm"
+    "Never: Kustomize replaces Helm"
    ],
    "answer": 0,
    "why": "Helm shines at packaging/sharing versioned charts and expressing logic. Kustomize shines at simple, template-free per-env customization.",
    "whyWrong": [
     "",
-    "A simple label change is exactly where Kustomize's commonLabels shines — no chart needed.",
+    "A simple label change is exactly where Kustomize's commonLabels shines, no chart needed.",
     "kubectl works with both (apply -k included); tool choice doesn't hinge on it.",
-    "They coexist — Helm for packaging and logic, Kustomize for overlay-style tweaks."
+    "They coexist: Helm for packaging and logic, Kustomize for overlay-style tweaks."
    ]
   }
  ],
@@ -1404,7 +1404,7 @@
    "why": "Continuous Integration produces a tested, pushed image; Continuous Delivery/Deployment updates Kubernetes and completes the rollout.",
    "whyWrong": [
     "",
-    "Reversed — integration builds and tests; delivery deploys.",
+    "Reversed, integration builds and tests; delivery deploys.",
     "Tests are one CI step; the pipeline also produces the image and rolls it out.",
     "The whole point of both is automation triggered by commits."
    ]
@@ -1412,7 +1412,7 @@
   {
    "q": "Why tag images with the git SHA?",
    "options": [
-    "Traceability to exact source and precise rollbacks — never use latest",
+    "Traceability to exact source and precise rollbacks, never use latest",
     "SHAs are shorter to type",
     "It makes images smaller",
     "Registries require it"
@@ -1421,7 +1421,7 @@
    "why": "A SHA tag ties a running image to the exact commit, so you know what's deployed and can roll back precisely. 'latest' is ambiguous.",
    "whyWrong": [
     "",
-    "Nobody types them — CI does; the win is knowing exactly which commit is running.",
+    "Nobody types them: CI does; the win is knowing exactly which commit is running.",
     "The tag is just a label; image contents and size are unchanged.",
     "Registries accept any tag, including the dangerous 'latest'."
    ]
@@ -1439,8 +1439,8 @@
    "whyWrong": [
     "",
     "They differ in who initiates: CI pushing changes in, or an in-cluster agent pulling from git.",
-    "Backwards — GitOps is the pull model, and it's fully automated.",
-    "Git is exactly what a pull-based controller syncs from — it's the source of truth."
+    "Backwards: GitOps is the pull model, and it's fully automated.",
+    "Git is exactly what a pull-based controller syncs from, it's the source of truth."
    ]
   },
   {
@@ -1457,13 +1457,13 @@
     "",
     "etcd reflects current state; in GitOps git defines desired state, and you never hand-edit etcd.",
     "Deleting images breaks anything still using them; rollback means reverting the manifest in git.",
-    "git revert is the rollback — clean, audited, and reconciled automatically."
+    "git revert is the rollback, clean, audited, and reconciled automatically."
    ]
   },
   {
    "q": "What makes an automated deploy safe against a bad image?",
    "options": [
-    "Gating on kubectl rollout status — a readiness-gated rollout fails and triggers a rollback",
+    "Gating on kubectl rollout status, a readiness-gated rollout fails and triggers a rollback",
     "Deploying only on Fridays",
     "Skipping tests to go faster",
     "Using the latest tag"
@@ -1473,7 +1473,7 @@
    "whyWrong": [
     "",
     "The day you deploy catches nothing; readiness gating does.",
-    "Skipping tests removes a safety net — it makes bad images more likely.",
+    "Skipping tests removes a safety net, it makes bad images more likely.",
     "'latest' makes it unclear what's deployed and impossible to roll back precisely."
    ]
   }
@@ -1491,7 +1491,7 @@
    "why": "The controller is the actual proxy doing the routing; the Ingress resource is the rules it reads. You need both.",
    "whyWrong": [
     "",
-    "A resource with no controller is inert YAML — nothing reads the rules.",
+    "A resource with no controller is inert YAML, nothing reads the rules.",
     "One LoadBalancer per app is what Ingress avoids; a single controller fronts everything.",
     "Storage objects have nothing to do with HTTP routing."
    ]
@@ -1499,7 +1499,7 @@
   {
    "q": "Why don't you get Ingress functionality out of the box?",
    "options": [
-    "Kubernetes ships no default controller — you install one, e.g. ingress-nginx",
+    "Kubernetes ships no default controller, you install one, e.g. ingress-nginx",
     "Ingress is deprecated",
     "It requires a paid license",
     "Only cloud clusters have it"
@@ -1510,13 +1510,13 @@
     "",
     "Ingress is fully supported; the missing piece is a controller, not the API.",
     "Common controllers like ingress-nginx are free and open source.",
-    "Local clusters run controllers fine — you just install one yourself."
+    "Local clusters run controllers fine, you just install one yourself."
    ]
   },
   {
    "q": "What do the backing Services look like behind an Ingress?",
    "options": [
-    "Simple ClusterIP — only the Ingress is exposed externally",
+    "Simple ClusterIP, only the Ingress is exposed externally",
     "Each is a LoadBalancer with its own IP",
     "They must be NodePort",
     "They don't need Services"
@@ -1539,12 +1539,12 @@
     "By namespace only"
    ],
    "answer": 0,
-   "why": "Ingress rules match on hostname and URL path and forward to the corresponding backend Service — many apps behind one entry point.",
+   "why": "Ingress rules match on hostname and URL path and forward to the corresponding backend Service, many apps behind one entry point.",
    "whyWrong": [
     "",
     "Pod IPs churn constantly; Ingress targets Services by name.",
     "The image is invisible to HTTP routing; rules match host and path.",
-    "Requests are matched on host and path — the namespace only scopes which Services rules can reference."
+    "Requests are matched on host and path, the namespace only scopes which Services rules can reference."
    ]
   },
   {
@@ -1596,7 +1596,7 @@
    "whyWrong": [
     "",
     "Only two touch pods; the Cluster Autoscaler adds and removes machines.",
-    "Swapped — the HPA changes pod replicas; the Cluster Autoscaler changes nodes.",
+    "Swapped, the HPA changes pod replicas; the Cluster Autoscaler changes nodes.",
     "Three separate components at three different layers, often used together."
    ]
   },
@@ -1606,14 +1606,14 @@
     "Utilization is measured relative to the request; without it, no percentage can be computed",
     "Requests make pods start faster",
     "The HPA reads requests as the max",
-    "It doesn't — requests are optional"
+    "It doesn't, requests are optional"
    ],
    "answer": 0,
    "why": "averageUtilization is a percentage of the CPU request. No request means the HPA can't compute utilization and won't scale.",
    "whyWrong": [
     "",
     "Startup speed is unaffected; requests exist for scheduling and the utilization math.",
-    "The request is the denominator of the percentage, not a ceiling — usage can exceed it.",
+    "The request is the denominator of the percentage, not a ceiling, usage can exceed it.",
     "For CPU-percentage targets the request is mandatory; without it the HPA shows <unknown>."
    ]
   },
@@ -1631,7 +1631,7 @@
     "",
     "Ingress handles HTTP routing, not metrics.",
     "cert-manager issues TLS certs; it has no metrics role.",
-    "Helm is a package manager — it could install metrics-server, but isn't the dependency."
+    "Helm is a package manager, it could install metrics-server, but isn't the dependency."
    ]
   },
   {
@@ -1640,7 +1640,7 @@
     "A stabilization window prevents flapping when load fluctuates",
     "Deleting pods is technically slow",
     "Kubernetes bills per scale-down",
-    "It isn't — both are instant"
+    "It isn't, both are instant"
    ],
    "answer": 0,
    "why": "The HPA waits (a stabilization window) before scaling down so brief dips don't cause it to remove pods it soon needs again.",
@@ -1673,24 +1673,24 @@
   {
    "q": "Does creating a custom object do anything by itself?",
    "options": [
-    "No — a CRD is just data storage until a controller/operator acts on it",
-    "Yes — it automatically provisions infrastructure",
-    "Yes — it starts a pod",
+    "No, a CRD is just data storage until a controller/operator acts on it",
+    "Yes, it automatically provisions infrastructure",
+    "Yes, it starts a pod",
     "Only if it's in kube-system"
    ],
    "answer": 0,
-   "why": "A CRD only stores structured data. Something must watch and reconcile those objects for anything to happen — that's the operator.",
+   "why": "A CRD only stores structured data. Something must watch and reconcile those objects for anything to happen, that's the operator.",
    "whyWrong": [
     "",
     "Provisioning happens only if an operator watches that type and acts on it.",
     "The API server just stores the object; no pod appears without a controller.",
-    "Namespace placement changes nothing — the data is inert without a watcher."
+    "Namespace placement changes nothing, the data is inert without a watcher."
    ]
   },
   {
    "q": "What is an Operator?",
    "options": [
-    "A controller that watches custom resources and reconciles them — automating operational tasks",
+    "A controller that watches custom resources and reconciles them, automating operational tasks",
     "A human sysadmin",
     "A type of Service",
     "A cloud billing tool"
@@ -1701,7 +1701,7 @@
     "",
     "The name nods to human operators, but it's software encoding their playbook.",
     "Services route traffic; an operator is a controller process.",
-    "No relation to billing — it automates operations."
+    "No relation to billing, it automates operations."
    ]
   },
   {
@@ -1713,7 +1713,7 @@
     "Pod + Volume = Operator"
    ],
    "answer": 0,
-   "why": "An operator is a custom resource type plus a controller that acts on it — the whole ecosystem extends Kubernetes this way.",
+   "why": "An operator is a custom resource type plus a controller that acts on it, the whole ecosystem extends Kubernetes this way.",
    "whyWrong": [
     "",
     "That's just a running app; the pattern needs a custom type plus a controller.",
@@ -1743,10 +1743,10 @@
   {
    "q": "Which object type did the database use, and why?",
    "options": [
-    "StatefulSet — stable identity plus its own persistent storage",
-    "Deployment — because databases are stateless",
-    "DaemonSet — one per node",
-    "Job — it runs once"
+    "StatefulSet, stable identity plus its own persistent storage",
+    "Deployment, because databases are stateless",
+    "DaemonSet, one per node",
+    "Job, it runs once"
    ],
    "answer": 0,
    "why": "Databases need a stable identity and dedicated persistent storage per replica, which StatefulSets provide via volumeClaimTemplates.",
@@ -1786,9 +1786,9 @@
    "why": "A single Ingress routes /api to the api Service and / to the frontend Service, keeping both apps as internal ClusterIP Services.",
    "whyWrong": [
     "",
-    "Three external IPs to manage — the single-Ingress design avoids exactly that.",
+    "Three external IPs to manage, the single-Ingress design avoids exactly that.",
     "Pod ports aren't reachable from outside the cluster, and pod IPs churn.",
-    "The frontend was reachable — through the Ingress entry point."
+    "The frontend was reachable, through the Ingress entry point."
    ]
   },
   {
@@ -1800,18 +1800,18 @@
     "Scaling to zero"
    ],
    "answer": 0,
-   "why": "The Deployment's ReplicaSet maintains the desired replica count, so a deleted pod is immediately replaced — self-healing.",
+   "why": "The Deployment's ReplicaSet maintains the desired replica count, so a deleted pod is immediately replaced, self-healing.",
    "whyWrong": [
     "",
     "A cluster restart tests recovery, not the controller's automatic pod replacement.",
-    "Changing the tag triggers a rollout — an update feature, not healing.",
+    "Changing the tag triggers a rollout, an update feature, not healing.",
     "Scaling to zero is intentional; healing is replacing what you didn't mean to lose."
    ]
   },
   {
    "q": "Which piece would make a bad rollout safe?",
    "options": [
-    "Readiness probes — new pods only get traffic once ready, so a broken version can't cause an outage",
+    "Readiness probes, new pods only get traffic once ready, so a broken version can't cause an outage",
     "A bigger memory limit",
     "More namespaces",
     "Deleting the Service"
@@ -1830,7 +1830,7 @@
   {
    "q": "What kind of exams are the CKA/CKAD?",
    "options": [
-    "Hands-on, performance-based — you perform tasks on a live cluster, open-book against kubernetes.io",
+    "Hands-on, performance-based, you perform tasks on a live cluster, open-book against kubernetes.io",
     "Multiple-choice, closed-book",
     "Oral interviews",
     "Written essays"
@@ -1839,7 +1839,7 @@
    "why": "Both give you a real cluster and terminal; you complete tasks under time pressure, allowed only the official docs.",
    "whyWrong": [
     "",
-    "There are no answer choices — you're graded on the state of a real cluster, with kubernetes.io open.",
+    "There are no answer choices, you're graded on the state of a real cluster, with kubernetes.io open.",
     "No interviewer involved; it's you and a terminal.",
     "You write YAML and commands, not prose."
    ]
@@ -1847,16 +1847,16 @@
   {
    "q": "Which CKA domain is largest, and which course module targets it?",
    "options": [
-    "Troubleshooting, 30% — Module 8",
-    "Storage, 10% — Module 5",
-    "Helm, 25% — Module 9",
-    "Scheduling, 15% — Module 2"
+    "Troubleshooting, 30%: Module 8",
+    "Storage, 10%: Module 5",
+    "Helm, 25%: Module 9",
+    "Scheduling, 15%: Module 2"
    ],
    "answer": 0,
    "why": "Troubleshooting is the biggest CKA slice at 30%. Module 8's debugging method is your highest-value review.",
    "whyWrong": [
     "",
-    "Storage is a real domain but a small one at 10% — troubleshooting dwarfs it at 30%.",
+    "Storage is a real domain but a small one at 10%, troubleshooting dwarfs it at 30%.",
     "Helm isn't a standalone 25% domain on the CKA.",
     "Scheduling matters, but the heaviest weight sits on troubleshooting."
    ]
@@ -1870,10 +1870,10 @@
     "helm install everything"
    ],
    "answer": 0,
-   "why": "Generating YAML with --dry-run=client -o yaml turns slow hand-writing into fast edit-and-apply — the top time-saver.",
+   "why": "Generating YAML with --dry-run=client -o yaml turns slow hand-writing into fast edit-and-apply, the top time-saver.",
    "whyWrong": [
     "",
-    "Deleting everything destroys graded work — catastrophic in an exam.",
+    "Deleting everything destroys graded work, catastrophic in an exam.",
     "Watching pods is passive; it creates nothing for the grader.",
     "Helm isn't the exam workflow; generating YAML with dry-run is."
    ]
@@ -1892,7 +1892,7 @@
     "",
     "Speed is unchanged; correctness of placement is what's graded.",
     "Login is handled by contexts and credentials; namespaces just scope objects.",
-    "It matters enormously — graders look in the specified namespace only."
+    "It matters enormously, graders look in the specified namespace only."
    ]
   },
   {
@@ -1904,7 +1904,7 @@
     "man kubectl"
    ],
    "answer": 0,
-   "why": "kubectl explain (e.g. deployment.spec.strategy) documents fields without leaving the terminal — great when you forget a key.",
+   "why": "kubectl explain (e.g. deployment.spec.strategy) documents fields without leaving the terminal, great when you forget a key.",
    "whyWrong": [
     "",
     "Not a real subcommand.",
@@ -1928,11 +1928,11 @@
     "",
     "Delete-and-recreate destroys the evidence, and often not the cause.",
     "Helm manages releases; it won't tell you why a pod is failing.",
-    "Those build and ship images — a different phase entirely."
+    "Those build and ship images, a different phase entirely."
    ]
   },
   {
-   "q": "A Service isn't working and has no endpoints — the cause?",
+   "q": "A Service isn't working and has no endpoints, the cause?",
    "options": [
     "Its selector doesn't match the pods' labels",
     "The cluster is out of memory",
@@ -1940,7 +1940,7 @@
     "The image is corrupt"
    ],
    "answer": 0,
-   "why": "No endpoints means the selector matched no pods — a label/selector mismatch, the most common Service bug.",
+   "why": "No endpoints means the selector matched no pods, a label/selector mismatch, the most common Service bug.",
    "whyWrong": [
     "",
     "Memory pressure shows as evictions and OOM kills, not empty Service endpoints.",
@@ -1949,7 +1949,7 @@
    ]
   },
   {
-   "q": "Your HPA shows <unknown> — two likely reasons?",
+   "q": "Your HPA shows <unknown>, two likely reasons?",
    "options": [
     "No metrics-server, or the Deployment has no CPU requests",
     "Too many namespaces, or a missing Ingress",
@@ -1960,13 +1960,13 @@
    "why": "The HPA needs the metrics-server for readings and CPU requests to compute utilization; missing either yields <unknown>.",
    "whyWrong": [
     "",
-    "Neither affects metrics — the HPA needs metric readings and a request to divide by.",
+    "Neither affects metrics, the HPA needs metric readings and a request to divide by.",
     "Image size and node restarts don't blank HPA metrics.",
     "RBAC being off wouldn't hide metrics, and etcd doesn't store live pod usage."
    ]
   },
   {
-   "q": "You changed a ConfigMap used as env vars but nothing changed — why?",
+   "q": "You changed a ConfigMap used as env vars but nothing changed, why?",
    "options": [
     "Env vars are fixed at pod start; run 'kubectl rollout restart' to pick up the change",
     "ConfigMaps can't be changed",
@@ -1978,7 +1978,7 @@
    "whyWrong": [
     "",
     "ConfigMaps edit fine; the pods just captured the old values at start.",
-    "No reboot needed — recreating the pods is enough.",
+    "No reboot needed, recreating the pods is enough.",
     "Deleting the namespace destroys everything in it; a rollout restart is the fix."
    ]
   },
@@ -1994,9 +1994,9 @@
    "why": "Production readiness means health probes, resource requests/limits, externalized secure config, least privilege, availability, autoscaling, and observability.",
    "whyWrong": [
     "",
-    "Root is the opposite of least privilege — drop it with a securityContext.",
+    "Root is the opposite of least privilege, drop it with a securityContext.",
     "'latest' hides what's deployed and breaks precise rollbacks.",
-    "That's a single point of failure with no health signal — the anti-checklist."
+    "That's a single point of failure with no health signal, the anti-checklist."
    ]
   }
  ],
@@ -2005,12 +2005,12 @@
    "q": "You need a log collector running on every node, including nodes added next month. Which object?",
    "options": [
     "A Deployment with replicas equal to the node count",
-    "A DaemonSet — one pod per (matching) node, automatically tracking cluster growth",
+    "A DaemonSet, one pod per (matching) node, automatically tracking cluster growth",
     "A CronJob running every minute",
     "A StatefulSet"
    ],
    "answer": 1,
-   "why": "A DaemonSet's 'replica count' IS the node list — new node, new pod, no edits. A Deployment pinned to today's node count is stale the day the cluster scales.",
+   "why": "A DaemonSet's 'replica count' IS the node list, new node, new pod, no edits. A Deployment pinned to today's node count is stale the day the cluster scales.",
    "whyWrong": [
     "You'd edit replicas forever, and nothing guarantees one-per-node placement.",
     "",
@@ -2023,7 +2023,7 @@
    "options": [
     "Deployments can't mount secrets",
     "Migrations need more CPU than Deployments allow",
-    "A Deployment treats exit as failure and restarts the pod forever — your migration re-runs in a loop; a Job treats exit 0 as the goal",
+    "A Deployment treats exit as failure and restarts the pod forever, your migration re-runs in a loop; a Job treats exit 0 as the goal",
     "Deployments only run web servers"
    ],
    "answer": 2,
@@ -2039,7 +2039,7 @@
    "q": "A nightly CronJob sometimes runs long, and you notice two copies running at once. Which setting did you leave at its default?",
    "options": [
     "backoffLimit",
-    "concurrencyPolicy — the default Allow lets a slow run and its successor overlap; Forbid or Replace is almost always what you meant",
+    "concurrencyPolicy, the default Allow lets a slow run and its successor overlap; Forbid or Replace is almost always what you meant",
     "restartPolicy",
     "activeDeadlineSeconds"
    ],
@@ -2049,7 +2049,7 @@
     "backoffLimit controls retries of a failing pod, not overlap between scheduled runs.",
     "",
     "restartPolicy governs container restarts within a pod.",
-    "activeDeadlineSeconds caps one run's duration — useful, but it doesn't prevent overlap by itself."
+    "activeDeadlineSeconds caps one run's duration, useful, but it doesn't prevent overlap by itself."
    ]
   }
  ],
@@ -2058,7 +2058,7 @@
    "q": "All 3 replicas of your API landed on the same node, which just died. Which mechanism was missing?",
    "options": [
     "A PriorityClass",
-    "Pod anti-affinity (or topology spread) — nothing told the scheduler to keep replicas apart",
+    "Pod anti-affinity (or topology spread), nothing told the scheduler to keep replicas apart",
     "A bigger backoffLimit",
     "An admission controller"
    ],
@@ -2075,7 +2075,7 @@
    "q": "What is the difference between a nodeSelector and a taint?",
    "options": [
     "They're synonyms",
-    "A selector is the pod choosing nodes; a taint is the node refusing pods unless they carry a matching toleration — opposite directions",
+    "A selector is the pod choosing nodes; a taint is the node refusing pods unless they carry a matching toleration, opposite directions",
     "Taints are deprecated selectors",
     "Selectors work only in cloud clusters"
    ],
@@ -2097,7 +2097,7 @@
     "The API server is down"
    ],
    "answer": 1,
-   "why": "Drains respect PDBs: evict, wait for the replacement to be Ready, continue. A budget with no room to give — minAvailable: 3 with 3 replicas — makes every eviction a violation, and the drain waits indefinitely.",
+   "why": "Drains respect PDBs: evict, wait for the replacement to be Ready, continue. A budget with no room to give, minAvailable: 3 with 3 replicas, makes every eviction a violation, and the drain waits indefinitely.",
    "whyWrong": [
     "Disk pressure evicts pods more aggressively, not less.",
     "",

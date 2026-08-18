@@ -26,7 +26,7 @@ jdeps --module-path out out/com.dojo.api      # analyze real dependencies</div>
 <h4>The real adoption story</h4>
 <p>Most applications never write a <code>module-info.java</code>, and that is a defensible choice: on the classpath your code lives in the unnamed module, which reads everything and exports everything, exactly as before. The value is highest for <b>libraries</b> (where a published module boundary is a real API contract) and for anything that wants <code>jlink</code> to produce a trimmed runtime image, since jlink needs a fully modular graph.</p>
 <p>What everyone does encounter, modules or not, is the JDK's own modularity: <code>InaccessibleObjectException</code> and the "module java.base does not open java.lang" message are the platform enforcing encapsulation on reflection. The correct answer is a targeted <code>--add-opens</code> flag while the library is fixed, not a blanket one, and certainly not staying on an old JDK.</p>`,
-docs:[['Modules — dev.java','https://dev.java/learn/modules/'],['JPMS quick-start — openjdk','https://openjdk.org/projects/jigsaw/quick-start']],
+docs:[['Modules, dev.java','https://dev.java/learn/modules/'],['JPMS quick-start, openjdk','https://openjdk.org/projects/jigsaw/quick-start']],
 ex:{title:'Write a module descriptor',
 prompt:`Write the <code>module-info.java</code> for module <code>com.example.tokens</code>: it <code>requires java.net.http</code>, <code>requires transitive com.example.model</code> (model types appear in its public API), and exports exactly two packages: <code>com.example.tokens.api</code> and <code>com.example.tokens.claims</code>. Nothing else is exported.`,
 starter:`module com.example.tokens {
@@ -112,7 +112,7 @@ modular and benefits enormously, but most Spring Boot services ship a fat jar on
 Docker for the packaging problem JPMS was partly aimed at. Learn it because you will meet
 <code>--add-opens</code>, because the JDK's structure now depends on it, and because <code>jlink</code> is
 genuinely useful, not because your next service will have a <code>module-info.java</code>.</p>`,
-docs:[['ServiceLoader — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ServiceLoader.html'],['jlink — Oracle','https://docs.oracle.com/en/java/javase/21/docs/specs/man/jlink.html']],
+docs:[['ServiceLoader, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ServiceLoader.html'],['jlink, Oracle','https://docs.oracle.com/en/java/javase/21/docs/specs/man/jlink.html']],
 ex:{title:'Wire a service',
 prompt:`Write two module descriptors in one editor (Java allows one per file; for this drill, stack them): (1) module <code>com.dojo.provider</code>: requires <code>com.dojo.spi</code>, and <code>provides com.dojo.spi.TokenSigner with com.dojo.provider.HmacSigner</code>. (2) module <code>com.dojo.app</code>: requires <code>com.dojo.spi</code>, declares <code>uses com.dojo.spi.TokenSigner</code>, and <code>opens com.dojo.app.dto to com.fasterxml.jackson.databind</code>.`,
 starter:`module com.dojo.provider {
@@ -196,7 +196,7 @@ two systems.</p>
 the bottleneck is regularly an N+1 query, a misconfigured pool, a serialisation cost or a log statement,
 and almost never the algorithm someone was about to rewrite. Optimising without a profile is guessing with
 extra steps, and it usually makes the code worse while leaving the problem in place.</p>`,
-docs:[['JFR — Oracle docs','https://docs.oracle.com/en/java/javase/21/jfapi/why-use-jfr-api.html'],['JDK Mission Control','https://openjdk.org/projects/jmc/'],['jfr tool — reference','https://docs.oracle.com/en/java/javase/21/docs/specs/man/jfr.html']],
+docs:[['JFR, Oracle docs','https://docs.oracle.com/en/java/javase/21/jfapi/why-use-jfr-api.html'],['JDK Mission Control','https://openjdk.org/projects/jmc/'],['jfr tool, reference','https://docs.oracle.com/en/java/javase/21/docs/specs/man/jfr.html']],
 ex:{title:'Flight recorder drill',lang:'shell',
 prompt:`One per numbered line: (1) launch <code>app.jar</code> with a 60-second recording written to <code>rec.jfr</code>, (2) start a named recording (<code>name=probe</code>, <code>settings=profile</code>) on running pid 4242, (3) dump it to <code>probe.jfr</code>, (4) stop it, (5) print a summary of the file with the <code>jfr</code> CLI tool.`,
 starter:`# 1)
@@ -249,7 +249,7 @@ jfr summary probe.jfr`}},
 
 <h4>Method</h4>
 <p>Profile the workload you care about, under load, on hardware that resembles production; a profile of a JVM doing nothing is a picture of the JIT warming up. Take a baseline before the change and a second profile after, and compare like for like; "it feels faster" is not a measurement. And read the graph top-down for width, not bottom-up for familiarity: the frame you recognise is rarely the frame that is costing you.</p>`,
-docs:[['async-profiler — GitHub','https://github.com/async-profiler/async-profiler'],['Flame graphs — Brendan Gregg','https://www.brendangregg.com/flamegraphs.html']],
+docs:[['async-profiler, GitHub','https://github.com/async-profiler/async-profiler'],['Flame graphs, Brendan Gregg','https://www.brendangregg.com/flamegraphs.html']],
 ex:{title:'Profiler triage',lang:'text',
 prompt:`Answer on the numbered lines: (1) the command for a 30s CPU flame graph of pid 4242 into <code>cpu.html</code>, (2) the event mode that shows what is creating GC pressure, (3) the event mode that catches time spent blocked on I/O that a CPU profile misses, (4) in a flame graph, what the WIDTH of a frame means, (5) true or false: left-to-right order in a flame graph is chronological.`,
 starter:`# 1)

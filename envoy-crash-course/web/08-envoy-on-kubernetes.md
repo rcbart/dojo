@@ -1,4 +1,4 @@
-# 08 — Envoy on Kubernetes
+# 08: Envoy on Kubernetes
 
 *Where Envoy actually lives in modern infra. Concepts + a real kind + Envoy Gateway lab. ~30 min.
 Requires Docker, `kind`, `kubectl`, and `helm`.*
@@ -131,4 +131,4 @@ kind delete cluster --name envoy-lab
 
 ---
 
-**Next:** [09 — Service mesh & sidecars →](./09-service-mesh-sidecars.md)
+**Next:** [09: Service mesh & sidecars →](./09-service-mesh-sidecars.md)

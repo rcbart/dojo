@@ -1,4 +1,4 @@
-# JavaDojo Launch Guide — Step by Step
+# JavaDojo Launch Guide: Step by Step
 
 Companion to `BACKEND_PLAN.md`. That file explains *why*; this one is the *how*: every command, file, and config to take JavaDojo from a local HTML file to a live product at your own domain.
 
@@ -6,7 +6,7 @@ Companion to `BACKEND_PLAN.md`. That file explains *why*; this one is the *how*:
 
 **Prerequisites (one-time, ~1 hour)**
 
-1. Accounts: [github.com](https://github.com), [hetzner.com/cloud](https://www.hetzner.com/cloud), [console.anthropic.com](https://console.anthropic.com) (API key for Phase 4), a domain registrar (Namecheap/Porkbun, ~$10/yr — you'll want e.g. `javadojo.dev`).
+1. Accounts: [github.com](https://github.com), [hetzner.com/cloud](https://www.hetzner.com/cloud), [console.anthropic.com](https://console.anthropic.com) (API key for Phase 4), a domain registrar (Namecheap/Porkbun, ~$10/yr, you'll want e.g. `javadojo.dev`).
 2. Local tools:
    ```bash
    # macOS
@@ -19,7 +19,7 @@ Companion to `BACKEND_PLAN.md`. That file explains *why*; this one is the *how*:
 
 ---
 
-## Phase 0 — Get the site live today (~1 afternoon)
+## Phase 0: Get the site live today (~1 afternoon)
 
 The dojo file already degrades gracefully outside Cowork: when `window.cowork.askClaude` is missing it falls back to structural checks and says so in the header status line. So Phase 0 is almost pure publishing.
 
@@ -43,9 +43,9 @@ The dojo file already degrades gracefully outside Cowork: when `window.cowork.as
 
 ---
 
-## Phase 1 — Backend skeleton that deploys (~1 weekend)
+## Phase 1: Backend skeleton that deploys (~1 weekend)
 
-Goal: an empty-but-real Spring Boot API running on your VPS behind TLS, redeployed automatically on every push. Do this *before* writing features — every later phase then ships the day it works.
+Goal: an empty-but-real Spring Boot API running on your VPS behind TLS, redeployed automatically on every push. Do this *before* writing features, every later phase then ships the day it works.
 
 ### 1.1 Generate the project
 
@@ -59,7 +59,7 @@ curl https://start.spring.io/starter.tgz \
 cd dojo-api && git init && git add . && git commit -m "skeleton"
 gh repo create dojo-api --private --source=. --push
 ```
-(Security dependency comes in Phase 2 — adding it now locks every endpoint before you have users.)
+(Security dependency comes in Phase 2, adding it now locks every endpoint before you have users.)
 
 ### 1.2 Local dev environment
 
@@ -126,7 +126,7 @@ ENTRYPOINT ["java","-jar","/app.jar"]
 
 ### 1.4 The server
 
-1. Hetzner Console → Add Server: location near you, **Ubuntu 24.04**, type **CX22** (2 vCPU / 4 GB — enough through Phase 4), add your SSH public key. Note the IP.
+1. Hetzner Console → Add Server: location near you, **Ubuntu 24.04**, type **CX22** (2 vCPU / 4 GB, enough through Phase 4), add your SSH public key. Note the IP.
 2. DNS: at your registrar add `A api.javadojo.dev → <server-ip>`.
 3. Harden and install Docker:
    ```bash
@@ -140,7 +140,7 @@ ENTRYPOINT ["java","-jar","/app.jar"]
    apt update && apt install -y unattended-upgrades
    curl -fsSL https://get.docker.com | sh && usermod -aG docker deploy
    ```
-4. Production compose on the server, `/home/deploy/dojo/compose.yaml` — same as local plus the API and Caddy:
+4. Production compose on the server, `/home/deploy/dojo/compose.yaml`, same as local plus the API and Caddy:
    ```yaml
    services:
      api:
@@ -171,7 +171,7 @@ ENTRYPOINT ["java","-jar","/app.jar"]
          - caddy_data:/data
    volumes: { dbdata: {}, caddy_data: {} }
    ```
-   `Caddyfile` (TLS is automatic — this is the whole config):
+   `Caddyfile` (TLS is automatic, this is the whole config):
    ```
    api.javadojo.dev {
        reverse_proxy api:8080
@@ -209,7 +209,7 @@ Repo → Settings → Secrets: `VPS_HOST` (the IP) and `VPS_SSH_KEY` (a *new* ke
 
 ---
 
-## Phase 2 — Accounts (~1 week)
+## Phase 2: Accounts (~1 week)
 
 ### 2.1 Dependencies & schema
 
@@ -227,10 +227,10 @@ CREATE TABLE users (
 
 ### 2.2 Endpoints
 
-Build in this order — each is testable with curl before the next:
+Build in this order, each is testable with curl before the next:
 
-1. `POST /api/auth/register {email, password}` — validate email format + password ≥ 10 chars, hash with `BCryptPasswordEncoder`, insert, return 201. Duplicate email → 409.
-2. `POST /api/auth/login {email, password}` — verify with `passwordEncoder.matches()`, return `{token}`: a JWT signed HS256 with a 256-bit secret from env (`JWT_SECRET`, generate with `openssl rand -base64 32`), subject = user id, expiry 7 days.
+1. `POST /api/auth/register {email, password}`: validate email format + password ≥ 10 chars, hash with `BCryptPasswordEncoder`, insert, return 201. Duplicate email → 409.
+2. `POST /api/auth/login {email, password}`: verify with `passwordEncoder.matches()`, return `{token}`: a JWT signed HS256 with a 256-bit secret from env (`JWT_SECRET`, generate with `openssl rand -base64 32`), subject = user id, expiry 7 days.
 3. A `OncePerRequestFilter` that reads `Authorization: Bearer`, validates the JWT, and sets the `SecurityContext`.
 
 ### 2.3 Security config
@@ -249,7 +249,7 @@ SecurityFilterChain chain(HttpSecurity http) throws Exception {
 }
 ```
 
-CORS — lock to your site, not `*`:
+CORS, lock to your site, not `*`:
 ```java
 @Bean
 CorsConfigurationSource cors() {
@@ -269,9 +269,9 @@ Add `JWT_SECRET` to the server's `.env` and the compose `environment:` block.
 
 ---
 
-## Phase 3 — Progress sync (~1 week)
+## Phase 3: Progress sync (~1 week)
 
-### 3.1 Schema — `V3__progress.sql`
+### 3.1 Schema: `V3__progress.sql`
 
 ```sql
 CREATE TABLE progress (
@@ -293,19 +293,19 @@ CREATE TABLE progress (
 
 The dojo's storage is one object: the `store` at the top of the STATE section (localStorage key `'javadojo'`, keyed by `exSid` = `lessonId` or `lessonId#index`). Integration is three additions, no rewrite:
 
-1. **Login UI**: a small "Sign in" button in the header → modal with email/password → calls `/api/auth/login|register`, keeps the JWT in a `let authToken` variable (in-memory; localStorage works too but XSS-reads it — your call, note the tradeoff in the README).
+1. **Login UI**: a small "Sign in" button in the header → modal with email/password → calls `/api/auth/login|register`, keeps the JWT in a `let authToken` variable (in-memory; localStorage works too but XSS-reads it, your call, note the tradeoff in the README).
 2. **Pull on login**: fetch `GET /api/progress`, merge into `store.get()` with the same latest-wins rule, `store.set(merged)`, re-render.
-3. **Push on change**: wrap `store.patch` — after each local write, debounce 2s, then `PUT /api/progress` with the changed keys. Offline/logged-out silently skips; localStorage remains the source of truth for anonymous users.
+3. **Push on change**: wrap `store.patch`, after each local write, debounce 2s, then `PUT /api/progress` with the changed keys. Offline/logged-out silently skips; localStorage remains the source of truth for anonymous users.
 
 **Done when:** solve an exercise in Chrome, log in on your phone, the belt progress is there.
 
 ---
 
-## Phase 4 — AI judge proxy (~1 week)
+## Phase 4: AI judge proxy (~1 week)
 
-Restores the dojo's smartest feature — real test verdicts — publicly and affordably.
+Restores the dojo's smartest feature, real test verdicts, publicly and affordably.
 
-### 4.1 Schema — `V4__judge.sql`
+### 4.1 Schema: `V4__judge.sql`
 
 ```sql
 CREATE TABLE submissions (
@@ -329,31 +329,31 @@ CREATE TABLE api_usage (
 `POST /api/judge {exerciseKey, code}` (auth required):
 
 1. **Daily cap**: `UPDATE api_usage ... RETURNING judge_calls`; over 50/day → 429 with a friendly message.
-2. **Rate limit**: Bucket4j lettuce/Redis bucket per user — 5 requests/min. Add `bucket4j-redis` dependency.
-3. **Cache**: Caffeine, key = `exerciseKey + ":" + sha256(code)`, TTL 24h, max 10k entries — identical resubmissions are free.
-4. **Call Claude**: the judge prompt already exists in the dojo (search `index.html` for `You are JavaDojo's build and test runner` — it takes the exercise prompt, the `behavior` test spec, and numbered code, and demands a strict JSON verdict: `{compiles, compileErrors[], tests[], output, passed, feedback}`). Move that prompt server-side verbatim. You'll need the exercise metadata server-side too: write a small script that extracts each exercise's `prompt` and `behavior` from the HTML into `exercises.json`, shipped inside the API jar — this also stops clients from forging easier rubrics. Call `POST https://api.anthropic.com/v1/messages` with `claude-haiku-4-5` (cheap, plenty for judging), `ANTHROPIC_API_KEY` from env.
-5. Persist to `submissions`, and if `passed`, upsert `progress` server-side — **the server, not the client, records completion** (client-set `done` from Phase 3 still syncs, but treat it as unverified: add a `verified` boolean to progress if you want the distinction).
-6. Return the verdict JSON unchanged — the dojo's existing renderer already understands it.
+2. **Rate limit**: Bucket4j lettuce/Redis bucket per user, 5 requests/min. Add `bucket4j-redis` dependency.
+3. **Cache**: Caffeine, key = `exerciseKey + ":" + sha256(code)`, TTL 24h, max 10k entries, identical resubmissions are free.
+4. **Call Claude**: the judge prompt already exists in the dojo (search `index.html` for `You are JavaDojo's build and test runner`, it takes the exercise prompt, the `behavior` test spec, and numbered code, and demands a strict JSON verdict: `{compiles, compileErrors[], tests[], output, passed, feedback}`). Move that prompt server-side verbatim. You'll need the exercise metadata server-side too: write a small script that extracts each exercise's `prompt` and `behavior` from the HTML into `exercises.json`, shipped inside the API jar, this also stops clients from forging easier rubrics. Call `POST https://api.anthropic.com/v1/messages` with `claude-haiku-4-5` (cheap, plenty for judging), `ANTHROPIC_API_KEY` from env.
+5. Persist to `submissions`, and if `passed`, upsert `progress` server-side, **the server, not the client, records completion** (client-set `done` from Phase 3 still syncs, but treat it as unverified: add a `verified` boolean to progress if you want the distinction).
+6. Return the verdict JSON unchanged, the dojo's existing renderer already understands it.
 
 ### 4.3 Frontend
 
-In `index.html`, the runner function currently does `window.cowork.askClaude(prompt,[])`. Replace that branch: if `authToken` exists, `fetch('https://api.javadojo.dev/api/judge', ...)` and feed the response into the same `extractJson`/render path; else keep the structural-checks fallback with a "sign in for AI-verified runs" nudge. Same one-line swap in the hint function, via a `POST /api/hint` twin (tighter cap — 20/day).
+In `index.html`, the runner function currently does `window.cowork.askClaude(prompt,[])`. Replace that branch: if `authToken` exists, `fetch('https://api.javadojo.dev/api/judge', ...)` and feed the response into the same `extractJson`/render path; else keep the structural-checks fallback with a "sign in for AI-verified runs" nudge. Same one-line swap in the hint function, via a `POST /api/hint` twin (tighter cap, 20/day).
 
 **Done when:** logged in on the public site, "Compile & Run Tests" returns real verdicts; a second identical run returns instantly (cache); the 6th run inside a minute returns 429; your Anthropic console shows bounded spend.
 
 ---
 
-## Phase 5 — Real code execution (the crown jewel, 2–4 weeks)
+## Phase 5: Real code execution (the crown jewel, 2–4 weeks)
 
 Replace "AI judges your code" with "your code actually compiles and runs against JUnit-style tests." This is the part with real engineering teeth: you are deliberately building a service whose job is to run hostile code safely.
 
 ### 5.0 Pragmatic on-ramp (weekend)
 
-Integrate [Judge0](https://judge0.com) first: point `POST /api/run` at its API (self-hosted CE via their docker-compose on your VPS, or their hosted tier). You get compile+run working in days and a felt understanding of the problem — then replace it with your own runner and keep Judge0 as the fallback flag.
+Integrate [Judge0](https://judge0.com) first: point `POST /api/run` at its API (self-hosted CE via their docker-compose on your VPS, or their hosted tier). You get compile+run working in days and a felt understanding of the problem, then replace it with your own runner and keep Judge0 as the fallback flag.
 
 ### 5.1 Your own runner
 
-A second, minimal service (`dojo-runner`, plain Java or a thin Spring app) on the VPS — or, better for isolation once traffic exists, a second small VPS with no DB credentials at all.
+A second, minimal service (`dojo-runner`, plain Java or a thin Spring app) on the VPS, or, better for isolation once traffic exists, a second small VPS with no DB credentials at all.
 
 Execution recipe per submission:
 
@@ -374,23 +374,23 @@ Rules that are not optional: no network, non-root, read-only rootfs, memory/CPU/
 
 ### 5.2 Test harnesses
 
-Each exercise's `behavior` spec (already structured text in the dojo) becomes a real `MainTest.java` — assertions that print `PASS test-name` / `FAIL test-name: detail` lines the API parses into the same verdict JSON the frontend already renders. Generate these semi-automatically (an LLM pass over `exercises.json` gets you 80%; hand-fix the rest) and commit them — they're now the authoritative test suite, versioned in git.
+Each exercise's `behavior` spec (already structured text in the dojo) becomes a real `MainTest.java`, assertions that print `PASS test-name` / `FAIL test-name: detail` lines the API parses into the same verdict JSON the frontend already renders. Generate these semi-automatically (an LLM pass over `exercises.json` gets you 80%; hand-fix the rest) and commit them, they're now the authoritative test suite, versioned in git.
 
 ### 5.3 Queue
 
-API inserts into `submissions` with `status='queued'`; runner polls (`SELECT ... FOR UPDATE SKIP LOCKED LIMIT 1`), executes, writes verdict; API long-polls or the frontend polls `GET /api/submissions/{id}` every second. A DB queue is correct at this scale — upgrade to Kafka only when you want to cash in the messaging lesson for real, and enjoy that the outbox pattern you studied is exactly what the migration needs.
+API inserts into `submissions` with `status='queued'`; runner polls (`SELECT ... FOR UPDATE SKIP LOCKED LIMIT 1`), executes, writes verdict; API long-polls or the frontend polls `GET /api/submissions/{id}` every second. A DB queue is correct at this scale, upgrade to Kafka only when you want to cash in the messaging lesson for real, and enjoy that the outbox pattern you studied is exactly what the migration needs.
 
-**Done when:** deliberately hostile submissions fail safely — `while(true){}` (timeout kills it), `new byte[Integer.MAX_VALUE]` (memory cap), `new Socket("evil.com",80)` (no network), `Runtime.exec("rm -rf /")` (non-root, read-only, containerized), fork bombs (pid limit) — and honest solutions pass with real compiler errors on real mistakes.
+**Done when:** deliberately hostile submissions fail safely, `while(true){}` (timeout kills it), `new byte[Integer.MAX_VALUE]` (memory cap), `new Socket("evil.com",80)` (no network), `Runtime.exec("rm -rf /")` (non-root, read-only, containerized), fork bombs (pid limit), and honest solutions pass with real compiler errors on real mistakes.
 
 ---
 
-## Phase 6 — Production hardening (ongoing)
+## Phase 6: Production hardening (ongoing)
 
 - **Logs**: `logstash-logback-encoder` for JSON logs; an MDC filter putting `requestId` + `userId` on every line (the Logging lesson, in anger). `docker compose logs` is fine until it isn't; then ship to Grafana Loki (free, runs in compose).
 - **Metrics**: `micrometer-registry-prometheus` + Prometheus + Grafana containers on the VPS. One dashboard: request rate/latency, judge calls + spend/day, runner queue depth, JVM heap.
-- **Backups**: nightly cron on the VPS — `docker compose exec -T db pg_dump -U dojo dojo | gzip > /backups/dojo-$(date +%F).sql.gz`, keep 14, and copy off-box (rclone to any object storage). **Do one test restore now** — an untested backup is a hope, not a backup.
+- **Backups**: nightly cron on the VPS, `docker compose exec -T db pg_dump -U dojo dojo | gzip > /backups/dojo-$(date +%F).sql.gz`, keep 14, and copy off-box (rclone to any object storage). **Do one test restore now**, an untested backup is a hope, not a backup.
 - **Updates**: Dependabot on both repos; `unattended-upgrades` already handles the OS.
-- **Abuse watch**: the `submissions` table is your forensics — a weekly look at top users by judge calls and weird code patterns.
+- **Abuse watch**: the `submissions` table is your forensics, a weekly look at top users by judge calls and weird code patterns.
 
 ---
 
@@ -403,5 +403,5 @@ API inserts into `submissions` with `status='queued'`; runner polls (`SELECT ...
 | GitHub Pages, Actions, GHCR | free |
 | Claude API (judge, capped) | usage-based; caps keep it ~$5–20/mo |
 
-**Launch order recap:** 0 site live → 1 API deploys itself → 2 accounts → 3 progress follows you → 4 AI judge public → 5 real execution → 6 keep it alive. Each phase ships. When someone asks about it in an interview, tell them about Phase 5's threat model — and the restore test.
+**Launch order recap:** 0 site live → 1 API deploys itself → 2 accounts → 3 progress follows you → 4 AI judge public → 5 real execution → 6 keep it alive. Each phase ships. When someone asks about it in an interview, tell them about Phase 5's threat model, and the restore test.
 

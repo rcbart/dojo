@@ -1,4 +1,4 @@
-# 4b — Rate limiting & ext_authz: policy at the proxy
+# 4b: Rate limiting & ext_authz: policy at the proxy
 
 *The two filters that turn Envoy from a router into a policy edge: limiting how often, and deciding who. ~12 min read.*
 
@@ -98,4 +98,4 @@ logs with the response flags: `RL` marks a rate-limited request, `UAEX` an unaut
 
 ---
 
-**Next:** [5 — Clusters, load balancing & resilience →](./05-clusters-load-balancing-resilience.md)
+**Next:** [5: Clusters, load balancing & resilience →](./05-clusters-load-balancing-resilience.md)

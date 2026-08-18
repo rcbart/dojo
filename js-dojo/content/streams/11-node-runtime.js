@@ -31,12 +31,12 @@ import fs from "node:fs";    // unambiguous, and cannot be shadowed by
                              // a package called "fs" in node_modules</div>
 
 <h4>The parts of the standard library worth knowing exist</h4>
-<p><b><code>node:path</code></b> — join and resolve paths without concatenating strings, so your code works
-on Windows too. <b><code>node:os</code></b> — CPU count, memory, temp directory, platform.
-<b><code>node:crypto</code></b> — <code>randomUUID()</code>, hashing, HMAC, and real key operations,
+<p><b><code>node:path</code></b>, join and resolve paths without concatenating strings, so your code works
+on Windows too. <b><code>node:os</code></b>: CPU count, memory, temp directory, platform.
+<b><code>node:crypto</code></b>, <code>randomUUID()</code>, hashing, HMAC, and real key operations,
 unlike the browser it is available everywhere with no secure-context requirement.
-<b><code>node:util</code></b> — <code>promisify</code> for wrapping old callback APIs.
-<b><code>node:test</code></b> — a test runner, built in, no dependency required.</p>
+<b><code>node:util</code></b>, <code>promisify</code> for wrapping old callback APIs.
+<b><code>node:test</code></b>, a test runner, built in, no dependency required.</p>
 
 <h4>Versions and LTS</h4>
 <p>Node releases a new major every six months; even-numbered ones become <b>LTS</b> (long-term support) and
@@ -50,7 +50,7 @@ not.</p>
 permissions-by-default and built-in TypeScript. <b>Bun</b> is a faster runtime with a bundler and test
 runner included. Both are interesting; Node has the ecosystem, the LTS story and the jobs, so learn Node
 first and the others transfer almost entirely.</p>`,
-docs:[['Node — introduction','https://nodejs.org/en/learn/getting-started/introduction-to-nodejs'],['Node — API documentation','https://nodejs.org/api/'],['Node — releases and LTS','https://nodejs.org/en/about/previous-releases']],
+docs:[['Node (introduction)','https://nodejs.org/en/learn/getting-started/introduction-to-nodejs'],['Node (API documentation)','https://nodejs.org/api/'],['Node (releases and LTS)','https://nodejs.org/en/about/previous-releases']],
 ex:{title:'Where does this API live?',diff:'easy',lang:'js',
 run:{call:'availableIn',cases:[
  {name:'fs is Node only',args:['fs'],expect:'node'},
@@ -143,7 +143,7 @@ event-driven.</p>
 loop, message-passing between them) or a separate process. The rule is unchanged from the browser:
 <b>asynchronous does not mean parallel</b>, and no amount of <code>async</code> makes a busy loop stop
 blocking.</p>`,
-docs:[['Node — the event loop','https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick'],['Node — do not block the event loop','https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop'],['Node — worker_threads','https://nodejs.org/api/worker_threads.html']],
+docs:[['Node (the event loop)','https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick'],['Node (do not block the event loop)','https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop'],['Node (worker_threads)','https://nodejs.org/api/worker_threads.html']],
 exs:[
 {title:'Order the Node queues',diff:'medium',lang:'js',
 run:{call:'nodeOrder',cases:[
@@ -247,7 +247,7 @@ process.on("SIGINT", ...);               // Ctrl-C
 <code>unhandledRejection</code> and <code>uncaughtException</code> should <b>log and exit</b>. After an
 uncaught exception the program's state is unknown, and continuing risks corrupting data in ways worse
 than a restart.</p>`,
-docs:[['Node — process','https://nodejs.org/api/process.html'],['Node — util.parseArgs','https://nodejs.org/api/util.html#utilparseargsconfig'],['The Twelve-Factor App — config','https://12factor.net/config']],
+docs:[['Node (process)','https://nodejs.org/api/process.html'],['Node (util.parseArgs)','https://nodejs.org/api/util.html#utilparseargsconfig'],['The Twelve-Factor App (config)','https://12factor.net/config']],
 exs:[
 {title:'Read a port from the environment',diff:'medium',lang:'js',
 run:{call:'readPort',cases:[
@@ -361,7 +361,7 @@ needs a matching release.</p>
 pushes, <code>emit</code> loops, <code>off</code> filters, <code>once</code> removes after the first call.
 The exercise has you build exactly that, because having built one, no emitter behavior will surprise you
 again.</p>`,
-docs:[['Node — events','https://nodejs.org/api/events.html'],['Node — EventEmitter class','https://nodejs.org/api/events.html#class-eventemitter'],['Node — events best practices','https://nodejs.org/en/learn/asynchronous-work/the-nodejs-event-emitter']],
+docs:[['Node (events)','https://nodejs.org/api/events.html'],['Node (EventEmitter class)','https://nodejs.org/api/events.html#class-eventemitter'],['Node (events best practices)','https://nodejs.org/en/learn/asynchronous-work/the-nodejs-event-emitter']],
 ex:{title:'Build a tiny emitter',diff:'hard',lang:'js',
 run:{call:'runEvents',cases:[
  {name:'a listener fires on every emit',args:[[['on','greet','A'],['emit','greet','hi'],['emit','greet','yo']]],expect:['A:hi','A:yo']},

@@ -1,4 +1,4 @@
-# 10 — Debugging, gotchas & next steps
+# 10: Debugging, gotchas & next steps
 
 *The field guide you'll come back to. Concept-only. ~15 min.*
 
@@ -81,7 +81,7 @@ and keep the filter chain lean.
   Prometheus+Grafana; build a canary with weighted clusters; put TLS origination
   (`UpstreamTlsContext`) in front of an HTTPS backend.
 
-## Course recap — the one-paragraph mental model
+## Course recap: the one-paragraph mental model
 
 A **listener** binds a port and hands connections to a **filter chain**; for HTTP that chain's
 **HTTP Connection Manager** runs an ordered list of **HTTP filters** ending in the **router**,

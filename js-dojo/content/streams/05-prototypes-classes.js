@@ -45,7 +45,7 @@ function(){}──▶ Function.prototype  (call, apply, bind)
 // so arr.map is not on your array - it is one link up, shared by EVERY
 // array in the program. that is the memory win prototypes exist for.</div>
 
-<h4>Constructor functions — the old way, still worth reading</h4>
+<h4>Constructor functions: the old way, still worth reading</h4>
 <div class="codeSample" data-hl>function Dog(name) { this.name = name; }        // capitalised by convention
 Dog.prototype.speak = function () { return this.name + " says woof"; };
 
@@ -64,7 +64,7 @@ in the program, including every library's, and breaks the day the language adds 
 <p><b>Prototype pollution is a real vulnerability.</b> Merging untrusted JSON into an object can set
 <code>__proto__</code> and thereby add a property to <i>every</i> object in the program. Use
 <code>Object.create(null)</code> for lookup tables built from user input, or a <code>Map</code>.</p>`,
-docs:[['MDN — Inheritance and the prototype chain','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Inheritance_and_the_prototype_chain'],['MDN — Object.create','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create'],['OWASP — prototype pollution','https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/11-Client-side_Testing/13-Testing_for_Prototype_Pollution']],
+docs:[['MDN (Inheritance and the prototype chain)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Inheritance_and_the_prototype_chain'],['MDN (Object.create)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create'],['OWASP (prototype pollution)','https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/11-Client-side_Testing/13-Testing_for_Prototype_Pollution']],
 ex:{title:'Own or inherited?',diff:'easy',lang:'js',
 run:{call:'lookup',cases:[
  {name:'found as an own property',args:[['name'],['speak'],'name'],expect:'own'},
@@ -149,7 +149,7 @@ setTimeout(() =&gt; a.deposit(50), 100);      // the dot survives
 setTimeout(a.deposit.bind(a), 100);        // or bind it</div>
 <p>Class syntax makes this <i>louder</i> (you get a clear <code>TypeError</code> rather than a silent
 write to the global object), but the rule is unchanged: <code>this</code> comes from the call.</p>`,
-docs:[['MDN — Classes','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes'],['MDN — Private properties','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_properties'],['MDN — static','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/static']],
+docs:[['MDN (Classes)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes'],['MDN (Private properties)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_properties'],['MDN (static)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/static']],
 exs:[
 {title:'A class with private state',diff:'easy',lang:'js',
 run:{call:'runAccount',cases:[
@@ -318,7 +318,7 @@ come from you.</p>
 <p><code>class MyError extends Error</code> is the one everyone needs, and it has a detail: set
 <code>this.name</code> yourself, because the default is inherited and your subclass will otherwise
 identify itself as <code>"Error"</code> in logs. The errors stream covers this properly.</p>`,
-docs:[['MDN — extends','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/extends'],['MDN — super','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/super'],['MDN — instanceof','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof']],
+docs:[['MDN (extends)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/extends'],['MDN (super)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/super'],['MDN (instanceof)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof']],
 ex:{title:'Inherit or compose?',diff:'easy',lang:'js',
 run:{call:'decide',cases:[
  {name:'a genuine is-a with substitution holding',args:[true,true,false],expect:'inherit'},
@@ -396,7 +396,7 @@ values or entries. Say which:</p>
 for (const [k, v] of Object.entries(obj)) { }
 // or add [Symbol.iterator] to your own class when there IS one obvious
 // sequence, e.g. a Playlist iterating its tracks.</div>`,
-docs:[['MDN — Iteration protocols','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols'],['MDN — Symbol','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol'],['MDN — Generators','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*']],
+docs:[['MDN (Iteration protocols)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols'],['MDN (Symbol)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol'],['MDN (Generators)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*']],
 ex:{title:'Implement the iterable protocol',diff:'easy',lang:'js',
 run:{call:'collect',cases:[
  {name:'an ascending range',args:[1,3],expect:[1,2,3]},
@@ -489,7 +489,7 @@ over a file stream is the reading pattern the Node streams lesson builds on.</p>
 <p>A plain array is still right for a handful of items you already have. Generators earn their place when
 the sequence is <b>large, expensive, or endless</b> (lines of a file, pages of an API, retry delays,
 walks over a tree), because laziness means you only pay for what the consumer actually takes.</p>`,
-docs:[['MDN — function*','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*'],['MDN — for await...of','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of'],['MDN — yield*','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/yield*']],
+docs:[['MDN (function*)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*'],['MDN (for await...of)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of'],['MDN (yield*)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/yield*']],
 ex:{title:'Chunk a list with a generator',diff:'medium',lang:'js',
 run:{call:'chunks',cases:[
  {name:'splits into pairs with a remainder',args:[[1,2,3,4,5],2],expect:[[1,2],[3,4],[5]]},

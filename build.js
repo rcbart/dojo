@@ -2,7 +2,7 @@
 // Build dist/index.html (and a root devdojo.html copy) for DevDojo.
 //
 // Layout note: engine/ is the SHARED RUNTIME, used by every course in this
-// repo. src/ holds only what belongs to this course — the content-derived
+// repo. src/ holds only what belongs to this course, the content-derived
 // grading and quiz maps. Keeping those apart is what lets a course be lifted
 // into its own repository without forking the engine.
 const fs = require('fs');
@@ -23,6 +23,7 @@ const script = engine('sqlengine.js')
   + engine('glossary.js')   // must precede app.js: merges terms into KW at load
   + engine('grade.js')
   + engine('feedback.js')
+  + engine('icons.js')   // must precede app.js: ico() is called during render
   + engine('app.js')
   + data
   + engine('boot.js');

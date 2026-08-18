@@ -1,4 +1,4 @@
-# 0 — What Kubernetes is
+# 0: What Kubernetes is
 
 *No lab: the mental model that anchors everything. ~12 min read.*
 
@@ -35,7 +35,7 @@ same way.
 
 | Object | One-line job | Module |
 |--------|-------------|--------|
-| **Pod** | The smallest unit — one (or a few) containers running together | 1 |
+| **Pod** | The smallest unit, one (or a few) containers running together | 1 |
 | **Deployment** | Keeps N replicas of a Pod healthy; handles rollouts/rollbacks | 2 |
 | **Service** | A stable name + load balancing across a set of Pods | 3 |
 | **ConfigMap / Secret** | Inject configuration / credentials into Pods | 4 |
@@ -48,7 +48,7 @@ same way.
 
 Every one is just a `spec` you submit and a controller that reconciles it.
 
-## Labels and selectors — the glue
+## Labels and selectors: the glue
 
 Kubernetes objects find each other with **labels** (key/value tags) and **selectors** (queries over
 labels), not hard IDs. A Deployment labels its pods `app: web`; a Service selects `app: web` to know
@@ -61,7 +61,7 @@ which pods to send traffic to. This loose coupling is everywhere:
 Add a pod with that label and the Service instantly includes it; no wiring. **Labels + selectors**
 are how almost everything connects. Internalize this early.
 
-## Namespaces — dividing the cluster
+## Namespaces: dividing the cluster
 
 A **namespace** is a virtual sub-cluster for organizing objects (by team, environment, or app).
 `default` is where your stuff goes unless you say otherwise; `kube-system` holds Kubernetes' own
@@ -110,4 +110,4 @@ Every module answers one of these.
 
 ---
 
-**Next:** [1 — Pods & kubectl →](./01-pods-and-kubectl.md)
+**Next:** [1: Pods & kubectl →](./01-pods-and-kubectl.md)

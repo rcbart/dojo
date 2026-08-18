@@ -1,4 +1,4 @@
-# Primer — What are containers? (in plain English)
+# Primer: What are containers? (in plain English)
 
 *The idea everything else rests on. No jargon assumed. ~10 min.*
 
@@ -87,4 +87,4 @@ it. Master the lunchbox, then learn to manage a whole warehouse of them.
 
 ---
 
-**Next:** [Primer — Core concepts & glossary (keep it open as you go) →](./primer-core-concepts.md)
+**Next:** [Primer: Core concepts & glossary (keep it open as you go) →](./primer-core-concepts.md)

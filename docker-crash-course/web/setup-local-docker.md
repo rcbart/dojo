@@ -1,4 +1,4 @@
-# Setup — install Docker & run your first container
+# Setup: install Docker & run your first container
 
 *Do this once. In ~10 minutes you'll have Docker installed and a real container running. Every step
 spelled out for macOS, Windows, and Linux. No prior experience assumed.*
@@ -10,7 +10,7 @@ spelled out for macOS, Windows, and Linux. No prior experience assumed.*
 
 ---
 
-## Step 1 — Install Docker
+## Step 1: Install Docker
 
 **macOS**
 : Download **Docker Desktop** from <https://www.docker.com/products/docker-desktop/>, open the
@@ -35,7 +35,7 @@ sudo usermod -aG docker $USER      # run docker without sudo — log out/in afte
 > store the default). Everything in this course is stable across recent versions; commands are
 > unchanged. Check `docker --version`.
 
-## Step 2 — Verify it works
+## Step 2: Verify it works
 
 ```bash
 docker --version                 # prints the version
@@ -45,7 +45,7 @@ docker run --rm hello-world      # pulls a tiny image and runs it
 If you see "Hello from Docker!", the whole pipeline works: Docker pulled an **image** from a
 registry, created a **container** from it, ran it, and (thanks to `--rm`) cleaned it up.
 
-## Step 3 — Run something real
+## Step 3: Run something real
 
 Let's run a web server and actually visit it:
 
@@ -68,7 +68,7 @@ docker ps                        # your running container, its ports
 docker logs web                  # the server's output
 ```
 
-## Step 4 — Look inside the running container
+## Step 4: Look inside the running container
 
 ```bash
 docker exec -it web bash         # open a shell INSIDE the container
@@ -78,7 +78,7 @@ docker exec -it web bash         # open a shell INSIDE the container
 `exec` runs a command in an existing container; `-it` makes it interactive. This is how you poke
 around a running container to debug it.
 
-## Step 5 — Stop and clean up
+## Step 5: Stop and clean up
 
 ```bash
 docker stop web                  # stop the container
@@ -119,4 +119,4 @@ terminal.
 
 ---
 
-**Next:** [Primer — What are containers? →](./primer-what-are-containers.md)
+**Next:** [Primer: What are containers? →](./primer-what-are-containers.md)

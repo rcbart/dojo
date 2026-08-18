@@ -1,4 +1,4 @@
-# 1 — Architecture: istiod + the proxies
+# 1: Architecture: istiod + the proxies
 
 *No lab; this is the map. Once you can trace how your YAML becomes proxy behavior, every later
 module reads itself. ~15 min.*
@@ -26,7 +26,7 @@ You apply Istio objects to Kubernetes. **istiod** watches them, computes the rig
 configuration, and streams it (plus TLS certificates) to every proxy over **xDS**. The proxies,
 the **data plane**, carry the actual traffic.
 
-## istiod — the control plane, up close
+## istiod: the control plane, up close
 
 `istiod` is a single component that bundles three jobs (they used to be separate: Pilot, Citadel,
 Galley):
@@ -43,7 +43,7 @@ Galley):
 
 One process, three hats. In production you run a few replicas of it for high availability.
 
-## The data plane — Envoy, in two roles
+## The data plane: Envoy, in two roles
 
 Same Envoy binary, two placements:
 
@@ -120,4 +120,4 @@ You'll meet the top five constantly. Everything else is refinement.
 
 ---
 
-**Next:** [2 — Lab: install & inspect the mesh →](./02-lab-install-and-inject.md)
+**Next:** [2: Lab: install & inspect the mesh →](./02-lab-install-and-inject.md)

@@ -1,4 +1,4 @@
-# 2 — Lab: install & inspect the mesh
+# 2: Lab: install & inspect the mesh
 
 *Hands-on. You'll confirm Istio is running, see a sidecar get injected, and use `istioctl` to look
 at the Envoy config istiod generated. ~20 min. Assumes you finished the Setup page.*
@@ -125,4 +125,4 @@ You're looking at the exact Envoy stats from the Envoy course, now auto-generate
 
 ---
 
-**Next:** [3 — Ingress: Gateway & VirtualService →](./03-traffic-gateway-virtualservice.md)
+**Next:** [3: Ingress: Gateway & VirtualService →](./03-traffic-gateway-virtualservice.md)

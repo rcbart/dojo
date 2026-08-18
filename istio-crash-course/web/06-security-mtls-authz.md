@@ -1,4 +1,4 @@
-# 6 — Security: mTLS & authorization
+# 6: Security: mTLS & authorization
 
 *The reason many teams adopt Istio: encryption and access control between services, with no app
 changes. Concepts + a lab. ~25 min. Uses Bookinfo.*
@@ -14,7 +14,7 @@ Istio security has two layers, and they answer different questions:
 
 Encrypt first (mTLS), then decide who may do what (authz).
 
-## mTLS — automatic mutual encryption
+## mTLS: automatic mutual encryption
 
 "Mutual TLS" means **both** ends present a certificate and verify the other. Regular HTTPS only
 authenticates the server; mTLS authenticates the client too. In Istio, every workload already has a
@@ -41,7 +41,7 @@ spec:
 Scope options: **mesh-wide** (put it in `istio-system` named `default`), **per-namespace** (as
 above), or **per-workload** (add a `selector`). Narrow scopes override broader ones.
 
-## AuthorizationPolicy — who may call whom
+## AuthorizationPolicy: who may call whom
 
 Once you know *who* the caller is (via mTLS identity), you can allow/deny. Default with no policy:
 everything is allowed. Add an **ALLOW** policy and only listed traffic is permitted to that
@@ -73,7 +73,7 @@ mTLS.
 
 ## Lab: enforce mTLS, then lock down access
 
-### Step 1 — turn on STRICT mTLS for the namespace
+### Step 1: turn on STRICT mTLS for the namespace
 
 ```bash
 kubectl apply -f - <<'EOF'
@@ -96,14 +96,14 @@ kubectl -n nomesh run curl --image=curlimages/curl -it --rm --restart=Never -- \
 kubectl delete ns nomesh
 ```
 
-### Step 2 — verify traffic is actually encrypted
+### Step 2: verify traffic is actually encrypted
 
 ```bash
 # Kiali shows a padlock on mTLS edges; from the CLI, check the mode Istio computed:
 istioctl proxy-config secret "$(kubectl get pod -l app=productpage -o jsonpath='{.items[0].metadata.name}')" | head
 ```
 
-### Step 3 — add an authorization policy
+### Step 3: add an authorization policy
 
 Deny everything to `reviews`, then allow only `productpage`:
 
@@ -162,4 +162,4 @@ kubectl delete peerauthentication default -n default    # back to PERMISSIVE def
 
 ---
 
-**Next:** [6b — Request authentication: JWTs at the mesh →](./12-request-auth-jwt.md)
+**Next:** [6b: Request authentication: JWTs at the mesh →](./12-request-auth-jwt.md)

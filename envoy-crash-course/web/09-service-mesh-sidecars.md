@@ -1,4 +1,4 @@
-# 09 — Service mesh & sidecars
+# 09: Service mesh & sidecars
 
 *The largest-scale way Envoy is deployed. Concepts + an optional hands-on with Istio. ~25 min.
 The lab needs the Module 08 kind cluster + `istioctl` (optional; the concepts stand alone).*
@@ -115,4 +115,4 @@ mesh when the cross-cutting needs justify it. Ambient mode exists precisely to l
 
 ---
 
-**Next:** [10 — Debugging, gotchas & next steps →](./10-debugging-gotchas-next-steps.md)
+**Next:** [10: Debugging, gotchas & next steps →](./10-debugging-gotchas-next-steps.md)

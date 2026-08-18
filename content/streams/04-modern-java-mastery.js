@@ -38,7 +38,7 @@ give you two views of one variable that silently disagree. Fields are captured d
 when a lambda outlives the call that created it. And a checked exception cannot escape a lambda whose
 interface does not declare one, which is why pipelines calling IO-throwing code fill up with wrapper
 noise.</p>`,
-docs:[['Lambda Expressions — dev.java','https://dev.java/learn/lambdas/'],['java.util.function — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/package-summary.html']],
+docs:[['Lambda Expressions, dev.java','https://dev.java/learn/lambdas/'],['java.util.function, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/package-summary.html']],
 ex:{title:'Think in functions',
 prompt:`Write class <code>Funcs</code> with three <code>static</code> fields: <code>Predicate&lt;String&gt; NON_BLANK</code> (true when the string is not blank), <code>Function&lt;Integer,Integer&gt; SQUARE</code> (returns its input times itself: 5 → 25), and <code>BinaryOperator&lt;Integer&gt; MAX</code> (returns the larger of two ints; use a lambda, you may call Math.max inside). Import from <code>java.util.function</code>.`,
 starter:`import java.util.function.*;
@@ -98,7 +98,7 @@ arguments, but as a <code>Function&lt;Integer,List&gt;</code> it resolves to the
 the compiler picks the overload from the target type, which is elegant and occasionally surprising.
 And a bound reference on a null receiver throws immediately at creation, not later at use, which is
 usually the more helpful moment to fail.</p>`,
-docs:[['Method References — dev.java','https://dev.java/learn/lambdas/method-references/'],['Method References — Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html']],
+docs:[['Method References, dev.java','https://dev.java/learn/lambdas/method-references/'],['Method References, Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html']],
 ex:{title:'Refactor to references',
 prompt:`Write class <code>Refs</code> with static fields using <b>method references only</b> (no <code>-&gt;</code> anywhere): <code>Function&lt;String,Integer&gt; PARSE</code> (parses decimal text to its int value: "7" → 7), <code>Function&lt;String,String&gt; UPPER</code> (returns the string uppercased), <code>Supplier&lt;java.util.ArrayList&lt;String&gt;&gt; NEW_LIST</code> (returns a <b>new empty list on every call</b>), and <code>Consumer&lt;Object&gt; PRINT</code> (prints its argument to stdout).`,
 starter:`import java.util.function.*;
@@ -177,7 +177,7 @@ second abstract method, so nobody breaks every caller by accident.</p>
 <p>Three or four combinators read beautifully. Twelve, with nested <code>compose</code> calls, read worse
 than the imperative version and debug far worse: a stack trace through composed lambdas names none of the
 steps. Compose when the pieces are meaningful on their own; write a method when they are not.</p>`,
-docs:[['Combining lambdas — dev.java','https://dev.java/learn/lambdas/combining-chaining-composing/'],['Function.andThen / compose — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html']],
+docs:[['Combining lambdas, dev.java','https://dev.java/learn/lambdas/combining-chaining-composing/'],['Function.andThen / compose, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html']],
 ex:{title:'Compose and invent',
 prompt:`(1) In class <code>Combo</code>, define <code>Function&lt;Integer,Integer&gt; PLUS3</code> (adds 3) and <code>TIMES2</code> (doubles) as lambdas, and <code>PIPELINE</code> as PLUS3 <b>andThen</b> TIMES2: PLUS3 runs first, then TIMES2, so <code>PIPELINE.apply(1) == 8</code>. (2) Define your own <code>@FunctionalInterface Validator&lt;T&gt;</code> with abstract <code>boolean check(T t)</code> and a <b>default method</b> <code>Validator&lt;T&gt; and(Validator&lt;T&gt; other)</code> returning a validator that passes only when <b>both</b> this and other pass. (3) In Combo, define <code>Validator&lt;String&gt; STRONG</code> that requires (length ≥ 8) <b>and</b> (contains a digit, use a lambda with <code>chars().anyMatch(Character::isDigit)</code>).`,
 starter:`import java.util.function.*;
@@ -255,7 +255,7 @@ static &lt;T&gt; Supplier&lt;T&gt; memoize(Supplier&lt;T&gt; expensive) {
 <h4>Memoization, and its two traps</h4>
 <p>Wrapping a pure function in a cache is the same technique the DP stream calls memoization, and the same caveats apply with a Java accent. First, <b>the function must be pure</b>: cache a function that reads a database or a clock and you have cached a moment, not a value. Second, <b>an unbounded cache is a memory leak with good intentions</b>: <code>computeIfAbsent</code> on a static map keyed by user input grows forever. Use a bounded cache with an eviction policy (Caffeine, Guava) for anything whose key space you do not control.</p>
 <p>One Java-specific hazard worth knowing: recursively calling <code>computeIfAbsent</code> on a <code>HashMap</code> from inside its own mapping function can corrupt the map or throw <code>ConcurrentModificationException</code>, because you are structurally modifying it mid-computation. Compute the value first, then put it.</p>`,
-docs:[['Writing lambdas — dev.java','https://dev.java/learn/lambdas/writing-lambdas/'],['Currying in Java — Baeldung','https://www.baeldung.com/java-currying']],
+docs:[['Writing lambdas, dev.java','https://dev.java/learn/lambdas/writing-lambdas/'],['Currying in Java, Baeldung','https://www.baeldung.com/java-currying']],
 ex:{title:'Function factory',
 prompt:`In class <code>Higher</code>: (1) define <code>static Function&lt;Integer, Function&lt;Integer, Integer&gt;&gt; MULTIPLIER = a -&gt; b -&gt; a * b</code> (curried multiply). (2) Write generic <code>static &lt;T, R&gt; Function&lt;T, R&gt; withDefault(Function&lt;T, R&gt; f, R fallback)</code> returning a function that calls f but returns fallback if f throws <b>any</b> RuntimeException. (3) Write <code>static Supplier&lt;String&gt; once(Supplier&lt;String&gt; s)</code> that calls s at most once and caches the result (a simple non-null field check is fine).`,
 starter:`import java.util.function.*;
@@ -264,7 +264,7 @@ public class Higher {
     // (1) curried multiply
     static Function<Integer, Function<Integer, Integer>> MULTIPLIER = null;
 
-    // (2) safety wrapper — higher-order function
+    // (2) safety wrapper, higher-order function
     static <T, R> Function<T, R> withDefault(Function<T, R> f, R fallback) {
         return null;
     }
@@ -325,7 +325,7 @@ public class Higher {
 }</div>
 <p><b>The collision rule</b>, since a class can implement many interfaces: if two interfaces provide the same default method, the class <b>must</b> override it (the compiler forces the tie-break), and inside that override it can delegate to a chosen parent with the special syntax <code>InterfaceName.super.method()</code>. And if a superclass provides the method, the <b>class always wins</b> over any interface default. Memorize as: class beats interface, and ties among interfaces are yours to break.</p>
 <p>Design guidance: default methods are for <i>behavior derivable from the contract</i> (sendUrgent is just send + decoration), not for sneaking state or primary behavior into what should be a class. Interfaces still hold no instance fields; that boundary is what keeps them contracts.</p>`,
-docs:[['Default methods — Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html'],['Private interface methods — JEP 213','https://openjdk.org/jeps/213'],['Evolving interfaces — dev.java','https://dev.java/learn/interfaces/']],
+docs:[['Default methods (Oracle)','https://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html'],['Private interface methods (JEP 213)','https://openjdk.org/jeps/213'],['Evolving interfaces (dev.java)','https://dev.java/learn/interfaces/']],
 ex:{title:'Evolve an interface',
 prompt:`Write interface <code>Logger</code>: (1) abstract <code>void log(String msg)</code>; (2) a <b>default</b> method <code>void logAll(java.util.List&lt;String&gt; msgs)</code> that loops the list calling <code>log</code> on each (enhanced for); (3) a <b>private</b> method <code>String stamp(String msg)</code> returning <code>"[LOG] " + msg</code>; (4) a <b>default</b> method <code>void logStamped(String msg)</code> calling <code>log(stamp(msg))</code>; (5) a <b>static</b> factory <code>Logger console()</code> returning the lambda <code>msg -&gt; System.out.println(msg)</code>.`,
 starter:`import java.util.List;
@@ -358,7 +358,7 @@ interface Logger {
         return msg -> System.out.println(msg);
     }
 }`,
-tests:[{d:'Abstract contract method log(String)',re:'void\\s+log\\s*\\(\\s*String\\s+\\w+\\s*\\)\\s*;'},{d:'default logAll loops with enhanced for',re:'default\\s+void\\s+logAll[\\s\\S]*?for\\s*\\(\\s*String\\s+\\w+\\s*:\\s*msgs\\s*\\)'},{d:'private helper stamp builds the prefix',re:'private\\s+String\\s+stamp[\\s\\S]*?"\\[LOG\\] "\\s*\\+\\s*msg'},{d:'default logStamped delegates through the helper',re:'default\\s+void\\s+logStamped[\\s\\S]*?log\\s*\\(\\s*stamp\\s*\\(\\s*msg\\s*\\)\\s*\\)'},{d:'static factory returns a lambda',re:'static\\s+Logger\\s+console[\\s\\S]*?return\\s+\\w+\\s*->\\s*System\\.out\\.println'},{d:'No instance fields — interfaces stay stateless',re:'(private|protected)\\s+(?!String\\s+stamp)\\w+\\s+\\w+\\s*;',not:true}],
+tests:[{d:'Abstract contract method log(String)',re:'void\\s+log\\s*\\(\\s*String\\s+\\w+\\s*\\)\\s*;'},{d:'default logAll loops with enhanced for',re:'default\\s+void\\s+logAll[\\s\\S]*?for\\s*\\(\\s*String\\s+\\w+\\s*:\\s*msgs\\s*\\)'},{d:'private helper stamp builds the prefix',re:'private\\s+String\\s+stamp[\\s\\S]*?"\\[LOG\\] "\\s*\\+\\s*msg'},{d:'default logStamped delegates through the helper',re:'default\\s+void\\s+logStamped[\\s\\S]*?log\\s*\\(\\s*stamp\\s*\\(\\s*msg\\s*\\)\\s*\\)'},{d:'static factory returns a lambda',re:'static\\s+Logger\\s+console[\\s\\S]*?return\\s+\\w+\\s*->\\s*System\\.out\\.println'},{d:'No instance fields, interfaces stay stateless',re:'(private|protected)\\s+(?!String\\s+stamp)\\w+\\s+\\w+\\s*;',not:true}],
 behavior:`1. Any class (or lambda) implementing just log() gets logAll and logStamped for free; that is interface evolution in miniature. 2. Logger.console().logStamped("hi") prints [LOG] hi; the private stamp ran inside the default method. 3. stamp is not callable from outside the interface (private). 4. console() is called on the interface name, not on an instance. 5. Logger qualifies as a functional interface (one abstract method), which is why the lambda in console() works.`,
 hints:['Only the abstract method ends in a semicolon; default/private/static ones have bodies.','Because log is the single abstract method, a lambda IS a Logger; the factory returns msg -> ... directly.','If two interfaces both gave a class logStamped, the class must override and may pick: Logger.super.logStamped(msg).']}},
 {id:'mod3',title:'Streams API: filter, map, collect',body:`
@@ -390,7 +390,7 @@ String joined = names.stream().collect(Collectors.joining(", "));</div>
 <h4>Where streams are the wrong tool</h4>
 <p>Three cases, and knowing them is what separates using streams from over-using them. A plain <code>for</code> loop is clearer when you need the index, when you must break out early with complex conditions, or when the body mutates several things. Checked exceptions do not fit lambdas, so a pipeline calling code that throws <code>IOException</code> turns into wrapper noise; a loop stays readable. And <code>parallelStream()</code> is not a free speed-up: it costs a fork/join split and merge, it is wrong for anything order-dependent or contended, and it is a genuine improvement only for large, CPU-bound, side-effect-free work you have measured.</p>
 <p>The unbreakable rule: <b>no side effects in a pipeline</b>. A <code>forEach</code> that adds to an external list is a loop wearing a costume, and it is broken under <code>parallelStream</code>, quietly, with results that differ between runs.</p>`,
-docs:[['The Stream API — dev.java','https://dev.java/learn/api/streams/'],['java.util.stream — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html']],
+docs:[['The Stream API, dev.java','https://dev.java/learn/api/streams/'],['java.util.stream, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html']],
 ex:{title:'Pipeline practice',
 prompt:`Write <code>Pipeline</code> with <code>static List&lt;String&gt; activeEmails(List&lt;User&gt; users)</code> that returns the <b>lowercased emails</b> of users that are <b>active</b>, <b>sorted alphabetically</b>: one stream pipeline, no loops. The <code>User</code> record is provided.`,
 starter:`import java.util.*;
@@ -482,7 +482,7 @@ count, sum, min, max and average in a single pass.</p>
 <p><b>One trap:</b> <code>average()</code> returns an <code>OptionalDouble</code>, not a
 <code>double</code>, because an empty stream has no average. <code>orElse(0)</code> is the usual
 answer, but be deliberate: for an empty payroll, zero and "no data" mean quite different things.</p>`,
-docs:[['Reducing & collecting — dev.java','https://dev.java/learn/api/streams/reducing/'],['Collectors — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Collectors.html']],
+docs:[['Reducing & collecting, dev.java','https://dev.java/learn/api/streams/reducing/'],['Collectors, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Collectors.html']],
 ex:{title:'Order analytics',
 prompt:`Given <code>record Order(String customer, List&lt;String&gt; items, double total)</code>, write <code>Analytics</code> with: <code>static Map&lt;String, Double&gt; revenueByCustomer(List&lt;Order&gt; orders)</code> using <code>groupingBy</code> + <code>summingDouble</code>, and <code>static List&lt;String&gt; allItems(List&lt;Order&gt; orders)</code> returning every item across all orders, <b>distinct</b>, via <code>flatMap</code>.`,
 starter:`import java.util.*;
@@ -541,7 +541,7 @@ public class Analytics {
     }
 }</div>
 <p>Why immutability earns its keep: immutable objects are free to share between threads (no locks; the Concurrency stream cashes this in), safe as Map keys, trivially cacheable, and above all <i>legible</i>: a value that cannot change is a value you never re-check. The working default in modern Java: collections are immutable unless a mutation is the point, and every mutable input crossing a class boundary gets copied.</p>`,
-docs:[['List.of & friends — Javadoc','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html#unmodifiable'],['JEP 269: convenience factories','https://openjdk.org/jeps/269'],['Immutability — dev.java','https://dev.java/learn/records/']],
+docs:[['List.of & friends, Javadoc','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html#unmodifiable'],['JEP 269: convenience factories','https://openjdk.org/jeps/269'],['Immutability, dev.java','https://dev.java/learn/records/']],
 ex:{title:'Freeze the boundaries',
 prompt:`Write class <code>Roster</code>: (1) a <code>private final List&lt;String&gt; players</code>; (2) constructor <code>Roster(List&lt;String&gt; players)</code> storing a <b>defensive immutable copy</b> via <code>List.copyOf</code>; (3) <code>List&lt;String&gt; players()</code> returning the field directly (already safe); (4) a <b>static</b> method <code>Roster demo()</code> returning <code>new Roster(List.of("Ada", "Linus", "Grace"))</code>; (5) <code>Roster with(String extra)</code>, the immutable update pattern: build a <code>new java.util.ArrayList&lt;&gt;(players)</code>, add <code>extra</code>, return a <b>new Roster</b> from it (the original is never touched).`,
 starter:`import java.util.ArrayList;
@@ -576,7 +576,7 @@ public class Roster {
         return new Roster(next);
     }
 }`,
-tests:[{d:'Field is private final',re:'private\\s+final\\s+List<String>\\s+players'},{d:'Constructor takes a defensive copy with List.copyOf',re:'this\\.players\\s*=\\s*List\\.copyOf\\s*\\(\\s*players\\s*\\)'},{d:'demo() builds from the List.of factory',re:'new\\s+Roster\\s*\\(\\s*List\\.of\\s*\\(\\s*"Ada"\\s*,\\s*"Linus"\\s*,\\s*"Grace"\\s*\\)\\s*\\)'},{d:'with() copies into a fresh ArrayList before adding',re:'new\\s+ArrayList<>\\s*\\(\\s*players\\s*\\)[\\s\\S]*?\\.add\\s*\\(\\s*extra\\s*\\)'},{d:'with() returns a NEW Roster — immutable update',re:'return\\s+new\\s+Roster\\s*\\(\\s*\\w+\\s*\\)'},{d:'getter hands out the frozen list, no re-copy needed',re:'List<String>\\s+players\\s*\\(\\s*\\)\\s*\\{\\s*return\\s+players\\s*;'}],
+tests:[{d:'Field is private final',re:'private\\s+final\\s+List<String>\\s+players'},{d:'Constructor takes a defensive copy with List.copyOf',re:'this\\.players\\s*=\\s*List\\.copyOf\\s*\\(\\s*players\\s*\\)'},{d:'demo() builds from the List.of factory',re:'new\\s+Roster\\s*\\(\\s*List\\.of\\s*\\(\\s*"Ada"\\s*,\\s*"Linus"\\s*,\\s*"Grace"\\s*\\)\\s*\\)'},{d:'with() copies into a fresh ArrayList before adding',re:'new\\s+ArrayList<>\\s*\\(\\s*players\\s*\\)[\\s\\S]*?\\.add\\s*\\(\\s*extra\\s*\\)'},{d:'with() returns a NEW Roster, immutable update',re:'return\\s+new\\s+Roster\\s*\\(\\s*\\w+\\s*\\)'},{d:'getter hands out the frozen list, no re-copy needed',re:'List<String>\\s+players\\s*\\(\\s*\\)\\s*\\{\\s*return\\s+players\\s*;'}],
 behavior:`1. Roster r = demo(); r.players().add("Mallory") throws UnsupportedOperationException; the boundary is frozen. 2. Mutating the list a caller passed to the constructor afterwards does NOT change the roster; copyOf snapshotted it. 3. r.with("Karen") returns a roster of 4; r itself still has 3; updates create values instead of editing state. 4. List.of(...) with a null player would throw NullPointerException at creation: bad data dies at the door, not downstream.`,
 hints:['The constructor line is the whole defensive-copy idiom: this.players = List.copyOf(players).','with() briefly uses a mutable ArrayList as scaffolding, then re-freezes by passing through the constructor.','This copy-add-refreeze shape is exactly how records with list components handle updates too.']}},
 {id:'mod5',title:'Modern iteration: enhanced for, forEach, Iterable',body:`
@@ -634,7 +634,7 @@ bridges the two.</p>
 <code>entrySet()</code> gives you both at once, and <code>map.forEach((k, v) -&gt; ...)</code> is cleaner
 still. Where order matters, remember <code>HashMap</code> gives you none; that is
 <code>LinkedHashMap</code> (insertion order) or <code>TreeMap</code> (sorted).</p>`,
-docs:[['The for statement — Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/for.html'],['Iterable — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html']],
+docs:[['The for statement, Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/for.html'],['Iterable, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html']],
 ex:{title:'Make it Iterable',
 prompt:`Write class <code>Countdown implements Iterable&lt;Integer&gt;</code>: constructor takes <code>int from</code>, and iteration yields <code>from, from-1, … 1</code>. Implement <code>iterator()</code> returning an anonymous or inner <code>Iterator&lt;Integer&gt;</code> with proper <code>hasNext()</code>/<code>next()</code>. Then <code>static int sum(Countdown c)</code> must total the values using an <b>enhanced for</b> loop.`,
 starter:`import java.util.Iterator;
@@ -700,7 +700,7 @@ String sql = """
         ORDER BY title
         """;</div>
 <p>No <code>\\n</code> escapes, no <code>+</code> concatenation ladders, and unescaped <code>"</code> inside, which is why JSON, SQL and HTML snippets are their natural habitat. The clever part is <b>incidental indentation</b>: the compiler measures the whitespace common to all lines (set by the closing <code>"""</code>'s position) and strips it, so your source stays indented but the string isn't. Two escapes exist just for text blocks: a trailing <code>\\</code> joins lines (no newline emitted), and <code>\\s</code> pins trailing spaces that would otherwise be stripped.</p>`,
-docs:[['Varargs — Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/arguments.html#varargs'],['Text blocks — JEP 378','https://openjdk.org/jeps/378'],['Text blocks programmer’s guide','https://docs.oracle.com/en/java/javase/21/text-blocks/index.html']],
+docs:[['Varargs, Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/arguments.html#varargs'],['Text blocks, JEP 378','https://openjdk.org/jeps/378'],['Text blocks programmer’s guide','https://docs.oracle.com/en/java/javase/21/text-blocks/index.html']],
 ex:{title:'Pack and unpack',
 prompt:`Write class <code>Report</code>: (1) <code>static int sum(int... nums)</code>: enhanced for over the varargs array, accumulate, return (sum() with no args must give 0); (2) <code>static String join(String separator, String... parts)</code>: a <code>StringBuilder</code> loop over the parts appending the separator <b>between</b> elements (classic index check <code>i &gt; 0</code>), separator first parameter because <b>varargs must come last</b>; (3) <code>static String template()</code>: return a <b>text block</b> (triple-quoted) containing exactly the two lines <code>Report for: %s</code> and <code>Total: %d</code>.`,
 starter:`public class Report {
@@ -768,7 +768,7 @@ String label = switch (shape) {          // switch expression + patterns
 
 <h4>Pattern matching, and why exhaustiveness matters</h4>
 <p><code>instanceof</code> with a binding removes the cast, and a switch over a <b>sealed</b> interface removes the default branch, which is the valuable part. When the compiler knows every permitted subtype, adding a new one turns every switch that does not handle it into a compile error, so the compiler finds the places you must update instead of you finding them in production. That combination (sealed types, records as the cases, switch with patterns) is how Java expresses a closed set of alternatives, and it is worth reaching for whenever a domain has a fixed list of shapes.</p>`,
-docs:[['Records — dev.java','https://dev.java/learn/records/'],['Pattern matching — dev.java','https://dev.java/learn/pattern-matching/'],['Optional — dev.java','https://dev.java/learn/api/streams/optionals/']],
+docs:[['Records (dev.java)','https://dev.java/learn/records/'],['Pattern matching (dev.java)','https://dev.java/learn/pattern-matching/'],['Optional (dev.java)','https://dev.java/learn/api/streams/optionals/']],
 ex:{title:'Modern trio',
 prompt:`(1) Define <code>record Book(String title, String author, int year)</code>. (2) Write <code>Library</code> with a private <code>List&lt;Book&gt; books</code>, method <code>Optional&lt;Book&gt; findByTitle(String t)</code> using a stream + <code>findFirst()</code>, and (3) <code>String describe(Object o)</code> using a <b>switch expression with pattern matching</b>: a <code>Book b</code> → <code>b.title() + " (" + b.year() + ")"</code>, a <code>String s</code> → <code>"text: " + s</code>, anything else → <code>"unknown"</code>.`,
 starter:`import java.util.*;
@@ -869,7 +869,7 @@ the states of a workflow, the result of a parse. Do <b>not</b> use it where you 
 extend your abstraction; that is what an ordinary interface is for, and sealing it is a deliberate
 statement that they may not. The choice between an open interface and a sealed one is a statement about who
 owns the set of cases, and it is worth making on purpose.`,
-docs:[['Sealed classes — JEP 409','https://openjdk.org/jeps/409'],['Record patterns — JEP 440','https://openjdk.org/jeps/440'],['Pattern matching for switch — JEP 441','https://openjdk.org/jeps/441']],
+docs:[['Sealed classes (JEP 409)','https://openjdk.org/jeps/409'],['Record patterns (JEP 440)','https://openjdk.org/jeps/440'],['Pattern matching for switch (JEP 441)','https://openjdk.org/jeps/441']],
 ex:{title:'An exhaustive payment switch',
 prompt:`Model payments as a <code>sealed interface Payment permits Card, Cash, Transfer</code> with three <b>records</b>: <code>Card(String last4, double amount)</code>, <code>Cash(double amount)</code>, <code>Transfer(String iban, double amount)</code>. Write <code>static String receipt(Payment p)</code> as a pattern-matching <code>switch</code> using <b>record patterns</b>, with a <b>guarded</b> case first: any Card <code>when</code> amount &gt; 1000 returns <code>"card (verified)"</code>; otherwise Card → <code>"card ****"+last4</code>, Cash → <code>"cash"</code>, Transfer → <code>"transfer to "+iban</code>. No <code>default</code> branch; the sealed hierarchy makes it exhaustive.`,
 starter:`sealed interface Payment permits Card, Cash, Transfer {}

@@ -1,4 +1,4 @@
-# 10 — Debugging, gotchas & next steps
+# 10: Debugging, gotchas & next steps
 
 *The field guide you'll come back to. Concept-only. ~15 min.*
 
@@ -8,7 +8,7 @@ You now know the whole model: istiod programs Envoy proxies (sidecar or ambient)
 VirtualService/DestinationRule/PeerAuthentication/AuthorizationPolicy YAML, giving you traffic
 control, mTLS, and observability. This module is the practical stuff that saves hours.
 
-## The debugging toolkit — four commands
+## The debugging toolkit: four commands
 
 Almost every Istio problem is diagnosed with these:
 
@@ -85,7 +85,7 @@ Ninety percent of issues fall out by step 4.
   plus per-service AuthorizationPolicies; migrate a namespace from sidecar to ambient; wire an
   external service in with a `ServiceEntry`.
 
-## Course recap — the one-paragraph mental model
+## Course recap: the one-paragraph mental model
 
 **Istio** is a service mesh: **istiod** (the control plane) watches your Kubernetes objects and
 streams **Envoy** config + identity certs to a fleet of proxies (the data plane) over **xDS**. Those

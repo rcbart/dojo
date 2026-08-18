@@ -35,7 +35,7 @@ try (Socket s = new Socket("localhost", 7007);
 <h4>Closing, and the half-open connection</h4>
 <p><code>readLine()</code> returning <code>null</code> is the peer's orderly close arriving as end-of-stream. That is information, not an error. The harder case is the connection that is gone without anyone saying so (a crashed peer or a dropped network), where a read simply blocks. The defence is a timeout: <code>socket.setSoTimeout(ms)</code> turns an indefinite block into a <code>SocketTimeoutException</code> you can act on. A socket without a timeout is a thread you may never get back, which is exactly the failure the resilience lessons call a resource leak under partial failure.</p>
 <p>Two more: <code>TIME_WAIT</code> keeps a closed port unusable for a couple of minutes, which is what <code>setReuseAddress(true)</code> is for during development restarts; and Nagle's algorithm delays small writes to improve throughput, which <code>setTcpNoDelay(true)</code> disables when latency matters more.</p>`,
-docs:[['Custom networking trail — Oracle','https://docs.oracle.com/javase/tutorial/networking/sockets/index.html'],['ServerSocket — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/net/ServerSocket.html']],
+docs:[['Custom networking trail, Oracle','https://docs.oracle.com/javase/tutorial/networking/sockets/index.html'],['ServerSocket, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/net/ServerSocket.html']],
 ex:{title:'Echo, once',
 prompt:`Write <code>EchoOnce</code> with <code>static void serveOne(int port) throws java.io.IOException</code>: open a <code>ServerSocket</code> on the port (try-with-resources), <code>accept()</code> ONE client, wrap its streams in a <code>BufferedReader</code> and an auto-flushing <code>PrintWriter</code>, read lines until <code>readLine()</code> returns null, echoing each back prefixed <code>"echo: "</code>. All resources in try-with-resources.`,
 starter:`import java.io.*;
@@ -101,7 +101,7 @@ static void handle(Socket client) {
 <li><b>Pinning.</b> A virtual thread blocked inside a <code>synchronized</code> block cannot unmount and holds its carrier thread hostage. Prefer <code>ReentrantLock</code> around blocking sections in code that runs on virtual threads.</li>
 </ul>
 <p>Architecturally this is what a servlet container does for you: accept, dispatch, isolate, bound. Knowing the shape is what lets you read <code>server.tomcat.threads.max</code> as a capacity decision rather than a magic number.</p>`,
-docs:[['Virtual threads — JEP 444','https://openjdk.org/jeps/444'],['Writing servers — Oracle trail','https://docs.oracle.com/javase/tutorial/networking/sockets/clientServer.html']],
+docs:[['Virtual threads, JEP 444','https://openjdk.org/jeps/444'],['Writing servers, Oracle trail','https://docs.oracle.com/javase/tutorial/networking/sockets/clientServer.html']],
 ex:{title:'Fan out the connections',
 prompt:`Write <code>EchoServer</code> with <code>static void serve(java.net.ServerSocket server) throws java.io.IOException</code>: open <code>Executors.newVirtualThreadPerTaskExecutor()</code> in try-with-resources, loop <code>while (true)</code> accepting clients, submitting each to the executor calling a <code>private static void handle(java.net.Socket client)</code> that echoes lines (prefix <code>"echo: "</code>) and <b>catches IOException inside itself</b> so one bad client never kills the loop.`,
 starter:`import java.io.*;
@@ -177,7 +177,7 @@ try (DatagramSocket socket = new DatagramSocket(8125)) {
 
 <h4>DNS is the UDP you use every day</h4>
 <p>Name resolution is a UDP request and reply, which is why it is fast and why it fails in ways HTTP does not: silently, or by timing out with no connection to blame. Two consequences for a JVM service: resolution happens on the calling thread and can block it, and the JVM caches results according to <code>networkaddress.cache.ttl</code>. That default caching is what makes a service keep hammering the old IP after a failover, and it is one of the first things to check when "DNS was updated an hour ago but traffic is still going to the dead host".</p>`,
-docs:[['Datagrams — Oracle trail','https://docs.oracle.com/javase/tutorial/networking/datagrams/index.html'],['DatagramSocket — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/net/DatagramSocket.html']],
+docs:[['Datagrams, Oracle trail','https://docs.oracle.com/javase/tutorial/networking/datagrams/index.html'],['DatagramSocket, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/net/DatagramSocket.html']],
 ex:{title:'Metrics over UDP',
 prompt:`Write <code>UdpMetrics</code> with: <code>static void send(String metric, String host, int port) throws Exception</code>: UTF-8 encode the string and send it as a <code>DatagramPacket</code> from a try-with-resources <code>DatagramSocket</code>; and <code>static String receiveOne(java.net.DatagramSocket bound) throws Exception</code>: receive into a 1500-byte buffer and decode <b>only the received length</b> as UTF-8.`,
 starter:`import java.net.*;

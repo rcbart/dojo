@@ -1,6 +1,6 @@
-// flows/index.js — every auth-flow diagram spec, grouped by stream.
+// flows/index.js, every auth-flow diagram spec, grouped by stream.
 // Rendered by ../flowdia.js, baked into stream files by ../gen-flows.js.
-// Keep arrow labels short — the numbered <ol class="fdSteps"> in the lesson
+// Keep arrow labels short, the numbered <ol class="fdSteps"> in the lesson
 // prose carries the full step-by-step description; numbers must match.
 module.exports = [
   ...require('./oauth-oidc'),      // 16d

@@ -1,4 +1,4 @@
-# 2 — Deployments & ReplicaSets
+# 2: Deployments & ReplicaSets
 
 *How you actually run apps: self-healing, scaling, and zero-downtime updates. Concepts + a lab. ~30
 min. Needs your kind cluster.*
@@ -66,7 +66,7 @@ kubectl get pods                     # still 5 — the ReplicaSet replaced it
 
 You declared 5; Kubernetes maintains 5 forever. That's the reconciliation loop doing its job.
 
-## Rolling updates — zero-downtime deploys
+## Rolling updates: zero-downtime deploys
 
 Change the image and Kubernetes rolls it out gradually: spin up new pods, wait for them ready, then
 retire old ones, so the app never fully goes down.
@@ -82,7 +82,7 @@ The behavior is controlled by the Deployment's **strategy** (`RollingUpdate` by 
 `maxSurge` (how many extra pods during rollout) and `maxUnavailable` (how many can be down). Defaults
 are safe.
 
-## Rollbacks — undo instantly
+## Rollbacks: undo instantly
 
 Shipped something broken? Roll back to the previous revision:
 
@@ -139,4 +139,4 @@ All share the same declarative, self-healing model.
 
 ---
 
-**Next:** [2b — Workloads beyond Deployments: DaemonSets, Jobs & CronJobs →](./19-workloads-beyond-deployments.md)
+**Next:** [2b: Workloads beyond Deployments: DaemonSets, Jobs & CronJobs →](./19-workloads-beyond-deployments.md)

@@ -1,4 +1,4 @@
-# 14 — Operators & CRDs
+# 14: Operators & CRDs
 
 *How Kubernetes is extended: adding your own object types and automation. Concepts + a lab. ~25 min.
 Needs your kind cluster. On the current CKA.*
@@ -11,7 +11,7 @@ superpower is that it's **extensible**: you can teach the API server *new* kinds
 declarative model. This is how tools like cert-manager, Prometheus, and databases integrate so
 cleanly.
 
-## CRDs — your own object kinds
+## CRDs: your own object kinds
 
 A **CustomResourceDefinition** registers a brand-new resource type with the API server. Once
 installed, `kubectl get`, RBAC, labels, and `apply` all work on it like any built-in.
@@ -58,7 +58,7 @@ spec:
 But a CRD by itself is just **data storage**: creating a `Backup` object does nothing until
 something *acts* on it. That something is an Operator.
 
-## Operators — controllers for custom resources
+## Operators: controllers for custom resources
 
 An **Operator** is a controller that watches your custom resources and does the work, encoding the
 operational knowledge a human expert would apply. It runs the same **reconciliation loop** as
@@ -151,4 +151,4 @@ pattern you just saw**: nothing magic, just more of the reconciliation model.
 
 ---
 
-**Next:** [15 — Capstone: deploy a multi-service app →](./15-capstone.md)
+**Next:** [15: Capstone: deploy a multi-service app →](./15-capstone.md)

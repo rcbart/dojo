@@ -42,7 +42,7 @@ running it, and the numbers in the message are class-file versions, not Java ver
 <p>Finally, learn the command line even though the IDE is more comfortable. CI servers have no IDE, and
 "works on my machine" is nearly always a difference between what your IDE configured and what the build
 actually does.</p>`,
-docs:[['Adoptium Temurin downloads','https://adoptium.net'],['SDKMAN! usage','https://sdkman.io/usage'],['JShell tutorial — Oracle','https://docs.oracle.com/en/java/javase/21/jshell/introduction-jshell.html']],
+docs:[['Adoptium Temurin downloads','https://adoptium.net'],['SDKMAN! usage','https://sdkman.io/usage'],['JShell tutorial (Oracle)','https://docs.oracle.com/en/java/javase/21/jshell/introduction-jshell.html']],
 ex:{title:'Toolchain drill',lang:'shell',
 prompt:`One per numbered line: (1) the SDKMAN command to install Temurin 21 (identifier <code>21.0.3-tem</code>), (2) verify the active Java version, (3) compile <code>Greeter.java</code> and, on the same line with <code>&amp;&amp;</code>, run the resulting class, (4) run <code>Greeter.java</code> directly without a compile step, (5) start the Java REPL, (6) print the JAVA_HOME environment variable.`,
 starter:`# 1)
@@ -103,7 +103,7 @@ echo $JAVA_HOME`}},
 <h4>The errors you will meet in your first hour</h4>
 <p><code>class Greeter is public, should be declared in a file named Greeter.java</code>: the file name must match the public class. <code>Could not find or load main class</code>: you are in the wrong directory, or you typed the file name instead of the class name: <code>java Greeter</code>, not <code>java Greeter.class</code>. And <code>cannot find symbol</code> is Java's phrase for "you used a name I do not know", where the caret under the offending token is the fastest thing to read.</p>
 <p>Since Java 11, <code>java Greeter.java</code> compiles in memory and runs in one step, which is ideal for learning and for single-file scripts. It is not how applications ship (that is the build-tools stream), but it removes a step while you are getting the language into your fingers.</p>`,
-docs:[['dev.java — Getting Started','https://dev.java/learn/getting-started/'],['Oracle Tutorial — A Closer Look at main','https://docs.oracle.com/javase/tutorial/getStarted/application/index.html']],
+docs:[['dev.java, Getting Started','https://dev.java/learn/getting-started/'],['Oracle Tutorial, A Closer Look at main','https://docs.oracle.com/javase/tutorial/getStarted/application/index.html']],
 ex:{title:'Your first Greeter',
 prompt:`Write a class <code>Greeter</code> with: (1) a <code>main</code> method that prints exactly <code>Welcome to Dev Dojo!</code>, and (2) a <code>static</code> method <code>String greet(String name)</code> that returns <code>"Hello, " + name + "!"</code>. Have main also print <code>greet("Ada")</code>.`,
 starter:`public class Greeter {
@@ -149,7 +149,7 @@ int n = Integer.parseInt("42");
 double half = 1 / 2;     // 0.0 — integer division happens FIRST
 double half2 = 1 / 2.0;  // 0.5</div>
 <p>Two classic traps: integer division truncates, and <code>==</code> on objects compares references; use <code>.equals()</code> for value equality (especially Strings).</p>`,
-docs:[['Primitive Data Types — Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html'],['Using var — dev.java','https://dev.java/learn/language-basics/using-var/']],
+docs:[['Primitive Data Types, Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html'],['Using var, dev.java','https://dev.java/learn/language-basics/using-var/']],
 ex:{title:'Conversion toolbox',
 prompt:`Write a class <code>Conversions</code> with three static methods: <code>double average(int a, int b)</code> returning the true average (careful: integer division!), <code>int toInt(String s)</code> parsing a string to int, and <code>boolean sameText(String a, String b)</code> comparing string content, not references.`,
 starter:`public class Conversions {
@@ -184,10 +184,10 @@ solution:`public class Conversions {
 {id:'fun2a',title:'Booleans & logical operators',body:`
 <p>Every condition your programs will ever branch on is built from a handful of operators combining <code>boolean</code> values. Master the combinators before the conditionals that use them:</p>
 <ul>
-<li><b><code>&amp;&amp;</code> — AND</b>: true only when both sides are true.</li>
-<li><b><code>||</code> — OR</b>: true when at least one side is true.</li>
-<li><b><code>!</code> — NOT</b>: flips the value.</li>
-<li><b><code>^</code> — XOR</b>: true when the sides <i>differ</i> (exactly one is true). Rarer, but the cleanest way to say "one or the other, not both".</li>
+<li><b><code>&amp;&amp;</code>, AND</b>: true only when both sides are true.</li>
+<li><b><code>||</code>, OR</b>: true when at least one side is true.</li>
+<li><b><code>!</code>: NOT</b>: flips the value.</li>
+<li><b><code>^</code>: XOR</b>: true when the sides <i>differ</i> (exactly one is true). Rarer, but the cleanest way to say "one or the other, not both".</li>
 </ul>
 <p><b>Short-circuit evaluation</b> is the behavior that makes <code>&amp;&amp;</code> and <code>||</code> more than logic: the right side is <i>not evaluated at all</i> when the left side already decides the answer. <code>false &amp;&amp; anything</code> never looks at anything; <code>true || anything</code> likewise. This is not an optimization footnote; it is the standard null-safety idiom:</p>
 <div class="codeSample">// safe: if s is null the left side is false and s.length() NEVER runs
@@ -197,7 +197,7 @@ if (s != null &amp;&amp; s.length() &gt; 3) { ... }
 if (s != null &amp; s.length() &gt; 3) { ... }   // NullPointerException when s == null</div>
 <p><b>Precedence</b>: <code>!</code> binds tightest, then <code>&amp;&amp;</code>, then <code>||</code>, so <code>a || b &amp;&amp; c</code> means <code>a || (b &amp;&amp; c)</code>. When a condition needs a re-read, add the parentheses; the compiler doesn't need them, colleagues do.</p>
 <p><b>De Morgan's laws</b> are the rewrite rules for pushing <code>!</code> through: <code>!(a &amp;&amp; b) == !a || !b</code> and <code>!(a || b) == !a &amp;&amp; !b</code>. They turn "not (in range)" into "below or above", often the version that reads like the requirement. And one style rule that separates juniors from seniors: <code>if (x) return true; else return false;</code> is just <code>return x;</code>. Boolean expressions are values; return them directly.</p>`,
-docs:[['Operators — Java Tutorials','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/operators.html'],['Equality & relational operators','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/op2.html'],['JLS — conditional operators','https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.23']],
+docs:[['Operators, Java Tutorials','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/operators.html'],['Equality & relational operators','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/op2.html'],['JLS, conditional operators','https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.23']],
 ex:{title:'Combinator drill',
 prompt:`Write class <code>Logic</code> with five static methods, each a <b>single return of a boolean expression, no if statements anywhere</b>: (1) <code>boolean canRent(int age, boolean hasLicense)</code>: true when age is at least 21 <b>AND</b> the license is there; (2) <code>boolean isWeekend(String day)</code>: true when day equals <code>"SAT"</code> <b>OR</b> <code>"SUN"</code> (use equals, not ==); (3) <code>boolean longEnough(String s, int min)</code>: true when s is <b>not null AND</b> at least min chars (order matters: the null check must short-circuit first); (4) <code>boolean exactlyOne(boolean a, boolean b)</code>: true when exactly one of them is true (one operator does this); (5) <code>boolean outsideRange(int n, int lo, int hi)</code>: true when n is below lo <b>OR</b> above hi.`,
 starter:`public class Logic {
@@ -244,7 +244,7 @@ solution:`public class Logic {
         return n < lo || n > hi;
     }
 }`,
-tests:[{d:'canRent: AND combines age and license',re:'canRent[\\s\\S]*?return\\s+age\\s*>=\\s*21\\s*&&\\s*hasLicense'},{d:'isWeekend: OR of two equals calls',re:'isWeekend[\\s\\S]*?equals\\s*\\(\\s*"SAT"\\s*\\)\\s*\\|\\|[\\s\\S]*?equals\\s*\\(\\s*"SUN"\\s*\\)'},{d:'Strings never compared with ==',re:'day\\s*==\\s*"',not:true},{d:'longEnough: null guard FIRST, then length — short-circuit order',re:'return\\s+s\\s*!=\\s*null\\s*&&\\s*s\\.length\\s*\\(\\s*\\)\\s*>=\\s*min'},{d:'exactlyOne uses XOR',re:'return\\s+a\\s*\\^\\s*b'},{d:'outsideRange: below-or-above (De Morgan of the range check)',re:'return\\s+n\\s*<\\s*lo\\s*\\|\\|\\s*n\\s*>\\s*hi'},{d:'No if statements — booleans returned directly',re:'\\bif\\s*\\(',not:true}],
+tests:[{d:'canRent: AND combines age and license',re:'canRent[\\s\\S]*?return\\s+age\\s*>=\\s*21\\s*&&\\s*hasLicense'},{d:'isWeekend: OR of two equals calls',re:'isWeekend[\\s\\S]*?equals\\s*\\(\\s*"SAT"\\s*\\)\\s*\\|\\|[\\s\\S]*?equals\\s*\\(\\s*"SUN"\\s*\\)'},{d:'Strings never compared with ==',re:'day\\s*==\\s*"',not:true},{d:'longEnough: null guard FIRST, then length, short-circuit order',re:'return\\s+s\\s*!=\\s*null\\s*&&\\s*s\\.length\\s*\\(\\s*\\)\\s*>=\\s*min'},{d:'exactlyOne uses XOR',re:'return\\s+a\\s*\\^\\s*b'},{d:'outsideRange: below-or-above (De Morgan of the range check)',re:'return\\s+n\\s*<\\s*lo\\s*\\|\\|\\s*n\\s*>\\s*hi'},{d:'No if statements, booleans returned directly',re:'\\bif\\s*\\(',not:true}],
 behavior:`1. canRent(22, true) == true; canRent(22, false) == false; canRent(20, true) == false. 2. isWeekend("SAT") and isWeekend("SUN") are true, isWeekend("MON") false. 3. longEnough(null, 3) returns FALSE instead of throwing: the null check short-circuits before s.length() runs; longEnough("hello", 3) == true. 4. exactlyOne(true, false) == true, exactlyOne(true, true) == false: XOR is "the sides differ". 5. outsideRange(5, 1, 10) == false, outsideRange(0, 1, 10) == true, outsideRange(11, 1, 10) == true. 6. No method contains an if: every condition IS the return value.`,
 hints:['Every method body is one line: return <expression>; if you typed if, you are working too hard.','longEnough is the whole lesson: swap the operands (s.length() >= min && s != null) and null crashes it; short-circuit only protects left-to-right.','outsideRange has two equally correct spellings: n < lo || n > hi, or !(n >= lo && n <= hi). De Morgan says they are the same; the drill asks for the first (it reads better).']}},
 
@@ -269,7 +269,7 @@ a == b;                      // false! — two different boxes (compares remotes
 a.equals(b);                 // true — compares the numbers inside the boxes</div>
 <p>The two traps deserve names. <b>Null unboxing</b>: a wrapper variable can be <code>null</code>, and unwrapping "no box" explodes, so check for null before treating a wrapper as a primitive. <b>Wrapper <code>==</code></b>: it compares references, not values (small values -128..127 are cached and can coincidentally match, which makes the bug worse: it "works" in tests and fails with real data). Rule: <b>wrappers are compared with <code>.equals()</code>, always.</b></p>
 <p>When do you choose which? Primitives for arithmetic, counters, and fields that always have a value; they are faster and can never be null. Wrappers when an object is required: inside collections and generics (<code>List&lt;Integer&gt;</code>, <code>Map&lt;String, Double&gt;</code>), or when "no value yet" is a legitimate state. Autoboxing makes the boundary almost invisible; these two traps are the only places the seam shows.</p>`,
-docs:[['Autoboxing — Oracle tutorial','https://docs.oracle.com/javase/tutorial/java/data/autoboxing.html'],['Numbers classes (wrappers) — Oracle','https://docs.oracle.com/javase/tutorial/java/data/numberclasses.html'],['Integer cache — JLS 5.1.7','https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.7']],
+docs:[['Autoboxing (Oracle tutorial)','https://docs.oracle.com/javase/tutorial/java/data/autoboxing.html'],['Numbers classes (wrappers) (Oracle)','https://docs.oracle.com/javase/tutorial/java/data/numberclasses.html'],['Integer cache (JLS 5.1.7)','https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.7']],
 ex:{title:'Boxing without the traps',
 prompt:`Write class <code>Boxing</code> with three static methods: (1) <code>int sum(java.util.List&lt;Integer&gt; nums)</code>: enhanced for over the list, accumulate into an <code>int</code> and return it (unboxing does the unwrapping for you); (2) <code>int valueOr(Integer maybe, int fallback)</code>: return <code>fallback</code> when <code>maybe == null</code>, otherwise return <code>maybe</code> (the null check is what makes the unboxing safe: trap #1 disarmed); (3) <code>boolean sameValue(Integer a, Integer b)</code>: return whether the two hold the same number: null-safe via <code>java.util.Objects.equals(a, b)</code>, and <b>never compare the wrappers with ==</b> (trap #2 disarmed).`,
 starter:`import java.util.List;
@@ -370,7 +370,7 @@ load-bearing, not stylistic.</p>
 are interned and shared, and then fails for a string built at runtime. That is the worst kind of bug: it
 passes every test you wrote by hand and fails on real input. Use <code>equals</code> for content, and
 <code>Objects.equals</code> when either side may be null.`,
-docs:[['if-then-else — Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/if.html'],['Switch expressions — dev.java','https://dev.java/learn/language-basics/switch-expression/']],
+docs:[['if-then-else, Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/if.html'],['Switch expressions, dev.java','https://dev.java/learn/language-basics/switch-expression/']],
 exs:[
 {title:'Classic chain: letter grades',
 prompt:`Write <code>Grades</code> with <code>static String grade(int score)</code> using an <b>if / else-if chain</b> (no switch): 90+ → "A", 80+ → "B", 70+ → "C", 60+ → "D", below → "F".`,
@@ -497,7 +497,7 @@ you find yourself writing one, a <code>for</code> probably expresses it better.<
 discovered as you go: reading lines, polling, consuming a queue. <b>do-while</b> when the body must run at
 least once, which in practice means prompting for input: ask, validate, ask again. The rarest of the three,
 and when it fits nothing else reads as well.</p>`,
-docs:[['The for statement — Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/for.html'],['while & do-while — Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/while.html'],['Branching statements — Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/branch.html']],
+docs:[['The for statement (Oracle)','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/for.html'],['while & do-while (Oracle)','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/while.html'],['Branching statements (Oracle)','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/branch.html']],
 exs:[
 {title:'Classic for: sum the evens',
 prompt:`Write <code>Loops</code> with <code>static int sumEvens(int n)</code>: a classic three-part <b>for loop</b> from 1 to n (inclusive) accumulating only even numbers; use <code>continue</code> to skip odds (that is the drill).`,
@@ -632,7 +632,7 @@ modification count and checks it on every step. It is a <b>fail-fast</b> design:
 undefined behaviour that silently skips elements. The fixes, in order of preference:
 <code>list.removeIf(predicate)</code>, an explicit <code>Iterator</code> with
 <code>iterator.remove()</code>, or building a new collection and replacing the old one.</p>`,
-docs:[['The Collection interface & iterators — Oracle','https://docs.oracle.com/javase/tutorial/collections/interfaces/collection.html'],['Iterable.forEach — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html']],
+docs:[['The Collection interface & iterators, Oracle','https://docs.oracle.com/javase/tutorial/collections/interfaces/collection.html'],['Iterable.forEach, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html']],
 exs:[
 {title:'Explicit Iterator: remove while iterating',
 prompt:`Write <code>Cleaner</code> with <code>static void dropShort(java.util.List&lt;String&gt; names, int minLen)</code>: iterate with an <b>explicit Iterator</b> (<code>hasNext</code>/<code>next</code>) and remove every name shorter than minLen using <code>it.remove()</code>, not <code>names.remove(...)</code>, which throws ConcurrentModificationException mid-iteration.`,
@@ -765,7 +765,7 @@ it does from the caller's side. Keep the parameter list short: more than three o
 missing type. Return a value rather than mutating an argument, because a method that quietly changes what
 it was given is one whose call site lies about what happens. And prefer returning an empty collection over
 <code>null</code>, so no caller has to remember a check.</p>`,
-docs:[['Defining Methods — Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/methods.html'],['Class vs instance members — Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/classvars.html']],
+docs:[['Defining Methods, Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/methods.html'],['Class vs instance members, Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/classvars.html']],
 ex:{title:'Overloaded Temperature',
 prompt:`Write a class <code>Temperature</code> with a private instance field <code>double celsius</code>, a constructor <code>Temperature(double celsius)</code>, an instance method <code>double inFahrenheit()</code> (C × 9/5 + 32), and two <b>overloaded static</b> factory methods: <code>Temperature of(double celsius)</code> and <code>Temperature of(double value, String unit)</code> where unit "F" converts to celsius first ((F − 32) × 5/9).`,
 starter:`public class Temperature {
@@ -838,7 +838,7 @@ class Ids {
 Temperature.of(72, "F");                          // ...and static factories (you
                                                   // built these two lessons ago!)</div>
 <p>In a subclass, the first line is implicitly <code>super()</code>; if the parent lacks a no-arg constructor you must call <code>super(args)</code> explicitly, first line. Constructors aren't inherited and can't be abstract, final or static. Frameworks care too: JPA entities need a no-arg constructor; Spring injects through the parameterized one.</p>`,
-docs:[['Providing constructors — Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/constructors.html'],['this(...) chaining — Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/thiskey.html'],['Effective Java: static factories — item summary','https://www.baeldung.com/java-constructors-vs-static-factory-methods']],
+docs:[['Providing constructors (Oracle)','https://docs.oracle.com/javase/tutorial/java/javaOO/constructors.html'],['this(...) chaining (Oracle)','https://docs.oracle.com/javase/tutorial/java/javaOO/thiskey.html'],['Effective Java: static factories (item summary)','https://www.baeldung.com/java-constructors-vs-static-factory-methods']],
 exs:[
 {title:'Overloading & this(...) chaining',
 prompt:`Write <code>Order</code> with private fields <code>String item</code>, <code>int qty</code>, <code>double unitPrice</code> and <b>three chained constructors</b>: <code>(String item, int qty, double unitPrice)</code>: the primary, which validates qty &gt; 0 (<code>IllegalArgumentException</code>) and assigns with <code>this.</code>; <code>(String item, double unitPrice)</code>: chains with qty 1; and a no-arg constructor chaining to <code>("unspecified", 1, 0.0)</code>. The two smaller constructors must contain <b>only</b> the <code>this(...)</code> call.`,
@@ -887,9 +887,9 @@ starter:`class Vehicle {
 class Car extends Vehicle {
     private final int doors;
 
-    // Car(String vin, int doors) — super first!
+    // Car(String vin, int doors), super first!
 
-    // Car(Car other) — copy constructor
+    // Car(Car other), copy constructor
 
     // int doors()
 }`,
@@ -993,7 +993,7 @@ subclass (other package)    ✗          ✗           ✓          ✓
 everyone else               ✗          ✗           ✗          ✓</div>
 <p><b>The impact is bigger than visibility: it's changeability.</b> Everything <code>public</code> is a promise: other code may now depend on it, so renaming or removing it breaks callers (in a library, forever). Everything <code>private</code> is yours to rewrite tonight without telling anyone. That's why BankAccount above works: <code>balanceCents</code> is private, so the <i>only</i> paths to it are deposit's validation and balance's read: no external code can set it to -50, and the class could switch to a different representation tomorrow without any caller noticing. The working rule: <b>start everything private and widen only when a real caller forces you to</b>: you can always open access later; taking it back is a breaking change.</p>
 <p>Validate in constructors and mutators, keep fields <code>final</code> when they never change, and expose the minimum surface. (Money as <code>long</code> cents, never <code>double</code>: floating point can't represent 0.10 exactly.)</p>`,
-docs:[['Access Control — Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/accesscontrol.html'],['Encapsulation — Baeldung','https://www.baeldung.com/java-oop-principles']],
+docs:[['Access Control, Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/accesscontrol.html'],['Encapsulation, Baeldung','https://www.baeldung.com/java-oop-principles']],
 ex:{title:'A safe BankAccount',
 prompt:`Implement <code>BankAccount</code>: private <code>long balanceCents</code>; <code>deposit(long cents)</code> throws <code>IllegalArgumentException</code> for amounts &le; 0; <code>withdraw(long cents)</code> throws <code>IllegalArgumentException</code> for amounts &le; 0 and <code>IllegalStateException</code> if it would overdraw; <code>long balance()</code> returns the current balance.`,
 starter:`public class BankAccount {
@@ -1053,7 +1053,7 @@ class SavingsAccount extends Account {          // inherits deposit, balance, ce
 }</div>
 <p>✋ <b>Pause: that <code>@Override</code> is the first <i>annotation</i> you've met in the dojo.</b> Anything starting with <code>@</code> is an annotation: a machine-readable label you attach to code. By itself it changes nothing about what the method does; it's metadata that <i>tools</i> read and act on. <code>@Override</code> is read by the <b>compiler</b>, and it means: "I claim this method replaces one inherited from the superclass; fail the build if it doesn't." That claim has teeth: without it, a typo like <code>balence()</code> silently creates a <i>new</i> method and the parent's version keeps running; with it, the same typo is a compile error at the exact line. That's the annotation pattern in general: state your intent so a machine can verify or act on it. ⚠️ <b>Capitalization matters</b>: an annotation is a named type like a class, and Java is case-sensitive: it's <code>@Override</code>, never <code>@override</code> or <code>@OVERRIDE</code>. The lowercase version isn't a milder warning, it's a compile error (<i>cannot find symbol</i>), because no type with that name exists. Annotation names follow the same UpperCamelCase convention as class names: <code>@Override</code>, <code>@Test</code>, <code>@FunctionalInterface</code>. You'll soon meet annotations read by test runners and frameworks instead of the compiler (<code>@Test</code>, <code>@Service</code>, <code>@WebServlet</code>), and when you're ready to see how they really work (retention, targets, reading them via reflection, building your own), the <b>Time, Testing, Reflection &amp; the JVM</b> stream covers exactly that in its <i>Annotations &amp; reflection</i> and <i>Annotation mastery</i> lessons.</p>
 <p>The rules that matter: a class <code>extends</code> <b>exactly one</b> superclass (single inheritance, but it may <code>implements</code> many interfaces); the subclass constructor implicitly calls <code>super()</code> first, or you call <code>super(args)</code> explicitly; <code>@Override</code> replaces a method (the compiler verifies the signature matches); <code>super.method()</code> reaches the parent's version; <code>final</code> on a method or class forbids overriding/extending. An <code>abstract</code> class can't be instantiated and may declare <code>abstract</code> methods subclasses must implement. Prefer shallow hierarchies: deep inheritance chains are a classic maintainability trap ("favor composition over inheritance").</p>`,
-docs:[['Inheritance — Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/subclasses.html'],['Overriding & super — Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/super.html'],['Abstract methods & classes','https://docs.oracle.com/javase/tutorial/java/IandI/abstract.html']],
+docs:[['Inheritance, Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/subclasses.html'],['Overriding & super, Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/super.html'],['Abstract methods & classes','https://docs.oracle.com/javase/tutorial/java/IandI/abstract.html']],
 exs:[
 {title:'Specialize with extends & super',
 prompt:`Given a base <code>class Employee</code> with <code>protected String name</code>, constructor <code>Employee(String name)</code>, and <code>double weeklyPay()</code> returning 1000. Write <code>class Manager extends Employee</code>: a constructor taking name and <code>double bonus</code> that calls <code>super(name)</code>, and an <code>@Override double weeklyPay()</code> that returns <code>super.weeklyPay() + bonus</code>.`,
@@ -1141,7 +1141,7 @@ for (Shape s : shapes) {
 <p>That loop knows nothing about circles or rectangles, and that ignorance is the feature. Add a <code>Triangle implements Shape</code> tomorrow and the loop handles it <i>without being touched</i>: behavior was extended without modifying existing code (you'll meet this again as the open/closed principle, and it's why <code>totalArea(Shape[])</code> in the exercise never needs an <code>if (s instanceof Circle)</code> chain: the dispatch IS the branching). The alternative, a switch over types, must be found and edited everywhere, every time a type is added.</p>
 <p>One disambiguation, since the word gets overloaded (pun intended): what this lesson shows is <b>subtype polymorphism</b>, the "real" one people mean by default. Java has two cousins: <b>overloading</b> (same method name, different parameter lists, resolved by the <i>compiler</i> from the declared argument types, no runtime lookup) and <b>generics</b> (<code>List&lt;T&gt;</code>: one class parameterized over many types, coming up in the generics lessons). Keeping the three apart is a classic interview question and an everyday reading skill.</p>
 <p>Prefer interfaces over concrete inheritance for flexibility. Always mark overrides with <code>@Override</code>; the compiler then catches signature typos.</p>`,
-docs:[['Interfaces — Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/createinterface.html'],['Polymorphism — Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/polymorphism.html']],
+docs:[['Interfaces, Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/createinterface.html'],['Polymorphism, Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/polymorphism.html']],
 ex:{title:'Shapes, polymorphically',
 prompt:`Define interface <code>Shape</code> with <code>double area()</code>. Implement <code>Circle(double radius)</code> (&pi;r²) and <code>Rectangle(double w, double h)</code> (w×h), both using <code>@Override</code>. Add a class <code>Geometry</code> with <code>static double totalArea(Shape[] shapes)</code> summing areas polymorphically.`,
 starter:`interface Shape {
@@ -1221,7 +1221,7 @@ new TreeSet&lt;&gt;(names);    // sorted unique</div>
 
 <h4>Modern conveniences worth adopting</h4>
 <p><code>List.of</code>, <code>Set.of</code> and <code>Map.of</code> build compact <b>immutable</b> collections, which is the right default for constants and for anything you return from a method: a caller cannot corrupt what it cannot modify. Note they reject nulls and throw on modification rather than ignoring it. On maps, <code>getOrDefault</code>, <code>computeIfAbsent</code> and <code>merge</code> replace the check-then-act patterns that fill older code: <code>counts.merge(word, 1, Integer::sum)</code> is the whole of a word count. And iterate with the enhanced <code>for</code>; removing during iteration is what <code>Iterator.remove</code> or <code>removeIf</code> is for, and doing it any other way is how you meet <code>ConcurrentModificationException</code>.</p>`,
-docs:[['Collections Trail — Oracle','https://docs.oracle.com/javase/tutorial/collections/index.html'],['Generics — dev.java','https://dev.java/learn/generics/']],
+docs:[['Collections Trail, Oracle','https://docs.oracle.com/javase/tutorial/collections/index.html'],['Generics, dev.java','https://dev.java/learn/generics/']],
 ex:{title:'Word frequency',
 prompt:`Write class <code>WordStats</code> with <code>static Map&lt;String,Integer&gt; frequencies(List&lt;String&gt; words)</code> returning how often each word appears (case-insensitive: lowercase the keys), and <code>static Set&lt;String&gt; uniqueSorted(List&lt;String&gt; words)</code> returning the distinct lowercased words in alphabetical order.`,
 starter:`import java.util.*;
@@ -1275,7 +1275,7 @@ public class WordStats {
 <li><b>EnumMap / EnumSet</b>: specialized, array-backed collections keyed by enum, faster and smaller than HashMap/HashSet. <code>new EnumMap&lt;&gt;(Op.class)</code>, <code>EnumSet.of(Op.ADD)</code>, <code>EnumSet.allOf(Op.class)</code>.</li>
 <li><b>Singleton</b>: a one-constant enum is the hardest-to-break singleton in Java, serialization- and reflection-proof (Effective Java, Item 3).</li>
 </ul>`,
-docs:[['Enum types — dev.java','https://dev.java/learn/classes-objects/enums/'],['EnumMap — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/EnumMap.html'],['EnumSet — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/EnumSet.html']],
+docs:[['Enum types (dev.java)','https://dev.java/learn/classes-objects/enums/'],['EnumMap (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/EnumMap.html'],['EnumSet (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/EnumSet.html']],
 ex:{title:'Enum as a strategy table',
 prompt:`Build enum <code>Shipping</code> with constants <code>STANDARD</code>, <code>EXPRESS</code>, <code>OVERNIGHT</code>. Each carries a <code>double baseFee</code> (4.99, 9.99, 24.99) via a private constructor, and each implements an <code>abstract double cost(double weightKg)</code>: STANDARD = base + 0.5/kg, EXPRESS = base + 1.0/kg, OVERNIGHT = base + 2.5/kg. Add <code>static double cheapest(double weightKg)</code> that streams <code>values()</code> and returns the minimum cost.`,
 starter:`public enum Shipping {
@@ -1325,7 +1325,7 @@ solution:`public enum Shipping {
 @Override public int hashCode() { return Objects.hash(cents, currency); }
 @Override public String toString() { return "Money[" + cents + " " + currency + "]"; }</div>
 <p><b>Records write all of this for you</b>: field-by-field equals, hashCode, toString. Use a record when the type is plain immutable data; write the methods by hand only when identity is more subtle than "all fields equal".</p>`,
-docs:[['Object.equals — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)'],['Objects.hash — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Objects.html'],['Comparable — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Comparable.html']],
+docs:[['Object.equals (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)'],['Objects.hash (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Objects.html'],['Comparable (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Comparable.html']],
 ex:{title:'A well-behaved value class',
 prompt:`Write <code>Version</code> (fields <code>int major, minor</code>) implementing <code>Comparable&lt;Version&gt;</code>: (1) <code>equals(Object)</code> using the <code>instanceof</code> pattern with the fast <code>this == o</code> path, (2) <code>hashCode()</code> via <code>Objects.hash</code>, (3) <code>toString()</code> returning like <code>1.4</code>, (4) <code>compareTo</code> by major then minor (use <code>Integer.compare</code>), consistent with equals. Mark all four <code>@Override</code> where applicable.`,
 starter:`import java.util.Objects;
@@ -1347,7 +1347,7 @@ public class Version implements Comparable<Version> {
         return 0;
     }
 }`,
-tests:[{d:'Overrides equals(Object) — not an overload',re:'boolean\\s+equals\\s*\\(\\s*Object\\s+\\w+\\s*\\)'},{d:'Fast identity path this == o',re:'this\\s*==\\s*\\w+'},{d:'instanceof check (null-safe)',re:'instanceof\\s+Version'},{d:'hashCode via Objects.hash',re:'Objects\\.hash\\s*\\('},{d:'Implements compareTo(Version)',re:'int\\s+compareTo\\s*\\(\\s*Version\\s+\\w+\\s*\\)'},{d:'Uses @Override',re:'@Override'}],
+tests:[{d:'Overrides equals(Object), not an overload',re:'boolean\\s+equals\\s*\\(\\s*Object\\s+\\w+\\s*\\)'},{d:'Fast identity path this == o',re:'this\\s*==\\s*\\w+'},{d:'instanceof check (null-safe)',re:'instanceof\\s+Version'},{d:'hashCode via Objects.hash',re:'Objects\\.hash\\s*\\('},{d:'Implements compareTo(Version)',re:'int\\s+compareTo\\s*\\(\\s*Version\\s+\\w+\\s*\\)'},{d:'Uses @Override',re:'@Override'}],
 behavior:`1. new Version(1,4).equals(new Version(1,4)) is true; equals(null) and equals("1.4") are false. 2. Equal versions produce equal hashCodes. 3. toString() of Version(1,4) is "1.4". 4. compareTo: (1,4) < (2,0), (2,1) > (2,0), and compareTo == 0 exactly when equals is true. 5. Works correctly as a HashMap key and inside TreeSet.`,
 hints:['equals skeleton: <code>if (this == o) return true; if (!(o instanceof Version v)) return false; return major == v.major &amp;&amp; minor == v.minor;</code>','hashCode is one line: <code>return Objects.hash(major, minor);</code>. Always pair it with equals.','compareTo: <code>int c = Integer.compare(major, o.major); return c != 0 ? c : Integer.compare(minor, o.minor);</code>'],
 solution:`import java.util.Objects;
@@ -1425,7 +1425,7 @@ request handler it never will. The lighter option is <b>integer minor units</b> 
 divisions are rare. Reach for <code>BigDecimal</code> when you need division, rates, tax, or interoperation
 with systems that speak decimals. And never, in either scheme, let a <code>double</code> touch money on the
 way in or out.</p>`,
-docs:[['BigDecimal — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html'],['RoundingMode — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/RoundingMode.html']],
+docs:[['BigDecimal, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html'],['RoundingMode, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/RoundingMode.html']],
 ex:{title:'An exact invoice',
 prompt:`Write <code>Invoice</code> with <code>static BigDecimal gross(String unitPrice, int quantity, String vatRate)</code> returning the <b>gross total: unitPrice × quantity × (1 + vatRate)</b>, e.g. gross("19.99", 3, "0.19") == 71.36. Build the unit price and rate from the <b>String</b> constructor, multiply by quantity (<code>BigDecimal.valueOf(quantity)</code>), add the VAT portion, and return the total scaled to 2 with <code>RoundingMode.HALF_EVEN</code>. Also add <code>static boolean same(BigDecimal a, BigDecimal b)</code> returning true when the two are <b>numerically equal ignoring scale</b> (1.0 vs 1.00 → true). Do <b>not</b> use the double constructor anywhere.`,
 starter:`import java.math.BigDecimal;
@@ -1482,7 +1482,7 @@ String same = String.join(", ", parts);        // the shortcut for exactly this
 String json = """
     { "name": "%s", "score": %.1f }
     """.formatted("Ada", 97.5);</div>`,
-docs:[['String — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html'],['StringBuilder — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/StringBuilder.html'],['Text blocks — dev.java','https://dev.java/learn/language-basics/text-blocks/']],
+docs:[['String (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html'],['StringBuilder (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/StringBuilder.html'],['Text blocks (dev.java)','https://dev.java/learn/language-basics/text-blocks/']],
 ex:{title:'Receipt builder',
 prompt:`Write <code>Receipt</code> with <code>static String render(String[] items, double[] prices)</code>: use a <b>StringBuilder</b> in a loop to append one line per item formatted with <code>String.format("%-10s %8.2f%n", item, price)</code>, then append a separator line of 19 dashes using <code>"-".repeat(19)</code> and a total line with the same numeric format. Compare strings nowhere with <code>==</code>.`,
 starter:`public class Receipt {
@@ -1551,7 +1551,7 @@ enclosing object, and that difference has produced a great deal of confusion.</p
 an <code>Iterator</code> over its own collection is the canonical example. Local for a class used once
 inside a single method, which is rare. Anonymous for the three cases above, and records for anything that
 is really just data.`,
-docs:[['Nested classes — dev.java','https://dev.java/learn/classes-objects/nested-classes/'],['Anonymous classes — Oracle tutorial','https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html']],
+docs:[['Nested classes, dev.java','https://dev.java/learn/classes-objects/nested-classes/'],['Anonymous classes, Oracle tutorial','https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html']],
 ex:{title:'Three flavors, one file',
 prompt:`Write <code>Playlist</code>: (1) a <b>static nested</b> class <code>Track</code> (fields <code>String title; int seconds</code>, constructor). (2) A method <code>Comparator&lt;Track&gt; byLength()</code> returning an <b>anonymous class</b> implementing <code>Comparator&lt;Track&gt;</code> comparing by seconds with <code>Integer.compare</code>. (3) A method <code>Comparator&lt;Track&gt; byTitle()</code> returning the same idea as a <b>lambda</b> using <code>compareTo</code> on titles.`,
 starter:`import java.util.Comparator;
@@ -1654,7 +1654,7 @@ ones read arguments (<code>args</code>, and a library like picocli once there ar
 environment variables for configuration, and files or network for data, largely because none of those
 require a human to be present. Do notice that <code>args</code> is empty, not null, when nothing was
 passed, so <code>args.length</code> is the check.</p>`,
-docs:[['Scanner — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Scanner.html'],['Formatting output — Oracle','https://docs.oracle.com/javase/tutorial/java/data/numberformat.html']],
+docs:[['Scanner, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Scanner.html'],['Formatting output, Oracle','https://docs.oracle.com/javase/tutorial/java/data/numberformat.html']],
 ex:{title:'A prompt that survives bad input',
 prompt:`Write <code>Prompt</code> with two static methods taking a <code>java.util.Scanner</code> parameter (passing it in keeps them testable): <code>static int askAge(java.util.Scanner sc)</code>: loop with <code>hasNextInt()</code>, discarding invalid tokens with <code>sc.next()</code>, then return <code>nextInt()</code>; and <code>static String welcome(java.util.Scanner sc)</code>: read a full name with <code>nextLine()</code> and return it formatted via <code>String.format("Welcome, %s!", name)</code>.`,
 starter:`import java.util.Scanner;
@@ -1751,7 +1751,7 @@ containing user input as hostile: <code>../../etc/passwd</code> is <b>path trave
 equivalent of SQL injection. Resolve against a known base directory, call
 <code>normalize()</code>, and then verify the result still <code>startsWith</code> the base; checking for
 ".." in the string is not sufficient.</p>`,
-docs:[['File I/O (NIO.2) — Oracle','https://docs.oracle.com/javase/tutorial/essential/io/fileio.html'],['Files — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Files.html']],
+docs:[['File I/O (NIO.2), Oracle','https://docs.oracle.com/javase/tutorial/essential/io/fileio.html'],['Files, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Files.html']],
 ex:{title:'Line counter',
 prompt:`Write <code>FileStats</code> with <code>static long nonBlankLines(java.nio.file.Path p) throws java.io.IOException</code> using <code>Files.lines</code> in a <b>try-with-resources</b>, filtering out blank lines and counting; and <code>static void saveReport(java.nio.file.Path p, long count) throws java.io.IOException</code> that ensures the parent directory exists (<code>createDirectories</code>) and writes <code>"lines: " + count</code> with <code>writeString</code>.`,
 starter:`import java.io.IOException;
@@ -1807,7 +1807,7 @@ static int sum(int a, int b) {    // a, b live in THIS frame — on the stack
 }</div>
 <p>So the split is simple: <b>primitives and references</b> (the arrows) sit in the stack frame; <b>the objects they point to</b> sit on the heap. This also explains Java&#8217;s "pass-by-value": Java copies the <i>value</i> you pass; for an object that copied value is the reference, so caller and callee end up pointing at the <i>same</i> heap object.</p>
 <p>The two classic failure modes fall right out of this design. Recurse too deeply and you keep pushing frames until the thread&#8217;s stack is exhausted: a <b>StackOverflowError</b>. Allocate more live objects than the heap can hold and the GC cannot help: an <b>OutOfMemoryError</b>. Knowing which memory area is involved tells you immediately which one you are looking at.</p>`,
-docs:[['JVM runtime data areas — JVM spec','https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-2.html#jvms-2.5'],['How the JVM works — Oracle','https://docs.oracle.com/javase/specs/jvms/se21/html/index.html'],['Garbage collection basics','https://docs.oracle.com/en/java/javase/21/gctuning/introduction-garbage-collection-tuning.html']],
+docs:[['JVM runtime data areas, JVM spec','https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-2.html#jvms-2.5'],['How the JVM works, Oracle','https://docs.oracle.com/javase/specs/jvms/se21/html/index.html'],['Garbage collection basics','https://docs.oracle.com/en/java/javase/21/gctuning/introduction-garbage-collection-tuning.html']],
 ex:{title:'Where does it live, and what breaks?',
 prompt:`Write class <code>Jvm</code> with two static methods. <code>String location(String what)</code>: <code>"object"</code>→<code>"heap"</code>, <code>"local-primitive"</code>→<code>"stack"</code>, <code>"reference-variable"</code>→<code>"stack"</code>, <code>"class-metadata"</code>→<code>"metaspace"</code>, else <code>"unknown"</code>. <code>String error(String cause)</code>: <code>"deep-recursion"</code>→<code>"StackOverflowError"</code>, <code>"too-many-objects"</code>→<code>"OutOfMemoryError"</code>, else <code>"unknown"</code>.`,
 starter:`public class Jvm {

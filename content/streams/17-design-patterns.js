@@ -47,7 +47,7 @@ be written. A builder names each value at the call site and lets the object vali
 <p>The modern caveat: for a small immutable value, a <b>record</b> does most of this with no ceremony at
 all. Reach for a builder when there are genuinely many optional fields, defaults to apply, or invariants to
 check across them.`,
-docs:[['Effective Java patterns summary — items 1-5','https://dev.java/learn/api/'],['Refactoring Guru — Builder','https://refactoring.guru/design-patterns/builder'],['Refactoring Guru — Singleton','https://refactoring.guru/design-patterns/singleton']],
+docs:[['Effective Java patterns summary (items 1-5)','https://dev.java/learn/api/'],['Refactoring Guru (Builder)','https://refactoring.guru/design-patterns/builder'],['Refactoring Guru (Singleton)','https://refactoring.guru/design-patterns/singleton']],
 ex:{title:'Build an immutable config',
 prompt:`Write an immutable <code>ServerConfig</code> (fields <code>String host; int port; boolean tls</code>, all <code>final</code>) with a <b>private constructor</b>, a <code>static Builder builder()</code> entry point, and a <b>static nested</b> class <code>Builder</code> whose fluent setters (<code>host(String)</code>, <code>port(int)</code>, <code>tls(boolean)</code>) each <code>return this</code>, finished by <code>ServerConfig build()</code> that calls the private constructor.`,
 starter:`public class ServerConfig {
@@ -133,7 +133,7 @@ which is why it has quietly lost ground to strategy.</li>
 implementation is indirection you pay for and do not use, and the second implementation is cheap to
 introduce when it actually arrives. Patterns are a vocabulary for describing structure you needed anyway,
 not a shopping list to work through.</p>`,
-docs:[['Refactoring Guru — Strategy','https://refactoring.guru/design-patterns/strategy'],['Refactoring Guru — Observer','https://refactoring.guru/design-patterns/observer'],['Refactoring Guru — Template Method','https://refactoring.guru/design-patterns/template-method']],
+docs:[['Refactoring Guru (Strategy)','https://refactoring.guru/design-patterns/strategy'],['Refactoring Guru (Observer)','https://refactoring.guru/design-patterns/observer'],['Refactoring Guru (Template Method)','https://refactoring.guru/design-patterns/template-method']],
 exs:[{title:'Pricing with pluggable strategies',
 prompt:`Build (1) a <code>@FunctionalInterface</code> <code>Discount</code> with <code>double apply(double price)</code>; (2) <code>class Register</code> with constants <code>Discount NONE</code> (identity lambda) and <code>Discount SUMMER</code> (20% off: multiply by 0.8); (3) <code>double checkout(double price, Discount d)</code> delegating to the strategy; (4) Observer support: a <code>List&lt;Consumer&lt;Double&gt;&gt; listeners</code>, <code>void onSale(Consumer&lt;Double&gt; l)</code>, and have <code>checkout</code> notify every listener with the final price via <code>forEach</code> + <code>accept</code>.`,
 starter:`import java.util.ArrayList;
@@ -232,7 +232,7 @@ that grows a method per use case has stopped simplifying and started accumulatin
 <p>Java's own library uses all three openly. <code>InputStreamReader</code> is an adapter from bytes to
 characters. <code>BufferedReader</code> is a decorator. <code>java.net.http.HttpClient</code> is a facade
 over connection pooling, negotiation and redirects.</p>`,
-docs:[['Refactoring Guru — Adapter','https://refactoring.guru/design-patterns/adapter'],['Refactoring Guru — Decorator','https://refactoring.guru/design-patterns/decorator'],['Refactoring Guru — Facade','https://refactoring.guru/design-patterns/facade']],
+docs:[['Refactoring Guru (Adapter)','https://refactoring.guru/design-patterns/adapter'],['Refactoring Guru (Decorator)','https://refactoring.guru/design-patterns/decorator'],['Refactoring Guru (Facade)','https://refactoring.guru/design-patterns/facade']],
 ex:{title:'Adapt the legacy, decorate the new',
 prompt:`Given interface <code>Printer { void print(String msg); }</code> and an unchangeable <code>class LegacyPrinter { void output(String text) {...} }</code>: (1) write <code>PrinterAdapter implements Printer</code> holding a <code>LegacyPrinter</code> field (constructor-injected) whose <code>print</code> translates to <code>output(msg)</code>; (2) write decorator <code>PrefixPrinter implements Printer</code> holding a <code>Printer delegate</code> and a <code>String prefix</code>, whose <code>print</code> calls <code>delegate.print(prefix + msg)</code>. Both use composition: no extends anywhere.`,
 starter:`interface Printer { void print(String msg); }
@@ -326,7 +326,7 @@ hints:['Prototype = clone an existing object; here, construct a new one from thi
 <p>Patterns are only useful if you can recognise the situation that calls for one. Each of these answers a
 different question about how objects are put together.</p>
 
-<h4>Proxy — "I need something to happen around access"</h4>
+<h4>Proxy: "I need something to happen around access"</h4>
 <p>Same interface, different object. The caller cannot tell, which is the point: you add caching, lazy
 loading, access control, retries or remoting <b>without touching either side</b>.</p>
 <div class="codeSample" data-hl>interface Report { byte[] render(); }
@@ -347,20 +347,20 @@ class CachingReport implements Report {          // same interface
 and you usually stack several deliberately; a proxy <i>controls access</i> to one specific object and is
 often invisible to the caller.</p>
 
-<h4>Composite — "a group should behave like one item"</h4>
+<h4>Composite: "a group should behave like one item"</h4>
 <p>When a client has to ask "is this a single thing or a collection?" before every operation, the
 conditionals spread everywhere. Composite gives leaf and container the same interface, so
 <code>size()</code> on a file and on a folder are both just <code>size()</code>, and the recursion lives
 in the container rather than in every caller. Directory trees, UI component hierarchies, nested
 permission groups and org charts all take this shape.</p>
 
-<h4>Bridge — "I have two things varying at once"</h4>
+<h4>Bridge: "I have two things varying at once"</h4>
 <p>The signal is a <b>class explosion</b>: three shapes times three renderers becomes nine classes, and a
 fourth of either makes it twelve. Bridge separates the two hierarchies and composes them, so each varies
 independently and you add one class instead of a row. In practice you meet it as JDBC (one
 <code>Connection</code> API, many drivers) and as SLF4J over multiple logging backends.</p>
 
-<h4>Flyweight — "I have millions of nearly identical objects"</h4>
+<h4>Flyweight: "I have millions of nearly identical objects"</h4>
 <p>Split state into <b>intrinsic</b> (shared, immutable, e.g. the character 'a' and its font) and
 <b>extrinsic</b> (per-use, passed in, e.g. its position). Share the first, pass the second. Java does this
 for you with the <code>Integer</code> cache for −128..127 and with interned string literals.</p>
@@ -406,7 +406,7 @@ hints:['A caching proxy stores the result of the first real call.','Guard with i
 is the payoff to look for: if the pattern does not make something first-class that used to be buried in a
 conditional, it is not earning its complexity.</p>
 
-<h4>Command — "an action I can hold onto"</h4>
+<h4>Command: "an action I can hold onto"</h4>
 <p>Once an action is an object rather than a method call, you can do things a call cannot: put it on a
 queue, retry it, log it, schedule it, and (the classic) undo it, by giving the command an inverse.</p>
 <div class="codeSample" data-hl>interface Command { void execute(); void undo(); }
@@ -421,7 +421,7 @@ class Transfer implements Command {
 <p>In modern Java a <code>Runnable</code> or a lambda <i>is</i> a command; the pattern earns its keep when
 you need the extra operations (undo, describe, serialise) that a bare lambda cannot offer.</p>
 
-<h4>State — "the object behaves differently depending on where it is"</h4>
+<h4>State: "the object behaves differently depending on where it is"</h4>
 <p>The smell is the same <code>switch (status)</code> appearing in five methods. Every new status means
 editing all five, and forgetting one is a silent bug. State moves the behaviour into a class per state, so
 a new state is a new class and the compiler tells you what it must implement.</p>
@@ -431,7 +431,7 @@ sealed interfaces plus pattern matching give you this with exhaustiveness checke
 simple cases an enum with per-constant method bodies is often enough; do not build a state machine
 framework for three states.</p>
 
-<h4>Chain of Responsibility — "someone in this line will handle it"</h4>
+<h4>Chain of Responsibility: "someone in this line will handle it"</h4>
 <p>A request passes along handlers until one deals with it. The value is that the sender does not know
 which handler will respond, and handlers can be reordered, added or removed independently, which is why
 it underpins every middleware pipeline you have used: servlet filters, Spring Security's filter chain,
@@ -483,7 +483,7 @@ hints:['State drives behavior: switch on the current state to pick the next.','r
 the main tool. The four below are what you will meet in a service written this year, and three of them
 exist because <b>a boundary needs protecting</b>.</p>
 
-<h4>Dependency Injection — the enabler for everything else</h4>
+<h4>Dependency Injection: the enabler for everything else</h4>
 <p>A class that constructs its own collaborators has hardcoded which implementation, when it is created and
 how long it lives. Receiving them instead moves all three decisions outward, and the practical result is
 that the class can be tested with fakes and reused in another context.</p>
@@ -492,7 +492,7 @@ exist without its dependencies, the fields can be <code>final</code>, and the co
 visible list of what the class depends on. A constructor with nine parameters is telling you the class does
 too much; field injection hides that same fact behind nine annotations.</p>
 
-<h4>Repository — a boundary, not a wrapper</h4>
+<h4>Repository: a boundary, not a wrapper</h4>
 <p>The point is that business code expresses intent in domain terms and never learns how storage works. Done
 right, the interface is defined <b>by the domain</b> and implemented by the persistence layer, so the
 dependency arrow points inward and the database is a detail.</p>
@@ -507,14 +507,14 @@ List&lt;User&gt; findActiveSince(LocalDate date);
 // call, or a different database WITHOUT changing any caller?
 // if not, it is a thin wrapper over your ORM, not a repository.</div>
 
-<h4>DTO — decoupling your API from your model</h4>
+<h4>DTO: decoupling your API from your model</h4>
 <p>Serialising a domain object straight to JSON quietly makes your internal model a public contract. Every
 rename becomes a breaking change; every new field is accidentally exposed; and adding a JSON annotation to
 a domain class drags web concerns into the core. A DTO costs a mapping and buys you the freedom to change
 either side alone. Java <code>record</code>s make it nearly free, and the mapping is worth writing rather
 than generating reflectively when the two shapes genuinely differ.</p>
 
-<h4>Null Object — and when it is wrong</h4>
+<h4>Null Object: and when it is wrong</h4>
 <p>Returning a harmless do-nothing implementation removes null checks from every caller. It is excellent
 for genuinely optional collaborators (a <code>NoOpMetrics</code>, a <code>NoOpLogger</code>) where doing
 nothing is a valid behaviour.</p>
@@ -558,7 +558,7 @@ hints:['Inject the dependency through the constructor and keep it in a final fie
 <li><b>Big Ball of Mud, Spaghetti, Anemic Domain Model, Golden Hammer</b> round out the catalog: no architecture, tangled flow, logic-less data classes, and "one tool for everything."</li>
 </ul>
 <p>The meta-cure is the set of principles the patterns encode: <b>SRP/SOLID</b>, <b>DRY</b>, <b>KISS</b>, and <b>YAGNI</b>, plus the discipline to refactor continuously so smells never compound. And remember the twist: over-applying patterns is itself an anti-pattern. Use the simplest thing that works.</p>`,
-docs:[['AntiPatterns — Wikipedia','https://en.wikipedia.org/wiki/Anti-pattern'],['Code smells','https://refactoring.guru/refactoring/smells'],['SOLID principles','https://en.wikipedia.org/wiki/SOLID']],
+docs:[['AntiPatterns (Wikipedia)','https://en.wikipedia.org/wiki/Anti-pattern'],['Code smells','https://refactoring.guru/refactoring/smells'],['SOLID principles','https://en.wikipedia.org/wiki/SOLID']],
 ex:{title:'Prescribe the remedy',
 prompt:`Write class <code>AntiPatterns</code> with <code>static String remedy(String smell)</code>: <code>"god-object"</code>→<code>"split by responsibility"</code>, <code>"magic-number"</code>→<code>"extract a named constant"</code>, <code>"copy-paste"</code>→<code>"extract a shared method"</code>, <code>"global-mutable-state"</code>→<code>"inject dependencies"</code>, <code>"premature-optimization"</code>→<code>"measure then optimize"</code>, and <code>"unknown"</code> for anything else.`,
 starter:`public class AntiPatterns {

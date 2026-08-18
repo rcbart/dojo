@@ -1,4 +1,4 @@
-# 0 — What Istio is (and why it exists)
+# 0: What Istio is (and why it exists)
 
 *No lab; this sets the mental model. ~12 min read.*
 
@@ -105,4 +105,4 @@ Those five questions are the whole game. Every module fills in one.
 
 ---
 
-**Next:** [1 — Architecture (istiod + the proxies) →](./01-architecture.md)
+**Next:** [1: Architecture (istiod + the proxies) →](./01-architecture.md)

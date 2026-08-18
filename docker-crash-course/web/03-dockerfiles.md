@@ -1,4 +1,4 @@
-# 3 — Building images with Dockerfiles
+# 3: Building images with Dockerfiles
 
 *The core practitioner skill: packaging your own app. Concepts + a build-it-yourself lab. ~30 min.
 Requires Docker.*
@@ -159,4 +159,4 @@ second build is fully `CACHED`.)*
 
 ---
 
-**Next:** [4 — Data: volumes & bind mounts →](./04-data-volumes.md)
+**Next:** [4: Data: volumes & bind mounts →](./04-data-volumes.md)

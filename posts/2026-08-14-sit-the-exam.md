@@ -3,6 +3,7 @@ title: "Write the exam, write the answer key, then sit the exam: why dogfooding 
 description: "I built a learning platform with two CI gates and a few thousand assertions, and it still shipped four exercises that failed even when I got the right answer. The missing ingredient wasn't more tests. It was dogfooding, and knowing when to stop."
 date: 2026-08-16
 tags: ["testing", "ci", "quality", "engineering"]
+category: engineering
 slug: "sit-the-exam"
 status: published
 ---

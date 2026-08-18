@@ -1,4 +1,4 @@
-# 8 — Advanced builds: BuildKit, buildx & multi-platform
+# 8: Advanced builds: BuildKit, buildx & multi-platform
 
 *The modern build engine and how to produce images that run on any CPU. Concepts + labs. ~30 min.
 Requires Docker (BuildKit ships enabled in current versions).*
@@ -11,7 +11,7 @@ Requires Docker (BuildKit ships enabled in current versions).*
 build time, and cache dependencies far more aggressively. This is the advanced-build knowledge that
 separates senior practitioners.
 
-## BuildKit — the engine under `docker build`
+## BuildKit: the engine under `docker build`
 
 **BuildKit** is Docker's build backend (default in current Docker). Versus the old builder it gives
 you:
@@ -64,7 +64,7 @@ docker buildx imagetools inspect YOURNAME/app:1.0
 # shows manifests for linux/amd64 and linux/arm64 under one tag
 ```
 
-## Build secrets — credentials without baking them in
+## Build secrets: credentials without baking them in
 
 Module 7 warned: never put secrets in a Dockerfile or `ENV` (they persist in layers). But sometimes
 a build *needs* a secret (a private package token). BuildKit's `--secret` mounts it **only for one
@@ -85,7 +85,7 @@ docker buildx build --secret id=npmtoken,src=./token.txt -t app .
 Verify it's not in the image with `docker history`: it isn't. This is the *correct* way to use a
 credential at build time.
 
-## Cache mounts — stop re-downloading dependencies
+## Cache mounts: stop re-downloading dependencies
 
 A `RUN --mount=type=cache` persists a directory **across builds** (e.g. the package manager cache),
 so dependencies aren't re-fetched every time even when the layer rebuilds:
@@ -101,7 +101,7 @@ COPY . .
 
 The npm download cache survives between builds, which means big speedups in CI.
 
-## `docker buildx bake` — declarative builds
+## `docker buildx bake`: declarative builds
 
 For multiple images/targets, `bake` builds them from a config file (like Compose, but for builds):
 
@@ -165,4 +165,4 @@ rm token.txt
 
 ---
 
-**Next:** [9 — Registries & distribution →](./09-registries-distribution.md)
+**Next:** [9: Registries & distribution →](./09-registries-distribution.md)

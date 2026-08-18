@@ -35,7 +35,7 @@ Object.keys(user)               // ["name", "favourite colour", ...]
 Object.values(user)
 Object.entries(user)            // [["name","Ada"], ...] - the one to loop over</div>
 
-<h4>References — the single most important idea here</h4>
+<h4>References: the single most important idea here</h4>
 <p>Primitives are copied by <b>value</b>. Objects are copied by <b>reference</b>: the variable holds a
 pointer, not the object, so two names can refer to the same thing.</p>
 <div class="codeSample" data-hl>let a = 1, b = a;  b = 2;      // a is still 1 - independent copies
@@ -72,7 +72,7 @@ const u = { name, age };            // shorthand: { name: name, age: age }
 
 const field = "email";
 const patch = { [field]: "a@b.c" }; // computed key -> { email: "a@b.c" }</div>`,
-docs:[['MDN — Working with objects','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Working_with_objects'],['MDN — Optional chaining','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining'],['MDN — structuredClone','https://developer.mozilla.org/en-US/docs/Web/API/Window/structuredClone']],
+docs:[['MDN (Working with objects)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Working_with_objects'],['MDN (Optional chaining)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining'],['MDN (structuredClone)','https://developer.mozilla.org/en-US/docs/Web/API/Window/structuredClone']],
 exs:[
 {title:'Read safely through a nested object',diff:'easy',lang:'js',
 run:{call:'cityOf',cases:[
@@ -170,7 +170,7 @@ use <code>some</code>, <code>find</code> or a <code>for...of</code>. And array "
 <code>new Array(3)</code> or deleting an element) are skipped by <code>map</code> and
 <code>forEach</code> but not by <code>for...of</code>, which is one more reason to avoid creating
 them.</p>`,
-docs:[['MDN — Array','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array'],['MDN — Array.prototype.reduce','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce'],['MDN — Array.prototype.sort','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort']],
+docs:[['MDN (Array)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array'],['MDN (Array.prototype.reduce)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce'],['MDN (Array.prototype.sort)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort']],
 exs:[
 {title:'Transform with map, filter and reduce',diff:'easy',lang:'js',
 run:{call:'activeTotal',cases:[
@@ -284,7 +284,7 @@ in a parameter list, it <b>collects</b> (rest). On the <b>right</b>, or inside a
 <p>Spread copies are <b>shallow</b>. <code>{ ...user }</code> gives you a new top-level object whose
 nested objects are still the same references, so mutating <code>copy.address.city</code> changes the
 original. For a true deep copy use <code>structuredClone</code>.</p>`,
-docs:[['MDN — Destructuring assignment','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment'],['MDN — Spread syntax','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax'],['MDN — Rest parameters','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters']],
+docs:[['MDN (Destructuring assignment)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment'],['MDN (Spread syntax)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax'],['MDN (Rest parameters)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters']],
 exs:[
 {title:'Strip a field without mutating',diff:'easy',lang:'js',
 run:{call:'withoutPassword',cases:[
@@ -354,7 +354,7 @@ const unique = [...new Set(arr)];        // the idiomatic dedupe
 // uniqueness uses ===, so OBJECTS are compared by reference:
 new Set([{a:1}, {a:1}]).size             // 2 - two different objects</div>
 
-<h4>JSON — and what it silently loses</h4>
+<h4>JSON: and what it silently loses</h4>
 <div class="codeSample" data-hl>JSON.stringify({ a: 1 })              // '{"a":1}'
 JSON.stringify(obj, null, 2)          // pretty-printed with 2-space indent
 JSON.parse('{"a":1}')                 // { a: 1 }
@@ -378,7 +378,7 @@ object contains a date, and then it fails in a way nobody notices until a compar
 <p>Unlike most of JavaScript, malformed JSON is an exception, not <code>undefined</code>. Anything parsed
 from a network response, a file, or user input needs a <code>try</code>/<code>catch</code>, a topic the
 errors stream takes properly.</p>`,
-docs:[['MDN — Map','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map'],['MDN — Set','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set'],['MDN — JSON','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON']],
+docs:[['MDN (Map)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map'],['MDN (Set)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set'],['MDN (JSON)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON']],
 exs:[
 {title:'Count occurrences with a Map',diff:'easy',lang:'js',
 run:{call:'countWords',cases:[
@@ -470,7 +470,7 @@ new Intl.NumberFormat("en", { notation: "compact" }).format(14500)
 <p>Reaching for <code>Intl</code> instead of hand-rolled formatting is one of those habits that quietly
 marks experienced code: it handles locales you have never heard of, and it means a French user sees
 French punctuation without anyone writing an if-statement about it.</p>`,
-docs:[['MDN — Date','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date'],['MDN — Intl','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl'],['TC39 — Temporal','https://tc39.es/proposal-temporal/docs/']],
+docs:[['MDN (Date)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date'],['MDN (Intl)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl'],['TC39 (Temporal)','https://tc39.es/proposal-temporal/docs/']],
 ex:{title:'Work with instants, not strings',diff:'medium',lang:'js',
 run:{call:'daysBetween',cases:[
  {name:'a simple span',args:['2026-03-01T00:00:00Z','2026-03-04T00:00:00Z'],expect:3},

@@ -1,4 +1,4 @@
-# Primer — What is Istio? (in plain English)
+# Primer: What is Istio? (in plain English)
 
 *Start here. No Kubernetes or networking expertise assumed. ~10 min. If you've done the Envoy
 course, this is the "boss" that drives thousands of Envoys; here's the whole idea before any
@@ -113,4 +113,4 @@ all-or-nothing. This course teaches you the whole thing so you can decide with o
 
 ---
 
-**Next:** [Primer — Sidecar vs Ambient →](./primer-sidecar-vs-ambient.md)
+**Next:** [Primer: Sidecar vs Ambient →](./primer-sidecar-vs-ambient.md)

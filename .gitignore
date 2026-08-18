@@ -60,3 +60,5 @@ blog/
 # transient FUSE artifacts from the Cowork device bridge
 .fuse_hidden*
 **/.fuse_hidden*
+dist-site/
+*.tgz

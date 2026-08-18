@@ -62,7 +62,7 @@ npx tsc --init          # writes tsconfig.json
 <code>strictNullChecks</code>: without it <code>null</code> and <code>undefined</code> are assignable to
 everything and the type system cannot help with the single most common runtime error in JavaScript.
 Adding it to an existing codebase later is genuinely painful.</p>`,
-docs:[['TypeScript — handbook','https://www.typescriptlang.org/docs/handbook/intro.html'],['TypeScript — tsconfig reference','https://www.typescriptlang.org/tsconfig'],['TypeScript — strict mode','https://www.typescriptlang.org/tsconfig#strict']],
+docs:[['TypeScript (handbook)','https://www.typescriptlang.org/docs/handbook/intro.html'],['TypeScript (tsconfig reference)','https://www.typescriptlang.org/tsconfig'],['TypeScript (strict mode)','https://www.typescriptlang.org/tsconfig#strict']],
 ex:{title:'Compile time or runtime?',diff:'easy',lang:'js',
 run:{call:'caughtBy',cases:[
  {name:'a misspelt property name',args:['typo-in-property'],expect:'typescript'},
@@ -168,7 +168,7 @@ Omit&lt;User, "password"&gt;     everything except - API responses
 Readonly&lt;User&gt;             nothing reassignable
 Record&lt;string, number&gt;     an object used as a dictionary
 ReturnType&lt;typeof fn&gt;      whatever that function returns</div>`,
-docs:[['TypeScript — everyday types','https://www.typescriptlang.org/docs/handbook/2/everyday-types.html'],['TypeScript — generics','https://www.typescriptlang.org/docs/handbook/2/generics.html'],['TypeScript — utility types','https://www.typescriptlang.org/docs/handbook/utility-types.html']],
+docs:[['TypeScript (everyday types)','https://www.typescriptlang.org/docs/handbook/2/everyday-types.html'],['TypeScript (generics)','https://www.typescriptlang.org/docs/handbook/2/generics.html'],['TypeScript (utility types)','https://www.typescriptlang.org/docs/handbook/utility-types.html']],
 exs:[
 {title:'Pick the right type construct',diff:'medium',lang:'js',
 run:{call:'typeFor',cases:[
@@ -293,7 +293,7 @@ Anywhere data enters, validate; everywhere else, let the types work.</p>
 type-checked without renaming a single file. Then convert file by file, leaves first, with
 <code>strict</code> on for new files. Do not attempt a whole-codebase rewrite in one branch: it will not
 merge, and the types you write while fighting a rebase are not the types you want.</p>`,
-docs:[['TypeScript — narrowing','https://www.typescriptlang.org/docs/handbook/2/narrowing.html'],['TypeScript — migrating from JavaScript','https://www.typescriptlang.org/docs/handbook/migrating-from-javascript.html'],['Zod','https://zod.dev/']],
+docs:[['TypeScript, narrowing','https://www.typescriptlang.org/docs/handbook/2/narrowing.html'],['TypeScript, migrating from JavaScript','https://www.typescriptlang.org/docs/handbook/migrating-from-javascript.html'],['Zod','https://zod.dev/']],
 exs:[
 {title:'What narrows this type?',diff:'medium',lang:'js',
 run:{call:'narrowWith',cases:[

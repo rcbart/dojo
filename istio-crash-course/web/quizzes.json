@@ -6,31 +6,31 @@
     "Kubernetes; kind makes a throwaway local cluster inside Docker",
     "A bare web server; npm makes the cluster",
     "A database; SQL makes the cluster",
-    "Nothing — Istio runs directly on your laptop"
+    "Nothing: Istio runs directly on your laptop"
    ],
    "answer": 0,
    "why": "Istio is a Kubernetes add-on. kind (Kubernetes-IN-Docker) spins up a real one-node cluster locally so you can install Istio into it.",
    "whyWrong": [
     "",
-    "npm manages JavaScript packages — it can't create clusters, and Istio needs Kubernetes underneath, not a bare web server.",
+    "npm manages JavaScript packages, it can't create clusters, and Istio needs Kubernetes underneath, not a bare web server.",
     "Databases and SQL play no role here; the cluster is a Kubernetes cluster and kind builds it in Docker.",
-    "Istio has no standalone mode — it installs into a Kubernetes cluster, which is exactly why kind exists."
+    "Istio has no standalone mode, it installs into a Kubernetes cluster, which is exactly why kind exists."
    ]
   },
   {
    "q": "What does 'istioctl install --set profile=demo' install?",
    "options": [
-    "The control plane (istiod) plus ingress/egress gateways — the demo profile for learning",
+    "The control plane (istiod) plus ingress/egress gateways, the demo profile for learning",
     "Only a single Envoy proxy with no control plane",
     "A production-hardened, minimal install",
     "The Kubernetes cluster itself"
    ],
    "answer": 0,
-   "why": "The demo profile is 'batteries included' with relaxed resource needs — istiod and gateways — ideal for tutorials, not production.",
+   "why": "The demo profile is 'batteries included' with relaxed resource needs, istiod and gateways, ideal for tutorials, not production.",
    "whyWrong": [
     "",
     "A lone Envoy with no control plane would have nothing programming it; the demo profile ships istiod plus gateways.",
-    "Demo is deliberately roomy and relaxed for learning — the leaner installs are the 'minimal' and 'default' profiles.",
+    "Demo is deliberately roomy and relaxed for learning, the leaner installs are the 'minimal' and 'default' profiles.",
     "istioctl assumes a cluster already exists; kind created that separately beforehand."
    ]
   },
@@ -47,7 +47,7 @@
    "whyWrong": [
     "",
     "The label drives sidecar injection; it does nothing to data at rest.",
-    "Existing sidecar-less pods are left alone — they just sit outside the mesh until recreated.",
+    "Existing sidecar-less pods are left alone, they just sit outside the mesh until recreated.",
     "Istio is installed once, cluster-wide, into istio-system; the label only opts that namespace's new pods into injection."
    ]
   },
@@ -57,7 +57,7 @@
     "Your app container plus the injected Envoy sidecar proxy",
     "Two copies of the same app for redundancy",
     "One container for HTTP and one for HTTPS",
-    "A bug — pods should always be 1/1"
+    "A bug, pods should always be 1/1"
    ],
    "answer": 0,
    "why": "2/2 means two containers in the pod: your application and the istio-proxy (Envoy) sidecar that Istio injected.",
@@ -65,7 +65,7 @@
     "",
     "Redundancy comes from Deployment replicas (more pods), not duplicate containers inside one pod.",
     "One Envoy handles every protocol; there's no per-protocol container split.",
-    "2/2 is the expected state inside the mesh — the second container is the injected sidecar, not a malfunction."
+    "2/2 is the expected state inside the mesh, the second container is the injected sidecar, not a malfunction."
    ]
   },
   {
@@ -96,12 +96,12 @@
     "A replacement for Kubernetes"
    ],
    "answer": 0,
-   "why": "Istio makes the network between your services smart and controllable — traffic control, security, and observability — with no app code changes.",
+   "why": "Istio makes the network between your services smart and controllable, traffic control, security, and observability, with no app code changes.",
    "whyWrong": [
     "",
     "You keep writing services in whatever language you like; Istio operates on the network between them.",
     "Istio's config lives in ordinary Kubernetes resources; it isn't a datastore of any kind.",
-    "Istio requires Kubernetes and runs on top of it — it adds a layer rather than replacing one."
+    "Istio requires Kubernetes and runs on top of it, it adds a layer rather than replacing one."
    ]
   },
   {
@@ -113,10 +113,10 @@
     "It runs your services on faster hardware"
    ],
    "answer": 0,
-   "why": "With a proxy on both ends of every call, Istio can encrypt, route, retry, and measure traffic uniformly — the app just makes a normal call.",
+   "why": "With a proxy on both ends of every call, Istio can encrypt, route, retry, and measure traffic uniformly, the app just makes a normal call.",
    "whyWrong": [
     "",
-    "Your source and binaries are untouched — the interception happens at the network layer via the proxy.",
+    "Your source and binaries are untouched, the interception happens at the network layer via the proxy.",
     "Needing a library in every service is precisely the problem the sidecar model avoids.",
     "Hardware speed is irrelevant; the features come from mediating traffic, not accelerating it."
    ]
@@ -124,7 +124,7 @@
   {
    "q": "Which proxy does Istio use as its data plane?",
    "options": [
-    "Envoy — Istio programs a whole fleet of them automatically",
+    "Envoy: Istio programs a whole fleet of them automatically",
     "nginx",
     "HAProxy",
     "Its own proxy written in Java"
@@ -135,7 +135,7 @@
     "",
     "nginx is a fine proxy, but Istio's data plane is built on Envoy and its dynamic xDS APIs.",
     "HAProxy isn't live-programmable the way Istio needs; Envoy was designed for exactly this.",
-    "Istio didn't write its own proxy — it adopted Envoy, which is C++ (and istiod is Go)."
+    "Istio didn't write its own proxy, it adopted Envoy, which is C++ (and istiod is Go)."
    ]
   },
   {
@@ -151,7 +151,7 @@
    "whyWrong": [
     "",
     "Frontend/backend describes app tiers, not mesh layers; the split is proxies (data) versus istiod (control).",
-    "That's reversed — the proxies carry the data, istiod does the controlling.",
+    "That's reversed, the proxies carry the data, istiod does the controlling.",
     "Client and server are roles in one call; every proxy plays both, and istiod sits above them all."
    ]
   },
@@ -168,7 +168,7 @@
    "whyWrong": [
     "",
     "The mesh handles the network between services; bugs inside your code are still yours.",
-    "Istio consumes compute (the proxies aren't free) — it certainly doesn't provide any.",
+    "Istio consumes compute (the proxies aren't free), it certainly doesn't provide any.",
     "Databases are entirely outside Istio's scope."
    ]
   }
@@ -177,7 +177,7 @@
   {
    "q": "In sidecar mode, where does the proxy live?",
    "options": [
-    "Inside every pod, next to the app — a full Envoy sidecar",
+    "Inside every pod, next to the app, a full Envoy sidecar",
     "Once per cluster, in a central location",
     "On the client's laptop",
     "Inside istiod only"
@@ -188,13 +188,13 @@
     "",
     "One shared proxy is closer to ambient's ztunnel idea; sidecar mode is defined by the per-pod proxy.",
     "The mesh lives inside the cluster; nothing runs on client machines.",
-    "istiod is the control plane — it programs proxies but carries no application traffic itself."
+    "istiod is the control plane, it programs proxies but carries no application traffic itself."
    ]
   },
   {
    "q": "In ambient mode, what are the two proxy layers and what does each do?",
    "options": [
-    "ztunnel — per-node, handles mTLS/L4 cheaply; waypoint — a full Envoy added per-namespace/service for L7",
+    "ztunnel, per-node, handles mTLS/L4 cheaply; waypoint, a full Envoy added per-namespace/service for L7",
     "A frontend proxy and a backend proxy, both per-pod",
     "Two sidecars per pod for redundancy",
     "ztunnel for HTTP and waypoint for TCP, both per-pod"
@@ -205,7 +205,7 @@
     "",
     "Ambient splits by layer (L4 vs L7) and placement (node vs namespace), not front-versus-back.",
     "Ambient's whole point is removing per-pod proxies, not doubling them.",
-    "Inverted and misplaced — ztunnel is the L4 layer, the waypoint handles HTTP, and neither runs per pod."
+    "Inverted and misplaced, ztunnel is the L4 layer, the waypoint handles HTTP, and neither runs per pod."
    ]
   },
   {
@@ -222,14 +222,14 @@
     "",
     "Kubernetes is still required; ambient only changes where the proxies run.",
     "ztunnel adds encryption at modest cost; it doesn't accelerate your applications.",
-    "Rust is ztunnel's implementation language — your apps stay exactly as they are."
+    "Rust is ztunnel's implementation language, your apps stay exactly as they are."
    ]
   },
   {
    "q": "Is Envoy still involved in ambient mode?",
    "options": [
-    "Yes — the waypoint proxy is Envoy; it's just no longer in every pod",
-    "No — ambient mode removes Envoy entirely",
+    "Yes, the waypoint proxy is Envoy; it's just no longer in every pod",
+    "No, ambient mode removes Envoy entirely",
     "Only on Windows nodes",
     "Only in the control plane"
    ],
@@ -245,8 +245,8 @@
   {
    "q": "Do Istio concepts like mTLS and VirtualService apply to both modes?",
    "options": [
-    "Yes — only the plumbing differs; the concepts carry over",
-    "No — ambient mode uses completely different concepts",
+    "Yes, only the plumbing differs; the concepts carry over",
+    "No, ambient mode uses completely different concepts",
     "Only mTLS applies to both; VirtualService is sidecar-only",
     "Neither applies to ambient mode"
    ],
@@ -254,7 +254,7 @@
    "why": "The same objects work in both modes. In ambient, L7 rules are enforced by the waypoint and L4/mTLS by ztunnel.",
    "whyWrong": [
     "",
-    "The APIs are shared on purpose — VirtualService, PeerAuthentication and friends work in ambient too.",
+    "The APIs are shared on purpose: VirtualService, PeerAuthentication and friends work in ambient too.",
     "VirtualService works in ambient as well; it's enforced by a waypoint instead of a sidecar.",
     "Both apply: ztunnel provides mTLS everywhere and waypoints enforce the L7 objects."
    ]
@@ -270,11 +270,11 @@
     "Frontend, backend, and database"
    ],
    "answer": 0,
-   "why": "Everything Istio does falls into these three buckets — control where traffic goes, secure it with mTLS/authz, and observe it.",
+   "why": "Everything Istio does falls into these three buckets, control where traffic goes, secure it with mTLS/authz, and observe it.",
    "whyWrong": [
     "",
     "Those are infrastructure resources; Istio is software managing traffic over whatever infra you already have.",
-    "Compiler, linker, and debugger are build tools — Istio never touches your build.",
+    "Compiler, linker, and debugger are build tools: Istio never touches your build.",
     "Frontend/backend/database is an app architecture; Istio's pillars are about the network between services."
    ]
   },
@@ -290,7 +290,7 @@
    "why": "Envoy proxies carry the traffic (data plane); istiod computes and pushes their config (control plane).",
    "whyWrong": [
     "",
-    "Swapped — istiod is the control-plane brain; the Envoy proxies are the data plane carrying traffic.",
+    "Swapped, istiod is the control-plane brain; the Envoy proxies are the data plane carrying traffic.",
     "Kubernetes and Docker are the platform underneath; the mesh split is Envoy (data) versus istiod (control).",
     "They're distinct components: istiod pushes config, the proxies move packets."
    ]
@@ -298,8 +298,8 @@
   {
    "q": "Do you configure Envoy directly when using Istio?",
    "options": [
-    "No — you write Istio objects, and istiod translates them to Envoy config over xDS",
-    "Yes — you hand-write every proxy's YAML",
+    "No, you write Istio objects, and istiod translates them to Envoy config over xDS",
+    "Yes, you hand-write every proxy's YAML",
     "Only for the ingress gateway",
     "Envoy has no configuration"
    ],
@@ -308,7 +308,7 @@
    "whyWrong": [
     "",
     "Hand-writing every proxy's YAML is exactly the pain Istio removes; istiod generates it all.",
-    "Even the ingress gateway is an istiod-programmed Envoy — you configure it with Gateway and VirtualService.",
+    "Even the ingress gateway is an istiod-programmed Envoy, you configure it with Gateway and VirtualService.",
     "Envoy is intensely configurable; that's the whole reason istiod exists to generate its config."
    ]
   },
@@ -321,12 +321,12 @@
     "A mesh only works at the edge"
    ],
    "answer": 0,
-   "why": "Gateways cover north-south (edge) traffic. A mesh covers east-west (service-to-service) too — usually with a gateway at the edge as well.",
+   "why": "Gateways cover north-south (edge) traffic. A mesh covers east-west (service-to-service) too, usually with a gateway at the edge as well.",
    "whyWrong": [
     "",
-    "Speed and security aren't the axis — the difference is scope: edge-only versus every service-to-service hop.",
+    "Speed and security aren't the axis, the difference is scope: edge-only versus every service-to-service hop.",
     "A gateway covers only the edge; a mesh adds all the east-west traffic between services.",
-    "The opposite — a mesh's distinguishing feature is covering traffic inside the cluster, well past the edge."
+    "The opposite, a mesh's distinguishing feature is covering traffic inside the cluster, well past the edge."
    ]
   },
   {
@@ -338,12 +338,12 @@
     "Any system running on Kubernetes"
    ],
    "answer": 0,
-   "why": "A mesh earns its complexity at scale. For a few services, a single gateway and in-code retries are often enough — though ambient lowers the entry cost.",
+   "why": "A mesh earns its complexity at scale. For a few services, a single gateway and in-code retries are often enough, though ambient lowers the entry cost.",
    "whyWrong": [
     "",
     "High-volume regulated encryption is the classic case where a mesh earns its complexity.",
     "Uniform mTLS across hundreds of services is precisely what Istio is for.",
-    "Running Kubernetes doesn't imply a mesh — small clusters often do fine with an ingress and in-code retries."
+    "Running Kubernetes doesn't imply a mesh, small clusters often do fine with an ingress and in-code retries."
    ]
   }
  ],
@@ -360,7 +360,7 @@
    "why": "istiod bundles the old Pilot (config/xDS), Citadel (CA/identity), and the injection webhook into one control-plane component.",
    "whyWrong": [
     "",
-    "Logs go to your logging stack and databases to your apps — istiod handles config, certificates, and injection.",
+    "Logs go to your logging stack and databases to your apps, istiod handles config, certificates, and injection.",
     "Compiling, testing, and deploying is a CI/CD pipeline's job; istiod runs the mesh, not your builds.",
     "Load balancing happens inside the Envoy proxies istiod programs; caching and DNS aren't istiod's jobs at all."
    ]
@@ -377,7 +377,7 @@
    "why": "Transparent interception via iptables (commonly ports 15001 out, 15006 in) means the app is unaware a proxy is in the path.",
    "whyWrong": [
     "",
-    "The app never knowingly talks to the sidecar — interception is transparent via iptables.",
+    "The app never knowingly talks to the sidecar, interception is transparent via iptables.",
     "No recompilation happens; the redirect is at the network layer with the code untouched.",
     "It's fully automatic at pod startup via an init container, never a manual operation."
    ]
@@ -396,13 +396,13 @@
     "",
     "Container images are pulled by the kubelet from a registry; istiod ships proxy config, not containers.",
     "istiod never sees your source code; it streams generated Envoy config plus identity certs.",
-    "There's no SQL anywhere in the path — xDS is a gRPC configuration protocol."
+    "There's no SQL anywhere in the path, xDS is a gRPC configuration protocol."
    ]
   },
   {
    "q": "In the mesh, a call from service A to service B is really between what?",
    "options": [
-    "A's sidecar and B's sidecar — encrypted and policy-checked",
+    "A's sidecar and B's sidecar, encrypted and policy-checked",
     "A's app and B's app, directly",
     "istiod and the Kubernetes API",
     "The client's browser and B"
@@ -412,7 +412,7 @@
    "whyWrong": [
     "",
     "The apps believe they talk directly, but iptables detours every packet through both sidecars.",
-    "istiod is out-of-band — it programs the proxies but sits on no request path.",
+    "istiod is out-of-band, it programs the proxies but sits on no request path.",
     "The browser only reaches the edge gateway; inside the mesh the hop in question is proxy-to-proxy."
    ]
   },
@@ -428,7 +428,7 @@
    "why": "You express intent as Kubernetes CRDs (Gateway, VirtualService, DestinationRule, PeerAuthentication, etc.) and kubectl apply them.",
    "whyWrong": [
     "",
-    "Nothing is compiled — it's declarative YAML applied to the Kubernetes API.",
+    "Nothing is compiled, it's declarative YAML applied to the Kubernetes API.",
     "Config lives in the Kubernetes API server as resources, not in a SQL database you manage.",
     "Env vars configure single containers; mesh-wide intent is expressed as CRDs that istiod watches."
    ]
@@ -448,7 +448,7 @@
    "whyWrong": [
     "",
     "The injector ignores resource limits; only the namespace label matters.",
-    "The webhook doesn't inspect image names — any new pod in a labelled namespace gets the sidecar.",
+    "The webhook doesn't inspect image names, any new pod in a labelled namespace gets the sidecar.",
     "Injection is decided by an admission webhook at pod creation; the node has no say in it."
    ]
   },
@@ -489,7 +489,7 @@
   {
    "q": "Who wrote the listeners/routes/clusters you see with 'istioctl proxy-config'?",
    "options": [
-    "istiod generated them from discovered services — you didn't write them",
+    "istiod generated them from discovered services, you didn't write them",
     "You wrote them by hand in envoy.yaml",
     "Kubernetes wrote them automatically without Istio",
     "They are hard-coded into the Envoy image"
@@ -498,7 +498,7 @@
    "why": "istiod discovers every service and produces each proxy's Envoy config. proxy-config just shows you what it delivered.",
    "whyWrong": [
     "",
-    "There's no envoy.yaml for you to write — istiod generates everything from your CRDs and discovered services.",
+    "There's no envoy.yaml for you to write, istiod generates everything from your CRDs and discovered services.",
     "Bare Kubernetes produces no Envoy config; kube-proxy works differently, and this is istiod's output.",
     "The image ships only a bootstrap stub; the real listeners, routes, and clusters arrive from istiod at runtime."
    ]
@@ -515,7 +515,7 @@
    "why": "istiod's CA issues each workload a SPIFFE identity tied to its ServiceAccount, which mTLS and AuthorizationPolicy use to know who a caller is.",
    "whyWrong": [
     "",
-    "The identity is structured and meaningful — cluster, namespace, ServiceAccount — not random.",
+    "The identity is structured and meaningful, cluster, namespace, ServiceAccount, not random.",
     "Pod IPs churn constantly; identity is deliberately decoupled from addresses.",
     "Image digests identify code, not the running workload's ServiceAccount-based identity."
    ]
@@ -534,9 +534,9 @@
    "why": "A Gateway is the front door (accepts connections). A VirtualService provides the routing rules. You use them together for ingress.",
    "whyWrong": [
     "",
-    "Reversed — the Gateway only opens ports and hosts; routing decisions live in the VirtualService.",
+    "Reversed, the Gateway only opens ports and hosts; routing decisions live in the VirtualService.",
     "They're complementary halves; a Gateway alone routes nothing.",
-    "Neither stores data — the Gateway is the listening door and the VirtualService is the route table."
+    "Neither stores data, the Gateway is the listening door and the VirtualService is the route table."
    ]
   },
   {
@@ -551,7 +551,7 @@
    "why": "First match wins (like raw Envoy). Put specific matches above catch-alls or they'll be shadowed.",
    "whyWrong": [
     "",
-    "Istio doesn't rank rules by specificity — position in the list is all that matters.",
+    "Istio doesn't rank rules by specificity, position in the list is all that matters.",
     "Last-listed winning would mean catch-alls always shadow everything; it's the first match that takes the traffic.",
     "Overlapping matches are perfectly legal; Envoy just evaluates them top-down."
    ]
@@ -560,7 +560,7 @@
    "q": "How do you make a VirtualService apply to internal east-west traffic instead of the edge?",
    "options": [
     "Bind it to the 'mesh' gateway (or omit gateways) and set hosts to the internal service",
-    "It's impossible — VirtualServices only work at the edge",
+    "It's impossible: VirtualServices only work at the edge",
     "Delete the Gateway object",
     "Add a DestinationRule instead"
    ],
@@ -570,7 +570,7 @@
     "",
     "VirtualServices apply in-mesh by default; binding to an edge Gateway is the optional extra, not the only mode.",
     "Deleting the Gateway just closes the edge door; it doesn't repoint the rules at east-west traffic.",
-    "DestinationRules define subsets and policy — the routing rules still come from a VirtualService."
+    "DestinationRules define subsets and policy, the routing rules still come from a VirtualService."
    ]
   },
   {
@@ -582,11 +582,11 @@
     "The Gateway only allows HTTPS"
    ],
    "answer": 0,
-   "why": "The VirtualService exposed specific paths. The gateway is a controlled front door — unlisted paths simply don't match a route.",
+   "why": "The VirtualService exposed specific paths. The gateway is a controlled front door, unlisted paths simply don't match a route.",
    "whyWrong": [
     "",
     "The backend was healthy; the request never reached it because no route matched '/'.",
-    "Istio doesn't block '/' specially — it routes only what your VirtualService matches.",
+    "Istio doesn't block '/' specially, it routes only what your VirtualService matches.",
     "The Gateway accepted plain HTTP fine; the 404 came from route matching, not TLS."
    ]
   },
@@ -621,8 +621,8 @@
    "why": "VirtualService is the 'where' (routing/splits). DestinationRule is the 'how' (policy) and crucially defines the named subsets you route to.",
    "whyWrong": [
     "",
-    "Encryption isn't the split — the VirtualService picks where traffic goes, the DestinationRule sets how it's treated.",
-    "They're complementary, not interchangeable — a VirtualService routes to subsets only a DestinationRule can define.",
+    "Encryption isn't the split, the VirtualService picks where traffic goes, the DestinationRule sets how it's treated.",
+    "They're complementary, not interchangeable, a VirtualService routes to subsets only a DestinationRule can define.",
     "Listeners and clusters are Envoy internals; both CRDs sit a level above that."
    ]
   },
@@ -640,7 +640,7 @@
     "",
     "A DestinationRule can carry TLS settings, but routing needs it for subset definitions, not encryption.",
     "Pods come from Deployments; the DestinationRule only groups existing pods into named subsets by label.",
-    "It is required — routing to an undefined subset produces 503s."
+    "It is required, routing to an undefined subset produces 503s."
    ]
   },
   {
@@ -656,7 +656,7 @@
    "whyWrong": [
     "",
     "Gateways open doors; they don't split traffic between versions.",
-    "Replica ratios give only rough, accidental balance — weights give an exact, instantly adjustable split.",
+    "Replica ratios give only rough, accidental balance, weights give an exact, instantly adjustable split.",
     "Applying the same VirtualService twice just overwrites it; the weights inside one VS do the splitting."
    ]
   },
@@ -672,9 +672,9 @@
    "why": "Header-based routing: a match rule for the end-user header targets v2; a fallback route sends everyone else to v1.",
    "whyWrong": [
     "",
-    "Deleting v1 sends everyone to v2 — the opposite of a targeted test.",
+    "Deleting v1 sends everyone to v2, the opposite of a targeted test.",
     "A DestinationRule defines subsets by pod labels, not by calling user; user matching happens in the VirtualService.",
-    "AuthorizationPolicy allows or denies requests — it never routes anyone to a different version."
+    "AuthorizationPolicy allows or denies requests, it never routes anyone to a different version."
    ]
   },
   {
@@ -686,7 +686,7 @@
     "The Gateway's port number"
    ],
    "answer": 0,
-   "why": "trafficPolicy sets how to talk to a destination — LB algorithm, connection pools, outlier detection, TLS — for the host or per subset.",
+   "why": "trafficPolicy sets how to talk to a destination, LB algorithm, connection pools, outlier detection, TLS, for the host or per subset.",
    "whyWrong": [
     "",
     "Container images belong to the Deployment spec.",
@@ -697,7 +697,7 @@
  ],
  "05-resilience-fault-injection": [
   {
-   "q": "Where do you set a request timeout — VirtualService or DestinationRule?",
+   "q": "Where do you set a request timeout: VirtualService or DestinationRule?",
    "options": [
     "VirtualService (on the route)",
     "DestinationRule",
@@ -716,7 +716,7 @@
   {
    "q": "What does 'outlierDetection' do?",
    "options": [
-    "Ejects a pod that returns repeated errors, routing around it — passive health checking",
+    "Ejects a pod that returns repeated errors, routing around it, passive health checking",
     "Detects unusual login attempts",
     "Finds slow database queries",
     "Removes duplicate config objects"
@@ -743,14 +743,14 @@
    "whyWrong": [
     "",
     "Retries don't touch encryption; the danger is load amplification.",
-    "Retries delete nothing themselves — the real hazards are extra load and duplicated non-idempotent writes.",
+    "Retries delete nothing themselves, the real hazards are extra load and duplicated non-idempotent writes.",
     "They're double-edged: every attempt is real load on a possibly already-struggling service."
    ]
   },
   {
    "q": "What is fault injection for?",
    "options": [
-    "Deliberately adding delays/errors to verify callers handle failure — chaos testing — without touching real services",
+    "Deliberately adding delays/errors to verify callers handle failure, chaos testing, without touching real services",
     "Fixing broken YAML automatically",
     "Speeding up slow services",
     "Encrypting traffic"
@@ -760,15 +760,15 @@
    "whyWrong": [
     "",
     "It breaks things on purpose; it never repairs YAML.",
-    "It adds delays and errors — the opposite of an accelerator — to see how callers cope.",
+    "It adds delays and errors, the opposite of an accelerator, to see how callers cope.",
     "Encryption is mTLS's job; fault injection is for testing failure handling."
    ]
   },
   {
    "q": "Does the backend service see an injected fault?",
    "options": [
-    "No — the proxy fabricates the delay or abort; the backend never receives it",
-    "Yes — the fault is sent to the backend",
+    "No, the proxy fabricates the delay or abort; the backend never receives it",
+    "Yes, the fault is sent to the backend",
     "Only for delays, not aborts",
     "Only if mTLS is disabled"
    ],
@@ -776,7 +776,7 @@
    "why": "Injection happens at the proxy. For an abort, the caller gets the error without the request ever reaching the backend.",
    "whyWrong": [
     "",
-    "Both kinds are fabricated at the proxy — for aborts the backend never receives the request at all.",
+    "Both kinds are fabricated at the proxy, for aborts the backend never receives the request at all.",
     "Delays are also imposed by the proxy in the request path, not by the backend.",
     "mTLS is orthogonal; injection happens in the proxy either way."
    ]
@@ -786,7 +786,7 @@
   {
    "q": "What does the 'mutual' in mTLS add over normal HTTPS?",
    "options": [
-    "Both ends present and verify certificates — the client is authenticated too, not just the server",
+    "Both ends present and verify certificates, the client is authenticated too, not just the server",
     "It uses a longer encryption key",
     "It makes traffic faster",
     "It removes the need for certificates"
@@ -797,7 +797,7 @@
     "",
     "Key length isn't the distinction; the added piece is verifying the client's certificate too.",
     "mTLS adds a little handshake cost if anything; the win is identity, not speed.",
-    "It needs more certificates, not fewer — one for each side."
+    "It needs more certificates, not fewer, one for each side."
    ]
   },
   {
@@ -813,20 +813,20 @@
    "whyWrong": [
     "",
     "Both modes encrypt mesh-to-mesh traffic; the difference is whether plaintext from others is also accepted.",
-    "They differ exactly in plaintext handling — that difference is the whole migration story.",
-    "Backwards — STRICT is the mode that refuses plaintext."
+    "They differ exactly in plaintext handling, that difference is the whole migration story.",
+    "Backwards: STRICT is the mode that refuses plaintext."
    ]
   },
   {
    "q": "What does an AuthorizationPolicy match a caller on?",
    "options": [
-    "SPIFFE principals tied to Kubernetes ServiceAccounts — cryptographically proven by mTLS",
+    "SPIFFE principals tied to Kubernetes ServiceAccounts, cryptographically proven by mTLS",
     "The caller's browser user-agent",
     "A password in the request body",
     "The caller's pod name only"
    ],
    "answer": 0,
-   "why": "Authz uses the mTLS-verified identity (SPIFFE principal), plus optional namespace, path, method, or JWT claims — proven, not spoofable.",
+   "why": "Authz uses the mTLS-verified identity (SPIFFE principal), plus optional namespace, path, method, or JWT claims, proven, not spoofable.",
    "whyWrong": [
     "",
     "User-agent is a spoofable request header; identity comes from verified certificates.",
@@ -837,8 +837,8 @@
   {
    "q": "With no AuthorizationPolicy on a workload, what is allowed?",
    "options": [
-    "Everything — policies are additive; adding an ALLOW policy restricts to what's listed",
-    "Nothing — all traffic is denied by default",
+    "Everything, policies are additive; adding an ALLOW policy restricts to what's listed",
+    "Nothing, all traffic is denied by default",
     "Only GET requests",
     "Only traffic from the same namespace"
    ],
@@ -848,7 +848,7 @@
     "",
     "Deny-by-default only kicks in once a workload has its first ALLOW policy.",
     "No method filtering exists until a policy says so.",
-    "Namespace isn't restricted by default either — with no policy, anyone in the mesh can call the workload."
+    "Namespace isn't restricted by default either, with no policy, anyone in the mesh can call the workload."
    ]
   },
   {
@@ -864,7 +864,7 @@
    "whyWrong": [
     "",
     "Neither is 'encrypted' as such; the point is identities are cryptographically verified and stable.",
-    "Typing effort isn't the argument — IP churn and spoofability are.",
+    "Typing effort isn't the argument: IP churn and spoofability are.",
     "They're not equivalent: IPs get reused and spoofed, while SPIFFE identities are proven on every handshake."
    ]
   }
@@ -882,9 +882,9 @@
    "why": "Prometheus = metric store, Grafana = dashboards, Kiali = live service graph, Jaeger = distributed traces of individual requests.",
    "whyWrong": [
     "",
-    "Each tool has a distinct role — storage, dashboards, topology, traces — deliberately composed.",
+    "Each tool has a distinct role, storage, dashboards, topology, traces, deliberately composed.",
     "That scrambles the roles: Prometheus stores, Grafana graphs, Kiali maps, Jaeger traces.",
-    "Also scrambled — Kiali doesn't store metrics and Grafana doesn't hold traces."
+    "Also scrambled: Kiali doesn't store metrics and Grafana doesn't hold traces."
    ]
   },
   {
@@ -896,7 +896,7 @@
     "Only the number of pods"
    ],
    "answer": 0,
-   "why": "Every proxy reports rate, error fraction, and latency percentiles consistently across all services and languages — no app instrumentation.",
+   "why": "Every proxy reports rate, error fraction, and latency percentiles consistently across all services and languages, no app instrumentation.",
    "whyWrong": [
     "",
     "Hardware inventory isn't something the proxies emit; they report traffic behavior.",
@@ -910,14 +910,14 @@
     "Forward the tracing headers (like traceparent/x-request-id) from incoming to outgoing requests",
     "Install a Jaeger agent in each container",
     "Rewrite each service in Go",
-    "Nothing — Istio does 100% of it"
+    "Nothing: Istio does 100% of it"
    ],
    "answer": 0,
    "why": "Proxies generate spans, but only propagating the trace headers lets them be stitched into one end-to-end trace. Bookinfo already does this.",
    "whyWrong": [
     "",
     "No per-container agent is needed; the sidecar already reports spans.",
-    "Tracing is language-agnostic — you only need to pass the headers through.",
+    "Tracing is language-agnostic, you only need to pass the headers through.",
     "Istio does most of it, but it can't link an incoming request to your outgoing calls unless the app forwards the headers."
    ]
   },
@@ -960,7 +960,7 @@
   {
    "q": "What are ambient mode's two layers and their jobs?",
    "options": [
-    "ztunnel — per-node, mTLS + L4; waypoint — an Envoy per namespace/service for L7",
+    "ztunnel, per-node, mTLS + L4; waypoint, an Envoy per namespace/service for L7",
     "Two sidecars per pod",
     "A frontend and a backend database",
     "ztunnel for logging and waypoint for metrics"
@@ -977,7 +977,7 @@
   {
    "q": "What happens to your pods' container count in ambient mode?",
    "options": [
-    "They stay 1/1 — there is no sidecar",
+    "They stay 1/1, there is no sidecar",
     "They become 2/2 like sidecar mode",
     "They become 3/3",
     "The pods are deleted"
@@ -987,7 +987,7 @@
    "whyWrong": [
     "",
     "2/2 is sidecar mode; ambient leaves the pod untouched while ztunnel proxies from the node.",
-    "Nothing is added to pods at all — that's the point.",
+    "Nothing is added to pods at all, that's the point.",
     "Pods keep running; enrollment doesn't even restart them."
    ]
   },
@@ -1000,21 +1000,21 @@
     "Nothing until you reboot the cluster"
    ],
    "answer": 0,
-   "why": "The label enrolls the namespace into ztunnel's secure L4 overlay instantly — encryption with zero restarts. L7 needs a waypoint.",
+   "why": "The label enrolls the namespace into ztunnel's secure L4 overlay instantly, encryption with zero restarts. L7 needs a waypoint.",
    "whyWrong": [
     "",
     "L7 features wait until you add a waypoint; the label gives you the secure L4 overlay.",
-    "No sidecars exist in ambient — ztunnel on the node picks up the traffic.",
+    "No sidecars exist in ambient, ztunnel on the node picks up the traffic.",
     "No reboot is needed; enrollment is immediate and restart-free."
    ]
   },
   {
    "q": "When do you need to add a waypoint proxy?",
    "options": [
-    "For L7 features — HTTP routing, weighted canaries, L7 authorization, retries",
+    "For L7 features: HTTP routing, weighted canaries, L7 authorization, retries",
     "For basic encryption between pods",
     "Only to see metrics",
-    "Never — ztunnel does everything"
+    "Never, ztunnel does everything"
    ],
    "answer": 0,
    "why": "ztunnel is L4 only. HTTP-level behavior (routing rules, splits, L7 authz) requires a waypoint Envoy for that namespace/service.",
@@ -1022,14 +1022,14 @@
     "",
     "Basic encryption is exactly what ztunnel already covers.",
     "L4 telemetry flows without a waypoint; it's HTTP-level behavior that needs one.",
-    "ztunnel stops at L4 — HTTP routing, splits, and L7 authorization are beyond it."
+    "ztunnel stops at L4: HTTP routing, splits, and L7 authorization are beyond it."
    ]
   },
   {
    "q": "Do your VirtualService and AuthorizationPolicy objects still work in ambient mode?",
    "options": [
-    "Yes — L7 ones are enforced by the waypoint, L4 ones by ztunnel",
-    "No — ambient uses entirely different objects",
+    "Yes: L7 ones are enforced by the waypoint, L4 ones by ztunnel",
+    "No, ambient uses entirely different objects",
     "Only AuthorizationPolicy works",
     "Only in the istio-system namespace"
    ],
@@ -1047,7 +1047,7 @@
   {
    "q": "What problem does the Kubernetes Gateway API solve that Istio's own API doesn't?",
    "options": [
-    "Portability — a standard API implemented by many gateways/meshes, with a clean infra/app ownership split",
+    "Portability, a standard API implemented by many gateways/meshes, with a clean infra/app ownership split",
     "It makes traffic encrypted; Istio's API doesn't",
     "It is the only way to do routing",
     "It replaces Kubernetes"
@@ -1058,16 +1058,16 @@
     "",
     "Istio's own API encrypts just as well; the standard's win is portability, not security.",
     "Istio's Gateway and VirtualService still work fine; the standard is an alternative, not the only way.",
-    "It's a Kubernetes API standardizing ingress and mesh config — nothing about replacing Kubernetes."
+    "It's a Kubernetes API standardizing ingress and mesh config, nothing about replacing Kubernetes."
    ]
   },
   {
    "q": "Which Gateway API resource do application teams typically write?",
    "options": [
-    "HTTPRoute — the routing rules attached to a Gateway",
-    "GatewayClass — the controller selection",
-    "Node — a cluster machine",
-    "Secret — a TLS cert only"
+    "HTTPRoute, the routing rules attached to a Gateway",
+    "GatewayClass, the controller selection",
+    "Node, a cluster machine",
+    "Secret, a TLS cert only"
    ],
    "answer": 0,
    "why": "The Gateway API splits ownership: platform teams own GatewayClass/Gateway (the door); app teams own HTTPRoute (their routes).",
@@ -1081,8 +1081,8 @@
   {
    "q": "Are Istio's 'Gateway' and the Gateway API's 'Gateway' the same thing?",
    "options": [
-    "No — they are different resources in different API groups that happen to share the name",
-    "Yes — identical resources",
+    "No, they are different resources in different API groups that happen to share the name",
+    "Yes, identical resources",
     "The Gateway API one is just an alias",
     "Istio has no Gateway resource"
    ],
@@ -1090,9 +1090,9 @@
    "why": "networking.istio.io/Gateway and gateway.networking.k8s.io/Gateway are distinct. Check the apiVersion to know which you're using.",
    "whyWrong": [
     "",
-    "Same name, different apiVersions — networking.istio.io versus gateway.networking.k8s.io.",
+    "Same name, different apiVersions, networking.istio.io versus gateway.networking.k8s.io.",
     "Neither aliases the other; they're separate resources with different schemas.",
-    "Istio does have its own Gateway resource — that's what causes the name collision."
+    "Istio does have its own Gateway resource, that's what causes the name collision."
    ]
   },
   {
@@ -1101,7 +1101,7 @@
     "Multiple backendRefs with weight values",
     "Two separate Gateways",
     "A DestinationRule subset",
-    "You can't — HTTPRoute has no splitting"
+    "You can't: HTTPRoute has no splitting"
    ],
    "answer": 0,
    "why": "The Gateway API supports traffic splitting directly via weighted backendRefs, the portable equivalent of a weighted VirtualService.",
@@ -1109,7 +1109,7 @@
     "",
     "Two Gateways would be two doors, not a split behind one route.",
     "DestinationRule subsets are Istio's mechanism; HTTPRoute splits natively with weighted backendRefs.",
-    "It does — weighted backendRefs are core HTTPRoute functionality."
+    "It does, weighted backendRefs are core HTTPRoute functionality."
    ]
   },
   {
@@ -1118,7 +1118,7 @@
     "For Istio-only L7 features like fault injection or mirroring not yet in the standard API",
     "Whenever you use Kubernetes",
     "For basic path routing only",
-    "Never — VirtualService is deprecated"
+    "Never: VirtualService is deprecated"
    ],
    "answer": 0,
    "why": "The standard covers basic ingress and splits; richer Istio features (faults, mirroring, some policies) may still need a VirtualService. They interoperate.",
@@ -1126,7 +1126,7 @@
     "",
     "Kubernetes alone doesn't force either API; the standard covers most basic needs.",
     "Basic path routing is exactly what HTTPRoute handles portably.",
-    "VirtualService isn't deprecated — it remains the way to reach Istio-specific features."
+    "VirtualService isn't deprecated, it remains the way to reach Istio-specific features."
    ]
   }
  ],
@@ -1157,7 +1157,7 @@
     "The Gateway port is wrong"
    ],
    "answer": 0,
-   "why": "Subsets are defined in DestinationRules. Routing to an undefined subset produces 503s — istioctl analyze flags this.",
+   "why": "Subsets are defined in DestinationRules. Routing to an undefined subset produces 503s, istioctl analyze flags this.",
    "whyWrong": [
     "",
     "Disk pressure shows up as evictions, not 503s on routes to a named subset.",
@@ -1168,7 +1168,7 @@
   {
    "q": "You set mTLS to STRICT and a metrics scraper suddenly breaks. Why?",
    "options": [
-    "Something still speaks plaintext; STRICT rejects it — migrate with PERMISSIVE first",
+    "Something still speaks plaintext; STRICT rejects it, migrate with PERMISSIVE first",
     "STRICT mode deletes the scraper",
     "The scraper needs a bigger CPU",
     "STRICT only works on Tuesdays"
@@ -1185,7 +1185,7 @@
   {
    "q": "In ambient mode your weighted traffic split doesn't apply. What's missing?",
    "options": [
-    "A waypoint — L7 rules need one; ztunnel only does L4/mTLS",
+    "A waypoint: L7 rules need one; ztunnel only does L4/mTLS",
     "A second cluster",
     "A DestinationRule in istio-system",
     "A bigger node"
@@ -1195,7 +1195,7 @@
    "whyWrong": [
     "",
     "One cluster is plenty; the missing piece is the L7 proxy.",
-    "A DestinationRule doesn't add L7 capability, and moving config to istio-system wouldn't either — a waypoint would.",
+    "A DestinationRule doesn't add L7 capability, and moving config to istio-system wouldn't either, a waypoint would.",
     "Capacity isn't the problem; ztunnel simply can't do HTTP-level splits."
    ]
   },
@@ -1227,11 +1227,11 @@
     "It forces all traffic through the ingress gateway"
    ],
    "answer": 1,
-   "why": "The default (ALLOW_ANY) passes unknown traffic through blind. REGISTRY_ONLY flips it: no registry entry, no connection — which turns your ServiceEntries into a reviewed, version-controlled list of everything the cluster talks to.",
+   "why": "The default (ALLOW_ANY) passes unknown traffic through blind. REGISTRY_ONLY flips it: no registry entry, no connection, which turns your ServiceEntries into a reviewed, version-controlled list of everything the cluster talks to.",
    "whyWrong": [
     "DNS performance is unrelated.",
     "",
-    "Declared HTTPS destinations work fine — undeclared ones are refused.",
+    "Declared HTTPS destinations work fine, undeclared ones are refused.",
     "Ingress handles inbound; this setting governs outbound."
    ]
   },
@@ -1244,7 +1244,7 @@
     "Nothing else"
    ],
    "answer": 1,
-   "why": "Registry membership is what unlocks the mesh's machinery — visibility and resilience policy — for outside destinations. External dependencies fail more than yours; now your timeouts apply to them.",
+   "why": "Registry membership is what unlocks the mesh's machinery, visibility and resilience policy, for outside destinations. External dependencies fail more than yours; now your timeouts apply to them.",
    "whyWrong": [
     "Certificates come from the external host itself; the mesh doesn't issue for outsiders.",
     "",
@@ -1255,8 +1255,8 @@
   {
    "q": "When is an egress GATEWAY (not just ServiceEntries) actually warranted?",
    "options": [
-    "Always — it's a best practice",
-    "When outbound traffic must exit from known network locations — a partner allowlists your IPs, or compliance requires one audited, meterable choke point",
+    "Always, it's a best practice",
+    "When outbound traffic must exit from known network locations, a partner allowlists your IPs, or compliance requires one audited, meterable choke point",
     "Whenever you have more than 10 external dependencies",
     "When Kiali shows a PassthroughCluster"
    ],
@@ -1266,7 +1266,7 @@
     "It's a cost with a specific payoff, not a default.",
     "",
     "Dependency count doesn't change the topology question.",
-    "PassthroughCluster traffic means undeclared dependencies — the fix is ServiceEntries, not a gateway."
+    "PassthroughCluster traffic means undeclared dependencies, the fix is ServiceEntries, not a gateway."
    ]
   }
  ],
@@ -1275,14 +1275,14 @@
    "q": "You apply a RequestAuthentication with correct jwtRules. A request with NO token still gets through. Why?",
    "options": [
     "The sidecar is broken",
-    "RequestAuthentication only validates tokens that are present; requiring one is an authorization decision — add an AuthorizationPolicy on requestPrincipals",
+    "RequestAuthentication only validates tokens that are present; requiring one is an authorization decision, add an AuthorizationPolicy on requestPrincipals",
     "JWTs are optional in Istio by design and cannot be required",
     "The token cache is stale"
    ],
    "answer": 1,
-   "why": "Validation and requirement are deliberately separate questions. Valid tokens produce a requestPrincipal; absent tokens produce nothing — and only an AuthorizationPolicy can say 'nothing is not enough.'",
+   "why": "Validation and requirement are deliberately separate questions. Valid tokens produce a requestPrincipal; absent tokens produce nothing, and only an AuthorizationPolicy can say 'nothing is not enough.'",
    "whyWrong": [
-    "It's working as specified — the spec is just narrower than people assume.",
+    "It's working as specified, the spec is just narrower than people assume.",
     "",
     "They can absolutely be required; it just takes the second resource.",
     "Caching affects key fetches, not the present-vs-absent logic."
@@ -1292,9 +1292,9 @@
    "q": "What does combining principals and requestPrincipals in one AuthorizationPolicy rule express?",
    "options": [
     "Redundancy for reliability",
-    "Both identities at once: WHICH SERVICE is calling (mTLS certificate) and WHICH USER it carries (validated JWT) — e.g. only the frontend, only with an admin's token",
+    "Both identities at once: WHICH SERVICE is calling (mTLS certificate) and WHICH USER it carries (validated JWT), e.g. only the frontend, only with an admin's token",
     "It doubles the token lifetime",
-    "Nothing — they're aliases"
+    "Nothing, they're aliases"
    ],
    "answer": 1,
    "why": "Service identity from certificates plus user identity from tokens, enforced in one place, is the concrete form of zero-trust: the network location of the caller appears nowhere in the rule.",
@@ -1302,19 +1302,19 @@
     "They check different credentials, not the same one twice.",
     "",
     "Lifetimes belong to the IdP issuing the token.",
-    "principals comes from the mTLS peer; requestPrincipals from the JWT — different layers entirely."
+    "principals comes from the mTLS peer; requestPrincipals from the JWT, different layers entirely."
    ]
   },
   {
    "q": "After enabling REGISTRY_ONLY egress, every JWT suddenly fails validation. What happened?",
    "options": [
     "The IdP revoked all tokens",
-    "The sidecars can no longer fetch the issuer's JWKS keys — strict egress silently blocked the jwksUri; add a ServiceEntry for the IdP",
+    "The sidecars can no longer fetch the issuer's JWKS keys, strict egress silently blocked the jwksUri; add a ServiceEntry for the IdP",
     "JWTs are incompatible with strict egress",
     "Clock skew"
    ],
    "answer": 1,
-   "why": "Signature validation needs the issuer's published keys, and fetching them is an external call like any other. This cross-module interaction — egress policy breaking authentication — is the mesh-debugging lesson in miniature.",
+   "why": "Signature validation needs the issuer's published keys, and fetching them is an external call like any other. This cross-module interaction, egress policy breaking authentication, is the mesh-debugging lesson in miniature.",
    "whyWrong": [
     "Mass revocation at the IdP is possible but wouldn't coincide with your egress change.",
     "",

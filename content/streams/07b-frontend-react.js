@@ -19,7 +19,7 @@ STREAMS.push({icon:'⚛️',title:'Front-End with React',blurb:'Build user inter
 <h4>What React is not</h4>
 <p>React is a view library, not a framework in the Angular sense. It has no router, no data-fetching layer, no form validation and no opinion about your build, which is why real projects assemble React plus a router plus a data library, and why the ecosystem churns more than the core does. The core API has been remarkably stable; the surrounding advice changes yearly.</p>
 <p>It is also not the only answer. Vue and Svelte solve the same problem with less ceremony, and for a page with three interactive widgets, plain JavaScript is still correct. React earns its cost when the state is genuinely complex and shared, and this stream builds to exactly that case.</p>`,
-docs:[['React — official docs','https://react.dev/learn'],['DOM introduction — MDN','https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction']],
+docs:[['React, official docs','https://react.dev/learn'],['DOM introduction, MDN','https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction']],
 ex:{title:'The core vocabulary',lang:'js',run:{call:'role',cases:[{args:['component'],expect:'reusable piece of UI'},{args:['props'],expect:'inputs passed to a component'},{args:['state'],expect:'data that changes over time'},{args:['render'],expect:'produce UI from current data'},{args:['zzz'],expect:'unknown'}]},
 prompt:`Write <code>function role(term)</code> that returns what each React concept is: <code>"component"</code>→<code>"reusable piece of UI"</code>, <code>"props"</code>→<code>"inputs passed to a component"</code>, <code>"state"</code>→<code>"data that changes over time"</code>, <code>"render"</code>→<code>"produce UI from current data"</code>, else <code>"unknown"</code>.`,
 starter:`function role(term) {
@@ -89,7 +89,7 @@ the property the rest of React depends on.</p>
 stable id from the data, <b>not the array index</b>, which changes when items are inserted or removed and
 causes React to reuse the wrong DOM node, producing the classic bug where input text follows the wrong
 row.</p>`,
-docs:[['Your first component — React','https://react.dev/learn/your-first-component'],['Writing markup with JSX','https://react.dev/learn/writing-markup-with-jsx']],
+docs:[['Your first component (React)','https://react.dev/learn/your-first-component'],['Writing markup with JSX','https://react.dev/learn/writing-markup-with-jsx']],
 ex:{title:'Write a component',lang:'jsx',
 prompt:`Write a function component <code>Greeting</code> that takes <code>props</code> and returns an <code>&lt;h1&gt;</code> containing the text <code>Hello, </code> followed by <code>{props.name}</code>.`,
 starter:`function Greeting(props) {
@@ -150,7 +150,7 @@ render instead. Keep the <b>minimum</b> that cannot be computed from props and o
 the same value, <b>lift it</b> to their nearest common parent and pass it down with a setter; that is
 the standard shape of a React application, and reaching for a global store before you have tried it
 usually adds machinery you do not need.</p>`,
-docs:[['State: a component memory','https://react.dev/learn/state-a-components-memory'],['useState — React','https://react.dev/reference/react/useState']],
+docs:[['State: a component memory','https://react.dev/learn/state-a-components-memory'],['useState (React)','https://react.dev/reference/react/useState']],
 ex:{title:'A counter with state',lang:'jsx',
 prompt:`Write a <code>Counter</code> component that holds a number in state starting at <code>0</code> using <code>useState</code>, and renders a <code>&lt;button&gt;</code> whose <code>onClick</code> increments it with the setter (<code>setCount(count + 1)</code>) and whose label shows the count.`,
 starter:`function Counter() {
@@ -213,7 +213,7 @@ filtering a list of fifty items is not it.</p>
 <p>Every list has at least three states and a common bug is designing only the happy one. Handle
 <b>loading</b>, <b>empty</b> and <b>error</b> explicitly: an empty result is a normal outcome that
 deserves a message, not a blank area that looks like a failure.</p>`,
-docs:[['Rendering lists — React','https://react.dev/learn/rendering-lists'],['Conditional rendering','https://react.dev/learn/conditional-rendering']],
+docs:[['Rendering lists (React)','https://react.dev/learn/rendering-lists'],['Conditional rendering','https://react.dev/learn/conditional-rendering']],
 ex:{title:'Render a keyed list',lang:'jsx',
 prompt:`Write a <code>List</code> component that takes <code>props</code> and returns a <code>&lt;ul&gt;</code> mapping <code>props.items</code> to a <code>&lt;li&gt;</code> for each item, using <code>key={item.id}</code> and showing <code>{item.name}</code>.`,
 starter:`function List(props) {
@@ -278,7 +278,7 @@ alongside the values.</p>
 <p>Two more things worth doing properly: <b>disable the submit button while the request is in flight</b>,
 or users will double-submit; and associate every input with a <code>&lt;label htmlFor&gt;</code>, which
 gives screen readers the field name and makes the label clickable for everyone else.</p>`,
-docs:[['Responding to events','https://react.dev/learn/responding-to-events'],['Controlled inputs — React','https://react.dev/reference/react-dom/components/input']],
+docs:[['Responding to events','https://react.dev/learn/responding-to-events'],['Controlled inputs (React)','https://react.dev/reference/react-dom/components/input']],
 ex:{title:'A controlled input',lang:'jsx',
 prompt:`Write a <code>NameField</code> component with a string state initialized to <code>""</code>. Render an <code>&lt;input&gt;</code> whose <code>value</code> is bound to that state (<code>value={name}</code>) and whose <code>onChange</code> updates it with <code>setName(e.target.value)</code>.`,
 starter:`function NameField() {
@@ -348,7 +348,7 @@ silently when the request does. Handle all three from the start.</p>
 component renders, and every component does its own caching, deduplication and revalidation badly. That is
 why production applications use a data library (TanStack Query, SWR) or a framework's loader. Learn the
 effect first so the library is not magic; then stop hand-rolling this.</p>`,
-docs:[['Synchronizing with effects','https://react.dev/learn/synchronizing-with-effects'],['Fetching data — React','https://react.dev/learn/you-might-not-need-an-effect#fetching-data']],
+docs:[['Synchronizing with effects','https://react.dev/learn/synchronizing-with-effects'],['Fetching data (React)','https://react.dev/learn/you-might-not-need-an-effect#fetching-data']],
 ex:{title:'Fetch on mount',lang:'jsx',
 prompt:`Write a <code>Users</code> component with an array state starting <code>[]</code>. In a <code>useEffect</code> with an empty dependency array, <code>fetch("/api/users")</code>, parse the JSON, and store it with the setter. Render the users as a keyed list.`,
 starter:`function Users() {
@@ -391,7 +391,7 @@ hints:['Side effects like fetch belong in useEffect, not in the render body.','C
 <li><b>Credentials are opt-in.</b> Cookies do not travel cross-origin unless you set <code>credentials: "include"</code>, and then the server must allow credentials and name a single origin rather than <code>*</code>.</li>
 </ul>
 <p>CORS is worth understanding rather than working around: it decides whether your script may <i>read</i> the response, not whether the request was sent. A dev proxy makes the browser see a same-origin URL and is the reason a call that works locally can fail in production, where the proxy is gone.</p>`,
-docs:[['Using fetch — MDN','https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch'],['WebSocket — MDN','https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API'],['Server-sent events — MDN','https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events']],
+docs:[['Using fetch (MDN)','https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch'],['WebSocket (MDN)','https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API'],['Server-sent events (MDN)','https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events']],
 ex:{title:'POST JSON to the backend',lang:'js',run:{call:'createUser',mock:'fetch',cases:[{name:'sends a JSON POST to /api/users with the user in the body',args:[{name:'Ada'}],expect:{method:'POST',url:'/api/users',contentType:'application/json',bodyIncludes:'Ada'}}]},
 prompt:`Write <code>async function createUser(user)</code> that POSTs to <code>/api/users</code> with <code>fetch</code>: method <code>"POST"</code>, header <code>"Content-Type": "application/json"</code>, body <code>JSON.stringify(user)</code>. <code>await</code> the response and return its parsed JSON.`,
 starter:`async function createUser(user) {
@@ -431,7 +431,7 @@ hints:['fetch takes a URL and an options object with method, headers, and body.'
 <h4>The escalation order</h4>
 <p>Reach for the smallest thing that works, in this order: local <code>useState</code>; lift the state to the nearest common parent; <code>useReducer</code> when the updates get related; context when the depth genuinely hurts; a dedicated store only when profiling shows context re-renders are the problem or the state outlives the tree. Most applications stop at step three or four.</p>
 <p>One category deserves naming, because putting it in any of the above is the most common architectural mistake in React apps: <b>server data is not application state</b>. Cached responses need staleness, refetching, deduplication and invalidation, which is what data-fetching libraries provide and what a reducer does not. Keeping the two separate is what stops a store from slowly becoming a hand-written cache with no eviction.</p>`,
-docs:[['useReducer — React','https://react.dev/reference/react/useReducer'],['Passing data with context','https://react.dev/learn/passing-data-deeply-with-context']],
+docs:[['useReducer (React)','https://react.dev/reference/react/useReducer'],['Passing data with context','https://react.dev/learn/passing-data-deeply-with-context']],
 ex:{title:'Write a reducer',lang:'js',run:{call:'reducer',cases:[{name:'inc increments count',args:[{count:0},{type:'inc'}],expect:{count:1}},{name:'dec decrements count',args:[{count:5},{type:'dec'}],expect:{count:4}},{name:'unknown action returns state unchanged',args:[{count:2},{type:'noop'}],expect:{count:2}}]},
 prompt:`Write <code>function reducer(state, action)</code> that switches on <code>action.type</code>: <code>"inc"</code> returns <code>{ count: state.count + 1 }</code>, <code>"dec"</code> returns <code>{ count: state.count - 1 }</code>, and any other action returns the unchanged <code>state</code>.`,
 starter:`function reducer(state, action) {
@@ -476,11 +476,11 @@ hints:['A reducer is a pure function switching on action.type.','Return a NEW ob
 <h4>Two rules the front end cannot break</h4>
 <p><b>Nothing in the bundle is secret.</b> Every API key, feature flag and internal URL you ship is public, including anything in an environment variable your bundler inlined. Secrets live on a server you control.</p>
 <p><b>Client-side checks are UX, not security.</b> Hiding an admin button is a courtesy to the user; the API must reject the call regardless, because the button was never the control. Every check that matters is re-done on the server, which is the same lesson as the API stream's, arriving from the other side.</p>`,
-docs:[['XSS prevention — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html'],['dangerouslySetInnerHTML — React','https://react.dev/reference/react-dom/components/common#dangerously-setting-the-inner-html'],['CSP — MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP']],
+docs:[['XSS prevention (OWASP)','https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html'],['dangerouslySetInnerHTML (React)','https://react.dev/reference/react-dom/components/common#dangerously-setting-the-inner-html'],['CSP (MDN)','https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP']],
 ex:{title:'Render user content safely',lang:'jsx',
 prompt:`Write a <code>Comment</code> component that safely displays untrusted <code>props.text</code> by interpolating it inside a <code>&lt;p&gt;</code> with <code>{props.text}</code> (letting React auto-escape it). Do <b>not</b> use <code>dangerouslySetInnerHTML</code>.`,
 starter:`function Comment(props) {
-  // render props.text safely — let React escape it
+  // render props.text safely, let React escape it
 }`,
 solution:`function Comment(props) {
   return <p>{props.text}</p>;

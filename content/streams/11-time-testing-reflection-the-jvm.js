@@ -46,7 +46,7 @@ supported everywhere, at the cost of size and no schema unless you add one. <b>P
 their keep on high-volume internal traffic and event streams, where a schema registry gives you
 compatibility checks in CI rather than incidents in production. The deciding question is rarely
 performance; it is whether you need a contract that a machine can enforce.</p>`,
-docs:[['Serializable — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Serializable.html'],['Serialization filtering — Oracle','https://docs.oracle.com/en/java/javase/21/core/serialization-filtering1.html'],['OWASP: insecure deserialization','https://owasp.org/www-community/vulnerabilities/Deserialization_of_untrusted_data']],
+docs:[['Serializable, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Serializable.html'],['Serialization filtering, Oracle','https://docs.oracle.com/en/java/javase/21/core/serialization-filtering1.html'],['OWASP: insecure deserialization','https://owasp.org/www-community/vulnerabilities/Deserialization_of_untrusted_data']],
 ex:{title:'Round-trip a session',
 prompt:`Write <code>class Session implements java.io.Serializable</code> with <code>private static final long serialVersionUID = 1L</code>, fields <code>String userId</code> and <code>transient char[] secret</code>, and a constructor for both. Then <code>class SessionStore</code> with <code>static void save(Session s, java.nio.file.Path p) throws Exception</code> using <code>ObjectOutputStream</code> over <code>Files.newOutputStream</code> in try-with-resources, and <code>static Session load(java.nio.file.Path p) throws Exception</code> using <code>ObjectInputStream</code> + a cast.`,
 starter:`import java.io.*;
@@ -159,7 +159,7 @@ political decision, so keep the tzdata in your JDK and containers current.</p>
 <code>now()</code> method accepts one, so production passes <code>Clock.systemUTC()</code> and tests pass
 <code>Clock.fixed(...)</code>. That single habit removes an entire category of untestable code (expiry
 windows, rate limits, scheduling), and it costs one constructor parameter.</p>`,
-docs:[['java.time — dev.java','https://dev.java/learn/date-time/'],['DateTimeFormatter — API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/format/DateTimeFormatter.html']],
+docs:[['java.time, dev.java','https://dev.java/learn/date-time/'],['DateTimeFormatter, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/format/DateTimeFormatter.html']],
 ex:{title:'Dates done right',
 prompt:`Write <code>Dates</code> with: <code>static int ageYears(java.time.LocalDate birth)</code> using <code>Period.between</code> to now; <code>static java.time.LocalDate paymentDue(java.time.LocalDate invoice)</code> returning invoice date + 30 days; and <code>static String pretty(java.time.LocalDate d)</code> formatting with pattern <code>"dd MMM yyyy"</code>.`,
 starter:`import java.time.*;
@@ -356,7 +356,7 @@ usually a design that does not need to.</p>
 annotations at compile time and generate real code: fast, checked, debuggable, and the basis of MapStruct
 and Micronaut. And <b>method handles</b> / <code>VarHandle</code> give reflective flexibility at close to
 direct-call speed. Worth knowing they exist before you write a reflection-heavy library.</p>`,
-docs:[['Annotations — dev.java','https://dev.java/learn/annotations/'],['Reflection API — Oracle','https://docs.oracle.com/javase/tutorial/reflect/index.html']],
+docs:[['Annotations, dev.java','https://dev.java/learn/annotations/'],['Reflection API, Oracle','https://docs.oracle.com/javase/tutorial/reflect/index.html']],
 ex:{title:'Build @Audited',
 prompt:`(1) Declare annotation <code>@interface Audited</code> with <code>@Retention(RetentionPolicy.RUNTIME)</code>, <code>@Target(ElementType.METHOD)</code> and a <code>String value()</code> element. (2) Write <code>class AuditScanner</code> with <code>static java.util.List&lt;String&gt; auditedMethods(Class&lt;?&gt; c)</code> that loops <code>getDeclaredMethods()</code>, and for each method carrying the annotation adds <code>method.getName() + ":" + annotation.value()</code> to the result.`,
 starter:`import java.lang.annotation.*;
@@ -458,7 +458,7 @@ looking at the method cannot see what else happens to it, and a typo in an annot
 fails silently. Use them for genuinely cross-cutting, orthogonal concerns (auditing, transactions,
 security, serialisation) and not as a way to configure business logic, where an ordinary parameter is
 clearer and the compiler is on your side.</p>`,
-docs:[['Annotations in depth — dev.java','https://dev.java/learn/annotations/'],['Repeating annotations — Oracle','https://docs.oracle.com/javase/tutorial/java/annotations/repeating.html'],['Spring composed annotations','https://docs.spring.io/spring-framework/reference/core/beans/classpath-scanning.html#beans-meta-annotations']],
+docs:[['Annotations in depth, dev.java','https://dev.java/learn/annotations/'],['Repeating annotations, Oracle','https://docs.oracle.com/javase/tutorial/java/annotations/repeating.html'],['Spring composed annotations','https://docs.spring.io/spring-framework/reference/core/beans/classpath-scanning.html#beans-meta-annotations']],
 ex:{title:'Build a mini validation framework',
 prompt:`Create field annotation <code>@interface Required</code> (RUNTIME retention, <code>ElementType.FIELD</code> target) with element <code>String message() default "is required"</code>. Then write <code>class MiniValidator</code> with <code>static java.util.List&lt;String&gt; validate(Object o) throws IllegalAccessException</code>: loop <code>o.getClass().getDeclaredFields()</code>, for each field carrying @Required call <code>setAccessible(true)</code>, read its value via <code>field.get(o)</code>, and if null add <code>field.getName() + " " + annotation.message()</code> to the violations list.`,
 starter:`import java.lang.annotation.*;
@@ -559,7 +559,7 @@ thread dump when things are hung: take three, thirty seconds apart, and look for
 place. <b>JFR</b> (<code>jcmd &lt;pid&gt; JFR.start</code>) is the one worth learning properly: continuous,
 low-overhead profiling you can leave running in production and inspect afterwards in JDK Mission
 Control.</p>`,
-docs:[['JVM architecture — Baeldung','https://www.baeldung.com/jvm-vs-jre-vs-jdk'],['HotSpot GC tuning guide','https://docs.oracle.com/en/java/javase/21/gctuning/introduction-garbage-collection-tuning.html']],
+docs:[['JVM architecture (Baeldung)','https://www.baeldung.com/jvm-vs-jre-vs-jdk'],['HotSpot GC tuning guide','https://docs.oracle.com/en/java/javase/21/gctuning/introduction-garbage-collection-tuning.html']],
 ex:{title:'JVM drill',lang:'text',
 prompt:`Answer on the numbered lines: (1) the error thrown by infinite recursion, (2) the error when the heap is exhausted, (3) the flag setting max heap to 2 GB, (4) where objects are allocated (one word), (5) where each thread's method frames live (one word), (6) the CLI tool that prints a thread dump for a pid, (7) the flag that writes a heap dump when the heap blows up.`,
 starter:`# 1)

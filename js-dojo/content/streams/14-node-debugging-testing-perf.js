@@ -52,7 +52,7 @@ a long time, and are a genuine source of breaches.</p>
 <p>A breakpoint requires you to be there when it happens. Production, timing-sensitive races, and bugs you
 can reproduce exactly once are all cases where a log line is the only option, which is why the previous
 lesson's structured logging matters, and why the next lessons cover recording rather than pausing.</p>`,
-docs:[['Node — debugging guide','https://nodejs.org/en/learn/getting-started/debugging'],['Node — inspector security','https://nodejs.org/en/learn/getting-started/debugging#security-implications'],['VS Code — Node.js debugging','https://code.visualstudio.com/docs/nodejs/nodejs-debugging']],
+docs:[['Node (debugging guide)','https://nodejs.org/en/learn/getting-started/debugging'],['Node (inspector security)','https://nodejs.org/en/learn/getting-started/debugging#security-implications'],['VS Code (Node.js debugging)','https://code.visualstudio.com/docs/nodejs/nodejs-debugging']],
 exs:[
 {title:'Choose the right inspect flag',diff:'easy',lang:'js',
 run:{call:'inspectFlag',cases:[
@@ -170,7 +170,7 @@ fn.mock.calls[0].arguments;   // [1]
 useful question is <b>"if I broke this, would a test tell me?"</b> Concentrate on the logic with branches
 and edge cases, the code that has broken before, and the paths that are expensive to get wrong. A handful
 of tests that fail for real reasons beats a suite that fails on every refactor.</p>`,
-docs:[['Node — test runner','https://nodejs.org/api/test.html'],['Node — assert','https://nodejs.org/api/assert.html'],['Node — mock timers','https://nodejs.org/api/test.html#class-mocktimers']],
+docs:[['Node (test runner)','https://nodejs.org/api/test.html'],['Node (assert)','https://nodejs.org/api/assert.html'],['Node (mock timers)','https://nodejs.org/api/test.html#class-mocktimers']],
 ex:{title:'Judge a test suite',diff:'hard',lang:'js',
 run:{call:'reviewTests',cases:[
  {name:'a good test passes review',args:[[{name:'rejects a negative amount',asserts:1,sharedState:false,mocksOwnCode:false}]],expect:{ok:true,problems:[]}},
@@ -267,7 +267,7 @@ show.</p>
 <p><b>Reproduce, measure, then change one thing.</b> Reach for the loop-lag metric first (is the loop
 blocked?), then a CPU profile (where is the time?), then heap snapshots (what is being retained?). Going
 straight to optimisation without one of those three is guessing with extra confidence.</p>`,
-docs:[['Node — diagnostics: memory','https://nodejs.org/en/learn/diagnostics/memory'],['Node — perf_hooks','https://nodejs.org/api/perf_hooks.html'],['Chrome DevTools — memory problems','https://developer.chrome.com/docs/devtools/memory-problems']],
+docs:[['Node (diagnostics: memory)','https://nodejs.org/en/learn/diagnostics/memory'],['Node (perf_hooks)','https://nodejs.org/api/perf_hooks.html'],['Chrome DevTools (memory problems)','https://developer.chrome.com/docs/devtools/memory-problems']],
 exs:[
 {title:'Growth or a leak?',diff:'medium',lang:'js',
 run:{call:'memoryVerdict',cases:[
@@ -379,7 +379,7 @@ layouts.set(user, expensiveLayout(user));
 <code>process.memoryUsage()</code> not dropping the instant you null a reference means nothing. Your job
 is only ever the references: keep the paths you need, sever the ones you do not, and let the collector do
 the rest.</p>`,
-docs:[['MDN — Memory management','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Memory_management'],['MDN — WeakMap','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap'],['V8 — Trash talk: the garbage collector','https://v8.dev/blog/trash-talk']],
+docs:[['MDN (Memory management)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Memory_management'],['MDN (WeakMap)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap'],['V8 (Trash talk: the garbage collector)','https://v8.dev/blog/trash-talk']],
 ex:{title:'Implement the mark phase',diff:'medium',lang:'js',
 run:{call:'reachable',cases:[
  {name:'follows a chain from the root',args:[{root:['a'],a:['b'],b:[]},['root']],expect:['a','b','root']},
@@ -455,7 +455,7 @@ nobody starts there.)</p>
 <p>The decision is the event-loop lesson's arithmetic: 50ms of synchronous work on a server handling 100
 requests per second does not slow things down, it <i>stops</i> them. Move that computation to a pool and
 the loop goes back to what it is good at: waiting on everything at once.</p>`,
-docs:[['Node — worker_threads','https://nodejs.org/api/worker_threads.html'],['MDN — Web Workers','https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers'],['MDN — structured clone','https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm']],
+docs:[['Node (worker_threads)','https://nodejs.org/api/worker_threads.html'],['MDN (Web Workers)','https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers'],['MDN (structured clone)','https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm']],
 ex:{title:'Loop or worker?',diff:'medium',lang:'js',
 run:{call:'whereToRun',cases:[
  {name:'slow I/O still belongs on the loop',args:[{kind:'io',ms:2000}],expect:'the event loop: async I/O does not block'},

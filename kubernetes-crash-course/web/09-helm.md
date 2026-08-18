@@ -1,4 +1,4 @@
-# 9 — Packaging with Helm
+# 9: Packaging with Helm
 
 *Kubernetes' package manager: install complex apps in one command, template your own. Concepts + a
 lab. ~30 min. Needs your kind cluster + Helm installed.*
@@ -130,4 +130,4 @@ Helm and Kustomize (next module) solve overlapping problems differently; many te
 
 ---
 
-**Next:** [10 — Kustomize →](./10-kustomize.md)
+**Next:** [10: Kustomize →](./10-kustomize.md)

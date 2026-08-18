@@ -56,7 +56,7 @@ head. Most RBAC implementations are deliberately <b>allow-only</b> (you hold a p
 and handle exclusions through separation-of-duties constraints instead, which are checked at assignment
 time rather than at every decision. That is a simplicity worth defending; when you meet a model with deny
 rules, find out immediately how conflicts resolve.</p>`,
-docs:[['RBAC — NIST','https://csrc.nist.gov/projects/role-based-access-control'],['Access control — OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Access_Control_Cheat_Sheet.html']],
+docs:[['RBAC, NIST','https://csrc.nist.gov/projects/role-based-access-control'],['Access control, OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Access_Control_Cheat_Sheet.html']],
 ex:{title:'Role check',gradeJava:{class:'Rbac',cases:[{name:'admin present -> true',call:'isAdmin',args:['java.util.Set.of("admin")'],expect:'true'},{name:'no admin -> false',call:'isAdmin',args:['java.util.Set.of("viewer")'],expect:'false'}]},
 prompt:`Write class <code>Rbac</code> with <code>static boolean isAdmin(java.util.Set&lt;String&gt; roles)</code> that returns true only when the set of roles contains <code>"admin"</code>.`,
 starter:`import java.util.Set;
@@ -185,7 +185,7 @@ requires the engine to tell you which one.</li>
 fine one, where ownership, tenant and context decide. That maps neatly onto the split in the data-level
 lesson: roles at the edge, attributes next to the data. It also keeps the enumerable part enumerable,
 which is what keeps reviews possible.`,
-docs:[['ABAC — NIST 800-162','https://csrc.nist.gov/publications/detail/sp/800-162/final'],['ABAC vs RBAC','https://auth0.com/blog/what-is-abac-attribute-based-access-control/']],
+docs:[['ABAC (NIST 800-162)','https://csrc.nist.gov/publications/detail/sp/800-162/final'],['ABAC vs RBAC','https://auth0.com/blog/what-is-abac-attribute-based-access-control/']],
 ex:{title:'Write an attribute policy',
 prompt:`Write class <code>Abac</code> with <code>static boolean permit(String userDept, String resourceDept, boolean isOwner)</code> that allows access when the user is in the same department as the resource <b>or</b> the user owns the resource.`,
 starter:`public class Abac {
@@ -386,7 +386,7 @@ enforce object authorization, because it does not know who owns record 4417; onl
 the data does. So the split is structural, not stylistic: <b>coarse checks at the edge, ownership
 checks next to the data.</b> Any design that pushes all authorization to the perimeter has, by
 construction, no answer to IDOR.</p>`,
-docs:[['OWASP API Security Top 10 — API1:2023 Broken Object Level Authorization','https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/'],['OWASP — Insecure Direct Object Reference Prevention Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html'],['PostgreSQL — Row Security Policies','https://www.postgresql.org/docs/current/ddl-rowsecurity.html']],
+docs:[['OWASP API Security Top 10: API1:2023 Broken Object Level Authorization','https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/'],['OWASP: Insecure Direct Object Reference Prevention Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html'],['PostgreSQL (Row Security Policies)','https://www.postgresql.org/docs/current/ddl-rowsecurity.html']],
 ex:{title:'Ownership checks and field masking',
 prompt:`Write <code>DataAuthz</code> with three methods. <code>static boolean canRead(String callerTenant, String recordTenant)</code> returns true only when both are non-null and equal: the ownership check that role-based rules never perform. <code>static String scopedQuery(String base)</code> returns <code>base + " AND tenant_id = ?"</code>, putting the constraint in the query rather than checking after the fetch. <code>static String maskCard(String pan, boolean fullAccess)</code> returns <code>pan</code> unchanged when <code>fullAccess</code> is true; otherwise it returns <code>"****"</code> plus the <b>last 4 characters</b>. Return <code>"****"</code> if <code>pan</code> is null or shorter than 4.`,
 starter:`public class DataAuthz {
@@ -476,7 +476,7 @@ Collapsing them means every org-chart change becomes a permissions change nobody
 <p>And in reviews, the number that matters is <b>effective permissions</b>: the flattened union across
 every group, nested or direct. If your system cannot produce that for one person on demand, you cannot
 answer the only question an auditor will ask.</p>`,
-docs:[['Microsoft Entra — Dynamic membership rules','https://learn.microsoft.com/en-us/entra/identity/users/groups-dynamic-membership'],['Microsoft Entra — Configure group claims (and the token size problem)','https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/how-to-connect-fed-group-claims'],['NIST SP 800-53 AC-2 — Account Management','https://csrc.nist.gov/projects/risk-management/sp800-53-controls/release-search#!/control?version=5.1&number=AC-2']],
+docs:[['Microsoft Entra (Dynamic membership rules)','https://learn.microsoft.com/en-us/entra/identity/users/groups-dynamic-membership'],['Microsoft Entra: Configure group claims (and the token size problem)','https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/how-to-connect-fed-group-claims'],['NIST SP 800-53 AC-2 (Account Management)','https://csrc.nist.gov/projects/risk-management/sp800-53-controls/release-search#!/control?version=5.1&number=AC-2']],
 ex:{title:'Flatten nested groups without hanging on a cycle',
 prompt:`Write <code>Groups</code> with <code>static java.util.Set&lt;String&gt; effective(String group, java.util.Map&lt;String, java.util.List&lt;String&gt;&gt; children)</code> returning the group plus every group reachable through nesting. Walk iteratively with a stack or queue, and keep a <b>visited</b> set so a cycle terminates instead of looping forever. Return an empty set if <code>group</code> is null. Then <code>static boolean memberOf(String group, String target, java.util.Map&lt;String, java.util.List&lt;String&gt;&gt; children)</code>, true when <code>target</code> is in the effective set: the transitive check a direct-membership lookup misses.`,
 starter:`import java.util.*;
@@ -577,7 +577,7 @@ to add a broad permit until it works, which is how policy sets rot.</p>
 <p>And test the combinations, not the rules. Each policy in isolation is usually obviously correct; the
 defects live in the interactions, so the cases worth writing down are the ones where two rules
 disagree.</p>`,
-docs:[['XACML 3.0 — rule-combining algorithms','https://docs.oasis-open.org/xacml/3.0/xacml-3.0-core-spec-os-en.html#_Toc325047267'],['AWS — Policy evaluation logic (explicit deny always wins)','https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html'],['Open Policy Agent — Policy language','https://www.openpolicyagent.org/docs/latest/policy-language/']],
+docs:[['XACML 3.0 (rule-combining algorithms)','https://docs.oasis-open.org/xacml/3.0/xacml-3.0-core-spec-os-en.html#_Toc325047267'],['AWS: Policy evaluation logic (explicit deny always wins)','https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html'],['Open Policy Agent (Policy language)','https://www.openpolicyagent.org/docs/latest/policy-language/']],
 ex:{title:'Combine decisions, deny-overrides, default deny',
 prompt:`Model a decision as one of the strings <code>"PERMIT"</code>, <code>"DENY"</code> or <code>"NA"</code> (not applicable). Write <code>PolicyCombiner</code> with <code>static String denyOverrides(java.util.List&lt;String&gt; decisions)</code>: return <code>"DENY"</code> if any decision is DENY; otherwise <code>"PERMIT"</code> if any is PERMIT; otherwise <code>"NA"</code>, including when the list is null or empty. Then <code>static boolean enforce(String decision)</code>, which permits <b>only</b> on <code>"PERMIT"</code>, so NA collapses to denied at the enforcement point.`,
 starter:`import java.util.*;
@@ -632,7 +632,7 @@ every check a traversal.</p>
 <p><b>1. Latency.</b> A check may fan out across many tuples and many shards. The answer is aggressive
 caching plus a trick worth knowing: <b>leopard indexes</b>, which precompute the transitive closure of
 slow-changing sets such as group membership, so a deep nesting chain collapses into one lookup.</p>
-<p><b>2. Consistency — the "new enemy" problem.</b> This is the one that makes the design interesting.
+<p><b>2. Consistency, the "new enemy" problem.</b> This is the one that makes the design interesting.
 Authorization has a failure mode ordinary caches do not:</p>
 <div class="codeSample" data-hl>t1  Ada removes Bob from the group
 t2  Ada adds a confidential document to the group's folder
@@ -670,7 +670,7 @@ to each other in patterns you cannot enumerate in advance, which is exactly the 
 repositories and collaboration tools have.</p>
 <p>And if you do build on this model, the property to protect is not expressiveness but <b>the
 guarantee that a revocation is never overtaken by a stale read</b>. Everything else is optimisation.</p>`,
-docs:[['Google — Zanzibar: Consistent, Global Authorization System','https://research.google/pubs/pub48190/'],['OpenFGA — Modeling guides','https://openfga.dev/docs/modeling'],['SpiceDB — Consistency and zookies','https://authzed.com/docs/spicedb/concepts/consistency']],
+docs:[['Google: Zanzibar: Consistent, Global Authorization System','https://research.google/pubs/pub48190/'],['OpenFGA (Modeling guides)','https://openfga.dev/docs/modeling'],['SpiceDB (Consistency and zookies)','https://authzed.com/docs/spicedb/concepts/consistency']],
 ex:{title:'Zookies and the new-enemy problem',
 prompt:`Write <code>Zanzibar</code> with three methods. <code>static boolean freshEnough(long snapshotAt, long zookieAt)</code> is true only when the replica's snapshot is at or after the token's timestamp. <code>static boolean check(boolean tupleGrantsAccess, long snapshotAt, long zookieAt)</code> returns false whenever the snapshot is too old, <b>even if the tuple currently says access is granted</b>, because a stale replica may not yet know about a revocation. <code>static boolean needsRelationshipGraph(boolean userDrivenSharing, boolean rolesMapCleanly)</code> is true only when sharing is user-driven and roles do not map cleanly.`,
 starter:`public class Zanzibar {
@@ -766,7 +766,7 @@ rather than discovering.</li>
 </ul>
 <p>The summary a senior engineer should be able to give: <b>a policy you cannot test, explain or roll out
 gradually is not a policy; it is a liability with a syntax.</b></p>`,
-docs:[['OPA — policy testing','https://www.openpolicyagent.org/docs/latest/policy-testing/'],['AWS Cedar — policy validation','https://docs.cedarpolicy.com/'],['Google SRE Workbook — canarying releases','https://sre.google/workbook/canarying-releases/']],
+docs:[['OPA (policy testing)','https://www.openpolicyagent.org/docs/latest/policy-testing/'],['AWS Cedar (policy validation)','https://docs.cedarpolicy.com/'],['Google SRE Workbook (canarying releases)','https://sre.google/workbook/canarying-releases/']],
 ex:{title:'Return the reason with the decision',lang:'js',
 run:{call:'decide',cases:[{name:'a matching allow rule is reported by id',args:[[{id:'r1',effect:'allow',when:{role:'admin'}},{id:'r2',effect:'deny',when:{env:'prod'}}],{role:'admin',env:'dev'}],expect:{allow:true,reason:'r1'}},{name:'deny overrides an earlier allow',args:[[{id:'r1',effect:'allow',when:{role:'admin'}},{id:'r2',effect:'deny',when:{env:'prod'}}],{role:'admin',env:'prod'}],expect:{allow:false,reason:'r2'}},{name:'nothing matches, so the default denies',args:[[{id:'r1',effect:'allow',when:{role:'admin'}}],{role:'guest'}],expect:{allow:false,reason:'no rule matched'}},{name:'an empty policy denies rather than permits',args:[[],{role:'admin'}],expect:{allow:false,reason:'no rule matched'}},{name:'a rule matches only when every condition holds',args:[[{id:'r1',effect:'allow',when:{role:'dev',oncall:true}}],{role:'dev',oncall:false}],expect:{allow:false,reason:'no rule matched'}}]},
 prompt:`Write <code>function decide(rules, req)</code> returning <code>{ allow, reason }</code>. A rule is <code>{ id, effect, when }</code> and matches when <b>every</b> key in <code>when</code> equals the same key in <code>req</code>. Deny wins: if any matching rule denies, return that rule's id. Otherwise return the id of the first matching allow. If nothing matches, deny with the reason <code>"no rule matched"</code>. The <code>reason</code> is the decision log; without it, a refused user is an unanswerable ticket.`,

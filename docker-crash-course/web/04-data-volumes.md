@@ -1,4 +1,4 @@
-# 4 — Data: volumes & bind mounts
+# 4: Data: volumes & bind mounts
 
 *Containers are throwaway, so where does data live? Concepts + a lab. ~25 min. Requires Docker.*
 
@@ -127,4 +127,4 @@ docker volume rm notes >/dev/null
 
 ---
 
-**Next:** [5 — Networking →](./05-networking.md)
+**Next:** [5: Networking →](./05-networking.md)

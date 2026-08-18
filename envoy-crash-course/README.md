@@ -1,4 +1,4 @@
-# Envoy Crash Course — from zero to service mesh
+# Envoy Crash Course: from zero to service mesh
 
 A hands-on course to understand **Envoy Proxy** from scratch. It starts with the raw
 fundamentals (what Envoy is, how a request flows through it, static config you run yourself),
@@ -42,18 +42,18 @@ your system config.
 
 | # | Module | What you learn | Lab? |
 |---|--------|----------------|------|
-| 00 | [What Envoy is (and why it exists)](./web/00-what-is-envoy.md) | The mental model: an L7 proxy / "universal data plane"; where it's used; Envoy vs nginx/HAProxy | — |
-| 01 | [Architecture & the request lifecycle](./web/01-architecture-and-request-lifecycle.md) | The core objects (listener → filters → router → cluster → endpoint) and how one request flows through them; the threading model | — |
+| 00 | [What Envoy is (and why it exists)](./web/00-what-is-envoy.md) | The mental model: an L7 proxy / "universal data plane"; where it's used; Envoy vs nginx/HAProxy |, |
+| 01 | [Architecture & the request lifecycle](./web/01-architecture-and-request-lifecycle.md) | The core objects (listener → filters → router → cluster → endpoint) and how one request flows through them; the threading model |, |
 | 02 | [Lab: your first Envoy (static config)](./web/02-lab-first-static-config.md) | Run Envoy in Docker with a minimal static config and proxy a real request, line by line | ✅ |
 | 03 | [Listeners, filter chains & TLS](./web/03-listeners-filter-chains-tls.md) | Listeners in depth; TCP vs HTTP; filter-chain matching (SNI); terminating TLS | ✅ |
 | 04 | [HTTP routing & filters](./web/04-http-routing-and-filters.md) | The HTTP Connection Manager; virtual hosts & route matching; header manipulation, redirects, CORS, fault injection, ext_authz | ✅ |
-| 4b | [Rate limiting & ext_authz](./web/11-rate-limiting-ext-authz.md) | Local vs global rate limiting, token buckets, descriptors; ext_authz as the enforcement point for edge authentication | — |
+| 4b | [Rate limiting & ext_authz](./web/11-rate-limiting-ext-authz.md) | Local vs global rate limiting, token buckets, descriptors; ext_authz as the enforcement point for edge authentication |, |
 | 05 | [Clusters, load balancing & resilience](./web/05-clusters-load-balancing-resilience.md) | Service discovery, load-balancing policies, health checks, timeouts, retries, circuit breakers, outlier detection | ✅ |
 | 06 | [Observability & the admin interface](./web/06-observability-and-admin.md) | The admin endpoint, stats/Prometheus metrics, access logs, distributed tracing | ✅ |
 | 07 | [Dynamic config & xDS](./web/07-dynamic-config-xds.md) | Static vs dynamic; the xDS APIs (LDS/RDS/CDS/EDS/SDS/ADS); control planes; hot-reload with zero drops | ✅ |
 | 08 | [Envoy on Kubernetes (Gateway API)](./web/08-envoy-on-kubernetes.md) | How Envoy runs as an ingress/gateway; Envoy Gateway + the Kubernetes Gateway API | ✅ |
 | 09 | [Envoy as a service-mesh sidecar (Istio)](./web/09-service-mesh-sidecars.md) | The sidecar pattern; mTLS between proxies; how Istio programs Envoy via xDS; reading the generated config | ✅ |
-| 10 | [Debugging, gotchas & where to go next](./web/10-debugging-gotchas-next-steps.md) | The debugging toolkit, common mistakes, and a curated path onward | — |
+| 10 | [Debugging, gotchas & where to go next](./web/10-debugging-gotchas-next-steps.md) | The debugging toolkit, common mistakes, and a curated path onward |, |
 
 ## The one-sentence summary you'll understand by the end
 

@@ -1,4 +1,4 @@
-# 6 — Multi-container apps with Docker Compose
+# 6: Multi-container apps with Docker Compose
 
 *Real apps are several containers. Compose runs them together from one file. Concepts + a full lab.
 ~30 min. Requires Docker.*
@@ -164,4 +164,4 @@ docker compose down >/dev/null 2>&1
 
 ---
 
-**Next:** [7 — Image optimization & security →](./07-image-optimization-security.md)
+**Next:** [7: Image optimization & security →](./07-image-optimization-security.md)

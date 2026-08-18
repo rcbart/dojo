@@ -43,20 +43,20 @@ Step          F9    the next statement, wherever it is
 
 <h4>Breakpoints beyond the plain kind</h4>
 <p>These are the ones that turn debugging from tedious to quick, and most people never use them.</p>
-<p><b>Conditional</b> — right-click a line number, "Add conditional breakpoint", enter an expression such
+<p><b>Conditional</b>: right-click a line number, "Add conditional breakpoint", enter an expression such
 as <code>user.id === 4172</code>. It pauses only when that is true. Indispensable inside a loop over ten
 thousand rows.</p>
-<p><b>Logpoint</b> — same menu, "Add logpoint". Logs an expression and <b>keeps going</b>: a
+<p><b>Logpoint</b>: same menu, "Add logpoint". Logs an expression and <b>keeps going</b>: a
 <code>console.log</code> you did not have to add to the source, cannot forget to remove, and can change
 without a rebuild.</p>
-<p><b>DOM breakpoint</b> — in Elements, right-click a node: break on subtree modification, attribute
+<p><b>DOM breakpoint</b>: in Elements, right-click a node: break on subtree modification, attribute
 change, or removal. The answer to "what is changing this element?" when you have no idea which code does
 it.</p>
-<p><b>XHR/fetch breakpoint</b> — in Sources, "XHR/fetch Breakpoints", add a URL fragment. Pauses when a
+<p><b>XHR/fetch breakpoint</b>: in Sources, "XHR/fetch Breakpoints", add a URL fragment. Pauses when a
 matching request is <i>about to be sent</i>, with the call stack showing exactly what triggered it.</p>
-<p><b>Event listener breakpoint</b> — break on any <code>click</code>, or any <code>submit</code>, across
+<p><b>Event listener breakpoint</b>: break on any <code>click</code>, or any <code>submit</code>, across
 the whole page, without knowing which handler is attached.</p>
-<p><b>Pause on exceptions</b> — the ⏸ icon with the stop sign. Pauses at the moment an error is thrown,
+<p><b>Pause on exceptions</b>: the ⏸ icon with the stop sign. Pauses at the moment an error is thrown,
 with the state intact. Tick "Pause on caught exceptions" as well when something is being swallowed by a
 <code>catch</code> and you cannot find where.</p>
 
@@ -65,7 +65,7 @@ with the state intact. Tick "Pause on caught exceptions" as well when something 
 A breakpoint answers <b>every</b> question about that moment, including ones you only think of once you
 are looking, and lets you walk the call stack to see how you got there. Logging is still useful for
 things you cannot pause on: production, timing-sensitive code, or a bug you can only reproduce once.</p>`,
-docs:[['Chrome DevTools — debug JavaScript','https://developer.chrome.com/docs/devtools/javascript'],['Chrome DevTools — breakpoints','https://developer.chrome.com/docs/devtools/javascript/breakpoints'],['MDN — Firefox Debugger','https://firefox-source-docs.mozilla.org/devtools-user/debugger/']],
+docs:[['Chrome DevTools (debug JavaScript)','https://developer.chrome.com/docs/devtools/javascript'],['Chrome DevTools (breakpoints)','https://developer.chrome.com/docs/devtools/javascript/breakpoints'],['MDN (Firefox Debugger)','https://firefox-source-docs.mozilla.org/devtools-user/debugger/']],
 ex:{title:'Choose the right breakpoint',diff:'easy',lang:'js',
 run:{call:'breakpointFor',cases:[
  {name:'a bug on one specific record out of thousands',args:['one-record-in-a-loop'],expect:'conditional'},
@@ -154,7 +154,7 @@ source and see your real variable names.</p>
 version of a file DevTools serves in place of the real one, so you can test a fix against production
 without deploying. <b>Workspaces</b> map served files to a folder on disk, so edits in the Sources panel
 write straight to your source. Both are enormous time-savers and almost unknown.</p>`,
-docs:[['Chrome DevTools — ignore list','https://developer.chrome.com/docs/devtools/settings/ignore-list'],['Chrome DevTools — local overrides','https://developer.chrome.com/docs/devtools/overrides'],['MDN — Source maps','https://developer.mozilla.org/en-US/docs/Glossary/Source_map']],
+docs:[['Chrome DevTools (ignore list)','https://developer.chrome.com/docs/devtools/settings/ignore-list'],['Chrome DevTools (local overrides)','https://developer.chrome.com/docs/devtools/overrides'],['MDN (Source maps)','https://developer.mozilla.org/en-US/docs/Glossary/Source_map']],
 ex:{title:'Diagnose a breakpoint that will not bind',diff:'easy',lang:'js',
 run:{call:'diagnoseSourceMap',cases:[
  {name:'single-letter variables mean no map is applied',args:[false,true,true],expect:'source map not applied'},
@@ -233,12 +233,12 @@ Access-Control-Allow-Headers: authorization, content-type
 // changes which rules apply, not whether they are enforced.</div>
 
 <h4>Two more habits</h4>
-<p><b>Copy as cURL</b> — right-click any request. You get the exact call, headers and all, to replay in a
+<p><b>Copy as cURL</b>: right-click any request. You get the exact call, headers and all, to replay in a
 terminal or hand to a backend engineer. It removes every "works for me" argument in one step.</p>
 <p><b>Check the request, not your intention.</b> The panel shows what was actually sent. A surprising
 number of bugs are a stale token, a missing header, or a URL built from an undefined variable that
 stringified into the path.</p>`,
-docs:[['Chrome DevTools — Network','https://developer.chrome.com/docs/devtools/network'],['MDN — CORS','https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS'],['MDN — HTTP status codes','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status']],
+docs:[['Chrome DevTools (Network)','https://developer.chrome.com/docs/devtools/network'],['MDN (CORS)','https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS'],['MDN (HTTP status codes)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status']],
 ex:{title:'Triage from the Network panel',diff:'easy',lang:'js',
 run:{call:'triage',cases:[
  {name:'never reached the server',args:['failed'],expect:'network, DNS, TLS or blocked by CSP'},
@@ -334,7 +334,7 @@ website, does not hand a live credential to a third party. Check <code>iss</code
 <code>exp</code> and <code>nonce</code>. Decoding is not verifying; the signature is the server's job.</p>
 <p>And the security note that belongs here: <b>never paste a real token into an online decoder.</b> It is
 a live credential, and you have just given it away.</p>`,
-docs:[['Chrome DevTools — Application panel','https://developer.chrome.com/docs/devtools/storage/localstorage'],['MDN — Set-Cookie','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie'],['RFC 6749 — OAuth 2.0','https://www.rfc-editor.org/rfc/rfc6749'],['RFC 7636 — PKCE','https://www.rfc-editor.org/rfc/rfc7636']],
+docs:[['Chrome DevTools (Application panel)','https://developer.chrome.com/docs/devtools/storage/localstorage'],['MDN (Set-Cookie)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie'],['RFC 6749 (OAuth 2.0)','https://www.rfc-editor.org/rfc/rfc6749'],['RFC 7636 (PKCE)','https://www.rfc-editor.org/rfc/rfc7636']],
 exs:[
 {title:'Locate the OAuth failure',diff:'easy',lang:'js',
 run:{call:'whereToLook',cases:[

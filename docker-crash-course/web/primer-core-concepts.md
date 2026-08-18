@@ -1,4 +1,4 @@
-# Primer — Core concepts & glossary
+# Primer: Core concepts & glossary
 
 *Read this if any word in this course feels assumed. It defines the background terms (machine,
 host, process, kernel, port, and friends) in plain English, so nothing later leaves you lost. ~10
@@ -109,4 +109,4 @@ term in a later module is fuzzy. Every concept here is used, in context, in the 
 
 ---
 
-**Next:** [0 — What Docker is →](./00-what-is-docker.md)
+**Next:** [0: What Docker is →](./00-what-is-docker.md)

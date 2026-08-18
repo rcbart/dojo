@@ -1,4 +1,4 @@
-# 7 — Security: RBAC, ServiceAccounts & NetworkPolicy
+# 7: Security: RBAC, ServiceAccounts & NetworkPolicy
 
 *Locking down who can do what, and which pods may talk. Concepts + a lab. ~30 min. Needs your kind
 cluster. Heavily tested on CKA/CKAD.*
@@ -10,7 +10,7 @@ can run which commands), **ServiceAccounts + SecurityContext** (pod identity and
 **NetworkPolicy** (which pods may reach which). The theme is **least privilege**: grant the minimum
 needed.
 
-## RBAC — who can do what
+## RBAC: who can do what
 
 **Role-Based Access Control** decides whether a user or app may perform an action (get pods, create
 deployments, read secrets…). Four object types, in two pairs:
@@ -56,7 +56,7 @@ kubectl auth can-i list pods --namespace dev
 kubectl auth can-i create deployments --as=system:serviceaccount:dev:myapp -n dev
 ```
 
-## ServiceAccounts — identity for pods
+## ServiceAccounts: identity for pods
 
 A **ServiceAccount** is the identity a *pod* uses to talk to the Kubernetes API. Every pod gets one
 (`default` if unspecified). You bind RBAC to ServiceAccounts to control what an app may do. Best
@@ -68,7 +68,7 @@ spec:
   serviceAccountName: myapp        # the pod runs as this identity
 ```
 
-## SecurityContext — how privileged the container runs
+## SecurityContext: how privileged the container runs
 
 Constrain what the container itself can do on the node:
 
@@ -85,7 +85,7 @@ Constrain what the container itself can do on the node:
 These mirror the Docker security lessons (non-root, least privilege), now enforced by the platform.
 Production clusters often require them via **Pod Security Standards** (the `restricted` profile).
 
-## NetworkPolicy — which pods may talk
+## NetworkPolicy: which pods may talk
 
 By default, **every pod can reach every other pod**: flat and open. A **NetworkPolicy** restricts
 that, per label selector. The critical gotcha: policies are **allow-lists that only take effect once
@@ -161,4 +161,4 @@ kubectl delete namespace dev
 
 ---
 
-**Next:** [8 — Observability & troubleshooting →](./08-observability-troubleshooting.md)
+**Next:** [8: Observability & troubleshooting →](./08-observability-troubleshooting.md)

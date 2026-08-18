@@ -140,7 +140,7 @@ unanswerable and rollbacks a guess. Tag with the commit SHA (immutable and trace
 human-readable version alongside. Scan images in CI, rebuild them regularly so base-image CVE fixes
 actually reach you, and prefer a slim or distroless base: fewer packages is fewer vulnerabilities to
 triage.</p>`,
-docs:[['Dockerize a Spring Boot app — spring.io guide','https://spring.io/guides/gs/spring-boot-docker'],['eclipse-temurin images','https://hub.docker.com/_/eclipse-temurin']],
+docs:[['Dockerize a Spring Boot app (spring.io guide)','https://spring.io/guides/gs/spring-boot-docker'],['eclipse-temurin images','https://hub.docker.com/_/eclipse-temurin']],
 ex:{title:'Write the Dockerfile',lang:'dockerfile',
 prompt:`Write a multi-stage Dockerfile: build stage <code>FROM eclipse-temurin:21-jdk AS build</code> that copies the project and runs <code>./mvnw clean package -DskipTests</code>; run stage <code>FROM eclipse-temurin:21-jre</code> that copies the jar from the build stage as <code>app.jar</code>, EXPOSEs 8080, and uses the exec-form <code>ENTRYPOINT</code> to run it.`,
 starter:`# build stage
@@ -224,7 +224,7 @@ exposure should not.</p>
 liveness must not check the database, or one brief outage restarts every instance simultaneously and turns
 a blip into an incident. Keep management endpoints on a port your cluster can reach and the internet
 cannot, and never expose <code>env</code>, <code>heapdump</code> or <code>loggers</code> publicly.</p>`,
-docs:[['The Twelve-Factor App — Config','https://12factor.net/config'],['Spring Boot Actuator','https://docs.spring.io/spring-boot/reference/actuator/index.html']],
+docs:[['The Twelve-Factor App (Config)','https://12factor.net/config'],['Spring Boot Actuator','https://docs.spring.io/spring-boot/reference/actuator/index.html']],
 ex:{title:'Environment drill',lang:'shell',
 prompt:`(1) Write the <code>docker run</code> command: image <code>dojo/api:1.2.0</code>, publish port 8080, set env vars <code>SPRING_PROFILES_ACTIVE=prod</code> and <code>DOJO_API_KEY=abc123</code>, run detached (<code>-d</code>). (2) On the next numbered line, the env var name Spring maps to the property <code>dojo.rate.limit</code>. (3) The actuator endpoint path a load balancer should probe. (4) One line stating where the API key should REALLY come from in production (mention a secret manager).`,
 starter:`# 1)
@@ -311,7 +311,7 @@ pull request. Treat it accordingly: pin actions to a commit SHA rather than a mo
 the minimum and prefer short-lived OIDC federation over stored registry passwords, do not expose secrets to
 workflows triggered by forks, and require review on the workflow files themselves: a pull request that
 edits the pipeline is a pull request that can exfiltrate every secret it has.</p>`,
-docs:[['GitHub Actions — Java with Maven','https://docs.github.com/en/actions/use-cases-and-examples/building-and-testing/building-and-testing-java-with-maven'],['setup-java action','https://github.com/actions/setup-java']],
+docs:[['GitHub Actions (Java with Maven)','https://docs.github.com/en/actions/use-cases-and-examples/building-and-testing/building-and-testing-java-with-maven'],['setup-java action','https://github.com/actions/setup-java']],
 ex:{title:'Write the workflow',lang:'yaml',
 prompt:`Write a GitHub Actions workflow: name <code>ci</code>, triggered on push to <code>main</code>, one job <code>build</code> on <code>ubuntu-latest</code> with steps: checkout (<code>actions/checkout@v4</code>), <code>actions/setup-java@v4</code> with temurin 21 and maven cache, then <code>./mvnw clean verify</code>, then a docker build step tagging <code>api:test</code> (plain tag is fine for this drill).`,
 starter:`name: ci
@@ -437,7 +437,7 @@ try {
 } finally {
     MDC.remove("orderId");                   // pooled threads: always clean up
 }</div>`,
-docs:[['SLF4J manual','https://www.slf4j.org/manual.html'],['Logback configuration','https://logback.qos.ch/manual/configuration.html'],['MDC — Logback manual','https://logback.qos.ch/manual/mdc.html']],
+docs:[['SLF4J manual','https://www.slf4j.org/manual.html'],['Logback configuration','https://logback.qos.ch/manual/configuration.html'],['MDC (Logback manual)','https://logback.qos.ch/manual/mdc.html']],
 ex:{title:'Instrument a checkout',
 prompt:`Write <code>CheckoutService</code> with the standard logger idiom and a method <code>void checkout(String orderId, String userId)</code> that: (1) puts <code>orderId</code> into the <b>MDC</b>, (2) logs at INFO with <b>two {} placeholders</b>: <code>"checkout started: order {} user {}"</code>, (3) calls <code>charge()</code> (given) in a try, logging failures with <code>log.error("charge failed", e)</code> with the exception as the last argument, (4) removes the MDC key in <code>finally</code>. No string concatenation inside any log call.`,
 starter:`import org.slf4j.Logger;
