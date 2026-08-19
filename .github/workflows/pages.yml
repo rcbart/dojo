@@ -117,7 +117,9 @@ jobs:
           cp istio-crash-course/index.html           _site/istio/index.html
           # ML Dojo lives in its own repo; this is a tracked snapshot of its build
           cp ml-dojo/dist/index.html                 _site/ml/index.html
+          cp skills-rubric.html                      _site/skills-rubric.html
           test -s _site/index.html
+          test -s _site/skills-rubric.html
           test -s _site/blog/index.html
           test -s _site/courses/index.html
           test -s _site/dev/index.html
