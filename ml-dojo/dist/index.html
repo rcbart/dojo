@@ -6238,7 +6238,7 @@ analysis), and choosing the right one is a mark of competence.</p></div>
 <p><b>Mean</b>, the average (sum ÷ count); sensitive to extreme values. <b>Median</b>, the
 middle value when sorted; <i>robust</i>, the billionaire barely moves it. <b>Mode</b>, the
 most common value. On <code>[1, 2, 2, 3, 100]</code>: mean ≈ 21.6 (dragged up by 100),
-median = 2 (unbothered), mode = 2. When mean and median diverge, your data is <b>skewed</b> —
+median = 2 (unbothered), mode = 2. When mean and median diverge, your data is <b>skewed</b>, and
 the mean is pulled toward the long tail. (Recognise the pair? Squared error lands on the mean,
 absolute error on the median, the MSE-vs-MAE robustness story, in statistics form.)</p>
 
@@ -6349,8 +6349,8 @@ formula below; if you ever forget a formula, you can rebuild it from here.</p>
 
 <h3>Factorials: the counting principle applied to arranging</h3>
 <p>How many ways to arrange <code>n</code> distinct items in a row? <code>n</code> choices for
-the first slot, <code>(n−1)</code> for the next (one is used up), and so on down to 1 —
-multiply them all by the counting principle. That product is the <b>factorial</b>:
+the first slot, <code>(n−1)</code> for the next (one is used up), and so on down to 1.
+Multiply them all by the counting principle. That product is the <b>factorial</b>:
 <code>n! = n × (n−1) × … × 2 × 1</code>. So <code>5! = 120</code>. One convention worth knowing:
 <code>0! = 1</code> (there is exactly one way to arrange nothing). Factorials are the raw
 material of permutations and combinations.</p>
@@ -6579,7 +6579,7 @@ this into the famous 9%).</div>
 
 <div class="hardidea">🧠 <b>Why ML cares so much:</b> assuming independence when it is false is
 one of the great silent model-killers (two correlated features double-counted as if they were
-separate evidence). And the one assumption that makes Naive Bayes "naive" is, precisely —
+separate evidence). And the one assumption that makes Naive Bayes "naive" is, precisely,
 conditional independence of features. You are one lesson away from seeing it exploited.</div>`,
  docs:[['Seeing Theory (conditional probability)','https://seeing-theory.brown.edu/compound-probability/index.html']],
  quiz:{title:'Quick check',questions:[
@@ -6961,6 +6961,992 @@ print(mle, best_p, ll_07 > ll_05)
      'L = p**heads * (1 - p)**tails, the probability of exactly your sequence under candidate p.',
      'Log form: heads*log(p) + tails*log(1-p). Products become sums; the winner does not move.'
    ]}]}
+,
+
+{id:'pr6',
+ title:'Fundamentals: random variables and expectation, done properly',
+ body:`
+<div class="ground"><span class="gTag">🎯 The object every later formula is written about</span>
+<p>So far "probability" has meant probabilities of events. Almost every formula in machine
+learning is instead written about a <b>random variable</b>, and about its <b>expectation</b>.
+Both words sound heavier than they are.</p></div>
+
+<h3>A random variable is a function, not a variable</h3>
+<p>Roll two dice. The outcome is a pair like (3, 5). A <b>random variable</b> is a rule that
+turns each outcome into a number: <code>X = "the total"</code> maps (3,5) to 8. That is all it
+is, a function from outcomes to numbers. It is called a variable for historical reasons and the
+name has confused students ever since.</p>
+<p>Capital letters name the variable, lower case names a value it took. <code>P(X = 8)</code>
+asks for the probability of the outcomes that map to 8.</p>
+<p><b>Discrete</b> variables take countable values and are described by a probability mass
+function <code>p(x)</code>. <b>Continuous</b> variables take values on a range and are described
+by a density <code>p(x)</code>, where only intervals have probability.</p>
+
+<h3>Expectation is a weighted average</h3>
+<div class="mathblock">discrete:    E[X] = &Sigma;<sub>x</sub> x &middot; p(x)
+
+continuous:  E[X] = &int; x p(x) dx</div>
+<p>Read it in English: every value, weighted by how likely it is. It is the long-run average you
+would get by sampling forever, which is not a definition but is the right intuition, and the law
+of large numbers later makes it precise.</p>
+<div class="worked"><b>Worked, a fair die.</b>
+<code>E[X] = (1+2+3+4+5+6)/6 = 3.5</code>. Note that 3.5 is not a value the die can produce. An
+expectation need not be attainable, which is worth remembering when a model reports an expected
+class label.</div>
+
+<h3>The two properties you will use constantly</h3>
+<div class="mathblock">linearity:   E[aX + bY + c] = a E[X] + b E[Y] + c        (always)
+
+LOTUS:       E[g(X)] = &Sigma;<sub>x</sub> g(x) p(x)</div>
+<p><b>Linearity holds whether or not X and Y are independent.</b> That is stronger than most
+people expect and it is why so many derivations are shorter than they look. LOTUS, the law of
+the unconscious statistician, says you can take the expectation of a function of X without ever
+working out the distribution of that function, which saves an enormous amount of work.</p>
+
+<h3>Variance measures spread, and squares the units</h3>
+<div class="mathblock">Var[X] = E[ (X - E[X])<sup>2</sup> ] = E[X<sup>2</sup>] - (E[X])<sup>2</sup>
+
+Var[aX + b] = a<sup>2</sup> Var[X]</div>
+<div class="worked"><b>Deriving the computational form.</b> Let <code>&mu; = E[X]</code>. Expand
+the square: <code>E[(X-&mu;)<sup>2</sup>] = E[X<sup>2</sup> - 2&mu;X + &mu;<sup>2</sup>]</code>.
+By linearity that is <code>E[X<sup>2</sup>] - 2&mu;E[X] + &mu;<sup>2</sup></code>, and since
+<code>E[X] = &mu;</code> this is <code>E[X<sup>2</sup>] - 2&mu;<sup>2</sup> + &mu;<sup>2</sup> =
+E[X<sup>2</sup>] - &mu;<sup>2</sup>.</code> Two lines, using nothing but linearity.</div>
+<p>Notice <code>Var[aX] = a<sup>2</sup>Var[X]</code>, not <code>a Var[X]</code>. Variance lives
+in squared units, which is why the <b>standard deviation</b> <code>&radic;Var</code> exists: it
+is back in the units of the data and can be compared to it.</p>
+<div class="hardidea">🧠 <b>Why the loss function you already met is an expectation.</b> Mean
+squared error is <code>E[(y - y&#770;)<sup>2</sup>]</code> estimated from a sample. Training a
+model is minimizing an expectation you cannot compute, using the average over your data as a
+stand-in. That substitution is called <b>empirical risk minimization</b>, and every gap between
+training performance and real performance comes from the fact that the sample average is not the
+expectation.</div>
+`,
+ quiz:{title:'Quick check, expectation',questions:[
+   {q:'A random variable is best described as:',
+    options:['A function mapping outcomes to numbers','A number chosen uniformly at random','A variable whose value is unknown','The probability assigned to an event'],answer:0,
+    why:'It is a function on the sample space. The name is historical and misleading.'},
+   {q:'E[X + Y] = E[X] + E[Y] holds:',
+    options:['Only when X and Y are independent','Only for discrete random variables','For any X and Y whatsoever','Only when both have finite variance'],answer:2,
+    why:'Linearity of expectation never requires independence, which makes it unusually powerful.'},
+   {q:'Why is standard deviation reported instead of variance?',
+    options:['It is faster to compute from a sample','It is always smaller and easier to read','It has the same units as the data itself','It is unaffected by extreme values'],answer:2,
+    why:'Variance is in squared units. Taking the root puts the spread back on the scale of the measurements.'}
+ ]}},
+
+{id:'pr7',
+ title:'Fundamentals: joint, marginal and conditional, and what covariance measures',
+ body:`
+<div class="ground"><span class="gTag">🎯 What happens when you have more than one variable</span>
+<p>Real data has many columns. Everything from covariance matrices to PCA to Gaussian mixtures
+rests on how several random variables behave together, and there are exactly three
+distributions you need to keep straight.</p></div>
+
+<h3>The three distributions</h3>
+<p><b>Joint</b>, <code>p(x, y)</code>: the probability that both take particular values.
+<b>Marginal</b>, <code>p(x)</code>: the probability of one, ignoring the other. <b>Conditional</b>,
+<code>p(x | y)</code>: the probability of one given that the other is known.</p>
+<div class="mathblock">marginal:     p(x) = &Sigma;<sub>y</sub> p(x, y)        or   &int; p(x,y) dy
+
+conditional:  p(x | y) = p(x, y) / p(y)
+
+product rule: p(x, y) = p(x | y) p(y)</div>
+<p>"Marginalizing" means summing the other variable out, and the name is literal: in old
+printed tables the row and column totals were written in the margins.</p>
+<div class="worked"><b>Worked.</b> A joint table over weather and whether you carry an umbrella:
+<pre><code>            rain   dry
+umbrella    0.30   0.10
+none        0.10   0.50</code></pre>
+Marginal for rain: <code>0.30 + 0.10 = 0.40</code>. Conditional
+<code>P(umbrella | rain) = 0.30 / 0.40 = 0.75</code>. Note this differs from
+<code>P(rain | umbrella) = 0.30 / 0.40 = 0.75</code> only by coincidence here; in general
+swapping them is the error Bayes' theorem exists to correct.</div>
+
+<h3>Independence, stated precisely</h3>
+<div class="mathblock">X &perp; Y   &hArr;   p(x, y) = p(x) p(y) for all x, y   &hArr;   p(x | y) = p(x)</div>
+<p>Knowing one tells you nothing about the other. This is a strong condition, and most
+interesting variables fail it.</p>
+
+<h3>Covariance: do they move together</h3>
+<div class="mathblock">Cov[X, Y] = E[ (X - E[X])(Y - E[Y]) ]  =  E[XY] - E[X]E[Y]</div>
+<p>Read the definition. When X is above its mean at the same times Y is above its mean, both
+factors are positive and the product is positive. When one is above while the other is below,
+the product is negative. Average those products, and you get a number that is positive for
+variables that rise together, negative for variables that move oppositely, and near zero for
+variables with no linear relationship.</p>
+<p>Its size is uninterpretable, because it depends on the units. Divide by both standard
+deviations and you get <b>correlation</b>, which is confined to [-1, 1]:</p>
+<div class="mathblock">&rho;<sub>XY</sub> = Cov[X, Y] / ( &sigma;<sub>X</sub> &sigma;<sub>Y</sub> )</div>
+<div class="hardidea">🧠 <b>Zero covariance does not mean independent.</b> Let X be uniform on
+[-1, 1] and let <code>Y = X<sup>2</sup></code>. Y is completely determined by X, so they could
+hardly be more dependent. But by symmetry <code>E[X] = 0</code> and
+<code>E[XY] = E[X<sup>3</sup>] = 0</code>, so <code>Cov[X,Y] = 0</code>. Covariance sees only
+<b>linear</b> association. Independence implies zero covariance; the reverse is false, except in
+the special case of jointly Gaussian variables, where the two do coincide. That exception is a
+large part of why the Gaussian is so convenient.</div>
+
+<h3>The covariance matrix</h3>
+<p>With <code>D</code> variables, collect every pairwise covariance into a
+<code>D &times; D</code> matrix:</p>
+<div class="mathblock">&Sigma; = E[ (x - &mu;)(x - &mu;)<sup>T</sup> ]      &Sigma;<sub>ij</sub> = Cov[X<sub>i</sub>, X<sub>j</sub>]</div>
+<p>The diagonal holds the variances. It is symmetric, since
+<code>Cov[X,Y] = Cov[Y,X]</code>, and it is <b>positive semi-definite</b>, meaning
+<code>a<sup>T</sup>&Sigma;a &ge; 0</code> for any vector <code>a</code>. That last fact is not
+decoration: it says the variance of any linear combination of your variables cannot be negative,
+which is obviously true, and it is exactly the property the next lesson exploits.</p>
+<div class="worked"><b>Why a<sup>T</sup>&Sigma;a is a variance.</b> Consider the scalar
+<code>Y = a<sup>T</sup>x</code>, a weighted combination of your columns. Then
+<code>Var[Y] = E[(a<sup>T</sup>(x-&mu;))<sup>2</sup>] = E[a<sup>T</sup>(x-&mu;)(x-&mu;)<sup>T</sup>a]
+= a<sup>T</sup>&Sigma;a</code>. So the quadratic form is not an abstraction, it is the variance
+of the data measured along the direction <code>a</code>.</div>
+`,
+ quiz:{title:'Quick check, joint and covariance',questions:[
+   {q:'Marginalizing a joint distribution means:',
+    options:['Summing or integrating the other variable out','Conditioning on the most likely value','Normalizing so the total equals one','Discarding the least probable outcomes'],answer:0,
+    why:'p(x) = Σ_y p(x,y). You remove a variable by summing over everything it could have been.'},
+   {q:'Zero covariance between X and Y implies:',
+    options:['X and Y must be statistically independent','No linear relationship, but possibly others','One of the two has zero variance','The joint distribution factorizes exactly'],answer:1,
+    why:'Y = X² with X symmetric about zero has zero covariance and total dependence.'},
+   {q:'The quantity aᵀΣa represents:',
+    options:['The correlation between the first two columns','The determinant of the covariance matrix','The mean of the data along direction a','The variance of the data along direction a'],answer:3,
+    why:'It is Var[aᵀx]. That is why Σ must be positive semi-definite, since variances cannot be negative.'}
+ ]}},
+
+{id:'pr8',
+ title:'Advanced: the multivariate Gaussian, directional derivatives, and where PCA comes from',
+ body:`
+<div class="ground"><span class="gTag">🎯 One distribution, one optimization, and the machinery behind both</span>
+<p>The multivariate Gaussian is the distribution nearly every method assumes when it assumes
+anything. PCA is the optimization that falls out of its geometry. This lesson does both, and
+introduces <b>directional derivatives</b> along the way, because that is the tool that makes the
+PCA derivation honest rather than hand-waved.</p></div>
+
+<h3>The density, term by term</h3>
+<div class="mathblock">N(x | &mu;, &Sigma;) = (2&pi;)<sup>-D/2</sup> |&Sigma;|<sup>-1/2</sup> exp( -&frac12; (x-&mu;)<sup>T</sup>&Sigma;<sup>-1</sup>(x-&mu;) )</div>
+<p>Do not be intimidated by the front. The two factors before the exponential are a normalizing
+constant, present only so the density integrates to 1. Everything interesting is in the
+exponent.</p>
+<p>That exponent, <code>(x-&mu;)<sup>T</sup>&Sigma;<sup>-1</sup>(x-&mu;)</code>, is called the
+<b>squared Mahalanobis distance</b>. Compare it to ordinary squared distance
+<code>(x-&mu;)<sup>T</sup>(x-&mu;)</code>. The only difference is the <code>&Sigma;<sup>-1</sup></code>
+in the middle, and what it does is measure distance in units of standard deviation along each
+direction. Being three units away along a direction where the data varies a lot is unremarkable;
+being three units away along a direction where it barely varies is extraordinary. Mahalanobis
+distance knows the difference and Euclidean distance does not.</p>
+<div class="worked"><b>Worked, two dimensions.</b> Take
+<code>&Sigma; = [[9, 0], [0, 1]]</code>, so the data has standard deviation 3 horizontally and 1
+vertically. Then <code>&Sigma;<sup>-1</sup> = [[1/9, 0],[0,1]]</code> and the exponent for a
+point 3 units right of the mean is <code>9/9 = 1</code>, while for a point 3 units above it is
+<code>9/1 = 9</code>. Same Euclidean distance, nine times the surprise.</div>
+
+<h3>The shape: eigenvectors are the axes</h3>
+<p>Since <code>&Sigma;</code> is symmetric and positive semi-definite, the spectral theorem
+guarantees it can be written as</p>
+<div class="mathblock">&Sigma; = U &Lambda; U<sup>T</sup>,   U orthogonal,   &Lambda; = diag(&lambda;<sub>1</sub>, ..., &lambda;<sub>D</sub>), all &lambda;<sub>i</sub> &ge; 0</div>
+<p>Geometrically: the contours of constant density are ellipsoids. The columns of
+<code>U</code>, the <b>eigenvectors</b>, point along the axes of those ellipsoids, and the
+<b>eigenvalues</b> give the variance along each axis, so the semi-axis lengths are
+<code>&radic;&lambda;<sub>i</sub></code>. A Gaussian is a stretched, rotated ball, and
+<code>&Sigma;</code> records exactly how it was stretched and rotated.</p>
+
+<h3>Directional derivatives, since PCA needs them</h3>
+<p>Before deriving PCA, the tool. You know the partial derivative
+<code>&part;f/&part;x<sub>i</sub></code>: how fast <code>f</code> changes as you move along one
+coordinate axis. But you can move in any direction, not only along the axes. The
+<b>directional derivative</b> asks how fast <code>f</code> changes as you step in an arbitrary
+unit direction <code>u</code>:</p>
+<div class="mathblock">D<sub>u</sub>f(x) = lim<sub>h&rarr;0</sub> [ f(x + hu) - f(x) ] / h  =  &nabla;f(x)<sup>T</sup>u</div>
+<p>That second equality is the useful one, and it is worth seeing why it holds. To first order,
+<code>f(x + hu) &asymp; f(x) + h &nabla;f(x)<sup>T</sup>u</code>, so subtracting and dividing by
+<code>h</code> leaves exactly <code>&nabla;f<sup>T</sup>u</code>.</p>
+<div class="hardidea">🧠 <b>Two consequences worth internalizing.</b> First, since
+<code>&nabla;f<sup>T</sup>u = ||&nabla;f|| cos&theta;</code> for a unit <code>u</code>, the
+directional derivative is largest when <code>&theta; = 0</code>, meaning <b>the gradient points
+in the direction of steepest increase</b>. That is not a definition of the gradient, it is a
+theorem, and it is the entire justification for gradient descent stepping along
+<code>-&nabla;E</code>. Second, when <code>u</code> is perpendicular to the gradient the
+directional derivative is zero, which is why contour lines are everywhere perpendicular to the
+gradient.</div>
+
+<h3>PCA, derived</h3>
+<p>Ask a concrete question: <b>which single direction carries the most variance in the data?</b>
+From the last lesson, the variance along a unit direction <code>u</code> is
+<code>u<sup>T</sup>&Sigma;u</code>. So we want</p>
+<div class="mathblock">maximize   u<sup>T</sup>&Sigma;u    subject to   u<sup>T</sup>u = 1</div>
+<p>The constraint is essential. Without it you could make the objective arbitrarily large just by
+lengthening <code>u</code>, which says nothing about the data. Constrained problems like this are
+handled with a <b>Lagrange multiplier</b>: form</p>
+<div class="mathblock">L(u, &lambda;) = u<sup>T</sup>&Sigma;u - &lambda;(u<sup>T</sup>u - 1)</div>
+<p>and set the derivative with respect to <code>u</code> to zero. Using
+<code>&part;(u<sup>T</sup>Au)/&part;u = 2Au</code> for symmetric <code>A</code>:</p>
+<div class="mathblock">2&Sigma;u - 2&lambda;u = 0    &rArr;    &Sigma;u = &lambda;u</div>
+<p>That is the eigenvector equation. <b>The directions of maximum variance are the eigenvectors
+of the covariance matrix</b>, and this is not asserted, it fell out of the optimization.</p>
+<p>Which eigenvector? Multiply <code>&Sigma;u = &lambda;u</code> on the left by
+<code>u<sup>T</sup></code>: since <code>u<sup>T</sup>u = 1</code>, you get
+<code>u<sup>T</sup>&Sigma;u = &lambda;</code>. The variance captured by a direction <b>is</b> its
+eigenvalue. So take the largest one. The second component is the same problem restricted to
+directions orthogonal to the first, giving the second-largest eigenvalue, and so on.</p>
+<div class="worked"><b>Reading a PCA output.</b> Eigenvalues
+<code>[4.0, 1.5, 0.4, 0.1]</code> total 6.0. The first component explains
+<code>4.0/6.0 = 67%</code> of the variance, the first two explain
+<code>5.5/6.0 = 92%</code>. That ratio is the "explained variance" every library prints, and now
+it is not a black box: it is the share of total variance lying along that axis, and the total
+variance is the trace of &Sigma;.</div>
+<div class="demystify"><b>Why centering first is not optional.</b> The derivation used
+<code>&Sigma; = E[(x-&mu;)(x-&mu;)<sup>T</sup>]</code>. If you skip subtracting the mean, you
+compute <code>E[xx<sup>T</sup>]</code> instead, and the first component will point roughly at the
+mean of your data rather than at the direction of greatest spread. It will look plausible and be
+wrong.</div>
+`,
+ docs:[['A visual, interactive explanation of PCA','https://setosa.io/ev/principal-component-analysis/']],
+ quiz:{title:'Quick check, Gaussians and PCA',questions:[
+   {q:'The Mahalanobis distance differs from Euclidean distance by:',
+    options:['Measuring in units of standard deviation per direction','Being restricted to two dimensions at a time','Ignoring the correlations between variables','Always producing a value between zero and one'],answer:0,
+    why:'The Σ⁻¹ in the middle rescales each direction by how much the data actually varies along it.'},
+   {q:'The directional derivative ∇fᵀu is largest when u:',
+    options:['Is perpendicular to the gradient vector','Points along the first coordinate axis','Points in the same direction as the gradient','Has the smallest possible magnitude'],answer:2,
+    why:'∇fᵀu = ‖∇f‖cos θ, maximized at θ = 0. That is why gradient descent steps along −∇E.'},
+   {q:'PCA finds eigenvectors of the covariance matrix because:',
+    options:['Eigenvectors are always orthogonal to each other','Maximizing uᵀΣu subject to ‖u‖=1 yields Σu = λu','The covariance matrix is expensive to invert','Eigen-decomposition is numerically the fastest route'],answer:1,
+    why:'The Lagrange condition for the constrained maximum is exactly the eigenvector equation.'}
+ ]}}
+,
+
+{id:'pr9',
+ title:'Advanced: entropy, cross-entropy and KL divergence, where loss functions come from',
+ body:`
+<div class="ground"><span class="gTag">🎯 Why classifiers minimize a quantity invented for telegraph wires</span>
+<p>Every classifier you will build minimizes cross-entropy. It is usually presented as a formula
+to accept. It is not arbitrary, it comes from Claude Shannon's 1948 theory of communication, and
+once you see where it comes from you can never mistake it for a convention again.</p></div>
+
+<h3>Surprise, made quantitative</h3>
+<p>You met this in the logarithms stream. Define the surprise of an outcome of probability
+<code>p</code> as <code>-log p</code>. A certain event has zero surprise, a rare one has a lot,
+and the surprise of two independent events adds. Those three requirements force the logarithm,
+they do not merely permit it.</p>
+<p><b>Entropy</b> is the average surprise of a distribution:</p>
+<div class="mathblock">H(p) = -&Sigma;<sub>x</sub> p(x) log p(x)     (in bits if log base 2, nats if natural log)</div>
+<div class="worked"><b>Worked, three coins.</b> A fair coin:
+<code>H = -(0.5 log&#8322;0.5 + 0.5 log&#8322;0.5) = 1</code> bit. A biased coin with p = 0.9:
+<code>-(0.9 log&#8322;0.9 + 0.1 log&#8322;0.1) = 0.469</code> bits. A two-headed coin:
+<code>H = 0</code>, since you learn nothing from the flip. Entropy is highest for the uniform
+distribution and zero for a certainty, and its literal meaning is the average number of bits
+needed to transmit one outcome under the best possible code.</div>
+
+<h3>Cross-entropy: coding with the wrong distribution</h3>
+<p>Suppose the truth is <code>p</code> but you built your code assuming <code>q</code>. You are
+now assigning short codes to things that are not actually common. The average message length you
+achieve is the <b>cross-entropy</b>:</p>
+<div class="mathblock">H(p, q) = -&Sigma;<sub>x</sub> p(x) log q(x)</div>
+<p>Read it carefully: the weights are the true probabilities <code>p</code>, but the surprise is
+computed under your beliefs <code>q</code>. Reality decides how often each thing happens; your
+model decides how surprised you are when it does.</p>
+
+<h3>KL divergence: the penalty for being wrong</h3>
+<div class="mathblock">D<sub>KL</sub>(p || q) = H(p, q) - H(p) = &Sigma;<sub>x</sub> p(x) log[ p(x) / q(x) ]</div>
+<p>The excess cost of using <code>q</code> when the truth is <code>p</code>. It is zero exactly
+when <code>q = p</code>, and otherwise strictly positive. It is <b>not symmetric</b>:
+<code>D<sub>KL</sub>(p||q) &ne; D<sub>KL</sub>(q||p)</code>, so it is not a distance despite
+being used like one.</p>
+<div class="hardidea">🧠 <b>Proving it cannot be negative, since this is the fact everything
+rests on.</b> Jensen's inequality says that for a concave function <code>f</code>,
+<code>E[f(Z)] &le; f(E[Z])</code>. Apply it with <code>f = log</code>, which is concave:
+<div class="mathblock">-D<sub>KL</sub>(p||q) = &Sigma; p(x) log[q(x)/p(x)] = E<sub>p</sub>[ log(q/p) ]
+                &le; log E<sub>p</sub>[ q/p ] = log &Sigma; p(x)&middot;q(x)/p(x) = log &Sigma; q(x) = log 1 = 0</div>
+So <code>D<sub>KL</sub> &ge; 0</code>, with equality only when <code>q = p</code> everywhere.
+Remember this argument. The EM algorithm two lessons from now is built on precisely the same
+inequality.</div>
+
+<h3>Why your classifier's loss is exactly this</h3>
+<p>For a single training example the true distribution is one-hot: probability 1 on the correct
+class <code>c</code>, zero elsewhere. Substitute into cross-entropy:</p>
+<div class="mathblock">H(p, q) = -&Sigma;<sub>k</sub> p<sub>k</sub> log q<sub>k</sub> = -log q<sub>c</sub></div>
+<p>Every term vanishes except the one for the true class. So the loss for that example is just
+<b>the negative log of the probability your model assigned to the right answer</b>. Confident and
+correct gives a loss near zero. Confident and wrong gives a very large loss, because
+<code>-log</code> of something near zero is enormous. That asymmetry is deliberate and it is why
+cross-entropy trains classifiers so much better than squared error does.</p>
+<div class="worked"><b>Worked.</b> True class is the second of three. Model outputs
+<code>[0.2, 0.7, 0.1]</code>: loss <code>-log(0.7) = 0.357</code>. Model outputs
+<code>[0.2, 0.1, 0.7]</code>: loss <code>-log(0.1) = 2.303</code>. Same confidence, wrong target,
+six times the penalty.</div>
+<div class="demystify"><b>The link back to maximum likelihood.</b> Since
+<code>D<sub>KL</sub>(p||q) = H(p,q) - H(p)</code> and <code>H(p)</code> does not depend on your
+model, minimizing cross-entropy is identical to minimizing KL divergence from the truth. And
+minimizing cross-entropy over a dataset is identical to maximizing log-likelihood. Three
+descriptions, one optimization. That is why the same objective keeps appearing under different
+names.</div>
+`,
+ docs:[['Shannon, A Mathematical Theory of Communication (1948)','https://people.math.harvard.edu/~ctm/home/text/others/shannon/entropy/entropy.pdf']],
+ quiz:{title:'Quick check, information',questions:[
+   {q:'Entropy is highest when a distribution is:',
+    options:['Concentrated on a single outcome','As close to uniform as possible','Skewed toward the rarest event','Defined over the fewest outcomes'],answer:1,
+    why:'Uniform means maximum average surprise. A certainty has entropy zero.'},
+   {q:'KL divergence is not a distance because:',
+    options:['It can take negative values in some cases','It is undefined for continuous variables','It is not symmetric in its two arguments','It depends on the base of the logarithm'],answer:2,
+    why:'D(p‖q) ≠ D(q‖p) in general, which violates a requirement of any metric.'},
+   {q:'For a one-hot target, cross-entropy loss reduces to:',
+    options:['The negative log probability of the true class','The squared error against the one-hot vector','The entropy of the predicted distribution','The sum of logs across every class'],answer:0,
+    why:'Every term with p_k = 0 vanishes, leaving −log q_c for the correct class only.'}
+ ]}},
+
+{id:'pr10',
+ title:'Advanced: Bayesian inference, conjugate priors and MAP',
+ body:`
+<div class="ground"><span class="gTag">🎯 From one application of Bayes to a way of doing statistics</span>
+<p>You already met Bayes' theorem on the medical-test problem. That was arithmetic. This lesson
+is the shift from using the formula once to treating <b>the parameters themselves as random
+variables</b>, which is what "Bayesian" actually means.</p></div>
+
+<h3>The reframing</h3>
+<div class="mathblock">p(&theta; | D) = p(D | &theta;) p(&theta;) / p(D)
+
+posterior = likelihood &times; prior / evidence</div>
+<p>Maximum likelihood asked: which single <code>&theta;</code> makes my data most probable. The
+Bayesian question is different: given the data, <b>what is the distribution over</b>
+<code>&theta;</code>. You do not get one answer, you get a whole distribution expressing what you
+now believe and how firmly.</p>
+<p>The <b>evidence</b> <code>p(D) = &int; p(D|&theta;)p(&theta;) d&theta;</code> is just the
+normalizing constant, and it is also the reason Bayesian methods are computationally hard: that
+integral is usually impossible in closed form. Nearly all of Bayesian computation, MCMC and
+variational inference alike, exists to dodge it.</p>
+
+<h3>A conjugate pair, worked from scratch</h3>
+<p>Estimating a coin's bias <code>&theta;</code>. The likelihood for <code>h</code> heads in
+<code>n</code> flips is binomial, <code>&theta;<sup>h</sup>(1-&theta;)<sup>n-h</sup></code>. Take
+a <b>Beta prior</b>:</p>
+<div class="mathblock">Beta(&theta; | a, b) &prop; &theta;<sup>a-1</sup>(1-&theta;)<sup>b-1</sup></div>
+<p>Multiply prior by likelihood and collect the exponents:</p>
+<div class="mathblock">p(&theta;|D) &prop; &theta;<sup>h</sup>(1-&theta;)<sup>n-h</sup> &middot; &theta;<sup>a-1</sup>(1-&theta;)<sup>b-1</sup>
+        = &theta;<sup>(a+h)-1</sup>(1-&theta;)<sup>(b+n-h)-1</sup>
+        = Beta(&theta; | a+h, b+n-h)</div>
+<p>The posterior is a Beta again, with the counts simply added to the parameters. That is what
+<b>conjugacy</b> means: prior and posterior belong to the same family, so updating is arithmetic
+rather than integration. It also gives the prior a plain reading, <code>a</code> and
+<code>b</code> act like heads and tails you had already imagined seeing.</p>
+<div class="worked"><b>Worked.</b> Start with <code>Beta(2,2)</code>, a mild belief the coin is
+fair. Observe 7 heads in 10 flips. Posterior is <code>Beta(9,5)</code>, whose mean is
+<code>9/14 = 0.64</code>. Maximum likelihood alone would have said <code>0.70</code>. The prior
+pulled the estimate toward 0.5, and its influence shrinks as data accumulates: after 700 heads in
+1000 flips the posterior mean is <code>702/1004 = 0.699</code>, essentially the data's answer.</div>
+
+<h3>MAP, and why regularization reappears</h3>
+<p>If you want a single number rather than a distribution, take the <b>maximum a posteriori</b>
+estimate, the peak of the posterior:</p>
+<div class="mathblock">&theta;<sub>MAP</sub> = argmax<sub>&theta;</sub> p(D|&theta;)p(&theta;)
+        = argmax<sub>&theta;</sub> [ log p(D|&theta;) + log p(&theta;) ]</div>
+<p>Compare that with maximum likelihood, which is the same expression without the second term.
+<b>The prior contributes an additive term to the objective</b>, and if you have read the
+overfitting lesson in the neural networks stream you have seen this before: a zero-mean Gaussian
+prior on the weights gives <code>log p(w) = -&lambda;w<sup>T</sup>w/2 + const</code>, which is
+exactly L2 regularization. A Laplace prior gives L1.</p>
+<div class="hardidea">🧠 <b>Regularization was never a hack.</b> Every penalty term you add to a
+loss is a prior belief written in the language of optimization. Choosing "weights are probably
+small" and choosing "add λ‖w‖²" are the same act described in two vocabularies. This is worth
+knowing because it tells you how to design a penalty: ask what you believe about the parameters
+before seeing data, and take its negative log.</div>
+
+<h3>Where the two schools actually differ</h3>
+<p>A frequentist treats <code>&theta;</code> as fixed and unknown, and treats the data as random,
+so a 95% confidence interval is a statement about the procedure. A Bayesian treats
+<code>&theta;</code> as random and the observed data as fixed, so a 95% credible interval is a
+statement about <code>&theta;</code>: there is a 95% probability it lies in this range, given the
+prior and the data. The second is what people usually think the first means.</p>
+<p>The practical trade is honest: Bayesian methods give you uncertainty as a first-class output
+and require you to state a prior and pay for the integral. Which matters depends on whether you
+need calibrated uncertainty, and on how much data you have, since with enough data the prior
+washes out and the two agree.</p>
+`,
+ quiz:{title:'Quick check, Bayesian inference',questions:[
+   {q:'A conjugate prior is one where:',
+    options:['The prior contains no information at all','The posterior stays in the same family','The evidence integral evaluates to one','The likelihood and prior are independent'],answer:1,
+    why:'Beta prior with a binomial likelihood gives a Beta posterior, so updating means adding counts.'},
+   {q:'MAP estimation differs from maximum likelihood by:',
+    options:['Averaging over the whole posterior distribution','Requiring the evidence term to be computed','Adding the log prior to the objective','Using a different optimization algorithm'],answer:2,
+    why:'argmax [log p(D|θ) + log p(θ)]. That extra term is exactly what regularization does.'},
+   {q:'An L2 penalty on weights corresponds to which prior?',
+    options:['A zero-mean Gaussian over the weights','A uniform prior over a bounded range','A Laplace prior centered at zero','An exponential prior on the magnitudes'],answer:0,
+    why:'log of a zero-mean Gaussian gives −λwᵀw/2 plus a constant. Laplace gives L1 instead.'}
+ ]}}
+,
+
+{id:'pr11',
+ title:'Fundamentals: the distribution zoo, and how to pick one',
+ body:`
+<div class="ground"><span class="gTag">🎯 Nine distributions, each answering one specific question</span>
+<p>Textbooks present distributions as a list to memorize. They are better understood as answers:
+each one is what you get when you ask a particular question about a particular kind of
+randomness. Learn the question and the formula stops needing memorizing.</p></div>
+
+<h3>Discrete: probability mass functions</h3>
+<p>A <b>PMF</b> gives the probability of each exact value, so <code>p(x) &ge; 0</code> and
+<code>&Sigma; p(x) = 1</code>. You can ask <code>P(X = 3)</code> and get a real answer.</p>
+<div class="mathblock">Bernoulli(p)     one trial, success or not
+  p(x) = p<sup>x</sup>(1-p)<sup>1-x</sup>,  x &isin; {0,1}      E = p        Var = p(1-p)
+
+Binomial(n,p)    how many successes in n independent trials
+  p(k) = C(n,k) p<sup>k</sup>(1-p)<sup>n-k</sup>            E = np       Var = np(1-p)
+
+Categorical(&pi;)    one trial, K possible outcomes
+  p(x = k) = &pi;<sub>k</sub>,  &Sigma;&pi;<sub>k</sub> = 1
+
+Poisson(&lambda;)       how many rare events in a fixed interval
+  p(k) = &lambda;<sup>k</sup>e<sup>-&lambda;</sup>/k!                   E = &lambda;        Var = &lambda;
+
+Geometric(p)     how many trials until the first success
+  p(k) = (1-p)<sup>k-1</sup>p                    E = 1/p      Var = (1-p)/p&sup2;</div>
+<div class="worked"><b>Where Poisson comes from.</b> Take a binomial with <code>n</code> huge and
+<code>p</code> tiny, holding <code>np = &lambda;</code> fixed. Substituting and taking the limit
+gives <code>&lambda;<sup>k</sup>e<sup>-&lambda;</sup>/k!</code>. That is why Poisson describes
+rare events across many opportunities: server requests per second, typos per page, mutations per
+genome. Its mean and variance are both <code>&lambda;</code>, so if your count data has variance
+noticeably larger than its mean, Poisson is the wrong model and you want a negative binomial
+instead. That single check catches a lot of bad modeling.</div>
+
+<h3>Continuous: probability density functions</h3>
+<p>A <b>PDF</b> is not a probability. <code>p(x)</code> can exceed 1, and
+<code>P(X = 3) = 0</code> exactly, for every value. Only intervals carry probability:
+<code>P(a &lt; X &lt; b) = &int;<sub>a</sub><sup>b</sup> p(x)dx</code>. Density is
+probability per unit of x, which is why it has units and why it can be large where the range is
+narrow.</p>
+<div class="mathblock">Uniform(a,b)     every value in a range equally likely
+  p(x) = 1/(b-a)                     E = (a+b)/2
+
+Exponential(&lambda;)   waiting time until the next Poisson event
+  p(x) = &lambda;e<sup>-&lambda;x</sup>,  x &ge; 0            E = 1/&lambda;      Var = 1/&lambda;&sup2;
+
+Gamma(&alpha;,&beta;)       waiting time until the &alpha;-th event
+  p(x) &prop; x<sup>&alpha;-1</sup>e<sup>-&beta;x</sup>                E = &alpha;/&beta;
+
+Beta(a,b)        a probability that is itself uncertain, on [0,1]
+  p(x) &prop; x<sup>a-1</sup>(1-x)<sup>b-1</sup>              E = a/(a+b)
+
+Gaussian(&mu;,&sigma;&sup2;)   the next lesson, and it earns one</div>
+<div class="hardidea">🧠 <b>The memorylessness of the exponential.</b> The exponential is the only
+continuous distribution satisfying <code>P(X &gt; s+t | X &gt; s) = P(X &gt; t)</code>. A bus
+that has not come for ten minutes is no more likely to come in the next minute than it was at the
+start. This is exactly right for radioactive decay and completely wrong for machine parts, which
+wear out. When someone models time-to-failure with an exponential, this assumption is what they
+are asserting, usually without noticing.</div>
+
+<h3>Choosing, in practice</h3>
+<p>Ask what kind of thing you are modeling. Binary outcome: Bernoulli. Count of successes out of
+a known number of tries: binomial. Count of events with no natural upper bound: Poisson. Time
+until something happens: exponential or gamma. A proportion or a probability: beta. One of
+several unordered categories: categorical. A quantity produced by many small additive effects:
+Gaussian, for the reason in the next lesson.</p>
+<div class="demystify"><b>The relationships are worth more than the formulas.</b> Bernoulli is
+binomial with n = 1. Binomial becomes Poisson in the rare-event limit, and Gaussian in the
+many-trial limit. Exponential is gamma with &alpha; = 1. Beta is the conjugate prior for
+Bernoulli and binomial; gamma is the conjugate prior for the Poisson rate. The zoo is a family
+tree, not a list.</div>
+`,
+ quiz:{title:'Quick check, the distribution zoo',questions:[
+   {q:'A probability density function can exceed 1 because:',
+    options:['It measures probability per unit, not probability','Densities are normalized only at the end','It represents a cumulative rather than exact value','Continuous variables have infinite outcomes'],answer:0,
+    why:'Only the integral over an interval is a probability. Density on a narrow range can be large.'},
+   {q:'Count data whose variance is much larger than its mean suggests:',
+    options:['A Poisson model fits it especially well','Poisson is wrong, since it forces them equal','The data should be modeled as continuous','The counts were collected over too short a window'],answer:1,
+    why:'Poisson has E = Var = λ. Overdispersion points to a negative binomial instead.'},
+   {q:'The exponential distribution is memoryless, which means:',
+    options:['Its parameter cannot be estimated from data','Its variance does not depend on its mean','Past waiting does not change future waiting','It has no defined expectation value'],answer:2,
+    why:'P(X > s+t | X > s) = P(X > t). Right for decay, wrong for anything that wears out.'}
+ ]}},
+
+{id:'pr12',
+ title:'Advanced: the Gaussian, and the four reasons it is everywhere',
+ body:`
+<div class="ground"><span class="gTag">🎯 Not a convenience, and not a coincidence</span>
+<p>The Gaussian shows up in noise models, in priors, in initialization schemes, in mixture
+models, and in the assumptions of half of classical statistics. People often assume it is chosen
+because the math is easy. The math being easy is a consequence, not the cause. There are four
+real reasons, and each one buys something specific.</p></div>
+
+<div class="mathblock">N(x | &mu;, &sigma;&sup2;) = (1/&radic;(2&pi;&sigma;&sup2;)) exp( -(x-&mu;)&sup2; / (2&sigma;&sup2;) )</div>
+
+<h3>Reason 1: sums of many small things become Gaussian</h3>
+<p>The <b>central limit theorem</b>: take independent variables with finite mean and variance,
+from <i>any</i> distribution at all, and their standardized sum converges to a Gaussian.</p>
+<div class="mathblock">( &Sigma;X<sub>i</sub> - n&mu; ) / ( &sigma;&radic;n )  &rarr;  N(0, 1)   as n &rarr; &infin;</div>
+<p>This is why measurement error is usually Gaussian: it is the accumulation of many small
+independent perturbations, and their sum forgets what shape each one had. It also explains where
+the Gaussian is <b>not</b> appropriate. Income is not a sum of small effects, it is closer to a
+product, so it is log-normal with a long right tail. Financial returns have tails far heavier
+than Gaussian, and models that assumed otherwise have caused real damage.</p>
+<div class="worked"><b>How fast it converges.</b> Average 30 draws from a uniform distribution
+and the histogram is already visually indistinguishable from a bell curve. From something badly
+skewed you may need hundreds. The convergence is in distribution, not in the tails, so extreme
+events remain badly estimated even when the middle looks perfect. That caveat is the one that
+bites.</div>
+
+<h3>Reason 2: it is the most honest choice given only a mean and a variance</h3>
+<p>Among all distributions on the real line with a given mean and variance, the Gaussian has
+<b>maximum entropy</b>. Entropy is average surprise, so maximum entropy means assuming the least
+beyond what you have specified. If all you are willing to claim is a center and a spread, any
+other distribution smuggles in extra assumptions about shape. This is a principled argument, not
+an aesthetic one.</p>
+
+<h3>Reason 3: it is closed under the operations you actually perform</h3>
+<div class="mathblock">sum:          N(&mu;<sub>1</sub>,&sigma;<sub>1</sub>&sup2;) + N(&mu;<sub>2</sub>,&sigma;<sub>2</sub>&sup2;) = N(&mu;<sub>1</sub>+&mu;<sub>2</sub>, &sigma;<sub>1</sub>&sup2;+&sigma;<sub>2</sub>&sup2;)   (independent)
+scaling:      aN(&mu;,&sigma;&sup2;) + b = N(a&mu;+b, a&sup2;&sigma;&sup2;)
+marginal:     a Gaussian marginalized is Gaussian
+conditional:  a Gaussian conditioned is Gaussian
+linear map:   x ~ N(&mu;,&Sigma;)  &rArr;  Ax ~ N(A&mu;, A&Sigma;A<sup>T</sup>)</div>
+<p>Almost no other distribution behaves this well. Marginalize a mixture and you get something
+messier; marginalize a Gaussian and you get a Gaussian, with the relevant rows and columns simply
+struck out of <code>&Sigma;</code>. This closure is why Kalman filters, Gaussian processes and
+linear regression all have closed-form answers, and why almost nothing else does.</p>
+
+<h3>Reason 4: squared error and Gaussian noise are the same assumption</h3>
+<p>Assume <code>y = f(x) + &epsilon;</code> with <code>&epsilon; ~ N(0, &sigma;&sup2;)</code>.
+The log-likelihood of the data is</p>
+<div class="mathblock">log p(y|x) = -&Sigma;<sub>n</sub> (y<sub>n</sub> - f(x<sub>n</sub>))&sup2; / (2&sigma;&sup2;)  + const</div>
+<p>Maximizing that is minimizing the sum of squared errors. So <b>every time you use MSE you are
+assuming Gaussian noise</b>, whether or not you said so. That is worth knowing, because when your
+residuals are heavy-tailed, MSE is the wrong loss and it is the outliers that will dominate your
+fit. Absolute error corresponds to Laplace noise and is the standard alternative.</p>
+
+<h3>The multivariate case, briefly recalled</h3>
+<p>Everything above generalizes, with <code>&Sigma;</code> in place of <code>&sigma;&sup2;</code>,
+as covered in the PCA lesson. Two facts to carry into the next lessons: for jointly Gaussian
+variables, <b>zero covariance really does imply independence</b>, which is false in general, and
+a diagonal <code>&Sigma;</code> means axis-aligned contours while a full <code>&Sigma;</code>
+allows tilted ellipses.</p>
+`,
+ quiz:{title:'Quick check, the Gaussian',questions:[
+   {q:'The central limit theorem explains why the Gaussian suits:',
+    options:['Quantities that are products of many factors','Quantities built from many small additive effects','Any dataset once it is large enough','Counts of rare events over a fixed interval'],answer:1,
+    why:'Sums converge to Gaussian. Products converge to log-normal, which is why income is not Gaussian.'},
+   {q:'The maximum entropy argument says the Gaussian:',
+    options:['Assumes the least given a mean and a variance','Is the most likely distribution in nature','Minimizes the error of any estimator','Has the smallest possible tail probability'],answer:0,
+    why:'Any other shape with the same two moments encodes additional assumptions you did not state.'},
+   {q:'Using mean squared error implicitly assumes:',
+    options:['The features have been standardized first','The model is linear in its parameters','The residuals are Gaussian','The data contains no missing values'],answer:2,
+    why:'Gaussian log-likelihood is a negative sum of squares plus a constant. The two objectives coincide.'}
+ ]}}
+,
+
+{id:'pr13',
+ title:'Advanced: latent variables and Gaussian mixture models',
+ body:`
+<div class="ground"><span class="gTag">🎯 What to do when one bell curve is obviously not enough</span>
+<p>Plot the heights of everyone in a building and you may see two humps. No single Gaussian fits
+that. A <b>mixture</b> says the data came from several Gaussians, and that you were never told
+which one produced each point. That missing label is a <b>latent variable</b>, and latent
+variables are the doorway to a large part of modern machine learning.</p></div>
+
+<h3>The generative story</h3>
+<p>Describe how you imagine the data was produced. For each point: first pick a component
+<code>k</code> with probability <code>&pi;<sub>k</sub></code>, then draw the point from that
+component's Gaussian. You observe the point, never the choice.</p>
+<div class="mathblock">z ~ Categorical(&pi;),      x | z = k  ~  N(&mu;<sub>k</sub>, &Sigma;<sub>k</sub>)
+
+p(x) = &Sigma;<sub>k=1..K</sub> &pi;<sub>k</sub> N(x | &mu;<sub>k</sub>, &Sigma;<sub>k</sub>)      &Sigma;<sub>k</sub> &pi;<sub>k</sub> = 1, &pi;<sub>k</sub> &ge; 0</div>
+<p>The second line is the marginal, obtained by summing the joint over the unobserved
+<code>z</code>. The <code>&pi;<sub>k</sub></code> are called <b>mixing coefficients</b>, and they
+are the prior probability of each component before you look at the point.</p>
+<div class="hardidea">🧠 <b>Why a mixture is not simply "several Gaussians fitted separately".</b>
+If you knew which component produced each point, this would be trivial: split the data and fit
+each group. You do not know. So the parameters depend on the assignments and the assignments
+depend on the parameters, and that circularity is the entire difficulty. Everything in the next
+lesson exists to break it.</div>
+
+<h3>Responsibilities: soft assignment</h3>
+<p>Given parameters, you can ask how likely it is that point <code>x<sub>n</sub></code> came from
+component <code>k</code>. That is Bayes' theorem, with the mixing coefficient as the prior:</p>
+<div class="mathblock">&gamma;(z<sub>nk</sub>) = p(z=k | x<sub>n</sub>) = &pi;<sub>k</sub>N(x<sub>n</sub>|&mu;<sub>k</sub>,&Sigma;<sub>k</sub>) / &Sigma;<sub>j</sub> &pi;<sub>j</sub>N(x<sub>n</sub>|&mu;<sub>j</sub>,&Sigma;<sub>j</sub>)</div>
+<p>These are called <b>responsibilities</b>: how much each component is held responsible for each
+point. They are probabilities, so they sum to 1 across components. A point in the middle of one
+cluster gets responsibility near 1 from it; a point between two clusters splits its
+responsibility.</p>
+<div class="worked"><b>Worked.</b> Two components, equal weights. A point where
+<code>N<sub>1</sub> = 0.30</code> and <code>N<sub>2</sub> = 0.10</code>. Then
+<code>&gamma;<sub>1</sub> = 0.5(0.30)/[0.5(0.30)+0.5(0.10)] = 0.75</code> and
+<code>&gamma;<sub>2</sub> = 0.25</code>. The point belongs three-quarters to the first
+cluster.</div>
+
+<h3>Why not just use k-means</h3>
+<p>K-means is the special case you get by making three restrictions: every
+<code>&Sigma;<sub>k</sub> = &sigma;&sup2;I</code> with the same <code>&sigma;</code>, all
+<code>&pi;<sub>k</sub></code> equal, and responsibilities forced to 0 or 1 rather than allowed to
+be fractions. Those restrictions cost you real things.</p>
+<p>K-means finds spherical clusters of similar size, because that is what its assumptions
+encode. A GMM with full covariance can find elongated, tilted clusters of different sizes and
+different shapes. And soft responsibilities mean a point between two clusters is honestly
+reported as ambiguous rather than arbitrarily assigned.</p>
+<div class="demystify"><b>The trap that ruins naive implementations.</b> The likelihood of a GMM
+is <b>unbounded</b>. Put one component's mean exactly on a single data point and shrink its
+variance toward zero, and the density at that point goes to infinity, so the likelihood does too.
+This is a genuine singularity, not a numerical artifact. Implementations avoid it by adding a
+small constant to the diagonal of each &Sigma;, or by placing a prior on the covariances and
+doing MAP instead of maximum likelihood. If your GMM produces a component that has collapsed onto
+one point, this is what happened.</div>
+`,
+ quiz:{title:'Quick check, mixtures',questions:[
+   {q:'The latent variable in a GMM represents:',
+    options:['Which component produced each data point','The noise added to each observation','The number of clusters in the data','The distance from a point to its center'],answer:0,
+    why:'z is the unobserved component label. If you knew it, fitting would be trivial.'},
+   {q:'A responsibility γ(z_nk) is:',
+    options:['The distance from point n to component k','The prior probability of component k','The posterior probability that k produced n','The fraction of variance explained by k'],answer:2,
+    why:'It is p(z=k | xₙ) by Bayes, using π as the prior. They sum to one across components.'},
+   {q:'K-means is a GMM restricted to:',
+    options:['Two components with equal mixing weights','Diagonal covariances estimated per cluster','Spherical equal covariances and hard assignment','Data that has been standardized beforehand'],answer:2,
+    why:'Shared σ²I, equal π, and responsibilities forced to 0 or 1. Those restrictions are why it finds only round clusters.'}
+ ]}},
+
+{id:'pr14',
+ title:'Advanced: expectation maximization, derived from scratch',
+ body:`
+<div class="ground"><span class="gTag">🎯 The algorithm for when the thing you need was never observed</span>
+<p>The circularity from the last lesson looks fatal: parameters need assignments, assignments
+need parameters. EM breaks it by alternating, and the reason that alternation is guaranteed to
+work is a genuinely beautiful piece of mathematics built on the same Jensen inequality that gave
+us <code>D<sub>KL</sub> &ge; 0</code>.</p></div>
+
+<h3>The algorithm first, so you know where we are going</h3>
+<p><b>Initialize</b> the parameters, often with k-means. Then repeat until the log-likelihood
+stops improving:</p>
+<p><b>E-step.</b> With parameters fixed, compute the responsibilities
+<code>&gamma;(z<sub>nk</sub>)</code> for every point and component.</p>
+<p><b>M-step.</b> With responsibilities fixed, update the parameters as weighted versions of the
+ordinary formulas, using responsibilities as the weights:</p>
+<div class="mathblock">N<sub>k</sub> = &Sigma;<sub>n</sub> &gamma;(z<sub>nk</sub>)
+
+&mu;<sub>k</sub> = (1/N<sub>k</sub>) &Sigma;<sub>n</sub> &gamma;(z<sub>nk</sub>) x<sub>n</sub>
+
+&Sigma;<sub>k</sub> = (1/N<sub>k</sub>) &Sigma;<sub>n</sub> &gamma;(z<sub>nk</sub>)(x<sub>n</sub>-&mu;<sub>k</sub>)(x<sub>n</sub>-&mu;<sub>k</sub>)<sup>T</sup>
+
+&pi;<sub>k</sub> = N<sub>k</sub> / N</div>
+<p>Read those: each is the familiar sample mean, sample covariance, and proportion, except every
+point contributes in proportion to how responsible that component is for it.
+<code>N<sub>k</sub></code> is the effective number of points belonging to component
+<code>k</code>.</p>
+
+<h3>Why the alternation cannot make things worse</h3>
+<p>Here is the derivation. We want to maximize the log-likelihood, which contains a sum inside a
+logarithm and is therefore awkward:</p>
+<div class="mathblock">log p(X|&theta;) = &Sigma;<sub>n</sub> log &Sigma;<sub>z</sub> p(x<sub>n</sub>, z | &theta;)</div>
+<p>Introduce any distribution <code>q(z)</code> over the latent variable, multiply and divide,
+and apply Jensen's inequality, exactly as in the KL lesson:</p>
+<div class="mathblock">log &Sigma;<sub>z</sub> p(x,z|&theta;) = log &Sigma;<sub>z</sub> q(z) [ p(x,z|&theta;) / q(z) ]
+                     &ge; &Sigma;<sub>z</sub> q(z) log [ p(x,z|&theta;) / q(z) ]  &equiv;  L(q, &theta;)</div>
+<p><code>L(q, &theta;)</code> is a <b>lower bound</b> on the log-likelihood, for any choice of
+<code>q</code>. It is called the <b>evidence lower bound</b>, or ELBO. And the gap between the
+bound and the truth turns out to be exactly a KL divergence:</p>
+<div class="mathblock">log p(X|&theta;) = L(q, &theta;) + D<sub>KL</sub>( q(z) || p(z|X,&theta;) )</div>
+<div class="hardidea">🧠 <b>This single identity explains both steps at once.</b> Since KL is
+never negative, <code>L</code> is always below the log-likelihood, and they are equal exactly
+when the KL term is zero, which happens exactly when
+<code>q(z) = p(z|X,&theta;)</code>, the true posterior. So:
+<br><br>
+<b>The E-step</b> holds <code>&theta;</code> fixed and sets <code>q</code> to the posterior. That
+drives KL to zero, so the bound now touches the log-likelihood at the current parameters. Those
+posteriors are the responsibilities.
+<br><br>
+<b>The M-step</b> holds <code>q</code> fixed and maximizes <code>L</code> over
+<code>&theta;</code>. Because <code>L</code> is a bound, raising it must raise the
+log-likelihood at least as much, since the log-likelihood sits above it and they were touching.
+<br><br>
+So every full iteration increases the log-likelihood or leaves it unchanged. Never decreases. The
+proof is that one identity.</div>
+
+<h3>What the M-step actually maximizes</h3>
+<p>With <code>q</code> fixed, drop the terms of <code>L</code> that do not involve
+<code>&theta;</code> and you are left with</p>
+<div class="mathblock">Q(&theta;, &theta;<sup>old</sup>) = E<sub>q</sub>[ log p(X, Z | &theta;) ] = &Sigma;<sub>n</sub>&Sigma;<sub>k</sub> &gamma;(z<sub>nk</sub>) log[ &pi;<sub>k</sub> N(x<sub>n</sub>|&mu;<sub>k</sub>,&Sigma;<sub>k</sub>) ]</div>
+<p>This is the <b>expected complete-data log-likelihood</b>, and it is why the algorithm has its
+name. The awkward log-of-a-sum has become a sum-of-logs, which separates cleanly, so setting
+derivatives to zero gives the closed-form updates above. Differentiating with respect to
+<code>&mu;<sub>k</sub></code> and solving yields precisely the weighted mean; the
+<code>&pi;</code> update needs a Lagrange multiplier for the constraint
+<code>&Sigma;&pi;<sub>k</sub> = 1</code>, which is where <code>N<sub>k</sub>/N</code> comes
+from.</p>
+
+<h3>What the guarantee does and does not promise</h3>
+<p>It promises the likelihood never decreases, so the algorithm converges. It does <b>not</b>
+promise you reach the global maximum. EM is a hill-climb, and mixture likelihoods have many local
+optima, so the answer depends on where you started. Standard practice is several restarts, keep
+the best. It also converges slowly near the optimum compared to second-order methods, which is
+usually an acceptable price for having closed-form steps and no learning rate to tune.</p>
+
+<h3>Where else you will meet it</h3>
+<p>EM is a general recipe, not a GMM trick. It fits hidden Markov models through the
+Baum-Welch algorithm, it handles missing data by treating the missing entries as latent, it
+underpins probabilistic PCA and factor analysis, and it fits topic models. And the ELBO you just
+derived is the same object that variational autoencoders maximize, the difference being that when
+the true posterior is intractable you restrict <code>q</code> to a family you can handle and
+accept a nonzero KL gap. Variational inference is EM with the E-step done approximately.</p>
+`,
+ docs:[['Dempster, Laird & Rubin (1977), the paper that named EM','https://www.jstor.org/stable/2984875'],['Bishop, Pattern Recognition and Machine Learning, chapter 9','https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/']],
+ quiz:{title:'Quick check, EM',questions:[
+   {q:'The E-step sets q(z) to the posterior in order to:',
+    options:['Make the KL gap zero so the bound is tight','Reduce the number of parameters to update','Guarantee the global maximum is reached','Remove the need for an initialization'],answer:0,
+    why:'log p = L + KL. Setting q to the true posterior zeroes the KL term, so the bound touches the likelihood.'},
+   {q:'EM guarantees that each iteration:',
+    options:['Reaches the global optimum of the likelihood','Reduces the number of active components','Never decreases the log-likelihood','Converges in a fixed number of steps'],answer:2,
+    why:'Monotonic improvement only. Local optima are real, which is why multiple restarts are standard.'},
+   {q:'The M-step is tractable because taking the expectation:',
+    options:['Removes the latent variables from the model','Turns a log of a sum into a sum of logs','Makes the covariance matrices diagonal','Eliminates the mixing coefficients'],answer:1,
+    why:'The expected complete-data log-likelihood separates, so each parameter has a closed-form solution.'}
+ ]}},
+
+{id:'pr15',
+ title:'Advanced: the other places Gaussians show up in machine learning',
+ body:`
+<div class="ground"><span class="gTag">🎯 Six uses, so the pattern stops looking like a coincidence</span>
+<p>Having done the Gaussian and the mixture properly, it is worth collecting the other places the
+same distribution appears, because recognizing it saves you from learning several things that are
+really one thing.</p></div>
+
+<h3>1. Linear regression is a Gaussian likelihood</h3>
+<p>As shown two lessons ago, assuming <code>y = w<sup>T</sup>x + &epsilon;</code> with
+<code>&epsilon; ~ N(0,&sigma;&sup2;)</code> makes maximum likelihood identical to least squares.
+Add a Gaussian prior on <code>w</code> and MAP becomes ridge regression. The entire classical
+toolkit is Gaussian assumptions wearing different names.</p>
+
+<h3>2. Gaussian naive Bayes</h3>
+<p>Model each feature within each class as an independent Gaussian, then classify by posterior.
+"Naive" refers to the independence assumption, which is usually false and often works anyway,
+because the decision boundary can be roughly right even when the probabilities are badly
+calibrated.</p>
+<div class="mathblock">p(y=c | x) &prop; p(y=c) &Pi;<sub>d</sub> N(x<sub>d</sub> | &mu;<sub>cd</sub>, &sigma;<sub>cd</sub>&sup2;)</div>
+
+<h3>3. Weight initialization</h3>
+<p>Networks are initialized from a Gaussian whose variance is chosen from the layer widths.
+<b>Xavier</b> initialization uses <code>Var = 2/(n<sub>in</sub>+n<sub>out</sub>)</code>, and
+<b>He</b> initialization uses <code>Var = 2/n<sub>in</sub></code> for ReLU networks.</p>
+<div class="worked"><b>Where the 2/n comes from.</b> A neuron computes
+<code>&Sigma;<sub>i</sub>w<sub>i</sub>x<sub>i</sub></code> over <code>n</code> inputs. If the
+weights are independent with variance <code>&sigma;<sub>w</sub>&sup2;</code>, the variance of that
+sum is <code>n&sigma;<sub>w</sub>&sup2;Var[x]</code>. To keep signal variance stable layer to
+layer you want that factor to be 1, so <code>&sigma;<sub>w</sub>&sup2; = 1/n</code>. ReLU zeroes
+roughly half the outputs, halving the variance, so you double it back:
+<code>2/n</code>. The number is derived, not tuned.</div>
+
+<h3>4. Gaussian processes</h3>
+<p>Instead of a distribution over parameters, put a distribution over <b>functions</b>: any
+finite set of points has a joint Gaussian distribution, with the covariance between two points
+given by a kernel measuring how similar their inputs are. Because Gaussians are closed under
+conditioning, observing some points gives a closed-form posterior over the rest, with calibrated
+uncertainty. Excellent with little data, and the cost is <code>O(n&sup3;)</code>, which is why it
+is not used with much of it.</p>
+
+<h3>5. Variational autoencoders</h3>
+<p>A VAE encodes each input to a Gaussian in latent space rather than to a point, samples from
+it, and decodes. The objective is the ELBO from the EM lesson: reconstruction accuracy minus the
+KL divergence between the encoder's Gaussian and a standard Gaussian prior. Both Gaussians are
+chosen so that KL has a closed form and so that sampling can be written as
+<code>z = &mu; + &sigma;&odot;&epsilon;</code> with <code>&epsilon; ~ N(0,I)</code>, which keeps
+the randomness out of the path the gradient travels. That trick is called
+<b>reparameterization</b> and it depends on the Gaussian's scaling property.</p>
+
+<h3>6. Diffusion models</h3>
+<p>Add Gaussian noise to an image in small steps until it is pure noise, then train a network to
+reverse one step at a time. The forward process is chosen to be Gaussian precisely because the
+sum-of-Gaussians property lets you jump to any noise level in closed form instead of simulating
+every step, which is what makes training affordable.</p>
+<div class="demystify"><b>The through-line.</b> In every one of these the Gaussian is chosen for
+the same reason: it is closed under the operations involved, so something that would otherwise
+require an intractable integral has a closed form. When you see a Gaussian assumption in a paper,
+ask which integral it is buying, and you will usually find it immediately.</div>
+`,
+ quiz:{title:'Quick check, Gaussians in ML',questions:[
+   {q:'He initialization uses variance 2/n_in because:',
+    options:['It matches the scale of typical input data','It keeps signal variance stable, doubled for ReLU','It minimizes the number of dead neurons','It was found empirically to train fastest'],answer:1,
+    why:'Var of the weighted sum is n·σ²·Var[x]; setting it to 1 gives 1/n, and ReLU zeroing half the outputs doubles it.'},
+   {q:'The reparameterization trick in a VAE relies on:',
+    options:['The Gaussian being closed under scaling and shifting','The encoder producing discrete latent codes','KL divergence being symmetric in its arguments','The decoder being a deterministic function'],answer:0,
+    why:'z = μ + σ⊙ε keeps the sampling outside the gradient path, and only works because scaling a Gaussian gives a Gaussian.'},
+   {q:'Across all six examples, the Gaussian is chosen mainly because:',
+    options:['It best describes how real data is distributed','It has the fewest parameters to estimate','It makes an otherwise intractable integral solvable','It is the only distribution with finite variance'],answer:2,
+    why:'Closure under the relevant operation is what buys the closed form. That is the common thread.'}
+ ]}}
+,
+
+{id:'pr16',
+ title:'Fundamentals: estimators, bias, and the laws that justify using a sample',
+ body:`
+<div class="ground"><span class="gTag">🎯 Why an average of 200 things tells you anything about a million</span>
+<p>Every number you compute from data is a guess at something you cannot see. This lesson is
+about why those guesses work, when they are systematically wrong, and the one place a
+denominator of <code>n-1</code> comes from.</p></div>
+
+<h3>The CDF, and why it is often the more useful object</h3>
+<div class="mathblock">F(x) = P(X &le; x)     non-decreasing,  F(-&infin;) = 0,  F(&infin;) = 1
+
+discrete:   F(x) = &Sigma;<sub>t &le; x</sub> p(t)          continuous:  F(x) = &int;<sub>-&infin;</sub><sup>x</sup> p(t)dt,  p(x) = F'(x)</div>
+<p>The <b>cumulative distribution function</b> always exists, whether or not a density does, and
+it is what percentiles are read from. The median is <code>F<sup>-1</sup>(0.5)</code>. It also
+gives you a way to generate samples: if <code>U</code> is uniform on [0,1], then
+<code>F<sup>-1</sup>(U)</code> has distribution <code>F</code>. That is <b>inverse transform
+sampling</b>, and it is how a random number generator producing uniforms becomes one producing
+anything.</p>
+
+<h3>Estimators, and what it means for one to be biased</h3>
+<p>An <b>estimator</b> is any function of the data used to guess a parameter. It is itself a
+random variable, since a different sample gives a different value. Two properties matter:</p>
+<div class="mathblock">bias(&theta;&#770;) = E[&theta;&#770;] - &theta;        MSE(&theta;&#770;) = bias&sup2; + Var[&theta;&#770;]</div>
+<p><b>Unbiased</b> means right on average across repeated samples. It does not mean right on your
+sample, and a biased estimator with low variance often beats an unbiased one with high variance,
+which is exactly the trade the next lesson formalizes.</p>
+
+<h3>Where n-1 comes from, derived</h3>
+<p>The sample mean is unbiased: <code>E[x&#772;] = &mu;</code>, directly by linearity. The naive
+sample variance is not. Consider dividing by <code>n</code>:</p>
+<div class="mathblock">E[ (1/n)&Sigma;(x<sub>i</sub> - x&#772;)&sup2; ] = &sigma;&sup2; (n-1)/n  &lt;  &sigma;&sup2;</div>
+<p>It underestimates, every time. The reason is intuitive once stated: the deviations are measured
+from <code>x&#772;</code>, which was itself computed from the same data and therefore sits closer
+to the points than the true <code>&mu;</code> does. Squared deviations from the sample mean are
+the smallest they could be from any center, so they undershoot.</p>
+<div class="worked"><b>The correction.</b> Dividing by <code>n-1</code> instead of
+<code>n</code> multiplies the result by <code>n/(n-1)</code>, cancelling the factor exactly and
+giving an unbiased estimate. The <code>n-1</code> is the number of <b>degrees of freedom</b>
+left: once you know <code>x&#772;</code> and any <code>n-1</code> of the deviations, the last one
+is determined, since they sum to zero. You spent one degree of freedom estimating the mean.</div>
+
+<h3>The two laws that make sampling legitimate</h3>
+<p><b>The law of large numbers.</b> As the sample grows, the sample mean converges to the true
+mean:</p>
+<div class="mathblock">x&#772;<sub>n</sub> &rarr; &mu;   as n &rarr; &infin;</div>
+<p>This is the theorem that says estimation is possible at all. Without it there would be no
+reason to think a sample tells you about a population.</p>
+<p><b>The central limit theorem</b> tells you how fast, and in what shape. The standard deviation
+of the sample mean is <code>&sigma;/&radic;n</code>, called the <b>standard error</b>, and the
+distribution of the sample mean is approximately Gaussian.</p>
+<div class="hardidea">🧠 <b>The square root is the whole economics of data collection.</b> Error
+falls as <code>1/&radic;n</code>, so halving your error requires <b>four times</b> the data, and
+reducing it tenfold requires a hundred times. This single fact explains why the step from 100 to
+1,000 examples transforms a model and the step from 100,000 to 1,000,000 often barely moves it,
+and why past a point buying more data is worse value than improving the model or the
+features.</div>
+<div class="worked"><b>Confidence interval, worked.</b> With <code>n = 100</code>,
+<code>x&#772; = 50</code>, <code>s = 10</code>: standard error is
+<code>10/&radic;100 = 1</code>. An approximate 95% interval is
+<code>50 &plusmn; 1.96(1) = [48.04, 51.96]</code>. Read it correctly: it is a statement about the
+procedure, meaning 95% of intervals built this way contain the true mean. It is not a 95%
+probability that &mu; lies in this particular interval, which is the Bayesian credible interval
+from the earlier lesson.</div>
+
+<h3>Monte Carlo and the bootstrap</h3>
+<p><b>Monte Carlo</b> estimation is the law of large numbers used deliberately: to compute an
+expectation you cannot integrate, draw samples and average.</p>
+<div class="mathblock">E[f(X)] &asymp; (1/N) &Sigma;<sub>i=1..N</sub> f(x<sub>i</sub>),   x<sub>i</sub> ~ p(x)</div>
+<p>The error falls as <code>1/&radic;N</code> regardless of dimension, which is why Monte Carlo
+wins over grid methods in high dimensions, where a grid is hopeless. Dropout at prediction time,
+run repeatedly to estimate uncertainty, is Monte Carlo. So is most of Bayesian computation.</p>
+<p><b>The bootstrap</b> answers "how uncertain is this statistic" when no formula exists.
+Resample your data with replacement, recompute the statistic, repeat a thousand times, and look
+at the spread of the results. It treats your sample as a stand-in for the population, which is
+justified by the same law of large numbers. It is also the idea behind <b>bagging</b> and
+therefore behind random forests.</p>
+`,
+ quiz:{title:'Quick check, estimation',questions:[
+   {q:'Sample variance divides by n-1 because:',
+    options:['Deviations from the sample mean are too small','It makes the result match the standard deviation','Small samples need a larger denominator','It prevents division by zero when n is one'],answer:0,
+    why:'The sample mean sits closer to the data than μ does, so squared deviations undershoot by exactly n/(n-1).'},
+   {q:'Standard error falls as 1/√n, which implies:',
+    options:['Doubling the data halves the error','Ten times the data cuts error by a factor of ten','A hundred times the data cuts error tenfold','Error is independent of the sample size'],answer:2,
+    why:'√100 = 10. This is why going from 100 to 1,000 examples matters far more than 100,000 to 1,000,000.'},
+   {q:'The bootstrap estimates uncertainty by:',
+    options:['Assuming the statistic is Gaussian around its mean','Resampling the data with replacement many times','Splitting the data into equal sized folds','Fitting the model on progressively larger subsets'],answer:1,
+    why:'It uses the sample as a stand-in for the population, then looks at the spread of the recomputed statistic.'}
+ ]}},
+
+{id:'pr17',
+ title:'Advanced: the bias-variance decomposition, and what overfitting actually is',
+ body:`
+<div class="ground"><span class="gTag">🎯 Overfitting and underfitting, as an equation rather than a picture</span>
+<p>You have seen the two-curve diagram. Underneath it is an exact identity that says expected
+error splits into three parts, one of which you cannot do anything about. Once you have the
+identity, every practical technique in machine learning has an obvious place in it.</p></div>
+
+<h3>Setting it up</h3>
+<p>Suppose the truth is <code>y = f(x) + &epsilon;</code> with <code>E[&epsilon;] = 0</code> and
+<code>Var[&epsilon;] = &sigma;&sup2;</code>. You fit a model <code>f&#770;</code> on a random
+training set, so <code>f&#770;</code> is itself random: a different sample gives a different
+fitted model. Ask for the expected squared error at a fixed point <code>x</code>, averaged over
+both the noise and the choice of training set.</p>
+
+<h3>The derivation</h3>
+<p>Write <code>f&#772;(x) = E[f&#770;(x)]</code>, the average prediction across all possible
+training sets. Add and subtract it inside the square:</p>
+<div class="mathblock">E[(y - f&#770;)&sup2;] = E[(f + &epsilon; - f&#770;)&sup2;]
+            = E[(f - f&#770;)&sup2;] + E[&epsilon;&sup2;]           (cross term vanishes: &epsilon; is independent, mean zero)
+            = E[(f - f&#772; + f&#772; - f&#770;)&sup2;] + &sigma;&sup2;
+            = (f - f&#772;)&sup2; + E[(f&#772; - f&#770;)&sup2;] + &sigma;&sup2;
+            =   bias&sup2;    +     variance     + irreducible</div>
+<p>The cross term in the last expansion vanishes because <code>(f - f&#772;)</code> is a constant
+while <code>E[f&#772; - f&#770;] = 0</code> by the definition of <code>f&#772;</code>. Three terms,
+and each has a plain meaning:</p>
+<p><b>Bias</b> is how far the average model is from the truth. It measures whether your model
+family can represent <code>f</code> at all. <b>Variance</b> is how much the fitted model moves
+when the training set changes. <b>Irreducible error</b> is the noise, and no model, no data and
+no algorithm removes it.</p>
+<div class="worked"><b>Reading it on two extremes.</b> Predict a constant, ignoring
+<code>x</code> entirely: variance is zero, since the training set barely changes the answer, and
+bias is enormous. Fit a polynomial through every point exactly: bias is near zero, since the
+family can represent anything, and variance is enormous, since resampling the data produces a
+wildly different curve. The two failure modes are the two terms.</div>
+
+<h3>Underfitting and overfitting, named precisely</h3>
+<p><b>Underfitting is high bias.</b> The model family cannot represent the pattern, so training
+error and validation error are both high and close together. <b>Overfitting is high variance.</b>
+The model fits this sample rather than the pattern, so training error is low, validation error is
+high, and the gap between them is the symptom.</p>
+<p>That gap now has an interpretation: <b>it is an estimate of the variance term</b>. And the
+floor that validation error cannot go below is <code>bias&sup2; + &sigma;&sup2;</code>.</p>
+
+<h3>Every technique, placed</h3>
+<div class="mathblock">more data          &rarr;  reduces variance, leaves bias unchanged
+regularization     &rarr;  reduces variance, increases bias
+a bigger model     &rarr;  reduces bias, increases variance
+bagging / forests  &rarr;  reduces variance by averaging many fits
+boosting           &rarr;  reduces bias by fitting the residuals in sequence
+dropout            &rarr;  reduces variance, an averaging argument
+early stopping     &rarr;  stops before variance overtakes the bias reduction
+feature selection  &rarr;  reduces variance, risks adding bias</div>
+<p>Read that table as a single strategy: choose a family with low enough bias to represent the
+problem, then spend everything else on controlling variance. That is what modern practice
+actually is, and it explains why large models plus heavy regularization plus large data is the
+dominant recipe.</p>
+<div class="hardidea">🧠 <b>Where the classical story stops being true.</b> The traditional picture
+is a U-shaped curve: error falls as complexity rises, then rises again as variance takes over,
+with a sweet spot in the middle. Very large modern networks are trained far past the point where
+they can interpolate the training data exactly, and test error often <b>falls again</b> rather
+than continuing to rise. This is called <b>double descent</b>, and it does not violate the
+decomposition, which is an identity and cannot be violated. It says that in the heavily
+overparameterized regime, the implicit bias of the optimizer selects among the many perfect fits,
+and gradient descent happens to prefer smooth ones. The decomposition remains exactly true; the
+assumption that variance must grow with parameter count is what fails.</div>
+
+<h3>What to do with small datasets</h3>
+<p>Small data means the variance term dominates, so every effective technique is a variance
+reduction:</p>
+<p><b>Transfer learning</b> is the strongest option available. Start from a model trained on a
+large related dataset and fine-tune. Someone else paid for the variance reduction.
+<b>Data augmentation</b> manufactures new examples from existing ones. <b>Cross-validation</b>
+replaces a single split with <code>k</code> of them, so your estimate of performance is itself
+lower variance, which matters most when you can least afford to waste rows on a test set.
+<b>Simpler models</b> accept bias in exchange for variance, which is the correct trade when
+<code>n</code> is small, and it is why linear models and gradient-boosted trees still win on
+small tabular data. <b>Stronger regularization</b> and <b>ensembling</b> do the same in different
+currencies. And a <b>Bayesian treatment</b> with an informative prior is the principled version
+of all of them, since the prior supplies information the data cannot.</p>
+`,
+ docs:[['Belkin et al., double descent','https://arxiv.org/abs/1812.11118']],
+ quiz:{title:'Quick check, bias and variance',questions:[
+   {q:'The gap between training and validation error estimates:',
+    options:['The variance term of the decomposition','The bias term of the decomposition','The irreducible noise in the labels','The learning rate used during training'],answer:0,
+    why:'Variance is how much the fitted model moves with the training sample, which is exactly what the gap reflects.'},
+   {q:'Adding regularization typically:',
+    options:['Reduces bias while raising variance','Reduces variance while raising bias','Reduces both terms simultaneously','Affects only the irreducible error'],answer:1,
+    why:'It constrains the family, so the average fit moves further from the truth but varies less across samples.'},
+   {q:'With a small dataset, the dominant term is usually:',
+    options:['Irreducible error, since noise dominates','Bias, since simple models are forced','Variance, since fits move a lot per sample','All three contribute about equally'],answer:2,
+    why:'Few rows means the fit swings with the sample. That is why transfer learning and augmentation help most.'}
+ ]}}
 ]});
 
 STREAMS.push({icon:'🧮',track:'Scientific Python (after the math)',title:'NumPy: arrays & fast vectorized math',blurb:'The advanced-Python tool for the linear algebra you now understand, arrays, vectorized operations, broadcasting. The concepts were the math; this is the fast way to run them.',requires:'pr5',requiresName:'the Mathematical Foundations (through Probability & Statistics)',lessons:[
@@ -7951,7 +8937,7 @@ print(preds, mse, base_pred, base_mse, beats_baseline)
  body:`
 <div class="ground"><span class="gTag">🎯 What it does</span>
 <p><b>Linear regression</b> is the "hello world" of ML: fit the best straight line through your
-data, then use it to predict. It is where <i>all</i> the foundations finally click together —
+data, then use it to predict. It is where <i>all</i> the foundations finally click together:
 the line is a dot product (linear algebra), the error is MSE (probability/loss), and finding
 the best weights is gradient descent (calculus). You are about to train a real model with
 nothing but what you already know.</p></div>
@@ -8073,7 +9059,7 @@ takes the same linear score <code>w·x + b</code> as before, then squashes it th
 network's output layer.</p></div>
 
 <h3>Score → probability → decision</h3>
-<p><b>Step 1, score:</b> <code>z = w·x + b</code>, exactly the linear model. <b>Step 2 —
+<p><b>Step 1, score:</b> <code>z = w·x + b</code>, exactly the linear model. <b>Step 2,
 probability:</b> <code>p = sigmoid(z) = 1 / (1 + e^(−z))</code>, the S-curve (from the
 functions lesson) maps any score into (0, 1). A big positive score → near 1; big negative →
 near 0; zero → exactly 0.5. <b>Step 3, decision:</b> predict class 1 (spam) if
@@ -8162,6 +9148,167 @@ print([round(p, 3) for p in probs], preds, accuracy)
     solution:`Score: <code>z = 2·4 − 6 = 2</code>. Probability: <code>sigmoid(2) = 1/(1+e^(−2)) ≈ 1/(1+0.135) ≈ <b>0.88</b></code>. Since 0.88 ≥ 0.5, predict <b>SPAM</b>. The boundary is where <code>z = 0</code>: <code>2x − 6 = 0 → x = 3</code>, so 4 words (above 3) is spam, as expected.`},
    {q:`<b>2. (Concept)</b> Why squash the linear score through a sigmoid instead of just using the raw score w·x + b to classify?`,
     solution:`The raw linear score can be any number, −4, 7.2, 100, which is meaningless as a probability and makes "how confident?" impossible to read. The <b>sigmoid maps any score into (0, 1)</b>, giving a genuine probability you can threshold and interpret ("88% spam"). It also gives a smooth, differentiable output so the model can be trained by gradient descent, and pairs with the cross-entropy (log) loss to punish confident-but-wrong predictions. A bare line does none of that.`}
+ ]}}
+,
+
+{id:'mlparadigms',
+ title:'Supervised, unsupervised, and the rest of the map',
+ body:`
+<div class="ground"><span class="gTag">🎯 The first question to ask about any ML problem</span>
+<p>Before choosing an algorithm, work out which kind of problem you have. Almost every mistake in
+applied machine learning starts with getting this wrong, usually by assuming labels exist when
+they do not, or by treating a labeling exercise as a modeling one.</p></div>
+
+<h3>The distinction, in one line</h3>
+<p><b>Supervised learning has an answer key. Unsupervised learning does not.</b> That is the
+entire difference, and everything else follows from it.</p>
+<div class="mathblock">supervised:    data is (x, y) pairs        learn  f: x &rarr; y
+unsupervised:  data is x alone            learn  structure in p(x)</div>
+
+<h3>Supervised learning</h3>
+<p>You have inputs and the correct outputs, and you want a function mapping one to the other.
+Two flavors, distinguished only by what <code>y</code> is.</p>
+<p><b>Regression</b> predicts a number: a price, a temperature, a duration. Error is naturally
+measured as a distance, so squared error is the default, which (as the probability stream shows)
+is a Gaussian noise assumption.</p>
+<p><b>Classification</b> predicts a category: spam or not, which of ten digits. Error is
+naturally measured by probability assigned to the truth, so cross-entropy is the default.</p>
+<div class="worked"><b>The test that settles it.</b> Ask whether the numbers you are predicting
+have meaningful arithmetic. Predicting house price: 300k is halfway between 200k and 400k, so
+regression. Predicting which of three doctors saw a patient, coded 1, 2, 3: doctor 2 is not
+halfway between doctors 1 and 3, so classification. Coding categories as integers and running
+regression on them is a common and quiet error.</div>
+
+<h3>Unsupervised learning</h3>
+<p>No labels. You are asking what structure exists in the data itself, which means there is no
+single right answer and no accuracy to report. That is the hard part, not the algorithms.</p>
+<p><b>Clustering</b> groups similar points: k-means, Gaussian mixtures, hierarchical,
+DBSCAN. <b>Dimensionality reduction</b> finds a smaller set of coordinates that keeps most of
+the information: PCA, t-SNE, UMAP, autoencoders. <b>Density estimation</b> models
+<code>p(x)</code> itself, which gives you anomaly detection for free, since an anomaly is a point
+in a low-density region. <b>Association</b> finds items that co-occur.</p>
+<div class="hardidea">🧠 <b>Why unsupervised results are so easy to over-trust.</b> Run k-means
+with k=4 on data with no cluster structure whatsoever and it returns four clusters, confidently,
+with tidy boundaries. The algorithm has no way to report that there was nothing there. Every
+clustering method partitions whatever you hand it. Validating unsupervised output requires
+something outside the algorithm: a downstream task it should improve, a stability check across
+resamples, or a human who knows the domain. A silhouette score is a description of the partition,
+not evidence that the partition is real.</div>
+
+<h3>The middle ground, which is where most real work sits</h3>
+<p><b>Semi-supervised</b>: a few labeled examples and many unlabeled ones. This is the ordinary
+situation, because collecting <code>x</code> is cheap and labeling it is not.</p>
+<p><b>Self-supervised</b>: invent labels from the data. Hide a word and predict it; mask a patch
+of an image and reconstruct it; take two crops of the same photo and require their
+representations to agree. Formally supervised, since there is a target, but it costs no
+annotation, and it is how essentially every large modern model is pre-trained. This is the single
+most consequential idea on this page.</p>
+<p><b>Reinforcement learning</b>: no answer key, only a reward that arrives later, often long
+after the actions that earned it. Different enough to be its own field.</p>
+
+<h3>Choosing, and the honest order to do it in</h3>
+<p>Start from the question, not the method. Do you have labels? If yes and you want a number,
+regression; a category, classification. If no, ask whether you want groups, fewer dimensions, or
+a notion of "unusual", and pick accordingly. If you have a few labels and lots of raw data, look
+for a pre-trained model before you consider training anything from scratch, because
+self-supervised pre-training has already paid for most of what you need.</p>
+<div class="demystify"><b>A framing that saves time.</b> Supervised learning is interpolation
+inside a labeled region. Unsupervised learning is a description of a dataset. Neither is a claim
+about cause. If your question is "what will happen if we change X", no algorithm on this page
+answers it, and reaching for one is how organizations end up confidently acting on a
+correlation.</div>
+`,
+ quiz:{title:'Quick check, paradigms',questions:[
+   {q:'The defining difference between supervised and unsupervised learning is:',
+    options:['Whether the training data includes target labels','Whether the model is linear or nonlinear','Whether the data is numeric or categorical','Whether the dataset is large or small'],answer:0,
+    why:'Supervised has an answer key. Everything else about the two follows from that one fact.'},
+   {q:'Self-supervised learning is best described as:',
+    options:['Clustering applied before a supervised model runs','Supervised learning on labels derived from the data','Training without any objective function at all','Reinforcement learning with a delayed reward'],answer:1,
+    why:'Mask a word and predict it. There is a target, so it is supervised, but nobody annotated anything.'},
+   {q:'Running k-means on data with no real cluster structure will:',
+    options:['Fail to converge within the iteration limit','Return a single cluster containing everything','Return k clusters and report no problem','Raise an error about insufficient separation'],answer:2,
+    why:'Clustering partitions whatever it is given. Validation has to come from outside the algorithm.'}
+ ]}},
+
+{id:'mlsmall',
+ title:'Working with small datasets, and how to know if a model is any good',
+ body:`
+<div class="ground"><span class="gTag">🎯 The situation most people are actually in</span>
+<p>Papers use a million examples. Most real problems have a few hundred rows and no budget for
+more. Small data is not a lesser version of the same task, it changes which methods are
+appropriate and how you are allowed to measure success.</p></div>
+
+<h3>Why small data is specifically a variance problem</h3>
+<p>From the bias-variance lesson: expected error is
+<code>bias&sup2; + variance + noise</code>. With few rows the fitted model swings substantially
+depending on which rows you happened to get, so <b>variance dominates</b>. That single fact
+determines the entire strategy: with small data you should be willing to accept extra bias to buy
+a reduction in variance.</p>
+<p>It also explains something people find counterintuitive: on a few hundred rows of tabular
+data, logistic regression or gradient-boosted trees routinely beat a neural network. The network
+has lower bias and far higher variance, and at that sample size the trade goes the wrong way.</p>
+
+<h3>What actually works, in order of effect</h3>
+<p><b>Transfer learning.</b> Start from a model trained on something large and related, and
+fine-tune. Somebody else paid the variance cost on millions of examples. For images, text and
+audio this is now the default and it is not close.</p>
+<p><b>Data augmentation.</b> Manufacture new examples from the ones you have, using
+transformations that preserve the label. Flips, crops and color shifts for images; synonym
+replacement and back-translation for text; time shifts and noise for audio. Every augmentation is
+you telling the model an invariance you know about, which is information the data did not
+contain.</p>
+<p><b>Simpler models and stronger regularization.</b> Deliberately accept bias. This is the
+correct move, not a compromise.</p>
+<p><b>Feature engineering.</b> Out of fashion and highly effective when <code>n</code> is small.
+A feature encoding domain knowledge is information you did not have to learn, and learning is
+exactly what you cannot afford.</p>
+<p><b>Ensembling.</b> Average several models. Averaging reduces variance almost by construction,
+which is why bagging exists.</p>
+<p><b>An informative prior.</b> The Bayesian version of all of the above, and the most explicit:
+you are stating what you believed before the data arrived, and small data is precisely when that
+belief still matters.</p>
+<p><b>Collecting more data.</b> Worth pricing honestly. Error falls as
+<code>1/&radic;n</code>, so going from 100 to 400 rows halves your error. That is often cheaper
+than a month of modeling.</p>
+
+<h3>Measuring performance when you cannot spare a test set</h3>
+<p>With 200 rows, holding back 40 leaves you both a worse model and a noisy estimate.
+<b>K-fold cross-validation</b> solves this: split into <code>k</code> folds, train on
+<code>k-1</code> and evaluate on the held-out one, rotate, and average.</p>
+<div class="mathblock">CV error = (1/k) &Sigma;<sub>i=1..k</sub> error on fold i</div>
+<p>Every row is used for evaluation exactly once and for training <code>k-1</code> times. With
+<code>k = n</code> this is <b>leave-one-out</b>, nearly unbiased and high variance and expensive.
+<code>k = 5</code> or <code>10</code> is the usual compromise.</p>
+<div class="hardidea">🧠 <b>The mistake that invalidates the whole estimate.</b> Any step that
+looks at the labels must happen <b>inside</b> the fold, not before it. Selecting features by
+correlation with the target on the full dataset, then cross-validating, leaks the test folds into
+the selection and produces optimistic numbers that will not survive deployment. The same applies
+to scaling, imputation and target encoding. If it learned anything from <code>y</code>, it goes
+in the pipeline, and the pipeline goes inside the loop.</div>
+<div class="worked"><b>Stratify when classes are imbalanced.</b> With 200 rows and 20 positives,
+a random 5-fold split can easily give one fold with 1 positive and another with 7. Stratified
+folds preserve the class ratio in each, so the estimates are comparable. With imbalance this
+severe, also stop reporting accuracy: predicting the majority class always gives 90% here, and
+means nothing. Report precision, recall and the confusion matrix.</div>
+
+<h3>The habit that matters most</h3>
+<p>With small data, the difference between a good result and a self-deception is usually not the
+model. It is whether you tuned repeatedly against the same split until something scored well. Do
+that twenty times and you have fitted the validation set with your own choices. Keep a final set
+you look at once, and if you cannot afford one, at least count how many decisions you made
+against your cross-validation score and treat the last number with a proportionate amount of
+suspicion.</p>
+`,
+ quiz:{title:'Quick check, small data',questions:[
+   {q:'Small datasets are dominated by which error term?',
+    options:['Bias, since simpler models must be used','Variance, since the fit swings with the sample','Irreducible noise in the measurements','All three contribute about equally'],answer:1,
+    why:'Few rows means a different sample gives a noticeably different model. That is variance by definition.'},
+   {q:'Feature selection based on correlation with the target should be done:',
+    options:['Inside each cross-validation fold','Once on the full dataset beforehand','After the model has been fitted','Only when the dataset is large'],answer:0,
+    why:'Doing it beforehand leaks the held-out labels into the selection and inflates every score that follows.'},
+   {q:'With 200 rows and 20 positives, reporting accuracy is misleading because:',
+    options:['Accuracy is undefined for imbalanced data','Cross-validation cannot be used at all','Predicting the majority class already scores 90%','The folds will not contain any positives'],answer:2,
+    why:'A model that learns nothing scores 90%. Precision, recall and the confusion matrix are informative here.'}
  ]}}
 ]});
 
