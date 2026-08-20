@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MLDojo: Learn Machine Learning from zero</title>
 <style>*{box-sizing:border-box}
+.mark{display:inline-block;width:17px;height:17px;border-radius:5px;
+  vertical-align:-.15em;margin-right:2px;
+  background:linear-gradient(100deg,#f59e0b,#f43f5e 48%,#8b5cf6)}
+.ic{width:1em;height:1em;vertical-align:-.12em;color:var(--accent);opacity:.9;
+  display:inline-block;flex:0 0 auto}
 :root{
   color-scheme:light;
   /* Aligned with the roniam.dev design system (engine/styles.css in the dojo
@@ -156,8 +161,9 @@ button:disabled{opacity:.5;cursor:default}
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 </head>
 <body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><defs><symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="8" r="4"/><path d="M11 11l9 9M17 17l2-2M14 14l2.5-2.5"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4-3 7.5-7 9-4-1.5-7-5-7-9V6z"/><path d="M9.5 12l2 2 3.5-4"/></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8 10.5V7.5a4 4 0 018 0v3"/><circle cx="12" cy="15" r="1.1"/></symbol><symbol id="i-cert" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="12" rx="2"/><path d="M7 8h6M7 11.5h4"/><circle cx="16.5" cy="17.5" r="3"/><path d="M14.6 19.9L14 23l2.5-1.4L19 23l-.6-3.1"/></symbol><symbol id="i-ticket" viewBox="0 0 24 24"><path d="M3 8.5V6.5a1 1 0 011-1h16a1 1 0 011 1v2a2.5 2.5 0 000 5v2.5a1 1 0 01-1 1H4a1 1 0 01-1-1V13.5a2.5 2.5 0 000-5z"/><path d="M13 6v2M13 11v2M13 16v2"/></symbol><symbol id="i-link" viewBox="0 0 24 24"><path d="M10.5 13.5a4 4 0 006 .5l2.5-2.5a4.2 4.2 0 00-6-6L11.5 7"/><path d="M13.5 10.5a4 4 0 00-6-.5L5 12.5a4.2 4.2 0 006 6L12.5 17"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4.5l8.5 14.5H3.5z"/><path d="M12 10v4"/><circle cx="12" cy="16.6" r=".9" fill="currentColor" stroke="none"/></symbol><symbol id="i-code" viewBox="0 0 24 24"><path d="M8.5 8L4 12l4.5 4M15.5 8l4.5 4-4.5 4M13.5 5.5l-3 13"/></symbol><symbol id="i-braces" viewBox="0 0 24 24"><path d="M9.5 4.5C7 4.5 7.5 8 7.5 9.5S6.5 12 5 12c1.5 0 2.5.5 2.5 2.5S7 19.5 9.5 19.5"/><path d="M14.5 4.5c2.5 0 2 3.5 2 5s1 2.5 2.5 2.5c-1.5 0-2.5.5-2.5 2.5s.5 5-2 5"/></symbol><symbol id="i-terminal" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M7 9.5l3 2.5-3 2.5M12.5 15h4.5"/></symbol><symbol id="i-bug" viewBox="0 0 24 24"><rect x="8" y="8" width="8" height="11" rx="4"/><path d="M9.5 7a2.5 2.5 0 015 0M8 11H4.5M16 11h3.5M8 14.5H4.5M16 14.5h3.5M8.5 8.5L6.5 6M15.5 8.5L17.5 6"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l4.5 4.5"/></symbol><symbol id="i-branch" viewBox="0 0 24 24"><circle cx="7" cy="5.5" r="2.2"/><circle cx="7" cy="18.5" r="2.2"/><circle cx="17" cy="9" r="2.2"/><path d="M7 7.7v8.6M17 11.2c0 3.5-2.5 4.6-6.5 5.2"/></symbol><symbol id="i-cycle" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 0112.9-5.2l2.1 2.1"/><path d="M19.5 12a7.5 7.5 0 01-12.9 5.2l-2.1-2.1"/><path d="M19.8 4.6v4.3h-4.3M4.2 19.4v-4.3h4.3"/></symbol><symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.2 2.3 3.3 5 3.3 8s-1.1 5.7-3.3 8c-2.2-2.3-3.3-5-3.3-8s1.1-5.7 3.3-8z"/></symbol><symbol id="i-plug" viewBox="0 0 24 24"><path d="M8.5 3.5v4M15.5 3.5v4M6 7.5h12v3a6 6 0 01-12 0z"/><path d="M12 16.5V21"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6"/><path d="M4.5 12v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-6"/></symbol><symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3.5l8.5 4.2-8.5 4.2-8.5-4.2z"/><path d="M3.5 12.2l8.5 4.2 8.5-4.2M3.5 16.4l8.5 4.1 8.5-4.1"/></symbol><symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><rect x="10" y="10" width="4" height="4" rx=".7"/><path d="M9.5 3.5v3M14.5 3.5v3M9.5 17.5v3M14.5 17.5v3M3.5 9.5h3M3.5 14.5h3M17.5 9.5h3M17.5 14.5h3"/></symbol><symbol id="i-package" viewBox="0 0 24 24"><path d="M20 8l-8-4.2L4 8v8l8 4.2L20 16z"/><path d="M4 8l8 4.2M20 8l-8 4.2M12 12.2v8M8 5.9l8 4.2"/></symbol><symbol id="i-flask" viewBox="0 0 24 24"><path d="M10 3.5v5.8L4.9 18a2 2 0 001.7 3h10.8a2 2 0 001.7-3L14 9.3V3.5"/><path d="M8.8 3.5h6.4M7.6 14.5h8.8"/></symbol><symbol id="i-rocket" viewBox="0 0 24 24"><path d="M12 3c3.2 2.2 5 5.6 5 9.4l-2.4 3.1H9.4L7 12.4C7 8.6 8.8 5.2 12 3z"/><circle cx="12" cy="10" r="1.8"/><path d="M9.4 15.5L7 18l2.2.6.6 2.2 2.2-2.6M14.6 15.5L17 18l-2.2.6-.6 2.2-2.2-2.6"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7.2V12l3.2 2"/></symbol><symbol id="i-atom" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.9"/><ellipse cx="12" cy="12" rx="9" ry="3.6"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(120 12 12)"/></symbol><symbol id="i-leaf" viewBox="0 0 24 24"><path d="M20 4c0 9-5.2 13.5-11 13.5-2 0-3.5-.6-3.5-.6C5 10.5 9.5 5.5 20 4z"/><path d="M4 20c1.5-4 4.5-7.5 9-10"/></symbol><symbol id="i-coffee" viewBox="0 0 24 24"><path d="M4 9h13v6a5 5 0 01-5 5H9a5 5 0 01-5-5z"/><path d="M17 10.5h1.8a2.7 2.7 0 010 5.4H17"/><path d="M8 2.5c-1 1.4-1 2.4 0 3.8M12 2.5c-1 1.4-1 2.4 0 3.8"/></symbol><symbol id="i-dna" viewBox="0 0 24 24"><path d="M7.5 3c0 5.5 9 6.5 9 9s-9 3.5-9 9"/><path d="M16.5 3c0 5.5-9 6.5-9 9s9 3.5 9 9"/><path d="M9 6.5h6M8 17.5h8"/></symbol><symbol id="i-files" viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 012-2h3.2l1.8 2.2h8a2 2 0 012 2v8.3a2 2 0 01-2 2h-13a2 2 0 01-2-2z"/><path d="M3.5 11h17"/></symbol><symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"/><path d="M12 2.8v2.6M12 18.6v2.6M21.2 12h-2.6M5.4 12H2.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8M18.5 18.5l-1.8-1.8M7.3 7.3L5.5 5.5"/></symbol><symbol id="i-wrench" viewBox="0 0 24 24"><path d="M15.5 3.5a5.5 5.5 0 00-5 7.8L3.8 18a2 2 0 102.8 2.8l6.7-6.7a5.5 5.5 0 006.9-7.3l-3 3-2.8-.7-.7-2.8 3-3a5.6 5.6 0 00-1.2-.3z"/></symbol><symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 9.5h.01M9.5 9.5h.01M13 9.5h.01M16.5 9.5h.01M6 13h.01M18 13h.01M9 16h6"/><path d="M9.5 13h5"/></symbol><symbol id="i-book" viewBox="0 0 24 24"><path d="M4 4.5h6a3 3 0 013 3v12a2.5 2.5 0 00-2.5-2.5H4z"/><path d="M20 4.5h-6a3 3 0 00-3 3v12a2.5 2.5 0 012.5-2.5H20z"/></symbol><symbol id="i-columns" viewBox="0 0 24 24"><path d="M3.5 8.5h17M12 8.5v11"/><rect x="3.5" y="4.5" width="17" height="15" rx="2"/></symbol><symbol id="i-badge" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16.4c.5-1.7 1.8-2.5 3.2-2.5s2.7.8 3.2 2.5M14.5 10h4M14.5 13.5h3"/></symbol></defs></svg>
 <header>
-  <div class="logo" style="cursor:pointer" onclick="renderHome()">🧠 ML<span>Dojo</span></div>
+  <div class="logo" style="cursor:pointer" onclick="renderHome()"><span class="mark" aria-hidden="true"></span> ML<span>Dojo</span></div>
   <div class="tip">Real Python runs in your browser, no install. Grounded in what each idea is <i>for</i>, before any math.</div>
   <div class="belt"><span id="beltName">White belt</span><div class="strip"><i id="beltFill" style="width:0%"></i></div><span id="beltPct">0%</span></div>
 </header>
@@ -176,7 +182,37 @@ button:disabled{opacity:.5;cursor:default}
     <button id="tutorSend" class="primary">Ask</button>
   </div>
 </div>
-<script>/* ============================== MLDojo engine (POC) ============================== */
+<script>/* Monoline icon set, shared with roniam.dev and the other dojos.
+   Streams keep declaring an emoji in `icon:` because that is the authoring
+   shorthand; ico() maps it to a symbol at render time. Anything unmapped falls
+   through to the emoji, so a new stream is never iconless. */
+const ICON_MAP = {
+  // ML Dojo streams
+  '\u{1F9ED}':'i-layers',    // compass, orientation
+  '\u{1F40D}':'i-code',      // snake, Python
+  '\u{1F9EE}':'i-cpu',       // abacus, numerics
+  '\u{1F4D0}':'i-layers',    // set square, linear algebra
+  '\u{1F4C8}':'i-cycle',     // rising chart, calculus
+  '\u{1F4C9}':'i-cycle',     // falling chart, logarithms
+  '\u{1F3B2}':'i-atom',      // die, probability
+  '\u{1F9F0}':'i-flask',     // toolbox
+  '\u{1F916}':'i-cpu',       // robot, classic ML
+  '✍':'i-book',         // writing hand, notation
+  // shared with the other dojos, so a stream can move between them
+  '\u{1F511}':'i-key','\u{1F512}':'i-lock','\u{1F513}':'i-lock','\u{1F6E1}':'i-shield',
+  '\u{1F310}':'i-globe','\u{1F41E}':'i-bug','\u{1F50D}':'i-search','\u{1F4DA}':'i-book',
+  '\u{1F4D6}':'i-book','\u{1F4BB}':'i-terminal','⚡':'i-cpu','\u{1F3E0}':'i-columns',
+  '\u{1F5C4}':'i-database','\u{1F680}':'i-rocket','\u{1F4E6}':'i-package','⚙':'i-gear',
+  '\u{1F527}':'i-wrench','\u{1F6E0}':'i-wrench','\u{1F9F0}':'i-flask','\u{1F9EA}':'i-flask','\u{1F3AF}':'i-flask','\u{1F9E0}':'i-cpu',
+};
+function ico(e, cls) {
+  if (!e) return '';
+  const id = ICON_MAP[e] || ICON_MAP[e.replace(/️/g, '')];
+  if (!id) return e;                       // unmapped: keep the emoji rather than nothing
+  return `<svg class="ic ${cls || ''}" aria-hidden="true" focusable="false"><use href="#${id}"/></svg>`;
+}
+
+/* ============================== MLDojo engine (POC) ============================== */
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function hesc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
@@ -366,7 +402,7 @@ function renderHome(){
   cur={si:-1,li:-1};
   const total=totalLessons(),done=doneCount();
   document.getElementById('main').innerHTML=`
-  <h1 class="lessonTitle" style="font-size:30px">Welcome to <span style="color:var(--accent)">MLDojo</span> 🧠</h1>
+  <h1 class="lessonTitle" style="font-size:30px">Welcome to <span style="color:var(--accent)">MLDojo</span></h1>
   <div class="lessonBody">
   <p style="font-size:16px"><b>This course takes you from absolute zero to genuinely understanding
   machine learning and AI</b>, the way a university would teach it, but hands-on, self-paced,
@@ -424,9 +460,9 @@ function renderHome(){
 function renderNav(){
   const nav=document.getElementById('nav');
   let lastTrack=null;
-  nav.innerHTML=`<div class="lessonLink${cur.si===-1?' active':''}" onclick="renderHome()" style="font-weight:700">🏠 Welcome &amp; mission</div>
-  <div class="lessonLink${cur.si===-2?' active':''}" onclick="renderPlayground()" style="font-weight:700">🐍 Python Playground</div>
-  <div class="lessonLink${cur.si===-3?' active':''}" onclick="renderSetupGuide()" style="font-weight:700">🛠 Python on your machine</div>`+STREAMS.map((s,si)=>{
+  nav.innerHTML=`<div class="lessonLink${cur.si===-1?' active':''}" onclick="renderHome()" style="font-weight:700">${ico('\u{1F3E0}')} Welcome &amp; mission</div>
+  <div class="lessonLink${cur.si===-2?' active':''}" onclick="renderPlayground()" style="font-weight:700">${ico('\u{1F40D}')} Python Playground</div>
+  <div class="lessonLink${cur.si===-3?' active':''}" onclick="renderSetupGuide()" style="font-weight:700">${ico('\u{1F6E0}')} Python on your machine</div>`+STREAMS.map((s,si)=>{
     let divider='';
     if(s.track&&s.track!==lastTrack){divider=`<div class="trackDivider">${esc(s.track)}</div>`;lastTrack=s.track;}
     const links=s.lessons.map((l,li)=>{
@@ -434,7 +470,7 @@ function renderNav(){
       const active=(si===cur.si&&li===cur.li);
       return `<div class="lessonLink${active?' active':''}" onclick="openLesson(${si},${li})">${done?'✅':'○'} ${esc(l.title)}</div>`;
     }).join('');
-    return `${divider}<div class="streamHd">${s.icon} ${esc(s.title)}</div>${links}`;
+    return `${divider}<div class="streamHd">${ico(s.icon)} ${esc(s.title)}</div>${links}`;
   }).join('');
 }
 
@@ -450,7 +486,7 @@ function openLesson(si,li){
   const prereqUnmet=s.requires&&!store.lesson(s.requires).done;
   const prereqBanner=prereqUnmet?`<div class="hardidea" style="border-color:#e2a03f;background:#fff4e0">🔒 <b>Prerequisite:</b> this stream assumes you've completed <b>${esc(s.requiresName||'the earlier stream')}</b> first, it teaches the Python and the primitives (like what a <i>dimension</i> is) that this lesson builds on. You can look around, but you'll get the most out of it after finishing the prerequisite.</div>`:'';
   m.innerHTML=`
-    <div class="crumb">${s.icon} ${esc(s.title)} · Lesson ${li+1} of ${s.lessons.length}</div>
+    <div class="crumb">${ico(s.icon)} ${esc(s.title)} · Lesson ${li+1} of ${s.lessons.length}</div>
     ${prereqBanner}
     <h1 class="lessonTitle">${esc(l.title)}${done?' <span class="badge done">✓ COMPLETED</span>':''}</h1>
     <div class="lessonBody">${l.body}</div>
@@ -634,7 +670,7 @@ function nextStep(l){
 function renderSetupGuide(){
   cur={si:-3,li:-1};
   document.getElementById('main').innerHTML=`
-  <h1 class="lessonTitle">🛠 Set up Python for ML on your own machine</h1>
+  <h1 class="lessonTitle">${ico('\u{1F6E0}')} Set up Python for ML on your own machine</h1>
   <div class="lessonBody">
   <p><b>You do not need any of this to take the course</b>: everything in MLDojo runs right
   here in your browser. But when you want to experiment further on your own computer (bigger
@@ -721,7 +757,7 @@ for i in range(3):
 function renderPlayground(){
   cur={si:-2,li:-1};
   document.getElementById('main').innerHTML=`
-    <h1 class="lessonTitle">🐍 Python Playground</h1>
+    <h1 class="lessonTitle">${ico('\u{1F40D}')} Python Playground</h1>
     <p class="lessonBody" style="margin-bottom:12px">A free coding space, real Python in your browser, no rules, no grading.
     Test an idea from a lesson, or just explore. Imports (numpy, pandas, …) are downloaded automatically the first time you use them.
     Your code is saved between visits.</p>
