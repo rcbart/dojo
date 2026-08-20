@@ -51,10 +51,12 @@ const kb = n => (n / 1024).toFixed(0) + 'kb';
     const locs = [...sm.body.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
     const rows = [];
     let slowest = { ms: 0 }, total = 0;
+    const heavy = [];
     for (const loc of locs) {
       const r = await get(loc);
       total += r.bytes;
       if (r.ms > slowest.ms) slowest = { ms: r.ms, loc };
+      if (r.bytes > 1024 * 1024) heavy.push({ loc: loc.replace(ORIGIN, ''), bytes: r.bytes });
       if (!r.ok) failures++;
       rows.push(`| ${loc.replace(ORIGIN, '') || '/'} | ${r.ok ? r.status : '**' + (r.status || 'ERR') + '**'} | ${r.ms}ms | ${kb(r.bytes)} |`);
     }
@@ -62,7 +64,14 @@ const kb = n => (n / 1024).toFixed(0) + 'kb';
     say(`| path | status | time | size |`);
     say(`|---|---|---|---|`);
     rows.forEach(r => say(r));
-    say(`\n${locs.length} URLs, ${kb(total)} total, slowest ${slowest.loc?.replace(ORIGIN, '') || 'n/a'} at ${slowest.ms}ms\n`);
+    say(`\n${locs.length} URLs, ${kb(total)} total, slowest ${slowest.loc?.replace(ORIGIN, '') || 'n/a'} at ${slowest.ms}ms`);
+    if (heavy.length) {
+      const share = Math.round(heavy.reduce((a, h) => a + h.bytes, 0) / total * 100);
+      say(`\n> ${heavy.length} page(s) over 1MB (${heavy.map(h => h.loc + ' ' + kb(h.bytes)).join(', ')}),`);
+      say(`> which is ${share}% of the site by weight. Expected: the dojos are single-file`);
+      say(`> by design. Worth watching if it climbs, and worth remembering that these`);
+      say(`> are the pages a stranger on a phone lands on.\n`);
+    } else say('');
   }
 
   // ---- 2. internal links actually on the pages ----
@@ -114,12 +123,17 @@ const kb = n => (n / 1024).toFixed(0) + 'kb';
     if (!nodes) say(`Could not read Discussions (${res?.error || res?.errors?.[0]?.message || 'no data'}).\n`);
     else if (!nodes.length) say(`No discussion threads yet. giscus creates one the first time somebody comments on a post.\n`);
     else {
-      say(`| thread | comments | reactions |`);
-      say(`|---|---|---|`);
-      nodes.filter(n => n.comments.totalCount || n.reactions.totalCount)
-        .forEach(n => say(`| [${n.title}](${n.url}) | ${n.comments.totalCount} | ${n.reactions.totalCount} |`));
+      const active = nodes.filter(n => n.comments.totalCount || n.reactions.totalCount);
+      if (active.length) {
+        say(`| thread | comments | reactions |`);
+        say(`|---|---|---|`);
+        active.forEach(n => say(`| [${n.title}](${n.url}) | ${n.comments.totalCount} | ${n.reactions.totalCount} |`));
+        say('');
+      }
       const tot = nodes.reduce((a, n) => a + n.comments.totalCount, 0);
-      say(`\n${tot} comment(s) across ${nodes.length} thread(s).\n`);
+      say(`${tot} comment(s) and ${nodes.reduce((a, n) => a + n.reactions.totalCount, 0)} reaction(s) across ${nodes.length} giscus thread(s).`);
+      if (!active.length) say(`\nThreads exist but nobody has said anything yet.`);
+      say('');
     }
   } else {
     say(`## Engagement\n\nSkipped: no GITHUB_TOKEN in the environment.\n`);
