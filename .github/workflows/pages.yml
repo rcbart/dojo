@@ -97,6 +97,14 @@ jobs:
           python3 envoy-crash-course/web/build.py
           python3 istio-crash-course/web/build.py
 
+      # Gate 9. Content gates check what the source says. This one checks that
+      # what we ship can actually run: every inline <script> in every built page
+      # must parse. One invalid escape in a quiz option once shipped a page that
+      # returned 200, weighed the right size, passed all eight gates, and
+      # rendered a header with nothing under it.
+      - name: Verify every built page can run
+        run: node scripts/verify-built.js
+
       # One Pages site. The root is the roniam.dev portfolio home plus the blog
       # (both emitted by scripts/build-blog.js from blog/*.md and docs/home.html);
       # each course keeps its own path, and the old course landing survives at

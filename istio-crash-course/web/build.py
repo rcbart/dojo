@@ -92,6 +92,18 @@ TEMPLATE = r"""<!DOCTYPE html>
   .result .rs{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
   .result .rs mark{background:var(--teal-dim);color:#d7fff6;border-radius:3px;padding:0 2px}
   .noresult{padding:12px 20px;font-size:13px;color:var(--muted)}
+  .pathnav{padding:12px 14px 14px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .pathnav .pn-head{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:1px;
+    font-weight:800;color:var(--muted);margin:0 6px 8px}
+  .pathnav .pn-item{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:7px;
+    font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+  .pathnav a.pn-item:hover{background:rgba(255,255,255,.06);color:var(--teal)}
+  .pathnav .pn-item b{display:inline-flex;align-items:center;justify-content:center;
+    width:19px;height:19px;border-radius:5px;font-size:11px;font-weight:800;
+    background:rgba(255,255,255,.08);color:var(--muted);flex:0 0 auto}
+  .pathnav .pn-here{color:var(--teal);background:rgba(255,255,255,.07)}
+  .pathnav .pn-here b{background:var(--teal);color:#0b1020}
+  .pathnav a.pn-item:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
   .pathlinks{padding:14px 20px 4px;border-top:1px solid var(--line);margin-top:12px;
     font-size:12px;color:var(--muted);line-height:1.9}
   .pathlinks a{color:var(--muted)} .pathlinks a:hover{color:var(--teal)}
@@ -185,13 +197,19 @@ TEMPLATE = r"""<!DOCTYPE html>
       <div class="progtxt" id="progtxt">0% complete</div>
     </div>
     <div class="searchwrap">
-      <input id="search" type="search" placeholder="Search the course…" autocomplete="off">
+      <input id="search" type="search" placeholder="Search the course…" aria-label="Search this course" autocomplete="off">
     </div>
     <div id="results"></div>
+    <div class="pathnav">
+      <span class="pn-head">The cloud-native path · 5 courses</span>
+      <a class="pn-item" href="/fundamentals/"><b>1</b>Fundamentals</a>
+      <a class="pn-item" href="/docker/"><b>2</b>Docker</a>
+      <a class="pn-item" href="/kubernetes/"><b>3</b>Kubernetes</a>
+      <a class="pn-item" href="/envoy/"><b>4</b>Envoy</a>
+      <span class="pn-item pn-here"><b>5</b>Istio</span>
+    </div>
     <nav id="nav"></nav>
     <div class="pathlinks">
-      <span class="pl-head">The cloud-native path</span>
-      <a href="/fundamentals/">Fundamentals</a> · <a href="/docker/">Docker</a> · <a href="/kubernetes/">Kubernetes</a> · <a href="/envoy/">Envoy</a> · <span class="pl-here">Istio</span>
       <span class="pl-head" style="margin-top:10px">Course</span>
       <a href="https://github.com/rcbart/dojo/issues/new?labels=bug,istio&template=bug_report.yml" target="_blank" rel="noopener">Report an issue</a> ·
       <a href="https://roniam.dev/">roniam.dev</a>

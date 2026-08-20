@@ -78,7 +78,10 @@ function md(src) {
       i++; out.push(`<pre class="code"${lang ? ` data-lang="${esc(lang)}"` : ''}><code>${esc(buf.join('\n'))}</code></pre>`);
       continue;
     }
-    if (/^#{1,4} /.test(l)) { flush(); const d = l.match(/^#+/)[0].length; out.push(`<h${d + 1}>${inline(l.slice(d + 1))}</h${d + 1}>`); i++; continue; }
+    if (/^#{1,4} /.test(l)) { flush(); const d = l.match(/^#+/)[0].length;
+      // the post title is the page's h1, so body headings start at h2.
+      // '## Section' must render h2: mapping it to h3 skipped a level.
+      const lvl = Math.max(2, d); out.push(`<h${lvl}>${inline(l.slice(d + 1))}</h${lvl}>`); i++; continue; }
     if (/^---+\s*$/.test(l)) { flush(); out.push('<hr>'); i++; continue; }
     if (/^> /.test(l)) {
       flush(); const buf = [];
@@ -129,6 +132,10 @@ const page = (title, desc, body, root) => `<!doctype html>
   body{margin:0;background:var(--bg);color:var(--ink);
        font:17px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
   a{color:var(--deep2);text-decoration:none} a:hover{text-decoration:underline}
+  .skip{position:absolute;left:-9999px;top:0;z-index:100;background:var(--panel);
+    color:var(--accent-ink);font-weight:700;padding:12px 18px;
+    border:2px solid var(--accent-ink);border-radius:0 0 10px 0}
+  .skip:focus{left:0}
   .wrap{max-width:760px;margin:0 auto;padding:0 24px 70px}
   nav{border-bottom:1px solid var(--line)}
   .navrow{display:flex;align-items:center;gap:18px;padding:14px 0;font-size:14.5px;font-weight:600}
@@ -162,14 +169,15 @@ const page = (title, desc, body, root) => `<!doctype html>
 </style>
 </head>
 <body>
+<a class="skip" href="#content">Skip to content</a>
 <nav><div class="wrap navrow" style="padding-bottom:14px">
   <a href="${root}">← roniam.dev</a><a href="${root}blog/">Writing</a>
   <span style="margin-left:auto"><a href="${root}identity/">Identity Dojo</a></span>
 </div></nav>
-<div class="wrap">
+<main id="content" class="wrap">
 ${body}
 <footer>© ${new Date().getFullYear()} Ron Bar-Tor · <a href="https://github.com/rcbart">GitHub</a> · <a id="mailme" href="#" style="font-weight:600;color:var(--deep2)">email me</a> · <a href="https://github.com/rcbart/dojo/issues/new?template=bug_report.yml&labels=bug,blog">report an issue</a></footer>
-</div>
+</main>
 <script>
 (function(){const p=['ron','iam','dev'],d=['gm','ail'];const el=document.getElementById('mailme');const go=e=>{e.preventDefault();location.href='mailto:'+p.join('')+'@'+d.join('')+'.com?subject='+encodeURIComponent('Hello from roniam.dev')};el.addEventListener('click',go);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')go(e)});})();
 </script>
