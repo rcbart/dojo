@@ -105,6 +105,16 @@ jobs:
       - name: Verify every built page can run
         run: node scripts/verify-built.js
 
+      # Gate 10. A correct answer that is conspicuously the longest option is
+      # answerable without knowing the material. The budget only ever comes down.
+      - name: Verify quiz options are not length-biased
+        run: node scripts/verify-quiz-balance.js
+
+      # Gate 11. Same failure from a different angle: if the right answer is
+      # almost always slot B, the quiz measures pattern-spotting, not learning.
+      - name: Verify correct answers are spread across the options
+        run: node scripts/verify-quiz-answer-spread.js
+
       # One Pages site. The root is the roniam.dev portfolio home plus the blog
       # (both emitted by scripts/build-blog.js from blog/*.md and docs/home.html);
       # each course keeps its own path, and the old course landing survives at
