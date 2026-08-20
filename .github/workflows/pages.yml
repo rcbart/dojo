@@ -133,6 +133,12 @@ jobs:
           test -s _site/ml/index.html
           ls -lh _site _site/blog _site/dev _site/identity _site/js
 
+      # Gate 8. Every <loc> the sitemap advertises has to exist in the assembled
+      # site, and the feed and robots.txt have to be there. A link the build
+      # cannot resolve should break the build, not 404 quietly in production.
+      - name: Verify the sitemap, feed and robots resolve
+        run: node scripts/verify-sitemap.js _site
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

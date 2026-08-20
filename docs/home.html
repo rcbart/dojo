@@ -8,6 +8,8 @@
 <meta property="og:title" content="Ron Bar-Tor · roniam.dev">
 <meta property="og:description" content="roniam = Ron + IAM. Built to develop engineers, not park them in tutorial hell. 420 lessons, every one ends with you doing the work.">
 <meta property="og:url" content="https://roniam.dev/">
+<link rel="canonical" href="https://roniam.dev/">
+<link rel="alternate" type="application/rss+xml" title="roniam.dev" href="/feed.xml">
 <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="%23f59e0b"/><stop offset=".5" stop-color="%23f43f5e"/><stop offset="1" stop-color="%238b5cf6"/></linearGradient></defs><rect x="1" y="1" width="30" height="30" rx="8" fill="%23130f26"/><g fill="none" stroke="url(%23g)" stroke-width="2.4" stroke-linecap="round"><path d="M5 10.5 Q16 8 27 10.5" stroke-width="2.8"/><path d="M7.5 14.5 H24.5"/><path d="M10 11 V25"/><path d="M22 11 V25"/></g></svg>'>
 <style>
   :root{
@@ -91,6 +93,8 @@
   .alpha b{color:var(--accent-ink)}
   .alpha .k2{font-size:11.5px;font-weight:800;letter-spacing:.2px;color:var(--amber-ink);display:block;margin-bottom:6px}
   .alpha .mailme2{color:var(--teal-ink);font-weight:700;cursor:pointer}
+  .mailme:focus-visible,.mailme2:focus-visible{outline:3px solid var(--violet-ink);
+    outline-offset:3px;border-radius:4px}
   .alpha .mailme2:hover{text-decoration:underline}
 
   .stats{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:14px;
@@ -120,6 +124,10 @@
           padding:20px 22px;background:var(--panel)}
   .p-card h3{font-family:var(--serif);font-size:18px;margin:0 0 8px;font-style:italic}
   .p-card p{font-size:14px;color:var(--muted);margin:0}
+  .p-card .epi{font-family:var(--serif);font-style:italic;font-size:13.5px;color:var(--ink);
+    border-left:2px solid var(--c,var(--violet));padding-left:10px;margin:0 0 10px}
+  .p-card .epi cite{display:block;font-style:normal;font-size:11.5px;color:var(--muted);
+    margin-top:3px;letter-spacing:.2px}
   .p-card p b{color:var(--ink)}
 
   .post{display:block;padding:18px 0;border-bottom:1px solid var(--line);color:inherit}
@@ -207,7 +215,7 @@
   <a class="snav" href="/blog/" style="color:#fff">All posts →</a>
 
   <div class="sfoot">
-    <a class="mailme" data-sub="Hello from roniam.dev">Drop me a line</a>
+    <a class="mailme" href="#contact" data-sub="Hello from roniam.dev">Drop me a line</a>
     <div class="slinks">
       <a href="https://github.com/rcbart">GitHub</a>
       <a href="https://www.linkedin.com/in/ron-bar-tor-9085082/">LinkedIn</a>
@@ -217,17 +225,6 @@
 </aside>
 
 <main><div class="col">
-
-
-  <div class="alpha" style="margin:26px 0 0">
-    <span class="k2">🧪 Alpha · volunteers wanted</span>
-    The dojos are in <b>alpha</b>: complete enough to learn from, not yet ready for launch. I'm
-    looking for <b>10 to 15 volunteers</b> to take a course end to end and tell me where it falls
-    short: what confused you, what bored you, what the grader got wrong. I can't compensate you
-    with anything except knowledge, and there's a lot of that here. Interested?
-    <span class="mailme2" data-sub="Dojo alpha volunteer">Drop me a line</span> and I'll make sure
-    you're set up.
-  </div>
 
   <header class="hero" id="about">
     <div class="domain">ron<b>iam</b>.dev = <b>Ron</b> + <b>IAM</b> · identity &amp; access management</div>
@@ -279,56 +276,59 @@
   <section id="principles">
     <div class="k violet">Learned the hard way</div>
     <h2>How I lead</h2>
-    <p class="secdesc">This is what I believe and live. This is what I say and do with my teams.</p>
     <div class="prin">
       <div class="p-card" style="--c:var(--amber);--ci:var(--amber-ink)">
         <h3>“Build trust, then unleash.”</h3>
-        <p>I can't do everything, and pretending otherwise helps nobody. So delegation starts with
-        building trust, and then I unleash the engineers I work with on the problems themselves.
-        That's how I get results, and it's how engineers grow, feel empowered, and love the work.</p>
+        <p class="epi">Never tell people how to do things. Tell them what to do and they will
+        surprise you with their ingenuity.<cite>George S. Patton, War As I Knew It, 1947</cite></p>
+        <p>The conductor is not the best violinist in the orchestra, but the vision comes to life
+        through the musicians. The engineers I work with are at the coal face every day. They're
+        experts, or working to become ones, and they're doing what they love. I trust them to do the
+        best job, and that empowers me to unleash them on problems. And if they struggle along the
+        way, we work together to build whatever they need to succeed.</p>
         <a class="receipt" href="/blog/art-of-delegation/" data-needs="art-of-delegation">The long version, written up</a>
-      </div>
-      <div class="p-card" style="--c:var(--rose);--ci:var(--rose-ink)">
-        <h3>“Honest, direct, in every direction.”</h3>
-        <p>Between me and my engineers, my managers, my peers, and the rest of the organization,
-        communication has to be honest and direct, tuned to what works best for each person. When a
-        call to action is needed, I call to action. I celebrate wins and I own failures. And when a
-        problem arises, I don't just highlight the problem, I offer solutions.</p>
-        <a class="receipt" href="#ai">Where AI fits, and what I don't hand over</a>
       </div>
       <div class="p-card" style="--c:var(--violet);--ci:var(--violet-ink)">
         <h3>“People first, engineers second.”</h3>
-        <p>I get to know my people and learn what makes them tick. That's how they grow, and how I
-        let them be their best. I value their opinions, and I'm willing to change direction when
-        someone passionately believes in something, as long as they can prove it with data.</p>
+        <p>Deliberately in that order. I get to know their strengths, because those are the ones
+        they undersell. I get to notice these by getting to know the person first. After that, I
+        work with them to develop them by finding the right balance between what they want and what
+        the organization needs. One of my engineers is brilliant and has no wish to lead. Knowing
+        that is what lets me aim his strengths where they count most, and more importantly, it's why
+        he's happy. That's why the 1:1s are sacred. I don't cancel, I reschedule, and I
+        focus on them, not the work they're doing.</p>
         <a class="receipt" href="/blog/in-the-critical-path-of-evolution/" data-needs="in-the-critical-path-of-evolution">Leading a platform team through a re-org</a>
       </div>
       <div class="p-card" style="--c:var(--teal);--ci:var(--teal-ink)">
         <h3>“Don't let perfect be the enemy of good.”</h3>
-        <p>Sometimes it's OK, and smart, to do something later. Deferring on purpose is a decision.
-        Over and over again I've seen that trying to "boil the ocean" is a recipe for analysis
-        paralysis, overcomplication, and failure to launch.</p>
+        <p>Meticulous engineers are great engineers. They look around corners, find the edge cases,
+        and build things that last. Done every time, that same strength becomes analysis paralysis
+        and delivery slows to a stop. My job is to ground it in reality. We work in a business that
+        expects fast results, so I say plainly that the best solution will take time and that right
+        now we ship something that solves the problem. Sometimes that means hacking it together.
+        When we do, we call it out and we come back to it. That is a promise I keep: when the time
+        is there, we do it the right way. <b>Very few doors are one-way doors.</b></p>
         <a class="receipt" href="/blog/sit-the-exam/" data-needs="sit-the-exam">Where I stopped, and why</a>
       </div>
       <div class="p-card" style="--c:var(--cyan);--ci:var(--cyan-ink)">
-        <h3>“I make smart bets. There are no guarantees.”</h3>
-        <p>Built on data and experience, and it's hard to argue with the data. Most decisions won't
-        sink us, so we commit to what the data tells us. Could it go wrong? Sure. But I don't walk
-        through one-way doors.</p>
+        <h3>“I make smart bets, but there are no guarantees.”</h3>
+        <p>It's natural to want certainty. But we work where learning is part of the work and the
+        ground is constantly shifting, so certainty is hard to give. My tool is the most relevant
+        data at the time. That's where I go exploring, and where I ask my engineers to go too:
+        <b>move from I think to I know.</b> What we know may change later, and that's fine, because
+        we build in a way that lets us change quickly. Swapping one tool for another. Adding PKCE
+        once we learn a client is public. Very rarely does reality shift so radically that
+        everything needs revisiting. It's mostly incremental, and we can work with that.</p>
       </div>
       <div class="p-card" style="--c:var(--amber);--ci:var(--amber-ink)">
         <h3>“Never stop learning.”</h3>
-        <p>Being the smartest in the room rings my alarms. Not because being smart is bad, but
-        because it means the learning has stopped. The best version of my job is being surrounded by
-        people who regularly teach me something, and the dojos exist because teaching is how I keep
-        forcing myself to learn.</p>
+        <p>Being the smartest person in the room rings my alarms. Not because being smart is bad,
+        but because it means <b>either the learning has stopped, or I have forced my position</b>.
+        It's OK to make a decision, but I keep my ears open for a different opinion, from the most
+        junior person in the room to the most senior. And people learn in different ways, which is
+        where the dojos came from: I built the thing I wish I'd had, because it would have made the
+        learning easier.</p>
         <a class="receipt" href="#develop">Which is exactly why the dojos exist</a>
-      </div>
-      <div class="p-card" style="--c:var(--rose);--ci:var(--rose-ink)">
-        <h3>“I deliver results, and I love impact.”</h3>
-        <p>I love taking on new challenges, tackling hard problems, and solving real pain points. I
-        work with the whole organization to deliver real results that exceed customer expectations,
-        on time, and grounded in reality.</p>
       </div>
     </div>
   </section>
@@ -357,7 +357,7 @@
     <a class="receipt" href="/skills-rubric.html">The skills rubric: an honest read of where you stand</a>
 
     <p style="margin-top:18px">And I hold the material to the same bar I would hold a team to. Every
-    push runs seven checks, and one of them takes all <b>2,990 assertions</b> behind the graded
+    push runs eight checks, and one of them takes all <b>2,990 assertions</b> behind the graded
     exercises and runs them against their own reference solutions. If a single one fails, the build
     fails. That has stopped my own work more than once, which is the point of it. A bar you can wave
     yourself through isn't a bar.</p>
@@ -388,7 +388,7 @@
     yourself</b>, in the page, and it has to pass. Five learning
     paths; the three core dojos compile to a single self-contained HTML file with <b>zero
     dependencies</b>, so they run offline, from a USB stick if you like, while ML Dojo lives in its
-    own repository and the cloud-native path takes you from Docker to a running Istio mesh. Every push is gated by seven CI checks, including one that executes every graded
+    own repository and the cloud-native path takes you from Docker to a running Istio mesh. Every push is gated by eight CI checks, including one that executes every graded
     exercise against its own reference solution. Free, no accounts, no tracking. Knowledge shared is
     the whole point.</p>
 
@@ -398,6 +398,18 @@
       <div class="stat"><b>420</b><span>lessons</span></div>
       <div class="stat"><b>639</b><span>hands-on exercises</span></div>
     </div>
+
+  <div class="alpha" style="margin:26px 0 0">
+    <span class="k2">🧪 Alpha · volunteers wanted</span>
+    The dojos are in <b>alpha</b>: complete enough to learn from, not yet ready for launch. I'm
+    looking for <b>10 to 15 people</b>, and the ask is small. <b>Forty-five minutes</b> on the
+    first three lessons of any course, then tell me three things: what confused you, what bored
+    you, and what the grader got wrong. Carry on if you want to, but that's the whole ask. I can't
+    pay you, though I'm glad to return the favor with a code review, a career conversation, or an
+    introduction. Interested?
+    <a class="mailme2" href="#contact" data-sub="Dojo alpha volunteer">Drop me a line</a> and I'll set you
+    up.
+  </div>
 
 
     <div class="cards">
@@ -464,7 +476,7 @@
     <p>I'm always happy to talk shop: identity architecture, engineering management, course feedback,
     or a collaboration you have in mind. I read everything that lands in my inbox, and
     <b>alpha volunteers</b> get a personal onboarding.</p>
-    <a class="mailme" data-sub="Hello from roniam.dev">Drop me a line</a>
+    <a class="mailme" href="#contact" data-sub="Hello from roniam.dev">Drop me a line</a>
   </div>
 
   <div style="border:1px dashed var(--line);border-radius:12px;padding:14px 18px;margin:34px 0 0;font-size:13.5px;color:var(--muted)">
@@ -472,14 +484,14 @@
     Spotted a mistake, or have a suggestion?
     <a href="https://github.com/rcbart/dojo/issues/new?template=bug_report.yml">Report an issue</a> ·
     <a href="https://github.com/rcbart/dojo/issues/new?template=suggestion.yml">Suggest an improvement</a> ·
-    <a class="mailme2" style="cursor:pointer;color:var(--teal-ink);font-weight:600" data-sub="A suggestion for roniam.dev">or just write to me</a>.
+    <a class="mailme2" href="#contact" style="color:var(--teal-ink);font-weight:600" data-sub="A suggestion for roniam.dev">or just write to me</a>.
   </div>
 
   <footer>
     © @@YEAR@@ Ron Bar-Tor · ron<span class="iam">iam</span>.dev ·
     <a href="https://github.com/rcbart">GitHub</a> ·
     <a href="https://www.linkedin.com/in/ron-bar-tor-9085082/">LinkedIn</a> ·
-    <span class="mailme2" data-sub="Hello from roniam.dev" style="cursor:pointer;font-weight:600">email me</span>
+    <a class="mailme2" href="#contact" data-sub="Hello from roniam.dev" style="font-weight:600">email me</a>
     · Built by hand. Zero dependencies, like everything else here.
   </footer>
 
@@ -488,13 +500,18 @@
 <script>
 // contact: the address is assembled on click so it never sits in the page in plain view
 (function(){
-  const p=['rc','ba','rt'], d=['gm','ail'], t='com';
+  const p=['ron','iam','dev'], d=['gm','ail'], t='com';
   const addr=()=>p.join('')+'@'+d.join('')+'.'+t;
+  const go=(el,e)=>{
+    e.preventDefault();
+    const sub=encodeURIComponent(el.dataset.sub||'Hello');
+    location.href='mailto:'+addr()+'?subject='+sub;
+  };
   document.querySelectorAll('.mailme,.mailme2').forEach(el=>{
-    el.addEventListener('click',e=>{
-      e.preventDefault();
-      const sub=encodeURIComponent(el.dataset.sub||'Hello');
-      location.href='mailto:'+addr()+'?subject='+sub;
+    el.addEventListener('click',e=>go(el,e));
+    // Enter and Space, so the address is reachable without a mouse
+    el.addEventListener('keydown',e=>{
+      if(e.key==='Enter'||e.key===' ') go(el,e);
     });
   });
 })();

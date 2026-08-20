@@ -119,6 +119,7 @@ const page = (title, desc, body, root) => `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
+<link rel="alternate" type="application/rss+xml" title="roniam.dev" href="/feed.xml">
 <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="8" fill="%231a1f2b"/><g fill="none" stroke="%23d97706" stroke-width="2.4" stroke-linecap="round"><path d="M5 10.5 Q16 8 27 10.5" stroke-width="2.8"/><path d="M7.5 14.5 H24.5"/><path d="M10 11 V25"/><path d="M22 11 V25"/></g></svg>'>
 <style>
   :root{--bg:#f6f6fa;--panel:#fff;--ink:#191530;--muted:#5b5872;--line:#e4e4f0;
@@ -167,10 +168,10 @@ const page = (title, desc, body, root) => `<!doctype html>
 </div></nav>
 <div class="wrap">
 ${body}
-<footer>© ${new Date().getFullYear()} Ron Bar-Tor · <a href="https://github.com/rcbart">GitHub</a> · <span id="mailme" style="cursor:pointer;font-weight:600;color:var(--deep2)">email me</span> · <a href="https://github.com/rcbart/dojo/issues/new?template=bug_report.yml&labels=bug,blog">report an issue</a></footer>
+<footer>© ${new Date().getFullYear()} Ron Bar-Tor · <a href="https://github.com/rcbart">GitHub</a> · <a id="mailme" href="#" style="font-weight:600;color:var(--deep2)">email me</a> · <a href="https://github.com/rcbart/dojo/issues/new?template=bug_report.yml&labels=bug,blog">report an issue</a></footer>
 </div>
 <script>
-(function(){const p=['rc','ba','rt'],d=['gm','ail'];document.getElementById('mailme').addEventListener('click',()=>{location.href='mailto:'+p.join('')+'@'+d.join('')+'.com?subject='+encodeURIComponent('Hello from roniam.dev')});})();
+(function(){const p=['ron','iam','dev'],d=['gm','ail'];const el=document.getElementById('mailme');const go=e=>{e.preventDefault();location.href='mailto:'+p.join('')+'@'+d.join('')+'.com?subject='+encodeURIComponent('Hello from roniam.dev')};el.addEventListener('click',go);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')go(e)});})();
 </script>
 </body>
 </html>`;
@@ -191,7 +192,7 @@ for (const [dir, include, mark] of sources) {
     const [meta, body] = frontMatter(fs.readFileSync(path.join(dp, f), 'utf8'));
     if (mark) meta.title = mark + (meta.title || f);
     const slug = meta.slug || f.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.md$/, '');
-    posts.push({ meta, body, slug, date: meta.date || f.slice(0, 10) });
+    posts.push({ meta, body, slug, date: meta.date || f.slice(0, 10), draft: Boolean(mark) });
   }
 }
 posts.sort((a, b) => b.date.localeCompare(a.date));
@@ -271,4 +272,60 @@ const home = dropUnpublished(fs.readFileSync(path.join(ROOT, 'docs', 'home.html'
   .replace('@@YEAR@@', String(new Date().getFullYear()));
 fs.writeFileSync(path.join(OUT, 'index.html'), home);
 
+// ---- discovery: sitemap, feed, robots ----
+// Purely additive. Search engines cannot see inside the single-file dojos, so
+// these exist to get the home page and every post indexed, and to let a reader
+// subscribe. scripts/verify-sitemap.js checks every URL here resolves to a file.
+const ORIGIN = 'https://roniam.dev';
+const live = posts.filter(p => !p.draft);
+
+// Landing pages that exist because the workflow copies them into the site.
+// Adding a course = one entry here and one cp line in .github/workflows/pages.yml.
+const STATIC_PATHS = [
+  '/', '/blog/', '/skills-rubric.html', '/courses/',
+  '/identity/', '/dev/', '/js/', '/ml/',
+  '/fundamentals/', '/docker/', '/kubernetes/', '/envoy/', '/istio/',
+];
+
+const xmlEsc = s => String(s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+
+const newest = live.length ? live[0].date : null;
+const urls = [
+  ...STATIC_PATHS.map(loc => ({ loc, lastmod: loc === '/' || loc === '/blog/' ? newest : null })),
+  ...live.map(p => ({ loc: `/blog/${p.slug}/`, lastmod: p.date })),
+];
+fs.writeFileSync(path.join(OUT, 'sitemap.xml'),
+  '<?xml version="1.0" encoding="UTF-8"?>\n' +
+  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+  urls.map(u => '  <url>\n    <loc>' + ORIGIN + u.loc + '</loc>\n' +
+    (u.lastmod ? '    <lastmod>' + u.lastmod + '</lastmod>\n' : '') +
+    '  </url>').join('\n') +
+  '\n</urlset>\n');
+
+const rfc822 = iso => new Date(iso + 'T12:00:00Z').toUTCString();
+fs.writeFileSync(path.join(OUT, 'feed.xml'),
+  '<?xml version="1.0" encoding="UTF-8"?>\n' +
+  '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n<channel>\n' +
+  '  <title>roniam.dev</title>\n' +
+  `  <link>${ORIGIN}/blog/</link>\n` +
+  '  <description>Ron Bar-Tor on engineering management, identity, and the occasional bug worth telling the whole story about.</description>\n' +
+  '  <language>en</language>\n' +
+  `  <atom:link href="${ORIGIN}/feed.xml" rel="self" type="application/rss+xml"/>\n` +
+  (newest ? `  <lastBuildDate>${rfc822(newest)}</lastBuildDate>\n` : '') +
+  live.map(p =>
+    '  <item>\n' +
+    `    <title>${xmlEsc(p.meta.title)}</title>\n` +
+    `    <link>${ORIGIN}/blog/${p.slug}/</link>\n` +
+    `    <guid isPermaLink="true">${ORIGIN}/blog/${p.slug}/</guid>\n` +
+    `    <pubDate>${rfc822(p.date)}</pubDate>\n` +
+    `    <description>${xmlEsc(p.meta.description || '')}</description>\n` +
+    '  </item>').join('\n') +
+  '\n</channel>\n</rss>\n');
+
+fs.writeFileSync(path.join(OUT, 'robots.txt'),
+  'User-agent: *\nAllow: /\n\nSitemap: ' + ORIGIN + '/sitemap.xml\n');
+
 console.log(`built home + ${posts.length} post(s) + archive into ${OUT}`);
+console.log(`discovery: sitemap ${urls.length} urls, feed ${live.length} item(s), robots.txt`);

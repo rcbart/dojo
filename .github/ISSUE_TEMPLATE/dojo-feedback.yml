@@ -1,0 +1,55 @@
+name: Dojo feedback
+description: Something in a course was wrong, confusing, or graded badly.
+title: "[dojo] "
+labels: ["dojo-feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Objective problems are best reported here so
+        they can be tracked and fixed in the open.
+
+        If your feedback is more along the lines of *I got lost here* or *I
+        stopped halfway and here is why*, email it instead. That kind of thing
+        is more useful to me than a bug report and it does not belong in a
+        public thread.
+  - type: dropdown
+    id: course
+    attributes:
+      label: Which course
+      options:
+        - Identity Dojo
+        - Dev Dojo
+        - JS Dojo
+        - ML Dojo
+        - Cloud-native path
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: Where
+      description: Stream or track, and the lesson title if you have it.
+      placeholder: "OAuth 2.0 and OIDC, lesson 7"
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of problem
+      options:
+        - The grader rejected an answer I believe is correct
+        - The grader accepted something that should have failed
+        - The lesson is factually wrong
+        - The exercise cannot be completed as written
+        - Something is broken (page, editor, navigation)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got. Paste your answer if the grader is involved.
+    validations:
+      required: true

@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
-  - name: ML Dojo issues
-    url: https://github.com/rcbart/ml-dojo/issues
-    about: ML Dojo lives in its own repository — report ML Dojo problems there.
+  - name: Confusing, boring, or you stopped partway
+    url: https://roniam.dev/#contact
+    about: Email it rather than opening an issue. That feedback is the most useful kind and it does not belong in a public thread.

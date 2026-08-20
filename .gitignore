@@ -36,6 +36,11 @@ private-do-not-commit/
 # local-only design/interview-prep notes — do NOT commit
 DESIGN_AND_TRADEOFFS.md
 
+# working agreement for assistant sessions. Local only: it names the private
+# interview files and the after-hours push rule, neither of which belongs in a
+# public repo. Persistence comes from the file being on disk, not from git.
+CLAUDE.md
+
 # local-only personal interview prep — do NOT commit
 INTERVIEW_SENIOR_EM_GUIDE.md
 ARCHITECTURE_INTERVIEW.md

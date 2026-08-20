@@ -1,0 +1,35 @@
+# Daily health and activity report for roniam.dev.
+#
+# Adds no tracking to the site. Everything is observed from outside or read
+# from GitHub, because the home page promises "no accounts, no tracking" and
+# that promise is worth more than pageview counts.
+#
+# The report lands in the run summary. A failing run means something on the
+# live site does not resolve, which is worth an email.
+name: monitor
+
+on:
+  schedule:
+    - cron: '17 14 * * *'      # 07:17 Pacific daily, after any overnight deploy
+  workflow_dispatch:            # and on demand
+
+permissions:
+  contents: read
+  discussions: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Check the live site
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional. Set this once roniam.dev is verified in Search Console and
+          # a service account has read access to the property. It is the only
+          # traffic source used, because it needs no script on the site.
+          GSC_CREDENTIALS: ${{ secrets.GSC_CREDENTIALS }}
+        run: node scripts/monitor.js https://roniam.dev
