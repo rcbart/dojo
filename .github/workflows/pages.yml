@@ -185,6 +185,14 @@ jobs:
       - name: Verify every internal link resolves
         run: python3 scripts/verify-links.py _site
 
+      # Gate 15. authlint lives in its own repository; what is tracked here is
+      # only the built artifact this workflow copies to /authlint/. That can
+      # drift: fix a check over there, forget to refresh the snapshot here, and
+      # the live tool quietly stays on the old build with nothing looking wrong.
+      # So rebuild authlint from its own source and compare.
+      - name: Verify the authlint snapshot matches its source
+        run: node scripts/verify-authlint-snapshot.js
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
