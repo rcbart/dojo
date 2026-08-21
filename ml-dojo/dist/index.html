@@ -456,7 +456,7 @@ function renderHome(){
   machine learning and AI</b>, the way a university would teach it, but hands-on, self-paced,
   and with every concept grounded in what it is actually <i>for</i>.</p>
 
-  <div class="ground"><span class="gTag">⏳ An honest promise</span>
+  <div class="ground"><span class="gTag">⏳ What this will take</span>
   <p><b>This will take time to master, and that is the point.</b> MLDojo is not a "become an
   ML expert in 30 days" shortcut. It offers the opposite: <b>depth and rigor that rivals
   college studies</b>. We are confident that, although it does not grant a degree, if you
@@ -496,7 +496,7 @@ function renderHome(){
   exercises, offers progressive hints and full solutions, a tutor you can ask anything, and
   a Dive Deeper path down to graduate-level treatment when you want it.</p>
 
-  <h3>Where this leads: said honestly</h3>
+  <h3>Where this leads</h3>
   <p>Completing MLDojo means you can understand, build, and deploy real ML systems, and hold
   your own with people who studied this in college. It is <b>preparation, not a credential</b>:
   it will make you thrive in a job interview, an ML team, or a degree program, but it is not
@@ -1359,7 +1359,7 @@ and designed around one value above all: <b>readability</b>, code that looks clo
 English. That design choice is exactly why it became the language of data science and ML.</p>
 <p>In ML, Python's role is precise: it is where ML solutions are <b>prototyped, designed, and
 orchestrated</b>, the heavy number-crunching itself runs in far more optimized compiled code
-that Python directs (an honest distinction this track makes precise in the ML Toolkit
+that Python directs (a distinction this track makes precise in the ML Toolkit
 stream). ML work leans on words like <i>list</i>, <i>index</i>, and <i>dimension</i> as if
 everyone already knows them, so before we touch NumPy or a single dataset, we learn the tools
 of the trade from zero, starting with "what is a variable."</p></div>
@@ -3069,7 +3069,7 @@ That is all a CSV is, and every tool from pandas up is automating this exact loo
 (1,234,567); <code>f"{share:.0%}"</code> → a percentage. For interactive terminal programs,
 <code>input("prompt")</code> pauses and returns what the user types (always as a
 <i>string</i>, convert with <code>int()</code>/<code>float()</code>, and guard with the
-try/except you learned, because users type "abc"). Honest note: <code>input()</code> belongs
+try/except you learned, because users type "abc"). Note: <code>input()</code> belongs
 to terminal apps; in browsers and web apps, user input arrives through UI events instead,
 here in MLDojo, your "input" is the code and data you provide.</p>
 
@@ -3298,7 +3298,7 @@ print(result)
  title:'You cannot memorize Python, how to learn any function or library',
  body:`
 <div class="ground"><span class="gTag">🎯 The most important skill of all</span>
-<p>Here is the honest truth this course is built on: <b>nobody knows all of Python.</b> The
+<p>Here is the premise this course is built on: <b>nobody knows all of Python.</b> The
 standard library alone has hundreds of modules; NumPy, pandas, and scikit-learn have thousands
 of functions between them; the wider ecosystem has hundreds of thousands of packages. No
 course could cover them all, and no professional has them memorized. What separates competent
@@ -3974,7 +3974,7 @@ also explains the shape law: the row length of A must equal the column length of
 dot two lists of different lengths.</p>
 
 <div class="worked"><b>✍️ Worked by hand, multiply a matrix by a vector.</b> Take our three
-houses and the weights, and compute every prediction the slow, honest way.
+houses and the weights, and compute every prediction the slow way.
 <div class="mathblock">X = | 1  2 |        w = | 50 |
     | 3  4 |            | −2 |
     | 5  6 |
@@ -4107,8 +4107,7 @@ print(preds, unchanged, first_by_hand)
 <div class="ground"><span class="gTag">🎯 The idea that unlocks the rest</span>
 <p>So far a matrix has been a grid of numbers and a batch of dot products. Here is the deeper
 picture that makes eigenvectors, determinants, and inverses finally make sense: <b>a matrix is
-a machine that moves points around, it transforms space.</b> But first we owe you an honest
-answer to a question you should be asking: <i>what is "space"?</i></p></div>
+a machine that moves points around, it transforms space.</b> But first we owe you an answer to a question you should be asking: <i>what is "space"?</i></p></div>
 
 <h3>First: what do we even mean by "space"?</h3>
 <p>Not outer space, no vacuum, no stars. In math, a <b>space</b> is simply <b>the collection of
@@ -4717,7 +4716,7 @@ one line. Sound familiar? That is precisely the duplicated-feature disease from 
 lesson (height in cm and in meters), and precisely what <b>rank</b> counts: rank = the number
 of independent directions = the true dimension of the span.</p>
 
-<h3>Basis: the minimal honest description</h3>
+<h3>Basis: the minimal description</h3>
 <p>A <b>basis</b> is an independent set that spans the space, no redundancy, nothing missing;
 every point has exactly one recipe in terms of it. Finding the coefficients of that recipe is
 a <code>solve</code>, the same tool as last lesson. And a preview with teeth: <b>PCA</b>
@@ -5700,7 +5699,7 @@ d/dx σ(x)  = σ(x)·(1 − σ(x))     the SIGMOID derivative, used in every bac
 get by applying the chain rule to <code>1/(1+e⁻ˣ)</code>. Every neural network that uses a
 sigmoid computes exactly this during training. You will verify it in the exercise.</p>
 
-<div class="demystify"><b>Honest boundary, and why you will rarely do this by hand.</b> We
+<div class="demystify"><b>The boundary, and why you will rarely do this by hand.</b> We
 cover the power, product, and chain rules and the derivatives of <code>eˣ</code>,
 <code>ln x</code>, and the sigmoid, the differentiation ML uses, and we <i>skip</i> the rest
 of a calculus course (integration, trig calculus, infinite series, related rates): ML does not
@@ -5887,7 +5886,7 @@ slope per knob and stack them into a vector: THAT vector is the gradient. "Gradi
 gradient IS the derivative. Nothing fancier is happening in a 100-billion-parameter model,
 just this loop, with more knobs.</div>
 
-<div class="hardidea">🧠 <b>Honest caveat (convexity, previewed).</b> Walking downhill finds
+<div class="hardidea">🧠 <b>Caveat (convexity, previewed).</b> Walking downhill finds
 <i>a</i> bottom, not always <i>the deepest</i> one. Bowl-shaped ("convex") errors like
 (x−3)² have exactly one bottom, so descent is guaranteed to find it. Neural-net losses are
 bumpier; that's a real issue, and it gets its own deep-dive later. For now: one bowl, one
@@ -6967,7 +6966,7 @@ print(mean, var, p_six)
 <p>Before modeling anything, you <b>describe</b> your data, and the mean alone lies. One
 billionaire in a room of ten people makes the <i>average</i> wealth enormous while nine people
 are broke. Descriptive statistics are the small set of numbers that summarize a dataset
-honestly; reaching for them is the first move in every real ML project (exploratory data
+faithfully; reaching for them is the first move in every real ML project (exploratory data
 analysis), and choosing the right one is a mark of competence.</p></div>
 
 <h3>Middle: mean vs median vs mode</h3>
@@ -8018,8 +8017,7 @@ print(py, cond, cov, gap)
 <div class="ground"><span class="gTag">🎯 One distribution, one optimization, and the machinery behind both</span>
 <p>The multivariate Gaussian is the distribution nearly every method assumes when it assumes
 anything. PCA is the optimization that falls out of its geometry. This lesson does both, and
-introduces <b>directional derivatives</b> along the way, because that is the tool that makes the
-PCA derivation honest rather than hand-waved.</p></div>
+introduces <b>directional derivatives</b> along the way, because that is the tool that makes the PCA derivation rigorous rather than hand-waved.</p></div>
 
 <h3>The density, term by term</h3>
 <div class="mathblock">N(x | &mu;, &Sigma;) = (2&pi;)<sup>-D/2</sup> |&Sigma;|<sup>-1/2</sup> exp( -&frac12; (x-&mu;)<sup>T</sup>&Sigma;<sup>-1</sup>(x-&mu;) )</div>
@@ -8419,7 +8417,7 @@ so a 95% confidence interval is a statement about the procedure. A Bayesian trea
 <code>&theta;</code> as random and the observed data as fixed, so a 95% credible interval is a
 statement about <code>&theta;</code>: there is a 95% probability it lies in this range, given the
 prior and the data. The second is what people usually think the first means.</p>
-<p>The practical trade is honest: Bayesian methods give you uncertainty as a first-class output
+<p>The practical trade is plain: Bayesian methods give you uncertainty as a first-class output
 and require you to state a prior and pay for the integral. Which matters depends on whether you
 need calibrated uncertainty, and on how much data you have, since with enough data the prior
 washes out and the two agree.</p>
@@ -8704,7 +8702,7 @@ skewed you may need hundreds. The convergence is in distribution, not in the tai
 events remain badly estimated even when the middle looks perfect. That caveat is the one that
 bites.</div>
 
-<h3>Reason 2: it is the most honest choice given only a mean and a variance</h3>
+<h3>Reason 2: it is the least presumptuous choice given only a mean and a variance</h3>
 <p>Among all distributions on the real line with a given mean and variance, the Gaussian has
 <b>maximum entropy</b>. Entropy is average surprise, so maximum entropy means assuming the least
 beyond what you have specified. If all you are willing to claim is a center and a spread, any
@@ -8870,8 +8868,7 @@ cluster.</div>
 be fractions. Those restrictions cost you real things.</p>
 <p>K-means finds spherical clusters of similar size, because that is what its assumptions
 encode. A GMM with full covariance can find elongated, tilted clusters of different sizes and
-different shapes. And soft responsibilities mean a point between two clusters is honestly
-reported as ambiguous rather than arbitrarily assigned.</p>
+different shapes. And soft responsibilities mean a point between two clusters is reported as ambiguous rather than arbitrarily assigned.</p>
 <div class="demystify"><b>The trap that ruins naive implementations.</b> The likelihood of a GMM
 is <b>unbounded</b>. Put one component's mean exactly on a single data point and shrink its
 variance toward zero, and the density at that point goes to infinity, so the likelihood does too.
@@ -8880,7 +8877,7 @@ small constant to the diagonal of each &Sigma;, or by placing a prior on the cov
 doing MAP instead of maximum likelihood. If your GMM produces a component that has collapsed onto
 one point, this is what happened.</div>
 `,
- exs:[{title:'Compute responsibilities, and find the points the model is honestly unsure about',
+ exs:[{title:'Compute responsibilities, and find the points the model is unsure about',
    lang:'python',
    packages:['numpy'],
    prompt:`Two components: weights 0.3 and 0.7, means 0 and 4, standard deviations 1 and 1.5.
@@ -9320,7 +9317,7 @@ print(he[-1], half[-1], naive[-1], float(np.median(ratios)))
     options:['The encoder producing discrete latent codes','The Gaussian being closed under scaling and shifting','KL divergence being symmetric in its arguments','The decoder being a deterministic function'],answer:1,whyWrong:['Discrete codes are exactly the case the trick does not cover, which is why Gumbel-softmax exists.','','KL is not symmetric, and the trick does not need it to be.','The decoder is deterministic in a VAE, and the trick is about the sampling step in the encoder.'],
     why:'z = μ + σ⊙ε keeps the sampling outside the gradient path, and only works because scaling a Gaussian gives a Gaussian.'},
    {q:'Across all six examples, the Gaussian is chosen mainly because:',
-    options:['It has the fewest parameters to estimate','It makes an otherwise intractable integral solvable','It is the only distribution with finite variance','It best describes how real data is distributed'],answer:1,whyWrong:['It has more parameters than several alternatives, two rather than one.','','Plenty of distributions have finite variance, including the uniform.','Real data is frequently skewed or heavy-tailed. Convenience is the honest reason.'],
+    options:['It has the fewest parameters to estimate','It makes an otherwise intractable integral solvable','It is the only distribution with finite variance','It best describes how real data is distributed'],answer:1,whyWrong:['It has more parameters than several alternatives, two rather than one.','','Plenty of distributions have finite variance, including the uniform.','Real data is frequently skewed or heavy-tailed. Convenience is the real reason.'],
     why:'Closure under the relevant operation is what buys the closed form. That is the common thread.'}
  ]}}
 ,
@@ -9466,7 +9463,7 @@ print(means.mean(), v_n.mean(), v_nm1.mean(), bias_n)
    ]}],
  quiz:{title:'Quick check, estimation',questions:[
    {q:'Sample variance divides by n-1 because:',
-    options:['It makes the result match the standard deviation','It prevents division by zero when n is one','Deviations from the sample mean are too small','Small samples need a larger denominator'],answer:2,whyWrong:['The standard deviation is the square root of whichever variance you computed. The denominator is a separate question.','With n equal to one there is no spread to estimate, and the undefined result is arguably the honest answer.','','It is not a size-based fudge. The correction is exactly one, at every n.'],
+    options:['It makes the result match the standard deviation','It prevents division by zero when n is one','Deviations from the sample mean are too small','Small samples need a larger denominator'],answer:2,whyWrong:['The standard deviation is the square root of whichever variance you computed. The denominator is a separate question.','With n equal to one there is no spread to estimate, and the undefined result is arguably the right answer.','','It is not a size-based fudge. The correction is exactly one, at every n.'],
     why:'The sample mean sits closer to the data than μ does, so squared deviations undershoot by exactly n/(n-1).'},
    {q:'Standard error falls as 1/√n, which implies:',
     options:['A hundred times the data cuts error tenfold','Doubling the data halves the error','Error is independent of the sample size','Ten times the data cuts error by a factor of ten'],answer:0,whyWrong:['','Doubling gives a factor of the square root of two, about 1.41, not 2.','It depends on n very much. That dependence is the whole point of the formula.','Ten times the data cuts it by the square root of ten, about 3.2.'],
@@ -9739,8 +9736,7 @@ The length of <code>a</code> is <code>‖a‖ = √(a·a)</code>. Everything abo
 formulas, and in the exercise you'll compute both on real vectors, in real Python, running in
 your browser.</div>`,
  deepDive:`<b>📖 Dive deeper: the dot product, rigorously (but in plain English).</b>
-<p>We said the dot product measures <i>alignment</i>. Here is why that is literally true, built up
-one honest step at a time.</p>
+<p>We said the dot product measures <i>alignment</i>. Here is why that is literally true, built up one step at a time.</p>
 <p><b>1. The definition.</b> For two vectors <code>a = [a₁,…,a_n]</code> and
 <code>b = [b₁,…,b_n]</code>, the dot product is <code>a·b = Σᵢ aᵢbᵢ = a₁b₁ + a₂b₂ + … + a_nb_n</code>.
 Just multiply matching entries and add. This is the <i>algebraic</i> definition.</p>
@@ -10066,11 +10062,11 @@ print(check_means, check_stds)
    ]}]}
 ]});
 
-STREAMS.push({icon:'🧰',track:'Scientific Python (after the math)',title:'The ML Toolkit: pandas, scikit-learn & plotting',blurb:'The advanced Python stream: the libraries that run real ML work, and the honest story of what Python actually does in ML.',requires:'vec3',requiresName:'NumPy: arrays & fast vectorized math',lessons:[
+STREAMS.push({icon:'🧰',track:'Scientific Python (after the math)',title:'The ML Toolkit: pandas, scikit-learn & plotting',blurb:'The advanced Python stream: the libraries that run real ML work, and what Python actually does in ML.',requires:'vec3',requiresName:'NumPy: arrays & fast vectorized math',lessons:[
 {id:'tk1',
  title:'Python’s real role in ML: the control room, not the engine room',
  body:`
-<div class="ground"><span class="gTag">🎯 The honest story</span>
+<div class="ground"><span class="gTag">🎯 What actually runs</span>
 <p>Let's correct a myth before it takes root: <b>"ML is written in Python" is only half
 true.</b> Python is where ML solutions are <b>prototyped, designed, and orchestrated</b>,
 where you express ideas, wire pipelines, and explore data. But the actual number-crunching,
@@ -10089,7 +10085,7 @@ thin steering layer over a compiled engine</i>. That is also why loops over arra
 cardinal sin, every trip back into the Python interpreter abandons the engine.</p>
 
 <h3>And in production?</h3>
-<p>The same honesty applies at the far end: serious production systems often go further,
+<p>The same applies at the far end: serious production systems often go further,
 inference servers in C++ or Rust, models exported to optimized runtimes (ONNX, TensorRT),
 specialized hardware. The pattern to internalize: <b>design and validate in Python, execute
 in whatever the computation demands.</b> Knowing this makes you better at both, you will
@@ -10645,7 +10641,7 @@ print(preds, mse, base_pred, base_mse, beats_baseline)
    {q:`<b>1.</b> A model predicts salary from years of experience as <code>salary = 5·years + 30</code> (in thousands). What does the weight 5 mean, and what does the 30 mean? Predict the salary for 4 years.`,
     solution:`The <b>weight 5</b> means each extra year of experience adds <b>5k</b> to the predicted salary (positive → more experience, higher pay; size 5 → the strength). The <b>30</b> is the <b>bias/baseline</b>: the predicted salary at 0 years (a starting point). Prediction at 4 years: <code>5·4 + 30 = 50</code> → <b>50k</b>.`},
    {q:`<b>2. (Concept)</b> Why do we evaluate a model on data it has never seen (a test set) instead of the data it trained on?`,
-    solution:`Because doing well on the training data is easy and misleading, a model can <b>memorize</b> those exact examples without learning the real pattern (overfitting), then fail on anything new. The whole point of a model is to work on <b>future, unseen</b> data, so we hold out a test set to get an honest estimate of that. Low training error but high test error is the classic warning sign.`}
+    solution:`Because doing well on the training data is easy and misleading, a model can <b>memorize</b> those exact examples without learning the real pattern (overfitting), then fail on anything new. The whole point of a model is to work on <b>future, unseen</b> data, so we hold out a test set to get an unbiased estimate of that. Low training error but high test error is the classic warning sign.`}
  ]}},
 
 {id:'mllinreg',
@@ -10792,8 +10788,7 @@ boundary sits at <code>x = 3</code> (where <code>z = 0, p = 0.5</code>).</div>
 <div class="demystify"><b>Demystify "logistic regression":</b> the name lies twice over, it
 does <b>classification</b>, not regression, and there is nothing scary about it: it is linear
 regression's score passed through the sigmoid to become a probability. Why not just use a line
-for 0/1 labels? Because a line gives −4 or 7.2, nonsense as a probability; the sigmoid keeps
-the answer honestly between 0 and 1. (And its loss is cross-entropy, not MSE, the log-loss you
+for 0/1 labels? Because a line gives −4 or 7.2, nonsense as a probability; the sigmoid keeps the answer between 0 and 1. (And its loss is cross-entropy, not MSE, the log-loss you
 met in the logarithms stream.)</div>`,
  docs:[['scikit-learn (LogisticRegression)','https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html']],
  quiz:{title:'Quick check',questions:[
@@ -10922,7 +10917,7 @@ most consequential idea on this page.</p>
 <p><b>Reinforcement learning</b>: no answer key, only a reward that arrives later, often long
 after the actions that earned it. Different enough to be its own field.</p>
 
-<h3>Choosing, and the honest order to do it in</h3>
+<h3>Choosing, and the order to do it in</h3>
 <p>Start from the question, not the method. Do you have labels? If yes and you want a number,
 regression; a category, classification. If no, ask whether you want groups, fewer dimensions, or
 a notion of "unusual", and pick accordingly. If you have a few labels and lots of raw data, look
@@ -11078,7 +11073,7 @@ which is why bagging exists.</p>
 <p><b>An informative prior.</b> The Bayesian version of all of the above, and the most explicit:
 you are stating what you believed before the data arrived, and small data is precisely when that
 belief still matters.</p>
-<p><b>Collecting more data.</b> Worth pricing honestly. Error falls as
+<p><b>Collecting more data.</b> Worth pricing. Error falls as
 <code>1/&radic;n</code>, so going from 100 to 400 rows halves your error. That is often cheaper
 than a month of modeling.</p>
 
@@ -11337,7 +11332,7 @@ the trick, and it is one of the most elegant ideas in the field.</div>
 <code>d</code> is large, text being the classic case. They scale badly past a few tens of
 thousands of rows.</p>
 
-<h3>Choosing, honestly</h3>
+<h3>Choosing, in practice</h3>
 <div class="mathblock">tabular, any size        &rarr; gradient boosting first, random forest as the safe default
 text, small data         &rarr; naive Bayes or linear SVM
 few features, need speed &rarr; logistic regression, and it is interpretable
@@ -11616,7 +11611,7 @@ them across the middle rather than along their length. That is not a bug, it is 
 <p>Covered in depth in the probability stream. A GMM replaces "nearest center" with "posterior
 probability of each component", and replaces the shared spherical shape with a learned
 <code>&Sigma;<sub>k</sub></code> per component. That buys you elongated, tilted clusters of
-different sizes, and honest fractional membership for ambiguous points.</p>
+different sizes, and fractional membership for ambiguous points.</p>
 <div class="mathblock">k-means  =  GMM with  &Sigma;<sub>k</sub> = &sigma;&sup2;I (shared), equal &pi;<sub>k</sub>, hard responsibilities</div>
 <p>Fitted by EM. Costs more, needs more data per cluster because there are more parameters, and
 can collapse onto a single point if the covariances are not regularized.</p>
@@ -11652,7 +11647,7 @@ distance to the nearest other cluster:</p>
 <div class="mathblock">s(i) = (b(i) - a(i)) / max(a(i), b(i)), s &isin; [-1, 1]</div>
 <p><b>BIC or AIC</b> apply to GMMs, since a GMM has a likelihood, and penalize parameter count.
 This is the closest thing to a principled answer available.</p>
-<div class="hardidea">🧠 <b>The honest position on validation.</b> Every internal measure above
+<div class="hardidea">🧠 <b>Where validation actually stands.</b> Every internal measure above
 scores how well the partition matches the assumptions of the method that produced it. Silhouette
 rewards compact round clusters, so it will prefer k-means output on data with elongated groups,
 even when the elongated grouping is the true one. No internal score can tell you whether the
@@ -14128,8 +14123,7 @@ learn otherwise.</div>
 <h3>GRU, in one paragraph</h3>
 <p>The <b>gated recurrent unit</b> (2014) merges the forget and input gates into one update
 gate, and drops the separate cell state. Fewer parameters, faster, and in practice usually
-comparable. Which one is better depends on the problem, and the honest answer from the
-literature is that the difference is small.</p>
+comparable. Which one is better depends on the problem, and the answer from the literature is that the difference is small.</p>
 `,
  docs:[['Hochreiter & Schmidhuber, Long Short-Term Memory (1997)','https://www.bioinf.jku.at/publications/older/2604.pdf'],['Olah, Understanding LSTM Networks','https://colah.github.io/posts/2015-08-Understanding-LSTMs/']],
  exs:[{title:'Multiply thirty derivatives together, then open a gate',
@@ -14568,7 +14562,7 @@ print(np.round(w_causal, 4))
 {id:'nn14',
  title:'What neural networks still cannot do',
  body:`
-<div class="ground"><span class="gTag">🎯 The lesson that keeps the rest of the stream honest</span>
+<div class="ground"><span class="gTag">🎯 What the rest of the stream cannot do</span>
 <p>Every technique here works, and none of them makes the limitations below go away. Knowing
 what a network cannot do is what separates using one well from being surprised by it in
 production.</p></div>
@@ -16071,7 +16065,7 @@ different questions: Q-learning asks what is optimal, SARSA asks what is best <i
 going to keep making mistakes</i>. If exploration will continue in deployment, or mistakes are
 expensive, SARSA is often the one you want.</p></div>
 
-<h3>Convergence, and the honest version of it</h3>
+<h3>Convergence, and what it actually guarantees</h3>
 <p>Tabular Q-learning converges to <code>Q*</code> with probability 1, under two conditions.
 Every state-action pair must be visited infinitely often, and the step sizes must satisfy the
 Robbins-Monro conditions:</p>
@@ -17404,7 +17398,7 @@ print('learned', proxy_l, true_l)
 {id:'rl14',
  title:'What reinforcement learning is still bad at, and when not to use it',
  body:`
-<div class="ground"><span class="gTag">🎯 The honest summary</span>
+<div class="ground"><span class="gTag">🎯 Where it stands</span>
 <p>RL has produced some of the most striking results in machine learning and it remains difficult
 to deploy. Knowing where the difficulty lives is what separates someone who has read about it
 from someone who has shipped it. Most of what follows is not solved, and being clear about that
@@ -17444,7 +17438,7 @@ own. And when comparing algorithms, be suspicious of any gap smaller than the se
 <h3>Safety during learning</h3>
 <p>An agent learns by making mistakes. In a simulator that is free. On a real robot, a real
 network, or a real financial position, some mistakes are not recoverable. Constrained MDPs, safe
-exploration and shielding all address this, and the honest state of the art is that most
+exploration and shielding all address this, and the state of the art is that most
 production deployments avoid the problem instead: train in simulation, transfer to reality, and
 never let the live system explore.</p>
 

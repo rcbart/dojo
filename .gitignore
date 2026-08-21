@@ -78,3 +78,17 @@ dist-site/
 # The assembled Pages artifact. CI builds it fresh; a local copy from a
 # dry run must never be committed.
 _site/
+
+# authlint lives in its own repository (github.com/rcbart/authlint). This repo
+# carries ONLY the built snapshot the Pages workflow copies to /authlint/.
+# An extracted copy of the source tree landed here once and was committed;
+# these rules stop that repeating.
+authlint/*
+!authlint/dist/
+!authlint/authlint-og.png
+
+# release archives, never source
+*.tar.gz
+
+# the FUSE mount leaves these behind for files deleted while still open
+.fuse_hidden*

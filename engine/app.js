@@ -666,7 +666,7 @@ function renderGettingStarted(){
   <p>${DOJO_NAME} runs entirely in your browser and every lesson ends with a hands-on exercise. This page shows how your work is checked, what to install to get the <b>full depth</b>, and how to run any exercise in your own dev environment when you want real, compiler-verified feedback.</p>
 
   <div class="gsCard">
-  <h2>How your work is checked (be honest with yourself)</h2>
+  <h2>How your work is checked (mark yourself strictly)</h2>
   <p>When you hit <b>Compile &amp; Run Tests</b>, ${DOJO_NAME} does two things: it checks your code contains the right constructs, and, in the app, it asks Claude to execute the tests like a compiler plus JUnit and report pass/fail per test. That is great for fast feedback and learning, but it is <b>not a real compiler</b>. It can miss a runtime edge case, and a correct solution written in an unusual way can occasionally be marked wrong.</p>
   <p><b>The fix for real depth:</b> every exercise now has a <b>🖥️ Run this on your own machine</b> panel with the exact commands. SQL exercises execute against real sample data in your browser, and pure-JavaScript exercises run in a sandboxed Web Worker, both graded on real behavior. Java exercises can even <b>compile &amp; run in-app</b> if you start the site with a local JDK and <code>JD_LOCAL_RUNNER=1</code>.</p>
   </div>

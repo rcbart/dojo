@@ -9,6 +9,12 @@ SVG, because an identifier is not a spelling mistake.
 Fails on an em dash, a British spelling, LLM filler vocabulary, or a leftover
 placeholder. Drafts under blog/ are not published and are not checked here.
 
+Also enforces a ratcheting budget on "honest". The word is a claim about the
+text rather than a property of it, and once it appears often enough the reader
+starts wondering about everything that was not labelled. It went to 77 across
+the site before anyone noticed. A handful of uses genuinely earn their place, so
+this is a budget rather than a ban: the count may fall, never rise.
+
   python3 scripts/verify-voice-content.py FILE...
 """
 import io, re, sys, collections
@@ -52,6 +58,25 @@ for p in sys.argv[1:]:
         for (n, w), k in collections.Counter(hits).most_common(6):
             print('        %3d  %-18s %s' % (k, n, w[:60]))
 print('\nTOTAL', dict(tot) or 'clean')
+
+# ---- ratcheting budget on "honest" -------------------------------------------
+# The published surface is at zero. The uses that genuinely earn their place all
+# live outside this set: a code comment in the test harness, a variable named
+# `honest` in the RLHF exercise where it is the technical contrast, and a draft
+# whose subject is honesty. If a new one earns it, raise this deliberately and
+# say why in the commit. Do not raise it to make a build pass.
+HONEST_BUDGET = 0
+honest = 0
+for p in sys.argv[1:]:
+    t = js_prose(p) if re.search(r'content/streams/.*\.js$', p) else text_of(p)
+    honest += len(re.findall(r'\bhonest[a-z]*\b', t, re.I))
+print('honest: %d of %d budgeted' % (honest, HONEST_BUDGET))
+over = honest > HONEST_BUDGET
+if over:
+    print('\n"honest" is a claim about the text, not a property of it. It is over budget.\n'
+          'Say the unflattering thing instead of announcing that you are about to.')
+
 if tot:
     print('\nThese are the tells Ron asked to keep out of his own writing.')
+if tot or over:
     sys.exit(1)

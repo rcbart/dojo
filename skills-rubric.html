@@ -51,7 +51,7 @@
 <body>
 <div class="wrap">
   <h1>Skills rubric &amp; self-assessment</h1>
-  <p class="lead">An honest gauge of where you stand after the Docker, Kubernetes, Envoy, and Istio
+  <p class="lead">A gauge of where you stand after the Docker, Kubernetes, Envoy, and Istio
   courses. Tick only what you could do <b>unaided, from a blank terminal</b>, not "I saw it in a
   lesson." The verdict updates live.</p>
   <div class="rule">The hard rule: if you'd need to copy from notes or a lesson to do it, leave it
@@ -60,7 +60,7 @@
 
   <div class="verdict">
     <div class="badge" id="badge">Not started</div>
-    <div class="sub" id="sub">Tick the boxes below as you honestly self-assess.</div>
+    <div class="sub" id="sub">Tick the boxes below as you self-assess.</div>
     <div class="bars">
       <div class="bar"><div class="lab">Foundational</div><div class="track"><div class="fill" id="f1"></div></div><div class="n" id="n1">0 / 0</div></div>
       <div class="bar"><div class="lab">Job-ready (mid)</div><div class="track"><div class="fill" id="f2"></div></div><div class="n" id="n2">0 / 0</div></div>
@@ -161,7 +161,7 @@ function updateVerdict(){
   const p1=c1.n/c1.total, p2=c2.n/c2.total, p3=c3.n/c3.total;
   let badge, sub;
   const totalChecked=c1.n+c2.n+c3.n;
-  if(totalChecked===0){ badge="Not started"; sub="Tick the boxes below as you honestly self-assess."; }
+  if(totalChecked===0){ badge="Not started"; sub="Tick the boxes below as you self-assess."; }
   else if(p1<0.7){ badge="Beginner"; sub="Foundations still forming, work through the Docker and Kubernetes fundamentals and their labs."; }
   else if(p2<0.5){ badge="Advanced beginner"; sub="Solid basics. Now drill the production toolkit in Tier 2, probes, rollouts, Helm/Kustomize, RBAC, ingress."; }
   else if(p2<0.85){ badge="Job-ready · junior→mid"; sub="You can build and run real workloads. Close the remaining Tier 2 gaps and you're interview-ready for most container/Kubernetes roles."; }
