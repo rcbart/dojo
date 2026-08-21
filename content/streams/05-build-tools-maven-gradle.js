@@ -6,7 +6,7 @@ STREAMS.push({icon:'🔧',title:'Build Tools: Maven & Gradle',blurb:'How imports
 <li><b>The classpath</b> is where classes are actually found: a list of directories and jars that <code>javac</code> searches at compile time and <code>java</code> searches at runtime. A <b>jar</b> is just a zip of .class files.</li>
 <li><b>A build tool</b> (Maven/Gradle) is a classpath robot: it downloads declared libraries (and their <i>transitive</i> dependencies) from a repository into a local cache (Maven's is <code>~/.m2/repository</code>) and assembles the classpath for you.</li>
 </ul>
-<div class="codeSample"># by hand — what the build tool automates:
+<div class="codeSample"># by hand, what the build tool automates:
 javac -cp lib/gson-2.11.0.jar src/App.java -d out
 java  -cp out:lib/gson-2.11.0.jar App          # ':' on macOS/Linux, ';' on Windows
 
@@ -26,7 +26,7 @@ Gson gson = new Gson();                     // class loaded from the jar at runt
 needs <code>com.acme.Order</code> it asks the class loader, which walks that list and takes the
 <b>first</b> match. Two consequences follow, and both cause real incidents.</p>
 <p><b>Order decides the winner.</b> If two jars contain the same class, the earlier one wins silently and
-the later one is invisible: no warning, no error, just behaviour from a version you did not expect. That
+the later one is invisible: no warning, no error, just behavior from a version you did not expect. That
 is the classic "it works locally" bug, because the local and CI classpath order differ.</p>
 <p><b>An import is not a dependency.</b> <code>import</code> is compile-time shorthand so you can write
 <code>Order</code> instead of the fully qualified name; it loads nothing. The dependency is what put the
@@ -119,10 +119,10 @@ cached forever on the assumption it can never change.</p>
 <div class="codeSample" data-hl>compile   (default) needed to build AND at runtime; ships with your app
 provided  needed to compile, supplied by the environment at runtime
           (servlet API, and anything the container already has)
-runtime   not needed to compile, required to run — JDBC drivers
+runtime   not needed to compile, required to run, JDBC drivers
 test      test code only; never packaged
 import    only in dependencyManagement, to pull in a BOM</div>
-<p>Getting a scope wrong produces a specific, recognisable failure: <code>provided</code> where you
+<p>Getting a scope wrong produces a specific, recognizable failure: <code>provided</code> where you
 needed <code>compile</code> compiles fine and throws <code>NoClassDefFoundError</code> at runtime,
 which is why that error so often means "a scope is wrong", not "a dependency is missing".</p>
 
@@ -298,7 +298,7 @@ discovering a typo three minutes into a build.</p>
 build cache  a task whose inputs match a PREVIOUS run (even on another
              machine, even on CI) restores the outputs instead of running
 daemon       a warm JVM between builds - no startup, JIT already hot
-config cache serialises the configuration phase itself
+config cache serializes the configuration phase itself
 
 # when caching is not working, this tells you exactly why, per task:
 ./gradlew build --scan
@@ -403,7 +403,7 @@ every module, the split is wrong.</p>
 
 <h4>Version management is the part that decays</h4>
 <p>Left alone, modules drift onto different versions of the same library and you get the nearest-wins
-resolution problems from earlier, now multiplied. Centralise deliberately: Maven's
+resolution problems from earlier, now multiplied. Centralize deliberately: Maven's
 <code>&lt;dependencyManagement&gt;</code> in the parent (or an imported BOM), Gradle's version catalog and
 platform. Declare versions in exactly one place, and let modules declare only <i>what</i> they need, never
 <i>which version</i>.</p>
@@ -443,16 +443,16 @@ include 'api', 'core'
 {id:'bld5',title:'Project setup like a senior engineer',body:`
 <p>What a senior's "new project" checklist actually contains, and why:</p>
 <div class="codeSample">my-service/
-├── mvnw / mvnw.cmd / .mvn/          # wrapper COMMITTED — identical builds everywhere
+├── mvnw / mvnw.cmd / .mvn/          # wrapper COMMITTED, identical builds everywhere
 ├── pom.xml                          # pinned versions, compiler release set
 ├── .gitignore                       # target/, build/, .idea/, *.iml, .DS_Store
 ├── .editorconfig                    # indentation/encoding enforced across IDEs
-├── README.md                        # how to build, run, test — in 5 lines
+├── README.md                        # how to build, run, test, in 5 lines
 ├── .github/workflows/ci.yml        # CI from commit #1, not "later"
 └── src/
     ├── main/java/com/example/svc/   # package = reversed domain, matches dirs
     ├── main/resources/              # application.properties, db/migration/
-    ├── test/java/com/example/svc/   # mirrors main — tooling depends on this
+    ├── test/java/com/example/svc/   # mirrors main, tooling depends on this
     └── test/resources/</div>
 <p><b>Under the hood</b>, when you run <code>./mvnw verify</code>: the wrapper downloads the pinned Maven version → Maven reads the POM, resolves the dependency graph (local cache <code>~/.m2</code> first, then Central), builds the compile/test classpaths → plugins bound to each lifecycle phase run in order (compiler → surefire tests → jar → failsafe). "Convention over configuration" is why there is no config for any of this: the standard layout IS the contract the plugins rely on.</p>
 <p>The senior habits: wrapper committed (never "install maven 3.9 first"), versions pinned (no version ranges), formatter + linter as build plugins (Spotless; style debates end), tests and CI wired before the first feature, one-command onboarding (<code>git clone && ./mvnw verify</code> must just work), and a <code>.gitignore</code> that keeps build output and IDE noise out of review forever.</p>

@@ -1,4 +1,4 @@
-STREAMS.push({icon:'🟨',title:'JavaScript Foundations',blurb:'Assuming nothing: what JavaScript is and where it runs, how a program is a sequence of statements, values and the eight types, variables and the three declaration keywords, operators, and the coercion rules that make so much JavaScript behaviour surprising until you know them.',lessons:[
+STREAMS.push({icon:'🟨',title:'JavaScript Foundations',blurb:'Assuming nothing: what JavaScript is and where it runs, how a program is a sequence of statements, values and the eight types, variables and the three declaration keywords, operators, and the coercion rules that make so much JavaScript behavior surprising until you know them.',lessons:[
 
 {id:'js1',title:'What JavaScript is, and where it runs',body:`
 <p>🌱 <b>Starting from zero.</b> A <b>program</b> is a list of instructions. A <b>programming language</b> is
@@ -34,15 +34,15 @@ it is called out so you can read it, not so you write it.</p>
 <h4>Running your first program</h4>
 <p>You have three ways to run JavaScript right now, and it is worth trying all three, because knowing
 where your code executes is the beginning of being able to debug it.</p>
-<div class="codeSample" data-hl>// 1. THE BROWSER CONSOLE — fastest feedback loop that exists.
+<div class="codeSample" data-hl>// 1. THE BROWSER CONSOLE, fastest feedback loop that exists.
 //    Chrome/Edge: F12 or Cmd-Option-J.  Firefox: F12.  Safari: enable
 //    Develop menu first. Type an expression, press Enter, see the value.
 
-// 2. NODE, in a file — how real programs are run.
+// 2. NODE, in a file, how real programs are run.
 //    save as hello.js, then:  node hello.js
 console.log("hello");
 
-// 3. NODE, interactively — type  node  with no arguments, get a prompt.
+// 3. NODE, interactively, type  node  with no arguments, get a prompt.
 //    Ctrl-D or .exit to leave.</div>
 <p><code>console.log</code> prints a value where you can see it: the browser's console panel, or the
 terminal under Node. It is not part of the language either (both hosts happen to provide it), and it is
@@ -105,7 +105,7 @@ hints:['A switch with fall-through cases groups the names by host neatly.','Thre
 {id:'js2',title:'Values and the eight types',body:`
 <p>Everything a JavaScript program manipulates is a <b>value</b>. Every value has a <b>type</b>, and there
 are exactly eight. Learning them now saves an enormous amount of confusion later, because most surprising
-JavaScript behaviour is a type behaving exactly as specified in a situation you did not expect.</p>
+JavaScript behavior is a type behaving exactly as specified in a situation you did not expect.</p>
 
 <h4>The seven primitives, and the one that is not</h4>
 <div class="codeSample" data-hl>number      42, 3.14, -7, Infinity, NaN     one numeric type for everything
@@ -290,7 +290,7 @@ behavior:`Six operations are executed against your function, including an unreco
 hints:['Three permitted operations, everything else false.','const controls the binding; the value stays mutable.','The temporal dead zone makes reading before a let declaration a ReferenceError.']}},
 
 {id:'js4',title:'Operators, coercion and equality',body:`
-<p>This lesson explains more surprising JavaScript behaviour than any other in the course. JavaScript
+<p>This lesson explains more surprising JavaScript behavior than any other in the course. JavaScript
 converts values between types automatically (<b>coercion</b>), and the rules are consistent, learnable,
 and occasionally absurd.</p>
 
@@ -320,7 +320,7 @@ const fixed = Number("5") + 3;   // 8</div>
 
 <h4>Truthiness</h4>
 <p>Anywhere a boolean is expected, JavaScript coerces. <b>Exactly eight values are falsy</b> and
-everything else is truthy. Memorise the short list:</p>
+everything else is truthy. Memorize the short list:</p>
 <div class="codeSample" data-hl>FALSY:   false   0   -0   0n   ""   null   undefined   NaN
 TRUTHY:  everything else, including:
            "0"        a non-empty string
@@ -401,8 +401,8 @@ solution:`function withDefault(value, fallback) {
 tests:[{d:'uses nullish coalescing rather than ||',re:'\\?\\?'},{d:'does not use the falsy-based fallback',re:'\\|\\|',not:true}],
 behavior:`The three middle cases are the whole lesson and they are executed: writing value || fallback passes the first two tests and fails on 0, "" and false: a bug that appears the day someone legitimately configures a port of 0 or an empty prefix.`,
 hints:['|| falls back on any falsy value; ?? falls back only on null and undefined.','The whole body is a single return.','0 and "" must survive.']},
-{title:'Normalise a form submission',diff:'hard',lang:'js',
-run:{call:'normalise',cases:[
+{title:'Normalize a form submission',diff:'hard',lang:'js',
+run:{call:'normalize',cases:[
  {name:'trims and converts a numeric field',args:[{name:'  Ada  ',age:'36'}],expect:{name:'Ada',age:36}},
  {name:'a legitimate zero survives',args:[{name:'Ada',age:'0'}],expect:{name:'Ada',age:0}},
  {name:'a non-numeric age becomes null',args:[{name:'Ada',age:'abc'}],expect:{name:'Ada',age:null}},
@@ -410,11 +410,11 @@ run:{call:'normalise',cases:[
  {name:'an empty name becomes null too',args:[{name:'   ',age:'1'}],expect:{name:null,age:1}},
  {name:'missing fields are null',args:[{}],expect:{name:null,age:null}},
  {name:'a negative age is still a number',args:[{name:'x',age:'-3'}],expect:{name:'x',age:-3}}]},
-prompt:`Every value from an HTML form arrives as a <b>string</b>. Write <code>function normalise(form)</code> returning <code>{ name, age }</code> where <code>name</code> is the trimmed string or <code>null</code> when blank or missing, and <code>age</code> is a real number or <code>null</code> when blank, missing or not numeric. An age of <code>"0"</code> must become the number <code>0</code>, not <code>null</code>. This is the trap the whole lesson has been building to.`,
-starter:`function normalise(form) {
+prompt:`Every value from an HTML form arrives as a <b>string</b>. Write <code>function normalize(form)</code> returning <code>{ name, age }</code> where <code>name</code> is the trimmed string or <code>null</code> when blank or missing, and <code>age</code> is a real number or <code>null</code> when blank, missing or not numeric. An age of <code>"0"</code> must become the number <code>0</code>, not <code>null</code>. This is the trap the whole lesson has been building to.`,
+starter:`function normalize(form) {
   return { name: null, age: null };
 }`,
-solution:`function normalise(form) {
+solution:`function normalize(form) {
   const rawName = (form.name ?? "").trim();       // ?? handles a missing key
   const name = rawName === "" ? null : rawName;
 

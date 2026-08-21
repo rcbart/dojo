@@ -108,7 +108,7 @@ hints:['The ladder to memorize: RAM ~100ns, SSD ~100µs, same-DC ~0.5ms, cross-r
 "same rows read 1000×/s"         → cache (with a TTL you can defend)
 "reads drown the database"       → read replicas (mind read-after-write)
 "traffic spikes break writes"    → queue between accept and process
-"ONE table too big for ONE box"  → sharding — the tool of last resort</div>
+"ONE table too big for ONE box"  → sharding, the tool of last resort</div>
 <p>The meta-rule: <b>scale the bottleneck, not the architecture</b>. Measure, find the actual constraint, apply the cheapest tool that moves it, re-measure. Systems that jumped to microservices-plus-sharding on day one carry the tax forever while their traffic would have fit in a cache.</p>`,
 docs:[['Scaling to 11M+ users on AWS','https://aws.amazon.com/blogs/startups/scaling-on-aws-part-1/'],['Cache strategies, AWS builders library','https://aws.amazon.com/builders-library/caching-challenges-and-strategies/'],['Shopify, sharding lessons','https://shopify.engineering/a-pods-architecture-to-allow-shopify-to-scale']],
 exs:[{title:'Bottleneck triage',lang:'text',
@@ -297,13 +297,13 @@ hints:['The metadata/blob split is THE pattern: every "design a storage product"
 <p><b>3. Data model</b>: <code>users</code>, <code>posts(author_id, image_url, created_at)</code>, <code>follows(follower_id, followee_id)</code>. Images are the easy trap: they go in <b>object storage + CDN</b>, never the database; the DB stores the URL.</p>
 <p><b>4. The core decision, every real system has one.</b> Here: how is the feed built?</p>
 <div class="codeSample">fan-out on READ  (pull): feed = query posts of everyone I follow, at request time
-  + simple, always fresh      − that query at 1,200/s joins follows×posts — expensive
+  + simple, always fresh      − that query at 1,200/s joins follows×posts, expensive
 
 fan-out on WRITE (push): when someone posts, INSERT into every follower's feed table
   + feed read = one indexed lookup (fast, cheap)     − a 5M-follower celebrity post
                                                        = 5M writes (the hot-key problem)
 
-production answer: HYBRID — push for normal users, pull for celebrities, merge at read.
+production answer: HYBRID, push for normal users, pull for celebrities, merge at read.
 Not a compromise: a recognition that two populations have two different shapes.</div>
 <p><b>5. Walk the failure & growth paths.</b> What breaks first? The feed store → cache hot feeds. Celebrity posts → the hybrid. Image bandwidth → CDN already took it. Then say what you're NOT building: no stories, no ranking algorithm v1; chronological ships first.</p>
 <p>Notice what the method did: numbers chose read-vs-write focus, the API forced pagination thinking, the data model surfaced object storage, and ONE decision (fan-out) got the real analysis. Depth on the decision that matters beats shallow coverage of ten boxes, in interviews and in the design review at work.</p>`,
@@ -387,16 +387,16 @@ hints:['This question is beloved precisely because it composes everything: queue
 {id:'sd5',title:'Design docs & ADRs: deciding in writing',body:`
 <p>A design that lives in your head scales to one person and zero months. Senior engineers <b>decide in writing</b>: not bureaucracy, but the cheapest known way to find flaws before building, get real review, and let 2027-you understand why 2026-you did this.</p>
 <p><b>The design doc</b> (one to four pages, written <i>before</i> building anything significant):</p>
-<div class="codeSample">1. Context     — the problem, the numbers, what happens if we do nothing
-2. Goals       — bullet list; and NON-goals: what this explicitly won't do
-3. Proposal    — the design, at whatever depth the decision needs
-4. Alternatives— 2-3 seriously considered options and WHY NOT each
-                 (the section reviewers read first — no alternatives = no thinking)
-5. Risks       — what could go wrong, blast radius, rollback story
-6. Open questions — asked outright; a doc with zero open questions is bluffing</div>
+<div class="codeSample">1. Context, the problem, the numbers, what happens if we do nothing
+2. Goals, bullet list; and NON-goals: what this explicitly won't do
+3. Proposal, the design, at whatever depth the decision needs
+4. Alternatives, 2-3 seriously considered options and WHY NOT each
+                 (the section reviewers read first, no alternatives = no thinking)
+5. Risks, what could go wrong, blast radius, rollback story
+6. Open questions, asked outright; a doc with zero open questions is bluffing</div>
 <p><b>The ADR</b> (Architecture Decision Record) is the design doc's small sibling: half a page recording ONE decision, numbered and immutable, living in the repo (<code>docs/adr/0007-use-postgres-for-progress.md</code>). Its power is the <b>Context → Decision → Consequences</b> discipline: consequences <i>including the bad ones you accept</i>:</p>
 <div class="codeSample"># ADR-0007: Store progress in Postgres, not Redis
-Status: accepted            (later: superseded by ADR-0019 — history preserved, never edited)
+Status: accepted            (later: superseded by ADR-0019, history preserved, never edited)
 ## Context
 Progress must survive restarts and joins with users; write rate ~12/s.
 ## Decision

@@ -115,13 +115,29 @@ jobs:
       - name: Verify correct answers are spread across the options
         run: node scripts/verify-quiz-answer-spread.js
 
+      # Gate 12. The stat block on the home page is a claim about the work. It
+      # said 420 lessons while the dojos held 529, which is the kind of detail a
+      # reader checks. Recompute from the content and fail on drift.
+      - name: Verify the home page stats match the content
+        run: node scripts/verify-stats.js
+
+      # Gate 13. The published surface is written under Ron's name, so it holds
+      # to the same rules as a blog post: no em dashes, no British spellings, no
+      # LLM filler, no leftover placeholders. Prose only, code is exempt.
+      - name: Verify the published prose reads like Ron wrote it
+        run: |
+          python3 scripts/verify-voice-content.py \
+            docs/home.html docs/landing.html skills-rubric.html \
+            content/streams/*.js identity-dojo/content/streams/*.js \
+            js-dojo/content/streams/*.js posts/*.md
+
       # One Pages site. The root is the roniam.dev portfolio home plus the blog
       # (both emitted by scripts/build-blog.js from blog/*.md and docs/home.html);
       # each course keeps its own path, and the old course landing survives at
       # /courses/. Adding a course = one build step + one copy line.
       - name: Assemble the site
         run: |
-          mkdir -p _site/dev _site/identity _site/js _site/courses _site/ml \
+          mkdir -p _site/dev _site/identity _site/js _site/courses _site/ml _site/authlint \
                    _site/fundamentals _site/docker _site/kubernetes _site/envoy _site/istio
           node scripts/build-blog.js _site
           cp docs/landing.html                       _site/courses/index.html
@@ -135,6 +151,9 @@ jobs:
           cp istio-crash-course/index.html           _site/istio/index.html
           # ML Dojo lives in its own repo; this is a tracked snapshot of its build
           cp ml-dojo/dist/index.html                 _site/ml/index.html
+          # authlint likewise: github.com/rcbart/authlint, snapshot of its build
+          cp authlint/dist/index.html                _site/authlint/index.html
+          cp authlint/authlint-og.png                _site/authlint/authlint-og.png
           cp skills-rubric.html                      _site/skills-rubric.html
           test -s _site/index.html
           test -s _site/skills-rubric.html
@@ -149,6 +168,7 @@ jobs:
           test -s _site/envoy/index.html
           test -s _site/istio/index.html
           test -s _site/ml/index.html
+          test -s _site/authlint/index.html
           ls -lh _site _site/blog _site/dev _site/identity _site/js
 
       # Gate 8. Every <loc> the sitemap advertises has to exist in the assembled
@@ -156,6 +176,14 @@ jobs:
       # cannot resolve should break the build, not 404 quietly in production.
       - name: Verify the sitemap, feed and robots resolve
         run: node scripts/verify-sitemap.js _site
+
+      # Gate 14. The sitemap gate proves the URLs we advertise exist. It says
+      # nothing about the links inside the pages, which is the half that broke:
+      # a section renamed, an id changed, a path that quietly stopped being
+      # copied. This resolves every internal href in the assembled site,
+      # fragments included, against the files actually about to ship.
+      - name: Verify every internal link resolves
+        run: python3 scripts/verify-links.py _site
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

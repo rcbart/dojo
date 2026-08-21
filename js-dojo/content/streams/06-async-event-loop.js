@@ -139,7 +139,7 @@ run:{call:'settle',cases:[
  {name:'the error wins even when a result is present',args:[{message:'nope'},'data'],expect:'error: nope'},
  {name:'no error and no result',args:[null,null],expect:'ok: null'},
  {name:'undefined error behaves like no error',args:[undefined,'data'],expect:'ok: data'}]},
-prompt:`Write <code>function settle(err, result)</code> modelling an error-first callback body. When <code>err</code> is present return <code>"error: MESSAGE"</code> using <code>err.message</code>; otherwise return <code>"ok: RESULT"</code>. When the result is <code>null</code>, the text should read <code>"ok: null"</code>.`,
+prompt:`Write <code>function settle(err, result)</code> modeling an error-first callback body. When <code>err</code> is present return <code>"error: MESSAGE"</code> using <code>err.message</code>; otherwise return <code>"ok: RESULT"</code>. When the result is <code>null</code>, the text should read <code>"ok: null"</code>.`,
 starter:`function settle(err, result) {
   return null;
 }`,
@@ -168,7 +168,7 @@ composition and error propagation possible.</p>
   someCallbackApi((err, data) =&gt; err ? reject(err) : resolve(data));
 });
 
-p.then(value =&gt; { ... })          // on fulfilment
+p.then(value =&gt; { ... })          // on fulfillment
  .catch(err   =&gt; { ... })         // on rejection, anywhere ABOVE in the chain
  .finally(()  =&gt; { ... });        // either way - cleanup
 
@@ -193,12 +193,12 @@ already returns one.</p>
 wait, the next step gets <code>undefined</code>, and nothing reports an error.</p>
 
 <h4>Running things at the same time</h4>
-<div class="codeSample" data-hl>Promise.all([a, b, c])         // ALL fulfil -> array of values.
+<div class="codeSample" data-hl>Promise.all([a, b, c])         // ALL fulfill -> array of values.
                                // rejects IMMEDIATELY on the first failure,
                                // and the others keep running (no cancellation)
 Promise.allSettled([a, b, c])  // waits for all; never rejects. gives
                                // [{status:"fulfilled",value} | {status:"rejected",reason}]
-Promise.race([a, b])           // first to SETTLE, fulfil or reject
+Promise.race([a, b])           // first to SETTLE, fulfill or reject
 Promise.any([a, b])            // first to FULFIL; rejects only if all do</div>
 <p>Choose by intent: <code>all</code> when you need every result and any failure is fatal;
 <code>allSettled</code> when partial success is useful, which, for a dashboard fetching six widgets, it
@@ -319,7 +319,7 @@ fire-and-forget with an attached <code>.catch()</code>. "I do not care about the
 care whether it failed" are different statements, and only the second is usually wrong.</p>
 
 <h4>Timeouts and cancellation</h4>
-<div class="codeSample" data-hl>// promises cannot be cancelled. AbortController is how you stop the
+<div class="codeSample" data-hl>// promises cannot be canceled. AbortController is how you stop the
 // underlying WORK and get a rejection you can handle:
 const ac = new AbortController();
 setTimeout(() =&gt; ac.abort(), 5000);
@@ -362,7 +362,7 @@ solution:`async function totalOf(values) {
   return results.reduce((sum, v) => sum + v, 0);   // initial 0 for []
 }`,
 tests:[{d:'is async',re:'async'},{d:'awaits all of them together',re:'Promise\\.all'},{d:'maps values to promises',re:'\\.map\\('},{d:'sums with an initial accumulator',re:'\\.reduce\\('}],
-behavior:`Promise.all on an empty array resolves immediately to [], and reduce's initial 0 turns that into 0 rather than a TypeError. Awaiting inside a loop instead would produce the same answer here but would serialise the work: correct, and needlessly slow.`,
+behavior:`Promise.all on an empty array resolves immediately to [], and reduce's initial 0 turns that into 0 rather than a TypeError. Awaiting inside a loop instead would produce the same answer here but would serialize the work: correct, and needlessly slow.`,
 hints:['map each value to a promise, then hand the array to Promise.all.','await the whole thing at once rather than one at a time.','reduce needs its initial value for the empty case.']},
 {title:'Retry with exponential backoff',diff:'hard',lang:'js',
 run:{call:'attemptPlan',cases:[

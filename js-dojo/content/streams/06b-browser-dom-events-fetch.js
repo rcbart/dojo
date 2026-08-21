@@ -92,7 +92,7 @@ occurs. Every listener is a callback, exactly the shape the async stream taught.
 <div class="codeSample" data-hl>button.addEventListener("click", (event) =&gt; {
   event.target       // the element the event actually happened on
   event.currentTarget // the element THIS listener is attached to
-  event.preventDefault()   // stop the browser's built-in behaviour
+  event.preventDefault()   // stop the browser's built-in behavior
 });
 
 button.removeEventListener("click", handler);  // needs the SAME function
@@ -163,7 +163,7 @@ run:{call:'delegate',cases:[
  {name:'a click on the container, between rows, is ignored',args:[[['ul',null]],'li'],expect:null},
  {name:'a click outside any matching element is ignored',args:[[['span',null],['div',null]],'li'],expect:null},
  {name:'the NEAREST matching ancestor wins',args:[[['b','9'],['li','9'],['li','1'],['ul',null]],'li'],expect:'9'}]},
-prompt:`The path from the clicked element upward is given as pairs of <code>[tagName, dataId]</code>, innermost first, modelling <code>e.target</code> and its ancestors. Write <code>function delegate(path, matchTag)</code> that does what <code>e.target.closest(matchTag)</code> does: walk up the path, find the <b>first</b> element whose tag is <code>matchTag</code>, and return its <code>dataId</code>. Return <code>null</code> when no element on the path matches.`,
+prompt:`The path from the clicked element upward is given as pairs of <code>[tagName, dataId]</code>, innermost first, modeling <code>e.target</code> and its ancestors. Write <code>function delegate(path, matchTag)</code> that does what <code>e.target.closest(matchTag)</code> does: walk up the path, find the <b>first</b> element whose tag is <code>matchTag</code>, and return its <code>dataId</code>. Return <code>null</code> when no element on the path matches.`,
 starter:`function delegate(path, matchTag) {
   return null;
 }`,
@@ -210,7 +210,7 @@ const data = await res.json();
 inside a rendering function.</p>
 
 <h4>Failure is normal: timeouts and cancellation</h4>
-<div class="codeSample" data-hl>// AbortController, from the async stream, is how fetch is cancelled:
+<div class="codeSample" data-hl>// AbortController, from the async stream, is how fetch is canceled:
 const ac = new AbortController();
 const t = setTimeout(() =&gt; ac.abort(), 5000);
 try {

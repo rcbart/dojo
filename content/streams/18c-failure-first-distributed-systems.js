@@ -91,7 +91,7 @@ hints:['Check the attempt budget first, so nothing can bypass it.','Transient me
 <div class="codeSample">attempt 1  ──fail──▶  wait random(0, 1s)
 attempt 2  ──fail──▶  wait random(0, 2s)
 attempt 3  ──fail──▶  wait random(0, 4s)
-attempt 4  ──fail──▶  give up — surface the error to the caller
+attempt 4  ──fail──▶  give up, surface the error to the caller
 (and only retry SAFE-to-repeat operations; the next lesson makes them safe)</div>
 <p>Two more rules complete the kit: <b>cap the attempts</b> (a retry budget: infinite patience is an outage prolonger), and <b>only retry retryable things</b>: a 503 or timeout, yes; a 400 Bad Request will be exactly as bad the fourth time. Idempotency (next lesson) is what makes even the scary world-3 retry safe.</p>`,
 docs:[['Exponential backoff & jitter (AWS)','https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/'],['Google SRE (handling overload)','https://sre.google/sre-book/handling-overload/'],['Resilience4j (retry)','https://resilience4j.readme.io/docs/retry']],
@@ -184,11 +184,11 @@ behavior:`1. 27: retry multiplies MULTIPLICATIVELY across layers; three innocent
 hints:['Multiply the per-layer retry counts; that product is your amplification factor.','Jitter and exponential backoff solve two DIFFERENT problems (synchronization vs magnitude); you need both.','Retrying at every layer is the single most common way a blip becomes an outage.']},
 {title:'Exponential backoff with a cap',lang:'js',diff:'medium',
 run:{call:'backoffMs',cases:[{"name": "the first retry waits the base delay", "args": [0, 100, 5000], "expect": 100}, {"name": "each attempt doubles", "args": [3, 100, 5000], "expect": 800}, {"name": "the cap holds", "args": [10, 100, 5000], "expect": 5000}, {"name": "a different base scales the whole curve", "args": [2, 250, 5000], "expect": 1000}]},
-prompt:`Write <code>function backoffMs(attempt, baseMs, capMs)</code> returning the delay before retry number <code>attempt</code> (zero-based): <code>baseMs</code> doubled once per attempt, never exceeding <code>capMs</code>. Return the deterministic value here; the jitter that must be added on top is the subject of the behaviour note.`,
+prompt:`Write <code>function backoffMs(attempt, baseMs, capMs)</code> returning the delay before retry number <code>attempt</code> (zero-based): <code>baseMs</code> doubled once per attempt, never exceeding <code>capMs</code>. Return the deterministic value here; the jitter that must be added on top is the subject of the behavior note.`,
 starter:`function backoffMs(attempt, baseMs, capMs) {\n  return 0;\n}`,
 solution:`function backoffMs(attempt, baseMs, capMs) {\n  return Math.min(capMs, baseMs * Math.pow(2, attempt));\n}`,
 tests:[{d:'the delay grows exponentially',re:'Math\\.pow|\\*\\*|<<'},{d:'the base delay scales it',re:'baseMs'},{d:'a cap bounds the wait',re:'Math\\.min'},{d:'the attempt number drives the growth',re:'attempt'}],
-behavior:`Four cases execute: 100, 200, 400, 800 and then flat at the cap. Two properties matter and only one is tested here. The cap exists because unbounded doubling reaches delays measured in hours, and a client waiting an hour is indistinguishable from a client that gave up. Jitter (a random component on top) cannot be unit-tested deterministically, which is exactly why it gets omitted in real code: without it, every client that failed during the same outage retries at the same instants, so the recovering service is hit by a synchronised wave and fails again. Full jitter means picking uniformly between 0 and this value.`,
+behavior:`Four cases execute: 100, 200, 400, 800 and then flat at the cap. Two properties matter and only one is tested here. The cap exists because unbounded doubling reaches delays measured in hours, and a client waiting an hour is indistinguishable from a client that gave up. Jitter (a random component on top) cannot be unit-tested deterministically, which is exactly why it gets omitted in real code: without it, every client that failed during the same outage retries at the same instants, so the recovering service is hit by a synchronized wave and fails again. Full jitter means picking uniformly between 0 and this value.`,
 hints:['Doubling is base * 2^attempt.','Math.min against the cap does the bounding in one expression.','Attempt 0 is the first retry, so it should wait exactly baseMs.']}]},
 
 {id:'fdr3',title:'Idempotency: making retries safe',body:`
@@ -197,8 +197,8 @@ hints:['Doubling is base * 2^attempt.','Math.min against the cap does the boundi
 <p>The universal cure for the dangerous kind is the <b>idempotency key</b>: the CLIENT mints a unique id per logical operation (not per attempt!) and sends it with every retry; the server remembers processed keys and answers duplicates with the <i>original</i> result instead of redoing the work:</p>
 <div class="codeSample">client:  POST /payments   Idempotency-Key: 7f3a-...   (same key on every retry)
 server:  seen 7f3a before?  ──no──▶  process, STORE (key → result), reply
-                            ──yes─▶  reply with the stored result — do nothing
-the store: unique index on the key column — the DATABASE enforces once,
+                            ──yes─▶  reply with the stored result, do nothing
+the store: unique index on the key column, the DATABASE enforces once,
            atomically, even when two retries race in concurrently</div>
 <p>Details that separate toy from production: the key must be stored <b>in the same transaction</b> as the work's effects (else you can crash between them and re-arm the bomb); keys can expire after a retention window (24h covers any sane retry storm); and Stripe's API made <code>Idempotency-Key</code> a de-facto standard header worth copying. You've met this pattern's siblings already: the Kafka consumer's processed-ids set, and the outbox pattern's exactly-once-ish publishing: same idea, different boundary. <i>Idempotency is not an optimization; it's what makes lesson 2's retries legal.</i></p>`,
 docs:[['Stripe, idempotent requests','https://docs.stripe.com/api/idempotent_requests'],['You cannot have exactly-once delivery','https://bravenewgeek.com/you-cannot-have-exactly-once-delivery/'],['AWS builders library, idempotency','https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/']],
@@ -296,7 +296,7 @@ prompt:`Write <code>function dedupe(seen, key)</code> returning <code>true</code
 starter:`function dedupe(seen, key) {\n  return true;\n}`,
 solution:`function dedupe(seen, key) {\n  return !seen.includes(key);   // unseen key: safe to process\n}`,
 tests:[{d:'the record of processed keys is consulted',re:'seen\\.includes|indexOf|has\\s*\\('},{d:'a repeat returns false',re:'!'},{d:'the key is used',re:'key'},{d:'a boolean is returned',re:'return'}],
-behavior:`Four cases run. The exact-comparison case is a warning rather than a feature: keys must be compared as opaque strings, never normalised, because two clients could legitimately choose keys differing only by case. The deeper point the exercise cannot execute is that the check and the write must be ATOMIC (a unique constraint on the key column, or an insert-if-absent) because two concurrent retries both check, both find nothing, and both charge the card. A dedupe done as read-then-write in application code is a race with money in it.`,
+behavior:`Four cases run. The exact-comparison case is a warning rather than a feature: keys must be compared as opaque strings, never normalized, because two clients could legitimately choose keys differing only by case. The deeper point the exercise cannot execute is that the check and the write must be ATOMIC (a unique constraint on the key column, or an insert-if-absent) because two concurrent retries both check, both find nothing, and both charge the card. A dedupe done as read-then-write in application code is a race with money in it.`,
 hints:['True means "not seen, go ahead".','Set or array membership either way; the semantics are what matter.','Think about what happens when two copies of the same retry arrive at once; that is why real implementations use a unique constraint.']}]},
 
 {id:'fdr4',title:'Circuit breakers & bulkheads',body:`
@@ -436,12 +436,12 @@ hints:['Three states, decided by two comparisons.','Below the threshold nothing 
 <li><b>Never use timestamps to order events across machines.</b> Two servers stamp two chat messages; server B's clock runs 80ms ahead; "sort by timestamp" now shows the reply before the question. Cross-machine ordering needs a <b>logical</b> source: a per-conversation sequence from the database (your chat-design drill answered this), an auto-increment id, or, in fully distributed settings, Lamport-style logical clocks, whose one-line essence is <i>"causality increments a counter; clocks don't vote"</i>.</li>
 <li><b>Beware the deceptively hard nearby problems.</b> Distributed locks with expiry ("I hold it for 10s", says whose clock?), exactly-at-midnight jobs on N servers (N executions), TTL-based coordination: each is a clock-skew bug wearing a feature costume. The senior reflex: any sentence coordinating machines via wall-clock time gets redesigned around a single writer, a database constraint, or a logical sequence.</li>
 </ul>
-<div class="codeSample">// measuring elapsed time — the one correct way:
+<div class="codeSample">// measuring elapsed time, the one correct way:
 long t0 = System.nanoTime();
 doWork();
 long elapsedMs = (System.nanoTime() - t0) / 1_000_000;   // immune to NTP shenanigans
 
-// ordering chat messages — the one correct way:
+// ordering chat messages, the one correct way:
 //   messages(conversation_id, seq BIGINT, ...)  seq from the DB, not from clocks
 </div>
 <p>Full ordering-under-partition (vector clocks, consensus, Spanner's atomic clocks) is a rabbit hole with excellent books at the bottom; the working-senior 90% is these three rules applied without exception. They cost nothing and each prevents a bug that is miserable to reproduce, the worst kind.</p>`,

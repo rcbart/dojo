@@ -74,7 +74,7 @@ exs:[
 run:{call:'routeKey',cases:[
  {name:'a simple path',args:['GET','/users'],expect:'GET /users'},
  {name:'the query string is not part of the route',args:['GET','/users?active=1'],expect:'GET /users'},
- {name:'a trailing slash is normalised away',args:['GET','/users/'],expect:'GET /users'},
+ {name:'a trailing slash is normalized away',args:['GET','/users/'],expect:'GET /users'},
  {name:'the root path keeps its slash',args:['GET','/'],expect:'GET /'},
  {name:'the method is upper-cased',args:['post','/users'],expect:'POST /users'},
  {name:'a hash fragment never reaches the server, but is stripped anyway',args:['GET','/users#top'],expect:'GET /users'}]},
@@ -354,7 +354,7 @@ solution:`function respond(req) {
 }`,
 tests:[{d:'401 carries the challenge header',re:'www-authenticate'},{d:'distinguishes 403 from 401',re:'403'},{d:'rejects the wrong content type',re:'415'},{d:'bounds the body size',re:'413'},{d:'sets nosniff on every response',re:'x-content-type-options'}],
 behavior:`Six cases execute and two of them exist purely to pin the ORDER. The fourth has a body of 99999999 bytes and the wrong content type, and must return 415: you reject a payload you cannot parse before measuring it. The sixth has no credential, the wrong role, the wrong type and an enormous body, and must still return 401: authentication comes first, because everything after it is a statement about a caller you have not identified. A 401 without www-authenticate is also non-compliant, which is why that header is checked separately.`,
-hints:['Build the shared header object once and spread it into each response.','The order is authenticate, authorise, then validate the request itself.','The 401 is the only response without cache-control, so return it before adding that header.']}]}
+hints:['Build the shared header object once and spread it into each response.','The order is authenticate, authorize, then validate the request itself.','The 401 is the only response without cache-control, so return it before adding that header.']}]}
 ,
 
 {id:'jssec',title:'Security in JavaScript: injection, pollution and the supply chain',body:`

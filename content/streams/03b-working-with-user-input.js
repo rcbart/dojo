@@ -8,7 +8,7 @@ STREAMS.push({icon:'⌨️',title:'Working with User Input',blurb:'Scanner in de
 </ul>
 <div class="codeSample" data-hl>Scanner sc = new Scanner(System.in);
 System.out.print("Age: ");
-int age = sc.nextInt();          // user types "36⏎" — reads 36, LEAVES the ⏎
+int age = sc.nextInt();          // user types "36⏎", reads 36, LEAVES the ⏎
 System.out.print("Name: ");
 String name = sc.nextLine();     // consumes that leftover ⏎ → name is ""  ← THE TRAP
 
@@ -18,7 +18,7 @@ sc.nextLine();                   // swallow the ⏎
 String name2 = sc.nextLine();    // now actually waits for the name</div>
 <p>The second essential habit: <b>ask before you read</b>. Every <code>nextInt()</code> on non-numeric input throws <code>InputMismatchException</code>, and the bad token <i>stays in the stream</i>, so a naive retry loops forever on the same garbage. The professional pattern pairs <code>hasNextInt()</code> with an explicit discard:</p>
 <div class="codeSample" data-hl>while (!sc.hasNextInt()) {       // is the NEXT token an int?
-    sc.next();                   // no — throw the bad token away
+    sc.next();                   // no, throw the bad token away
     System.out.print("Numbers only, try again: ");
 }
 int value = sc.nextInt();        // guaranteed to succeed</div>
@@ -195,7 +195,7 @@ prompt:`Write <code>function parsePort(raw)</code> returning the port as a <b>nu
 starter:`function parsePort(raw) {\n  return null;\n}`,
 solution:`function parsePort(raw) {\n  const s = String(raw).trim();\n  if (!/^\\d+$/.test(s)) return null;      // whole string must be digits\n  const n = Number(s);\n  return n >= 1 && n <= 65535 ? n : null;   // and inside the valid range\n}`,
 tests:[{d:'the whole string is validated',re:'\\^\\\\d\\+\\$|\\^\\[0-9\\]\\+\\$'},{d:'input is trimmed',re:'trim'},{d:'the range is enforced',re:'65535'},{d:'failures return null',re:'return null'}],
-behavior:`Six cases execute. The "80a" case is the one that separates validation from parsing: parseInt("80a") returns 80 with no error, so a service configured from that input listens on a port nobody asked for. The anchored digit test rejects it before any conversion happens. The negative case shows why a range check is still needed after the pattern, and note that the pattern alone already excludes "-1", so the two checks overlap deliberately: each is correct on its own terms, and defence in depth costs one line.`,
+behavior:`Six cases execute. The "80a" case is the one that separates validation from parsing: parseInt("80a") returns 80 with no error, so a service configured from that input listens on a port nobody asked for. The anchored digit test rejects it before any conversion happens. The negative case shows why a range check is still needed after the pattern, and note that the pattern alone already excludes "-1", so the two checks overlap deliberately: each is correct on its own terms, and defense in depth costs one line.`,
 hints:['Test the pattern against the WHOLE string with ^ and $.','Trim before testing, or a trailing newline from a console read fails your check.','Range check after conversion: 0 and 70000 are both digits.']}]},
 
 {id:'inp4',title:'The interactive loop: build a REPL',body:`

@@ -55,9 +55,16 @@ def plan(items):
     return out
 
 
-def perm(n, ai, key, target):
-    """Index permutation: old option `ai` lands in slot `target`, the rest rotate."""
-    rest = [i for i in range(n) if i != ai]
+def perm(opts, ai, key, target):
+    """Index permutation placing option `ai` in slot `target`.
+
+    The distractors are put in a canonical order (sorted by their own text)
+    before the key-seeded rotation, so the result depends on the SET of options
+    rather than on their current arrangement. Without that, a second run rotates
+    them again: the answer position looks stable while the options keep moving
+    underneath it, which is not a fixed point and is easy to miss, because the
+    summary counts are identical either way."""
+    rest = sorted((i for i in range(len(opts)) if i != ai), key=lambda i: str(opts[i]))
     r = h(key) % len(rest)
     rest = rest[r:] + rest[:r]
     return rest[:target] + [ai] + rest[target:]
@@ -101,12 +108,16 @@ def main(mode):
         name, data = load(rel)
         qs = list(walk(data))
         movable = [q for q in qs if not skippable(q['options'])]
-        keys = [(str(q.get('q', '')) + '|' + str(q['options'][0]), len(q['options'])) for q in movable]
+        # Key on content that does not move. Including options[0] made the key
+        # change every time the options were reordered, so the plan differed on
+        # every run and the banks never settled.
+        keys = [(str(q.get('q', '')) + '|' + '|'.join(sorted(str(o) for o in q['options'])),
+                 len(q['options'])) for q in movable]
         targets = plan(keys)
         before = collections.Counter(q['answer'] for q in qs)
         for q, (key, _) in zip(movable, keys):
             t = targets[key]
-            reorder(q, perm(len(q['options']), q['answer'], key, t))
+            reorder(q, perm(q['options'], q['answer'], key, t))
             q['answer'] = t
         after = collections.Counter(q['answer'] for q in qs)
         grand.update(after)

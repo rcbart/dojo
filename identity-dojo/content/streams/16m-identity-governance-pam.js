@@ -37,7 +37,7 @@ plain-language description, when it was last used, and who else in the same job 
 data is the one addition that improves a review most</b>; "not used in 180 days" converts a judgement
 call into an obvious revoke.</p>
 <p><b>Wrong reviewer</b> is the second. A line manager knows whether someone still works for them; only
-the application owner knows what a given entitlement actually permits. Serious programmes run both
+the application owner knows what a given entitlement actually permits. Serious programs run both
 perspectives, on different populations.</p>
 <p><b>Revocations that never happen</b> is the third and most damaging. A campaign that produces a
 revoke list nobody executes is worse than no campaign, because it generates audit evidence of a control
@@ -69,7 +69,7 @@ hints:['The ternary operator condition ? a : b fits in one line.','Return "keep"
 <h4>Start with the naming problem</h4>
 <p>Governance is only as good as its vocabulary, and the vocabulary here is genuinely muddled. An
 <b>entitlement</b> is the atomic unit: one specific thing a person can do in one specific system. It
-might be an AD group, a database role, a SaaS licence tier, an application permission. A <b>role</b> is a
+might be an AD group, a database role, a SaaS license tier, an application permission. A <b>role</b> is a
 named bundle of entitlements. The distinction matters because reviews and conflict checks must run at
 the entitlement level: two harmless-looking roles can conflict through entitlements neither name
 reveals.</p>
@@ -85,7 +85,7 @@ role "Treasury Ops" -> {ap_pay,    bank_read}
 <b>anti-fraud and anti-error control</b>, and it comes from accounting long before it came from IT. The
 principle: no single person should be able to complete a transaction that moves value from beginning to
 end without a second pair of eyes.</p>
-<p>The canonical conflicts recur across every organisation:</p>
+<p>The canonical conflicts recur across every organization:</p>
 <ul>
 <li><b>Create vendor / pay vendor</b>: invent a supplier, invoice yourself, approve the payment.</li>
 <li><b>Amend payroll / approve payroll</b>: the same fraud with salaries.</li>
@@ -98,7 +98,7 @@ optional for whoever holds it.</li>
 the logs.</p>
 
 <h4>Preventive versus detective</h4>
-<p>You can enforce SoD at two moments, and mature programmes do both. <b>Preventive</b> is a check at
+<p>You can enforce SoD at two moments, and mature programs do both. <b>Preventive</b> is a check at
 request time: the grant is blocked before it exists, which is cheap and non-negotiable. <b>Detective</b>
 is a scan across current holdings, which catches everything preventive control missed: access granted
 directly in the target system, conflicts introduced by a new rule, or a role definition that quietly
@@ -180,7 +180,7 @@ will notice, is logged immutably, and is reviewed afterward regardless of outcom
 <b>tested</b>: an untested break-glass procedure is a comforting fiction, discovered to be broken at
 exactly the worst moment.</p>
 
-<h4>Where PAM programmes stall</h4>
+<h4>Where PAM programs stall</h4>
 <p><b>Admins route around it.</b> If JIT elevation takes twenty minutes to approve during an outage,
 people will keep a standing account "just in case", and you have built a control that is bypassed
 precisely when it matters. Fast paths for on-call, pre-approved for defined scenarios, are not a
@@ -251,7 +251,7 @@ that has not picked up the new value. The pattern that works is two valid creden
 
 <h4>Detection matters as much as storage</h4>
 <p>Assume some secret will leak anyway. Secret <b>scanning</b> in repositories and CI, distinctive
-<b>prefixes</b> on issued keys so scanners can recognise them, and push protection that rejects a commit
+<b>prefixes</b> on issued keys so scanners can recognize them, and push protection that rejects a commit
 before it lands, all shorten the interval between leak and response. Pair that with <b>usage
 anomaly</b> alerting (a database credential appearing from an unfamiliar network is a strong signal)
 and honeytoken credentials that exist only to be stolen and alert when used.</p>
@@ -345,8 +345,8 @@ solution:`function lifecycleAction(a) {
   if (a.daysSinceLastSeen >= a.dormantAfterDays) return "dormant";
   return "active";
 }`,
-tests:[{d:'the hold-versus-erasure conflict is handled first',re:'retain-pending-hold'},{d:'an erasure request is honoured',re:'deletionRequested'},{d:'the retention deadline deletes on its own',re:'deleteAfterDays'},{d:'dormancy is evaluated against its own threshold',re:'dormantAfterDays'}],
-behavior:`Six cases execute. The fifth is the one worth sitting with: a customer exercising a right to erasure while a legal hold is active is a genuine conflict between two obligations, and both obvious answers are wrong: ignoring the request breaches the right, destroying the record breaches the hold. The defensible outcome is to stop processing, mark the account and delete when the hold lifts, with the decision recorded. The third case is the one teams forget entirely: retention deadlines should delete accounts nobody asked about, because data you kept without a reason is the cheapest breach you will ever suffer. Note the ordering is the policy: reordering these five lines changes what your organisation promises.`,
+tests:[{d:'the hold-versus-erasure conflict is handled first',re:'retain-pending-hold'},{d:'an erasure request is honored',re:'deletionRequested'},{d:'the retention deadline deletes on its own',re:'deleteAfterDays'},{d:'dormancy is evaluated against its own threshold',re:'dormantAfterDays'}],
+behavior:`Six cases execute. The fifth is the one worth sitting with: a customer exercising a right to erasure while a legal hold is active is a genuine conflict between two obligations, and both obvious answers are wrong: ignoring the request breaches the right, destroying the record breaches the hold. The defensible outcome is to stop processing, mark the account and delete when the hold lifts, with the decision recorded. The third case is the one teams forget entirely: retention deadlines should delete accounts nobody asked about, because data you kept without a reason is the cheapest breach you will ever suffer. Note the ordering is the policy: reordering these five lines changes what your organization promises.`,
 hints:['Two flags interact, and their combination is a distinct outcome rather than either one alone.','Deletion has two independent triggers: someone asked, or the clock ran out.','Decide whether exactly at a threshold counts, then encode it: that boundary is a policy statement.']}},
 {id:'ig6',title:'Consent & privacy in CIAM',body:`
 <p>Consumer identity (CIAM) means holding real people's personal data, so <b>consent and privacy are first-class</b>, not an afterthought, and often legally required (GDPR, CCPA).</p>
@@ -363,14 +363,14 @@ hints:['Two flags interact, and their combination is a distinct outcome rather t
 <p>The same applies to withdrawal. Consent that cannot be revoked as easily as it was given is not valid consent under GDPR, and "as easily" is a design constraint: if opting in took one click, opting out cannot require an email to support. Revocation must also propagate (to the marketing platform, the analytics pipeline and every downstream copy), which is why consent belongs in a service other systems query, not in a flag each system caches.</p>
 
 <h4>Lawful basis, and why consent is often the wrong one</h4>
-<p>Consent is one of six lawful bases in GDPR, and frequently the weakest choice. Processing an order needs no consent; it is <b>contractual necessity</b>. Fraud prevention and security logging are usually <b>legitimate interests</b>. Asking for consent where another basis applies creates an obligation you cannot honour: if a user withdraws consent for something you must do anyway to run the service, you have promised something untrue. Map each purpose to its basis first, then ask for consent only where consent is genuinely the basis: typically marketing, optional personalisation and non-essential cookies.</p>
+<p>Consent is one of six lawful bases in GDPR, and frequently the weakest choice. Processing an order needs no consent; it is <b>contractual necessity</b>. Fraud prevention and security logging are usually <b>legitimate interests</b>. Asking for consent where another basis applies creates an obligation you cannot honor: if a user withdraws consent for something you must do anyway to run the service, you have promised something untrue. Map each purpose to its basis first, then ask for consent only where consent is genuinely the basis: typically marketing, optional personalization and non-essential cookies.</p>
 
 <h4>What data-subject rights mean for the identity store</h4>
 <ul>
 <li><b>Access and portability</b>: you must be able to export everything you hold about one person, which means knowing every store that keys on a user id, including logs and backups.</li>
 <li><b>Erasure</b>: genuinely hard, because deleting a user id from a relational store breaks referential integrity and audit records must survive. The usual answer is to delete or crypto-shred the personal data while retaining a pseudonymous id for the records that must remain, and to document that decision.</li>
 <li><b>Correction</b>: including in the downstream systems provisioned from your directory.</li>
-<li><b>Identity for the request itself</b>: a subject-access request is a beautiful phishing target, so verifying the requester is part of honouring the right.</li>
+<li><b>Identity for the request itself</b>: a subject-access request is a beautiful phishing target, so verifying the requester is part of honoring the right.</li>
 </ul>
 <p><b>Privacy by design</b>, restated as engineering: collect the minimum, separate identifiers from attributes, set retention per purpose and enforce it automatically, encrypt personal data at rest, and make every one of those choices visible in the data model rather than in a policy document nobody reads.</p>`,
 docs:[['GDPR consent','https://gdpr.eu/gdpr-consent-requirements/'],['Privacy by design','https://en.wikipedia.org/wiki/Privacy_by_design']],
@@ -401,7 +401,7 @@ hints:['Three conditions joined with &&.','A pre-ticked box is not explicit cons
 <p>Two things distinguish a usable trail from a pile of lines. <b>Events are structured</b>, with stable field names, so a query for "every privilege change by this admin" is a filter rather than a regular expression. And <b>failures are recorded as carefully as successes</b>: a denied access is often the more interesting event, and a trail that only shows what worked cannot show an attack that did not.</p>
 
 <h4>What must never appear in it</h4>
-<p>Passwords, tokens, session identifiers, MFA codes, private keys, full card numbers, and the contents of assertions. This matters more in identity than elsewhere, because the audit pipeline is widely readable by design (SOC analysts, auditors, on-call engineers), so a token in a log has effectively been published. Log identifiers and hashes instead: a token's <code>jti</code>, a key's <code>kid</code>, the last four digits, a salted hash of an email where correlation is needed without exposure. And treat the pipeline as processing personal data, because names, addresses and behaviour patterns are exactly what identity events contain.</p>
+<p>Passwords, tokens, session identifiers, MFA codes, private keys, full card numbers, and the contents of assertions. This matters more in identity than elsewhere, because the audit pipeline is widely readable by design (SOC analysts, auditors, on-call engineers), so a token in a log has effectively been published. Log identifiers and hashes instead: a token's <code>jti</code>, a key's <code>kid</code>, the last four digits, a salted hash of an email where correlation is needed without exposure. And treat the pipeline as processing personal data, because names, addresses and behavior patterns are exactly what identity events contain.</p>
 
 <h4>From evidence to control</h4>
 <p>The reason to invest here is that in identity the audit trail is not documentation of the controls; it <i>is</i> several of them. Access reviews are evidenced by it. Deprovisioning is proved by it. "Least privilege" is measurable only if you can see what was actually used, which is what makes usage-derived recommendations possible. Detection (impossible travel, a burst of failures, a new admin, a first-time-seen client) reads the same stream. And the real test of the whole thing is a rehearsal: pick a real question ("which accounts did this compromised admin touch on Tuesday?") and try to answer it from the logs alone. Most teams discover a missing field the first time, which is much better than discovering it during an incident.</p>`,
@@ -442,7 +442,7 @@ joins via HR, leaves via HR       created ad hoc by whoever needed it
 has a manager                     has an owner who left in 2021
 MFA                               a static secret in a config file
 password expires                  the credential never expires
-access reviewed quarterly         never reviewed — reviewers do not know
+access reviewed quarterly         never reviewed, reviewers do not know
                                     what it does or dare disable it
 one person, one account           shared across teams and environments
 leaves when the person leaves     outlives every person who touched it</div>
@@ -480,9 +480,9 @@ NHI unused for ninety days is a candidate for removal and the easiest win availa
 </ul>
 
 <h4>The reviewer's problem, and how to fix it</h4>
-<p>Human access reviews work because a manager recognises their reports. Nobody recognises
+<p>Human access reviews work because a manager recognizes their reports. Nobody recognizes
 <code>svc-etl-prod-3</code>. Reviewers therefore approve everything, and the review becomes a
-compliance artefact with no security value.</p>
+compliance artifact with no security value.</p>
 <p>The fix is not more reviews but <b>better evidence</b>: show the reviewer what the identity did, when
 it last ran, what it accessed and who owns it. Given that, a reviewer can make a real decision. Given a
 list of names, they cannot, and asking anyway trains people that reviews are theatre.</p>

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>authlint · paste any artifact from an authentication flow, decode it, see what is wrong</title>
+<meta name="description" content="Paste a JWT, a SAML response or assertion, an OpenID Connect discovery document, a JWKS or an OAuth authorization request. authlint works out which it is, decodes it and tells you what is wrong, why it matters and what to change. One HTML file, no dependencies, nothing leaves your browser.">
+<meta name="color-scheme" content="light">
+<!-- The privacy claim, enforced by the browser rather than asserted by the author.
+     default-src 'none' means no network destination of any kind is permitted:
+     no fetch, no XHR, no beacon, no websocket, no image, no font, no worker.
+     If a future edit introduced one, it would fail here instead of leaking.
+     form-action 'none' stops any submission, base-uri 'none' stops a <base>
+     rewrite. frame-ancestors cannot be set from a meta tag, so there is a
+     script guard for that further down. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src 'none'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'; manifest-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://roniam.dev/authlint/">
+<meta property="og:title" content="authlint">
+<meta property="og:description" content="Paste any artifact from an authentication flow, decode it, and see what is wrong with it. Nothing leaves your browser.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://roniam.dev/authlint/">
+<meta property="og:image" content="https://roniam.dev/authlint/authlint-og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://roniam.dev/authlint/authlint-og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%236d28d9'/%3E%3Cpath d='M9 17.5l4.5 4.5L23 12' stroke='%23fff' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>@@STYLES@@</style>
+</head>
+<body>
+
+<a class="skip" href="#in">Skip to the input</a>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+        <rect width="32" height="32" rx="7" fill="currentColor"/>
+        <path d="M9 17.5l4.5 4.5L23 12" stroke="#fff" stroke-width="3" fill="none"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>auth<b>lint</b></span>
+    </div>
+    <p class="tag">Paste any artifact from an authentication flow, decode it, and see what is wrong with it.</p>
+    <p class="privacy">
+      <b>Nothing leaves your browser.</b> No network calls, no storage, no analytics, and a
+      Content-Security-Policy of <code>default-src 'none'</code> so the browser enforces that
+      rather than taking my word for it. Your input never enters the URL, so it never reaches
+      your history. Spellcheck and grammar extensions are opted out, because those read text
+      boxes and send what they find upstream. The box is emptied when you leave the page.
+      <a href="https://github.com/rcbart/authlint/blob/main/SECURITY.md" rel="noopener noreferrer external">How this is verified</a>.
+    </p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="io">
+    <div class="lbl">
+      <label for="in">Paste anything below</label>
+      <div class="samples">
+        <span>or try a broken one:</span>
+        <button type="button" data-sample="jwt">JWT</button>
+        <button type="button" data-sample="discovery">discovery</button>
+        <button type="button" data-sample="authz">authorization request</button>
+        <button type="button" data-sample="jwks">JWKS</button>
+        <button type="button" data-sample="saml">SAML response</button>
+        <button type="button" id="clear" class="ghost">clear</button>
+      </div>
+    </div>
+    <textarea id="in" spellcheck="false" autocomplete="off" autocapitalize="off"
+      autocorrect="off" data-gramm="false" data-gramm_editor="false"
+      data-enable-grammarly="false" data-1p-ignore data-lpignore="true" data-form-type="other"
+      placeholder="A JWT, an OpenID Connect discovery document, a JWKS, an OAuth authorization request or redirect URL, a SAML response, or SAML metadata. authlint works out which."></textarea>
+    <div id="summary" class="summary"></div>
+  </section>
+
+  <div id="out" class="out"></div>
+
+  <section class="about">
+    <h2>What it checks</h2>
+    <div class="grid">
+      <div>
+        <h3>JWTs and JWKS</h3>
+        <p>Algorithm confusion and <code>alg: none</code>. Header fields that ask the verifier to
+        fetch a key from somewhere the token chose. Lifetimes measured in weeks. Millisecond
+        timestamps that push expiry into the next millennium. Personal data riding in a payload that
+        is base64, not encryption. Tokens that will not survive a header limit once one user
+        accumulates enough groups. Symmetric keys published in a document meant to be public.</p>
+      </div>
+      <div>
+        <h3>OpenID Connect and OAuth</h3>
+        <p>Discovery documents advertising no PKCE, implicit flows nobody remembers enabling, and
+        unsigned ID tokens. Authorization requests missing <code>state</code> or a challenge, with a
+        wildcard redirect, or carrying a client secret through the browser. Trailing-slash issuer
+        mismatches, which cost more debugging hours than any other single character in this field.</p>
+      </div>
+      <div>
+        <h3>SAML</h3>
+        <p>Whether the assertion is signed or only the response is, which is the difference between
+        a working federation and signature wrapping. Multiple assertions and duplicate IDs. Missing
+        audience restrictions, four-hour validity windows, SHA-1 digests, email addresses used as
+        durable identifiers, and certificates that expire the weekend nobody is on call.</p>
+      </div>
+    </div>
+
+    <h2>What it does not do</h2>
+    <p>It does not verify signatures. That needs the key, and fetching keys means network calls,
+    which would break the one promise this tool makes. Everything here is about what a token says
+    and how it is put together, never about whether it is genuine. Verify in your own code, with
+    the algorithm pinned, against a key set you fetched yourself.</p>
+
+    <h2>Why it exists</h2>
+    <p>Every tool of this kind is run by a vendor, on their servers, and people paste production
+    tokens into them all day. authlint is one static file with no build-time dependencies and no
+    runtime ones. Save it, open it on a machine with the network unplugged, and it works exactly
+    the same. <a href="https://github.com/rcbart/authlint" rel="noopener noreferrer external">The source is on GitHub</a> and it is
+    short enough to read before you trust it. There is a
+    <a href="https://github.com/rcbart/authlint/blob/main/USAGE.md" rel="noopener noreferrer external">full guide</a> covering every
+    input type, what each severity means, and how to use it during an incident.</p>
+
+    <h2>The long version</h2>
+    <p>If a finding here is the first time you have met the idea behind it, the
+    <a href="https://roniam.dev/identity/" rel="noopener noreferrer">Identity Dojo</a> is the same material at length:
+    OAuth and OIDC flows, SAML and web SSO, tokens and JOSE, and the attacks that made each of
+    these checks necessary. Free, no accounts, same policy on tracking.</p>
+  </section>
+</main>
+
+<footer class="foot wrap">
+  <p>Built by <a href="https://roniam.dev/" rel="noopener noreferrer">Ron Bar-Tor</a>, who has spent a long time in the
+  identity domain and got tired of explaining the same twelve findings.
+  <a href="https://github.com/rcbart/authlint/issues/new" rel="noopener noreferrer external">Something wrong, or a check missing?</a></p>
+
+  <p class="terms"><b>No warranty.</b> authlint is free software, provided as-is under the
+  <a href="https://github.com/rcbart/authlint/blob/main/LICENSE" rel="noopener noreferrer external">MIT license</a>.
+  It reports what an artifact says and how it is assembled. It does not verify signatures, it cannot
+  see your verification code, and <b>a result with no findings is not a security assessment</b> or an
+  assurance that anything is safe. Use it only on systems you are authorized to test. Decisions you
+  make from its output are yours, and the author accepts no liability for them.</p>
+</footer>
+
+<script>@@SCRIPT@@</script>
+</body>
+</html>

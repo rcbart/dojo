@@ -28,7 +28,7 @@ project can compile in your terminal and fail in your IDE while both claim to be
 
 <h4>Verifying the setup actually works</h4>
 <div class="codeSample">java -version      # the runtime you will run on
-javac -version     # the compiler — a JRE-only install has no javac at all
+javac -version     # the compiler, a JRE-only install has no javac at all
 echo $JAVA_HOME    # what Maven, Gradle and your IDE will actually use
 jshell             # if this opens, the toolchain is genuinely working</div>
 <p>Those four lines catch nearly every setup problem: a JRE where you wanted a JDK, a
@@ -133,10 +133,10 @@ solution:`public class Greeter {
 </ul>
 <div class="codeSample" data-hl>int x;
 // System.out.println(x);     // compile error: x might not have been initialized
-int y = 42;                   // declare + initialize — the habit
+int y = 42;                   // declare + initialize, the habit
 
 class Session {
-    List&lt;String&gt; events;                          // silently null — NPE waiting
+    List&lt;String&gt; events;                          // silently null, NPE waiting
     List&lt;String&gt; safe = new ArrayList&lt;&gt;();        // initialized at declaration
 }</div>
 <p>Every variable also has a <b>scope</b>, the region of code where its name exists: the block it was declared in, and nothing more. Declare variables in the <i>smallest scope that works</i> and as close to first use as possible; a variable alive for 300 lines is 300 lines of "what's its value now?".</p>
@@ -144,9 +144,9 @@ class Session {
 <div class="codeSample" data-hl>int a = 7;
 double d = a;          // widening: automatic
 int b = (int) 3.99;    // narrowing: explicit cast, b == 3 (truncates!)
-var list = "1,2,3";    // var infers String — still static typing
+var list = "1,2,3";    // var infers String, still static typing
 int n = Integer.parseInt("42");
-double half = 1 / 2;     // 0.0 — integer division happens FIRST
+double half = 1 / 2;     // 0.0, integer division happens FIRST
 double half2 = 1 / 2.0;  // 0.5</div>
 <p>Two classic traps: integer division truncates, and <code>==</code> on objects compares references; use <code>.equals()</code> for value equality (especially Strings).</p>`,
 docs:[['Primitive Data Types, Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html'],['Using var, dev.java','https://dev.java/learn/language-basics/using-var/']],
@@ -193,7 +193,7 @@ solution:`public class Conversions {
 <div class="codeSample">// safe: if s is null the left side is false and s.length() NEVER runs
 if (s != null &amp;&amp; s.length() &gt; 3) { ... }
 
-// crash: both sides always evaluated — &amp; and | are the non-short-circuit twins
+// crash: both sides always evaluated, &amp; and | are the non-short-circuit twins
 if (s != null &amp; s.length() &gt; 3) { ... }   // NullPointerException when s == null</div>
 <p><b>Precedence</b>: <code>!</code> binds tightest, then <code>&amp;&amp;</code>, then <code>||</code>, so <code>a || b &amp;&amp; c</code> means <code>a || (b &amp;&amp; c)</code>. When a condition needs a re-read, add the parentheses; the compiler doesn't need them, colleagues do.</p>
 <p><b>De Morgan's laws</b> are the rewrite rules for pushing <code>!</code> through: <code>!(a &amp;&amp; b) == !a || !b</code> and <code>!(a || b) == !a &amp;&amp; !b</code>. They turn "not (in range)" into "below or above", often the version that reads like the requirement. And one style rule that separates juniors from seniors: <code>if (x) return true; else return false;</code> is just <code>return x;</code>. Boolean expressions are values; return them directly.</p>`,
@@ -265,8 +265,8 @@ Integer maybe = null;        // a reference can be null ("no box at all")...
 int boom = maybe;            // ...UNBOXING null → NullPointerException!  trap #1
 
 Integer a = 1000, b = 1000;
-a == b;                      // false! — two different boxes (compares remotes)  trap #2
-a.equals(b);                 // true — compares the numbers inside the boxes</div>
+a == b;                      // false!, two different boxes (compares remotes)  trap #2
+a.equals(b);                 // true, compares the numbers inside the boxes</div>
 <p>The two traps deserve names. <b>Null unboxing</b>: a wrapper variable can be <code>null</code>, and unwrapping "no box" explodes, so check for null before treating a wrapper as a primitive. <b>Wrapper <code>==</code></b>: it compares references, not values (small values -128..127 are cached and can coincidentally match, which makes the bug worse: it "works" in tests and fails with real data). Rule: <b>wrappers are compared with <code>.equals()</code>, always.</b></p>
 <p>When do you choose which? Primitives for arithmetic, counters, and fields that always have a value; they are faster and can never be null. Wrappers when an object is required: inside collections and generics (<code>List&lt;Integer&gt;</code>, <code>Map&lt;String, Double&gt;</code>), or when "no value yet" is a legitimate state. Autoboxing makes the boundary almost invisible; these two traps are the only places the seam shows.</p>`,
 docs:[['Autoboxing (Oracle tutorial)','https://docs.oracle.com/javase/tutorial/java/data/autoboxing.html'],['Numbers classes (wrappers) (Oracle)','https://docs.oracle.com/javase/tutorial/java/data/numberclasses.html'],['Integer cache (JLS 5.1.7)','https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.7']],
@@ -322,11 +322,11 @@ hints:['sum needs no boxing code at all: write it as if the list held ints; that
 <p>Branching, from classic to modern:</p>
 <div class="codeSample" data-hl>if (score &gt;= 90) grade = "A";
 else if (score &gt;= 80) grade = "B";
-else grade = "F";                          // classic chain — order matters!
+else grade = "F";                          // classic chain, order matters!
 
 String sign = n &lt; 0 ? "negative" : "non-negative";   // ternary: small choices only
 
-// guard clauses: handle edge cases first, exit early — flat beats nested
+// guard clauses: handle edge cases first, exit early, flat beats nested
 if (input == null) throw new IllegalArgumentException("input required");
 if (input.isBlank()) return DEFAULT;
 // ...happy path continues un-indented
@@ -352,7 +352,7 @@ which is almost never what anyone means and is a genuine source of bugs. The arr
 <div class="codeSample">String label = switch (status) {
     case NEW, PENDING -&gt; "waiting";
     case SHIPPED      -&gt; "on its way";
-    case CANCELLED    -&gt; "cancelled";
+    case CANCELLED    -&gt; "canceled";
 };   // no break, no fall-through, and the compiler checks every case is covered</div>
 <p>That last property is the valuable one. Over an <code>enum</code> or a sealed type the compiler requires
 exhaustiveness, so adding a new constant turns every switch that does not handle it into a compile error:
@@ -590,14 +590,14 @@ solution:`public class Grid {
 {id:'fun2d',title:'Iterating collections: Iterator → for-each → forEach',body:`
 <p>🌱 <b>Starting from zero:</b> programs constantly work with <b>groups</b> of things: all the players, every line of a file, each item in a cart. Java calls these groups <i>collections</i> (a fuller tour comes in two lessons; for now: a List is simply an ordered bunch of values). The everyday need is to <b>visit every item and do something to it</b>, like going down a checklist. This lesson shows the three ways Java lets you walk a collection, from the old manual way to the modern one-liner.</p>
 <p>Three generations of the same job:</p>
-<div class="codeSample" data-hl>// 1) explicit Iterator — verbose, but the ONLY safe way to remove while iterating
+<div class="codeSample" data-hl>// 1) explicit Iterator, verbose, but the ONLY safe way to remove while iterating
 Iterator&lt;String&gt; it = names.iterator();
 while (it.hasNext()) {
     String s = it.next();
     if (s.isBlank()) it.remove();       // list.remove(s) here would throw CME!
 }
 
-// 2) enhanced for (Java 5) — the everyday workhorse
+// 2) enhanced for (Java 5), the everyday workhorse
 for (String s : names) use(s);
 for (Map.Entry&lt;String, Double&gt; e : prices.entrySet())
     System.out.println(e.getKey() + " = " + e.getValue());
@@ -629,7 +629,7 @@ need.</p>
 <p><code>ConcurrentModificationException</code> is not about threads, despite the name. A single thread
 removing from a list inside its own enhanced <code>for</code> triggers it, because the iterator holds a
 modification count and checks it on every step. It is a <b>fail-fast</b> design: the alternative is
-undefined behaviour that silently skips elements. The fixes, in order of preference:
+undefined behavior that silently skips elements. The fixes, in order of preference:
 <code>list.removeIf(predicate)</code>, an explicit <code>Iterator</code> with
 <code>iterator.remove()</code>, or building a new collection and replacing the old one.</p>`,
 docs:[['The Collection interface & iterators, Oracle','https://docs.oracle.com/javase/tutorial/collections/interfaces/collection.html'],['Iterable.forEach, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html']],
@@ -753,7 +753,7 @@ shape and only the meaning differs, two well-named methods beat one clever name.
 <p>An instance method has a <code>this</code>; a static one does not. Everything else follows. A static
 method cannot read instance fields because there is no instance to read them from, which is why the
 compiler rejects it rather than guessing. Utility functions that depend only on their arguments are
-naturally static (<code>Math.max</code>, <code>List.of</code>), and anything that expresses the behaviour
+naturally static (<code>Math.max</code>, <code>List.of</code>), and anything that expresses the behavior
 of one object should be an instance method.</p>
 <p>The trap is <b>static mutable state</b>: a static field is shared by everything in the process, so it is
 a global variable with better manners, and under concurrency it needs the same care as any other shared
@@ -815,9 +815,9 @@ solution:`public class Temperature {
     // 2) NO-ARG (explicit): sensible defaults
     public Account() {
         this("unknown", 0);              // 4) CHAINING: this(...) reuses another
-    }                                    //    constructor — must be the FIRST line
+    }                                    //    constructor, must be the FIRST line
 
-    // 3) PARAMETERIZED: the workhorse — validate here!
+    // 3) PARAMETERIZED: the workhorse, validate here!
     public Account(String owner, long cents) {
         if (cents &lt; 0) throw new IllegalArgumentException("negative balance");
         this.owner = owner;              // this. disambiguates field from param
@@ -830,7 +830,7 @@ solution:`public class Temperature {
     }
 }
 
-// 6) PRIVATE constructor: nobody may 'new' this — used for
+// 6) PRIVATE constructor: nobody may 'new' this, used for
 class Ids {
     private Ids() {}                             // utility class (all static)
     static String next() { return java.util.UUID.randomUUID().toString(); }
@@ -970,7 +970,7 @@ class Duration2 {
 <p>🌱 <b>Starting from zero:</b> think of a vending machine. You interact with buttons and a coin slot; you cannot reach inside and rearrange the cans, and that restriction is exactly why the machine stays reliable. <b>Encapsulation</b> is building your objects the same way: the data inside is off-limits (private), and the only way in is through the buttons the class chooses to offer (its methods), each of which can refuse nonsense. It is the single most important habit in object-oriented programming, and this lesson shows how Java enforces it.</p>
 <p>Encapsulation = fields are <code>private</code>; the class guards its own invariants through methods. Nobody outside can put the object into an invalid state.</p>
 <div class="codeSample" data-hl>public class BankAccount {
-    private long balanceCents;   // never negative — the class enforces it
+    private long balanceCents;   // never negative, the class enforces it
 
     public void deposit(long cents) {
         if (cents &lt;= 0) throw new IllegalArgumentException("deposit must be positive");
@@ -1136,7 +1136,7 @@ s.area();                  // runtime dispatch → Circle.area()</div>
 <div class="codeSample" data-hl>Shape[] shapes = { new Circle(2), new Rectangle(3, 4), new Circle(1) };
 double total = 0;
 for (Shape s : shapes) {
-    total += s.area();     // SAME line of code — three different methods run
+    total += s.area();     // SAME line of code, three different methods run
 }</div>
 <p>That loop knows nothing about circles or rectangles, and that ignorance is the feature. Add a <code>Triangle implements Shape</code> tomorrow and the loop handles it <i>without being touched</i>: behavior was extended without modifying existing code (you'll meet this again as the open/closed principle, and it's why <code>totalArea(Shape[])</code> in the exercise never needs an <code>if (s instanceof Circle)</code> chain: the dispatch IS the branching). The alternative, a switch over types, must be found and edited everywhere, every time a type is added.</p>
 <p>One disambiguation, since the word gets overloaded (pun intended): what this lesson shows is <b>subtype polymorphism</b>, the "real" one people mean by default. Java has two cousins: <b>overloading</b> (same method name, different parameter lists, resolved by the <i>compiler</i> from the declared argument types, no runtime lookup) and <b>generics</b> (<code>List&lt;T&gt;</code>: one class parameterized over many types, coming up in the generics lessons). Keeping the three apart is a classic interview question and an everyday reading skill.</p>
@@ -1393,7 +1393,7 @@ BigDecimal qty   = BigDecimal.valueOf(3);
 BigDecimal net   = price.multiply(qty);                          // 59.97
 BigDecimal vat   = net.multiply(new BigDecimal("0.19"))
                       .setScale(2, RoundingMode.HALF_EVEN);      // 11.39
-net.add(vat);            // ⚠ result thrown away — BigDecimal is immutable
+net.add(vat);            // ⚠ result thrown away, BigDecimal is immutable
 BigDecimal gross = net.add(vat);                                 // 71.36</div>
 
 <h4>Scale is part of the value, and it propagates</h4>
@@ -1525,7 +1525,7 @@ names.sort(new Comparator&lt;String&gt;() {
     }
 });
 
-// same thing as a lambda — functional interface, one method
+// same thing as a lambda, functional interface, one method
 names.sort((a, b) -&gt; Integer.compare(a.length(), b.length()));</div>
 <p><b>Capture rule</b>: local and anonymous classes (and lambdas) can only read local variables that are <i>effectively final</i>, assigned once. The workaround for a mutable counter is a one-element array or <code>AtomicInteger</code>; the better fix is usually restructuring.</p>
 
@@ -1541,7 +1541,7 @@ instance.</b> A static nested class is just a namespaced class with no hidden st
 
 <h4>Anonymous classes versus lambdas</h4>
 <p>Since lambdas arrived, an anonymous class is the right choice in exactly three situations: the interface
-has more than one abstract method, you need instance state or an initialiser, or you want a real class name
+has more than one abstract method, you need instance state or an initializer, or you want a real class name
 in the stack trace. Otherwise a lambda is shorter, cheaper and does not shadow <code>this</code>:
 inside an anonymous class <code>this</code> is the anonymous instance, while inside a lambda it is the
 enclosing object, and that difference has produced a great deal of confusion.</p>
@@ -1799,8 +1799,8 @@ public class FileStats {
 <p><b>How a method call works under the hood.</b> Every time you call a method, the JVM <b>pushes a new frame</b> onto the current thread&#8217;s stack. That frame holds the method&#8217;s <b>local variable array</b> (its parameters and locals) and an <b>operand stack</b> (a scratch workspace the bytecode uses to compute expressions). When the method returns, its frame is <b>popped</b> and its locals vanish instantly. This is why locals are cheap and thread-safe: each call has its own frame.</p>
 <div class="codeSample" data-hl>int total = sum(2, 3);            // pushes a frame for sum(): locals a=2, b=3
 
-static int sum(int a, int b) {    // a, b live in THIS frame — on the stack
-    int r = a + b;                // r is a local — stack
+static int sum(int a, int b) {    // a, b live in THIS frame, on the stack
+    int r = a + b;                // r is a local, stack
     int[] data = new int[3];      // the variable 'data' (a reference) is on the stack,
                                   // but the array OBJECT it points to lives on the HEAP
     return r;                     // frame pops; 'data' is now unreachable -> GC reclaims it later

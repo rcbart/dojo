@@ -35,3 +35,27 @@ const DOJO_GLOSS_DOMAINS = [
   'Service-to-Service & Zero Trust',
   'PKI & Certificates'
 ];
+
+/* The recommended route. Ordered the way the course is: every protocol arrives
+   after the problem it exists to solve, so OAuth is obvious when you reach it
+   rather than four endpoints to memorize. Without this the shared engine falls
+   back to Dev Dojo's Java route. */
+const DOJO_PATH_INTRO = 'covers a field that is wide and full of sharp edges, so this is the order I would teach it in. Concepts first, protocols second, operations last, because a protocol you meet before its problem is just a list of steps. Jump around once the foundations are in, this is a suggestion, not a cage.';
+const DOJO_PATH = [
+  ['\u2B1C White','The vocabulary, and what a token actually is',
+   'Start with <b>Identity Foundations</b>: authentication versus authorization, what a token physically is, sessions versus tokens, and what that choice costs you in production. Skim the <b>Glossary</b> as you go. Nothing later makes sense without this stream, and most confusion in this field is vocabulary confusion.'],
+  ['\uD83D\uDFE1 Yellow','Staying logged in, safely',
+   'Take <b>Sessions, Cookies &amp; Web Login Security</b>: cookie flags, CSRF, fixation, token storage, and why logout is harder than it looks. This is the browser plumbing every protocol later rides on top of.'],
+  ['\uD83D\uDFE0 Orange','Proving who you are',
+   'Work through <b>Authentication Methods &amp; MFA</b>: passwords done right, the three factors, TOTP, then passkeys and the WebAuthn ceremonies in depth. Finish with assurance levels and account recovery, which is where most real breaches actually start.'],
+  ['\uD83D\uDFE2 Green','Deciding what people may do',
+   'Do <b>Authorization Models</b> end to end: ACLs to RBAC, then ABAC, ReBAC and policy engines, PDP/PEP, and the data-level check that actually matters. Authorization is the half of this field that gets least attention and causes most incidents.'],
+  ['\uD83D\uDD35 Blue','The protocols',
+   'Now <b>OAuth 2.0 &amp; OpenID Connect</b>: the roles, the authorization code flow, PKCE, refresh tokens, discovery, and choosing a flow. Then <b>OAuth, JWT &amp; JOSE</b> for what is inside the tokens and how a verifier is supposed to check them. Paste real artifacts into <b>authlint</b> as you go.'],
+  ['\uD83D\uDFE3 Purple','The enterprise, which is where the money is',
+   'Take <b>SAML 2.0 &amp; Web SSO</b>, <b>Enterprise Identity &amp; Directories</b> (LDAP, Active Directory, Kerberos, SCIM), and <b>PKI &amp; Certificate Management</b>. Older, still everywhere, and the reason most migrations are hard.'],
+  ['\uD83D\uDFE4 Brown','Machines, and attackers',
+   'Do <b>Service-to-Service Authorization &amp; SPIFFE</b> for mTLS, workload identity and token exchange, then <b>Advanced OAuth 2.0 &amp; OIDC Threats</b>: introspection, DPoP, PAR, FAPI, the attack catalog, and refresh-token reuse detection. Add <b>Identity Governance &amp; Privileged Access</b> for the reviews and the non-human identities nobody governs.'],
+  ['\u26AB Black','Running it at 3am',
+   'Finish with <b>Running Identity</b>: incident response, migrating an estate without an outage, break-glass when the IdP is the blast radius, what to log and what never to log, and a systematic method for diagnosing failures. Then prove it in the <b>Identity Capstone</b>. This stream is the difference between knowing the protocols and being trusted with them.'],
+];

@@ -232,7 +232,7 @@ hints:['Declare the cache and the counter in makeSquarer, before the inner funct
 
 {id:'js16',title:'this: five rules, in order',body:`
 <p><code>this</code> is decided <b>at call time</b>, by <i>how</i> the function was called, not where it
-was written. Once you know the five rules and their precedence, the behaviour becomes entirely
+was written. Once you know the five rules and their precedence, the behavior becomes entirely
 predictable.</p>
 
 <div class="codeSample" data-hl>1. new binding        new Fn()          this = the new object
@@ -362,7 +362,7 @@ a closure, or write the loop.</p>
 
 <h4>The depth limit is real</h4>
 <p>JavaScript engines allow somewhere around 10,000 frames; the exact number varies by engine, platform
-and frame size, so never depend on it. Tail-call optimisation is in the specification and, in practice,
+and frame size, so never depend on it. Tail-call optimization is in the specification and, in practice,
 implemented only by Safari, so <b>you cannot rely on deep recursion in JavaScript at all</b>. When depth
 is genuinely unbounded (an untrusted directory tree, arbitrary nested JSON), convert to an iterative
 version with an explicit array as the stack.</p>

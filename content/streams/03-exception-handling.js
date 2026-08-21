@@ -7,7 +7,7 @@ STREAMS.push({icon:'🧯',title:'Exception Handling',blurb:'try/catch to custom 
 } catch (NumberFormatException e) {
     System.err.println("Not a number: " + e.getMessage());
 } finally {
-    System.out.println("always runs");     // cleanup — even after a throw
+    System.out.println("always runs");     // cleanup, even after a throw
 }</div>
 <p>Catch the <i>most specific</i> type you can handle. Catching bare <code>Exception</code> hides bugs.</p>
 
@@ -84,7 +84,7 @@ investigation. State what was expected, what arrived, and, where it helps, which
 so a message quoting a password or a token has just published it.</p>
 
 <h4>Wrapping: always pass the cause</h4>
-<div class="codeSample" data-hl>// throws away the evidence — the stack trace stops here
+<div class="codeSample" data-hl>// throws away the evidence, the stack trace stops here
 catch (SQLException e) { throw new DataAccessException("query failed"); }
 
 // preserves the chain: "Caused by: SQLException: ..." survives
@@ -161,7 +161,7 @@ public class Wallet {
 <div class="codeSample" data-hl>try (var reader = Files.newBufferedReader(path);
      var writer = Files.newBufferedWriter(out)) {
     writer.write(reader.readLine());
-}   // both closed here, guaranteed — even on exception
+}   // both closed here, guaranteed, even on exception
 
 class Session implements AutoCloseable {
     @Override public void close() { System.out.println("closed"); }
@@ -180,7 +180,7 @@ class Session implements AutoCloseable {
 <li><b>Closing is not flushing on failure.</b> Closing a buffered writer flushes it, so a partial write can reach disk even on the exception path. If a file must be all-or-nothing, write to a temporary file and rename.</li>
 </ul>
 
-<h4>Where this generalises</h4>
+<h4>Where this generalizes</h4>
 <p>Every long-lived scarce thing has this shape: file handles, sockets, database connections, locks, thread pools, tracing spans. The failure mode is always the same: a path that skips the release, invisible at low volume, fatal under load as the pool exhausts. Connection leaks in particular usually trace to a connection obtained outside a try-with-resources and returned only on the happy path. When you see <code>Timeout waiting for connection from pool</code>, this construct is what was missing.</p>`,
 docs:[['try-with-resources, Oracle','https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html'],['AutoCloseable, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html']],
 ex:{title:'An auto-closing resource',

@@ -19,7 +19,7 @@ URIError        bad encodeURI / decodeURI input
 AggregateError  several at once - from Promise.any</div>
 <p>Reading the <i>type</i> first is a habit worth forming. <code>TypeError: cannot read properties of
 undefined</code> means something you assumed existed did not; <code>ReferenceError</code> means a name is
-misspelt or not yet initialised. They point at different mistakes.</p>
+misspelled or not yet initialized. They point at different mistakes.</p>
 
 <h4>Always throw an <code>Error</code></h4>
 <div class="codeSample" data-hl>throw "not found";              // legal, and it costs you the stack trace,
@@ -60,18 +60,18 @@ docs:[['MDN (Error)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Re
 ex:{title:'Diagnose from the error type',diff:'easy',lang:'js',
 run:{call:'diagnose',cases:[
  {name:'a TypeError points at a wrong assumption',args:['TypeError'],expect:'something you assumed existed did not'},
- {name:'a ReferenceError points at a name',args:['ReferenceError'],expect:'a name is misspelt or not yet initialised'},
+ {name:'a ReferenceError points at a name',args:['ReferenceError'],expect:'a name is misspelled or not yet initialized'},
  {name:'a SyntaxError points at unparseable input',args:['SyntaxError'],expect:'the text could not be parsed'},
  {name:'a RangeError usually means runaway recursion',args:['RangeError'],expect:'a value is out of range, or recursion ran away'},
  {name:'anything else needs reading',args:['CustomError'],expect:'read the message and the stack'}]},
-prompt:`Write <code>function diagnose(errorName)</code> mapping a built-in error name to what it tells you: <code>"TypeError"</code>&rarr;<code>"something you assumed existed did not"</code>; <code>"ReferenceError"</code>&rarr;<code>"a name is misspelt or not yet initialised"</code>; <code>"SyntaxError"</code>&rarr;<code>"the text could not be parsed"</code>; <code>"RangeError"</code>&rarr;<code>"a value is out of range, or recursion ran away"</code>; anything else&rarr;<code>"read the message and the stack"</code>.`,
+prompt:`Write <code>function diagnose(errorName)</code> mapping a built-in error name to what it tells you: <code>"TypeError"</code>&rarr;<code>"something you assumed existed did not"</code>; <code>"ReferenceError"</code>&rarr;<code>"a name is misspelled or not yet initialized"</code>; <code>"SyntaxError"</code>&rarr;<code>"the text could not be parsed"</code>; <code>"RangeError"</code>&rarr;<code>"a value is out of range, or recursion ran away"</code>; anything else&rarr;<code>"read the message and the stack"</code>.`,
 starter:`function diagnose(errorName) {
   return null;
 }`,
 solution:`function diagnose(errorName) {
   switch (errorName) {
     case "TypeError":      return "something you assumed existed did not";
-    case "ReferenceError": return "a name is misspelt or not yet initialised";
+    case "ReferenceError": return "a name is misspelled or not yet initialized";
     case "SyntaxError":    return "the text could not be parsed";
     case "RangeError":     return "a value is out of range, or recursion ran away";
     default:               return "read the message and the stack";
@@ -144,7 +144,7 @@ run:{call:'parseOrRethrow',cases:[
  {name:'a syntax error becomes null',args:['bad','SyntaxError'],expect:null},
  {name:'a different error is re-thrown',args:['bad','TypeError'],expect:'rethrown'},
  {name:'a range error is re-thrown too',args:['bad','RangeError'],expect:'rethrown'}]},
-prompt:`Write <code>function parseOrRethrow(text, errorName)</code> modelling selective catching. If <code>text</code> is <code>"bad"</code> a failure occurred of type <code>errorName</code>: return <code>null</code> when it is a <code>"SyntaxError"</code>, and the string <code>"rethrown"</code> for any other type. When <code>text</code> is not <code>"bad"</code>, return it unchanged.`,
+prompt:`Write <code>function parseOrRethrow(text, errorName)</code> modeling selective catching. If <code>text</code> is <code>"bad"</code> a failure occurred of type <code>errorName</code>: return <code>null</code> when it is a <code>"SyntaxError"</code>, and the string <code>"rethrown"</code> for any other type. When <code>text</code> is not <code>"bad"</code>, return it unchanged.`,
 starter:`function parseOrRethrow(text, errorName) {
   return null;
 }`,
@@ -153,7 +153,7 @@ solution:`function parseOrRethrow(text, errorName) {
   if (errorName === "SyntaxError") return null;     // I know what this means
   return "rethrown";                                 // I do not - pass it on
 }`,
-tests:[{d:'handles the success path',re:'text\\s*!==\\s*"bad"'},{d:'recognises the error it can handle',re:'"SyntaxError"'},{d:'passes everything else on',re:'"rethrown"'}],
+tests:[{d:'handles the success path',re:'text\\s*!==\\s*"bad"'},{d:'recognizes the error it can handle',re:'"SyntaxError"'},{d:'passes everything else on',re:'"rethrown"'}],
 behavior:`Two different unexpected error types execute the same re-throw path. That is the discipline this models: swallowing every error would turn a TypeError in your own parsing code into a silent null, and you would spend an afternoon looking for data that was never malformed.`,
 hints:['Handle the success case first and return early.','Only the specific error type you understand becomes null.','Everything else is passed on rather than swallowed.']},
 {title:'Cleanup that always runs',diff:'medium',lang:'js',
@@ -234,7 +234,7 @@ await Promise.allSettled(tasks);                // when partials are fine</div>
 program in an unknown state should stop), but it means a forgotten <code>await</code> is now a crash
 rather than a warning.</p>
 
-<h4>The last line of defence</h4>
+<h4>The last line of defense</h4>
 <div class="codeSample" data-hl>// Node
 process.on("unhandledRejection", (reason) =&gt; { log(reason); process.exit(1); });
 process.on("uncaughtException",  (err) =&gt; { log(err); process.exit(1); });

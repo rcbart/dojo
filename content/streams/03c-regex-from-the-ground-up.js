@@ -9,12 +9,12 @@ STREAMS.push({icon:'🔍',title:'Regex from the Ground Up',blurb:'Pattern matchi
 </ul>
 <p>In Java you'll use patterns two ways, and the difference matters from day one:</p>
 <div class="codeSample" data-hl>"education".matches("cat")        // false! matches() asks: does the WHOLE string fit?
-"education".contains("cat")       // true — but contains() only does literal text
-"c9t".matches("c.t")              // true — whole string, one pattern
+"education".contains("cat")       // true, but contains() only does literal text
+"c9t".matches("c.t")              // true, whole string, one pattern
 
-// find-anywhere needs Pattern/Matcher (the deep-dive lesson) — or bracket the
+// find-anywhere needs Pattern/Matcher (the deep-dive lesson), or bracket the
 // pattern with "anything before, anything after":
-"education".matches(".*cat.*")    // true — .* means "any characters, any amount"</div>
+"education".matches(".*cat.*")    // true, .* means "any characters, any amount"</div>
 <p>One Java wrinkle to absorb now, because it explains every doubled backslash you'll ever see: regex and Java string literals <b>both</b> use backslash as their escape character. The regex <code>\\\\.</code> (a literal dot) must be typed in Java source as <code>"\\\\\\\\."</code>: one layer for the string, one for the regex. When a pattern looks over-slashed, mentally halve them.</p>`,
 docs:[['Regular expressions (Oracle tutorial)','https://docs.oracle.com/javase/tutorial/essential/regex/'],['String.matches (Javadoc)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#matches(java.lang.String)'],['regex101 (interactive playground)','https://regex101.com/']],
 exs:[{title:'First descriptions',
@@ -72,7 +72,7 @@ shorthands for the common menus (memorize these three):
 \\\\w  = [A-Za-z0-9_]    a "word" char    \\\\W  anything but
 \\\\s  = space/tab/newline  whitespace    \\\\S  anything but</div>
 <p><b>Amounts: quantifiers.</b> A quantifier sits <i>after</i> a thing and says how many times it repeats:</p>
-<div class="codeSample">?      zero or one    (optional)         colou?r  → color, colour
+<div class="codeSample">?      zero or one    (optional)         colou?r  → color, color
 *      zero or more                      .*       → anything, even nothing
 +      one or more                       \\\\d+     → 42, 7, 123456  (but not "")
 {3}    exactly three                     \\\\d{3}   → 404
@@ -138,13 +138,13 @@ hints:['Without the g flag, match() returns only the first match plus its groups
 <li><b>Alternation: or.</b> <code>|</code> separates alternatives: <code>yes|no|maybe</code>. Combine with grouping to scope it: <code>gr(a|e)y</code> matches gray and grey; without the parens, <code>gra|ey</code> would read as "gra, or ey".</li>
 <li><b>Groups: capture the parts you care about.</b> Parentheses do two jobs: they scope (as above), and they <b>capture</b>: the engine remembers what each parenthesized part actually matched, numbered left to right from 1. Given <code>(\\\\d{4})-(\\\\d{2})</code> against <i>2026-07</i>: group 1 holds 2026, group 2 holds 07. Capturing is what upgrades regex from "does it match?" to "<b>pull the pieces out</b>": the year and month are yours to use.</li>
 </ul>
-<div class="codeSample" data-hl>// Java's find-and-capture workflow (Pattern/Matcher — the next lesson goes deep):
+<div class="codeSample" data-hl>// Java's find-and-capture workflow (Pattern/Matcher, the next lesson goes deep):
 Pattern p = Pattern.compile("(\\\\w+)@(\\\\w+)\\\\.com");
 Matcher m = p.matcher("write to ada@dojo.com today");
 if (m.find()) {                       // find(): search anywhere (vs matches(): whole string)
-    m.group(1);                       // "ada"     — first parens
-    m.group(2);                       // "dojo"    — second parens
-    m.group(0);                       // "ada@dojo.com" — group 0 is always the whole match
+    m.group(1);                       // "ada", first parens
+    m.group(2);                       // "dojo", second parens
+    m.group(0);                       // "ada@dojo.com", group 0 is always the whole match
 }</div>
 <p>And one replacement superpower while the groups are fresh: <code>replaceAll</code> can refer back to them as <code>$1</code>, <code>$2</code>: <code>"2026-07-19".replaceAll("(\\\\d{4})-(\\\\d{2})-(\\\\d{2})", "$3/$2/$1")</code> → <i>19/07/2026</i>. Describe the structure once, then rearrange it.</p>`,
 docs:[['Boundary matchers (Oracle)','https://docs.oracle.com/javase/tutorial/essential/regex/bounds.html'],['Groups & capturing (Oracle)','https://docs.oracle.com/javase/tutorial/essential/regex/groups.html'],['Matcher (Javadoc)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Matcher.html']],
@@ -286,7 +286,7 @@ prompt:`Write <code>function splitCsvLine(line)</code> splitting on commas and d
 starter:`function splitCsvLine(line) {\n  return [];\n}`,
 solution:`function splitCsvLine(line) {\n  return line.split(/\\s*,\\s*/);\n}`,
 tests:[{d:'split is given a regular expression',re:'split\\s*\\(\\s*/'},{d:'whitespace around the separator is consumed',re:'\\\\s\\*'},{d:'the comma is the separator',re:','},{d:'an array is returned',re:'return'}],
-behavior:`Four real cases. The trailing-separator case is the behaviour to know rather than to fix: "a,b," splits into three fields, the last empty, because a separator at the end means there is something after it. That is correct and it surprises people. Note the real limit of this whole approach: it is not a CSV parser. A quoted field containing a comma will be split in two, which is the same warning the log-reading stream gives about -F, in awk: regex splitting works until the data has quoting.`,
+behavior:`Four real cases. The trailing-separator case is the behavior to know rather than to fix: "a,b," splits into three fields, the last empty, because a separator at the end means there is something after it. That is correct and it surprises people. Note the real limit of this whole approach: it is not a CSV parser. A quoted field containing a comma will be split in two, which is the same warning the log-reading stream gives about -F, in awk: regex splitting works until the data has quoting.`,
 hints:['split accepts a regex as its separator.','\\s* on both sides absorbs any spaces or tabs around the comma.','Think about what a separator at the very end should produce before you special-case it.']}]},
 
 {id:'rgxwild',title:'Regex in the wild: replace, split & restraint',body:`

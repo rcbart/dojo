@@ -205,7 +205,7 @@ solution:`public class Stock {\n    static int maxProfit(int[] prices) {\n      
 prompt:`<b>Easy.</b> An element appears more than n/2 times. Write <code>static int majority(int[] a)</code> using <b>Boyer-Moore voting</b>: keep a candidate and a count; matching values increment, others decrement, and on zero adopt a new candidate. O(n) time, O(1) space.`,
 starter:`public class Majority {\n    static int majority(int[] a) {\n        return 0;\n    }\n}`,
 tests:[{d:'Method signature',re:'static\\s+int\\s+majority\\s*\\(\\s*int\\[\\]\\s+a\\s*\\)'},{d:'Keeps a running count',re:'count\\s*==\\s*0|count\\s*\\+\\+|count--'},{d:'Tracks a candidate',re:'candidate\\s*='},{d:'No Map (O(1) space)',re:'HashMap',not:true}],
-behavior:`1. majority([3,2,3]) == 3. 2. majority([2,2,1,1,1,2,2]) == 2. 3. majority([9]) == 9. 4. Voting: the true majority cannot be fully cancelled out.`,
+behavior:`1. majority([3,2,3]) == 3. 2. majority([2,2,1,1,1,2,2]) == 2. 3. majority([9]) == 9. 4. Voting: the true majority cannot be fully canceled out.`,
 hints:['Start with count 0 and no fixed candidate.','If count == 0, set candidate = current; then count += (current == candidate ? 1 : -1).','The survivor is the majority element.'],
 solution:`public class Majority {\n    static int majority(int[] a) {\n        int candidate = a[0], count = 0;\n        for (int x : a) {\n            if (count == 0) candidate = x;\n            count += (x == candidate) ? 1 : -1;\n        }\n        return candidate;\n    }\n}`},
 {title:'Sum of digits',
@@ -253,13 +253,13 @@ brute force, which is fine as a stated starting point, and fatal as a silent one
 
 <h4>The three in this round, and why each is instructive</h4>
 <ul>
-<li><b>Group anagrams</b>: the canonical-key idea. Anagrams are equal <i>after normalisation</i>, so
+<li><b>Group anagrams</b>: the canonical-key idea. Anagrams are equal <i>after normalization</i>, so
 sorting each word's characters produces a key that collides exactly when you want it to. The general
 lesson: when equality is not literal, invent a key that makes it literal. Sorting costs O(k log k) per
 word; a 26-slot character count is O(k) and faster for long words.</li>
 <li><b>Search in a rotated sorted array</b>: binary search survives a broken invariant. The array is
 not sorted, but at every split <b>one half always is</b>, and you can tell which by comparing the
-endpoints. Recognising that a weakened invariant still supports the algorithm is the transferable
+endpoints. Recognizing that a weakened invariant still supports the algorithm is the transferable
 insight.</li>
 <li><b>Product of array except self</b>: the constraint (no division) is the hint. Forbidding division
 forces you to see the answer as prefix-product times suffix-product, which is one left pass and one
@@ -437,7 +437,7 @@ solution:`public class MinSubLen {\n    static int minSubArrayLen(int target, in
 {title:'Unique paths',
 prompt:`<b>Medium.</b> A robot moves only right or down on an m x n grid. Write <code>static int uniquePaths(int m, int n)</code> counting paths from top-left to bottom-right with a 1D DP row (each cell = paths from left + from above).`,
 starter:`import java.util.*;\n\npublic class UniquePaths {\n    static int uniquePaths(int m, int n) {\n        return 0;\n    }\n}`,
-tests:[{d:'Method signature',re:'static\\s+int\\s+uniquePaths\\s*\\(\\s*int\\s+m\\s*,\\s*int\\s+n\\s*\\)'},{d:'DP row initialised to 1',re:'Arrays\\.fill\\s*\\(\\s*dp\\s*,\\s*1\\s*\\)'},{d:'Accumulates left neighbour',re:'dp\\[\\s*j\\s*\\]\\s*\\+=\\s*dp\\[\\s*j\\s*-\\s*1\\s*\\]'}],
+tests:[{d:'Method signature',re:'static\\s+int\\s+uniquePaths\\s*\\(\\s*int\\s+m\\s*,\\s*int\\s+n\\s*\\)'},{d:'DP row initialized to 1',re:'Arrays\\.fill\\s*\\(\\s*dp\\s*,\\s*1\\s*\\)'},{d:'Accumulates left neighbor',re:'dp\\[\\s*j\\s*\\]\\s*\\+=\\s*dp\\[\\s*j\\s*-\\s*1\\s*\\]'}],
 behavior:`1. uniquePaths(3, 7) == 28. 2. uniquePaths(3, 2) == 3. 3. uniquePaths(1, 1) == 1. 4. O(m*n) time, O(n) space with the rolling row.`,
 hints:['One row of n ones represents the top row (only one path along an edge).','For each subsequent row, dp[j] += dp[j-1] folds in the path from the left.','The answer is dp[n-1].'],
 solution:`import java.util.*;\n\npublic class UniquePaths {\n    static int uniquePaths(int m, int n) {\n        int[] dp = new int[n];\n        Arrays.fill(dp, 1);\n        for (int i = 1; i < m; i++) {\n            for (int j = 1; j < n; j++) {\n                dp[j] += dp[j - 1];\n            }\n        }\n        return dp[n - 1];\n    }\n}`},
@@ -514,7 +514,7 @@ checking which line broke the promise.</p>
 partial from a weak one:</p>
 <ul>
 <li><b>Get the brute force on the board first.</b> A stated O(n²) with correct logic beats an
-unfinished O(n) with none, and it gives you something to optimise from rather than a blank page.</li>
+unfinished O(n) with none, and it gives you something to optimize from rather than a blank page.</li>
 <li><b>Say what you are trading.</b> "I can make this O(n) with O(n) extra space" is a design decision,
 not a concession; interviewers want to hear the axis you are moving along.</li>
 <li><b>Test on the smallest failing case.</b> When output is wrong, shrink the input until it fits in
@@ -704,7 +704,7 @@ prompt:`<b>Hard.</b> Write <code>static int editDistance(String a, String b)</co
 starter:`public class EditDistance {\n    static int editDistance(String a, String b) {\n        return 0;\n    }\n}`,
 tests:[{d:'Method signature',re:'static\\s+int\\s+editDistance\\s*\\(\\s*String\\s+a\\s*,\\s*String\\s+b\\s*\\)'},{d:'2D table sized +1',re:'new\\s+int\\[\\s*a\\.length\\s*\\(\\s*\\)\\s*\\+\\s*1\\s*\\]\\[\\s*b\\.length\\s*\\(\\s*\\)\\s*\\+\\s*1\\s*\\]'},{d:'Three-way min on mismatch',re:'Math\\.min\\s*\\([\\s\\S]*?Math\\.min'},{d:'Offset char comparison',re:'charAt\\s*\\(\\s*i\\s*-\\s*1\\s*\\)'}],
 behavior:`1. editDistance("horse", "ros") == 3. 2. editDistance("intention", "execution") == 5. 3. editDistance("", "abc") == 3 (row/col base cases). 4. O(m*n) time and space.`,
-hints:['Initialise dp[i][0]=i and dp[0][j]=j, the cost of pure inserts/deletes.','Match: dp[i][j]=dp[i-1][j-1]. Mismatch: 1 + min of the three neighbours.','Answer is dp[a.length()][b.length()].'],
+hints:['Initialize dp[i][0]=i and dp[0][j]=j, the cost of pure inserts/deletes.','Match: dp[i][j]=dp[i-1][j-1]. Mismatch: 1 + min of the three neighbors.','Answer is dp[a.length()][b.length()].'],
 solution:`public class EditDistance {\n    static int editDistance(String a, String b) {\n        int[][] dp = new int[a.length() + 1][b.length() + 1];\n        for (int i = 0; i <= a.length(); i++) dp[i][0] = i;\n        for (int j = 0; j <= b.length(); j++) dp[0][j] = j;\n        for (int i = 1; i <= a.length(); i++) {\n            for (int j = 1; j <= b.length(); j++) {\n                if (a.charAt(i - 1) == b.charAt(j - 1)) dp[i][j] = dp[i - 1][j - 1];\n                else dp[i][j] = 1 + Math.min(dp[i - 1][j - 1], Math.min(dp[i - 1][j], dp[i][j - 1]));\n            }\n        }\n        return dp[a.length()][b.length()];\n    }\n}`},
 {title:'Sliding window maximum',
 prompt:`<b>Hard.</b> Write <code>static int[] maxSlidingWindow(int[] nums, int k)</code> returning the max of each length-k window in O(n) using a <b>monotonic deque</b> of indices (front holds the current max; evict out-of-window and smaller-tail indices).`,
@@ -795,7 +795,7 @@ prompt:`<b>Hard.</b> Given numCourses and prerequisite pairs [a,b] (b before a),
 starter:`import java.util.*;\n\npublic class CourseSchedule {\n    static boolean canFinish(int numCourses, int[][] prereq) {\n        return false;\n    }\n}`,
 tests:[{d:'Method signature',re:'static\\s+boolean\\s+canFinish\\s*\\(\\s*int\\s+numCourses\\s*,\\s*int\\[\\]\\[\\]\\s+prereq\\s*\\)'},{d:'Indegree array',re:'int\\[\\]\\s+indeg'},{d:'Queue-based BFS',re:'ArrayDeque<'},{d:'Compares processed count to numCourses',re:'==\\s*numCourses'}],
 behavior:`1. canFinish(2, [[1,0]]) == true. 2. canFinish(2, [[1,0],[0,1]]) == false (cycle). 3. canFinish(1, []) == true. 4. If fewer than numCourses are ever dequeued, a cycle exists.`,
-hints:['Build an adjacency list and an indegree count for each course.','Seed the queue with all indegree-0 courses; process one, decrement its neighbours, enqueue any that hit 0.','If the number processed equals numCourses, there is no cycle.'],
+hints:['Build an adjacency list and an indegree count for each course.','Seed the queue with all indegree-0 courses; process one, decrement its neighbors, enqueue any that hit 0.','If the number processed equals numCourses, there is no cycle.'],
 solution:`import java.util.*;\n\npublic class CourseSchedule {\n    static boolean canFinish(int numCourses, int[][] prereq) {\n        List<List<Integer>> graph = new ArrayList<>();\n        int[] indeg = new int[numCourses];\n        for (int i = 0; i < numCourses; i++) graph.add(new ArrayList<>());\n        for (int[] p : prereq) { graph.get(p[1]).add(p[0]); indeg[p[0]]++; }\n        Deque<Integer> q = new ArrayDeque<>();\n        for (int i = 0; i < numCourses; i++) if (indeg[i] == 0) q.offer(i);\n        int seen = 0;\n        while (!q.isEmpty()) {\n            int c = q.poll();\n            seen++;\n            for (int nxt : graph.get(c)) if (--indeg[nxt] == 0) q.offer(nxt);\n        }\n        return seen == numCourses;\n    }\n}`},
 {title:'Decode ways',
 prompt:`<b>Hard.</b> Digits 1-26 map to A-Z. Write <code>static int numDecodings(String s)</code> counting the ways to decode s. DP like Fibonacci: dp[i] adds dp[i-1] when the last digit is 1-9 and dp[i-2] when the last two digits form 10-26.`,

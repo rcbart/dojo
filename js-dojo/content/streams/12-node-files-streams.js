@@ -59,7 +59,7 @@ try {
   throw e;                                 // anything else is not mine
 }</div>
 <p>The <code>code</code> property is how you branch on file-system errors, never the message, which is
-localised and can change. The ones worth knowing: <b>ENOENT</b> no such file, <b>EACCES</b> permission
+localized and can change. The ones worth knowing: <b>ENOENT</b> no such file, <b>EACCES</b> permission
 denied, <b>EEXIST</b> already exists, <b>EISDIR</b> it is a directory, <b>ENOTEMPTY</b> directory not
 empty, <b>EMFILE</b> too many open files, which usually means you are leaking handles.</p>`,
 docs:[['Node (fs promises API)','https://nodejs.org/api/fs.html#promises-api'],['Node (fs error codes)','https://nodejs.org/api/errors.html#common-system-errors'],['Node (do not block the event loop)','https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop']],
@@ -95,7 +95,7 @@ run:{call:'readOrDefault',cases:[
  {name:'a permission error is NOT swallowed',args:['EACCES','contents'],expect:'rethrown'},
  {name:'a directory error is not swallowed either',args:['EISDIR','contents'],expect:'rethrown'},
  {name:'an empty file is a real result, not a default',args:['ok',''],expect:''}]},
-prompt:`Write <code>function readOrDefault(outcome, contents)</code> modelling the attempt-and-handle pattern. When <code>outcome</code> is <code>"ok"</code> return <code>contents</code> unchanged, including the empty string. When it is <code>"ENOENT"</code> return <code>"default"</code>. Any other error code returns <code>"rethrown"</code>.`,
+prompt:`Write <code>function readOrDefault(outcome, contents)</code> modeling the attempt-and-handle pattern. When <code>outcome</code> is <code>"ok"</code> return <code>contents</code> unchanged, including the empty string. When it is <code>"ENOENT"</code> return <code>"default"</code>. Any other error code returns <code>"rethrown"</code>.`,
 starter:`function readOrDefault(outcome, contents) {
   return null;
 }`,
@@ -299,7 +299,7 @@ run:{call:'drainPlan',cases:[
  {name:'nothing to write',args:[[],5],expect:{written:0,pauses:0,maxBuffered:0}},
  {name:'a single oversized chunk still gets written',args:[[10],2],expect:{written:1,pauses:1,maxBuffered:10}},
  {name:'repeated pauses across many chunks',args:[[2,2,2,2],2],expect:{written:4,pauses:4,maxBuffered:2}}]},
-prompt:`Write <code>function drainPlan(chunks, highWaterMark)</code> modelling backpressure. Process each chunk in order: add its size to the buffer and count it as written. If the buffer then reaches or exceeds <code>highWaterMark</code>, the writer signals "full": count a <b>pause</b> and drain the buffer back to 0 before the next chunk. Return <code>{ written, pauses, maxBuffered }</code>, where <code>maxBuffered</code> is the highest the buffer ever reached. The final chunk pausing still counts.`,
+prompt:`Write <code>function drainPlan(chunks, highWaterMark)</code> modeling backpressure. Process each chunk in order: add its size to the buffer and count it as written. If the buffer then reaches or exceeds <code>highWaterMark</code>, the writer signals "full": count a <b>pause</b> and drain the buffer back to 0 before the next chunk. Return <code>{ written, pauses, maxBuffered }</code>, where <code>maxBuffered</code> is the highest the buffer ever reached. The final chunk pausing still counts.`,
 starter:`function drainPlan(chunks, highWaterMark) {
   return { written: 0, pauses: 0, maxBuffered: 0 };
 }`,

@@ -81,7 +81,7 @@ The case was called `'exactly at the window edge is still inside it'` and the re
 
 One had test data written against a different mental model than its own prompt. Both halves looked reasonable alone. That's precisely why reading never caught it.
 
-And my favourite wasn't a content bug at all. Six cases failed on an exercise whose solution was right and whose expected values were right. They just weren't *equal*, because of this:
+And my favorite wasn't a content bug at all. Six cases failed on an exercise whose solution was right and whose expected values were right. They just weren't *equal*, because of this:
 
 ```js
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -89,9 +89,9 @@ const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 `{status: 200, headers: {...}}` and `{headers: {...}, status: 200}` are the same object. They are not the same string. Anyone whose correct answer built an object with keys in another order was told they were wrong. In an exercise about HTTP responses, where key order means nothing. A check I wrote to validate content found a bug in the code doing the grading. Proper dogfooding does that: it doesn't just test the food, it tests the kitchen.
 
-## Edge cases, and the licence to stop
+## Edge cases, and the license to stop
 
-Fixing the grader meant writing a canonicaliser: sort object keys recursively, leave arrays alone because for a list, the order is the data.
+Fixing the grader meant writing a canonicalizer: sort object keys recursively, leave arrays alone because for a list, the order is the data.
 
 ```js
 const canon = v =>
@@ -106,7 +106,7 @@ And immediately the edge cases start whispering. `undefined` values get dropped 
 
 I chased none of those. The gate and the in-browser grader share the same comparison, so they can't disagree with each other, and no exercise returns a Map. That's the whole analysis. It took five minutes.
 
-This is the part of testing culture nobody puts on the poster. Yes, you handle edge cases. You should be a little paranoid; my favourite bug above only surfaced because an exercise finally returned a plain object. But somewhere past the reasonable cases is the meteor hitting the data center, and you have to be willing to look at a risk and say: this one isn't worth the reward. My repository has a list of checks I decided not to build: no coverage threshold, no end-to-end browser suite, no fuzzing of the grader. In my professional life I had to accept the fact that I don't control the internet, and when something happens, information may go where it was not intended. Enough said.
+This is the part of testing culture nobody puts on the poster. Yes, you handle edge cases. You should be a little paranoid; my favorite bug above only surfaced because an exercise finally returned a plain object. But somewhere past the reasonable cases is the meteor hitting the data center, and you have to be willing to look at a risk and say: this one isn't worth the reward. My repository has a list of checks I decided not to build: no coverage threshold, no end-to-end browser suite, no fuzzing of the grader. In my professional life I had to accept the fact that I don't control the internet, and when something happens, information may go where it was not intended. Enough said.
 
 The trick is that declining a risk is only acceptable after you've done the cheap paranoia. The order matters. Sit the exam first; it cost me a weekend and found five real defects. Then look at the remaining tail, price it honestly, and stop. A team that stops before dogfooding is negligent. A team that can't stop after it is chasing meteors while the capstone throws `undefined` at its best students. This is the essence of senior experience, and the art of risk acceptance. Thinking about this as I write this, it's worth a blog post by itself.
 
@@ -114,4 +114,4 @@ A good question to ask: what kind of bug would survive everything we currently r
 
 The gate runs on every push now, third in line. The four defects are documented in its header comment, so I won't delete it for being slow without learning why it exists. And "the build is green" finally means what I always claimed it meant: not that we proofread everything, but that somebody sat the exam.
 
-One more thing, because it's the part I'd actually want a younger engineer to hear. That weekend of red herrings never really ends; there will always be another one. And I've stopped resenting them (I actually learnt to love them). These one-off fights, where you're alone with the logic and it keeps winning until suddenly it doesn't, are where you genuinely learn. You'll forget the tutorials. You will never forget the bug you chased for two days that turned out to be your own missing test.
+One more thing, because it's the part I'd actually want a younger engineer to hear. That weekend of red herrings never really ends; there will always be another one. And I've stopped resenting them (I actually learned to love them). These one-off fights, where you're alone with the logic and it keeps winning until suddenly it doesn't, are where you genuinely learn. You'll forget the tutorials. You will never forget the bug you chased for two days that turned out to be your own missing test.

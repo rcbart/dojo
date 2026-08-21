@@ -194,13 +194,13 @@ message to React; they are not passed to your component as a prop.</p>
 React renders the number <code>0</code>, unlike <code>false</code>, <code>null</code> or
 <code>undefined</code>, which render nothing.</p>
 <div class="codeSample" data-hl>{items.length &amp;&amp; &lt;List /&gt;}          // empty list renders a literal "0"
-{items.length &gt; 0 &amp;&amp; &lt;List /&gt;}     // fine — the left side is a boolean
+{items.length &gt; 0 &amp;&amp; &lt;List /&gt;}     // fine, the left side is a boolean
 {items.length ? &lt;List /&gt; : null}    // also fine</div>
 <p>Make the left side an explicit boolean and the problem disappears.</p>
 
 <h4>Deriving, not storing</h4>
 <p>A filtered or sorted list is <b>derived state</b> and should be computed during render, not kept in
-its own <code>useState</code> and synchronised with an effect. Two states that must agree will
+its own <code>useState</code> and synchronized with an effect. Two states that must agree will
 eventually disagree; that is the whole class of "stale filter" bugs.</p>
 <div class="codeSample" data-hl>const visible = items.filter(i =&gt; !i.done);   // just compute it
 
@@ -249,7 +249,7 @@ until it clicks:</p>
 // - value={name} with NO onChange = a permanently read-only field
 //   (React's classic "you provided a value prop without onChange" warning)
 // - value={undefined} makes it uncontrolled, and switching between the
-//   two mid-life warns loudly. initialise to "" not null.</div>
+//   two mid-life warns loudly. initialize to "" not null.</div>
 
 <h4>Events are not quite DOM events</h4>
 <p>React wraps native events in a <b>SyntheticEvent</b> with a consistent API across browsers, attached at
@@ -303,7 +303,7 @@ hints:['Controlled means value={state} plus an onChange that writes back to stat
 }</div>
 <p>The second argument is the <b>dependency array</b>: <code>[]</code> runs the effect once; listing values runs it again whenever they change; omitting it runs after <i>every</i> render (usually a bug). Return a cleanup function to cancel subscriptions or timers when the component unmounts.</p>
 <h4>What an effect is for, and what it is not for</h4>
-<p><code>useEffect</code> exists to <b>synchronise your component with something outside React</b>: the
+<p><code>useEffect</code> exists to <b>synchronize your component with something outside React</b>: the
 network, a timer, a subscription, the document title, a non-React widget. That framing is more useful than
 "run code after render", because it tells you when <i>not</i> to use one.</p>
 <p>The most common misuse is computing a value: storing a filtered list in state and recalculating it in
@@ -467,10 +467,10 @@ hints:['A reducer is a pure function switching on action.type.','Return a NEW ob
 
 <h4>Where React's escaping stops</h4>
 <p>Auto-escaping covers text interpolated with <code>{ }</code>, and that is most of an app. It does not cover four places, and every real React XSS lives in one of them: <code>dangerouslySetInnerHTML</code>; a URL built from user input, where <code>javascript:</code> as an <code>href</code> executes on click; props spread blindly onto an element (<code>{...userProvided}</code>) which can inject an <code>onError</code> handler; and anything rendered outside React, such as a third-party widget handed raw HTML.</p>
-<p>If HTML from users genuinely must be rendered (a rich-text field), sanitise it with a maintained library (DOMPurify) on an allowlist basis, and do it on the server as well, because anything done only in the browser is done by an attacker's browser too.</p>
+<p>If HTML from users genuinely must be rendered (a rich-text field), sanitize it with a maintained library (DOMPurify) on an allowlist basis, and do it on the server as well, because anything done only in the browser is done by an attacker's browser too.</p>
 
 <h4>The storage argument, stated carefully</h4>
-<p>The usual advice ("cookies, not localStorage") is right but often stated too strongly. An <code>HttpOnly</code> cookie cannot be read by injected script, which removes the easy theft of a token; it does not stop that script from <i>using</i> the session by making requests as the user, since the browser attaches the cookie automatically. So cookies raise the cost of XSS rather than neutralising it, and they add CSRF as a concern that <code>SameSite</code> and anti-CSRF tokens then have to answer.</p>
+<p>The usual advice ("cookies, not localStorage") is right but often stated too strongly. An <code>HttpOnly</code> cookie cannot be read by injected script, which removes the easy theft of a token; it does not stop that script from <i>using</i> the session by making requests as the user, since the browser attaches the cookie automatically. So cookies raise the cost of XSS rather than neutralizing it, and they add CSRF as a concern that <code>SameSite</code> and anti-CSRF tokens then have to answer.</p>
 <p>The defensible position: <code>HttpOnly; Secure; SameSite=Lax</code> cookies, short-lived tokens, and a real CSP, with the recognition that if you have XSS, you have a problem no storage choice solves. That is the argument for the BFF pattern: no token in the browser at all.</p>
 
 <h4>Two rules the front end cannot break</h4>

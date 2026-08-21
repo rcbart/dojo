@@ -1,0 +1,2259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>authlint · paste any artifact from an authentication flow, decode it, see what is wrong</title>
+<meta name="description" content="Paste a JWT, a SAML response or assertion, an OpenID Connect discovery document, a JWKS or an OAuth authorization request. authlint works out which it is, decodes it and tells you what is wrong, why it matters and what to change. One HTML file, no dependencies, nothing leaves your browser.">
+<meta name="color-scheme" content="light">
+<!-- The privacy claim, enforced by the browser rather than asserted by the author.
+     default-src 'none' means no network destination of any kind is permitted:
+     no fetch, no XHR, no beacon, no websocket, no image, no font, no worker.
+     If a future edit introduced one, it would fail here instead of leaking.
+     form-action 'none' stops any submission, base-uri 'none' stops a <base>
+     rewrite. frame-ancestors cannot be set from a meta tag, so there is a
+     script guard for that further down. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src 'none'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'; manifest-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://roniam.dev/authlint/">
+<meta property="og:title" content="authlint">
+<meta property="og:description" content="Paste any artifact from an authentication flow, decode it, and see what is wrong with it. Nothing leaves your browser.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://roniam.dev/authlint/">
+<meta property="og:image" content="https://roniam.dev/authlint/authlint-og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://roniam.dev/authlint/authlint-og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%236d28d9'/%3E%3Cpath d='M9 17.5l4.5 4.5L23 12' stroke='%23fff' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>/* authlint. Same palette as roniam.dev so the two read as one hand.
+   Contrast is checked in CI: body copy clears 4.5:1, large text clears 3:1. */
+:root{
+  --bg:#f6f6fa; --panel:#ffffff; --ink:#191530; --muted:#55516e; --line:#e2e0ef;
+  --violet:#6d28d9; --violet-tint:#f3f0ff; --violet-line:#ddd6fe;
+  --red:#b91c1c; --red-tint:#fef2f2; --red-line:#fecaca;
+  --amber:#92400e; --amber-tint:#fffbeb; --amber-line:#fde68a;
+  --teal:#0f766e; --teal-tint:#f0fdfa; --teal-line:#99f6e4;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px}
+a{color:var(--violet)}
+.skip{position:absolute;left:-9999px}
+.skip:focus{left:8px;top:8px;z-index:9;background:#fff;padding:10px 14px;border-radius:8px;
+  border:2px solid var(--violet)}
+
+.top{background:linear-gradient(180deg,#ffffff,#f6f6fa);border-bottom:1px solid var(--line);
+  padding:34px 0 26px;margin-bottom:26px}
+.brand{display:flex;align-items:center;gap:10px;font-size:26px;font-weight:700;letter-spacing:-.3px;
+  color:var(--violet)}
+.brand span{color:var(--ink)}
+.brand b{color:var(--violet)}
+.mark{width:30px;height:30px;color:var(--violet);flex:none}
+.tag{margin:10px 0 0;font-size:19px;color:var(--ink)}
+.privacy{margin:12px 0 0;font-size:14.5px;color:var(--muted);max-width:70ch;
+  background:var(--teal-tint);border:1px solid var(--teal-line);border-left:4px solid var(--teal);
+  border-radius:0 10px 10px 0;padding:12px 14px}
+.privacy b{color:var(--teal)}
+
+.io{margin-bottom:22px}
+.lbl{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;justify-content:space-between;
+  margin-bottom:8px}
+.lbl label{font-weight:650}
+.samples{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.samples button{font:inherit;font-size:13px;padding:4px 10px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--violet-line);background:var(--violet-tint);color:var(--violet)}
+.samples button:hover{border-color:var(--violet)}
+.samples button.ghost{background:#fff;border-color:var(--line);color:var(--muted)}
+textarea{width:100%;min-height:190px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;
+  background:var(--panel);color:var(--ink);font-family:var(--mono);font-size:13.5px;line-height:1.55;
+  resize:vertical}
+textarea:focus{outline:2px solid var(--violet);outline-offset:1px;border-color:var(--violet)}
+
+.summary{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px;min-height:1px}
+.kind{font-weight:700;font-size:17px}
+.tallies{display:flex;gap:6px;flex-wrap:wrap}
+.t{font-size:12.5px;font-weight:650;padding:3px 10px;border-radius:999px;border:1px solid}
+.t.critical{color:var(--red);background:var(--red-tint);border-color:var(--red-line)}
+.t.warn{color:var(--amber);background:var(--amber-tint);border-color:var(--amber-line)}
+.t.note{color:var(--muted);background:#fff;border-color:var(--line)}
+.t.ok{color:var(--teal);background:var(--teal-tint);border-color:var(--teal-line)}
+
+.out section{margin:0 0 26px}
+.out h3{font-size:14px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);
+  margin:0 0 10px;font-weight:800}
+.nested h3{color:var(--violet)}
+
+.f{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--line);
+  border-radius:0 10px 10px 0;padding:12px 15px;margin-bottom:9px}
+.f.critical{border-left-color:var(--red)}
+.f.warn{border-left-color:var(--amber)}
+.f.note{border-left-color:var(--violet-line)}
+.f.ok{border-left-color:var(--teal)}
+.fh{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.sev{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;flex:none}
+.f.critical .sev{color:var(--red)}
+.f.warn .sev{color:var(--amber)}
+.f.note .sev{color:var(--muted)}
+.f.ok .sev{color:var(--teal)}
+.ft{font-weight:650}
+.fw{margin:6px 0 0;color:var(--muted);font-size:14.5px}
+.ff{margin:6px 0 0;font-size:14.5px}
+.ff b{color:var(--violet);font-size:11px;letter-spacing:1px;text-transform:uppercase;
+  margin-right:6px}
+.fr{margin:6px 0 0;font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+
+.decoded .seg{margin-bottom:14px}
+.decoded h4{margin:0 0 6px;font-size:13px;color:var(--muted);font-weight:700}
+/* Capped, because a token carrying forty group claims would otherwise push the
+   findings off the bottom of the page, which is the bug this ordering fixed. */
+.code{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+  overflow:auto;max-height:340px;font-family:var(--mono);font-size:13px;line-height:1.5;margin:0;
+  white-space:pre-wrap;word-break:break-word}
+.jump{font-size:12.5px;font-weight:650;color:var(--violet);text-decoration:none;
+  border-bottom:1px dotted var(--violet-line)}
+.jump:hover{border-bottom-style:solid}
+table{border-collapse:collapse;width:100%;background:var(--panel);border:1px solid var(--line);
+  border-radius:10px;overflow:hidden;font-size:13.5px}
+td{padding:7px 12px;border-top:1px solid var(--line);vertical-align:top}
+tr:first-child td{border-top:0}
+td:first-child{font-family:var(--mono);color:var(--violet);width:1%;white-space:nowrap;font-weight:600}
+.times td:nth-child(2){font-family:var(--mono);color:var(--muted)}
+.params code{font-size:12.5px;word-break:break-all}
+.dim{color:var(--muted);font-size:14px}
+.empty{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.empty p{color:var(--muted);font-size:14.5px;margin:8px 0 0}
+
+/* Two failure states, told apart at a glance. Amber means authlint knows what
+   you meant and the document is broken; red means it does not read this at all. */
+.diag{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--line);
+  border-radius:0 12px 12px 0;padding:16px 18px}
+.diag.malformed{border-color:var(--amber-line);border-left-color:var(--amber);background:var(--amber-tint)}
+.diag.unknown{border-color:var(--red-line);border-left-color:var(--red);background:var(--red-tint)}
+.dh{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.dsev{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;flex:none}
+.diag.malformed .dsev{color:var(--amber)}
+.diag.unknown .dsev{color:var(--red)}
+.dt{font-weight:650;font-size:16px}
+.diag p{max-width:74ch}
+.dwhy{margin:8px 0 0;font-size:14.5px}
+.dhint{margin:8px 0 0;font-size:14.5px;color:var(--muted)}
+.dfoot{margin:10px 0 0;padding-top:10px;border-top:1px solid var(--line);font-size:13.5px;
+  color:var(--muted)}
+
+.about{border-top:1px solid var(--line);padding-top:26px;margin-top:34px}
+.about h2{font-size:20px;margin:0 0 12px}
+.about h2:not(:first-child){margin-top:30px}
+.about h3{font-size:15px;margin:0 0 6px;color:var(--violet);text-transform:none;letter-spacing:0}
+.about p{color:var(--muted);font-size:15px;max-width:74ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+code{font-family:var(--mono);font-size:.92em;background:var(--violet-tint);color:var(--violet);
+  padding:1px 5px;border-radius:5px}
+.about .grid code{background:transparent;padding:0}
+
+.foot{border-top:1px solid var(--line);margin-top:34px;padding-top:18px;padding-bottom:40px}
+.foot p{color:var(--muted);font-size:14px;max-width:74ch}
+.terms{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:13px}
+.terms b{color:var(--ink)}
+
+@media (max-width:640px){
+  .top{padding:24px 0 20px}
+  .brand{font-size:22px}
+  .tag{font-size:17px}
+  textarea{min-height:150px}
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#in">Skip to the input</a>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+        <rect width="32" height="32" rx="7" fill="currentColor"/>
+        <path d="M9 17.5l4.5 4.5L23 12" stroke="#fff" stroke-width="3" fill="none"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>auth<b>lint</b></span>
+    </div>
+    <p class="tag">Paste any artifact from an authentication flow, decode it, and see what is wrong with it.</p>
+    <p class="privacy">
+      <b>Nothing leaves your browser.</b> No network calls, no storage, no analytics, and a
+      Content-Security-Policy of <code>default-src 'none'</code> so the browser enforces that
+      rather than taking my word for it. Your input never enters the URL, so it never reaches
+      your history. Spellcheck and grammar extensions are opted out, because those read text
+      boxes and send what they find upstream. The box is emptied when you leave the page.
+      <a href="https://github.com/rcbart/authlint/blob/main/SECURITY.md" rel="noopener noreferrer external">How this is verified</a>.
+    </p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="io">
+    <div class="lbl">
+      <label for="in">Paste anything below</label>
+      <div class="samples">
+        <span>or try a broken one:</span>
+        <button type="button" data-sample="jwt">JWT</button>
+        <button type="button" data-sample="discovery">discovery</button>
+        <button type="button" data-sample="authz">authorization request</button>
+        <button type="button" data-sample="jwks">JWKS</button>
+        <button type="button" data-sample="saml">SAML response</button>
+        <button type="button" id="clear" class="ghost">clear</button>
+      </div>
+    </div>
+    <textarea id="in" spellcheck="false" autocomplete="off" autocapitalize="off"
+      autocorrect="off" data-gramm="false" data-gramm_editor="false"
+      data-enable-grammarly="false" data-1p-ignore data-lpignore="true" data-form-type="other"
+      placeholder="A JWT, an OpenID Connect discovery document, a JWKS, an OAuth authorization request or redirect URL, a SAML response, or SAML metadata. authlint works out which."></textarea>
+    <div id="summary" class="summary"></div>
+  </section>
+
+  <div id="out" class="out"></div>
+
+  <section class="about">
+    <h2>What it checks</h2>
+    <div class="grid">
+      <div>
+        <h3>JWTs and JWKS</h3>
+        <p>Algorithm confusion and <code>alg: none</code>. Header fields that ask the verifier to
+        fetch a key from somewhere the token chose. Lifetimes measured in weeks. Millisecond
+        timestamps that push expiry into the next millennium. Personal data riding in a payload that
+        is base64, not encryption. Tokens that will not survive a header limit once one user
+        accumulates enough groups. Symmetric keys published in a document meant to be public.</p>
+      </div>
+      <div>
+        <h3>OpenID Connect and OAuth</h3>
+        <p>Discovery documents advertising no PKCE, implicit flows nobody remembers enabling, and
+        unsigned ID tokens. Authorization requests missing <code>state</code> or a challenge, with a
+        wildcard redirect, or carrying a client secret through the browser. Trailing-slash issuer
+        mismatches, which cost more debugging hours than any other single character in this field.</p>
+      </div>
+      <div>
+        <h3>SAML</h3>
+        <p>Whether the assertion is signed or only the response is, which is the difference between
+        a working federation and signature wrapping. Multiple assertions and duplicate IDs. Missing
+        audience restrictions, four-hour validity windows, SHA-1 digests, email addresses used as
+        durable identifiers, and certificates that expire the weekend nobody is on call.</p>
+      </div>
+    </div>
+
+    <h2>What it does not do</h2>
+    <p>It does not verify signatures. That needs the key, and fetching keys means network calls,
+    which would break the one promise this tool makes. Everything here is about what a token says
+    and how it is put together, never about whether it is genuine. Verify in your own code, with
+    the algorithm pinned, against a key set you fetched yourself.</p>
+
+    <h2>Why it exists</h2>
+    <p>Every tool of this kind is run by a vendor, on their servers, and people paste production
+    tokens into them all day. authlint is one static file with no build-time dependencies and no
+    runtime ones. Save it, open it on a machine with the network unplugged, and it works exactly
+    the same. <a href="https://github.com/rcbart/authlint" rel="noopener noreferrer external">The source is on GitHub</a> and it is
+    short enough to read before you trust it. There is a
+    <a href="https://github.com/rcbart/authlint/blob/main/USAGE.md" rel="noopener noreferrer external">full guide</a> covering every
+    input type, what each severity means, and how to use it during an incident.</p>
+
+    <h2>The long version</h2>
+    <p>If a finding here is the first time you have met the idea behind it, the
+    <a href="https://roniam.dev/identity/" rel="noopener noreferrer">Identity Dojo</a> is the same material at length:
+    OAuth and OIDC flows, SAML and web SSO, tokens and JOSE, and the attacks that made each of
+    these checks necessary. Free, no accounts, same policy on tracking.</p>
+  </section>
+</main>
+
+<footer class="foot wrap">
+  <p>Built by <a href="https://roniam.dev/" rel="noopener noreferrer">Ron Bar-Tor</a>, who has spent a long time in the
+  identity domain and got tired of explaining the same twelve findings.
+  <a href="https://github.com/rcbart/authlint/issues/new" rel="noopener noreferrer external">Something wrong, or a check missing?</a></p>
+
+  <p class="terms"><b>No warranty.</b> authlint is free software, provided as-is under the
+  <a href="https://github.com/rcbart/authlint/blob/main/LICENSE" rel="noopener noreferrer external">MIT license</a>.
+  It reports what an artifact says and how it is assembled. It does not verify signatures, it cannot
+  see your verification code, and <b>a result with no findings is not a security assessment</b> or an
+  assurance that anything is safe. Use it only on systems you are authorized to test. Decisions you
+  make from its output are yours, and the author accepts no liability for them.</p>
+</footer>
+
+<script>/* ============================== HARDENING ==============================
+   authlint tells people it is safe to paste a production token. That claim has
+   to survive an adversary who is not the author, so the mitigations below are
+   for the leak paths that exist even when the code makes no network call.
+
+   Each one closes a specific, documented route out of the page. What is not
+   here is anything that pretends to defend against a hostile browser extension
+   or a compromised host, because nothing in a web page can, and SECURITY.md
+   says so rather than implying otherwise. */
+
+(function () {
+  'use strict';
+
+  /* 1. The input must never reach the URL.
+     Anything in the query string or the fragment is written to session history,
+     survives in the address bar, appears in the Referer header on an outbound
+     click, and is read by anything that syncs history between devices. Nothing
+     in this tool writes to location, and this makes that a runtime guarantee
+     rather than a code-review promise: if a future edit tries, it fails loudly
+     in the console instead of silently leaking. */
+  try {
+    const trap = function (name) {
+      return function () {
+        console.error('authlint: blocked an attempt to write the input to the URL via ' + name +
+                      '. Nothing pasted here is allowed into browser history.');
+      };
+    };
+    if (window.history && history.pushState) {
+      history.pushState = trap('history.pushState');
+      history.replaceState = trap('history.replaceState');
+    }
+  } catch (e) { /* a locked-down environment already prevents it */ }
+
+  /* 2. If the page is loaded with anything in the URL, clear it immediately.
+     Someone may arrive at a link a colleague built by hand, with a token in
+     the query string, thinking that is how the tool works. Strip it before it
+     can be read, and say why. */
+  try {
+    if (location.search.length > 1 || location.hash.length > 1) {
+      const clean = location.origin + location.pathname;
+      // replaceState is trapped above, so use the native one deliberately.
+      History.prototype.replaceState.call(history, null, '', clean);
+      window.__urlWasCleared = true;
+    }
+  } catch (e) { /* file:// has no origin to rebuild; nothing to do */ }
+
+  /* 3. Empty the box when the page goes away.
+     Browsers restore form state on reload and on back-forward navigation, and
+     the bfcache keeps a live copy of the page in memory. Neither is a network
+     leak and both leave a production token recoverable by the next person at
+     the keyboard. Clearing on pagehide costs the user a reload of their own
+     paste, which is the correct trade for a tool that handles secrets. */
+  window.addEventListener('pagehide', function () {
+    const box = document.getElementById('in');
+    if (box) box.value = '';
+    const out = document.getElementById('out');
+    if (out) out.innerHTML = '';
+    const sum = document.getElementById('summary');
+    if (sum) sum.innerHTML = '';
+  });
+
+  /* 4. Refuse to run inside someone else's frame.
+     frame-ancestors cannot be set from a meta tag, only from a real header, and
+     this file is served as a static asset. A framed copy of a paste box is the
+     shape of a credential-harvesting page, so break out or refuse. */
+  try {
+    if (window.top !== window.self) {
+      try {
+        window.top.location = window.self.location;
+      } catch (e) {
+        document.documentElement.innerHTML =
+          '<body style="font:16px system-ui;padding:40px;max-width:60ch">' +
+          '<h1>authlint will not run in a frame</h1>' +
+          '<p>A tool that asks for tokens should not be embedded in a page you did not choose. ' +
+          'Open it directly at <a href="https://roniam.dev/authlint/" rel="noopener noreferrer">roniam.dev/authlint</a>, ' +
+          'or download the file and open it locally.</p></body>';
+      }
+    }
+  } catch (e) { /* cross-origin access to top throws, which is itself the answer */ }
+
+  /* 5. Never become a drop target by accident.
+     A dropped file would be read into the page, and a dropped link would
+     navigate. Neither is a feature here. */
+  for (const ev of ['dragover', 'drop']) {
+    window.addEventListener(ev, function (e) {
+      if (e.target && e.target.id === 'in') return;   // pasting text into the box is fine
+      e.preventDefault();
+    });
+  }
+})();
+
+/* ============================== FINDINGS ==============================
+   Every check returns the same shape, because the value of this tool is not
+   that it decodes things. Decoders are everywhere. The value is that it says
+   what is wrong, why that matters, and what to do, and a consistent shape is
+   what makes sixty checks readable instead of a wall.
+
+   sev:   'critical' exploitable or broken now
+          'warn'     will bite you, or is a bad default someone should fix
+          'note'     worth knowing, often deliberate
+          'ok'       an explicit pass, shown only for the things people worry about
+   title: the finding, in a few words
+   why:   one or two sentences. What goes wrong, not a definition.
+   fix:   what to change. Omitted when the finding is informational.
+   ref:   the spec section or advisory that backs it up. */
+
+function F(sev, title, why, fix, ref) {
+  return { sev, title, why, fix: fix || '', ref: ref || '' };
+}
+
+const SEV_ORDER = { critical: 0, warn: 1, note: 2, ok: 3 };
+
+function sortFindings(list) {
+  return list.slice().sort((a, b) => SEV_ORDER[a.sev] - SEV_ORDER[b.sev]);
+}
+
+/* Shared helpers used by more than one protocol. */
+
+function secondsToHuman(s) {
+  if (s == null || isNaN(s)) return 'unknown';
+  const abs = Math.abs(s);
+  if (abs < 90) return Math.round(s) + ' seconds';
+  if (abs < 5400) return Math.round(s / 60) + ' minutes';
+  if (abs < 172800) return (s / 3600).toFixed(1) + ' hours';
+  if (abs < 63072000) return (s / 86400).toFixed(1) + ' days';
+  return (s / 31536000).toFixed(1) + ' years';
+}
+
+const PII_CLAIMS = [
+  'email', 'email_verified', 'phone_number', 'phone_number_verified', 'name',
+  'given_name', 'family_name', 'middle_name', 'nickname', 'preferred_username',
+  'birthdate', 'address', 'gender', 'picture', 'profile', 'website', 'zoneinfo',
+];
+
+function looksLikeEmail(v) {
+  return typeof v === 'string' && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
+}
+
+/* A date that is obviously not a second-based epoch. Milliseconds in an `exp`
+   is one of the most common and most confusing bugs in this space: the token
+   appears to be valid until the year 56000. */
+function looksLikeMillis(n) {
+  return typeof n === 'number' && n > 1e11;
+}
+
+/* ============================== DECODE ==============================
+   Turning pasted text into something checkable. Everything here is pure:
+   no network, no storage, no side effects. That is not a style preference,
+   it is the entire promise of the tool. */
+
+function b64urlToBytes(s) {
+  let t = String(s).replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, '');
+  while (t.length % 4) t += '=';
+  let bin;
+  // atob throws on anything that is not base64, and this function is handed
+  // whatever was in the paste box. Failing softly is the whole job here.
+  try { bin = atob(t); } catch (e) { throw new Error('not valid base64'); }
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function bytesToText(bytes) {
+  return new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+}
+
+function b64urlToText(s) {
+  return bytesToText(b64urlToBytes(s));
+}
+
+/* Base64 that is NOT url-safe still needs decoding: SAML travels as plain
+   base64, and half the tokens people paste have been through a system that
+   re-encoded them. Accept both rather than being right and unhelpful. */
+function b64ToText(s) {
+  return b64urlToText(s);
+}
+
+function tryJson(text) {
+  try { return { ok: true, value: JSON.parse(text) }; }
+  catch (e) { return { ok: false, error: e.message }; }
+}
+
+/* ------------------------------ JWT ------------------------------ */
+function decodeJwt(raw) {
+  const parts = String(raw).trim().split('.');
+  const out = { parts: parts.length, raw: String(raw).trim() };
+  if (parts.length < 2) return { error: 'not enough segments' };
+
+  let headerText;
+  try { headerText = b64urlToText(parts[0]); }
+  catch (e) { return { error: 'the header segment is not base64url' }; }
+  const h = tryJson(headerText);
+  if (!h.ok) return { error: 'header is not JSON: ' + h.error };
+  out.header = h.value;
+
+  // A JWE has five segments and an encrypted payload; there is nothing to
+  // decode without the key, but the header still says plenty.
+  if (parts.length === 5) {
+    out.kind = 'jwe';
+    out.encrypted = true;
+    out.signature = '';
+    out.payloadRaw = parts[1];
+    return out;
+  }
+
+  let payloadText;
+  try { payloadText = b64urlToText(parts[1]); }
+  catch (e) { return { error: 'the payload segment is not base64url', header: h.value }; }
+  const p = tryJson(payloadText);
+  if (!p.ok) return { error: 'payload is not JSON: ' + p.error, header: h.value };
+  out.kind = 'jws';
+  out.payload = p.value;
+  out.signature = parts[2] || '';
+  try { out.signatureBytes = out.signature ? b64urlToBytes(out.signature).length : 0; }
+  catch (e) { out.signatureBytes = 0; }
+  out.segments = parts;
+  return out;
+}
+
+/* ------------------------------ XML ------------------------------ */
+function decodeXml(raw) {
+  let text = String(raw).trim();
+
+  // SAML over HTTP-POST arrives base64-encoded, and over HTTP-Redirect it is
+  // additionally deflated, which we cannot inflate without a library. Say so
+  // rather than failing silently.
+  if (!/^\s*</.test(text)) {
+    let candidate = text.replace(/\s+/g, '');
+    if (/^[A-Za-z0-9+/=_-]+$/.test(candidate)) {
+      try {
+        const decoded = b64ToText(candidate);
+        if (/^\s*</.test(decoded)) {
+          text = decoded;
+        } else {
+          return { error: 'decoded, but the result is not XML. If this came from a ' +
+                          'redirect binding it is DEFLATE compressed, which this tool ' +
+                          'does not inflate. Grab the POST binding instead.' };
+        }
+      } catch (e) {
+        return { error: 'looks like base64 but will not decode: ' + e.message };
+      }
+    }
+  }
+
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  const errs = doc.getElementsByTagName('parsererror');
+  if (errs && errs.length) {
+    return { error: 'XML will not parse: ' + String(errs[0].textContent).slice(0, 200) };
+  }
+  if (!doc.documentElement) return { error: 'XML will not parse: no root element' };
+  return { doc, text };
+}
+
+/* Namespace-agnostic lookup. Providers disagree about prefixes, and matching
+   on localName is the only thing that works across all of them. */
+function els(node, localName) {
+  if (!node) return [];
+  const all = node.getElementsByTagName('*');
+  const out = [];
+  for (let i = 0; i < all.length; i++) {
+    if (all[i].localName === localName) out.push(all[i]);
+  }
+  if (node.localName === localName) out.unshift(node);
+  return out;
+}
+
+function el(node, localName) {
+  return els(node, localName)[0] || null;
+}
+
+function attr(node, name) {
+  return node && node.getAttribute ? node.getAttribute(name) : null;
+}
+
+/* ------------------------------ certificates ------------------------------ */
+/* Just enough DER walking to read notBefore and notAfter out of an X.509
+   certificate. A full ASN.1 parser is not needed to answer the only question
+   anyone actually has, which is whether the thing has expired. */
+function certValidity(b64) {
+  try {
+    const bytes = b64urlToBytes(b64.replace(/\s+/g, ''));
+    const times = [];
+    for (let i = 0; i < bytes.length - 2; i++) {
+      const tag = bytes[i], len = bytes[i + 1];
+      // UTCTime is 0x17 (len 13, YYMMDDhhmmssZ), GeneralizedTime is 0x18 (len 15)
+      if ((tag === 0x17 && len === 13) || (tag === 0x18 && len === 15)) {
+        const s = bytesToText(bytes.slice(i + 2, i + 2 + len));
+        if (!/^\d{12,14}Z$/.test(s)) continue;
+        let y, rest;
+        if (tag === 0x17) {
+          const yy = parseInt(s.slice(0, 2), 10);
+          y = yy >= 50 ? 1900 + yy : 2000 + yy;
+          rest = s.slice(2);
+        } else {
+          y = parseInt(s.slice(0, 4), 10);
+          rest = s.slice(4);
+        }
+        const d = new Date(Date.UTC(y, +rest.slice(0, 2) - 1, +rest.slice(2, 4),
+                                    +rest.slice(4, 6), +rest.slice(6, 8), +rest.slice(8, 10)));
+        if (!isNaN(d)) times.push(d);
+        if (times.length === 2) break;
+      }
+    }
+    if (times.length === 2) return { notBefore: times[0], notAfter: times[1] };
+  } catch (e) { /* an unreadable certificate is reported by the caller */ }
+  return null;
+}
+
+/* Key size from a JWK modulus, which is what decides whether an RSA key is
+   too small to still be trusted. */
+function rsaBits(n) {
+  try {
+    const bytes = b64urlToBytes(n);
+    let i = 0;
+    while (i < bytes.length && bytes[i] === 0) i++;   // strip leading zero padding
+    return (bytes.length - i) * 8;
+  } catch (e) { return null; }
+}
+
+/* ============================== DETECT ==============================
+   One box, and the tool works out what you pasted. Nobody debugging a
+   federation problem at 2am wants to first tell a form what kind of artifact
+   they are holding, and half the time they are not sure.
+
+   Order matters: the cheapest and most certain shapes are tested first, and
+   anything ambiguous falls through to a guess with a stated confidence. */
+
+const KINDS = {
+  jwt:       'JSON Web Token',
+  jwks:      'JSON Web Key Set',
+  discovery: 'OpenID Connect discovery document',
+  authz:     'OAuth 2.0 authorization request',
+  samlresp:  'SAML response',
+  samlreq:   'SAML authentication request',
+  samlmeta:  'SAML metadata',
+  saml:      'SAML document',
+};
+
+function detect(raw) {
+  const text = String(raw || '').trim();
+  if (!text) return { kind: null };
+
+  // A JWT is three or five base64url segments. Check this first: it is the
+  // most common paste and the least ambiguous shape there is.
+  if (/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]*){1,3}$/.test(text.replace(/\s+/g, ''))) {
+    return { kind: 'jwt', confidence: 'certain' };
+  }
+
+  // A bearer header pasted whole, which people do constantly.
+  const bearer = text.match(/^(?:Authorization:\s*)?Bearer\s+([A-Za-z0-9_.-]+)$/i);
+  if (bearer) return { kind: 'jwt', confidence: 'certain', rewrite: bearer[1] };
+
+  // A URL: either an authorization request or a redirect carrying the result.
+  if (/^https?:\/\//i.test(text) && /[?#]/.test(text)) {
+    return { kind: 'authz', confidence: 'certain' };
+  }
+
+  // JSON: which document depends on what is inside it.
+  if (/^[\[{]/.test(text)) {
+    try {
+      const j = JSON.parse(text);
+      if (j && Array.isArray(j.keys)) return { kind: 'jwks', confidence: 'certain' };
+      if (j && (j.issuer || j.authorization_endpoint || j.jwks_uri)) {
+        return { kind: 'discovery', confidence: 'certain' };
+      }
+      if (j && (j.kty || j.n || j.crv)) return { kind: 'jwks', confidence: 'likely', wrapSingleKey: true };
+      return { kind: null, reason: 'JSON, but not a shape authlint knows' };
+    } catch (e) {
+      return { kind: null, reason: 'starts like JSON but will not parse: ' + e.message };
+    }
+  }
+
+  // XML, either raw or base64. Look at the root element to tell them apart.
+  const xmlish = /^\s*</.test(text) ? text : peekBase64Xml(text);
+  if (xmlish) {
+    if (/<[\w:]*EntityDescriptor/i.test(xmlish) || /<[\w:]*EntitiesDescriptor/i.test(xmlish)) {
+      return { kind: 'samlmeta', confidence: 'certain' };
+    }
+    if (/<[\w:]*Response/i.test(xmlish)) return { kind: 'samlresp', confidence: 'certain' };
+    if (/<[\w:]*AuthnRequest/i.test(xmlish)) return { kind: 'samlreq', confidence: 'certain' };
+    if (/<[\w:]*Assertion/i.test(xmlish)) return { kind: 'samlresp', confidence: 'likely' };
+    if (/<[\w:]*LogoutRequest/i.test(xmlish) || /<[\w:]*LogoutResponse/i.test(xmlish)) {
+      return { kind: 'saml', confidence: 'likely' };
+    }
+    // Parses as XML but the root is not one of the SAML elements. Running the
+    // SAML checks over it would produce a page of findings about a document
+    // that was never SAML, so hand it to diagnose instead.
+    return { kind: null, reason: 'XML, but not a document authlint knows' };
+  }
+
+  // A bare query string, which is what you get from copying out of a HAR file.
+  if (/(^|[?&])(response_type|client_id|redirect_uri|code_challenge)=/.test(text)) {
+    return { kind: 'authz', confidence: 'likely', asQuery: true };
+  }
+
+  return { kind: null, reason: 'authlint cannot tell what this is' };
+}
+
+function peekBase64Xml(text) {
+  const candidate = text.replace(/\s+/g, '');
+  if (!/^[A-Za-z0-9+/=_-]{40,}$/.test(candidate)) return null;
+  try {
+    // Slice on a 4-character boundary so the peek does not fail on padding.
+    const head = candidate.slice(0, Math.floor(Math.min(candidate.length, 400) / 4) * 4);
+    const decoded = b64urlToText(head);
+    return /^\s*</.test(decoded) ? decoded : null;
+  } catch (e) { return null; }
+}
+
+/* ============================== DIAGNOSE ==============================
+   A free paste box accepts anything, so it has to answer two different
+   questions well.
+
+   "I do not recognise this at all" is one answer, and it should say what the
+   tool does accept rather than shrugging.
+
+   "This is a JWT and it is broken" is a completely different answer, and it is
+   the more useful one. Somebody pasting a truncated token out of a log file is
+   two seconds from the fix if you tell them which segment is short, and lost
+   for ten minutes if all you say is that the input was not understood.
+
+   Returns { state, looksLike, problem, hint }, where state is 'malformed' when
+   the shape is recognisable and 'unknown' when it is not. */
+
+const ACCEPTS = 'a JWT, a JWKS, an OpenID Connect discovery document, an OAuth ' +
+                'authorization request or redirect URL, a SAML response or assertion, ' +
+                'or SAML metadata';
+
+function diagnose(raw) {
+  const text = String(raw || '').trim();
+  if (!text) return null;
+  const compact = text.replace(/\s+/g, '');
+
+  /* ---------------- things we recognise and deliberately do not handle ---------------- */
+
+  if (/^-{2,}BEGIN ([A-Z ]+)-{2,}/.test(text)) {
+    const what = (text.match(/^-{2,}BEGIN ([A-Z ]+)-{2,}/) || [])[1].trim().toLowerCase();
+    if (/private key/.test(what)) {
+      return { state: 'unknown', looksLike: 'a PEM private key',
+        problem: 'authlint does not read private keys, and you should not paste one into anything.',
+        hint: 'If you are checking a key set, paste the public JWKS instead.' };
+    }
+    return { state: 'unknown', looksLike: 'a PEM ' + what + ' block',
+      problem: 'authlint inspects certificates where they are published rather than on their own.',
+      hint: 'Paste the SAML metadata or the JWKS that carries this certificate, and the expiry ' +
+            'will be checked in context.' };
+  }
+
+  if (/^(Cookie|Set-Cookie):/i.test(text)) {
+    return { state: 'unknown', looksLike: 'an HTTP cookie header',
+      problem: 'A session cookie is usually opaque, with nothing inside it to decode.',
+      hint: 'If one of the values is a JWT, three base64url segments separated by dots, paste just that.' };
+  }
+
+  /* ---------------- JWT, the one worth diagnosing precisely ---------------- */
+
+  // Deliberately narrow. A dotted string is not enough on its own, or every
+  // hostname somebody pastes gets told it is a JWT missing a segment. Either it
+  // opens with the base64 of {" , which nothing else does, or it is made of
+  // base64url runs with at least one of them long enough to be a real segment.
+  const parts = compact.split('.');
+  const jwtish = /^eyJ/.test(compact) ||
+                 (parts.length >= 2 && parts.length <= 6 &&
+                  parts.every(s => /^[A-Za-z0-9_-]*$/.test(s)) &&
+                  parts.some(s => s.length >= 20));
+  if (jwtish) {
+    const name = 'a JWT';
+
+    if (parts.length === 1) {
+      // One segment beginning eyJ is the base64 of a JSON object, which is a
+      // lone JWT header, and is also what you get from anyone who base64s some
+      // JSON for their own reasons. An alg or enc key settles it.
+      let obj = null;
+      try { obj = JSON.parse(b64urlToText(compact)); } catch (e) { /* not whole JSON */ }
+      if (obj && typeof obj === 'object' && !obj.alg && !obj.enc) {
+        return { state: 'malformed', looksLike: 'base64-encoded JSON',
+          problem: 'It decodes to JSON rather than to a document authlint recognises.',
+          hint: 'Decode it yourself and paste the JSON, or paste the token that is inside it.' };
+      }
+      return { state: 'malformed', looksLike: name,
+        problem: 'There is only one segment. A signed JWT has three, separated by dots.',
+        hint: 'It has probably been truncated, or copied from somewhere that stripped the dots. ' +
+              'Check both ends of what you copied.' };
+    }
+    if (parts.length === 2) {
+      return { state: 'malformed', looksLike: name,
+        problem: 'There are two segments. A signed JWT has three: header, payload and signature.',
+        hint: 'The signature is usually what gets cut off, because it is last. Copy the whole value.' };
+    }
+    if (parts.length === 4 || parts.length > 5) {
+      return { state: 'malformed', looksLike: name,
+        problem: 'There are ' + parts.length + ' segments. A signed JWT has three and an encrypted ' +
+                 'one has five.',
+        hint: 'Check whether two values have been pasted together.' };
+    }
+
+    // The right number of segments, so the fault is inside one of them.
+    const labels = ['header', 'payload', 'signature'];
+    for (let i = 0; i < Math.min(parts.length, 2); i++) {
+      if (!parts[i]) {
+        return { state: 'malformed', looksLike: name,
+          problem: 'The ' + labels[i] + ' segment is empty.',
+          hint: 'Copy the whole token again. An empty segment means something was lost in transit.' };
+      }
+      let decoded;
+      try {
+        decoded = b64urlToText(parts[i]);
+      } catch (e) {
+        return { state: 'malformed', looksLike: name,
+          problem: 'The ' + labels[i] + ' segment is not valid base64url.',
+          hint: 'The usual causes are a truncated copy, a line break inserted by a terminal or a ' +
+                'log viewer, or the token having been URL-encoded. Try copying it from the ' +
+                'network tab rather than from a log.' };
+      }
+      try {
+        JSON.parse(decoded);
+      } catch (e) {
+        return { state: 'malformed', looksLike: name,
+          problem: 'The ' + labels[i] + ' segment decodes, but the result is not valid JSON: ' +
+                   e.message + '.',
+          hint: decoded.length < 400
+            ? 'It decoded to: ' + decoded.slice(0, 200)
+            : 'That usually means the segment is truncated part way through.' };
+      }
+    }
+    return { state: 'malformed', looksLike: name,
+      problem: 'The segments are present but authlint could not read them.',
+      hint: 'Please open an issue with the token, redacted, because this should not happen.' };
+  }
+
+  /* ---------------- JSON ---------------- */
+
+  if (/^[[{]/.test(text)) {
+    try {
+      const j = JSON.parse(text);
+      const keys = j && typeof j === 'object' ? Object.keys(j).slice(0, 6).join(', ') : '';
+      return { state: 'malformed', looksLike: 'a JSON document',
+        problem: 'It parses, but it is not a shape authlint knows.' +
+                 (keys ? ' Its top-level keys are: ' + keys + '.' : ''),
+        hint: 'A key set needs a "keys" array. A discovery document needs "issuer" or ' +
+              '"authorization_endpoint". If this is a token response, paste the access_token or ' +
+              'id_token value from inside it.' };
+    } catch (e) {
+      return { state: 'malformed', looksLike: 'a JSON document',
+        problem: 'It will not parse: ' + e.message + '.',
+        hint: 'The common causes are a truncated copy, a trailing comma, or single quotes where ' +
+              'JSON requires double.' };
+    }
+  }
+
+  /* ---------------- XML ---------------- */
+
+  // Raw XML, or base64 that turns out to be XML. Both arrive here, because
+  // people paste SAMLResponse straight out of the form field as often as they
+  // paste the document itself.
+  let asXml = /^</.test(text) ? text : null;
+  if (!asXml && peekBase64Xml(text)) {
+    try {
+      const full = b64urlToText(compact.slice(0, Math.floor(compact.length / 4) * 4));
+      if (/^\s*</.test(full)) asXml = full;
+    } catch (e) { /* falls through to the base64 branch below */ }
+  }
+  if (asXml) {
+    const parsed = decodeXml(asXml);
+    if (parsed.error) {
+      return { state: 'malformed', looksLike: 'an XML document',
+        problem: 'It will not parse. ' + parsed.error.replace(/^XML will not parse: /, ''),
+        hint: 'A SAML response copied out of a browser is often truncated in the middle. Take it ' +
+              'from the form field in the network tab rather than from the rendered page.' };
+    }
+    const root = parsed.doc.documentElement.localName;
+    return { state: 'malformed', looksLike: 'an XML document with a <' + root + '> root',
+      problem: 'It parses, but authlint does not have checks for that element.',
+      hint: 'It reads SAML Response, Assertion, AuthnRequest and EntityDescriptor documents.' };
+  }
+
+  /* ---------------- base64 of something ---------------- */
+
+  // Whitespace is stripped first because a base64 SAMLResponse arrives wrapped
+  // at 76 columns, but a sentence of English with the spaces taken out also
+  // matches the base64 alphabet. Line breaks are allowed, spaces are not.
+  if (!/ /.test(text) && /^[A-Za-z0-9+/=_-]{24,}$/.test(compact)) {
+    let decoded = null;
+    try { decoded = b64urlToText(compact.slice(0, Math.floor(Math.min(compact.length, 600) / 4) * 4)); }
+    catch (e) { /* handled below */ }
+
+    if (decoded && /^\s*[[{]/.test(decoded)) {
+      return { state: 'malformed', looksLike: 'base64-encoded JSON',
+        problem: 'It decodes to JSON rather than to a document authlint recognises.',
+        hint: 'Decode it yourself and paste the JSON, or paste the token inside it.' };
+    }
+    if (decoded && /[\x00-\x08\x0e-\x1f]/.test(decoded)) {
+      return { state: 'malformed', looksLike: 'compressed or binary data',
+        problem: 'It is valid base64, and what comes out is not text.',
+        hint: 'SAML sent over the HTTP-Redirect binding is DEFLATE compressed, and authlint does ' +
+              'not inflate it because that would mean a dependency. Use the POST binding version, ' +
+              'which is what you want for debugging anyway.' };
+    }
+    return { state: 'unknown', looksLike: 'an opaque value',
+      problem: 'It looks like base64 or a random identifier, with no structure inside it.',
+      hint: 'Opaque access tokens and session identifiers have nothing to decode. That is by ' +
+            'design, and the only thing that can tell you about one is the issuer\'s ' +
+            'introspection endpoint.' };
+  }
+
+  /* ---------------- URLs ---------------- */
+
+  if (/^https?:\/\//i.test(text)) {
+    return { state: 'malformed', looksLike: 'a URL',
+      problem: 'It has no query string and no fragment, so there are no parameters to check.',
+      hint: 'Copy the authorization request as the browser had it, including everything after ' +
+            'the question mark. In the network tab, tick Preserve log first, or the redirect ' +
+            'will clear it before you get there.' };
+  }
+
+  /* ---------------- give up, usefully ---------------- */
+
+  return { state: 'unknown', looksLike: null,
+    problem: 'authlint does not recognise this.',
+    hint: 'It reads ' + ACCEPTS + '. If you believe this should be one of those, please open an ' +
+          'issue with the input, redacted.' };
+}
+
+/* ============================== JWT CHECKS ==============================
+   Ordered roughly by how much trouble each one causes. The header checks come
+   first because every one of them is a way to make a verifier trust a token it
+   should have rejected, and those are the bugs that end up in advisories. */
+
+const WEAK_ALGS = ['none', 'HS1', 'RS1'];
+
+function checkJwt(t, now) {
+  const f = [];
+  const h = t.header || {};
+  const p = t.payload || {};
+  const alg = String(h.alg || '');
+
+  /* ---------------- header: the ways a verifier gets fooled ---------------- */
+
+  if (!h.alg) {
+    f.push(F('critical', 'No alg in the header',
+      'A verifier that reads the algorithm from the token has nothing to read, and one that ' +
+      'defaults on a missing value will pick something.',
+      'Pin the expected algorithm in the verifier and reject anything else.', 'RFC 7515 §4.1.1'));
+  } else if (/^none$/i.test(alg)) {
+    f.push(F('critical', 'alg is "none", so this token is unsigned',
+      'Anyone can change the payload and the token still parses. If any verifier in the chain ' +
+      'honours the header algorithm, this is a straight authentication bypass.',
+      'Reject alg=none unconditionally. Pin the algorithm you expect rather than reading it from the token.',
+      'CVE-2015-9235, RFC 8725 §3.1'));
+  } else if (/^HS/i.test(alg)) {
+    f.push(F('warn', 'Symmetric signature (' + alg + ')',
+      'Everyone who can verify this token can also mint one, because the verification key is the ' +
+      'signing key. If a provider that normally signs with RS256 issued this, the classic algorithm ' +
+      'confusion attack looks exactly like it: the attacker re-signs with the public key as an HMAC secret.',
+      'Prefer RS256 or ES256 for anything crossing a trust boundary, and pin the algorithm on verification.',
+      'RFC 8725 §2.1'));
+  }
+
+  if (h.jku) {
+    f.push(F('critical', 'Header carries jku, a URL the verifier is asked to fetch keys from',
+      'If the verifier fetches that URL and trusts what comes back, whoever controls the token ' +
+      'controls the signing key. That is forgery with extra steps.',
+      'Ignore jku, or resolve it only against a fixed allow-list of hosts you own.', 'RFC 8725 §3.5'));
+  }
+  if (h.x5u) {
+    f.push(F('critical', 'Header carries x5u, a URL pointing at the signing certificate',
+      'Same failure as jku. An attacker who can set this field can nominate the key that validates ' +
+      'their own token.',
+      'Ignore x5u, or allow-list the host.', 'RFC 8725 §3.5'));
+  }
+  if (h.jwk) {
+    f.push(F('critical', 'Header embeds its own public key (jwk)',
+      'The token is telling the verifier which key to trust. Any verifier that believes it will ' +
+      'accept a token signed by anyone.',
+      'Never take the key from the token. Resolve kid against a JWKS you fetched yourself.', 'RFC 8725 §3.6'));
+  }
+  if (!h.kid && /^(RS|ES|PS)/i.test(alg)) {
+    f.push(F('note', 'No kid',
+      'The verifier has to try every key in the set, and rotating a key becomes a flag day rather ' +
+      'than a rollout.',
+      'Have the issuer stamp kid and publish matching kids in the JWKS.', 'RFC 7515 §4.1.4'));
+  }
+  if (h.typ && String(h.typ).toLowerCase() === 'jwt' && (p.scope || p.scp || p.client_id) && !p.nonce) {
+    f.push(F('note', 'Access token typed as "JWT" rather than "at+jwt"',
+      'Explicit typing is what stops a resource server accepting an ID token where it expected an ' +
+      'access token. The two are both JWTs and both signed by the same issuer.',
+      'Issue access tokens with typ=at+jwt and check it.', 'RFC 9068 §2.1'));
+  }
+  if (h.crit) {
+    f.push(F('note', 'crit header present: ' + JSON.stringify(h.crit),
+      'A verifier that does not understand every extension listed here is required to reject the ' +
+      'token. Many libraries quietly do not.', '', 'RFC 7515 §4.1.11'));
+  }
+
+  if (t.kind === 'jws' && !t.signature) {
+    f.push(F('critical', 'Empty signature segment',
+      'The token claims an algorithm and carries nothing to verify. Some libraries have historically ' +
+      'treated this as valid.',
+      'Reject tokens with an empty signature.', 'RFC 8725 §3.1'));
+  }
+
+  /* ---------------- time ---------------- */
+
+  if (looksLikeMillis(p.exp) || looksLikeMillis(p.iat) || looksLikeMillis(p.nbf)) {
+    f.push(F('critical', 'Timestamps look like milliseconds, not seconds',
+      'JWT time claims are seconds since the epoch. A millisecond value puts the expiry thousands ' +
+      'of years out, so the token never expires and nobody notices until it is abused.',
+      'Divide by 1000 at the issuer.', 'RFC 7519 §2 (NumericDate)'));
+  }
+
+  if (p.exp == null) {
+    f.push(F('critical', 'No exp claim',
+      'The token is valid forever. Whatever leaks it, leaks it permanently: a log line, a browser ' +
+      'history entry, a support ticket screenshot.',
+      'Always set exp. Minutes for access tokens, not hours.', 'RFC 7519 §4.1.4'));
+  } else if (typeof p.exp === 'number') {
+    const remaining = p.exp - now;
+    if (remaining < 0) {
+      f.push(F('note', 'Expired ' + secondsToHuman(-remaining) + ' ago',
+        'Stated so you know the token you are looking at is not the one currently failing, if it is failing now.'));
+    } else {
+      f.push(F('ok', 'Valid for another ' + secondsToHuman(remaining), ''));
+    }
+    if (typeof p.iat === 'number') {
+      const life = p.exp - p.iat;
+      if (life > 31536000) {
+        f.push(F('critical', 'Lifetime is ' + secondsToHuman(life),
+          'A bearer token this long-lived is a password that nobody can rotate and everybody logs.',
+          'Shorten it and refresh instead.', 'RFC 8725 §3.9'));
+      } else if (life > 86400) {
+        f.push(F('warn', 'Lifetime is ' + secondsToHuman(life),
+          'Long enough that revocation matters, and bearer tokens have no revocation.',
+          'Minutes for access tokens. If you need longer sessions, use a refresh token you can revoke.'));
+      } else {
+        f.push(F('ok', 'Lifetime is ' + secondsToHuman(life), ''));
+      }
+    }
+  }
+
+  if (typeof p.iat === 'number' && p.iat - now > 300) {
+    f.push(F('warn', 'Issued ' + secondsToHuman(p.iat - now) + ' in the future',
+      'Either a clock is wrong or the token was minted somewhere you did not expect. Verifiers with ' +
+      'tight skew tolerance will reject it intermittently, which is the worst kind of bug to chase.',
+      'Fix time sync at the issuer before you widen the skew allowance.'));
+  }
+  if (typeof p.nbf === 'number' && p.nbf - now > 60) {
+    f.push(F('note', 'Not valid for another ' + secondsToHuman(p.nbf - now), ''));
+  }
+
+  /* ---------------- identity of the parties ---------------- */
+
+  if (!p.iss) {
+    f.push(F('critical', 'No iss claim',
+      'Nothing says who minted this. A verifier that does not check the issuer will accept a ' +
+      'correctly signed token from a completely different tenant.',
+      'Set iss, and compare it exactly against the expected issuer.', 'OIDC Core §2'));
+  } else if (typeof p.iss === 'string' && /^http:\/\//i.test(p.iss)) {
+    // Caught separately from the general case below: the earlier version of
+    // this check allowed anything with a scheme through, which meant a
+    // plaintext http issuer was never reported at all.
+    f.push(F('warn', 'iss is a plaintext http URL: ' + p.iss,
+      'Discovery against a plaintext issuer can be rewritten in transit, and the keys a client ' +
+      'ends up trusting come from whatever answered.',
+      'Serve the issuer over https.', 'OIDC Discovery §4.3'));
+  } else if (typeof p.iss === 'string' && !/^https:\/\//.test(p.iss) && !/^[a-z][a-z0-9+.-]*:/i.test(p.iss)) {
+    f.push(F('note', 'iss is not a URL: ' + p.iss,
+      'Legal for a plain JWT, and OpenID Connect requires an https URL because discovery depends ' +
+      'on the value matching the issuer exactly, trailing slash and all.', '', 'OIDC Discovery §4.3'));
+  }
+
+  if (p.aud == null) {
+    f.push(F('warn', 'No aud claim',
+      'Nothing scopes this token to a recipient, so any service holding it can present it to any ' +
+      'other service that trusts the same issuer.',
+      'Set aud to the intended recipient and verify it there.', 'RFC 7519 §4.1.3'));
+  } else if (Array.isArray(p.aud) && p.aud.length > 1 && !p.azp) {
+    f.push(F('warn', 'Multiple audiences and no azp',
+      'With more than one audience a verifier cannot tell which party the token was actually issued ' +
+      'to, and OpenID Connect requires azp in exactly this case.',
+      'Add azp, or issue one token per audience.', 'OIDC Core §2'));
+  }
+
+  if (!p.sub && (p.iss || p.aud)) {
+    f.push(F('warn', 'No sub claim',
+      'There is no stable identifier for the principal, so the relying party has to fall back on ' +
+      'something mutable to key its own records.',
+      'Set sub to an identifier that never changes and is never reused.', 'RFC 7519 §4.1.2'));
+  } else if (looksLikeEmail(p.sub)) {
+    f.push(F('warn', 'sub is an email address',
+      'People change their surname and companies recycle addresses. When that happens, either an ' +
+      'account is orphaned or someone inherits the previous holder\'s access.',
+      'Use an opaque immutable identifier for sub and carry the email as a separate claim.',
+      'OIDC Core §5.7'));
+  }
+
+  if (!p.jti && typeof p.exp === 'number' && (p.exp - now) > 900) {
+    f.push(F('note', 'No jti',
+      'Nothing to record if you ever need to deny a specific token before it expires.',
+      'Add jti if you plan to support revocation.', 'RFC 7519 §4.1.7'));
+  }
+
+  /* ---------------- what is being carried ---------------- */
+
+  const pii = PII_CLAIMS.filter(c => p[c] !== undefined);
+  if (pii.length) {
+    f.push(F(pii.length > 3 ? 'warn' : 'note', 'Personal data in the token: ' + pii.join(', '),
+      'A JWT is base64, not encryption. Everything here is readable in any log aggregator, proxy ' +
+      'access log, browser history entry and error report the token passes through.',
+      'Carry an identifier and let the relying party fetch what it needs from userinfo.',
+      'RFC 8725 §3.11'));
+  }
+  for (const k of Object.keys(p)) {
+    const v = p[k];
+    if (typeof v === 'string' && /^-{2,5}BEGIN|^[A-Za-z0-9+/]{200,}={0,2}$/.test(v)) {
+      f.push(F('warn', 'Claim "' + k + '" looks like embedded key material or a nested credential',
+        'Anything readable in the token is readable by everything the token touches.', ''));
+      break;
+    }
+  }
+
+  const size = (t.raw || '').length;
+  if (size > 8192) {
+    f.push(F('critical', 'Token is ' + size.toLocaleString() + ' bytes',
+      'Past the default header limit on most servers and proxies. This fails as a 431 or a silently ' +
+      'truncated header, usually only for the users with the most group memberships.',
+      'Move the large claims out. Group lists are the usual culprit.'));
+  } else if (size > 4096) {
+    f.push(F('warn', 'Token is ' + size.toLocaleString() + ' bytes',
+      'Too big for a single cookie, and close enough to common header limits that a user with a few ' +
+      'more roles than average will break.',
+      'Move group and permission lists out of the token.'));
+  }
+
+  for (const k of ['roles', 'groups', 'permissions', 'scp', 'entitlements']) {
+    if (Array.isArray(p[k]) && p[k].length > 40) {
+      f.push(F('warn', k + ' has ' + p[k].length + ' entries',
+        'This is the claim that grows until the token stops fitting in a header, and it grows for ' +
+        'your longest-serving employees first.',
+        'Look these up at the resource server instead of carrying them.'));
+    }
+  }
+
+  if (t.kind === 'jwe') {
+    f.push(F('note', 'This is a JWE, so the payload is encrypted',
+      'authlint can read the header but not the content, which is the point of a JWE. The header ' +
+      'checks above still apply.', '', 'RFC 7516'));
+  }
+
+  /* ---------------- the reminder that matters most ---------------- */
+  f.push(F('note', 'authlint did not verify the signature',
+    'Nothing here proves this token is genuine. A decoded token tells you what it claims, not ' +
+    'whether the claim is true, and every finding above is about content rather than authenticity.',
+    'Verify against the issuer\'s JWKS in your own code, with the algorithm pinned.'));
+
+  return sortFindings(f);
+}
+
+/* ============================== DISCOVERY & JWKS CHECKS ==============================
+   A discovery document is the most under-read file in an identity deployment.
+   It is also the one place where a single missing field tells you the whole
+   estate is running a flow that was deprecated years ago. */
+
+function checkDiscovery(d, now) {
+  const f = [];
+  const arr = k => Array.isArray(d[k]) ? d[k] : [];
+  const has = (k, v) => arr(k).some(x => String(x).toLowerCase() === v);
+
+  if (!d.issuer) {
+    f.push(F('critical', 'No issuer',
+      'Clients compare the iss claim of every token against this value. Without it there is nothing ' +
+      'to compare against.', '', 'OIDC Discovery §3'));
+  } else {
+    if (!/^https:\/\//.test(d.issuer)) {
+      f.push(F('critical', 'issuer is not https: ' + d.issuer,
+        'Discovery over plaintext means the endpoints and keys a client trusts can be rewritten in transit.',
+        '', 'OIDC Discovery §4.3'));
+    }
+    if (/\/$/.test(d.issuer)) {
+      f.push(F('note', 'issuer has a trailing slash',
+        'Issuer comparison is exact string equality. A trailing slash here and not in the token, or ' +
+        'the other way round, is one of the most common interop failures in OpenID Connect and the ' +
+        'error message never says so.',
+        'Make sure the iss claim in issued tokens matches this byte for byte.', 'OIDC Discovery §4.3'));
+    }
+    for (const k of ['authorization_endpoint', 'token_endpoint', 'jwks_uri', 'userinfo_endpoint']) {
+      const v = d[k];
+      if (typeof v === 'string' && /^https?:\/\//.test(v)) {
+        try {
+          if (new URL(v).origin !== new URL(d.issuer).origin) {
+            f.push(F('note', k + ' is on a different origin from the issuer',
+              'Legitimate in plenty of deployments, and also what a compromised document looks like. ' +
+              'Worth confirming this origin is one you own.', '', ''));
+          }
+        } catch (e) { /* malformed URLs are reported below */ }
+      }
+    }
+  }
+
+  for (const k of ['authorization_endpoint', 'token_endpoint', 'jwks_uri']) {
+    if (!d[k]) {
+      f.push(F('warn', 'No ' + k, 'Clients that rely on discovery cannot complete a flow without it.', '', 'OIDC Discovery §3'));
+    } else if (!/^https:\/\//.test(String(d[k]))) {
+      f.push(F('critical', k + ' is not https',
+        'Keys or codes traveling in plaintext. For jwks_uri this means an attacker on the path ' +
+        'chooses the signing key.', '', 'OIDC Discovery §3'));
+    }
+  }
+
+  /* ---------------- the flow the estate is actually running ---------------- */
+
+  const pkce = arr('code_challenge_methods_supported').map(x => String(x).toLowerCase());
+  if (!pkce.length) {
+    f.push(F('critical', 'No PKCE advertised',
+      'Either the provider does not support it or it does not say so, and clients that read discovery ' +
+      'will not send a challenge. Authorization codes are then interceptable, which is the whole ' +
+      'reason PKCE exists.',
+      'Enable PKCE and advertise S256. It is required for every client type now, not just mobile.',
+      'RFC 9700 §2.1'));
+  } else {
+    if (!pkce.includes('s256')) {
+      f.push(F('critical', 'PKCE advertised without S256: ' + pkce.join(', '),
+        'Only the plain method is offered, which sends the verifier in the clear in the authorization ' +
+        'request and protects nothing against an attacker who can read it.',
+        'Support S256 and stop advertising plain.', 'RFC 7636 §7.2'));
+    } else if (pkce.includes('plain')) {
+      f.push(F('warn', 'PKCE still advertises the plain method',
+        'A client that picks plain gets no protection, and some libraries pick the first method listed.',
+        'Advertise S256 only.', 'RFC 7636 §7.2'));
+    } else {
+      f.push(F('ok', 'PKCE with S256', ''));
+    }
+  }
+
+  const rts = arr('response_types_supported').map(x => String(x).toLowerCase());
+  const implicit = rts.filter(x => /\btoken\b/.test(x) && !/^code$/.test(x));
+  if (implicit.length) {
+    f.push(F('warn', 'Implicit flow is still enabled: ' + implicit.join(', '),
+      'Tokens come back in the URL fragment, which puts them in browser history, in referrer headers ' +
+      'and in anything that logs URLs. It has been advised against for years and it is usually left ' +
+      'on for one forgotten legacy client.',
+      'Find out who still uses it, move them to code with PKCE, and turn it off.', 'RFC 9700 §2.1.2'));
+  } else if (rts.length) {
+    f.push(F('ok', 'No implicit response types', ''));
+  }
+
+  const algs = arr('id_token_signing_alg_values_supported').map(x => String(x).toLowerCase());
+  if (algs.includes('none')) {
+    f.push(F('critical', 'Unsigned ID tokens are advertised (alg none)',
+      'A client that negotiates none receives an ID token anyone can write.',
+      'Remove none from the supported algorithms.', 'RFC 8725 §3.1'));
+  }
+  if (algs.some(a => /^hs/.test(a))) {
+    f.push(F('warn', 'Symmetric ID token signing offered: ' + algs.filter(a => /^hs/.test(a)).join(', '),
+      'Every client that can verify can also forge, and it is the precondition for the algorithm ' +
+      'confusion attack against providers that also offer RS256.',
+      'Offer asymmetric algorithms only unless a specific client genuinely needs otherwise.', 'RFC 8725 §2.1'));
+  }
+
+  const tea = arr('token_endpoint_auth_methods_supported').map(x => String(x).toLowerCase());
+  if (tea.includes('client_secret_basic') || tea.includes('client_secret_post')) {
+    f.push(F('note', 'Shared-secret client authentication is available',
+      'Fine for confidential clients. Worth knowing which of your clients are actually confidential, ' +
+      'because a secret shipped inside a SPA or a mobile binary is not one.', '', 'RFC 9700 §2.5'));
+  }
+  if (tea.includes('private_key_jwt') || tea.includes('tls_client_auth')) {
+    f.push(F('ok', 'Strong client authentication available: ' +
+      tea.filter(x => /private_key_jwt|tls_client_auth/.test(x)).join(', '), ''));
+  }
+
+  if (!d.end_session_endpoint) {
+    f.push(F('note', 'No end_session_endpoint',
+      'There is no RP-initiated logout, so signing out of an application leaves the session at the ' +
+      'provider intact and the next sign-in is silent. Users read that as "logout is broken".',
+      '', 'OIDC RP-Initiated Logout §2'));
+  }
+  if (!d.revocation_endpoint) {
+    f.push(F('note', 'No revocation_endpoint',
+      'Nothing can be withdrawn before it expires, which makes token lifetime your only ' +
+      'containment control during an incident.', '', 'RFC 7009'));
+  }
+  if (arr('subject_types_supported').length && !has('subject_types_supported', 'pairwise')) {
+    f.push(F('note', 'Only public subject identifiers',
+      'Every relying party sees the same sub for a given user, so two of them can correlate their ' +
+      'records without the user agreeing to it.', '', 'OIDC Core §8'));
+  }
+  if (d.require_pushed_authorization_requests === true) {
+    f.push(F('ok', 'Pushed authorization requests are required', ''));
+  }
+
+  return sortFindings(f);
+}
+
+function checkJwks(j, now) {
+  const f = [];
+  const keys = Array.isArray(j.keys) ? j.keys : [j];
+  if (!keys.length) {
+    f.push(F('warn', 'No keys in the set', 'Nothing here can verify anything.'));
+    return f;
+  }
+
+  const secret = keys.filter(k => k && String(k.kty).toLowerCase() === 'oct');
+  if (secret.length) {
+    f.push(F('critical', secret.length + ' symmetric key(s) in a key set',
+      'A JWKS is a public document. An oct key is a shared secret, and its value is right there in ' +
+      'the k parameter. If this document is served from a well-known URL, the secret is public.',
+      'Remove it now and rotate it. Assume it is compromised.', 'RFC 7517 §8.1'));
+  }
+
+  const priv = keys.filter(k => k && (k.d || k.p || k.q));
+  if (priv.length) {
+    f.push(F('critical', priv.length + ' key(s) include private parameters',
+      'The d, p and q parameters are the private half. Publishing them means anyone can sign as you.',
+      'Rotate immediately and publish only the public parameters.', 'RFC 7517 §9.2'));
+  }
+
+  const seen = {};
+  for (const k of keys) {
+    if (!k) continue;
+    if (!k.kid) {
+      f.push(F('warn', 'A key has no kid',
+        'Verifiers cannot select it by identifier, so they try every key in turn and rotation ' +
+        'becomes guesswork.', '', 'RFC 7517 §4.5'));
+    } else if (seen[k.kid]) {
+      f.push(F('critical', 'Duplicate kid: ' + k.kid,
+        'Two keys claim the same identifier, so which one verifies a given token depends on the ' +
+        'iteration order of whatever library you happen to be using.',
+        'Give every key a unique kid.', 'RFC 7517 §4.5'));
+    } else {
+      seen[k.kid] = true;
+    }
+
+    if (String(k.kty).toUpperCase() === 'RSA' && k.n) {
+      const bits = rsaBits(k.n);
+      if (bits && bits < 2048) {
+        f.push(F('critical', 'RSA key is ' + bits + ' bits' + (k.kid ? ' (' + k.kid + ')' : ''),
+          'Below the minimum anyone still considers safe.',
+          'Rotate to at least 2048 bits.', 'RFC 7518 §3.3'));
+      } else if (bits) {
+        f.push(F('ok', 'RSA ' + bits + ' bits' + (k.kid ? ' (' + k.kid + ')' : ''), ''));
+      }
+    }
+
+    if (Array.isArray(k.x5c) && k.x5c[0]) {
+      const v = certValidity(k.x5c[0]);
+      if (v) {
+        const days = (v.notAfter - now * 1000) / 86400000;
+        if (days < 0) {
+          f.push(F('critical', 'Certificate expired ' + Math.abs(Math.round(days)) + ' days ago' +
+            (k.kid ? ' (' + k.kid + ')' : ''),
+            'Anything validating the chain rather than the raw key is already failing.', 'Rotate it.'));
+        } else if (days < 30) {
+          f.push(F('warn', 'Certificate expires in ' + Math.round(days) + ' days' +
+            (k.kid ? ' (' + k.kid + ')' : ''),
+            'Certificate expiry is the single most common cause of a federation outage, and it always ' +
+            'lands on a weekend.', 'Schedule the rotation now.'));
+        } else {
+          f.push(F('ok', 'Certificate valid for another ' + Math.round(days) + ' days', ''));
+        }
+      }
+    }
+
+    if (!k.use && !k.key_ops) {
+      f.push(F('note', 'A key declares neither use nor key_ops',
+        'Nothing says whether it is for signing or encryption, so a verifier may try it for both.',
+        '', 'RFC 7517 §4.2'));
+    }
+  }
+
+  return sortFindings(f);
+}
+
+/* ============================== AUTHORIZATION REQUEST CHECKS ==============================
+   Paste the URL out of the address bar, or out of a HAR file, or out of the
+   network tab. Most of what is wrong with an OAuth deployment is visible in
+   this one line, and almost nobody reads it. */
+
+function parseAuthz(text, asQuery) {
+  const out = { params: {}, base: '', fragment: false, scheme: '' };
+  let s = String(text).trim();
+
+  if (asQuery) {
+    for (const [k, v] of new URLSearchParams(s.replace(/^[?&]/, ''))) out.params[k] = v;
+    return out;
+  }
+
+  let u;
+  try { u = new URL(s); } catch (e) { return { error: 'not a URL: ' + e.message }; }
+  out.base = u.origin + u.pathname;
+  out.scheme = u.protocol.replace(':', '');
+  for (const [k, v] of u.searchParams) out.params[k] = v;
+  if (u.hash && u.hash.length > 1) {
+    out.fragment = true;
+    for (const [k, v] of new URLSearchParams(u.hash.slice(1))) {
+      out.params[k] = v;
+      out.fragmentParams = out.fragmentParams || {};
+      out.fragmentParams[k] = v;
+    }
+  }
+  return out;
+}
+
+function checkAuthz(a, now) {
+  const f = [];
+  const p = a.params || {};
+  const rt = String(p.response_type || '').toLowerCase().trim();
+
+  /* A redirect carrying results, rather than a request. Different checks matter. */
+  const isCallback = !!(p.code || p.access_token || p.id_token || p.error);
+
+  if (a.scheme === 'http' && !/^https?:\/\/(localhost|127\.0\.0\.1)/.test(a.base)) {
+    f.push(F('critical', 'Plaintext http',
+      'Everything in this URL is readable and rewritable in transit, including the code and the ' +
+      'redirect target.', 'Use https everywhere except loopback during development.', 'RFC 9700 §2.1'));
+  }
+
+  if (p.client_secret) {
+    f.push(F('critical', 'client_secret is in the URL',
+      'This is a front-channel request. The secret is now in the browser address bar, the history, ' +
+      'the referrer header and every proxy log between here and the provider. Treat it as public.',
+      'Rotate the secret. Client authentication belongs on the back-channel token request only.',
+      'RFC 6749 §2.3.1'));
+  }
+
+  if (a.fragmentParams && (a.fragmentParams.access_token || a.fragmentParams.id_token)) {
+    f.push(F('warn', 'Tokens returned in the URL fragment',
+      'Fragments reach browser history and anything that reads location. This is the implicit flow ' +
+      'or a hybrid variant of it.',
+      'Move to the authorization code flow with PKCE.', 'RFC 9700 §2.1.2'));
+  }
+
+  if (!isCallback) {
+    if (!rt) {
+      f.push(F('warn', 'No response_type', 'Not a complete authorization request.', '', 'RFC 6749 §4.1.1'));
+    } else if (rt === 'code') {
+      f.push(F('ok', 'Authorization code flow', ''));
+    } else if (/token/.test(rt)) {
+      f.push(F('critical', 'response_type=' + rt + ' returns tokens through the browser',
+        'The implicit and hybrid flows hand tokens to the front channel, where they land in history ' +
+        'and referrer headers. Both have been advised against for years.',
+        'Use response_type=code with PKCE.', 'RFC 9700 §2.1.2'));
+    }
+
+    if (!p.code_challenge) {
+      f.push(F('critical', 'No PKCE',
+        'Without a challenge, anyone who intercepts the authorization code can redeem it. That is ' +
+        'the attack PKCE was written to stop, and it applies to confidential clients too.',
+        'Send code_challenge with code_challenge_method=S256.', 'RFC 9700 §2.1.1'));
+    } else if (String(p.code_challenge_method || 'plain').toLowerCase() !== 's256') {
+      f.push(F('warn', 'code_challenge_method is ' + (p.code_challenge_method || 'plain (the default)'),
+        'The plain method puts the verifier in the request in the clear, so an attacker who can read ' +
+        'the request can also complete the exchange.',
+        'Use S256.', 'RFC 7636 §7.2'));
+    } else {
+      f.push(F('ok', 'PKCE with S256', ''));
+    }
+
+    if (!p.state) {
+      f.push(F('warn', 'No state parameter',
+        'Nothing binds the callback to the browser session that started it, which is what makes ' +
+        'login CSRF possible. PKCE does not cover this.',
+        'Send an unguessable state and check it on return.', 'RFC 6749 §10.12'));
+    } else if (String(p.state).length < 8) {
+      f.push(F('warn', 'state is only ' + String(p.state).length + ' characters',
+        'Short enough to guess, which defeats the point of having it.',
+        'Use at least 128 bits of randomness.'));
+    } else {
+      f.push(F('ok', 'state present', ''));
+    }
+
+    if (/id_token/.test(rt) && !p.nonce) {
+      f.push(F('critical', 'ID token requested with no nonce',
+        'The nonce is what ties the returned ID token to this request. Without it, a token captured ' +
+        'elsewhere can be replayed into this session.',
+        'Send a nonce and check it in the returned token.', 'OIDC Core §3.1.2.1'));
+    }
+
+    if (!p.scope) {
+      f.push(F('note', 'No scope requested', 'The provider will apply its default, whatever that is.'));
+    } else {
+      const scopes = String(p.scope).split(/[\s+]+/).filter(Boolean);
+      if (!scopes.includes('openid') && (p.nonce || /id_token/.test(rt))) {
+        f.push(F('warn', 'Looks like OpenID Connect but scope is missing "openid"',
+          'Without it this is plain OAuth and you will not get an ID token, whatever else you asked for.',
+          '', 'OIDC Core §3.1.2.1'));
+      }
+      if (scopes.some(s => /^(.*\.)?(\*|all|full_access|admin)$/i.test(s))) {
+        f.push(F('warn', 'Very broad scope requested: ' + scopes.join(' '),
+          'The token you get back is as powerful as the scope you asked for, and it will be logged ' +
+          'somewhere.', 'Ask for the narrowest scope the feature needs.'));
+      }
+      if (scopes.length > 12) {
+        f.push(F('note', scopes.length + ' scopes requested',
+          'Long scope lists usually mean one client is doing several unrelated jobs.'));
+      }
+    }
+  }
+
+  /* ---------------- redirect_uri, where a surprising amount goes wrong ---------------- */
+  if (p.redirect_uri) {
+    const r = String(p.redirect_uri);
+    if (/[*]/.test(r)) {
+      f.push(F('critical', 'redirect_uri contains a wildcard',
+        'If the provider honours it, an attacker picks the destination the code is delivered to.',
+        'Register exact URIs. No wildcards, no prefixes.', 'RFC 9700 §2.1'));
+    }
+    if (/^http:/i.test(r) && !/^http:\/\/(localhost|127\.0\.0\.1)/i.test(r)) {
+      f.push(F('critical', 'redirect_uri is plaintext http: ' + r,
+        'The code is delivered over a channel anyone on the path can read.', 'Use https.', 'RFC 9700 §2.1'));
+    }
+    if (/#/.test(r)) {
+      f.push(F('warn', 'redirect_uri contains a fragment',
+        'Fragments are not permitted in a redirect URI and providers differ on what they do with one.',
+        '', 'RFC 6749 §3.1.2'));
+    }
+    if (/^(urn:ietf:wg:oauth:2\.0:oob|oob)$/i.test(r)) {
+      f.push(F('warn', 'Out-of-band redirect (copy the code by hand)',
+        'Deprecated, and the copy-paste step is exactly where users get phished.',
+        'Use a loopback redirect for native applications.', 'RFC 9700 §2.1'));
+    }
+  } else if (!isCallback) {
+    f.push(F('note', 'No redirect_uri in the request',
+      'Legal when the client has exactly one registered URI, and a source of confusion when it does not.'));
+  }
+
+  /* ---------------- the callback side ---------------- */
+  if (isCallback) {
+    if (p.error) {
+      f.push(F('note', 'Provider returned error=' + p.error +
+        (p.error_description ? ': ' + p.error_description : ''),
+        'The description is the provider\'s, not authlint\'s.'));
+    }
+    if (p.code) f.push(F('ok', 'Authorization code returned on the front channel, as intended', ''));
+    if (p.access_token) {
+      f.push(F('critical', 'An access token came back in the URL',
+        'It is now in the browser history and in any referrer header this page emits.',
+        'Switch to the code flow.', 'RFC 9700 §2.1.2'));
+    }
+    if (!p.state && !p.error) {
+      f.push(F('warn', 'Callback carries no state',
+        'Nothing to compare against what you sent, so the CSRF check cannot happen.', '', 'RFC 6749 §10.12'));
+    }
+  }
+
+  return sortFindings(f);
+}
+
+/* ============================== SAML CHECKS ==============================
+   SAML is where the interesting failures live, because the security of the
+   whole exchange rests on which element the signature covers, and that is
+   invisible unless you go looking. Every check here is something you cannot
+   see by reading a decoded assertion in a text editor. */
+
+const WEAK_SIG = /sha1|md5|dsa-sha1/i;
+
+function checkSamlResponse(x, now) {
+  const f = [];
+  const doc = x.doc;
+  const root = doc.documentElement;
+  const isResponse = /Response$/i.test(root.localName);
+  const assertions = els(root, 'Assertion').concat(els(root, 'EncryptedAssertion'));
+
+  /* ---------------- status ---------------- */
+  const sc = el(root, 'StatusCode');
+  if (sc) {
+    const v = attr(sc, 'Value') || '';
+    if (!/:Success$/i.test(v)) {
+      const inner = els(root, 'StatusCode')[1];
+      const msg = el(root, 'StatusMessage');
+      f.push(F('note', 'Status is not Success: ' + v.split(':').pop() +
+        (inner ? ' / ' + String(attr(inner, 'Value')).split(':').pop() : ''),
+        (msg && msg.textContent ? 'Provider message: ' + msg.textContent.trim() :
+         'The identity provider refused. The second-level code is usually the useful one.')));
+    } else {
+      f.push(F('ok', 'Status: Success', ''));
+    }
+  }
+
+  /* ---------------- the signature question, which is the whole game ---------------- */
+  const allSigs = els(root, 'Signature');
+  const responseSigned = allSigs.some(s => s.parentNode === root);
+  const signedAssertions = assertions.filter(a =>
+    els(a, 'Signature').some(s => s.parentNode === a));
+
+  if (!allSigs.length) {
+    f.push(F('critical', 'Nothing is signed',
+      'There is no signature anywhere in this document, so nothing establishes that the identity ' +
+      'provider produced it. Anyone who can reach the assertion consumer service can log in as anyone.',
+      'Require signed assertions at the service provider and reject unsigned responses.',
+      'SAML 2.0 Core §5'));
+  } else if (assertions.length && !signedAssertions.length && responseSigned) {
+    f.push(F('critical', 'The response is signed but the assertion inside it is not',
+      'This is the classic SAML break. A service provider that validates the response signature and ' +
+      'then reads the assertion can be fed a second, unsigned assertion wrapped into the document. ' +
+      'The signature still verifies, because it covers the element it always covered.',
+      'Sign the assertion, and validate the signature on the element you actually consume.',
+      'XML signature wrapping, CVE-2017-11427 and family'));
+  } else if (signedAssertions.length) {
+    f.push(F('ok', 'Assertion is signed' + (responseSigned ? ' (and so is the response)' : ''), ''));
+  }
+
+  if (assertions.length > 1) {
+    f.push(F('critical', 'Document contains ' + assertions.length + ' assertions',
+      'A legitimate response carries one. More than one is the shape of a signature wrapping attack, ' +
+      'where the signed original is kept to satisfy verification and an injected copy is what gets read.',
+      'Reject any response with more than one assertion.', 'XML signature wrapping'));
+  }
+
+  /* Duplicate IDs are the mechanism wrapping attacks rely on. */
+  const ids = {};
+  const withId = doc.getElementsByTagName('*');
+  for (let i = 0; i < withId.length; i++) {
+    const id = withId[i].getAttribute && withId[i].getAttribute('ID');
+    if (!id) continue;
+    if (ids[id]) {
+      f.push(F('critical', 'Duplicate ID attribute: ' + id,
+        'Signature references resolve by ID. Two elements sharing one means the element that gets ' +
+        'verified and the element that gets read can be different elements.',
+        'Reject the document.', 'XML signature wrapping'));
+      break;
+    }
+    ids[id] = true;
+  }
+
+  for (const s of allSigs) {
+    const sm = el(s, 'SignatureMethod');
+    const dm = el(s, 'DigestMethod');
+    const sa = attr(sm, 'Algorithm') || '';
+    const da = attr(dm, 'Algorithm') || '';
+    if (WEAK_SIG.test(sa)) {
+      f.push(F('warn', 'Signature algorithm is ' + sa.split('#').pop(),
+        'SHA-1 is retired for signatures. Plenty of deployments still run it because the other side ' +
+        'never upgraded, and it is worth knowing which side that is.',
+        'Move to rsa-sha256.', 'NIST SP 800-131A'));
+      break;
+    }
+    if (WEAK_SIG.test(da)) {
+      f.push(F('warn', 'Digest algorithm is ' + da.split('#').pop(),
+        'A SHA-1 digest weakens the signature regardless of the signature algorithm above it.',
+        'Move to sha256.', 'NIST SP 800-131A'));
+      break;
+    }
+  }
+  if (allSigs.length && !allSigs.some(s => {
+    const sa = attr(el(s, 'SignatureMethod'), 'Algorithm') || '';
+    return WEAK_SIG.test(sa);
+  })) {
+    f.push(F('ok', 'Signature and digest algorithms are current', ''));
+  }
+
+  /* ---------------- who this is for ---------------- */
+  const audiences = els(root, 'Audience').map(a => a.textContent.trim()).filter(Boolean);
+  const hasRestriction = els(root, 'AudienceRestriction').length > 0;
+  if (assertions.length && !hasRestriction) {
+    f.push(F('critical', 'No AudienceRestriction',
+      'Nothing scopes this assertion to one service provider. Any SP that trusts the same identity ' +
+      'provider will accept it, so a malicious or compromised SP can replay it elsewhere.',
+      'Add an AudienceRestriction and check it against your own entity ID.', 'SAML 2.0 Core §2.5.1.4'));
+  } else if (audiences.length) {
+    f.push(F('ok', 'Audience: ' + audiences.join(', '), ''));
+  }
+
+  const dest = attr(root, 'Destination');
+  if (isResponse && !dest) {
+    f.push(F('warn', 'No Destination attribute',
+      'The response does not say where it was meant to be delivered, so it cannot be detected when ' +
+      'it is delivered somewhere else.',
+      'Set Destination and compare it to your own ACS URL.', 'SAML 2.0 Core §3.2.2'));
+  }
+
+  if (isResponse && !attr(root, 'InResponseTo')) {
+    f.push(F('note', 'No InResponseTo, so this is IdP-initiated',
+      'There is no request to correlate against, which means no protection against an attacker ' +
+      'submitting a captured assertion to your ACS endpoint in a victim\'s browser.',
+      'Prefer SP-initiated sign-on. If you must accept IdP-initiated, be strict about replay.',
+      'SAML 2.0 Core §3.2.2'));
+  }
+
+  /* ---------------- validity windows ---------------- */
+  const conds = el(root, 'Conditions');
+  if (assertions.length && !conds) {
+    f.push(F('critical', 'Assertion has no Conditions element',
+      'No validity window at all, so the assertion never goes stale and a captured one works forever.',
+      'Emit NotBefore and NotOnOrAfter.', 'SAML 2.0 Core §2.5'));
+  } else if (conds) {
+    const nb = attr(conds, 'NotBefore'), na = attr(conds, 'NotOnOrAfter');
+    if (!na) {
+      f.push(F('critical', 'Conditions has no NotOnOrAfter',
+        'The assertion does not expire.', 'Set a window of minutes.', 'SAML 2.0 Core §2.5.1.2'));
+    } else {
+      const end = Date.parse(na), start = nb ? Date.parse(nb) : null;
+      if (!isNaN(end)) {
+        const remaining = (end - now * 1000) / 1000;
+        if (remaining < 0) {
+          f.push(F('note', 'Assertion expired ' + secondsToHuman(-remaining) + ' ago', ''));
+        } else {
+          f.push(F('ok', 'Assertion valid for another ' + secondsToHuman(remaining), ''));
+        }
+        if (start && !isNaN(start)) {
+          const life = (end - start) / 1000;
+          if (life > 3600) {
+            f.push(F('warn', 'Validity window is ' + secondsToHuman(life),
+              'A SAML assertion is a single-use sign-on artifact. A window this wide gives a captured ' +
+              'assertion a long useful life.',
+              'Five minutes is typical. Widen only as far as your clock skew genuinely requires.'));
+          } else {
+            f.push(F('ok', 'Validity window is ' + secondsToHuman(life), ''));
+          }
+        }
+      }
+    }
+  }
+
+  const scd = el(root, 'SubjectConfirmationData');
+  if (assertions.length && scd && !attr(scd, 'Recipient')) {
+    f.push(F('warn', 'SubjectConfirmationData has no Recipient',
+      'Nothing states which endpoint may consume this, which is the per-assertion version of the ' +
+      'Destination check.', '', 'SAML 2.0 Core §2.4.1.2'));
+  }
+
+  /* ---------------- the subject ---------------- */
+  const nameId = el(root, 'NameID');
+  if (nameId) {
+    const fmt = String(attr(nameId, 'Format') || '').split(':').pop();
+    const val = nameId.textContent.trim();
+    if (/emailAddress/i.test(fmt) || looksLikeEmail(val)) {
+      f.push(F('warn', 'NameID is an email address',
+        'Email addresses get changed on marriage and reissued after someone leaves. Either the ' +
+        'account is orphaned or the next holder inherits it.',
+        'Federate on an opaque immutable identifier and carry the email as an attribute.',
+        'SAML 2.0 Core §8.3'));
+    } else if (/transient/i.test(fmt)) {
+      f.push(F('note', 'NameID format is transient',
+        'A new identifier every sign-on. Correct for privacy, and it means the service provider ' +
+        'cannot link this session to a stored account unless an attribute does it.', '', 'SAML 2.0 Core §8.3.8'));
+    } else if (/unspecified/i.test(fmt)) {
+      f.push(F('note', 'NameID format is unspecified',
+        'Both sides are guessing at what the value means, which works right up until the identity ' +
+        'provider changes it.', 'Agree a format explicitly.', 'SAML 2.0 Core §8.3.1'));
+    } else if (/persistent/i.test(fmt)) {
+      f.push(F('ok', 'NameID format is persistent', ''));
+    }
+  }
+
+  const acr = el(root, 'AuthnContextClassRef');
+  if (acr) {
+    const v = acr.textContent.trim().split(':').pop();
+    if (/^(Password|unspecified|PasswordProtectedTransport)$/i.test(v)) {
+      f.push(F('note', 'AuthnContext is ' + v,
+        'The assertion is telling you a password was used. If you rely on the identity provider for ' +
+        'multi-factor, this is where you would see it, and it is not here.',
+        'Request and enforce a stronger context if MFA is a requirement.', 'SAML 2.0 Core §2.7.2.2'));
+    } else {
+      f.push(F('ok', 'AuthnContext: ' + v, ''));
+    }
+  }
+
+  /* ---------------- what is being carried ---------------- */
+  const encrypted = els(root, 'EncryptedAssertion').length > 0;
+  const attrs = els(root, 'Attribute').map(a => attr(a, 'Name') || attr(a, 'FriendlyName')).filter(Boolean);
+  if (attrs.length && !encrypted) {
+    const pii = attrs.filter(n => /mail|phone|name|address|birth|ssn|nino|employee/i.test(n));
+    if (pii.length) {
+      f.push(F('note', attrs.length + ' attributes in the clear, including ' + pii.slice(0, 4).join(', '),
+        'The assertion is signed, not encrypted. It passes through the user\'s browser and lands in ' +
+        'any logs on the way.',
+        'Use EncryptedAssertion if the attributes are sensitive.', 'SAML 2.0 Core §2.3.4'));
+    }
+  }
+  if (encrypted) {
+    f.push(F('ok', 'Assertion is encrypted', ''));
+  }
+
+  const certs = els(root, 'X509Certificate');
+  for (const c of certs.slice(0, 3)) {
+    const v = certValidity(c.textContent);
+    if (!v) continue;
+    const days = (v.notAfter - now * 1000) / 86400000;
+    if (days < 0) {
+      f.push(F('critical', 'Signing certificate expired ' + Math.abs(Math.round(days)) + ' days ago',
+        'Every service provider that checks expiry is already rejecting this.', 'Rotate it.'));
+    } else if (days < 45) {
+      f.push(F('warn', 'Signing certificate expires in ' + Math.round(days) + ' days',
+        'Certificate expiry is the most common cause of a federation outage, and the failure is total ' +
+        'rather than gradual.', 'Schedule the rotation and tell the other side now.'));
+    } else {
+      f.push(F('ok', 'Signing certificate valid for another ' + Math.round(days) + ' days', ''));
+    }
+    break;
+  }
+
+  f.push(F('note', 'authlint did not verify the signature',
+    'The checks above are about structure and content. Whether the signature actually validates ' +
+    'against a trusted key is a separate question, and it needs the key.',
+    'Validate in your own code, against the certificate you configured, over the element you consume.'));
+
+  return sortFindings(f);
+}
+
+function checkSamlMetadata(x, now) {
+  const f = [];
+  const root = x.doc.documentElement;
+
+  const validUntil = attr(root, 'validUntil');
+  if (validUntil) {
+    const d = Date.parse(validUntil);
+    if (!isNaN(d)) {
+      const days = (d - now * 1000) / 86400000;
+      if (days < 0) {
+        f.push(F('critical', 'Metadata expired ' + Math.abs(Math.round(days)) + ' days ago',
+          'Implementations that honour validUntil will refuse to load this.', 'Republish it.'));
+      } else if (days < 30) {
+        f.push(F('warn', 'Metadata expires in ' + Math.round(days) + ' days', '', 'Republish before it lapses.'));
+      }
+    }
+  }
+
+  for (const sso of els(root, 'SPSSODescriptor')) {
+    if (String(attr(sso, 'WantAssertionsSigned')).toLowerCase() === 'false') {
+      f.push(F('critical', 'WantAssertionsSigned is false',
+        'This service provider is publishing that it will accept unsigned assertions. Anyone can ' +
+        'write one.', 'Set it to true and enforce it in the implementation, not just the metadata.',
+        'SAML 2.0 Metadata §2.4.4'));
+    } else if (String(attr(sso, 'WantAssertionsSigned')).toLowerCase() === 'true') {
+      f.push(F('ok', 'WantAssertionsSigned is true', ''));
+    }
+    if (String(attr(sso, 'AuthnRequestsSigned')).toLowerCase() !== 'true') {
+      f.push(F('note', 'AuthnRequestsSigned is not true',
+        'Requests are unsigned, so the identity provider cannot confirm which service provider asked.',
+        '', 'SAML 2.0 Metadata §2.4.4'));
+    }
+  }
+
+  const endpoints = els(root, 'AssertionConsumerService')
+    .concat(els(root, 'SingleSignOnService'))
+    .concat(els(root, 'SingleLogoutService'));
+  const plain = endpoints.map(e => attr(e, 'Location')).filter(l => l && /^http:/i.test(l));
+  if (plain.length) {
+    f.push(F('critical', plain.length + ' endpoint(s) on plaintext http',
+      'Assertions delivered over a channel anyone on the path can read and rewrite.',
+      'Publish https endpoints only.', 'SAML 2.0 Security §4.1'));
+  } else if (endpoints.length) {
+    f.push(F('ok', 'All ' + endpoints.length + ' endpoints are https', ''));
+  }
+
+  const certs = els(root, 'X509Certificate');
+  if (!certs.length) {
+    f.push(F('warn', 'No certificate in the metadata',
+      'Nothing here to validate signatures against, so the other side has to get the key some other ' +
+      'way, and "some other way" is usually email.'));
+  }
+  let i = 0;
+  for (const c of certs) {
+    const v = certValidity(c.textContent);
+    if (!v) { f.push(F('note', 'A certificate could not be parsed', '')); continue; }
+    const days = (v.notAfter - now * 1000) / 86400000;
+    const label = 'Certificate ' + (++i) + ' of ' + certs.length;
+    if (days < 0) {
+      f.push(F('critical', label + ' expired ' + Math.abs(Math.round(days)) + ' days ago',
+        'If this is the active signing certificate, the federation is down.', 'Rotate it.'));
+    } else if (days < 45) {
+      f.push(F('warn', label + ' expires in ' + Math.round(days) + ' days',
+        'Tell the other side now. Metadata exchange takes longer than anyone plans for.', 'Rotate it.'));
+    } else {
+      f.push(F('ok', label + ' valid for another ' + Math.round(days) + ' days', ''));
+    }
+  }
+  if (certs.length > 1) {
+    f.push(F('ok', certs.length + ' certificates published, which is what a clean rotation looks like', ''));
+  }
+
+  return sortFindings(f);
+}
+
+/* ============================== SAMPLES ==============================
+   Deliberately broken examples, so the first thing a visitor sees is the tool
+   doing its job rather than an empty box. Everything here is invented: the
+   domains are example.com, the names are from the history of computing, and
+   the signature is the word "signature" in base64.
+
+   The token is assembled at load time rather than pasted in as a constant, so
+   its expiry is always relative to now and the demo never rots. */
+
+function b64url(obj) {
+  const json = JSON.stringify(obj);
+  const bytes = new TextEncoder().encode(json);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function buildSampleJwt() {
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const payload = {
+    iss: 'https://login.example.com/',
+    sub: 'ada.lovelace@example.com',
+    aud: ['api://orders', 'api://billing'],
+    iat: now - 120,
+    exp: now + 7 * 24 * 3600,
+    email: 'ada.lovelace@example.com',
+    name: 'Ada Lovelace',
+    phone_number: '+1-555-0100',
+    scope: 'orders.read billing.write',
+    groups: Array.from({ length: 60 }, (_, i) => 'grp-' + String(i).padStart(3, '0')),
+  };
+  return b64url(header) + '.' + b64url(payload) + '.c2lnbmF0dXJl';
+}
+
+function buildSampleSaml() {
+  const now = Date.now();
+  const iso = ms => new Date(ms).toISOString().replace(/\.\d+Z$/, 'Z');
+  return [
+    '<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"',
+    '  xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"',
+    '  ID="_res-0001" Version="2.0" IssueInstant="' + iso(now - 5000) + '">',
+    '  <saml:Issuer>https://idp.example.com/metadata</saml:Issuer>',
+    '  <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">',
+    '    <ds:SignedInfo>',
+    '      <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>',
+    '      <ds:Reference URI="#_res-0001">',
+    '        <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>',
+    '        <ds:DigestValue>ZGlnZXN0</ds:DigestValue>',
+    '      </ds:Reference>',
+    '    </ds:SignedInfo>',
+    '    <ds:SignatureValue>c2lnbmF0dXJl</ds:SignatureValue>',
+    '  </ds:Signature>',
+    '  <samlp:Status>',
+    '    <samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/>',
+    '  </samlp:Status>',
+    '  <saml:Assertion ID="_asr-0001" Version="2.0" IssueInstant="' + iso(now - 5000) + '">',
+    '    <saml:Issuer>https://idp.example.com/metadata</saml:Issuer>',
+    '    <saml:Subject>',
+    '      <saml:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">',
+    '        grace.hopper@example.com</saml:NameID>',
+    '      <saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">',
+    '        <saml:SubjectConfirmationData NotOnOrAfter="' + iso(now + 4 * 3600 * 1000) + '"/>',
+    '      </saml:SubjectConfirmation>',
+    '    </saml:Subject>',
+    '    <saml:Conditions NotBefore="' + iso(now - 60000) + '"',
+    '      NotOnOrAfter="' + iso(now + 4 * 3600 * 1000) + '"/>',
+    '    <saml:AuthnStatement AuthnInstant="' + iso(now - 5000) + '">',
+    '      <saml:AuthnContext>',
+    '        <saml:AuthnContextClassRef>',
+    '          urn:oasis:names:tc:SAML:2.0:ac:classes:Password</saml:AuthnContextClassRef>',
+    '      </saml:AuthnContext>',
+    '    </saml:AuthnStatement>',
+    '    <saml:AttributeStatement>',
+    '      <saml:Attribute Name="mail">',
+    '        <saml:AttributeValue>grace.hopper@example.com</saml:AttributeValue>',
+    '      </saml:Attribute>',
+    '      <saml:Attribute Name="employeeNumber">',
+    '        <saml:AttributeValue>004401</saml:AttributeValue>',
+    '      </saml:Attribute>',
+    '    </saml:AttributeStatement>',
+    '  </saml:Assertion>',
+    '</samlp:Response>',
+  ].join('\n');
+}
+
+const SAMPLES = {
+  jwt: buildSampleJwt(),
+
+  authz: 'https://login.example.com/oauth2/authorize' +
+    '?response_type=token' +
+    '&client_id=web-console' +
+    '&redirect_uri=http://app.example.com/callback/*' +
+    '&scope=openid%20profile%20admin.all' +
+    '&client_secret=s3cr3t-do-not-do-this',
+
+  discovery: JSON.stringify({
+    issuer: 'https://login.example.com/',
+    authorization_endpoint: 'https://login.example.com/oauth2/authorize',
+    token_endpoint: 'https://login.example.com/oauth2/token',
+    userinfo_endpoint: 'https://login.example.com/oauth2/userinfo',
+    jwks_uri: 'https://login.example.com/.well-known/jwks.json',
+    response_types_supported: ['code', 'token', 'id_token token'],
+    subject_types_supported: ['public'],
+    id_token_signing_alg_values_supported: ['RS256', 'HS256'],
+    token_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post'],
+    scopes_supported: ['openid', 'profile', 'email'],
+  }, null, 2),
+
+  jwks: JSON.stringify({
+    keys: [
+      { kty: 'RSA', use: 'sig', kid: 'rotation-2024', alg: 'RS256', e: 'AQAB',
+        n: 'sVJ0Zn3nqvJ7pQx2vN1kLwYyR8mFtHc0dGvBpKzXaQwErTyUiOpAsDfGhJkLzXcVbNmQwErTyUi' +
+           'OpAsDfGhJkLzXcVbNmQwErTyUiOpAsDfGhJkLzXcVbNmQwErTyUiOpAsDfGhJkLzXcVbNm' },
+      { kty: 'oct', use: 'sig', kid: 'legacy-hmac', alg: 'HS256',
+        k: 'c3VwZXItc2VjcmV0LXNoYXJlZC1rZXktZG8tbm90LXB1Ymxpc2g' },
+    ],
+  }, null, 2),
+
+  saml: buildSampleSaml(),
+};
+
+/* ============================== APP ==============================
+   One box in, findings out. No routing, no state to speak of, and
+   deliberately no network: everything below runs on the string you pasted
+   and nothing else. */
+
+const $ = id => document.getElementById(id);
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g,
+    c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+function nowSeconds() { return Math.floor(Date.now() / 1000); }
+
+/* ------------------------------ analysis ------------------------------ */
+
+function analyze(input) {
+  const now = nowSeconds();
+  const d = detect(input);
+  if (!d.kind) {
+    return { error: d.reason || 'authlint cannot tell what this is.' };
+  }
+  const text = d.rewrite || input;
+
+  if (d.kind === 'jwt') {
+    const t = decodeJwt(text);
+    if (t.error) return { error: t.error, kind: d.kind };
+    return {
+      kind: t.kind === 'jwe' ? 'Encrypted JWT (JWE)' : describeJwt(t),
+      decoded: renderJwt(t),
+      findings: checkJwt(t, now),
+    };
+  }
+
+  if (d.kind === 'jwks') {
+    const j = JSON.parse(text);
+    return {
+      kind: 'JSON Web Key Set',
+      decoded: renderJson(j),
+      findings: checkJwks(j, now),
+    };
+  }
+
+  if (d.kind === 'discovery') {
+    const j = JSON.parse(text);
+    return {
+      kind: 'OpenID Connect discovery document',
+      decoded: renderJson(j),
+      findings: checkDiscovery(j, now),
+    };
+  }
+
+  if (d.kind === 'authz') {
+    const a = parseAuthz(text, d.asQuery);
+    if (a.error) return { error: a.error };
+    const isCallback = !!(a.params.code || a.params.access_token || a.params.id_token || a.params.error);
+    return {
+      kind: isCallback ? 'OAuth 2.0 redirect (callback)' : 'OAuth 2.0 authorization request',
+      decoded: renderParams(a),
+      findings: checkAuthz(a, now),
+      also: nestedJwts(a.params),
+    };
+  }
+
+  const x = decodeXml(text);
+  if (x.error) return { error: x.error };
+  if (d.kind === 'samlmeta') {
+    return { kind: 'SAML metadata', decoded: renderXml(x.text), findings: checkSamlMetadata(x, now) };
+  }
+  return {
+    kind: d.kind === 'samlreq' ? 'SAML authentication request' : 'SAML response',
+    decoded: renderXml(x.text),
+    findings: checkSamlResponse(x, now),
+  };
+}
+
+/* A redirect often carries an id_token worth checking on its own. */
+function nestedJwts(params) {
+  const out = [];
+  for (const k of ['id_token', 'access_token']) {
+    const v = params[k];
+    if (v && /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\./.test(v)) out.push({ name: k, value: v });
+  }
+  return out;
+}
+
+function describeJwt(t) {
+  const p = t.payload || {};
+  if (p.nonce || p.at_hash || p.auth_time) return 'OpenID Connect ID token';
+  if (p.scope || p.scp) return 'OAuth 2.0 access token (JWT)';
+  return 'JSON Web Token';
+}
+
+/* ------------------------------ rendering ------------------------------ */
+
+function renderJson(o) {
+  return '<pre class="code">' + esc(JSON.stringify(o, null, 2)) + '</pre>';
+}
+
+function renderJwt(t) {
+  let h = '<div class="seg"><h4>Header</h4><pre class="code">' +
+          esc(JSON.stringify(t.header, null, 2)) + '</pre></div>';
+  if (t.kind === 'jwe') {
+    h += '<div class="seg"><h4>Payload</h4><p class="dim">Encrypted. Nothing to show without the key.</p></div>';
+  } else {
+    h += '<div class="seg"><h4>Payload</h4><pre class="code">' +
+         esc(JSON.stringify(t.payload, null, 2)) + '</pre></div>';
+    const claims = timeClaims(t.payload);
+    if (claims) h += '<div class="seg"><h4>Times</h4>' + claims + '</div>';
+    h += '<div class="seg"><h4>Signature</h4><pre class="code">' +
+         esc(t.signature || '(empty)') +
+         (t.signatureBytes ? '\n\n' + t.signatureBytes + ' bytes' : '') + '</pre></div>';
+  }
+  return h;
+}
+
+function timeClaims(p) {
+  if (!p) return '';
+  const rows = [];
+  for (const k of ['iat', 'nbf', 'exp', 'auth_time', 'updated_at']) {
+    if (typeof p[k] !== 'number') continue;
+    const ms = looksLikeMillis(p[k]) ? p[k] : p[k] * 1000;
+    rows.push('<tr><td>' + k + '</td><td>' + p[k] + '</td><td>' +
+      esc(new Date(ms).toISOString().replace('T', ' ').replace('.000Z', ' UTC')) + '</td></tr>');
+  }
+  return rows.length ? '<table class="times"><tbody>' + rows.join('') + '</tbody></table>' : '';
+}
+
+function renderParams(a) {
+  const rows = Object.keys(a.params).map(k => {
+    const v = String(a.params[k]);
+    const shown = v.length > 300 ? v.slice(0, 300) + '…' : v;
+    return '<tr><td>' + esc(k) + '</td><td><code>' + esc(shown) + '</code></td></tr>';
+  }).join('');
+  return (a.base ? '<p class="dim">Endpoint: <code>' + esc(a.base) + '</code></p>' : '') +
+         '<table class="params"><tbody>' + rows + '</tbody></table>';
+}
+
+function renderXml(text) {
+  return '<pre class="code">' + esc(prettyXml(text)) + '</pre>';
+}
+
+/* Indentation only. Nothing here reorders or rewrites the document, because
+   the thing being inspected has to stay the thing that was pasted. */
+function prettyXml(xml) {
+  const parts = String(xml).replace(/>\s*</g, '><').replace(/></g, '>\n<').split('\n');
+  let depth = 0;
+  return parts.map(line => {
+    if (/^<\//.test(line)) depth = Math.max(0, depth - 1);
+    const out = '  '.repeat(depth) + line;
+    if (/^<[^!?/][^>]*[^/]>$/.test(line) && !/^<\//.test(line)) depth++;
+    return out;
+  }).join('\n');
+}
+
+const SEV_LABEL = { critical: 'Critical', warn: 'Warning', note: 'Note', ok: 'Pass' };
+
+function renderFindings(list) {
+  if (!list || !list.length) return '<p class="dim">No findings.</p>';
+  return list.map(x =>
+    '<div class="f ' + x.sev + '">' +
+      '<div class="fh"><span class="sev">' + SEV_LABEL[x.sev] + '</span>' +
+        '<span class="ft">' + esc(x.title) + '</span></div>' +
+      (x.why ? '<p class="fw">' + esc(x.why) + '</p>' : '') +
+      (x.fix ? '<p class="ff"><b>Fix</b> ' + esc(x.fix) + '</p>' : '') +
+      (x.ref ? '<p class="fr">' + esc(x.ref) + '</p>' : '') +
+    '</div>').join('');
+}
+
+/* Two different failures deserve two different answers. "This is a JWT and the
+   payload segment is truncated" is a fix somebody can act on in seconds. "I do
+   not know what this is" is a different message, and it should at least say what
+   the tool does read. Both go through esc(), because every word of this is
+   quoting something that was pasted. */
+function renderDiagnosis(input, fallback) {
+  let d = null;
+  try { d = diagnose(input); } catch (e) { d = null; }
+
+  if (!d) {
+    return '<div class="diag unknown"><div class="dh">' +
+      '<span class="dsev">Not recognised</span>' +
+      '<span class="dt">' + esc(fallback || 'authlint cannot tell what this is.') + '</span></div>' +
+      '<p class="dhint">' + esc(ACCEPTED_SENTENCE) + '</p></div>';
+  }
+
+  const malformed = d.state === 'malformed';
+  const heading = malformed
+    ? (d.looksLike ? 'This looks like ' + d.looksLike + ', but it seems malformed.'
+                   : 'This looks like something authlint reads, but it seems malformed.')
+    : (d.looksLike ? 'This looks like ' + d.looksLike + ', which authlint does not read.'
+                   : 'authlint does not recognise this.');
+
+  let h = '<div class="diag ' + (malformed ? 'malformed' : 'unknown') + '">' +
+    '<div class="dh">' +
+      '<span class="dsev">' + (malformed ? 'Malformed' : 'Unrecognised format') + '</span>' +
+      '<span class="dt">' + esc(heading) + '</span>' +
+    '</div>';
+  if (d.problem) h += '<p class="dwhy">' + esc(d.problem) + '</p>';
+  if (d.hint) h += '<p class="dhint">' + esc(d.hint) + '</p>';
+  if (!malformed && !d.looksLike) h += '<p class="dfoot">' + esc(ACCEPTED_SENTENCE) + '</p>';
+  return h + '</div>';
+}
+
+const ACCEPTED_SENTENCE =
+  'authlint reads JSON Web Tokens, JWKS documents, OpenID Connect discovery documents, OAuth ' +
+  'authorization requests and redirects, SAML responses and assertions, and SAML metadata. SAML ' +
+  'over the redirect binding is DEFLATE compressed and needs the POST binding version.';
+
+function counts(list) {
+  const c = { critical: 0, warn: 0, note: 0, ok: 0 };
+  (list || []).forEach(x => { c[x.sev]++; });
+  return c;
+}
+
+/* ------------------------------ wiring ------------------------------ */
+
+function run() {
+  const input = $('in').value.trim();
+  const out = $('out');
+  if (!input) { out.innerHTML = ''; $('summary').innerHTML = ''; return; }
+
+  let r;
+  try { r = analyze(input); }
+  catch (e) { r = { error: 'authlint fell over on this input: ' + e.message }; }
+
+  if (r.error) {
+    $('summary').innerHTML = '';
+    out.innerHTML = renderDiagnosis(input, r.error);
+    return;
+  }
+
+  const c = counts(r.findings);
+  $('summary').innerHTML =
+    '<div class="kind">' + esc(r.kind) + '</div>' +
+    '<a class="jump" href="#findings">jump to findings</a>' +
+    '<div class="tallies">' +
+      (c.critical ? '<span class="t critical">' + c.critical + ' critical</span>' : '') +
+      (c.warn ? '<span class="t warn">' + c.warn + ' warning' + (c.warn > 1 ? 's' : '') + '</span>' : '') +
+      (c.note ? '<span class="t note">' + c.note + ' note' + (c.note > 1 ? 's' : '') + '</span>' : '') +
+      (c.ok ? '<span class="t ok">' + c.ok + ' pass' + (c.ok > 1 ? 'es' : '') + '</span>' : '') +
+    '</div>';
+
+  /* Decoded goes first. It used to sit under the findings, which put it two
+     thousand pixels down the page on a token with a lot of claims, and the
+     first thing anyone wants from a paste box is to read what they pasted.
+     The findings are what makes this better than a decoder; they are not what
+     makes it useful in the first ten seconds. */
+  let html = '<section class="decoded"><h3>Decoded</h3>' + r.decoded + '</section>';
+  html += '<section class="findings" id="findings"><h3>Findings</h3>' +
+          renderFindings(r.findings) + '</section>';
+  if (r.also && r.also.length) {
+    html += r.also.map(n => {
+      const t = decodeJwt(n.value);
+      if (t.error) return '';
+      const nf = checkJwt(t, nowSeconds());
+      return '<section class="findings nested"><h3>' + esc(n.name) + ' inside this redirect</h3>' +
+             renderFindings(nf) + '</section>';
+    }).join('');
+  }
+  out.innerHTML = html;
+}
+
+function loadSample(which) {
+  $('in').value = SAMPLES[which] || '';
+  run();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  $('in').addEventListener('input', debounce(run, 120));
+  document.querySelectorAll('[data-sample]').forEach(b => {
+    b.addEventListener('click', () => loadSample(b.getAttribute('data-sample')));
+  });
+  $('clear').addEventListener('click', () => { $('in').value = ''; run(); $('in').focus(); });
+  run();
+});
+
+function debounce(fn, ms) {
+  let t;
+  return function () { clearTimeout(t); t = setTimeout(fn, ms); };
+}
+</script>
+</body>
+</html>

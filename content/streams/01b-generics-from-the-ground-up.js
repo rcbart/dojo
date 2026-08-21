@@ -9,8 +9,8 @@ STREAMS.push({icon:'🧬',title:'Generics from the Ground Up',blurb:'The angle b
 <li>The <b>strict warehouse worker</b> is the compiler: it refuses, at compile time, any code that puts the wrong thing in: the program won't even build.</li>
 </ul>
 <div class="codeSample" data-hl>List&lt;String&gt; names = new ArrayList&lt;&gt;();   // a box labeled: Strings only
-names.add("Ada");                          // fine — it's a String
-names.add(42);                             // COMPILE ERROR — the label says no
+names.add("Ada");                          // fine, it's a String
+names.add(42);                             // COMPILE ERROR, the label says no
 
 String first = names.get(0);               // no caution needed: it CAN only be a String</div>
 <p>Java actually lived the cardboard-box era: before 2004 (Java 5), collections were unlabeled. Every <code>get()</code> returned <code>Object</code> ("something"), you had to <b>cast</b> (assert "trust me, it's a String"), and when you trusted wrongly, the program crashed <i>at runtime</i>, wherever the unpacking happened, with a <code>ClassCastException</code>. Generics moved that whole class of error from runtime (your users find it) to compile time (you find it, immediately, at the exact line).</p>
@@ -65,7 +65,7 @@ hints:['new ArrayList<>(): the empty diamond <> lets the compiler copy the label
 Map&lt;String, List&lt;Integer&gt;&gt;           "a Map from Strings to Lists of Integers"
 Optional&lt;BigDecimal&gt;                  "maybe a BigDecimal"
 Function&lt;String, Integer&gt;             "a function taking a String, giving an Integer"
-List&lt;Map&lt;String, Double&gt;&gt;             "a List of (Maps from String to Double)"  — nest from the inside out</div>
+List&lt;Map&lt;String, Double&gt;&gt;             "a List of (Maps from String to Double)", nest from the inside out</div>
 <p>Where the labels appear, and who writes them:</p>
 <ul>
 <li><b>Variables & fields</b>: <code>List&lt;String&gt; names = new ArrayList&lt;&gt;();</code>. Spell the label on the left; the <b>diamond</b> <code>&lt;&gt;</code> on the right says "compiler, copy it over" (always use it; repeating the label is noise, omitting brackets entirely is a raw type, a different and dangerous thing).</li>
@@ -118,7 +118,7 @@ hints:['Read the field inside-out: a Map from String to (List of String).','comp
 
 Box&lt;String&gt; b = new Box&lt;&gt;();          // diamond: T inferred as String
 b.put("hi");
-String s = b.get();                   // no cast — the compiler knows
+String s = b.get();                   // no cast, the compiler knows
 
 // generic METHOD: declares its own &lt;T&gt; before the return type
 static &lt;T&gt; T firstNonNull(T a, T b) {
@@ -245,7 +245,7 @@ int x = ints.get(0);            // ClassCastException at runtime</div>
 
 <h4>Erasure, and the workarounds it forces</h4>
 <p>Generics were added without changing the class file format, so the compiler checks types and then <b>erases</b> them, inserting casts where needed. The compatibility win was enormous (existing code and libraries kept working), and the cost is a list of things you cannot do: no <code>new T[]</code>, no <code>T.class</code>, no <code>instanceof List&lt;String&gt;</code>, no overloads differing only in type argument, and no primitives as type arguments (hence the boxing that Project Valhalla aims to remove).</p>
-<p>The standard workarounds are worth recognising because you will read them in every library: pass a <code>Class&lt;T&gt;</code> token when you need the runtime type, and use the anonymous-subclass trick (Jackson's <code>TypeReference</code>, Spring's <code>ParameterizedTypeReference</code>) when you need a full generic type, which survives erasure because it is recorded in the subclass's signature. And treat an unavoidable unchecked cast as a claim you have verified: annotate it with <code>@SuppressWarnings("unchecked")</code> and a comment saying why it holds.</p>`,
+<p>The standard workarounds are worth recognizing because you will read them in every library: pass a <code>Class&lt;T&gt;</code> token when you need the runtime type, and use the anonymous-subclass trick (Jackson's <code>TypeReference</code>, Spring's <code>ParameterizedTypeReference</code>) when you need a full generic type, which survives erasure because it is recorded in the subclass's signature. And treat an unavoidable unchecked cast as a claim you have verified: annotate it with <code>@SuppressWarnings("unchecked")</code> and a comment saying why it holds.</p>`,
 docs:[['Wildcards & PECS, Oracle','https://docs.oracle.com/javase/tutorial/java/generics/wildcards.html'],['Type erasure, Oracle','https://docs.oracle.com/javase/tutorial/java/generics/erasure.html']],
 ex:{title:'PECS in practice',
 prompt:`Write class <code>Variance</code> with three methods: (1) <code>static double total(java.util.List&lt;? extends Number&gt; prices)</code> summing via <code>doubleValue()</code>; (2) <code>static void pad(java.util.List&lt;? super Integer&gt; target, int n)</code> adding the numbers 1..n to the list; (3) <code>static &lt;T extends Comparable&lt;T&gt;&gt; T biggest(java.util.List&lt;T&gt; items)</code> returning the max via <code>compareTo</code> (assume non-empty).`,
@@ -305,9 +305,9 @@ public class Variance {
 </ul>
 <div class="codeSample" data-hl>List&lt;String&gt; a = new ArrayList&lt;&gt;();
 List&lt;Integer&gt; b = new ArrayList&lt;&gt;();
-a.getClass() == b.getClass();          // true! — same class at runtime, labels erased
+a.getClass() == b.getClass();          // true!, same class at runtime, labels erased
 
-List raw = a;                          // raw type: compiles, warns — 2003 mode
+List raw = a;                          // raw type: compiles, warns, 2003 mode
 raw.add(42);                           // no label, no protection...
 String s = a.get(1);                   // ...ClassCastException, back from the dead</div>
 <p>The takeaway isn't "generics are fake"; it's knowing <i>where</i> the guarantee lives: in the compiler, completely, and therefore only where labels are intact. Keep every declaration parameterized and the 2003 failure mode stays extinct.</p>`,

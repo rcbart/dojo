@@ -41,7 +41,7 @@ what makes independent deployment possible at all.</li>
 </ul>
 
 <h4>Choosing a format</h4>
-<p><b>JSON</b> is the default for anything crossing an organisational boundary: readable, debuggable, and
+<p><b>JSON</b> is the default for anything crossing an organizational boundary: readable, debuggable, and
 supported everywhere, at the cost of size and no schema unless you add one. <b>Protobuf or Avro</b> earn
 their keep on high-volume internal traffic and event streams, where a schema registry gives you
 compatibility checks in CI rather than incidents in production. The deciding question is rarely
@@ -102,7 +102,7 @@ LocalDateTime dt = LocalDateTime.now();
 ZonedDateTime z  = ZonedDateTime.now(ZoneId.of("America/New_York"));
 Instant i        = Instant.now();                 // machine timestamp (UTC)
 
-LocalDate due = d.plusDays(30);                   // immutable — returns NEW object!
+LocalDate due = d.plusDays(30);                   // immutable, returns NEW object!
 Period age  = Period.between(birthDate, LocalDate.now());   // years/months/days
 Duration dur = Duration.ofMinutes(90);                       // time-based
 
@@ -225,17 +225,17 @@ svc.transfer("a", "b", 100);
 verify(audit).log(contains("100"));</div>
 <p><b>What makes a test worth having.</b> A good test fails for exactly one reason, names that reason in
 its title, and does not change when you refactor the implementation. That last property is the one most
-often lost: a test that asserts on internal calls rather than observable behaviour breaks every time you
+often lost: a test that asserts on internal calls rather than observable behavior breaks every time you
 improve the code, and a suite that punishes refactoring gets deleted or ignored.</p>
 
 <h4>Mock the boundary, not your own logic</h4>
-<div class="codeSample" data-hl>// GOOD — mock what you do not control
+<div class="codeSample" data-hl>// GOOD, mock what you do not control
 when(paymentGateway.charge(any())).thenReturn(Receipt.ok("r-1"));
 
-// BAD — mocking your own domain means you are testing the mock
+// BAD, mocking your own domain means you are testing the mock
 when(orderCalculator.total(any())).thenReturn(new Money(100));
 
-// verify BEHAVIOUR that matters, not every interaction
+// verify BEHAVIOR that matters, not every interaction
 verify(paymentGateway).charge(argThat(c -&gt; c.amount().equals(expected)));
 verifyNoMoreInteractions(paymentGateway);   // use sparingly: it is brittle</div>
 <p>The rule of thumb: mock things that are slow, non-deterministic, or outside your process: clocks,
@@ -249,7 +249,7 @@ fixed seed. <code>Clock.fixed(...)</code> in a test turns "expires tomorrow" fro
 assertion, and it lets you test the boundary, which is where date bugs live.</p>
 
 <h4>JUnit 5 features worth using</h4>
-<div class="codeSample" data-hl>@ParameterizedTest                  // one test, many cases — beats copy-paste
+<div class="codeSample" data-hl>@ParameterizedTest                  // one test, many cases, beats copy-paste
 @CsvSource({"1,I", "4,IV", "9,IX"})
 void converts(int n, String expected) { ... }
 
@@ -320,7 +320,7 @@ for (Method m : Service.class.getDeclaredMethods()) {
 <h4>Why the two are always discussed together</h4>
 <p>Separately they are unremarkable: an annotation is inert metadata, and reflection is a slow way to do
 what a normal method call does better. Together they are the mechanism behind every framework you have
-used in this course: <b>you declare intent, and something else discovers it and supplies behaviour</b>.
+used in this course: <b>you declare intent, and something else discovers it and supplies behavior</b>.
 JUnit finds your <code>@Test</code> methods this way. Spring finds beans and transactional methods. Jackson
 finds property names.</p>
 <p>Seeing that once removes the magic permanently: no framework has access to a mechanism you do not. What
@@ -341,7 +341,7 @@ RUNTIME  in the class file AND readable via reflection. what frameworks
 that silently does nothing where it was put.</p>
 
 <h4>A clear look at the costs</h4>
-<p>Reflection is slower than direct invocation: lookups are expensive, and while modern JITs optimise
+<p>Reflection is slower than direct invocation: lookups are expensive, and while modern JITs optimize
 repeated calls well, the discovery phase is not free. It also <b>defeats the compiler</b>: a field renamed
 by a refactoring tool leaves a string somewhere that no longer matches, and you find out at runtime. And
 it can breach encapsulation, which is why the module system (later in this course) restricts deep
@@ -449,14 +449,14 @@ is why Spring's <code>AnnotatedElementUtils</code> exists and finds things plain
 <h4>What annotations cannot do</h4>
 <p>The element types are restricted: primitives, <code>String</code>, <code>Class</code>, enums, other
 annotations, and arrays of those. No arbitrary objects, and <b>no nulls</b>, so an "absent" value has to be
-signalled by a default like <code>""</code>. Values must be compile-time constants, which is why you see
+signaled by a default like <code>""</code>. Values must be compile-time constants, which is why you see
 <code>Class</code> literals and string expressions (like Spring's SpEL) rather than lambdas.</p>
 
 <h4>When not to reach for one</h4>
-<p>Annotations move behaviour away from the code it affects. That is their value and their cost: a reader
-looking at the method cannot see what else happens to it, and a typo in an annotation-driven behaviour
+<p>Annotations move behavior away from the code it affects. That is their value and their cost: a reader
+looking at the method cannot see what else happens to it, and a typo in an annotation-driven behavior
 fails silently. Use them for genuinely cross-cutting, orthogonal concerns (auditing, transactions,
-security, serialisation) and not as a way to configure business logic, where an ordinary parameter is
+security, serialization) and not as a way to configure business logic, where an ordinary parameter is
 clearer and the compiler is on your side.</p>`,
 docs:[['Annotations in depth, dev.java','https://dev.java/learn/annotations/'],['Repeating annotations, Oracle','https://docs.oracle.com/javase/tutorial/java/annotations/repeating.html'],['Spring composed annotations','https://docs.spring.io/spring-framework/reference/core/beans/classpath-scanning.html#beans-meta-annotations']],
 ex:{title:'Build a mini validation framework',
@@ -510,7 +510,7 @@ class MiniValidator {
 <li><b>Interning</b>: string literals share one pooled instance: <code>"a" == "a"</code> is true but never rely on it; <code>equals()</code> always.</li>
 </ul>
 <div class="codeSample">jps                    # JVM processes
-jstack &lt;pid&gt;           # thread dump — find deadlocks
+jstack &lt;pid&gt;           # thread dump, find deadlocks
 jmap -heap &lt;pid&gt;       # heap summary
 jcmd &lt;pid&gt; GC.heap_info</div>
 <h4>Why "compiled and interpreted" is the interesting part</h4>
@@ -518,14 +518,14 @@ jcmd &lt;pid&gt; GC.heap_info</div>
 which is slow but requires no analysis. Meanwhile the JVM <b>profiles</b> (which branches are taken, which
 types actually appear at each call site), and once a method is hot, the JIT compiles it to native code
 using that evidence.</p>
-<p>The result is optimisation a static compiler cannot perform: an interface call that has only ever seen
+<p>The result is optimization a static compiler cannot perform: an interface call that has only ever seen
 one implementation is compiled as a direct call and inlined; branches never taken are compiled away. If the
-assumption later proves wrong, the JVM <b>deoptimises</b> and recompiles. This is why Java frequently beats
+assumption later proves wrong, the JVM <b>deoptimizes</b> and recompiles. This is why Java frequently beats
 naively-written C++ in long-running services, and why the first thousand requests are slower than the rest,
 the "warm-up" everyone mentions.</p>
 <div class="codeSample" data-hl>// two practical consequences:
 // 1. BENCHMARKS. timing a loop in main() measures the interpreter and
-//    a half-optimised JIT. use JMH, which warms up properly. hand-rolled
+//    a half-optimized JIT. use JMH, which warms up properly. hand-rolled
 //    microbenchmarks in Java are wrong more often than they are right.
 // 2. STARTUP. this is why serverless and CLI workloads consider AOT
 //    (GraalVM native-image): no warm-up, no JIT, lower peak throughput.</div>

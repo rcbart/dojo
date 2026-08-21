@@ -2,6 +2,13 @@
 dist/
 javadojo.html
 
+# authlint is built in its own repo (github.com/rcbart/authlint) and the built
+# file is checked in here so the Pages job has something to copy. The directory
+# has to be re-included as well as the file: git does not descend into an
+# ignored directory, so un-ignoring the file alone would do nothing.
+!authlint/dist/
+!authlint/dist/index.html
+
 # secrets & environment — never commit credentials
 .env
 .env.*
@@ -67,3 +74,7 @@ blog/
 **/.fuse_hidden*
 dist-site/
 *.tgz
+
+# The assembled Pages artifact. CI builds it fresh; a local copy from a
+# dry run must never be committed.
+_site/

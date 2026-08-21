@@ -306,20 +306,20 @@ GROUP BY u.name
 HAVING SUM(total_cents) > 50000;`}},
 {id:'db1a',title:'Every JOIN type, in plain English',body:`
 <p>A JOIN stitches rows from two tables together using a matching rule (the <code>ON</code> condition). The only thing that changes between join types is <b>which unmatched rows you keep</b>. Picture two tables: <code>employees(id, name, dept_id, manager_id)</code> and <code>departments(id, name)</code>.</p>
-<div class="codeSample">-- INNER JOIN — only rows that match on BOTH sides (the overlap)
+<div class="codeSample">-- INNER JOIN, only rows that match on BOTH sides (the overlap)
 SELECT e.name, d.name AS dept
 FROM employees e
 JOIN departments d ON d.id = e.dept_id;      -- "JOIN" alone means INNER
 
--- LEFT [OUTER] JOIN — every LEFT row; right side is NULL when no match
+-- LEFT [OUTER] JOIN, every LEFT row; right side is NULL when no match
 SELECT e.name, d.name AS dept
 FROM employees e
 LEFT JOIN departments d ON d.id = e.dept_id; -- keeps employees with no dept
 
--- RIGHT [OUTER] JOIN — mirror image: every RIGHT row, left may be NULL
--- FULL [OUTER] JOIN — every row from BOTH; NULLs fill whichever side is missing
--- CROSS JOIN — every combination (Cartesian product): rows_left x rows_right
--- SELF JOIN — a table joined to itself, using two aliases</div>
+-- RIGHT [OUTER] JOIN, mirror image: every RIGHT row, left may be NULL
+-- FULL [OUTER] JOIN, every row from BOTH; NULLs fill whichever side is missing
+-- CROSS JOIN, every combination (Cartesian product): rows_left x rows_right
+-- SELF JOIN, a table joined to itself, using two aliases</div>
 <p>Simple way to remember them:</p>
 <ul>
 <li><b>INNER</b> = "matches only." Rows that exist in both tables.</li>
@@ -383,24 +383,24 @@ hints:['INNER JOIN keeps only rows that match on both sides; LEFT JOIN keeps eve
 
 {id:'db1b',title:'The SQL command map: every command by category',body:`
 <p>SQL commands fall into four families. Knowing which family a command belongs to tells you what it does and how careful to be with it.</p>
-<div class="codeSample">-- DDL  (Data Definition) — define/change STRUCTURE
+<div class="codeSample">-- DDL  (Data Definition), define/change STRUCTURE
 CREATE TABLE tags (id SERIAL PRIMARY KEY, name TEXT NOT NULL);
 ALTER TABLE tags ADD COLUMN slug TEXT;   -- add/drop/modify columns, keys, indexes
 DROP TABLE tags;                          -- delete the table and all its data
 TRUNCATE tags;                            -- empty ALL rows fast, keep the table
 -- also: CREATE INDEX, CREATE VIEW, RENAME
 
--- DML  (Data Manipulation) — read/change ROWS
+-- DML  (Data Manipulation), read/change ROWS
 SELECT * FROM tags;                       -- read
 INSERT INTO tags (name) VALUES ('java');  -- add rows
 UPDATE tags SET slug = 'jvm' WHERE id = 1;-- change rows (WHERE!)
 DELETE FROM tags WHERE id = 1;            -- remove rows (WHERE!)
 
--- TCL  (Transaction Control) — group changes as all-or-nothing
+-- TCL  (Transaction Control), group changes as all-or-nothing
 BEGIN;  UPDATE tags SET slug='x' WHERE id=1;  COMMIT;   -- or ROLLBACK
 SAVEPOINT sp1;   -- a checkpoint you can ROLLBACK TO
 
--- DCL  (Data Control) — permissions
+-- DCL  (Data Control), permissions
 GRANT SELECT ON tags TO reader;   -- give a privilege
 REVOKE SELECT ON tags FROM reader;-- take it back</div>
 <p>Plain-terms cheat sheet: <b>DDL</b> = the building (create/alter/drop the tables). <b>DML</b> = the furniture (put rows in, move them, take them out). <b>TCL</b> = the "undo/commit" bracket around your DML. <b>DCL</b> = the keys to the doors (who may do what).</p>
@@ -585,7 +585,7 @@ becomes a no-op instead of data loss.</p>
 SET views = contacts.views + 1         -- computed inside the statement: atomic, correct</div>
 <p>The first form is the read-modify-write race from the concurrency stream, wearing SQL. Two workers both
 read 500 and both write 501, and one view is gone. Compute from the current row inside the statement and
-the database serialises it for you.</p>
+the database serializes it for you.</p>
 
 <h4>Bite 4: DO NOTHING returns nothing</h4>
 <p><code>ON CONFLICT DO NOTHING</code> is the tidy way to ignore duplicates, and it returns <b>no row</b>
@@ -1002,7 +1002,7 @@ EXPLAIN ANALYZE SELECT * FROM orders WHERE user_id = 42;
 -- Seq Scan on orders (cost=0.00..421337) ← add the index!</div>
 
 <h4>Finding the problem before guessing at it</h4>
-<p>Every item above has a symptom you can look for rather than a habit you adopt on faith. N+1 shows as a burst of identical SELECTs differing only in the id; turn on SQL logging in a test and <b>count the statements</b>, because an assertion on query count is the only regression test that reliably catches it coming back. Missing indexes show as <code>Seq Scan</code> over a large table in <code>EXPLAIN ANALYZE</code>; note the difference between <code>EXPLAIN</code>, which shows the plan the optimiser intends, and <code>EXPLAIN ANALYZE</code>, which runs the query and shows what actually happened, including how far the row estimates were out. Pool exhaustion shows as a timeout waiting for a connection while the database itself is idle: the queue is in your process, not in the database.</p>
+<p>Every item above has a symptom you can look for rather than a habit you adopt on faith. N+1 shows as a burst of identical SELECTs differing only in the id; turn on SQL logging in a test and <b>count the statements</b>, because an assertion on query count is the only regression test that reliably catches it coming back. Missing indexes show as <code>Seq Scan</code> over a large table in <code>EXPLAIN ANALYZE</code>; note the difference between <code>EXPLAIN</code>, which shows the plan the optimizer intends, and <code>EXPLAIN ANALYZE</code>, which runs the query and shows what actually happened, including how far the row estimates were out. Pool exhaustion shows as a timeout waiting for a connection while the database itself is idle: the queue is in your process, not in the database.</p>
 
 <h4>What an index costs</h4>
 <p>An index is a second, ordered copy of the columns it covers. Reads get faster; every insert, update and delete must now maintain that copy, and the storage is real. Three refinements are worth knowing: a <b>composite</b> index is usable for a prefix of its columns and not for a suffix, so the column order is a design decision rather than a detail; a <b>covering</b> index that includes the selected columns lets the database answer from the index alone; and a <b>low-selectivity</b> index (a boolean, a status with three values) often will not be used at all, because scanning is cheaper than jumping.</p>

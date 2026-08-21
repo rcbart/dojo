@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 /* Gate 6: colour contrast.
  *
- * The engine's palette is shared with the site, and two of the site's brand
- * hues are unusable as text: violet #8b5cf6 is 4.23:1 on white and teal
- * #0d9488 is 3.74:1, both under the 4.5:1 WCAG AA floor for body copy. The
- * token set therefore carries a darker -ink variant for every hue, and the
- * rule is: raw hue for fills, borders and gradients; -ink for text.
+ * The brand hues are unusable as text at full saturation: violet #8b5cf6 is
+ * 4.23:1 on white and teal #0d9488 is 3.74:1, both under the 4.5:1 WCAG AA
+ * floor for body copy. The token set therefore carries an -ink variant for
+ * every hue, and the rule is: raw hue for fills, borders and gradients; -ink
+ * for text.
+ *
+ * The dojos run a dark palette, so the -ink variants sit at the light end of
+ * each hue while the fills stay put. That is exactly the sort of change that
+ * looks fine to the person who made it and is unreadable to everyone else,
+ * which is why every pairing below is arithmetic rather than opinion.
  *
  * This gate reads the tokens straight out of engine/styles.css and checks
  * every declared text-on-background pairing, so a future palette edit that
@@ -13,7 +18,7 @@
  */
 const fs = require('fs');
 const path = require('path');
-const CSS = path.join(__dirname, '..', 'engine', 'styles.css');
+const CSS = process.argv[2] || path.join(__dirname, '..', 'engine', 'styles.css');
 
 const css = fs.readFileSync(CSS, 'utf8');
 const root = css.slice(css.indexOf(':root'), css.indexOf('}', css.indexOf(':root')));
@@ -53,7 +58,26 @@ const PAIRS = [
   ['on-night',   'night2',      4.5, 'header brand, gradient end'],
   ['night-muted','night',       4.5, 'header secondary text'],
   ['night-muted','night2',      4.5, 'header secondary text, gradient end'],
-  ['ink',        'amber',       4.5, 'text on an amber button'],
+  ['on-amber',   'amber',       4.5, 'text on an amber button'],
+  // surfaces introduced when the palette was tokenized for the dark theme
+  ['ink',        'panel-2',     4.5, 'body copy on a raised panel'],
+  ['muted',      'panel-2',     4.5, 'secondary copy on a raised panel'],
+  ['accent',     'panel-2',     4.5, 'links on a raised panel'],
+  ['muted',      'sunken',      4.5, 'an inactive tab label'],
+  ['ink',        'sunken',      4.5, 'an active tab label'],
+  ['violet-ink', 'inline-code-bg', 4.5, 'inline code'],
+  ['ink',        'inline-code-bg', 4.5, 'inline code and kbd'],
+  ['amber-ink',  'amber-tint-2',4.5, 'a nav divider and tour badge'],
+  ['ok-ink',     'ok-tint-2',   4.5, 'a solved challenge chip'],
+  ['bad-ink',    'bad-tint',    4.5, 'a SQL error and a wrong quiz option'],
+  ['on-accent',  'accent-fill', 4.5, 'the label on a primary button'],
+  ['on-accent',  'accent-fill-hover', 4.5, 'the label on a hovered primary button'],
+  ['on-accent',  'ok-line',     4.5, 'the label on a solved chip'],
+  ['on-accent',  'bad',         4.5, 'the label on a destructive control'],
+  ['accent2-ink','bg',          4.5, 'teal as text on the page'],
+  ['rose-ink',   'panel',       4.5, 'rose as text on a card'],
+  ['ok-ink',     'panel',       4.5, 'a pass count on a card'],
+  ['warn',       'panel',       4.5, 'a warning on a card'],
 ];
 
 let fails = 0, worst = { r: Infinity };

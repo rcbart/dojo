@@ -61,7 +61,7 @@ with the state intact. Tick "Pause on caught exceptions" as well when something 
 <code>catch</code> and you cannot find where.</p>
 
 <h4>Why this beats logging</h4>
-<p>A log answers the one question you thought of, after a reload, and only for values you can serialise.
+<p>A log answers the one question you thought of, after a reload, and only for values you can serialize.
 A breakpoint answers <b>every</b> question about that moment, including ones you only think of once you
 are looking, and lets you walk the call stack to see how you got there. Logging is still useful for
 things you cannot pause on: production, timing-sensitive code, or a bug you can only reproduce once.</p>`,
@@ -91,7 +91,7 @@ solution:`function breakpointFor(situation) {
   }
 }`,
 tests:[{d:'conditional for a single record',re:'"conditional"'},{d:'logpoint for logging without editing',re:'"logpoint"'},{d:'DOM breakpoint for element changes',re:'"dom"'},{d:'XHR breakpoint to find the caller',re:'"xhr"'},{d:'pause on exceptions for an unknown throw',re:'"pause-on-exceptions"'}],
-behavior:`Seven situations execute. The three worth memorising are conditional (a loop with one bad record), XHR (what triggered this request) and pause-on-exceptions (where is this thrown). Between them they cover most of the debugging that otherwise turns into scattering log statements.`,
+behavior:`Seven situations execute. The three worth memorizing are conditional (a loop with one bad record), XHR (what triggered this request) and pause-on-exceptions (where is this thrown). Between them they cover most of the debugging that otherwise turns into scattering log statements.`,
 hints:['One case per breakpoint type, with a default.','A logpoint logs and continues; a conditional pauses selectively.','The plain line breakpoint is the fallback for everything else.']}},
 
 {id:'js31',title:'Scope, call stack, blackboxing and source maps',body:`
@@ -101,7 +101,7 @@ features do most of that work.</p>
 <h4>Reading the Scope pane</h4>
 <div class="codeSample" data-hl>Local      the current function's parameters and variables, and 'this'
 Closure    variables captured from enclosing functions - one group PER
-           enclosing scope, labelled with the function name
+           enclosing scope, labeled with the function name
 Script     module-level bindings
 Global     window / globalThis
 
@@ -137,7 +137,7 @@ default.</p>
 at <code>main.4f2a.js:1:28471</code>. A <b>source map</b> is a separate file mapping those positions back
 to your original files, and DevTools applies it automatically, so you set breakpoints in your real
 source and see your real variable names.</p>
-<div class="codeSample" data-hl>// when the map is missing or wrong, the symptoms are recognisable:
+<div class="codeSample" data-hl>// when the map is missing or wrong, the symptoms are recognizable:
 //   breakpoints do not bind, or bind to the wrong line
 //   variable names are single letters
 //   the Sources tree shows the bundle instead of your files
@@ -365,8 +365,8 @@ solution:`function whereToLook(symptom) {
   }
 }`,
 tests:[{d:'redirect_uri_mismatch',re:'"redirect_uri_mismatch"'},{d:'invalid_grant',re:'"invalid_grant"'},{d:'state_mismatch',re:'"state_mismatch"'},{d:'api_401',re:'"api_401"'},{d:'login_loop',re:'"login_loop"'}],
-behavior:`Six symptoms execute. The default is the real lesson: when you do not recognise the symptom, turn on Preserve log and walk the chain from /authorize to the API call, because every one of these is visible in the Network panel if the panel is still holding the earlier hops.`,
-hints:['One case per symptom, with a default that describes the general method.','invalid_grant is always at the token exchange, never at authorize.','The default should describe what to do when you do not recognise the error.']},
+behavior:`Six symptoms execute. The default is the real lesson: when you do not recognize the symptom, turn on Preserve log and walk the chain from /authorize to the API call, because every one of these is visible in the Network panel if the panel is still holding the earlier hops.`,
+hints:['One case per symptom, with a default that describes the general method.','invalid_grant is always at the token exchange, never at authorize.','The default should describe what to do when you do not recognize the error.']},
 {title:'Decode a JWT payload safely',diff:'medium',lang:'js',
 run:{call:'decodePayload',cases:[
  {name:'decodes the middle segment',args:['aaa.eyJzdWIiOiJhZGEifQ.sig'],expect:{sub:'ada'}},
@@ -412,8 +412,8 @@ solution:`function checkClaims(claims, expected) {
   if (expected.nonce && claims.nonce !== expected.nonce) return "nonce mismatch";
   return "accept";
 }`,
-tests:[{d:'checks the issuer',re:'\\.iss\\b'},{d:'normalises aud to an array',re:'Array\\.isArray'},{d:'compares exp against now',re:'\\.exp\\b'},{d:'verifies the nonce when one is expected',re:'nonce'}],
+tests:[{d:'checks the issuer',re:'\\.iss\\b'},{d:'normalizes aud to an array',re:'Array\\.isArray'},{d:'compares exp against now',re:'\\.exp\\b'},{d:'verifies the nonce when one is expected',re:'nonce'}],
 behavior:`Eight cases execute the four checks the lesson names, in order, guard-clause style. Two deserve attention: exp equal to now is already expired (a token is valid strictly before its expiry), and a missing exp fails the same check: !(undefined > now) is true, so absence of an expiry reads as expired rather than as immortal. That inversion (unprovable freshness is staleness) is the safe default everywhere in identity.`,
-hints:['Guard clauses in the order given: iss, aud, exp, nonce.','Normalise aud with Array.isArray, then one includes() covers both shapes.','Write the exp check as !(claims.exp > expected.now) so a missing exp also fails it.']}]}
+hints:['Guard clauses in the order given: iss, aud, exp, nonce.','Normalize aud with Array.isArray, then one includes() covers both shapes.','Write the exp check as !(claims.exp > expected.now) so a missing exp also fails it.']}]}
 
 ]});

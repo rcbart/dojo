@@ -3,24 +3,48 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dojo, interactive courses in software engineering, identity &amp; JavaScript</title>
-<meta name="description" content="Self-contained, dependency-free interactive courses: Dev Dojo (software engineering), Identity Dojo (identity &amp; access management) and JS Dojo (JavaScript and Node from the ground up).">
+<title>The dojos, nine interactive courses in identity, software engineering, JavaScript, machine learning and cloud-native infrastructure</title>
+<meta name="description" content="Nine self-contained, dependency-free interactive courses: Identity Dojo, Dev Dojo, JS Dojo, ML Dojo and the cloud-native path. Every lesson ends with a graded exercise, and a wrong quiz answer explains why that answer is wrong.">
+<link rel="canonical" href="https://roniam.dev/courses/">
+<meta property="og:title" content="The dojos · roniam.dev">
+<meta property="og:description" content="Nine interactive courses. Nothing assumed, plain English before rigor, every lesson graded, and a wrong answer tells you why it is wrong.">
+<meta property="og:url" content="https://roniam.dev/courses/">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236a5cf5%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2306b6d4%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20x%3D%221%22%20y%3D%221%22%20width%3D%2230%22%20height%3D%2230%22%20rx%3D%228%22%20fill%3D%22url(%23g)%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M5%2010.5%20Q16%208%2027%2010.5%22%20stroke-width%3D%222.8%22%2F%3E%3Cpath%20d%3D%22M7.5%2014.5%20H24.5%22%2F%3E%3Cpath%20d%3D%22M10%2011%20V25%22%2F%3E%3Cpath%20d%3D%22M22%2011%20V25%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E">
 <style>
   :root{--bg:#0b0f19;--card:#121829;--line:#222b45;--fg:#e8ecf6;--muted:#9aa7c2;
-        --accent:#8b5cf6;--accent2:#06b6d4;--ok:#2ea44f}
+        --accent:#8b5cf6;--accent2:#06b6d4;--ok:#2ea44f;--amber:#f59e0b}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--fg);
        font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-  .wrap{max-width:1000px;margin:0 auto;padding:64px 24px 80px}
+  .wrap{max-width:1000px;margin:0 auto;padding:34px 24px 80px}
+  a{color:var(--accent2)}
+  .skip{position:absolute;left:-9999px}
+  .skip:focus{left:8px;top:8px;z-index:9;background:var(--card);padding:10px 14px;border-radius:8px;
+    border:2px solid var(--accent);color:var(--fg)}
+  .back{display:inline-block;color:var(--muted);font-size:14px;font-weight:600;text-decoration:none;
+        margin-bottom:26px}
+  .back:hover{color:var(--fg)}
   .brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:18px;letter-spacing:.3px}
   .logo{width:34px;height:34px;border-radius:9px;
         background:linear-gradient(135deg,#6a5cf5,#8b5cf6 55%,#06b6d4)}
-  h1{font-size:clamp(30px,5vw,46px);line-height:1.15;margin:34px 0 14px;letter-spacing:-.5px}
+  h1{font-size:clamp(30px,5vw,46px);line-height:1.15;margin:30px 0 14px;letter-spacing:-.5px}
   .grad{background:linear-gradient(135deg,#a78bfa,#22d3ee);-webkit-background-clip:text;
         background-clip:text;color:transparent}
   .lede{font-size:18px;color:var(--muted);max-width:70ch;margin:0 0 10px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin:44px 0 0}
+  .lede b{color:var(--fg)}
+
+  h2.sec{margin:64px 0 6px;font-size:26px;letter-spacing:-.3px}
+  .secsub{color:var(--muted);max-width:74ch;margin:0 0 22px}
+  h3{margin:56px 0 12px;font-size:15px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted)}
+
+  .why{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+  .w{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);
+     border-radius:10px;padding:20px 22px}
+  .w h4{margin:0 0 8px;font-size:16.5px}
+  .w p{margin:0;color:var(--muted);font-size:14.5px}
+  .w p b{color:var(--fg)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin:26px 0 0}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px;
         display:flex;flex-direction:column;transition:border-color .15s,transform .15s}
   .card:hover{border-color:var(--accent);transform:translateY(-2px)}
@@ -30,34 +54,174 @@
   .stats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
   .stat{font-size:12px;font-weight:700;padding:4px 9px;border-radius:999px;
         background:#1b233c;color:#b9c6e4;border:1px solid var(--line)}
+  .pre{border-color:var(--amber);color:#f6c667;background:#2a2210}
   .go{display:inline-block;text-decoration:none;font-weight:700;padding:11px 18px;border-radius:9px;
       background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0b0f19;text-align:center}
   .go.alt{background:transparent;color:var(--fg);border:1px solid var(--line)}
   .row{display:flex;gap:10px;flex-wrap:wrap}
-  h3{margin:56px 0 12px;font-size:15px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted)}
   .note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent2);
         border-radius:10px;padding:18px 20px;color:var(--muted);font-size:15px}
   .note b{color:var(--fg)}
+  .note.amber{border-left-color:var(--amber)}
   .more{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
   .more a{text-decoration:none;color:var(--fg);background:var(--card);border:1px solid var(--line);
           border-radius:10px;padding:14px 16px;font-size:14px;font-weight:600;transition:border-color .15s}
   .more a:hover{border-color:var(--accent)}
   .more span{display:block;color:var(--muted);font-weight:400;font-size:13px;margin-top:3px}
-  footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--line);
+
+  ol.path{counter-reset:s;list-style:none;padding:0;margin:0;display:grid;gap:12px}
+  ol.path li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+             padding:16px 20px 16px 56px;position:relative;color:var(--muted);font-size:15px}
+  ol.path li::before{counter-increment:s;content:counter(s);position:absolute;left:18px;top:15px;
+    width:24px;height:24px;border-radius:50%;background:var(--accent);color:#0b0f19;
+    font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+  ol.path li b{color:var(--fg)}
+
+  ul.plain{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+  ul.plain li{color:var(--muted);font-size:15px;padding-left:22px;position:relative}
+  ul.plain li::before{content:"·";position:absolute;left:6px;color:var(--accent);font-weight:800}
+  ul.plain li b{color:var(--fg)}
+
+  footer{margin-top:70px;padding-top:24px;border-top:1px solid var(--line);
          color:var(--muted);font-size:14px}
   footer a{color:var(--accent2)}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;
+       background:#1b233c;padding:1px 5px;border-radius:5px}
 </style>
 </head>
 <body>
+<a class="skip" href="#courses">Skip to the courses</a>
 <div class="wrap">
 
-  <div class="brand"><div class="logo"></div> Dojo</div>
+  <a class="back" href="/">&larr; roniam.dev</a>
+  <div class="brand"><div class="logo"></div> The dojos</div>
 
   <h1>Learn by <span class="grad">doing</span>, in a single HTML file.</h1>
-  <p class="lede">Two interactive courses that run entirely in your browser: no install, no build,
-  no dependencies. Every lesson ends with an exercise in a built-in editor.</p>
+  <p class="lede">Nine interactive courses that run entirely in your browser: no install, no build,
+  no dependencies, no account, no tracking. <b>Every lesson ends with an exercise you complete in
+  the page, and it has to pass.</b> They are free because the alternative was letting what I learned
+  stay in my head.</p>
+
+  <h2 class="sec">Why they are built this way</h2>
+  <p class="secsub">Every one of these is a reaction to something that was done to me while I was
+  learning, or something I watched happen to an engineer I was responsible for.</p>
+
+  <div class="why">
+    <div class="w">
+      <h4>Nothing is assumed</h4>
+      <p>The fastest way to lose someone is to skip the step you have forgotten was ever hard. Every
+      course starts before the beginning. <b>If a lesson depends on an idea, that idea has its own
+      lesson first</b>, and the course tells you which one and links to it.</p>
+    </div>
+    <div class="w">
+      <h4>Plain English first, rigor second</h4>
+      <p>An idea arrives in words you already have. Only once you know what it is for does the
+      notation show up, and then it shows up in full. <b>Meeting the formula second is the
+      difference between reading it and understanding it</b>, and it costs nothing but ordering.</p>
+    </div>
+    <div class="w">
+      <h4>A wrong answer tells you why</h4>
+      <p>Most quizzes tell you which option was right, which teaches you almost nothing. Here,
+      <b>picking a wrong answer explains what is wrong with that specific answer</b>. The
+      misconception you actually had is the one worth addressing, and it is usually a reasonable
+      one.</p>
+    </div>
+    <div class="w">
+      <h4>The grader is code, not a checkbox</h4>
+      <p>You do not mark your own homework and you do not click "I understand". SQL runs against real
+      sample data, JavaScript executes in a sandboxed worker, Python runs in the page, and
+      <b>a build gate executes every reference solution against its own assertions</b> before any of
+      it ships.</p>
+    </div>
+    <div class="w">
+      <h4>Sequence is the curriculum</h4>
+      <p>Coverage is easy and ordering is hard. Identity Dojo teaches sessions and cryptographic
+      trust before OAuth, because <b>a protocol you meet before its problem is just a list of
+      steps to memorize</b>. That ordering is the part that took the longest to get right.</p>
+    </div>
+    <div class="w">
+      <h4>Yours to keep</h4>
+      <p>Each course builds to <b>one self-contained HTML file with zero dependencies</b>. Save it,
+      put it on a USB stick, open it on a plane. Nothing phones home, nothing expires, and nothing
+      asks for your email address. The source is public.</p>
+    </div>
+  </div>
+
+  <h2 class="sec">The part of the job nobody teaches</h2>
+  <p class="secsub">A degree teaches you to write the program. It does not teach you the rest of the
+  job, and the rest of the job is most of the job. Nobody sits you down and explains how a commit
+  becomes a running service, how to read a log file at 3am when something is on fire, or what to do
+  in the first ten minutes of an incident. You are expected to absorb it, and most engineers do,
+  slowly and expensively, by getting it wrong in production. That was worth building for
+  deliberately, so a large part of this material is operational rather than academic.</p>
+
+  <div class="why">
+    <div class="w">
+      <h4>From commit to production</h4>
+      <p><b>Git: Beginner to Master</b> (8 lessons), <b>Build Tools: Maven &amp; Gradle</b> (6),
+      <b>Deploying Java to the Web</b> (6) and <b>CI/CD: GitHub Actions &amp; ArgoCD</b> (6). The
+      whole path a change travels, rather than the part that happens in your editor.</p>
+    </div>
+    <div class="w">
+      <h4>Reading production</h4>
+      <p><b>Reading Production: the Command Line for Logs</b> (6 lessons) is grep, awk, sed and jq
+      pointed at a real log file, because the first thing anyone asks in an incident is what the
+      logs say and the second is whether you can actually get an answer out of them.</p>
+    </div>
+    <div class="w">
+      <h4>When it breaks</h4>
+      <p><b>Running Identity</b> (10 lessons) in Identity Dojo is incident response, migrations and
+      the 3am page. <b>Failure-First: Distributed Systems</b> (5) starts from the assumption that
+      things fail, which is the assumption production actually operates under.</p>
+    </div>
+    <div class="w">
+      <h4>Debugging as a taught skill</h4>
+      <p>Three streams of it in JS Dojo (13 lessons): reading a stack trace properly, breakpoints
+      and the scope pane, the Network panel, tracing an OAuth redirect end to end,
+      <code>node --inspect</code>, heap snapshots and CPU profiles. It is the skill everyone is
+      assumed to have and nobody is taught.</p>
+    </div>
+    <div class="w">
+      <h4>Decisions, not just code</h4>
+      <p><b>System Design &amp; Tradeoffs</b> (5 lessons) and <b>Time, Testing, Reflection &amp; the
+      JVM</b> (6). Senior work is mostly choosing between two defensible options and being able to
+      say why, which is a different muscle from making something work.</p>
+    </div>
+    <div class="w">
+      <h4>Running it yourself</h4>
+      <p>The entire cloud-native path, <b>80 modules</b> across Docker, Kubernetes, Envoy and Istio,
+      is hands-on on your own machine. You package it, orchestrate it, proxy it and mesh it, because
+      reading about a service mesh teaches you nothing about operating one.</p>
+    </div>
+  </div>
+
+  <p class="note amber" style="margin-top:22px"><b>151 lessons and modules of it</b>, which is
+  roughly a fifth of everything here. Code is not done when it compiles. It is done when it is
+  running, observable, and someone other than you can keep it alive.</p>
+
+  <h2 class="sec" id="courses">The four dojos</h2>
+  <p class="secsub">Each one is self-contained. The only ordering that matters is the one below,
+  under "where to start".</p>
 
   <div class="grid">
+
+    <div class="card">
+      <div class="icon">🛂</div>
+      <h2>Identity Dojo</h2>
+      <div class="stats">
+        <span class="stat">14 streams</span><span class="stat">150 lessons</span>
+        <span class="stat">160 exercises</span>
+      </div>
+      <p>Identity &amp; access management, sequenced so concepts are grounded <em>before</em> the
+      protocols that assume them. OAuth 2.0/2.1, OIDC, SAML, WebAuthn/FIDO2 internals, Active
+      Directory and Kerberos, zero trust, plus a Running Identity stream on incident response,
+      migration and the 3am page. This is the field I have spent my career in, and it is the course
+      I would hand to an engineer joining my team.</p>
+      <div class="row">
+        <a class="go" href="/identity/">Open Identity Dojo</a>
+        <a class="go alt" href="https://github.com/rcbart/dojo/tree/main/identity-dojo">Source</a>
+      </div>
+    </div>
 
     <div class="card">
       <div class="icon">🥋</div>
@@ -69,7 +233,8 @@
       <p>Software engineering end to end: Java &amp; the JVM, data structures &amp; algorithms,
       web &amp; HTTP, React, APIs, Spring, databases &amp; SQL, concurrency, DevOps, and a
       senior-level architecture track. SQL exercises run against real sample data in a
-      from-scratch in-browser engine.</p>
+      from-scratch in-browser engine. It looks eclectic because a career is eclectic: this is the
+      set of things I actually had to learn, arranged so someone can grow through them in order.</p>
       <div class="row">
         <a class="go" href="/dev/">Open Dev Dojo</a>
         <a class="go alt" href="https://github.com/rcbart/dojo">Source</a>
@@ -77,38 +242,50 @@
     </div>
 
     <div class="card">
-      <div class="icon">🛂</div>
-      <h2>Identity Dojo</h2>
+      <div class="icon">🟨</div>
+      <h2>JS Dojo</h2>
       <div class="stats">
-        <span class="stat">14 streams</span><span class="stat">149 lessons</span>
-        <span class="stat">159 exercises</span>
+        <span class="stat pre">Foundations first</span>
+        <span class="stat">16 streams</span><span class="stat">64 lessons</span>
+        <span class="stat">106 exercises</span><span class="stat">100% real execution</span>
       </div>
-      <p>Identity &amp; access management, sequenced so concepts are grounded <em>before</em> the
-      protocols that assume them. OAuth 2.0/2.1, OIDC, SAML, WebAuthn/FIDO2 internals, Active
-      Directory and Kerberos, zero trust, plus a Running Identity stream on incident response,
-      migration and the 3am page.</p>
+      <p><b>This is the foundations course, and it exists so a language gap cannot block you.</b>
+      A good part of the graded work in Dev Dojo and Identity Dojo is JavaScript, alongside Java,
+      SQL and shell, so if JavaScript is unfamiliar the honest answer is to fix it first rather than
+      push through. It is also the gentlest starting point on the site if you have never programmed
+      at all. It assumes nothing: values and
+      types before anything that manipulates them, the call stack before closures, the event loop
+      before a single promise. Then modules and npm, TypeScript, the Node runtime, files and
+      streams, a secured HTTP server and a capstone. Three streams are devoted to <em>debugging</em>:
+      breakpoints and the scope pane, the Network panel, tracing an OAuth redirect end to end,
+      <code>node --inspect</code>, heap snapshots and CPU profiles. Every exercise runs for real:
+      618 executed cases.</p>
       <div class="row">
-        <a class="go" href="/identity/">Open Identity Dojo</a>
-        <a class="go alt" href="https://github.com/rcbart/dojo/tree/main/identity-dojo">Source</a>
+        <a class="go" href="/js/">Open JS Dojo</a>
+        <a class="go alt" href="https://github.com/rcbart/dojo/tree/main/js-dojo">Source</a>
       </div>
     </div>
 
     <div class="card">
-      <div class="icon">🟨</div>
-      <h2>JS Dojo</h2>
+      <div class="icon">🧮</div>
+      <h2>ML Dojo</h2>
       <div class="stats">
-        <span class="stat">16 streams</span><span class="stat">64 lessons</span>
-        <span class="stat">106 exercises</span><span class="stat">100% real execution</span>
+        <span class="stat">12 streams</span><span class="stat">109 lessons</span>
+        <span class="stat">109 exercises</span><span class="stat">real Python in the page</span>
       </div>
-      <p>JavaScript and Node from the ground up, assuming nothing: values and types before anything
-      that manipulates them, the call stack before closures, the event loop before a single promise.
-      Then modules and npm, TypeScript, the Node runtime, files and streams, a secured HTTP server and
-      a capstone. Three streams are devoted to <em>debugging</em>: breakpoints and the scope pane, the
-      Network panel, tracing an OAuth redirect end to end, <code>node --inspect</code>, heap snapshots
-      and CPU profiles. <b>Every exercise runs for real</b>: 618 executed cases.</p>
+      <p>Machine learning starting from Python itself, on the assumption that you have never written
+      a line of it. Arrays and vectors, then the mathematics that models are actually built from:
+      linear algebra, calculus and gradients, logarithms, and a probability stream that runs from
+      counting through distributions, Bayes, maximum likelihood, expectation maximization and the
+      bias-variance decomposition. Then the models: regression, the classifier zoo, clustering,
+      neural networks from the perceptron to the transformer, and reinforcement learning from the
+      bandit to the algorithm that fine-tunes language models. There is no PyTorch here on purpose:
+      you write the forward pass, the backward pass and an attention head in numpy, because that is
+      what makes them yours. <b>Every lesson opens in plain English and ends at textbook
+      rigor.</b></p>
       <div class="row">
-        <a class="go" href="/js/">Open JS Dojo</a>
-        <a class="go alt" href="https://github.com/rcbart/dojo/tree/main/js-dojo">Source</a>
+        <a class="go" href="/ml/">Open ML Dojo</a>
+        <a class="go alt" href="https://github.com/rcbart/ml-dojo">Source</a>
       </div>
     </div>
 
@@ -127,17 +304,94 @@
     <a href="/istio/">Istio crash course<span>Mesh, mTLS, ambient mode · hands-on</span></a>
   </div>
 
+  <h3>A tool, not a course</h3>
+  <p class="note"><b><a href="/authlint/">authlint</a></b> came out of Identity Dojo and is the short
+  version of it. <b>Paste any artifact from an authentication flow, decode it, and see the errors.</b>
+  A JWT, a SAML response or assertion, a discovery document, a JWKS or an authorization URL. About
+  sixty checks, and it says so plainly when it does not recognize what you gave it. One HTML file,
+  no dependencies, and nothing you paste leaves your browser, which is the only honest way to build
+  something people put production tokens into. <a href="/authlint/">Open authlint</a>.</p>
+
+  <h2 class="sec">Where to start</h2>
+  <p class="secsub">There is no enrollment and no fixed order, so the only thing worth saying is what
+  each course assumes you already have.</p>
+
+  <ol class="path">
+    <li><b>If you have never programmed at all: JS Dojo.</b> It is the gentlest on-ramp here, and it
+    is a prerequisite for some of what follows rather than all of it: a good part of the graded work
+    in Dev Dojo and Identity Dojo is JavaScript. If that is unfamiliar, fix it first, because the
+    ethos of this place is that you do not skip a foundation and hope. Two or three streams is
+    usually enough to unblock you; you do not need to finish it. <b>It is not a prerequisite for ML
+    Dojo</b>, which is Python and carries its own on-ramp.</li>
+    <li><b>If you are here for identity: Identity Dojo, from stream one.</b> Resist the urge to jump
+    to OAuth. The first streams exist so that OAuth is obvious when you get there instead of being
+    four endpoints you memorize and forget.</li>
+    <li><b>If you are a working engineer filling gaps: Dev Dojo, and take the tracks out of
+    order.</b> It is arranged for growth from newbie toward senior, but each track stands alone.
+    Start with the one you were embarrassed about in your last code review.</li>
+    <li><b>If you want machine learning: ML Dojo, and do not skip the math streams.</b> They are the
+    course. The models at the end are short because by then there is nothing left to explain. It
+    needs no JavaScript and no prior Python: it opens with nineteen lessons of Python from zero,
+    then the math, and every exercise after that runs real Python in the page.</li>
+    <li><b>If you deploy and operate things: the cloud-native path, in order.</b> Fundamentals
+    first, since it is pure concepts with nothing to install, then Docker onward with your own
+    machine.</li>
+  </ol>
+
+  <h2 class="sec">How they are built, and how they are checked</h2>
+  <p class="secsub">If a course claims an exercise is graded, that claim should survive being
+  checked. Here is what enforces it.</p>
+
+  <ul class="plain">
+    <li><b>One file, zero dependencies.</b> No framework, no bundler, no CDN, no runtime install.
+    Each course builds to a single self-contained HTML document that opens offline.</li>
+    <li><b>Every reference solution is executed before it ships.</b> A build gate runs each model
+    answer and evaluates the same assertions the learner is graded against. A model answer that
+    stops satisfying its own tests fails the build, because that defect is invisible from the
+    learner's side and there is no way for them to tell.</li>
+    <li><b>Every quiz question must explain its wrong answers.</b> Another gate counts them. A
+    question that only justifies the right answer does not ship.</li>
+    <li><b>Correct answers are not the longest option.</b> A gate measures this, because an answer
+    that is guessable from its length tests reading rather than knowledge.</li>
+    <li><b>Fourteen checks run on every push</b>, covering the above along with dead links, orphaned
+    pages, the numbers quoted on this site, and whether the built page can actually parse and
+    run.</li>
+    <li><b>The source is public</b> for all of it, so none of the above has to be taken on
+    trust.</li>
+  </ul>
+
   <h3>How grading works</h3>
   <p class="note"><b>Worth being straight about this.</b> Most exercises are checked by
   <b>regex against the shape of your answer</b>: they verify you wrote the right construct, not that
   your code runs correctly. SQL and JavaScript genuinely execute (sample data and a sandboxed worker),
-  and Java compiles and runs for real if you start the optional local runner. Every exercise ships a
-  <b>Run locally</b> panel with exact commands, and that is the ground truth.</p>
+  Python in ML Dojo runs for real in the page, and Java compiles and runs if you start the optional
+  local runner. Every exercise ships a <b>Run locally</b> panel with exact commands, and that is the
+  ground truth.</p>
+
+  <h2 class="sec">What these are not</h2>
+  <p class="secsub">Saying it myself is more useful than letting you find out three streams in.</p>
+
+  <ul class="plain">
+    <li><b>Not a certification.</b> There is no credential at the end and nothing an employer
+    recognizes. What you get is the ability to do the thing.</li>
+    <li><b>Not a substitute for building something.</b> No course makes you senior. These are a
+    strong technical track to grow alongside real work, and they are explicit about where that line
+    is.</li>
+    <li><b>No video, no community, no support.</b> It is reading and doing, alone, at your own pace.
+    If that is not how you learn, this will not suit you and that is a fair reason to leave.</li>
+    <li><b>Still in alpha.</b> Complete enough to learn from, not finished. You will find rough
+    edges, and I would rather hear about them than have you assume I know.</li>
+    <li><b>Written with AI assistance, under my direction.</b> The curriculum, the sequencing and the
+    technical judgements are mine; a lot of the typing was not. The
+    <a href="/#dojos">home page explains exactly how</a>, because you deserve to know that before
+    you spend forty hours here.</li>
+  </ul>
 
   <footer>
     Built with zero runtime dependencies: no framework, no bundler, no CDN. Each course builds to one
     self-contained HTML file you can open offline.
     <br>Source on <a href="https://github.com/rcbart/dojo">GitHub</a> · found something broken? <a href="https://github.com/rcbart/dojo/issues/new?template=bug_report.yml">Report an issue</a>.
+    <br><a href="/">Back to roniam.dev</a>
   </footer>
 
 </div>

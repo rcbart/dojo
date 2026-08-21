@@ -24,7 +24,7 @@ PATCH        no       usually not depends on whether the patch is absolute</div>
 <p>The practical consequence: <b>only idempotent requests are safe to retry automatically</b>. A client
 that retries a POST on timeout may create two orders, because it cannot know whether the first one
 arrived. That is what idempotency keys exist to solve: the client sends a unique key and the server
-recognises the repeat.</p>
+recognizes the repeat.</p>
 
 <h4>Statelessness, and what it actually costs</h4>
 <p>HTTP has no memory: each request must carry everything needed to serve it. That is why any server
@@ -109,7 +109,7 @@ servlet model's assumptions leak upward into frameworks that seem to have nothin
   -> you write the response
   -> thread RETURNS TO THE POOL
 
-// two consequences that explain most classic Java web behaviour:
+// two consequences that explain most classic Java web behavior:
 // 1. one servlet INSTANCE serves every request concurrently
 // 2. the thread is occupied for the whole request, including the time
 //    spent waiting on a database - which is why pool exhaustion, not
@@ -182,14 +182,14 @@ public class GreetServlet extends HttpServlet {
 }`}},
 {id:'web3',title:'The MVC pattern',body:`
 <p><b>Model–View–Controller</b> separates the three things web code does: <b>Model</b> = domain data + business rules (knows nothing about HTTP), <b>View</b> = rendering (template/JSON, no logic beyond display), <b>Controller</b> = thin traffic cop: parse input → call model → pick view.</p>
-<div class="codeSample" data-hl>// Model — pure domain
+<div class="codeSample" data-hl>// Model, pure domain
 record Product(String id, String name, long priceCents) {}
 
 class Catalog {
     Optional&lt;Product&gt; find(String id) { /* db lookup */ return Optional.empty(); }
 }
 
-// Controller — thin!
+// Controller, thin!
 class ProductController {
     private final Catalog catalog;
     ProductController(Catalog catalog) { this.catalog = catalog; }
@@ -226,7 +226,7 @@ a branch on business meaning rather than on the outcome of a call, it belongs on
 
 <h4>Where the layers meet</h4>
 <p>Two boundaries are worth being deliberate about. <b>Do not let domain objects be your API contract</b>:
-serialising an entity straight to JSON means every internal rename is a breaking API change, and every
+serializing an entity straight to JSON means every internal rename is a breaking API change, and every
 new field is accidentally public. Map to a DTO at the edge.</p>
 <p>And <b>translate errors at the boundary</b>: the domain throws meaningful exceptions
 (<code>InsufficientFunds</code>), and the web layer decides that becomes a 409. The domain should not know
@@ -234,9 +234,9 @@ what a status code is, and the controller should not be inventing business meani
 
 <h4>MVC's shape in modern applications</h4>
 <p>With a JSON API and a JavaScript front end, the View has moved to the browser and the server's "view" is
-the serialised response, but the split survives intact, and the naming in Spring reflects it directly:
+the serialized response, but the split survives intact, and the naming in Spring reflects it directly:
 <code>@Controller</code>/<code>@RestController</code> for the traffic cop, <code>@Service</code> for the
-model's behaviour, <code>@Repository</code> for its persistence. Those annotations are the pattern with
+model's behavior, <code>@Repository</code> for its persistence. Those annotations are the pattern with
 labels attached; using them without the separation is decoration.</p>`,
 docs:[['MVC, MDN glossary','https://developer.mozilla.org/en-US/docs/Glossary/MVC'],['Spring MVC explained, spring.io','https://docs.spring.io/spring-framework/reference/web/webmvc.html']],
 ex:{title:'Untangle to MVC',
@@ -344,20 +344,20 @@ SameSite   Lax    not sent on cross-site POSTs / iframes / XHR
                   removing even that
 
 __Host-    prefix: browser enforces Secure, Path=/, and no Domain.
-           free defence against a subdomain overwriting your cookie</div>
+           free defense against a subdomain overwriting your cookie</div>
 
 <h4>The three attacks, stated as one sentence each</h4>
-<p><b>XSS</b>: your page executes attacker-supplied script, so the attacker runs as the user. The defence
+<p><b>XSS</b>: your page executes attacker-supplied script, so the attacker runs as the user. The defense
 is output encoding, contextual and everywhere, plus a Content-Security-Policy as the second line. Note
 that escaping is context-dependent: what is safe inside HTML text is not safe inside an attribute, a URL
 or a <code>&lt;script&gt;</code> block.</p>
 <p><b>CSRF</b>: the attacker's page causes the browser to send an authenticated request the user did not
-intend. The defence is a token the attacker cannot read (synchroniser or double-submit) and
+intend. The defense is a token the attacker cannot read (synchronizer or double-submit) and
 <code>SameSite</code> cookies. APIs authenticated by an <code>Authorization</code> header are not
 vulnerable, because that header is not attached automatically, which is why disabling CSRF protection is
 correct for a stateless API and wrong the moment anything authenticates by cookie.</p>
 <p><b>Session fixation</b>: the attacker plants a session id, waits for the victim to authenticate into
-it, and then uses it. The defence is one line: <b>issue a new session id at login</b>, and again on any
+it, and then uses it. The defense is one line: <b>issue a new session id at login</b>, and again on any
 privilege change.</p>
 
 <h4>What the flags cannot do</h4>
@@ -448,7 +448,7 @@ prompt:`Write <code>function statusFor(kind)</code> mapping an outcome name to i
 starter:`function statusFor(kind) {\n  return 500;\n}`,
 solution:`function statusFor(kind) {\n  const map = { ok: 200, created: 201, accepted: 202, "no-content": 204,\n    "bad-request": 400, unauthorized: 401, forbidden: 403, "not-found": 404,\n    conflict: 409, unprocessable: 422, "rate-limited": 429, "server-error": 500 };\n  return map[kind] ?? 500;   // unknown outcome: our fault, not theirs\n}`,
 tests:[{d:'a lookup table maps outcomes to codes',re:'\\{[^}]*created'},{d:'created is 201',re:'201'},{d:'conflict is 409',re:'409'},{d:'an unknown value falls back',re:'\\?\\?|undefined|\\|\\|'}],
-behavior:`Eight cases execute. Two pairs are worth committing to memory because they are confused constantly. 401 versus 403: 401 means "I do not know who you are" and invites a credential, while 403 means "I know exactly who you are and the answer is no"; returning 401 for a permission failure sends clients into a pointless re-authentication loop. And 400 versus 422: malformed syntax versus syntactically valid but semantically wrong. The unknown case defaults to 500 rather than 200 because an outcome your code does not recognise is a server-side problem, and defaulting to success is how failures reach users as empty screens.`,
+behavior:`Eight cases execute. Two pairs are worth committing to memory because they are confused constantly. 401 versus 403: 401 means "I do not know who you are" and invites a credential, while 403 means "I know exactly who you are and the answer is no"; returning 401 for a permission failure sends clients into a pointless re-authentication loop. And 400 versus 422: malformed syntax versus syntactically valid but semantically wrong. The unknown case defaults to 500 rather than 200 because an outcome your code does not recognize is a server-side problem, and defaulting to success is how failures reach users as empty screens.`,
 hints:['A plain object literal is the lookup table.','?? supplies the fallback for a key that is not present.','201 for created, 204 for success with no body, 409 for a conflict of state.']}]},
 {id:'web9',title:'Pagination & building compliant, standardized APIs',body:`
 <p>An endpoint that returns "all the orders" works in a demo and falls over in production. Real collections are paginated. Two styles dominate:</p>
@@ -488,9 +488,9 @@ cursor server-side, since it arrives from the client like anything else.</p>
 <li><b>Always cap the page size.</b> An unbounded <code>limit</code> is a denial-of-service parameter your
 API is offering to strangers. Clamp it, and document the maximum.</li>
 <li><b>Be careful with totals.</b> An exact <code>COUNT(*)</code> on every page is often the most expensive
-part of the request. Either omit it, or return an estimate labelled as one.</li>
+part of the request. Either omit it, or return an estimate labeled as one.</li>
 <li><b>Keep the ordering stable and explicit.</b> Pagination over an unspecified order is undefined
-behaviour that happens to work until the query plan changes.</li>
+behavior that happens to work until the query plan changes.</li>
 </ul>`,
 docs:[['Web Linking (RFC 8288)','https://www.rfc-editor.org/rfc/rfc8288'],['Problem Details (RFC 7807)','https://www.rfc-editor.org/rfc/rfc7807'],['API design guide (Google)','https://cloud.google.com/apis/design']],
 exs:[{title:'Pagination choice & error compliance',
@@ -536,7 +536,7 @@ hints:['A page shorter than the limit means there is no page after it.','The cur
 <p>The discipline behind the mechanism matters more than the mechanism. Follow <b>semantic versioning</b> thinking: only a <b>breaking change</b> (removing or renaming a field, changing a type, or altering behavior clients rely on) needs a new major version. <b>Additive</b> changes (a new optional field, a new endpoint) are backward-compatible and should <i>not</i> force a version bump. When you do retire a version, announce it: the <code>Deprecation</code> and <code>Sunset</code> response headers tell clients a version is going away and by when.</p>
 
 <h4>What actually counts as breaking</h4>
-<p>The version debate is easier once the categories are clear. <b>Safe:</b> adding an optional request field, adding a response field, adding an endpoint, adding an enum value <i>if</i> clients were told to tolerate unknown ones. <b>Breaking:</b> removing or renaming anything, changing a type (<code>"123"</code> to <code>123</code> breaks strict parsers), making an optional field required, tightening validation, changing default behaviour, changing an error's shape or status code.</p>
+<p>The version debate is easier once the categories are clear. <b>Safe:</b> adding an optional request field, adding a response field, adding an endpoint, adding an enum value <i>if</i> clients were told to tolerate unknown ones. <b>Breaking:</b> removing or renaming anything, changing a type (<code>"123"</code> to <code>123</code> breaks strict parsers), making an optional field required, tightening validation, changing default behavior, changing an error's shape or status code.</p>
 <p>Two are argued about and both are breaking in practice: <b>adding an enum value</b> when clients switch exhaustively on it, and <b>changing pagination defaults</b>, because a client that assumed twenty items now silently processes fifty. If in doubt, ask what a consumer wrote against your response: the contract is what they can observe, not what you documented.</p>
 
 <h4>The cost of a new version</h4>

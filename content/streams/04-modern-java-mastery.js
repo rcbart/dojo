@@ -20,7 +20,7 @@ practical consequences: lambdas are cheaper in hot paths, they do not have their
 (inside a lambda <code>this</code> is the enclosing instance, which is usually what you wanted), and they
 appear in stack traces under synthetic names that take a moment to read.</p>
 
-<h4>The shapes worth memorising</h4>
+<h4>The shapes worth memorizing</h4>
 <p>Four interfaces cover most code, and knowing them by shape stops you inventing your own:</p>
 <div class="codeSample">Function&lt;T,R&gt;   R apply(T t)      // transform one thing into another
 Predicate&lt;T&gt;    boolean test(T t)  // answer a yes/no question about it
@@ -127,8 +127,8 @@ public class Refs {
 <div class="codeSample" data-hl>Function&lt;Integer,Integer&gt; plus3  = n -&gt; n + 3;
 Function&lt;Integer,Integer&gt; times2 = n -&gt; n * 2;
 
-plus3.andThen(times2).apply(1);   // (1+3)*2 = 8   — plus3 first
-plus3.compose(times2).apply(1);   // (1*2)+3 = 5   — times2 first!
+plus3.andThen(times2).apply(1);   // (1+3)*2 = 8, plus3 first
+plus3.compose(times2).apply(1);   // (1*2)+3 = 5, times2 first!
 
 Predicate&lt;String&gt; nonNull  = s -&gt; s != null;
 Predicate&lt;String&gt; nonEmpty = s -&gt; !s.isEmpty();
@@ -247,7 +247,7 @@ static &lt;T&gt; Supplier&lt;T&gt; memoize(Supplier&lt;T&gt; expensive) {
 <p>These patterns power real APIs: <code>Comparator.comparing(...).thenComparing(...)</code>, retry/timing wrappers, and every middleware chain you've ever used. If you can read <code>a -> b -> a + b</code> without blinking, you've arrived.</p>
 
 <h4>Why a function returning a function is useful</h4>
-<p>The point of a higher-order function is <b>configuration captured once, behaviour reused many times</b>. <code>Comparator.comparing(Person::age)</code> is a function that builds a comparator; a retry wrapper is a function that takes an operation and returns a more resilient operation with the same signature. Because the result has the same type as the input, wrappers compose: retry around timing around logging, each written once and unaware of the others. That is the whole idea behind middleware, filters and interceptors, and it is why reading <code>Function&lt;A, Function&lt;B, C&gt;&gt;</code> without flinching is worth the practice.</p>
+<p>The point of a higher-order function is <b>configuration captured once, behavior reused many times</b>. <code>Comparator.comparing(Person::age)</code> is a function that builds a comparator; a retry wrapper is a function that takes an operation and returns a more resilient operation with the same signature. Because the result has the same type as the input, wrappers compose: retry around timing around logging, each written once and unaware of the others. That is the whole idea behind middleware, filters and interceptors, and it is why reading <code>Function&lt;A, Function&lt;B, C&gt;&gt;</code> without flinching is worth the practice.</p>
 
 <h4>Currying, and what it is actually for in Java</h4>
 <p>Currying turns a two-argument function into a one-argument function returning another. In languages built around it, this is how partial application works; in Java it is occasionally elegant and frequently over-applied. The real use is <b>pre-binding a dependency</b>: a function that takes a configured client and returns a function taking the request, so the caller only supplies what varies. Beyond that, a plain method with two parameters is clearer, and clarity is the point of the whole stream.</p>
@@ -379,7 +379,7 @@ String joined = names.stream().collect(Collectors.joining(", "));</div>
 <p>Intermediate operations build a plan; nothing runs until the terminal operation asks for a result. That is not a performance footnote; it changes what the pipeline costs. Elements flow through the whole chain one at a time, so <code>filter().map().findFirst()</code> stops as soon as it has an answer rather than mapping the entire list first. It is also why a stream with no terminal operation does precisely nothing, which surprises everyone once.</p>
 <p>Ordering follows from that: put the cheap, selective <code>filter</code> before the expensive <code>map</code>, and you do the expensive work only for what survives.</p>
 
-<h4>The collectors worth memorising</h4>
+<h4>The collectors worth memorizing</h4>
 <ul>
 <li><code>toList()</code>: Java 16+, returns an unmodifiable list, and is what you want by default.</li>
 <li><code>groupingBy(Order::status)</code>: the SQL GROUP BY of the language, and by far the highest-value collector to know. Add a downstream collector for the aggregate: <code>groupingBy(Order::status, counting())</code>, or <code>summingLong</code>, or <code>mapping</code>.</li>
@@ -534,10 +534,10 @@ public class Analytics {
     private final List&lt;String&gt; stops;
 
     Route(List&lt;String&gt; stops) {
-        this.stops = List.copyOf(stops);      // IN: snapshot — caller's later edits don't reach us
+        this.stops = List.copyOf(stops);      // IN: snapshot, caller's later edits don't reach us
     }
     List&lt;String&gt; stops() {
-        return stops;                          // OUT: already immutable — safe to hand out as-is
+        return stops;                          // OUT: already immutable, safe to hand out as-is
     }
 }</div>
 <p>Why immutability earns its keep: immutable objects are free to share between threads (no locks; the Concurrency stream cashes this in), safe as Map keys, trivially cacheable, and above all <i>legible</i>: a value that cannot change is a value you never re-check. The working default in modern Java: collections are immutable unless a mutation is the point, and every mutable input crossing a class boundary gets copied.</p>`,
@@ -592,7 +592,7 @@ IntStream.range(0, 5).forEach(i -&gt; ...);         // index as a stream</div>
 <p>The distinction underneath all of these is who controls the loop. With a <code>for</code> loop
 <b>you</b> do: you can <code>break</code>, <code>continue</code>, keep an index, or mutate as you go. With
 <code>forEach</code> and streams the <b>library</b> does, and you supply what to do with each element,
-which is what allows it to reorder, parallelise or short-circuit internally.</p>
+which is what allows it to reorder, parallelize or short-circuit internally.</p>
 <p>That is the real trade, and it explains why <code>forEach</code> has no <code>break</code>: you gave up
 control of the loop. Wanting one is a signal to use <code>anyMatch</code>, <code>findFirst</code> or
 <code>takeWhile</code>, which express the intent directly, or to go back to a plain loop.</p>
@@ -741,7 +741,7 @@ hints:['Inside sum, nums is just an int[]: length, indexing, enhanced for all wo
 {id:'mod6',title:'Optional, records & pattern matching',body:`
 <p>🌱 <b>Starting from zero:</b> the billion-dollar question of "what if there\u0027s no answer?": a search that finds nothing, a lookup with no match. Returning <code>null</code> (nothing) works until someone forgets to check and the program crashes. <b>Optional</b> is a see-through box: it either contains the answer or is visibly empty, and its type forces everyone who receives it to acknowledge the empty case. That\u0027s pillar one below; records and pattern matching follow the same spirit: saying what you mean in the type.</p>
 <p>Three modern pillars:</p>
-<div class="codeSample" data-hl>// Optional: an explicit "maybe" — no more null returns
+<div class="codeSample" data-hl>// Optional: an explicit "maybe", no more null returns
 Optional&lt;User&gt; u = repo.findById(id);
 String name = u.map(User::name).orElse("anonymous");
 
@@ -759,7 +759,7 @@ String label = switch (shape) {          // switch expression + patterns
 <p>Rules: never call <code>Optional.get()</code> without checking; use records for DTOs and value objects; switch expressions with <code>-&gt;</code> don't fall through and must be exhaustive.</p>
 
 <h4>Optional, used as intended</h4>
-<p><code>Optional</code> was designed for one job: a <b>return type</b> that may legitimately have no value. Used there it forces the caller to acknowledge the empty case at compile time. Used elsewhere it makes things worse: as a field it is not serialisable and adds an object per instance, and as a parameter it forces every caller to wrap, when two overloads say the same thing more clearly.</p>
+<p><code>Optional</code> was designed for one job: a <b>return type</b> that may legitimately have no value. Used there it forces the caller to acknowledge the empty case at compile time. Used elsewhere it makes things worse: as a field it is not serializable and adds an object per instance, and as a parameter it forces every caller to wrap, when two overloads say the same thing more clearly.</p>
 <p>The idiomatic style is to keep the value inside the box and transform it: <code>findUser(id).map(User::email).filter(e -&gt; e.endsWith("@acme.com")).orElseThrow(...)</code>. Calling <code>isPresent()</code> then <code>get()</code> is the null check you were trying to escape, wearing a longer name. Two more choices worth making deliberately: <code>orElse(compute())</code> evaluates its argument every time, while <code>orElseGet(() -&gt; compute())</code> only on the empty path, an easy performance bug when the fallback hits a database. And never return <code>null</code> from a method whose type is <code>Optional</code>.</p>
 
 <h4>Records are about equality, not brevity</h4>
@@ -828,7 +828,7 @@ static double area(Shape s) {
     return switch (s) {
         case Circle(double r)          -&gt; Math.PI * r * r;   // record pattern:
         case Rect(double w, double h)  -&gt; w * h;             // deconstructs fields
-    };  // no default — compiler proves exhaustiveness
+    };  // no default, compiler proves exhaustiveness
 }
 
 static String describe(Shape s) {

@@ -39,7 +39,7 @@ hints:['Processes are isolated; threads within a process share memory.','Threads
 <div class="codeSample" data-hl>Runnable work = () -&gt; System.out.println("on " + Thread.currentThread().getName());
 
 Thread t = new Thread(work, "worker-1");
-t.start();          // new thread — run() would just be a method call!
+t.start();          // new thread, run() would just be a method call!
 t.join();           // wait for it to finish
 
 Thread.sleep(100);  // pause current thread (throws InterruptedException)
@@ -129,7 +129,7 @@ public class Workers {
     public synchronized int get() { return count; }     // reads need it too!
 }
 
-// block form — lock only what you must:
+// block form, lock only what you must:
 synchronized (lockObject) { shared.update(); }
 
 private volatile boolean running = true;   // visibility, NOT atomicity</div>
@@ -153,7 +153,7 @@ production load, on a different machine, and cannot be reproduced on demand.</p>
 <p>Atomicity is only half of it. Even a write that completes may never be <i>seen</i> by another thread,
 because the JVM and the CPU are permitted to keep values in registers and caches and to reorder
 instructions, as long as the result looks correct <b>to the thread doing it</b>. A loop reading a plain
-<code>boolean</code> flag can legally be optimised into an infinite loop, because nothing in that thread
+<code>boolean</code> flag can legally be optimized into an infinite loop, because nothing in that thread
 ever changes it.</p>
 <p>That is what the Java Memory Model governs, and its central concept is <b>happens-before</b>: unless
 you establish such a relationship, one thread's writes are not guaranteed visible to another, ever.
@@ -173,7 +173,7 @@ AtomicInteger lock-free atomic read-modify-write (CAS)
 <p><b>Prefer not sharing.</b> The cheapest concurrency bug is the one that cannot exist: immutable objects
 need no synchronization, confined state needs none, and a queue between threads beats shared mutable
 state.</p>
-<p><b>Lock the right granularity.</b> Synchronizing an entire method is easy and serialises everything;
+<p><b>Lock the right granularity.</b> Synchronizing an entire method is easy and serializes everything;
 locking too little leaves gaps. Guard a coherent unit of state with one lock, and document which lock
 guards what.</p>
 <p><b>Never call unknown code holding a lock.</b> A callback, a listener or an overridden method invoked
@@ -233,7 +233,7 @@ try {
                           -&gt; work piles up in memory rather than being refused
 newCachedThreadPool()     UNBOUNDED threads, no queue
                           -&gt; a burst can create thousands of threads
-newSingleThreadExecutor() serialised, ordering guaranteed
+newSingleThreadExecutor() serialized, ordering guaranteed
 newVirtualThreadPerTaskExecutor()  Java 21+: a thread per task, cheaply
                           -&gt; the right default for blocking I/O work
 
@@ -249,7 +249,7 @@ blocked, and on Java 21+ that is exactly the case virtual threads solve, letting
 sizes for blocking work altogether.</p>
 
 <h4>Exceptions vanish unless you look</h4>
-<p>This is the behaviour that most often surprises people. A task submitted with
+<p>This is the behavior that most often surprises people. A task submitted with
 <code>submit()</code> that throws does <b>not</b> print anything; the exception is captured in the
 <code>Future</code> and only surfaces when you call <code>get()</code>. Fire-and-forget
 <code>submit()</code> with an ignored return value silently discards failures.</p>
@@ -409,7 +409,7 @@ byUser.merge(user, 1L, Long::sum);            // atomic per-key update
 
 BlockingQueue&lt;Task&gt; queue = new LinkedBlockingQueue&lt;&gt;();
 queue.put(task);      // producer blocks when full
-Task t = queue.take(); // consumer blocks when empty — no polling!
+Task t = queue.take(); // consumer blocks when empty, no polling!
 
 CountDownLatch ready = new CountDownLatch(3);
 // each worker: ready.countDown();  main: ready.await();</div>
@@ -419,10 +419,10 @@ CountDownLatch ready = new CountDownLatch(3);
 <p>The mistake that survives every code review: each <i>operation</i> on a concurrent collection is
 atomic, but a <i>sequence</i> of them is not. Check-then-act is a race no matter how thread-safe the
 map is.</p>
-<div class="codeSample" data-hl>// BROKEN — two threads can both see absent and both put
+<div class="codeSample" data-hl>// BROKEN, two threads can both see absent and both put
 if (!map.containsKey(k)) map.put(k, expensive(k));
 
-// CORRECT — one atomic operation
+// CORRECT, one atomic operation
 map.computeIfAbsent(k, this::expensive);
 
 // counters
@@ -430,7 +430,7 @@ map.merge(k, 1L, Long::sum);          // atomic increment-or-insert
 
 // and the same trap with the "synchronized" wrappers:
 List&lt;String&gt; l = Collections.synchronizedList(new ArrayList&lt;&gt;());
-for (String s : l) { ... }            // NOT safe — iteration needs the lock</div>
+for (String s : l) { ... }            // NOT safe, iteration needs the lock</div>
 <p><code>ConcurrentHashMap</code> beats <code>synchronizedMap</code> not merely on speed but because it
 <i>offers</i> the atomic compound operations (<code>computeIfAbsent</code>, <code>merge</code>,
 <code>putIfAbsent</code>, <code>compute</code>) that make correct code expressible. Keep the mapping
@@ -451,7 +451,7 @@ single immutable object swapped atomically via <code>AtomicReference</code>.</p>
                  "wait until N services have started"
 CyclicBarrier    reusable rendezvous. all N wait for each other, then all
                  proceed; resets automatically. simulation rounds.
-Semaphore        N permits — a bounded resource. acquire/release, and
+Semaphore        N permits, a bounded resource. acquire/release, and
                  RELEASE IN A FINALLY BLOCK or you leak permits until
                  everything blocks forever.
 Phaser           barrier with a variable number of parties.</div>
@@ -527,7 +527,7 @@ blocking call still blocks that virtual thread; it no longer blocks anything exp
 <div class="codeSample" data-hl>platform thread   ~1 MB stack, created by the OS, thousands max
 virtual thread    stack on the heap, grows as needed, MILLIONS
 
-// so the old optimisation inverts:
+// so the old optimization inverts:
 POOLING a virtual thread is pointless - creation is nearly free, and a
 pool exists to limit an expensive resource. create one per task.
 
@@ -556,7 +556,7 @@ imply them.</p>
 threads, per-thread copies are memory you did not budget for. <b>Scoped values</b> are the modern
 replacement for passing context.</p>
 <p>Then <b>structured concurrency</b> completes the picture: subtasks forked in a scope are guaranteed to
-finish or be cancelled before the scope exits, so a failed fan-out cannot leave orphaned work running,
+finish or be canceled before the scope exits, so a failed fan-out cannot leave orphaned work running,
 the last piece of async that thread-per-request never handled well.</p>`,
 docs:[['Virtual threads, dev.java','https://dev.java/learn/new-features/virtual-threads/'],['JEP 444, Virtual Threads','https://openjdk.org/jeps/444']],
 ex:{title:'Fan out on virtual threads',

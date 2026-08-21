@@ -1,0 +1,42 @@
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: npm ci
+
+      # Every check runs against the files in src/, not a copy of them.
+      - name: Test the checks
+        run: node --test test/*.test.js
+
+      # dist/index.html is committed so the tool can be downloaded and opened
+      # with no toolchain. This proves it still matches src/, and that the
+      # privacy claim on the page is true of the file being shipped.
+      - name: Verify the built file is current and self-contained
+        run: node scripts/verify-dist.js
+
+      # The page tells people it is safe to paste a production token. Every
+      # claim behind that is checked against the file being shipped.
+      - name: Verify the security claims
+        run: node scripts/verify-security.js
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: npm ci
+      - run: npm i --no-save playwright && npx playwright install --with-deps chromium
+
+      # Static checks prove the code contains no way out. This proves the
+      # running page behaves: hostile input renders as text, the URL never
+      # carries the input, storage stays empty, and the CSP really blocks.
+      - name: Verify security in a real browser
+        run: node test/security.browser.js

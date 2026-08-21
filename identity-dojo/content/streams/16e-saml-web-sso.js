@@ -276,7 +276,7 @@ same underlying rule: <b>verify the exact thing that was signed</b>.</p>
 <p>The Artifact binding is genuinely more secure: nothing sensitive passes through the browser at all, so
 there is no assertion to capture from history, a Referer header, or a compromised extension. It is also
 rarely used, because it requires the SP to make a direct, authenticated back-channel call to the IdP, which
-means network reachability and mutual trust that a browser-only integration does not. Recognise it, expect
+means network reachability and mutual trust that a browser-only integration does not. Recognize it, expect
 POST.</p>`,
 docs:[['SAML bindings (OASIS)','http://docs.oasis-open.org/security/saml/v2.0/saml-bindings-2.0-os.pdf'],['java.util.zip.Deflater','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/zip/Deflater.html']],
 ex:{title:'Encode an AuthnRequest for the Redirect binding',
@@ -332,7 +332,7 @@ public class Redirect {
 &lt;/EntityDescriptor&gt;</div>
 
 <h4>What "establishing trust" actually means here</h4>
-<p>There is no registry, no discovery protocol and nothing automatic. Two organisations decide to trust each
+<p>There is no registry, no discovery protocol and nothing automatic. Two organizations decide to trust each
 other and <b>exchange XML documents describing themselves</b>. That exchange is the entire trust
 establishment, and it is usually done by a human pasting a URL into an admin console.</p>
 <p>Once done, the SP's rule is simple: accept an assertion whose <code>Issuer</code> equals the IdP's
@@ -465,7 +465,7 @@ application will look:</p>
 // the application says "welcome, admin"
 // two components, two different answers to "which assertion?" - that is the bug</div>
 <p>The 2018 Duo Labs research found this class of flaw in multiple mainstream SAML libraries at once,
-which tells you it is a design trap rather than a series of careless mistakes. The defences: verify the
+which tells you it is a design trap rather than a series of careless mistakes. The defenses: verify the
 signature and read the claims from <b>the same node reference</b>, reject documents containing more than
 one assertion, resolve IDs strictly, disable DTD processing and entity expansion, and never re-parse the
 document after validating it.</p>
@@ -521,7 +521,7 @@ solution:`public class Assertion {
 {id:'sml6',title:'Migrating from SAML to OIDC without a flag day',body:`
 <p>Plenty of working SAML deployments will outlive the people who built them, and that is fine; SAML is
 not broken. But new applications are built against OIDC, mobile and single-page apps fit it badly through
-SAML, and eventually an organisation ends up running both. This lesson is about getting from one to the
+SAML, and eventually an organization ends up running both. This lesson is about getting from one to the
 other while people keep logging in.</p>
 <p>The first thing to establish is that there is no flag day. Anyone proposing "we switch on Saturday" is
 proposing to discover every undocumented integration at once, at the weekend.</p>
@@ -536,7 +536,7 @@ user key, the OIDC login looks like a brand new user.</li>
 (<code>http://schemas.xmlsoap.org/.../emailaddress</code>); OIDC claims are short names
 (<code>email</code>). Every mapping has to be restated, and applications tend to depend on attributes
 nobody documented.</li>
-<li><b>Session and logout behaviour.</b> SAML single logout and OIDC front- or back-channel logout are not
+<li><b>Session and logout behavior.</b> SAML single logout and OIDC front- or back-channel logout are not
 equivalent, and a partially migrated estate can leave a user signed out of some applications and not
 others.</li>
 <li><b>The long tail.</b> The applications nobody owns, the service that authenticates through SAML for one

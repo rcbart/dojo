@@ -20,7 +20,7 @@ STREAMS.push({icon:'🛡️',iam:true,sec:'Advanced OAuth & threats',title:'Adva
   -> { "active": true, "scope": "orders:read", "sub": "ada",
        "aud": "orders-api", "exp": 1767225600, "client_id": "web" }
 
-POST /revoke                RFC 7009 - "stop honouring this"
+POST /revoke                RFC 7009 - "stop honoring this"
   token=...&token_type_hint=refresh_token
   -> 200, ALWAYS. even for an unknown token.</div>
 <p>Two details people get wrong. <b>Introspection endpoints must be authenticated</b>: an open one is
@@ -30,7 +30,7 @@ from "unknown" would turn the endpoint into a token-existence oracle.</p>
 
 <h4>The single field that matters</h4>
 <p><code>active</code> is the answer. It is not merely "unexpired"; it is the server asserting the token
-is currently honoured: issued by it, not expired, not revoked, and the grant behind it still standing.
+is currently honored: issued by it, not expired, not revoked, and the grant behind it still standing.
 A response of <code>{"active": false}</code> carries no other claims, on purpose, so a rejected token
 reveals nothing.</p>
 
@@ -268,11 +268,11 @@ key. A stolen token, without the key, is inert.</p>
 <h4>The proof JWT</h4>
 <p>Each request carries an extra header, <code>DPoP</code>, whose value is a small JWT the client mints
 on the spot:</p>
-<div class="codeSample" data-hl>// header — carries the PUBLIC key, so the server needs no prior registration
+<div class="codeSample" data-hl>// header, carries the PUBLIC key, so the server needs no prior registration
 { "typ": "dpop+jwt", "alg": "ES256",
   "jwk": { "kty":"EC", "crv":"P-256", "x":"...", "y":"..." } }
 
-// payload — binds this proof to THIS request
+// payload, binds this proof to THIS request
 { "htm": "POST",                                  // the HTTP method
   "htu": "https://api.example.com/orders",        // the URI, no query or fragment
   "iat": 1767222000,                              // when it was minted
@@ -319,7 +319,7 @@ still works, and the token is still effectively a bearer token.</p>
 
 <h4>Replay, clocks, and the nonce</h4>
 <p>A proof is valid for a short window, so an attacker who captures one has a brief chance to replay it
-against the same endpoint. Two defences, used together:</p>
+against the same endpoint. Two defenses, used together:</p>
 <ul>
 <li><b>A replay cache.</b> Store each <code>jti</code> for the acceptance window and reject repeats.
 Cheap for one server, awkward across a fleet: it needs shared state, which is precisely what
@@ -340,7 +340,7 @@ well, and the same key must be proven at the token endpoint. Rotating the key me
 <h4>DPoP or mTLS?</h4>
 <div class="codeSample" data-hl>                      DPoP                        mTLS-bound (RFC 8705)
 key material          app-generated, in memory    an X.509 client certificate
-infrastructure        none — ordinary HTTPS       PKI, and TLS terminated where
+infrastructure        none, ordinary HTTPS       PKI, and TLS terminated where
                                                   the cert is still visible
 works in a browser    yes                         effectively no
 proxies / CDN         transparent                 client certs often break
@@ -418,37 +418,37 @@ authorization code lands on their server. The fix is not validation-by-blocklist
 
 <p><b>2. Mix-up attack.</b> An app that supports several IdPs is tricked into sending the code from
 IdP&nbsp;A to IdP&nbsp;B's token endpoint, where B, a legitimate IdP, has no idea it did not issue it, but
-an <i>attacker-controlled</i> IdP happily keeps it. Defence: track which IdP each authorization request
+an <i>attacker-controlled</i> IdP happily keeps it. Defense: track which IdP each authorization request
 went to, and check the <code>iss</code> returned in the response matches. This is why RFC 9207 added an
 explicit <code>iss</code> parameter to the authorization response.</p>
 
 <p><b>3. CSRF on the callback.</b> Without <code>state</code>, an attacker completes their own
 authorization, then feeds <i>their</i> code to your callback in the victim's browser. The victim's
-session is now linked to the attacker's account, and anything they upload goes to the attacker. Defence:
+session is now linked to the attacker's account, and anything they upload goes to the attacker. Defense:
 <code>state</code>, bound to the user's session, checked on return.</p>
 
 <p><b>4. Authorization code injection.</b> Distinct from CSRF: the attacker injects a code obtained
 elsewhere into a legitimate flow. A client secret does not help: the client is genuine. <b>PKCE</b> is
-the defence, because the victim's client holds a verifier that does not match the challenge the
+the defense, because the victim's client holds a verifier that does not match the challenge the
 attacker's code was bound to.</p>
 
 <p><b>5. Token replay and theft.</b> Bearer tokens leak through logs, referrers, proxies and browser
-storage. Defence in layers: short lifetimes, audience restriction, and sender-constraining with DPoP or
+storage. Defense in layers: short lifetimes, audience restriction, and sender-constraining with DPoP or
 mTLS so possession of the token alone is not enough.</p>
 
 <p><b>6. Refresh token reuse.</b> A stolen refresh token is the most valuable credential in the system.
-Defence: <b>rotation with reuse detection</b>. If an old token is presented again, assume theft and
+Defense: <b>rotation with reuse detection</b>. If an old token is presented again, assume theft and
 revoke the whole family, since either the legitimate client or the attacker is replaying.</p>
 
 <p><b>7. Consent phishing.</b> No protocol flaw at all: the attacker registers a plausible app, sends a
-genuine consent link, and the user grants real scopes to a malicious client. Defence is
-organisational: app allow-listing, publisher verification, scope review, and admin consent for
+genuine consent link, and the user grants real scopes to a malicious client. Defense is
+organizational: app allow-listing, publisher verification, scope review, and admin consent for
 sensitive scopes. <b>This is now a leading enterprise attack, and no amount of protocol hardening
 addresses it.</b></p>
 
 <p><b>8. alg confusion and key confusion.</b> Accepting the token's own <code>alg</code> lets an
 attacker propose <code>none</code>, or hand an RSA public key to an HMAC verifier as the shared secret.
-Defence: pin the algorithm, and pin where keys come from.</p>
+Defense: pin the algorithm, and pin where keys come from.</p>
 
 <div class="codeSample" data-hl>ATTACK                    BOUND BY WHAT
 open redirect             exact pre-registered redirect_uri
@@ -459,7 +459,7 @@ token replay              short exp + aud + DPoP/mTLS
 refresh reuse             rotation with reuse detection
 consent phishing          nothing in the protocol - governance
 alg confusion             algorithm pinned by the verifier</div>
-<p>Notice the shape of the table: <b>every protocol defence is a binding</b>: of the response to the
+<p>Notice the shape of the table: <b>every protocol defense is a binding</b>: of the response to the
 request, the code to the client, the token to a key. The one row with no protocol answer is the one
 that attacks the human, and it is the one growing fastest.</p>`,
 docs:[['OAuth 2.0 Security BCP','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['Redirect URI validation','https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2']],
@@ -531,7 +531,7 @@ collision is the alarm.</p>
 <h4>The practical wrinkles</h4>
 <p><b>Race conditions.</b> A page that fires three requests at once may refresh three times concurrently,
 and naive reuse detection will read that as theft and log the user out. Real implementations allow a
-short grace window where the immediately-previous token still works, and serialise refreshes in the
+short grace window where the immediately-previous token still works, and serialize refreshes in the
 client.</p>
 <p><b>Lost writes.</b> If the client redeems a token but the response never arrives, it now holds a dead
 token and has no way back. Handle the failure explicitly, or the user's session simply stops working.</p>
@@ -600,7 +600,7 @@ attack where a response is tampered with on the way back.</li>
 <li><b>Exact redirect URI matching</b>, and no open redirects anywhere in the flow.</li>
 <li><b>Short-lived authorization codes</b>, one-time use, bound to the client.</li>
 </ul>
-<p>Read that list again as a summary of the course: every item is a defence you have already met. FAPI's
+<p>Read that list again as a summary of the course: every item is a defense you have already met. FAPI's
 contribution is refusing to let any of them be optional.</p>
 
 <h4>Two levels</h4>
@@ -613,7 +613,7 @@ FAPI 2.0 Message Signing      adds non-repudiation: requests AND responses are
                               deny what was sent
                               -> payment initiation, high-value transactions</div>
 <p>The distinction is worth understanding because it is not about strength but about <i>evidence</i>.
-The baseline protects the exchange. Message signing produces an artefact that survives the exchange:
+The baseline protects the exchange. Message signing produces an artifact that survives the exchange:
 a signed record that stands up in a dispute months later. That is a legal requirement, not a
 cryptographic one, which is why it is a separate level rather than simply "more secure".</p>
 
@@ -659,7 +659,7 @@ DELETE /grants/{grant_id}    -> revoke THIS grant, and every token from it
 authorization that may <b>replace</b> everything previously granted, so a user who declines the new
 permission can lose the ones they had already agreed to, with nothing in the protocol saying that happened.
 <code>update</code> versus <code>replace</code> makes that an explicit, auditable choice.</p>
-<p>You will meet this in regulated finance rather than in general-purpose OAuth, and it is worth recognising
+<p>You will meet this in regulated finance rather than in general-purpose OAuth, and it is worth recognizing
 because it is the direction the mature end of the ecosystem is moving: consent as a durable, inspectable
 record rather than a side effect of a redirect.`,
 docs:[['FAPI 2.0 Security Profile','https://openid.net/specs/fapi-security-profile-2_0-final.html'],['FAPI 2.0 Message Signing','https://openid.net/specs/fapi-message-signing-2_0.html'],['RFC 9126 (Pushed Authorization Requests)','https://www.rfc-editor.org/rfc/rfc9126'],['RFC 9101 (JWT-Secured Authorization Request (JAR))','https://www.rfc-editor.org/rfc/rfc9101'],['OpenID Foundation (certification)','https://openid.net/certification/']],
@@ -740,7 +740,7 @@ holds a fact that overrides it, the same shape as a certificate revocation list,
 rather than poll.</p>
 
 <h4>How the event gets there</h4>
-<p>The delivery mechanism is standardised as <b>Shared Signals</b>: a <b>Security Event Token</b> (a JWT
+<p>The delivery mechanism is standardized as <b>Shared Signals</b>: a <b>Security Event Token</b> (a JWT
 carrying an event rather than an identity) delivered over a subscription. Two profiles matter: CAEP
 for access changes, and RISC for account-level compromise signals shared between providers.</p>
 <div class="codeSample" data-hl>// a Security Event Token: a JWT whose payload is an EVENT
@@ -767,7 +767,7 @@ participate in CAE at all.</li>
 <li><b>Handle missed events.</b> Push delivery fails. Without a fallback the system degrades silently
 into "no revocation", which is the worst failure because it looks fine. Periodic reconciliation, or a
 token lifetime short enough to bound the gap, is still required.</li>
-<li><b>Decide the fail mode.</b> If the event stream is down, do you keep honouring tokens or start
+<li><b>Decide the fail mode.</b> If the event stream is down, do you keep honoring tokens or start
 rejecting? Both are defensible; not having chosen is not.</li>
 </ol>
 
@@ -824,7 +824,7 @@ public class Caep {
 
 {id:'ao9',title:'Resource indicators: one token per audience',body:`
 <p>A client that talks to five APIs asks for the scopes it needs across all five, and receives <b>one
-access token that all five accept</b>. That is the default behaviour of most authorization servers, and it
+access token that all five accept</b>. That is the default behavior of most authorization servers, and it
 is a design flaw hiding in plain sight: whichever of those five APIs is weakest now holds a credential
 that works at the other four.</p>
 
@@ -893,7 +893,7 @@ hints:['Two shapes to handle: a string and an array of strings.','Array.isArray 
 {id:'ao10',title:'Cross-device flows: QR login, device code and consent phishing',body:`
 <p>Three flows share one shape: the device that <b>gets</b> access is not the device that
 <b>authenticates</b>. The device flow puts a code on a TV and asks you to type it on your phone. QR login
-shows a code on a laptop that a phone app scans. CIBA sends a push to a phone while a call-centre agent
+shows a code on a laptop that a phone app scans. CIBA sends a push to a phone while a call-center agent
 waits. Each solves a real problem (no keyboard, no browser, no shared session), and each introduces the
 same structural weakness.</p>
 
@@ -923,7 +923,7 @@ credential is bound to an origin, so it cannot be replayed at a fake site. In a 
 <i>is</i> no fake site: the user authenticates at the genuine origin, with the genuine authenticator, and
 the ceremony succeeds exactly as designed. What was phished is the <b>authorization</b>, not the credential.</p>
 
-<h4>The defences, in order of effectiveness</h4>
+<h4>The defenses, in order of effectiveness</h4>
 <ul>
 <li><b>Do not enable the flow where it is not needed.</b> Device flow exists for input-constrained
 devices. Enabling it for every client, as many providers do by default, hands the attacker a starting
@@ -937,12 +937,12 @@ device's location or network. "Approve sign-in for Smart TV in Warsaw" is a ques
 <li><b>Exclude high-value scopes.</b> Admin, payment and consent-granting scopes should require a
 same-device flow, unconditionally.</li>
 <li><b>Proximity where the platform offers it.</b> FIDO's hybrid transport uses Bluetooth proximity between
-the two devices, which is the only defence here that is not advisory: it makes remote approval physically
+the two devices, which is the only defense here that is not advisory: it makes remote approval physically
 impossible.</li>
 </ul>
 <p>The general principle, and it outlives all three protocols: <b>consent is only meaningful when the user
 can see what they are consenting to and knows why they were asked</b>. Cross-device flows remove both, so
-whatever you can add back (a code they must type, a device they must recognise, a scope you refuse to
+whatever you can add back (a code they must type, a device they must recognize, a scope you refuse to
 grant this way) is the whole of the security.</p>`,
 docs:[['OAuth 2.0 Cross-Device Flows Best Current Practice','https://datatracker.ietf.org/doc/draft-ietf-oauth-cross-device-security/'],['RFC 8628, OAuth 2.0 Device Authorization Grant','https://www.rfc-editor.org/rfc/rfc8628'],['Microsoft, device code phishing','https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-device-code']],
 ex:{title:'Gate a cross-device approval',lang:'js',

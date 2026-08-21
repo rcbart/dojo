@@ -46,7 +46,7 @@ forge with it. A key <b>pair</b> breaks that symmetry: the private key signs and
 verifies and encrypts, and publishing the public one gives nothing away.</p>
 <p>That asymmetry is what lets a stranger verify your identity without you having first met them: the
 same property that makes federation possible in the identity streams, and the reason RS256 and ES256 are
-preferred over HS256 across organisational boundaries.</p>
+preferred over HS256 across organizational boundaries.</p>
 
 <h4>Two things worth knowing early</h4>
 <p><b>A certificate is public.</b> It is meant to be handed to anyone who connects. There is nothing

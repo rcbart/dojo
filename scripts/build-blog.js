@@ -83,6 +83,14 @@ function md(src) {
       // '## Section' must render h2: mapping it to h3 skipped a level.
       const lvl = Math.max(2, d); out.push(`<h${lvl}>${inline(l.slice(d + 1))}</h${lvl}>`); i++; continue; }
     if (/^---+\s*$/.test(l)) { flush(); out.push('<hr>'); i++; continue; }
+    // A pull quote: the one line in the piece worth stopping on. Marked '>> '
+    // so it stays distinct from a blockquote, which is a callout or a citation.
+    // Checked first, because the blockquote continuation pattern would swallow it.
+    if (/^>> /.test(l)) {
+      flush(); const buf = [];
+      while (i < lines.length && /^>> ?/.test(lines[i])) buf.push(lines[i++].replace(/^>> ?/, ''));
+      out.push(`<p class="pull">${inline(buf.join(' '))}</p>`); continue;
+    }
     if (/^> /.test(l)) {
       flush(); const buf = [];
       while (i < lines.length && /^> ?/.test(lines[i])) buf.push(lines[i++].replace(/^> ?/, ''));
@@ -143,7 +151,16 @@ const page = (title, desc, body, root) => `<!doctype html>
   h1{font-family:var(--serif);font-size:clamp(28px,4.6vw,42px);line-height:1.15;margin:40px 0 8px;font-weight:600;letter-spacing:-.4px}
   h2{font-family:var(--serif);font-size:26px;margin:36px 0 10px;font-weight:600}
   h3{font-size:19px;margin:26px 0 8px}
+  .psub{font-family:var(--serif);font-style:italic;font-size:clamp(17px,2.2vw,21px);
+        line-height:1.35;color:var(--muted);margin:0 0 14px;max-width:52ch}
   .pdate{color:var(--muted);font-size:14px;margin-bottom:26px}
+  .pull{font-family:var(--serif);font-size:clamp(21px,3.1vw,29px);line-height:1.3;
+        font-weight:600;letter-spacing:-.3px;color:var(--ink);text-align:center;
+        max-width:22ch;margin:44px auto;padding:26px 0;position:relative;
+        border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .pull::before{content:'';position:absolute;top:-1px;left:50%;transform:translateX(-50%);
+        width:64px;height:3px;background:var(--grad, linear-gradient(90deg,#f59e0b,#f43f5e 48%,#8b5cf6))}
+  @media(max-width:640px){.pull{max-width:none;margin:32px 0;font-size:20px}}
   blockquote{border-left:4px solid var(--accent);margin:22px 0;padding:4px 0 4px 20px;
              font-family:var(--serif);font-style:italic;font-size:19px;color:var(--ink)}
   pre.code{background:#161b26;color:#e2e8f0;border-radius:10px;padding:14px 16px;overflow-x:auto;
@@ -210,7 +227,9 @@ fs.mkdirSync(path.join(OUT, 'blog'), { recursive: true });
 
 for (const p of posts) {
   const html = page(p.meta.title + ' · Ron Bar-Tor', p.meta.description || '',
-    `<h1>${esc(p.meta.title)}</h1><div class="pdate">${fmtDate(p.date)}</div>` + md(p.body) + giscusBlock(), '/');
+    `<h1>${esc(p.meta.title)}</h1>` +
+    (p.meta.subtitle ? `<p class="psub">${esc(p.meta.subtitle)}</p>` : '') +
+    `<div class="pdate">${fmtDate(p.date)}</div>` + md(p.body) + giscusBlock(), '/');
   fs.mkdirSync(path.join(OUT, 'blog', p.slug), { recursive: true });
   fs.writeFileSync(path.join(OUT, 'blog', p.slug, 'index.html'), html);
 }
@@ -291,7 +310,7 @@ const live = posts.filter(p => !p.draft);
 // Adding a course = one entry here and one cp line in .github/workflows/pages.yml.
 const STATIC_PATHS = [
   '/', '/blog/', '/skills-rubric.html', '/courses/',
-  '/identity/', '/dev/', '/js/', '/ml/',
+  '/identity/', '/dev/', '/js/', '/ml/', '/authlint/',
   '/fundamentals/', '/docker/', '/kubernetes/', '/envoy/', '/istio/',
 ];
 

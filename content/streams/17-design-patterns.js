@@ -7,7 +7,7 @@ STREAMS.push({icon:'🏛️',title:'Design Patterns',blurb:'The Gang-of-Four pat
 <li><b>Factory Method / Abstract Factory</b>: push the "which concrete class?" decision behind an interface: <code>ConnectionFactory.create()</code>. You met this spirit in JDBC (<code>DriverManager</code>) and Jackson (<code>ObjectMapper</code> readers).</li>
 <li><b>Builder</b>: the cure for telescoping constructors (<code>new User(name, null, true, false, null, 3)</code>: which boolean was which?). A fluent object assembles the configuration, then <code>build()</code> produces an immutable result. You've been on the consuming end constantly: <code>HttpRequest.newBuilder()...build()</code>, <code>Caffeine.newBuilder()</code>, Lombok's <code>@Builder</code>.</li>
 </ul>
-<div class="codeSample">// holder idiom — lazy, thread-safe, no locks
+<div class="codeSample">// holder idiom, lazy, thread-safe, no locks
 class Config {
     private Config() {}
     private static class Holder { static final Config INSTANCE = new Config(); }
@@ -22,14 +22,14 @@ HttpRequest req = HttpRequest.newBuilder()
     .build();</div>
 
 <h4>Singleton: the one to be suspicious of</h4>
-<p>It is the most recognised pattern and the most often wrong. A singleton is global mutable state with a
+<p>It is the most recognized pattern and the most often wrong. A singleton is global mutable state with a
 respectable name: it hides dependencies (nothing in a signature says the class uses it), it makes tests
 order-dependent because state survives between them, and under concurrency it needs the same care as any
 shared mutable object. In a Spring application you almost never write one; a <code>@Component</code> is
 already a single instance managed by the container, and it arrives through a constructor where you can see
 and replace it.</p>
 <p>When you genuinely need one, an <code>enum</code> is the form Java itself defends best: the JVM guarantees a
-single instance, including against reflection and serialisation, which most hand-written singletons do
+single instance, including against reflection and serialization, which most hand-written singletons do
 not.</p>
 
 <h4>Factory: naming the thing that varies</h4>
@@ -107,10 +107,10 @@ void onSale(Consumer&lt;String&gt; l) { listeners.add(l); }
 void fire(String item) { listeners.forEach(l -&gt; l.accept(item)); }</div>
 
 <h4>What these three actually have in common</h4>
-<p>All three separate <b>what varies</b> from <b>what stays the same</b>, which is the whole of behavioural
+<p>All three separate <b>what varies</b> from <b>what stays the same</b>, which is the whole of behavioral
 design. Strategy varies an algorithm behind a fixed call. Observer varies who reacts to an event without the
 source knowing. Template Method fixes the skeleton and varies the steps. Naming them matters less than
-recognising the move, because you have already made it: every <code>Comparator</code> is a strategy, every
+recognizing the move, because you have already made it: every <code>Comparator</code> is a strategy, every
 listener list is an observer, and every abstract base class with a <code>run()</code> that calls
 <code>doStep()</code> is a template method.</p>
 
@@ -182,7 +182,7 @@ prompt:`Write <code>function applyStrategy(name, amount)</code> where <code>amou
 starter:`function applyStrategy(name, amount) {\n  return amount;\n}`,
 solution:`function applyStrategy(name, amount) {\n  const strategies = {\n    none: a => a,\n    tenPercent: a => Math.round(a * 0.9),\n    flatFive: a => Math.max(0, a - 500)\n  };\n  return (strategies[name] ?? strategies.none)(amount);\n}`,
 tests:[{d:'strategies live in a lookup table',re:'\\{[^}]*=>'},{d:'an unknown name falls back',re:'\\?\\?|\\|\\||undefined'},{d:'the percentage strategy rounds',re:'Math\\.round'},{d:'the flat discount is floored at zero',re:'Math\\.max'}],
-behavior:`Five cases run. The floor case is the requirement people leave out, and it is the one that shows up as a negative invoice. The unknown-name case is the important design choice: falling back to "no discount" is safe, while throwing would take down a checkout because someone added a promotion the code has not shipped yet, and defaulting to the LARGEST discount would be worse still. Note what has disappeared compared with the Java version: no interface, no classes, no factory. The pattern is the idea (behaviour selected at runtime by name), and the class ceremony is one language\x27s way of expressing it, not the pattern itself.`,
+behavior:`Five cases run. The floor case is the requirement people leave out, and it is the one that shows up as a negative invoice. The unknown-name case is the important design choice: falling back to "no discount" is safe, while throwing would take down a checkout because someone added a promotion the code has not shipped yet, and defaulting to the LARGEST discount would be worse still. Note what has disappeared compared with the Java version: no interface, no classes, no factory. The pattern is the idea (behavior selected at runtime by name), and the class ceremony is one language\x27s way of expressing it, not the pattern itself.`,
 hints:['A plain object whose values are functions IS the strategy table.','Look the strategy up, fall back if it is missing, then call it.','Money is in cents and must never go negative; clamp the result.']}]},
 {id:'pat3',title:'Structural: Adapter, Decorator & Facade',body:`
 <p>Third family: <b>composing objects into bigger structures</b>. All three are exercises in <i>composition over inheritance</i>: hold a reference, delegate, add value around the call.</p>
@@ -202,7 +202,7 @@ class TimestampPrinter implements Printer {
     }
 }
 
-// stacks arbitrarily — exactly like java.io
+// stacks arbitrarily, exactly like java.io
 Printer p = new TimestampPrinter(new UpperCasePrinter(new ConsolePrinter()));</div>
 
 <h4>Telling the three apart, since they look identical in a diagram</h4>
@@ -211,10 +211,10 @@ Printer p = new TimestampPrinter(new UpperCasePrinter(new ConsolePrinter()));</d
 <li><b>Adapter</b> changes an interface you do not control into one your code expects. The wrapped thing
 was already useful; it simply spoke the wrong language. If you are writing an adapter, some third party
 made the shape decision for you.</li>
-<li><b>Decorator</b> keeps the same interface and adds behaviour: caching, retry, timing, logging. Because
+<li><b>Decorator</b> keeps the same interface and adds behavior: caching, retry, timing, logging. Because
 the type is unchanged, decorators stack, and the caller cannot tell how many are present.</li>
 <li><b>Facade</b> hides several collaborating objects behind one simple entry point. It does not change
-their interfaces or add behaviour; it narrows the surface a caller has to learn.</li>
+their interfaces or add behavior; it narrows the surface a caller has to learn.</li>
 </ul>
 <p>The test question: <i>am I translating, adding, or simplifying?</i> One answer each.</p>
 
@@ -222,7 +222,7 @@ their interfaces or add behaviour; it narrows the surface a caller has to learn.
 <p><b>Adapter</b> is what keeps a third-party library from spreading through your codebase. Wrap it once at
 the boundary and the rest of your code depends on your interface, so replacing the vendor is one class
 rather than a search-and-replace. The cost is a layer of indirection people will occasionally want to skip.</p>
-<p><b>Decorator</b> is the cleaner alternative to inheritance for cross-cutting behaviour. A retrying,
+<p><b>Decorator</b> is the cleaner alternative to inheritance for cross-cutting behavior. A retrying,
 caching, instrumented client composed from three decorators is testable in isolation; the same thing as a
 subclass hierarchy is not. Its failure mode is depth: a stack five deep gives a stack trace nobody can
 read, and an ordering that matters and is written down nowhere. If retry sits outside caching, you retry
@@ -323,7 +323,7 @@ hints:['Prototype = clone an existing object; here, construct a new one from thi
 </ul>
 <p>They all shape <i>how objects are composed and accessed</i> without changing what they do.</p>
 <h4>Reading each one as a problem, not a shape</h4>
-<p>Patterns are only useful if you can recognise the situation that calls for one. Each of these answers a
+<p>Patterns are only useful if you can recognize the situation that calls for one. Each of these answers a
 different question about how objects are put together.</p>
 
 <h4>Proxy: "I need something to happen around access"</h4>
@@ -419,11 +419,11 @@ class Transfer implements Command {
 // system. a log of them is an audit trail - and if you keep the log
 // rather than the state, you have arrived at event sourcing.</div>
 <p>In modern Java a <code>Runnable</code> or a lambda <i>is</i> a command; the pattern earns its keep when
-you need the extra operations (undo, describe, serialise) that a bare lambda cannot offer.</p>
+you need the extra operations (undo, describe, serialize) that a bare lambda cannot offer.</p>
 
 <h4>State: "the object behaves differently depending on where it is"</h4>
 <p>The smell is the same <code>switch (status)</code> appearing in five methods. Every new status means
-editing all five, and forgetting one is a silent bug. State moves the behaviour into a class per state, so
+editing all five, and forgetting one is a silent bug. State moves the behavior into a class per state, so
 a new state is a new class and the compiler tells you what it must implement.</p>
 <p>The genuine benefit is that <b>illegal transitions become impossible rather than merely wrong</b>: if
 <code>Delivered</code> has no <code>cancel()</code> path, no code can cancel a delivered order. In Java,
@@ -442,7 +442,7 @@ order explicit, because "which handler ran?" is otherwise a debugging exercise.<
 
 <h4>The rest of the set, briefly</h4>
 <p><b>Iterator</b> traverses without exposing internals, built into Java as <code>Iterable</code>.
-<b>Mediator</b> centralises interaction so N components talk to one hub instead of each other, which is
+<b>Mediator</b> centralizes interaction so N components talk to one hub instead of each other, which is
 what a message bus does. <b>Visitor</b> adds operations to a stable class hierarchy without editing it;
 it earns its keep on ASTs and is awkward everywhere else, and Java's pattern matching for switch has largely
 replaced it.</p>`,
@@ -479,7 +479,7 @@ hints:['State drives behavior: switch on the current state to pick the next.','r
 </ul>
 <p>Together they define how modern services are wired, persisted, and communicated.</p>
 <h4>Why these matter more than most of the Gang of Four</h4>
-<p>The original catalogue was written for 1994's problems, when frameworks were rare and inheritance was
+<p>The original catalog was written for 1994's problems, when frameworks were rare and inheritance was
 the main tool. The four below are what you will meet in a service written this year, and three of them
 exist because <b>a boundary needs protecting</b>.</p>
 
@@ -508,7 +508,7 @@ List&lt;User&gt; findActiveSince(LocalDate date);
 // if not, it is a thin wrapper over your ORM, not a repository.</div>
 
 <h4>DTO: decoupling your API from your model</h4>
-<p>Serialising a domain object straight to JSON quietly makes your internal model a public contract. Every
+<p>Serializing a domain object straight to JSON quietly makes your internal model a public contract. Every
 rename becomes a breaking change; every new field is accidentally exposed; and adding a JSON annotation to
 a domain class drags web concerns into the core. A DTO costs a mapping and buys you the freedom to change
 either side alone. Java <code>record</code>s make it nearly free, and the mapping is worth writing rather
@@ -517,11 +517,11 @@ than generating reflectively when the two shapes genuinely differ.</p>
 <h4>Null Object: and when it is wrong</h4>
 <p>Returning a harmless do-nothing implementation removes null checks from every caller. It is excellent
 for genuinely optional collaborators (a <code>NoOpMetrics</code>, a <code>NoOpLogger</code>) where doing
-nothing is a valid behaviour.</p>
+nothing is a valid behavior.</p>
 <p>It is a poor choice when absence is <b>meaningful</b>. A <code>NullUser</code> returned from a lookup
 that found nothing will silently propagate through the system and surface as a wrong answer somewhere
 distant. Use <code>Optional</code> there, which forces the caller to acknowledge the case, and reserve
-Null Object for behaviour rather than data.</p>`,
+Null Object for behavior rather than data.</p>`,
 docs:[['Dependency Injection','https://martinfowler.com/articles/injection.html'],['Repository pattern','https://martinfowler.com/eaaCatalog/repository.html'],['DTO','https://martinfowler.com/eaaCatalog/dataTransferObject.html']],
 ex:{title:'Constructor Dependency Injection',
 prompt:`Model a repository behind an interface and inject it. Declare <code>interface Repo { String find(int id); }</code>, then class <code>Service</code> that holds a <code>private final Repo repo</code>, receives it via a <code>Service(Repo repo)</code> constructor (<code>this.repo = repo</code>), and has <code>String lookup(int id)</code> returning <code>repo.find(id)</code>. Do not create the Repo inside Service.`,

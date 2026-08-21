@@ -39,13 +39,13 @@ hints:['Two of the six answers (snapshot, pointer) correct the two most common w
 git init                          # a repo is born: .git/ appears
 echo "day 1" &gt; notes.txt
 
-git status                        # notes.txt: "untracked" — git sees it, tracks nothing yet
+git status                        # notes.txt: "untracked", git sees it, tracks nothing yet
 git add notes.txt                 # → staged: it will be in the next commit
 git status                        # "changes to be committed"
 git commit -m "Add notes"         # snapshot! history has 1 commit
 
 echo "day 2" &gt;&gt; notes.txt
-git status                        # "modified" — working copy differs from last commit
+git status                        # "modified", working copy differs from last commit
 git diff                          # EXACTLY what changed, unstaged (+day 2)
 git add notes.txt
 git diff --staged                 # what will ship in the next commit
@@ -59,8 +59,8 @@ git log --oneline                 # the story so far, one line per commit</div>
 <p>Every tracked file exists in three states at once: the <b>working tree</b> (what you edited), the
 <b>index</b> (what will go into the next commit), and <b>HEAD</b> (what the last commit recorded). Almost
 every confusing moment in git is a question about which pair you are looking at:</p>
-<div class="codeSample">git diff             # working tree vs index — "what have I NOT staged?"
-git diff --staged    # index vs HEAD       — "what am I ABOUT to commit?"
+<div class="codeSample">git diff             # working tree vs index, "what have I NOT staged?"
+git diff --staged    # index vs HEAD, "what am I ABOUT to commit?"
 git status           # names all three, and prints the command to move between them</div>
 <p>Read <code>git status</code> obsessively while learning. It is unusually good documentation: it tells
 you the state and the command that changes it.</p>
@@ -104,7 +104,7 @@ hints:['Steps 2 and 5-6 are the inspection habit: status names states, diff show
 
 {id:'git2',title:'A second file: staging with intent',body:`
 <p>Real projects have many files, and git's staging area exists precisely so that <b>a commit contains one logical change, not "everything I touched today"</b>. Add a second file to the journal and learn to compose commits deliberately.</p>
-<div class="codeSample">echo "buy milk" &gt; todo.txt          # new file — while notes.txt ALSO has edits
+<div class="codeSample">echo "buy milk" &gt; todo.txt          # new file, while notes.txt ALSO has edits
 git status                          # two files, two different states
 
 git add todo.txt                    # stage ONLY the new file
@@ -210,7 +210,7 @@ hints:['Four network commands total: clone, push, fetch, pull. Everything else i
 {id:'git4',title:'Branches: parallel work & merging',body:`
 <p>A branch lets an idea develop in isolation while <code>main</code> stays shippable. Since branches are just pointers, the whole cycle is cheap enough to use for every feature, fix and experiment; this is the industry's default workflow:</p>
 <div class="codeSample">git switch -c feature/tags     # create-and-switch (older spelling: git checkout -b)
-# ...edit notes.txt and tasks.txt, add, commit — as many commits as the idea needs
+# ...edit notes.txt and tasks.txt, add, commit, as many commits as the idea needs
 git switch main                # back to stable
 git merge feature/tags         # bring the idea in
 git branch -d feature/tags     # merged = safe to delete (the COMMITS remain)</div>
@@ -338,8 +338,7 @@ hints:['restore vs restore --staged: working copy vs staging area.','Pushed = sh
 <li><b>git bisect</b>: binary-search history for the commit that broke things: <code>start</code>, mark <code>bad</code>/<code>good</code>, answer git's checkouts until it names the culprit. Twenty commits ≈ 5 tests.</li>
 </ul>
 <div class="codeSample">merge:  main ─A─B────M         rebase:  main ─A─B─C'─D'
-              \\      /                    straight line, new hashes C',D' —
-     feature   ─C──D                      same content, rewritten history</div>
+              \\      /                    straight line, new hashes C',D', feature   ─C──D                      same content, rewritten history</div>
 <p>Choosing: <b>merge</b> when the branch is shared or the fork-point matters; <b>rebase</b> to keep an unpushed feature branch current and its history clean; <b>revert</b> when the mistake is already public. All three end with the same files; they differ in the story history tells.</p>`,
 docs:[['Rebasing, Pro Git','https://git-scm.com/book/en/v2/Git-Branching-Rebasing'],['Reset demystified, Pro Git','https://git-scm.com/book/en/v2/Git-Tools-Reset-Demystified'],['git cherry-pick','https://git-scm.com/docs/git-cherry-pick'],['git bisect','https://git-scm.com/docs/git-bisect']],
 ex:{title:'History-rewriting drill',lang:'shell',

@@ -5,7 +5,11 @@ A correct answer that is conspicuously the longest option is answerable without
 knowing the material. This tool lists the worst offenders and applies fixes.
 
   list  N                 show the N worst, as JSON, ready to rewrite
-  apply patch.json        apply {file, stream, qi, oi, text} edits in place
+  apply patch.json        apply {file, stream, qi, oi, text, why?} edits in place
+
+`text` replaces the option. Optional `why` replaces the parallel whyWrong entry,
+which you must supply whenever a rewritten distractor no longer matches the
+rebuttal that was written against the old wording.
 
 Banks are single-line `window.QUIZZES_HAND = {...}` JSON assignments, so edits
 round-trip through json and cannot corrupt the structure.
@@ -58,7 +62,9 @@ def cmd_list(n):
                 if b:
                     rows.append({'file': key, 'stream': stream, 'qi': qi, 'gap': b[0],
                                  'answer': b[1], 'q': strip(q['q']),
-                                 'options': [strip(o) for o in q['options']]})
+                                 'options': [strip(o) for o in q['options']],
+                                 'why': strip(q.get('why', '')),
+                                 'whyWrong': [strip(w) for w in q.get('whyWrong', [])]})
     rows.sort(key=lambda r: -r['gap'])
     print(json.dumps(rows[:n], ensure_ascii=False, indent=1))
 
@@ -74,8 +80,15 @@ def cmd_apply(patch_path):
         name, data = load(rel)
         for e in edits:
             q = data[e['stream']][e['qi']]
-            q['options'][e['oi']] = e['text']
-            changed += 1
+            if 'text' in e:
+                q['options'][e['oi']] = e['text']
+                changed += 1
+            # A rewritten distractor needs its rebuttal rewritten with it, or the
+            # explanation you get for picking it will describe a claim that is no
+            # longer on the screen.
+            if 'why' in e and isinstance(q.get('whyWrong'), list) and len(q['whyWrong']) == len(q['options']):
+                assert e['oi'] != q.get('answer'), 'refusing to put a rebuttal in the correct slot'
+                q['whyWrong'][e['oi']] = e['why']
         save(rel, name, data)
         print('  %-4s %d edit(s) -> %s' % (key, len(edits), rel))
     print('%d option(s) rewritten' % changed)

@@ -113,7 +113,7 @@ origin-bound possession is not</b>. It is why a passkey on its own is generally 
 plus TOTP, despite "looking like" fewer factors: the device is possession and the biometric or PIN that
 unlocks it is inherence or knowledge, and neither travels.</p>
 
-<h4>Where MFA programmes fail</h4>
+<h4>Where MFA programs fail</h4>
 <p><b>The downgrade path.</b> Deploying security keys means nothing if SMS remains enabled as a fallback:
 the attacker simply chooses SMS. The strength of your MFA is the strength of its <i>weakest enabled</i>
 method, not its best.</p>
@@ -149,8 +149,8 @@ hints:['A switch on method with one case per method reads cleanly.','Group passw
 {id:'am3',title:'One-time codes: TOTP & HOTP',body:`
 <p>Authenticator apps show a 6-digit code that changes every 30 seconds. That is <b>TOTP</b> (Time-based One-Time Password). It builds on <b>HOTP</b> (a counter-based code): both hash a shared secret with a moving number using HMAC, then truncate to digits.</p>
 <!--flow:am3-totp-->
-<h4>TOTP: enrolment and login: step by step</h4>
-<div class="flowDia"><svg viewBox="0 0 620 348" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="TOTP: enrolment and login"><defs><marker id="am3-totp-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="am3-totp-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="am3-totp-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="am3-totp-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="54" x2="74" y2="336" class="fdLife"/><line x1="546" y1="54" x2="546" y2="336" class="fdLife"/><rect x="-19" y="8" width="186" height="46" rx="8" class="fdActor"/><text x="74" y="27" class="fdActorT">User + authenticator</text><text x="74" y="42" class="fdActorS">phone app</text><rect x="507" y="8" width="78" height="46" rx="8" class="fdActor"/><text x="546" y="35.5" class="fdActorT">Server</text><line x1="14" y1="98" x2="606" y2="98" class="fdPhase"/><text x="310" y="102" class="fdPhaseT">enrolment, happens once</text><line x1="543" y1="132" x2="79" y2="132" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#am3-totp-ah-front)"/><text x="295" y="123" class="fdLabel">QR code: the shared secret K</text><circle cx="528" cy="132" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="528" y="135.5" class="fdNumT" style="fill:var(--accent)">1</text><rect x="21.400000000000006" y="149" width="105.19999999999999" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="82" y="164" class="fdSelfT">app stores K</text><circle cx="21.400000000000006" cy="160" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="21.400000000000006" y="163.5" class="fdNumT" style="fill:var(--muted)">2</text><line x1="14" y1="194" x2="606" y2="194" class="fdPhase"/><text x="310" y="198" class="fdPhaseT">every login</text><rect x="14" y="215" width="197.6" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="120.8" y="230" class="fdSelfT">code = TOTP(K, now ÷ 30 s)</text><circle cx="14" cy="226" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="14" y="229.5" class="fdNumT" style="fill:var(--muted)">3</text><line x1="77" y1="264" x2="541" y2="264" stroke="var(--accent)" class="fdArrow" marker-end="url(#am3-totp-ah-front)"/><text x="325" y="255" class="fdLabel">the 6-digit code</text><circle cx="92" cy="264" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="267.5" class="fdNumT" style="fill:var(--accent)">4</text><rect x="349" y="281" width="257" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="485.5" y="296" class="fdSelfT">same computation ±1 window; compare</text><circle cx="349" cy="292" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="349" y="295.5" class="fdNumT" style="fill:var(--muted)">5</text><text x="310" y="318" class="fdNote">Both sides compute; nothing is “sent to your phone”. And a code can be phished; see passkeys.</text></svg></div>
+<h4>TOTP: enrollment and login: step by step</h4>
+<div class="flowDia"><svg viewBox="0 0 620 348" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="TOTP: enrollment and login"><defs><marker id="am3-totp-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="am3-totp-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="am3-totp-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="am3-totp-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="54" x2="74" y2="336" class="fdLife"/><line x1="546" y1="54" x2="546" y2="336" class="fdLife"/><rect x="-19" y="8" width="186" height="46" rx="8" class="fdActor"/><text x="74" y="27" class="fdActorT">User + authenticator</text><text x="74" y="42" class="fdActorS">phone app</text><rect x="507" y="8" width="78" height="46" rx="8" class="fdActor"/><text x="546" y="35.5" class="fdActorT">Server</text><line x1="14" y1="98" x2="606" y2="98" class="fdPhase"/><text x="310" y="102" class="fdPhaseT">enrollment, happens once</text><line x1="543" y1="132" x2="79" y2="132" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#am3-totp-ah-front)"/><text x="295" y="123" class="fdLabel">QR code: the shared secret K</text><circle cx="528" cy="132" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="528" y="135.5" class="fdNumT" style="fill:var(--accent)">1</text><rect x="21.400000000000006" y="149" width="105.19999999999999" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="82" y="164" class="fdSelfT">app stores K</text><circle cx="21.400000000000006" cy="160" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="21.400000000000006" y="163.5" class="fdNumT" style="fill:var(--muted)">2</text><line x1="14" y1="194" x2="606" y2="194" class="fdPhase"/><text x="310" y="198" class="fdPhaseT">every login</text><rect x="14" y="215" width="197.6" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="120.8" y="230" class="fdSelfT">code = TOTP(K, now ÷ 30 s)</text><circle cx="14" cy="226" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="14" y="229.5" class="fdNumT" style="fill:var(--muted)">3</text><line x1="77" y1="264" x2="541" y2="264" stroke="var(--accent)" class="fdArrow" marker-end="url(#am3-totp-ah-front)"/><text x="325" y="255" class="fdLabel">the 6-digit code</text><circle cx="92" cy="264" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="267.5" class="fdNumT" style="fill:var(--accent)">4</text><rect x="349" y="281" width="257" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="485.5" y="296" class="fdSelfT">same computation ±1 window; compare</text><circle cx="349" cy="292" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="349" y="295.5" class="fdNumT" style="fill:var(--muted)">5</text><text x="310" y="318" class="fdNote">Both sides compute; nothing is “sent to your phone”. And a code can be phished; see passkeys.</text></svg></div>
 <ol class="fdSteps">
 <li><b>Server → User + authenticator:</b> QR code: the shared secret K <i>(front channel)</i></li>
 <li><b>User + authenticator:</b> app stores K</li>
@@ -296,11 +296,11 @@ much easier to reason about.</p>
    [   Browser   ]
           |
           |  CTAP2           Client To Authenticator Protocol (a FIDO Alliance
-          |                  standard) — speaks USB, NFC or Bluetooth
+          |                  standard), speaks USB, NFC or Bluetooth
    [ Authenticator ]         the thing holding the private key
 
 FIDO2 = WebAuthn + CTAP2</div>
-<p><b>WebAuthn</b> is the part your code touches: a browser API, standardised by the W3C, that your
+<p><b>WebAuthn</b> is the part your code touches: a browser API, standardized by the W3C, that your
 JavaScript calls and your server verifies. <b>CTAP2</b> is the part you never see: how the browser
 talks to an external authenticator over USB, NFC or Bluetooth. If the authenticator is built into the
 device (Touch ID, Windows Hello), the platform handles it internally and no CTAP is involved at all.</p>
@@ -326,11 +326,11 @@ unlocks it), verified locally and never transmitted.</p>
 <h4>Authenticator types, and the two axes</h4>
 <p>Every authenticator is described by two independent properties, and the vocabulary appears directly
 in the API:</p>
-<div class="codeSample" data-hl>ATTACHMENT — where it lives
+<div class="codeSample" data-hl>ATTACHMENT, where it lives
   platform     built into the device      Touch ID, Windows Hello, Android
   cross-platform ("roaming")  portable    YubiKey, phone used for another device
 
-CREDENTIAL STORAGE — what it remembers
+CREDENTIAL STORAGE, what it remembers
   discoverable (resident)   the key lives on the authenticator, which knows
                             which accounts it holds -> usernameless login
   non-discoverable          the key is wrapped into the credential id itself;
@@ -362,8 +362,8 @@ be the origin's domain or a <i>registrable suffix</i> of it: a page on
 
   rpId "login.example.com"   OK   credential works only on that host
   rpId "example.com"         OK   works across all subdomains
-  rpId "com"                 REJECTED — public suffix
-  rpId "evil.com"            REJECTED — not a suffix of this origin
+  rpId "com"                 REJECTED, public suffix
+  rpId "evil.com"            REJECTED, not a suffix of this origin
 
 // choose deliberately: rpId is baked into the credential and CANNOT be
 // changed later without re-registering every user.</div>
@@ -402,7 +402,7 @@ solution:`public class RpId {
 {id:'am4b',title:'Every MFA method compared: pros, cons and when to use each',body:`
 <p>"Turn on MFA" is not one decision. The methods differ by orders of magnitude in the attacks they
 stop, and choosing badly produces a system that passes a compliance checkbox while remaining
-phishable. This lesson is the catalogue: every method in common use, what it actually resists, and the
+phishable. This lesson is the catalog: every method in common use, what it actually resists, and the
 practice that makes each one as good as it can be.</p>
 
 <h4>The one axis that matters most</h4>
@@ -424,7 +424,7 @@ checks who is asking, which requires the origin to be part of the cryptographic 
 Nothing about the code is broken. It was simply given to the wrong site.
 A passkey cannot be relayed this way: the signature is bound to the origin.</div>
 
-<h4>The catalogue</h4>
+<h4>The catalog</h4>
 
 <p><b>1. SMS one-time code.</b> A code texted to a phone number.<br>
 <i>Pros:</i> works on every phone, no app, no enrollment friction, understood by everyone. For a
@@ -496,7 +496,7 @@ deliberately between <i>device-bound</i> passkeys (stronger, harder to recover) 
 
 <p><b>9. Smart card / PIV / CAC.</b> A certificate on a card, unlocked by PIN.<br>
 <i>Pros:</i> phishing-resistant, hardware-backed, ties into an existing PKI, and doubles as a physical
-badge. Long-established in government and defence.<br>
+badge. Long-established in government and defense.<br>
 <i>Cons:</i> needs readers and middleware, and a whole PKI with issuance and revocation behind it. Heavy
 for anything outside a regulated enterprise.<br>
 <i>Best practice:</i> use where the PKI already exists; check revocation, and do not let the PIN become
@@ -520,7 +520,7 @@ low, and tell the user plainly where <i>not</i> to keep them.</p>
 
 <h4>The ranking</h4>
 <div class="codeSample" data-hl>PHISHING-RESISTANT   passkey · security key · smart card
-                       origin is part of the signature — a proxy gets nothing
+                       origin is part of the signature, a proxy gets nothing
 
 RESISTS BULK ATTACKS  push with number matching
                        stops fatigue; still relayable by a live proxy
@@ -543,7 +543,7 @@ protected by email.</li>
 attacker with a stolen session can silently enroll their own authenticator, the MFA is decorative.
 Require a fresh authentication for enrollment, and notify the user on every change.</li>
 <li><b>Enroll two, always.</b> Single-method MFA guarantees eventual lockout, and lockout pressure is
-what makes organisations build the weak bypass that gets exploited.</li>
+what makes organizations build the weak bypass that gets exploited.</li>
 </ol>
 <p><b>The short version.</b> Consumer product: passkeys as the goal, TOTP as the common path, SMS only
 as an on-ramp. Workforce: passkeys or security keys, number-matched push as the transition. Privileged
@@ -629,7 +629,7 @@ proportional to what is being done, and it should be recent.</b></p>
               -> driven by the sensitivity of the operation
               -> deterministic: changing the recovery email ALWAYS re-auths
 
-ADAPTIVE    "this CONTEXT looks unlike the user's normal behaviour"
+ADAPTIVE    "this CONTEXT looks unlike the user's normal behavior"
               -> driven by risk signals, probabilistic
               -> a familiar device at home may never see a prompt
 
@@ -638,19 +638,19 @@ ADAPTIVE    "this CONTEXT looks unlike the user's normal behaviour"
 
 <h4>Making it real: the freshness check</h4>
 <p>The mechanism is simpler than it sounds. Record when the user last authenticated and how strongly;
-before a sensitive action, compare that against what the action demands. In OIDC this is standardised:
+before a sensitive action, compare that against what the action demands. In OIDC this is standardized:
 <code>max_age</code> asks the provider to re-authenticate if the session is older than N seconds,
 <code>acr_values</code> asks for a specific assurance level, and the returned <code>auth_time</code> and
 <code>acr</code> claims tell you what you actually got.</p>
 <p>Two rules that are easy to get wrong. <b>Verify what came back</b>: asking for a stronger
 <code>acr</code> means nothing if you do not check the response contains it; a provider that cannot
 satisfy the request may simply return the session it already had. And <b>bind the result to the
-action</b>: a fresh authentication should authorise the specific operation that triggered it, not open a
+action</b>: a fresh authentication should authorize the specific operation that triggered it, not open a
 window in which any sensitive action passes.</p>
 
 <h4>Risk signals, and their limits</h4>
 <p>The useful signals are unremarkable: new device, new network, impossible travel, an unusual time,
-velocity, a known-bad IP reputation, behavioural drift. Each is weak alone; together they are decent at
+velocity, a known-bad IP reputation, behavioral drift. Each is weak alone; together they are decent at
 ranking sessions.</p>
 <p>What they are not is <b>evidence</b>. Every signal has a benign explanation: people travel, use VPNs,
 get new phones, and work odd hours. Tuned too tightly, adaptive auth prompts constantly, users learn to
@@ -685,7 +685,7 @@ hints:['Compute a sensitive flag first from the two high-risk actions joined by 
 <h4>Why three scales instead of one</h4>
 <p>"How much do we trust this login?" is really three questions that people habitually collapse into one,
 and collapsing them produces bad decisions in both directions.</p>
-<div class="codeSample" data-hl>IAL  "is this the right HUMAN?"       - settled ONCE, at enrolment
+<div class="codeSample" data-hl>IAL  "is this the right HUMAN?"       - settled ONCE, at enrollment
 AAL  "is this that human, NOW?"       - settled at EVERY login
 FAL  "can I trust this MESSAGE about  - settled per federated assertion
       them from another system?"
@@ -697,7 +697,7 @@ FAL  "can I trust this MESSAGE about  - settled per federated assertion
 // single combined score would hide it entirely.</div>
 
 <h4>What each level actually requires</h4>
-<p><b>IAL</b> is about evidence at enrolment. <b>IAL1</b> is self-asserted: anyone can type a name, which
+<p><b>IAL</b> is about evidence at enrollment. <b>IAL1</b> is self-asserted: anyone can type a name, which
 is right for a newsletter and wrong for a bank. <b>IAL2</b> means remote or in-person evidence was checked
 against authoritative sources. <b>IAL3</b> adds a supervised, in-person process. The cost rises steeply, and
 so does the amount of personal data you are then holding, which is a liability as well as an asset.</p>
@@ -714,7 +714,7 @@ to. FAL3 is the same idea as DPoP and mTLS-bound tokens: the assertion stops bei
 <p>The practical value is that <b>you can dial each independently against the risk of the action</b>, rather
 than treating a user as uniformly trusted. Reading published documentation needs almost nothing. Changing a
 payment destination needs high AAL, right now: a step-up, not a session from this morning. Opening a
-regulated financial account needs high IAL at enrolment and says nothing about how they log in
+regulated financial account needs high IAL at enrollment and says nothing about how they log in
 afterwards.</p>
 <p>In OIDC these travel as <code>acr</code> and <code>amr</code>, and in SAML as
 <code>AuthnContextClassRef</code>. The rule from the step-up lesson applies: <b>asking for a level means
@@ -724,7 +724,7 @@ the session it already had.</p>
 <h4>The mismatch worth watching for</h4>
 <p>High IAL with low AAL is the combination that quietly creates risk, because the account <i>feels</i>
 trustworthy (a verified human is behind it) while the door is weak. It is also the most common state in
-regulated industries, where enrolment received enormous attention and login was left as a password. If you
+regulated industries, where enrollment received enormous attention and login was left as a password. If you
 audit one thing from this lesson, audit that gap.</p>`,
 docs:[['NIST SP 800-63-3 (Digital Identity)','https://pages.nist.gov/800-63-3/'],['800-63B (Authenticator AALs)','https://pages.nist.gov/800-63-3/sp800-63b.html']],
 ex:{title:'Name the scale and the level',
@@ -787,9 +787,9 @@ SMS OTP                 weakest. SIM swap, SS7 interception, and the code
 // removing the password is not the same as removing the phishing.</div>
 
 <h4>Designing recovery that is not the weak point</h4>
-<p><b>Enrol two authenticators up front.</b> This is the single highest-value thing you can do, and it is
+<p><b>Enroll two authenticators up front.</b> This is the single highest-value thing you can do, and it is
 almost entirely a UX problem rather than a security one. A user with a phone passkey and a hardware key, or
-a set of recovery codes printed at enrolment, never needs a weak fallback path at all.</p>
+a set of recovery codes printed at enrollment, never needs a weak fallback path at all.</p>
 <p><b>Make recovery slow and noisy.</b> Login should be fast; recovery should not. A delay of hours for a
 high-value account, a notification to every registered channel, and a window in which the legitimate user
 can cancel it, together defeat the quiet takeover, which is the attack that matters, because the victim
@@ -852,7 +852,7 @@ thing deciding.</p>
                      username - it is stored on the device, sometimes
                      forever, and it should not leak who the person is.
   excludeCredentials the credentials already registered, so the same
-                     authenticator does not silently enrol twice.
+                     authenticator does not silently enroll twice.
 
 the authenticator returns:
   clientDataJSON     the challenge, the ORIGIN, and the type. the browser
@@ -933,12 +933,12 @@ happens. The browser hands your server two blobs; being able to read them is the
 <h4>What the server asks for</h4>
 <p>Your server builds the creation options, and every field is a security decision:</p>
 <div class="codeSample" data-hl>{
-  "challenge": &lt;32 random bytes&gt;,        // MUST be fresh, random, server-stored
+  "challenge": &lt;32 random bytes&gt;        // MUST be fresh, random, server-stored
   "rp":   { "id": "example.com", "name": "Example" },
-  "user": { "id": &lt;opaque bytes&gt;,        // NOT the email — this is the user handle
+  "user": { "id": &lt;opaque bytes&gt;        // NOT the email, this is the user handle
             "name": "ada@example.com",
             "displayName": "Ada" },
-  "pubKeyCredParams": [ {"alg": -7},     // ES256  (ECDSA P-256) — expect this
+  "pubKeyCredParams": [ {"alg": -7},     // ES256  (ECDSA P-256), expect this
                         {"alg": -257} ], // RS256  (RSA)
   "authenticatorSelection": {
      "residentKey": "required",          // discoverable -> usernameless login
@@ -959,13 +959,13 @@ adds a privacy cost and buys nothing.</p>
 <p>Two fields matter: <code>clientDataJSON</code>, produced by the <i>browser</i>, and
 <code>attestationObject</code>, produced by the <i>authenticator</i>. They are signed together, which is
 what ties the browser's view of the origin to the authenticator's key.</p>
-<div class="codeSample" data-hl>// clientDataJSON — the BROWSER's testimony, base64url of plain JSON
+<div class="codeSample" data-hl>// clientDataJSON, the BROWSER's testimony, base64url of plain JSON
 { "type": "webauthn.create",
   "challenge": "&lt;the base64url challenge you sent&gt;",
   "origin": "https://login.example.com",   // the browser will not lie about this
   "crossOrigin": false }
 
-// attestationObject — CBOR, containing:
+// attestationObject, CBOR, containing:
 { "fmt": "packed",          // attestation format, or "none"
   "attStmt": { ... },       // the provenance signature, if any
   "authData": &lt;bytes&gt;       // the part that matters
@@ -973,7 +973,7 @@ what ties the browser's view of the origin to the authenticator's key.</p>
 
 <h4>Reading authData</h4>
 <p>A fixed binary layout, and worth knowing by hand because the flags carry real meaning:</p>
-<div class="codeSample" data-hl>bytes  0..31   rpIdHash     SHA-256 of the RP ID — must match YOUR rp id
+<div class="codeSample" data-hl>bytes  0..31   rpIdHash     SHA-256 of the RP ID, must match YOUR rp id
 byte   32      flags
                  bit 0  UP  user present    (someone touched it)
                  bit 2  UV  user verified   (PIN or biometric succeeded)
@@ -1106,7 +1106,7 @@ someone typed tells an unauthenticated caller whether that account exists and wh
 <div class="codeSample" data-hl>authenticatorData   rpIdHash · flags · signCount   (no attested credential data)
 clientDataJSON      { "type": "webauthn.get", "challenge": ..., "origin": ... }
 signature           over: authenticatorData || SHA-256(clientDataJSON)
-userHandle          who this is — present for discoverable credentials</div>
+userHandle          who this is, present for discoverable credentials</div>
 <p>That signature input is the mechanism the entire scheme rests on. The authenticator signs its own
 data <i>concatenated with a hash of the browser's testimony about the origin</i>. A phishing proxy
 cannot alter the origin, because the browser wrote it and it is inside the signed bytes.</p>
@@ -1213,8 +1213,8 @@ public class Assertion {
 freely available, roughly two thirds of people reuse passwords, and a rented botnet makes the attempts cost
 almost nothing. At a success rate of a fraction of a percent, an attacker replaying ten million pairs
 against your login page still walks away with thousands of accounts.</p>
-<p>Every defence below is an attempt to change one of three numbers: <b>the hit rate</b>, <b>the cost per
-attempt</b>, or <b>the value of a hit</b>. Framing it that way is what stops the defences being a list of
+<p>Every defense below is an attempt to change one of three numbers: <b>the hit rate</b>, <b>the cost per
+attempt</b>, or <b>the value of a hit</b>. Framing it that way is what stops the defenses being a list of
 disconnected features.</p>
 
 <div class="codeSample" data-hl>MFA                     -> makes a HIT WORTHLESS. the single most
@@ -1298,7 +1298,7 @@ onboarding, marketplace verification) made proofing mandatory in places that pre
 
 <h4>What a proofing check actually consists of</h4>
 <ul>
-<li><b>Document authenticity.</b> Is this a real passport or driving licence? Checks include the machine-
+<li><b>Document authenticity.</b> Is this a real passport or driving license? Checks include the machine-
 readable zone's checksums, the security features under different lighting, the chip in an ePassport
 (genuinely strong, because it is cryptographically signed by the issuing state), and consistency between
 the printed data and the encoded data.</li>
@@ -1329,10 +1329,10 @@ almost never measured with the same care).</p>
 <i>presentation</i> attack that liveness detection is good at spotting), an attacker bypasses the camera
 entirely, feeding synthetic video into the device through a virtual camera or a modified client. The
 biometric pipeline sees a perfect, well-lit, entirely fabricated human.</p>
-<p>The defences are layered and none is sufficient alone. Signals that the capture came from a genuine
+<p>The defenses are layered and none is sufficient alone. Signals that the capture came from a genuine
 device sensor. Challenge-response that is hard to synthesise in real time. Server-side liveness rather than
 a client's word for it. And, strongest by a distance, <b>reading the chip</b> in an ePassport or a mobile
-driving licence, where the data is signed by the issuing state and cannot be fabricated at all. The
+driving license, where the data is signed by the issuing state and cannot be fabricated at all. The
 direction of travel is away from "look at a picture and judge" and towards "verify a signature", which is
 the same move identity made everywhere else.</p>
 

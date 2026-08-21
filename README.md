@@ -3,56 +3,87 @@
 </p>
 
 <p align="center">
-  <a href="https://rcbart.github.io/dojo/dev/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-Dev%20Dojo-6a5cf5" alt="Dev Dojo live"></a>
-  <a href="https://rcbart.github.io/dojo/identity/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-Identity%20Dojo-8b5cf6" alt="Identity Dojo live"></a>
-  <a href="https://rcbart.github.io/dojo/js/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-JS%20Dojo-eab308" alt="JS Dojo live"></a>
-  <img src="https://img.shields.io/badge/tracks-29-8b5cf6" alt="tracks">
-  <img src="https://img.shields.io/badge/lessons-207-8b5cf6" alt="lessons">
-  <img src="https://img.shields.io/badge/exercises-374-06b6d4" alt="exercises">
-  <img src="https://img.shields.io/badge/content%20checks-1876-2ea44f" alt="content integrity checks">
+  <a href="https://roniam.dev/dev/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-Dev%20Dojo-6a5cf5" alt="Dev Dojo live"></a>
+  <a href="https://roniam.dev/identity/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-Identity%20Dojo-8b5cf6" alt="Identity Dojo live"></a>
+  <a href="https://roniam.dev/js/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-JS%20Dojo-eab308" alt="JS Dojo live"></a>
+  <a href="https://roniam.dev/ml/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-ML%20Dojo-f97316" alt="ML Dojo live"></a>
+  <img src="https://img.shields.io/badge/streams-71-8b5cf6" alt="streams across all four dojos">
+  <img src="https://img.shields.io/badge/lessons-609-8b5cf6" alt="lessons across all four dojos">
+  <img src="https://img.shields.io/badge/exercises-702-06b6d4" alt="hands-on exercises across all four dojos">
+  <img src="https://img.shields.io/badge/quiz%20questions-1302-eab308" alt="hand-authored quiz questions across all four dojos">
+  <img src="https://img.shields.io/badge/content%20checks-2990-2ea44f" alt="content integrity assertions across the three engine-based dojos">
   <img src="https://img.shields.io/badge/engine%20tests-35-2ea44f" alt="engine unit tests">
-  <img src="https://img.shields.io/badge/executed%20exercises-31-06b6d4" alt="exercises graded by real execution">
+  <img src="https://img.shields.io/badge/executed%20exercises-184-06b6d4" alt="exercises graded by real execution">
+  <img src="https://img.shields.io/badge/CI%20gates-13-2ea44f" alt="CI gates">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
-# Dev Dojo 🥋
+# Dojo 🥋
 
-An interactive, self-contained learning platform for software engineering. **29 training tracks,
-207 lessons, and 374 hands-on exercises** run entirely in the browser: an in-editor coding
-exercise on every lesson, a belt progression, **spaced-repetition review**, a **difficulty-filtered practice hub**, a domain
-glossary with click-to-explain terms, tournaments, and end-to-end capstone projects.
+Four interactive, self-contained learning platforms plus a five-course cloud-native path, all running
+entirely in the browser. **71 streams, 609 lessons and 702 hands-on exercises**: an in-editor coding
+exercise on every lesson, a belt progression, **spaced-repetition review**, a **difficulty-filtered
+practice hub**, a domain glossary with click-to-explain terms, tournaments, and end-to-end capstone
+projects.
 
-It began as a Java course (JavaDojo, which is why this repository was once named for it) and now spans the full stack: the Java language and JVM,
-computer science & algorithms, web/HTTP, front-end (React), APIs, databases & SQL, concurrency,
-security & cryptography, DevOps, architecture, and a senior ("dan") track. Identity & access has its
-own course (below).
+| Course | Streams | Lessons | Exercises | Quiz questions | Content checks |
+|---|--:|--:|--:|--:|--:|
+| [**Dev Dojo**](https://roniam.dev/dev/) | 29 | 207 | 374 | 397 | 1,876 |
+| [**Identity Dojo**](https://roniam.dev/identity/) | 14 | 149 | 159 | 327 | 729 |
+| [**JS Dojo**](https://roniam.dev/js/) | 16 | 64 | 106 | 192 | 385 |
+| [**ML Dojo**](https://roniam.dev/ml/) | 12 | 109 | 63 | 345 | in its own repository |
 
-**Identity & access now lives in its own course.** It grew past 130 lessons (40% of Dev Dojo), which
+It began as a Java course (JavaDojo, which is why this repository was once named for it). **Dev Dojo**
+now spans the full stack: the Java language and JVM, computer science & algorithms, web/HTTP,
+front-end (React), APIs, databases & SQL, concurrency, security & cryptography, DevOps, architecture,
+and a senior ("dan") track.
+
+**Identity & access has its own course.** It grew past 130 lessons (40% of Dev Dojo), which
 unbalanced a course meant to cover software engineering broadly. It is now
 [**Identity Dojo**](identity-dojo/README.md): 14 streams covering the identity lifecycle, OAuth 2.0/2.1
 and OIDC, SAML, WebAuthn/FIDO2 internals, Active Directory and Kerberos, zero trust, and a Running
 Identity stream on incident response, migration and operations. Same engine, separate build.
 
-**▶ Live:** https://roniam.dev/, the portfolio home; https://rcbart.github.io/dojo/courses/ lists every course.
-[**Dev Dojo**](https://rcbart.github.io/dojo/dev/) ·
-[**Identity Dojo**](https://rcbart.github.io/dojo/identity/) ·
-[**JS Dojo**](https://rcbart.github.io/dojo/js/). Each is a single,
-self-contained page; SQL exercises run against real sample data in your browser with no server, and
-JS Dojo's exercises execute in a sandboxed Web Worker.
+**JavaScript has its own course too.** [**JS Dojo**](js-dojo/README.md) is 16 streams of the language
+and its runtime, and its exercises are graded by really running your code in a sandboxed Web Worker.
+
+**Machine learning starts at Python itself.** [**ML Dojo**](https://roniam.dev/ml/) is written for
+someone who has never written a line of Python: Python, NumPy arrays and vectors, mathematical
+notation, linear algebra, calculus and gradients, logarithms. A probability and statistics stream then
+runs from counting through distributions, the Gaussian, Bayes, maximum likelihood, expectation
+maximization, Lagrange multipliers and the bias-variance decomposition. Then the models: regression,
+the classifier zoo, clustering, neural networks from the perceptron to the transformer, and
+reinforcement learning from the multi-armed bandit through Q-learning and policy gradients to the
+algorithm that fine-tunes language models. Every lesson opens in plain English and ends at textbook
+rigor. Python runs in the browser through Pyodide. 12 streams, 109 lessons, 63 exercises, 345 quiz
+questions, and a glossary of 203 terms across 8 domains. It lives in
+[its own repository](https://github.com/rcbart/ml-dojo) and ships here as a tracked build snapshot at
+`ml-dojo/dist/index.html`.
+
+**▶ Live:** https://roniam.dev/ is the portfolio home, and https://roniam.dev/courses/ lists every
+course. [**Dev Dojo**](https://roniam.dev/dev/) ·
+[**Identity Dojo**](https://roniam.dev/identity/) ·
+[**JS Dojo**](https://roniam.dev/js/) ·
+[**ML Dojo**](https://roniam.dev/ml/). Each is a single, self-contained page: SQL exercises run
+against real sample data in your browser with no server, JS Dojo's exercises execute in a sandboxed
+Web Worker, and ML Dojo runs Python through Pyodide. The pages are served from GitHub Pages, whose
+origin is `rcbart.github.io/dojo/`.
 *(First time: in Settings → Pages, set Source to "GitHub Actions". The workflow unit-tests the shared
-engine, then verifies and builds all three courses on every push, and fails the deploy if any check
-fails.)*
+engine, then verifies and builds the courses on every push, and fails the deploy if any check fails.
+Four dojos and five crash courses ship from it; ML Dojo is copied in from its tracked build snapshot,
+since it is built in its own repository.)*
 
 ## What's inside
 
 - **Guided onboarding**: a **🚀 Getting started** page (how to set up your environment and how
   grading really works) and a **🗺️ Learning path** (a recommended white→black-belt route).
-- **Every lesson** ends with an exercise in the built-in editor. **How grading works:** most exercises (~79%, all the Java ones) are checked by **regex against the shape of your answer**;
+- **Every lesson** ends with an exercise in the built-in editor. **How grading works:** most
+  exercises, all the Java ones included, are checked by **regex against the shape of your answer**;
   they verify you wrote the right construct, not that your code runs correctly. Real execution is
   available where the environment allows it: **SQL** runs against sample datasets in the built-in
-  engine and **JavaScript** in a sandboxed Web Worker (~4% of exercises, graded on actual results),
-  and **Java** compiles and runs for real only if you start the optional local runner. Every exercise
-  ships a **Run locally** panel with exact commands, which is the ground truth.
+  engine and **JavaScript** in a sandboxed Web Worker, which covers **184 exercises graded on actual
+  results**. **Java** compiles and runs for real only if you start the optional local runner. Every
+  exercise ships a **Run locally** panel with exact commands, which is the ground truth.
 - **Run it for real**: every exercise has a **🖥️ Run locally** panel with exact commands for your own
   dev environment, plus a **🔬 Dive deeper** panel that states honestly how it was graded.
 - **🔁 Review**: spaced repetition builds a review deck from your completed exercises and schedules
@@ -61,12 +92,14 @@ fails.)*
   across the whole catalog.
 - **🧠 Quick check**: multiple-choice questions with instant feedback: not just "wrong", but which
   answer was right, why it is right, and why the option you picked is not. **Options are shuffled per
-  lesson visit**, so the answer position can never be memorised. Dev Dojo now carries **397 hand-authored
-  questions across 129 lessons** (each with a written explanation of why the right answer is right and
-  why every distractor is wrong), plus 9 auto-generated from the exercise specs. Identity Dojo carries a
-  further 327 and JS Dojo 192. Extending the hand-authored bank to the remaining lessons is an open item.
-- **📖 Glossary**: 11 domains / 360 terms, collapsible and searchable, doubling as the in-lesson
-  click-to-explain source.
+  lesson visit** in all four dojos, so the answer position can never be memorized. The bank is
+  **1,302 hand-authored questions**: 397 in Dev Dojo, 327 in Identity Dojo, 192 in JS Dojo, 345 in ML
+  Dojo. Every one carries a written explanation of why the right answer is right, plus a per-option
+  rebuttal saying why the option you picked is wrong. Dev Dojo adds 9 more auto-generated from the
+  exercise specs. Extending the hand-authored bank to the remaining lessons is an open item.
+- **📖 Glossary**: 11 domains / 360 terms shared by Dev, Identity and JS Dojo, collapsible and
+  searchable, doubling as the in-lesson click-to-explain source. ML Dojo carries its own: 8 domains,
+  203 terms.
 - **Belts & capstones**: per-domain percentage belts (white → black), dan sub-tracks for advanced
   topics, and a graded multi-step capstone. Streams
   flagged `tournament:true` or `project:true` are practice and don't count toward belts.
@@ -104,32 +137,37 @@ flowchart TD
   D --> Site
   B --> GH
   Runtime --> ID["identity-dojo/ · same shape, own content + build"]
+  Runtime --> JS["js-dojo/ · same shape, own content + build"]
   ID --> GH
+  JS --> GH
+  ML["ml-dojo/dist/index.html · tracked snapshot, built in its own repo"] --> GH
 ```
 
-**The engine is unit-tested.** `node --test engine/test/engine.test.js` runs 22 tests against the shared
+**The engine is unit-tested.** `node --test engine/test/engine.test.js` runs 35 tests against the shared
 runtime's pure logic: regex grading and its failure modes, the Web Worker sandbox preamble, quiz option
 shuffling, difficulty rating, and HTML escaping. They run in CI before any course is built, because a bug
-in the engine breaks all three at once. Two of them exist because a real bug shipped: every hand-authored
+in the engine breaks every course at once. Two of them exist because a real bug shipped: every hand-authored
 quiz once had its answer at option A, and two exercise regexes did not match their own reference
 solutions. Writing them found a third: `esc()` threw on `undefined`, which would blank a panel rather
 than render nothing.
 
 **How grading works (honestly).** The headline number to be careful with is the **content checks**
-badge: `scripts/verify.js` runs 1866 assertions proving every exercise's reference solution matches its
-own regex checks and that ids are unique. A separate gate, `scripts/verify-exec.js`, goes further for the
-exercises that are executed: it loads each reference solution and calls it with that exercise's own cases,
-so a solution that does not actually produce the expected result fails the build. That is a **content integrity gate, not a test suite for a
-running product**; it says the material is internally consistent, not that a learner's code is
-correct.
+badge: `scripts/verify.js` runs 1,876 assertions for Dev Dojo, and 2,990 across the three
+engine-based dojos, proving every exercise's reference solution matches its own regex checks and that
+ids are unique. ML Dojo has its own workflow, which executes all 62 runnable Python reference solutions against the assertions the learner is graded on. A separate gate,
+`scripts/verify-exec.js`, goes further for the exercises that are executed: it loads each reference
+solution and calls it with that exercise's own cases, 999 of them across 184 exercises, so a solution
+that does not actually produce the expected result fails the build. That is a **content integrity
+gate, not a test suite for a running product**; it says the material is internally consistent, not
+that a learner's code is correct.
 
 Grading itself splits three ways:
 
 | Path | Share | What it actually verifies |
 |---|--:|---|
-| Regex structural checks | ~79% | That your answer contains the expected constructs. Not correctness. |
-| Real execution, in-browser | ~4% | SQL against sample data (`engine/sqlengine.js`, result sets compared); JavaScript in a sandboxed Web Worker (real return values). |
-| Real execution, opt-in | Java | Compiles and runs via the local runner (`site/` + `JD_LOCAL_RUNNER=1`) with a generated `DojoTest` harness, **off by default**. |
+| Regex structural checks | 454 of 702 (65%) | That your answer contains the expected constructs. Not correctness. Most Java, shell, YAML and prose exercises land here. |
+| Real execution, in-browser | 248 of 702 (35%) | 185 JavaScript exercises run in a sandboxed Web Worker and are compared on real return values. 63 Python exercises run in Pyodide and are checked by assertions against the actual interpreter state. SQL runs against sample data in `engine/sqlengine.js`. |
+| Real execution, opt-in | a subset of the Java exercises | Compiles and runs via the local runner (`site/` + `JD_LOCAL_RUNNER=1`) with a generated `DojoTest` harness, **off by default**. |
 
 So a green check on most exercises means "this looks right", not "this works". Every exercise has a
 **Run locally** panel with exact commands, and that is the ground truth. Raising the share of real
@@ -150,7 +188,7 @@ graded by running it against sample data and comparing result sets.*
 ## Repository layout
 
 ```
-engine/             the SHARED RUNTIME — used by every course in this repo
+engine/             the SHARED RUNTIME, used by every engine-based course in this repo
   app.js            state, nav, lessons, editor, Review (SRS), Practice, quizzes
   glossary.js       keyword table, click-to-explain and the glossary (loads before app.js)
   grade.js          all five grading paths
@@ -163,7 +201,7 @@ src/                Dev Dojo's own content-derived maps (NOT the engine)
   gradejava.js      auto-generated executable-grading specs (by lesson id)
   quizzes.js        auto-generated quick-check bank (by lesson id)
   quizzes_hand.js   hand-authored quizzes, where they exist
-content/streams/    one module per stream — the course content
+content/streams/    one module per stream, the course content itself
   manifest.json     stream order
 LESSON_TEMPLATE.md  the shape every new lesson follows: skeleton, checklist, gates
 scripts/verify.js   content integrity gate: parses every module, runs each exercise's
@@ -172,21 +210,23 @@ scripts/verify-exec.js  execution gate: runs every run-spec exercise's reference
                     solution against its own cases, as the browser worker does
 scripts/verify-java.js  compiles every self-contained Java reference solution
 scripts/verify-depth.js depth gate: every lesson against half its course median
-scripts/verify-cloudnative.js  cloud-native gate: the five crash courses — pages exist,
+scripts/verify-cloudnative.js  cloud-native gate for the five crash courses: pages exist,
                     quizzes well-formed, Next-chains match the built order
 build.js            engine/ + src/ + content/ -> dist/index.html (+ devdojo.html)
 identity-dojo/      Identity Dojo: same shape, consumes ../engine
+js-dojo/            JS Dojo: same shape, consumes ../engine
+ml-dojo/dist/       ML Dojo's built page, a tracked snapshot from its own repository
 site/               optional Node server: accounts, progress sync (SQLite via node:sqlite)
 ```
 
 **Why `engine/` is separate.** `src/` used to be both "Dev Dojo's source" and "the shared runtime",
 which meant a second course could only be added by forking 1,600 lines of `app.js`. Splitting the
 engine out makes the seam explicit: a course is content plus a build file, and lifting one into its own
-repository is a copy rather than a fork.
+repository is a copy rather than a fork. ML Dojo is the proof: it left, and the engine did not notice.
 
-Identity content lives in **[`identity-dojo/`](identity-dojo/README.md)** with its own manifest and
-build. It reuses this runtime (`identity-dojo/build.js` reads `../src`), so there is one engine to
-maintain; only content, domain grouping and the page shell differ.
+Identity content lives in **[`identity-dojo/`](identity-dojo/README.md)** and JavaScript content in
+**[`js-dojo/`](js-dojo/README.md)**, each with its own manifest and build. They reuse this runtime, so
+there is one engine to maintain; only content, domain grouping and the page shell differ.
 
 ## Workflow
 
@@ -197,7 +237,10 @@ node build.js            # produce dist/index.html (+ devdojo.html copy)
 
 The build output is a single, dependency-free HTML file; open `devdojo.html` directly in a browser,
 or host `dist/index.html` on any static host. Generated files are gitignored; only source is
-versioned.
+versioned. In CI, 13 gates have to pass before anything deploys: the engine unit tests, content
+verification for each dojo, the execution gate, the Java compile gate, lesson depth, the cloud-native
+check, color contrast, a run check on every built page, two quiz-balance gates, the home-page stats
+check, a prose check, and sitemap resolution.
 
 ### Optional: run the full site (accounts + saved progress)
 
@@ -223,19 +266,17 @@ apostrophes and `\u` sequences. Always run `node scripts/verify.js` after editin
 ## The cloud-native path (standalone, in this repo)
 
 Five companion courses on their own lighter pipeline (markdown → `web/build.py` → one interactive
-HTML file each), all live on the same Pages site and gated in CI by `scripts/verify-cloudnative.js`
-(80 pages, 374 quiz questions, every answer explained, right and wrong options alike):
+HTML file each), all live on the same site and gated in CI by `scripts/verify-cloudnative.js`
+(80 modules, 374 quiz questions, every answer explained, right and wrong options alike):
 
-- [**Cloud-Native Fundamentals**](https://rcbart.github.io/dojo/fundamentals/), the map before the
+- [**Cloud-Native Fundamentals**](https://roniam.dev/fundamentals/), the map before the
   machines: the path of a request, load balancers, API gateways, CDNs, DNS in depth, TLS, queues &
   caches. Pure concepts, nothing to install.
-- [**Docker**](https://rcbart.github.io/dojo/docker/) ·
-  [**Kubernetes**](https://rcbart.github.io/dojo/kubernetes/) ·
-  [**Envoy**](https://rcbart.github.io/dojo/envoy/) ·
-  [**Istio**](https://rcbart.github.io/dojo/istio/): hands-on on your own machine; each starts
+- [**Docker**](https://roniam.dev/docker/) ·
+  [**Kubernetes**](https://roniam.dev/kubernetes/) ·
+  [**Envoy**](https://roniam.dev/envoy/) ·
+  [**Istio**](https://roniam.dev/istio/): hands-on on your own machine; each starts
   with a step-by-step local setup guide, and Envoy ships runnable lab configs in `envoy-crash-course/labs/`.
-- `ml-dojo`: a machine-learning curriculum (Python via Pyodide). It forked the engine and shares
-  nothing with this repo, so it now lives in its own repository: https://github.com/rcbart/ml-dojo
 - `oauth-trainer/`: a small Maven CLI for generating and signing JWKs
 
 ## Companion docs

@@ -31,7 +31,7 @@ most disappointed teams. It is a very good tool for the errors you make while wr
 a substitute for validating what comes in.</p>
 
 <h4>What it buys you</h4>
-<p><b>Errors at write time.</b> A misspelt property, a wrong argument order, a function that returns
+<p><b>Errors at write time.</b> A misspelled property, a wrong argument order, a function that returns
 <code>undefined</code> on one branch, all found as you type rather than in production.</p>
 <p><b>Refactoring you can trust.</b> Rename a field and the compiler lists every use. In plain JavaScript
 that is a search-and-hope.</p>
@@ -65,7 +65,7 @@ Adding it to an existing codebase later is genuinely painful.</p>`,
 docs:[['TypeScript (handbook)','https://www.typescriptlang.org/docs/handbook/intro.html'],['TypeScript (tsconfig reference)','https://www.typescriptlang.org/tsconfig'],['TypeScript (strict mode)','https://www.typescriptlang.org/tsconfig#strict']],
 ex:{title:'Compile time or runtime?',diff:'easy',lang:'js',
 run:{call:'caughtBy',cases:[
- {name:'a misspelt property name',args:['typo-in-property'],expect:'typescript'},
+ {name:'a misspelled property name',args:['typo-in-property'],expect:'typescript'},
  {name:'arguments in the wrong order',args:['wrong-argument-order'],expect:'typescript'},
  {name:'a branch that forgets to return',args:['missing-return-branch'],expect:'typescript'},
  {name:'a server sending an unexpected shape',args:['bad-api-response'],expect:'runtime check'},
@@ -197,7 +197,7 @@ solution:`function typeFor(need) {
   }
 }`,
 tests:[{d:'a fixed set is a union',re:'union of literals'},{d:'a generic when output follows input',re:'"generic"'},{d:'Omit hides a field',re:'"Omit"'},{d:'the default prefers inference',re:'let it be inferred'}],
-behavior:`Eight cases execute. The default is deliberate advice rather than a fallback: most values should be inferred, and over-annotating is the commonest way a TypeScript codebase becomes noisy. The union-of-literals answer is the highest-value one in daily use: it turns a misspelt status from a silent bug into a compile error.`,
+behavior:`Eight cases execute. The default is deliberate advice rather than a fallback: most values should be inferred, and over-annotating is the commonest way a TypeScript codebase becomes noisy. The union-of-literals answer is the highest-value one in daily use: it turns a misspelled status from a silent bug into a compile error.`,
 hints:['One case per construct, with a default that recommends inference.','A union of string literals is what replaces a loosely-typed status string.','Partial makes everything optional; Omit removes a named field.']},
 {title:'Does this argument satisfy the constraint?',diff:'hard',lang:'js',
 run:{call:'satisfies',cases:[
@@ -208,7 +208,7 @@ run:{call:'satisfies',cases:[
  {name:'nothing required is always satisfied',args:[[],['anything']],expect:{ok:true,missing:[]}},
  {name:'an empty argument satisfies nothing',args:[['name'],[]],expect:{ok:false,missing:['name']}},
  {name:'order does not matter, only presence',args:[['a','b'],['b','a']],expect:{ok:true,missing:[]}}]},
-prompt:`Write <code>function satisfies(requiredProps, actualProps)</code> modelling structural typing. Return <code>{ ok, missing }</code>. Every property in <code>requiredProps</code> must be present in <code>actualProps</code>, but <b>extra</b> properties are fine, and order is irrelevant. <code>missing</code> lists the absent ones in the order they were required.`,
+prompt:`Write <code>function satisfies(requiredProps, actualProps)</code> modeling structural typing. Return <code>{ ok, missing }</code>. Every property in <code>requiredProps</code> must be present in <code>actualProps</code>, but <b>extra</b> properties are fine, and order is irrelevant. <code>missing</code> lists the absent ones in the order they were required.`,
 starter:`function satisfies(requiredProps, actualProps) {
   return { ok: true, missing: [] };
 }`,

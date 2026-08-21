@@ -43,12 +43,12 @@ immediately and every legitimately-issued token fails too.</p>
  1. generate + publish the new key alongside the old   (JWKS holds both)
  2. start signing with the new kid immediately
  3. REMOVE the compromised key from JWKS
- 4. force RPs to refetch — this is where JWKS cache TTL becomes your
+ 4. force RPs to refetch, this is where JWKS cache TTL becomes your
     recovery time. a 24h cache means a 24h window of forged tokens.
  5. invalidate every session and grant: everyone re-authenticates
  6. only then investigate what was minted while the key was out</div>
 <p>Step 4 is the lesson: <b>your JWKS cache TTL is your worst-case exposure window.</b> Decide it with
-that in mind, and make sure relying parties honour a <code>kid</code> they do not recognise by
+that in mind, and make sure relying parties honor a <code>kid</code> they do not recognize by
 refetching rather than failing closed forever.</p>
 
 <h4>The containment order</h4>
@@ -56,12 +56,12 @@ refetching rather than failing closed forever.</p>
 <li><b>Stop the bleeding</b>: disable the account, revoke grants, rotate the secret. Before you
 understand it fully.</li>
 <li><b>Preserve evidence</b>: snapshot the logs before anything rotates them out. Identity logs are
-frequently the shortest-retention logs in an organisation, which is discovered at the worst time.</li>
+frequently the shortest-retention logs in an organization, which is discovered at the worst time.</li>
 <li><b>Find persistence</b>: this is the step people skip. An attacker with a session enrolled their
 own MFA authenticator, added an API key, registered an OAuth client, or created a federated trust.
 Resetting the password removes none of it. <b>Enumerate every credential and trust attached to the
 account, and every one created during the window.</b></li>
-<li><b>Assess reach</b>: what did that identity touch, and what did it authorise?</li>
+<li><b>Assess reach</b>: what did that identity touch, and what did it authorize?</li>
 <li><b>Restore</b>: re-enroll, re-issue, force re-authentication.</li>
 </ol>
 
@@ -86,7 +86,7 @@ starter:`public class IncidentResponse {
 }`,
 tests:[{d:'a signing key is a total compromise',re:'"signing-key"'},{d:'an admin account is a total compromise',re:'"admin-account"'},{d:'refresh tokens are durable for one user',re:'"durable-user"'},{d:'client secrets affect the whole application',re:'"application"'},{d:'unknown inputs fall through',re:'"unknown"'},{d:'access tokens cannot be revoked',re:'"access-token"'},{d:'persistence hunting follows a total compromise',re:'"total"\\s*\\.\\s*equals|equals\\s*\\(\\s*"total"'}],
 behavior:`blastRadius("signing-key") and blastRadius("admin-account") return total, because the first lets an attacker mint tokens for anyone with nothing in your login logs, and the second lets them establish access that survives a password reset. blastRadius("refresh-token") is durable-user and blastRadius("access-token") is transient-user. revocationStops("refresh-token") is true but revocationStops("access-token") is false: it stays valid until exp, which is why a short lifetime is an incident-response decision rather than a performance one. mustHuntPersistence("signing-key") is true; mustHuntPersistence("access-token") is false.`,
-hints:['A switch mapping each leaked artefact to its radius, defaulting to "unknown".','Special-case "access-token" first in revocationStops, then require a known radius.','<code>return "total".equals(blastRadius(leaked));</code>'],
+hints:['A switch mapping each leaked artifact to its radius, defaulting to "unknown".','Special-case "access-token" first in revocationStops, then require a known radius.','<code>return "total".equals(blastRadius(leaked));</code>'],
 solution:`public class IncidentResponse {
     static String blastRadius(String leaked) {
         if (leaked == null) return "unknown";
@@ -149,7 +149,7 @@ sometimes the only option under a regulator.</li>
 
   phase 3   migrate credentials (below), then stop federating
 
-  phase 4   decommission — the step organisations skip, leaving a legacy
+  phase 4   decommission, the step organizations skip, leaving a legacy
             IdP running for years as an unmonitored attack surface</div>
 
 <h4>Moving the credentials</h4>
@@ -201,7 +201,7 @@ public class Migration {
         return null;
     }
 }`,
-tests:[{d:'a null password is rejected',re:'presented\\s*==\\s*null|null\\s*==\\s*presented'},{d:'the modern algorithm is recognised',re:'"argon2"'},{d:'the legacy checker is used otherwise',re:'legacyCheck'},{d:'rehash only after a successful login',re:'loginSucceeded'},{d:'already-modern hashes are not rehashed',re:'!\\s*"argon2"\\s*\\.\\s*equals|\\!"argon2"'},{d:'the new subject wins when present',re:'newSub\\s*!=\\s*null|null\\s*!=\\s*newSub'},{d:'otherwise fall back to the mapping table',re:'mapping\\s*\\.\\s*get\\s*\\('}],
+tests:[{d:'a null password is rejected',re:'presented\\s*==\\s*null|null\\s*==\\s*presented'},{d:'the modern algorithm is recognized',re:'"argon2"'},{d:'the legacy checker is used otherwise',re:'legacyCheck'},{d:'rehash only after a successful login',re:'loginSucceeded'},{d:'already-modern hashes are not rehashed',re:'!\\s*"argon2"\\s*\\.\\s*equals|\\!"argon2"'},{d:'the new subject wins when present',re:'newSub\\s*!=\\s*null|null\\s*!=\\s*newSub'},{d:'otherwise fall back to the mapping table',re:'mapping\\s*\\.\\s*get\\s*\\('}],
 behavior:`verifyLegacy("argon2","pw",legacy,modern) uses the modern checker; verifyLegacy("bcrypt","pw",legacy,modern) uses the legacy one, which is what lets you import old hashes untouched. shouldRehash("bcrypt", true) is true, so the account upgrades silently on the user's next login and the population migrates itself. shouldRehash("bcrypt", false) is false, because you only have the plaintext to rehash from when the login actually succeeded, and shouldRehash("argon2", true) is false since it is already current. resolveUser("old@x", "u-1", map) returns u-1; resolveUser("old@x", null, map) returns the mapped id, which is how an app relinks an account instead of showing the user an empty one.`,
 hints:['Guard the null password, then branch on the stored algorithm.','Both conditions matter in shouldRehash: the login succeeded AND the algorithm is stale.','A short chain of null checks is enough for resolveUser.'],
 solution:`import java.util.*;
@@ -305,11 +305,11 @@ is actually protected, how long does it take for a leaver to lose access.</p>
 <div class="codeSample" data-hl>EXPERIENCE
   login success rate            the headline. a drop is an outage users feel
                                 before any dashboard shows red
-  time to first successful auth  p50/p95 — the redirect chain is 4+ hops
+  time to first successful auth  p50/p95, the redirect chain is 4+ hops
   MFA prompt rate               too high means fatigue and workarounds
   password reset rate           a proxy for friction AND for phishing
 
-COVERAGE — the ones auditors ask for
+COVERAGE, the ones auditors ask for
   % accounts with MFA           and specifically with PHISHING-RESISTANT MFA
   % apps behind SSO             the un-federated tail is your real risk
   orphaned accounts             no owner, still enabled
@@ -422,24 +422,24 @@ in.</p>
 <h4>Why it is genuinely awkward</h4>
 <ul>
 <li>The flow crosses your app, a browser, and a third-party IdP.</li>
-<li>It depends on redirects, cookies and browser behaviour, so unit tests miss most of it.</li>
+<li>It depends on redirects, cookies and browser behavior, so unit tests miss most of it.</li>
 <li>Real IdPs rate-limit, require MFA, and have no API to create a hundred test users.</li>
 <li>Tokens expire, so recorded fixtures rot.</li>
 </ul>
 
 <h4>What to test at each level</h4>
-<div class="codeSample" data-hl>UNIT — no network. the highest-value tests, and the cheapest.
+<div class="codeSample" data-hl>UNIT, no network. the highest-value tests, and the cheapest.
   token validation: expired, wrong aud, wrong iss, bad signature,
     alg:none, missing claims, clock skew at the boundary
   authorization: ownership checks, scope checks, deny by default
   PKCE: verifier/challenge, and the DOWNGRADE (no verifier presented)
 
-INTEGRATION — against a MOCK IdP you control
+INTEGRATION, against a MOCK IdP you control
   full redirect flow, state and nonce round-trip
   refresh, and refresh-token reuse detection
   logout and session invalidation
 
-END-TO-END — a real IdP in a test tenant, a small number of cases
+END-TO-END, a real IdP in a test tenant, a small number of cases
   one happy path per client type. that is enough: E2E is for wiring,
   not for logic.</div>
 <p>The temptation is to invert this: a few E2E tests and nothing underneath. It is the wrong shape:
@@ -540,7 +540,7 @@ A method is not.</p>
 3  IdP: authenticates the user  (MFA here)
 4  IdP -> browser: redirect back with a code
 5  browser -> app: the callback
-6  app  -> IdP: POST /token   (back channel — invisible in the browser)
+6  app  -> IdP: POST /token   (back channel, invisible in the browser)
 7  app: validates the token, creates a session
 8  app: authorizes the request
 
@@ -551,7 +551,7 @@ A method is not.</p>
 <p>Once you know the last successful step, the cause is nearly always in a small set:</p>
 <div class="codeSample" data-hl>SYMPTOM                          LOOK AT
 never reaches the IdP            client_id wrong, discovery doc unreachable
-"invalid redirect_uri"           registered value vs sent value — EXACT match,
+"invalid redirect_uri"           registered value vs sent value, EXACT match,
                                  including trailing slash, port and scheme
 loops between app and IdP        the app cannot set or read its cookie:
                                  SameSite, Secure over http, domain mismatch
@@ -582,7 +582,7 @@ push, a library upgrade, or a browser release. If nothing changed on your side, 
 random, and it is invisible unless you check.</li>
 </ol>
 
-<h4>Read the actual artefacts</h4>
+<h4>Read the actual artifacts</h4>
 <p>Do not debug from the error message alone. The evidence is available and specific:</p>
 <ul>
 <li><b>Decode the token.</b> Look at <code>iss</code>, <code>aud</code>, <code>exp</code>,
@@ -749,7 +749,7 @@ data exposed for weeks. Both deserve more care than a normal release.</p>
 often leave state behind that outlives the revert:</p>
 <div class="codeSample" data-hl>CHANGE                        WHAT SURVIVES A ROLLBACK
 rotate the signing key        tokens signed with the NEW key, still in the wild
-change the RP ID              every passkey registered under it — permanently
+change the RP ID              every passkey registered under it, permanently
 migrate password hashes       accounts already rehashed (one-way)
 change the sub claim format   every app that stored the new identifier
 tighten a scope               tokens already issued with the old semantics
@@ -767,7 +767,7 @@ than a rollback, and you should know that before you start.</p>
 identifier; support the new and old client auth method. Only remove the old thing after the new one is
 proven: a two-phase change with a gap is what makes a revert possible at all.</li>
 <li><b>Ring by ring.</b> Yourself, then your team, then a friendly department, then everyone. Identity
-affects every human in the organisation, so a 1% rollout is still hundreds of people.</li>
+affects every human in the organization, so a 1% rollout is still hundreds of people.</li>
 <li><b>Watch the right signal.</b> Login success rate, not CPU. And watch it per client: an aggregate
 stays green while one app is completely broken.</li>
 <li><b>Never change two things at once.</b> Rotating a key during an IdP upgrade means you cannot tell
@@ -797,7 +797,7 @@ decided is not.</li>
 <li><b>If the vendor disappears entirely?</b> Concentration risk. Can you export users, group
 memberships and configuration in a usable form? Credentials will not come with you, so re-enrollment is
 the plan whether you like it or not.</li>
-<li><b>Who can authorise emergency access, and how is that person reached out of hours?</b></li>
+<li><b>Who can authorize emergency access, and how is that person reached out of hours?</b></li>
 </ul>
 <p>Test the answers rather than documenting them. A continuity plan nobody has exercised is a
 description of what you hope would happen.</p>`,
@@ -857,7 +857,7 @@ not from the market.</p>
 <ol>
 <li><b>Who are the users?</b> Workforce, customers (CIAM), business partners (B2B), or machines. This
 one answer eliminates most of the market immediately, and the products are genuinely different:
-workforce IAM optimises for governance and lifecycle, CIAM for conversion, scale and privacy consent.
+workforce IAM optimizes for governance and lifecycle, CIAM for conversion, scale and privacy consent.
 A workforce tool used for a consumer product is a common and expensive mistake.</li>
 <li><b>What do your applications speak <i>today</i>?</b> Not what you wish. Inventory it: OIDC, SAML,
 and then the awkward tail: header-based auth behind a proxy, Kerberos/IWA on the intranet, direct LDAP
@@ -874,7 +874,7 @@ FAPI, specific assurance levels, data residency. Write these as requirements bef
 you will find yourself wanting whatever was demonstrated well.</li>
 <li><b>What does governance require?</b> Access reviews, separation of duties, certification campaigns,
 and above all <b>audit evidence in a form your auditor accepts</b>. "It has reporting" is not the same
-as "it produces the artefact we are asked for each quarter".</li>
+as "it produces the artifact we are asked for each quarter".</li>
 <li><b>What are the operational commitments?</b> SLA and its credits, DR posture and tested RTO, data
 residency, support responsiveness at 3am, and the maintenance windows they impose on you.</li>
 <li><b>What does it cost, really?</b> Per monthly-active-user or per named user (a huge difference for
@@ -891,7 +891,7 @@ product for two engineers who also own three other systems.</li>
 
 <h4>Build versus buy</h4>
 <p>Apply the same scrutiny in both directions. <b>Building authentication is almost always a false economy</b>: the
-protocol is the easy part, and the long tail (MFA, recovery, session management, bot defence, audit,
+protocol is the easy part, and the long tail (MFA, recovery, session management, bot defense, audit,
 compliance, keeping pace with the security BCP) is a permanent team. Most "we built our own" estates
 are quietly worse and quietly expensive.</p>
 <p>The legitimate exceptions are narrow: identity <i>is</i> the product; scale or unit economics make
@@ -899,16 +899,16 @@ per-user pricing untenable; or the model is genuinely unusual and no vendor fits
 answer is buy the IdP and build the thin layer around it, rather than building the IdP.</p>
 
 <h4>Scoring without fooling yourself</h4>
-<div class="codeSample" data-hl>GATES  (must-have — fail one and the option is OUT, no score)
+<div class="codeSample" data-hl>GATES  (must-have, fail one and the option is OUT, no score)
   handles our legacy auth tail
   meets the residency requirement
   produces the audit evidence we are asked for
   supports phishing-resistant MFA
 
-SCORED (weighted — only for options that pass every gate)
+SCORED (weighted, only for options that pass every gate)
   migration effort        x3   the largest real cost, and the most underestimated
   operational burden      x3   who runs this, every week, forever
-  total 3-year cost       x2   licence + migration + run, not licence alone
+  total 3-year cost       x2   license + migration + run, not license alone
   governance depth        x2
   developer experience    x1
 
@@ -967,7 +967,7 @@ function evaluate(gates, weightedScore) {
   return gates ? weightedScore : -1;
 }`,
 tests:[{d:'every gate must pass',re:'handlesLegacyTail\\s*&&'},{d:'residency is a gate',re:'meetsResidency'},{d:'audit evidence is a gate',re:'producesAuditEvidence'},{d:'phishing-resistant MFA is a gate',re:'phishingResistantMfa'},{d:'migration effort carries the heaviest weight',re:'3\\s*\\*\\s*migrationEffortInverse'},{d:'operational burden is weighted equally',re:'3\\s*\\*\\s*operationalEase'},{d:'a failed gate disqualifies rather than scores',re:'-1'}],
-behavior:`evaluate(true,55) is 55 and evaluate(false,55) is -1, executed for real, so returning a low score instead of -1 actually fails. score(5,5,5,5,5) is 55: migration effort and operational burden carry triple weight because they are the largest real costs and the most consistently underestimated, while licence price and developer experience dominate most evaluations for no good reason.`,
+behavior:`evaluate(true,55) is 55 and evaluate(false,55) is -1, executed for real, so returning a low score instead of -1 actually fails. score(5,5,5,5,5) is 55: migration effort and operational burden carry triple weight because they are the largest real costs and the most consistently underestimated, while license price and developer experience dominate most evaluations for no good reason.`,
 hints:['Four conditions joined with &&, no scoring involved.','Write the weighted sum literally so the weights are visible in the code.','<code>return gates ? weightedScore : -1;</code>']}},
 
 {id:'run10',title:'Detecting identity attacks: what ITDR actually watches',body:`
@@ -985,7 +985,7 @@ logins at all.</p>
 vulnerability is exploited. The endpoint agent sees a browser, the WAF sees an authenticated request, and
 the access logs show a successful login, because it <i>was</i> a successful login. What separates the
 attacker from the employee is not the credential; it is the <b>pattern of use</b>. Detection therefore has
-to be behavioural, and it has to happen where identity events are, which is the IdP.</p>
+to be behavioral, and it has to happen where identity events are, which is the IdP.</p>
 
 <h4>The signals worth building first</h4>
 <p>Ordered by value per unit of effort, not by sophistication:</p>
@@ -1020,7 +1020,7 @@ confirmed        -> disable the account, revoke grants, rotate its secrets
 // reversible before irreversible. a killed session costs a login;
 // a disabled executive account costs a phone call to your CISO.</div>
 <p>This is where <b>CAEP and Shared Signals</b> earn their place. A revocation is only as fast as its slowest
-consumer, and a stateless resource server will honour a stolen access token until it expires no matter what
+consumer, and a stateless resource server will honor a stolen access token until it expires no matter what
 your IdP decided. Push-based signals turn "revoked in principle" into "revoked in seconds"; without them,
 your response time is your token lifetime.</p>
 

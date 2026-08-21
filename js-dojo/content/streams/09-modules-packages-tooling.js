@@ -54,7 +54,7 @@ import data from "./d.json" with { type: "json" };   // import attributes
 
 <h4>Circular imports</h4>
 <p>A imports B and B imports A. ESM handles it without crashing (the second import gets a partially
-initialised module), but that usually means reading a binding that is still in its temporal dead zone,
+initialized module), but that usually means reading a binding that is still in its temporal dead zone,
 producing a <code>ReferenceError</code> or, worse, an <code>undefined</code> that flows onward. Treat a
 cycle as a design signal: extract the shared piece into a third module.</p>`,
 docs:[['MDN (JavaScript modules)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules'],['MDN (import)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import'],['Node (ECMAScript modules)','https://nodejs.org/api/esm.html']],

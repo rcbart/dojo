@@ -1,18 +1,18 @@
 STREAMS.push({icon:'🔐',title:'Security & Crypto APIs',blurb:'Hashing, password storage, AES-GCM, signatures & HMAC, keystores and TLS: the JCA, done right.',lessons:[
 {id:'sec1',title:'Hashing & password storage',body:`
 <p>Two different jobs people confuse:</p>
-<div class="codeSample" data-hl>// INTEGRITY hashing — fast by design (checksums, dedup, content ids)
+<div class="codeSample" data-hl>// INTEGRITY hashing, fast by design (checksums, dedup, content ids)
 MessageDigest md = MessageDigest.getInstance("SHA-256");
 byte[] hash = md.digest(data);
 String hex = HexFormat.of().formatHex(hash);       // Java 17+
 
-// PASSWORD storage — must be SLOW and SALTED. Never bare SHA-256!
+// PASSWORD storage, must be SLOW and SALTED. Never bare SHA-256!
 byte[] salt = new byte[16];
 new SecureRandom().nextBytes(salt);                 // SecureRandom, never Random
 PBEKeySpec spec = new PBEKeySpec(password, salt, 210_000, 256);  // OWASP-level iterations
 SecretKeyFactory f = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
 byte[] derived = f.generateSecret(spec).getEncoded();
-// store: salt + iterations + derived — verify by re-deriving and comparing
+// store: salt + iterations + derived, verify by re-deriving and comparing
 // constant-time: MessageDigest.isEqual(a, b), never Arrays.equals for secrets</div>
 <p>Why slow &amp; salted: a fast hash lets attackers try billions of guesses per second against a leaked table; the salt kills rainbow tables; iterations make each guess cost real time. In new systems prefer Argon2/bcrypt via a library (Spring Security's <code>PasswordEncoder</code>); PBKDF2 is the built-in JCA option. In CIAM, password storage policy is an audit line item; this is the vocabulary behind it.</p>
 
@@ -21,7 +21,7 @@ byte[] derived = f.generateSecret(spec).getEncoded();
 <p>That cost has a direct consequence worth designing for: password verification is now expensive on purpose, so an unauthenticated endpoint that hashes on every request is a denial-of-service surface. Rate-limit before you hash, not after.</p>
 
 <h4>Why Argon2 beats PBKDF2 on modern hardware</h4>
-<p>PBKDF2 is <i>compute</i>-hard, and compute is exactly what a GPU has thousands of units of: a single card tries billions of PBKDF2-SHA256 guesses per second. Argon2id is <b>memory</b>-hard: each guess needs a configurable block of RAM, which a GPU cannot parallelise cheaply because memory, not arithmetic, becomes the bottleneck. bcrypt sits in between, with a small fixed memory requirement that still frustrates naive GPU cracking. Prefer Argon2id for new systems, accept bcrypt in existing ones, and use PBKDF2 when a FIPS-validated primitive is mandatory.</p>
+<p>PBKDF2 is <i>compute</i>-hard, and compute is exactly what a GPU has thousands of units of: a single card tries billions of PBKDF2-SHA256 guesses per second. Argon2id is <b>memory</b>-hard: each guess needs a configurable block of RAM, which a GPU cannot parallelize cheaply because memory, not arithmetic, becomes the bottleneck. bcrypt sits in between, with a small fixed memory requirement that still frustrates naive GPU cracking. Prefer Argon2id for new systems, accept bcrypt in existing ones, and use PBKDF2 when a FIPS-validated primitive is mandatory.</p>
 
 <h4>Storing and upgrading</h4>
 <p>Store the algorithm, its parameters, the salt and the derived key in one self-describing string: the <code>$argon2id$v=19$m=65536,t=3,p=4$salt$hash</code> convention, or Spring Security's <code>{bcrypt}</code> prefix. That is what makes a migration possible without a mass reset: on a successful login you have the plaintext for a moment, so re-hash with the new parameters and write it back. Systems that stored a bare hash with no parameters cannot do this, and they are the reason "we cannot upgrade our password hashing" appears in real incident reviews.</p>
@@ -80,13 +80,13 @@ KeyGenerator kg = KeyGenerator.getInstance("AES");
 kg.init(256);
 SecretKey key = kg.generateKey();
 
-// encrypt: FRESH 12-byte IV per message — reuse breaks GCM catastrophically
+// encrypt: FRESH 12-byte IV per message, reuse breaks GCM catastrophically
 byte[] iv = new byte[12];
 new SecureRandom().nextBytes(iv);
 Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
 cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(128, iv));
 byte[] ct = cipher.doFinal(plaintext);
-// ship iv || ct together — the IV is not secret, uniqueness is what matters
+// ship iv || ct together, the IV is not secret, uniqueness is what matters
 
 // decrypt: same params; tampered ciphertext throws AEADBadTagException
 cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, iv));
@@ -148,13 +148,13 @@ public class AesGcm {
 }`}},
 {id:'sec3',title:'Signatures & HMAC: how JWTs are really made',body:`
 <p>Both prove authenticity; the difference is who can verify:</p>
-<div class="codeSample" data-hl>// HMAC — shared secret: whoever can VERIFY can also FORGE. (JWT HS256)
+<div class="codeSample" data-hl>// HMAC, shared secret: whoever can VERIFY can also FORGE. (JWT HS256)
 Mac mac = Mac.getInstance("HmacSHA256");
 mac.init(new SecretKeySpec(secret, "HmacSHA256"));
 byte[] tag = mac.doFinal(message);
 // verify: recompute and compare with MessageDigest.isEqual (constant time!)
 
-// DIGITAL SIGNATURE — key pair: sign with PRIVATE, anyone verifies with PUBLIC. (JWT RS256/ES256)
+// DIGITAL SIGNATURE, key pair: sign with PRIVATE, anyone verifies with PUBLIC. (JWT RS256/ES256)
 KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
 kpg.initialize(256);
 KeyPair pair = kpg.generateKeyPair();
@@ -182,7 +182,7 @@ SIGNATURE   a key pair. sign with PRIVATE, verify with PUBLIC.
             -> asymmetric trust. this is what makes federation possible.</div>
 <p>That is why an IdP signs with RS256 or ES256: it can distribute the public key to a hundred resource
 servers, publish it at a JWKS endpoint, and rotate it; none of those servers can issue a token. Use
-HS256 across organisational boundaries and every party that validates tokens can also create them, so a
+HS256 across organizational boundaries and every party that validates tokens can also create them, so a
 breach of the least careful one compromises the whole system.</p>
 <p>HS256 is not wrong everywhere; it is fine and faster when one service signs and the same service
 verifies, such as a stateless session cookie. The question is always <b>who needs to verify</b>.</p>
@@ -196,7 +196,7 @@ how many bytes matched, enough to forge a tag one byte at a time given enough at
 input. Two classic attacks follow from trusting it: <code>alg: none</code>, where a library helpfully
 accepts an unsigned token; and the RS256→HS256 confusion, where the attacker signs with the <i>public</i>
 key as an HMAC secret and a naive verifier (which picks its method from the header) accepts it. The
-defence is to decide the expected algorithm from your configuration and reject anything else.</p>
+defense is to decide the expected algorithm from your configuration and reject anything else.</p>
 
 <h4>Sizing and choosing</h4>
 <p>An HMAC secret must have real entropy: at least as many bits as the hash output, from a

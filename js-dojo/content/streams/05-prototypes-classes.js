@@ -72,7 +72,7 @@ run:{call:'lookup',cases:[
  {name:'own shadows inherited',args:[['speak'],['speak'],'speak'],expect:'own'},
  {name:'found nowhere',args:[['name'],['speak'],'fly'],expect:'undefined'},
  {name:'no own properties at all',args:[[],['speak'],'speak'],expect:'inherited'}]},
-prompt:`Write <code>function lookup(ownKeys, protoKeys, key)</code> modelling the chain: return <code>"own"</code> when the key is in <code>ownKeys</code>, <code>"inherited"</code> when it is only in <code>protoKeys</code>, and <code>"undefined"</code> when it is in neither.`,
+prompt:`Write <code>function lookup(ownKeys, protoKeys, key)</code> modeling the chain: return <code>"own"</code> when the key is in <code>ownKeys</code>, <code>"inherited"</code> when it is only in <code>protoKeys</code>, and <code>"undefined"</code> when it is in neither.`,
 starter:`function lookup(ownKeys, protoKeys, key) {
   return null;
 }`,
@@ -177,7 +177,7 @@ function runAccount(amounts) {
   return a.balance;                    // a getter: no parentheses
 }`,
 tests:[{d:'uses a private field',re:'#balance'},{d:'declares a getter',re:'get\\s+balance'},{d:'guards against non-positive deposits',re:'amount\\s*>\\s*0'},{d:'creates an instance',re:'new\\s+Account'}],
-behavior:`Your class is exercised through runAccount, so the field, the guard and the getter all have to work. The negative case executes the guard, and the empty case relies on the field initialiser rather than a constructor.`,
+behavior:`Your class is exercised through runAccount, so the field, the guard and the getter all have to work. The negative case executes the guard, and the empty case relies on the field initializer rather than a constructor.`,
 hints:['A field declared with # is private to the class body.','The getter is read as a.balance with no call parentheses.','Return this from deposit so calls can chain.']},
 {title:'Static members belong to the class',diff:'medium',lang:'js',
 run:{call:'countInstances',cases:[
@@ -283,13 +283,13 @@ creates the object, so touching <code>this</code> first is a <code>ReferenceErro
 surprised. If <code>Dog.speak()</code> throws where <code>Animal.speak()</code> returned a string, or
 demands arguments the parent did not, you have broken every function that accepts an
 <code>Animal</code>. That constraint (the Liskov substitution principle) is what makes inheritance safe,
-and it is violated more often than it is honoured.</p>
+and it is violated more often than it is honored.</p>
 
 <h4>The judgement: is-a versus has-a</h4>
 <div class="codeSample" data-hl>INHERIT when the subclass genuinely IS the parent, everywhere the parent
   is accepted, with no exceptions you have to document.
 
-COMPOSE when you only wanted to reuse some behaviour.
+COMPOSE when you only wanted to reuse some behavior.
 
 // the classic mistake:
 class Stack extends Array { }     // a Stack IS-A Array? then it also has
@@ -323,9 +323,9 @@ ex:{title:'Inherit or compose?',diff:'easy',lang:'js',
 run:{call:'decide',cases:[
  {name:'a genuine is-a with substitution holding',args:[true,true,false],expect:'inherit'},
  {name:'is-a claimed but substitution breaks',args:[true,false,false],expect:'compose'},
- {name:'only reusing some behaviour',args:[false,true,false],expect:'compose'},
+ {name:'only reusing some behavior',args:[false,true,false],expect:'compose'},
  {name:'is-a and substitutable but the hierarchy is already deep',args:[true,true,true],expect:'compose'},
- {name:'nothing in its favour',args:[false,false,false],expect:'compose'}]},
+ {name:'nothing in its favor',args:[false,false,false],expect:'compose'}]},
 prompt:`Write <code>function decide(isA, substitutable, alreadyDeep)</code> returning <code>"inherit"</code> only when it is a genuine is-a relationship <b>and</b> substitution holds <b>and</b> the hierarchy is not already deep. Everything else returns <code>"compose"</code>.`,
 starter:`function decide(isA, substitutable, alreadyDeep) {
   return null;
@@ -352,7 +352,7 @@ its own hooks.</p>
 // well-known symbols are the language's extension points:
 Symbol.iterator      // makes an object iterable
 Symbol.asyncIterator // makes it work with for await...of
-Symbol.toStringTag   // customises Object.prototype.toString</div>
+Symbol.toStringTag   // customizes Object.prototype.toString</div>
 
 <h4>The iterable protocol</h4>
 <p>An object is <b>iterable</b> if it has a <code>[Symbol.iterator]</code> method returning an
@@ -387,7 +387,7 @@ const [a, b] = range;             // and so does destructuring</div>
 function* naturals() { let n = 1; while (true) yield n++; }
 const first = naturals().next().value;   // 1, and nothing else computed</div>
 <p>Laziness is the real value: you can express "all the lines in this enormous file" or "every page of
-this API" as a sequence without materialising it, which the Node streams lesson builds on directly.</p>
+this API" as a sequence without materializing it, which the Node streams lesson builds on directly.</p>
 
 <h4>Making a plain object iterable</h4>
 <p>Objects are not iterable by default. This is deliberate, since it is ambiguous whether you meant keys,
@@ -512,7 +512,7 @@ solution:`function* chunkGen(list, size) {
 function chunks(list, size) {
   return [...chunkGen(list, size)];      // spread drives next() to done
 }`,
-tests:[{d:'declares a generator',re:'function\\s*\\*'},{d:'yields each chunk',re:'yield\\s'},{d:'slices without mutating',re:'\\.slice\\('},{d:'a consumer materialises it',re:'\\.\\.\\.|Array\\.from'}],
+tests:[{d:'declares a generator',re:'function\\s*\\*'},{d:'yields each chunk',re:'yield\\s'},{d:'slices without mutating',re:'\\.slice\\('},{d:'a consumer materializes it',re:'\\.\\.\\.|Array\\.from'}],
 behavior:`Five cases execute the whole protocol: the spread in chunks() calls next() until done, and each yield hands out one slice. The generator itself never builds the full result; the same chunkGen could feed a for...of that stops after the first chunk of a million-element list, and would compute exactly one slice.`,
 hints:['Step the index by size, not by one.','slice(i, i + size) is safely clipped at the end of the list.','chunks() just spreads the generator - the exercise is the yield loop.']}}
 

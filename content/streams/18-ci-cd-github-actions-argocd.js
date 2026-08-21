@@ -155,10 +155,10 @@ jobs:
 </ul>
 
 <h4>Fast feedback is a design goal, not a nice-to-have</h4>
-<p>A pipeline that takes twenty minutes changes behaviour: people stop waiting for it, batch their changes,
-and merge on hope. Under five minutes it becomes part of the edit-run loop. That is worth optimising for
+<p>A pipeline that takes twenty minutes changes behavior: people stop waiting for it, batch their changes,
+and merge on hope. Under five minutes it becomes part of the edit-run loop. That is worth optimizing for
 directly: cache dependencies, run the fast checks first so an obvious failure returns in seconds, and
-parallelise the slow ones.</p>
+parallelize the slow ones.</p>
 <p>Order matters more than raw speed. Compile and unit tests before integration tests; static checks before
 either. Failing in ninety seconds on a typo beats failing in twelve minutes on the same typo after the
 container has been built.</p>
@@ -255,8 +255,8 @@ must eventually remove.</li>
 <p>Rollback is not a plan, it is a rehearsed action with a number attached: how long does it take, who can
 do it at 3am, and does it survive the migration you just ran? If the answer to any of those is unknown, you
 have a forward-only deploy and should treat every release accordingly. The environments should differ only
-in <b>configuration</b> (same image, different variables), because an artefact rebuilt per environment is
-no longer the artefact you tested.`,
+in <b>configuration</b> (same image, different variables), because an artifact rebuilt per environment is
+no longer the artifact you tested.`,
 docs:[['GitHub Environments & protection rules','https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment'],['Blue/green deployments, Fowler','https://martinfowler.com/bliki/BlueGreenDeployment.html'],['Canary release, Fowler','https://martinfowler.com/bliki/CanaryRelease.html']],
 ex:{title:'Strategy triage',lang:'text',
 prompt:`One answer per numbered line: (1) the strategy that replaces instances gradually behind a load balancer (one word), (2) the strategy that runs old and new stacks side by side and flips traffic at the router (two words, slash ok), (3) the strategy that sends a small % of real traffic to the new version first (one word), (4) staging tested image :abc123: does production <code>rebuild</code> or <code>reuse</code> that image? (5) the migration discipline that lets two app versions share one schema during a rolling deploy (hyphenated phrase: ______-then-______), (6) which is faster to execute: <code>rollback</code> or <code>revert</code>?`,
@@ -369,7 +369,7 @@ ArgoCD watches ─▶ OutOfSync ─▶ sync ─▶ cluster runs :SHA   (rollback
 <p>The pipeline stops at the registry. Actions builds, tests and pushes an image; ArgoCD notices a changed
 manifest and reconciles the cluster toward it. Nothing in CI holds cluster credentials, which is the point:
 a compromised build job cannot deploy, because it has no way to reach production. It can only publish an
-artefact and propose a change.</p>
+artifact and propose a change.</p>
 <p>That separation also changes what "deployed" means. Push-based CD reports success when the deploy command
 returns; pull-based CD reports it when the cluster's actual state matches the declared state, which is a
 stronger claim, and the reason drift shows up as a status rather than as a surprise months later.</p>

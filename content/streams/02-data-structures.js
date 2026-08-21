@@ -243,8 +243,8 @@ hints:['Copy with a spread or slice before sorting.','A comparator returns a neg
 <div class="codeSample" data-hl>Deque&lt;String&gt; stack = new ArrayDeque&lt;&gt;();   // THE stack in modern Java
 stack.push("a");                             // add on top
 stack.push("b");
-stack.peek();                                // "b" — look, don't take
-stack.pop();                                 // "b" — take from top
+stack.peek();                                // "b", look, don't take
+stack.pop();                                 // "b", take from top
 stack.isEmpty();
 
 // java.util.Stack exists but is LEGACY: it extends Vector (synchronized,
@@ -322,7 +322,7 @@ hints:['A plain array is a stack: push() and pop().','Map each closer to the ope
 <p>🌱 <b>Starting from zero:</b> a queue is the line at a checkout: first come, first served. Where the plate-stack reverses order, the queue preserves it, which makes it the shape of fairness: things are handled in the order they arrived.</p>
 <p>A queue is first-in-first-out: task queues, BFS, buffering. A <b>deque</b> (double-ended queue) does both ends in O(1) and therefore impersonates stacks, queues and sliding windows.</p>
 <div class="codeSample" data-hl>Queue&lt;Task&gt; q = new ArrayDeque&lt;&gt;();
-q.offer(task);          // enqueue (returns false when full — add() throws)
+q.offer(task);          // enqueue (returns false when full, add() throws)
 q.peek();               // head, or null when empty (element() throws)
 q.poll();               // dequeue, or null when empty (remove() throws)
 
@@ -336,7 +336,7 @@ void record(Deque&lt;String&gt; history, String event, int max) {
 }</div>
 
 <h4>Two API families, and why both exist</h4>
-<p>Every queue operation comes in two flavours: <code>offer/poll/peek</code> return a sentinel (<code>false</code> or <code>null</code>) on failure, and <code>add/remove/element</code> throw. Neither is better; they encode whether "empty" is an expected condition or a bug. A worker draining a queue expects empty and uses <code>poll</code>; code that has just checked <code>size()</code> and must find an element uses <code>remove</code> so a violated assumption fails loudly. Mixing them in one class is how a NoSuchElementException reaches production.</p>
+<p>Every queue operation comes in two flavors: <code>offer/poll/peek</code> return a sentinel (<code>false</code> or <code>null</code>) on failure, and <code>add/remove/element</code> throw. Neither is better; they encode whether "empty" is an expected condition or a bug. A worker draining a queue expects empty and uses <code>poll</code>; code that has just checked <code>size()</code> and must find an element uses <code>remove</code> so a violated assumption fails loudly. Mixing them in one class is how a NoSuchElementException reaches production.</p>
 
 <h4>ArrayDeque is a circular buffer, and that is why it wins</h4>
 <p>Underneath is an array with a head index and a tail index that wrap around. Adding at either end writes one slot and moves one index: no shifting, no per-element allocation. <code>LinkedList</code> also implements <code>Deque</code>, and it allocates a node object per element with two pointers each: worse memory, worse cache locality, and slower in practice for every operation except splicing in the middle, which you almost never do. The rule of thumb: <b>ArrayDeque unless you have measured a reason.</b></p>
@@ -421,13 +421,13 @@ PriorityQueue&lt;Integer&gt; maxHeap = new PriorityQueue&lt;&gt;(Comparator.reve
 PriorityQueue&lt;Trade&gt; byAmount =
     new PriorityQueue&lt;&gt;(Comparator.comparingLong(Trade::amountCents));
 
-// TOP-K LARGEST of a huge stream — keep a min-heap of size k:
+// TOP-K LARGEST of a huge stream, keep a min-heap of size k:
 PriorityQueue&lt;Integer&gt; heap = new PriorityQueue&lt;&gt;();   // min at the top
 for (int x : stream) {
     heap.offer(x);
     if (heap.size() &gt; k) heap.poll();   // evict the smallest survivor
 }
-// heap now holds the k largest — O(n log k), constant memory</div>
+// heap now holds the k largest, O(n log k), constant memory</div>
 
 <h4>What a binary heap actually is</h4>
 <p>Not a tree of objects but an <b>array</b> interpreted as a complete binary tree, where the children of index <code>i</code> live at <code>2i+1</code> and <code>2i+2</code>. The only invariant is that a parent is never larger than its children (for a min-heap); siblings are unordered, which is why the structure is cheap to maintain. Insert appends at the end and <i>sifts up</i> while it is smaller than its parent; remove takes the root, moves the last element into its place and <i>sifts down</i>. Both walk one root-to-leaf path, so both are O(log n), and no pointers or allocations are involved.</p>
@@ -614,9 +614,9 @@ public class IntList {
 record ClientId(String tenant, String id) {}   // records do it right for free
 
 // choosing the map:
-// HashMap        — no order, fastest
-// LinkedHashMap  — insertion (or ACCESS) order preserved
-// TreeMap        — sorted by key, O(log n), range queries (headMap/tailMap)
+// HashMap, no order, fastest
+// LinkedHashMap, insertion (or ACCESS) order preserved
+// TreeMap, sorted by key, O(log n), range queries (headMap/tailMap)
 
 // the famous trick: LinkedHashMap in access-order = an LRU cache
 new LinkedHashMap&lt;K, V&gt;(16, 0.75f, true) {     // true = access order!

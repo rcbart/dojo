@@ -193,8 +193,8 @@ two systems.</p>
 
 <h4>The rule this lesson exists to enforce</h4>
 <p><b>Measure first.</b> Intuition about performance is wrong at a rate that should be embarrassing:
-the bottleneck is regularly an N+1 query, a misconfigured pool, a serialisation cost or a log statement,
-and almost never the algorithm someone was about to rewrite. Optimising without a profile is guessing with
+the bottleneck is regularly an N+1 query, a misconfigured pool, a serialization cost or a log statement,
+and almost never the algorithm someone was about to rewrite. Optimizing without a profile is guessing with
 extra steps, and it usually makes the code worse while leaving the problem in place.</p>`,
 docs:[['JFR, Oracle docs','https://docs.oracle.com/en/java/javase/21/jfapi/why-use-jfr-api.html'],['JDK Mission Control','https://openjdk.org/projects/jmc/'],['jfr tool, reference','https://docs.oracle.com/en/java/javase/21/docs/specs/man/jfr.html']],
 ex:{title:'Flight recorder drill',lang:'shell',
@@ -248,7 +248,7 @@ jfr summary probe.jfr`}},
 <p>Choosing the wrong mode is the most common reason a profiling session finds nothing: a service waiting on a database is invisible in a CPU profile, and its flame graph will look reassuringly flat while the latency is entirely real.</p>
 
 <h4>Method</h4>
-<p>Profile the workload you care about, under load, on hardware that resembles production; a profile of a JVM doing nothing is a picture of the JIT warming up. Take a baseline before the change and a second profile after, and compare like for like; "it feels faster" is not a measurement. And read the graph top-down for width, not bottom-up for familiarity: the frame you recognise is rarely the frame that is costing you.</p>`,
+<p>Profile the workload you care about, under load, on hardware that resembles production; a profile of a JVM doing nothing is a picture of the JIT warming up. Take a baseline before the change and a second profile after, and compare like for like; "it feels faster" is not a measurement. And read the graph top-down for width, not bottom-up for familiarity: the frame you recognize is rarely the frame that is costing you.</p>`,
 docs:[['async-profiler, GitHub','https://github.com/async-profiler/async-profiler'],['Flame graphs, Brendan Gregg','https://www.brendangregg.com/flamegraphs.html']],
 ex:{title:'Profiler triage',lang:'text',
 prompt:`Answer on the numbered lines: (1) the command for a 30s CPU flame graph of pid 4242 into <code>cpu.html</code>, (2) the event mode that shows what is creating GC pressure, (3) the event mode that catches time spent blocked on I/O that a CPU profile misses, (4) in a flame graph, what the WIDTH of a frame means, (5) true or false: left-to-right order in a flame graph is chronological.`,

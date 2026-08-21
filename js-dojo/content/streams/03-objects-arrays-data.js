@@ -8,13 +8,13 @@ dates, errors), so this lesson underpins most of the rest.</p>
 <div class="codeSample" data-hl>const user = {
   name: "Ada",
   age: 36,
-  "favourite colour": "green",     // quotes needed: the key has a space
+  "favorite color": "green",     // quotes needed: the key has a space
   greet() { return "hi"; },        // method shorthand
   address: { city: "London" }      // nested object
 };
 
 user.name                  // "Ada"          dot notation
-user["favourite colour"]   // "green"        bracket notation - required here
+user["favorite color"]   // "green"        bracket notation - required here
 const key = "age";
 user[key]                  // 36             bracket notation for a VARIABLE key
 
@@ -31,7 +31,7 @@ delete user.age;                // remove (rare in practice)
 "name" in user                  // true - includes inherited keys
 Object.hasOwn(user, "name")     // true - OWN keys only. prefer this.
 
-Object.keys(user)               // ["name", "favourite colour", ...]
+Object.keys(user)               // ["name", "favorite color", ...]
 Object.values(user)
 Object.entries(user)            // [["name","Ada"], ...] - the one to loop over</div>
 
@@ -50,7 +50,7 @@ o1 === o2                      // true  - same reference
 
 // and it is why passing an object to a function lets it modify yours:
 function rename(u) { u.name = "changed"; }   // mutates the CALLER's object</div>
-<p>This explains a great deal of confusing behaviour: why <code>const</code> objects can still change,
+<p>This explains a great deal of confusing behavior: why <code>const</code> objects can still change,
 why a function "changed my data", why comparing two objects with <code>===</code> is almost never what
 you want.</p>
 
@@ -164,7 +164,7 @@ function top2(list) { return [...list].sort((a,b) =&gt; b-a)[0]; }  // safe</div
 // the chain grows past three or four steps, one loop is both faster
 // and clearer. clarity first; reach for the loop when it IS clearer.</div>
 
-<h4>Two behaviours worth knowing</h4>
+<h4>Two behaviors worth knowing</h4>
 <p><code>forEach</code> cannot <code>break</code> and ignores return values; if you want to stop early
 use <code>some</code>, <code>find</code> or a <code>for...of</code>. And array "holes" (from
 <code>new Array(3)</code> or deleting an element) are skipped by <code>map</code> and
@@ -209,19 +209,19 @@ solution:`function topThree(numbers) {
 tests:[{d:'copies before sorting',re:'\\[\\s*\\.\\.\\.\\s*numbers\\s*\\]|toSorted'},{d:'sorts numerically',re:'b\\s*-\\s*a'},{d:'takes the first three',re:'slice\\s*\\(\\s*0\\s*,\\s*3\\s*\\)'}],
 behavior:`The first case fails outright with a bare sort(): as strings, 100 sorts before 9 because "1" < "9". slice handles short arrays without a length check, and the spread copy is what stops the caller's array being reordered underneath them.`,
 hints:['Spread into a new array first, or use toSorted().','A numeric comparator subtracts: b - a for descending.','slice(0, 3) is safe even when there are fewer than three items.']},
-{title:'Group and summarise',diff:'hard',lang:'js',
-run:{call:'summarise',cases:[
+{title:'Group and summarize',diff:'hard',lang:'js',
+run:{call:'summarize',cases:[
  {name:'groups by category and totals each',args:[[{cat:'a',price:10},{cat:'b',price:5},{cat:'a',price:2}]],expect:[['a',12],['b',5]]},
  {name:'sorts by total, highest first',args:[[{cat:'a',price:1},{cat:'b',price:50}]],expect:[['b',50],['a',1]]},
  {name:'a single category',args:[[{cat:'a',price:7}]],expect:[['a',7]]},
  {name:'an empty list',args:[[]],expect:[]},
  {name:'ties keep first-seen order',args:[[{cat:'a',price:5},{cat:'b',price:5}]],expect:[['a',5],['b',5]]},
  {name:'handles many categories',args:[[{cat:'x',price:1},{cat:'y',price:3},{cat:'x',price:1},{cat:'z',price:2}]],expect:[['y',3],['x',2],['z',2]]}]},
-prompt:`Write <code>function summarise(items)</code> that groups items by <code>cat</code>, sums each group's <code>price</code>, and returns <code>[category, total]</code> pairs sorted by total <b>descending</b>. On a tie, the category seen first must come first. An empty list returns <code>[]</code>.`,
-starter:`function summarise(items) {
+prompt:`Write <code>function summarize(items)</code> that groups items by <code>cat</code>, sums each group's <code>price</code>, and returns <code>[category, total]</code> pairs sorted by total <b>descending</b>. On a tie, the category seen first must come first. An empty list returns <code>[]</code>.`,
+starter:`function summarize(items) {
   return [];
 }`,
-solution:`function summarise(items) {
+solution:`function summarize(items) {
   const totals = new Map();                    // Map preserves insertion order
   for (const item of items) {
     totals.set(item.cat, (totals.get(item.cat) ?? 0) + item.price);
@@ -253,8 +253,8 @@ const [head, ...tail] = [1, 2, 3];        // head 1, tail [2, 3]
 let a = 1, b = 2;
 [a, b] = [b, a];</div>
 <p>The most valuable use is in <b>parameters</b>, because it names the arguments at the call site:</p>
-<div class="codeSample" data-hl>function draw({ x = 0, y = 0, colour = "black" } = {}) { ... }
-draw({ colour: "red" });    // clear at the call site, order-independent
+<div class="codeSample" data-hl>function draw({ x = 0, y = 0, color = "black" } = {}) { ... }
+draw({ color: "red" });    // clear at the call site, order-independent
 draw();                     // the trailing = {} is what makes this legal
 
 // compare:  draw(0, 0, "red")  - which argument is which?</div>
@@ -342,7 +342,7 @@ o[42] = "x";  Object.keys(o);   // ["42"] - the number became a string</div>
 <p>Choose <code>Map</code> when keys are not strings, when you add and remove frequently, when insertion
 order matters, or when the keys come from user input: a plain object inherits from
 <code>Object.prototype</code>, so a key of <code>"constructor"</code> or <code>"__proto__"</code> behaves
-strangely. Choose a plain object for fixed, known-at-write-time shapes, and because it serialises to JSON
+strangely. Choose a plain object for fixed, known-at-write-time shapes, and because it serializes to JSON
 where a <code>Map</code> does not.</p>
 
 <h4><code>Set</code>: unique values</h4>
@@ -457,7 +457,7 @@ const days = (end - start) / (1000 * 60 * 60 * 24);
 // library (Temporal, the replacement API, fixes this properly).</div>
 
 <h4>Intl: formatting you do not have to write</h4>
-<p>Every "format this nicely" function you are tempted to write already exists, localised, in
+<p>Every "format this nicely" function you are tempted to write already exists, localized, in
 <code>Intl</code>:</p>
 <div class="codeSample" data-hl>new Intl.DateTimeFormat("en-GB", { dateStyle: "long" }).format(d)
 // "3 March 2026"

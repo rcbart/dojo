@@ -2,10 +2,13 @@
 
 > **Status note (this document is historical).** It was written before the identity material was split
 > out into its own course, so its figures describe IAM *inside* DevDojo and no longer match anything.
-> What it proposed has shipped: per-domain percentage belts, per-domain dan tracks, and an IAM curriculum
+> Two of the three things it proposed have shipped: per-domain percentage belts, and an IAM curriculum
 > that outgrew the estimate here and became [IdentityDojo](identity-dojo/README.md), now 14 streams and
-> 149 lessons. For current figures see [ARCHITECTURE.md](ARCHITECTURE.md); this file is kept for the
-> reasoning, not the numbers.
+> 149 lessons. The third, a dan track in every domain, has not: the three dan streams that existed
+> when this was written are still the only three, and they still sit together in one "Senior Track
+> (Dan)" group rather than one track per domain. The repository has since grown to four courses plus a five-course cloud-native path, 71
+> streams, 609 lessons and 702 hands-on exercises in total, all live at https://roniam.dev/. For current
+> figures see the [README](README.md); this file is kept for the reasoning, not the numbers.
 
 This captures the product direction you described so nothing is lost, and proposes a concrete,
 low-risk way to build it. Three things are in scope:
@@ -122,9 +125,13 @@ Design) need more belt lessons to make black belt meaningful. This is a phased e
 1. ~~**Engine: per-domain belts + per-domain dan rendering**~~, done; belts are percentage-based
    per domain.
 2. ~~**Finish the IAM belt track + IAM dan track**~~, done, and extended well beyond the original
-   map (see the status note in section 3).
+   map (see the status note in section 3), then moved out of DevDojo entirely into IdentityDojo.
 3. **Roll dan tracks + fill gaps across the other domains**, domain by domain, until each is a full
-   white→black + dan journey. ← *current focus*
+   white→black + dan journey. **Still open, and no closer than the day this was written.** DevDojo
+   still carries the same three dan streams it had then, System Design & Tradeoffs, Failure-First:
+   Distributed Systems, and Working with Real Code, grouped in the one senior section. No other domain
+   has a dan track of its own. The build effort since went into new courses instead: JSDojo, MLDojo,
+   and the five cloud-native crash courses.
 
 Each step ends green (`verify.js` 0 failures) and rebuilt.
 
@@ -133,10 +140,16 @@ Each step ends green (`verify.js` 0 failures) and rebuilt.
 IAM is now by far the deepest domain at 115 lessons; the rest of the course is 200. The gap is the
 work remaining. Rough shape of it, from the current content:
 
+> **Update: the comparison in that sentence no longer exists.** The IAM material left DevDojo and
+> became IdentityDojo, 14 streams and 149 lessons, built and deployed on its own. DevDojo is 29
+> streams and 207 lessons. The imbalance that prompted the split is gone; the shape of the gap below
+> is unchanged, now measured against a course that contains no IAM at all.
+
 - **Deep enough for a meaningful black belt**: Java & the JVM, data structures & algorithms,
   concurrency, web/HTTP & APIs, DevOps & delivery.
 - **Thinner, needs belt lessons**: data & persistence, systems & networking, architecture & design.
 - **Missing a dedicated dan track**: most domains outside IAM and the three existing dan streams.
+  Still true, and the three are still the only ones.
 
 The IAM build is a useful template for the others: ground the vocabulary first in a foundations
 sub-category, then let each protocol or tool stream assume it.

@@ -14,7 +14,7 @@ STREAMS.push({iam:true,sec:'Tokens: JWT & JOSE',icon:'🔑',title:'OAuth, JWT & 
 <p>With the Nimbus JOSE+JWT library, a generator produces a JWK directly, tagged with its metadata:</p>
 <div class="codeSample" data-hl>// RSA-2048 signing key, as a JWK
 RSAKey rsa = new RSAKeyGenerator(2048)
-        .keyUse(KeyUse.SIGNATURE)          // use: "sig" — this key is for signatures
+        .keyUse(KeyUse.SIGNATURE)          // use: "sig", this key is for signatures
         .algorithm(JWSAlgorithm.RS256)     // alg: RS256
         .keyIDFromThumbprint(true)         // kid: a stable RFC 7638 fingerprint of the key
         .generate();
@@ -24,12 +24,12 @@ String json = publicOnly.toJSONString();   // the JSON you serve at a JWKS endpo
 <p>The <b>kid</b> (key ID) is important: it is a stable label for the key. Because issuers hold several keys and rotate them, the kid is how a verifier later knows <i>which</i> key signed a given token (next lessons).</p>
 
 <h4>Reading a JWK</h4>
-<p>A JWK is a JSON object whose fields depend on the key type. The parameters worth recognising:</p>
+<p>A JWK is a JSON object whose fields depend on the key type. The parameters worth recognizing:</p>
 <div class="codeSample" data-hl>{ "kty": "EC",          // key type: EC, RSA or oct (symmetric)
   "crv": "P-256",       // the curve, for EC keys
   "x": "...", "y": "...",   // the public point. RSA instead has "n" and "e"
   "kid": "2026-08-a",   // key id: your label, any string, must be unique
-  "use": "sig",         // sig (signature) or enc (encryption) — never both
+  "use": "sig",         // sig (signature) or enc (encryption), never both
   "alg": "ES256" }      // the algorithm this key is intended for</div>
 <p>A <b>private</b> JWK adds the secret parameters: <code>d</code> for EC, and <code>d</code>, <code>p</code>, <code>q</code> and friends for RSA. That is the single most dangerous mistake in this area: publishing the full JWK instead of its public half exposes your signing key, and it looks identical to the correct thing at a glance. Libraries provide an explicit "public only" projection precisely because the difference is a few fields.</p>
 <p>A <b>JWKS</b> is simply <code>{"keys": [ ... ]}</code>: several JWKs together, which is what makes rotation possible: publish the new key beside the old one, and verifiers holding either can keep working.</p>
@@ -97,11 +97,11 @@ public class JwkKeys {
 </ul>
 <p>Beyond these you add <b>custom claims</b> for your app: for example, a <code>role</code> the API uses for authorization. (In real systems, namespace custom claims, e.g. <code>https://myapp/role</code>, so they never collide with standard ones.)</p>
 <div class="codeSample" data-hl>JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .issuer("https://auth.example.com")     // iss — who signed it
-        .subject("user-1234")                   // sub — who it is about
-        .audience("https://api.example.com")    // aud — who may accept it
-        .expirationTime(new Date(now + 900_000))// exp — valid 15 minutes
-        .issueTime(new Date())                  // iat — now
+        .issuer("https://auth.example.com")     // iss, who signed it
+        .subject("user-1234")                   // sub, who it is about
+        .audience("https://api.example.com")    // aud, who may accept it
+        .expirationTime(new Date(now + 900_000))// exp, valid 15 minutes
+        .issueTime(new Date())                  // iat, now
         .claim("role", "admin")                 // custom claim
         .build();</div>
 
@@ -345,7 +345,7 @@ boolean valid = SignedJWT.parse(token).verify(new RSASSAVerifier(publicKey));
 <h4>The forgeries that do work</h4>
 <p>Every real JWT forgery attacks the <b>verification code</b>, never the mathematics:</p>
 <ul>
-<li><b>alg: none</b>, the specification's unsecured mode. A library that honours it accepts a token with an empty signature. Refuse it explicitly.</li>
+<li><b>alg: none</b>, the specification's unsecured mode. A library that honors it accepts a token with an empty signature. Refuse it explicitly.</li>
 <li><b>Algorithm confusion</b>: change <code>alg</code> from RS256 to HS256 and sign with the issuer's <i>public</i> key as the HMAC secret. A verifier that picks its routine from the header will validate it. Selecting the algorithm from your own policy makes this impossible.</li>
 <li><b>Decoding without verifying</b>: libraries offer a decode function that parses claims and checks nothing, and it is used by mistake constantly. If your code path can reach the claims without a verification result, that is the bug.</li>
 <li><b>Ignoring iss and aud</b>: a genuine, unexpired, correctly-signed token from a different issuer or intended for a different API is not a forgery at all; it is a valid token you should have rejected.</li>
@@ -494,7 +494,7 @@ they are.</p>
 holding a digest could brute-force the value: there are only so many plausible birthdates, and a
 verifier could hash them all until one matched. The salt makes the digest input unguessable, so an
 undisclosed claim stays genuinely hidden.</p>
-<p>Salts must also be <b>unique per disclosure</b>. Reusing one lets a verifier recognise the same claim
+<p>Salts must also be <b>unique per disclosure</b>. Reusing one lets a verifier recognize the same claim
 value across two presentations, which quietly reintroduces the correlation the format exists to
 prevent.</p>
 
@@ -518,7 +518,7 @@ with the matching private key, naming the verifier and the moment:</p>
 
 <h4>What it does and does not solve</h4>
 <ul>
-<li><b>Solves data minimisation.</b> Prove one fact, disclose one fact.</li>
+<li><b>Solves data minimization.</b> Prove one fact, disclose one fact.</li>
 <li><b>Solves holder binding</b>, with the key-binding JWT.</li>
 <li><b>Does not make you unlinkable.</b> The issuer's signature is identical in every presentation, so
 two colluding verifiers can tell they saw the same credential. Only more exotic cryptography (BBS+
@@ -603,7 +603,7 @@ the forgery happily.</p>
 config change, while everything absent from the list is refused by default.</p>
 
 <h4>Where post-quantum actually sits</h4>
-<p>NIST standardised ML-KEM (key establishment), ML-DSA and SLH-DSA (signatures) in 2024. The urgency
+<p>NIST standardized ML-KEM (key establishment), ML-DSA and SLH-DSA (signatures) in 2024. The urgency
 differs sharply by use:</p>
 <ul>
 <li><b>Confidentiality is urgent</b>, because of <i>harvest now, decrypt later</i>: traffic captured today
@@ -612,7 +612,7 @@ servers already negotiate <b>hybrid</b> TLS key exchange (X25519 combined with M
 JWE-encrypted data deserves attention now.</li>
 <li><b>Signatures are less urgent</b>, because a signature only needs to resist forgery <i>during the
 lifetime of the thing it signs</i>. A five-minute access token is not a harvest-now target. Long-lived
-artefacts (certificates, firmware, verifiable credentials valid for years) are.</li>
+artifacts (certificates, firmware, verifiable credentials valid for years) are.</li>
 </ul>
 <p>The practical answer for an identity system in 2026 is not to swap to ML-DSA everywhere. It is:
 <b>inventory where each algorithm is named</b>, remove the hardcoded strings, keep token lifetimes short,

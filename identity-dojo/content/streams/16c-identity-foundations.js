@@ -25,7 +25,7 @@ Glossary is one click away. The quick exercise below cements the acronyms you wi
 </ul>
 
 <h4>How to use the glossary while you read</h4>
-<p>Open the <b>&#128214; Glossary</b> in the sidebar as a full reference, or select any term inside a lesson to see its definition in place. The order it is organised in (core distinction, actors, tokens, protocols, flows, endpoints, concepts, threats, governance) is also a reasonable reading order if you want the vocabulary in one pass before the protocols that use it.</p>
+<p>Open the <b>&#128214; Glossary</b> in the sidebar as a full reference, or select any term inside a lesson to see its definition in place. The order it is organized in (core distinction, actors, tokens, protocols, flows, endpoints, concepts, threats, governance) is also a reasonable reading order if you want the vocabulary in one pass before the protocols that use it.</p>
 <p>One habit pays for itself throughout this course: whenever a lesson introduces a term, say out loud <b>which role it belongs to and in which protocol</b>. "Assertion: that is SAML's word for the signed statement about the user, the equivalent of an ID token." Terms anchored to a role and a protocol stay put; terms learned as isolated definitions do not.</p>`,
 docs:[['OAuth 2.0 roles (RFC 6749 §1.1)','https://www.rfc-editor.org/rfc/rfc6749#section-1.1'],['OIDC terminology','https://openid.net/specs/openid-connect-core-1_0.html#Terminology'],['CSRF (OWASP)','https://owasp.org/www-community/attacks/csrf']],
 ex:{title:'Expand the acronyms',
@@ -220,7 +220,7 @@ today just as often a cloud identity provider's user store. It holds accounts, t
 (department, manager, email), and their group memberships. When a later lesson says "the IdP looks up
 the user," this is what it looks in.</p>
 <div class="codeSample" data-hl>PERSON            Ada, a real human being
-  |  identity proofing        (passport checked — happens once, before login)
+  |  identity proofing        (passport checked, happens once, before login)
   v
 ACCOUNT           id=u-4817  in the corporate directory
   |  identifier               ada@corp.example
@@ -275,7 +275,7 @@ solution:`public class IdentityTerms {
     }
 }`},
 {title:'Joiner, mover, leaver',
-prompt:`Write <code>Lifecycle</code> with <code>static String stage(String event)</code> returning <code>"joiner"</code> for <code>"hired"</code>, <code>"mover"</code> for <code>"transferred"</code> or <code>"promoted"</code>, <code>"leaver"</code> for <code>"terminated"</code> or <code>"resigned"</code>, and <code>"unknown"</code> otherwise (including <code>null</code>). Then <code>static boolean endsAccess(String event)</code>, returning <code>true</code> only for a leaver, the stage where deprovisioning must run, and the one organisations most often skip.`,
+prompt:`Write <code>Lifecycle</code> with <code>static String stage(String event)</code> returning <code>"joiner"</code> for <code>"hired"</code>, <code>"mover"</code> for <code>"transferred"</code> or <code>"promoted"</code>, <code>"leaver"</code> for <code>"terminated"</code> or <code>"resigned"</code>, and <code>"unknown"</code> otherwise (including <code>null</code>). Then <code>static boolean endsAccess(String event)</code>, returning <code>true</code> only for a leaver, the stage where deprovisioning must run, and the one organizations most often skip.`,
 starter:`public class Lifecycle {
     static String stage(String event) {
         return null;
@@ -329,14 +329,14 @@ packaged and signed into an <b>assertion</b> &rarr; carried inside a <b>token</b
 envelope; the claims are the letter.</p>
 
 <h4>Registered claims: the ones every token has</h4>
-<p>A handful of claim names are standardised, and they are about the <i>envelope</i>, not the person:</p>
+<p>A handful of claim names are standardized, and they are about the <i>envelope</i>, not the person:</p>
 <div class="codeSample" data-hl>iss  issuer      who asserted this          "https://idp.example.com"
 sub  subject    who it is about            "u-4817"      <- the identifier
 aud  audience   who it is FOR              "orders-api"
 exp  expires    after this, worthless      1767225600
 iat  issued at  when it was minted         1767222000
 nbf  not before don't accept it before     1767222000
-jti  token id   unique, for replay defence "b7c1-...-9f"
+jti  token id   unique, for replay defense "b7c1-...-9f"
 
 // everything else is up to the issuer; these are about the person:
 "email":"ada@corp.example", "department":"Platform", "groups":["platform","oncall"]</div>
@@ -348,7 +348,7 @@ your user records on email is a bug that surfaces years later when someone chang
 <p>An IdP knows far more about a person than any one app should receive. <b>Attribute release</b> is the
 per-app policy deciding which attributes become claims: an expense tool may get
 <code>department</code> and <code>manager</code>, a public forum only a nickname. This is data
-minimisation, and in a consumer context it is what a consent screen is approving.</p>
+minimization, and in a consumer context it is what a consent screen is approving.</p>
 <p><b>Attribute mapping</b> handles the fact that everyone names things differently: the directory says
 <code>sAMAccountName</code>, SAML sends <code>urn:oid:0.9.2342...</code>, OIDC says
 <code>preferred_username</code>, and your app wants <code>username</code>. Mapping is the translation
@@ -432,8 +432,8 @@ PAIRWISE     each relying party gets a DIFFERENT sub for the same user.
 // every time you return - the identifier is still stable, just local.</div>
 
 <h4>Sector identifiers, and the problem they solve</h4>
-<p>If pairwise is derived per <i>client</i>, an organisation running five applications gets five different
-identifiers for one user, and now <i>they</i> cannot recognise their own customer across their own
+<p>If pairwise is derived per <i>client</i>, an organization running five applications gets five different
+identifiers for one user, and now <i>they</i> cannot recognize their own customer across their own
 products. That is the opposite problem.</p>
 <p>A <b>sector identifier</b> is the grouping key. Several clients declare the same sector, so they receive
 the same pairwise <code>sub</code> as each other and a different one from everyone else. The sector is
@@ -446,7 +446,7 @@ sector_identifier_uri = https://example.com/redirect_uris.json
 
 sub = hash(sector_identifier + local_user_id + salt)
 
-// same sector  -> same sub  (one company recognises its own user)
+// same sector  -> same sub  (one company recognizes its own user)
 // other sector -> different sub  (nobody else can join to it)</div>
 
 <h4>What it costs, and when not to use it</h4>
@@ -476,7 +476,7 @@ run:{call:'subjectType',cases:[
  {name:'workforce, even for sensitive data',args:['workforce','health',false],expect:'public'},
  {name:'consumer apps inside one company share a sector',args:['consumer','retail',true],expect:'pairwise-same-sector'},
  {name:'workforce is unaffected by the sector flag',args:['workforce','hr',true],expect:'public'}]},
-prompt:`Write <code>function subjectType(population, domain, sameOrganisation)</code>. Workforce always returns <code>"public"</code>: correlation across internal systems is the point. Consumer returns <code>"pairwise-same-sector"</code> when the applications belong to one organisation, and <code>"pairwise"</code> otherwise.`,
+prompt:`Write <code>function subjectType(population, domain, sameOrganisation)</code>. Workforce always returns <code>"public"</code>: correlation across internal systems is the point. Consumer returns <code>"pairwise-same-sector"</code> when the applications belong to one organization, and <code>"pairwise"</code> otherwise.`,
 starter:`function subjectType(population, domain, sameOrganisation) {
   return null;
 }`,
@@ -484,9 +484,9 @@ solution:`function subjectType(population, domain, sameOrganisation) {
   if (population === "workforce") return "public";   // checked FIRST
   return sameOrganisation ? "pairwise-same-sector" : "pairwise";
 }`,
-tests:[{d:'workforce is always public',re:'"workforce"'},{d:'a shared sector groups an organisation',re:'pairwise-same-sector'},{d:'consumer defaults to pairwise',re:'"pairwise"'}],
-behavior:`Six cases execute, and the fourth is the one that pins the ordering: workforce identity stays public even when the data is sensitive, because HR, payroll and the helpdesk are supposed to be able to recognise the same employee. Checking the domain before the population would get that backwards. The sector flag exists so one company's five consumer apps still recognise their own customer while remaining unlinkable to anyone else.`,
-hints:['Population is the stronger condition; check it before anything else.','Workforce wants correlation; consumer identity wants to prevent it.','The sector groups applications that belong to the same organisation.']}},
+tests:[{d:'workforce is always public',re:'"workforce"'},{d:'a shared sector groups an organization',re:'pairwise-same-sector'},{d:'consumer defaults to pairwise',re:'"pairwise"'}],
+behavior:`Six cases execute, and the fourth is the one that pins the ordering: workforce identity stays public even when the data is sensitive, because HR, payroll and the helpdesk are supposed to be able to recognize the same employee. Checking the domain before the population would get that backwards. The sector flag exists so one company's five consumer apps still recognize their own customer while remaining unlinkable to anyone else.`,
+hints:['Population is the stronger condition; check it before anything else.','Workforce wants correlation; consumer identity wants to prevent it.','The sector groups applications that belong to the same organization.']}},
 
 {id:'idftok',title:'What a token actually is (and how it differs from a JWT)',body:`
 <p>Every lesson from here on says <b>token</b> constantly. Before that word can carry any weight, you
@@ -519,19 +519,19 @@ gets it, and it stays valid until it expires, because there is nothing central t
 lookup; structured tokens are fast and offline-verifiable but public and hard to revoke.</p>
 
 <h4>What they actually look like</h4>
-<div class="codeSample" data-hl>// 1. OPAQUE — random bytes, base64/hex. Means nothing. Must be looked up.
+<div class="codeSample" data-hl>// 1. OPAQUE, random bytes, base64/hex. Means nothing. Must be looked up.
 2YotnFZFEjr1zCsicMWpAA
 
-// 2. JWT (JSON Web Token) — three base64url chunks joined by dots
+// 2. JWT (JSON Web Token), three base64url chunks joined by dots
 eyJhbGciOiJSUzI1NiIsImtpZCI6ImsxIn0.eyJzdWIiOiJhbGljZSIsImV4cCI6MTc2NzIyNTYwMH0.SflKxwRJSMeKKF2QT4f
 
-// 3. SAML assertion — the same idea, but signed XML (much larger)
+// 3. SAML assertion, the same idea, but signed XML (much larger)
 &lt;saml:Assertion&gt;&lt;saml:Subject&gt;alice&lt;/saml:Subject&gt;&lt;ds:Signature&gt;...&lt;/ds:Signature&gt;&lt;/saml:Assertion&gt;
 
-// 4. Session cookie id — an opaque token that happens to ride in a cookie
+// 4. Session cookie id, an opaque token that happens to ride in a cookie
 Cookie: session=8f3a91c07b2e4d15
 
-// 5. API key — a long-lived opaque token identifying an application, not a person
+// 5. API key, a long-lived opaque token identifying an application, not a person
 X-Api-Key: sk_live_51H7qYbK9mNp2</div>
 <p>Look at #1 and #4: <b>the same kind of token</b>, differing only in which HTTP header carries it.
 Look at #2 and #3: the same kind of token, differing only in JSON vs XML. Format and transport are
@@ -543,10 +543,10 @@ dots, each <b>base64url</b>-encoded (base64 with <code>+/</code> swapped for <co
 <code>=</code> padding dropped, so it survives being put in a URL):</p>
 <div class="codeSample" data-hl>header . payload . signature
 
-// header — what algorithm signed this, and which key
+// header, what algorithm signed this, and which key
 {"alg":"RS256","kid":"k1","typ":"JWT"}
 
-// payload — the "claims", just a JSON object of facts
+// payload, the "claims", just a JSON object of facts
 {"iss":"https://idp.example.com",  // issuer: who minted it
  "sub":"alice",                    // subject: who it is about
  "aud":"orders-api",               // audience: who it is FOR
@@ -554,7 +554,7 @@ dots, each <b>base64url</b>-encoded (base64 with <code>+/</code> swapped for <co
  "iat":1767222000,                 // issued at
  "scope":"orders:read"}            // what it permits
 
-// signature — issuer signs base64url(header) + "." + base64url(payload)</div>
+// signature, issuer signs base64url(header) + "." + base64url(payload)</div>
 <p><b>Base64url is encoding, not encryption.</b> This is the single most misunderstood point about
 JWTs. Anyone who intercepts the token can paste the middle chunk into a decoder and read every claim.
 The signature stops <i>tampering</i>, not <i>reading</i>. Never put a password, a national id, or
@@ -656,7 +656,7 @@ something the first time you meet it.
 <p><b>JWKS</b>: "JSON Web Key Set". When an issuer signs tokens with a private key, verifiers need the
 matching <i>public</i> key. Publishing it at a well-known URL is how: a small JSON document listing the
 issuer's current public keys, each with a <code>kid</code> (key id) that the token's header names. A
-verifier fetches it once, caches it, and re-fetches when it sees a <code>kid</code> it does not recognise,
+verifier fetches it once, caches it, and re-fetches when it sees a <code>kid</code> it does not recognize,
 which is what makes key rotation a non-event. The JOSE stream builds one.</p>
 <p><b>Refresh token</b>: an access token is deliberately short-lived so a leaked one expires quickly, but
 sending the user back through login every few minutes is unacceptable. A refresh token is a second,
@@ -710,7 +710,7 @@ starter:`public class TokenShape {
         return false;
     }
 }`,
-tests:[{d:'handles null and empty up front',re:'==\\s*null|isEmpty\\s*\\(\\s*\\)'},{d:'splits on the escaped dot',re:'split\\s*\\(\\s*"\\\\\\\\."'},{d:'recognises the 3-part JWS compact form',re:'3'},{d:'recognises the 5-part JWE compact form',re:'5'},{d:'falls through to opaque',re:'"opaque"'},{d:'introspection is driven by the classification',re:'"opaque"\\s*\\.\\s*equals|equals\\s*\\(\\s*"opaque"'}],
+tests:[{d:'handles null and empty up front',re:'==\\s*null|isEmpty\\s*\\(\\s*\\)'},{d:'splits on the escaped dot',re:'split\\s*\\(\\s*"\\\\\\\\."'},{d:'recognizes the 3-part JWS compact form',re:'3'},{d:'recognizes the 5-part JWE compact form',re:'5'},{d:'falls through to opaque',re:'"opaque"'},{d:'introspection is driven by the classification',re:'"opaque"\\s*\\.\\s*equals|equals\\s*\\(\\s*"opaque"'}],
 behavior:`classify("a.b.c") returns "jwt". classify("a.b.c.d.e") returns "jwe" (the JWE compact form has five parts). classify("2YotnFZFEjr1zCsicMWpAA") returns "opaque". classify(null) and classify("") return "none". needsIntrospection is true only for the opaque case: a JWT can be verified offline with the issuer public key, whereas an opaque token means nothing without a call to the issuer.`,
 hints:['Guard first: <code>if (token == null || token.isEmpty()) return "none";</code>','<code>int n = token.split("\\\\.").length;</code> then return based on <code>n == 3</code> and <code>n == 5</code>.','<code>return "opaque".equals(classify(token));</code>, which reuses the method rather than repeating the shape logic.'],
 solution:`public class TokenShape {
@@ -791,7 +791,7 @@ browser never holds a token at all.</p>
 <p>People say "token" for both. A session id <i>is</i> a token in the loose sense, a string that stands for
 your authenticated state. The distinction that matters is not the word but whether the value
 <b>carries</b> its meaning or <b>refers</b> to it. Ask that question about any credential and the rest of
-its behaviour follows: how it is revoked, what happens if it leaks, whether the issuer can be offline.</p>
+its behavior follows: how it is revoked, what happens if it leaks, whether the issuer can be offline.</p>
 
 <h4>Stateful and stateless, in plain English</h4>
 <p>Those two words sit underneath everything above, and they are worth ten seconds on their own because
@@ -799,12 +799,12 @@ they get used as jargon far more often than they get explained.</p>
 <p><b>Stateful</b> means <i>the server remembers something between requests.</i> It wrote something down.
 <b>Stateless</b> means <i>it remembers nothing</i>: every request has to arrive carrying whatever is needed
 to handle it, because the server starts from scratch each time.</p>
-<div class="codeSample" data-hl>STATEFUL  — the doctor's surgery
+<div class="codeSample" data-hl>STATEFUL, the doctor's surgery
   you give your name, and they pull your file. the file lives with THEM.
   they can add to it, correct it, or shred it at any moment.
   but the receptionist has to be able to REACH the filing cabinet.
 
-STATELESS — the coffee shop loyalty card
+STATELESS, the coffee shop loyalty card
   the card itself carries the nine stamps. nothing is written down at
   the shop. any branch can read it, with no filing cabinet anywhere.
   but if you claim a stamp was wrong, there is nothing to correct -
@@ -864,6 +864,253 @@ solution:`public class Bearer {
     }
 }`}},
 
+{id:'idf2b',title:'Tokens in production: size, revocation lag, and when a session is the better answer',body:`
+<p>The previous lesson gave you the architectural choice. This one is what that choice costs at three in
+the morning, eighteen months later, when the system is running and the pager has gone off. None of it is
+exotic, and almost none of it appears in the tutorial that talked the team into tokens.</p>
+
+<h4>A JWT is not free, and it rides on every single request</h4>
+<p>A session cookie carries an opaque id: thirty-two bytes, and it never grows, because the id
+<i>refers</i> to the state instead of containing it. A JWT contains the state. With a modest payload,
+issuer, subject, audience, expiry, issued-at and a scope string, you are looking at 400 to 800 bytes once
+it is signed and encoded. That is fine. Then someone adds <code>groups</code>, or <code>roles</code>, or
+<code>entitlements</code>, and the token stops having a size and starts having a growth rate.</p>
+<p>Two multipliers make this worse than it looks in the debugger. Base64url costs four characters for
+every three bytes, so the token on the wire is about a third larger than the JSON you are reading. And it
+rides on <i>every</i> request: every API call, every image behind an authenticated route, every poll. That
+is bandwidth on a mobile connection, bytes ahead of the first byte of your response, and a copy of itself
+in every line of every access log.</p>
+<div class="codeSample" data-hl>CLAIMS (the JSON you read)        ON THE WIRE (what you actually send)
+sub, iss, aud, exp, iat, scope     ~156 B  ->   ~600 B   signed and encoded
+  + 30 group DNs                  ~2976 B  ->  ~4360 B
+  + 66 group DNs                  ~6329 B  ->  ~8815 B
+
+// an RS256 signature is 256 bytes on its own, 342 once base64url has been
+// applied, before a single claim. the payload you read is not what you send.</div>
+
+<h4>Where it breaks, in the order you meet it</h4>
+<div class="codeSample" data-hl>4 KB     one cookie. every browser enforces it. past the limit the
+         browser DROPS the cookie, silently: no error, no console
+         warning. the user is logged out at random and nobody can
+         reproduce it.
+8 KB     nginx, large_client_header_buffers, default "4 8k": a single
+         header line has to fit in one 8k buffer.
+8190 B   Apache, LimitRequestFieldSize.
+16 KB    Node, --max-http-header-size. older releases defaulted to
+         8 KB, and some of those are still running somewhere.
+lower    load balancers, API gateways and serverless front ends often
+         cap well below 8 KB, and rarely say so where you would look.</div>
+<p>Past a header limit, the polite failure is <b>431 Request Header Fields Too Large</b>, which at least
+names itself. The unkind one is a proxy that truncates the header and forwards it anyway: your service
+receives a JWT missing its last few hundred characters, fails the signature check, and answers with a 400
+that says nothing about size. You will spend an hour on the signature before you think to count the bytes.
+Paste the token into authlint (<code>/authlint/</code>) and it warns above 4 KB and calls anything above
+8 KB critical.</p>
+
+<h4>It breaks for your longest-serving employees first</h4>
+<p>This is the part worth carrying around. Group membership accumulates and nothing removes it: nobody
+is ever taken off the security group for a project that ended in 2019. Token size therefore tracks tenure,
+and the first people to cross a limit are the people who have been there longest, which in most
+organizations means the people with the most authority and the least appetite for a mystery.</p>
+<p>It passes every test, because the fixtures give the user three groups. It passes staging, because the
+staging directory was copied before the last two reorganizations. Then it fails in production, on the
+first day, for the VP of Engineering, as a login loop rather than as an error anyone can search for. A
+<code>groups</code> array over forty entries is worth flagging on sight, which is why authlint does.</p>
+
+<h4>Keeping the token small</h4>
+<ul>
+<li><b>Carry an identifier and a few claims, not a permission dump.</b> The resource server already has a
+database, and looking up what this subject may do gives an answer that is current rather than as old as
+the token.</li>
+<li><b>Scopes rather than enumerated permissions.</b> <code>orders.write</code> is one claim that stands
+for a hundred things. A hundred permission strings is a hundred permission strings, on every request.</li>
+<li><b>Filter <code>groups</code> to the ones the audience cares about.</b> The orders API has no use for
+the payroll groups, so leaving them out is a smaller token and a smaller disclosure.</li>
+<li><b>Split-token, or a BFF.</b> The browser holds an opaque token or a session cookie, and the gateway
+mints the JWT inward, where it is short-lived and narrowed to one audience. The OAuth stream builds the
+pattern properly.</li>
+</ul>
+<p>And the evidence that this is a wall rather than a tidiness preference: Microsoft Entra hit it and had
+to design around it. Past a threshold the token stops carrying the groups and carries
+<code>_claim_names</code> and <code>_claim_sources</code> instead, a pointer to a Microsoft Graph endpoint
+your application has to call for the list. That is the <b>groups overage</b> claim, and it turns an offline
+check into a network call exactly when you did not plan for one. The largest identity provider in the
+enterprise market gave up on fitting groups into a token, which is a fair guide to how the argument ends
+in your system.</p>
+
+<h4>Stateless means you cannot take it back</h4>
+<p>Revocation lag is not a tuning parameter you get to choose separately. It is the token lifetime,
+exactly.</p>
+<div class="codeSample" data-hl>09:00  HR disables the account. the directory is now correct.
+09:00  the access token minted at 08:31 is still signed, still
+       unexpired, and still says role=admin. nothing consults
+       the directory, because that was the entire point.
+09:14  a production bucket is deleted. every request verified fine.
+10:00  exp passes. NOW the token stops working.</div>
+<p>Sixty-minute access tokens mean a sixty-minute window in which a disabled account stays authorized.
+That can be defensible. What is not defensible is not knowing the number, which lives in whatever your
+identity provider was configured with in 2021 rather than in your security policy.</p>
+
+<h4>The logout that does not log out</h4>
+<p>Clearing the cookie on logout deletes the client's copy of the token. It does not delete the token. The
+bytes are still signed, still unexpired, and still accepted, so anyone who captured them, from a shared
+machine, a proxy log, an error report, a browser extension, is holding a working credential until
+<code>exp</code>. Logout felt like an event. To the resource server, nothing happened.</p>
+
+<h4>Every fix reintroduces the state you were avoiding</h4>
+<ul>
+<li><b>A deny-list.</b> Now every verification consults a shared store. That is the session lookup wearing
+a different name, with the one advantage that it holds only the exceptions.</li>
+<li><b>Introspection on every call.</b> Correct and current, at the cost of a network hop per request and
+the authorization server sitting in the availability path of everything you run.</li>
+<li><b>Short expiry plus refresh.</b> The refresh is a lookup at the token endpoint, so the state is still
+there. You have moved it off the hot path and reduced how often anyone consults it.</li>
+<li><b>Continuous Access Evaluation.</b> The issuer pushes revocation events to resource servers, which
+react in seconds instead of at expiry. It works, and it is a subscription, a delivery guarantee and a
+piece of state. The Advanced OAuth and Threats stream gives it a lesson of its own.</li>
+</ul>
+<p>Notice the shape of that list. Teams adopt JWTs to avoid a lookup, discover they need revocation, and
+add a lookup back to get it. At that point the question worth asking out loud is what the JWT is still
+buying. Sometimes the answer is real: offline verification between services, an issuer that can be down
+for ten minutes without taking the estate with it. Sometimes nobody has asked since the decision was
+made.</p>
+<p>Shortening the lifetime does not escape the trade either. Five-minute tokens cut the revocation window
+by a factor of twelve and multiply traffic to your token endpoint by the same factor, on an endpoint doing
+asymmetric crypto and a database write for every call. Lifetime is a dial with load on one end and
+staleness on the other, and there is no setting that is free.</p>
+
+<h4>When a session is simply the better answer</h4>
+<p>Not a preference, a decision procedure. A <b>session</b> wins when all of these hold: one domain, a
+backend you control, first-party clients only, and a logout that has to be immediate. A <b>token</b> wins
+when any of these hold: genuinely cross-domain, several services that must verify without calling you, a
+third-party client, or a mobile app against a public API.</p>
+<div class="codeSample" data-hl>ONE DOMAIN, ONE BACKEND, YOUR OWN USERS  ->  session cookie
+  32 bytes. never grows. revocable at any instant. HttpOnly, so
+  script running in the page cannot read it.
+
+MANY SERVICES / THIRD PARTIES / MOBILE  ->  token
+  self-contained, verifiable by anyone holding the public key,
+  and it costs you the ability to change your mind before exp.</div>
+<p><b>"We used JWTs because they scale" is the most common piece of cargo-cult reasoning in this
+field.</b> Most applications that reach for stateless never had a horizontal-scaling problem. They had one
+server, or three behind a load balancer, and a session store nobody ever measured. A session lookup in
+Redis is well under a millisecond, and it buys a logout that works and nothing readable if the cookie
+leaks. Scaling is a real reason once you have measured it. It is not a default.</p>
+
+<h4>The rest of the list, briefly</h4>
+<ul>
+<li><b>Clock skew.</b> An <code>iat</code> a few seconds in the future, or an <code>exp</code> a few
+seconds past, produces intermittent 401s that reproduce on nothing and clear up by themselves. Sixty
+seconds of leeway is the usual allowance, but fix time sync first: widening the allowance to hide a
+drifting clock is how a five-second problem becomes a five-minute one.</li>
+<li><b>Caching the JWKS.</b> Fetch it per request and you have written a denial-of-service tool pointed at
+your own issuer. Cache it forever and the next key rotation logs out everybody. Cache with a TTL, refetch
+when a <code>kid</code> you do not recognize arrives, and rate-limit that refetch, or an attacker sends
+junk kids and you do the fetching on their behalf.</li>
+<li><b>Rotation as a flag day.</b> If your tokens carry no <code>kid</code>, no verifier can tell which
+key signed what, so the only way to rotate is to swap everything at once and hope. A <code>kid</code> in
+the header costs nothing and turns rotation into an ordinary Tuesday.</li>
+<li><b>Tokens in URLs.</b> A token in a query string lands in browser history, in the
+<code>Referer</code> header sent to the next site, in every proxy access log along the way, and in the
+report your crash reporter uploads. Worse: a JWT payload is base64, not encryption, so personal data in a
+token is personal data in every one of those places.</li>
+<li><b>The <code>aud</code> you never checked.</b> If your service accepts any token from an issuer it
+trusts, a token minted for a different service, quite possibly one with looser rules about who gets one,
+works against yours. Checking the audience is the one line that stops a valid token being valid
+everywhere.</li>
+</ul>
+
+<h4>The bottom line</h4>
+<p>Sessions and tokens fail differently, and the previous lesson said so. What this one adds is that the
+token failures arrive late, hit your most senior people first, and take forms that do not name themselves:
+a cookie that vanishes, a 400 with no explanation, a fired employee whose access lingers for an hour, a
+logout that logs nobody out. Choose tokens when the shape of the system needs them, and a session when it
+does not.</p>`,
+docs:[['RFC 7519 (JSON Web Token)','https://www.rfc-editor.org/rfc/rfc7519'],['RFC 8725 (JWT Best Current Practices)','https://www.rfc-editor.org/rfc/rfc8725'],['RFC 9068 (JWT Profile for OAuth 2.0 Access Tokens)','https://www.rfc-editor.org/rfc/rfc9068'],['MDN, 431 Request Header Fields Too Large','https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/431'],['Microsoft Entra, access token claims (the groups overage claim)','https://learn.microsoft.com/en-us/entra/identity-platform/access-token-claims-reference'],['nginx, large_client_header_buffers','https://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers']],
+exs:[{title:'Will this token fit?',lang:'js',diff:'medium',
+run:{call:'tokenFit',cases:[
+ {name:'a lean token: subject, audience, expiry, one scope',args:[{iss:'https://login.example.com/',sub:'ada.lovelace',aud:'api://orders',iat:1767222000,exp:1767225600,name:'Ada Lovelace',scope:'orders.read'}],expect:{bytes:600,fitsCookie:true,fitsHeader:true,bytesWithoutGroups:600,fitsCookieWithoutGroups:true}},
+ {name:'thirty group memberships: past the cookie, inside the header',args:[{iss:'https://login.example.com/',sub:'ada.lovelace',aud:'api://orders',iat:1767222000,exp:1767225600,name:'Ada Lovelace',scope:'orders.read',groups:[
+   'CN=SG-APP-Payments-Approvers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Billing-Approvers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Fraud-Approvers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Treasury-Approvers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payroll-Approvers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Trading-Approvers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Lending-Approvers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Clearing-Approvers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Custody-Approvers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Reporting-Approvers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payments-Readers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Billing-Readers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Fraud-Readers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Treasury-Readers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payroll-Readers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Trading-Readers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Lending-Readers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Clearing-Readers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Custody-Readers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Reporting-Readers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payments-Operators-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Billing-Operators-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Fraud-Operators-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Treasury-Operators-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payroll-Operators-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Trading-Operators-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Lending-Operators-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Clearing-Operators-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Custody-Operators-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Reporting-Operators-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com']}],expect:{bytes:4360,fitsCookie:false,fitsHeader:true,bytesWithoutGroups:600,fitsCookieWithoutGroups:true}},
+ {name:'sixty-six group memberships: the fifteen-year employee',args:[{iss:'https://login.example.com/',sub:'ada.lovelace',aud:'api://orders',iat:1767222000,exp:1767225600,name:'Ada Lovelace',scope:'orders.read',groups:[
+   'CN=SG-APP-Payments-Approvers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Billing-Approvers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Fraud-Approvers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Treasury-Approvers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payroll-Approvers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Trading-Approvers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Lending-Approvers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Clearing-Approvers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Custody-Approvers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Reporting-Approvers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payments-Readers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Billing-Readers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Fraud-Readers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Treasury-Readers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payroll-Readers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Trading-Readers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Lending-Readers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Clearing-Readers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Custody-Readers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Reporting-Readers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payments-Operators-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Billing-Operators-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Fraud-Operators-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Treasury-Operators-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payroll-Operators-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Trading-Operators-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Lending-Operators-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Clearing-Operators-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Custody-Operators-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Reporting-Operators-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payments-Auditors-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Billing-Auditors-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Fraud-Auditors-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Treasury-Auditors-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payroll-Auditors-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Trading-Auditors-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Lending-Auditors-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Clearing-Auditors-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Custody-Auditors-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Reporting-Auditors-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payments-Admins-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Billing-Admins-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Fraud-Admins-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Treasury-Admins-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payroll-Admins-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Trading-Admins-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Lending-Admins-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Clearing-Admins-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Custody-Admins-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Reporting-Admins-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payments-Reviewers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Billing-Reviewers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Fraud-Reviewers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Treasury-Reviewers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payroll-Reviewers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Trading-Reviewers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Lending-Reviewers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Clearing-Reviewers-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Custody-Reviewers-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Reporting-Reviewers-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payments-Support-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com','CN=SG-APP-Billing-Support-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Fraud-Support-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com','CN=SG-APP-Treasury-Support-EMEA-Tier1,OU=Security Groups,OU=EMEA,DC=corp,DC=example,DC=com',
+   'CN=SG-APP-Payroll-Support-AMER-Tier2,OU=Security Groups,OU=AMER,DC=corp,DC=example,DC=com','CN=SG-APP-Trading-Support-APAC-Tier3,OU=Security Groups,OU=APAC,DC=corp,DC=example,DC=com']}],expect:{bytes:8815,fitsCookie:false,fitsHeader:false,bytesWithoutGroups:600,fitsCookieWithoutGroups:true}}]},
+prompt:`A token is only useful if it fits where it has to travel. Write <code>function tokenFit(claims)</code> that models the encoded size of a signed JWT and decides where it will survive.<br><br>Model the size as <code>392</code> bytes of fixed overhead (the encoded header, an encoded RS256 signature and the two dots) plus the base64url-encoded payload, which is <code>Math.ceil(JSON.stringify(claims).length * 4 / 3)</code> for ASCII claims. Return an object with: <code>bytes</code>, the encoded size; <code>fitsCookie</code>, true when <code>bytes</code> is at most <code>4096</code>; <code>fitsHeader</code>, true when it is at most <code>8192</code>; <code>bytesWithoutGroups</code>, the same size computed with the <code>groups</code> claim removed; and <code>fitsCookieWithoutGroups</code>. Do not modify the object you were given.`,
+starter:`function tokenFit(claims) {
+  return null;
+}`,
+solution:`function tokenFit(claims) {
+  // 48 bytes of encoded header + 342 for an encoded RS256 signature + 2 dots.
+  // Only the payload varies, so the rest is one constant.
+  var OVERHEAD = 392;
+  function encoded(c) {
+    // base64url spends 4 characters on every 3 bytes, so the wire size is a
+    // third larger than the JSON anyone reads in a debugger.
+    return OVERHEAD + Math.ceil(JSON.stringify(c).length * 4 / 3);
+  }
+  var lean = {};
+  for (var k of Object.keys(claims)) {
+    if (k !== "groups") lean[k] = claims[k];   // copy, never delete from the input
+  }
+  var bytes = encoded(claims);
+  var trimmed = encoded(lean);
+  return {
+    bytes: bytes,
+    fitsCookie: bytes <= 4096,
+    fitsHeader: bytes <= 8192,
+    bytesWithoutGroups: trimmed,
+    fitsCookieWithoutGroups: trimmed <= 4096
+  };
+}`,
+tests:[{d:'measures the serialized claims',re:'JSON\\.stringify'},{d:'inflates the payload for base64url',re:'4\\s*/\\s*3'},{d:'rounds the encoded length up',re:'Math\\.ceil'},{d:'counts the header and signature overhead',re:'392'},{d:'checks the 4 KB cookie ceiling',re:'4096'},{d:'checks the 8 KB header ceiling',re:'8192'},{d:'removes the groups claim to get the second number',re:'"groups"'}],
+behavior:`The lean token is 600 bytes and fits everywhere. Thirty group DNs take it to 4,360, which is past the 4 KB cookie limit and still inside an 8 KB header: the user is logged out at random while the API calls keep working, which is why this failure is so hard to place. Sixty-six DNs reach 8,815 and fail both. In every case the same claims without groups come back to 600, so the fix is not a bigger buffer. The 30-group case is the one that catches the two plausible wrong answers: skip the base64url inflation and you compute 3,368 and call it fine, and use one threshold for both cookie and header and you get fitsCookie right by accident.`,
+hints:['Write the size calculation once as a small helper, then call it twice: once with the claims you were given, once without groups.','Math.ceil(JSON.stringify(c).length * 4 / 3) is the encoded payload. Add the 392 bytes of overhead before comparing against any limit.','Build the trimmed object by copying every key except groups. Using delete would mutate the caller’s claims, and this function is meant to answer a question, not change anything.']}]},
+
 {id:'idfcast',title:'The cast: one set of actors, four sets of names',body:`
 <p>Identity has four or five actors, and every protocol renamed all of them. Most of the difficulty in
 reading OAuth, OIDC and SAML side by side is not conceptual; it is that <i>the same box has four
@@ -873,7 +1120,7 @@ names</i>. Learn the boxes once here and the protocol streams become translation
 <ul>
 <li><b>The subject</b>: the human (or workload) the whole exchange is about. In OAuth, when the
 subject is also the one granting permission, the spec calls them the <b>resource owner</b>: the person
-who <i>owns</i> the data an app wants and is therefore the only one who can authorise access to it.</li>
+who <i>owns</i> the data an app wants and is therefore the only one who can authorize access to it.</li>
 <li><b>The app the user is using</b>: wants to log the user in, or to call an API for them. OAuth and
 OIDC call it the <b>client</b>; OIDC also calls it the <b>relying party (RP)</b> because it relies on
 someone else's authentication; SAML calls it the <b>service provider (SP)</b>.</li>
@@ -957,9 +1204,9 @@ solution:`public class Actors {
 <p>These three words get used as if they were interchangeable, and they describe completely different
 kinds of thing. Getting them apart is probably the clarification that pays off most in the whole domain,
 because almost every muddled identity conversation is really a collision between them.</p>
-<div class="codeSample" data-hl>SSO         is an EXPERIENCE   — what the user feels: "I only logged in once"
-Federation  is an ARCHITECTURE — who is trusted to authenticate, across a boundary
-Delegation  is a PERMISSION    — an app acting on your behalf, with limits you set</div>
+<div class="codeSample" data-hl>SSO         is an EXPERIENCE, what the user feels: "I only logged in once"
+Federation  is an ARCHITECTURE, who is trusted to authenticate, across a boundary
+Delegation  is a PERMISSION, an app acting on your behalf, with limits you set</div>
 <p>One is an outcome. One is a trust relationship. One is an authorization mechanism. They frequently
 appear together, which is exactly why they get conflated, but each can exist without the others.</p>
 
@@ -973,7 +1220,7 @@ message, no actor. You cannot "implement SSO" the way you implement OAuth; you p
 cookie, or sit behind one gateway that holds the session. Log in at one, you are logged in at all.
 This is genuine SSO, and it involves <b>no federation, no IdP and no tokens</b>, just a cookie with a
 carefully scoped domain.</li>
-<li><b>Federated SSO.</b> Apps in different domains or different organisations each redirect to a
+<li><b>Federated SSO.</b> Apps in different domains or different organizations each redirect to a
 shared authority. The authority already has a session with you, so it answers immediately without
 prompting, and you experience SSO. This is the version that needs SAML or OIDC.</li>
 <li><b>Desktop/integrated SSO.</b> Kerberos on a corporate network: your workstation login yields a
@@ -981,7 +1228,7 @@ ticket that gets you into intranet apps silently.</li>
 </ul>
 <p><b>So SSO does not require federation.</b> That single fact dissolves a lot of confusion. When a
 stakeholder says "we need SSO," the useful reply is: <i>across what boundary?</i> Within one domain it
-may be a cookie configuration. Across organisations it is a federation project.</p>
+may be a cookie configuration. Across organizations it is a federation project.</p>
 <p>The mirror image is <b>Single Logout (SLO)</b>, and it is notoriously unreliable for exactly this
 reason: the pleasant illusion of "one login" is really N separate application sessions created behind
 your back. Ending one does not end the rest, and there is no reliable way to reach into every app and
@@ -989,10 +1236,10 @@ close them.</p>
 
 <h4>Federation is a trust architecture</h4>
 <p><b>Federation</b> means an application stops authenticating users itself and instead accepts a signed
-statement from an authority it has agreed in advance to trust, typically across an organisational
+statement from an authority it has agreed in advance to trust, typically across an organizational
 boundary. The app never sees a password. Trust is configured beforehand, by exchanging the authority's
 public keys or certificate.</p>
-<p><b>Federation does not require SSO either.</b> An organisation with exactly one federated
+<p><b>Federation does not require SSO either.</b> An organization with exactly one federated
 application gets no "sign on once" benefit at all, yet federation is still worth it, because the real
 wins are structural:</p>
 <ul>
@@ -1006,7 +1253,7 @@ problem from the lifecycle lesson, solved.</li>
 architecture is the point; the experience is the bonus.</p>
 
 <h4>Delegation is about permission, not login</h4>
-<p><b>Delegation</b> is a different axis entirely: you authorise an <i>application</i> to act on your
+<p><b>Delegation</b> is a different axis entirely: you authorize an <i>application</i> to act on your
 behalf against an API, with a limited slice of your access, without giving it your password. This is
 what OAuth 2.0 was invented for. It answers <i>"may this app do this thing for me?"</i>, not
 <i>"who are you?"</i></p>
@@ -1014,7 +1261,7 @@ what OAuth 2.0 was invented for. It answers <i>"may this app do this thing for m
 access token says an app may call an API; it says nothing reliable about who the user is, and treating
 it as proof of identity is a real vulnerability. <b>OpenID Connect</b> exists precisely to fix that,
 adding an ID token (an authentication statement) on top of OAuth's delegation.</p>
-<p>And delegation has a dangerous neighbour. In <b>delegation</b> the token records both identities:
+<p>And delegation has a dangerous neighbor. In <b>delegation</b> the token records both identities:
 "app X, acting for user Y." In <b>impersonation</b> the app simply becomes user Y and the API cannot
 tell the difference. Impersonation carries more authority, is harder to audit, and should be a deliberate
 choice.</p>
@@ -1078,7 +1325,7 @@ public class Federation {
 </ul>
 <div class="codeSample" data-hl>// confidential client: HTTP Basic client authentication
 Authorization: Basic base64(client_id ":" client_secret)
-// public client: NO secret — proves itself with a PKCE code_verifier instead</div>
+// public client: NO secret, proves itself with a PKCE code_verifier instead</div>
 
 <h4>The question, in plain English</h4>
 <p>Forget the vocabulary for a moment and ask one thing: <b>can this application keep a secret?</b></p>
@@ -1403,7 +1650,7 @@ must <b>fail closed</b>: an absent or unreadable scope claim means denied, never
 <div class="codeSample" data-hl>// the token carries granted scopes as a space-separated string
 "scope": "photos:read profile"
 
-// the API checks before acting — and denies when unsure
+// the API checks before acting, and denies when unsure
 if (!granted.contains("photos:read")) throw new ForbiddenException();</div>
 <p>A subtlety worth internalising: <b>a scope is not a permission.</b> A scope bounds what the
 <i>application</i> may attempt on the user's behalf; the user's own rights still apply underneath.
@@ -1415,7 +1662,7 @@ a scope as the whole authorization decision is a real and common vulnerability.<
 <p>Delegated authentication answers <i>who is this?</i> Delegated authorization answers <i>may this app
 do this for them?</i> They are so routinely bundled (one redirect, one consent screen, tokens for
 both) that people assume one implies the other. It does not, and the failure mode is specific:</p>
-<p><b>An access token is not proof of identity.</b> It says an app was authorised to call an API. It
+<p><b>An access token is not proof of identity.</b> It says an app was authorized to call an API. It
 carries no reliable statement about who the user is, was minted for a different audience, and may be a
 token the app obtained for an entirely different user. Applications that "log the user in" by accepting
 an access token are exploitable. <b>OpenID Connect</b> exists to close exactly this gap by adding an
@@ -1437,7 +1684,7 @@ public class Delegation {
     }
 }`,
 tests:[{d:'missing scope yields an empty set, not null',re:'Set\\s*\\.\\s*of\\s*\\(\\s*\\)|emptySet\\s*\\(\\s*\\)|new\\s+HashSet\\s*<\\s*>\\s*\\(\\s*\\)'},{d:'null or blank input is handled',re:'==\\s*null|isBlank\\s*\\(\\s*\\)|isEmpty\\s*\\(\\s*\\)'},{d:'splits the space-separated scope string',re:'split\\s*\\('},{d:'membership decides the scope check',re:'contains\\s*\\('},{d:'ownership is required as well as scope',re:'&&\\s*userOwnsResource|userOwnsResource\\s*&&'}],
-behavior:`granted("photos:read profile") contains both scopes; granted(null) and granted("") return an empty set rather than null, so a missing scope claim fails closed. allowed("photos:read", "photos:read") is true; allowed(null, "photos:read") is false. canAct("photos:read", "photos:read", true) is true, but canAct("photos:read", "photos:read", false) is false: the app was authorised to read photos, not to read somebody else's photos.`,
+behavior:`granted("photos:read profile") contains both scopes; granted(null) and granted("") return an empty set rather than null, so a missing scope claim fails closed. allowed("photos:read", "photos:read") is true; allowed(null, "photos:read") is false. canAct("photos:read", "photos:read", true) is true, but canAct("photos:read", "photos:read", false) is false: the app was authorized to read photos, not to read somebody else's photos.`,
 hints:['Return an empty set for missing input: <code>if (scope == null || scope.isBlank()) return Set.of();</code>','<code>return new HashSet&lt;&gt;(Arrays.asList(scope.trim().split(" ")));</code>','Both conditions must hold: <code>return allowed(scope, required) &amp;&amp; userOwnsResource;</code>'],
 solution:`import java.util.*;
 
@@ -1494,11 +1741,11 @@ involved. More authority, and the audit trail now claims Ada did something she n
 </ul>
 <p>OAuth Token Exchange encodes delegation with an <b>act</b> claim, which nests to record the whole
 chain, and gates who is permitted to do this with <b>may_act</b> on the original token:</p>
-<div class="codeSample" data-hl>// delegation — both identities, chain preserved
+<div class="codeSample" data-hl>// delegation, both identities, chain preserved
 {"sub":"ada", "aud":"ledger",
  "act":{"sub":"billing-svc", "act":{"sub":"orders-svc"}}}
 
-// impersonation — the acting party has vanished
+// impersonation, the acting party has vanished
 {"sub":"ada", "aud":"ledger"}
 
 // may_act on Ada's original token: WHO is allowed to act for her
@@ -1572,7 +1819,7 @@ mechanism unless it is deliberately constrained. It reads customer data by desig
 data access, and regulators treat it that way.</p>
 
 <h4>The two subjects</h4>
-<p>Everything good here follows from one modelling decision: <b>keep two identities, always</b>.</p>
+<p>Everything good here follows from one modeling decision: <b>keep two identities, always</b>.</p>
 <ul>
 <li><b>Authenticated subject</b>: who actually logged in and holds the session. The support engineer.
 Never changes during the session.</li>
@@ -1583,7 +1830,7 @@ the engineer. It is a few lines of code and it destroys everything downstream. T
 the customer deleted their own account. Rate limits, notifications and security alerts all fire as the
 customer. If the engineer's session is stolen, the thief is the customer. And you have no way to answer
 the only question that matters after an incident: <i>which employee did this?</i></p>
-<div class="codeSample" data-hl>WRONG — one subject                RIGHT — two subjects
+<div class="codeSample" data-hl>WRONG, one subject                RIGHT, two subjects
 session { user: "cust-91" }        session { auth: "eng-14",
                                              effective: "cust-91",
                                              reason: "TKT-8823",
@@ -1612,8 +1859,8 @@ or the feature becomes a ladder.</li>
 
 <h4>The controls that make it defensible</h4>
 <ol>
-<li><b>Authorised explicitly.</b> A specific role, and a recorded reason, usually a ticket id. "Because
-I could" is not an authorisation.</li>
+<li><b>Authorized explicitly.</b> A specific role, and a recorded reason, usually a ticket id. "Because
+I could" is not an authorization.</li>
 <li><b>Time-boxed.</b> Thirty minutes, not a session that lives until logout. Sessions that never end
 are how this becomes routine surveillance.</li>
 <li><b>Visible.</b> A persistent banner in the UI. Engineers forget which window they are in, and act
@@ -1629,10 +1876,10 @@ this is the log that catches an employee browsing a celebrity's account.</li>
 <h4>Prefer the weaker tool</h4>
 <p>Most "I need to act as them" requests are really "I need to see what they see," and there is a ladder
 of options with steadily lower blast radius. Take the lowest rung that solves the problem:</p>
-<div class="codeSample" data-hl>LOWEST RISK   diagnostics view  — their config and flags, none of their content
-              redacted view    — their screens, sensitive fields masked
-              read-only act-as — full view, no writes, banner, time-boxed
-HIGHEST RISK  write act-as     — separate approval, narrow allowlist, notify</div>
+<div class="codeSample" data-hl>LOWEST RISK   diagnostics view, their config and flags, none of their content
+              redacted view, their screens, sensitive fields masked
+              read-only act-as, full view, no writes, banner, time-boxed
+HIGHEST RISK  write act-as, separate approval, narrow allowlist, notify</div>
 <p>And one alternative that beats all of them when it fits: <b>ask the user to share their session</b>:
 a screen share, or a support link they generate themselves. Consent given directly by the person,
 in the moment, is stronger than any control you can build on your side.</p>`,
@@ -1668,13 +1915,13 @@ behavior:`The denied list is checked with writeApproved set to true in every cas
 hints:['<code>return actorRole === "support" &amp;&amp; !targetIsPrivileged;</code>','Check the denied list first and return false, before considering the write prefix.','<code>if (action.indexOf("write:") === 0) return writeApproved; return true;</code>']}},
 
 {id:'idfciam',title:'CIAM vs workforce IAM: two disciplines, one vocabulary',body:`
-<p>Almost every identity conversation inside an organisation is really two conversations, and treating them
+<p>Almost every identity conversation inside an organization is really two conversations, and treating them
 as one produces decisions that are wrong for both populations. This lesson separates them <b>before</b> the
 protocol streams, because the protocols are identical and the answers are not.</p>
 
 <h4>The same word, two different jobs</h4>
-<p><b>Workforce IAM</b> governs the people your organisation employs: staff, contractors, and the systems
-they use. <b>CIAM</b> (Customer Identity and Access Management) governs the people your organisation
+<p><b>Workforce IAM</b> governs the people your organization employs: staff, contractors, and the systems
+they use. <b>CIAM</b> (Customer Identity and Access Management) governs the people your organization
 <i>sells to</i>. Both authenticate humans. Both use OAuth, OIDC and SAML. Everything else differs, because
 the forces acting on them are inverted.</p>
 <div class="codeSample" data-hl>                     WORKFORCE                  CIAM
@@ -1693,7 +1940,7 @@ regulated by         SOX, internal audit        GDPR, CCPA, consumer law</div>
 <h4>What follows from an authoritative source</h4>
 <p>Workforce identity has something CIAM will never have: <b>a system of record that decides who exists</b>.
 HR says a person was hired, holds this job, reports to that manager, and left on this date. Every
-downstream behaviour derives from it: birthright access on joining, recalculation on transfer,
+downstream behavior derives from it: birthright access on joining, recalculation on transfer,
 deprovisioning within minutes of termination.</p>
 <p>That single fact is what makes governance possible. Access reviews, joiner-mover-leaver, entitlement
 certification and separation of duties all assume you can enumerate your people and ask an authority
@@ -1701,7 +1948,7 @@ whether each one still belongs. <b>None of that machinery transfers to CIAM</b>,
 system for your customers and nobody to certify that a shopper still needs their account.</p>
 
 <h4>What follows from having no coercive power</h4>
-<p>You can require an employee to enrol a security key. You cannot require a customer to do anything;
+<p>You can require an employee to enroll a security key. You cannot require a customer to do anything;
 they will simply leave. So the CIAM toolkit is different in kind:</p>
 <ul>
 <li><b>Registration is a funnel.</b> Every additional field measurably reduces completion. This is the one
@@ -1720,7 +1967,7 @@ downstream system, on request.</li>
 everything is down.</li>
 </ul>
 
-<h4>How an organisation should actually run them</h4>
+<h4>How an organization should actually run them</h4>
 <p><b>Separate the tenants, always.</b> Customers and employees must not share a user store, even when the
 same product could serve both. One breach then reaches one population, an employee cannot accidentally be
 granted a customer entitlement, and the two can be governed under the regimes that actually apply to
@@ -1750,7 +1997,7 @@ run:{call:'population',cases:[
  {name:'quarterly access certification',args:['access-review'],expect:'workforce'},
  {name:'mandating phishing-resistant MFA',args:['mandate-mfa'],expect:'workforce'},
  {name:'reducing signup form fields',args:['signup-funnel'],expect:'ciam'},
- {name:'honouring a deletion request',args:['right-to-erasure'],expect:'ciam'},
+ {name:'honoring a deletion request',args:['right-to-erasure'],expect:'ciam'},
  {name:'self-service account recovery by email',args:['self-service-recovery'],expect:'ciam'},
  {name:'a customer admin managing their own users',args:['delegated-admin'],expect:'b2b'},
  {name:'a customer bringing their own IdP',args:['bring-your-own-idp'],expect:'b2b'},
@@ -1782,7 +2029,7 @@ solution:`function population(decision) {
   }
 }`,
 tests:[{d:'deprovisioning is a workforce control',re:'"deprovision-on-termination"'},{d:'the signup funnel is a CIAM concern',re:'"signup-funnel"'},{d:'delegated administration is B2B',re:'"delegated-admin"'},{d:'protocol mechanics are shared',re:'"shared"'},{d:'the default pushes the question back',re:'ask which population first'}],
-behavior:`Eleven cases execute. Two groups carry the lesson. The <b>b2b</b> answers exist because forcing a business customer into either model is a common and expensive error: delegated administration is not a workforce feature and not a consumer one. And the <b>default</b> is deliberate advice rather than a fallback: an identity decision made without naming the population is how an organisation ends up mandating security keys for shoppers, or letting employees self-register.`,
+behavior:`Eleven cases execute. Two groups carry the lesson. The <b>b2b</b> answers exist because forcing a business customer into either model is a common and expensive error: delegated administration is not a workforce feature and not a consumer one. And the <b>default</b> is deliberate advice rather than a fallback: an identity decision made without naming the population is how an organization ends up mandating security keys for shoppers, or letting employees self-register.`,
 hints:['Group the cases by population and let them fall through to a shared return.','B2B is a third population, not a variant of the other two.','The default should push the question back rather than guess.']}},
 
 {id:'idfzt',title:'Zero trust: identity as the perimeter',body:`
@@ -1831,17 +2078,17 @@ valid for minutes. This is why audience checks matter so much: a token that work
 recreated the flat interior inside your token format.</li>
 <li><b>Assume breach.</b> Design so that a stolen credential yields the smallest, shortest-lived
 capability you can arrange, and so the damage is visible in a log.</li>
-<li><b>Use context as a signal.</b> Device posture, location, time, behavioural anomalies feed the
+<li><b>Use context as a signal.</b> Device posture, location, time, behavioral anomalies feed the
 decision, and can trigger step-up authentication. Context is <i>evidence</i>, never identity: "on the
 corporate network" is one input to a decision, not a reason to skip it.</li>
 </ol>
 
 <h4>The decision point</h4>
 <p>Zero trust needs somewhere the answer is computed. Two roles recur under many product names:</p>
-<div class="codeSample" data-hl>request ──▶ [ PEP ]  policy ENFORCEMENT point — sidecar, gateway, middleware
+<div class="codeSample" data-hl>request ──▶ [ PEP ]  policy ENFORCEMENT point, sidecar, gateway, middleware
                │     intercepts, then obeys the verdict
                ▼
-            [ PDP ]  policy DECISION point — evaluates identity + resource
+            [ PDP ]  policy DECISION point, evaluates identity + resource
                │              + action + context against policy
                ▼
             permit / deny  ── and it must DENY when it cannot decide</div>
@@ -1919,7 +2166,7 @@ lose on everything else.</p>
 lifetime         forever (usually)          minutes
 scope            often all-or-nothing       explicit scopes
 subject          an application             a user, or a service
-audience         none — works anywhere      one API (aud)
+audience         none, works anywhere      one API (aud)
 revocation       delete the row (instant)   hard: valid until exp
 verification     lookup on every call       offline signature check
 setup cost       ten minutes                a real integration</div>
@@ -1927,7 +2174,7 @@ setup cost       ten minutes                a real integration</div>
 kills them immediately. The problem is never the mechanism; it is the lifetime and the sprawl.</p>
 
 <h4>How they leak</h4>
-<p>Keys leak in a small number of very predictable ways, and knowing the list is most of the defence:</p>
+<p>Keys leak in a small number of very predictable ways, and knowing the list is most of the defense:</p>
 <ul>
 <li><b>Committed to git.</b> The classic. Rewriting history does not help; assume anything pushed is
 public forever and rotate.</li>
@@ -2060,7 +2307,7 @@ them.</li>
 the full secret to a log.</li>
 </ol>
 
-<h4>Two flavours worth distinguishing</h4>
+<h4>Two flavors worth distinguishing</h4>
 <p><b>Stored capabilities</b>: a random token in a database row recording what it grants and when it
 expires. Instantly revocable, requires a lookup. This is what password resets should be.</p>
 <p><b>Signed capabilities</b>: the parameters are in the URL along with an HMAC signature, so the
@@ -2162,7 +2409,7 @@ require: sub == "repo:acme/api:ref:refs/heads/main"
 require: sub startsWith "repo:acme/"     // ANY repo in the org
 require: nothing at all                  // ANY repo on GitHub, anywhere</div>
 <p>That last line is not hypothetical: a trust policy naming the issuer but not constraining
-<code>sub</code> lets any repository on the platform assume your role. The lesson generalises: with
+<code>sub</code> lets any repository on the platform assume your role. The lesson generalizes: with
 federated trust, <b>the issuer check tells you the token is real; the subject check tells you it is
 the right one.</b> You need both, exactly as with <code>iss</code> and <code>aud</code> on any other
 token.</p>`,
@@ -2183,7 +2430,7 @@ public class RoleAssumption {
     }
 }`,
 tests:[{d:'the trust policy is an allow-list',re:'contains\\s*\\('},{d:'a null caller or missing policy denies',re:'callerId\\s*!=\\s*null|allowedCallers\\s*!=\\s*null'},{d:'an unset external id never means anyone',re:'expected\\s*!=\\s*null|null\\s*!=\\s*expected'},{d:'the external id is compared by value',re:'expected\\s*\\.\\s*equals|equals\\s*\\(\\s*presented'},{d:'the federated subject must be present',re:'requiredSub\\s*[=!]=\\s*null|tokenSub\\s*[=!]=\\s*null'},{d:'the subject is matched exactly, not by prefix',re:'requiredSub\\s*\\.\\s*equals|equals\\s*\\(\\s*tokenSub'},{d:'no prefix matching on the subject',re:'startsWith',not:true}],
-behavior:`trusted("ci-runner", Set.of("ci-runner")) is true; an unknown caller, a null caller or a null policy set are all false. externalIdOk("a7f3","a7f3") is true, while externalIdOk(null,"a7f3") is false; that is the whole confused-deputy defence, since a vendor trusted by many customers must bind each call to the customer it is for. subjectAllowed("repo:acme/api:ref:refs/heads/main", same) is true, but a different branch or repository is false, and prefix matching is deliberately not used because "repo:acme/" would admit every repository in the organisation.`,
+behavior:`trusted("ci-runner", Set.of("ci-runner")) is true; an unknown caller, a null caller or a null policy set are all false. externalIdOk("a7f3","a7f3") is true, while externalIdOk(null,"a7f3") is false; that is the whole confused-deputy defense, since a vendor trusted by many customers must bind each call to the customer it is for. subjectAllowed("repo:acme/api:ref:refs/heads/main", same) is true, but a different branch or repository is false, and prefix matching is deliberately not used because "repo:acme/" would admit every repository in the organization.`,
 hints:['Guard both arguments, then <code>allowedCallers.contains(callerId)</code>.','<code>return expected != null &amp;&amp; expected.equals(presented);</code>','Exact equality only; reaching for <code>startsWith</code> here is the bug the test checks for.'],
 solution:`import java.util.*;
 
@@ -2249,7 +2496,7 @@ single line of code that prevents it.</p>
 <h4>Validate at the edge of trust, not at the edge of the network</h4>
 <p>A gateway that validates tokens is useful, but it is not sufficient; it only proves the request
 entered through the front door. Anything that can reach the service directly bypasses it. Each service
-validates for itself; the gateway is defence in depth, not the check.</p>
+validates for itself; the gateway is defense in depth, not the check.</p>
 <p>Two related habits: <b>fail closed</b> (an issuer you cannot reach, a key you cannot fetch, a claim you
 cannot parse are all rejections, never "allow and log"), and <b>never trust the token to tell you where
 to verify it</b>: the issuer list is your configuration, not something read out of the token you are
@@ -2293,7 +2540,7 @@ solution:`public class TokenCheck {
 <p>That last item is why the IdP becomes the highest-value target in the estate. Compromise one app and you have one app; compromise the IdP and you can mint a valid identity for every app that trusts it. Federation does not remove risk, it <b>concentrates</b> it, which is a good bargain, because one system defended extremely well beats fifty defended averagely, but only if the concentration is acknowledged and funded.</p>
 
 <h4>Reading the passport analogy carefully</h4>
-<p>The analogy is worth pushing on, because its edges are the real subject. A border checks that the passport is authentic (the signature), unexpired (the token's lifetime), and issued by a country it recognises (the trust configuration). It does not phone the issuing country, which is why revoking a passport is slow and imperfect, exactly like a signed token that stays valid until it expires. And a passport says who you are, not what you may do; the visa is separate, which is the distinction between authentication and authorization arriving in the same document.</p>
+<p>The analogy is worth pushing on, because its edges are the real subject. A border checks that the passport is authentic (the signature), unexpired (the token's lifetime), and issued by a country it recognizes (the trust configuration). It does not phone the issuing country, which is why revoking a passport is slow and imperfect, exactly like a signed token that stays valid until it expires. And a passport says who you are, not what you may do; the visa is separate, which is the distinction between authentication and authorization arriving in the same document.</p>
 
 <h4>Three things that must be arranged in advance</h4>
 <ul>
@@ -2348,7 +2595,7 @@ hints:['A two-case switch plus a default covers it.','The identity provider vouc
 <p>When the app starts the flow it creates state before anything leaves: a request id, a <code>state</code> value, a PKCE verifier, a return URL. Everything that comes back can then be matched against something the app itself generated, which is what makes a response forged or replayed by a third party detectable. In the <b>IdP-initiated</b> direction (the user clicks a tile in a portal and an unsolicited assertion arrives at the app), none of that state exists. The app receives a valid-looking assertion it never asked for, and it cannot tell whether the user meant to send it or an attacker did. That is the shape behind a whole family of login-CSRF and assertion-replay problems, and it is why modern guidance is to avoid IdP-initiated flows or to convert them into SP-initiated ones by bouncing the user back to the app first.</p>
 
 <h4>What "trust" concretely consists of</h4>
-<p>Trust in federation is not a feeling; it is four pieces of configuration that both sides can point at. The <b>issuer identifier</b>, which must match exactly. The <b>signing keys</b>, discovered rather than hardcoded so rotation is invisible. The <b>audience</b>, so an assertion for one app is not usable at another. And the <b>attribute contract</b>: which claims are released, in what format, with what identifier. Get the first three wrong and you have a security problem; get the fourth wrong and you have an integration that authenticates people it cannot authorise.</p>
+<p>Trust in federation is not a feeling; it is four pieces of configuration that both sides can point at. The <b>issuer identifier</b>, which must match exactly. The <b>signing keys</b>, discovered rather than hardcoded so rotation is invisible. The <b>audience</b>, so an assertion for one app is not usable at another. And the <b>attribute contract</b>: which claims are released, in what format, with what identifier. Get the first three wrong and you have a security problem; get the fourth wrong and you have an integration that authenticates people it cannot authorize.</p>
 
 <h4>The failure modes worth expecting</h4>
 <ul>
@@ -2418,8 +2665,8 @@ hints:['Trust is configuration (registration) plus cryptography (verifying a sig
 <p>Versus federation: there is no central login and no IdP that sees every sign-in, which improves privacy and resilience. The caveat: the ecosystem (wallets, revocation, standards) is still maturing, so most production identity today is still federated, but VCs are showing up in digital IDs and know-your-customer flows.</p>
 
 <h4>The trust triangle, and what is genuinely new</h4>
-<p>Federation and decentralized identity both rest on a signature from an authority you trust. The difference is <b>where the authority sits at the moment of use</b>. In federation the IdP is online and in the flow: it learns every login, every relying party, and every time you sign in. In the credential model the issuer signs once and goes away; the verifier checks a signature against a published key and never contacts the issuer. That absence is the point: no phone-home means no central observer of your behaviour, and no single service whose outage stops every login.</p>
-<p><b>Selective disclosure</b> is the second genuinely new property. A signed credential normally has to be shown whole, which is why proving your age with a driving licence reveals your address. SD-JWT and similar constructions let the holder reveal individual claims while the signature still verifies over what was revealed, so "over 18" is provable without a birthdate. That is a capability federation simply does not have.</p>
+<p>Federation and decentralized identity both rest on a signature from an authority you trust. The difference is <b>where the authority sits at the moment of use</b>. In federation the IdP is online and in the flow: it learns every login, every relying party, and every time you sign in. In the credential model the issuer signs once and goes away; the verifier checks a signature against a published key and never contacts the issuer. That absence is the point: no phone-home means no central observer of your behavior, and no single service whose outage stops every login.</p>
+<p><b>Selective disclosure</b> is the second genuinely new property. A signed credential normally has to be shown whole, which is why proving your age with a driving license reveals your address. SD-JWT and similar constructions let the holder reveal individual claims while the signature still verifies over what was revealed, so "over 18" is provable without a birthdate. That is a capability federation simply does not have.</p>
 
 <h4>The parts that are still hard</h4>
 <ul>
@@ -2430,7 +2677,7 @@ hints:['Trust is configuration (registration) plus cryptography (verifying a sig
 </ul>
 
 <h4>Where it is actually being used</h4>
-<p>Where this stands in 2026: it is no longer a research topic and not yet the default. The EU Digital Identity Wallet regulation obliges member states to offer wallets, mobile driving licences are in production in several US states and are accepted at airports, and OpenID for Verifiable Credential Issuance and Presentation (OID4VCI / OID4VP) have made the flows look reassuringly like OAuth, which is the pragmatic reason they are gaining traction. Most enterprise identity remains federated, and the two will coexist: an employee logs in via the corporate IdP and presents a credential to prove a professional certification the employer never held.</p>`,
+<p>Where this stands in 2026: it is no longer a research topic and not yet the default. The EU Digital Identity Wallet regulation obliges member states to offer wallets, mobile driving licenses are in production in several US states and are accepted at airports, and OpenID for Verifiable Credential Issuance and Presentation (OID4VCI / OID4VP) have made the flows look reassuringly like OAuth, which is the pragmatic reason they are gaining traction. Most enterprise identity remains federated, and the two will coexist: an employee logs in via the corporate IdP and presents a credential to prove a professional certification the employer never held.</p>`,
 docs:[['Decentralized Identifiers (W3C DID)','https://www.w3.org/TR/did-core/'],['Verifiable Credentials (W3C)','https://www.w3.org/TR/vc-data-model/'],['Self-sovereign identity','https://en.wikipedia.org/wiki/Self-sovereign_identity']],
 ex:{title:'The trust triangle',
 prompt:`Write class <code>Ssi</code> with <code>static String role(String party)</code>: <code>"issuer"</code>→<code>"signs and issues the credential"</code>, <code>"holder"</code>→<code>"keeps it in a wallet"</code>, <code>"verifier"</code>→<code>"checks the issuer signature"</code>, and <code>"unknown"</code> otherwise.`,
@@ -2494,7 +2741,7 @@ the single most useful design habit in the whole area, and it applies well beyon
 that store dates of birth only ever needed a boolean.</p>
 
 <h4>The mDL and why standards collided</h4>
-<p>Mobile driving licences arrived from a different direction: ISO/IEC 18013-5, written by standards
+<p>Mobile driving licenses arrived from a different direction: ISO/IEC 18013-5, written by standards
 bodies serving physical documents, using CBOR and designed to work offline over NFC or Bluetooth at a
 roadside stop with no connectivity. OID4VP came from the web. Both are real, both are deployed, and
 convergence is partial: OID4VP can carry mdoc credentials, so the transport and the format are
@@ -2521,7 +2768,7 @@ federation problem, now at ecosystem scale.</li>
 </ul>
 <p>Worth watching rather than adopting for most systems today. The habit to take away regardless is the
 predicate one: <b>ask for the narrowest fact that answers your question.</b></p>`,
-docs:[['OpenID for Verifiable Credential Issuance (OID4VCI)','https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html'],['OpenID for Verifiable Presentations (OID4VP)','https://openid.net/specs/openid-4-verifiable-presentations-1_0.html'],['ISO/IEC 18013-5, mobile driving licence (mDL)','https://www.iso.org/standard/69084.html'],['W3C, Verifiable Credentials Data Model 2.0','https://www.w3.org/TR/vc-data-model-2.0/']],
+docs:[['OpenID for Verifiable Credential Issuance (OID4VCI)','https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html'],['OpenID for Verifiable Presentations (OID4VP)','https://openid.net/specs/openid-4-verifiable-presentations-1_0.html'],['ISO/IEC 18013-5, mobile driving license (mDL)','https://www.iso.org/standard/69084.html'],['W3C, Verifiable Credentials Data Model 2.0','https://www.w3.org/TR/vc-data-model-2.0/']],
 ex:{title:'Ask for the predicate, not the data',
 prompt:`Write <code>Wallet</code> with three methods. <code>static String minimalClaim(String question)</code> returns the narrowest claim that answers it: <code>"age_over_18"</code> for <code>"is-adult"</code>, <code>"country"</code> for <code>"is-resident"</code>, <code>"has_licence"</code> for <code>"may-drive"</code>, and <code>"unknown"</code> otherwise including null, never <code>"birthdate"</code>. <code>static boolean disclosureMinimal(java.util.Set&lt;String&gt; disclosed, String required)</code> is true only when exactly the required claim was disclosed and nothing else. <code>static boolean presentationBound(String kbAud, String verifier, String kbNonce, String expectedNonce)</code> requires both to match, rejecting nulls.`,
 starter:`import java.util.*;

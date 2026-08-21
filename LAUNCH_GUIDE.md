@@ -4,6 +4,30 @@ Companion to `BACKEND_PLAN.md`. That file explains *why*; this one is the *how*:
 
 **Stack:** GitHub Pages (frontend) · Hetzner CX22 VPS ~€4.6/mo (backend) · Spring Boot 4.1 / Java 25 · Postgres 17 · Redis · Caddy (TLS) · GitHub Actions (CI/CD).
 
+> **Status: Phase 0 is done, by a different route. Phases 1 to 6 are still open.**
+>
+> The site is live at **https://roniam.dev/**, not at `javadojo.dev`. Every course ships from this one
+> repository, built and deployed by GitHub Actions on each push to `main`: `/dev/`, `/identity/`,
+> `/js/`, `/ml/`, `/fundamentals/`, `/docker/`, `/kubernetes/`, `/envoy/`, `/istio/`, plus `/courses/`
+> and `/blog/`. There is no separate site repository and no manual copy step. The deploy is gated on
+> 13 checks, so a page whose inline scripts do not parse, or a stat on the home page that disagrees
+> with the content, fails the build instead of shipping. The dojos are in alpha.
+>
+> Two phases below were overtaken by what got built:
+>
+> - **Real code execution arrived in the browser for two languages, without any of Phase 5.** JS Dojo
+>   grades JavaScript by running it in a sandboxed Web Worker; ML Dojo runs Python through Pyodide.
+>   Java is still graded structurally, so Phase 5 stands for Java and for anything that needs a
+>   verdict the client cannot forge.
+> - **Accounts and progress sync exist, on a different stack, and are not deployed.** `site/` is a
+>   registration flow, account page, admin console and per-user progress store written against Node's
+>   standard library and its built-in SQLite, with no third-party dependencies. It runs on localhost.
+>   It is not the Spring Boot, Postgres and Redis design in Phases 1 to 3, and the published site does
+>   not talk to it: progress on roniam.dev lives in the browser and nowhere else.
+>
+> Everything after this note is the plan as written. The names in it, `javadojo.dev` and `dojo-api`,
+> are the plan's names, not anything that is running.
+
 **Prerequisites (one-time, ~1 hour)**
 
 1. Accounts: [github.com](https://github.com), [hetzner.com/cloud](https://www.hetzner.com/cloud), [console.anthropic.com](https://console.anthropic.com) (API key for Phase 4), a domain registrar (Namecheap/Porkbun, ~$10/yr, you'll want e.g. `javadojo.dev`).
@@ -23,13 +47,15 @@ Companion to `BACKEND_PLAN.md`. That file explains *why*; this one is the *how*:
 
 The dojo file already degrades gracefully outside Cowork: when `window.cowork.askClaude` is missing it falls back to structural checks and says so in the header status line. So Phase 0 is almost pure publishing.
 
+**Status: done, and worth reading as a record rather than as instructions.** The site is published straight from this repository by `.github/workflows/pages.yml`, not from a second repository, and the domain is `roniam.dev`. Steps 1 and 3 describe a copy-and-push flow that no longer happens. Step 4's custom domain is in place. What the phase did not anticipate: the workflow now builds nine courses, runs the engine unit tests, verifies the content of each dojo, executes graded exercises against their own solutions, compiles every Java reference solution, and checks the published prose, before it publishes anything.
+
 1. Create the repo and copy the file in:
    ```bash
    mkdir ~/code/javadojo-site && cd ~/code/javadojo-site
    git init
    cp dist/index.html index.html
    ```
-2. One tiny edit for the public web: in `index.html`, find the status line (`System status: AI test runner`) and change the fallback text `'⚠️ unavailable — structural checks only'` wording to something public-friendly like `'coming soon — structural checks active'`. Optional but honest.
+2. One tiny edit for the public web: in `index.html`, find the status line (`System status: AI test runner`) and reword the fallback text so it reads for a public audience, something like `'coming soon, structural checks active'`, rather than announcing that a feature is unavailable. Optional but honest.
 3. Publish:
    ```bash
    git add . && git commit -m "JavaDojo static site"
@@ -39,13 +65,15 @@ The dojo file already degrades gracefully outside Cowork: when `window.cowork.as
    In the repo on GitHub: **Settings → Pages → Source: Deploy from a branch → main / root**. Two minutes later you're at `https://<you>.github.io/javadojo/`.
 4. Custom domain (optional now, needed before Phase 2 for clean CORS): add a `CNAME` file containing `javadojo.dev`, and at your registrar add a CNAME record `www → <you>.github.io` plus the four GitHub Pages A records for the apex. Enable **Enforce HTTPS** in Pages settings.
 
-**Done when:** the dojo loads at a public URL, lessons open, structural checks pass exercises, progress persists in your browser.
+**Done when:** the dojo loads at a public URL, lessons open, structural checks pass exercises, progress persists in your browser. **Met:** four dojos and five crash courses load at https://roniam.dev/, lessons open, exercises grade in the browser, progress persists locally.
 
 ---
 
 ## Phase 1: Backend skeleton that deploys (~1 weekend)
 
 Goal: an empty-but-real Spring Boot API running on your VPS behind TLS, redeployed automatically on every push. Do this *before* writing features, every later phase then ships the day it works.
+
+**Status: not built.** There is no VPS, no Spring Boot service and no `api.` host. The only thing deployed is the static site on GitHub Pages. Every phase from here on depends on this one, which is why they are all still open.
 
 ### 1.1 Generate the project
 
@@ -211,6 +239,8 @@ Repo → Settings → Secrets: `VPS_HOST` (the IP) and `VPS_SSH_KEY` (a *new* ke
 
 ## Phase 2: Accounts (~1 week)
 
+**Status: built, on a different stack, and not deployed.** `site/` implements registration, sign-in, an account page and an admin console, with users in SQLite and the first registered account promoted to admin. It uses Node's standard library and built-in SQLite, no dependencies, so none of the JWT, Spring Security or CORS work below was needed. It has never run anywhere but localhost, and the published site has no accounts at all.
+
 ### 2.1 Dependencies & schema
 
 Add to `pom.xml`: `spring-boot-starter-security`, and `io.jsonwebtoken:jjwt-api`, `jjwt-impl`, `jjwt-jackson` (0.12.x).
@@ -271,6 +301,8 @@ Add `JWT_SECRET` to the server's `.env` and the compose `environment:` block.
 
 ## Phase 3: Progress sync (~1 week)
 
+**Status: built in the same local layer, and not reachable from the public site.** `site/db.js` carries a `progress` table keyed by (username, exercise_key) with `done` and a completion timestamp, cascading on user delete, which is the same shape as the schema below. The merge rule and the frontend wiring described here are the parts that never had to be written, because the browser and the server are never both in play: on roniam.dev, localStorage is the only store. Solving an exercise in Chrome still does not put it on your phone.
+
 ### 3.1 Schema: `V3__progress.sql`
 
 ```sql
@@ -304,6 +336,8 @@ The dojo's storage is one object: the `store` at the top of the STATE section (l
 ## Phase 4: AI judge proxy (~1 week)
 
 Restores the dojo's smartest feature, real test verdicts, publicly and affordably.
+
+**Status: not built.** There is no judge proxy, no key held anywhere, and no spend to cap. On the public site the AI path is simply absent and grading falls back to what the browser can do by itself.
 
 ### 4.1 Schema: `V4__judge.sql`
 
@@ -347,6 +381,8 @@ In `index.html`, the runner function currently does `window.cowork.askClaude(pro
 
 Replace "AI judges your code" with "your code actually compiles and runs against JUnit-style tests." This is the part with real engineering teeth: you are deliberately building a service whose job is to run hostile code safely.
 
+**Status: partly overtaken, and still open where it matters.** For two languages the problem was solved by not putting the code on a server at all: JS Dojo runs learner JavaScript in a sandboxed Web Worker, and ML Dojo runs learner Python through Pyodide, both in the browser, where the blast radius is the learner's own tab. CI adds a second kind of execution the phase never proposed: 999 exercise cases across 184 exercises are executed against their own reference solutions on every push, and every self-contained Java reference solution is compiled with a real JDK. None of that is the same as running the learner's Java, and none of it produces a verdict the client could not forge. For Java, and for any pass a server would need to trust, this phase stands exactly as written.
+
 ### 5.0 Pragmatic on-ramp (weekend)
 
 Integrate [Judge0](https://judge0.com) first: point `POST /api/run` at its API (self-hosted CE via their docker-compose on your VPS, or their hosted tier). You get compile+run working in days and a felt understanding of the problem, then replace it with your own runner and keep Judge0 as the fallback flag.
@@ -386,6 +422,8 @@ API inserts into `submissions` with `status='queued'`; runner polls (`SELECT ...
 
 ## Phase 6: Production hardening (ongoing)
 
+**Status: not started, and mostly not applicable yet.** Nothing is running that needs logs, metrics, backups or an abuse watch. The hardening that did land is on the content rather than on a server: 13 CI gates, listed with their reasons in `.github/workflows/pages.yml`, covering engine unit tests, per-course content verification, executed exercises, Java compilation, lesson depth, the cloud-native page structure, color contrast, every built page's inline scripts, quiz option length bias, correct-answer spread, the home page stats, the published prose, and the sitemap.
+
 - **Logs**: `logstash-logback-encoder` for JSON logs; an MDC filter putting `requestId` + `userId` on every line (the Logging lesson, in anger). `docker compose logs` is fine until it isn't; then ship to Grafana Loki (free, runs in compose).
 - **Metrics**: `micrometer-registry-prometheus` + Prometheus + Grafana containers on the VPS. One dashboard: request rate/latency, judge calls + spend/day, runner queue depth, JVM heap.
 - **Backups**: nightly cron on the VPS, `docker compose exec -T db pg_dump -U dojo dojo | gzip > /backups/dojo-$(date +%F).sql.gz`, keep 14, and copy off-box (rclone to any object storage). **Do one test restore now**, an untested backup is a hope, not a backup.
@@ -403,5 +441,7 @@ API inserts into `submissions` with `status='queued'`; runner polls (`SELECT ...
 | GitHub Pages, Actions, GHCR | free |
 | Claude API (judge, capped) | usage-based; caps keep it ~$5–20/mo |
 
-**Launch order recap:** 0 site live → 1 API deploys itself → 2 accounts → 3 progress follows you → 4 AI judge public → 5 real execution → 6 keep it alive. Each phase ships. When someone asks about it in an interview, tell them about Phase 5's threat model, and the restore test.
+Actual spend today: the domain, and nothing else. GitHub Pages, Actions and GHCR are free at this size, and none of the paid stack exists yet.
+
+**Launch order recap:** ~~0 site live~~ done → 1 API deploys itself → 2 accounts → 3 progress follows you → 4 AI judge public → 5 real execution → 6 keep it alive. Each phase ships. When someone asks about it in an interview, tell them about Phase 5's threat model, and the restore test.
 

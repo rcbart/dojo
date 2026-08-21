@@ -51,7 +51,7 @@ handling, every monitor, and every cache.</p>
 <h4>Where the purity stops being useful</h4>
 <p>Some operations are genuinely not CRUD on a noun. "Cancel this order" is a real business action with
 rules, and contorting it into <code>PATCH /orders/42 {"status":"cancelled"}</code> hides the fact that
-cancelling is not the same as setting a field. Modelling it as a sub-resource,
+canceling is not the same as setting a field. Modeling it as a sub-resource,
 <code>POST /orders/42/cancellations</code>, keeps the interface saying what actually happens. And HATEOAS, the level of REST
 almost nobody implements, is worth knowing about so you can say clearly that you have chosen not to.</p>`,
 docs:[['REST, MDN glossary','https://developer.mozilla.org/en-US/docs/Glossary/REST'],['HTTP methods, MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods']],
@@ -147,7 +147,7 @@ entirely.</p>
 the right choice for fan-out: fetching thirty resources concurrently without thirty blocked threads.
 The discipline it demands is <b>bounding the concurrency</b>: firing a thousand async requests at once
 will exhaust the pool or the remote service. Batch them.</p>
-<p><code>BodyHandlers</code> decide how the response is materialised. <code>ofString()</code> is
+<p><code>BodyHandlers</code> decide how the response is materialized. <code>ofString()</code> is
 convenient and reads everything into memory: fine for JSON, wrong for a large download, where
 <code>ofFile()</code> or <code>ofInputStream()</code> streams instead.</p>
 
@@ -155,7 +155,7 @@ convenient and reads everything into memory: fine for JSON, wrong for a large do
 <p>No retries, no circuit breaking, no automatic JSON binding, no rate limiting. Those are your job or a
 library's. Retrying is the one people most often need and most often get wrong: retry only idempotent
 requests (GET, PUT, DELETE; never a bare POST), use exponential backoff with jitter, cap the attempts,
-and honour <code>Retry-After</code> when the server sends it.</p>`,
+and honor <code>Retry-After</code> when the server sends it.</p>`,
 docs:[['HttpClient, API docs','https://docs.oracle.com/en/java/javase/21/docs/api/java.net.http/java/net/http/HttpClient.html'],['Java HTTP Client, Baeldung','https://www.baeldung.com/java-9-http-client']],
 ex:{title:'Call an API',
 prompt:`Write <code>ApiCaller</code> with <code>static String fetchUser(String id) throws Exception</code>: GET <code>https://api.dojo.dev/users/&lt;id&gt;</code> with header <code>Accept: application/json</code>; return the body on status 200, otherwise throw <code>RuntimeException</code> including the status code in the message.`,
@@ -234,7 +234,7 @@ missing module.</p>
 
 <h4>Records, and why constructors matter</h4>
 <p>Jackson historically needed a no-arg constructor plus setters, which pushed people toward mutable
-DTOs. Modern Jackson deserialises <b>records</b> and other immutable types directly by using the
+DTOs. Modern Jackson deserializes <b>records</b> and other immutable types directly by using the
 canonical constructor, so your DTOs can be immutable, which is what you want for objects crossing a
 boundary. If parameter names are stripped at compile time, you may still need
 <code>@JsonProperty</code> on the components or the <code>-parameters</code> compiler flag.</p>
@@ -244,7 +244,7 @@ boundary. If parameter names are stripped at compile time, you may still need
 format, and the coupling runs both ways: their rename becomes your refactor, and your private field
 becomes their public API. A separate DTO plus an explicit mapping step costs a little code and buys
 independent evolution.</p>
-<p>It also closes a security hole. Deserialising an arbitrary payload onto a domain object lets a caller
+<p>It also closes a security hole. Deserializing an arbitrary payload onto a domain object lets a caller
 set fields you never intended to expose: the <b>mass assignment</b> problem. If the JSON contains
 <code>"role":"admin"</code> and your entity has a <code>role</code> field, Jackson will happily set it.
 Use <code>@JsonIgnore</code>, or better, a DTO that simply has no such field.</p>
@@ -394,7 +394,7 @@ starter:`function isIdempotent(method) {\n  return false;\n}`,
 solution:`function isIdempotent(method) {\n  return ["GET","HEAD","PUT","DELETE","OPTIONS","TRACE"]\n    .includes(String(method).toUpperCase());\n}`,
 tests:[{d:'the method list is checked',re:'includes|indexOf'},{d:'PUT is included',re:'PUT'},{d:'POST is absent from the list',re:'^(?!.*"POST")'},{d:'comparison is case-insensitive',re:'toUpperCase|toLowerCase|i\\)'}],
 behavior:`Six cases execute. Idempotent does not mean safe: DELETE changes state, and it is idempotent because deleting twice leaves the same world as deleting once; the second call returning 404 is a different response, not a different effect. PATCH is the interesting exclusion: "set status to shipped" is idempotent, "add 10 to the balance" is not, and since PATCH bodies can express either, the method cannot promise it. This matters because it decides what a client or proxy may safely retry, and everything that is not idempotent needs an idempotency key instead, which is the next lesson\x27s subject.`,
-hints:['Six methods are idempotent; two common ones are not.','Normalise the case before comparing; methods arrive from the wire in any form.','Ask "if this ran twice, would the end state differ?" rather than "does it change anything?"']}]},
+hints:['Six methods are idempotent; two common ones are not.','Normalize the case before comparing; methods arrive from the wire in any form.','Ask "if this ran twice, would the end state differ?" rather than "does it change anything?"']}]},
 {id:'api5',title:'Advanced REST: versioning, pagination, rate limits',body:`
 <p>Running an API <i>platform</i> means designing for change and scale:</p>
 <ul>
@@ -421,11 +421,11 @@ that you lose "jump to page 47", which most APIs never genuinely needed. Keep th
 (base64 an internal structure) so you can change what is inside it without breaking clients.</p>
 
 <h4>Versioning: pick one and mean it</h4>
-<div class="codeSample" data-hl>/v1/orders                        URI  — visible, cacheable, easy to route.
+<div class="codeSample" data-hl>/v1/orders                        URI, visible, cacheable, easy to route.
                                        the pragmatic default.
-Accept: application/vnd.acme.v2+json   media type — "purer", far more awkward
+Accept: application/vnd.acme.v2+json   media type, "purer", far more awkward
                                        in browsers, proxies and curl
-?version=2                        query — easy, but caches and logs treat it
+?version=2                        query, easy, but caches and logs treat it
                                        as a different resource inconsistently</div>
 <p>The more important discipline is <b>not needing a new version</b>. Adding an optional field, adding
 an endpoint, adding an enum value a client can ignore: all backward compatible. Removing a field,
@@ -500,19 +500,19 @@ components:
 
 <h4>Code-first or spec-first, and how to choose</h4>
 <p><b>Code-first</b> keeps the spec in sync automatically, because it is generated from the same annotations that implement the endpoint: no drift, and near-zero effort. Its weakness is that the API is designed by whoever writes the controller, one endpoint at a time, and the document only exists after the code does.</p>
-<p><b>Spec-first</b> makes the contract a reviewable artefact <i>before</i> implementation: consumers can comment, mocks can be generated for parallel front-end work, and server stubs enforce the agreed shape. Its weakness is drift (a spec nobody regenerates from is folklore again within a quarter), so it only works when generation is wired into the build.</p>
+<p><b>Spec-first</b> makes the contract a reviewable artifact <i>before</i> implementation: consumers can comment, mocks can be generated for parallel front-end work, and server stubs enforce the agreed shape. Its weakness is drift (a spec nobody regenerates from is folklore again within a quarter), so it only works when generation is wired into the build.</p>
 <p>The practical rule: spec-first for public or cross-team APIs where the contract is a negotiation, code-first for internal services where speed matters more and the consumer is down the hall.</p>
 
 <h4>What a good spec carries beyond paths</h4>
 <ul>
 <li><b>Schemas with constraints</b>, not just types: formats, ranges, required fields, enums. Generated clients and validators use them, and they are the difference between documentation and a contract.</li>
-<li><b>Error responses</b>, modelled explicitly, ideally as <code>application/problem+json</code> (RFC 9457), so failures have a defined shape rather than being an undocumented surprise.</li>
+<li><b>Error responses</b>, modeled explicitly, ideally as <code>application/problem+json</code> (RFC 9457), so failures have a defined shape rather than being an undocumented surprise.</li>
 <li><b>Examples</b> on requests and responses. They are what a human actually reads, and they power mock servers.</li>
 <li><b>Security schemes</b>, so the spec states which scopes or schemes each operation needs.</li>
 </ul>
 
 <h4>The spec as a change-control mechanism</h4>
-<p>The reason to keep the document in git is that a diff becomes reviewable: adding an optional field is additive, removing a field or tightening a type is breaking, and a reviewer can see which one a pull request contains. Tooling can enforce it (<code>oasdiff</code> and similar will fail a build on a breaking change), which turns "we did not realise anyone used that field" into a conversation before release rather than an incident after it. Pair that with the deprecation headers from the versioning lesson and the whole lifecycle is documented in one place that clients and generators both read.</p>`,
+<p>The reason to keep the document in git is that a diff becomes reviewable: adding an optional field is additive, removing a field or tightening a type is breaking, and a reviewer can see which one a pull request contains. Tooling can enforce it (<code>oasdiff</code> and similar will fail a build on a breaking change), which turns "we did not realize anyone used that field" into a conversation before release rather than an incident after it. Pair that with the deprecation headers from the versioning lesson and the whole lifecycle is documented in one place that clients and generators both read.</p>`,
 docs:[['OpenAPI specification','https://spec.openapis.org/oas/v3.0.3'],['springdoc-openapi','https://springdoc.org/'],['openapi-generator','https://openapi-generator.tech/']],
 ex:{title:'Write the contract',lang:'yaml',
 prompt:`Write an OpenAPI 3.0.3 snippet: <code>info</code> with title <code>Ledger API</code> version <code>1.0.0</code>; path <code>/entries/{id}</code> with a <code>get</code> operation (<code>operationId: getEntry</code>), a required path parameter <code>id</code> of type string, a <code>"200"</code> response whose <code>application/json</code> content references <code>#/components/schemas/Entry</code>, and a <code>"404"</code>; components schema <code>Entry</code>: object with required <code>[id, amountCents]</code>, properties id (string) and amountCents (integer).`,
@@ -603,14 +603,14 @@ putting a credential in a query string, that is the signal to stop.</p>
 curl -v ...                                     # -v: the full exchange, request headers included
 curl -X POST -H 'Content-Type: application/json' -d '{"a":1}' ...
 curl -H 'Accept: application/json' -w '\n%{http_code} %{time_total}s\n' -o /dev/null -s ...
-curl --fail ...            # non-zero exit on 4xx/5xx — the flag that makes curl safe in a script</div>
+curl --fail ...            # non-zero exit on 4xx/5xx, the flag that makes curl safe in a script</div>
 <p><code>--fail</code> matters more than it looks: without it curl exits 0 on a 500 and prints the error
 body, so a shell script "succeeds" while receiving an error page. That is the same class of bug as a
 pipeline reporting only its last command's status.</p>
 
 <h4>The debugging ritual, and why it works</h4>
 <p>Reproduce with curl before touching the code. An SDK adds retries, default headers, connection pooling
-and its own serialisation, so a failure inside it has half a dozen candidate causes. curl removes all of
+and its own serialization, so a failure inside it has half a dozen candidate causes. curl removes all of
 them and leaves the HTTP truth. If curl succeeds and your client does not, run both with headers visible
 and <b>diff them</b>: the difference is nearly always a header you did not know your SDK was setting.</p>`,
 docs:[['HTTP headers (MDN)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers'],['curl docs','https://curl.se/docs/manpage.html'],['Everything curl (book)','https://everything.curl.dev/']],

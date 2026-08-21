@@ -3,8 +3,19 @@
 // exercise's regex tests pass against its own solution. Run: node scripts/verify.js
 const fs = require('fs');
 const path = require('path');
-const ROOT = path.join(__dirname, '..');
+// Which course to check. The workflow runs this three times with a different
+// working-directory for each dojo; anchoring ROOT to __dirname made all three
+// runs check Dev Dojo, so Identity and JS shipped ungated for months. Prefer an
+// explicit argument, then the working directory, then the repo root.
+const arg = process.argv[2];
+const candidates = [arg, process.cwd(), path.join(__dirname, '..')].filter(Boolean);
+const ROOT = candidates.find(c => fs.existsSync(path.join(c, 'content/streams/manifest.json')));
+if (!ROOT) {
+  console.error('no content/streams/manifest.json in ' + candidates.join(', '));
+  process.exit(1);
+}
 const dir = p => path.join(ROOT, 'content/streams', p);
+console.log('checking ' + (path.relative(path.join(__dirname, '..'), ROOT) || 'the repo root'));
 
 const manifest = JSON.parse(fs.readFileSync(dir('manifest.json'), 'utf8'));
 const STREAMS = [];

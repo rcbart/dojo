@@ -328,7 +328,7 @@ function renderHome(){
   m.innerHTML=`<div class="home">
   <h1 class="pageTitle">${HOME.title}</h1>
   <div class="startBanner">New here? Start with <a href="javascript:void(0)" onclick="cur=null;renderGettingStarted();renderNav()"><b>${ico('🚀')} Getting started</b></a> to set up your environment and get the full depth, then follow the <a href="javascript:void(0)" onclick="cur=null;renderPath();renderNav()"><b>${ico('🗺️')} Learning path</b></a>.</div>
-  <p>${HOME.intro} Every lesson ends with an exercise in the built-in editor. <b>Most exercises are graded on the shape of your answer, not on running it</b>, regex checks that you used the right construct. SQL and JavaScript do execute for real; Java runs for real if you start the optional local runner. Every exercise has a <b>Run locally</b> panel with exact commands, that is the ground truth. Stuck? <b>Next Step</b> gives a progressive hint, and <b>Show me the solution</b> is always there, no judgment.</p>
+  <p>${HOME.intro} Every lesson ends with an exercise in the built-in editor. <b>Most exercises are graded on the shape of your answer, not on running it</b>, regex checks that you used the right construct. SQL and JavaScript do execute for real; Java runs for real if you start the optional local runner. Every exercise has a <b>Run locally</b> panel with exact commands, that is the ground truth. Stuck? <b>Next Step</b> gives a progressive hint, and <b>Show me the solution</b> is always there, no judgment. Each lesson also ends with a <b>Quick check</b> quiz, and <b>choosing a wrong answer explains what is wrong with that answer</b>, not just which one was right, because the misconception you actually had is the one worth fixing.</p>
   <p><b>Tip:</b> select or double-click any keyword or term, in a lesson or your own code, and a popup explains it, drawing on the ${GLOSS.reduce((a,d)=>a+d.groups.reduce((b,g)=>b+g.terms.length,0),0)} terms in the glossary.</p>
   <div class="gsCard">
   <h2>How to get the most out of ${HOME.name}: learn &amp; retain</h2>
@@ -336,7 +336,7 @@ function renderHome(){
     <li><b>Follow the path, earn the belt.</b> Work a domain top-to-bottom via the <b>${ico('🗺️')} Learning path</b>; the belt bar tracks your progress white → black.</li>
     <li><b>Struggle first.</b> Try the exercise before revealing anything, use <b>Next Step</b> for a nudge, and only then <b>the solution</b>. The effort is what makes it stick.</li>
     <li><b>Run it for real.</b> Use the <b>${ico('🖥️')} Run-locally</b> panel or in-app execution to confirm behavior, reading a solution is not the same as making it work.</li>
-    <li><b>Check yourself.</b> Take the <b>Quick check</b> quiz on each lesson; getting one slightly wrong and seeing why is where a lot of the learning happens.</li>
+    <li><b>Check yourself, and read the wrong answer.</b> Take the <b>Quick check</b> quiz on each lesson. Getting one wrong is the useful case: it tells you why <i>that</i> option is wrong, which is where a lot of the learning actually happens.</li>
     <li><b>Come back tomorrow.</b> Do your <b>${ico('📑')} Review</b> daily, spaced repetition resurfaces cards right before you'd forget them. This is the single biggest lever for retention.</li>
     <li><b>Ramp the difficulty.</b> Once the basics click, use <b>${ico('🎯')} Practice</b> to grind Easy → Hard.</li>
     <li><b>Teach it back.</b> After each lesson, say the idea in one plain sentence. If you can teach it, you own it.</li>
@@ -698,24 +698,36 @@ function renderGettingStarted(){
   m.scrollTop=0;
 }
 
-/* ============================== LEARNING PATH ============================== */
+/* ============================== LEARNING PATH ==============================
+   The route used to be hardcoded to Dev Dojo's belts, which meant JS Dojo and
+   Identity Dojo both opened this page and told the reader to install a JDK and
+   start on Java Fundamentals. A sibling course now supplies its own route as
+   DOJO_PATH in its config: an array of [belt, title, body] rows, longest
+   journey last. The default below stays Dev Dojo's. */
+const DEFAULT_PATH = [
+  ['\u2B1C White','Start here','Read <b>Getting started</b>, install a JDK, and skim the <b>Glossary</b>. Then begin <b>Java Fundamentals</b>, variables, control flow, objects, collections.'],
+  ['\uD83D\uDFE1 Yellow','Core Java','Finish <b>Java Fundamentals</b> (including <i>Inside the JVM</i>), <b>Exception Handling</b>, and <b>Generics from the Ground Up</b>. This is the language spine everything else assumes.'],
+  ['\uD83D\uDFE0 Orange','Computer science','Do <b>Data Structures &amp; Algorithms</b>, collections, Big-O, trees, and BFS/DFS/Dijkstra traversal. Interview-critical and used everywhere.'],
+  ['\uD83D\uDFE2 Green','How programs talk','Take <b>Web &amp; HTTP</b>, <b>APIs &amp; REST</b>, and <b>Working with Databases</b> (SQL joins, the command map, complex queries). Now you can build real services.'],
+  ['\uD83D\uDD35 Blue','Frameworks & concurrency','Add <b>Spring Boot</b>, <b>Concurrency &amp; Multithreading</b> (start with <i>threads vs processes</i>), and <b>Modern Java</b>. Run these locally, concurrency especially rewards a real JVM.'],
+  ['\uD83D\uDFE3 Purple','Security & identity','Work through <b>Identity and Access</b> end to end: foundations &amp; federation, authn/MFA, authorization models, sessions, OAuth/OIDC, tokens, SAML, PKI, and the advanced/governance sub-tracks.'],
+  ['\uD83D\uDFE4 Brown','Ship it','Learn <b>Build Tools</b>, <b>Git</b>, <b>Deploying to the Web</b>, and <b>CI/CD</b>. Pair these with the standalone Docker &amp; Kubernetes courses in your own environment.'],
+  ['\u26AB Black','Senior craft','Enter the <b>Senior (Dan)</b> tracks, System Design, Failure-First Distributed Systems, Working with Real Code, then prove it in <b>Real-World Projects</b> and the <b>Tournament</b>.'],
+];
+const DEFAULT_PATH_INTRO = 'is large on purpose, but you do not have to wander. This is a recommended route from beginner to senior. Finish the belt lessons in a domain to earn its belt; the dan sub-tracks and the Projects/Tournaments are where you cement it. Jump around once you know the basics, this is a suggestion, not a cage.';
+
 function renderPath(){
   const m=document.getElementById('main');
+  const rows=(typeof DOJO_PATH!=="undefined"&&DOJO_PATH.length)?DOJO_PATH:DEFAULT_PATH;
+  const intro=(typeof DOJO_PATH_INTRO!=="undefined"&&DOJO_PATH_INTRO)?DOJO_PATH_INTRO:DEFAULT_PATH_INTRO;
   const step=(n,belt,title,body)=>`<div class="pathStep"><div class="pathNum">${n}</div><div class="pathBody"><div class="pathBelt">${belt}</div><h3>${esc(title)}</h3><p>${body}</p></div></div>`;
   m.innerHTML=`<div class="home">
-  <h1 class="pageTitle">${ico('🗺️')} Learning path</h1>
-  <p>${DOJO_NAME} is large on purpose, but you do not have to wander. This is a recommended route from beginner to senior. Finish the belt lessons in a domain to earn its belt; the dan sub-tracks and the Projects/Tournaments are where you cement it. Jump around once you know the basics, this is a suggestion, not a cage.</p>
+  <h1 class="pageTitle">${ico('\uD83D\uDDFA\uFE0F')} Learning path</h1>
+  <p>${DOJO_NAME} ${intro}</p>
   <div class="pathWrap">
-  ${step(1,'⬜ White','Start here','Read <b>Getting started</b>, install a JDK, and skim the <b>Glossary</b>. Then begin <b>Java Fundamentals</b>, variables, control flow, objects, collections.')}
-  ${step(2,'🟡 Yellow','Core Java','Finish <b>Java Fundamentals</b> (including <i>Inside the JVM</i>), <b>Exception Handling</b>, and <b>Generics from the Ground Up</b>. This is the language spine everything else assumes.')}
-  ${step(3,'🟠 Orange','Computer science','Do <b>Data Structures &amp; Algorithms</b>, collections, Big-O, trees, and BFS/DFS/Dijkstra traversal. Interview-critical and used everywhere.')}
-  ${step(4,'🟢 Green','How programs talk','Take <b>Web &amp; HTTP</b>, <b>APIs &amp; REST</b>, and <b>Working with Databases</b> (SQL joins, the command map, complex queries). Now you can build real services.')}
-  ${step(5,'🔵 Blue','Frameworks &amp; concurrency','Add <b>Spring Boot</b>, <b>Concurrency &amp; Multithreading</b> (start with <i>threads vs processes</i>), and <b>Modern Java</b>. Run these locally, concurrency especially rewards a real JVM.')}
-  ${step(6,'🟣 Purple','Security &amp; identity','Work through <b>Identity and Access</b> end to end: foundations &amp; federation, authn/MFA, authorization models, sessions, OAuth/OIDC, tokens, SAML, PKI, and the advanced/governance sub-tracks.')}
-  ${step(7,'🟤 Brown','Ship it','Learn <b>Build Tools</b>, <b>Git</b>, <b>Deploying to the Web</b>, and <b>CI/CD</b>. Pair these with the standalone Docker &amp; Kubernetes courses in your own environment.')}
-  ${step(8,'⚫ Black','Senior craft','Enter the <b>Senior (Dan)</b> tracks, System Design, Failure-First Distributed Systems, Working with Real Code, then prove it in <b>Real-World Projects</b> and the <b>Tournament</b>.')}
+  ${rows.map((r,i)=>step(i+1,r[0],r[1],r[2])).join('\n  ')}
   </div>
-  <p style="margin-top:16px">Ready? <a href="javascript:void(0)" onclick="cur=null;renderHome();renderNav()"><b>Back to all tracks →</b></a></p>
+  <p style="margin-top:16px">Ready? <a href="javascript:void(0)" onclick="cur=null;renderHome();renderNav()"><b>Back to all tracks &rarr;</b></a></p>
   </div>`;
   m.scrollTop=0;
 }
@@ -831,7 +843,7 @@ function renderPractice(filter){
 }
 
 /* ============================== QUIZ ENGINE (Quick check) ============================== */
-/* Randomise option order so the correct answer is never predictable by position.
+/* Randomize option order so the correct answer is never predictable by position.
    Hand-authored quizzes were written with the right answer first (answer:0), which
    made them solvable without reading the question. Permutes options and whyWrong in
    lockstep and remaps answer, so quizPick() stays correct with no other changes.
@@ -854,7 +866,7 @@ function shuffleQuiz(qs){
 }
 function renderQuiz(l){
   const qs=window.__QZ||(l&&l.quiz); if(!qs||!qs.length)return '';
-  return `<div class="quizBox"><h3>🧠 Quick check</h3>`+qs.map((q,qi)=>
+  return `<div class="quizBox"><h3>🧠 Quick check</h3><p class="quizNote">Pick a wrong answer and it tells you what is wrong with <em>that</em> answer, not just which one was right.</p>`+qs.map((q,qi)=>
     `<div class="quizQ"><div class="quizQt">${qi+1}. ${esc(q.q)}</div>`+
     `<div class="quizOpts">${q.options.map((o,oi)=>`<button class="quizOpt" data-qi="${qi}" data-oi="${oi}" onclick="quizPick(${qi},${oi})">${esc(o)}</button>`).join('')}</div>`+
     `<div class="quizWhy" id="quizWhy-${qi}" hidden></div></div>`).join('')+`</div>`;

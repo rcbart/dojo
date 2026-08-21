@@ -33,7 +33,7 @@ try (Socket s = new Socket("localhost", 7007);
 <p><code>PrintWriter</code> buffers, so without autoflush your bytes sit in memory while the peer blocks on a read that will never complete. Both sides then wait forever, a deadlock produced by an omitted boolean. The habit that prevents it: after writing a complete message, flush; before reading a response, be certain you have flushed the request.</p>
 
 <h4>Closing, and the half-open connection</h4>
-<p><code>readLine()</code> returning <code>null</code> is the peer's orderly close arriving as end-of-stream. That is information, not an error. The harder case is the connection that is gone without anyone saying so (a crashed peer or a dropped network), where a read simply blocks. The defence is a timeout: <code>socket.setSoTimeout(ms)</code> turns an indefinite block into a <code>SocketTimeoutException</code> you can act on. A socket without a timeout is a thread you may never get back, which is exactly the failure the resilience lessons call a resource leak under partial failure.</p>
+<p><code>readLine()</code> returning <code>null</code> is the peer's orderly close arriving as end-of-stream. That is information, not an error. The harder case is the connection that is gone without anyone saying so (a crashed peer or a dropped network), where a read simply blocks. The defense is a timeout: <code>socket.setSoTimeout(ms)</code> turns an indefinite block into a <code>SocketTimeoutException</code> you can act on. A socket without a timeout is a thread you may never get back, which is exactly the failure the resilience lessons call a resource leak under partial failure.</p>
 <p>Two more: <code>TIME_WAIT</code> keeps a closed port unusable for a couple of minutes, which is what <code>setReuseAddress(true)</code> is for during development restarts; and Nagle's algorithm delays small writes to improve throughput, which <code>setTcpNoDelay(true)</code> disables when latency matters more.</p>`,
 docs:[['Custom networking trail, Oracle','https://docs.oracle.com/javase/tutorial/networking/sockets/index.html'],['ServerSocket, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/net/ServerSocket.html']],
 ex:{title:'Echo, once',
@@ -95,7 +95,7 @@ static void handle(Socket client) {
 
 <h4>What still needs care</h4>
 <ul>
-<li><b>The accept loop is a single point of serialisation.</b> It must do nothing but accept and dispatch; any work done there (a lookup, a log flush, a lock) becomes the ceiling on your connection rate.</li>
+<li><b>The accept loop is a single point of serialization.</b> It must do nothing but accept and dispatch; any work done there (a lookup, a log flush, a lock) becomes the ceiling on your connection rate.</li>
 <li><b>Unbounded dispatch is unbounded load.</b> Cheap threads do not make the database behind them cheap. A semaphore or a bounded queue in front of the expensive resource is what turns an overload into slow-but-alive instead of a cascade.</li>
 <li><b>Every handler needs a timeout</b> and its own exception boundary. One misbehaving client must never take the server with it; the catch in the handler is load-bearing, not decoration.</li>
 <li><b>Pinning.</b> A virtual thread blocked inside a <code>synchronized</code> block cannot unmount and holds its carrier thread hostage. Prefer <code>ReentrantLock</code> around blocking sections in code that runs on virtual threads.</li>

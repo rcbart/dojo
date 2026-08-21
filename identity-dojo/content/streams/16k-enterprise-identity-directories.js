@@ -53,11 +53,11 @@ hints:['Concatenate the fixed labels and the arguments with +.','The two literal
 
 {id:'ei1b',title:'Active Directory in depth: structure, trusts and attack paths',body:`
 <p>Active Directory has run enterprise identity for twenty-five years and still underpins most large
-organisations, including ones that believe they have moved to the cloud. It is also, by a wide margin,
+organizations, including ones that believe they have moved to the cloud. It is also, by a wide margin,
 the most commonly compromised identity system in existence. Both facts deserve attention.</p>
 <p>The reason it is worth studying carefully: AD is not one service. It is an <b>LDAP directory, a
 Kerberos KDC, a DNS service and a policy engine</b> fused together, and the seams between them are
-where the interesting behaviour lives.</p>
+where the interesting behavior lives.</p>
 
 <h4>The structure, and the boundary people get wrong</h4>
 <div class="codeSample" data-hl>FOREST            the SECURITY boundary. shared schema and configuration.
@@ -98,7 +98,7 @@ accumulate silently over years of one-off delegations.</p>
 
 <h4>The attack surface</h4>
 <div class="codeSample" data-hl>DCSync            replication rights let an account ASK a domain controller
-                  for every password hash — no malware, no access to the DC,
+                  for every password hash, no malware, no access to the DC,
                   it is a legitimate protocol operation
 NTDS.dit theft    the database file itself: every hash, offline
 Pass-the-hash     NTLM authenticates with the HASH, so cracking is unnecessary
@@ -113,7 +113,7 @@ token can reach a machine trusted for delegation. Tools like BloodHound exist to
 paths, and defenders should run them before attackers do. Auditing permissions one at a time will
 never find this.</p>
 
-<h4>The defences that actually work</h4>
+<h4>The defenses that actually work</h4>
 <ol>
 <li><b>Tiering.</b> Tier 0 (domain controllers, AD itself, anything that can control it), Tier 1
 (servers), Tier 2 (workstations). Credentials never flow downward: a Domain Admin must never log into
@@ -121,10 +121,10 @@ a workstation, because their credential material then exists on a machine at the
 single discipline breaks most real attack paths.</li>
 <li><b>Privileged access workstations</b> for Tier 0 administration, and separate admin accounts from
 day-to-day accounts.</li>
-<li><b>Minimise Tier 0 membership</b>: Domain Admins, Enterprise Admins, Schema Admins, plus anything
-with replication rights or GPO edit rights at the root. Most organisations discover this set is far
+<li><b>Minimize Tier 0 membership</b>: Domain Admins, Enterprise Admins, Schema Admins, plus anything
+with replication rights or GPO edit rights at the root. Most organizations discover this set is far
 larger than they believed.</li>
-<li><b>Randomise local administrator passwords</b> per machine (LAPS), or one stolen local hash opens
+<li><b>Randomize local administrator passwords</b> per machine (LAPS), or one stolen local hash opens
 every workstation.</li>
 <li><b>Retire NTLM</b> where possible, and use the Protected Users group and managed service accounts
 (gMSA) so credentials are not cached or human-chosen.</li>
@@ -133,7 +133,7 @@ changes on privileged objects, and new delegation configuration.</li>
 </ol>
 
 <h4>The hybrid reality</h4>
-<p>Very few organisations are purely cloud. Most synchronise AD to a cloud IdP, which creates a new
+<p>Very few organizations are purely cloud. Most synchronize AD to a cloud IdP, which creates a new
 critical dependency: <b>the sync server is Tier 0</b>. It holds credentials or hashes for the whole
 directory and can write to both sides, yet it is frequently treated as an ordinary application server.
 Whichever integration model is used (hash sync, pass-through authentication, or federation), the
@@ -262,7 +262,7 @@ key encrypted this?</i></p>
 <div class="codeSample" data-hl>AS   (once per session)  client -> KDC   "I am ada"
                           + PRE-AUTH: a timestamp encrypted with ada's key
                         KDC -> client  a TGT, encrypted with the KRBTGT key
-                                       (the client cannot read it — only the KDC can)
+                                       (the client cannot read it, only the KDC can)
 
 TGS  (once per service)  client -> KDC   TGT + "I want cifs/fs01"
                         KDC -> client  a SERVICE TICKET, encrypted with the
@@ -287,22 +287,22 @@ not a bug; it is how the protocol distributes tickets. But the returned ticket i
 service account's password-derived key, so an attacker can request tickets for every SPN in the domain
 and crack them <i>offline</i>, at their leisure, with no failed logins and no lockouts. This is
 <b>Kerberoasting</b>, and it is why service accounts with human-chosen passwords are the softest target
-in most AD estates. The defence is not detection but key strength: <b>gMSA</b> accounts with
+in most AD estates. The defense is not detection but key strength: <b>gMSA</b> accounts with
 128-character machine-generated passwords, and AES rather than RC4.</p>
 
 <h4>Ticket forgery: golden and silver</h4>
 <div class="codeSample" data-hl>GOLDEN TICKET   requires: the KRBTGT account's key
                 gives:    forge ANY TGT, for anyone, with any group SIDs
-                          in the PAC — including Domain Admin
-                lifetime: valid until krbtgt is rotated TWICE — Active
+                          in the PAC, including Domain Admin
+                lifetime: valid until krbtgt is rotated TWICE, Active
                           Directory retains the PREVIOUS krbtgt key for
                           continuity, so one rotation leaves forged tickets
-                          working. (This is AD behaviour, not something
+                          working. (This is AD behavior, not something
                           RFC 4120 specifies.)
 
 SILVER TICKET   requires: one SERVICE account's key
                 gives:    forge service tickets for that one service
-                scope:    narrower, and stealthier — the KDC is never
+                scope:    narrower, and stealthier, the KDC is never
                           contacted, so there is no ticket request to log</div>
 <p>The golden ticket is why <b>krbtgt compromise means the domain must be rebuilt or the key rotated
 twice</b>, and why "we reset the Domain Admin passwords" is not recovery. The silver ticket is why
@@ -401,7 +401,7 @@ solution:`public class Kerberos {
 <!--/flow:ei3-scim-->
 <p>The lifecycle is often called <b>JML</b>: <b>Joiner</b> (create the account and grant baseline access), <b>Mover</b> (update access when the role changes), <b>Leaver</b> (deactivate/delete on exit). Automating leaver deprovisioning is the single biggest win: orphaned accounts after someone departs are a top breach cause.</p>
 
-<h4>What SCIM actually standardises</h4>
+<h4>What SCIM actually standardizes</h4>
 <p>Before SCIM every SaaS vendor had a bespoke user API, so connecting fifty applications meant fifty
 integrations. SCIM fixes the <i>shape</i>: a standard schema for User and Group, over ordinary REST.</p>
 <div class="codeSample" data-hl>POST   /scim/v2/Users        create        (Joiner)
@@ -564,7 +564,7 @@ hints:['indexOf("@") gives the position of the @ character.','substring from tha
 
 <h4>Attribute drift</h4>
 <p>The second JIT problem is subtler: attributes are copied at first login and then frozen. Someone changes department, loses a group membership, or has their name corrected, and your local copy still says what it said the first time. Any authorization decision made from those stale attributes is wrong in the direction that matters: permissions retained after the reason for them ended.</p>
-<p>The fix is to <b>re-apply claims on every login</b>, not only at creation, and to treat the IdP's assertion as the source of truth for anything it is authoritative for. That has a consequence worth designing deliberately: local edits to synchronised attributes will be overwritten, so decide which fields are IdP-owned and which are yours, and make the distinction visible in the admin UI rather than discovering it through a support ticket.</p>
+<p>The fix is to <b>re-apply claims on every login</b>, not only at creation, and to treat the IdP's assertion as the source of truth for anything it is authoritative for. That has a consequence worth designing deliberately: local edits to synchronized attributes will be overwritten, so decide which fields are IdP-owned and which are yours, and make the distinction visible in the admin UI rather than discovering it through a support ticket.</p>
 
 <h4>The three questions that decide the model</h4>
 <p><b>Who is authoritative for the population?</b> If HR or a corporate directory is, pre-provision from it. <b>Do you need the account to exist before first login?</b> Sharing a document with a colleague who has never signed in requires the account to exist, which JIT cannot provide. <b>How predictable is the population?</b> Partners and customers arrive unpredictably and in numbers that make pre-import impractical, which is exactly where JIT earns its place.</p>`,
@@ -656,20 +656,20 @@ hints:['Concatenate provider, the literal "|", and subject.','The pipe is just a
 <p><b>How it shapes authentication.</b> B2C optimizes for low-friction self-service and consent. B2B optimizes for federation and central control (the customer's IT owns the users). B2B2C must do both (isolate each tenant's users while letting each business manage its own consumers), which is why multi-tenancy (next lesson) is the defining problem for B2B and B2B2C.</p>
 
 <h4>What changes when the customer is a company</h4>
-<p>The deepest difference is <b>who owns the user</b>. In B2C the person owns their own account: they register themselves, choose their password, and can delete it. In B2B the <i>customer organisation</i> owns the account: their IT department decides who exists, what they may access, and when access ends. That single shift explains most of the technical differences downstream, and it is why a B2C-shaped product entering the enterprise market discovers it needs a rebuild rather than a feature.</p>
+<p>The deepest difference is <b>who owns the user</b>. In B2C the person owns their own account: they register themselves, choose their password, and can delete it. In B2B the <i>customer organization</i> owns the account: their IT department decides who exists, what they may access, and when access ends. That single shift explains most of the technical differences downstream, and it is why a B2C-shaped product entering the enterprise market discovers it needs a rebuild rather than a feature.</p>
 <p>It also inverts the definition of a good login. In B2C, friction is the enemy: every extra field costs conversions. In B2B, control is the requirement: the buyer wants SSO enforced, self-registration disabled, and a leaver's access gone within minutes of HR pressing a button.</p>
 
 <h4>The enterprise checklist, and why buyers ask for it</h4>
 <ul>
 <li><b>SSO via SAML or OIDC</b>, so the customer's IdP remains the only place credentials exist. Often mandated by their security policy, which makes it a deal blocker rather than a preference.</li>
 <li><b>SCIM provisioning</b>, so accounts are created, updated and <b>deactivated</b> automatically. Manual deprovisioning is what leaves an ex-employee with access for months, and auditors ask about exactly this.</li>
-<li><b>Group-to-role mapping</b>: the customer expresses permissions in their directory groups and expects your product to honour them.</li>
+<li><b>Group-to-role mapping</b>: the customer expresses permissions in their directory groups and expects your product to honor them.</li>
 <li><b>Delegated administration and audit</b>: their admins manage their own users, and their auditors want the log.</li>
 </ul>
 <p>Charging extra for SSO is worth a mention because the industry argues about it: the "SSO tax" is common commercially and is criticised on the grounds that it prices a security control out of reach for small customers.</p>
 
 <h4>B2B2C: two populations, one system</h4>
-<p>The hardest model, because you serve two kinds of identity at once with different rules: the merchant's staff (enterprise-shaped: SSO, roles, audit) and the merchant's shoppers (consumer-shaped: self-service, social login, privacy rights). They must be isolated from each other, branded per tenant, and often stored so that one tenant's consumers are invisible to another's, including in your support tooling. The mistake that is expensive to undo is modelling both populations in one user table with a flag; the two have different lifecycles, different lawful bases for processing, and different definitions of "delete my account".</p>`,
+<p>The hardest model, because you serve two kinds of identity at once with different rules: the merchant's staff (enterprise-shaped: SSO, roles, audit) and the merchant's shoppers (consumer-shaped: self-service, social login, privacy rights). They must be isolated from each other, branded per tenant, and often stored so that one tenant's consumers are invisible to another's, including in your support tooling. The mistake that is expensive to undo is modeling both populations in one user table with a flag; the two have different lifecycles, different lawful bases for processing, and different definitions of "delete my account".</p>`,
 docs:[['CIAM vs workforce IAM','https://auth0.com/blog/what-is-ciam/'],['Multi-tenancy patterns','https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/overview']],
 ex:{title:'Match the model to its identity style',
 prompt:`Write class <code>Model</code> with <code>static String identityStyle(String model)</code>: <code>"b2c"</code>→<code>"CIAM self-service"</code>, <code>"b2b"</code>→<code>"enterprise SSO and SCIM"</code>, <code>"b2b2c"</code>→<code>"tenant isolation and delegated admin"</code>, else <code>"unknown"</code>. Also <code>static boolean multiTenant(String model)</code> returning true for <code>"b2b"</code> or <code>"b2b2c"</code>.`,
@@ -776,7 +776,7 @@ upstream provider and an identity provider to every application. Each side integ
 <p>The integration arithmetic is the obvious benefit and the least interesting one. The real value is that
 the broker is the one place where cross-cutting decisions can live: where MFA policy is applied
 consistently no matter which upstream authenticated the user, where claims from four very different
-providers are normalised into one shape your applications understand, where a session exists that spans
+providers are normalized into one shape your applications understand, where a session exists that spans
 them, and where the audit trail is complete.</p>
 <p>It is also where you absorb change. Replacing an upstream provider becomes a broker configuration
 change rather than a project touching every application.</p>
@@ -819,7 +819,7 @@ solution:`function brokeredSubject(upstreamIssuer, upstreamSub) {
   return upstreamIssuer + "|" + upstreamSub;          // unique across ALL upstreams
 }`,
 tests:[{d:'both parts are required',re:'!upstreamIssuer|!upstreamSub'},{d:'the issuer qualifies the subject',re:'upstreamIssuer\\s*\\+|\\$\\{upstreamIssuer'},{d:'the subject is included',re:'upstreamSub'},{d:'missing input returns null',re:'return null'}],
-behavior:`Four cases execute, and cases one and two are the whole lesson: the same raw identifier 12345 arrives from two different providers and must produce two different accounts. A broker keying on the raw sub merges them, and the symptom is a user seeing someone else's data, which is discovered by a support ticket rather than by a test. The rule generalises past brokering: a subject identifier is only unique within its issuer, so anywhere you store one, store the issuer beside it.`,
+behavior:`Four cases execute, and cases one and two are the whole lesson: the same raw identifier 12345 arrives from two different providers and must produce two different accounts. A broker keying on the raw sub merges them, and the symptom is a user seeing someone else's data, which is discovered by a support ticket rather than by a test. The rule generalizes past brokering: a subject identifier is only unique within its issuer, so anywhere you store one, store the issuer beside it.`,
 hints:['The identity is the pair, not either value alone.','Guard both inputs before combining them.','Pick a separator that cannot appear in an issuer URL.']},
 {title:'Which upstream may assert this email?',lang:'js',diff:'hard',
 run:{call:'acceptUpstreamEmail',cases:[{name:'the upstream is authoritative for the domain',args:['https://acme.okta.com','ada@acme.com',{'https://acme.okta.com':['acme.com'],'https://beta.example':['beta.example']}],expect:true},{name:'another customer claiming your domain is refused',args:['https://beta.example','ada@acme.com',{'https://acme.okta.com':['acme.com'],'https://beta.example':['beta.example']}],expect:false},{name:'domains compare case-insensitively',args:['https://acme.okta.com','Ada@ACME.com',{'https://acme.okta.com':['acme.com'],'https://beta.example':['beta.example']}],expect:true},{name:'a malformed address is refused',args:['https://acme.okta.com','not-an-email',{'https://acme.okta.com':['acme.com']}],expect:false},{name:'an upstream with no verified domains',args:['https://who.example','ada@acme.com',{'https://acme.okta.com':['acme.com']}],expect:false}]},

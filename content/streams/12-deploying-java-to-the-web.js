@@ -118,7 +118,7 @@ RUN ./mvnw package -DskipTests
 <h4>The two settings people forget, and their consequences</h4>
 <p><b>Do not run as root.</b> Containers share the host kernel, so root inside is closer to root outside
 than people assume. One line fixes it. Note that a non-root user cannot bind ports below 1024, which
-is why containerised apps listen on 8080.</p>
+is why containerized apps listen on 8080.</p>
 <div class="codeSample" data-hl>RUN useradd -r -u 1001 app
 USER 1001
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]</div>

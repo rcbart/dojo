@@ -95,7 +95,7 @@ solution:`function classify(method) {
   }
 }`,
 tests:[{d:'GET is safe',re:'"GET"'},{d:'PUT is idempotent',re:'"PUT"'},{d:'POST is neither',re:'"POST"'},{d:'has a default branch',re:'default'}],
-behavior:`Nine cases run, including "BREW" and a lowercase "get". The lowercase case is the point: switch compares with ===, so casing must match exactly; normalise before switching if you want case-insensitive behaviour.`,
+behavior:`Nine cases run, including "BREW" and a lowercase "get". The lowercase case is the point: switch compares with ===, so casing must match exactly; normalize before switching if you want case-insensitive behavior.`,
 hints:['Group cases by letting them fall through to a shared return.','Each group ends with a return, so no break is needed.','The default must exist, or unknown methods return undefined.']}},
 
 {id:'js7',title:'Loops: four forms and when to use each',body:`
@@ -257,7 +257,7 @@ sum(1, 2, 3);             // 6
 function two(a, b) { return [a, b]; }
 two(1);                   // [1, undefined]   - no error
 two(1, 2, 3);             // [1, 2]           - no error</div>
-<p>That last behaviour is why calling a function with the wrong number of arguments fails silently in
+<p>That last behavior is why calling a function with the wrong number of arguments fails silently in
 JavaScript and loudly in most other languages, and it is a large part of the case for TypeScript.</p>
 
 <h4>Return, and the semicolon trap</h4>
@@ -289,7 +289,7 @@ solution:`function welcome(name, greeting = "Hello") {
 }`,
 tests:[{d:'uses a default parameter',re:'greeting\\s*=\\s*"Hello"'},{d:'uses a template literal',re:'\`'},{d:'does not hand-roll a fallback',re:'\\|\\||\\?\\?',not:true}],
 behavior:`The last two cases are the lesson and they execute: null and "" are real values, so the default does not apply and you get "null, Ada" and ", Ada". A hand-rolled || fallback would wrongly rewrite both, which is precisely the bug default parameters avoid.`,
-hints:['Put the default in the parameter list, not in the body.','Template literals use backticks and ${ }.','Do not add || or ??; they would change the null and "" behaviour.']},
+hints:['Put the default in the parameter list, not in the body.','Template literals use backticks and ${ }.','Do not add || or ??; they would change the null and "" behavior.']},
 {title:'Collect any number of arguments',diff:'medium',lang:'js',
 run:{call:'longest',cases:[
  {name:'picks the longest',args:['hi','there','you'],expect:'there'},
@@ -309,7 +309,7 @@ solution:`function longest(...words) {
 }`,
 tests:[{d:'uses a rest parameter',re:'\\.\\.\\.\\s*words'},{d:'compares lengths',re:'length\\s*>'},{d:'starts from the empty string',re:'best\\s*=\\s*""'}],
 behavior:`The tie case is executed: with > the first of two equal-length words is kept, and with >= the last would be. Starting the accumulator at "" is what makes the zero-argument case work without a special branch.`,
-hints:['A rest parameter gathers all arguments into a real array.','Strictly greater keeps the first winner on a tie.','Initialising to "" handles the empty case for free.']}]},
+hints:['A rest parameter gathers all arguments into a real array.','Strictly greater keeps the first winner on a tie.','Initializing to "" handles the empty case for free.']}]},
 
 {id:'js9',title:'Writing functions people can read',body:`
 <p>The language part of functions is done. This lesson is the craft: the handful of habits that separate

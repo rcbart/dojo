@@ -17,6 +17,10 @@ if len(sys.argv) < 2:
 
 raw = open(sys.argv[1], encoding='utf-8').read()
 text = re.sub(r'^---.*?---', '', raw, flags=re.S)          # strip front matter
+# Code is not prose. A fenced block full of `exercise.run.call` was being read as
+# an unfilled placeholder, and identifiers are not subject to spelling rules.
+text = re.sub(r'```.*?```', '', text, flags=re.S)
+text = re.sub(r'`[^`\n]+`', '', text)
 body = re.sub(r'^(#|>).*$', '', text, flags=re.M)          # strip headings/quotes
 body = re.sub(r'\*\*(.*?)\*\*', r'\1', body)
 

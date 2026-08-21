@@ -103,7 +103,7 @@ solution:`function auditLogLine(line) {
   return { ok: problems.length === 0, problems };
 }`,
 tests:[{d:'checks the line is structured',re:'structured'},{d:'requires a request id',re:'requestId'},{d:'names each sensitive field',re:'sensitive field'},{d:'collects every problem',re:'problems\\.push'}],
-behavior:`Six cases execute. The last requires all four problems at once, in a fixed order: a reviewer wants the whole list, not the first thing wrong. The sensitive-field check is the one that matters most: logs are widely readable inside an organisation and retained for months, so a token written once is a credential sitting in a searchable store long after it should have expired.`,
+behavior:`Six cases execute. The last requires all four problems at once, in a fixed order: a reviewer wants the whole list, not the first thing wrong. The sensitive-field check is the one that matters most: logs are widely readable inside an organization and retained for months, so a token written once is a credential sitting in a searchable store long after it should have expired.`,
 hints:['Accumulate into a problems array rather than returning at the first issue.','Keep the sensitive names in a list and check each field against it.','Push one problem per offending field, in the order the fields appear.']}]},
 
 {id:'js48',title:'Testing with the built-in runner',body:`
@@ -141,13 +141,13 @@ constantly: <code>equal</code> for primitives, <code>deepEqual</code> for object
 skip, even though it is where the bugs are.</p>
 
 <h4>What makes a test worth having</h4>
-<p><b>One behaviour per test</b>, named so a failure report reads as a sentence: "rejects a negative
+<p><b>One behavior per test</b>, named so a failure report reads as a sentence: "rejects a negative
 amount" tells you what broke; "test 3" does not.</p>
 <p><b>Arrange, act, assert</b>, in that order and visibly separated. A test where you cannot see which
 line is the action is a test nobody will maintain.</p>
 <p><b>No shared mutable state.</b> Tests that pass alone and fail together, or that depend on running in
 order, are worse than no tests: they train the team to ignore red.</p>
-<p><b>Test behaviour, not implementation.</b> A test that asserts a private method was called breaks on
+<p><b>Test behavior, not implementation.</b> A test that asserts a private method was called breaks on
 every refactor while catching nothing. Assert on what the caller can observe.</p>
 
 <h4>Test doubles, and using them sparingly</h4>
@@ -214,8 +214,8 @@ node --cpu-prof app.js          # writes a .cpuprofile on exit
 # reading it: look for a WIDE frame, not a deep one. width is time
 # spent. a deep narrow stack is just a call chain; a wide plateau is
 # where the milliseconds actually went.</div>
-<p>The rule from the JVM stream applies unchanged: <b>measure before optimising</b>. The bottleneck is
-regularly an N+1 query, a synchronous file read, a JSON serialisation or a log statement, and almost
+<p>The rule from the JVM stream applies unchanged: <b>measure before optimizing</b>. The bottleneck is
+regularly an N+1 query, a synchronous file read, a JSON serialization or a log statement, and almost
 never the algorithm someone was about to rewrite.</p>
 
 <h4>Memory: growth versus a leak</h4>
@@ -266,7 +266,7 @@ show.</p>
 <h4>The order to work in</h4>
 <p><b>Reproduce, measure, then change one thing.</b> Reach for the loop-lag metric first (is the loop
 blocked?), then a CPU profile (where is the time?), then heap snapshots (what is being retained?). Going
-straight to optimisation without one of those three is guessing with extra confidence.</p>`,
+straight to optimization without one of those three is guessing with extra confidence.</p>`,
 docs:[['Node (diagnostics: memory)','https://nodejs.org/en/learn/diagnostics/memory'],['Node (perf_hooks)','https://nodejs.org/api/perf_hooks.html'],['Chrome DevTools (memory problems)','https://developer.chrome.com/docs/devtools/memory-problems']],
 exs:[
 {title:'Growth or a leak?',diff:'medium',lang:'js',

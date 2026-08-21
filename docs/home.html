@@ -92,6 +92,12 @@
     color:var(--accent);font-weight:700;padding:12px 18px;border:2px solid var(--accent);
     border-radius:0 0 10px 0;text-decoration:none}
   .skip:focus{left:0}
+  .tool{margin-top:20px;background:var(--teal-tint,#f0fdfa);border:1px solid var(--teal-line,#99f6e4);
+    border-left:4px solid var(--teal,#0f766e);border-radius:0 12px 12px 0;padding:15px 18px;
+    font-size:15px;color:var(--muted)}
+  .tool b a{color:var(--ink);text-decoration:none}
+  .tool .k2{display:block;font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;
+    color:var(--teal,#0f766e);margin-bottom:6px}
   .alpha{border:1.5px solid var(--amber);background:color-mix(in srgb,var(--amber) 8%,var(--panel));
          border-radius:14px;padding:18px 22px;margin:26px 0 24px;font-size:15px}
   .alpha b{color:var(--accent-ink)}
@@ -110,6 +116,11 @@
   .stat:nth-child(3) b{color:var(--violet)} .stat:nth-child(4) b{color:var(--teal)}
   .stat:nth-child(5) b{color:var(--ink)}
   .stat span{font-size:12.5px;color:var(--muted)}
+
+  .cta{display:inline-block;font-weight:700;font-size:15px;padding:12px 20px;border-radius:10px;
+       background:var(--violet);color:#fff;text-decoration:none;transition:filter .15s}
+  .cta:hover{filter:brightness(1.08);text-decoration:none}
+  .cta:focus-visible{outline:3px solid var(--violet-ink);outline-offset:3px}
 
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
   .card{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--c,var(--violet));
@@ -204,17 +215,21 @@
   <a class="snav" href="#about"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-user"/></svg>About</a>
   <a class="snav" href="#identity"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-shield"/></svg>Identity and Access, my domain</a>
   <a class="snav" href="#principles"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-scale"/></svg>How I lead</a>
-  <a class="snav" href="#writing"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-pen"/></svg>My Thoughts, in Writing</a>
-  <a class="snav" href="#develop"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-belt"/></svg>What I've learned<small>and the bar I hold it to</small></a>
+  <a class="snav" href="#writing"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-pen"/></svg>Writings: essays and proud scars</a>
+  <a class="snav" href="#develop"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-belt"/></svg>Things I've Learned<small>and the bar I hold it to</small></a>
+
+  <div class="sgroup">Tools</div>
+  <a class="snav" href="/authlint/"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-shield"/></svg>authlint<small>paste any authentication artifact, decode it, see the errors</small></a>
 
   <div class="sgroup">The dojos</div>
+  <a class="snav" href="/courses/"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-belt"/></svg>All nine courses<small>why they exist, and where to start</small></a>
   <a class="snav" href="/identity/"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-shield"/></svg>Identity Dojo<small>from wading in the shallow end to genuine mastery</small></a>
   <a class="snav" href="/dev/"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-code"/></svg>Dev Dojo<small>software engineering, end to end, and side to side</small></a>
-  <a class="snav" href="/js/"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-js"/></svg>JS Dojo<small>JavaScript &amp; Node, executed for real</small></a>
+  <a class="snav" href="/js/"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-js"/></svg>JS Dojo<small>JavaScript from zero, the on-ramp for Dev &amp; Identity</small></a>
   <a class="snav" href="/fundamentals/"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-cloud"/></svg>Cloud-native path<small>fundamentals → Docker → Kubernetes → Envoy → Istio</small></a>
   <a class="snav" href="/ml/"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-net"/></svg>ML Dojo<small>machine learning, a grad-school passion</small></a>
 
-  <div class="sgroup">Proud scars</div>
+  <div class="sgroup">Latest writing</div>
   @@NAVPOSTS@@
   <a class="snav" href="/blog/" style="color:#fff">All posts →</a>
 
@@ -237,30 +252,31 @@
     <p class="tagline">When my kids were little, both of them insisted I read Green Eggs and Ham
     cover to cover, every single night. Sam-I-Am never left me. So here is mine: Ron-I-AM. Identity
     in both senses, the field I work in and who I am.</p>
-    <p class="lede">I'm Ron Bar-Tor, a Senior Engineering Manager. Over my career
-    I've managed teams of more than 50 engineers, spread across several US states, the UK,
-    India, Australia, and Ukraine. Today I lead nine engineers in the US and the UK, and we're
-    growing. My corner of engineering is <b>identity</b>, the load-bearing machinery that decides
-    who you are and what you may touch. I've spent years in the OAuth dance (2.0 day to day, a
-    smidge of 2.1 where it matters), in SAML's enterprise plumbing, in passkeys and Kerberos
-    tickets, and in the thousand ways login can ruin a Tuesday.</p>
+    <p class="lede">I'm Ron Bar-Tor, a senior engineering manager. My corner of engineering is
+    <b>identity</b>, the load-bearing machinery that decides who you are and what you may touch:
+    the OAuth dance, SAML's enterprise plumbing, passkeys and Kerberos tickets, and the thousand
+    ways login can ruin a Tuesday. I've led teams of more than fifty people across the US, the UK,
+    India, Australia and Ukraine. Today I lead nine engineers in the US and the UK, and we're
+    growing.</p>
 
-    <p class="lede">The writing is where I share what I've picked up leading and running
-    teams, and where I put my own take on things. What actually helps a team through a re-org. Why
-    we reach for a solution before anyone has stated the problem. What it takes to run a team
-    spread across nine hours. All of it comes from things I've done, things I've
-    seen, and places where I changed my mind. I write it down to argue a case, and because
-    someone else may get some use out of it.</p>
+    <p class="lede">Growing engineers is the part of this job I care most about, and this site is
+    that instinct with the volume turned up. Most of what I know arrived slowly, from a handful of
+    people who took the time, and in the gaps between them I worked it out myself. I would rather
+    hand it over than watch someone spend the same years on it. So everything here is written the
+    way I wish it had been handed to me: plainly first, rigorously second, with the reasoning left
+    in rather than the conclusion alone.</p>
 
-    <p class="lede">The dojos come from the same instinct. I have watched capable engineers
-    spend three weeks unable to contribute because nobody wrote down how any of it fits together,
-    and I have onboarded people badly myself and had to fix it. So I built the thing I wish
-    somebody had handed me: five learning paths across identity, software engineering, JavaScript,
-    machine learning, and cloud-native infrastructure. Machine learning is there because graduate
-    school introduced it the way a cliff introduces the sea, and ML Dojo is my answer to that.
-    Every lesson ends with you doing the work, and CI gates hold the material to the same bar I'd
-    hold a team to. Growing engineers is the part of this job I care most about, and the dojos are
-    that with the volume turned up.</p>
+    <p class="lede">It comes in three shapes. The writing is where I put what I've learned running
+    teams and where I make my own case: what actually helps a team through a re-org, why we reach
+    for a solution before anyone has stated the problem, what it takes to run a team spread across
+    nine hours. All of it comes from things I've done, things I've seen, and places where I changed
+    my mind. <a href="/courses/">The dojos</a> are that same instinct pointed at craft: identity,
+    software engineering, JavaScript, machine learning and cloud-native infrastructure, nine courses
+    where every lesson ends with you doing the work rather than nodding along. Machine learning is
+    there because graduate school introduced it the way a cliff introduces the sea. And
+    <a href="/authlint/">authlint</a> is a tool rather than a lesson: paste any artifact from an
+    authentication flow into it, decode it, and see the errors. It is the same knowledge with the
+    reading taken out.</p>
 
     <div class="pull"><figure>
       <blockquote>“If you don’t dogfood your own product, everything you built is a technical
@@ -283,10 +299,23 @@
     <a href="/identity/#authentication-methods">WebAuthn &amp; passkeys</a> · <a href="/identity/#enterprise-identity">Kerberos &amp; AD</a> ·
     <a href="/identity/#service-to-service">service-to-service auth &amp; SPIFFE</a> ·
     <a href="/identity/#advanced-oauth">advanced OAuth threats</a> · <a href="/identity/#running-identity">running identity</a>.</p>
+
+    <div class="tool">
+      <span class="k2">🔎 Free tool</span>
+      <b><a href="/authlint/">authlint</a></b> is the short version of everything above. <b>Paste any
+      artifact from an authentication flow, decode it, and see the errors.</b> A JWT, a SAML response
+      or assertion, a discovery document, a JWKS or an authorization URL: it decodes what you give it
+      and tells you what is wrong, why that matters and what to change. Paste something it does not
+      recognize and it says so, rather than pretending. About sixty checks, from
+      <code>alg: none</code> to a SAML response whose assertion is not the thing that got signed.
+      One HTML file, no dependencies, and <b>nothing leaves your browser</b>, which is the only
+      honest way to build something people paste production tokens into.
+      <a class="mailme2" href="/authlint/">Open authlint</a>
+    </div>
   </section>
 
   <section id="principles">
-    <div class="k violet">Learned the hard way</div>
+    <div class="k violet">Adjusted along the way</div>
     <h2>How I lead</h2>
     <div class="prin">
       <div class="p-card" style="--c:var(--amber);--ci:var(--amber-ink)">
@@ -346,8 +375,8 @@
   </section>
 
   <section id="writing">
-    <div class="k teal">Proud scars</div>
-    <h2>Essays &amp; proud scars</h2>
+    <div class="k teal">In my own words</div>
+    <h2>Writings: essays and proud scars</h2>
     <p class="secdesc">Engineering management, identity, and the occasional bug worth telling the whole story about.</p>
     @@POSTS@@
     <p style="margin-top:16px"><a href="/blog/" style="font-weight:700">All posts →</a></p>
@@ -368,7 +397,7 @@
     <a class="receipt" href="/skills-rubric.html">The skills rubric: an honest read of where you stand</a>
 
     <p style="margin-top:18px">And I hold the material to the same bar I would hold a team to. Every
-    push runs nine checks, and one of them takes all <b>2,990 assertions</b> behind the graded
+    push runs fourteen checks, and one of them takes all <b>2,990 assertions</b> behind the graded
     exercises and runs them against their own reference solutions. If a single one fails, the build
     fails. That has stopped my own work more than once, which is the point of it. A bar you can wave
     yourself through isn't a bar.</p>
@@ -392,23 +421,28 @@
   <section id="dojos">
     <div class="k amber">My contribution, your knowledge</div>
     <h2>Take the course.</h2>
-    <p class="secdesc">Tutorial hell is watching someone explain things, and your gut telling you
-    they know the material. You do the exercises and still feel like you've only scratched the
-    surface. You went through the motions, but nothing more. Where's the real sense of achievement?
-    That's what these are built for: <b>every lesson here ends with an exercise you complete
-    yourself</b>, in the page, and it has to pass. Five learning
-    paths; the three core dojos compile to a single self-contained HTML file with <b>zero
-    dependencies</b>, so they run offline, from a USB stick if you like, while ML Dojo lives in its
-    own repository and the cloud-native path takes you from Docker to a running Istio mesh. Every push is gated by nine CI checks, including one that executes every graded
-    exercise against its own reference solution. Free, no accounts, no tracking. Knowledge shared is
-    the whole point.</p>
+    <p class="secdesc">Tutorial hell is watching someone explain something, following along, and
+    finding out later that you never had it. Everything here is built against that. <b>Every lesson
+    ends with an exercise you complete in the page, and it has to pass</b>, and when you get a quiz
+    question wrong it tells you why <em>that</em> answer is wrong, not just which one was right.
+    Nine courses, from JavaScript for someone who has never programmed to identity protocols at the
+    depth you would argue about in a design review. And a large part of it is the work nobody teaches
+    you: how a commit becomes a running service, how to read a log file at 3am, what to do in the
+    first ten minutes of an incident. Free, no accounts, no tracking. Knowledge shared is the whole
+    point.</p>
 
     <div class="stats">
       <div class="stat"><b>0</b><span>dependencies</span></div>
-      <div class="stat"><b>59</b><span>tracks &amp; streams</span></div>
-      <div class="stat"><b>420</b><span>lessons</span></div>
-      <div class="stat"><b>639</b><span>hands-on exercises</span></div>
+      <div class="stat"><b>71</b><span>streams</span></div>
+      <div class="stat"><b>610</b><span>lessons</span></div>
+      <div class="stat"><b>749</b><span>hands-on exercises</span></div>
     </div>
+
+    <p class="secdesc" style="margin-top:18px"><a class="cta" href="/courses/">See all nine courses &rarr;</a></p>
+    <p class="secdesc">What each one covers, where to start depending on what you already know, and
+    what these are not. Every push runs fourteen CI checks, one of which executes every graded
+    exercise against its own reference solution and fails the build if a model answer stops
+    passing.</p>
 
   <div class="alpha">
     <span class="k2">🧪 Alpha · volunteers wanted</span>
@@ -422,59 +456,6 @@
     up.
   </div>
 
-    <div class="cards">
-      <div class="card" style="--c:var(--rose);--ci:var(--rose-ink)">
-        <div class="tag">Identity &amp; access</div>
-        <h3><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-shield"/></svg> Identity Dojo</h3>
-        <div class="nums"><b>14 streams · 149 lessons · 159 exercises</b></div>
-        <p>Identity and access is a huge field: so much to learn, so many problems to solve, so much
-        misdirection if you get it wrong. And it's changing at a rapid pace, we now have to manage AI
-        agents as if they were end users. My aim with this course is to cover and work through as
-        much of it as possible, from the ground up to the technical nitty-gritty.</p>
-        <a class="go" href="/identity/">Enter Identity Dojo →</a>
-      </div>
-      <div class="card" style="--c:var(--violet);--ci:var(--violet-ink)">
-        <div class="tag">Software engineering</div>
-        <h3><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-code"/></svg> Dev Dojo</h3>
-        <div class="nums"><b>29 tracks · 207 lessons · 374 exercises</b></div>
-        <p>It might look eclectic. It isn't. This is a collection of the technologies, learnings
-        and challenges I've met across my career, arranged so someone can grow from newbie toward
-        senior engineer. It won't make you a senior engineer on its own, nothing but real experience
-        does, but it's a strong technical track to grow alongside it.</p>
-        <a class="go" href="/dev/">Enter Dev Dojo →</a>
-      </div>
-      <div class="card" style="--c:var(--amber);--ci:var(--amber-ink)">
-        <div class="tag">JavaScript &amp; Node</div>
-        <h3><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-js"/></svg> JS Dojo</h3>
-        <div class="nums"><b>16 streams · 64 lessons · 106 exercises</b></div>
-        <p>This one exists so nothing else here can block you. Exercises across the site run on
-        JavaScript, so JS Dojo takes you from zero to comfortable, from the ground up, with every
-        exercise executed for real. It's the site's ethos in miniature: nothing is assumed,
-        everything is available.</p>
-        <a class="go" href="/js/">Enter JS Dojo →</a>
-      </div>
-      <div class="card" style="--c:var(--teal);--ci:var(--teal-ink)">
-        <div class="tag">Machine learning</div>
-        <h3><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-net"/></svg> ML Dojo</h3>
-        <div class="nums"><b>the passion project · its own repository</b></div>
-        <p>Grad school introduced ML the way a cliff introduces the sea: head first. Support Vector
-        Machine sounded like a spaceship, nobody would tell me what an eigenvector was for, and one
-        lecturer swore Bayes' theorem was the only equation we'd ever need. He was wrong. So this
-        dojo removes the intimidation: every idea starts with plain English, and the math arrives
-        after, once you know what it's there for.</p>
-        <a class="go" href="/ml/">Enter ML Dojo →</a>
-      </div>
-      <div class="card" style="--c:var(--cyan);--ci:var(--cyan-ink)">
-        <div class="tag">Cloud-native infrastructure</div>
-        <h3><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-cloud"/></svg> Cloud-native path</h3>
-        <div class="nums"><b>5 courses · 80 modules · 374 quiz questions</b></div>
-        <p>The other side of being an engineer, the one nobody really talks about: everyday
-        operations. Code isn't done when it compiles, it's done when it's up, running and deployed.
-        This path teaches exactly that, beginner or senior, from your first container to a
-        production service mesh: package it, orchestrate it, proxy it, mesh it.</p>
-        <a class="go" href="/fundamentals/">Start the path →</a>
-      </div>
-    </div>
   </section>
 
 

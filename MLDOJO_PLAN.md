@@ -10,6 +10,34 @@ build order. Phase 1 is a complete, shippable product on its own.
 
 ---
 
+> **Status: MLDojo is built and live, and what shipped is not the shape this plan describes.**
+> The course is at https://roniam.dev/ml/: **12 streams, 109 lessons, 63 exercises**, 345 quiz
+> questions, and its own glossary of **203 terms across 8 domains**, filterable. Python runs in the
+> browser through Pyodide, as planned. It lives in its own repository and reaches the site as a
+> tracked build snapshot at `ml-dojo/dist/index.html`, which is what the deploy copies to `/ml/`.
+> It is in alpha.
+>
+> Three divergences worth stating before the plan text below, which is left as written:
+>
+> - **The math went deeper than planned, and a whole later phase arrived early.** Calculus gained
+>   Lagrange multipliers and the KKT conditions. Probability and statistics grew from a single stream
+>   into counting, descriptive statistics, distributions, the Gaussian, Bayes, maximum likelihood,
+>   latent variables and expectation maximization, variance and covariance, entropy and KL divergence,
+>   and the bias-variance decomposition. Neural networks, a Phase 2 item, shipped as a 15-lesson stream
+>   running from the perceptron to the transformer.
+> - **Reinforcement learning shipped, and this plan never mentions it.** 15 lessons: the
+>   agent-environment loop, returns and discounting, Markov decision processes, Bellman, dynamic
+>   programming, Monte Carlo, temporal difference, SARSA and Q-learning, exploration and bandits,
+>   function approximation and the deadly triad, deep Q-networks, policy gradients, actor-critic and
+>   PPO, RLHF, and a closing lesson on what reinforcement learning is still bad at.
+> - **The data-craft and dimensionality blocks did not get built.** Blocks B and C of Phase 1 below
+>   are open, as are the three projects and the capstone in block E. pandas, matplotlib and
+>   scikit-learn ship as lessons inside the ML Toolkit stream rather than as streams of their own.
+>
+> Per-section status notes below mark what is done and what is still missing.
+
+---
+
 ## Introduction: what this course aims to provide, and how (shown to every learner)
 
 The course opens with an explicit statement of intent, on the landing page and the in-app
@@ -93,7 +121,7 @@ admitted* by itself:
   (real analysis, measure-theoretic probability). A PhD-bound learner should add proof-based
   math and, above all, research experience.
 
-Summary sentence for the site: *MLDojo prepares you to thrive in ML, in work or in school —
+Summary sentence for the site: *MLDojo prepares you to thrive in ML, in work or in school,
 but it is preparation, not a credential, and we will always tell you which one you need.*
 
 ---
@@ -266,6 +294,13 @@ feeling like one family.
 - **The teaser already exists**: the "coming soon" promo on the JavaDojo landing flips to
   a live link when Phase 1 ships.
 
+> **Status.** The fork happened and then diverged further than "fork" suggests. MLDojo has its own
+> repository and its own engine, so it does not share the runtime the other three dojos are built
+> from. One consequence is visible to learners: MLDojo carries its own glossary, 203 terms across 8
+> domains, rather than the shared one. The shared `site/` layer never gained the `product` column, so
+> MLDojo progress is browser-local like every other course. The teaser did flip: the course is listed
+> at https://roniam.dev/courses/ and live at `/ml/`.
+
 ---
 
 ## 3. Architecture
@@ -293,6 +328,20 @@ Two capabilities the JavaDojo engine doesn't have, added here:
 
 Everything else, belts, streams, the lesson/exercise data shape, progress in
 localStorage synced to the account, the build/verify toolchain, is inherited.
+
+> **Status: built, with two changes to record.** Pyodide runs the Python, the build assembles a
+> single `dist/index.html`, and the snapshot of that file is what this repository serves at `/ml/`.
+>
+> **KaTeX was never wired in.** Equations are set as monospaced blocks of Unicode symbols instead.
+> That keeps the page free of a vendored library and renders offline, and it means the course cannot
+> typeset anything a fixed-width grid will not hold.
+>
+> **Pyodide is not self-hosted.** The page loads it from a public CDN, so the `vendor/` directory
+> above and the "no third-party CDN at runtime" promise did not survive contact with a 10MB runtime.
+> The cost is stated where a learner will meet it: the runtime downloads on the first run rather than
+> on page load, and a failed run says so when the CDN is blocked. Self-hosting it is open work.
+>
+> Progress is not synced to an account, because the account layer was never deployed.
 
 ---
 
@@ -347,6 +396,12 @@ piece is independently shippable:
    is the same AI-judge/proxy infrastructure JavaDojo's launch plan already designs, extended
    to student-authored calls.
 
+> **Status: Tier 0 is what exists.** Everything in MLDojo runs in the browser. There is no `/run`
+> API, no job queue, no sandboxed worker, no GPU pool and no LLM proxy, so Tiers 1 to 3 are open in
+> full. The consequence for the curriculum is visible in Phase 2 below: neural networks are taught
+> and their mechanics are worked through, but there is no stream in which the learner trains a real
+> network with a real framework, because there is nowhere to run it.
+
 Guardrails carried from JavaDojo: all backend calls are authenticated through the shared
 `site/` accounts layer; the runner is network-isolated and resource-capped; spend is bounded
 per user; nothing the learner submits can touch real user data. The honest headline stays:
@@ -394,6 +449,15 @@ exactly this loop, and MLDojo keeps it as a hard rule for every exercise/quiz:
 exercise-or-quiz, lacks a solution, or lacks at least one hint, assessment, solution, and
 hints are structurally required, exactly like grounding and glossary coverage.
 
+> **Status: the rule holds in its weaker form.** All 109 lessons carry a quiz. 63 of them carry a
+> graded exercise, so "an exercise and/or quiz on every lesson" is met, and "hands-on practice on
+> every lesson" is not: 46 lessons are read-and-answer. Quiz quality was worked on separately and
+> across all four dojos: 1,302 hand-authored questions, each with an explanation of why the right
+> answer is right and a per-option rebuttal saying why the option you picked is wrong, correct
+> answers spread evenly across the four slots, and options shuffled again at render time. No question
+> now has a correct answer that is conspicuously the longest, down from 653 that did. Two CI gates
+> hold that line, one on option length and one on where the correct answer sits.
+
 ---
 
 ## 5. Full curriculum (all three tiers, phased)
@@ -434,7 +498,7 @@ but it's designed as one coherent product.
 >   (a dot product as a loop, a 2×2 determinant as `ad−bc`, a matrix–vector product by hand),
 >   which is how understanding is forged. **No NumPy in the math streams.**
 > - **Stage 3: Scientific Python** (NumPy, pandas, matplotlib, scikit-learn), *after* the
->   math: now that you understand every operation, here is the fast, professional library way —
+>   math: now that you understand every operation, here is the fast, professional library way:
 >   NumPy redoes the linear algebra you hand-wrote, pandas the data work, etc. This is where the
 >   dot product becomes `a @ b` and the determinant `np.linalg.det`, framed as "the tool for the
 >   concept you already own." Vectors and the dot/cross product are **not** taught here, they
@@ -455,7 +519,7 @@ but it's designed as one coherent product.
 > many dimensions, and classic machine learning (blocks B–E below), then Deep Learning and
 > LLMs in Phases 2–3. This is where "ML and AI" actually begins, standing on prepared ground.
 >
-> The tracks are visible in the UI (a labelled divider in the nav, like JavaDojo's Dan Track),
+> The tracks are visible in the UI (a labeled divider in the nav, like JavaDojo's Dan Track),
 > so the learner always knows which stage they're in and what completing it unlocks.
 >
 > **The hierarchy is explicit: Track → Stream → Lesson → Exercise/Quiz.** A *track* is a stage
@@ -471,6 +535,20 @@ but it's designed as one coherent product.
 > derivatives/gradients → the chain rule and convexity).
 
 **A. Foundations Track: Python & Math, from zero**
+
+> **Status: built, all of it, and deeper than planned.** Every stream in this block shipped:
+> Orientation as its own opening stream, Python from Zero (19 lessons, from "what is a program" to
+> how to look things up), NumPy and vectors, Math Notation and Functions, Linear Algebra, Logarithms
+> and Exponentials, Calculus and Gradients, Probability and Statistics, and the ML Toolkit closing
+> the track. Two streams outgrew their entries here. Calculus added Lagrange multipliers and the KKT
+> conditions, which this plan mentioned only as an aside inside a convex-optimization deep dive.
+> Probability and statistics became the largest stream in the course: counting, permutations and
+> combinations, descriptive statistics, the distribution zoo, the Gaussian and the four reasons it is
+> everywhere, the multivariate Gaussian, conditional probability, Bayesian inference with conjugate
+> priors and MAP, maximum likelihood, latent variables and Gaussian mixture models, expectation
+> maximization derived from scratch, estimators and bias, entropy and cross-entropy and KL
+> divergence, and the bias-variance decomposition. What this block promised and did not deliver is a
+> graded exercise on every lesson; a good share of these lessons are checked by quiz alone.
 
 > **Preamble: Tools of the Trade (the hard prerequisite).** No learner meets NumPy, a
 > dataset, or any ML idea before they can actually *program in Python*. Stream 1 is a genuine
@@ -491,8 +569,8 @@ but it's designed as one coherent product.
    exercise. Deliberately **no NumPy/pandas** here: programming is learned as programming
    first, and the data lesson does *by hand* exactly what libraries will later automate, so the
    libraries feel like shortcuts rather than magic. **Completion gates the rest of Phase 1.**
-   The scope commitment: **all the Python needed to develop and test an ML application** —
-   language fundamentals, files and data in/out, imports and packages, errors and debugging —
+   The scope commitment: **all the Python needed to develop and test an ML application**,
+   language fundamentals, files and data in/out, imports and packages, errors and debugging,
    with plotting/graphs taught in the toolkit stream (matplotlib, rendered inline). The path:
    1. **Values & collections**: what a program is; variables & types; **lists, indexing, and
       what *length* / *dimension* mean** (a list is 1-D, a grid is 2-D, "n×m" is examples ×
@@ -554,7 +632,7 @@ but it's designed as one coherent product.
    taught in depth (with a measured loop-vs-kernel speed comparison the learner runs) in the
    toolkit stream below, so no learner leaves believing the interpreter does the math.
 
-   *Integrated Python IDE + Playground:* every exercise runs in a real in-browser editor —
+   *Integrated Python IDE + Playground:* every exercise runs in a real in-browser editor:
    syntax highlighting, line numbers, auto-indent, bracket/quote pairing, Tab/⇧Tab block
    indent, ⌘/Ctrl+Enter to run, and a free-coding **Python Playground** (scratchpad, saved
    between visits, auto-fetches imports like numpy/pandas on first use) lets learners write
@@ -649,7 +727,7 @@ but it's designed as one coherent product.
      pain, seeded here and paid off in PCA (stream 19): "the directions a matrix stretches
      without rotating, and how much", real uses first (PCA's axes of maximum variance,
      PageRank, vibration modes), spinning-globe intuition, math last. (🧠 hard-idea treatment.)
-3b. ⭐ **Logarithms & Exponentials** *(a foundation math stream, before probability needs it)* —
+3b. ⭐ **Logarithms & Exponentials** *(a foundation math stream, before probability needs it)*,
    the one piece of school math ML leans on hardest, taught for real and, crucially, **with the
    reason we use it**. *Fundamentals:* a logarithm is just an exponent asked backwards
    (`log10(1000)=3`); the three bases (log10 orders of magnitude, log2 doublings, `ln`/base-e
@@ -786,6 +864,14 @@ but it's designed as one coherent product.
 ### ML & AI Track *(unlocks only after the Foundations Track above)*
 
 **B. Working with Data, the craft (expanded)**
+
+> **Status: not built. This is the largest hole in the course.** None of streams 6 to 10 exists.
+> pandas and matplotlib are one lesson each inside the ML Toolkit stream, enough to load a table and
+> draw a plot and not enough to teach the craft. Data literacy, missing data and outliers and class
+> imbalance, exploratory analysis, and above all data leakage and the train/test discipline are still
+> only planned. A learner finishing MLDojo today has trained models and has not been taught how the
+> data that feeds them goes wrong.
+
 6. ⭐ **Data Literacy**, what a feature / label / observation actually *is*; data types &
    scales (nominal, ordinal, interval, ratio) and why the scale changes what you can do;
    tidy data; the real shape of datasets.
@@ -800,6 +886,13 @@ but it's designed as one coherent product.
     in real ML; why the split is sacred and how leakage sneaks in.
 
 **C. Thinking in Many Dimensions (dedicated stream, the "aha" most people never get)**
+
+> **Status: not built.** No stream covers the curse of dimensionality, and no lesson shows a
+> projection method as a way of peeking at high-dimensional structure. Pieces of the ground are
+> covered elsewhere: vectors, norms, distance and cosine similarity are taught in linear algebra, and
+> PCA arrives through eigenvectors and the multivariate Gaussian. The intuition this block was
+> written for, why distance stops meaning much when there are 300 axes, is still missing.
+
 11. ⭐ **From 2D to n-D**, a data point *is* a vector in space; distance and similarity
     (Euclidean, cosine); why "features" are just axes.
 12. ⭐ **The Curse of Dimensionality**, why your intuition breaks in high dimensions:
@@ -810,6 +903,19 @@ but it's designed as one coherent product.
     PCA / t-SNE / UMAP let you *peek* at high-dimensional structure (and how they mislead).
 
 **D. Classic Machine Learning**
+
+> **Status: partly built, as one stream rather than seven.** Classic machine learning shipped as
+> eight lessons: what machine learning actually is (the fit, predict, evaluate loop), linear
+> regression with gradient descent written from scratch, classification with logistic regression,
+> supervised and unsupervised and the rest of the map, working with small datasets and how to know if
+> a model is any good, the classifier zoo (six ways to draw a boundary), cluster analysis (four
+> methods and the question none of them answer), and regression beyond the straight line. The
+> demystify-the-name treatment for regression and the squared-error lesson both landed. Overfitting,
+> bias and variance arrived through the bias-variance decomposition in the probability stream rather
+> than as their own stream here. **Still open:** model evaluation as a stream of its own
+> (cross-validation, the confusion matrix, ROC and AUC, and why accuracy lies under class imbalance),
+> trees and ensembles in depth, and feature engineering with leakage-safe pipelines.
+
 14. ⭐ **What ML Actually Is**, supervised/unsupervised, features/labels, the learning
     loop, plain-language framing. This stream **opens the running ML glossary** (the
     counterpart to the probability glossary): every core ML term is defined in plain English
@@ -851,7 +957,7 @@ but it's designed as one coherent product.
     the pair is set straight: *linear regression* predicts a number; *logistic regression*,
     despite the "regression" in its name, actually does **classification** (predicts a
     probability of a category), a second naming trap named out loud. Includes an explicit
-    **"Why do we square the error?"** lesson —
+    **"Why do we square the error?"** lesson,
     one of the most-asked, least-answered questions in ML. Grounded: *Hook*, you predicted
     house prices; some guesses are too high, some too low; how do you score "how wrong" in
     one number? *Why squaring, plainly:* (1) it makes every error positive so overs and
@@ -895,6 +1001,12 @@ but it's designed as one coherent product.
     pipelines; the craft that separates working ML from toy ML.
 
 **E. Phase-1 Projects (end-to-end, deploy-something)**
+
+> **Status: not built.** There are no projects and no capstone. This matters more than the count
+> suggests: the positioning section above promises a demonstrable artifact, "I built this and can
+> explain it", and that promise currently has nothing behind it. The AI-judged explanation rubric the
+> capstone depends on has not been built either.
+
 21. ⭐ **Project: Predict house prices**, full regression on a real dataset.
 22. ⭐ **Project: Spam / churn classifier**, full classification pipeline + honest evaluation.
 23. ⭐ **Project: Customer segmentation**, unsupervised; communicate the findings.
@@ -914,7 +1026,7 @@ but it's designed as one coherent product.
     and can explain it") that the positioning section promises, and the strongest single item
     a learner can put in front of an employer or an admissions committee.
 
-**Cross-cutting: "🧠 Hard idea, made simple."** The genuinely counterintuitive concepts —
+**Cross-cutting: "🧠 Hard idea, made simple."** The genuinely counterintuitive concepts,
 the ones people pass exams on but never truly *get*, are flagged with a badge and given
 the deepest treatment: grounding-first, an **interactive Pyodide/matplotlib visualization**
 you manipulate, and an explicit "common misconception" callout. The starting set:
@@ -928,6 +1040,16 @@ This, showing high-dimensional weirdness with code you run, not equations you ta
 faith, is only possible *because* we chose in-browser execution.
 
 ### Phase 2: Deep Learning *(second release)*
+
+> **Status: arrived early, as one stream, minus the framework.** Neural networks shipped as 15
+> lessons: what a neuron is and why the brain metaphor misleads, the 1958 perceptron, XOR and the
+> first AI winter, layers, activation functions, backpropagation, gradient descent, overfitting and
+> the tricks that stop it, convolution in plain English, CNNs, recurrent networks, why RNNs forget
+> and how gates fixed it, attention, what happens inside a transformer, and what neural networks
+> still cannot do. The history callout the plan asked for is there. **Still open:** the framework
+> stream (PyTorch, tensors, autograd, `nn.Module`, a real training loop) and the deployed image
+> classifier, both of which need compute the browser does not have and therefore need the backend
+> from section 4 that was never built.
 
 17. Neural Networks from Scratch, a net in pure numpy: forward, loss, backprop, SGD. Given
     the full grounded + historical treatment: *forward propagation* as repeated "multiply,
@@ -945,6 +1067,12 @@ faith, is only possible *because* we chose in-browser execution.
 
 ### Phase 3: LLMs & Generative AI *(third release)*
 
+> **Status: the mechanics landed inside the neural-networks stream; the applied half did not.**
+> Attention, tokens, embeddings and the internals of a transformer are taught. Prompting, structured
+> output, evaluation, embeddings and vector search, RAG, fine-tuning and LoRA, agents and tool use,
+> and the RAG assistant project are all still open, and all of them need the provider proxy in
+> section 4 that does not exist.
+
 23. Transformers, Demystified, attention, tokens, embeddings; from-fundamentals.
 24. Using LLMs Well, prompting, structured output, context windows, evaluation.
 25. Embeddings & Vector Search, semantic search from scratch.
@@ -957,6 +1085,23 @@ faith, is only possible *because* we chose in-browser execution.
 Attention internals, RLHF/alignment, scaling laws, evaluation & safety, ML system design
 interviews, the senior tier, mirroring JavaDojo's Dan Track.
 
+> **Status: no separate track, but two of its topics shipped as ordinary lessons.** Attention
+> internals are in the neural-networks stream and RLHF is in the reinforcement-learning stream, both
+> taught in line rather than gated behind a black belt. Scaling laws, evaluation and safety, and ML
+> system design interviews are open. Whether MLDojo needs a dan track at all is now an open question
+> rather than a settled decision, since the depth it was meant to hold went into the main streams.
+
+### Reinforcement Learning *(shipped, and absent from this plan)*
+
+This plan does not mention reinforcement learning anywhere. It shipped anyway, as 15 lessons: what
+reinforcement learning is and why it is not supervised learning; states, actions, returns and why
+the future is discounted; Markov decision processes; value functions and the Bellman equation;
+Bellman optimality with policy iteration and value iteration; Monte Carlo methods; temporal
+difference learning; SARSA and Q-learning; exploration and exploitation through bandits; function
+approximation and the deadly triad; deep Q-networks; policy gradients; actor-critic, advantage and
+PPO; RLHF; and a closing lesson on what reinforcement learning is still bad at and when not to use
+it. Recorded here so the plan and the course can be read against each other honestly.
+
 ---
 
 ## 5b. The rigorous glossary: complete term inventory
@@ -964,6 +1109,17 @@ interviews, the senior tier, mirroring JavaDojo's Dan Track.
 This section makes "complete coverage with rigor" concrete. It is the **checklist** the whole
 course is graded against: every term below gets a glossary entry and a lesson callout, and
 `verify.js` fails the build if any of them is used before its entry exists.
+
+> **Status: the glossary shipped, and it is MLDojo's own.** 203 terms grouped into 8 domains and
+> filterable in the page, written for this course because it does not use the shared engine and so
+> could not inherit the shared glossary. The domains follow the course rather than this inventory:
+> Python and arrays, linear algebra, calculus and optimization, probability and statistics,
+> machine-learning concepts, classic models, neural networks, and reinforcement learning.
+>
+> **Still open:** the inventory below, as a checklist. It was written before the course was, and it
+> is organized around streams that in some cases were never built. Its last section, LLMs and
+> generative AI, has no stream behind it at all; those terms are covered only where the
+> neural-networks stream happens to need them.
 
 **The standard for every entry (four parts, in order):**
 1. **Plain English**: one sentence a smart beginner understands, no jargon.
@@ -1070,7 +1226,7 @@ hallucination · **RLHF** · alignment · scaling laws.
 > cross-entropy so the gradient is simply `(prediction − truth)`.
 
 > **Activation function (and why nonlinearity).** *Plain:* the "squash" step that lets a
-> network bend, not just draw straight lines. *Example:* **ReLU** just does `max(0, x)` —
+> network bend, not just draw straight lines. *Example:* **ReLU** just does `max(0, x)`,
 > keep positives, zero out negatives. *Used in ML:* every hidden layer; without it, stacking
 > layers collapses to a single linear map (no depth benefit). *Precise:* a network is
 > `f(x)=W₂·σ(W₁x+b₁)+b₂`; if `σ` is linear the whole thing is linear, so the *nonlinearity*
@@ -1195,19 +1351,24 @@ Two capabilities, built on the same AI-tutor mechanism JavaDojo already uses
 
 ## 6. Build order for Phase 1 (what actually gets built first)
 
-1. **Fork the engine**: copy JavaDojo's `src/`, `build.js`, `scripts/verify.js` into
-   `ml-dojo/`; restyle to the MLDojo palette; strip Java-specifics.
-2. **Wire Pyodide**: the runner: load runtime + numpy/pandas/sklearn/matplotlib, run user
-   code in a worker, capture stdout/returns/exceptions/figures. Prove it with one lesson.
-3. **Wire KaTeX**: math rendering in lessons.
-4. **Define the exercise schema**: extend JavaDojo's (add `run`/`assert`/`plot` types and
-   Python `setup`/`solution`/`tests`). Update `verify.js` to run each solution through
-   Pyodide headlessly (Node + Pyodide) so the content test-suite stays green like JavaDojo's.
-5. **Author streams 1–2** (Python from Zero, NumPy) end to end as the template.
-6. **Author the rest of Phase 1** (streams 3–16), verifying continuously.
-7. **Integrate with the site**: serve MLDojo at `/ml` (or its own subdomain), extend the
-   progress table with a `product` column, add the hub link, flip the landing teaser to live.
-8. **Ship Phase 1.**
+1. ~~**Fork the engine**~~, done, and then taken further: MLDojo has its own repository and its own
+   runtime rather than a copy that tracks JavaDojo's.
+2. ~~**Wire Pyodide**~~, done. Learner Python runs in the browser.
+3. **Wire KaTeX**: math rendering in lessons. **Dropped.** Equations are set as monospaced Unicode
+   blocks instead. See the status note in section 3 for what that costs.
+4. ~~**Define the exercise schema**~~, done for the exercise types the course uses.
+5. ~~**Author streams 1–2**~~ (Python from Zero, NumPy), done, and they set the template the rest
+   followed.
+6. **Author the rest of Phase 1** (streams 3–16). **Partly done, and reordered.** The foundations,
+   classic ML, neural networks and reinforcement learning were written; the data-craft streams, the
+   dimensionality stream, the evaluation stream and the projects were not. See the block status notes
+   in section 5.
+7. **Integrate with the site**: MLDojo is served at `/ml/` and listed on the course index, and the
+   teaser is live. **Still open:** the `product` column on the progress table, because the accounts
+   layer it belongs to was never deployed. The integration that does exist is a build snapshot copied
+   in from the other repository.
+8. **Ship Phase 1.** **Not yet.** A course shipped; the Phase 1 defined here did not. Section 8 says
+   what is missing.
 
 ---
 
@@ -1227,17 +1388,40 @@ Two capabilities, built on the same AI-tutor mechanism JavaDojo already uses
 - **Scope discipline.** Phase 1 is 16 streams, already sizable. Resist creep; DL and LLMs
   are separate releases by design.
 
+> **Status of the risks, one by one.** *Pyodide first-load weight*: real, accepted, mitigated by
+> loading the runtime on the first run rather than on page load, and saying so in the button while it
+> downloads. *Deep-learning execution*: unresolved, and it is now the binding constraint on Phases 2
+> and 3, since neither the framework stream nor anything involving an LLM can be practiced without
+> the backend. *CSP and hosting*: decided the other way. KaTeX was dropped and Pyodide is loaded from
+> a public CDN rather than self-hosted, which trades a stricter policy for a smaller repository and
+> leaves the course dependent on a third party at runtime. *Math pedagogy*: this is where the effort
+> actually went, and where the course is strongest. *Dataset licensing*: never tested, because the
+> streams that would load real datasets are the ones that were not built. *Scope discipline*: not held,
+> and knowingly. Deep learning and reinforcement learning were written before Phase 1's own data and
+> project blocks, which is why a learner can derive expectation maximization here but has never been
+> taught about data leakage.
+
 ---
 
 ## 8. What "done" looks like for Phase 1
 
 A learner with zero programming and rusty high-school math can start at Python from Zero,
 be carried through the math they need, train and evaluate real ML models **in the browser
-with real results**, complete three end-to-end projects, and earn belts along the way —
+with real results**, complete three end-to-end projects, and earn belts along the way,
 all synced to their account, served alongside JavaDojo. A complete product that stands on
 its own, with a clear runway to Deep Learning and LLMs.
 
+> **Status: most of that is true, and the parts that are not are named.** A learner with no
+> programming can start at Python from Zero, be carried through the math, and train and evaluate
+> models in the browser on real output. Belts work. Three things in that sentence are still false:
+> there are **no end-to-end projects and no capstone**, progress is **not synced to an account**
+> because the accounts layer was never deployed, and the data craft a learner needs before their
+> results can be trusted is **not taught at all**. Stated in this plan's own terms, what is missing
+> from Phase 1 is block B, block E, and the model-evaluation stream in block D. The runway to deep
+> learning was taken early; the runway to LLMs is blocked on a backend that does not exist.
+
 ---
 
-*Next step on approval: begin Phase 1, Build Order step 1, fork the engine into `ml-dojo/`
-and stand up the Pyodide runner against a first proof-of-concept lesson.*
+*That next step was taken: the engine was forked, the Pyodide runner stood up, and the course grew
+from there into 12 streams and 109 lessons. This document is now the record of what was planned,
+read against the status notes for what happened.*
