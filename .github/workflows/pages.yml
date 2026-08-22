@@ -193,6 +193,14 @@ jobs:
       - name: Verify the authlint snapshot matches its source
         run: node scripts/verify-authlint-snapshot.js
 
+      # Gate 16. The home page says what you are reading has been through more
+      # than ten revisions. That is a claim about the work, and a claim about
+      # the work gets checked here rather than asserted. Every post recording a
+      # revision count has to clear the floor, and the home page has to still be
+      # making the claim, so it cannot be quietly dropped to make this pass.
+      - name: Verify the revision claim is backed by the posts
+        run: node scripts/verify-revisions.js
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

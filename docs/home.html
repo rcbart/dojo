@@ -68,7 +68,10 @@
   .domain b{color:var(--ink)}
   h1{font-family:var(--serif);font-size:clamp(32px,4.6vw,50px);line-height:1.1;margin:16px 0 12px;
      letter-spacing:-.5px;font-weight:600}
-  .tagline{font-family:var(--serif);font-style:italic;font-size:clamp(16.5px,2vw,19.5px);color:var(--muted);margin:0 0 20px}
+  /* It sits between the lede paragraphs now rather than under the h1, so it takes
+     their measure and a little air above it. */
+  .tagline{font-family:var(--serif);font-style:italic;font-size:clamp(16.5px,2vw,19.5px);
+    color:var(--muted);margin:0 0 24px;max-width:66ch}
   .lede{font-size:17.5px;color:var(--muted);max-width:66ch;margin:0 0 24px}
   .lede b{color:var(--ink)}
 
@@ -249,15 +252,16 @@
   <header class="hero" id="about">
     <div class="domain">ron<b>iam</b>.dev = <b>Ron</b> + <b>IAM</b> · identity &amp; access management</div>
     <h1>Hi, I'm Ron. <span class="iam">I&nbsp;AM</span> what I do.</h1>
-    <p class="tagline">When my kids were little, both of them insisted I read Green Eggs and Ham
-    cover to cover, every single night. Sam-I-Am never left me. So here is mine: Ron-I-AM. Identity
-    in both senses, the field I work in and who I am.</p>
     <p class="lede">I'm Ron Bar-Tor, a senior engineering manager. My corner of engineering is
     <b>identity</b>, the load-bearing machinery that decides who you are and what you may touch:
     the OAuth dance, SAML's enterprise plumbing, passkeys and Kerberos tickets, and the thousand
     ways login can ruin a Tuesday. I've led teams of more than fifty people across the US, the UK,
     India, Australia and Ukraine. Today I lead nine engineers in the US and the UK, and we're
     growing.</p>
+
+    <p class="tagline">When my kids were little, both of them insisted I read Green Eggs and Ham
+    cover to cover, every single night. Sam-I-Am never left me. So here is mine: Ron-I-AM. Identity
+    in both senses, the field I work in and who I am.</p>
 
     <p class="lede">Growing engineers is the part of this job I care most about, and this site is
     that instinct with the volume turned up. Most of what I know arrived slowly, from a handful of
@@ -396,7 +400,7 @@
     <a class="receipt" href="/skills-rubric.html">The skills rubric: where you actually stand</a>
 
     <p style="margin-top:18px">And I hold the material to the same bar I would hold a team to. Every
-    push runs fifteen checks, and one of them takes all <b>2,990 assertions</b> behind the graded
+    push runs sixteen checks, and one of them takes all <b>2,990 assertions</b> behind the graded
     exercises and runs them against their own reference solutions. If a single one fails, the build
     fails. That has stopped my own work more than once, which is the point of it. A bar you can wave
     yourself through isn't a bar.</p>
@@ -404,17 +408,20 @@
 
   <div class="ainote" id="ai">
     <h3>Where AI fits, and where it doesn't</h3>
-    <p>I want to be transparent about this: AI generated this site, and large parts of the dojos.
-    It was an engineering decision and the way I actually work. <b>Delegation is an art</b>, and this
-    is the way I approached this. Like my management work every day, I delegated the work to someone
-    or something that can do it faster than me. But I also believe in the idea of <b>"trust but
-    verify"</b>. The curriculum, the architecture, and technical judgements were all mine. I thought
-    about it, put it down on paper, worked it over, and then told AI what I wanted. All this comes
-    from years of experience and knowing what works best. When I needed to go hands on I did it.
-    When I saw AI was drifting, I course corrected it, and did some of the work myself. The
-    mechanical work, I delegated it to AI, just like I would to my junior engineers. <b>The typing
-    was delegated, the thinking was not.</b> Regardless of who wrote something, quality gates were
-    always there. I will keep iterating on it and improving it. I'm not done yet.</p>
+    <p>I want to be transparent about this. AI generates the first drafts, with a lot of input from
+    me. <b>What you are reading has been through more than ten revisions.</b> So what you are reading
+    is mine. The ideas, the curriculum, the sequencing and the technical judgments were mine before
+    a first draft existed, and the voice is what survives the rewriting. <b>That is what proper
+    delegation looks like.</b></p>
+    <p>It is the same delegation I do every day: hand the work to someone or something that can do
+    it faster than me, be specific about what I want, and then verify. <b>Delegation is an art</b>,
+    and I also believe in <b>"trust but verify"</b>. I thought it through, put it on paper, worked it
+    over, and only then said what I wanted built. All of it comes from years of doing this and
+    knowing what works. When I needed to go hands on, I did. When I saw the AI drifting, I corrected
+    it and wrote that part myself. The mechanical work I delegated, exactly as I would to a junior
+    engineer. <b>The typing was delegated, the thinking was not.</b> And regardless of who wrote a
+    given line, the quality gates were always there. I will keep iterating on it and improving it.
+    I'm not done yet.</p>
   </div>
 
   <section id="dojos">
@@ -439,7 +446,7 @@
 
     <p class="secdesc" style="margin-top:18px"><a class="cta" href="/courses/">See all nine courses &rarr;</a></p>
     <p class="secdesc">What each one covers, where to start depending on what you already know, and
-    what these are not. Every push runs fifteen CI checks, one of which executes every graded
+    what these are not. Every push runs sixteen CI checks, one of which executes every graded
     exercise against its own reference solution and fails the build if a model answer stops
     passing.</p>
 

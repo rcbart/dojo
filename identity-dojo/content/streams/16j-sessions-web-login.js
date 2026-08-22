@@ -94,7 +94,7 @@ Max-Age      absent = session cookie, dies with the browser process.
 __Host-      a name PREFIX the browser enforces: Secure, Path=/, no Domain.
              the strongest binding available, and free.</div>
 
-<h4>The judgement calls</h4>
+<h4>The judgment calls</h4>
 <p><b>Lax versus Strict</b> is a real trade, not a "more secure is better" choice. Strict breaks the
 ordinary case of arriving from an external link and finding yourself logged out, which pushes users
 toward "remember me forever" settings that are worse. Lax is the sensible default; use Strict for

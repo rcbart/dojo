@@ -2474,7 +2474,7 @@ return true;                                       // (then check scope/roles)</
 <h4>Why validation is the whole game</h4>
 <p>It is tempting to read the token as a message from the user. It is not. It is a message from the
 <b>issuer</b>, handed to you by whoever is calling, and that party may not be the person the token
-describes. Everything a resource server does rests on one judgement: <i>is this a statement my issuer
+describes. Everything a resource server does rests on one judgment: <i>is this a statement my issuer
 made, to me, that is still true?</i></p>
 <p>Split that sentence and you have the checks, in order, and the attack each one stops:</p>
 <div class="codeSample" data-hl>"a statement my issuer made"   -> signature + iss   stops FORGED tokens

@@ -10,8 +10,9 @@ Companion to `BACKEND_PLAN.md`. That file explains *why*; this one is the *how*:
 > repository, built and deployed by GitHub Actions on each push to `main`: `/dev/`, `/identity/`,
 > `/js/`, `/ml/`, `/fundamentals/`, `/docker/`, `/kubernetes/`, `/envoy/`, `/istio/`, plus `/courses/`
 > and `/blog/`. There is no separate site repository and no manual copy step. The deploy is gated on
-> 13 checks, so a page whose inline scripts do not parse, or a stat on the home page that disagrees
-> with the content, fails the build instead of shipping. The dojos are in alpha.
+> 16 checks, so a page whose inline scripts do not parse, a stat on the home page that disagrees
+> with the content, or an internal link that does not resolve, fails the build instead of shipping.
+> The dojos are in alpha.
 >
 > Two phases below were overtaken by what got built:
 >
@@ -422,7 +423,7 @@ API inserts into `submissions` with `status='queued'`; runner polls (`SELECT ...
 
 ## Phase 6: Production hardening (ongoing)
 
-**Status: not started, and mostly not applicable yet.** Nothing is running that needs logs, metrics, backups or an abuse watch. The hardening that did land is on the content rather than on a server: 13 CI gates, listed with their reasons in `.github/workflows/pages.yml`, covering engine unit tests, per-course content verification, executed exercises, Java compilation, lesson depth, the cloud-native page structure, color contrast, every built page's inline scripts, quiz option length bias, correct-answer spread, the home page stats, the published prose, and the sitemap.
+**Status: not started, and mostly not applicable yet.** Nothing is running that needs logs, metrics, backups or an abuse watch. The hardening that did land is on the content rather than on a server: 16 CI gates, listed with their reasons in `.github/workflows/pages.yml`, covering engine unit tests, per-course content verification, executed exercises, Java compilation, lesson depth, the cloud-native page structure, color contrast, every built page's inline scripts, quiz option length bias, correct-answer spread, the home page stats, the published prose, the sitemap, every internal link including fragments, the authlint snapshot against its source repository, and the revision claim on the home page.
 
 - **Logs**: `logstash-logback-encoder` for JSON logs; an MDC filter putting `requestId` + `userId` on every line (the Logging lesson, in anger). `docker compose logs` is fine until it isn't; then ship to Grafana Loki (free, runs in compose).
 - **Metrics**: `micrometer-registry-prometheus` + Prometheus + Grafana containers on the VPS. One dashboard: request rate/latency, judge calls + spend/day, runner queue depth, JVM heap.

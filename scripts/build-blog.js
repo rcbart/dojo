@@ -229,7 +229,9 @@ for (const p of posts) {
   const html = page(p.meta.title + ' · Ron Bar-Tor', p.meta.description || '',
     `<h1>${esc(p.meta.title)}</h1>` +
     (p.meta.subtitle ? `<p class="psub">${esc(p.meta.subtitle)}</p>` : '') +
-    `<div class="pdate">${fmtDate(p.date)}</div>` + md(p.body) + giscusBlock(), '/');
+    `<div class="pdate">${fmtDate(p.date)}` +
+      (p.meta.revisions ? ` &middot; ${esc(String(p.meta.revisions))} revisions` : '') +
+    `</div>` + md(p.body) + giscusBlock(), '/');
   fs.mkdirSync(path.join(OUT, 'blog', p.slug), { recursive: true });
   fs.writeFileSync(path.join(OUT, 'blog', p.slug, 'index.html'), html);
 }

@@ -34,7 +34,7 @@ actually catches the mover problem, because it fires at the moment the access be
 <code>APP_FIN_GL_RW_PRD</code> and they will approve all of them in one click, because the alternative is
 an afternoon of guessing. The fix is not exhortation; it is making the decision answerable: show the
 plain-language description, when it was last used, and who else in the same job holds it. <b>Last-used
-data is the one addition that improves a review most</b>; "not used in 180 days" converts a judgement
+data is the one addition that improves a review most</b>; "not used in 180 days" converts a judgment
 call into an obvious revoke.</p>
 <p><b>Wrong reviewer</b> is the second. A line manager knows whether someone still works for them; only
 the application owner knows what a given entitlement actually permits. Serious programs run both

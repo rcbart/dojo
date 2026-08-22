@@ -254,7 +254,7 @@ hints:['Both the items array and the capacity should be private fields.','add() 
 
 {id:'js24',title:'Inheritance, and when not to use it',body:`
 <p><code>extends</code> links one class's prototype to another's, so instances inherit through the chain
-from the first lesson. The syntax is small; the judgement about <i>whether</i> to inherit is the real
+from the first lesson. The syntax is small; the judgment about <i>whether</i> to inherit is the real
 content here.</p>
 
 <div class="codeSample" data-hl>class Animal {
@@ -285,7 +285,7 @@ demands arguments the parent did not, you have broken every function that accept
 <code>Animal</code>. That constraint (the Liskov substitution principle) is what makes inheritance safe,
 and it is violated more often than it is honored.</p>
 
-<h4>The judgement: is-a versus has-a</h4>
+<h4>The judgment: is-a versus has-a</h4>
 <div class="codeSample" data-hl>INHERIT when the subclass genuinely IS the parent, everywhere the parent
   is accepted, with no exceptions you have to document.
 
