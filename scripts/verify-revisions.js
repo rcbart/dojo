@@ -9,6 +9,11 @@
  * home page has to still be making the claim this gate is enforcing. Drop the
  * sentence and the gate fails, because an unenforced claim is worse than none.
  *
+ * The count is deliberately NOT printed in the byline. Advertising it would be
+ * boasting about process; leaving it in the committed source keeps the claim
+ * checkable by anyone who cares to look, which is the standard the rest of this
+ * repo holds itself to.
+ *
  * Posts written before the tally started have no `revisions:` field and are
  * skipped. New posts should carry one. It is one line of front matter:
  *
