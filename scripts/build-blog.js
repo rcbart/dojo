@@ -234,18 +234,27 @@ for (const p of posts) {
   fs.writeFileSync(path.join(OUT, 'blog', p.slug, 'index.html'), html);
 }
 
-const catOf = p => (p.meta.category || 'engineering').toLowerCase();
-const pill = c => `<span class="pill ${c}">${c === 'leadership' ? 'Leadership' : 'Engineering'}</span>`;
+// A post carries one category or two. Front matter accepts either
+//   category: leadership
+//   category: [engineering, leadership]
+// because some posts genuinely are both, and forcing the choice at publish time
+// mislabels them. Note the front matter parser above takes values as raw
+// strings, so the brackets arrive here as text and are stripped rather than
+// parsed. Everything downstream works on the list.
+const catsOf = p => String(p.meta.category || 'engineering')
+  .replace(/[[\]"']/g, '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+const pill = c => `<span class="pill ${c}">${c.charAt(0).toUpperCase() + c.slice(1)}</span>`;
+const pills = p => catsOf(p).map(pill).join(' ');
 
 const list = root => posts.map(p =>
-  `<a class="post" data-cat="${catOf(p)}" href="${root}blog/${p.slug}/">` +
-  `<h2>${esc(p.meta.title)} ${pill(catOf(p))}</h2>` +
+  `<a class="post" data-cat="${catsOf(p).join(' ')}" href="${root}blog/${p.slug}/">` +
+  `<h2>${esc(p.meta.title)} ${pills(p)}</h2>` +
   `<div class="pdate">${fmtDate(p.date)}</div><p>${esc(p.meta.description || '')}</p></a>`).join('\n');
 
 // Two labels, one page. At three posts a filter reads as intent; at thirty it
 // earns its keep; and when it graduates to real sections the metadata is here.
 const filterBar = () => {
-  const cats = [...new Set(posts.map(catOf))];
+  const cats = [...new Set(posts.flatMap(catsOf))];
   if (cats.length < 2) return '';
   return `<div class="filters">
   <button data-f="all" aria-pressed="true">All</button>
@@ -262,7 +271,7 @@ const filterScript = () => posts.length ? `
     var f=b.dataset.f;
     bar.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});
     document.querySelectorAll('.post').forEach(function(a){
-      a.style.display=(f==='all'||a.dataset.cat===f)?'':'none';
+      a.style.display=(f==='all'||(' '+a.dataset.cat+' ').indexOf(' '+f+' ')>=0)?'':'none';
     });
   });
 })();
@@ -281,7 +290,7 @@ const navPosts = posts.length
   : '<span class="snone">first post coming soon</span>';
 const mainPosts = posts.length
   ? posts.slice(0, 3).map(p =>
-      `<a class="post" data-cat="${catOf(p)}" href="/blog/${p.slug}/"><div class="pdate">${fmtDate(p.date)} ${pill(catOf(p))}</div>` +
+      `<a class="post" data-cat="${catsOf(p).join(' ')}" href="/blog/${p.slug}/"><div class="pdate">${fmtDate(p.date)} ${pills(p)}</div>` +
       `<h3>${esc(p.meta.title)}</h3><p>${esc(p.meta.description || '')}</p></a>`).join('\n')
   : '<p class="secdesc">First post coming soon.</p>';
 // The home page links each leadership principle to the post that proves it.
