@@ -7,12 +7,15 @@
 <meta name="description" content="Paste a JWT, a SAML response or assertion, an OpenID Connect discovery document, a JWKS or an OAuth authorization request. authlint works out which it is, decodes it and tells you what is wrong, why it matters and what to change. One HTML file, no dependencies, nothing leaves your browser.">
 <meta name="color-scheme" content="light">
 <!-- The privacy claim, enforced by the browser rather than asserted by the author.
-     default-src 'none' means no network destination of any kind is permitted:
+     default-src 'none' means no subresource or background request is permitted:
      no fetch, no XHR, no beacon, no websocket, no image, no font, no worker.
      If a future edit introduced one, it would fail here instead of leaking.
      form-action 'none' stops any submission, base-uri 'none' stops a <base>
      rewrite. frame-ancestors cannot be set from a meta tag, so there is a
-     script guard for that further down. -->
+     script guard for that further down. Honest limit: CSP does not govern
+     top-level navigation, so "the browser refuses" covers requests, not a
+     script that navigates away; nothing here navigates, the history methods
+     are trapped, and the source is short enough to check that. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src 'none'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'; manifest-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="index, follow">
@@ -183,9 +186,9 @@ code{font-family:var(--mono);font-size:.92em;background:var(--violet-tint);color
     <p class="tag">Paste any artifact from an authentication flow, decode it, and see what is wrong with it.</p>
     <p class="privacy">
       <b>Nothing leaves your browser.</b> No network calls, no storage, no analytics, and a
-      Content-Security-Policy of <code>default-src 'none'</code> so the browser enforces that
-      rather than taking my word for it. Your input never enters the URL, so it never reaches
-      your history. Spellcheck and grammar extensions are opted out, because those read text
+      Content-Security-Policy of <code>default-src 'none'</code> so the browser refuses every
+      subresource and background request — fetch, XHR, beacon, WebSocket — rather than taking my
+      word for it. Your input never enters the URL, so it never reaches your history. Spellcheck and grammar extensions are opted out, because those read text
       boxes and send what they find upstream. The box is emptied when you leave the page.
       <a href="https://github.com/rcbart/authlint/blob/main/SECURITY.md" rel="noopener noreferrer external">How this is verified</a>.
     </p>
@@ -210,7 +213,7 @@ code{font-family:var(--mono);font-size:.92em;background:var(--violet-tint);color
     <textarea id="in" spellcheck="false" autocomplete="off" autocapitalize="off"
       autocorrect="off" data-gramm="false" data-gramm_editor="false"
       data-enable-grammarly="false" data-1p-ignore data-lpignore="true" data-form-type="other"
-      placeholder="A JWT, an OpenID Connect discovery document, a JWKS, an OAuth authorization request or redirect URL, a SAML response, or SAML metadata. authlint works out which."></textarea>
+      placeholder="A JWT or DPoP proof, a discovery document, a JWKS, an OAuth authorization request or redirect URL, a token endpoint response, a Set-Cookie header, a SAML response, request or metadata document. authlint works out which."></textarea>
     <div id="summary" class="summary"></div>
   </section>
 
@@ -220,34 +223,47 @@ code{font-family:var(--mono);font-size:.92em;background:var(--violet-tint);color
     <h2>What it checks</h2>
     <div class="grid">
       <div>
-        <h3>JWTs and JWKS</h3>
-        <p>Algorithm confusion and <code>alg: none</code>. Header fields that ask the verifier to
-        fetch a key from somewhere the token chose. Lifetimes measured in weeks. Millisecond
-        timestamps that push expiry into the next millennium. Personal data riding in a payload that
-        is base64, not encryption. Tokens that will not survive a header limit once one user
-        accumulates enough groups. Symmetric keys published in a document meant to be public.</p>
+        <h3>JWTs, DPoP and JWKS</h3>
+        <p>Algorithm confusion and <code>alg: none</code>. Header fields that nominate the key that
+        validates their own token. Lifetimes measured in weeks, string timestamps that make
+        validators fail open, millisecond timestamps that push expiry into the next millennium.
+        Personal data riding in a payload that is base64, not encryption. Tokens that will not
+        survive a header limit once one user accumulates enough groups. Symmetric keys published in
+        a document meant to be public. And each kind of token graded by its own rules: a DPoP proof,
+        an ID token, an access token and a logout token are different artifacts with different
+        required claims.</p>
       </div>
       <div>
         <h3>OpenID Connect and OAuth</h3>
-        <p>Discovery documents advertising no PKCE, implicit flows nobody remembers enabling, and
-        unsigned ID tokens. Authorization requests missing <code>state</code> or a challenge, with a
-        wildcard redirect, or carrying a client secret through the browser. Trailing-slash issuer
-        mismatches, which cost more debugging hours than any other single character in this field.</p>
+        <p>Discovery documents advertising no PKCE, ROPC and implicit still enabled in the grant
+        list, and unsigned ID tokens. Authorization requests with a wildcard or look-alike redirect,
+        duplicated parameters, or a client secret in the browser. Redirects missing the RFC&nbsp;9207
+        <code>iss</code>. Token endpoint responses and Set-Cookie headers. Trailing-slash issuer
+        mismatches, in the discovery document and in the token, which cost more debugging hours than
+        any other single character in this field. And when a redirect carries an ID token beside its
+        access token or code, <code>at_hash</code> and <code>c_hash</code> are actually verified,
+        offline — the one cryptographic check that needs no key.</p>
       </div>
       <div>
         <h3>SAML</h3>
-        <p>Whether the assertion is signed or only the response is, which is the difference between
-        a working federation and signature wrapping. Multiple assertions and duplicate IDs. Missing
-        audience restrictions, four-hour validity windows, SHA-1 digests, email addresses used as
-        durable identifiers, and certificates that expire the weekend nobody is on call.</p>
+        <p>Whether the assertion is signed or only the response is, and what each signature actually
+        covers: the Reference is resolved, so a signature pointing at an element other than the one
+        it lives in — the mechanism of signature wrapping — is reported directly, alongside multiple
+        assertions, duplicate IDs, XPath transforms and look-alike elements in foreign namespaces.
+        Missing audience restrictions, bearer confirmations without expiry, timestamps with no
+        timezone, four-hour validity windows, SHA-1 digests, email addresses as durable identifiers,
+        and certificates that expire the weekend nobody is on call. Requests, logout messages and
+        metadata get their own rules, and redirect-binding payloads are inflated in the browser.</p>
       </div>
     </div>
 
     <h2>What it does not do</h2>
-    <p>It does not verify signatures. That needs the key, and fetching keys means network calls,
-    which would break the one promise this tool makes. Everything here is about what a token says
-    and how it is put together, never about whether it is genuine. Verify in your own code, with
-    the algorithm pinned, against a key set you fetched yourself.</p>
+    <p>It does not verify signatures. That needs the key, and retrieving keys means network calls,
+    which would break the one promise this tool makes. The checkable exceptions are checked:
+    <code>at_hash</code> and <code>c_hash</code> need only the artifacts themselves, and they are
+    verified locally with WebCrypto. Everything else is about what a token says and how it is put
+    together, never about whether it is genuine. Verify in your own code, with the algorithm
+    pinned, against a key set you fetched yourself.</p>
 
     <h2>Why it exists</h2>
     <p>Every tool of this kind is run by a vendor, on their servers, and people paste production
@@ -466,6 +482,13 @@ function decodeJwt(raw) {
   const parts = String(raw).trim().split('.');
   const out = { parts: parts.length, raw: String(raw).trim() };
   if (parts.length < 2) return { error: 'not enough segments' };
+  if (parts.length === 4 || parts.length > 5) {
+    // Previously a four-segment paste was decoded as a JWS and the fourth
+    // segment silently discarded, which reported findings about a token that
+    // did not exist. Refuse instead, and say why.
+    return { error: parts.length + ' segments: a signed JWT has three and an encrypted one has ' +
+                    'five. Check whether two values were pasted together, or a stray dot got in.' };
+  }
 
   let headerText;
   try { headerText = b64urlToText(parts[0]); }
@@ -503,22 +526,27 @@ function decodeXml(raw) {
   let text = String(raw).trim();
 
   // SAML over HTTP-POST arrives base64-encoded, and over HTTP-Redirect it is
-  // additionally deflated, which we cannot inflate without a library. Say so
-  // rather than failing silently.
+  // additionally raw-DEFLATE compressed. The browser ships an inflater
+  // (DecompressionStream), so hand the bytes back for the async path to
+  // inflate rather than turning the paste away. A percent-encoded value,
+  // which is what a copy out of a form body or a HAR looks like, is unwrapped
+  // first.
   if (!/^\s*</.test(text)) {
     let candidate = text.replace(/\s+/g, '');
+    if (/%[0-9a-fA-F]{2}/.test(candidate)) {
+      try { candidate = decodeURIComponent(candidate); } catch (e) { /* leave as pasted */ }
+    }
     if (/^[A-Za-z0-9+/=_-]+$/.test(candidate)) {
-      try {
-        const decoded = b64ToText(candidate);
-        if (/^\s*</.test(decoded)) {
-          text = decoded;
-        } else {
-          return { error: 'decoded, but the result is not XML. If this came from a ' +
-                          'redirect binding it is DEFLATE compressed, which this tool ' +
-                          'does not inflate. Grab the POST binding instead.' };
-        }
-      } catch (e) {
-        return { error: 'looks like base64 but will not decode: ' + e.message };
+      let bytes;
+      try { bytes = b64urlToBytes(candidate); }
+      catch (e) { return { error: 'looks like base64 but will not decode: ' + e.message }; }
+      const decoded = bytesToText(bytes);
+      if (/^\s*</.test(decoded)) {
+        text = decoded;
+      } else if (/[\x00-\x08\x0e-\x1f]/.test(decoded)) {
+        return { deflate: bytes };
+      } else {
+        return { error: 'decoded, but the result is not XML' };
       }
     }
   }
@@ -532,8 +560,11 @@ function decodeXml(raw) {
   return { doc, text };
 }
 
-/* Namespace-agnostic lookup. Providers disagree about prefixes, and matching
-   on localName is the only thing that works across all of them. */
+/* Prefix-agnostic lookup: providers disagree about prefixes, so elements are
+   matched on localName. That is deliberately loose, and the SAML checks close
+   the gap by verifying the namespace of the elements that matter (Assertion,
+   Signature) explicitly, because a look-alike element in a foreign namespace
+   is itself a finding rather than something to silently accept. */
 function els(node, localName) {
   if (!node) return [];
   const all = node.getElementsByTagName('*');
@@ -588,7 +619,9 @@ function certValidity(b64) {
 }
 
 /* Key size from a JWK modulus, which is what decides whether an RSA key is
-   too small to still be trusted. */
+   too small to still be trusted. Returns null when the modulus does not
+   decode, and the CALLER reports that: a swallowed decode error here once
+   meant a malformed key produced no finding at all. */
 function rsaBits(n) {
   try {
     const bytes = b64urlToBytes(n);
@@ -598,28 +631,33 @@ function rsaBits(n) {
   } catch (e) { return null; }
 }
 
+/* Raw DEFLATE, the redirect binding's compression, inflated with the
+   decompressor the browser ships. No library, no network: bytes in this tab,
+   bytes out in this tab. */
+function inflateRaw(bytes) {
+  const ds = new DecompressionStream('deflate-raw');
+  const stream = new Blob([bytes]).stream().pipeThrough(ds);
+  return new Response(stream).arrayBuffer().then(buf => bytesToText(new Uint8Array(buf)));
+}
+
 /* ============================== DETECT ==============================
    One box, and the tool works out what you pasted. Nobody debugging a
    federation problem at 2am wants to first tell a form what kind of artifact
    they are holding, and half the time they are not sure.
 
    Order matters: the cheapest and most certain shapes are tested first, and
-   anything ambiguous falls through to a guess with a stated confidence. */
-
-const KINDS = {
-  jwt:       'JSON Web Token',
-  jwks:      'JSON Web Key Set',
-  discovery: 'OpenID Connect discovery document',
-  authz:     'OAuth 2.0 authorization request',
-  samlresp:  'SAML response',
-  samlreq:   'SAML authentication request',
-  samlmeta:  'SAML metadata',
-  saml:      'SAML document',
-};
+   anything that stays ambiguous is handed to diagnose(), which explains
+   rather than guesses. */
 
 function detect(raw) {
   const text = String(raw || '').trim();
   if (!text) return { kind: null };
+
+  // Cookie headers, either direction. The value is usually opaque; the
+  // attributes are the artifact.
+  if (/^(set-cookie|cookie):/im.test(text)) {
+    return { kind: 'cookie' };
+  }
 
   // A bearer header pasted whole, which people do constantly. This must be
   // tested BEFORE the bare-JWT shape below: that test strips whitespace so a
@@ -628,27 +666,50 @@ function detect(raw) {
   // other way round, a bare Bearer paste matches as a JWT with no rewrite and
   // the prefix is carried into the decoder.
   const bearer = text.match(/^(?:Authorization:\s*)?Bearer\s+([A-Za-z0-9_.-]+)$/i);
-  if (bearer) return { kind: 'jwt', confidence: 'certain', rewrite: bearer[1] };
+  if (bearer) return { kind: 'jwt', rewrite: bearer[1] };
 
-  // A JWT is three or five base64url segments.
+  // A JWT is three base64url segments, an encrypted one five. Four segments
+  // still get routed to the decoder, which refuses them with a reason a
+  // person can act on; swallowing the extra segment would be worse.
   if (/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]*){1,3}$/.test(text.replace(/\s+/g, ''))) {
-    return { kind: 'jwt', confidence: 'certain' };
+    return { kind: 'jwt' };
   }
 
-  // A URL: either an authorization request or a redirect carrying the result.
+  // A URL. Only an OAuth one: a URL with a query string is not automatically
+  // an authorization request, and grading a search link for missing PKCE
+  // helped nobody. A redirect-binding SSO URL carries the SAML document in a
+  // parameter, so unwrap that first.
   if (/^https?:\/\//i.test(text) && /[?#]/.test(text)) {
-    return { kind: 'authz', confidence: 'certain' };
+    const saml = text.match(/[?&](SAMLResponse|SAMLRequest|LogoutRequest|LogoutResponse)=([^&#\s]+)/i);
+    if (saml) {
+      let v = saml[2];
+      try { v = decodeURIComponent(v); } catch (e) { /* use as-is */ }
+      return { kind: 'samlparam', rewrite: v };
+    }
+    if (/[?#&](response_type|client_id|redirect_uri|scope|state|code|access_token|id_token|error|code_challenge|iss|token_type)=/i.test(text)) {
+      return { kind: 'authz' };
+    }
+    return { kind: null, reason: 'a URL with parameters, none of which are OAuth parameters. ' +
+                                 'authlint reads authorization requests and redirects.' };
   }
 
   // JSON: which document depends on what is inside it.
   if (/^[\[{]/.test(text)) {
     try {
       const j = JSON.parse(text);
-      if (j && Array.isArray(j.keys)) return { kind: 'jwks', confidence: 'certain' };
+      if (j && Array.isArray(j.keys)) return { kind: 'jwks' };
       if (j && (j.issuer || j.authorization_endpoint || j.jwks_uri)) {
-        return { kind: 'discovery', confidence: 'certain' };
+        return { kind: 'discovery' };
       }
-      if (j && (j.kty || j.n || j.crv)) return { kind: 'jwks', confidence: 'likely', wrapSingleKey: true };
+      // The token endpoint's answer, or an introspection response: the two
+      // most-pasted JSON artifacts in any OAuth debugging session.
+      if (j && (j.access_token || j.refresh_token ||
+                (j.token_type && j.expires_in != null) || j.id_token)) {
+        return { kind: 'tokenresp' };
+      }
+      if (j && typeof j.active === 'boolean') return { kind: 'tokenresp' };
+      if (j && (j.error && (j.error_description || j.error_uri))) return { kind: 'tokenresp' };
+      if (j && (j.kty || j.n || j.crv)) return { kind: 'jwks' };
       return { kind: null, reason: 'JSON, but not a shape authlint knows' };
     } catch (e) {
       return { kind: null, reason: 'starts like JSON but will not parse: ' + e.message };
@@ -656,26 +717,45 @@ function detect(raw) {
   }
 
   // XML, either raw or base64. Look at the root element to tell them apart.
+  // Logout messages are tested before the generic Response match, because
+  // LogoutResponse IS a "*Response" and used to be graded with sign-on
+  // response rules, which produced nonsense findings on it.
   const xmlish = /^\s*</.test(text) ? text : peekBase64Xml(text);
   if (xmlish) {
     if (/<[\w:]*EntityDescriptor/i.test(xmlish) || /<[\w:]*EntitiesDescriptor/i.test(xmlish)) {
-      return { kind: 'samlmeta', confidence: 'certain' };
+      return { kind: 'samlmeta' };
     }
-    if (/<[\w:]*Response/i.test(xmlish)) return { kind: 'samlresp', confidence: 'certain' };
-    if (/<[\w:]*AuthnRequest/i.test(xmlish)) return { kind: 'samlreq', confidence: 'certain' };
-    if (/<[\w:]*Assertion/i.test(xmlish)) return { kind: 'samlresp', confidence: 'likely' };
     if (/<[\w:]*LogoutRequest/i.test(xmlish) || /<[\w:]*LogoutResponse/i.test(xmlish)) {
-      return { kind: 'saml', confidence: 'likely' };
+      return { kind: 'samllogout' };
     }
+    if (/<[\w:]*AuthnRequest/i.test(xmlish)) return { kind: 'samlreq' };
+    if (/<[\w:]*Response/i.test(xmlish)) return { kind: 'samlresp' };
+    if (/<[\w:]*Assertion/i.test(xmlish)) return { kind: 'samlresp' };
     // Parses as XML but the root is not one of the SAML elements. Running the
     // SAML checks over it would produce a page of findings about a document
     // that was never SAML, so hand it to diagnose instead.
     return { kind: null, reason: 'XML, but not a document authlint knows' };
   }
 
+  // Long base64 that decodes to bytes rather than text: the redirect
+  // binding's raw-DEFLATE payload. Only the binary case routes here; base64
+  // of readable text falls through to diagnose, which explains it better.
+  const blob = text.replace(/\s+/g, '');
+  if (/^[A-Za-z0-9+/=_%-]{40,}$/.test(blob)) {
+    let peek = null;
+    try {
+      let c = blob;
+      if (/%[0-9a-fA-F]{2}/.test(c)) { try { c = decodeURIComponent(c); } catch (e) {} }
+      peek = b64urlToText(c.slice(0, Math.floor(Math.min(c.length, 400) / 4) * 4));
+    } catch (e) { /* not base64 after all */ }
+    if (peek && /[\x00-\x08\x0e-\x1f]/.test(peek)) {
+      return { kind: 'samlresp', maybeDeflate: true };
+    }
+  }
+
   // A bare query string, which is what you get from copying out of a HAR file.
   if (/(^|[?&])(response_type|client_id|redirect_uri|code_challenge)=/.test(text)) {
-    return { kind: 'authz', confidence: 'likely', asQuery: true };
+    return { kind: 'authz', asQuery: true };
   }
 
   return { kind: null, reason: 'authlint cannot tell what this is' };
@@ -707,9 +787,10 @@ function peekBase64Xml(text) {
    Returns { state, looksLike, problem, hint }, where state is 'malformed' when
    the shape is recognisable and 'unknown' when it is not. */
 
-const ACCEPTS = 'a JWT, a JWKS, an OpenID Connect discovery document, an OAuth ' +
-                'authorization request or redirect URL, a SAML response or assertion, ' +
-                'or SAML metadata';
+const ACCEPTS = 'a JWT (including a DPoP proof or a JWE), a JWKS, an OpenID Connect discovery ' +
+                'document, an OAuth authorization request or redirect URL, a token endpoint or ' +
+                'introspection response, a Set-Cookie header, a SAML response, assertion, ' +
+                'request or logout message, or SAML metadata';
 
 function diagnose(raw) {
   const text = String(raw || '').trim();
@@ -731,11 +812,8 @@ function diagnose(raw) {
             'will be checked in context.' };
   }
 
-  if (/^(Cookie|Set-Cookie):/i.test(text)) {
-    return { state: 'unknown', looksLike: 'an HTTP cookie header',
-      problem: 'A session cookie is usually opaque, with nothing inside it to decode.',
-      hint: 'If one of the values is a JWT, three base64url segments separated by dots, paste just that.' };
-  }
+  // Cookie headers are handled by detect() and get real findings; nothing to
+  // refuse here any more.
 
   /* ---------------- JWT, the one worth diagnosing precisely ---------------- */
 
@@ -877,9 +955,9 @@ function diagnose(raw) {
     if (decoded && /[\x00-\x08\x0e-\x1f]/.test(decoded)) {
       return { state: 'malformed', looksLike: 'compressed or binary data',
         problem: 'It is valid base64, and what comes out is not text.',
-        hint: 'SAML sent over the HTTP-Redirect binding is DEFLATE compressed, and authlint does ' +
-              'not inflate it because that would mean a dependency. Use the POST binding version, ' +
-              'which is what you want for debugging anyway.' };
+        hint: 'Redirect-binding SAML (raw DEFLATE) is inflated automatically, in the browser, so ' +
+              'seeing this message means the bytes would not inflate: the copy is probably ' +
+              'truncated. The POST binding version also works.' };
     }
     return { state: 'unknown', looksLike: 'an opaque value',
       problem: 'It looks like base64 or a random identifier, with no structure inside it.',
@@ -891,6 +969,14 @@ function diagnose(raw) {
   /* ---------------- URLs ---------------- */
 
   if (/^https?:\/\//i.test(text)) {
+    if (/[?#]/.test(text)) {
+      return { state: 'unknown', looksLike: 'a URL',
+        problem: 'It has parameters, and none of them are OAuth parameters, so there is nothing ' +
+                 'here for the authorization checks to read.',
+        hint: 'An authorization request carries response_type, client_id and friends; a callback ' +
+              'carries code or error. If this URL wraps a SAMLRequest or SAMLResponse parameter, ' +
+              'paste it whole and it is unwrapped automatically.' };
+    }
     return { state: 'malformed', looksLike: 'a URL',
       problem: 'It has no query string and no fragment, so there are no parameters to check.',
       hint: 'Copy the authorization request as the browser had it, including everything after ' +
@@ -909,11 +995,46 @@ function diagnose(raw) {
 /* ============================== JWT CHECKS ==============================
    Ordered roughly by how much trouble each one causes. The header checks come
    first because every one of them is a way to make a verifier trust a token it
-   should have rejected, and those are the bugs that end up in advisories. */
+   should have rejected, and those are the bugs that end up in advisories.
 
-const WEAK_ALGS = ['none', 'HS1', 'RS1'];
+   Not every three-segment token is the same artifact. An ID token, an access
+   token, a DPoP proof and a logout token carry different required claims, and
+   grading one against another's rules produces confident nonsense: a DPoP
+   proof has no exp BY DESIGN, and telling its author "this token is valid
+   forever" is worse than saying nothing. So the first thing that happens here
+   is working out which kind of token this is. */
+
+function jwtProfile(t) {
+  const h = t.header || {};
+  const p = t.payload || {};
+  const typ = String(h.typ || '').toLowerCase();
+  if (t.kind === 'jwe') return 'jwe';
+  if (typ === 'dpop+jwt') return 'dpop';
+  if (typ === 'logout+jwt') return 'logout';
+  if (p.events && typeof p.events === 'object' &&
+      Object.keys(p.events).some(k => /backchannel-logout/i.test(k))) return 'logout';
+  if (p.htm && p.htu) return 'dpop';   // the shape of a proof, even without the typ
+  if (typ === 'at+jwt' || typ === 'application/at+jwt') return 'at';
+  if (p.nonce !== undefined || p.at_hash !== undefined || p.auth_time !== undefined) return 'id';
+  if (p.scope || p.scp || p.client_id) return 'at';
+  return 'jwt';
+}
+
+/* A claim that should be a NumericDate but arrived as a string. Several stacks
+   emit "1756000000" and several validators then fail OPEN: the typeof check
+   misses, no branch runs, and the token never expires as far as that code is
+   concerned. Returns the numeric value so the time checks still happen. */
+function numericDate(v) {
+  if (typeof v === 'number') return v;
+  if (typeof v === 'string' && /^\d+(\.\d+)?$/.test(v.trim())) return Number(v);
+  return null;
+}
 
 function checkJwt(t, now) {
+  const prof = jwtProfile(t);
+  if (prof === 'jwe') return checkJwe(t, now);
+  if (prof === 'dpop') return checkDpopProof(t, now);
+
   const f = [];
   const h = t.header || {};
   const p = t.payload || {};
@@ -943,21 +1064,23 @@ function checkJwt(t, now) {
 
   if (h.jku) {
     f.push(F('critical', 'Header carries jku, a URL the verifier is asked to fetch keys from',
-      'If the verifier fetches that URL and trusts what comes back, whoever controls the token ' +
-      'controls the signing key. That is forgery with extra steps.',
-      'Ignore jku, or resolve it only against a fixed allow-list of hosts you own.', 'RFC 8725 §3.5'));
+      'If the verifier follows that URL and trusts what comes back, whoever controls the token ' +
+      'controls the signing key. That is forgery with extra steps, and following it blindly is ' +
+      'also a server-side request forgery.',
+      'Ignore jku, or resolve it only against a fixed allow-list of hosts you own.', 'RFC 8725 §3.10'));
   }
   if (h.x5u) {
     f.push(F('critical', 'Header carries x5u, a URL pointing at the signing certificate',
       'Same failure as jku. An attacker who can set this field can nominate the key that validates ' +
       'their own token.',
-      'Ignore x5u, or allow-list the host.', 'RFC 8725 §3.5'));
+      'Ignore x5u, or allow-list the host.', 'RFC 8725 §3.10'));
   }
   if (h.jwk) {
     f.push(F('critical', 'Header embeds its own public key (jwk)',
       'The token is telling the verifier which key to trust. Any verifier that believes it will ' +
-      'accept a token signed by anyone.',
-      'Never take the key from the token. Resolve kid against a JWKS you fetched yourself.', 'RFC 8725 §3.6'));
+      'accept a token signed by anyone. (The one artifact where an embedded jwk is required is a ' +
+      'DPoP proof, and this token does not look like one.)',
+      'Never take the key from the token. Resolve kid against a JWKS you fetched yourself.', 'RFC 8725 §3.10'));
   }
   if (!h.kid && /^(RS|ES|PS)/i.test(alg)) {
     f.push(F('note', 'No kid',
@@ -965,11 +1088,11 @@ function checkJwt(t, now) {
       'than a rollout.',
       'Have the issuer stamp kid and publish matching kids in the JWKS.', 'RFC 7515 §4.1.4'));
   }
-  if (h.typ && String(h.typ).toLowerCase() === 'jwt' && (p.scope || p.scp || p.client_id) && !p.nonce) {
+  if (prof === 'at' && String(h.typ || '').toLowerCase() === 'jwt') {
     f.push(F('note', 'Access token typed as "JWT" rather than "at+jwt"',
       'Explicit typing is what stops a resource server accepting an ID token where it expected an ' +
       'access token. The two are both JWTs and both signed by the same issuer.',
-      'Issue access tokens with typ=at+jwt and check it.', 'RFC 9068 §2.1'));
+      'Issue access tokens with typ=at+jwt and check it.', 'RFC 9068 §2.1, RFC 8725 §3.11'));
   }
   if (h.crit) {
     f.push(F('note', 'crit header present: ' + JSON.stringify(h.crit),
@@ -986,7 +1109,18 @@ function checkJwt(t, now) {
 
   /* ---------------- time ---------------- */
 
-  if (looksLikeMillis(p.exp) || looksLikeMillis(p.iat) || looksLikeMillis(p.nbf)) {
+  for (const k of ['exp', 'iat', 'nbf']) {
+    if (typeof p[k] === 'string') {
+      f.push(F('critical', k + ' is a string, not a number: "' + String(p[k]).slice(0, 24) + '"',
+        'NumericDate is a JSON number. Validators that check typeof before comparing fail OPEN on ' +
+        'a string: no branch runs, no error is raised, and the token never expires as far as that ' +
+        'code is concerned.',
+        'Emit ' + k + ' as a number at the issuer.', 'RFC 7519 §2'));
+    }
+  }
+  const exp = numericDate(p.exp), iat = numericDate(p.iat), nbf = numericDate(p.nbf);
+
+  if (looksLikeMillis(exp) || looksLikeMillis(iat) || looksLikeMillis(nbf)) {
     f.push(F('critical', 'Timestamps look like milliseconds, not seconds',
       'JWT time claims are seconds since the epoch. A millisecond value puts the expiry thousands ' +
       'of years out, so the token never expires and nobody notices until it is abused.',
@@ -998,20 +1132,25 @@ function checkJwt(t, now) {
       'The token is valid forever. Whatever leaks it, leaks it permanently: a log line, a browser ' +
       'history entry, a support ticket screenshot.',
       'Always set exp. Minutes for access tokens, not hours.', 'RFC 7519 §4.1.4'));
-  } else if (typeof p.exp === 'number') {
-    const remaining = p.exp - now;
+  } else if (exp != null && !looksLikeMillis(exp)) {
+    const remaining = exp - now;
     if (remaining < 0) {
       f.push(F('note', 'Expired ' + secondsToHuman(-remaining) + ' ago',
         'Stated so you know the token you are looking at is not the one currently failing, if it is failing now.'));
     } else {
       f.push(F('ok', 'Valid for another ' + secondsToHuman(remaining), ''));
     }
-    if (typeof p.iat === 'number') {
-      const life = p.exp - p.iat;
-      if (life > 31536000) {
+    if (iat != null) {
+      const life = exp - iat;
+      if (life < 0) {
+        f.push(F('critical', 'exp is before iat',
+          'The token expired before it was issued. Something is assembling these claims by hand, ' +
+          'and time-of-check bugs travel in groups.',
+          'Fix the issuer.', 'RFC 7519 §4.1.4'));
+      } else if (life > 31536000) {
         f.push(F('critical', 'Lifetime is ' + secondsToHuman(life),
           'A bearer token this long-lived is a password that nobody can rotate and everybody logs.',
-          'Shorten it and refresh instead.', 'RFC 8725 §3.9'));
+          'Shorten it and refresh instead.'));
       } else if (life > 86400) {
         f.push(F('warn', 'Lifetime is ' + secondsToHuman(life),
           'Long enough that revocation matters, and bearer tokens have no revocation.',
@@ -1022,14 +1161,14 @@ function checkJwt(t, now) {
     }
   }
 
-  if (typeof p.iat === 'number' && p.iat - now > 300) {
-    f.push(F('warn', 'Issued ' + secondsToHuman(p.iat - now) + ' in the future',
+  if (iat != null && iat - now > 300) {
+    f.push(F('warn', 'Issued ' + secondsToHuman(iat - now) + ' in the future',
       'Either a clock is wrong or the token was minted somewhere you did not expect. Verifiers with ' +
       'tight skew tolerance will reject it intermittently, which is the worst kind of bug to chase.',
       'Fix time sync at the issuer before you widen the skew allowance.'));
   }
-  if (typeof p.nbf === 'number' && p.nbf - now > 60) {
-    f.push(F('note', 'Not valid for another ' + secondsToHuman(p.nbf - now), ''));
+  if (nbf != null && nbf - now > 60) {
+    f.push(F('note', 'Not valid for another ' + secondsToHuman(nbf - now), ''));
   }
 
   /* ---------------- identity of the parties ---------------- */
@@ -1051,6 +1190,12 @@ function checkJwt(t, now) {
     f.push(F('note', 'iss is not a URL: ' + p.iss,
       'Legal for a plain JWT, and OpenID Connect requires an https URL because discovery depends ' +
       'on the value matching the issuer exactly, trailing slash and all.', '', 'OIDC Discovery §4.3'));
+  } else if (typeof p.iss === 'string' && /^https:\/\/.+\/$/.test(p.iss)) {
+    f.push(F('note', 'iss ends with a trailing slash: ' + p.iss,
+      'Issuer comparison is exact string equality. If the discovery document, the token and the ' +
+      'client configuration do not agree byte for byte, trailing slash included, validation fails ' +
+      'with an error that never mentions the slash.',
+      'Make iss match the advertised issuer exactly, and check where the slash lives.', 'OIDC Discovery §4.3'));
   }
 
   if (p.aud == null) {
@@ -1058,14 +1203,23 @@ function checkJwt(t, now) {
       'Nothing scopes this token to a recipient, so any service holding it can present it to any ' +
       'other service that trusts the same issuer.',
       'Set aud to the intended recipient and verify it there.', 'RFC 7519 §4.1.3'));
-  } else if (Array.isArray(p.aud) && p.aud.length > 1 && !p.azp) {
-    f.push(F('warn', 'Multiple audiences and no azp',
-      'With more than one audience a verifier cannot tell which party the token was actually issued ' +
-      'to, and OpenID Connect requires azp in exactly this case.',
-      'Add azp, or issue one token per audience.', 'OIDC Core §2'));
+  } else if (prof === 'id' && Array.isArray(p.aud) && p.aud.length > 1 && !p.azp) {
+    f.push(F('note', 'ID token with multiple audiences and no azp',
+      'A client validating this token is advised to check that azp is present when aud is ' +
+      'multi-valued, so it can confirm it is the party the token was issued to. Without azp that ' +
+      'check cannot happen. (On an access token a multi-valued aud is normal and azp is not expected.)',
+      'Add azp naming the client this token was issued to, or issue one token per audience.',
+      'OIDC Core §2, §3.1.3.7'));
   }
 
-  if (!p.sub && (p.iss || p.aud)) {
+  if (prof === 'logout' && p.nonce !== undefined) {
+    f.push(F('critical', 'Logout token carries a nonce',
+      'A logout token is prohibited from carrying a nonce, precisely so it can never be replayed ' +
+      'into an ID token slot. One that carries it anyway defeats that separation.',
+      'Remove nonce at the issuer.', 'OIDC Back-Channel Logout §2.4'));
+  }
+
+  if (!p.sub && (p.iss || p.aud) && prof !== 'logout') {
     f.push(F('warn', 'No sub claim',
       'There is no stable identifier for the principal, so the relying party has to fall back on ' +
       'something mutable to key its own records.',
@@ -1078,10 +1232,21 @@ function checkJwt(t, now) {
       'OIDC Core §5.7'));
   }
 
-  if (!p.jti && typeof p.exp === 'number' && (p.exp - now) > 900) {
+  if (!p.jti && exp != null && (exp - now) > 900) {
     f.push(F('note', 'No jti',
       'Nothing to record if you ever need to deny a specific token before it expires.',
       'Add jti if you plan to support revocation.', 'RFC 7519 §4.1.7'));
+  }
+
+  if (p.cnf && (p.cnf.jkt || p.cnf['x5t#S256'])) {
+    f.push(F('ok', 'Sender-constrained token (cnf.' + (p.cnf.jkt ? 'jkt' : 'x5t#S256') + ')',
+      'This token is bound to a key. A thief without that key cannot use it, which is the single ' +
+      'biggest upgrade over a bearer token.', '', p.cnf.jkt ? 'RFC 9449 §6.1' : 'RFC 8705 §3'));
+  } else if (prof === 'at') {
+    f.push(F('note', 'Bearer token: no cnf binding',
+      'Anyone who holds this token can use it. DPoP or mutual-TLS binding (a cnf claim) makes a ' +
+      'stolen token useless without the key it was bound to.',
+      'Consider sender-constraining tokens for anything sensitive.', 'RFC 9449, RFC 8705'));
   }
 
   /* ---------------- what is being carried ---------------- */
@@ -1092,7 +1257,7 @@ function checkJwt(t, now) {
       'A JWT is base64, not encryption. Everything here is readable in any log aggregator, proxy ' +
       'access log, browser history entry and error report the token passes through.',
       'Carry an identifier and let the relying party fetch what it needs from userinfo.',
-      'RFC 8725 §3.11'));
+      'RFC 7519 §12'));
   }
   for (const k of Object.keys(p)) {
     const v = p[k];
@@ -1125,17 +1290,175 @@ function checkJwt(t, now) {
     }
   }
 
-  if (t.kind === 'jwe') {
-    f.push(F('note', 'This is a JWE, so the payload is encrypted',
-      'authlint can read the header but not the content, which is the point of a JWE. The header ' +
-      'checks above still apply.', '', 'RFC 7516'));
-  }
-
   /* ---------------- the reminder that matters most ---------------- */
   f.push(F('note', 'authlint did not verify the signature',
     'Nothing here proves this token is genuine. A decoded token tells you what it claims, not ' +
     'whether the claim is true, and every finding above is about content rather than authenticity.',
     'Verify against the issuer\'s JWKS in your own code, with the algorithm pinned.'));
+
+  return sortFindings(f);
+}
+
+/* ============================== DPoP PROOF ==============================
+   A DPoP proof is not an access token, and grading it as one produces exactly
+   backwards advice: the embedded jwk is REQUIRED, and exp, iss and aud are not
+   defined for it at all. */
+function checkDpopProof(t, now) {
+  const f = [];
+  const h = t.header || {};
+  const p = t.payload || {};
+  const alg = String(h.alg || '');
+  const typ = String(h.typ || '').toLowerCase();
+
+  if (typ === 'dpop+jwt') {
+    f.push(F('ok', 'DPoP proof (typ dpop+jwt)', ''));
+  } else {
+    f.push(F('warn', 'Shaped like a DPoP proof but typ is "' + (h.typ || 'absent') + '"',
+      'The htm/htu claims say proof, the type header does not. Servers are required to reject a ' +
+      'proof whose typ is not dpop+jwt, and explicit typing is what keeps a proof from being ' +
+      'replayed as some other kind of token.',
+      'Set typ to dpop+jwt at the client.', 'RFC 9449 §4.2, RFC 8725 §3.11'));
+  }
+
+  if (!h.alg || /^none$/i.test(alg)) {
+    f.push(F('critical', 'Proof algorithm is ' + (h.alg ? '"none"' : 'missing'),
+      'An unsigned proof proves nothing.', 'Sign with an asymmetric algorithm.', 'RFC 9449 §4.2'));
+  } else if (/^HS/i.test(alg)) {
+    f.push(F('critical', 'DPoP proof signed with a symmetric algorithm (' + alg + ')',
+      'The whole point of the proof is possession of a private key the server does not hold. With ' +
+      'HMAC the verifier holds the same key, so possession proves nothing.',
+      'Use an asymmetric algorithm such as ES256.', 'RFC 9449 §4.2'));
+  }
+
+  if (!h.jwk) {
+    f.push(F('critical', 'No jwk in the header',
+      'A DPoP proof carries its public key in the header by definition; that is the key the server ' +
+      'checks the signature with and hashes into the token binding.',
+      'Include the public key as jwk.', 'RFC 9449 §4.2'));
+  } else if (h.jwk.d || h.jwk.p || h.jwk.q) {
+    f.push(F('critical', 'The jwk in this proof includes PRIVATE key parameters',
+      'd, p and q are the private half. Every server this proof is sent to now holds the key that ' +
+      'was supposed to prove possession.',
+      'Send only the public parameters, and rotate this key now.', 'RFC 9449 §4.2'));
+  } else {
+    f.push(F('ok', 'Header embeds the proof public key (jwk), as a DPoP proof must', '',
+      '', 'RFC 9449 §4.2'));
+  }
+
+  for (const [k, why] of [
+    ['jti', 'nothing identifies this proof for replay tracking'],
+    ['htm', 'nothing binds the proof to an HTTP method'],
+    ['htu', 'nothing binds the proof to a target URI'],
+    ['iat', 'nothing bounds how old a replayed proof can be']]) {
+    if (p[k] === undefined) {
+      f.push(F('critical', 'No ' + k + ' claim', 'Required in every DPoP proof: ' + why + '.',
+        'Add ' + k + ' at the client.', 'RFC 9449 §4.2'));
+    }
+  }
+
+  if (typeof p.htu === 'string' && /[?#]/.test(p.htu)) {
+    f.push(F('warn', 'htu carries a query or fragment: ' + p.htu,
+      'htu is the target URI without query and fragment. Servers compare it after stripping ' +
+      'both, and a client that includes them fails against strict implementations.',
+      'Send scheme, host and path only.', 'RFC 9449 §4.2'));
+  }
+
+  const iat = numericDate(p.iat);
+  if (iat != null) {
+    const age = now - iat;
+    if (age > 300) {
+      f.push(F('note', 'Proof is ' + secondsToHuman(age) + ' old',
+        'Servers accept proofs only within a narrow window, typically seconds to a few minutes. ' +
+        'This one would be rejected as stale by most.', '', 'RFC 9449 §11.1'));
+    } else if (age < -300) {
+      f.push(F('warn', 'Proof is issued ' + secondsToHuman(-age) + ' in the future',
+        'A clock is wrong on one side, and proof acceptance windows are tight.', 'Fix time sync.'));
+    }
+  }
+
+  if (p.ath) {
+    f.push(F('note', 'Bound to an access token (ath present)',
+      'This proof accompanies a specific access token: ath is the hash of it. The server must ' +
+      'compare that hash against the token actually presented.', '', 'RFC 9449 §4.3'));
+  }
+  if (p.nonce) {
+    f.push(F('note', 'Carries a server-issued nonce',
+      'The server demanded fresh proofs via DPoP-Nonce, and this proof echoes it.', '', 'RFC 9449 §8'));
+  }
+
+  for (const k of ['exp', 'iss', 'aud', 'sub']) {
+    if (p[k] !== undefined) {
+      f.push(F('note', k + ' is present, but not defined for a DPoP proof',
+        'Freshness comes from iat and the server\'s window, identity from the key, audience from ' +
+        'htu. Verifiers ignore this claim, so nothing enforces whatever it promises.', '', 'RFC 9449 §4.2'));
+    }
+  }
+
+  f.push(F('note', 'authlint did not verify the proof signature',
+    'Whether the signature validates against the embedded key, and whether that key matches the ' +
+    'cnf.jkt in the access token it accompanies, are the checks that make DPoP real. Both need ' +
+    'your code.', 'Verify the proof with the embedded jwk, then compare its thumbprint to cnf.jkt.',
+    'RFC 9449 §4.3, §6.1'));
+
+  return sortFindings(f);
+}
+
+/* ============================== JWE ==============================
+   Five segments, an encrypted payload, and a different set of questions. The
+   header alg here is KEY MANAGEMENT, not a signature: flagging RSA-OAEP as "no
+   kid on an asymmetric signature" or demanding exp from a payload nobody can
+   read are the mistakes this function exists to not make. */
+function checkJwe(t, now) {
+  const f = [];
+  const h = t.header || {};
+  const alg = String(h.alg || '');
+  const enc = String(h.enc || '');
+
+  f.push(F('note', 'This is a JWE, so the payload is encrypted',
+    'authlint can read the header but not the content, which is the point of a JWE. Everything ' +
+    'below is about the header; the claims inside cannot be checked without the key.', '', 'RFC 7516'));
+
+  if (!alg) {
+    f.push(F('critical', 'No alg (key management algorithm) in the header',
+      'Nothing says how the content key was protected.', '', 'RFC 7516 §4.1.1'));
+  } else if (/^RSA1_5$/i.test(alg)) {
+    f.push(F('warn', 'Key management is RSA1_5 (PKCS#1 v1.5)',
+      'RSA1_5 decryption can be turned into a padding oracle wherever error behaviour differs ' +
+      'between bad padding and bad plaintext, and that class of attack has been rediscovered ' +
+      'against JOSE stacks repeatedly.',
+      'Use RSA-OAEP or an ECDH-ES variant.', 'RFC 8017 §7.2, RFC 7518 §4.2'));
+  } else if (/^dir$/i.test(alg)) {
+    f.push(F('note', 'Direct symmetric encryption (alg dir)',
+      'Producer and consumer share the content key outright. Fine inside one service; between ' +
+      'parties it has the same everyone-can-mint property as HMAC signing.', '', 'RFC 7518 §4.5'));
+  }
+  if (!enc) {
+    f.push(F('critical', 'No enc in the header',
+      'A JWE without a content encryption algorithm is malformed.', '', 'RFC 7516 §4.1.2'));
+  }
+  if (h.zip) {
+    f.push(F('warn', 'Compressed plaintext (zip: ' + h.zip + ')',
+      'Compression before encryption invites decompression bombs on the consumer and can leak ' +
+      'plaintext facts through ciphertext length.',
+      'Avoid zip unless you control both ends and cap the inflated size.', 'RFC 8725 §3.6'));
+  }
+  if (h.jku || h.x5u) {
+    f.push(F('warn', 'Header carries ' + (h.jku ? 'jku' : 'x5u') + ', a URL to resolve keys from',
+      'Following a URL the artifact chose is a request-forgery primitive even when the payload is ' +
+      'encrypted.', 'Resolve keys from configuration, not from the token.', 'RFC 8725 §3.10'));
+  }
+
+  const size = (t.raw || '').length;
+  if (size > 8192) {
+    f.push(F('warn', 'Token is ' + size.toLocaleString() + ' bytes',
+      'Past the default header limit on most servers and proxies if this travels as a header.',
+      'Check where it travels.'));
+  }
+
+  f.push(F('note', 'There is no signature on a JWE for authlint to verify',
+    'Integrity here comes from the AEAD tag under the encryption key. If a signed token is nested ' +
+    'inside (cty "JWT"), verify that inner signature after decrypting, and decrypt with the ' +
+    'algorithms pinned.', '', 'RFC 7519 §5.2'));
 
   return sortFindings(f);
 }
@@ -1217,6 +1540,7 @@ function checkDiscovery(d, now) {
   }
 
   const rts = arr('response_types_supported').map(x => String(x).toLowerCase());
+  const grants = arr('grant_types_supported').map(x => String(x).toLowerCase());
   const implicit = rts.filter(x => /\btoken\b/.test(x) && !/^code$/.test(x));
   if (implicit.length) {
     f.push(F('warn', 'Implicit flow is still enabled: ' + implicit.join(', '),
@@ -1224,8 +1548,39 @@ function checkDiscovery(d, now) {
       'and in anything that logs URLs. It has been advised against for years and it is usually left ' +
       'on for one forgotten legacy client.',
       'Find out who still uses it, move them to code with PKCE, and turn it off.', 'RFC 9700 §2.1.2'));
+  } else if (grants.includes('implicit')) {
+    f.push(F('warn', 'Implicit is enabled via grant_types_supported',
+      'The response types look clean, and the grant list still advertises implicit. The two halves ' +
+      'of this document disagree, and clients read both.',
+      'Remove implicit from grant_types_supported too.', 'RFC 9700 §2.1.2'));
   } else if (rts.length) {
-    f.push(F('ok', 'No implicit response types', ''));
+    f.push(F('ok', 'No implicit flow advertised', ''));
+  }
+
+  /* The grant list is where the worst findings in a real discovery document
+     live, and it is the half of the document that mostly goes unread. */
+  if (grants.includes('password')) {
+    f.push(F('critical', 'The password grant (ROPC) is enabled',
+      'The client collects the user\'s password and replays it, which trains users to type ' +
+      'credentials into applications and gives the authorization server no way to do MFA, ' +
+      'phishing-resistance or risk decisions. The current best practice is blunt: it MUST NOT ' +
+      'be used.',
+      'Find the clients still on it, move them to the code flow, and disable it.', 'RFC 9700 §2.4'));
+  }
+  if (grants.some(g => /jwt-bearer/.test(g))) {
+    f.push(F('note', 'JWT bearer grant is enabled',
+      'Tokens are issued for externally-signed assertions. Legitimate for federation, and every ' +
+      'issuer key trusted for it is a token-minting key: worth knowing exactly which those are.',
+      '', 'RFC 7523'));
+  }
+
+  const roAlgs = arr('request_object_signing_alg_values_supported').map(x => String(x).toLowerCase());
+  if (roAlgs.includes('none')) {
+    f.push(F('warn', 'Unsigned request objects are accepted (request_object_signing_alg none)',
+      'A JAR request object exists to make the authorization request tamper-evident. Accepting ' +
+      'unsigned ones hands an attacker a structured way to assert request parameters, with more ' +
+      'authority than a plain query string.',
+      'Remove none from the request object algorithms.', 'RFC 9101'));
   }
 
   const algs = arr('id_token_signing_alg_values_supported').map(x => String(x).toLowerCase());
@@ -1247,9 +1602,20 @@ function checkDiscovery(d, now) {
       'Fine for confidential clients. Worth knowing which of your clients are actually confidential, ' +
       'because a secret shipped inside a SPA or a mobile binary is not one.', '', 'RFC 9700 §2.5'));
   }
+  if (tea.includes('none')) {
+    f.push(F('note', 'Unauthenticated token requests are supported (auth method "none")',
+      'Public clients redeem codes without authenticating, which is normal for SPAs and native ' +
+      'apps, and it means PKCE is the only thing standing between a stolen code and a token.',
+      'Make sure PKCE is enforced, not just supported, for every public client.', 'RFC 9700 §2.1.1'));
+  }
   if (tea.includes('private_key_jwt') || tea.includes('tls_client_auth')) {
     f.push(F('ok', 'Strong client authentication available: ' +
       tea.filter(x => /private_key_jwt|tls_client_auth/.test(x)).join(', '), ''));
+  }
+  if (d.authorization_response_iss_parameter_supported === true) {
+    f.push(F('ok', 'Issuer identification on authorization responses (RFC 9207) is advertised',
+      'Clients can verify which issuer answered, which is the structural defense against mix-up ' +
+      'attacks across providers.', '', 'RFC 9207 §3'));
   }
 
   if (!d.end_session_endpoint) {
@@ -1288,7 +1654,7 @@ function checkJwks(j, now) {
     f.push(F('critical', secret.length + ' symmetric key(s) in a key set',
       'A JWKS is a public document. An oct key is a shared secret, and its value is right there in ' +
       'the k parameter. If this document is served from a well-known URL, the secret is public.',
-      'Remove it now and rotate it. Assume it is compromised.', 'RFC 7517 §8.1'));
+      'Remove it now and rotate it. Assume it is compromised.', 'RFC 7517 §9.2'));
   }
 
   const priv = keys.filter(k => k && (k.d || k.p || k.q));
@@ -1316,11 +1682,16 @@ function checkJwks(j, now) {
 
     if (String(k.kty).toUpperCase() === 'RSA' && k.n) {
       const bits = rsaBits(k.n);
-      if (bits && bits < 2048) {
+      if (bits == null) {
+        f.push(F('warn', 'RSA modulus does not decode' + (k.kid ? ' (' + k.kid + ')' : ''),
+          'The n parameter is not valid base64url, so no verifier can use this key, and a check ' +
+          'that swallows the decode error reports nothing at all. This one does not.',
+          'Fix the key material at the source.', 'RFC 7518 §6.3.1'));
+      } else if (bits < 2048) {
         f.push(F('critical', 'RSA key is ' + bits + ' bits' + (k.kid ? ' (' + k.kid + ')' : ''),
           'Below the minimum anyone still considers safe.',
           'Rotate to at least 2048 bits.', 'RFC 7518 §3.3'));
-      } else if (bits) {
+      } else {
         f.push(F('ok', 'RSA ' + bits + ' bits' + (k.kid ? ' (' + k.kid + ')' : ''), ''));
       }
     }
@@ -1328,6 +1699,11 @@ function checkJwks(j, now) {
     if (Array.isArray(k.x5c) && k.x5c[0]) {
       const v = certValidity(k.x5c[0]);
       if (v) {
+        if (v.notBefore && now * 1000 < v.notBefore.getTime()) {
+          f.push(F('warn', 'Certificate is not valid yet' + (k.kid ? ' (' + k.kid + ')' : ''),
+            'notBefore is in the future, so chain validators reject it right now and the failure ' +
+            'reads as a bad signature rather than a date problem.', 'Check the rotation.'));
+        }
         const days = (v.notAfter - now * 1000) / 86400000;
         if (days < 0) {
           f.push(F('critical', 'Certificate expired ' + Math.abs(Math.round(days)) + ' days ago' +
@@ -1360,11 +1736,17 @@ function checkJwks(j, now) {
    this one line, and almost nobody reads it. */
 
 function parseAuthz(text, asQuery) {
-  const out = { params: {}, base: '', fragment: false, scheme: '' };
+  const out = { params: {}, dups: {}, base: '', fragment: false, scheme: '' };
+  const put = (k, v) => {
+    if (k in out.params && out.params[k] !== v) {
+      (out.dups[k] = out.dups[k] || [out.params[k]]).push(v);
+    }
+    out.params[k] = v;
+  };
   let s = String(text).trim();
 
   if (asQuery) {
-    for (const [k, v] of new URLSearchParams(s.replace(/^[?&]/, ''))) out.params[k] = v;
+    for (const [k, v] of new URLSearchParams(s.replace(/^[?&]/, ''))) put(k, v);
     return out;
   }
 
@@ -1372,11 +1754,11 @@ function parseAuthz(text, asQuery) {
   try { u = new URL(s); } catch (e) { return { error: 'not a URL: ' + e.message }; }
   out.base = u.origin + u.pathname;
   out.scheme = u.protocol.replace(':', '');
-  for (const [k, v] of u.searchParams) out.params[k] = v;
+  for (const [k, v] of u.searchParams) put(k, v);
   if (u.hash && u.hash.length > 1) {
     out.fragment = true;
     for (const [k, v] of new URLSearchParams(u.hash.slice(1))) {
-      out.params[k] = v;
+      put(k, v);
       out.fragmentParams = out.fragmentParams || {};
       out.fragmentParams[k] = v;
     }
@@ -1391,6 +1773,17 @@ function checkAuthz(a, now) {
 
   /* A redirect carrying results, rather than a request. Different checks matter. */
   const isCallback = !!(p.code || p.access_token || p.id_token || p.error);
+
+  /* ---------------- parameter pollution, before anything trusts p ---------------- */
+  for (const k of Object.keys(a.dups || {})) {
+    const vals = a.dups[k];
+    f.push(F('critical', 'Parameter "' + k + '" appears ' + vals.length + ' times with different values',
+      'OAuth forbids repeating a parameter, because implementations disagree about which copy ' +
+      'wins: first, last, or concatenated. An attacker exploits exactly that disagreement, and ' +
+      'the copy your provider honoured may not be the copy you are reading. Values seen: ' +
+      vals.map(v => String(v).slice(0, 80)).join('  |  '),
+      'Reject requests with duplicated parameters.', 'RFC 6749 §3.1'));
+  }
 
   if (a.scheme === 'http' && !/^https?:\/\/(localhost|127\.0\.0\.1)/.test(a.base)) {
     f.push(F('critical', 'Plaintext http',
@@ -1439,15 +1832,26 @@ function checkAuthz(a, now) {
       f.push(F('ok', 'PKCE with S256', ''));
     }
 
+    /* state and CSRF. PKCE covers CSRF when the client completes the code
+       exchange and verifies it, so the two absences mean different things. */
     if (!p.state) {
-      f.push(F('warn', 'No state parameter',
-        'Nothing binds the callback to the browser session that started it, which is what makes ' +
-        'login CSRF possible. PKCE does not cover this.',
-        'Send an unguessable state and check it on return.', 'RFC 6749 §10.12'));
-    } else if (String(p.state).length < 8) {
-      f.push(F('warn', 'state is only ' + String(p.state).length + ' characters',
-        'Short enough to guess, which defeats the point of having it.',
-        'Use at least 128 bits of randomness.'));
+      if (!p.code_challenge) {
+        f.push(F('warn', 'No state and no PKCE',
+          'Nothing binds the callback to the browser session that started it, which is what makes ' +
+          'login CSRF possible.',
+          'Send PKCE (which covers CSRF when the exchange is verified) or an unguessable state ' +
+          'checked on return.', 'RFC 9700 §2.1, RFC 6749 §10.12'));
+      } else {
+        f.push(F('note', 'No state parameter',
+          'With PKCE present and verified at the token exchange, CSRF is covered and state is ' +
+          'application routing rather than a required security parameter. It is still the usual ' +
+          'place to carry "where do I send the user back to".',
+          '', 'RFC 9700 §2.1'));
+      }
+    } else if (String(p.state).length < 16 && !p.code_challenge) {
+      f.push(F('warn', 'state is only ' + String(p.state).length + ' characters and is doing CSRF duty',
+        'Without PKCE, state is the CSRF defense, and a short value is guessable.',
+        'Use at least 128 bits of randomness, or add PKCE.', 'RFC 6749 §10.12'));
     } else {
       f.push(F('ok', 'state present', ''));
     }
@@ -1488,7 +1892,7 @@ function checkAuthz(a, now) {
         'If the provider honours it, an attacker picks the destination the code is delivered to.',
         'Register exact URIs. No wildcards, no prefixes.', 'RFC 9700 §2.1'));
     }
-    if (/^http:/i.test(r) && !/^http:\/\/(localhost|127\.0\.0\.1)/i.test(r)) {
+    if (/^http:/i.test(r) && !/^http:\/\/(localhost|127\.0\.0\.1|\[::1\])/i.test(r)) {
       f.push(F('critical', 'redirect_uri is plaintext http: ' + r,
         'The code is delivered over a channel anyone on the path can read.', 'Use https.', 'RFC 9700 §2.1'));
     }
@@ -1502,6 +1906,42 @@ function checkAuthz(a, now) {
         'Deprecated, and the copy-paste step is exactly where users get phished.',
         'Use a loopback redirect for native applications.', 'RFC 9700 §2.1'));
     }
+    /* The exact-match bypass shapes. A wildcard is the amateur version; these
+       are what a real bypass attempt looks like, and a provider that matches
+       loosely falls to one of them long before it falls to a "*". */
+    let ru = null;
+    try { ru = new URL(r); } catch (e) { /* non-URL redirect handled above */ }
+    if (ru && (ru.username || ru.password)) {
+      f.push(F('critical', 'redirect_uri has userinfo in the authority: ' + r,
+        'Everything before the @ is credentials, not the host. A validator that matches on ' +
+        '"starts with https://app.example.com" reads the wrong host, and the browser delivers ' +
+        'the code to what comes after the @.',
+        'Reject redirect URIs containing @.', 'RFC 9700 §4.1'));
+    }
+    if (/\\/.test(r)) {
+      f.push(F('warn', 'redirect_uri contains a backslash',
+        'Browsers treat \\ as / in URLs; many server-side parsers do not. Every disagreement ' +
+        'between the validator\'s parser and the browser\'s is a bypass.',
+        'Reject it.', 'RFC 9700 §4.1'));
+    }
+    if (/\/\.\.(\/|$)|%2e%2e/i.test(r)) {
+      f.push(F('warn', 'redirect_uri contains path traversal: ' + r,
+        'If the provider normalises the path after matching, the code is delivered somewhere other ' +
+        'than the registered path.',
+        'Match the registered URI byte for byte, after normalising exactly once.', 'RFC 9700 §4.1'));
+    }
+    if (ru && /[?&](url|next|redirect|return|dest|goto|continue)=(https?%3a|https?:)/i.test(ru.search)) {
+      f.push(F('warn', 'redirect_uri carries a nested URL in its query: ' + ru.search.slice(0, 80),
+        'A forwarding parameter inside the registered redirect target is an open redirect one hop ' +
+        'later: the provider delivers the code to the right page, and that page hands it on.',
+        'Do not put open redirectors inside registered redirect URIs.', 'RFC 9700 §4.11'));
+    }
+    if (ru && !/^https?:$/.test(ru.protocol)) {
+      f.push(F('note', 'redirect_uri uses a custom scheme: ' + ru.protocol,
+        'Normal for native apps, and claimable: on several platforms any app can register the same ' +
+        'scheme and receive the code. Loopback or claimed https links are the stronger options.',
+        '', 'RFC 8252 §8.1'));
+    }
   } else if (!isCallback) {
     f.push(F('note', 'No redirect_uri in the request',
       'Legal when the client has exactly one registered URI, and a source of confusion when it does not.'));
@@ -1514,7 +1954,21 @@ function checkAuthz(a, now) {
         (p.error_description ? ': ' + p.error_description : ''),
         'The description is the provider\'s, not authlint\'s.'));
     }
-    if (p.code) f.push(F('ok', 'Authorization code returned on the front channel, as intended', ''));
+    if (p.code) {
+      f.push(F('ok', 'Authorization code returned on the front channel, as intended', ''));
+      if (p.iss) {
+        f.push(F('ok', 'Callback carries iss: ' + p.iss,
+          'The issuer identification parameter. A client that compares this against the issuer it ' +
+          'started with cannot be caught by a mix-up across providers.', '', 'RFC 9207 §2'));
+      } else {
+        f.push(F('note', 'Callback carries no iss parameter',
+          'With more than one provider configured, a client cannot tell which issuer this code came ' +
+          'from, which is the opening for mix-up attacks. Providers that support RFC 9207 return ' +
+          'iss on every authorization response.',
+          'If the provider advertises authorization_response_iss_parameter_supported, verify iss here.',
+          'RFC 9207 §2, RFC 9700 §4.4.2.1'));
+      }
+    }
     if (p.access_token) {
       f.push(F('critical', 'An access token came back in the URL',
         'It is now in the browser history and in any referrer header this page emits.',
@@ -1522,7 +1976,8 @@ function checkAuthz(a, now) {
     }
     if (!p.state && !p.error) {
       f.push(F('warn', 'Callback carries no state',
-        'Nothing to compare against what you sent, so the CSRF check cannot happen.', '', 'RFC 6749 §10.12'));
+        'Nothing to compare against what you sent. If the request used PKCE the CSRF risk is ' +
+        'covered at the exchange; if it did not, this callback is unbound.', '', 'RFC 9700 §2.1'));
     }
   }
 
@@ -1537,12 +1992,38 @@ function checkAuthz(a, now) {
 
 const WEAK_SIG = /sha1|md5|dsa-sha1/i;
 
+const SAML_ASSERT_NS = 'urn:oasis:names:tc:SAML:2.0:assertion';
+const SAML11_ASSERT_NS = 'urn:oasis:names:tc:SAML:1.0:assertion';
+const DSIG_NS = 'http://www.w3.org/2000/09/xmldsig#';
+
+/* SAML time values MUST be UTC with a trailing Z (Core §1.3.3). A zoneless
+   timestamp is parsed as LOCAL time by JavaScript and by several SAML stacks,
+   which silently shifts every window by the reader's UTC offset. Parse it as
+   the UTC the spec requires, and say so. */
+function samlInstant(v, f, what) {
+  if (!v) return NaN;
+  let s = String(v).trim();
+  if (!/([zZ]|[+-]\d{2}:?\d{2})$/.test(s)) {
+    if (f) {
+      f.push(F('warn', what + ' has no timezone designator: ' + s,
+        'SAML time values are required to be UTC with a trailing Z. A zoneless timestamp is read ' +
+        'as local time by most date parsers, so the validity window silently shifts by whatever ' +
+        'offset the reading machine happens to be in.',
+        'Emit UTC with the Z suffix at the identity provider.', 'SAML 2.0 Core §1.3.3'));
+    }
+    s += 'Z';
+  }
+  return Date.parse(s);
+}
+
 function checkSamlResponse(x, now) {
   const f = [];
   const doc = x.doc;
   const root = doc.documentElement;
   const isResponse = /Response$/i.test(root.localName);
-  const assertions = els(root, 'Assertion').concat(els(root, 'EncryptedAssertion'));
+  const plainAssertions = els(root, 'Assertion');
+  const encAssertions = els(root, 'EncryptedAssertion');
+  const assertions = plainAssertions.concat(encAssertions);
 
   /* ---------------- status ---------------- */
   const sc = el(root, 'StatusCode');
@@ -1563,22 +2044,38 @@ function checkSamlResponse(x, now) {
   /* ---------------- the signature question, which is the whole game ---------------- */
   const allSigs = els(root, 'Signature');
   const responseSigned = allSigs.some(s => s.parentNode === root);
-  const signedAssertions = assertions.filter(a =>
+  const signedAssertions = plainAssertions.filter(a =>
     els(a, 'Signature').some(s => s.parentNode === a));
 
   if (!allSigs.length) {
-    f.push(F('critical', 'Nothing is signed',
-      'There is no signature anywhere in this document, so nothing establishes that the identity ' +
-      'provider produced it. Anyone who can reach the assertion consumer service can log in as anyone.',
-      'Require signed assertions at the service provider and reject unsigned responses.',
-      'SAML 2.0 Core §5'));
-  } else if (assertions.length && !signedAssertions.length && responseSigned) {
+    if (encAssertions.length) {
+      f.push(F('warn', 'Nothing visible is signed, and the assertion is encrypted',
+        'No signature covers the response, and whether the encrypted assertion is signed inside ' +
+        'cannot be seen from here. If the inner assertion is unsigned too, anyone who can reach ' +
+        'the assertion consumer service can log in as anyone.',
+        'Verify the inner signature after decryption, on the element you consume.',
+        'SAML 2.0 Core §5'));
+    } else {
+      f.push(F('critical', 'Nothing is signed',
+        'There is no signature anywhere in this document, so nothing establishes that the identity ' +
+        'provider produced it. Anyone who can reach the assertion consumer service can log in as anyone.',
+        'Require signed assertions at the service provider and reject unsigned responses.',
+        'SAML 2.0 Core §5'));
+    }
+  } else if (plainAssertions.length && !signedAssertions.length && responseSigned) {
     f.push(F('critical', 'The response is signed but the assertion inside it is not',
       'This is the classic SAML break. A service provider that validates the response signature and ' +
       'then reads the assertion can be fed a second, unsigned assertion wrapped into the document. ' +
       'The signature still verifies, because it covers the element it always covered.',
       'Sign the assertion, and validate the signature on the element you actually consume.',
-      'XML signature wrapping, CVE-2017-11427 and family'));
+      'XML signature wrapping'));
+  } else if (!plainAssertions.length && encAssertions.length) {
+    f.push(F(responseSigned ? 'ok' : 'note',
+      'Assertion is encrypted' + (responseSigned ? ', and the response is signed' : ''),
+      'Whether the assertion inside the ciphertext is also signed cannot be determined without ' +
+      'decrypting it. Decrypt first, then verify the inner signature on the element you consume; ' +
+      'a signature check that runs before decryption is checking the wrong thing.',
+      '', 'SAML 2.0 Core §2.3.4'));
   } else if (signedAssertions.length) {
     f.push(F('ok', 'Assertion is signed' + (responseSigned ? ' (and so is the response)' : ''), ''));
   }
@@ -1590,52 +2087,155 @@ function checkSamlResponse(x, now) {
       'Reject any response with more than one assertion.', 'XML signature wrapping'));
   }
 
-  /* Duplicate IDs are the mechanism wrapping attacks rely on. */
-  const ids = {};
-  const withId = doc.getElementsByTagName('*');
-  for (let i = 0; i < withId.length; i++) {
-    const id = withId[i].getAttribute && withId[i].getAttribute('ID');
-    if (!id) continue;
-    if (ids[id]) {
-      f.push(F('critical', 'Duplicate ID attribute: ' + id,
-        'Signature references resolve by ID. Two elements sharing one means the element that gets ' +
-        'verified and the element that gets read can be different elements.',
-        'Reject the document.', 'XML signature wrapping'));
-      break;
+  /* Look-alike elements. Matching on local names is what lets providers use
+     any prefix, and it is also what an attacker exploits with an element NAMED
+     Assertion in a namespace of their own. Check the namespace explicitly. */
+  for (const a of plainAssertions) {
+    const ns = a.namespaceURI || '';
+    if (ns && ns !== SAML_ASSERT_NS && ns !== SAML11_ASSERT_NS) {
+      f.push(F('critical', 'An element named Assertion is in a foreign namespace: ' + ns,
+        'It is dressed as a SAML assertion and is not one. A consumer that matches elements by ' +
+        'local name will read it; a signature that covers the real assertion will still verify.',
+        'Reject it, and match elements by namespace as well as name in your own code.',
+        'XML signature wrapping'));
     }
-    ids[id] = true;
+  }
+  for (const s of allSigs) {
+    const ns = s.namespaceURI || '';
+    if (ns && ns !== DSIG_NS) {
+      f.push(F('critical', 'An element named Signature is outside the XML DSig namespace: ' + ns,
+        'It looks like a signature and no verifier will treat it as one. Its presence makes the ' +
+        'document appear signed to a human reading it.',
+        'Reject the document.', 'XML signature wrapping'));
+    }
   }
 
-  for (const s of allSigs) {
-    const sm = el(s, 'SignatureMethod');
-    const dm = el(s, 'DigestMethod');
-    const sa = attr(sm, 'Algorithm') || '';
-    const da = attr(dm, 'Algorithm') || '';
-    if (WEAK_SIG.test(sa)) {
-      f.push(F('warn', 'Signature algorithm is ' + sa.split('#').pop(),
-        'SHA-1 is retired for signatures. Plenty of deployments still run it because the other side ' +
-        'never upgraded, and it is worth knowing which side that is.',
-        'Move to rsa-sha256.', 'NIST SP 800-131A'));
-      break;
-    }
-    if (WEAK_SIG.test(da)) {
-      f.push(F('warn', 'Digest algorithm is ' + da.split('#').pop(),
-        'A SHA-1 digest weakens the signature regardless of the signature algorithm above it.',
-        'Move to sha256.', 'NIST SP 800-131A'));
-      break;
+  /* Duplicate IDs are the mechanism wrapping attacks rely on, and the ID map
+     is also what lets each signature's Reference be resolved below. */
+  const ids = {};
+  const withId = doc.getElementsByTagName('*');
+  let dupReported = false;
+  for (let i = 0; i < withId.length; i++) {
+    const node = withId[i];
+    const id = node.getAttribute && (node.getAttribute('ID') || node.getAttribute('Id'));
+    if (!id) continue;
+    if (ids[id]) {
+      if (!dupReported) {
+        f.push(F('critical', 'Duplicate ID attribute: ' + id,
+          'Signature references resolve by ID. Two elements sharing one means the element that gets ' +
+          'verified and the element that gets read can be different elements.',
+          'Reject the document.', 'XML signature wrapping'));
+        dupReported = true;
+      }
+    } else {
+      ids[id] = node;
     }
   }
-  if (allSigs.length && !allSigs.some(s => {
+
+  /* ---------------- what each signature actually covers ----------------
+     This is the mechanism of every wrapping attack, not its symptoms: does the
+     signature's Reference resolve, and is the element it resolves to the same
+     element the signature sits inside? Everything above (assertion counts,
+     duplicate IDs) infers wrapping; this observes it. */
+  for (const s of allSigs) {
+    const refs = els(s, 'Reference');
+    if (!refs.length) {
+      f.push(F('warn', 'A Signature carries no Reference',
+        'Nothing states which element it signs, so no verifier can connect it to the content.',
+        '', 'XML DSig Core §4.4'));
+      continue;
+    }
+    if (refs.length > 1) {
+      f.push(F('note', 'One Signature covers ' + refs.length + ' References',
+        'Legal, and unusual in SAML. Each reference is a separately-resolved target, and each is ' +
+        'a separate place for the resolved element and the consumed element to disagree.', ''));
+    }
+    for (const r of refs) {
+      const uri = attr(r, 'URI');
+      if (uri == null || uri === '') {
+        f.push(F('warn', 'Signature Reference URI is empty (whole-document reference)',
+          'It signs the entire document rather than one identified element. Anything inserted ' +
+          'anywhere invalidates it, which sounds strong, and it also means no element is ' +
+          'specifically bound: SAML profiles expect the signature to reference the element it ' +
+          'protects by ID.',
+          'Reference the Response or Assertion by its ID.', 'SAML 2.0 Core §5.4.2'));
+      } else if (uri[0] === '#') {
+        const target = ids[uri.slice(1)];
+        if (!target) {
+          f.push(F('critical', 'Signature Reference points at ' + uri + ', which does not exist',
+            'The signature names an element this document does not contain. Whatever this ' +
+            'signature once covered, it is not covering anything here.',
+            'Reject the document.', 'XML DSig Core §4.4.3'));
+        } else if (s.parentNode && s.parentNode !== target) {
+          f.push(F('critical', 'The signature does not cover its own parent',
+            'It sits inside <' + s.parentNode.localName + '> but signs <' + target.localName +
+            '> (' + uri + '). An enveloped SAML signature covers the element it lives in; when it ' +
+            'points elsewhere, the element that verifies and the element that gets consumed are ' +
+            'different elements, which is XML signature wrapping observed directly.',
+            'Validate the signature over the element you consume, and reject mismatches.',
+            'SAML 2.0 Core §5.4.1'));
+        } else {
+          f.push(F('ok', 'Signature Reference resolves to the element it sits in (<' +
+            target.localName + '>)', ''));
+        }
+      } else {
+        f.push(F('warn', 'Signature Reference is external: ' + String(uri).slice(0, 80),
+          'It points outside this document. Nothing a service provider resolves from elsewhere ' +
+          'should decide whether this document is trusted.',
+          'Use same-document ID references only.', 'SAML 2.0 Core §5.4.2'));
+      }
+    }
+    const transforms = els(s, 'Transform').map(t => String(attr(t, 'Algorithm') || ''));
+    if (transforms.some(a => /xpath/i.test(a))) {
+      f.push(F('warn', 'Signature uses an XPath transform',
+        'XPath transforms let a signature stay valid while the document changes shape around it, ' +
+        'which is exactly the property wrapping attacks need. SAML profiles expect enveloped ' +
+        'signature plus canonicalization and nothing else.',
+        'Reject signatures with XPath transforms.', 'SAML 2.0 Core §5.4.4'));
+    }
+    if (transforms.length && !transforms.some(a => /enveloped-signature/i.test(a))) {
+      f.push(F('note', 'No enveloped-signature transform',
+        'An enveloped SAML signature normally lists the enveloped-signature transform so the ' +
+        'signature value is excluded from its own digest. Without it, verification recomputes ' +
+        'over bytes that include the signature, and rarely matches.',
+        '', 'SAML 2.0 Core §5.4.4'));
+    }
+  }
+
+  /* ---------------- signature and digest algorithms ---------------- */
+  let weakSig = null, weakDig = null, hmacSig = null;
+  for (const s of allSigs) {
     const sa = attr(el(s, 'SignatureMethod'), 'Algorithm') || '';
-    return WEAK_SIG.test(sa);
-  })) {
+    const da = attr(el(s, 'DigestMethod'), 'Algorithm') || '';
+    if (!weakSig && WEAK_SIG.test(sa)) weakSig = sa;
+    if (!weakDig && WEAK_SIG.test(da)) weakDig = da;
+    if (!hmacSig && /hmac/i.test(sa)) hmacSig = sa;
+  }
+  if (weakSig) {
+    f.push(F('warn', 'Signature algorithm is ' + weakSig.split('#').pop(),
+      'SHA-1 is retired for signatures. Plenty of deployments still run it because the other side ' +
+      'never upgraded, and it is worth knowing which side that is.',
+      'Move to rsa-sha256.', 'NIST SP 800-131A'));
+  }
+  if (weakDig) {
+    f.push(F('warn', 'Digest algorithm is ' + weakDig.split('#').pop(),
+      'A SHA-1 digest weakens the signature regardless of the signature algorithm above it.',
+      'Move to sha256.', 'NIST SP 800-131A'));
+  }
+  if (hmacSig) {
+    f.push(F('warn', 'HMAC-signed SAML (' + hmacSig.split('#').pop() + ')',
+      'The verification key is the signing key, so every service provider that can verify this ' +
+      'assertion can also mint one. Federation across a trust boundary needs an asymmetric signature.',
+      'Use an RSA or ECDSA signature algorithm.', 'SAML 2.0 Core §5'));
+  }
+  if (allSigs.length && !weakSig && !weakDig) {
     f.push(F('ok', 'Signature and digest algorithms are current', ''));
   }
 
   /* ---------------- who this is for ---------------- */
   const audiences = els(root, 'Audience').map(a => a.textContent.trim()).filter(Boolean);
   const hasRestriction = els(root, 'AudienceRestriction').length > 0;
-  if (assertions.length && !hasRestriction) {
+  if (assertions.length && !hasRestriction && !encAssertions.length) {
     f.push(F('critical', 'No AudienceRestriction',
       'Nothing scopes this assertion to one service provider. Any SP that trusts the same identity ' +
       'provider will accept it, so a malicious or compromised SP can replay it elsewhere.',
@@ -1662,7 +2262,7 @@ function checkSamlResponse(x, now) {
 
   /* ---------------- validity windows ---------------- */
   const conds = el(root, 'Conditions');
-  if (assertions.length && !conds) {
+  if (plainAssertions.length && !conds) {
     f.push(F('critical', 'Assertion has no Conditions element',
       'No validity window at all, so the assertion never goes stale and a captured one works forever.',
       'Emit NotBefore and NotOnOrAfter.', 'SAML 2.0 Core §2.5'));
@@ -1672,7 +2272,8 @@ function checkSamlResponse(x, now) {
       f.push(F('critical', 'Conditions has no NotOnOrAfter',
         'The assertion does not expire.', 'Set a window of minutes.', 'SAML 2.0 Core §2.5.1.2'));
     } else {
-      const end = Date.parse(na), start = nb ? Date.parse(nb) : null;
+      const end = samlInstant(na, f, 'Conditions NotOnOrAfter');
+      const start = nb ? samlInstant(nb, f, 'Conditions NotBefore') : null;
       if (!isNaN(end)) {
         const remaining = (end - now * 1000) / 1000;
         if (remaining < 0) {
@@ -1695,11 +2296,44 @@ function checkSamlResponse(x, now) {
     }
   }
 
+  /* ---------------- subject confirmation, where bearer replay is bounded ---------------- */
   const scd = el(root, 'SubjectConfirmationData');
-  if (assertions.length && scd && !attr(scd, 'Recipient')) {
-    f.push(F('warn', 'SubjectConfirmationData has no Recipient',
-      'Nothing states which endpoint may consume this, which is the per-assertion version of the ' +
-      'Destination check.', '', 'SAML 2.0 Core §2.4.1.2'));
+  const scMethod = String(attr(el(root, 'SubjectConfirmation'), 'Method') || '');
+  if (plainAssertions.length && scd) {
+    if (!attr(scd, 'Recipient')) {
+      f.push(F('warn', 'SubjectConfirmationData has no Recipient',
+        'Nothing states which endpoint may consume this, which is the per-assertion version of the ' +
+        'Destination check.', '', 'SAML 2.0 Core §2.4.1.2'));
+    }
+    if (/cm:bearer/i.test(scMethod) || !scMethod) {
+      if (!attr(scd, 'NotOnOrAfter')) {
+        f.push(F('warn', 'SubjectConfirmationData has no NotOnOrAfter',
+          'For a bearer assertion this attribute, not the Conditions window, is what bounds how ' +
+          'long a captured assertion can be replayed to the ACS.',
+          'Set it a few minutes out, alongside Recipient and InResponseTo.',
+          'SAML 2.0 Profiles §4.1.4.2'));
+      } else {
+        const scdEnd = samlInstant(attr(scd, 'NotOnOrAfter'), f, 'SubjectConfirmationData NotOnOrAfter');
+        if (!isNaN(scdEnd) && (scdEnd - now * 1000) / 1000 > 3600) {
+          f.push(F('warn', 'Bearer confirmation is valid for another ' +
+            secondsToHuman((scdEnd - now * 1000) / 1000),
+            'This is the replay window for presenting the assertion to the ACS, and it is normally ' +
+            'minutes, not hours.',
+            'Shorten SubjectConfirmationData NotOnOrAfter.', 'SAML 2.0 Profiles §4.1.4.2'));
+        }
+      }
+      if (isResponse && attr(root, 'InResponseTo') && !attr(scd, 'InResponseTo')) {
+        f.push(F('warn', 'Response has InResponseTo but SubjectConfirmationData does not',
+          'The response correlates to a request and the assertion inside it does not, so an ' +
+          'assertion lifted from one exchange can ride inside another. Both layers carry it for ' +
+          'a reason.',
+          'Have the identity provider stamp InResponseTo on the SubjectConfirmationData too.',
+          'SAML 2.0 Profiles §4.1.4.2'));
+      }
+    }
+    if (scMethod && !/cm:(bearer|holder-of-key|sender-vouches)/i.test(scMethod)) {
+      f.push(F('note', 'SubjectConfirmation method is unrecognised: ' + scMethod, '', ''));
+    }
   }
 
   /* ---------------- the ACS URL ----------------
@@ -1805,9 +2439,8 @@ function checkSamlResponse(x, now) {
   }
 
   /* ---------------- what is being carried ---------------- */
-  const encrypted = els(root, 'EncryptedAssertion').length > 0;
   const attrs = els(root, 'Attribute').map(a => attr(a, 'Name') || attr(a, 'FriendlyName')).filter(Boolean);
-  if (attrs.length && !encrypted) {
+  if (attrs.length && !encAssertions.length) {
     const pii = attrs.filter(n => /mail|phone|name|address|birth|ssn|nino|employee/i.test(n));
     if (pii.length) {
       f.push(F('note', attrs.length + ' attributes in the clear, including ' + pii.slice(0, 4).join(', '),
@@ -1816,14 +2449,29 @@ function checkSamlResponse(x, now) {
         'Use EncryptedAssertion if the attributes are sensitive.', 'SAML 2.0 Core §2.3.4'));
     }
   }
-  if (encrypted) {
-    f.push(F('ok', 'Assertion is encrypted', ''));
-  }
 
+  checkSamlCerts(root, now, f);
+
+  f.push(F('note', 'authlint did not verify the signature',
+    'The checks above are about structure and content, including whether each signature points at ' +
+    'the element it lives in. Whether a signature actually validates against a trusted key is a ' +
+    'separate question, and it needs the key.',
+    'Validate in your own code, against the certificate you configured, over the element you consume.'));
+
+  return sortFindings(f);
+}
+
+/* Certificate expiry, shared between responses and requests. */
+function checkSamlCerts(root, now, f) {
   const certs = els(root, 'X509Certificate');
   for (const c of certs.slice(0, 3)) {
     const v = certValidity(c.textContent);
     if (!v) continue;
+    if (v.notBefore && now * 1000 < v.notBefore.getTime()) {
+      f.push(F('warn', 'Signing certificate is not valid yet (notBefore is in the future)',
+        'Validators that check the window are rejecting it right now, and the failure reads as a ' +
+        'bad signature rather than a date problem.', 'Check the rotation that minted it.'));
+    }
     const days = (v.notAfter - now * 1000) / 86400000;
     if (days < 0) {
       f.push(F('critical', 'Signing certificate expired ' + Math.abs(Math.round(days)) + ' days ago',
@@ -1837,11 +2485,138 @@ function checkSamlResponse(x, now) {
     }
     break;
   }
+}
 
-  f.push(F('note', 'authlint did not verify the signature',
-    'The checks above are about structure and content. Whether the signature actually validates ' +
-    'against a trusted key is a separate question, and it needs the key.',
-    'Validate in your own code, against the certificate you configured, over the element you consume.'));
+/* ============================== AUTHN REQUEST ==============================
+   An AuthnRequest is not a response, and running response checks over it
+   produces criticals about missing signatures on a message that is commonly
+   and legally unsigned. What matters here is different: where the request
+   asks the assertion to be sent, and what it asks for. */
+function checkSamlAuthnRequest(x, now) {
+  const f = [];
+  const root = x.doc.documentElement;
+
+  const sigs = els(root, 'Signature');
+  if (sigs.length) {
+    f.push(F('ok', 'Request is signed', ''));
+  } else {
+    f.push(F('note', 'Request is not signed',
+      'Legal and common: whether the identity provider requires signed requests is set in metadata ' +
+      '(AuthnRequestsSigned). Unsigned requests mean anyone can start a flow with parameters of ' +
+      'their choosing, which matters most when the request names its own ACS URL.',
+      '', 'SAML 2.0 Metadata §2.4.4'));
+  }
+
+  const acs = attr(root, 'AssertionConsumerServiceURL');
+  if (acs) {
+    if (/^http:/i.test(acs)) {
+      f.push(F('critical', 'AssertionConsumerServiceURL is plaintext http: ' + acs,
+        'The assertion would be delivered over a channel anyone on the path can read.',
+        'Use https.', 'SAML 2.0 Core §3.4.1'));
+    }
+    f.push(F(sigs.length ? 'note' : 'warn', 'The request names its own ACS URL: ' + acs,
+      'The identity provider must match this against the URLs registered in metadata before ' +
+      'honouring it. An IdP that trusts it as sent will deliver the assertion wherever a forged ' +
+      'request points' + (sigs.length ? '.' : ', and this request is unsigned.'),
+      'Confirm the IdP validates ACS URLs against metadata.', 'SAML 2.0 Core §3.4.1'));
+  }
+
+  const dest = attr(root, 'Destination');
+  if (dest && /^http:/i.test(dest)) {
+    f.push(F('critical', 'Destination is plaintext http: ' + dest, '',
+      'Use https.', 'SAML 2.0 Core §3.4.1'));
+  }
+
+  if (!attr(root, 'ID')) {
+    f.push(F('warn', 'Request has no ID',
+      'The response\'s InResponseTo has nothing to correlate against, so the service provider ' +
+      'cannot tie the answer to this question.', 'Emit a unique ID per request.', 'SAML 2.0 Core §3.4.1'));
+  }
+  samlInstant(attr(root, 'IssueInstant'), f, 'IssueInstant');
+
+  if (String(attr(root, 'ForceAuthn')).toLowerCase() === 'true') {
+    f.push(F('note', 'ForceAuthn is true',
+      'The IdP is asked to reauthenticate the user rather than reuse the session. Deliberate for ' +
+      'step-up moments; as a default it turns SSO off.', '', 'SAML 2.0 Core §3.4.1'));
+  }
+  if (String(attr(root, 'IsPassive')).toLowerCase() === 'true') {
+    f.push(F('note', 'IsPassive is true',
+      'The IdP may not interact with the user, so this only succeeds for an existing session.', '',
+      'SAML 2.0 Core §3.4.1'));
+  }
+
+  const nip = el(root, 'NameIDPolicy');
+  if (nip) {
+    const fmt = String(attr(nip, 'Format') || '');
+    if (/emailAddress/i.test(fmt)) {
+      f.push(F('warn', 'NameIDPolicy requests email-address identifiers',
+        'The service provider is asking to federate on a mutable, reassignable value.',
+        'Request persistent identifiers and carry the email as an attribute.', 'SAML 2.0 Core §8.3'));
+    }
+    if (String(attr(nip, 'AllowCreate')).toLowerCase() === 'true') {
+      f.push(F('note', 'NameIDPolicy AllowCreate is true',
+        'The IdP may mint a new identifier for a user it has not federated before. Normal for ' +
+        'just-in-time provisioning; worth knowing it is on.', '', 'SAML 2.0 Core §3.4.1.1'));
+    }
+  }
+
+  if (sigs.length) {
+    f.push(F('note', 'authlint did not verify the signature',
+      'Whether it validates against the service provider\'s registered certificate needs the key.',
+      ''));
+  }
+  return sortFindings(f);
+}
+
+/* ============================== LOGOUT MESSAGES ==============================
+   Small checks, mostly about what an unsigned or unbounded logout message
+   permits. These were previously mislabelled as responses and graded with
+   response rules, which produced "anyone can log in as anyone" findings on a
+   message that logs people out. */
+function checkSamlLogout(x, now) {
+  const f = [];
+  const root = x.doc.documentElement;
+  const isRequest = /LogoutRequest$/i.test(root.localName);
+
+  const sigs = els(root, 'Signature');
+  if (sigs.length) {
+    f.push(F('ok', root.localName + ' is signed', ''));
+  } else if (isRequest) {
+    f.push(F('warn', 'LogoutRequest is not signed',
+      'A forged logout is a denial of service: anyone who can reach the endpoint ends the ' +
+      'victim\'s sessions. Most deployments require signatures on single logout for exactly ' +
+      'this reason.',
+      'Sign logout messages and require signatures on both sides.', 'SAML 2.0 Core §3.7'));
+  } else {
+    f.push(F('note', 'LogoutResponse is not signed', '', '', 'SAML 2.0 Core §3.7'));
+  }
+
+  const dest = attr(root, 'Destination');
+  if (dest && /^http:/i.test(dest)) {
+    f.push(F('critical', 'Destination is plaintext http: ' + dest, '', 'Use https.', 'SAML 2.0 Core §3.7'));
+  }
+
+  if (isRequest) {
+    const nameId = el(root, 'NameID');
+    if (nameId && looksLikeEmail(nameId.textContent.trim())) {
+      f.push(F('note', 'Logout names the principal by email address',
+        'The same mutability problem as an email NameID at sign-on, and one more place the ' +
+        'address lands in logs.', '', 'SAML 2.0 Core §8.3'));
+    }
+    if (!el(root, 'SessionIndex')) {
+      f.push(F('note', 'No SessionIndex',
+        'Without it the IdP can only end every session for the principal, not the one session ' +
+        'this request came from.', '', 'SAML 2.0 Core §3.7.1'));
+    }
+    const na = attr(root, 'NotOnOrAfter');
+    if (na) samlInstant(na, f, 'NotOnOrAfter');
+  }
+
+  const sc = el(root, 'StatusCode');
+  if (sc && !isRequest) {
+    const v = attr(sc, 'Value') || '';
+    f.push(F(/:Success$/i.test(v) ? 'ok' : 'note', 'Status: ' + v.split(':').pop(), ''));
+  }
 
   return sortFindings(f);
 }
@@ -1852,7 +2627,7 @@ function checkSamlMetadata(x, now) {
 
   const validUntil = attr(root, 'validUntil');
   if (validUntil) {
-    const d = Date.parse(validUntil);
+    const d = samlInstant(validUntil, f, 'validUntil');
     if (!isNaN(d)) {
       const days = (d - now * 1000) / 86400000;
       if (days < 0) {
@@ -1862,6 +2637,17 @@ function checkSamlMetadata(x, now) {
         f.push(F('warn', 'Metadata expires in ' + Math.round(days) + ' days', '', 'Republish before it lapses.'));
       }
     }
+  }
+
+  const metaSigned = els(root, 'Signature').some(s => s.parentNode === root);
+  if (!metaSigned) {
+    f.push(F('note', 'Metadata is not signed',
+      'Whoever serves this document chooses the endpoints and keys the other side will trust. ' +
+      'HTTPS protects it in transit; a signature with a pinned metadata key protects it from the ' +
+      'server itself, which is why the large federations require one.',
+      'Sign metadata and pin the signing key out of band.', 'SAML 2.0 Metadata §3'));
+  } else {
+    f.push(F('ok', 'Metadata is signed', ''));
   }
 
   for (const sso of els(root, 'SPSSODescriptor')) {
@@ -1902,8 +2688,13 @@ function checkSamlMetadata(x, now) {
   for (const c of certs) {
     const v = certValidity(c.textContent);
     if (!v) { f.push(F('note', 'A certificate could not be parsed', '')); continue; }
-    const days = (v.notAfter - now * 1000) / 86400000;
     const label = 'Certificate ' + (++i) + ' of ' + certs.length;
+    if (v.notBefore && now * 1000 < v.notBefore.getTime()) {
+      f.push(F('warn', label + ' is not valid yet (notBefore is in the future)',
+        'Published ahead of its own validity. Verifiers that check the window reject it until then.',
+        ''));
+    }
+    const days = (v.notAfter - now * 1000) / 86400000;
     if (days < 0) {
       f.push(F('critical', label + ' expired ' + Math.abs(Math.round(days)) + ' days ago',
         'If this is the active signing certificate, the federation is down.', 'Rotate it.'));
@@ -1918,6 +2709,261 @@ function checkSamlMetadata(x, now) {
     f.push(F('ok', certs.length + ' certificates published, which is what a clean rotation looks like', ''));
   }
 
+  return sortFindings(f);
+}
+
+/* ============================== HTTP-SIDE ARTIFACTS ==============================
+   The two most-pasted artifacts in any OAuth debugging session are the token
+   endpoint's JSON response and a Set-Cookie header, and both used to be turned
+   away at the door. The cookie's value is usually opaque; its ATTRIBUTES are
+   not, and misconfigured cookie attributes are the most common web-auth defect
+   there is. */
+
+function checkTokenResponse(j, now) {
+  const f = [];
+
+  /* RFC 7662 introspection response: it has "active", a token response does not. */
+  if (typeof j.active === 'boolean') {
+    f.push(F('ok', 'Introspection response, active: ' + j.active, '', '', 'RFC 7662 §2.2'));
+    if (j.active === false) {
+      const extras = Object.keys(j).filter(k => k !== 'active');
+      if (extras.length) {
+        f.push(F('warn', 'Inactive, and the response still carries: ' + extras.join(', '),
+          'An introspection response for an inactive token is supposed to say nothing else, ' +
+          'because every extra member leaks what the token used to be to whoever is probing.',
+          'Return {"active": false} and nothing more.', 'RFC 7662 §2.2'));
+      }
+    } else {
+      const exp = typeof j.exp === 'number' ? j.exp : null;
+      if (exp == null) {
+        f.push(F('note', 'active:true with no exp',
+          'The caller cannot cache this answer safely, so it will either hammer the introspection ' +
+          'endpoint or cache blind.', '', 'RFC 7662 §2.2'));
+      } else if (exp < now) {
+        f.push(F('warn', 'active:true but exp is ' + secondsToHuman(now - exp) + ' in the past',
+          'The two members contradict each other, and callers believe active.',
+          'Fix the introspection endpoint.', 'RFC 7662 §2.2'));
+      }
+      if (!j.scope) {
+        f.push(F('note', 'No scope in the introspection response',
+          'The resource server knows the token is alive and not what it is allowed to do.', '',
+          'RFC 7662 §2.2'));
+      }
+    }
+    return sortFindings(f);
+  }
+
+  if (j.error) {
+    f.push(F('note', 'Token endpoint error: ' + j.error +
+      (j.error_description ? ' — ' + j.error_description : ''),
+      'The description is the provider\'s, not authlint\'s.', '', 'RFC 6749 §5.2'));
+    return sortFindings(f);
+  }
+
+  if (!j.access_token) {
+    f.push(F('warn', 'No access_token',
+      'This is shaped like a token response and the one required member is missing.', '',
+      'RFC 6749 §5.1'));
+  }
+  if (!j.token_type) {
+    f.push(F('warn', 'No token_type',
+      'Required, and clients that assume Bearer on its absence will be wrong the day this ' +
+      'deployment turns on DPoP.', 'Return token_type.', 'RFC 6749 §5.1'));
+  } else if (/^bearer$/i.test(String(j.token_type)) && j.token_type !== 'Bearer') {
+    f.push(F('note', 'token_type is "' + j.token_type + '"',
+      'The value is case-insensitive in the spec and a surprising number of clients string-match ' +
+      '"Bearer" exactly. This casing will break some of them.', '', 'RFC 6749 §5.1'));
+  } else if (/^dpop$/i.test(String(j.token_type))) {
+    f.push(F('ok', 'token_type is DPoP: the access token is sender-constrained', '', '', 'RFC 9449 §5'));
+  }
+
+  const ein = typeof j.expires_in === 'number' ? j.expires_in
+            : (typeof j.expires_in === 'string' && /^\d+$/.test(j.expires_in) ? Number(j.expires_in) : null);
+  if (j.expires_in == null) {
+    f.push(F('warn', 'No expires_in',
+      'Clients that are not told guess, and they guess long. The token\'s own exp only helps if ' +
+      'it is a JWT and the client decodes it, which clients are told not to do.',
+      'Return expires_in.', 'RFC 6749 §5.1'));
+  } else if (ein != null && ein > 86400) {
+    f.push(F('warn', 'expires_in is ' + secondsToHuman(ein),
+      'A bearer access token living longer than a day is a long time for something with no ' +
+      'revocation.', 'Minutes to an hour, with a refresh token for continuity.'));
+  } else if (typeof j.expires_in === 'string') {
+    f.push(F('note', 'expires_in is a string, not a number',
+      'The spec value is numeric. Clients doing arithmetic on this get NaN and treat the token ' +
+      'as expired, or worse, as never expiring.', 'Emit a number.', 'RFC 6749 §5.1'));
+  }
+
+  if (j.refresh_token) {
+    f.push(F('note', 'A refresh token was issued',
+      'Long-lived by design, so it is the artifact worth protecting most. For public clients the ' +
+      'requirement is one of two things: sender-constrain it, or rotate it on every use with ' +
+      'reuse detection revoking the family.',
+      'Confirm rotation or sender-constraining is on.', 'RFC 9700 §4.14.2'));
+    if (/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/.test(String(j.refresh_token))) {
+      f.push(F('note', 'The refresh token is a JWT',
+        'Decodable by anyone who holds it, so whatever claims are inside are readable in every ' +
+        'log it lands in. Paste it alone to check the contents.', ''));
+    }
+  }
+
+  if (j.scope == null) {
+    f.push(F('note', 'No scope in the response',
+      'Granted scope is only required in the response when it differs from what was requested, ' +
+      'so absence means "exactly what you asked for". A client that assumes more finds out at ' +
+      'the resource server.', '', 'RFC 6749 §5.1'));
+  } else {
+    const scopes = String(j.scope).split(/\s+/).filter(Boolean);
+    if (scopes.some(s => /^(.*\.)?(\*|all|full_access|admin)$/i.test(s))) {
+      f.push(F('warn', 'Broad scope granted: ' + j.scope,
+        'The token is as powerful as this list says, everywhere it lands.',
+        'Grant the narrowest scope the client needs.'));
+    }
+  }
+
+  if (j.access_token && !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\./.test(String(j.access_token))) {
+    f.push(F('note', 'The access token is opaque',
+      'Nothing to decode, which is a legitimate design: the resource server asks the issuer via ' +
+      'introspection instead of reading claims. The findings that matter for it are on the ' +
+      'introspection side.', '', 'RFC 7662'));
+  }
+  if (j.access_token || j.id_token) {
+    f.push(F('note', 'Any JWT in this response is checked separately below',
+      'The access_token and id_token values get their own findings sections when they decode.', ''));
+  }
+
+  return sortFindings(f);
+}
+
+/* ------------------------------ cookies ------------------------------ */
+
+function parseSetCookieLine(line) {
+  const body = line.replace(/^set-cookie:\s*/i, '');
+  const parts = body.split(';');
+  const eq = parts[0].indexOf('=');
+  if (eq < 0) return null;
+  const out = { name: parts[0].slice(0, eq).trim(), value: parts[0].slice(eq + 1).trim(),
+                attrs: {}, raw: body };
+  for (const p of parts.slice(1)) {
+    const t = p.trim();
+    if (!t) continue;
+    const i = t.indexOf('=');
+    if (i < 0) out.attrs[t.toLowerCase()] = true;
+    else out.attrs[t.slice(0, i).trim().toLowerCase()] = t.slice(i + 1).trim();
+  }
+  return out;
+}
+
+function checkCookie(text, now) {
+  const f = [];
+  const lines = String(text).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+  if (/^cookie:/i.test(lines[0])) {
+    f.push(F('note', 'This is the request-side Cookie header',
+      'The attributes that decide a cookie\'s security (Secure, HttpOnly, SameSite, Domain) are ' +
+      'set by the response and are not visible here.',
+      'Paste the Set-Cookie response header to check them.', 'RFC 6265 §4.2'));
+    const body = lines.join(' ').replace(/^cookie:\s*/i, '');
+    if (body.length > 4096) {
+      f.push(F('warn', 'Cookie header is ' + body.length.toLocaleString() + ' bytes',
+        'Past the size where servers start rejecting requests outright, and the user who hits it ' +
+        'cannot fix it themselves.', 'Slim the cookies.'));
+    }
+    const jwt = body.match(/[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/);
+    if (jwt) {
+      f.push(F('note', 'One of these values is a JWT',
+        'Paste it alone and the token checks run on it.', ''));
+    }
+    return sortFindings(f);
+  }
+
+  for (const line of lines) {
+    if (!/^set-cookie:/i.test(line) && lines.length > 1) continue;
+    const c = parseSetCookieLine(/^set-cookie:/i.test(line) ? line : 'Set-Cookie: ' + line);
+    if (!c) continue;
+    const a = c.attrs;
+    const who = '"' + c.name + '"';
+    const sameSite = String(a.samesite || '').toLowerCase();
+
+    if (/^__Host-/.test(c.name)) {
+      const bad = [];
+      if (!a.secure) bad.push('Secure is missing');
+      if (a.domain) bad.push('Domain is set');
+      if (String(a.path) !== '/') bad.push('Path is not /');
+      if (bad.length) {
+        f.push(F('critical', who + ' breaks its own __Host- prefix: ' + bad.join(', '),
+          'The prefix is a contract the browser enforces: Secure, no Domain, Path=/. Broken, the ' +
+          'browser rejects the whole cookie, silently, and login works in testing and fails in the field.',
+          'Meet the prefix contract or drop the prefix.', 'RFC 6265bis (cookie prefixes)'));
+      } else {
+        f.push(F('ok', who + ' honours the __Host- prefix', ''));
+      }
+    } else if (/^__Secure-/.test(c.name) && !a.secure) {
+      f.push(F('critical', who + ' has the __Secure- prefix without the Secure attribute',
+        'The browser rejects it outright.', 'Add Secure.', 'RFC 6265bis (cookie prefixes)'));
+    }
+
+    if (sameSite === 'none' && !a.secure) {
+      f.push(F('critical', who + ' is SameSite=None without Secure',
+        'Browsers reject this combination, so the cookie is never stored, and the symptom is a ' +
+        'login loop nobody can reproduce locally over https.',
+        'SameSite=None requires Secure.', 'RFC 6265bis'));
+    } else if (!a.secure) {
+      f.push(F('critical', who + ' has no Secure attribute',
+        'The browser will attach it to plaintext http requests to the same host, where anyone on ' +
+        'the path can read it. For a session cookie that is session theft.',
+        'Add Secure.', 'RFC 6265 §4.1.2.5'));
+    }
+
+    const csrfish = /csrf|xsrf/i.test(c.name);
+    if (!a.httponly && !csrfish) {
+      f.push(F('warn', who + ' is readable by script (no HttpOnly)',
+        'Every script on the page, including every injected one, can read it. XSS anywhere on ' +
+        'the origin becomes session theft.',
+        'Add HttpOnly unless JavaScript genuinely has to read this cookie.', 'RFC 6265 §4.1.2.6'));
+    }
+    if (!sameSite) {
+      f.push(F('note', who + ' has no SameSite attribute',
+        'Behaviour then differs by browser: some default to Lax, some to None. Whatever you ' +
+        'meant, say it, because the default you tested is not the default everywhere.',
+        'State SameSite explicitly.', 'RFC 6265bis'));
+    } else if (sameSite === 'none' && a.secure) {
+      f.push(F('note', who + ' is SameSite=None',
+        'Sent on every cross-site request, which is what enables both third-party use and CSRF. ' +
+        'Deliberate for embedded flows; a plain session cookie wants Lax or Strict.', '', 'RFC 6265bis'));
+    }
+    if (a.domain) {
+      f.push(F('note', who + ' is scoped to Domain=' + a.domain,
+        'It is sent to every subdomain of ' + a.domain + ', so one XSS-able or takeover-able ' +
+        'subdomain can read or overwrite it. Host-only (no Domain attribute) is tighter.',
+        '', 'RFC 6265 §4.1.2.3'));
+    }
+
+    const maxAge = a['max-age'] != null && /^\d+$/.test(String(a['max-age'])) ? Number(a['max-age']) : null;
+    if (maxAge != null && maxAge > 2592000 && !csrfish) {
+      f.push(F('note', who + ' lives for ' + secondsToHuman(maxAge),
+        'A month-plus cookie outlives most password changes and every "log out everywhere" ' +
+        'button that only clears server sessions it knows about.',
+        'Pair long cookies with server-side revocation.', ''));
+    }
+
+    if (/^[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*$/.test(c.value)) {
+      f.push(F('note', who + ' carries a JWT (' + c.value.length + ' characters)',
+        'Paste the value alone and the token checks run on it. JWTs in cookies also eat the 4KB ' +
+        'per-cookie budget fast, and the browser drops an oversized cookie without a word.',
+        '', ''));
+    }
+    if ((c.name + '=' + c.value).length > 4096) {
+      f.push(F('warn', who + ' is over 4KB',
+        'Browsers drop oversized cookies silently: no error, no console line, just a login that ' +
+        'never sticks.', 'Slim it, or move the payload server-side.', 'RFC 6265 §6.1'));
+    }
+  }
+
+  if (!f.length) {
+    f.push(F('note', 'No Set-Cookie lines found',
+      'Paste the header as it appears in the response, one Set-Cookie per line.', ''));
+  }
   return sortFindings(f);
 }
 
@@ -2032,9 +3078,13 @@ const SAMPLES = {
 
   jwks: JSON.stringify({
     keys: [
+      // A real, decodable 1024-bit modulus (the key size finding is part of
+      // the demo). The previous sample's modulus was 145 characters, which is
+      // not valid base64url, so the RSA size check silently never ran on it.
       { kty: 'RSA', use: 'sig', kid: 'rotation-2024', alg: 'RS256', e: 'AQAB',
-        n: 'sVJ0Zn3nqvJ7pQx2vN1kLwYyR8mFtHc0dGvBpKzXaQwErTyUiOpAsDfGhJkLzXcVbNmQwErTyUi' +
-           'OpAsDfGhJkLzXcVbNmQwErTyUiOpAsDfGhJkLzXcVbNmQwErTyUiOpAsDfGhJkLzXcVbNm' },
+        n: '97w2NJVvczC2FffTqfAWGry44eB-gNkuofgqYOSy_3EP93jk8C7HJy5T6pta7KXWD0Uq1KZNhFIs' +
+           'HrNxwKTsesb_3umKNuRkAuCVOefKF-kogbVxvksQ7ZOVyUytDa4sgg35XWeDDhx6NI6qQCGRGSdn' +
+           'lqPiO_axGHzq5-t9eMk' },
       { kty: 'oct', use: 'sig', kid: 'legacy-hmac', alg: 'HS256',
         k: 'c3VwZXItc2VjcmV0LXNoYXJlZC1rZXktZG8tbm90LXB1Ymxpc2g' },
     ],
@@ -2067,6 +3117,30 @@ function analyze(input) {
   }
   const text = d.rewrite || input;
 
+  // A SAML document extracted from a URL parameter: decide what the decoded
+  // value is and analyze that. One level of recursion, by construction.
+  if (d.kind === 'samlparam') {
+    return analyze(text);
+  }
+
+  if (d.kind === 'cookie') {
+    return {
+      kind: /^set-cookie:/im.test(text) ? 'Set-Cookie response header' : 'Cookie request header',
+      decoded: '<pre class="code">' + esc(text) + '</pre>',
+      findings: checkCookie(text, now),
+    };
+  }
+
+  if (d.kind === 'tokenresp') {
+    const j = JSON.parse(text);
+    return {
+      kind: typeof j.active === 'boolean' ? 'Token introspection response' : 'Token endpoint response',
+      decoded: renderJson(j),
+      findings: checkTokenResponse(j, now),
+      also: nestedJwts(j),
+    };
+  }
+
   if (d.kind === 'jwt') {
     const t = decodeJwt(text);
     if (t.error) return { error: t.error, kind: d.kind };
@@ -2074,6 +3148,18 @@ function analyze(input) {
       kind: t.kind === 'jwe' ? 'Encrypted JWT (JWE)' : describeJwt(t),
       decoded: renderJwt(t),
       findings: checkJwt(t, now),
+    };
+  }
+
+  if (d.kind === 'samllogout' || d.kind === 'samlreq') {
+    const x = decodeXml(text);
+    if (x.error) return { error: x.error };
+    if (x.deflate) return { deflate: x.deflate };
+    return {
+      kind: d.kind === 'samlreq' ? 'SAML authentication request'
+          : 'SAML logout message (' + x.doc.documentElement.localName + ')',
+      decoded: renderXml(x.text),
+      findings: d.kind === 'samlreq' ? checkSamlAuthnRequest(x, now) : checkSamlLogout(x, now),
     };
   }
 
@@ -2104,19 +3190,66 @@ function analyze(input) {
       decoded: renderParams(a),
       findings: checkAuthz(a, now),
       also: nestedJwts(a.params),
+      hashParams: a.params,
     };
   }
 
   const x = decodeXml(text);
   if (x.error) return { error: x.error };
+  if (x.deflate) return { deflate: x.deflate };
   if (d.kind === 'samlmeta') {
     return { kind: 'SAML metadata', decoded: renderXml(x.text), findings: checkSamlMetadata(x, now) };
   }
   return {
-    kind: d.kind === 'samlreq' ? 'SAML authentication request' : 'SAML response',
+    kind: 'SAML response',
     decoded: renderXml(x.text),
     findings: checkSamlResponse(x, now),
   };
+}
+
+/* ---------------- the one verification that needs no key ----------------
+   at_hash and c_hash are the left half of a hash of the access token and the
+   code, under the hash of the ID token's own alg. When a redirect carries
+   both halves, the claim is checkable right here, offline: WebCrypto digests
+   bytes in this tab and nothing leaves it. This is the difference between
+   "authlint cannot verify without the key" and not verifying what it can. */
+function verifyOidcHashes(params) {
+  const results = [];
+  const idt = params && params.id_token;
+  if (!idt || typeof crypto === 'undefined' || !crypto.subtle) return Promise.resolve(results);
+  const t = decodeJwt(idt);
+  if (t.error || t.kind !== 'jws' || !t.payload) return Promise.resolve(results);
+  const m = String(t.header.alg || '').match(/(256|384|512)$/);
+  if (!m) return Promise.resolve(results);
+  const sha = 'SHA-' + m[1];
+
+  const jobs = [];
+  for (const [claim, artifact, label, ref] of [
+      ['at_hash', params.access_token, 'access token', 'OIDC Core §3.2.2.9'],
+      ['c_hash', params.code, 'authorization code', 'OIDC Core §3.3.2.10']]) {
+    const expected = t.payload[claim];
+    if (!expected || !artifact) continue;
+    jobs.push(crypto.subtle.digest(sha, new TextEncoder().encode(String(artifact))).then(buf => {
+      const digest = new Uint8Array(buf);
+      const half = digest.slice(0, digest.length / 2);
+      let bin = '';
+      for (let i = 0; i < half.length; i++) bin += String.fromCharCode(half[i]);
+      const got = btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      if (got === String(expected)) {
+        results.push(F('ok', claim + ' verifies against the ' + label + ' in this redirect',
+          'Computed here, offline: ' + sha + ' over the ' + label + ', left half, base64url. No ' +
+          'key needed, nothing sent anywhere.', '', ref));
+      } else {
+        results.push(F('critical', claim + ' does NOT match the ' + label + ' in this redirect',
+          'The ID token was issued alongside a different ' + label + ' than the one riding next ' +
+          'to it. That is what token substitution looks like: someone swapped one artifact in a ' +
+          'response whose other half they kept.',
+          'Reject the response. If you are debugging, confirm both values came from the same ' +
+          'redirect.', ref));
+      }
+    }).catch(() => { /* a digest that cannot run is simply not reported */ }));
+  }
+  return Promise.all(jobs).then(() => results);
 }
 
 /* A redirect often carries an id_token worth checking on its own. */
@@ -2130,9 +3263,11 @@ function nestedJwts(params) {
 }
 
 function describeJwt(t) {
-  const p = t.payload || {};
-  if (p.nonce || p.at_hash || p.auth_time) return 'OpenID Connect ID token';
-  if (p.scope || p.scp) return 'OAuth 2.0 access token (JWT)';
+  const prof = jwtProfile(t);
+  if (prof === 'dpop') return 'DPoP proof';
+  if (prof === 'logout') return 'OIDC back-channel logout token';
+  if (prof === 'id') return 'OpenID Connect ID token';
+  if (prof === 'at') return 'OAuth 2.0 access token (JWT)';
   return 'JSON Web Token';
 }
 
@@ -2172,17 +3307,27 @@ function timeClaims(p) {
 }
 
 function renderParams(a) {
+  const dups = a.dups || {};
   const rows = Object.keys(a.params).map(k => {
-    const v = String(a.params[k]);
-    const shown = v.length > 300 ? v.slice(0, 300) + '…' : v;
-    return '<tr><td>' + esc(k) + '</td><td><code>' + esc(shown) + '</code></td></tr>';
+    const vals = dups[k] || [a.params[k]];
+    const shown = vals.map(v => {
+      const s = String(v);
+      return s.length > 300 ? s.slice(0, 300) + '…' : s;
+    });
+    // Every copy of a duplicated parameter is displayed, because the copy the
+    // provider honoured may not be the last one, and hiding the others hides
+    // the attack.
+    return '<tr><td>' + esc(k) + (vals.length > 1 ? ' <b>×' + vals.length + '</b>' : '') +
+           '</td><td><code>' + shown.map(esc).join('</code><br><code>') + '</code></td></tr>';
   }).join('');
   return (a.base ? '<p class="dim">Endpoint: <code>' + esc(a.base) + '</code></p>' : '') +
          '<table class="params"><tbody>' + rows + '</tbody></table>';
 }
 
 function renderXml(text) {
-  return '<pre class="code">' + esc(prettyXml(text)) + '</pre>';
+  return '<p class="dim">Re-indented for reading. Whitespace differs from the pasted original, ' +
+         'which matters if you are eyeballing byte-exact values: trust the findings, not the ' +
+         'indentation.</p><pre class="code">' + esc(prettyXml(text)) + '</pre>';
 }
 
 /* Indentation only. Nothing here reorders or rewrites the document, because
@@ -2247,9 +3392,10 @@ function renderDiagnosis(input, fallback) {
 }
 
 const ACCEPTED_SENTENCE =
-  'authlint reads JSON Web Tokens, JWKS documents, OpenID Connect discovery documents, OAuth ' +
-  'authorization requests and redirects, SAML responses and assertions, and SAML metadata. SAML ' +
-  'over the redirect binding is DEFLATE compressed and needs the POST binding version.';
+  'authlint reads JSON Web Tokens (including DPoP proofs and JWEs), JWKS documents, OpenID ' +
+  'Connect discovery documents, OAuth authorization requests and redirects, token endpoint and ' +
+  'introspection responses, Set-Cookie headers, SAML responses, assertions, requests, logout ' +
+  'messages and metadata. Redirect-binding SAML is inflated automatically, in the browser.';
 
 function counts(list) {
   const c = { critical: 0, warn: 0, note: 0, ok: 0 };
@@ -2259,7 +3405,7 @@ function counts(list) {
 
 /* ------------------------------ wiring ------------------------------ */
 
-function run() {
+async function run() {
   const input = $('in').value.trim();
   const out = $('out');
   if (!input) { out.innerHTML = ''; $('summary').innerHTML = ''; return; }
@@ -2267,6 +3413,35 @@ function run() {
   let r;
   try { r = analyze(input); }
   catch (e) { r = { error: 'authlint fell over on this input: ' + e.message }; }
+
+  /* Redirect-binding SAML: the bytes came back compressed, so inflate them
+     with the browser's own decompressor and analyze what comes out. Async
+     because DecompressionStream is, and still entirely inside this tab. */
+  if (r && r.deflate) {
+    try {
+      const inflated = await inflateRaw(r.deflate);
+      if (/^\s*</.test(inflated)) {
+        r = analyze(inflated);
+        if (r && !r.error) {
+          r.kind = (r.kind || '') + ' (inflated from the redirect binding)';
+        }
+      } else {
+        r = { error: 'inflated, but the result is not XML' };
+      }
+    } catch (e) {
+      r = { error: 'looks like compressed data but will not inflate. If it came from a ' +
+                   'redirect binding it may be truncated; the POST binding version also works.' };
+    }
+  }
+
+  /* The key-free cryptographic checks: at_hash and c_hash, when a redirect
+     carries both the ID token and the artifact it hashes. */
+  if (r && !r.error && r.hashParams) {
+    try {
+      const extra = await verifyOidcHashes(r.hashParams);
+      if (extra.length) r.findings = sortFindings((r.findings || []).concat(extra));
+    } catch (e) { /* verification that cannot run is simply not reported */ }
+  }
 
   if (r.error) {
     $('summary').innerHTML = '';
@@ -2298,7 +3473,7 @@ function run() {
       const t = decodeJwt(n.value);
       if (t.error) return '';
       const nf = checkJwt(t, nowSeconds());
-      return '<section class="findings nested"><h3>' + esc(n.name) + ' inside this redirect</h3>' +
+      return '<section class="findings nested"><h3>' + esc(n.name) + ', decoded and checked separately</h3>' +
              renderFindings(nf) + '</section>';
     }).join('');
   }
