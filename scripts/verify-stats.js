@@ -79,6 +79,24 @@ for (const [label, value] of shown) {
 if (bad) { console.error('\nUpdate the .stats block in docs/home.html.'); process.exit(1); }
 console.log('docs/home.html stats match the content.');
 
+// Numbers also live in meta tags, outside the .stats block, and one went
+// stale there unnoticed: og:description said 420 lessons after the site
+// held 610. Any "N lessons/streams/exercises" in a meta content attribute
+// must match the content too.
+let mbad = 0;
+for (const m of home.matchAll(/<meta[^>]+content="([^"]*)"/g)) {
+  for (const hit of m[1].matchAll(/([\d,]+)\s+(lessons?|streams?|exercises?)/g)) {
+    const key = hit[2].replace(/s?$/, 's');
+    const got = +hit[1].replace(/,/g, '');
+    if (got !== claim[key]) {
+      console.error(`  meta tag says ${got} ${key}, content says ${claim[key]}`);
+      mbad++;
+    }
+  }
+}
+if (mbad) { console.error('\nUpdate the meta tags in docs/home.html.'); process.exit(1); }
+console.log('docs/home.html meta tags match the content.');
+
 // The course index at /courses/ repeats the numbers per dojo. It went stale
 // once by simply not mentioning ML Dojo at all, so check it from the same source.
 const landing = fs.readFileSync('docs/landing.html', 'utf8');
