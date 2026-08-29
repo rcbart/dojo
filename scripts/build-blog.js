@@ -30,6 +30,18 @@ const GISCUS = {
   category: 'Blog comments',
   categoryId: 'DIC_kwDOTyZDJs4DDiLE',
 };
+// Buttondown subscribe form. A static POST to their embed endpoint keeps the
+// site backend-free; confirmation is double opt-in on their side.
+const subscribeBlock = () => `
+<div class="subscribe">
+  <p><b>Get the next one by email.</b></p>
+  <form action="https://buttondown.com/api/emails/embed-subscribe/roniam" method="post" target="_blank">
+    <input type="email" name="email" required placeholder="you@example.com" aria-label="Email address">
+    <button type="submit">Subscribe</button>
+  </form>
+  <small>Monthly-ish, when the writing earns it. No tracking, unsubscribe anytime.</small>
+</div>`;
+
 const giscusBlock = () => (GISCUS.repoId && GISCUS.categoryId) ? `
 <section class="comments">
   <h2 style="font-size:20px;margin:44px 0 4px">Comments</h2>
@@ -174,6 +186,12 @@ const page = (title, desc, body, root) => `<!doctype html>
   .post h2{margin:0 0 6px;font-size:23px} .post:hover h2{color:var(--accent-ink)}
   .post p{color:var(--muted);margin:6px 0 0;font-size:15.5px}
   footer{border-top:1px solid var(--line);margin-top:50px;padding-top:20px;color:var(--muted);font-size:14px}
+  .subscribe{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-top:42px;background:var(--panel,#fff)}
+  .subscribe p{margin:0 0 10px}
+  .subscribe form{display:flex;gap:8px;flex-wrap:wrap}
+  .subscribe input[type=email]{flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font:inherit}
+  .subscribe button{padding:9px 16px;border:0;border-radius:8px;background:var(--deep2,#6d28d9);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+  .subscribe small{display:block;margin-top:8px;color:var(--muted)}
   .pill{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
         border-radius:999px;padding:3px 10px;vertical-align:2px;border:1px solid}
   .pill.leadership{color:#9d174d;background:#fff1f2;border-color:#fbcfe8}
@@ -229,7 +247,7 @@ for (const p of posts) {
   const html = page(p.meta.title + ' · Ron Bar-Tor', p.meta.description || '',
     `<h1>${esc(p.meta.title)}</h1>` +
     (p.meta.subtitle ? `<p class="psub">${esc(p.meta.subtitle)}</p>` : '') +
-    `<div class="pdate">${fmtDate(p.date)}</div>` + md(p.body) + giscusBlock(), '/');
+    `<div class="pdate">${fmtDate(p.date)}</div>` + md(p.body) + subscribeBlock() + giscusBlock(), '/');
   fs.mkdirSync(path.join(OUT, 'blog', p.slug), { recursive: true });
   fs.writeFileSync(path.join(OUT, 'blog', p.slug, 'index.html'), html);
 }
@@ -280,7 +298,7 @@ const filterScript = () => posts.length ? `
 fs.writeFileSync(path.join(OUT, 'blog', 'index.html'),
   page('Essays & proud scars · Ron Bar-Tor', 'Essays on engineering management, identity, and quality.',
     `<h1>Essays &amp; proud scars</h1><div class="pdate">Engineering management, identity, and the occasional bug worth telling the whole story about.</div>`
-    + filterBar() + list('/') + filterScript(), '/'));
+    + filterBar() + list('/') + subscribeBlock() + filterScript(), '/'));
 
 // home page: fill @@POSTS@@ (latest 3, home-styled), @@NAVPOSTS@@ (sidebar
 // links, latest 5, title only) and @@YEAR@@
