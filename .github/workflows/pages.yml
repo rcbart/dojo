@@ -155,7 +155,11 @@ jobs:
           cp authlint/dist/index.html                _site/authlint/index.html
           cp authlint/authlint-og.png                _site/authlint/authlint-og.png
           cp skills-rubric.html                      _site/skills-rubric.html
+          # og:image referenced by the home page and every blog post
+          mkdir -p _site/img
+          cp docs/img/og.png                         _site/img/og.png
           test -s _site/index.html
+          test -s _site/img/og.png
           test -s _site/skills-rubric.html
           test -s _site/blog/index.html
           test -s _site/courses/index.html
