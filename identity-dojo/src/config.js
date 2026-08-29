@@ -59,3 +59,10 @@ const DOJO_PATH = [
   ['\u26AB Black','Running it at 3am',
    'Finish with <b>Running Identity</b>: incident response, migrating an estate without an outage, break-glass when the IdP is the blast radius, what to log and what never to log, and a systematic method for diagnosing failures. Then prove it in the <b>Identity Capstone</b>. This stream is the difference between knowing the protocols and being trusted with them.'],
 ];
+
+
+/* Alpha testers, credited on this course's home screen by the shared engine.
+   Format: { name: 'Jane Doe', url: 'https://www.linkedin.com/in/...' }, url
+   optional. While the list is empty the home screen shows the recruiting
+   card instead. Add a person the day they finish, not later. */
+const DOJO_ALPHA = [];

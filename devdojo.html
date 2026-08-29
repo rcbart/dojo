@@ -2010,7 +2010,21 @@ function renderHome(){
   </div>
   <div class="scaleBar">${STREAMS.length} streams · ${STREAMS.reduce((a,s)=>a+s.lessons.length,0)} lessons · ${STREAMS.reduce((a,s)=>a+s.lessons.reduce((b,l)=>b+((l.exs||(l.ex?[l.ex]:[])).length),0),0)} hands-on exercises</div>
   <p style="font-size:12px;color:var(--muted)">System status: AI test runner ${(window.cowork&&window.cowork.askClaude)?'✅ connected':'⚠️ unavailable, completion falls back to structural checks'} · progress storage ${store.persistent?'✅ persistent':'⚠️ session-only (browser storage is blocked here; progress lasts until this view closes)'}</p>
+  ${alphaBlock()}
   ${sections}</div>`;
+}
+/* Alpha-tester credits on the home screen. A sibling dojo lists its testers
+   via DOJO_ALPHA in its config: [{name:'Jane Doe', url:'https://...'}], url
+   optional. While the list is empty the card recruits instead, because a
+   reward that is not visible the day it is earned is a promise, not a
+   reward. */
+function alphaBlock(){
+  const list=(typeof DOJO_ALPHA!=='undefined'&&Array.isArray(DOJO_ALPHA))?DOJO_ALPHA:[];
+  if(!list.length){
+    return `<div class="gsCard"><h2>🧪 Alpha testers</h2><p>${DOJO_NAME} is in alpha, and the first testers get named right here, on this screen. The ask is about 45 minutes: work the first three lessons, then say what confused you, what bored you, and what the grader got wrong. Catch a real defect, a wrong answer key or an exercise that rejects a correct answer, and your name goes on the fix as well. <a href="https://roniam.dev/#contact" target="_blank" rel="noopener noreferrer">Volunteer here</a>.</p></div>`;
+  }
+  const names=list.map(t=>t&&t.url?`<a href="${t.url}" target="_blank" rel="noopener noreferrer">${t.name}</a>`:(t&&t.name)||'').filter(Boolean).join(' · ');
+  return `<div class="gsCard"><h2>🧪 Alpha testers</h2><p>These people worked the lessons before anyone else and made them better: ${names}. Defects they caught are credited on the fixes themselves.</p></div>`;
 }
 /* ============================== LESSON ============================== */
 function exSid(l,exs,i){return exs.length>1?l.id+'#'+i:l.id;}

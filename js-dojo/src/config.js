@@ -95,3 +95,10 @@ const DOJO_PATH = [
   ['\u26AB Black','Making it hold up',
    'Finish with <b>Debugging, Testing &amp; Profiling Node</b>: <code>node --inspect</code>, heap snapshots and CPU profiles. Then prove the lot in the <b>JavaScript Capstone</b>. With this behind you the exercises in Dev Dojo and Identity Dojo are no longer a language problem.'],
 ];
+
+
+/* Alpha testers, credited on this course's home screen by the shared engine.
+   Format: { name: 'Jane Doe', url: 'https://www.linkedin.com/in/...' }, url
+   optional. While the list is empty the home screen shows the recruiting
+   card instead. Add a person the day they finish, not later. */
+const DOJO_ALPHA = [];
