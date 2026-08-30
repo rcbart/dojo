@@ -184,7 +184,28 @@ requires the engine to tell you which one.</li>
 <p>RBAC for the coarse gate (may this <i>kind</i> of user reach this endpoint at all) and ABAC for the
 fine one, where ownership, tenant and context decide. That maps neatly onto the split in the data-level
 lesson: roles at the edge, attributes next to the data. It also keeps the enumerable part enumerable,
-which is what keeps reviews possible.`,
+which is what keeps reviews possible.
+
+<h4>The cookbook: one request, evaluated by hand</h4>
+<div class="codeSample" data-hl>// the request, as the decision point sees it
+subject:     { id:"ada", department:"eng", clearance:2, status:"active" }
+resource:    { id:"doc-7", department:"eng", classification:3, owner:"bob" }
+action:      "read"
+environment: { network:"corporate", time:"14:20" }
+
+// the policy from above, conjunct by conjunct
+subject.department == resource.department      eng == eng    PASS
+subject.clearance  &gt;= resource.classification  2 &gt;= 3        FAIL  &lt;- here
+action == "read"                               not evaluated: already denied
+environment.network == "corporate"             not evaluated
+
+decision: DENY. failing conjunct: clearance.</div>
+<p>Two things to copy from that trace. First, the engine must be able to say <i>which conjunct
+failed</i>; a bare DENY turns every access ticket into an investigation. Second, note where each
+attribute came from: department from the directory (stale by one sync), clearance from HR (stale by one
+export), network from the request itself (fresh, and the only one the caller can influence). A decision
+is only as fresh as its stalest attribute and only as trustworthy as its most forgeable one, so write
+the source and the staleness next to every attribute your policies use.</p>`,
 docs:[['ABAC (NIST 800-162)','https://csrc.nist.gov/publications/detail/sp/800-162/final'],['ABAC vs RBAC','https://auth0.com/blog/what-is-abac-attribute-based-access-control/']],
 ex:{title:'Write an attribute policy',
 prompt:`Write class <code>Abac</code> with <code>static boolean permit(String userDept, String resourceDept, boolean isOwner)</code> that allows access when the user is in the same department as the resource <b>or</b> the user owns the resource.`,
@@ -233,7 +254,29 @@ fail-closed is the usual answer, and the caching brings back the staleness probl
 covers.</p>
 <p><b>OPA</b> (Rego, general-purpose policy), <b>Cedar</b> (AWS, verification-friendly) and
 <b>OpenFGA/SpiceDB</b> (Zanzibar-style relationship graphs) are the common engines. Pick on the shape of
-your question: predicate over attributes, or path through a graph.`,
+your question: predicate over attributes, or path through a graph.
+
+<h4>The cookbook: the model, the tuples, and one check traced</h4>
+<div class="codeSample" data-hl>// the model (OpenFGA-style): what CAN relate to what
+type group      define member: [user]
+type folder     define viewer: [group#member]
+type document   define parent: [folder]
+                define viewer: viewer from parent
+
+// the tuples: what IS related, one row per fact
+document:readme   parent   folder:eng
+folder:eng        viewer   group:eng#member
+group:eng         member   user:ada
+
+// check(user:ada, viewer, document:readme) resolves by walking:
+viewer of readme  = viewer from parent  -&gt; look at folder:eng
+viewer of eng     = group:eng#member    -&gt; look at the group
+member of eng     includes user:ada     -&gt; ALLOW, three hops</div>
+<p>Before adopting, answer the two questions that trace exposes. How deep can a path get? Every hop is
+a lookup, and a folder tree twelve levels deep makes every permission check twelve reads unless the
+engine caches or flattens. And who writes the tuples? Sharing a document is now a data write, with the
+same consistency questions as any other write: revoke a viewer and a cached ALLOW can outlive the
+tuple, which is the new-enemy problem, and the reason the engines talk about snapshot consistency.</p>`,
 docs:[['Google Zanzibar','https://research.google/pubs/pub48190/'],['OpenFGA','https://openfga.dev/'],['Open Policy Agent','https://www.openpolicyagent.org/']],
 ex:{title:'A relationship check',
 prompt:`Write class <code>Rebac</code> with <code>static boolean canView(String user, String owner, java.util.Set&lt;String&gt; sharedWith)</code> that returns true when the user is the owner <b>or</b> the document was shared with them.`,

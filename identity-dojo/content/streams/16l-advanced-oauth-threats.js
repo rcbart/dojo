@@ -93,7 +93,27 @@ clocks rather than the validator.</p>
 <p>A token can pass all nine checks and still be the wrong basis for a decision. It proves <i>who issued
 it</i> and <i>who it is for</i>, not that the issuer had authority over the claim, nor that the subject
 owns the record being requested. Signature validity is authentication of the token; it is not
-authorization.</p>`,
+authorization.</p>
+
+<h4>The cookbook: the checklist as running code</h4>
+<div class="codeSample" data-hl>// node, with the jose library: the nine steps in their order
+import { createRemoteJWKSet, jwtVerify } from 'jose';
+
+// steps 1+2: keys come from the issuer YOU configured, never from the token
+const JWKS = createRemoteJWKSet(
+  new URL('https://issuer.example.com/.well-known/jwks.json'));
+
+const { payload } = await jwtVerify(token, JWKS, {
+  algorithms: ['RS256'],                  // 1: alg pinned by you
+  issuer:   'https://issuer.example.com', // 4: exact match
+  audience: 'https://api.example.com',    // 5: names ME
+  clockTolerance: 60,                     // 6+7: bounded skew, in seconds
+});                                       // 3: verified inside the same call
+// 8: a jti replay cache is yours to add, if you keep one
+// 9: only now do payload.scope and friends mean anything</div>
+<p>One call carries seven of the nine steps, which is the point: the checklist is not a wall of code,
+it is a configuration you refuse to leave at defaults. The two defaults to distrust in any library: an
+algorithms list you did not write yourself, and a clock tolerance measured in minutes.</p>`,
 docs:[['JWT best practices (RFC 8725)','https://www.rfc-editor.org/rfc/rfc8725'],['JWT access tokens (RFC 9068)','https://www.rfc-editor.org/rfc/rfc9068']],
 ex:{title:'Validate a token offline',lang:'js',
 run:{call:'ok',cases:[{name:'right issuer, right audience, unexpired',args:['https://as.example.com','orders-api',2000,1000],expect:true},{name:'wrong issuer',args:['https://evil.example','orders-api',2000,1000],expect:false},{name:'token for another service',args:['https://as.example.com','billing-api',2000,1000],expect:false},{name:'expired',args:['https://as.example.com','orders-api',900,1000],expect:false},{name:'expiring exactly now is expired',args:['https://as.example.com','orders-api',1000,1000],expect:false}]},

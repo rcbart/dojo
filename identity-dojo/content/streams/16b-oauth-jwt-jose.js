@@ -413,7 +413,22 @@ String sub = back.getJWTClaimsSet().getSubject();</div>
 <li><b>Shape:</b> JWS has 3 parts; JWE has 5.</li>
 <li><b>Typical use:</b> JWS for normal OAuth/OIDC access &amp; ID tokens; JWE when the payload must stay private.</li>
 </ul>
-<p><b>Which to use, and when.</b> Reach for <b>JWS</b> by default: most access and ID tokens are <i>not</i> secret; the client is allowed to read them, you just need to trust the issuer and detect tampering. Reach for <b>JWE</b> when the token carries data that must be hidden from the client or from intermediaries (personal data, internal ids, sensitive entitlements), or when a policy requires it. Very often you want <b>both</b>: <b>sign, then encrypt</b>, a nested JWT (a JWS placed inside a JWE), so the recipient can confirm <i>who</i> issued it (signature) <i>and</i> nobody else can read it (encryption). Don't rely on JWE alone for authenticity: encryption proves secrecy, not who sent it; nest a JWS for that.</p>`,
+<p><b>Which to use, and when.</b> Reach for <b>JWS</b> by default: most access and ID tokens are <i>not</i> secret; the client is allowed to read them, you just need to trust the issuer and detect tampering. Reach for <b>JWE</b> when the token carries data that must be hidden from the client or from intermediaries (personal data, internal ids, sensitive entitlements), or when a policy requires it. Very often you want <b>both</b>: <b>sign, then encrypt</b>, a nested JWT (a JWS placed inside a JWE), so the recipient can confirm <i>who</i> issued it (signature) <i>and</i> nobody else can read it (encryption). Don't rely on JWE alone for authenticity: encryption proves secrecy, not who sent it; nest a JWS for that.</p>
+
+<h4>The cookbook: the five parts, and what a failed decrypt means</h4>
+<div class="codeSample" data-hl>header . encrypted-CEK . IV . ciphertext . auth-tag
+
+header         alg (how the CEK is wrapped) + enc (how the payload is sealed)
+encrypted CEK  the padlock key, locked to the recipient's public key
+IV             fresh randomness for GCM; never reused under the same key
+ciphertext     the payload, unreadable without the CEK
+auth tag       GCM's tamper seal, covering ciphertext AND header
+
+when decryption fails, the failure tells you where to look:
+  CEK unwrap fails         wrong private key: rotated key? wrong kid?
+  auth tag fails           tampered or truncated in transit
+  header alg unexpected    refuse BEFORE unwrapping. pin alg and enc the
+                           same way JWS pins alg: the header is input.</div>`,
 docs:[['RFC 7516 (JSON Web Encryption)','https://www.rfc-editor.org/rfc/rfc7516'],['RFC 7518 §4-5 (key management & content encryption)','https://www.rfc-editor.org/rfc/rfc7518#section-4'],['Nimbus (encrypting a JWT)','https://connect2id.com/products/nimbus-jose-jwt/examples/jwt-with-rsa-encryption']],
 ex:{title:'Encrypt and decrypt a JWE',
 prompt:`Write <code>Jwe</code> with: <code>static String encrypt(RSAKey recipientPublic, JWTClaimsSet claims)</code>: build an <code>EncryptedJWT</code> with a <code>new JWEHeader(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM)</code>, encrypt with <code>new RSAEncrypter(recipientPublic)</code>, and return <code>serialize()</code>; and <code>static String decrypt(RSAKey recipientPrivate, String token)</code>: <code>EncryptedJWT.parse(token)</code>, <code>decrypt(new RSADecrypter(recipientPrivate))</code>, and return <code>getJWTClaimsSet().getSubject()</code>. Declare <code>throws Exception</code>.`,

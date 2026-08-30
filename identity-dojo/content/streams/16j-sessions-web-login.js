@@ -106,7 +106,20 @@ synchronizer token as well: defense in depth, and the next lesson covers why.</p
 to share a session between <code>app.</code> and <code>www.</code> also shares it with
 <code>staging.</code>, <code>legacy.</code> and anything else on the domain. An XSS on the least
 important subdomain then reaches the most important session. Prefer host-only cookies and
-<code>__Host-</code> unless sharing is a deliberate requirement.</p>`,
+<code>__Host-</code> unless sharing is a deliberate requirement.</p>
+
+<h4>The cookbook: two headers to copy, one command to check</h4>
+<div class="codeSample" data-hl># the session cookie: the default until a requirement forces a flag off
+Set-Cookie: __Host-session=abc123; HttpOnly; Secure; Path=/; SameSite=Lax
+
+# the deliberate cross-site cookie (an embedded widget), scoped to its path
+Set-Cookie: widget=xyz; Secure; SameSite=None; Path=/embed
+
+# see what you actually send today (staging first, then be brave)
+curl -sI https://app.example.com/login | grep -i set-cookie</div>
+<p>Every flag removed from the first recipe should carry a sentence of justification in the code
+review, and the second recipe should exist only next to the document explaining why the embed needs a
+cookie at all.</p>`,
 docs:[['SameSite cookies, MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'],['Secure cookie attributes, OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html#cookies']],
 ex:{title:'Harden the cookie',
 prompt:`Write class <code>SecureCookie</code> with <code>static String build(String sid)</code> that returns <code>session=&lt;sid&gt;; HttpOnly; Secure; SameSite=Lax</code>, the session cookie with all three protective flags.`,

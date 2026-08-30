@@ -568,7 +568,21 @@ a year finding them.</p>
 <p>Instrument the login path by protocol before you start, so "SAML logins last week" is a number rather
 than an opinion. The migration is done when that number reaches zero for an application, and the SAML
 integration is removed <i>after</i> a quiet period rather than at the same moment, because the traffic you
-cannot see is the traffic that will page you.</p>`,
+cannot see is the traffic that will page you.</p>
+
+<h4>The cookbook: the spreadsheet and the per-app cutover</h4>
+<div class="codeSample" data-hl>the inventory, one row per application, BEFORE anything moves:
+app | owner | NameID format | attributes consumed | uses SLO? | vendor OIDC status | logins/week
+
+the cutover, per application:
+[ ] OIDC client registered; claims mapped to the old attribute contract
+[ ] link table populated for pilot users (directory export, never email match)
+[ ] pilot moved; same human -&gt; same account, verified in the logs
+[ ] everyone moved; SAML logins/week for this app reads zero
+[ ] one quiet period, long enough to include month-end
+[ ] SAML integration removed as its own change, with its own rollback</div>
+<p>The spreadsheet is the migration. Every column is a question that gets answered either now, calmly,
+or later, at 2am, by whoever is on call: the empty "owner" cells are the long tail finding you first.</p>`,
 docs:[['OpenID Connect Core','https://openid.net/specs/openid-connect-core-1_0.html'],['SAML 2.0 core (assertions and NameID)','https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['NIST SP 800-63C (federation assurance)','https://pages.nist.gov/800-63-3/sp800-63c.html']],
 ex:{title:'Resolve one human across two protocols',lang:'js',
 run:{call:'resolveAccount',cases:[{name:'a known SAML identifier',args:[{protocol:'saml',id:'ada@acme.com',email:'ada@acme.com'},[{protocol:'saml',id:'ada@acme.com',accountId:'acct-1'},{protocol:'oidc',id:'sub-9911',accountId:'acct-1'}]],expect:'acct-1'},{name:'a known OIDC subject reaches the same account',args:[{protocol:'oidc',id:'sub-9911',email:'ada@acme.com'},[{protocol:'saml',id:'ada@acme.com',accountId:'acct-1'},{protocol:'oidc',id:'sub-9911',accountId:'acct-1'}]],expect:'acct-1'},{name:'an unknown subject is NOT linked by matching email',args:[{protocol:'oidc',id:'sub-0000',email:'ada@acme.com'},[{protocol:'saml',id:'ada@acme.com',accountId:'acct-1'},{protocol:'oidc',id:'sub-9911',accountId:'acct-1'}]],expect:null},{name:'the same string under the wrong protocol does not match',args:[{protocol:'oidc',id:'ada@acme.com',email:'ada@acme.com'},[{protocol:'saml',id:'ada@acme.com',accountId:'acct-1'}]],expect:null},{name:'no links at all',args:[{protocol:'saml',id:'ada@acme.com',email:'ada@acme.com'},[]],expect:null}]},

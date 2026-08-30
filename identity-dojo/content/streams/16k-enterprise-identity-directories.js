@@ -33,7 +33,25 @@ StartTLS is not optional.</p>
 <p>Group membership is stored as a list of member DNs on the group, not as a list of groups on the user,
 so "what groups is Ada in?" is a search across groups rather than a field lookup. AD offers
 <code>memberOf</code> as a convenience, and nested groups still require a recursive query, which is the
-transitive-membership problem the groups lesson covers.</p>`,
+transitive-membership problem the groups lesson covers.</p>
+
+<h4>The cookbook: the four searches that answer most questions</h4>
+<div class="codeSample" data-hl># find the user's DN and groups (bound as the service account)
+ldapsearch -H ldaps://dc.example.com -D "cn=svc-app,ou=Service,dc=example,dc=com" -W -b "dc=example,dc=com" "(sAMAccountName=ada)" dn mail memberOf
+
+# the actual credential check: bind AS the user, with the DN you just found
+ldapsearch -H ldaps://dc.example.com -D "cn=Ada Lovelace,ou=Engineering,dc=example,dc=com" -W -b "" -s base
+
+# who is in this group? members live on the group, not on the user
+ldapsearch -H ldaps://dc.example.com -D "cn=svc-app,ou=Service,dc=example,dc=com" -W -b "cn=platform-admins,ou=Groups,dc=example,dc=com" member
+
+# AD only: nested membership in ONE query, the matryoshka OID
+ldapsearch -H ldaps://dc.example.com -D "cn=svc-app,ou=Service,dc=example,dc=com" -W -b "dc=example,dc=com" "(member:1.2.840.113556.1.4.1941:=cn=Ada Lovelace,ou=Engineering,dc=example,dc=com)" dn</div>
+<p>Reading notes for the doer. <code>-W</code> prompts for the password instead of leaving it in shell
+history. The scheme is <code>ldaps://</code> in every line for a reason. And before any user-supplied
+text goes into a filter, escape the LDAP metacharacters (parentheses, asterisk, backslash, NUL):
+filter injection is SQL injection's forgotten sibling, and "(sAMAccountName=" plus raw input is
+exactly the same bug as string-concatenated SQL.</p>`,
 docs:[['LDAP (Wikipedia)','https://en.wikipedia.org/wiki/Lightweight_Directory_Access_Protocol'],['Active Directory','https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/get-started/virtual-dc/active-directory-domain-services-overview']],
 ex:{title:'Build a Distinguished Name',
 prompt:`Write class <code>Ldap</code> with <code>static String dn(String cn, String dc)</code> that returns a simple DN of the form <code>cn=&lt;cn&gt;,dc=&lt;dc&gt;</code>.`,
@@ -629,7 +647,28 @@ strong as the X account, and X's recovery flow is now yours.</li>
 at least one remaining, or force a password to be set first.</li>
 <li><b>Providers disappear or change ids.</b> Keep your own internal user id as the primary key and treat
 every provider identity as an attached credential, not as the user.</li>
-</ul>`,
+</ul>
+
+<h4>The cookbook: the arrival decision, every branch</h4>
+<div class="codeSample" data-hl>token arrives: { iss:"google", sub:"123",
+                 email:"ada@corp.example", email_verified:true }
+
+1. look up (iss, sub) in the identities table
+   found      -&gt; log the linked account in. done. (email is ignored)
+   not found  -&gt; continue
+
+2. does an account already exist with that email?
+   no   -&gt; create the account, store (iss, sub) against it. done.
+   yes  -&gt; do NOT auto-link. authenticate the existing account first:
+             already logged in this session  -&gt; confirm, then link
+             otherwise                       -&gt; password or magic link to
+                                                the ACCOUNT's address first
+3. only after that proof: store (iss, sub) against the account</div>
+<p>Provider quirks that bend the neat picture. Apple hands you a private relay address unless the user
+shares the real one; it works as a mailbox, so treat it as the account email only if the user confirms
+it. GitHub accounts carry several addresses and the token shows whichever is primary today. And
+<code>email_verified</code> means the provider verified it, at some point, by their rules; it lowers the
+risk of step 2, and it never replaces step 2.</p>`,
 docs:[['Account linking (Auth0)','https://auth0.com/docs/manage-users/user-accounts/user-account-linking'],['Sign in with Google','https://developers.google.com/identity']],
 ex:{title:'Build a stable linking key',
 prompt:`Write class <code>Linking</code> with <code>static String key(String provider, String subject)</code> that returns a composite identity key of the form <code>provider|subject</code> (provider, a pipe, then the provider&#8217;s subject id).`,

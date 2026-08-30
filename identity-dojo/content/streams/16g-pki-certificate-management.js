@@ -552,7 +552,22 @@ another name and the update problem does not exist.</p>
 <p>Where it does not earn its risk: a public website, a service integrating with third-party APIs whose
 rotation schedule you do not control, and anywhere the operational maturity to monitor and rotate pins does
 not exist. The real test is whether you can answer "what happens when this key rotates unexpectedly?"
-with a procedure rather than a silence.</p>`,
+with a procedure rather than a silence.</p>
+
+<h4>The cookbook: computing a pin, and rotating without bricking anyone</h4>
+<div class="codeSample" data-hl># the SPKI pin of a live server's leaf (inspect what you would be trusting)
+openssl s_client -connect api.example.com:443 2&gt;/dev/null | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | openssl enc -base64
+
+# the pin of the intermediate you actually chose
+openssl x509 -in intermediate.pem -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | openssl enc -base64
+
+# the backup pin: generate the NEXT key today, pin it, keep it offline
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out next.key
+openssl pkey -in next.key -pubout -outform der | openssl dgst -sha256 -binary | openssl enc -base64</div>
+<p>The rotation runbook in one line each: release N ships pins for the current key and the offline
+next key; when N's adoption crosses your comfort line, rotate the server to the next key; generate a
+fresh offline next, pin it in N+1, repeat. The app that skips the backup pin is one rotation away from
+a support queue full of reinstalls.</p>`,
 docs:[['OWASP (certificate and public key pinning)','https://owasp.org/www-community/controls/Certificate_and_Public_Key_Pinning'],['RFC 7469 (HPKP (obsolete, and instructive))','https://www.rfc-editor.org/rfc/rfc7469'],['Android (network security configuration)','https://developer.android.com/privacy-and-security/security-config']],
 ex:{title:'Accept the chain, or fail closed',lang:'js',
 run:{call:'pinAccepted',cases:[{name:'the leaf key matches a pin',args:[[{spkiHash:'aaa',isLeaf:true},{spkiHash:'bbb'}],['aaa']],expect:true},{name:'the leaf rotated but the pinned intermediate still matches',args:[[{spkiHash:'zzz',isLeaf:true},{spkiHash:'bbb'}],['aaa','bbb']],expect:true},{name:'nothing in the chain matches',args:[[{spkiHash:'zzz',isLeaf:true},{spkiHash:'yyy'}],['aaa','bbb']],expect:false},{name:'an empty pin set fails closed',args:[[{spkiHash:'aaa',isLeaf:true}],[]],expect:false},{name:'an empty chain matches nothing',args:[[],['aaa']],expect:false}]},
