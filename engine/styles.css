@@ -438,3 +438,25 @@ details.depth[open]>summary::before{content:'▾'}
    a wrong answer is answered specifically, not just overruled. */
 .quizNote{margin:-4px 0 14px;font-size:13px;color:var(--muted);line-height:1.5}
 .quizNote em{font-style:normal;font-weight:700;color:var(--ink,inherit)}
+
+/* --- Mobile: the lesson list collapses off-canvas (reported by Dima Galat,
+   29 Aug 2026: the nav ate most of a phone screen and the content got the
+   sliver that was left). Toggle in the header; scrim closes it; picking a
+   lesson closes it. --- */
+#navToggle{display:none;background:none;border:0;color:var(--on-night);font-size:22px;line-height:1;padding:4px 8px;margin:-2px 0 -2px -8px;cursor:pointer;border-radius:8px}
+#navToggle:active{background:rgba(255,255,255,.12)}
+#navScrim{display:none}
+@media (max-width:760px){
+  #navToggle{display:block}
+  header{padding:11px 12px;gap:10px}
+  header .tip{display:none}
+  .belt .strip{width:64px}
+  .beltNext{display:none}
+  #layout{position:relative}
+  nav{position:absolute;top:0;bottom:0;left:0;z-index:31;width:min(85vw,300px);min-width:0;transform:translateX(-103%);transition:transform .22s ease;box-shadow:6px 0 26px rgba(19,15,38,.35)}
+  body.navOpen nav{transform:none}
+  #navScrim{position:absolute;inset:0;z-index:30;background:rgba(19,15,38,.45)}
+  body.navOpen #navScrim{display:block}
+  main{padding:16px 14px 80px}
+}
+@media (prefers-reduced-motion:reduce){nav{transition:none}}

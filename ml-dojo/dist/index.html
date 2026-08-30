@@ -17581,5 +17581,44 @@ print(sup_examples, env_steps, ratio)
 /* ============================== BOOT ============================== */
 renderHome();refreshBelt();
 </script>
+<style id="mobileNavPatch">
+#navToggle{display:none;background:none;border:0;color:inherit;font-size:22px;line-height:1;padding:4px 8px;cursor:pointer;border-radius:8px}
+#navScrim{display:none}
+@media (max-width:760px){
+#navToggle{display:block}
+header{padding:11px 12px;gap:10px}
+header .tip{display:none}
+.belt .strip{width:64px}
+.beltNext{display:none}
+#layout{position:relative}
+nav{position:absolute;top:0;bottom:0;left:0;z-index:31;width:min(85vw,300px);min-width:0;transform:translateX(-103%);transition:transform .22s ease;box-shadow:6px 0 26px rgba(0,0,0,.35)}
+body.navOpen nav{transform:none}
+#navScrim{position:absolute;inset:0;z-index:30;background:rgba(0,0,0,.45)}
+body.navOpen #navScrim{display:block}
+}
+@media (prefers-reduced-motion:reduce){nav{transition:none}}
+</style>
+<script>
+/* Mobile nav collapse, reported by Dima Galat 29 Aug 2026. Port of the
+   shared-engine fix; replace with the engine version on the next ml-dojo
+   sync. */
+(function(){
+  var h=document.querySelector('header'), lay=document.getElementById('layout'),
+      nv=document.getElementById('nav'), b=document.body;
+  if(!h||!lay||!nv) return;
+  var t=document.createElement('button');
+  t.id='navToggle'; t.setAttribute('aria-label','Show lesson list');
+  t.setAttribute('aria-expanded','false'); t.innerHTML='&#9776;';
+  h.insertBefore(t, h.firstChild);
+  var sc=document.createElement('div'); sc.id='navScrim'; lay.appendChild(sc);
+  function set(open){ b.classList.toggle('navOpen', open); t.setAttribute('aria-expanded', String(open)); }
+  t.addEventListener('click', function(){ set(!b.classList.contains('navOpen')); });
+  sc.addEventListener('click', function(){ set(false); });
+  nv.addEventListener('click', function(e){
+    var el=e.target && e.target.closest ? e.target.closest('.lessonLink') : null;
+    if(el && window.matchMedia('(max-width:760px)').matches) set(false);
+  });
+})();
+</script>
 </body>
 </html>
