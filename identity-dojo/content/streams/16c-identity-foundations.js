@@ -2149,7 +2149,7 @@ precise about what you give up for that convenience, because most of the damage 
 
 <h4>What an API key actually is</h4>
 <p>An API key is a <b>long-lived, opaque bearer token identifying an application rather than a
-person</b>. Every word there is load-bearing:</p>
+person</b>. Every word there is doing work:</p>
 <ul>
 <li><b>Long-lived</b>: typically no expiry at all. Unlike an access token measured in minutes, a key
 issued in 2019 is probably still valid.</li>

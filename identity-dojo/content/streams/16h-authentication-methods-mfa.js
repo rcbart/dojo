@@ -87,7 +87,7 @@ hints:['A slow, memory-hard hash like argon2id is the modern default; MD5 and SH
 </ul>
 <p>Strong MFA combines factors from different categories, so stealing one (a leaked password) is not enough. Not all second factors are equal: SMS codes can be SIM-swapped or phished, app-based one-time codes are better, and phishing-resistant passkeys (next lessons) are best.</p>
 
-<h4>Why "independent" is the load-bearing word</h4>
+<h4>Why "independent" is the word that matters</h4>
 <p>The point of a second factor is not extra effort; it is that <b>one attack should not get both</b>.
 A password and a security question are both knowledge, so a single phishing page harvests them
 together. A password and an SMS code sound independent, until you notice both arrive on the same phone,
@@ -1022,7 +1022,7 @@ never a prefix or a "contains" check.</li>
 <li>Confirm the <b>credential id is not already registered</b> to anyone, then store credential id,
 public key, sign count, AAGUID and the BE flag against the user.</li>
 </ol>
-<p>Steps 2 and 3 are the load-bearing ones. A challenge that is not verified against server state turns
+<p>Steps 2 and 3 are the ones the security rests on. A challenge that is not verified against server state turns
 the whole ceremony into theatre, and an origin check written as "starts with" is how
 <code>https://login.example.com.evil.com</code> gets in.</p>`,
 docs:[['W3C: WebAuthn Level 3 (defines the BE and BS flags)','https://www.w3.org/TR/webauthn-3/'],['W3C: Registering a new credential (verification procedure)','https://www.w3.org/TR/webauthn-2/#sctn-registering-a-new-credential'],['W3C (Authenticator data layout)','https://www.w3.org/TR/webauthn-2/#sctn-authenticator-data'],['W3C (Attestation statement formats)','https://www.w3.org/TR/webauthn-2/#sctn-defined-attestation-formats'],['FIDO Alliance (Metadata Service (MDS))','https://fidoalliance.org/metadata/']],

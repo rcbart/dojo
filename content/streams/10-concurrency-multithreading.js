@@ -549,7 +549,7 @@ Diagnose it with <code>-Djdk.tracePinnedThreads=full</code>. (JDK 24 removed mos
 sized to them remains correct.</p>
 <p><b>They remove your accidental rate limit.</b> A 200-thread pool was also, quietly, a cap of 200
 concurrent calls to the downstream service. Replace it with unbounded virtual threads and you will
-discover that cap was load-bearing: the database connection pool is now the bottleneck, or you are
+discover what that cap was quietly protecting: the database connection pool is now the bottleneck, or you are
 DDoSing a partner. Add explicit limits (a <code>Semaphore</code>, a bulkhead) where the pool used to
 imply them.</p>
 <p><b>ThreadLocal becomes a liability.</b> It was cheap when threads were pooled and few; with millions of

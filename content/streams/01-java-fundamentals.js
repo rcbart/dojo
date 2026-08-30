@@ -363,7 +363,7 @@ the compiler finds the places you must update instead of your users finding them
 early for the invalid cases leaves the main path unindented and unconditional, which is far easier to read
 than an arrow of nesting. And remember <code>&amp;&amp;</code> and <code>||</code> short-circuit, which is
 what makes <code>obj != null &amp;&amp; obj.isReady()</code> safe: the order of those operands is
-load-bearing, not stylistic.</p>
+correctness, not style.</p>
 
 <h4>The equality trap</h4>
 <p><code>==</code> on objects compares references, so comparing strings with it works for literals, which

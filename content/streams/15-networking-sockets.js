@@ -97,7 +97,7 @@ static void handle(Socket client) {
 <ul>
 <li><b>The accept loop is a single point of serialization.</b> It must do nothing but accept and dispatch; any work done there (a lookup, a log flush, a lock) becomes the ceiling on your connection rate.</li>
 <li><b>Unbounded dispatch is unbounded load.</b> Cheap threads do not make the database behind them cheap. A semaphore or a bounded queue in front of the expensive resource is what turns an overload into slow-but-alive instead of a cascade.</li>
-<li><b>Every handler needs a timeout</b> and its own exception boundary. One misbehaving client must never take the server with it; the catch in the handler is load-bearing, not decoration.</li>
+<li><b>Every handler needs a timeout</b> and its own exception boundary. One misbehaving client must never take the server with it; the catch in the handler is survival, not decoration.</li>
 <li><b>Pinning.</b> A virtual thread blocked inside a <code>synchronized</code> block cannot unmount and holds its carrier thread hostage. Prefer <code>ReentrantLock</code> around blocking sections in code that runs on virtual threads.</li>
 </ul>
 <p>Architecturally this is what a servlet container does for you: accept, dispatch, isolate, bound. Knowing the shape is what lets you read <code>server.tomcat.threads.max</code> as a capacity decision rather than a magic number.</p>`,

@@ -21,7 +21,7 @@ import io, re, sys, collections
 HARD = {
  'em dash': r'—',
  'British spelling': r'\b(?:centre|centres|colour|colours|coloured|behaviour|behaviours|behavioural|organisation|organisations|organisational|organise|organised|organises|organising|recognise|recognised|recognises|recognising|recognisable|apologise|analyse|analysed|analyses|analysing|labelled|labelling|travelled|travelling|whilst|learnt|realise|realised|realises|realising|favour|favours|favourite|favourable|honour|honoured|honours|neighbour|neighbours|neighbouring|neighbourhood|flavour|flavours|rumour|humour|prioritise|prioritised|utilise|utilised|defence|defences|licence|licences|programme|programmes|serialise|serialised|serialisation|normalise|normalised|normalisation|initialise|initialised|initialisation|optimise|optimised|optimises|optimising|optimisation|synchronise|synchronised|authorise|authorised|specialise|specialised|customise|customised|summarise|summarised|minimise|minimised|maximise|maximised|maximising|catalogue|catalogues|modelling|modelled|artefact|artefacts|misspelt|enrolment|amongst|judgement|judgements|judgemental|spelt|greyscale|practise|sceptical)\b',
- 'LLM vocabulary': r'\b(?:delve|delving|leverage|leveraging|seamless|seamlessly|myriad|pivotal|tapestry|a testament to|in the realm of|it is worth noting|plays a (?:key|vital|crucial) role|navigate the complexities)\b',
+ 'LLM vocabulary': r'\b(?:delve|delving|leverage|leveraging|seamless|seamlessly|myriad|pivotal|tapestry|a testament to|in the realm of|load[- ]bearing|it is worth noting|plays a (?:key|vital|crucial) role|navigate the complexities)\b',
  'unfilled placeholder': r'\[(?:TODO|TBD|STORY SLOT|YOUR |STILL NEEDED|EPIGRAPH|PLACEHOLDER)[^\]]*\]',
 }
 def text_of(p):
