@@ -1,7 +1,7 @@
 ---
 title: "Write the exam, write the answer key, then sit the exam: why dogfooding really, really matters"
 description: "I built a learning platform with two CI gates and a few thousand assertions, and it still shipped four exercises that failed even when I got the right answer. The missing ingredient wasn't more tests. It was dogfooding, and knowing when to stop."
-date: 2026-08-16
+date: 2026-08-14
 tags: ["testing", "ci", "quality", "engineering"]
 category: engineering
 slug: "sit-the-exam"
@@ -16,7 +16,8 @@ I found four of those in my own product. This is the story of how they got past 
 
 ## What I'm building, and why
 
-I run five self-contained learning platforms: one for software engineering, one for identity and access, one for JavaScript and Node, one for Machine Learning, and another for the everyday operational work. The three biggest total 409 lessons and 624 exercises at last count, and each of them compiles to a single HTML file that works offline, no server, no dependencies. That constraint is deliberate. I want to make sure that someone trying to learn can focus on learning, not get dejected before the first exercise, because there is some setup issue. There is a whole discipline on getting your dev environment running, but that isn't the aim of this. It may be in the future. I'm still thinking about that one.
+I run five self-contained learning platforms: one for software engineering, one for identity and access, one for JavaScript and Node, one for Machine Learning, and another for the everyday operational work. The three biggest total 409 lessons and 624 exercises at last count (numbers as of
+August 2026; the site has since grown), and each of them compiles to a single HTML file that works offline, no server, no dependencies. That constraint is deliberate. I want to make sure that someone trying to learn can focus on learning, not get dejected before the first exercise, because there is some setup issue. There is a whole discipline on getting your dev environment running, but that isn't the aim of this. It may be in the future. I'm still thinking about that one.
 
 The intent behind all of it is simple to say and hard to do: develop engineers, not park them in tutorial hell. Watching someone else code isn't learning to code. So every lesson ends with an exercise you do yourself, and the platform grades it. Some exercises are checked structurally, does your answer contain the structure being taught. The better ones are executed: your function runs against real inputs in a sandboxed Web Worker, and the result is compared with expected values, one named case per failure mode. An exercise like that carries a small spec:
 
@@ -108,10 +109,14 @@ I chased none of those. The gate and the in-browser grader share the same compar
 
 This is the part of testing culture nobody puts on the poster. Yes, you handle edge cases. You should be a little paranoid; my favorite bug above only surfaced because an exercise finally returned a plain object. But somewhere past the reasonable cases is the meteor hitting the data center, and you have to be willing to look at a risk and say: this one isn't worth the reward. My repository has a list of checks I decided not to build: no coverage threshold, no end-to-end browser suite, no fuzzing of the grader. In my professional life I had to accept the fact that I don't control the internet, and when something happens, information may go where it was not intended. Enough said.
 
-The trick is that declining a risk is only acceptable after you've done the cheap paranoia. The order matters. Sit the exam first; it cost me a weekend and found five real defects. Then look at the remaining tail, price it, and stop. A team that stops before dogfooding is negligent. A team that can't stop after it is chasing meteors while the capstone throws `undefined` at its best students. This is the essence of senior experience, and the art of risk acceptance. Thinking about this as I write this, it's worth a blog post by itself.
+The trick is that declining a risk is only acceptable after you've done the cheap paranoia. The order matters. Sit the exam first; it cost me a weekend and found four real defects. Then look at the remaining tail, price it, and stop. A team that stops before dogfooding is negligent. A team that can't stop after it is chasing meteors while the capstone throws `undefined` at its best students. This is the essence of senior experience, and the art of risk acceptance. Thinking about this as I write this, it's worth a blog post by itself.
 
 A good question to ask: what kind of bug would survive everything we currently run? If the answer is easy to build, build it, it's probably your next gate. If the answer costs more than the blast radius it prevents, write the rationale down where the next person will find it, and go do something that matters. It's not easy, but it's worth the effort.
 
 The gate runs on every push now, third in line. The four defects are documented in its header comment, so I won't delete it for being slow without learning why it exists. And "the build is green" finally means what I always claimed it meant: not that we proofread everything, but that somebody sat the exam.
 
 One more thing, because it's the part I'd actually want a younger engineer to hear. That weekend of red herrings never really ends; there will always be another one. And I've stopped resenting them (I actually learned to love them). These one-off fights, where you're alone with the logic and it keeps winning until suddenly it doesn't, are where you genuinely learn. You'll forget the tutorials. You will never forget the bug you chased for two days that turned out to be your own missing test.
+
+---
+
+*Corrected 29 August 2026: the closing section counted five defects; the weekend found four. In a post about an exam and an answer key disagreeing, the post disagreed with itself, and a careful reader is why it no longer does.*
