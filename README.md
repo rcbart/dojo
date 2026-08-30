@@ -21,7 +21,7 @@
 # Dojo 🥋
 
 Four interactive, self-contained learning platforms plus a five-course cloud-native path, all running
-entirely in the browser. **71 streams, 609 lessons and 702 hands-on exercises**: an in-editor coding
+entirely in the browser. **71 streams, 610 lessons and 749 hands-on exercises**: an in-editor coding
 exercise on every lesson, a belt progression, **spaced-repetition review**, a **difficulty-filtered
 practice hub**, a domain glossary with click-to-explain terms, tournaments, and end-to-end capstone
 projects.
@@ -156,7 +156,7 @@ badge: `scripts/verify.js` runs 1,876 assertions for Dev Dojo, and 2,990 across 
 engine-based dojos, proving every exercise's reference solution matches its own regex checks and that
 ids are unique. ML Dojo has its own workflow, which executes all 62 runnable Python reference solutions against the assertions the learner is graded on. A separate gate,
 `scripts/verify-exec.js`, goes further for the exercises that are executed: it loads each reference
-solution and calls it with that exercise's own cases, 999 of them across 184 exercises, so a solution
+solution and calls it with that exercise's own cases, 1,002 of them across 185 exercises, so a solution
 that does not actually produce the expected result fails the build. That is a **content integrity
 gate, not a test suite for a running product**; it says the material is internally consistent, not
 that a learner's code is correct.

@@ -9,7 +9,7 @@
 
 # Identity Dojo 🛂
 
-A self-contained course on identity and access management: **14 streams, 149 lessons, 159 hands-on
+A self-contained course on identity and access management: **14 streams, 150 lessons, 160 hands-on
 exercises**, in a single offline HTML file. Split out of [Dev Dojo](../README.md) once the domain grew
 large enough to stand on its own.
 
@@ -69,7 +69,7 @@ The **content checks** badge counts assertions in `scripts/verify.js` proving ev
 matches its own regex checks and that ids are unique. That is a **content integrity gate, not a test
 suite**; it says the material is internally consistent, not that a learner's code is correct.
 
-Grading splits two ways. **47 of 159 exercises (30%) are graded by real execution**: they are pure-logic
+Grading splits two ways. **48 of 160 exercises (30%) are graded by real execution**: they are pure-logic
 problems written in JavaScript, and your function is called with real inputs in a sandboxed Web Worker
 with its return value compared against expected values, 229 executed cases in total. Every failure mode
 is its own named case, so an implementation that skips the audience check or fails open on an unknown
