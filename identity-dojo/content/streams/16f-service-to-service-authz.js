@@ -1091,7 +1091,65 @@ is a new dependency on the critical path of internal traffic, with the availabil
 obligations that implies. And this is a draft: expect claim details to move.</p>
 <p>The idea worth taking even if you never adopt the specification: <b>establish context once, at the
 boundary, sign it, and verify it at every hop</b>, rather than re-deriving it, or trusting whatever the
-previous service said.</p>`,
+previous service said.</p>
+
+<h4>The cookbook: long-running work and a token that lives for minutes</h4>
+<p>The first question anyone asks when they put a Txn-Token behind a queue: the token expires in
+minutes, the batch runs at 2am, so what travels? The answer is that the Txn-Token never travels
+through time. Section 7 of the draft is explicit that Txn-Tokens "MUST be used only for the expected
+duration of an external or internal invocation", and that when "a long-running process such as a
+batch or offline task is involved, the mechanism used to perform the external or internal invocation
+still results in a short-lived Txn-Token". Something durable initiates the work; each invocation
+inside it mints its own short-lived token.</p>
+<div class="codeSample" data-hl>WRONG: stretch the token to cover the business process
+  request --&gt; [Txn-Token, ttl 8h] --&gt; queue --&gt; ... --&gt; worker at 2am
+  a token valid for eight hours is an access token wearing a costume
+
+RIGHT: persist the DECISION, mint a token per invocation
+  request --&gt; TTS --&gt; [Txn-Token, ttl 2m] --&gt; edge work --&gt; done, token dies
+              |
+              +--&gt; durable record: who asked, what was authorized,
+                   on what evidence, when            (this is what waits)
+
+  2am: worker picks up the job
+       worker proves ITS OWN identity (mTLS / SVID)
+       + presents the durable record
+       --&gt; TTS --&gt; [fresh Txn-Token, ttl 2m] --&gt; step 1, token dies
+       --&gt; TTS --&gt; [fresh Txn-Token, ttl 2m] --&gt; step 2, token dies
+  a retry is not a refresh: re-run the step, mint a new token</div>
+<p><b>Why the lifetime is short, and why that is not an inconvenience to engineer around.</b> A
+Txn-Token is trusted at hop five without anyone re-consulting the edge. That trust is only affordable
+because the window in which a stolen token is useful is measured in minutes. Lengthen the lifetime and
+you have not made the system more convenient, you have rebuilt the bearer token you were trying to get
+away from, with a wider audience and no revocation story. The lifetime <i>is</i> the security
+property.</p>
+<p>Which gives the working rule: <b>a Txn-Token's lifetime bounds how long one hop should take, not
+how long the business process takes.</b> If a token is expiring in the middle of your processing, the
+token is not too short; the invocation is too coarse. Split it into steps that each mint their own.</p>
+
+<h4>The decision the draft leaves to you: whose authority runs at 2am?</h4>
+<p>The specification gives the shape and stops. It says nothing about replacement mid-processing,
+expiry during a batch, or queued work, so the hard question is yours: does delayed work run with the
+authority the user had <i>when they submitted</i>, or the authority they have <i>now</i>?</p>
+<div class="codeSample" data-hl>SUBMIT-TIME authority   the stored decision is the authority
+  + intent is preserved: the job does what was actually asked
+  + predictable; a job cannot half-fail because a role changed
+  - the offboarded employee's queued export still runs at 2am
+  - authority outlives revocation, by exactly the queue depth
+
+EXECUTION-TIME authority   re-evaluate against current state
+  + revocation actually revokes; least privilege holds over time
+  - legitimate jobs die hours later for invisible reasons
+  - the submitter is asleep when it fails
+
+WHAT MOST REGULATED SYSTEMS SHOULD DO
+  re-evaluate at execution, fail closed, and make the failure
+  legible to a human who can act on it. record BOTH: what was
+  authorized at submit time and what was true at execution, because
+  the gap between them is the thing an auditor will ask about.</div>
+<p>Whichever you pick, pick it deliberately and write it down. The default, whatever your queue
+happens to do when nobody decided, is almost always submit-time authority by accident, and nobody
+discovers that until the first person is offboarded with work still in flight.</p>`,
 docs:[['OAuth Transaction Tokens (IETF draft)','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens'],['RFC 8693, OAuth 2.0 Token Exchange','https://www.rfc-editor.org/rfc/rfc8693'],['RFC 8417, Security Event Token (the txn claim)','https://www.rfc-editor.org/rfc/rfc8417']],
 exs:[{title:'Should this workload accept the token?',lang:'js',diff:'medium',
 run:{call:'acceptTxnToken',cases:[{name:'a valid token for this trust domain',args:[{typ:'txntoken+jwt',aud:'trust-domain.example',txn:'abc-123',exp:2000},'trust-domain.example',1000],expect:'accept'},{name:'minted for a different trust domain',args:[{typ:'txntoken+jwt',aud:'other-domain.example',txn:'abc-123',exp:2000},'trust-domain.example',1000],expect:'reject: wrong trust domain'},{name:'expired, and these live for minutes',args:[{typ:'txntoken+jwt',aud:'trust-domain.example',txn:'abc-123',exp:900},'trust-domain.example',1000],expect:'reject: expired'},{name:'an access token is not a transaction token',args:[{typ:'at+jwt',aud:'trust-domain.example',txn:'abc-123',exp:2000},'trust-domain.example',1000],expect:'reject: not a txn-token'},{name:'no transaction id means nothing to correlate',args:[{typ:'txntoken+jwt',aud:'trust-domain.example',exp:2000},'trust-domain.example',1000],expect:'reject: no transaction id'}]},
