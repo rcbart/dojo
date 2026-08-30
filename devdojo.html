@@ -9032,7 +9032,30 @@ API is offering to strangers. Clamp it, and document the maximum.</li>
 part of the request. Either omit it, or return an estimate labeled as one.</li>
 <li><b>Keep the ordering stable and explicit.</b> Pagination over an unspecified order is undefined
 behavior that happens to work until the query plan changes.</li>
-</ul>`,
+</ul>
+
+<h4>The cookbook: the response, the header, and the query</h4>
+<div class="codeSample" data-hl>GET /orders?after=b3JkZXItMTA0Mg&amp;limit=20
+200 OK
+Link: &lt;/orders?after=b3JkZXItMTA2Mg&amp;limit=20&gt;; rel="next"
+{
+  "data":   [ { "id": "order-1043", ... }, ... ],
+  "cursor": { "next": "b3JkZXItMTA2Mg" }
+}
+
+-- the keyset query behind it: WHERE, not OFFSET
+SELECT * FROM orders
+WHERE  (created_at, id) &gt; (:last_created_at, :last_id)
+ORDER BY created_at, id
+LIMIT  20;
+
+-- the cursor is just (created_at, id) of the last row, base64 wrapped
+-- so clients treat it as opaque and cannot construct their own</div>
+<p>Three details in that recipe carry the correctness. The tuple comparison uses two columns because
+<code>created_at</code> alone is not unique, and a tie at a page boundary would skip or repeat rows.
+The <code>ORDER BY</code> matches the <code>WHERE</code> exactly, which is what lets the index serve
+both. And the cursor is opaque on purpose: the day you change the sort key, clients holding old
+cursors get a clean 400 instead of silently wrong pages.</p>`,
 docs:[['Web Linking (RFC 8288)','https://www.rfc-editor.org/rfc/rfc8288'],['Problem Details (RFC 7807)','https://www.rfc-editor.org/rfc/rfc7807'],['API design guide (Google)','https://cloud.google.com/apis/design']],
 exs:[{title:'Pagination choice & error compliance',
 prompt:`Write class <code>Paging</code> with two static methods. <code>String style(String need)</code>: <code>"stable-large-dataset"</code>→<code>"cursor"</code>, <code>"jump-to-page"</code>→<code>"offset"</code>, else <code>"unknown"</code>. <code>boolean compliantErrors(String contentType)</code>: return true only when errors use the standard <code>"application/problem+json"</code> media type.`,
