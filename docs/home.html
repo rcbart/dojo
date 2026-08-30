@@ -175,13 +175,20 @@
   footer{color:var(--muted);font-size:13.5px;padding:26px 0 40px}
   footer a{color:var(--muted);font-weight:600}
 
-  /* ---------- small screens: sidebar becomes a header ---------- */
+  #menuToggle{display:none}
+
+  /* ---------- small screens: sidebar becomes a compact header ---------- */
   @media(max-width:920px){
-    aside{position:static;width:auto;inset:auto;padding:20px 22px}
-    .sgroup{margin:12px 0 4px}
-    .snav{display:inline-block}
-    .snav.post{display:block;max-width:100%}
-    .sfoot{margin-top:14px}
+    aside{position:relative;width:auto;inset:auto;padding:18px 64px 16px 22px}
+    #menuToggle{display:block;position:absolute;top:16px;right:14px;background:none;
+      border:1px solid rgba(255,255,255,.3);color:#e8e3ff;font-size:19px;line-height:1;
+      padding:6px 11px;border-radius:8px;cursor:pointer}
+    .role{margin:2px 0 0}
+    .sgroup,.snav,.sfoot{display:none}
+    aside.open .sgroup{display:block;margin:12px 0 4px}
+    aside.open .snav{display:inline-block}
+    aside.open .snav.post{display:block;max-width:100%}
+    aside.open .sfoot{display:block;margin-top:14px}
     main{margin-left:0;padding:0 22px}
   }
   @media print{aside{display:none}main{margin-left:0}}
@@ -216,6 +223,7 @@
 <aside>
   <a class="brand" href="/"><svg width="26" height="26" viewBox="0 0 32 32"><defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset=".5" stop-color="#f43f5e"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect x="1" y="1" width="30" height="30" rx="8" fill="#221a44"/><g fill="none" stroke="url(#tg)" stroke-width="2.4" stroke-linecap="round"><path d="M5 10.5 Q16 8 27 10.5" stroke-width="2.8"/><path d="M7.5 14.5 H24.5"/><path d="M10 11 V25"/><path d="M22 11 V25"/></g></svg>
   <span>ron<span class="iam">iam</span>.dev</span></a>
+  <button id="menuToggle" aria-label="Show navigation" aria-expanded="false">&#9776;</button>
   <div class="role"><b>Ron Bar-Tor</b><br>Senior Engineering Manager<br>Identity &amp; access management</div>
 
   <div class="sgroup">Start here</div>
@@ -530,6 +538,23 @@
     el.addEventListener('keydown',e=>{
       if(e.key==='Enter'||e.key===' ') go(el,e);
     });
+  });
+})();
+// Mobile: the sidebar links hide behind the menu button so the
+// introduction is the first thing on the screen, not the navigation.
+(function(){
+  const t=document.getElementById('menuToggle'), a=document.querySelector('aside');
+  if(!t||!a) return;
+  t.addEventListener('click',()=>{
+    const open=a.classList.toggle('open');
+    t.setAttribute('aria-expanded',String(open));
+  });
+  a.addEventListener('click',e=>{
+    if(e.target.closest && e.target.closest('.snav') &&
+       window.matchMedia('(max-width:920px)').matches){
+      a.classList.remove('open');
+      t.setAttribute('aria-expanded','false');
+    }
   });
 })();
 </script>
