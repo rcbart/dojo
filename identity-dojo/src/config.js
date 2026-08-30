@@ -65,4 +65,6 @@ const DOJO_PATH = [
    Format: { name: 'Jane Doe', url: 'https://www.linkedin.com/in/...' }, url
    optional. While the list is empty the home screen shows the recruiting
    card instead. Add a person the day they finish, not later. */
-const DOJO_ALPHA = [];
+const DOJO_ALPHA = [
+  { name: 'Dima Galat', url: 'https://github.com/dimagalat' },
+];
