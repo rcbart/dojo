@@ -1117,6 +1117,14 @@ RIGHT: persist the DECISION, mint a token per invocation
        --&gt; TTS --&gt; [fresh Txn-Token, ttl 2m] --&gt; step 1, token dies
        --&gt; TTS --&gt; [fresh Txn-Token, ttl 2m] --&gt; step 2, token dies
   a retry is not a refresh: re-run the step, mint a new token</div>
+<p>The draft also gives you two narrower bridges for the gap, and the working group has pointed at
+both when asked (issue #350 in the draft repository). If the process is active the whole time, a
+workload can present its current Txn-Token back to the TTS as the subject_token and receive a
+replacement <i>before</i> each expiry: a chain, scope narrowing only, with the draft telling the TTS
+to limit how many links such a chain may have when lifetimes extend. And if the execution moment is
+known in advance, the TTS can mint a token whose <b>nbf</b> sits in the future: still short-lived,
+just aimed at the right window. Neither survives an actual gap: once a token has expired, the draft
+forbids replacing it, and the durable-record pattern above is the road back in.</p>
 <p><b>Why the lifetime is short, and why that is not an inconvenience to engineer around.</b> A
 Txn-Token is trusted at hop five without anyone re-consulting the edge. That trust is only affordable
 because the window in which a stolen token is useful is measured in minutes. Lengthen the lifetime and
@@ -1128,9 +1136,12 @@ how long the business process takes.</b> If a token is expiring in the middle of
 token is not too short; the invocation is too coarse. Split it into steps that each mint their own.</p>
 
 <h4>The decision the draft leaves to you: whose authority runs at 2am?</h4>
-<p>The specification gives the shape and stops. It says nothing about replacement mid-processing,
-expiry during a batch, or queued work, so the hard question is yours: does delayed work run with the
-authority the user had <i>when they submitted</i>, or the authority they have <i>now</i>?</p>
+<p>The specification gives the shape, the replacement mechanics, and an issuance-policies section,
+and then stops where every specification stops: at your policy. The hard question it leaves you is
+this one: does delayed work run with the authority the user had <i>when they submitted</i>, or the
+authority they have <i>now</i>? Every fresh mint and every link in a replacement chain is a moment
+where the TTS could re-evaluate against current state, and whether it does is a decision, not a
+default.</p>
 <div class="codeSample" data-hl>SUBMIT-TIME authority   the stored decision is the authority
   + intent is preserved: the job does what was actually asked
   + predictable; a job cannot half-fail because a role changed
