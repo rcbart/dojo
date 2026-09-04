@@ -157,7 +157,7 @@ public class Chain {
         return false;
     }
 }`,
-tests:[{d:'links child issuer to parent subject',re:'childIssuer\\s*\\.\\s*equals\\s*\\(\\s*parentSubject\\s*\\)'},{d:'null-safe',re:'childIssuer\\s*!=\\s*null|null\\s*!=\\s*childIssuer'},{d:'root must be a trusted anchor',re:'trustAnchors\\s*\\.\\s*contains\\s*\\(\\s*rootSubject\\s*\\)'}],
+tests:[{d:'links child issuer to parent subject',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:childIssuer\\s*\\.\\s*equals\\s*\\(\\s*parentSubject\\s*\\)))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:childIssuer\\s*\\.\\s*equals\\s*\\(\\s*parentSubject\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:childIssuer\\s*\\.\\s*equals\\s*\\(\\s*parentSubject\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:childIssuer\\s*\\.\\s*equals\\s*\\(\\s*parentSubject\\s*\\))[^{]*?return\\s+\\k<av>\\b)'},{d:'null-safe',re:'childIssuer\\s*!=\\s*null|null\\s*!=\\s*childIssuer'},{d:'root must be a trusted anchor',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:trustAnchors\\s*\\.\\s*contains\\s*\\(\\s*rootSubject\\s*\\)))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:trustAnchors\\s*\\.\\s*contains\\s*\\(\\s*rootSubject\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:trustAnchors\\s*\\.\\s*contains\\s*\\(\\s*rootSubject\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:trustAnchors\\s*\\.\\s*contains\\s*\\(\\s*rootSubject\\s*\\))[^{]*?return\\s+\\k<av>\\b)'}],
 behavior:`signedBy("CN=Intermediate", "CN=Intermediate") is true (the leaf's issuer matches the intermediate's subject); a mismatch is false. trusted(rootSubject, anchors) is true only if that root is in the trust store. A chain is valid only when every link connects and the top is a trusted root.`,
 hints:['<code>return childIssuer != null &amp;&amp; childIssuer.equals(parentSubject);</code>','The trust store is a set of roots you already trust: a membership test.','Real code uses CertPathValidator; this drills the core rule.'],
 solution:`import java.util.*;
@@ -249,7 +249,7 @@ public class KeyUsage {
         return false;
     }
 }`,
-tests:[{d:'TLS server needs serverAuth EKU',re:'contains\\s*\\(\\s*"serverAuth"\\s*\\)'},{d:'a CA needs CA:true AND keyCertSign',re:'basicConstraintsCa\\s*&&\\s*keyCertSign'}],
+tests:[{d:'TLS server needs serverAuth EKU',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:contains\\s*\\(\\s*"serverAuth"\\s*\\)))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:contains\\s*\\(\\s*"serverAuth"\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:contains\\s*\\(\\s*"serverAuth"\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:contains\\s*\\(\\s*"serverAuth"\\s*\\))[^{]*?return\\s+\\k<av>\\b)'},{d:'a CA needs CA:true AND keyCertSign',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:basicConstraintsCa\\s*&&\\s*keyCertSign))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:basicConstraintsCa\\s*&&\\s*keyCertSign)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:basicConstraintsCa\\s*&&\\s*keyCertSign)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:basicConstraintsCa\\s*&&\\s*keyCertSign)[^{]*?return\\s+\\k<av>\\b)'}],
 behavior:`canServeTls(Set.of("serverAuth")) is true; a cert without serverAuth cannot terminate TLS. isCa(true,true) is true; if either basic-constraints CA or keyCertSign is missing, it is not a valid CA, so a leaf cert can't masquerade as one.`,
 hints:['<code>return eku.contains("serverAuth");</code>','A CA cert must assert both CA:true and the keyCertSign key usage.','Enforcing EKU/constraints is what stops a leaf cert from signing others.'],
 solution:`import java.util.*;
@@ -340,7 +340,7 @@ starter:`public class TlsValidate {
         return false;
     }
 }`,
-tests:[{d:'requires a valid chain',re:'chainValid'},{d:'hostname must match the SAN',re:'requestedHost\\s*\\.\\s*equals\\s*\\(\\s*certHost\\s*\\)'},{d:'must not be expired',re:'now\\s*<\\s*notAfterEpoch|notAfterEpoch\\s*>\\s*now'}],
+tests:[{d:'requires a valid chain',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:chainValid))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:chainValid)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:chainValid)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:chainValid)[^{]*?return\\s+\\k<av>\\b)'},{d:'hostname must match the SAN',re:'requestedHost\\s*\\.\\s*equals\\s*\\(\\s*certHost\\s*\\)'},{d:'must not be expired',re:'now\\s*<\\s*notAfterEpoch|notAfterEpoch\\s*>\\s*now'}],
 behavior:`serverCertOk passes only when the chain validates, the hostname you asked for matches the certificate, and it's within its validity window. A perfectly valid certificate for a different hostname is rejected; that host-match check is what prevents a valid-but-wrong cert from impersonating a site.`,
 hints:['One expression: <code>chainValid &amp;&amp; requestedHost.equals(certHost) &amp;&amp; now &lt; notAfterEpoch</code>.','Hostname verification is separate from chain validation; both are required.','mTLS runs this same check on the client cert too.'],
 solution:`public class TlsValidate {
@@ -409,7 +409,7 @@ starter:`function usable(notAfterEpoch, now, revoked) {
 solution:`function usable(notAfterEpoch, now, revoked) {
   return notAfterEpoch > now && !revoked;
 }`,
-tests:[{d:'must not be expired',re:'notAfterEpoch\\s*>\\s*now'},{d:'must not be revoked',re:'!\\s*revoked'}],
+tests:[{d:'must not be expired',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:notAfterEpoch\\s*>\\s*now))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:notAfterEpoch\\s*>\\s*now)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:notAfterEpoch\\s*>\\s*now)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:notAfterEpoch\\s*>\\s*now)[^{]*?return\\s+\\k<av>\\b)'},{d:'must not be revoked',re:'!\\s*revoked'}],
 behavior:`Both failure modes are executed independently. In practice expiry is the reliable check and revocation is the unreliable one: soft-fail means an attacker who can block the revocation lookup simply wins, which is why the industry answer became short-lived certificates plus ACME automation rather than better revocation.`,
 hints:['Two conditions joined with &&.','Expiry is strict: notAfterEpoch must be greater than now.','Use ! for "not revoked".']}},
 
@@ -493,7 +493,7 @@ public class Stores {
         return false;
     }
 }`,
-tests:[{d:'uses the modern PKCS12 format',re:'KeyStore\\.getInstance\\s*\\(\\s*"PKCS12"\\s*\\)'},{d:'truststore membership = trust',re:'truststoreAliases\\s*\\.\\s*contains\\s*\\(\\s*caAlias\\s*\\)'}],
+tests:[{d:'uses the modern PKCS12 format',re:'KeyStore\\.getInstance\\s*\\(\\s*"PKCS12"\\s*\\)'},{d:'truststore membership = trust',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:truststoreAliases\\s*\\.\\s*contains\\s*\\(\\s*caAlias\\s*\\)))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:truststoreAliases\\s*\\.\\s*contains\\s*\\(\\s*caAlias\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:truststoreAliases\\s*\\.\\s*contains\\s*\\(\\s*caAlias\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:truststoreAliases\\s*\\.\\s*contains\\s*\\(\\s*caAlias\\s*\\))[^{]*?return\\s+\\k<av>\\b)'}],
 behavior:`loadPkcs12() returns a PKCS12 KeyStore instance (your identity store). trusts(aliases, caAlias) is true when that CA is present in the truststore. The keystore holds your private key; the truststore holds the CAs you validate peers against; mTLS needs both.`,
 hints:['<code>return KeyStore.getInstance("PKCS12");</code>: PKCS12 over the legacy JKS.','A truststore is just a KeyStore of trusted CA certs; membership means "trusted".','Keystore = secrets (your identity); truststore = public certs (who you trust).'],
 solution:`import java.security.KeyStore;
@@ -579,7 +579,7 @@ solution:`function pinAccepted(chain, pins) {
   if (!pins || pins.length === 0) return false;      // no pins loaded: fail closed
   return chain.some(c => pins.includes(c.spkiHash)); // ANY cert in the chain may match
 }`,
-tests:[{d:'an empty pin set is refused',re:'length\\s*===\\s*0|!pins|length\\s*<\\s*1'},{d:'the whole chain is searched',re:'some\\s*\\(|for\\s*\\('},{d:'the pin list is consulted',re:'pins\\.includes|indexOf'},{d:'the key hash is what is compared',re:'spkiHash'}],
+tests:[{d:'an empty pin set is refused',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:length\\s*===\\s*0|!pins|length\\s*<\\s*1))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:length\\s*===\\s*0|!pins|length\\s*<\\s*1)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:length\\s*===\\s*0|!pins|length\\s*<\\s*1)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:length\\s*===\\s*0|!pins|length\\s*<\\s*1)[^{]*?return\\s+\\k<av>\\b)'},{d:'the whole chain is searched',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:some\\s*\\(|for\\s*\\())|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:some\\s*\\(|for\\s*\\()[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:some\\s*\\(|for\\s*\\()[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:some\\s*\\(|for\\s*\\()[^{]*?return\\s+\\k<av>\\b)'},{d:'the pin list is consulted',re:'pins\\.includes|indexOf'},{d:'the key hash is what is compared',re:'spkiHash'}],
 behavior:`Five cases execute. Case two is the argument for pinning an intermediate rather than a leaf: the leaf key changed (an ordinary certificate renewal), and the connection still succeeds because the pinned intermediate is in the chain. Pin only the leaf and that same renewal is an outage on every installed client, fixable only by shipping an update to devices that can no longer reach you. Case four is a deliberate design choice worth arguing about: an empty pin list could mean "pinning disabled" and return true, which is friendlier and means a failed configuration load silently removes a security control. Failing closed makes the misconfiguration loud, which is the correct trade for a control you adopted on purpose.`,
 hints:['Any certificate in the chain matching any pin is enough.','Decide what an empty pin list means before you write the loop; it is a security decision.','You are comparing key hashes, not certificates.']}}
 ]});

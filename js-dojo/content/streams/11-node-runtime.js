@@ -83,7 +83,7 @@ solution:`function availableIn(api) {
       return "unknown";
   }
 }`,
-tests:[{d:'fs is Node',re:'"fs"'},{d:'document is the browser',re:'"document"'},{d:'fetch is in both',re:'"fetch"'},{d:'has a default',re:'default'}],
+tests:[{d:'fs is Node',re:'(?:(?:"fs"|\'fs\'|\\bfs\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"node"|\\[\\s*"fs"\\s*,\\s*"node"\\s*\\])'},{d:'document is the browser',re:'(?:(?:"document"|\'document\'|\\bdocument\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"browser"|\\[\\s*"document"\\s*,\\s*"browser"\\s*\\])'},{d:'fetch is in both',re:'(?:(?:"fetch"|\'fetch\'|\\bfetch\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"both"|\\[\\s*"fetch"\\s*,\\s*"both"\\s*\\])'},{d:'has a default',re:'(?:default[^;]{0,180}?return\\s+"unknown"|else[^;]{0,160}?return\\s+"unknown"|return\\s+(?!!)[^;]{0,90}?"unknown"\\s*;\\s*\\})'}],
 behavior:`Nine cases execute. The "both" group is the one that has changed: fetch was browser-only for a decade and has been in Node since v18, which is why older tutorials tell you to install node-fetch. setTimeout is in both but not identical: Node returns a Timeout object with .unref(), where the browser returns a number.`,
 hints:['Group the cases by host and let them fall through to a shared return.','fetch is now in both runtimes, despite what older material says.','Anything you were not told about returns unknown.']}},
 
@@ -160,7 +160,7 @@ solution:`function nodeOrder(kinds) {
   const order = ["sync", "nextTick", "promise", "timeout", "immediate"];
   return order.flatMap(k => kinds.filter(x => x === k));   // stable per group
 }`,
-tests:[{d:'lists the queues in priority order',re:'"nextTick"'},{d:'promises come after nextTick',re:'"promise"'},{d:'filters per group',re:'filter'},{d:'flattens the groups together',re:'flatMap|\\.\\.\\.'}],
+tests:[{d:'lists the queues in priority order',re:'"nextTick"'},{d:'promises come after nextTick',re:'"promise"'},{d:'filters per group',re:'filter'},{d:'flattens the groups together',re:'return\\s+(?!!)[^;]{0,140}?(?:flatMap|\\.\\.\\.)'}],
 behavior:`Five cases execute. The fourth pins stability: two nextTicks keep their order because filter preserves it. Writing this as a sort with a priority lookup also works; anything that reorders within a group does not. Note that the real timeout-vs-immediate ordering at the top level is non-deterministic, which is why this exercise fixes an order rather than pretending otherwise.`,
 hints:['Put the queue names in an array in priority order.','filter each group out of the input, which preserves relative order.','flatMap joins the groups into one flat array.']},
 {title:'Is this operation safe on the event loop?',diff:'hard',lang:'js',
@@ -181,7 +181,7 @@ solution:`function auditLoop(operations) {
     .map(op => op.name);
   return { safe: offenders.length === 0, offenders };
 }`,
-tests:[{d:'flags synchronous operations',re:'op\\.sync|\\.sync'},{d:'flags CPU-bound operations',re:'op\\.cpu|\\.cpu'},{d:'combines them with OR',re:'\\|\\|'},{d:'reports whether anything was found',re:'length\\s*===\\s*0|length\\s*>\\s*0'}],
+tests:[{d:'flags synchronous operations',re:'op\\.sync|\\.sync'},{d:'flags CPU-bound operations',re:'op\\.cpu|\\.cpu'},{d:'combines them with OR',re:'\\|\\|'},{d:'reports whether anything was found',re:'return\\s+(?!!)[^;]{0,160}?(?:length\\s*===\\s*0|length\\s*>\\s*0)'}],
 behavior:`Six cases execute, and two of them are the whole lesson. The 2000ms HTTP call is SAFE: Node hands the wait to the operating system and the loop carries on serving other requests, so duration alone tells you nothing. The 50ms CPU operation is UNSAFE despite being shorter, because it occupies the single thread for all 50ms. Any implementation that filters on ms passes the easy cases and fails both of these.`,
 hints:['The test is sync OR cpu; the duration is a distraction.','A long await is not blocking; a short busy loop is.','safe is simply whether the offenders list came back empty.']}]},
 
@@ -269,7 +269,7 @@ solution:`function readPort(env) {
   if (!Number.isInteger(n) || n < 1 || n > 65535) return null;
   return n;
 }`,
-tests:[{d:'defaults when absent',re:'3000'},{d:'converts the string',re:'Number\\s*\\('},{d:'requires a whole number',re:'Number\\.isInteger'},{d:'checks the upper bound',re:'65535'}],
+tests:[{d:'defaults when absent',re:'(?:===\\s*undefined|===\\s*""|!\\s*raw)[^;]{0,120}?return\\s+3000\\b'},{d:'converts the string',re:'Number\\s*\\('},{d:'requires a whole number',re:'Number\\.isInteger'},{d:'checks the upper bound',re:'65535[^;]{0,120}?return\\s+null\\b'}],
 behavior:`Seven cases execute. Two are boundaries that a loose check misses: 0 is a number and a perfectly good integer, but not a usable port, and 65535 must be accepted while 70000 must not, so the comparison has to be inclusive at the top. Distinguishing "absent" (use the default) from "present but wrong" (refuse to start) is the part that matters operationally.`,
 hints:['Check for absent and empty before converting: they mean "use the default".','Number.isInteger rejects both NaN and 8080.5 in one test.','The valid range is 1 to 65535 inclusive.']},
 {title:'Validate the whole configuration at boot',diff:'hard',lang:'js',
@@ -307,7 +307,7 @@ solution:`function loadConfig(env) {
   if (errors.length > 0) return { ok: false, config: null, errors };
   return { ok: true, config: { databaseUrl, port, debug }, errors: [] };
 }`,
-tests:[{d:'collects errors rather than throwing on the first',re:'errors\\.push'},{d:'requires the database url',re:'DATABASE_URL'},{d:'validates the port range',re:'65535'},{d:'compares DEBUG to the exact string',re:'===\\s*"true"'},{d:'returns null config on failure',re:'config:\\s*null'}],
+tests:[{d:'collects errors rather than throwing on the first',re:'errors\\.push'},{d:'requires the database url',re:'DATABASE_URL'},{d:'validates the port range',re:'65535'},{d:'compares DEBUG to the exact string',re:'===\\s*"true"'},{d:'returns null config on failure',re:'(?:return\\s+(?!!)|[^!<>=]=\\s*)[^;]{0,200}?config:\\s*null'}],
 behavior:`Six cases execute, and three of them separate a real implementation from a plausible one. The string "false" is truthy, so writing debug as Boolean(env.DEBUG) turns debugging on in production; the third case catches exactly that. The last case requires collecting ALL errors rather than returning at the first: an operator restarting a service wants one message listing everything wrong, not six deploys each revealing the next problem. And a valid default port must survive an unrelated failure elsewhere.`,
 hints:['Accumulate into an errors array instead of returning early: you want every problem at once.','DEBUG is true only when it is exactly the string "true"; every other string is false.','Apply the PORT default when the variable is absent, and validate it only when it is present.']}]}
 ,
@@ -367,6 +367,8 @@ run:{call:'runEvents',cases:[
  {name:'a listener fires on every emit',args:[[['on','greet','A'],['emit','greet','hi'],['emit','greet','yo']]],expect:['A:hi','A:yo']},
  {name:'once fires a single time',args:[[['once','boot','B'],['emit','boot','1'],['emit','boot','2']]],expect:['B:1']},
  {name:'off removes the listener',args:[[['on','tick','C'],['emit','tick','1'],['off','tick','C'],['emit','tick','2']]],expect:['C:1']},
+ {name:'off removes only the named listener',args:[[['on','tick','C'],['on','tick','D'],['off','tick','C'],['emit','tick','1']]],expect:['D:1']},
+ {name:'off on an event with no listeners is harmless',args:[[['off','none','X'],['on','none','Y'],['emit','none','1']]],expect:['Y:1']},
  {name:'listeners fire in registration order',args:[[['on','order','ship'],['on','order','email'],['emit','order','42']]],expect:['ship:42','email:42']},
  {name:'emitting into silence does nothing',args:[[['emit','ghost','boo'],['on','ghost','D'],['emit','ghost','ok']]],expect:['D:ok']},
  {name:'on and once coexist on one event',args:[[['on','msg','keep'],['once','msg','drop'],['emit','msg','a'],['emit','msg','b']]],expect:['keep:a','drop:a','keep:b']}]},
@@ -394,7 +396,7 @@ solution:`function runEvents(script) {
   }
   return log;
 }`,
-tests:[{d:'keeps listeners per event name',re:'listeners\\[event\\]'},{d:'once listeners carry a flag',re:'once'},{d:'off filters by label',re:'\\.filter\\('},{d:'emit walks listeners in order',re:'for\\s*\\(.*of\\s'}],
+tests:[{d:'keeps listeners per event name',re:'listeners\\[event\\]'},{d:'once listeners carry a flag',re:'once'},{d:'off filters by label',re:'\\.filter\\('},{d:'emit walks listeners in order',re:'for\\s*\\(.*of\\s[\\s\\S]{0,600}?return\\s+(?!!)[A-Za-z_$][\\w$]*\\s*;'}],
 behavior:`Six cases execute the contract Node's real emitter keeps: registration order is preserved, once-listeners survive exactly one emit, off removes without disturbing the others, and emitting with no listeners is silently fine. The solution snapshots the listener array before looping, the same choice Node makes, so a listener added during an emit does not fire in that same emit.`,
 hints:['Store { label, once } records so once and on share one array.','After an emit, filter out the listeners whose once flag is set.','off filters by label; emit into a missing event should touch nothing.']}}
 

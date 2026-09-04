@@ -80,7 +80,7 @@ solution:`function domCall(task) {
     default:                    return "unknown";
   }
 }`,
-tests:[{d:'user text uses textContent',re:'"textContent"'},{d:'own markup may use innerHTML',re:'"innerHTML"'},{d:'styling toggles a class',re:'"classList"'},{d:'unknown tasks are refused',re:'"unknown"'}],
+tests:[{d:'user text uses textContent',re:'(?:(?:"show\\-user\\-text"|\'show\\-user\\-text\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"textContent"|\\[\\s*"show\\-user\\-text"\\s*,\\s*"textContent"\\s*\\])'},{d:'own markup may use innerHTML',re:'(?:(?:"insert\\-own\\-markup"|\'insert\\-own\\-markup\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"innerHTML"|\\[\\s*"insert\\-own\\-markup"\\s*,\\s*"innerHTML"\\s*\\])'},{d:'styling toggles a class',re:'(?:(?:"toggle\\-style"|\'toggle\\-style\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"classList"|\\[\\s*"toggle\\-style"\\s*,\\s*"classList"\\s*\\])'},{d:'unknown tasks are refused',re:'(?:return\\s+(?!!)[^;]{0,110}?"unknown"|:\\s*"unknown")'}],
 behavior:`Six cases execute. The pair that matters is the first two: textContent treats everything as text, so a hostile name renders as characters on the screen; innerHTML parses, so the same name executes. The rest of the mapping is convention: classList over inline styles, dataset for data- attributes.`,
 hints:['A switch over the five tasks plus a default.','User-supplied text is textContent, always.','innerHTML is reserved for markup you authored yourself.']}},
 
@@ -153,7 +153,7 @@ solution:`function bubblePath(chain, clicked) {
   if (start === -1) return [];        // not in this part of the tree
   return chain.slice(start);          // from the target, outward - bubbling
 }`,
-tests:[{d:'locates the clicked element in the chain',re:'indexOf'},{d:'nothing fires for an element outside the chain',re:'-1'},{d:'returns the tail of the chain from the target outward',re:'\\.slice\\('}],
+tests:[{d:'locates the clicked element in the chain',re:'indexOf'},{d:'nothing fires for an element outside the chain',re:'(?:-\\s*1|<\\s*0)[^;]{0,100}?return\\s+\\[\\s*\\]'},{d:'returns the tail of the chain from the target outward',re:'return\\s+(?!!)[^;]{0,100}?\\.slice\\('}],
 behavior:`Five cases execute the model: the event starts at the target and visits every ancestor above it, which is why a listener on the container hears clicks on rows that did not exist when the listener was attached, the fact delegation is built on.`,
 hints:['Find where the clicked element sits in the chain.','slice from that index gives the upward path.','Not found means an empty result, not an error.']},
 {title:'Delegate clicks from one listener',diff:'hard',lang:'js',
@@ -173,7 +173,7 @@ solution:`function delegate(path, matchTag) {
   }
   return null;                        // clicked the gap - a real case, not an error
 }`,
-tests:[{d:'walks the path upward',re:'for\\s*'},{d:'matches on the tag',re:'matchTag'},{d:'a miss returns null rather than throwing',re:'null'}],
+tests:[{d:'walks the path upward',re:'for\\s*'},{d:'matches on the tag',re:'matchTag[^;]{0,100}?return\\s+(?!!)'},{d:'a miss returns null rather than throwing',re:'return\\s+null\\b'}],
 behavior:`The third case is the one real delegation code forgets: clicks land on the container itself, between rows, and closest() finds nothing; code that does li.dataset.id without the null check throws on the very first misclick. The fifth case pins "nearest wins" for nested matches.`,
 hints:['Loop the path in the order given; it is already innermost-first.','Return the id of the first tag match and stop.','No match is a normal outcome: return null.']}]},
 
@@ -250,7 +250,7 @@ solution:`function outcome(result) {
   if (!result.contentType.includes("application/json")) return "not-json";
   return "success";                                   // only now is json() safe
 }`,
-tests:[{d:'a rejection is a network error',re:'rejected'},{d:'checks the status range',re:'2\\d\\d|200'},{d:'checks the content type before parsing',re:'includes\\s*\\(\\s*"application/json"'}],
+tests:[{d:'a rejection is a network error',re:'rejected[^;]{0,100}?return\\s+"network-error"'},{d:'checks the status range',re:'(?:2\\d\\d|200)[^;]{0,140}?return\\s+"http-error"'},{d:'checks the content type before parsing',re:'includes\\s*\\(\\s*"application/json"[^;]{0,100}?return\\s+"not-json"'},{d:'the happy path returns success',re:'return\\s+"success"'}],
 behavior:`Six cases run and the fourth is the everyday one: a 500 whose body is an HTML error page. fetch resolves happily, res.ok is false, and code that goes straight to res.json() gets a parse error pointing at the wrong suspect. Classifying before parsing is what keeps the error message near the cause.`,
 hints:['Rejection first: it means there was no response at all.','ok is shorthand for status 200-299; reproduce it with a range check.','Only a good status with a JSON content type should ever be parsed.']},
 {title:'Build the request options',diff:'medium',lang:'js',
@@ -269,7 +269,7 @@ solution:`function postJson(data) {
     body: JSON.stringify(data),                        // objects do NOT send themselves
   };
 }`,
-tests:[{d:'sets the method',re:'"POST"'},{d:'declares the content type',re:'application/json'},{d:'stringifies the body',re:'JSON\\.stringify'}],
+tests:[{d:'sets the method',re:'return\\s+(?!!)[\\s\\S]{0,160}?"POST"'},{d:'declares the content type',re:'application/json'},{d:'stringifies the body',re:'JSON\\.stringify'}],
 behavior:`The comparison is structural, so the body must be the exact JSON text: JSON.stringify(data), not String(data), which produces "[object Object]", a request that a server will politely reject with a 400 that then needs the previous exercise to classify.`,
 hints:['Three properties: method, headers, body.','The header tells the server how to parse what you sent.','JSON.stringify turns the object into wire-format text.']}]},
 
@@ -352,7 +352,7 @@ solution:`function validateSignup(fields) {
   return errors;   // {} means valid - and EVERY problem is present, so the
                    // user fixes the form once, not once per submit
 }`,
-tests:[{d:'a blank email is required, not invalid',re:'"required"'},{d:'converts the age before judging it',re:'Number\\s*\\('},{d:'range-checks the age separately',re:'13'},{d:'compares the dates cross-field',re:'end\\s*>\\s*fields\\.start|fields\\.end\\s*>'}],
+tests:[{d:'a blank email is required, not invalid',re:'trim\\(\\)\\s*===\\s*""[^;]{0,100}?=\\s*"required"'},{d:'converts the age before judging it',re:'Number\\s*\\('},{d:'range-checks the age separately',re:'13'},{d:'compares the dates cross-field',re:'(?:end\\s*>\\s*fields\\.start|fields\\.end\\s*>)[\\s\\S]{0,260}?return\\s+(?!!)[A-Za-z_$][\\w$]*\\s*;'}],
 behavior:`Eight cases execute. Age "0" is the subtle one: it is a perfectly numeric string, so it must fail the range check, not the numeric one; a truthiness test on Number(age) would misreport it. And the last case is the user-experience point: all three problems arrive in one pass, because a validator that stops at the first error makes the user resubmit once per mistake.`,
 hints:['Collect errors in an object; only add a key when a rule fails.','Number("") is 0; guard the empty string before converting, as ever.','YYYY-MM-DD strings compare in date order with plain >.']}}
 

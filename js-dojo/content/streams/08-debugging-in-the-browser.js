@@ -90,7 +90,7 @@ solution:`function breakpointFor(situation) {
     default:                       return "line";
   }
 }`,
-tests:[{d:'conditional for a single record',re:'"conditional"'},{d:'logpoint for logging without editing',re:'"logpoint"'},{d:'DOM breakpoint for element changes',re:'"dom"'},{d:'XHR breakpoint to find the caller',re:'"xhr"'},{d:'pause on exceptions for an unknown throw',re:'"pause-on-exceptions"'}],
+tests:[{d:'conditional for a single record',re:'(?:(?:"one\\-record\\-in\\-a\\-loop"|\'one\\-record\\-in\\-a\\-loop\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"conditional"|\\[\\s*"one\\-record\\-in\\-a\\-loop"\\s*,\\s*"conditional"\\s*\\])'},{d:'logpoint for logging without editing',re:'(?:(?:"log\\-without\\-editing"|\'log\\-without\\-editing\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"logpoint"|\\[\\s*"log\\-without\\-editing"\\s*,\\s*"logpoint"\\s*\\])'},{d:'DOM breakpoint for element changes',re:'(?:(?:"element\\-changing"|\'element\\-changing\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"dom"|\\[\\s*"element\\-changing"\\s*,\\s*"dom"\\s*\\])'},{d:'XHR breakpoint to find the caller',re:'(?:(?:"who\\-sent\\-this\\-request"|\'who\\-sent\\-this\\-request\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"xhr"|\\[\\s*"who\\-sent\\-this\\-request"\\s*,\\s*"xhr"\\s*\\])'},{d:'pause on exceptions for an unknown throw',re:'(?:(?:"error\\-somewhere"|\'error\\-somewhere\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"pause\\-on\\-exceptions"|\\[\\s*"error\\-somewhere"\\s*,\\s*"pause\\-on\\-exceptions"\\s*\\])'}],
 behavior:`Seven situations execute. The three worth memorizing are conditional (a loop with one bad record), XHR (what triggered this request) and pause-on-exceptions (where is this thrown). Between them they cover most of the debugging that otherwise turns into scattering log statements.`,
 hints:['One case per breakpoint type, with a default.','A logpoint logs and continues; a conditional pauses selectively.','The plain line breakpoint is the fallback for everything else.']}},
 
@@ -171,7 +171,7 @@ solution:`function diagnoseSourceMap(hasSourceMappingComment, mapFileReachable, 
   if (!mapMatchesBundle) return "map is stale, rebuild";
   return "look elsewhere";              // the maps are fine; the bug is not here
 }`,
-tests:[{d:'checks for the sourceMappingURL comment first',re:'!\\s*hasSourceMappingComment'},{d:'then whether the map can be fetched',re:'!\\s*mapFileReachable'},{d:'then whether it matches the bundle',re:'!\\s*mapMatchesBundle'},{d:'otherwise the problem is elsewhere',re:'"look elsewhere"'}],
+tests:[{d:'checks for the sourceMappingURL comment first',re:'!\\s*hasSourceMappingComment[^;]{0,120}?return\\s+"source map not applied"'},{d:'then whether the map can be fetched',re:'!\\s*mapFileReachable[^;]{0,120}?return\\s+"map file not reachable"'},{d:'then whether it matches the bundle',re:'!\\s*mapMatchesBundle[^;]{0,120}?return\\s+"map is stale, rebuild"'},{d:'otherwise the problem is elsewhere',re:'(?:default[^;]{0,180}?return\\s+"look elsewhere"|else[^;]{0,160}?return\\s+"look elsewhere"|return\\s+(?!!)[^;]{0,90}?"look elsewhere"\\s*;\\s*\\})'}],
 behavior:`The guards run in the order you would actually check them: no point testing whether a map is stale before confirming one is referenced at all. The final case is the hardest to accept: when the tooling is fine, stop debugging the tooling.`,
 hints:['Guard clauses in the order you would check them in real life.','The comment must exist before the file can matter.','All three fine means the source maps are not your problem.']}},
 
@@ -265,7 +265,7 @@ solution:`function triage(status) {
     default:       return "the request was fine, look at the body";
   }
 }`,
-tests:[{d:'distinguishes a failed connection',re:'"failed"'},{d:'names CORS as a server-side fix',re:'"cors"'},{d:'separates 401 from 403',re:'401'},{d:'403 is a different problem',re:'403'},{d:'429 means back off',re:'429'}],
+tests:[{d:'distinguishes a failed connection',re:'(?:(?:"failed"|\'failed\'|\\bfailed\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"network, DNS, TLS or blocked by CSP"|\\[\\s*"failed"\\s*,\\s*"network, DNS, TLS or blocked by CSP"\\s*\\])'},{d:'names CORS as a server-side fix',re:'(?:(?:"cors"|\'cors\'|\\bcors\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"server must send the CORS headers"|\\[\\s*"cors"\\s*,\\s*"server must send the CORS headers"\\s*\\])'},{d:'separates 401 from 403',re:'(?:\\b401\\b[^;]{0,160}?(?:return\\s+|\\?\\s*|:\\s*)"no valid credential was attached"|\\[\\s*401\\s*,\\s*"no valid credential was attached"\\s*\\])'},{d:'403 is a different problem',re:'(?:\\b403\\b[^;]{0,160}?(?:return\\s+|\\?\\s*|:\\s*)"the credential is valid but lacks permission"|\\[\\s*403\\s*,\\s*"the credential is valid but lacks permission"\\s*\\])'},{d:'429 means back off',re:'(?:\\b429\\b[^;]{0,160}?(?:return\\s+|\\?\\s*|:\\s*)"back off and read Retry\\-After"|\\[\\s*429\\s*,\\s*"back off and read Retry\\-After"\\s*\\])'}],
 behavior:`Note that the switch mixes a string and numbers, and switch uses ===, so "401" as a string would not match 401. Eight cases execute. The 401/403 split is the one that saves the most time: one means the credential did not arrive, the other means it arrived and was not enough, and they lead to completely different investigations.`,
 hints:['A switch handles both the string and numeric cases.','401 and 403 mean different things and must not share a branch.','The default covers success: the bug is then in the body or your parsing.']}},
 
@@ -364,7 +364,7 @@ solution:`function whereToLook(symptom) {
       return "turn on Preserve log and walk the chain";
   }
 }`,
-tests:[{d:'redirect_uri_mismatch',re:'"redirect_uri_mismatch"'},{d:'invalid_grant',re:'"invalid_grant"'},{d:'state_mismatch',re:'"state_mismatch"'},{d:'api_401',re:'"api_401"'},{d:'login_loop',re:'"login_loop"'}],
+tests:[{d:'redirect_uri_mismatch',re:'(?:(?:"redirect_uri_mismatch"|\'redirect_uri_mismatch\'|\\bredirect_uri_mismatch\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"compare the sent redirect_uri with the registered one"|\\[\\s*"redirect_uri_mismatch"\\s*,\\s*"compare the sent redirect_uri with the registered one"\\s*\\])'},{d:'invalid_grant',re:'(?:(?:"invalid_grant"|\'invalid_grant\'|\\binvalid_grant\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"the code was reused, expired, or the verifier does not match"|\\[\\s*"invalid_grant"\\s*,\\s*"the code was reused, expired, or the verifier does not match"\\s*\\])'},{d:'state_mismatch',re:'(?:(?:"state_mismatch"|\'state_mismatch\'|\\bstate_mismatch\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"storage was cleared or two flows overlapped"|\\[\\s*"state_mismatch"\\s*,\\s*"storage was cleared or two flows overlapped"\\s*\\])'},{d:'api_401',re:'(?:(?:"api_401"|\'api_401\'|\\bapi_401\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"check the Authorization header was attached"|\\[\\s*"api_401"\\s*,\\s*"check the Authorization header was attached"\\s*\\])'},{d:'login_loop',re:'(?:(?:"login_loop"|\'login_loop\'|\\blogin_loop\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"check SameSite and Secure on the session cookie"|\\[\\s*"login_loop"\\s*,\\s*"check SameSite and Secure on the session cookie"\\s*\\])'}],
 behavior:`Six symptoms execute. The default is the real lesson: when you do not recognize the symptom, turn on Preserve log and walk the chain from /authorize to the API call, because every one of these is visible in the Network panel if the panel is still holding the earlier hops.`,
 hints:['One case per symptom, with a default that describes the general method.','invalid_grant is always at the token exchange, never at authorize.','The default should describe what to do when you do not recognize the error.']},
 {title:'Decode a JWT payload safely',diff:'medium',lang:'js',
@@ -387,7 +387,7 @@ solution:`function decodePayload(token) {
     return null;                             // atob or JSON.parse threw
   }
 }`,
-tests:[{d:'splits on the dot',re:'split\\s*\\(\\s*"\\."'},{d:'requires exactly three segments',re:'length\\s*!==\\s*3'},{d:'decodes the middle segment',re:'parts\\[1\\]|\\[1\\]'},{d:'guards against bad input',re:'catch'}],
+tests:[{d:'splits on the dot',re:'split\\s*\\(\\s*"\\."'},{d:'requires exactly three segments',re:'length\\s*!==\\s*3[^;]{0,100}?return\\s+null\\b'},{d:'decodes the middle segment',re:'(?:return\\s+(?!!)|[^!<>=]=\\s*)[^;]{0,160}?(?:parts\\[1\\]|\\[1\\])'},{d:'guards against bad input',re:'catch'}],
 behavior:`Five cases execute, including two that throw without the try/catch: atob rejects invalid base64 and JSON.parse rejects the result. This is the Console one-liner from the lesson, hardened. It reads a token without sending it anywhere, which is the entire reason not to use an online decoder on a live credential.`,
 hints:['A JWT is three dot-separated segments; the payload is the middle one.','atob decodes base64, and it throws on invalid input.','Wrap the decode and parse together in one try/catch.']},
 {title:'Judge the decoded claims',diff:'hard',lang:'js',
@@ -412,7 +412,7 @@ solution:`function checkClaims(claims, expected) {
   if (expected.nonce && claims.nonce !== expected.nonce) return "nonce mismatch";
   return "accept";
 }`,
-tests:[{d:'checks the issuer',re:'\\.iss\\b'},{d:'normalizes aud to an array',re:'Array\\.isArray'},{d:'compares exp against now',re:'\\.exp\\b'},{d:'verifies the nonce when one is expected',re:'nonce'}],
+tests:[{d:'checks the issuer',re:'\\.iss\\b[^;]{0,140}?return\\s+"wrong issuer"'},{d:'normalizes aud to an array',re:'Array\\.isArray[\\s\\S]{0,260}?return\\s+"wrong audience"'},{d:'compares exp against now',re:'\\.exp\\b[^;]{0,140}?return\\s+"expired"'},{d:'verifies the nonce when one is expected',re:'nonce[^;]{0,180}?return\\s+"nonce mismatch"'},{d:'a fully valid token is accepted',re:'return\\s+"accept"'}],
 behavior:`Eight cases execute the four checks the lesson names, in order, guard-clause style. Two deserve attention: exp equal to now is already expired (a token is valid strictly before its expiry), and a missing exp fails the same check: !(undefined > now) is true, so absence of an expiry reads as expired rather than as immortal. That inversion (unprovable freshness is staleness) is the safe default everywhere in identity.`,
 hints:['Guard clauses in the order given: iss, aud, exp, nonce.','Normalize aud with Array.isArray, then one includes() covers both shapes.','Write the exp check as !(claims.exp > expected.now) so a missing exp also fails it.']}]}
 

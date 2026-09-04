@@ -74,7 +74,7 @@ solution:`function order(kinds) {
   const macro   = kinds.filter(k => k === "timeout");
   return [...sync, ...micro, ...macro];   // filter preserves relative order
 }`,
-tests:[{d:'separates the synchronous work',re:'"sync"'},{d:'separates the microtasks',re:'"promise"'},{d:'separates the macrotasks',re:'"timeout"'},{d:'concatenates in priority order',re:'\\[\\s*\\.\\.\\.'}],
+tests:[{d:'separates the synchronous work',re:'"sync"'},{d:'separates the microtasks',re:'"promise"'},{d:'separates the macrotasks',re:'"timeout"'},{d:'concatenates in priority order',re:'return\\s+(?!!)[^;]{0,80}?\\[\\s*\\.\\.\\.'}],
 behavior:`The fourth case executes the stability requirement: two timers keep their relative order, because filter preserves it. Sorting with a comparator that returns 0 for equal priorities would also work; anything that reorders within a category would not.`,
 hints:['Three filters, then concatenate in priority order.','filter keeps the original relative order for free.','Synchronous beats microtask beats macrotask, always.']}},
 
@@ -147,7 +147,7 @@ solution:`function settle(err, result) {
   if (err) return \`error: \${err.message}\`;   // check the error FIRST
   return \`ok: \${result}\`;                    // template literal stringifies null
 }`,
-tests:[{d:'checks the error first',re:'if\\s*\\(\\s*err'},{d:'reports the error message',re:'err\\.message'},{d:'otherwise reports the result',re:'ok:'}],
+tests:[{d:'checks the error first',re:'if\\s*\\(\\s*err[^;]{0,100}?return\\s+(?!!)'},{d:'reports the error message',re:'err\\.message'},{d:'otherwise reports the result',re:'return\\s+(?!!)[^;]{0,100}?ok:'}],
 behavior:`The third case executes the convention: when both are present the error wins, because a callback that reads the result before checking err will happily process garbage. The fourth relies on template literals stringifying null as "null" rather than throwing.`,
 hints:['Guard on the error before touching the result.','Template literals convert null to the text "null" for you.','Return immediately from the error branch.']}},
 
@@ -230,7 +230,7 @@ solution:`function combinator(intent) {
     default:                     return "unknown";
   }
 }`,
-tests:[{d:'all for fail-fast',re:'"Promise\\.all"'},{d:'allSettled for partial results',re:'"Promise\\.allSettled"'},{d:'race for first to settle',re:'"Promise\\.race"'},{d:'any for first success',re:'"Promise\\.any"'}],
+tests:[{d:'all for fail-fast',re:'(?:(?:"need\\-all\\-fail\\-fast"|\'need\\-all\\-fail\\-fast\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"Promise\\.all"|\\[\\s*"need\\-all\\-fail\\-fast"\\s*,\\s*"Promise\\.all"\\s*\\])'},{d:'allSettled for partial results',re:'(?:(?:"need\\-partial\\-results"|\'need\\-partial\\-results\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"Promise\\.allSettled"|\\[\\s*"need\\-partial\\-results"\\s*,\\s*"Promise\\.allSettled"\\s*\\])'},{d:'race for first to settle',re:'(?:(?:"first\\-to\\-settle"|\'first\\-to\\-settle\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"Promise\\.race"|\\[\\s*"first\\-to\\-settle"\\s*,\\s*"Promise\\.race"\\s*\\])'},{d:'any for first success',re:'(?:(?:"first\\-success"|\'first\\-success\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"Promise\\.any"|\\[\\s*"first\\-success"\\s*,\\s*"Promise\\.any"\\s*\\])'}],
 behavior:`The distinction that matters in practice is the first two: Promise.all rejects the moment anything fails, so one dead widget takes out a whole dashboard, while allSettled gives you five results and one recorded failure.`,
 hints:['One case per combinator, with a default.','race settles on the first outcome of ANY kind; any waits for the first success.','allSettled never rejects.']},
 {title:'Await a real promise',diff:'medium',lang:'js',
@@ -247,7 +247,7 @@ solution:`async function doubleLater(n) {
   const value = await Promise.resolve(n);   // await unwraps the promise
   return value * 2;                          // an async fn returns a PROMISE
 }`,
-tests:[{d:'is an async function',re:'async\\s+function'},{d:'awaits a promise',re:'await'},{d:'doubles the awaited value',re:'\\*\\s*2'}],
+tests:[{d:'is an async function',re:'async\\s+function'},{d:'awaits a promise',re:'await'},{d:'doubles the awaited value',re:'return\\s+(?!!)[^;]{0,100}?\\*\\s*2'}],
 behavior:`This executes for real: your async function returns a promise, the runner awaits it, and the resolved number is compared. An async function always returns a promise even when the body returns a plain value, which is why await works on it and why forgetting await elsewhere gives you a Promise object instead of your data.`,
 hints:['Mark the function async so you can use await inside it.','Promise.resolve(n) gives you a promise already carrying n.','Return the doubled value; the async wrapper turns it into a promise.']}]},
 
@@ -344,7 +344,7 @@ solution:`function strategy(dependsOnPrevious, rateLimited) {
   if (rateLimited) return "batched";            // then the constraint
   return "concurrent";                           // otherwise, go wide
 }`,
-tests:[{d:'a dependency forces sequencing',re:'dependsOnPrevious'},{d:'a rate limit means batching',re:'rateLimited'},{d:'otherwise run concurrently',re:'"concurrent"'}],
+tests:[{d:'a dependency forces sequencing',re:'dependsOnPrevious[^;]{0,140}?(?:return\\s+|\\?\\s*)"sequential"'},{d:'a rate limit means batching',re:'rateLimited[^;]{0,140}?(?:return\\s+|\\?\\s*)"batched"'},{d:'otherwise run concurrently',re:'(?:return\\s+(?!!)[^;]{0,110}?"concurrent"|:\\s*"concurrent")'}],
 behavior:`The last case executes the precedence: a dependency wins even when a rate limit is also present, because correctness constrains ordering and a rate limit only constrains throughput. Checking the rate limit first would pass three cases and fail that one.`,
 hints:['Check the dependency first; it is the stronger constraint.','Guard clauses in priority order.','Independent and unlimited is the fast path.']},
 {title:'Run work concurrently',diff:'medium',lang:'js',
@@ -361,7 +361,7 @@ solution:`async function totalOf(values) {
   const results = await Promise.all(values.map(v => Promise.resolve(v)));
   return results.reduce((sum, v) => sum + v, 0);   // initial 0 for []
 }`,
-tests:[{d:'is async',re:'async'},{d:'awaits all of them together',re:'Promise\\.all'},{d:'maps values to promises',re:'\\.map\\('},{d:'sums with an initial accumulator',re:'\\.reduce\\('}],
+tests:[{d:'is async',re:'async'},{d:'awaits all of them together',re:'Promise\\.all'},{d:'maps values to promises',re:'\\.map\\('},{d:'sums with an initial accumulator',re:'(?:return\\s+(?!!)|=\\s*)[^;]{0,140}?\\.reduce\\('}],
 behavior:`Promise.all on an empty array resolves immediately to [], and reduce's initial 0 turns that into 0 rather than a TypeError. Awaiting inside a loop instead would produce the same answer here but would serialize the work: correct, and needlessly slow.`,
 hints:['map each value to a promise, then hand the array to Promise.all.','await the whole thing at once rather than one at a time.','reduce needs its initial value for the empty case.']},
 {title:'Retry with exponential backoff',diff:'hard',lang:'js',
@@ -389,7 +389,7 @@ solution:`function attemptPlan(succeedOnAttempt, maxAttempts, baseDelay) {
   }
   return { attempts: maxAttempts, delays };   // gave up
 }`,
-tests:[{d:'loops up to the attempt limit',re:'maxAttempts'},{d:'stops on success',re:'succeedOnAttempt'},{d:'doubles the delay',re:'\\*=\\s*2|\\*\\s*2'},{d:'collects the waits',re:'delays\\.push'}],
+tests:[{d:'loops up to the attempt limit',re:'maxAttempts'},{d:'stops on success',re:'succeedOnAttempt[^;]{0,140}?return\\s+(?!!)'},{d:'doubles the delay',re:'\\*=\\s*2|\\*\\s*2'},{d:'collects the waits',re:'delays\\.push'}],
 behavior:`Six cases execute and three of them catch off-by-one errors. There are always exactly one fewer delays than attempts, because you never wait after the last one; the first case proves it (one attempt, no delays) and the third pins the give-up path (4 attempts, 3 delays). Real retry code adds jitter to these numbers so a fleet of clients does not retry in lockstep and stampede the service they are waiting for.`,
 hints:['Count attempts from 1 so the comparison with succeedOnAttempt reads naturally.','Push a delay only when another attempt will follow.','Double the delay after pushing it, not before.']}]}
 

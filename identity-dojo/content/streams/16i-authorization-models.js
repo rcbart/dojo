@@ -71,7 +71,7 @@ public class Rbac {
         return roles.contains("admin");
     }
 }`,
-tests:[{d:'checks membership of the admin role',re:'roles\\.contains\\s*\\(\\s*"admin"\\s*\\)'},{d:'does not hardcode true',re:'return\\s+true\\s*;',not:true}],
+tests:[{d:'checks membership of the admin role',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:roles\\.contains\\s*\\(\\s*"admin"\\s*\\)))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:roles\\.contains\\s*\\(\\s*"admin"\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:roles\\.contains\\s*\\(\\s*"admin"\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:roles\\.contains\\s*\\(\\s*"admin"\\s*\\))[^{]*?return\\s+\\k<av>\\b)'},{d:'does not hardcode true',re:'isAdmin\\s*\\([^)]*\\)\\s*\\{\\s*return\\s+true\\s*;',not:true}],
 behavior:`isAdmin(Set.of("editor","admin")) is true; isAdmin(Set.of("viewer")) is false. RBAC turns a permission check into a role-membership check.`,
 hints:['A Java Set has a contains method that returns a boolean.','Return the result of roles.contains("admin") directly.','No if statement is needed; the contains call already yields the boolean.']}},
 
@@ -146,7 +146,7 @@ solution:`public class Roles {
         }
     }
 }`,
-tests:[{d:'viewer can read',re:'"viewer".*?"read"',flags:'s'},{d:'editor can read and write',re:'"editor".*?"read,write"',flags:'s'},{d:'admin can read, write, delete',re:'"admin".*?"read,write,delete"',flags:'s'},{d:'unknown role gets no permissions',re:'return\\s+""'}],
+tests:[{d:'viewer can read',re:'(?:["\']viewer["\'][^;}]*?return\\s+["\']read["\'])|(?:case\\s*["\']viewer["\']\\s*->\\s*(?:\\{\\s*)?["\']read["\'])|(?:["\']viewer["\']\\s*:\\s*["\']read["\'])|(?:(?:put|entry|of)\\s*\\(\\s*["\']viewer["\']\\s*,\\s*["\']read["\'])',flags:'s'},{d:'editor can read and write',re:'"editor".*?"read,write"',flags:'s'},{d:'admin can read, write, delete',re:'"admin".*?"read,write,delete"',flags:'s'},{d:'unknown role gets no permissions',re:'return\\s+""'}],
 behavior:`permissions("viewer") is "read", permissions("editor") is "read,write", permissions("admin") is "read,write,delete", permissions("ghost") is "". The mapping lives in one place, so policy changes are one edit.`,
 hints:['A switch on role keeps the whole mapping in one readable place.','Higher roles simply list more comma-separated permissions.','Unknown roles fall through to the default returning an empty string.']}},
 
@@ -219,7 +219,7 @@ solution:`public class Abac {
         return userDept.equals(resourceDept) || isOwner;
     }
 }`,
-tests:[{d:'same-department attribute grants access',re:'userDept\\.equals\\s*\\(\\s*resourceDept\\s*\\)'},{d:'ownership also grants access',re:'\\|\\|\\s*isOwner'}],
+tests:[{d:'same-department attribute grants access',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:userDept\\.equals\\s*\\(\\s*resourceDept\\s*\\)))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:userDept\\.equals\\s*\\(\\s*resourceDept\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:userDept\\.equals\\s*\\(\\s*resourceDept\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:userDept\\.equals\\s*\\(\\s*resourceDept\\s*\\))[^{]*?return\\s+\\k<av>\\b)'},{d:'ownership also grants access',re:'\\|\\|\\s*isOwner'}],
 behavior:`permit("sales","sales",false) is true (same department); permit("sales","hr",true) is true (owner); permit("sales","hr",false) is false. The decision is a boolean over attributes, not a fixed role.`,
 hints:['Compare the two department strings with equals.','Combine the department match with ownership using the || operator.','Either condition being true should grant access.']}},
 
@@ -292,7 +292,7 @@ public class Rebac {
         return user.equals(owner) || sharedWith.contains(user);
     }
 }`,
-tests:[{d:'owner can view',re:'user\\.equals\\s*\\(\\s*owner\\s*\\)'},{d:'shared-with relationship grants view',re:'sharedWith\\.contains\\s*\\(\\s*user\\s*\\)'},{d:'combines the relationships with OR',re:'\\|\\|'}],
+tests:[{d:'owner can view',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:user\\.equals\\s*\\(\\s*owner\\s*\\)))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:user\\.equals\\s*\\(\\s*owner\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:user\\.equals\\s*\\(\\s*owner\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:user\\.equals\\s*\\(\\s*owner\\s*\\))[^{]*?return\\s+\\k<av>\\b)'},{d:'shared-with relationship grants view',re:'sharedWith\\.contains\\s*\\(\\s*user\\s*\\)'},{d:'combines the relationships with OR',re:'\\|\\|'}],
 behavior:`canView("ada","ada",Set.of()) is true (owner); canView("bo","ada",Set.of("bo")) is true (shared); canView("cy","ada",Set.of("bo")) is false. Access follows the relationship graph, which is what ReBAC models.`,
 hints:['Ownership is an equals check between user and owner.','A shared relationship is membership in the sharedWith set.','Combine the two relationships with ||.']}},
 
@@ -358,7 +358,7 @@ public class Sod {
         return roles.contains("maker") && roles.contains("checker");
     }
 }`,
-tests:[{d:'checks for the maker role',re:'contains\\s*\\(\\s*"maker"\\s*\\)'},{d:'checks for the checker role',re:'contains\\s*\\(\\s*"checker"\\s*\\)'},{d:'a violation needs BOTH roles',re:'&&'}],
+tests:[{d:'checks for the maker role',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:contains\\s*\\(\\s*"maker"\\s*\\)))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:contains\\s*\\(\\s*"maker"\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:contains\\s*\\(\\s*"maker"\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:contains\\s*\\(\\s*"maker"\\s*\\))[^{]*?return\\s+\\k<av>\\b)'},{d:'checks for the checker role',re:'contains\\s*\\(\\s*"checker"\\s*\\)'},{d:'a violation needs BOTH roles',re:'&&'}],
 behavior:`violates(Set.of("maker","checker")) is true; violates(Set.of("maker")) is false. Holding both halves of a create-and-approve pair breaks separation of duties.`,
 hints:['A conflict exists only when both roles are present, so use &&.','Check membership of each role with contains.','One role alone is fine; it is the combination that violates the rule.']}},
 
@@ -443,7 +443,7 @@ starter:`public class DataAuthz {
         return null;
     }
 }`,
-tests:[{d:'ownership requires a caller tenant',re:'callerTenant\\s*[=!]=\\s*null|null\\s*[=!]=\\s*callerTenant'},{d:'the two tenants are compared by value',re:'equals\\s*\\('},{d:'the tenant filter is part of the query',re:'AND\\s+tenant_id\\s*=\\s*\\?'},{d:'full access returns the unmasked value',re:'fullAccess'},{d:'masked output hides all but the last digits',re:'"\\*\\*\\*\\*"'},{d:'the last four characters are kept',re:'length\\s*\\(\\s*\\)\\s*-\\s*4'}],
+tests:[{d:'ownership requires a caller tenant',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:callerTenant\\s*[=!]=\\s*null|null\\s*[=!]=\\s*callerTenant))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:callerTenant\\s*[=!]=\\s*null|null\\s*[=!]=\\s*callerTenant)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:callerTenant\\s*[=!]=\\s*null|null\\s*[=!]=\\s*callerTenant)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:callerTenant\\s*[=!]=\\s*null|null\\s*[=!]=\\s*callerTenant)[^{]*?return\\s+\\k<av>\\b)'},{d:'the two tenants are compared by value',re:'equals\\s*\\('},{d:'the tenant filter is part of the query',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:AND\\s+tenant_id\\s*=\\s*\\?))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:AND\\s+tenant_id\\s*=\\s*\\?)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:AND\\s+tenant_id\\s*=\\s*\\?)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:AND\\s+tenant_id\\s*=\\s*\\?)[^{]*?return\\s+\\k<av>\\b)'},{d:'full access returns the unmasked value',re:'fullAccess'},{d:'masked output hides all but the last digits',re:'"\\*\\*\\*\\*"'},{d:'the last four characters are kept',re:'length\\s*\\(\\s*\\)\\s*-\\s*4'}],
 behavior:`canRead("t1","t1") is true; canRead("t1","t2"), canRead(null,"t1") and canRead("t1",null) are all false: this is the check that stops changing 4417 to 4418 in the URL from returning someone else's record. scopedQuery("SELECT * FROM invoices WHERE status = ?") appends AND tenant_id = ?, so a wrong tenant finds nothing rather than being caught afterwards by a check somebody might forget to write. maskCard("4111111111111234", true) returns the full value; with false it returns ****1234; maskCard(null, false) and maskCard("12", false) return ****.`,
 hints:['<code>return callerTenant != null &amp;&amp; callerTenant.equals(recordTenant);</code>','Simple concatenation: <code>return base + " AND tenant_id = ?";</code>','Guard the length before slicing: <code>pan.substring(pan.length() - 4)</code>.'],
 solution:`public class DataAuthz {
@@ -532,7 +532,7 @@ public class Groups {
         return false;
     }
 }`,
-tests:[{d:'a null group yields an empty set',re:'group\\s*==\\s*null|null\\s*==\\s*group'},{d:'tracks visited groups so cycles terminate',re:'seen|visited'},{d:'walks the nesting with a stack or queue',re:'ArrayDeque|Stack|LinkedList|Queue'},{d:'loops until the frontier is empty',re:'while\\s*\\('},{d:'looks up the children of each group',re:'children\\s*\\.\\s*get(OrDefault)?\\s*\\('},{d:'handles a group with no children',re:'getOrDefault|!=\\s*null'},{d:'transitive membership reuses the flatten',re:'effective\\s*\\('}],
+tests:[{d:'a null group yields an empty set',re:'group\\s*==\\s*null|null\\s*==\\s*group'},{d:'tracks visited groups so cycles terminate',re:'seen|visited'},{d:'walks the nesting with a stack or queue',re:'ArrayDeque|Stack|LinkedList|Queue'},{d:'loops until the frontier is empty',re:'while\\s*\\('},{d:'looks up the children of each group',re:'children\\s*\\.\\s*get(OrDefault)?\\s*\\('},{d:'handles a group with no children',re:'getOrDefault|!=\\s*null'},{d:'transitive membership reuses the flatten',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:effective\\s*\\())|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:effective\\s*\\()[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:effective\\s*\\()[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:effective\\s*\\()[^{]*?return\\s+\\k<av>\\b)'}],
 behavior:`With children = {"A":["B"], "B":["C"]}, effective("A") returns {A, B, C}: nesting is transitive, so a direct-membership check on A would wrongly miss C. effective(null) returns an empty set. With a cycle, children = {"A":["B"], "B":["A"]}, effective("A") returns {A, B} and terminates rather than recursing forever, which is the failure mode of hand-rolled traversals. memberOf("A","C",children) is true; memberOf("C","A",children) is false, because nesting has a direction.`,
 hints:['Seed a stack with the starting group and a <code>seen</code> set, then loop while the stack is non-empty.','Add to <code>seen</code> as you pop; skip anything already there; that is what makes a cycle terminate.','<code>children.getOrDefault(g, List.of())</code> avoids a null check for leaf groups.'],
 solution:`import java.util.*;
@@ -727,7 +727,7 @@ starter:`public class Zanzibar {
         return false;
     }
 }`,
-tests:[{d:'the snapshot must be at least as recent as the token',re:'snapshotAt\\s*>=\\s*zookieAt|zookieAt\\s*<=\\s*snapshotAt'},{d:'a stale snapshot denies regardless of the tuple',re:'freshEnough\\s*\\('},{d:'the tuple still has to grant access',re:'tupleGrantsAccess'},{d:'user-driven sharing is required',re:'userDrivenSharing'},{d:'clean role mapping means you do not need this',re:'!\\s*rolesMapCleanly|rolesMapCleanly\\s*==\\s*false'}],
+tests:[{d:'the snapshot must be at least as recent as the token',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:snapshotAt\\s*>=\\s*zookieAt|zookieAt\\s*<=\\s*snapshotAt))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:snapshotAt\\s*>=\\s*zookieAt|zookieAt\\s*<=\\s*snapshotAt)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:snapshotAt\\s*>=\\s*zookieAt|zookieAt\\s*<=\\s*snapshotAt)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:snapshotAt\\s*>=\\s*zookieAt|zookieAt\\s*<=\\s*snapshotAt)[^{]*?return\\s+\\k<av>\\b)'},{d:'a stale snapshot denies regardless of the tuple',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:freshEnough\\s*\\())|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:freshEnough\\s*\\()[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:freshEnough\\s*\\()[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:freshEnough\\s*\\()[^{]*?return\\s+\\k<av>\\b)'},{d:'the tuple still has to grant access',re:'tupleGrantsAccess'},{d:'user-driven sharing is required',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:userDrivenSharing))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:userDrivenSharing)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:userDrivenSharing)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:userDrivenSharing)[^{]*?return\\s+\\k<av>\\b)'},{d:'clean role mapping means you do not need this',re:'!\\s*rolesMapCleanly|rolesMapCleanly\\s*==\\s*false'}],
 behavior:`freshEnough(100, 100) and freshEnough(101, 100) are true; freshEnough(99, 100) is false. check(true, 99, 100) is false; this is the whole point: the replica says access is granted, but it is older than the write the client already observed, so it may not yet know Bob was removed from the group. Answering from it is the new-enemy problem, where each write was correct and only the order was lost. check(true, 100, 100) is true, and check(false, 100, 100) is false. needsRelationshipGraph(true, false) is true, while needsRelationshipGraph(true, true) and needsRelationshipGraph(false, false) are false: most applications do not need this, and a tenant-scoped query with an ownership check is the right answer.`,
 hints:['One comparison for freshness; note it is &gt;=, not &gt;.','In check, test freshness first and deny before even looking at the tuple.','Two conditions, the second negated.'],
 solution:`public class Zanzibar {

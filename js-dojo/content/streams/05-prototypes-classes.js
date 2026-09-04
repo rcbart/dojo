@@ -81,7 +81,7 @@ solution:`function lookup(ownKeys, protoKeys, key) {
   if (protoKeys.includes(key)) return "inherited";   // then one link up
   return "undefined";                                 // end of the chain
 }`,
-tests:[{d:'checks own properties first',re:'ownKeys'},{d:'then the prototype',re:'protoKeys'},{d:'missing keys are undefined',re:'"undefined"'}],
+tests:[{d:'checks own properties first',re:'ownKeys[^;]{0,140}?(?:return\\s+|\\?\\s*)"own"'},{d:'then the prototype',re:'protoKeys[^;]{0,140}?(?:return\\s+|\\?\\s*)"inherited"'},{d:'missing keys are undefined',re:'(?:return\\s+(?!!)[^;]{0,110}?"undefined"|:\\s*"undefined")'}],
 behavior:`The shadowing case executes the ordering: with the key in both, "own" must win; checking the prototype first would pass the other four and fail that one. The last case shows an object with no own properties still resolving through its prototype.`,
 hints:['Two checks in order, own first.','includes() answers whether a key is present.','Falling off the end gives undefined, not an error.']}},
 
@@ -176,7 +176,7 @@ function runAccount(amounts) {
   for (const amount of amounts) a.deposit(amount);
   return a.balance;                    // a getter: no parentheses
 }`,
-tests:[{d:'uses a private field',re:'#balance'},{d:'declares a getter',re:'get\\s+balance'},{d:'guards against non-positive deposits',re:'amount\\s*>\\s*0'},{d:'creates an instance',re:'new\\s+Account'}],
+tests:[{d:'uses a private field',re:'#balance'},{d:'declares a getter',re:'get\\s+balance'},{d:'guards against non-positive deposits',re:'amount\\s*>\\s*0'},{d:'returns the value itself, not a negation of it',re:'return\\s+!',not:true},{d:'creates an instance',re:'new\\s+Account[\\s\\S]{0,300}?return\\s+(?!!)'}],
 behavior:`Your class is exercised through runAccount, so the field, the guard and the getter all have to work. The negative case executes the guard, and the empty case relies on the field initializer rather than a constructor.`,
 hints:['A field declared with # is private to the class body.','The getter is read as a.balance with no call parentheses.','Return this from deposit so calls can chain.']},
 {title:'Static members belong to the class',diff:'medium',lang:'js',
@@ -248,7 +248,7 @@ function runQueue(ops, capacity) {
   }
   return { out, size: q.size, dropped };
 }`,
-tests:[{d:'holds the items privately',re:'#items'},{d:'holds the capacity privately',re:'#capacity'},{d:'refuses when full',re:'>=\\s*this\\.#capacity|length\\s*>='},{d:'takes from the front',re:'shift\\(\\)'},{d:'exposes a size getter',re:'get\\s+size'}],
+tests:[{d:'holds the items privately',re:'#items'},{d:'holds the capacity privately',re:'#capacity'},{d:'refuses when full',re:'(?:>=\\s*this\\.#capacity|length\\s*>=)[^;]{0,100}?return\\s+false\\b'},{d:'takes from the front',re:'return\\s+(?!!)[^;]{0,140}?shift\\(\\)'},{d:'exposes a size getter',re:'get\\s+size'}],
 behavior:`Six scenarios execute your class through runQueue, so the private fields, the capacity check, the empty case and the getter all have to work together. Two cases are deliberately awkward: a capacity of 0 must refuse every add rather than dividing by anything or throwing, and taking from an empty queue must return null, which runQueue then stores, so treating null as "nothing happened" and skipping it fails the third case. Note that shift() removes from the front, which is what makes this a queue rather than a stack.`,
 hints:['Both the items array and the capacity should be private fields.','add() returns a boolean so the caller can count refusals; it should not throw.','take() uses shift() for first-in-first-out, and returns null rather than undefined when empty.']}]},
 
@@ -334,7 +334,7 @@ solution:`function decide(isA, substitutable, alreadyDeep) {
   if (isA && substitutable && !alreadyDeep) return "inherit";
   return "compose";                 // the safe default in every other case
 }`,
-tests:[{d:'requires a genuine is-a',re:'isA\\s*&&'},{d:'requires substitutability',re:'substitutable'},{d:'refuses to deepen an existing hierarchy',re:'!\\s*alreadyDeep'},{d:'composition is the default',re:'"compose"'}],
+tests:[{d:'requires a genuine is-a',re:'isA\\s*&&[^;]{0,120}?return\\s+"inherit"'},{d:'requires substitutability',re:'substitutable'},{d:'refuses to deepen an existing hierarchy',re:'!\\s*alreadyDeep'},{d:'composition is the default',re:'(?:return\\s+(?!!)[^;]{0,110}?"compose"|:\\s*"compose")'}],
 behavior:`All five combinations execute, and the fourth is the one worth noticing: even a textbook is-a relationship should compose when the hierarchy is already deep, because the cost of another level outweighs the reuse. Composition being the default is the whole point: inheritance has to earn its place.`,
 hints:['Three conditions must all hold for inheritance.','The third is negated: deep hierarchies argue against inheriting.','Every other path returns compose.']}},
 
@@ -421,7 +421,7 @@ solution:`function makeRange(from, to) {
 function collect(from, to) {
   return [...makeRange(from, to)];  // spread consumes the protocol
 }`,
-tests:[{d:'implements the iterator symbol',re:'Symbol\\.iterator'},{d:'produces values',re:'yield|next'},{d:'spreads the iterable',re:'\\[\\s*\\.\\.\\.'}],
+tests:[{d:'implements the iterator symbol',re:'Symbol\\.iterator'},{d:'produces values',re:'yield|next'},{d:'spreads the iterable',re:'return\\s+(?!!)[^;]{0,80}?\\[\\s*\\.\\.\\.'}],
 behavior:`Spread only works if the protocol is implemented correctly, so this executes the real thing rather than checking for a keyword. The empty case falls out for free: the loop never runs, the generator finishes immediately, and spread produces [].`,
 hints:['A generator method inside the object literal is the shortest correct implementation.','The computed key is [Symbol.iterator], and a * before it makes it a generator.','Spreading an iterable consumes it into an array.']}}
 ,
@@ -512,7 +512,7 @@ solution:`function* chunkGen(list, size) {
 function chunks(list, size) {
   return [...chunkGen(list, size)];      // spread drives next() to done
 }`,
-tests:[{d:'declares a generator',re:'function\\s*\\*'},{d:'yields each chunk',re:'yield\\s'},{d:'slices without mutating',re:'\\.slice\\('},{d:'a consumer materializes it',re:'\\.\\.\\.|Array\\.from'}],
+tests:[{d:'declares a generator',re:'function\\s*\\*'},{d:'yields each chunk',re:'yield\\s'},{d:'slices without mutating',re:'\\.slice\\('},{d:'a consumer materializes it',re:'return\\s+(?!!)[^;]{0,80}?(?:\\[\\s*\\.\\.\\.|Array\\.from)'}],
 behavior:`Five cases execute the whole protocol: the spread in chunks() calls next() until done, and each yield hands out one slice. The generator itself never builds the full result; the same chunkGen could feed a for...of that stops after the first chunk of a million-element list, and would compute exactly one slice.`,
 hints:['Step the index by size, not by one.','slice(i, i + size) is safely clipped at the end of the list.','chunks() just spreads the generator - the exercise is the yield loop.']}}
 

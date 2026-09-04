@@ -78,7 +78,7 @@ solution:`function specifierKind(spec) {
   if (spec.startsWith("#")) return "internal";      // package "imports" field
   return "bare";                                     // resolved from node_modules
 }`,
-tests:[{d:'detects relative specifiers',re:'"\\./"'},{d:'detects absolute paths',re:'"/"'},{d:'detects URLs',re:'"http"'},{d:'bare specifiers are the fallback',re:'"bare"'}],
+tests:[{d:'detects relative specifiers',re:'(?:(?:"\\.\\/"|\'\\.\\/\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"relative"|\\[\\s*"\\.\\/"\\s*,\\s*"relative"\\s*\\])'},{d:'detects absolute paths',re:'(?:(?:"\\/"|\'\\/\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"absolute"|\\[\\s*"\\/"\\s*,\\s*"absolute"\\s*\\])'},{d:'detects URLs',re:'(?:(?:"http"|\'http\'|\\bhttp\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"url"|\\[\\s*"http"\\s*,\\s*"url"\\s*\\])'},{d:'bare specifiers are the fallback',re:'(?:return\\s+(?!!)[^;]{0,110}?"bare"|:\\s*"bare")'}],
 behavior:`Order is executed rather than described: "./math.js" does not start with "/" so the two checks happen to be independent here, but "../lib" and a leading "/" are easy to confuse if you test the shorter prefix first. Scoped packages like @scope/pkg are bare specifiers, which is what the fourth case pins down.`,
 hints:['startsWith answers each of these directly.','Check the two-character relative prefixes before the single-character absolute one.','Everything unrecognised is a bare specifier: a package name.']}},
 
@@ -159,7 +159,7 @@ solution:`function moduleSystem(filename, packageType) {
   if (filename.endsWith(".cjs")) return "commonjs";
   return packageType === "module" ? "esm" : "commonjs";  // default is CJS
 }`,
-tests:[{d:'.mjs is always ESM',re:'"\\.mjs"'},{d:'.cjs is always CommonJS',re:'"\\.cjs"'},{d:'otherwise the package type decides',re:'"module"'}],
+tests:[{d:'.mjs is always ESM',re:'(?:(?:"\\.mjs"|\'\\.mjs\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"esm"|\\[\\s*"\\.mjs"\\s*,\\s*"esm"\\s*\\])'},{d:'.cjs is always CommonJS',re:'(?:(?:"\\.cjs"|\'\\.cjs\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"commonjs"|\\[\\s*"\\.cjs"\\s*,\\s*"commonjs"\\s*\\])'},{d:'otherwise the package type decides',re:'(?:(?:"module"|\'module\'|\\bmodule\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"esm"|\\[\\s*"module"\\s*,\\s*"esm"\\s*\\])'}],
 behavior:`The last case executes the precedence: a .mjs file inside a "type": "module" package is still ESM, but so is a .mjs file inside a CommonJS one: the extension is unconditional. The fifth case pins the default: no type field means CommonJS, which is why "Cannot use import statement outside a module" is the error people hit first.`,
 hints:['Check the explicit extensions first; they override everything.','Only .js files consult the package type.','The default when there is no type field is CommonJS.']}},
 
@@ -248,7 +248,7 @@ solution:`function caretAllows(wantMajor, wantMinor, wantPatch, haveMajor, haveM
   if (haveMinor !== wantMinor) return haveMinor > wantMinor;
   return havePatch >= wantPatch;                       // same minor: compare patch
 }`,
-tests:[{d:'the major must match',re:'haveMajor\\s*!==\\s*wantMajor'},{d:'compares the minor',re:'haveMinor'},{d:'compares the patch',re:'havePatch\\s*>=\\s*wantPatch'}],
+tests:[{d:'the major must match',re:'haveMajor\\s*!==\\s*wantMajor[^;]{0,100}?return\\s+false\\b'},{d:'compares the minor',re:'haveMinor[^;]{0,160}?return\\s+(?!!)'},{d:'compares the patch',re:'return\\s+(?!!)[^;]{0,80}?havePatch\\s*>=\\s*wantPatch'}],
 behavior:`Six comparisons execute, including both directions of the minor check. The last case is the one a naive implementation fails: 4.18.9 has the right major and a patch that looks fine, but the minor went backwards, so the comparison has to be positional, not a single combined number.`,
 hints:['Compare the components in order: major, then minor, then patch.','A differing major is an immediate no.','When the minors differ, the answer depends only on the minor.']},
 {title:'Which install command?',diff:'medium',lang:'js',
@@ -266,7 +266,7 @@ solution:`function installCommand(context) {
   if (context === "add-dependency" || context === "upgrade") return "npm install";
   return "npm ci";      // deterministic by default: the lockfile is the truth
 }`,
-tests:[{d:'install when the lockfile must change',re:'"npm install"'},{d:'ci everywhere else',re:'"npm ci"'},{d:'defaults to the deterministic command',re:'return\\s+"npm ci"'}],
+tests:[{d:'install when the lockfile must change',re:'(?:"add-dependency"|"upgrade")[^;]{0,180}?(?:return\\s+|\\?\\s*)"npm install"'},{d:'ci everywhere else',re:'"npm ci"'},{d:'defaults to the deterministic command',re:'(?:(?:default|else)[^;]{0,180}?return\\s+"npm ci"|return\\s+"npm ci"\\s*;\\s*\\}|:\\s*"npm ci")'}],
 behavior:`The default is the point and it executes: an unrecognised context gets the reproducible command, not the one that silently resolves ranges. Running npm install in CI is how a build that passed yesterday fails today with a dependency nobody changed.`,
 hints:['Only two contexts legitimately rewrite the lockfile.','Everything else should be deterministic.','Make the safe command the default rather than an explicit case.']},
 {title:'Compare two versions properly',diff:'hard',lang:'js',
@@ -298,7 +298,7 @@ solution:`function compareVersions(a, b) {
   if (B.pre === "") return -1;
   return A.pre < B.pre ? -1 : 1;                      // alphabetical between them
 }`,
-tests:[{d:'splits off the prerelease suffix',re:'split\\s*\\(\\s*"-"'},{d:'converts the parts to numbers',re:'map\\s*\\(\\s*Number|Number\\('},{d:'compares the three components in order',re:'for\\s*\\(|nums\\[0\\]'},{d:'handles the prerelease ranking',re:'pre'}],
+tests:[{d:'splits off the prerelease suffix',re:'split\\s*\\(\\s*"-"'},{d:'converts the parts to numbers',re:'map\\s*\\(\\s*Number|Number\\('},{d:'compares the three components in order',re:'(?:for\\s*\\(|nums\\[0\\])[\\s\\S]{0,260}?return\\s+(?!!)'},{d:'handles the prerelease ranking',re:'\\.pre\\s*===[^;]{0,100}?return\\s+(?!!)'}],
 behavior:`Eight comparisons execute. The fourth and fifth are the ones a string comparison fails: "1.10.0" < "1.9.0" is true as text, because "1" sorts before "9" character by character. Converting to numbers is what fixes it, and it is the reason npm cannot simply sort version strings. The last three cover the prerelease rule that catches people out: 1.2.3-beta is NOT newer than 1.2.3, it is a candidate for it.`,
 hints:['Split on "-" first to separate the version core from any prerelease label.','Map the dot-separated parts through Number so the comparison is numeric.','An empty prerelease means a full release, and a full release outranks any prerelease.']}]},
 
@@ -375,7 +375,7 @@ solution:`function toolFor(problem) {
     default:                   return "no tool - understand the problem first";
   }
 }`,
-tests:[{d:'bundler for request count',re:'"bundler"'},{d:'transpiler for old browsers',re:'"transpiler"'},{d:'formatter for style',re:'"formatter"'},{d:'linter for likely bugs',re:'"linter"'},{d:'has a default',re:'default'}],
+tests:[{d:'bundler for request count',re:'(?:(?:"too\\-many\\-requests"|\'too\\-many\\-requests\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"bundler"|\\[\\s*"too\\-many\\-requests"\\s*,\\s*"bundler"\\s*\\])'},{d:'transpiler for old browsers',re:'(?:(?:"old\\-browser"|\'old\\-browser\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"transpiler"|\\[\\s*"old\\-browser"\\s*,\\s*"transpiler"\\s*\\])'},{d:'formatter for style',re:'(?:(?:"style\\-arguments"|\'style\\-arguments\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"formatter"|\\[\\s*"style\\-arguments"\\s*,\\s*"formatter"\\s*\\])'},{d:'linter for likely bugs',re:'(?:(?:"likely\\-bugs"|\'likely\\-bugs\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"linter"|\\[\\s*"likely\\-bugs"\\s*,\\s*"linter"\\s*\\])'},{d:'has a default',re:'(?:default[^;]{0,180}?return\\s+"no tool \\- understand the problem first"|else[^;]{0,160}?return\\s+"no tool \\- understand the problem first"|return\\s+(?!!)[^;]{0,90}?"no tool \\- understand the problem first"\\s*;\\s*\\})'}],
 behavior:`Seven cases execute, and the default carries the lesson: reaching for a tool before you can state the problem it solves is how a project accumulates eleven config files nobody can explain. Note that linter and formatter are separate answers: one finds mistakes, the other has no opinions worth arguing about.`,
 hints:['One case per tool, with a default.','A linter finds likely bugs; a formatter only settles style.','The default should push back rather than name a tool.']}}
 

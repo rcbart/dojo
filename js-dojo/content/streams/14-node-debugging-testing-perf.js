@@ -76,7 +76,7 @@ solution:`function inspectFlag(situation) {
       return "--inspect";
   }
 }`,
-tests:[{d:'breaks on the first line for short-lived code',re:'"--inspect-brk"'},{d:'signals a live process',re:'kill -USR1'},{d:'plain inspect is the default',re:'"--inspect"'}],
+tests:[{d:'breaks on the first line for short-lived code',re:'(?:(?:"short\\-script"|\'short\\-script\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"\\-\\-inspect\\-brk"|\\[\\s*"short\\-script"\\s*,\\s*"\\-\\-inspect\\-brk"\\s*\\])'},{d:'signals a live process',re:'(?:(?:"already\\-running"|\'already\\-running\')[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"kill \\-USR1"|\\[\\s*"already\\-running"\\s*,\\s*"kill \\-USR1"\\s*\\])'},{d:'plain inspect is the default',re:'(?:return\\s+(?!!)[^;]{0,110}?"\\-\\-inspect"|:\\s*"\\-\\-inspect")'}],
 behavior:`Five cases execute. The distinction is timing: a script that finishes in 40 milliseconds is gone before you can attach, so --inspect-brk holds it at line one. And a process already running cannot be given a new flag at all; the signal is the only way in, which is worth knowing before an incident rather than during one.`,
 hints:['Two situations need the process held before any code runs.','A live process cannot take a new command-line flag.','Everything else is the plain inspect flag.']},
 {title:'Is this log line safe and useful?',diff:'medium',lang:'js',
@@ -102,7 +102,7 @@ solution:`function auditLogLine(line) {
   }
   return { ok: problems.length === 0, problems };
 }`,
-tests:[{d:'checks the line is structured',re:'structured'},{d:'requires a request id',re:'requestId'},{d:'names each sensitive field',re:'sensitive field'},{d:'collects every problem',re:'problems\\.push'}],
+tests:[{d:'checks the line is structured',re:'structured'},{d:'requires a request id',re:'requestId'},{d:'names each sensitive field',re:'sensitive field'},{d:'collects every problem',re:'problems\\.push[\\s\\S]{0,500}?return\\s+(?!!)'}],
 behavior:`Six cases execute. The last requires all four problems at once, in a fixed order: a reviewer wants the whole list, not the first thing wrong. The sensitive-field check is the one that matters most: logs are widely readable inside an organization and retained for months, so a token written once is a credential sitting in a searchable store long after it should have expired.`,
 hints:['Accumulate into a problems array rather than returning at the first issue.','Keep the sensitive names in a list and check each field against it.','Push one problem per offending field, in the order the fields appear.']}]},
 
@@ -198,7 +198,7 @@ solution:`function reviewTests(tests) {
   }
   return { ok: problems.length === 0, problems };
 }`,
-tests:[{d:'handles an empty suite',re:'no tests'},{d:'detects a meaningless name',re:'describes nothing'},{d:'detects a test with no assertions',re:'asserts nothing'},{d:'detects shared state',re:'shares mutable state'},{d:'detects self-mocking',re:'mocks its own code'}],
+tests:[{d:'handles an empty suite',re:'(?:tests\\.length\\s*===?\\s*0|!\\s*tests\\.length|tests\\.length\\s*<\\s*1)[^;]{0,200}?return\\s+(?!!)[^;]{0,140}?no tests'},{d:'detects a meaningless name',re:'(?:push|concat|problems\\s*=|\\.\\.\\.)[^;]{0,140}?describes nothing'},{d:'detects a test with no assertions',re:'(?:asserts\\s*===?\\s*0|!\\s*\\w+\\.asserts|asserts\\s*<\\s*1)[^;]{0,160}?asserts nothing'},{d:'detects shared state',re:'sharedState[^;]{0,160}?shares mutable state'},{d:'detects self-mocking',re:'mocksOwnCode[^;]{0,160}?mocks its own code[\\s\\S]{0,240}?return\\s+(?!!)'}],
 behavior:`Eight cases execute. Two decide the implementation: the sixth requires all four problems from ONE test in a fixed order, and the seventh requires problems from several tests to appear in test order, so the checks must be nested inside the loop rather than run as four separate passes over the list. The empty suite returns early with exactly one problem, because listing per-test issues for a suite with no tests would be nonsense. The rules themselves are the lesson: a test with no assertion cannot fail, and a green suite full of them is worse than none.`,
 hints:['Handle the empty suite first and return immediately.','Loop once over the tests, running all four checks inside the loop so the order comes out right.','A meaningless name is the literal word test, a space, and digits, nothing else.']}},
 
@@ -290,7 +290,7 @@ solution:`function memoryVerdict(readings) {
 
   return secondMin > firstMin * 1.2 ? "likely leak" : "normal growth";
 }`,
-tests:[{d:'requires enough samples',re:'length\\s*<\\s*3'},{d:'compares the minima, not the peaks',re:'Math\\.min'},{d:'uses a 20% threshold',re:'1\\.2'}],
+tests:[{d:'requires enough samples',re:'length\\s*<\\s*3[^;]{0,100}?return\\s+"not enough data"'},{d:'compares the minima, not the peaks',re:'Math\\.min'},{d:'uses a 20% threshold',re:'(?:return\\s+(?!!)[^;]{0,200}?1\\.2|1\\.2[^;]{0,160}?return\\s+(?!!))'}],
 behavior:`Six cases execute. The last is the point: a single enormous spike that comes back down is NOT a leak; it is a large request, and judging on peaks would flag it. What identifies a leak is the floor rising, because that is heap the collector could not reclaim. The "not enough data" rule exists for the same reason: two readings cannot show a trend, and acting on them is how people spend a day chasing normal allocation.`,
 hints:['Guard the sample count before doing any arithmetic.','Compare the LOWEST reading in each half: the troughs are what the collector could reclaim.','A 20% rise in the floor is the threshold; peaks are irrelevant.']},
 {title:'Diagnose a slow production service',diff:'hard',lang:'js',
@@ -319,7 +319,7 @@ solution:`function diagnoseService(signals) {
   return { cause: "unknown",
            nextStep: "add loop lag and dependency latency metrics" };
 }`,
-tests:[{d:'checks loop lag first',re:'loopLagMs\\s*>\\s*100'},{d:'then the heap trend',re:'"rising"'},{d:'then dependency latency',re:'dependencyLatencyMs\\s*>\\s*1000'},{d:'falls back to admitting it does not know',re:'"unknown"'}],
+tests:[{d:'checks loop lag first',re:'loopLagMs\\s*>\\s*100[\\s\\S]{0,300}?return\\s+(?!!)'},{d:'then the heap trend',re:'"rising"'},{d:'then dependency latency',re:'dependencyLatencyMs\\s*>\\s*1000'},{d:'falls back to admitting it does not know',re:'return\\s+(?!!)[^;]{0,240}?"unknown"'}],
 behavior:`Six cases execute and two exist to pin the ORDER. Case 4 has every signal bad at once and must return "blocked event loop", because a blocked loop makes everything downstream look slow: the dependency latency you measured includes time your own process spent not reading the socket. Case 5 puts a leak and a slow dependency together, and the leak wins, because unbounded memory growth eventually causes the other symptoms too. The last case is the disciplined one: when nothing is conclusive the answer is more instrumentation, not a guess.`,
 hints:['Guard clauses in the stated order: the first match wins.','A blocked loop distorts every other measurement, so it is checked first.','The final return admits ignorance and asks for better metrics rather than picking a cause.']}]}
 ,
@@ -403,7 +403,7 @@ solution:`function reachable(graph, roots) {
   }
   return [...seen].sort();               // everything NOT in here is garbage
 }`,
-tests:[{d:'tracks visited nodes in a Set',re:'new\\s+Set'},{d:'guards against revisiting',re:'\\.has\\('},{d:'follows outgoing references',re:'graph\\[node\\]'},{d:'returns a sorted list',re:'\\.sort\\('}],
+tests:[{d:'tracks visited nodes in a Set',re:'new\\s+Set'},{d:'guards against revisiting',re:'\\.has\\('},{d:'follows outgoing references',re:'graph\\[node\\]'},{d:'returns a sorted list',re:'(?:return\\s+(?!!)[^;]{0,160}?\\.sort\\(|\\.sort\\([\\s\\S]{0,180}?return\\s+(?!!))'}],
 behavior:`This is the actual algorithm, executed on six heaps. The cycle case is the argument for the whole design: a and b reference each other, no root references either, and the walk from the roots simply never arrives: the cycle collects itself by being unreachable. The seen-set is what real collectors call the mark bit, and the diamond case proves each object is marked once no matter how many paths lead to it.`,
 hints:['Keep a Set of seen names and a stack of names still to visit.','Pop, skip if seen, mark, push the node\\u2019s references.','Sort the Set\\u2019s contents at the end - the cases expect alphabetical order.']}}
 
@@ -477,7 +477,7 @@ solution:`function whereToRun(job) {
   }
   return "the event loop: too small to be worth a worker";
 }`,
-tests:[{d:'checks the kind first',re:'kind'},{d:'I/O never goes to a worker',re:'does not block'},{d:'uses the 50ms boundary',re:'50'},{d:'sends heavy CPU work away',re:'block the loop'}],
+tests:[{d:'checks the kind first',re:'kind'},{d:'I/O never goes to a worker',re:'kind[^;]{0,180}?return\\s+"the event loop: async I/O does not block"'},{d:'uses the 50ms boundary',re:'50'},{d:'sends heavy CPU work away',re:'(?:>=?\\s*50|50\\s*<=?)[^;]{0,180}?return\\s+"a worker: this would block the loop"'}],
 behavior:`The first case is the one that reorders intuitions: two full seconds of I/O stays on the loop, because the loop spends that time waiting, not computing; it can wait on ten thousand things at once. The boundary cases pin the CPU rule: 50ms is worker territory, 49ms is not, and the real threshold in production is whatever your latency budget says it is.`,
 hints:['Guard on kind === "io" first - duration is irrelevant for I/O.','&gt;= 50 goes to the worker; the boundary case is included.','Three returns, no else needed - the guard-clause habit from stream 02.']}}
 

@@ -56,7 +56,7 @@ solution:`public class Register {
         return "argon2id";
     }
 }`,
-tests:[{d:'rejects null and enforces length >= 12',re:'pw\\s*!=\\s*null\\s*&&\\s*pw\\.length\\s*\\(\\s*\\)\\s*>=\\s*12'},{d:'uses a slow password hash (argon2id)',re:'return\\s+"argon2id"'},{d:'does not use a fast general-purpose hash',re:'"(md5|sha-?256)"',not:true,flags:'i'}],
+tests:[{d:'rejects null and enforces length >= 12',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:pw\\s*!=\\s*null\\s*&&\\s*pw\\.length\\s*\\(\\s*\\)\\s*>=\\s*12))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:pw\\s*!=\\s*null\\s*&&\\s*pw\\.length\\s*\\(\\s*\\)\\s*>=\\s*12)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:pw\\s*!=\\s*null\\s*&&\\s*pw\\.length\\s*\\(\\s*\\)\\s*>=\\s*12)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:pw\\s*!=\\s*null\\s*&&\\s*pw\\.length\\s*\\(\\s*\\)\\s*>=\\s*12)[^{]*?return\\s+\\k<av>\\b)'},{d:'uses a slow password hash (argon2id)',re:'return\\s+"argon2id"'},{d:'does not use a fast general-purpose hash',re:'"(md5|sha-?256)"',not:true,flags:'i'}],
 behavior:`validPassword("short") is false; validPassword("correcthorsebattery") is true; hashAlgo() is "argon2id". Passwords are always stored as a slow, salted hash, never plaintext.`,
 hints:['Guard null before length so it never throws.','argon2id is the modern default; MD5/SHA-256 are too fast for passwords.','Length beats complexity: 12+ characters.']},
 
@@ -71,7 +71,7 @@ solution:`function valid(iss, aud, exp, now) {
   if (aud !== "dojo-api") return false;                // meant for US?
   return exp > now;                                    // still alive?
 }`,
-tests:[{d:'the issuer must be the one you trust',re:'"https://auth\\.dojo\\.dev"'},{d:'the audience must be this API',re:'"dojo-api"'},{d:'the token must not have expired',re:'exp\\s*>\\s*now'}],
+tests:[{d:'the issuer must be the one you trust',re:'(?:if\\s*\\(\\s*[^;{]*(?:"https://auth\\.dojo\\.dev")[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:return\\s+(?!\\s*!)[^;{]*(?:"https://auth\\.dojo\\.dev"))|(?:(?<h1>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:"https://auth\\.dojo\\.dev")[^{]*?return\\s+\\k<h1>\\b)'},{d:'the audience must be this API',re:'(?:if\\s*\\(\\s*[^;{]*(?:"dojo-api")[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:return\\s+(?!\\s*!)[^;{]*(?:"dojo-api"))|(?:(?<h1>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:"dojo-api")[^{]*?return\\s+\\k<h1>\\b)'},{d:'the token must not have expired',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:exp\\s*>\\s*now))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:exp\\s*>\\s*now)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:exp\\s*>\\s*now)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:exp\\s*>\\s*now)[^{]*?return\\s+\\k<av>\\b)'}],
 behavior:`Five cases run against your function, including the audience case that most implementations skip and the exact-expiry boundary. A token minted by your own issuer for a different service must be rejected here; that single check is what stops one compromised service reaching every other one.`,
 hints:['Three checks: issuer, audience, expiry.','Compare strings with === (or !== to fail fast).','Expiry is strict: exp must be greater than now.']},
 
@@ -90,7 +90,7 @@ public class Sessions {
         return !live.contains(sid);
     }
 }`,
-tests:[{d:'removes the session server-side',re:'live\\.remove\\s*\\(\\s*sid\\s*\\)'},{d:'confirms it is gone',re:'!\\s*live\\.contains\\s*\\(\\s*sid\\s*\\)'}],
+tests:[{d:'removes the session server-side',re:'live\\.remove\\s*\\(\\s*sid\\s*\\)'},{d:'confirms it is gone',re:'return\\s+!\\s*\\(?\\s*[^;{!]*?live\\s*\\.\\s*contains\\s*\\(\\s*sid\\s*\\)|(?<a1>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*!\\s*\\(?\\s*live\\s*\\.\\s*contains\\s*\\(\\s*sid\\s*\\)[^{]*?return\\s+\\k<a1>\\b|(?<a2>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{!]*live\\s*\\.\\s*contains\\s*\\(\\s*sid\\s*\\)[^{]*?return\\s+!\\s*\\k<a2>\\b|if\\s*\\(\\s*live\\s*\\.\\s*contains\\s*\\(\\s*sid\\s*\\)\\s*\\)\\s*\\{?\\s*return\\s+false|if\\s*\\(\\s*!\\s*live\\s*\\.\\s*contains\\s*\\(\\s*sid\\s*\\)\\s*\\)\\s*\\{?\\s*return\\s+true|if\\s*\\(\\s*!\\s*\\(\\s*!\\s*live\\s*\\.\\s*contains\\s*\\(\\s*sid\\s*\\)[^;{]*\\)*\\s*\\{?\\s*return\\s+false'}],
 behavior:`revoke(liveWith("s1"),"s1") removes it and returns true. Logout must end the session on the server, not just delete the browser cookie.`,
 hints:['Set has a remove method.','After removing, contains(sid) should be false.','Return the negation of contains.']},
 
@@ -108,7 +108,7 @@ public class Access {
         return roles.contains("admin") || roles.contains(required);
     }
 }`,
-tests:[{d:'admin can do anything',re:'roles\\.contains\\s*\\(\\s*"admin"\\s*\\)'},{d:'or the specific required role',re:'\\|\\|\\s*roles\\.contains\\s*\\(\\s*required\\s*\\)'}],
+tests:[{d:'admin can do anything',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:roles\\.contains\\s*\\(\\s*"admin"\\s*\\)))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:roles\\.contains\\s*\\(\\s*"admin"\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:roles\\.contains\\s*\\(\\s*"admin"\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:roles\\.contains\\s*\\(\\s*"admin"\\s*\\))[^{]*?return\\s+\\k<av>\\b)'},{d:'or the specific required role',re:'\\|\\|\\s*roles\\.contains\\s*\\(\\s*required\\s*\\)'}],
 behavior:`can(rolesOf("admin"),"delete") is true; can(rolesOf("editor"),"editor") is true; can(rolesOf("viewer"),"delete") is false. Least privilege plus an admin escape hatch.`,
 hints:['admin is a superuser role.','Otherwise the user must hold the exact required role.','Combine with ||.']},
 
@@ -122,7 +122,7 @@ solution:`function onUse(isCurrent) {
   // not "reject": the whole FAMILY dies, including the legitimate holder
   return isCurrent ? "rotate" : "revoke-family";
 }`,
-tests:[{d:'the current token rotates',re:'"rotate"'},{d:'a reused token revokes the whole family',re:'"revoke-family"'}],
+tests:[{d:'the current token rotates',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:"rotate"))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:"rotate")[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:"rotate")[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:"rotate")[^{]*?return\\s+\\k<av>\\b)'},{d:'a reused token revokes the whole family',re:'"revoke-family"'}],
 behavior:`Both paths are executed. The point of the second is that rejecting only the replayed token is not enough: the server cannot distinguish thief from victim, so every token descended from the same original grant must die. The legitimate user is logged out too, and that is the accepted trade.`,
 hints:['A single ternary covers both cases.','Rotation issues a new token and retires the old one.','Reuse is not a rejection, it is a revocation of everything in the chain.']},
 
@@ -144,7 +144,7 @@ solution:`public class Auth {
         }
     }
 }`,
-tests:[{d:'register hashes the password',re:'"register".*?"hash password"',flags:'s'},{d:'login issues tokens',re:'"login".*?"issue tokens"',flags:'s'},{d:'request validates then authorizes',re:'"request".*?"validate token and authorize"',flags:'s'},{d:'logout revokes the session',re:'"logout".*?"revoke session"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+tests:[{d:'register hashes the password',re:'(?:["\']register["\'][^;}]*?return\\s+["\']hash password["\'])|(?:case\\s*["\']register["\']\\s*->\\s*(?:\\{\\s*)?["\']hash password["\'])|(?:["\']register["\']\\s*:\\s*["\']hash password["\'])|(?:(?:put|entry|of)\\s*\\(\\s*["\']register["\']\\s*,\\s*["\']hash password["\'])',flags:'s'},{d:'login issues tokens',re:'"login".*?"issue tokens"',flags:'s'},{d:'request validates then authorizes',re:'"request".*?"validate token and authorize"',flags:'s'},{d:'logout revokes the session',re:'"logout".*?"revoke session"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
 behavior:`step("register") is "hash password", step("login") is "issue tokens", step("request") is "validate token and authorize", step("logout") is "revoke session". That is the whole auth lifecycle you just built, in order.`,
 hints:['A switch mapping each phase to its action.','The order is register, login, request, logout.','Anything else is unknown.']}
 ]}

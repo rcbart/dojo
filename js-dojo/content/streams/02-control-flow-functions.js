@@ -94,7 +94,7 @@ solution:`function classify(method) {
       return "unknown";      // fail closed on anything unrecognised
   }
 }`,
-tests:[{d:'GET is safe',re:'"GET"'},{d:'PUT is idempotent',re:'"PUT"'},{d:'POST is neither',re:'"POST"'},{d:'has a default branch',re:'default'}],
+tests:[{d:'GET is safe',re:'(?:"GET"[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"safe"|\\[\\s*"GET"\\s*,\\s*"safe"\\s*\\])'},{d:'PUT is idempotent',re:'(?:"PUT"[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"idempotent"|\\[\\s*"PUT"\\s*,\\s*"idempotent"\\s*\\])'},{d:'POST is neither',re:'(?:"POST"[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"neither"|\\[\\s*"POST"\\s*,\\s*"neither"\\s*\\])'},{d:'has a default branch',re:'(?:default[^;]{0,180}?return\\s+"unknown"|else[^;]{0,160}?return\\s+"unknown"|return\\s+(?!!)[^;]{0,90}?"unknown"\\s*;\\s*\\})'}],
 behavior:`Nine cases run, including "BREW" and a lowercase "get". The lowercase case is the point: switch compares with ===, so casing must match exactly; normalize before switching if you want case-insensitive behavior.`,
 hints:['Group cases by letting them fall through to a shared return.','Each group ends with a return, so no break is needed.','The default must exist, or unknown methods return undefined.']}},
 
@@ -173,7 +173,7 @@ solution:`function sumPositive(numbers) {
   }
   return total;
 }`,
-tests:[{d:'iterates the values',re:'for\\s*\\('},{d:'accumulates into a total',re:'\\+='},{d:'starts from zero',re:'let\\s+total\\s*=\\s*0'}],
+tests:[{d:'iterates the values',re:'for\\s*\\('},{d:'accumulates into a total',re:'(?:\\+=|total\\s*=\\s*total\\s*\\+)[\\s\\S]{0,240}?return\\s+total\\b'},{d:'starts from zero',re:'let\\s+total\\s*=\\s*0'}],
 behavior:`sumPositive([1,-2,3,-4,5]) is 9 and sumPositive([]) is 0. The accumulator must start at 0 rather than at the first element, which is what makes the empty case work without a special branch.`,
 hints:['Declare the accumulator before the loop and return it after.','for...of gives you values directly, with no index to manage.','continue skips an iteration; 0 is not greater than 0.']},
 {title:'Find the first match',diff:'medium',lang:'js',
@@ -287,7 +287,7 @@ starter:`function welcome(name, greeting) {
 solution:`function welcome(name, greeting = "Hello") {
   return \`\${greeting}, \${name}\`;
 }`,
-tests:[{d:'uses a default parameter',re:'greeting\\s*=\\s*"Hello"'},{d:'uses a template literal',re:'\`'},{d:'does not hand-roll a fallback',re:'\\|\\||\\?\\?',not:true}],
+tests:[{d:'uses a default parameter',re:'greeting\\s*=\\s*"Hello"'},{d:'uses a template literal',re:'return\\s+(?!!)[^;]{0,120}?`'},{d:'does not hand-roll a fallback',re:'\\|\\||\\?\\?',not:true}],
 behavior:`The last two cases are the lesson and they execute: null and "" are real values, so the default does not apply and you get "null, Ada" and ", Ada". A hand-rolled || fallback would wrongly rewrite both, which is precisely the bug default parameters avoid.`,
 hints:['Put the default in the parameter list, not in the body.','Template literals use backticks and ${ }.','Do not add || or ??; they would change the null and "" behavior.']},
 {title:'Collect any number of arguments',diff:'medium',lang:'js',
@@ -307,7 +307,7 @@ solution:`function longest(...words) {
   }
   return best;
 }`,
-tests:[{d:'uses a rest parameter',re:'\\.\\.\\.\\s*words'},{d:'compares lengths',re:'length\\s*>'},{d:'starts from the empty string',re:'best\\s*=\\s*""'}],
+tests:[{d:'uses a rest parameter',re:'\\.\\.\\.\\s*words'},{d:'compares lengths',re:'length\\s*>'},{d:'starts from the empty string',re:'best\\s*=\\s*""[\\s\\S]{0,320}?return\\s+best\\b'}],
 behavior:`The tie case is executed: with > the first of two equal-length words is kept, and with >= the last would be. Starting the accumulator at "" is what makes the zero-argument case work without a special branch.`,
 hints:['A rest parameter gathers all arguments into a real array.','Strictly greater keeps the first winner on a tie.','Initializing to "" handles the empty case for free.']}]},
 
@@ -393,7 +393,7 @@ solution:`function pay(user, amount) {
   if (user.balance < amount) return "insufficient";
   return "ok";                                  // the happy path, at the margin
 }`,
-tests:[{d:'guards on a missing user first',re:'!\\s*user'},{d:'guards on inactive',re:'user\\.active'},{d:'rejects non-positive amounts',re:'amount\\s*<=\\s*0'},{d:'checks the balance',re:'balance\\s*<\\s*amount'}],
+tests:[{d:'guards on a missing user first',re:'!\\s*user[^;]{0,80}?return\\s+"no user"'},{d:'guards on inactive',re:'user\\.active[^;]{0,80}?return\\s+"inactive"'},{d:'rejects non-positive amounts',re:'amount\\s*<=\\s*0[^;]{0,80}?return\\s+"invalid amount"'},{d:'checks the balance',re:'balance\\s*<\\s*amount[^;]{0,80}?return\\s+"insufficient"'}],
 behavior:`Order is executed, not merely described: a null user is checked before any property is read, so the inactive test cannot throw. The boundary cases matter too: an amount of exactly 0 is invalid, and a balance of exactly the amount succeeds.`,
 hints:['Check the null user first, or reading user.active will throw.','Each guard returns immediately, so no else is needed.','Non-positive means <= 0, and insufficient means balance < amount.']},
 {title:'An options object, defaulted properly',diff:'medium',lang:'js',
@@ -417,7 +417,7 @@ solution:`function summarize(text, options = {}) {
   if (clean.length <= maxLength) return clean;
   return clean.slice(0, maxLength).trimEnd() + suffix;
 }`,
-tests:[{d:'guards on non-string input',re:'typeof'},{d:'defaults each option as it destructures',re:'maxLength\\s*='},{d:'trims before measuring',re:'\\.trim\\('},{d:'does not end the cut on a space',re:'trimEnd'}],
+tests:[{d:'guards on non-string input',re:'typeof\\s+text\\s*!==?\\s*"string"[^;]{0,80}?return\\s+""'},{d:'defaults each option as it destructures',re:'maxLength\\s*='},{d:'trims before measuring',re:'\\.trim\\('},{d:'does not end the cut on a space',re:'return\\s+(?!!)[^;]{0,120}?trimEnd\\s*\\('}],
 behavior:`Compare the call sites this signature buys: summarize(text) reads clean, summarize(text, { maxLength: 4 }) names its argument, against a hypothetical summarize(text, 4, "…", true) where no reader knows which value is which. The boundary cases execute the craft details: exactly-at-the-limit text is untouched, padding never counts against the budget, and the trimEnd stops "one two …" from shipping with a floating space.`,
 hints:['Default the whole parameter with options = {}, then each field as you destructure it.','Trim first: the padding case expects whitespace not to count.','Slice, then trimEnd, then append the suffix; that order settles the mid-space case.']}]}
 

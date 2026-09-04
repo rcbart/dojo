@@ -85,7 +85,7 @@ solution:`function handleFsError(code) {
     default:       return "rethrow";     // not mine to handle
   }
 }`,
-tests:[{d:'handles a missing file',re:'"ENOENT"'},{d:'handles permission denied',re:'"EACCES"'},{d:'handles too many open files',re:'"EMFILE"'},{d:'re-throws the rest',re:'"rethrow"'}],
+tests:[{d:'handles a missing file',re:'(?:(?:"ENOENT"|\'ENOENT\'|\\bENOENT\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"not found"|\\[\\s*"ENOENT"\\s*,\\s*"not found"\\s*\\])'},{d:'handles permission denied',re:'(?:(?:"EACCES"|\'EACCES\'|\\bEACCES\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"permission denied"|\\[\\s*"EACCES"\\s*,\\s*"permission denied"\\s*\\])'},{d:'handles too many open files',re:'(?:(?:"EMFILE"|\'EMFILE\'|\\bEMFILE\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"handle leak \\- close what you open"|\\[\\s*"EMFILE"\\s*,\\s*"handle leak \\- close what you open"\\s*\\])'},{d:'re-throws the rest',re:'(?:return\\s+(?!!)[^;]{0,110}?"rethrow"|:\\s*"rethrow")'}],
 behavior:`Six cases execute, including an undefined code. The default is the discipline: handle the codes you can act on and pass the rest upward, rather than collapsing every file-system failure into "could not read file" and destroying the information.`,
 hints:['Branch on the code property, never on the message text.','A switch with one case per code you can act on.','The default re-throws: do not swallow codes you did not anticipate.']},
 {title:'Read a file without a TOCTOU race',diff:'medium',lang:'js',
@@ -104,7 +104,7 @@ solution:`function readOrDefault(outcome, contents) {
   if (outcome === "ENOENT") return "default";   // expected: file not there
   return "rethrown";                             // unexpected: pass it on
 }`,
-tests:[{d:'returns the contents on success',re:'"ok"'},{d:'only ENOENT falls back',re:'"ENOENT"'},{d:'everything else is re-thrown',re:'"rethrown"'}],
+tests:[{d:'returns the contents on success',re:'"ok"[^;]{0,100}?(?:return\\s+|\\?\\s*)contents'},{d:'only ENOENT falls back',re:'(?:(?:"ENOENT"|\'ENOENT\'|\\bENOENT\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"default"|\\[\\s*"ENOENT"\\s*,\\s*"default"\\s*\\])'},{d:'everything else is re-thrown',re:'(?:return\\s+(?!!)[^;]{0,110}?"rethrown"|:\\s*"rethrown")'}],
 behavior:`The last case is the one that catches a plausible implementation: an empty file is a successful read, so returning "default" whenever the contents are falsy would be wrong. And EACCES must not be treated as "missing": a permissions problem silently becoming a default is how a service runs for a week on empty configuration.`,
 hints:['Check the success outcome first and return the contents as they are.','Only ENOENT means "absent"; every other code is a real failure.','An empty string is a valid file content, so do not test it for truthiness.']}]},
 
@@ -204,7 +204,7 @@ solution:`function safeJoin(baseDir, userPath) {
   if (full !== base && !full.startsWith(base + "/")) return null;   // escaped
   return full;
 }`,
-tests:[{d:'refuses absolute user paths',re:'startsWith\\s*\\(\\s*"/"'},{d:'resolves .. rather than blocking it',re:'"\\.\\."'},{d:'verifies the result is still inside the base',re:'startsWith\\s*\\(\\s*base'},{d:'allows the base directory itself',re:'full\\s*!==\\s*base|===\\s*base'}],
+tests:[{d:'refuses absolute user paths',re:'startsWith\\s*\\(\\s*"/"\\s*\\)[^;]{0,100}?return\\s+null\\b'},{d:'resolves .. rather than blocking it',re:'"\\.\\."'},{d:'verifies the result is still inside the base',re:'startsWith\\s*\\(\\s*base[^;]{0,120}?return\\s+null\\b'},{d:'allows the base directory itself',re:'full\\s*!==\\s*base|===\\s*base'}],
 behavior:`Eight cases execute, and three of them break the obvious implementations. Case 4 shows why a blocklist is wrong: "a/../photo.png" contains ".." and is perfectly safe, so rejecting on the substring blocks legitimate paths while still missing encoded attacks. Case 6 is the prefix trap: "/srv/uploads-evil/x" starts with "/srv/uploads", so the containment check must compare against the base plus a separator. And case 7 requires the base directory itself to be allowed, which a naive startsWith(base + "/") alone would reject.`,
 hints:['Split into segments and walk them with a stack: ".." pops, "." and empty segments are skipped.','Reject a leading slash before doing anything else.','The containment check needs BOTH an exact match on the base and a startsWith on base + "/", or a sibling directory with a shared prefix slips through.']}},
 
@@ -288,7 +288,7 @@ solution:`function readStrategy(sizeMb, unbounded) {
   if (unbounded) return "stream";      // size is unknown: it could be anything
   return sizeMb > 10 ? "stream" : "readFile";
 }`,
-tests:[{d:'unbounded input always streams',re:'unbounded'},{d:'compares against the threshold',re:'sizeMb\\s*>\\s*10'},{d:'small bounded input reads whole',re:'"readFile"'}],
+tests:[{d:'unbounded input always streams',re:'unbounded[^;]{0,120}?(?:return\\s+|\\?\\s*)"stream"'},{d:'compares against the threshold',re:'sizeMb\\s*>\\s*10[^;]{0,120}?(?:return\\s+|\\?\\s*)"stream"'},{d:'small bounded input reads whole',re:'(?:return\\s+(?!!)[^;]{0,110}?"readFile"|:\\s*"readFile")'}],
 behavior:`Six cases execute. The third is the point: a 1 MB unbounded input still streams, because "unbounded" means you do not know it is 1 MB: an upload advertised as small can arrive as gigabytes, and readFile would buffer all of it. The two threshold cases pin the boundary, which is exactly the kind of off-by-one that passes review and fails on the one file that sits on it.`,
 hints:['Unbounded is the stronger condition: check it first and return.','The threshold comparison is strictly greater than.','Only bounded, small inputs are safe to read whole.']},
 {title:'Consume a stream with backpressure',diff:'hard',lang:'js',
@@ -317,7 +317,7 @@ solution:`function drainPlan(chunks, highWaterMark) {
   }
   return { written, pauses, maxBuffered };
 }`,
-tests:[{d:'accumulates the buffer',re:'buffered\\s*\\+='},{d:'counts every chunk as written',re:'written\\+\\+|written\\s*\\+='},{d:'pauses at the high-water mark',re:'>=\\s*highWaterMark'},{d:'tracks the peak',re:'maxBuffered'}],
+tests:[{d:'accumulates the buffer',re:'buffered\\s*\\+='},{d:'counts every chunk as written',re:'written\\+\\+|written\\s*\\+='},{d:'pauses at the high-water mark',re:'>=\\s*highWaterMark'},{d:'tracks the peak',re:'maxBuffered[\\s\\S]{0,400}?return\\s+(?!!)'}],
 behavior:`Six cases execute, and three of them are boundaries. Case 3 fills the buffer to exactly the high-water mark, which must pause; using a strict > instead of >= passes the other five and fails this one. Case 5 shows that a single chunk larger than the whole buffer is still written, because backpressure slows a producer down rather than rejecting data. And maxBuffered has to be recorded before the drain, or the peak is lost.`,
 hints:['Record the peak immediately after adding, before any drain resets the buffer.','The pause condition is >= the high-water mark, not >.','Every chunk counts as written, including one that immediately triggers a pause.']}]}
 

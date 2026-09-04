@@ -83,7 +83,7 @@ solution:`function lookUp(outerNames, middleNames, innerNames, name) {
   if (outerNames.includes(name)) return "outer";
   return "ReferenceError";                           // fell off the chain
 }`,
-tests:[{d:'searches the innermost scope first',re:'innerNames'},{d:'then the enclosing scope',re:'middleNames'},{d:'then the outer scope',re:'outerNames'},{d:'throws off the end of the chain',re:'"ReferenceError"'}],
+tests:[{d:'searches the innermost scope first',re:'innerNames[^;]{0,140}?(?:return\\s+|\\?\\s*)"inner"'},{d:'then the enclosing scope',re:'middleNames[^;]{0,140}?(?:return\\s+|\\?\\s*)"middle"'},{d:'then the outer scope',re:'outerNames[^;]{0,140}?(?:return\\s+|\\?\\s*)"outer"'},{d:'throws off the end of the chain',re:'(?:return\\s+(?!!)[^;]{0,110}?"ReferenceError"|:\\s*"ReferenceError")'}],
 behavior:`The shadowing case executes the ordering: with the same name in all three, the innermost must win, which is exactly what shadowing means. Searching outward-in instead would return "outer" and pass the other four cases, so order is what this exercise actually checks.`,
 hints:['Three checks in order, innermost first.','includes() tells you whether a name is in a scope.','Reaching the end of the chain is a ReferenceError, not undefined.']}},
 
@@ -171,7 +171,7 @@ function runCounter(n) {
   for (let i = 0; i < n; i++) out.push(next());
   return out;
 }`,
-tests:[{d:'keeps the count outside the returned function',re:'let\\s+count\\s*=\\s*0'},{d:'returns a function',re:'return\\s+function|=>'},{d:'creates one counter and calls it repeatedly',re:'makeCounter\\(\\)'}],
+tests:[{d:'keeps the count outside the returned function',re:'let\\s+count\\s*=\\s*0[\\s\\S]{0,300}?return\\s+\\+?\\+?count\\b'},{d:'returns a function',re:'return\\s+function|=>'},{d:'creates one counter and calls it repeatedly',re:'makeCounter\\(\\)[\\s\\S]{0,400}?return\\s+(?!!)[A-Za-z_$][\\w$]*\\s*;'}],
 behavior:`Your makeCounter is called through runCounter, so both must be right. The state has to live in the enclosing scope: declaring count inside the returned function would reset it to 0 on every call and produce [1,1,1].`,
 hints:['Declare the counter variable in makeCounter, before the returned function.','The inner function increments and returns it.','runCounter should call makeCounter ONCE, then call the result n times.']},
 {title:'Capture per iteration, not per loop',diff:'medium',lang:'js',
@@ -191,7 +191,7 @@ solution:`function makeAdders(n, base) {
   }
   return fns.map(f => f(base));
 }`,
-tests:[{d:'uses let for the per-iteration binding',re:'for\\s*\\(\\s*let\\s+i'},{d:'creates a closure per iteration',re:'push\\('},{d:'does not use var',re:'var\\s+i',not:true}],
+tests:[{d:'uses let for the per-iteration binding',re:'for\\s*\\(\\s*let\\s+i'},{d:'creates a closure per iteration',re:'push\\([\\s\\S]{0,300}?return\\s+(?!!)'},{d:'does not use var',re:'var\\s+i',not:true}],
 behavior:`The last case is the classic bug executed as a test: with var, all four closures share one i and return [4,4,4,4] because the loop finished before any of them ran. With let, each captured a distinct binding and you get [0,1,2,3].`,
 hints:['let in the for header gives each iteration its own binding.','Build the array of functions first, then call them.','If every result is the same, you captured one shared variable.']},
 {title:'Memoise with a closure',diff:'hard',lang:'js',
@@ -226,7 +226,7 @@ function runMemo(inputs) {
   const results = inputs.map(n => s.square(n));
   return { results, computed: s.computed() };
 }`,
-tests:[{d:'holds a cache in the closure',re:'new\\s+Map|\\{\\s*\\}'},{d:'checks the cache before computing',re:'\\.has\\(|in\\s+cache'},{d:'counts only real computations',re:'count\\+\\+|count\\s*\\+='},{d:'creates one squarer',re:'makeSquarer\\(\\)'}],
+tests:[{d:'holds a cache in the closure',re:'new\\s+Map|\\{\\s*\\}'},{d:'checks the cache before computing',re:'(?:\\.has\\(|in\\s+cache)[^;]{0,100}?return\\s+(?!!)'},{d:'counts only real computations',re:'count\\+\\+|count\\s*\\+='},{d:'returns the value itself, not a negation of it',re:'return\\s+!',not:true},{d:'creates one squarer',re:'makeSquarer\\(\\)[\\s\\S]{0,400}?return\\s+(?!!)'}],
 behavior:`The last case is the one that separates a correct memoiser from a plausible one: 0 * 0 is 0, which is falsy, so a cache check written as "if (cache.get(n)) return ..." recomputes it every time and reports 2 instead of 1. Use has() to ask whether a key exists rather than whether its value is truthy. The cache and the counter both live in the closure, so nothing outside can reach or reset them.`,
 hints:['Declare the cache and the counter in makeSquarer, before the inner function.','Use Map.has to test for presence; a cached value of 0 is falsy.','Increment the counter only on the path that actually multiplies.']}]},
 
@@ -315,7 +315,7 @@ solution:`function thisIs(callStyle) {
     default:       return "unknown";
   }
 }`,
-tests:[{d:'new binding',re:'"new"'},{d:'explicit binding covers both call and bind',re:'"bind"'},{d:'method call',re:'"method"'},{d:'arrows inherit',re:'"arrow"'}],
+tests:[{d:'new binding',re:'(?:(?:"new"|\'new\'|\\bnew\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"the new object"|\\[\\s*"new"\\s*,\\s*"the new object"\\s*\\])'},{d:'explicit binding covers both call and bind',re:'(?:(?:"bind"|\'bind\'|\\bbind\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"the bound object"|\\[\\s*"bind"\\s*,\\s*"the bound object"\\s*\\])'},{d:'method call',re:'(?:(?:"method"|\'method\'|\\bmethod\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"the object left of the dot"|\\[\\s*"method"\\s*,\\s*"the object left of the dot"\\s*\\])'},{d:'arrows inherit',re:'(?:(?:"arrow"|\'arrow\'|\\barrow\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"the enclosing scope"|\\[\\s*"arrow"\\s*,\\s*"the enclosing scope"\\s*\\])'}],
 behavior:`Seven cases execute. The two worth holding on to: a detached plain call gives undefined in strict mode and modules (which is every modern file), and an arrow has no own this at all, so none of the other four rules can apply to it.`,
 hints:['A switch with one case per rule.','call and bind are the same rule and share a return.','Modules are always strict, so a plain call gives undefined rather than the global object.']}},
 
@@ -397,7 +397,7 @@ solution:`function deepSum(items) {
   }
   return total;
 }`,
-tests:[{d:'detects nested arrays',re:'Array\\.isArray'},{d:'calls itself',re:'deepSum\\s*\\('},{d:'accumulates a total',re:'\\+='}],
+tests:[{d:'detects nested arrays',re:'Array\\.isArray'},{d:'calls itself',re:'deepSum\\s*\\('},{d:'accumulates a total',re:'\\+=[\\s\\S]{0,300}?return\\s+(?!!)[A-Za-z_$][\\w$]*\\s*;'}],
 behavior:`Six cases execute, including empty arrays at several depths. The base case here is implicit: an empty array runs no iterations and returns the initial 0, so no explicit guard is needed. Array.isArray is what decides recurse-or-add, since typeof would report "object" for both.`,
 hints:['Array.isArray tells you whether to recurse.','The empty array is the base case, and it works for free.','Accumulate into a total declared before the loop.']},
 {title:'Convert recursion to iteration',diff:'medium',lang:'js',
@@ -420,7 +420,7 @@ solution:`function depth(items) {
   }
   return deepest;
 }`,
-tests:[{d:'checks for nested arrays',re:'Array\\.isArray'},{d:'takes the deepest branch',re:'Math\\.max'},{d:'adds a level when recursing',re:'1\\s*\\+\\s*depth'}],
+tests:[{d:'checks for nested arrays',re:'Array\\.isArray'},{d:'takes the deepest branch',re:'Math\\.max[\\s\\S]{0,300}?return\\s+(?!!)[A-Za-z_$][\\w$]*\\s*;'},{d:'adds a level when recursing',re:'1\\s*\\+\\s*depth'}],
 behavior:`The last case executes the branching rule: [1,[2],[[3]]] has branches of depth 2 and 3, so the answer is 3; taking the first or the last rather than the maximum would pass the simpler cases and fail here. The empty array returns the initial 1 without a special branch.`,
 hints:['Start at 1: the array you were given is itself one level.','Only recurse into elements that are arrays.','Keep the maximum across all branches, not the last one.']}]}
 ,
@@ -493,7 +493,7 @@ solution:`function promoteAll(users) {
   // an increment written onto the CALLER'S object instead would leave
   // its evidence right in the original you hand back.
 }`,
-tests:[{d:'maps to new objects',re:'\\.map\\('},{d:'spreads each user into a copy',re:'\\.\\.\\.\\s*user'},{d:'overrides the role',re:'"admin"'},{d:'does not assign onto the input',re:'user\\.(role|logins)\\s*[+]?=',not:true}],
+tests:[{d:'maps to new objects',re:'(?:(?:\\.map\\(|\\.push\\(\\s*\\{)[\\s\\S]{0,420}?return\\s+(?!!)|return\\s+(?!!)[\\s\\S]{0,320}?\\.map\\()'},{d:'spreads each user into a copy',re:'\\.\\.\\.\\s*user'},{d:'overrides the role',re:'"admin"'},{d:'does not assign onto the input',re:'user\\.(role|logins)\\s*[+]?=',not:true}],
 behavior:`Every case checks the input twice: once through the promoted copies, and once through original, the same array your function received, examined after it ran. A mutating implementation returns an original whose users are already admins with bumped logins, and fails on real evidence of the side effect, not on style. The copying implementation leaves logins exactly where it found them.`,
 hints:['map gives you the new array; a spread literal gives you each new object.','Properties written after the spread override the copied ones.','If your original comes back already promoted, you mutated the input.']}}
 

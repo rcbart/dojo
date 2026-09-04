@@ -98,7 +98,7 @@ solution:`function provides(name) {
       return "unknown";
   }
 }`,
-tests:[{d:'document is a browser API',re:'"document"'},{d:'process is a Node API',re:'"process"'},{d:'Promise is part of the language',re:'"language"'},{d:'unrecognised names fall through',re:'"unknown"'}],
+tests:[{d:'document is a browser API',re:'(?:(?:"document"|\'document\'|\\bdocument\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"browser"|\\[\\s*"document"\\s*,\\s*"browser"\\s*\\])'},{d:'process is a Node API',re:'(?:(?:"process"|\'process\'|\\bprocess\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"node"|\\[\\s*"process"\\s*,\\s*"node"\\s*\\])'},{d:'Promise is part of the language',re:'(?:(?:"Promise"|\'Promise\'|\\bPromise\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"language"|\\[\\s*"Promise"\\s*,\\s*"language"\\s*\\])'},{d:'unrecognised names fall through',re:'(?:return\\s+(?!!)[^;]{0,110}?"unknown"|:\\s*"unknown")'}],
 behavior:`provides("document") is "browser", provides("process") is "node", provides("Promise") is "language", provides("zzz") is "unknown". All eight cases are executed against your function. This boundary is the one to internalise first: "X is not defined" almost always means you reached for a host API from the wrong host, not that something is broken.`,
 hints:['A switch with fall-through cases groups the names by host neatly.','Three groups plus a default covers every case.','Anything you were not told about returns "unknown".']}},
 
@@ -194,7 +194,7 @@ solution:`function describe(value) {
   if (Array.isArray(value)) return "array"; // arrays are objects to typeof
   return typeof value;
 }`,
-tests:[{d:'null is reported as null',re:'value\\s*===\\s*null'},{d:'arrays are detected properly',re:'Array\\.isArray'},{d:'everything else falls back to typeof',re:'typeof\\s+value'}],
+tests:[{d:'null is reported as null',re:'value\\s*===\\s*null[^;]{0,80}?(?:return\\s+|\\?\\s*)"null"'},{d:'arrays are detected properly',re:'Array\\.isArray[^;]{0,80}?(?:return\\s+|\\?\\s*)"array"'},{d:'everything else falls back to typeof',re:'(?:return\\s+|:\\s*)typeof\\s+value'}],
 behavior:`describe(42) is "number", describe(null) is "null", describe([1,2]) is "array", describe({a:1}) is "object". Order matters and is executed: check null before anything else, because typeof null returns "object" and would send it down the wrong path.`,
 hints:['Check for null with === before using typeof.','Array.isArray is the only reliable array test.','Everything else can just return typeof value.']}},
 
@@ -285,7 +285,7 @@ solution:`function allowed(operation) {
       return false;           // reassigning const, and the TDZ, both throw
   }
 }`,
-tests:[{d:'mutating a const object is permitted',re:'"mutate-property"'},{d:'pushing to a const array is permitted',re:'"push-to-array"'},{d:'let may be reassigned',re:'"reassign-let"'},{d:'anything else is refused',re:'default'}],
+tests:[{d:'mutating a const object is permitted',re:'"mutate\\-property"[^;]{0,220}?(?:return\\s+|\\?\\s*|:\\s*)true'},{d:'pushing to a const array is permitted',re:'"push\\-to\\-array"[^;]{0,220}?(?:return\\s+|\\?\\s*|:\\s*)true'},{d:'let may be reassigned',re:'"reassign\\-let"[^;]{0,220}?(?:return\\s+|\\?\\s*|:\\s*)true'},{d:'anything else is refused',re:'(?:default|else)[^;]{0,160}?(?:return\\s+|:\\s*)false'}],
 behavior:`Six operations are executed against your function, including an unrecognised one to check the default fails closed. The distinction being tested is the one people get wrong: const prevents the name being pointed somewhere else, and does nothing whatsoever about the contents of the object it points at.`,
 hints:['Three permitted operations, everything else false.','const controls the binding; the value stays mutable.','The temporal dead zone makes reading before a let declaration a ReferenceError.']}},
 
@@ -380,7 +380,7 @@ starter:`function isFalsy(value) {
 solution:`function isFalsy(value) {
   return !value;   // one ! coerces to boolean AND inverts it
 }`,
-tests:[{d:'uses coercion rather than a hardcoded list',re:'!\\s*value'},{d:'does not hardcode a result',re:'return\\s+(true|false)\\s*;',not:true}],
+tests:[{d:'uses coercion rather than a hardcoded list',re:'return\\s+!\\s*value\\b'},{d:'does not hardcode a result',re:'return\\s+(true|false)\\s*;',not:true}],
 behavior:`All eight cases run, including the three that catch people out: "0", [] and {} are all truthy, because only the eight listed values are falsy and none of them is a non-empty string or an object.`,
 hints:['A single ! both coerces to boolean and inverts.','Do not enumerate the falsy values; the language already knows them.','!!value gives you the truthiness; !value gives you its opposite.']},
 {title:'Default only when genuinely absent',diff:'medium',lang:'js',
@@ -398,7 +398,7 @@ starter:`function withDefault(value, fallback) {
 solution:`function withDefault(value, fallback) {
   return value ?? fallback;   // ?? checks NULLISH, not falsy
 }`,
-tests:[{d:'uses nullish coalescing rather than ||',re:'\\?\\?'},{d:'does not use the falsy-based fallback',re:'\\|\\|',not:true}],
+tests:[{d:'uses nullish coalescing rather than ||',re:'return\\s+value\\s*\\?\\?'},{d:'does not use the falsy-based fallback',re:'\\|\\|',not:true}],
 behavior:`The three middle cases are the whole lesson and they are executed: writing value || fallback passes the first two tests and fails on 0, "" and false: a bug that appears the day someone legitimately configures a port of 0 or an empty prefix.`,
 hints:['|| falls back on any falsy value; ?? falls back only on null and undefined.','The whole body is a single return.','0 and "" must survive.']},
 {title:'Normalize a form submission',diff:'hard',lang:'js',
@@ -426,7 +426,7 @@ solution:`function normalize(form) {
   }
   return { name, age };
 }`,
-tests:[{d:'trims the name',re:'\\.trim\\(\\)'},{d:'guards the empty string before converting',re:'!==\\s*""|===\\s*""'},{d:'converts with Number',re:'Number\\s*\\('},{d:'rejects NaN and Infinity',re:'Number\\.isFinite'}],
+tests:[{d:'trims the name',re:'\\.trim\\(\\)'},{d:'guards the empty string before converting',re:'!==\\s*""|===\\s*""'},{d:'converts with Number',re:'Number\\s*\\('},{d:'rejects NaN and Infinity',re:'Number\\.isFinite[\\s\\S]{0,240}?return\\s+(?!!)'}],
 behavior:`Seven cases execute and three of them fail a naive implementation. Number("") is 0, so without the empty guard a blank age silently becomes zero. A truthiness check on the converted value would throw away a legitimate 0. And "abc" converts to NaN, which is a number by typeof and useless by every other measure; Number.isFinite is what catches it.`,
 hints:['Handle the missing key with ?? before calling trim.','Check for the empty string BEFORE converting, because Number("") is 0.','Number.isFinite rejects NaN and Infinity in one test, and 0 passes it.']}]},
 
@@ -517,7 +517,7 @@ solution:`function toNumber(text) {
   const n = Number(text);                 // strict: rejects "42abc"
   return Number.isFinite(n) ? n : null;   // rejects NaN and Infinity
 }`,
-tests:[{d:'the empty string is rejected before conversion',re:'trim\\(\\)\\s*===\\s*""'},{d:'uses strict Number conversion',re:'Number\\s*\\(\\s*text\\s*\\)'},{d:'rejects NaN and Infinity',re:'Number\\.isFinite'}],
+tests:[{d:'the empty string is rejected before conversion',re:'trim\\(\\)\\s*===\\s*""[^;]{0,80}?(?:return\\s+|\\?\\s*)null'},{d:'uses strict Number conversion',re:'Number\\s*\\(\\s*text\\s*\\)'},{d:'rejects NaN and Infinity',re:'(?:return\\s+Number\\.isFinite|!\\s*Number\\.isFinite\\s*\\([^;]{0,60}?return\\s+null)'}],
 behavior:`Nine cases run. Two are the point: Number("") is 0, so an empty form field would silently become zero without the explicit guard; and Number("Infinity") is a finite-looking success that Number.isFinite correctly rejects. parseInt would also wrongly accept "42abc".`,
 hints:['Handle the empty/whitespace case first: Number("") is 0.','Number() is strict where parseInt is lenient; you want strict here.','Number.isFinite rejects both NaN and Infinity in one check.']},
 {title:'Format a name safely',diff:'medium',lang:'js',
@@ -534,7 +534,7 @@ solution:`function greet(name) {
   const clean = name.trim();
   return \`Hello, \${clean === "" ? "stranger" : clean}!\`;
 }`,
-tests:[{d:'uses a template literal',re:'\`'},{d:'trims the input',re:'\\.trim\\(\\)'},{d:'falls back for an empty name',re:'"stranger"'}],
+tests:[{d:'uses a template literal',re:'return\\s+(?!!)[^;]{0,160}?`'},{d:'trims the input',re:'\\.trim\\(\\)'},{d:'falls back for an empty name',re:'"stranger"'}],
 behavior:`greet("  Ada  ") is "Hello, Ada!" and greet("   ") is "Hello, stranger!". Note that trim() returns a new string; assigning its result is what makes this work, since strings are immutable.`,
 hints:['Assign the trimmed value; trim() does not modify the original.','A ternary inside the template literal handles the fallback.','Remember the exclamation mark.']}]}
 

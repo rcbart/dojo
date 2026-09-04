@@ -89,7 +89,7 @@ solution:`function cityOf(user) {
   const city = user?.address?.city;   // short-circuits to undefined, no throw
   return city ? city : "unknown";     // "" is falsy, so it falls back too
 }`,
-tests:[{d:'uses optional chaining',re:'\\?\\.'},{d:'falls back to unknown',re:'"unknown"'}],
+tests:[{d:'uses optional chaining',re:'\\?\\.'},{d:'falls back to unknown',re:'return\\s+(?!!)[^;]{0,80}?"unknown"'}],
 behavior:`Five cases execute, including a null user that would throw without optional chaining. Note the last one: an empty city string must also fall back, which is why a truthiness check is right here and ?? would be wrong: the opposite of the earlier lesson, because here "" is not a value you want to keep.`,
 hints:['?. after each step stops the chain at the first null or undefined.','A null user needs the ?. on the very first access.','An empty string is falsy, so a plain truthiness test handles it.']},
 {title:'Copy without sharing',diff:'medium',lang:'js',
@@ -104,7 +104,7 @@ starter:`function renameCopy(user, newName) {
 solution:`function renameCopy(user, newName) {
   return { ...user, name: newName };   // spread first, then override
 }`,
-tests:[{d:'spreads the original',re:'\\.\\.\\.\\s*user'},{d:'overrides the name',re:'name:\\s*newName'},{d:'does not mutate the argument',re:'user\\.name\\s*=',not:true}],
+tests:[{d:'spreads the original',re:'return\\s+(?!!)[^;]{0,140}?\\.\\.\\.\\s*user'},{d:'overrides the name',re:'name:\\s*newName'},{d:'does not mutate the argument',re:'user\\.name\\s*=',not:true}],
 behavior:`Order matters inside the literal: spreading first and overriding after is what applies your change. Reversing them would let the original name win. This is the standard shape for an immutable update, and it is exactly how React state updates are written.`,
 hints:['Spread the original into a new object literal.','Put the override AFTER the spread or it will be overwritten.','Never assign to user.name; that would mutate the caller’s object.']}]},
 
@@ -206,7 +206,7 @@ solution:`function topThree(numbers) {
     .sort((a, b) => b - a)            // numeric, descending
     .slice(0, 3);                     // slice is safe on short arrays
 }`,
-tests:[{d:'copies before sorting',re:'\\[\\s*\\.\\.\\.\\s*numbers\\s*\\]|toSorted'},{d:'sorts numerically',re:'b\\s*-\\s*a'},{d:'takes the first three',re:'slice\\s*\\(\\s*0\\s*,\\s*3\\s*\\)'}],
+tests:[{d:'copies before sorting',re:'\\[\\s*\\.\\.\\.\\s*numbers\\s*\\]|toSorted'},{d:'sorts numerically',re:'b\\s*-\\s*a'},{d:'takes the first three',re:'slice\\s*\\(\\s*0\\s*,\\s*3\\s*\\)'},{d:'returns the value itself, not a negation of it',re:'return\\s+!',not:true}],
 behavior:`The first case fails outright with a bare sort(): as strings, 100 sorts before 9 because "1" < "9". slice handles short arrays without a length check, and the spread copy is what stops the caller's array being reordered underneath them.`,
 hints:['Spread into a new array first, or use toSorted().','A numeric comparator subtracts: b - a for descending.','slice(0, 3) is safe even when there are fewer than three items.']},
 {title:'Group and summarize',diff:'hard',lang:'js',
@@ -228,7 +228,7 @@ solution:`function summarize(items) {
   }
   return [...totals].sort((a, b) => b[1] - a[1]);   // stable, so ties hold
 }`,
-tests:[{d:'accumulates per category',re:'\\.set\\('},{d:'reads the running total',re:'\\.get\\('},{d:'sorts by the total',re:'b\\[1\\]\\s*-\\s*a\\[1\\]|sort'},{d:'returns pairs',re:'\\[\\s*\\.\\.\\.'}],
+tests:[{d:'accumulates per category',re:'\\.set\\('},{d:'reads the running total',re:'\\.get\\('},{d:'sorts by the total',re:'b\\[1\\]\\s*-\\s*a\\[1\\]|sort'},{d:'returns pairs',re:'\\[\\s*\\.\\.\\.'},{d:'returns the value itself, not a negation of it',re:'return\\s+!',not:true}],
 behavior:`Six cases execute and two of them decide the implementation. The tie case only passes because Map keeps insertion order and Array.prototype.sort is stable; a plain object would give you no ordering guarantee for the keys. The empty case falls out with no special branch.`,
 hints:['A Map accumulates the totals and remembers first-seen order.','Default the running total to 0 with ?? before adding.','Spread the Map into pairs, then sort by the second element descending.']}]},
 
@@ -300,7 +300,7 @@ solution:`function withoutPassword(user) {
   const { password, ...safe } = user;   // password is pulled out and dropped
   return safe;
 }`,
-tests:[{d:'uses rest destructuring',re:'\\.\\.\\.\\s*safe|\\.\\.\\.\\s*rest'},{d:'names the field being removed',re:'password'},{d:'does not delete from the original',re:'delete\\s+user',not:true}],
+tests:[{d:'uses rest destructuring',re:'\\.\\.\\.\\s*(safe|rest)[\\s\\S]{0,100}?return\\s+\\1\\b'},{d:'names the field being removed',re:'password'},{d:'does not delete from the original',re:'delete\\s+user',not:true}],
 behavior:`Four cases execute, including one where the field is absent; rest destructuring handles that without a guard. Note the last case: only password is removed, so a token still passes through. Using delete would have mutated the caller's object instead of returning a new one.`,
 hints:['Destructure the unwanted key by name, then collect the rest.','The rest variable is the object you return.','delete would work but mutates what you were given.']},
 {title:'Merge configuration correctly',diff:'medium',lang:'js',
@@ -316,7 +316,7 @@ starter:`function resolve(defaults, options) {
 solution:`function resolve(defaults, options) {
   return { ...defaults, ...options };   // later spread wins, per key
 }`,
-tests:[{d:'spreads the defaults first',re:'\\.\\.\\.\\s*defaults'},{d:'spreads the options after',re:'\\.\\.\\.\\s*options'}],
+tests:[{d:'spreads the defaults first',re:'return\\s+(?!!)[^;]{0,140}?\\.\\.\\.\\s*defaults'},{d:'spreads the options after',re:'\\.\\.\\.\\s*options'}],
 behavior:`The last case executes the trap: spreading gives per-key override by presence, so an explicit port of 0 survives. Writing this with || per field (options.port || defaults.port) would silently replace 0 with 80, which is the same falsy-versus-nullish bug from the operators lesson.`,
 hints:['Both objects spread into one literal.','Whichever is spread LAST wins on conflicting keys.','No per-field logic is needed at all.']}]},
 
@@ -397,7 +397,7 @@ solution:`function countWords(words) {
   }
   return [...counts];                           // Map -> array of [k, v]
 }`,
-tests:[{d:'uses a Map',re:'new\\s+Map'},{d:'reads the current count',re:'\\.get\\('},{d:'writes the incremented count',re:'\\.set\\('},{d:'spreads the map into entries',re:'\\[\\s*\\.\\.\\.'}],
+tests:[{d:'uses a Map',re:'new\\s+Map'},{d:'reads the current count',re:'\\.get\\('},{d:'writes the incremented count',re:'\\.set\\('},{d:'spreads the map into entries',re:'return\\s+(?!!)[^;]{0,60}?\\[\\s*\\.\\.\\.'}],
 behavior:`Insertion order is executed as its own case: a Map iterates in the order keys were first added, so 'z' comes before 'a'. The ?? 0 handles the first sighting of a word, where get() returns undefined and undefined + 1 would be NaN.`,
 hints:['get() returns undefined for a key you have not seen; default it to 0.','set() overwrites, so read-then-write is the pattern.','Spreading a Map gives you [key, value] pairs directly.']},
 {title:'Parse JSON without crashing',diff:'medium',lang:'js',
@@ -419,7 +419,7 @@ solution:`function safeParse(text) {
     return null;             // optional catch binding: no (e) needed
   }
 }`,
-tests:[{d:'calls JSON.parse',re:'JSON\\.parse'},{d:'catches the failure',re:'catch'}],
+tests:[{d:'calls JSON.parse',re:'(?:return\\s+|=\\s*)JSON\\.parse\\s*\\('},{d:'catches the failure',re:'catch[^;]{0,100}?return\\s+null'}],
 behavior:`Three malformed inputs execute, each of which throws a SyntaxError without the catch. Note the last case: the string "null" is valid JSON that parses to null, so a valid parse and a failed one produce the same answer here: a real ambiguity, and the reason production code usually returns { ok, value } instead.`,
 hints:['Wrap the parse in try/catch.','catch { } without a binding is legal modern JavaScript.','Return null from the catch block, not from after the try.']}]}
 ,
@@ -491,7 +491,7 @@ solution:`function daysBetween(a, b) {
   const ms = Math.abs(db - da);        // subtraction gives milliseconds
   return Math.floor(ms / 86400000);    // 1000*60*60*24, whole days only
 }`,
-tests:[{d:'parses both inputs as Dates',re:'new\\s+Date'},{d:'detects an invalid date',re:'isNaN'},{d:'is order-independent',re:'Math\\.abs'},{d:'rounds down to whole days',re:'Math\\.floor'}],
+tests:[{d:'parses both inputs as Dates',re:'new\\s+Date'},{d:'detects an invalid date',re:'isNaN[^;]{0,160}?return\\s+null'},{d:'is order-independent',re:'Math\\.abs'},{d:'rounds down to whole days',re:'(?:return\\s+|=\\s*)Math\\.floor\\s*\\('}],
 behavior:`Six cases execute. The invalid-date pair is the production one: new Date("garbage") is not an exception, it is a value whose getTime() is NaN, and NaN divided, floored and compared stays NaN, so a guard at the boundary is the only place to catch it, exactly like toNumber in the foundations stream.`,
 hints:['getTime() on an invalid Date is NaN; check both before any arithmetic.','Subtracting Dates yields milliseconds; Math.abs removes the order problem.','86,400,000 milliseconds make a day; floor keeps only whole ones.']}}
 

@@ -89,7 +89,7 @@ solution:`function routeKey(method, url) {
   }
   return method.toUpperCase() + " " + path;
 }`,
-tests:[{d:'strips the query string',re:'split\\s*\\(\\s*"\\?"'},{d:'upper-cases the method',re:'toUpperCase'},{d:'protects the root path',re:'length\\s*>\\s*1'}],
+tests:[{d:'strips the query string',re:'split\\s*\\(\\s*"\\?"'},{d:'upper-cases the method',re:'(?:return\\s+(?!!)|=\\s*)[^;]{0,160}?toUpperCase'},{d:'protects the root path',re:'length\\s*>\\s*1'}],
 behavior:`Six cases execute, and the root-path case is the one that catches a naive trailing-slash strip: removing it unconditionally turns "/" into "", which then matches no route at all. Note that a real router should use the URL class rather than splitting strings; this exercise splits so the pieces are visible.`,
 hints:['Split off the query first, then the hash.','Only remove a trailing slash when the path is longer than one character.','Concatenate the upper-cased method, a space, and the path.']},
 {title:'Bound the request body',diff:'medium',lang:'js',
@@ -203,7 +203,7 @@ solution:`function resolveRoute(routes, method, path) {
   }
   return { status: 404, allow: null };           // the path itself is unknown
 }`,
-tests:[{d:'finds the methods registered for this path',re:'filter'},{d:'an exact match succeeds',re:'status:\\s*200'},{d:'a known path with a wrong method is 405',re:'405'},{d:'builds the Allow header',re:'join\\s*\\(\\s*", "'}],
+tests:[{d:'finds the methods registered for this path',re:'(?:\\.filter\\(|\\.forEach\\(|\\.reduce\\(|for\\s*\\()'},{d:'an exact match succeeds',re:'return\\s+(?!!)[^;]{0,160}?status:\\s*200'},{d:'a known path with a wrong method is 405',re:'return\\s+(?!!)[^;]{0,160}?405'},{d:'builds the Allow header',re:'join\\s*\\(\\s*", "'}],
 behavior:`Five cases execute. The distinction being tested is one most hand-rolled routers get wrong: returning 404 when the path exists but the method does not hides a client bug that 405 plus an Allow header explains immediately. The order of the checks matters: an exact match has to be tested before the path-only fallback.`,
 hints:['Filter the routes down to those whose path matches, then read their methods.','Check for an exact method match before deciding between 405 and 404.','The Allow header is the methods joined with a comma and a space.']},
 {title:'Validate a request body properly',diff:'hard',lang:'js',
@@ -214,6 +214,7 @@ run:{call:'validateUser',cases:[
  {name:'a blank name is reported',args:[{name:'   '}],expect:{ok:false,errors:['name is required']}},
  {name:'a numeric string is NOT a number',args:[{name:'Ada',age:'36'}],expect:{ok:false,errors:['age must be a whole number between 0 and 150']}},
  {name:'an out-of-range age is reported',args:[{name:'Ada',age:200}],expect:{ok:false,errors:['age must be a whole number between 0 and 150']}},
+ {name:'a fractional age is not a whole number',args:[{name:'Ada',age:36.5}],expect:{ok:false,errors:['age must be a whole number between 0 and 150']}},
  {name:'an unknown field is refused, not ignored',args:[{name:'Ada',role:'admin'}],expect:{ok:false,errors:['unknown field: role']}},
  {name:'every problem is reported at once, in a fixed order',args:[{age:'x',role:'admin'}],expect:{ok:false,errors:['name is required','age must be a whole number between 0 and 150','unknown field: role']}}]},
 prompt:`Write <code>function validateUser(body)</code> returning <code>{ ok, errors }</code>. <code>name</code> is required and must be a non-blank string (&rarr; <code>"name is required"</code>). <code>age</code> is optional, and when present must be a whole number from 0 to 150 (&rarr; <code>"age must be a whole number between 0 and 150"</code>); the <b>string</b> <code>"36"</code> is not a number. Any key other than <code>name</code> and <code>age</code> is an error (&rarr; <code>"unknown field: KEY"</code>). Report every problem, in that order.`,
@@ -241,7 +242,7 @@ solution:`function validateUser(body) {
 
   return { ok: errors.length === 0, errors };
 }`,
-tests:[{d:'checks the name is a non-blank string',re:'typeof\\s+name\\s*!==\\s*"string"|trim\\(\\)'},{d:'only validates age when it was supplied',re:'!==\\s*undefined'},{d:'requires a real number, not a numeric string',re:'typeof\\s+age\\s*!==\\s*"number"|Number\\.isInteger'},{d:'rejects unknown fields',re:'unknown field'},{d:'collects every error',re:'errors\\.push'}],
+tests:[{d:'checks the name is a non-blank string',re:'typeof\\s+name\\s*!==\\s*"string"|trim\\(\\)'},{d:'only validates age when it was supplied',re:'!==\\s*undefined'},{d:'requires a real number, not a numeric string',re:'typeof\\s+age\\s*!==\\s*"number"|Number\\.isInteger'},{d:'rejects unknown fields',re:'unknown field'},{d:'collects every error',re:'errors\\.push[\\s\\S]{0,800}?return\\s+(?!!)'}],
 behavior:`Eight cases execute and three of them are genuine security or correctness traps. The string "36" must fail: JSON gives you real types, so accepting a string here means a client controls whether your comparisons are numeric or lexicographic. The unknown-field case is mass assignment: silently ignoring { role: "admin" } is fine until someone spreads the body into a database write. And the last case requires collecting every error rather than returning at the first, so a client fixes their request once instead of six times.`,
 hints:['Check the type before the value: typeof "36" is "string", not "number".','An optional field is only validated when it is not undefined.','Walk Object.keys to find fields you did not expect, and push an error for each.']}]},
 
@@ -324,7 +325,7 @@ solution:`function bearerToken(authHeader) {
   const token = authHeader.slice("Bearer ".length);
   return token === "" ? null : token;                     // "Bearer " alone
 }`,
-tests:[{d:'checks the scheme prefix',re:'"Bearer "'},{d:'handles a missing header',re:'\\?\\.|authHeader\\s*&&|!\\s*authHeader'},{d:'refuses an empty token',re:'===\\s*""|length\\s*===\\s*0'}],
+tests:[{d:'checks the scheme prefix',re:'"Bearer "[^;]{0,140}?return\\s+null\\b'},{d:'handles a missing header',re:'\\?\\.|authHeader\\s*&&|!\\s*authHeader'},{d:'refuses an empty token',re:'(?:===\\s*""|length\\s*===\\s*0)[^;]{0,100}?(?:return\\s+|\\?\\s*)null'}],
 behavior:`Six cases execute. The fifth is the one people miss: "Bearer " with nothing after it passes a startsWith check and yields an empty token, which then fails much later inside the verifier with a confusing error rather than a clean 401 here. Optional chaining handles the undefined header without a separate branch.`,
 hints:['Optional chaining lets you test a possibly-undefined header in one expression.','Slice off the prefix by its length rather than a magic number.','An empty remainder is not a token.']},
 {title:'Build the response for a request',diff:'hard',lang:'js',
@@ -352,7 +353,7 @@ solution:`function respond(req) {
   if (req.bodyBytes > 1000000) return { status: 413, headers: withCache };
   return { status: 200, headers: withCache };
 }`,
-tests:[{d:'401 carries the challenge header',re:'www-authenticate'},{d:'distinguishes 403 from 401',re:'403'},{d:'rejects the wrong content type',re:'415'},{d:'bounds the body size',re:'413'},{d:'sets nosniff on every response',re:'x-content-type-options'}],
+tests:[{d:'401 carries the challenge header',re:'return\\s+(?!!)[^;]{0,220}?www-authenticate'},{d:'distinguishes 403 from 401',re:'return\\s+(?!!)[^;]{0,160}?403'},{d:'rejects the wrong content type',re:'return\\s+(?!!)[^;]{0,160}?415'},{d:'bounds the body size',re:'return\\s+(?!!)[^;]{0,160}?413'},{d:'sets nosniff on every response',re:'x-content-type-options'}],
 behavior:`Six cases execute and two of them exist purely to pin the ORDER. The fourth has a body of 99999999 bytes and the wrong content type, and must return 415: you reject a payload you cannot parse before measuring it. The sixth has no credential, the wrong role, the wrong type and an enormous body, and must still return 401: authentication comes first, because everything after it is a statement about a caller you have not identified. A 401 without www-authenticate is also non-compliant, which is why that header is checked separately.`,
 hints:['Build the shared header object once and spread it into each response.','The order is authenticate, authorize, then validate the request itself.','The 401 is the only response without cache-control, so return it before adding that header.']}]}
 ,
@@ -433,7 +434,7 @@ solution:`function vetPatch(patch) {
   const hit = walk(patch);
   return hit ? "reject: " + hit : "ok";
 }`,
-tests:[{d:'bans __proto__',re:'__proto__'},{d:'bans constructor and prototype',re:'constructor'},{d:'reads own keys only',re:'Object\\.keys'},{d:'recurses into nested values',re:'walk\\s*\\(|vetPatch\\s*\\('}],
+tests:[{d:'bans __proto__',re:'__proto__'},{d:'bans constructor and prototype',re:'constructor'},{d:'reads own keys only',re:'Object\\.keys'},{d:'recurses into nested values',re:'(?:walk\\s*\\(|vetPatch\\s*\\()[\\s\\S]{0,340}?return\\s+(?!!)'},{d:'reports the offending key rather than a bare boolean',re:'return\\s+(?!!)[^;]{0,140}?"reject: "'}],
 behavior:`The dangerous cases are built with JSON.parse in the test data for a reason: a literal {__proto__: ...} in source code would silently set the object's prototype, but JSON.parse creates it as an ordinary own property, which is exactly how the attack arrives over the network, and exactly what Object.keys exposes. The walker refuses the patch before any merge happens, which is cheaper than cleaning up a poisoned Object.prototype ever is.`,
 hints:['Recurse: a function inside vetPatch that calls itself on object values.','Arrays are objects too - Object.keys gives their indices, so one walker handles both.','Return the key from the recursion so the first find wins.']}}
 

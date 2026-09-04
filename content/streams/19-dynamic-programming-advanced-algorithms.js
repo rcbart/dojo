@@ -158,7 +158,7 @@ solution:`function minCoins(coins, amount) {
   }
   return dp[amount] > amount ? -1 : dp[amount];
 }`,
-tests:[{d:'a table of size amount + 1 is allocated',re:'amount\\s*\\+\\s*1'},{d:'the base case is set',re:'dp\\[0\\]\\s*=\\s*0'},{d:'every coin is tried for every amount',re:'for\\s*\\(.*of\\s+coins|coins\\.forEach'},{d:'the recurrence takes a minimum',re:'Math\\.min'},{d:'unreachable amounts return -1',re:'-1'}],
+tests:[{d:'a table of size amount + 1 is allocated',re:'amount\\s*\\+\\s*1'},{d:'the base case is set',re:'dp\\[0\\]\\s*=\\s*0'},{d:'every coin is tried for every amount',re:'for\\s*\\(.*of\\s+coins|coins\\.forEach'},{d:'the recurrence takes a minimum',re:'Math\\.min'},{d:'unreachable amounts return -1',re:'return\\s+(?!\\s*!\\s*\\()[^;]{0,80}-\\s*1\\s*[:;]'}],
 behavior:`Five cases run. The fourth is the one worth failing once: a greedy algorithm takes the largest coin that fits (4, then 1, then 1) and answers three, while the optimal answer is 3+3, two coins. Greedy is correct only for certain coin systems, which is why this problem is a DP problem and why "it worked on my examples" is not evidence. The unreachable case checks your sentinel survives the +1 without wrapping, and the zero case checks the base row exists at all: dp[0] = 0 is what every other entry is ultimately built from, so omitting it makes every answer wrong by an unbounded amount.`,
 hints:['dp[a] is the fewest coins making exactly a. dp[0] is 0.','For each amount, try each coin as the LAST coin used.','Compare the final entry against your sentinel to detect unreachable.']}]},
 {id:'dp3',title:'2D DP: longest common subsequence',body:`

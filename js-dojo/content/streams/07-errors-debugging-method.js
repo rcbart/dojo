@@ -77,7 +77,7 @@ solution:`function diagnose(errorName) {
     default:               return "read the message and the stack";
   }
 }`,
-tests:[{d:'handles TypeError',re:'"TypeError"'},{d:'handles ReferenceError',re:'"ReferenceError"'},{d:'handles SyntaxError',re:'"SyntaxError"'},{d:'has a default for custom errors',re:'default'}],
+tests:[{d:'handles TypeError',re:'(?:(?:"TypeError"|\'TypeError\'|\\bTypeError\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"something you assumed existed did not"|\\[\\s*"TypeError"\\s*,\\s*"something you assumed existed did not"\\s*\\])'},{d:'handles ReferenceError',re:'(?:(?:"ReferenceError"|\'ReferenceError\'|\\bReferenceError\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"a name is misspelled or not yet initialized"|\\[\\s*"ReferenceError"\\s*,\\s*"a name is misspelled or not yet initialized"\\s*\\])'},{d:'handles SyntaxError',re:'(?:(?:"SyntaxError"|\'SyntaxError\'|\\bSyntaxError\\b)[^;]{0,140}?(?:return\\s+|\\?\\s*|:\\s*)"the text could not be parsed"|\\[\\s*"SyntaxError"\\s*,\\s*"the text could not be parsed"\\s*\\])'},{d:'has a default for custom errors',re:'(?:default[^;]{0,180}?return\\s+"read the message and the stack"|else[^;]{0,160}?return\\s+"read the message and the stack"|return\\s+(?!!)[^;]{0,90}?"read the message and the stack"\\s*;\\s*\\})'}],
 behavior:`The default case matters more than it looks: a custom error class is the common case in real applications, and the type alone tells you nothing, which is exactly why setting a meaningful name and attaching structured fields is worth the four lines.`,
 hints:['A switch with one case per built-in type.','The default covers custom error classes.','TypeError is the one you will see most often.']}},
 
@@ -153,7 +153,7 @@ solution:`function parseOrRethrow(text, errorName) {
   if (errorName === "SyntaxError") return null;     // I know what this means
   return "rethrown";                                 // I do not - pass it on
 }`,
-tests:[{d:'handles the success path',re:'text\\s*!==\\s*"bad"'},{d:'recognizes the error it can handle',re:'"SyntaxError"'},{d:'passes everything else on',re:'"rethrown"'}],
+tests:[{d:'handles the success path',re:'text\\s*!==\\s*"bad"[^;]{0,100}?return\\s+text\\b'},{d:'recognizes the error it can handle',re:'"SyntaxError"[^;]{0,120}?return\\s+null\\b'},{d:'passes everything else on',re:'return\\s+"rethrown"'}],
 behavior:`Two different unexpected error types execute the same re-throw path. That is the discipline this models: swallowing every error would turn a TypeError in your own parsing code into a silent null, and you would spend an afternoon looking for data that was never malformed.`,
 hints:['Handle the success case first and return early.','Only the specific error type you understand becomes null.','Everything else is passed on rather than swallowed.']},
 {title:'Cleanup that always runs',diff:'medium',lang:'js',
@@ -178,7 +178,7 @@ solution:`function withCleanup(shouldFail) {
   }
   return out;               // the return lives OUTSIDE finally
 }`,
-tests:[{d:'uses try',re:'try\\s*\\{'},{d:'catches the failure',re:'catch'},{d:'cleans up in finally',re:'finally'},{d:'does not return from finally',re:'finally\\s*\\{[^}]*return',not:true}],
+tests:[{d:'uses try',re:'try\\s*\\{'},{d:'catches the failure',re:'catch'},{d:'cleans up in finally',re:'finally[\\s\\S]{0,260}?return\\s+(?!!)[A-Za-z_$][\\w$]*\\s*;'},{d:'does not return from finally',re:'finally\\s*\\{[^}]*return',not:true}],
 behavior:`Both paths execute twice, and every call must end in "|cleaned"; accumulating into a variable declared OUTSIDE the function would pass the first call and fail the third. The regex check for a return inside finally is deliberate: returning there would discard the exception entirely and make the failure invisible, which is the trap this lesson exists to prevent.`,
 hints:['Accumulate into a variable declared before the try.','finally runs on both paths, so put the cleanup there.','Return after the whole try/catch/finally, never inside finally.']}]},
 
@@ -273,7 +273,7 @@ solution:`function caught(scenario) {
       return false;        // everything else escapes - fail closed
   }
 }`,
-tests:[{d:'a synchronous throw is caught',re:'"sync-throw"'},{d:'an awaited rejection is caught',re:'"await-reject"'},{d:'a handled chain is caught',re:'"then-catch"'},{d:'everything else escapes',re:'default'}],
+tests:[{d:'a synchronous throw is caught',re:'(?:"sync\\-throw"[^;]{0,240}?(?:return\\s+|\\?\\s*|:\\s*)true|\\[[^\\]]{0,240}"sync\\-throw"[^\\]]{0,240}\\][\\s\\S]{0,220}?(?:return\\s+|\\?\\s*)true)'},{d:'an awaited rejection is caught',re:'(?:"await\\-reject"[^;]{0,240}?(?:return\\s+|\\?\\s*|:\\s*)true|\\[[^\\]]{0,240}"await\\-reject"[^\\]]{0,240}\\][\\s\\S]{0,220}?(?:return\\s+|\\?\\s*)true)'},{d:'a handled chain is caught',re:'(?:"then\\-catch"[^;]{0,240}?(?:return\\s+|\\?\\s*|:\\s*)true|\\[[^\\]]{0,240}"then\\-catch"[^\\]]{0,240}\\][\\s\\S]{0,220}?(?:return\\s+|\\?\\s*)true)'},{d:'everything else escapes',re:'(?:(?:default|else)[^;]{0,200}?(?:return\\s+|:\\s*)false|return\\s+false\\s*;\\s*\\})'}],
 behavior:`Seven scenarios execute. The three that escape are the three that appear in real code most often (a throw inside a timer, a promise nobody awaited, and an async callback handed to forEach), and since Node 15 the last two terminate the process rather than warning.`,
 hints:['Only three scenarios are caught; list them and default the rest.','await is what brings a rejection back onto your own stack.','forEach discards the promises its callback returns.']}},
 
@@ -355,7 +355,7 @@ solution:`function firstOwnFrame(frames, libraryMarker) {
   }
   return "no application frame";
 }`,
-tests:[{d:'scans the frames in order',re:'for\\s*\\('},{d:'skips library frames',re:'includes\\s*\\(\\s*libraryMarker'},{d:'reports when there is none',re:'"no application frame"'}],
+tests:[{d:'scans the frames in order',re:'for\\s*\\('},{d:'skips library frames',re:'includes\\s*\\(\\s*libraryMarker[^;]{0,100}?return\\s+(?!!)'},{d:'reports when there is none',re:'return\\s+"no application frame"'}],
 behavior:`Order is executed: the frames must be scanned top-down, because the first application frame is the one to open. This is exactly what DevTools blackboxing automates: hiding library frames so the top of the trace is your own code.`,
 hints:['Scan in order and return the first non-library frame.','includes() tests whether a frame is from a library.','Falling through the loop means every frame was a library frame.']},
 {title:'Bisect a range',diff:'medium',lang:'js',
@@ -372,7 +372,7 @@ starter:`function bisectSteps(n) {
 solution:`function bisectSteps(n) {
   return Math.ceil(Math.log2(n));   // log2(1) is 0, so the base case is free
 }`,
-tests:[{d:'uses a base-2 logarithm',re:'Math\\.log2'},{d:'rounds up to a whole step',re:'Math\\.ceil'}],
+tests:[{d:'uses a base-2 logarithm',re:'Math\\.log2'},{d:'rounds up to a whole step',re:'(?:return\\s+(?!!)|=\\s*)[^;]{0,100}?Math\\.ceil'}],
 behavior:`The 1000 case is the argument for the technique: ten steps to find one bad commit among a thousand. That is why git bisect is worth reaching for the moment you have no hypothesis; it converts an unbounded search into a bounded one.`,
 hints:['Halving repeatedly is a base-2 logarithm.','A partial step still costs a whole step, so round up.','log2(1) is 0, which gives the single-candidate case for free.']}]}
 

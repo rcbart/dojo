@@ -130,7 +130,7 @@ public class Entitlements {
         return held.contains("ap_create") && held.contains("ap_pay");
     }
 }`,
-tests:[{d:'checks the create entitlement',re:'contains\\s*\\(\\s*"ap_create"\\s*\\)'},{d:'checks the pay entitlement',re:'contains\\s*\\(\\s*"ap_pay"\\s*\\)'},{d:'conflict needs BOTH',re:'&&'}],
+tests:[{d:'checks the create entitlement',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:contains\\s*\\(\\s*"ap_create"\\s*\\)))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:contains\\s*\\(\\s*"ap_create"\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:contains\\s*\\(\\s*"ap_create"\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:contains\\s*\\(\\s*"ap_create"\\s*\\))[^{]*?return\\s+\\k<av>\\b)'},{d:'checks the pay entitlement',re:'contains\\s*\\(\\s*"ap_pay"\\s*\\)'},{d:'conflict needs BOTH',re:'&&'}],
 behavior:`conflict(Set.of("ap_create","ap_pay")) is true; conflict(Set.of("ap_create")) is false. Holding both halves of create-and-pay is the toxic combination governance forbids.`,
 hints:['Both entitlements must be present, so use &&.','Check each with contains.','Either one alone is acceptable.']}},
 
@@ -198,7 +198,7 @@ starter:`function grant(approved, timeBoxed) {
 solution:`function grant(approved, timeBoxed) {
   return approved && timeBoxed;
 }`,
-tests:[{d:'must be approved',re:'approved\\s*&&'},{d:'must be time-boxed',re:'&&\\s*timeBoxed'}],
+tests:[{d:'must be approved',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:approved\\s*&&))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:approved\\s*&&)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:approved\\s*&&)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:approved\\s*&&)[^{]*?return\\s+\\k<av>\\b)'},{d:'must be time-boxed',re:'&&\\s*timeBoxed'}],
 behavior:`grant(true,true) is true; grant(true,false) is false (standing privilege is refused); grant(false,true) is false. All four combinations are executed against your function.`,
 hints:['Both conditions must hold, so combine them with &&.','Approved alone is not enough without a time box.','Standing (non-time-boxed) privilege must be refused.']}},
 
@@ -267,7 +267,7 @@ starter:`function rotateDue(ageDays, maxDays) {
 solution:`function rotateDue(ageDays, maxDays) {
   return ageDays >= maxDays;
 }`,
-tests:[{d:'due once age reaches the maximum',re:'ageDays\\s*>=\\s*maxDays'},{d:'does not hardcode a result',re:'return\\s+(true|false)\\s*;',not:true}],
+tests:[{d:'due once age reaches the maximum',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:ageDays\\s*>=\\s*maxDays))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:ageDays\\s*>=\\s*maxDays)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:ageDays\\s*>=\\s*maxDays)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:ageDays\\s*>=\\s*maxDays)[^{]*?return\\s+\\k<av>\\b)'},{d:'does not hardcode a result',re:'rotateDue\\s*\\([^)]*\\)\\s*\\{\\s*return\\s+(true|false)\\s*;',not:true}],
 behavior:`rotateDue(90,90) is true, rotateDue(91,90) is true, rotateDue(30,90) is false. The boundary case is the one that matters and it is executed for real, so an off-by-one here actually fails.`,
 hints:['Reached or exceeded means the >= comparison.','Compare ageDays against maxDays directly.','Return the boolean result of the comparison.']}},
 
@@ -345,7 +345,7 @@ solution:`function lifecycleAction(a) {
   if (a.daysSinceLastSeen >= a.dormantAfterDays) return "dormant";
   return "active";
 }`,
-tests:[{d:'the hold-versus-erasure conflict is handled first',re:'retain-pending-hold'},{d:'an erasure request is honored',re:'deletionRequested'},{d:'the retention deadline deletes on its own',re:'deleteAfterDays'},{d:'dormancy is evaluated against its own threshold',re:'dormantAfterDays'}],
+tests:[{d:'the hold-versus-erasure conflict is handled first',re:'(?:if\\s*\\(\\s*a\\s*\\.\\s*deletionRequested\\s*&\\s*&\\s*a\\s*\\.\\s*legalHoldActive\\s*\\)[^;}]*?return\\s+["\']retain-pending-hold["\'])'},{d:'an erasure request is honored',re:'deletionRequested'},{d:'the retention deadline deletes on its own',re:'deleteAfterDays'},{d:'dormancy is evaluated against its own threshold',re:'dormantAfterDays'}],
 behavior:`Six cases execute. The fifth is the one worth sitting with: a customer exercising a right to erasure while a legal hold is active is a genuine conflict between two obligations, and both obvious answers are wrong: ignoring the request breaches the right, destroying the record breaches the hold. The defensible outcome is to stop processing, mark the account and delete when the hold lifts, with the decision recorded. The third case is the one teams forget entirely: retention deadlines should delete accounts nobody asked about, because data you kept without a reason is the cheapest breach you will ever suffer. Note the ordering is the policy: reordering these five lines changes what your organization promises.`,
 hints:['Two flags interact, and their combination is a distinct outcome rather than either one alone.','Deletion has two independent triggers: someone asked, or the clock ran out.','Decide whether exactly at a threshold counts, then encode it: that boundary is a policy statement.']}},
 {id:'ig6',title:'Consent & privacy in CIAM',body:`
@@ -383,7 +383,7 @@ starter:`function valid(explicit, granular, revocable) {
 solution:`function valid(explicit, granular, revocable) {
   return explicit && granular && revocable;
 }`,
-tests:[{d:'consent must be explicit',re:'explicit\\s*&&'},{d:'consent must be granular',re:'granular'},{d:'consent must be revocable',re:'revocable'}],
+tests:[{d:'consent must be explicit',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:explicit\\s*&&))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:explicit\\s*&&)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:explicit\\s*&&)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:explicit\\s*&&)[^{]*?return\\s+\\k<av>\\b)'},{d:'consent must be granular',re:'granular'},{d:'consent must be revocable',re:'revocable'}],
 behavior:`valid(true,true,true) is true; dropping any one makes it false. Pre-ticked boxes are not explicit, all-or-nothing is not granular, and consent you cannot withdraw is not consent; each is executed as its own case.`,
 hints:['Three conditions joined with &&.','A pre-ticked box is not explicit consent.','If it cannot be withdrawn, it is not consent.']}},
 {id:'igaudit',title:'Identity audit, logging & compliance',body:`
@@ -424,7 +424,7 @@ solution:`public class Audit {
         }
     }
 }`,
-tests:[{d:'who-did-what -> immutable audit log',re:'"prove-who-did-what".*?"immutable audit log"',flags:'s'},{d:'detect attacks -> SIEM alerting',re:'"detect-attacks".*?"SIEM alerting"',flags:'s'},{d:'access review -> IGA certification',re:'"periodic-access-review".*?"IGA certification"',flags:'s'},{d:'remove leaver access -> deprovisioning',re:'"remove-leaver-access".*?"deprovisioning"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
+tests:[{d:'who-did-what -> immutable audit log',re:'(?:["\']prove-who-did-what["\'][^;}]*?return\\s+["\']immutable audit log["\'])|(?:case\\s*["\']prove-who-did-what["\']\\s*->\\s*(?:\\{\\s*)?["\']immutable audit log["\'])|(?:["\']prove-who-did-what["\']\\s*:\\s*["\']immutable audit log["\'])|(?:(?:put|entry|of)\\s*\\(\\s*["\']prove-who-did-what["\']\\s*,\\s*["\']immutable audit log["\'])',flags:'s'},{d:'detect attacks -> SIEM alerting',re:'"detect-attacks".*?"SIEM alerting"',flags:'s'},{d:'access review -> IGA certification',re:'"periodic-access-review".*?"IGA certification"',flags:'s'},{d:'remove leaver access -> deprovisioning',re:'"remove-leaver-access".*?"deprovisioning"',flags:'s'},{d:'unknown default',re:'"unknown"'}],
 behavior:`control("prove-who-did-what") is "immutable audit log", control("detect-attacks") is "SIEM alerting". Compliance frameworks (SOC 2, NIST 800-63) map their requirements onto exactly these identity controls.`,
 hints:['Proving who did what needs an immutable, append-only audit log.','Detecting attacks in real time is a SIEM job.','Access reviews are IGA certification; removing a leaver is deprovisioning.']}},
 
@@ -503,7 +503,7 @@ solution:`function governable(owner, ownerStillEmployed, expiresAt, now) {
   // an unowned or orphaned credential cannot be reviewed by anyone
   return owner !== "" && ownerStillEmployed && expiresAt > now;
 }`,
-tests:[{d:'requires a named owner',re:'owner\\s*!==?\\s*""'},{d:'the owner must still be employed',re:'ownerStillEmployed'},{d:'the credential must not have expired',re:'expiresAt\\s*>\\s*now'}],
+tests:[{d:'requires a named owner',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:owner\\s*!==?\\s*""))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:owner\\s*!==?\\s*"")[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:owner\\s*!==?\\s*"")[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:owner\\s*!==?\\s*"")[^{]*?return\\s+\\k<av>\\b)'},{d:'the owner must still be employed',re:'ownerStillEmployed'},{d:'the credential must not have expired',re:'expiresAt\\s*>\\s*now'}],
 behavior:`governable("ada",true,2000,1000) is true. An empty owner, a departed owner, or a lapsed expiry each make it false: the three ways service accounts become the ungoverned majority.`,
 hints:['Three conditions joined with &&.','An empty string is not a named owner.','Expiry is in the future when expiresAt > now.']}}
 ]});

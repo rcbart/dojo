@@ -194,7 +194,7 @@ public class SamlRedirect {
         return null;
     }
 }`,
-tests:[{d:'carries the SAMLRequest',re:'\\?SAMLRequest='},{d:'carries RelayState (return-to)',re:'&RelayState='},{d:'URL-encodes both values',re:'URLEncoder\\.encode\\s*\\('}],
+tests:[{d:'carries the SAMLRequest',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:\\?SAMLRequest=))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:\\?SAMLRequest=)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:\\?SAMLRequest=)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:\\?SAMLRequest=)[^{]*?return\\s+\\k<av>\\b)'},{d:'carries RelayState (return-to)',re:'&RelayState=[^;"\']*["\'][^;"\']*?encode\\s*\\(\\s*relayState\\b'},{d:'URL-encodes both values',re:'URLEncoder\\.encode\\s*\\('}],
 behavior:`ssoUrl("https://idp/sso","REQ","/dashboard") returns "https://idp/sso?SAMLRequest=REQ&RelayState=%2Fdashboard". This is the SP-initiated redirect; the IdP will echo RelayState back so the SP returns the user to /dashboard.`,
 hints:['<code>idpSso + "?SAMLRequest=" + URLEncoder.encode(samlRequest, "UTF-8")</code>.','Append <code>"&RelayState=" + URLEncoder.encode(relayState, "UTF-8")</code>.','RelayState is how the SP remembers where the user was headed.'],
 solution:`import java.net.URLEncoder;
@@ -394,7 +394,7 @@ starter:`public class SamlTrust {
         return false;
     }
 }`,
-tests:[{d:'looks for the entityID attribute',re:'entityID='},{d:'uses indexOf to locate it',re:'indexOf\\s*\\('},{d:'extracts the attribute value',re:'substring\\s*\\('},{d:'trust compares issuer to the configured entityID',re:'idpEntityId\\s*\\.\\s*equals\\s*\\(\\s*assertionIssuer\\s*\\)'}],
+tests:[{d:'looks for the entityID attribute',re:'entityID='},{d:'uses indexOf to locate it',re:'indexOf\\s*\\('},{d:'extracts the attribute value',re:'substring\\s*\\('},{d:'trust compares issuer to the configured entityID',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:idpEntityId\\s*\\.\\s*equals\\s*\\(\\s*assertionIssuer\\s*\\)))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:idpEntityId\\s*\\.\\s*equals\\s*\\(\\s*assertionIssuer\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:idpEntityId\\s*\\.\\s*equals\\s*\\(\\s*assertionIssuer\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:idpEntityId\\s*\\.\\s*equals\\s*\\(\\s*assertionIssuer\\s*\\))[^{]*?return\\s+\\k<av>\\b)'}],
 behavior:`entityId of an EntityDescriptor with entityID="https://idp/saml" returns "https://idp/saml". issuerTrusted(assertionIssuer, idpEntityId) is true only when the assertion's Issuer exactly equals the IdP entityID from the imported metadata: the basis of SAML trust (plus the signature check).`,
 hints:['Find the marker text <code>entityID=</code> with <code>indexOf</code>, then move past it to the start of the value.','The value ends at the next double-quote: find it with <code>indexOf</code> from that position, then take the <code>substring</code>.','Trust is exact-match of the assertion Issuer to the configured entityID.'],
 solution:`public class SamlTrust {
@@ -506,7 +506,7 @@ starter:`public class Assertion {
         return false;
     }
 }`,
-tests:[{d:'requires a valid signature',re:'signatureValid'},{d:'checks the audience is this SP',re:'myEntityId\\s*\\.\\s*equals\\s*\\(\\s*audience\\s*\\)'},{d:'checks not-on-or-after (expiry)',re:'nowEpoch\\s*<\\s*notOnOrAfterEpoch|notOnOrAfterEpoch\\s*>\\s*nowEpoch'}],
+tests:[{d:'requires a valid signature',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:signatureValid))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:signatureValid)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:signatureValid)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:signatureValid)[^{]*?return\\s+\\k<av>\\b)'},{d:'checks the audience is this SP',re:'myEntityId\\s*\\.\\s*equals\\s*\\(\\s*audience\\s*\\)'},{d:'checks not-on-or-after (expiry)',re:'nowEpoch\\s*<\\s*notOnOrAfterEpoch|notOnOrAfterEpoch\\s*>\\s*nowEpoch'}],
 behavior:`acceptable returns true only when all three hold: the IdP's signature verified, the assertion is addressed to this SP (Audience == our entityID), and it hasn't expired. Drop any one (bad signature, wrong audience, or past NotOnOrAfter) and the SP must reject it.`,
 hints:['One boolean expression: <code>signatureValid &amp;&amp; myEntityId.equals(audience) &amp;&amp; nowEpoch &lt; notOnOrAfterEpoch</code>.','Audience is the SAML version of the JWT <code>aud</code> claim.','NotOnOrAfter is the SAML expiry: reject once now reaches it.'],
 solution:`public class Assertion {

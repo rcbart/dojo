@@ -196,7 +196,7 @@ public class Combo {
 
     static Validator<String> STRONG = null; // length>=8 AND has digit
 }`,
-tests:[{d:'@FunctionalInterface on Validator',re:'@FunctionalInterface\\s*(public\\s+)?interface\\s+Validator'},{d:'Default combinator method',re:'default\\s+Validator<T>\\s+and\\s*\\('},{d:'PIPELINE uses andThen',re:'PIPELINE\\s*=\\s*PLUS3\\.andThen\\s*\\(\\s*TIMES2\\s*\\)'},{d:'STRONG composed with .and(',re:'STRONG\\s*=[\\s\\S]*?\\.and\\s*\\('},{d:'Digit check via anyMatch',re:'anyMatch\\s*\\(\\s*Character::isDigit\\s*\\)'}],
+tests:[{d:'@FunctionalInterface on Validator',re:'@FunctionalInterface\\s*(public\\s+)?interface\\s+Validator'},{d:'Default and(...) returns a validator requiring both',re:'default\\s+Validator<T>\\s+and\\s*\\([^)]*\\)\\s*\\{\\s*return\\s+(?!\\s*!)[^;]{0,120}&&'},{d:'PIPELINE uses andThen',re:'PIPELINE\\s*=\\s*PLUS3\\.andThen\\s*\\(\\s*TIMES2\\s*\\)'},{d:'STRONG composed with .and(',re:'STRONG\\s*=[\\s\\S]*?\\.and\\s*\\('},{d:'Digit check via anyMatch',re:'anyMatch\\s*\\(\\s*Character::isDigit\\s*\\)'}],
 behavior:`1. PIPELINE.apply(1) == 8 (add first, then double). 2. The default and(): returns t -> check(t) && other.check(t). 3. STRONG.check("abcdefg1") == true; STRONG.check("short1") == false; STRONG.check("abcdefgh") == false (no digit). 4. Validator has exactly one abstract method.`,
 hints:['Default method body: <code>return t -> check(t) && other.check(t);</code>, a lambda implementing your own interface.','PIPELINE is not a new lambda; compose the two you have: <code>PLUS3.andThen(TIMES2)</code>.','STRONG: <code>((Validator&lt;String&gt;) s -> s.length() >= 8).and(s -> s.chars().anyMatch(Character::isDigit))</code>; the cast tells the compiler which interface the first lambda targets.'],
 solution:`import java.util.function.*;
@@ -655,7 +655,7 @@ public class Countdown implements Iterable<Integer> {
         return 0;
     }
 }`,
-tests:[{d:'Implements Iterable<Integer>',re:'implements\\s+Iterable<Integer>'},{d:'Provides hasNext and next',re:'hasNext[\\s\\S]*?next\\s*\\('},{d:'sum uses enhanced for over the Countdown',re:'for\\s*\\(\\s*(int|Integer|var)\\s+\\w+\\s*:\\s*\\w+\\s*\\)'}],
+tests:[{d:'Implements Iterable<Integer>',re:'implements\\s+Iterable<Integer>'},{d:'hasNext returns whether values remain, and next follows',re:'hasNext\\s*\\(\\s*\\)\\s*\\{[^}]{0,120}?return\\s+(?!\\s*!)[^;]{0,60};[\\s\\S]*?next\\s*\\('},{d:'sum uses enhanced for over the Countdown',re:'for\\s*\\(\\s*(int|Integer|var)\\s+\\w+\\s*:\\s*\\w+\\s*\\)'}],
 behavior:`1. Iterating new Countdown(3) yields 3, 2, 1. 2. sum(new Countdown(4)) == 10. 3. hasNext() returns false after 1 is consumed. 4. Countdown works directly in a for-each loop (that is what Iterable buys you).`,
 hints:['Inside iterator(), keep a cursor: <code>int current = from;</code> in an anonymous <code>new Iterator&lt;Integer&gt;() {...}</code>.','hasNext: <code>current >= 1</code>. next: <code>return current--;</code>','sum: <code>for (int n : c) total += n;</code>; the compiler calls your iterator() for you.'],
 solution:`import java.util.Iterator;
@@ -791,7 +791,7 @@ public class Library {
         };
     }
 }`,
-tests:[{d:'Book is a record',re:'record\\s+Book\\s*\\('},{d:'findByTitle returns Optional via findFirst',re:'findFirst\\s*\\(\\s*\\)'},{d:'Switch uses type patterns',re:'case\\s+Book\\s+\\w+\\s*->'},{d:'Handles String case',re:'case\\s+String\\s+\\w+\\s*->'},{d:'Never calls Optional.get()',re:'\\.get\\s*\\(\\s*\\)',not:true}],
+tests:[{d:'Book is a record',re:'record\\s+Book\\s*\\('},{d:'findByTitle returns Optional via findFirst',re:'findFirst\\s*\\(\\s*\\)'},{d:'Switch uses type patterns',re:'case\\s+Book\\s+\\w+\\s*->'},{d:'The String case yields the "text: " prefix',re:'case\\s+String\\s+\\w+\\s*->\\s*(\\{\\s*yield\\s+)?"text: "\\s*\\+'},{d:'Never calls Optional.get()',re:'\\.get\\s*\\(\\s*\\)',not:true}],
 behavior:`1. After add(new Book("Dune","Herbert",1965)), findByTitle("Dune") is a present Optional with that book; findByTitle("X") is empty. 2. describe(new Book("Dune","H",1965)) returns "Dune (1965)". 3. describe("hi") returns "text: hi". 4. describe(42) returns "unknown".`,
 hints:['findByTitle: <code>books.stream().filter(b -> b.title().equals(t)).findFirst()</code>; findFirst already returns Optional.','Pattern case: <code>case Book b -> b.title() + " (" + b.year() + ")";</code>; b is typed and bound in one step.','Record accessors have no get-prefix: <code>b.title()</code>, <code>b.year()</code>.'],
 solution:`import java.util.*;
@@ -881,7 +881,7 @@ public class Payments {
         return null;
     }
 }`,
-tests:[{d:'Sealed interface with permits list',re:'sealed\\s+interface\\s+Payment\\s+permits\\s+Card\\s*,\\s*Cash\\s*,\\s*Transfer'},{d:'Records implement the interface',re:'record\\s+Card\\s*\\([^)]*\\)\\s+implements\\s+Payment'},{d:'Pattern-matching switch on p',re:'switch\\s*\\(\\s*p\\s*\\)'},{d:'Record pattern deconstruction',re:'case\\s+Card\\s*\\('},{d:'Guarded case with when',re:'when\\s+.*>\\s*1000'},{d:'No default branch (exhaustive)',re:'default\\s*(:|->)',not:true}],
+tests:[{d:'Sealed interface with permits list',re:'sealed\\s+interface\\s+Payment\\s+permits\\s+Card\\s*,\\s*Cash\\s*,\\s*Transfer'},{d:'Records implement the interface',re:'record\\s+Card\\s*\\([^)]*\\)\\s+implements\\s+Payment'},{d:'Pattern-matching switch on p',re:'switch\\s*\\(\\s*p\\s*\\)'},{d:'Record pattern deconstruction feeds the card receipt',re:'case\\s+Card\\s*\\([^)]*\\)\\s*->\\s*(\\{\\s*yield\\s+)?"card \\*\\*\\*\\*"'},{d:'Guarded case with when returns the verified receipt',re:'when\\s+[^;>]*>\\s*1000\\s*->\\s*(\\{\\s*yield\\s+)?"card \\(verified\\)"'},{d:'No default branch (exhaustive)',re:'default\\s*(:|->)',not:true}],
 behavior:`1. receipt(new Card("1234", 50)) returns "card ****1234". 2. receipt(new Card("1234", 5000)) returns "card (verified)"; the guard wins because it is listed first. 3. receipt(new Cash(10)) returns "cash"; receipt(new Transfer("DE89...", 10)) starts with "transfer to ". 4. The switch compiles with no default, and adding a fourth Payment subtype would break compilation of receipt (that is the feature).`,
 hints:['Records: <code>record Card(String last4, double amount) implements Payment {}</code>: one line each; the sealed interface only permits these three.','Guard first: <code>case Card(String last4, double amount) when amount &gt; 1000 -&gt; "card (verified)";</code> then the plain <code>case Card(String last4, double amount) -&gt; "card ****" + last4;</code>','Finish with Cash and Transfer record patterns and return the switch directly: <code>return switch (p) { ... };</code>; no default allowed.'],
 solution:`sealed interface Payment permits Card, Cash, Transfer {}

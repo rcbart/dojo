@@ -367,7 +367,7 @@ public class Errors {
         return null;
     }
 }`,
-tests:[{d:'ProblemDetail record with 4 fields',re:'record\\s+ProblemDetail\\s*\\(\\s*String\\s+type\\s*,\\s*String\\s+title\\s*,\\s*int\\s+status\\s*,\\s*String\\s+detail\\s*\\)'},{d:'notFound uses 404',re:'notFound[\\s\\S]*?404'},{d:'validation uses 422 (not 400)',re:'validation[\\s\\S]*?422'},{d:'Detail strings are composed',re:'\\+\\s*id|field\\s*\\+'}],
+tests:[{d:'ProblemDetail record with 4 fields',re:'record\\s+ProblemDetail\\s*\\(\\s*String\\s+type\\s*,\\s*String\\s+title\\s*,\\s*int\\s+status\\s*,\\s*String\\s+detail\\s*\\)'},{d:'notFound carries the Not found title with 404',re:'notFound[\\s\\S]{0,300}?"Not found"\\s*,\\s*404'},{d:'validation carries the Validation failed title with 422',re:'validation[\\s\\S]{0,300}?"Validation failed"\\s*,\\s*422'},{d:'Detail strings are composed',re:'\\+\\s*id|field\\s*\\+'}],
 behavior:`1. notFound("portfolio","p1") → status 404, detail "portfolio p1 does not exist". 2. validation("email","must not be blank") → 422, detail "email: must not be blank". 3. Both carry their type URLs. 4. Records are immutable: no setters anywhere.`,
 hints:['Factories just call the record constructor with the right constants.','404 = the resource address is wrong; 422 = the address was fine, the payload semantics were not.','Compose detail with simple concatenation: <code>resource + " " + id + " does not exist"</code>.'],
 solution:`record ProblemDetail(String type, String title, int status, String detail) {}

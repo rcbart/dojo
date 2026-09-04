@@ -73,7 +73,7 @@ solution:`function validUrl(input) {
   }
   return url.protocol === "http:" || url.protocol === "https:";   // ALLOWLIST
 }`,
-tests:[{d:'parses with the URL constructor',re:'new\\s+URL'},{d:'guards against unparseable input',re:'catch'},{d:'allows only http and https',re:'"https:"'},{d:'does not blocklist schemes',re:'javascript',not:true}],
+tests:[{d:'parses with the URL constructor',re:'new\\s+URL'},{d:'guards against unparseable input',re:'catch[^;]{0,120}?return\\s+false\\b'},{d:'allows only http and https',re:'return\\s+(?!!)[^;]{0,200}?"https:"'},{d:'does not blocklist schemes',re:'javascript',not:true}],
 behavior:`Nine cases execute. Three of them are the security point: javascript:, data: and file: all parse successfully as URLs, so a check that only asks "did this parse?" lets every one of them through, and a link shortener that stores a javascript: URL and later renders it as a href has become an XSS delivery service. The allowlist is what makes those three fail without naming them. The last case relies on the parser lower-casing the scheme for you, which is why "HTTPS://" works without extra code.`,
 hints:['new URL throws on invalid input, so wrap it in try/catch and return false from the catch.','url.protocol includes the trailing colon: compare against "https:" not "https".','Allow the two schemes you want rather than blocking the ones you can think of.']},
 {title:'2. Generate codes and store links privately',diff:'hard',lang:'js',
@@ -119,7 +119,7 @@ function runStore(ops, capacity) {
   }
   return { results, size: store.size() };
 }`,
-tests:[{d:'keeps the data in the closure',re:'new\\s+Map|const\\s+\\w+\\s*=\\s*\\{\\}'},{d:'deduplicates by url',re:'byUrl|has\\('},{d:'refuses to exceed capacity',re:'>=\\s*capacity'},{d:'creates one store',re:'makeStore\\('}],
+tests:[{d:'keeps the data in the closure',re:'new\\s+Map|const\\s+\\w+\\s*=\\s*\\{\\}'},{d:'deduplicates by url',re:'byUrl|has\\('},{d:'refuses to exceed capacity',re:'>=\\s*capacity[^;]{0,120}?return\\s+null\\b'},{d:'creates one store',re:'makeStore\\([\\s\\S]{0,400}?return\\s+(?!!)'}],
 behavior:`Six scenarios run your store through runStore, so the closure, the dedupe, the capacity check and the getter all have to work together. Two cases decide the implementation. The dedupe must be checked BEFORE capacity; otherwise a full store refuses to return a code it already has, which is a bug a user sees as "my link stopped working". And get on an unknown code must return null rather than undefined, which is why has() is used rather than a truthy check on the result. Both maps are unreachable from outside, which is what the closure buys you over a module-level variable.`,
 hints:['Two maps: one code-to-url for lookups, one url-to-code so you can detect a repeat.','Check for an existing URL before checking capacity: a repeat does not add anything.','String.fromCharCode(97 + n) gives you "a", "b", "c" in order.']},
 {title:'3. Rate limit with a sliding window',diff:'hard',lang:'js',
@@ -151,7 +151,7 @@ solution:`function rateLimit(timestamps, limit, windowMs) {
   }
   return out;
 }`,
-tests:[{d:'slides the window relative to each request',re:'-\\s*windowMs'},{d:'compares against the limit',re:'<\\s*limit'},{d:'records only allowed requests',re:'allowed\\.push'}],
+tests:[{d:'slides the window relative to each request',re:'-\\s*windowMs'},{d:'compares against the limit',re:'<\\s*limit'},{d:'records only allowed requests',re:'allowed\\.push[\\s\\S]{0,300}?return\\s+(?!!)[A-Za-z_$][\\w$]*\\s*;'}],
 behavior:`Seven cases execute and three are boundaries that decide correctness. In case 4 a client bursts four requests at time 0; the fourth is refused and must NOT be recorded, so the request at 11 is allowed. Recording refusals is how a rate limiter turns a brief burst into a much longer lockout. Case 5 pins the window edge: a request at exactly t - windowMs is still inside it, so the comparison is strictly greater than the cutoff. And a limit of 0 must refuse everything rather than dividing by anything or allowing one through.`,
 hints:['For each request, filter the recorded timestamps down to those still inside its window.','Allowed when the count in the window is strictly less than the limit.','Push the timestamp only when you allowed it.']},
 {title:'4. Route a request to the right status',diff:'hard',lang:'js',
@@ -185,7 +185,7 @@ solution:`function handle(req) {
   }
   return { status: 405, location: null };
 }`,
-tests:[{d:'rate limiting is checked first',re:'limited'},{d:'an invalid url is unprocessable',re:'422'},{d:'a known link redirects',re:'302'},{d:'an unknown code is not found',re:'404'},{d:'an expired link is gone',re:'410'}],
+tests:[{d:'rate limiting is checked first',re:'limited[^;]{0,140}?return\\s+(?!!)'},{d:'an invalid url is unprocessable',re:'return\\s+(?!!)[^;]{0,240}?422'},{d:'a known link redirects',re:'return\\s+(?!!)[^;]{0,160}?302'},{d:'an unknown code is not found',re:'return\\s+(?!!)[^;]{0,160}?404'},{d:'an expired link is gone',re:'return\\s+(?!!)[^;]{0,160}?410'}],
 behavior:`Seven cases execute and two pin the ordering. Case 3 sends an invalid URL from a rate-limited client and must return 429: you refuse the request before spending anything on parsing it, which is the entire point of a rate limit. And the 404-before-410 order matters because "expired" is only meaningful for a code that exists; reporting 410 for an unknown code tells an attacker which codes are real. The 404-vs-410 distinction carries real information: 404 means never existed, 410 means existed and is deliberately gone, and a client can stop retrying on the second.`,
 hints:['The rate limit is the first check: it should cost nothing to refuse.','Handle the /links path separately from the redirect paths.','Check known before expired: expiry is only a fact about a link that exists.']},
 {title:'5. Diagnose it in production',diff:'hard',lang:'js',
@@ -217,7 +217,7 @@ solution:`function triageService(m) {
   }
   return { cause: "healthy", action: "no action" };
 }`,
-tests:[{d:'loop lag is checked first',re:'loopLagMs\\s*>\\s*100'},{d:'then the heap trend',re:'"rising"'},{d:'then the rejection rate',re:'limitRejectRate\\s*>\\s*0\\.5'},{d:'then the error rate',re:'error5xxRate\\s*>\\s*0\\.1'},{d:'otherwise healthy',re:'"healthy"'}],
+tests:[{d:'loop lag is checked first',re:'loopLagMs\\s*>\\s*100[\\s\\S]{0,300}?return\\s+(?!!)'},{d:'then the heap trend',re:'"rising"'},{d:'then the rejection rate',re:'limitRejectRate\\s*>\\s*0\\.5'},{d:'then the error rate',re:'error5xxRate\\s*>\\s*0\\.1'},{d:'otherwise healthy',re:'return\\s+(?!!)[^;]{0,240}?"healthy"'}],
 behavior:`Six cases execute and two exist to pin the ordering, which is the actual lesson of the whole capstone. Case 1 has four metrics simultaneously bad and must return "blocked event loop", because a blocked loop inflates latency, error rates and rejections all at once; chasing any of those first means fixing a symptom. Case 5 puts a leak against mass rejections and the leak wins, because unbounded growth eventually produces the rest. Diagnosis is an ordered list of causes, not a scoring function, and getting the order right is what turns a two-day outage into a twenty-minute one.`,
 hints:['Guard clauses in the stated order: the first match wins and you return immediately.','A blocked event loop distorts every other metric, so it must be checked before them.','The final return is the healthy case, not a guess.']}]}
 
