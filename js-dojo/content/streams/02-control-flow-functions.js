@@ -244,9 +244,9 @@ DO NOT USE AN ARROW as a constructor - \`new fn()\` throws.</div>
 <div class="codeSample" data-hl>function welcome(name, greeting = "Hello") {   // default applies to
   return \`\${greeting}, \${name}\`;             // undefined ONLY, not null
 }
-greet("Ada");             // "Hello, Ada"
-greet("Ada", undefined);  // "Hello, Ada"  - default kicks in
-greet("Ada", null);       // "null, Ada"   - null is a real value
+welcome("Ada");             // "Hello, Ada"
+welcome("Ada", undefined);  // "Hello, Ada"  - default kicks in
+welcome("Ada", null);       // "null, Ada"   - null is a real value
 
 function sum(...nums) {   // REST: collects the remaining args as an array
   return nums.reduce((a, b) =&gt; a + b, 0);

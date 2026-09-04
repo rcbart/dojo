@@ -76,7 +76,7 @@ state of the entire project rather than a change to part of it.</p>
 messages read that way and the line completes the sentence "this commit will…". Then, when it is not
 obvious, say <b>why</b> in the body. The what is in the diff and always will be; the why exists only in
 your head until you write it down, and it is what the next person needs, including you in six months
-reading <code>git blame</code> on a line you do not remember writing.`,
+reading <code>git blame</code> on a line you do not remember writing.</p>`,
 docs:[['git status','https://git-scm.com/docs/git-status'],['git diff','https://git-scm.com/docs/git-diff'],['Pro Git (recording changes)','https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository']],
 ex:{title:'The single-file drill',lang:'shell',
 prompt:`You are in an empty folder with one file, <code>notes.txt</code>, already created. One command per numbered line: (1) turn the folder into a git repository, (2) show the state of the working tree, (3) stage <code>notes.txt</code>, (4) commit with message <code>Add notes</code>, (5) after editing the file, show the <b>unstaged</b> changes, (6) stage it and show what is <b>about to be committed</b> (two commands joined with <code>&amp;&amp;</code>), (7) commit with message <code>Update notes</code>, (8) show the compact one-line history.`,
@@ -146,7 +146,7 @@ while testing. Two minutes there saves a follow-up commit titled "remove debuggi
 leaked key.</p>
 <p>And note what <code>git add</code> actually records: the content <i>at that moment</i>. Edit the file
 afterwards and the later edit is not staged, which is why <code>git status</code> can show one file as both
-staged and modified. That is not a bug; it is the staging area doing exactly what it exists for.`,
+staged and modified. That is not a bug; it is the staging area doing exactly what it exists for.</p>`,
 docs:[['git add (incl. -p)','https://git-scm.com/docs/git-add'],['git mv','https://git-scm.com/docs/git-mv'],['Pro Git (viewing history)','https://git-scm.com/book/en/v2/Git-Basics-Viewing-the-Commit-History']],
 ex:{title:'The two-file drill',lang:'shell',
 prompt:`Both <code>notes.txt</code> (modified) and <code>todo.txt</code> (brand new) have changes. One command per numbered line: (1) stage <b>only</b> <code>todo.txt</code>, (2) commit with message <code>Add todo list</code>, (3) stage <code>notes.txt</code> interactively, <b>hunk by hunk</b> (the -p flag), (4) commit with message <code>Update notes</code>, (5) show the history <b>with per-file statistics</b>, (6) rename <code>todo.txt</code> to <code>tasks.txt</code> the git way, (7) show the full changes introduced by the latest commit (one command, no arguments needed).`,
@@ -245,7 +245,7 @@ A branch open for a day merges itself; one open for three weeks becomes a negoti
 argument for continuous integration: merging main into your branch daily, or rebasing onto it, converts
 one large painful merge into a series of trivial ones.</p>
 <p>Delete branches after merging. A repository with two hundred stale branches makes it impossible to tell
-which represent work in progress, and git keeps the commits regardless.`,
+which represent work in progress, and git keeps the commits regardless.</p>`,
 docs:[['Basic branching & merging (Pro Git)','https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging'],['git switch','https://git-scm.com/docs/git-switch'],['git merge','https://git-scm.com/docs/git-merge']],
 ex:{title:'The branch cycle drill',lang:'shell',
 prompt:`One command per numbered line: (1) create <b>and switch to</b> branch <code>feature/tags</code> (the modern <code>switch</code> form), (2) stage <b>both</b> <code>notes.txt</code> and <code>tasks.txt</code> in one command naming them, (3) commit with message <code>Add tagging</code>, (4) switch back to <code>main</code>, (5) merge the feature branch in, (6) delete the merged branch, (7) show the history as a <b>graph</b>, one line per commit (two flags).`,

@@ -103,8 +103,8 @@ the rest of this course is really just:
   **service mesh**, the next primer).
 
 So whenever you feel lost later, come back to the one picture: **a middleman between a client and a
-server, doing helpful work in between.** That's all a proxy is, and Envoy is the best-in-class
-version of it.
+server, doing helpful work in between.** That's all a proxy is, and Envoy is one of the most
+configurable versions of it.
 
 ## Check yourself
 

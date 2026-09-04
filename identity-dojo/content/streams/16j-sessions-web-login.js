@@ -141,7 +141,7 @@ hints:['Concatenate the flags after the session value, separated by "; ".','The 
 <p><b>CSRF</b> (Cross-Site Request Forgery) abuses the fact that browsers attach your cookies automatically. A malicious page can make <i>your</i> browser POST to your bank, and the bank sees a fully authenticated request it cannot tell apart from a real one. Your browser is the confused deputy.</p>
 <!--flow:ss3-csrf-->
 <h4>CSRF: the confused deputy: step by step</h4>
-<div class="flowDia"><svg viewBox="0 0 700 314" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CSRF: the confused deputy"><defs><marker id="ss3-csrf-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="ss3-csrf-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="ss3-csrf-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="ss3-csrf-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="42" x2="74" y2="282" class="fdLife"/><line x1="350" y1="42" x2="350" y2="282" class="fdLife"/><line x1="626" y1="42" x2="626" y2="282" class="fdLife"/><rect x="-2.5999999999999943" y="8" width="153.2" height="34" rx="8" class="fdActor"/><text x="74" y="29.5" class="fdActorT">Victim’s browser</text><rect x="302.1" y="8" width="95.8" height="34" rx="8" class="fdActor"/><text x="350" y="29.5" class="fdActorT">evil.site</text><rect x="582.2" y="8" width="87.6" height="34" rx="8" class="fdActor"/><text x="626" y="29.5" class="fdActorT">bank.com</text><line x1="77" y1="90" x2="621" y2="90" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss3-csrf-ah-front)"/><text x="365" y="81" class="fdLabel">logs in, session cookie set</text><circle cx="92" cy="90" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="93.5" class="fdNumT" style="fill:var(--accent)">1</text><line x1="14" y1="116" x2="686" y2="116" class="fdPhase"/><text x="350" y="120" class="fdPhaseT">later, in another tab</text><line x1="77" y1="150" x2="345" y2="150" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss3-csrf-ah-front)"/><text x="227" y="141" class="fdLabel">visits evil.site</text><circle cx="92" cy="150" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="153.5" class="fdNumT" style="fill:var(--accent)">2</text><line x1="347" y1="180" x2="79" y2="180" stroke="var(--bad)" class="fdArrow" stroke-dasharray="7 4" marker-end="url(#ss3-csrf-ah-attack)"/><text x="197" y="171" class="fdLabel fdLabelBad">page auto-submits a hidden form → bank.com</text><circle cx="332" cy="180" r="9" class="fdNum" style="stroke:var(--bad)"/><text x="332" y="183.5" class="fdNumT" style="fill:var(--bad)">3</text><line x1="77" y1="210" x2="621" y2="210" stroke="var(--bad)" class="fdArrow" stroke-dasharray="7 4" marker-end="url(#ss3-csrf-ah-attack)"/><text x="365" y="201" class="fdLabel fdLabelBad">POST /transfer, cookie attached AUTOMATICALLY</text><circle cx="92" cy="210" r="9" class="fdNum" style="stroke:var(--bad)"/><text x="92" y="213.5" class="fdNumT" style="fill:var(--bad)">4</text><rect x="349.79999999999995" y="227" width="336.2" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="525.9" y="242" class="fdSelfT">valid session, valid request shape… money moves</text><circle cx="349.79999999999995" cy="238" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="349.79999999999995" y="241.5" class="fdNumT" style="fill:var(--muted)">5</text><text x="350" y="264" class="fdNote">The browser was deputised. Defenses: SameSite, CSRF tokens, origin checks.</text><line x1="18" y1="300" x2="44" y2="300" stroke="var(--accent)" class="fdArrow"/><text x="50" y="304" class="fdLegend">front channel (via the browser)</text><line x1="271.29999999999995" y1="300" x2="297.29999999999995" y2="300" stroke="var(--bad)" class="fdArrow" stroke-dasharray="7 4"/><text x="303.29999999999995" y="304" class="fdLegend">attack path</text></svg></div>
+<div class="flowDia"><svg viewBox="0 0 700 314" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CSRF: the confused deputy"><defs><marker id="ss3-csrf-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="ss3-csrf-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="ss3-csrf-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="ss3-csrf-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="42" x2="74" y2="282" class="fdLife"/><line x1="350" y1="42" x2="350" y2="282" class="fdLife"/><line x1="626" y1="42" x2="626" y2="282" class="fdLife"/><rect x="-2.5999999999999943" y="8" width="153.2" height="34" rx="8" class="fdActor"/><text x="74" y="29.5" class="fdActorT">Victim’s browser</text><rect x="302.1" y="8" width="95.8" height="34" rx="8" class="fdActor"/><text x="350" y="29.5" class="fdActorT">evil.site</text><rect x="582.2" y="8" width="87.6" height="34" rx="8" class="fdActor"/><text x="626" y="29.5" class="fdActorT">bank.com</text><line x1="77" y1="90" x2="621" y2="90" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss3-csrf-ah-front)"/><text x="365" y="81" class="fdLabel">logs in, session cookie set</text><circle cx="92" cy="90" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="93.5" class="fdNumT" style="fill:var(--accent)">1</text><line x1="14" y1="116" x2="686" y2="116" class="fdPhase"/><text x="350" y="120" class="fdPhaseT">later, in another tab</text><line x1="77" y1="150" x2="345" y2="150" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss3-csrf-ah-front)"/><text x="227" y="141" class="fdLabel">visits evil.site</text><circle cx="92" cy="150" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="153.5" class="fdNumT" style="fill:var(--accent)">2</text><line x1="347" y1="180" x2="79" y2="180" stroke="var(--bad)" class="fdArrow" stroke-dasharray="7 4" marker-end="url(#ss3-csrf-ah-attack)"/><text x="197" y="171" class="fdLabel fdLabelBad">page auto-submits a hidden form → bank.com</text><circle cx="332" cy="180" r="9" class="fdNum" style="stroke:var(--bad)"/><text x="332" y="183.5" class="fdNumT" style="fill:var(--bad)">3</text><line x1="77" y1="210" x2="621" y2="210" stroke="var(--bad)" class="fdArrow" stroke-dasharray="7 4" marker-end="url(#ss3-csrf-ah-attack)"/><text x="365" y="201" class="fdLabel fdLabelBad">POST /transfer, cookie attached AUTOMATICALLY</text><circle cx="92" cy="210" r="9" class="fdNum" style="stroke:var(--bad)"/><text x="92" y="213.5" class="fdNumT" style="fill:var(--bad)">4</text><rect x="349.79999999999995" y="227" width="336.2" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="525.9" y="242" class="fdSelfT">valid session, valid request shape… money moves</text><circle cx="349.79999999999995" cy="238" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="349.79999999999995" y="241.5" class="fdNumT" style="fill:var(--muted)">5</text><text x="350" y="264" class="fdNote">The browser was deputized. Defenses: SameSite, CSRF tokens, origin checks.</text><line x1="18" y1="300" x2="44" y2="300" stroke="var(--accent)" class="fdArrow"/><text x="50" y="304" class="fdLegend">front channel (via the browser)</text><line x1="271.29999999999995" y1="300" x2="297.29999999999995" y2="300" stroke="var(--bad)" class="fdArrow" stroke-dasharray="7 4"/><text x="303.29999999999995" y="304" class="fdLegend">attack path</text></svg></div>
 <ol class="fdSteps">
 <li><b>Victim’s browser → bank.com:</b> logs in, session cookie set <i>(front channel)</i></li>
 <li><b>Victim’s browser → evil.site:</b> visits evil.site <i>(front channel)</i></li>
@@ -249,16 +249,13 @@ for at most N hours regardless of activity). Idle timeout alone means a stolen s
 the attacker never expires at all; the absolute lifetime is what bounds that, and it is the one people
 omit because it occasionally logs out an active user.</p>
 
-<h4>Storage, ranked</h4>
-<p>In descending order of safety: an <b>HttpOnly, Secure, SameSite</b> cookie that page script cannot read;
-a token held only in <b>JavaScript memory</b>, which is lost on refresh but never written anywhere an
-attacker can read later; <b>sessionStorage</b>; and <b>localStorage</b>, which persists and is readable by
-any script that runs on the page.</p>
-<p>The useful framing is blast radius rather than prevention. With an HttpOnly cookie, an XSS bug lets
-an attacker act as the user <i>while the page is open</i>. With localStorage, the same bug lets them walk
-away with a credential usable from anywhere until it expires. Same vulnerability, very different aftermath,
-and neither is fixed by storage choice, which is why the BFF pattern, where the browser holds no token at
-all, is the structural answer rather than a preference.</p>`,
+<h4>What none of this fixes</h4>
+<p>Storage choice changes the aftermath of an XSS bug; it does not prevent one, and it does not make a
+session revocable. Both of the timeouts above are still enforced server-side, and a session that must end
+immediately (a password change, a reported theft, an administrator disabling the account) ends because the
+server deletes it, not because a cookie expired. Storage hardening, timeouts and server-side revocation are
+three separate controls, and a system with only the first is relying on the attacker being polite about
+where they look.</p>`,
 docs:[['Session fixation, OWASP','https://owasp.org/www-community/attacks/Session_fixation'],['Token storage, OWASP','https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html#local-storage']],
 ex:{title:'Choose safe token storage',lang:'js',
 run:{call:'safe',cases:[{args:['httponly-cookie'],expect:true},{args:['localstorage'],expect:false},{args:['sessionstorage'],expect:false},{name:'a plain variable is still script-readable',args:['jsvariable'],expect:false}]},
@@ -570,5 +567,116 @@ solution:`function corsAllowsCredentialedRead(allowlist, requestOrigin, allowOri
 tests:[{d:'the origin is checked against an allowlist',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:allowlist\\s*\\.\\s*includes|indexOf\\s*\\(\\s*requestOrigin))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:allowlist\\s*\\.\\s*includes|indexOf\\s*\\(\\s*requestOrigin)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:allowlist\\s*\\.\\s*includes|indexOf\\s*\\(\\s*requestOrigin)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:allowlist\\s*\\.\\s*includes|indexOf\\s*\\(\\s*requestOrigin)[^{]*?return\\s+\\k<av>\\b)'},{d:'the wildcard is rejected outright',re:'(?:if\\s*\\(\\s*[^;{]*(?:["\\x27]\\*["\\x27])[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:return\\s+(?!\\s*!)[^;{]*(?:["\\x27]\\*["\\x27]))|(?:(?<h1>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:["\\x27]\\*["\\x27])[^{]*?return\\s+\\k<h1>\\b)'},{d:'the header must name the requesting origin',re:'(?:if\\s*\\(\\s*[^;{]*(?:allowOriginHeader\\s*!==\\s*requestOrigin|allowOriginHeader\\s*===\\s*requestOrigin)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:return\\s+(?!\\s*!)[^;{]*(?:allowOriginHeader\\s*!==\\s*requestOrigin|allowOriginHeader\\s*===\\s*requestOrigin))|(?:(?<h1>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:allowOriginHeader\\s*!==\\s*requestOrigin|allowOriginHeader\\s*===\\s*requestOrigin)[^{]*?return\\s+\\k<h1>\\b)'},{d:'credentials must be explicitly allowed',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:allowCredentials\\s*===\\s*true|allowCredentials\\s*===))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:allowCredentials\\s*===\\s*true|allowCredentials\\s*===)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:allowCredentials\\s*===\\s*true|allowCredentials\\s*===)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:allowCredentials\\s*===\\s*true|allowCredentials\\s*===)[^{]*?return\\s+\\k<av>\\b)'}],
 behavior:`Five real cases. The wildcard case is the specification's own guard: a browser refuses Access-Control-Allow-Origin: * on a credentialed request, precisely so that an API cannot accidentally publish authenticated responses to every origin. The reflected-origin case is the misconfiguration that shows up in real audits: the server echoes whatever Origin it receives, the browser is satisfied, and any site the victim visits can read their data. The allowlist must hold exact origins: a prefix check on "https://example" also accepts https://example.attacker.com.`,
 hints:['Four independent conditions; any one failing is a refusal.','The wildcard has a special rule of its own; check it before comparing strings.','Exact string membership in the allowlist. A prefix test is a vulnerability, not a shortcut.']}}
+,
+{id:'ss8',title:'FedCM: federation after third-party cookies',body:`
+<p>Two lessons in this stream have described a mechanism failing for the same reason. Front-channel
+logout loads a hidden iframe per application and the iframe arrives without the application's cookie.
+Single-page apps used to renew tokens quietly by loading <code>/authorize?prompt=none</code> in a hidden
+iframe, and that iframe now arrives without the provider's cookie. Both were built on the browser
+sending a cookie to a site inside a frame owned by a different site, and browsers have been withdrawing
+that behavior.</p>
 
+<h4>Why the browser cannot simply exempt identity</h4>
+<p>The awkward part is that the mechanism federation depends on is <i>the same mechanism</i> tracking
+depends on. An identity provider recognizing you inside a relying party's iframe, and an advertising
+network recognizing you inside a publisher's iframe, are the same request with the same headers. The
+browser has no way to tell a legitimate single sign-on from a cross-site profile being built, because
+from the network's point of view there is no difference.</p>
+<p>So the answer was never going to be an exception list. It had to be a <b>purpose-built API</b>, where
+the browser knows the request is a login because the site said so, and can therefore apply login rules
+to it. That API is <b>FedCM</b>, Federated Credential Management.</p>
+
+<h4>What the relying party writes</h4>
+<div class="codeSample" data-hl>const credential = await navigator.credentials.get({
+  identity: {
+    providers: [{
+      configURL: "https://idp.example/fedcm.json",
+      clientId:  "client_id_1234"
+    }]
+  }
+});
+// credential.token is what the provider minted, typically an ID token
+
+// note what is absent: no redirect, no popup, no iframe, and no
+// markup of yours drawing an account picker. the BROWSER draws it.</div>
+<p>The provider publishes <code>/.well-known/web-identity</code> at its registrable domain, and a config
+file naming its endpoints: an <b>accounts endpoint</b>, an <b>ID assertion endpoint</b>, a login URL, and
+optionally client metadata and disconnect endpoints. The browser fetches those itself.</p>
+
+<h4>The privacy design is in which request carries what</h4>
+<p>This is the part worth memorizing, because it is where the guarantee lives rather than in the API
+shape:</p>
+<div class="codeSample" data-hl>config file          no cookies, no RP origin
+client metadata      no cookies, no RP origin
+accounts endpoint    the IdP's OWN cookies  ...  but NOT the RP origin
+id assertion         the IdP's own cookies  AND  Origin: the RP
+
+// read the third and fourth rows together. the provider is asked
+// "who is signed in here?" without being told which site is asking,
+// so it cannot log that this user visited this site. it learns the
+// relying party only at the moment it is asked to mint a token, which
+// is AFTER the human picked an account in the browser's own dialog.</div>
+<p>Every one of these requests also carries <code>Sec-Fetch-Dest: webidentity</code>, and the provider
+<b>must check it</b>. That header cannot be set by ordinary page script, so the check is what stops any
+other site fetching the accounts endpoint with the user's cookies and harvesting the list of who is
+signed in. It plays the role a CSRF token plays elsewhere: proof that the browser, not a page, made this
+request.</p>
+
+<h4>What the user sees, and why that matters</h4>
+<p>The account chooser is <b>browser UI</b>. The relying party cannot style it, cannot read what is in
+it, and is never told which accounts were offered. That is deliberate: the same property that makes
+WebAuthn phishing-resistant is at work here, in that the decision about who is being asked is made by
+software the page cannot lie to. The site learns nothing about the user until they pick an account, at
+which point it receives one token.</p>
+
+<h4>What FedCM is not</h4>
+<p>It is not a replacement for OpenID Connect. The token that comes back is whatever the provider mints,
+usually an ID token, and everything you already know applies unchanged: verify the signature against the
+JWKS, check <code>iss</code>, check <code>aud</code>, check <code>exp</code>, check the nonce. FedCM
+replaces the <i>transport</i>, which used to be a redirect or a cookie-bearing iframe, and leaves the
+protocol alone.</p>
+<p>It also does not fix logout. Ending an application session still needs back-channel logout or short
+sessions, for all the reasons the single logout lesson gives. And it is a browser API, so it does nothing
+for native apps, which should be using the system browser and the authorization code flow anyway.</p>
+
+<h4>What to do about it now</h4>
+<p>The specification and its browser implementations are still moving, so treat details as current rather
+than settled and check the spec before you build. The durable advice does not depend on the details:
+<b>stop building anything new that needs a third-party cookie to work</b>. If your single-page app renews
+tokens through a hidden iframe, that mechanism is on a timer, and the replacements are a backend for
+frontend holding the refresh token, a top-level redirect the user can see, or FedCM where your provider
+supports it. If you operate an identity provider, the well-known file and the four endpoints are a
+contained piece of work, and the alternative is that your customers' embedded sign-in stops working on a
+browser release you do not control.</p>`,
+docs:[['Federated Credential Management API (W3C)','https://w3c-fedid.github.io/FedCM/'],['FedCM API, MDN','https://developer.mozilla.org/en-US/docs/Web/API/FedCM_API'],['Implementing FedCM as an identity provider','https://developer.chrome.com/docs/identity/fedcm/implement/identity-provider']],
+ex:{title:'Who learns what, and when',lang:'js',
+run:{call:'cookiesSent',cases:[{name:'the accounts endpoint gets the IdP cookies',args:['accounts'],expect:true},{name:'the id assertion endpoint gets them too',args:['id_assertion'],expect:true},{name:'so does disconnect',args:['disconnect'],expect:true},{name:'the config file does not',args:['config'],expect:false},{name:'client metadata does not',args:['client_metadata'],expect:false},{name:'an unknown endpoint gets nothing',args:['accounts_v2'],expect:false},{name:'null gets nothing',args:[null],expect:false}]},
+prompt:`Write three functions over the FedCM endpoint names <code>"config"</code>, <code>"client_metadata"</code>, <code>"accounts"</code>, <code>"id_assertion"</code> and <code>"disconnect"</code>. <code>cookiesSent(endpoint)</code> returns <code>true</code> only for <code>"accounts"</code>, <code>"id_assertion"</code> and <code>"disconnect"</code>, the requests that carry the identity provider's own cookies. <code>rpOriginSent(endpoint)</code> returns <code>true</code> for <code>"id_assertion"</code> and nothing else, because that is the only request that tells the provider which site is asking. <code>secFetchDestOk(header)</code> returns <code>true</code> only for the exact string <code>"webidentity"</code>. Anything unrecognized, and <code>null</code>, is <code>false</code> in all three.`,
+starter:`function cookiesSent(endpoint) {
+  return false;
+}
+function rpOriginSent(endpoint) {
+  return false;
+}
+function secFetchDestOk(header) {
+  return false;
+}`,
+solution:`function cookiesSent(endpoint) {
+  // the provider must recognize the signed-in user, so its own cookies ride along
+  return endpoint === "accounts"
+      || endpoint === "id_assertion"
+      || endpoint === "disconnect";
+}
+function rpOriginSent(endpoint) {
+  // and only here, AFTER the human picked an account in the browser dialog,
+  // does the provider learn which relying party is asking
+  return endpoint === "id_assertion";
+}
+function secFetchDestOk(header) {
+  // page script cannot set this, so it proves the browser made the request
+  return header === "webidentity";
+}`,
+tests:[{d:'the accounts endpoint carries the provider cookies',re:'cookiesSent\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:(?:return\\s+(?!\\s*!)[^;{]*"accounts")|(?:case\\s*"accounts"[^;}]*?return\\s+true\\b)|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*"accounts"[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:(?<c1>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*"accounts"[^{]*?return\\s+\\k<c1>\\b))'},{d:'and so does the id assertion endpoint',re:'cookiesSent\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:(?:return\\s+(?!\\s*!)[^;{]*"id_assertion")|(?:case\\s*"id_assertion"[^;}]*?return\\s+true\\b)|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*"id_assertion"[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:(?<c2>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*"id_assertion"[^{]*?return\\s+\\k<c2>\\b))'},{d:'and disconnect',re:'cookiesSent\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:(?:return\\s+(?!\\s*!)[^;{]*"disconnect")|(?:case\\s*"disconnect"[^;}]*?return\\s+true\\b)|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*"disconnect"[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:(?<c3>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*"disconnect"[^{]*?return\\s+\\k<c3>\\b))'},{d:'only the id assertion request reveals the relying party',re:'rpOriginSent\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:(?:return\\s+(?!\\s*!)[^;{]*"id_assertion")|(?:case\\s*"id_assertion"[^;}]*?return\\s+true\\b)|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*"id_assertion"[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:(?<r1>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*"id_assertion"[^{]*?return\\s+\\k<r1>\\b))'},{d:'the accounts request does not reveal it',re:'rpOriginSent\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?return\\s+(?!\\s*!)(?:(?!"accounts")[^;{])*;'},{d:'the Sec-Fetch-Dest value is compared exactly',re:'secFetchDestOk\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:(?:return\\s+(?!\\s*!)[^;{]*"webidentity")|(?:case\\s*"webidentity"[^;}]*?return\\s+true\\b)|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*"webidentity"[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:(?<s1>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*"webidentity"[^{]*?return\\s+\\k<s1>\\b))'}],
+behavior:`cookiesSent runs over all five endpoint names plus an unknown one and null. The two rows that carry the whole privacy argument are "accounts" and "id_assertion": accounts is true here and false in rpOriginSent, so the provider is asked who is signed in without being told which site wants to know, and it learns the relying party only when it is asked to mint a token, which happens after the person picked an account in the browser's own dialog. Getting that pair backwards would hand the provider a record of every site its users visit, which is the tracking the whole API exists to prevent. The config and client metadata requests carry neither, so they can be served from a CDN. secFetchDestOk("webidentity") is true and everything else is false, including "empty" and null: page script cannot set that header, so checking it is what stops another site fetching the accounts endpoint with the user's cookies and reading off who is signed in.`,
+hints:['Three endpoints carry cookies; only one of them also carries the relying party origin.','The accounts endpoint is the interesting one: cookies yes, RP origin no.','Compare the header to the exact string; no lowercasing, no trimming.']}}
 ]});

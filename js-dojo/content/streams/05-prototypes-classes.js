@@ -1,4 +1,4 @@
-STREAMS.push({icon:'🧬',title:'Prototypes, Classes & Objects in Depth',blurb:'How JavaScript objects actually inherit: the prototype chain, class syntax as sugar over it, inheritance and super, getters/setters and private fields, static members, and making your own objects iterable.',lessons:[
+STREAMS.push({icon:'🧬',title:'Prototypes, Classes & Objects in Depth',blurb:'How JavaScript objects actually inherit: the prototype chain, class syntax as sugar over it, inheritance and super, getters/setters and private fields, static members, making your own objects iterable, and intercepting the operations themselves with Proxy and Reflect.',lessons:[
 
 {id:'js22',title:'The prototype chain',body:`
 <p>JavaScript has no classes underneath. It has <b>objects that link to other objects</b>, and a lookup
@@ -514,7 +514,106 @@ function chunks(list, size) {
 }`,
 tests:[{d:'declares a generator',re:'function\\s*\\*'},{d:'yields each chunk',re:'yield\\s'},{d:'slices without mutating',re:'\\.slice\\('},{d:'a consumer materializes it',re:'return\\s+(?!!)[^;]{0,80}?(?:\\[\\s*\\.\\.\\.|Array\\.from)'}],
 behavior:`Five cases execute the whole protocol: the spread in chunks() calls next() until done, and each yield hands out one slice. The generator itself never builds the full result; the same chunkGen could feed a for...of that stops after the first chunk of a million-element list, and would compute exactly one slice.`,
-hints:['Step the index by size, not by one.','slice(i, i + size) is safely clipped at the end of the list.','chunks() just spreads the generator - the exercise is the yield loop.']}}
+hints:['Step the index by size, not by one.','slice(i, i + size) is safely clipped at the end of the list.','chunks() just spreads the generator - the exercise is the yield loop.']}},
+{id:'jsproxy',title:'Proxy and Reflect: intercepting the operation itself',body:`
+<p>Everything so far has customized what an object <i>holds</i>. A <b>Proxy</b> customizes what happens
+when someone <i>uses</i> it: reading a property, writing one, asking whether a key exists, deleting it,
+listing the keys. You hand the engine a target and a handler, and the handler gets first refusal on each
+of those operations.</p>
 
+<div class="codeSample" data-hl>const target = { name: "Ada" };
+
+const p = new Proxy(target, {
+  get(obj, key, receiver) {
+    if (!Reflect.has(obj, key)) return "(missing)";   // your rule
+    return Reflect.get(obj, key, receiver);           // the default behavior
+  },
+  set(obj, key, value, receiver) {
+    if (typeof value !== "string") throw new TypeError(key + " must be a string");
+    return Reflect.set(obj, key, value, receiver);    // must return true/false
+  }
+});
+
+p.name        // "Ada"
+p.missing     // "(missing)"   - the get trap answered instead of undefined
+p.name = 1;   // TypeError, from your own set trap
+target.name;  // "Ada" - the TARGET is untouched by the refused write</div>
+
+<h4><code>Reflect</code> is the other half</h4>
+<p>Every trap has a matching <code>Reflect</code> method with the same arguments, and it performs exactly
+the operation you intercepted. That gives you a clean way to say "do the normal thing" without
+reimplementing it, and it forwards the <code>receiver</code> so getters on a prototype still see the right
+<code>this</code>. Writing <code>obj[key]</code> inside a <code>get</code> trap works most of the time and
+quietly breaks that case.</p>
+<div class="codeSample" data-hl>Reflect.get(obj, key, receiver)      Reflect.set(obj, key, value, receiver)
+Reflect.has(obj, key)                Reflect.ownKeys(obj)
+Reflect.deleteProperty(obj, key)     Reflect.defineProperty(obj, key, desc)
+
+// and one habit worth borrowing even without a Proxy:
+Reflect.has(o, "x")   // the function form of  "x" in o
+Reflect.ownKeys(o)    // string keys AND symbol keys, unlike Object.keys</div>
+
+<h4>The traps are not allowed to lie</h4>
+<p>A proxy cannot report anything it likes. The specification enforces <b>invariants</b>, and breaking one
+throws a <code>TypeError</code> at the point of the operation rather than silently misleading the caller.
+The two you are most likely to hit: a <code>get</code> trap must return the real value of a
+non-writable, non-configurable own property of the target, and <code>ownKeys</code> must include every
+non-configurable own key. That is what makes <code>Object.freeze</code> still mean something through a
+proxy, and it is the reason a proxy is a safe thing to hand to code you did not write.</p>
+
+<h4>What people actually use them for</h4>
+<div class="codeSample" data-hl>// defaults for missing keys, without touching the stored data
+// negative indexing:  arr.at(-1) as  arr[-1]
+// a read-only view of an object you own, handed to another module
+// recording every read, for a reactive framework's dependency tracking
+
+// that last one is the big one: Vue's reactivity is a Proxy noticing
+// which properties a render function read, so it knows what to re-run.</div>
+
+<h4>The costs, which are real</h4>
+<p><b>Identity changes.</b> <code>proxy !== target</code>, so code that compares references, or uses the
+object as a <code>Map</code> key, sees two different objects. <b>Private fields do not pass through.</b>
+Calling a method that reads <code>this.#x</code> with the proxy as <code>this</code> throws, because the
+proxy is not the instance the field was installed on; bind the method to the target if you need it.
+<b>It is slower</b>, since every operation goes through a function call rather than an engine fast path.
+And <b>debugging is harder</b>: a value that looks ordinary in a log is running your code on every read,
+which is exactly the kind of surprise the naming lesson warned about.</p>
+<p>So the rule is the same as for inheritance: a proxy is powerful and it earns its place rarely. Reach
+for one when you genuinely need to intercept an operation you do not control. When you own both sides,
+an explicit function is clearer and everybody can read it.</p>
+`,
+docs:[['MDN (Proxy)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy'],['MDN (Reflect)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect'],['TC39 (proxy internal methods and invariants)','https://tc39.es/ecma262/#sec-proxy-object-internal-methods-and-internal-slots']],
+exs:[
+{title:'A default that survives a stored zero',diff:'medium',lang:'js',
+run:{call:'runProxy',cases:[
+ {name:'a stored key reads normally, a missing one gets the default',args:[[['a',1]],['a','b'],0],expect:[1,0]},
+ {name:'a stored value of 0 must survive, not fall back',args:[[['a',0]],['a'],9],expect:[0]},
+ {name:'a stored empty string survives too',args:[[['a','']],['a'],'?'],expect:['']},
+ {name:'a stored false survives',args:[[['a',false]],['a'],true],expect:[false]},
+ {name:'every key is missing when nothing was stored',args:[[],['x','y'],-1],expect:[-1,-1]},
+ {name:'reads happen in the order asked',args:[[['a',1],['b',2]],['b','a','c'],-1],expect:[2,1,-1]},
+ {name:'no reads at all',args:[[['a',1]],[],0],expect:[]}]},
+prompt:`Write <code>function defaulting(target, fallback)</code> returning a <b>Proxy</b> over <code>target</code> whose <code>get</code> trap returns the stored value when the key exists and <code>fallback</code> when it does not. Then write <code>function runProxy(pairs, keys, fallback)</code>, which builds an object from the <code>[key, value]</code> pairs, wraps it, and returns the values read for each key in <code>keys</code>. Ask whether the key <i>exists</i>, not whether its value is truthy: a stored <code>0</code> is a real answer.`,
+starter:`function defaulting(target, fallback) {
+  return target;
+}
+function runProxy(pairs, keys, fallback) {
+  return [];
+}`,
+solution:`function defaulting(target, fallback) {
+  return new Proxy(target, {
+    get(obj, key, receiver) {
+      if (!Reflect.has(obj, key)) return fallback;   // presence, not truthiness
+      return Reflect.get(obj, key, receiver);         // otherwise, do the normal thing
+    }
+  });
+}
+function runProxy(pairs, keys, fallback) {
+  const view = defaulting(Object.fromEntries(pairs), fallback);
+  return keys.map(k => view[k]);
+}`,
+tests:[{d:'wraps the target in a proxy',re:'new\\s+Proxy'},{d:'intercepts reads with a get trap',re:'get\\s*\\('},{d:'asks whether the key exists rather than testing its value',re:'(?:Reflect\\.has|\\bin\\s+obj|hasOwn)'},{d:'falls back only for a missing key',re:'return\\s+fallback'},{d:'reads every requested key through the proxy',re:'return\\s+(?!!)[^;]{0,120}?\\.map\\('}],
+behavior:`Seven cases execute against a real Proxy. Three of them exist to rule out the version everyone writes first: obj[key] || fallback passes the first case and then hands back the fallback for a stored 0, an empty string and a stored false, because all three are falsy and none of them is missing. Reflect.has answers the question the prompt actually asked. The empty-keys case falls out of map with no special branch.`,
+hints:['new Proxy(target, handler) where the handler has a get(obj, key, receiver) method.','Reflect.has(obj, key) tells you whether the key exists; Reflect.get performs the normal read.','runProxy builds the object with Object.fromEntries, wraps it once, then maps the keys through it.']}]}
 
 ]});

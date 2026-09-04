@@ -241,7 +241,7 @@ first capture. A group that did not participate returns <code>null</code>, which
 empty string and is worth checking when a pattern has alternation.</p>
 
 <h4>Where regex stops being the right tool</h4>
-<p>Two limits worth internalising. <b>Nested structure is out of reach</b>: HTML, JSON and balanced
+<p>Two limits worth internalizing. <b>Nested structure is out of reach</b>: HTML, JSON and balanced
 brackets are not regular languages, so a pattern that appears to work will fail on the first nested case;
 use a parser. And <b>catastrophic backtracking</b> is a denial-of-service risk when the pattern contains
 nested quantifiers such as <code>(a+)+</code> and the input is attacker-supplied; the engine explores

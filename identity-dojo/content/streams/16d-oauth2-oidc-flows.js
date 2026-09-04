@@ -306,7 +306,8 @@ STEP 2, authorization request (front channel, through the browser)
     &client_id=app
     &redirect_uri=https://app.example.com/cb    exact match, registered
     &scope=openid%20orders:read
-    &state=xyz789                     CSRF: bound to the user's session
+    &state=xyz789                     the return address, and CSRF where
+                                      PKCE cannot be relied on
     &code_challenge=E9Melhoa2Ow...    the HASH, safe to expose
     &code_challenge_method=S256
 
@@ -332,11 +333,22 @@ the direct back-channel POST, once, at the end.</p>
 <h4>state and PKCE are not the same thing</h4>
 <p>They are routinely conflated because they sit next to each other in the request:</p>
 <div class="codeSample" data-hl>state           binds the RESPONSE to the user's session   -> stops CSRF
-code_challenge  binds the CODE to the client's secret       -> stops interception
-                                                               and injection
-// you need both. neither substitutes for the other.</div>
+code_challenge  binds the CODE to a ONE-TIME SECRET the       -> stops interception
+                redeeming client generated for this flow         and injection
+                (the code_verifier, NOT the client secret:
+                 a public client has no client secret, which
+                 is precisely why PKCE was invented)
+
+// they defend different things. RFC 9700 does allow a client that has
+// confirmed the server supports PKCE to rely on PKCE for the CSRF
+// protection too, which is why state is increasingly the return
+// address rather than a security parameter. what you may NEVER do is
+// run state alone and call the code protected: nothing about state
+// stops interception or injection.</div>
 <p>In OpenID Connect the <code>nonce</code> is a third, separate thing: it binds the <i>ID token</i> to
-this login, defeating ID token replay.</p>
+this login, defeating ID token replay. RFC 9700 accepts it as a CSRF defense as well, so the practical
+reading is that a flow needs <b>PKCE always</b>, and <i>one of</i> PKCE, <code>nonce</code> or
+<code>state</code> carrying the CSRF job.</p>
 
 <h4>Four ways to get it wrong</h4>
 <ol>
@@ -1008,6 +1020,118 @@ public class DeviceFlow {
     }
 }`}},
 
+{id:'oaciba',title:'CIBA: authenticating on a device the client cannot reach',body:`
+<p>The flow map in this stream names a grant it has not explained. <b>CIBA</b> (Client-Initiated
+Backchannel Authentication) is the one flow where the client never touches the user's browser at all.
+There is no redirect, no <code>/authorize</code> request and no user agent in the picture: the client
+asks the OpenID Provider to go and find the user, and then waits.</p>
+
+<h4>The situation it exists for</h4>
+<p>You telephone your bank and an agent answers. Before they can move money they need you to authorize
+it, and the agent is sitting at a terminal you will never see. There is no browser to redirect. The
+device flow does not help either, because that assumes the user is standing in front of the constrained
+device reading a code off its screen, and here the user is on a telephone.</p>
+<p>Point of sale is the other common case: a card terminal needs the cardholder to approve a payment,
+and the approval belongs on the cardholder's own phone rather than on a shared terminal keypad.</p>
+<div class="codeSample" data-hl>AUTHORIZATION CODE  the client sends the USER'S BROWSER to the provider
+DEVICE FLOW         the client shows a code; the user carries it elsewhere
+CIBA                the client tells the provider WHO to ask, and the
+                    provider reaches that person on its own
+
+// the vocabulary: the CONSUMPTION DEVICE is the thing that ends up with
+// the tokens (the agent's terminal). the AUTHENTICATION DEVICE is where
+// the human approves (their phone). CIBA is the only flow where those
+// two are not joined by a browser session.</div>
+
+<h4>The exchange</h4>
+<p>The client posts to a new endpoint, the <b>backchannel authentication endpoint</b>, authenticating
+itself exactly as it would at the token endpoint. It must say <i>who</i> to ask, using exactly one of
+three hints:</p>
+<div class="codeSample" data-hl>POST /bc-authorize                        (client-authenticated, back channel)
+  scope=openid%20payments
+  &amp;login_hint=ada@example.com            // ONE of these three, never two:
+  // &amp;login_hint_token=...                //   an issuer-minted hint
+  // &amp;id_token_hint=...                   //   a previous ID token
+  &amp;binding_message=A7F2                   // shown on BOTH devices
+  &amp;client_notification_token=...          // required for ping and push
+  &amp;requested_expiry=300
+
+-&gt; 200 { "auth_req_id": "1c266114-a1be-...", "expires_in": 120, "interval": 5 }</div>
+<p>Then the tokens arrive in one of <b>three delivery modes</b>, fixed per client at registration:</p>
+<ul>
+<li><b>Poll.</b> The client calls the ordinary token endpoint with
+<code>grant_type=urn:openid:params:grant-type:ciba</code> and the <code>auth_req_id</code>, and keeps
+asking. The waiting errors are the ones the device flow uses:
+<code>authorization_pending</code> and <code>slow_down</code> mean keep going, while
+<code>access_denied</code> and <code>expired_token</code> mean stop.</li>
+<li><b>Ping.</b> The provider calls a notification endpoint the client registered, saying only that a
+result is ready; the client then collects the tokens from the token endpoint as in poll mode. No
+polling, and no tokens on the notification channel.</li>
+<li><b>Push.</b> The provider delivers the tokens straight to the client's notification endpoint. It is
+the simplest to operate and the one to justify carefully, because tokens now arrive at an endpoint
+rather than being fetched by the party that asked for them.</li>
+</ul>
+<p>Note what is missing from every mode: a redirect URI. Nothing comes back through a browser, so the
+interception and injection attacks that PKCE exists to stop have no path here. What replaces them is
+<b>client authentication</b>, which is why CIBA is a confidential-client flow. A public client cannot
+use it, because nothing else establishes who asked.</p>
+
+<h4>The binding message is the security control</h4>
+<p>Read the flow again from the user's side and the risk is plain. Their phone buzzes and asks them to
+approve something. They did not start it, they cannot see what started it, and they have only the
+prompt's word for what they are agreeing to. That is the cross-device consent problem from the threats
+stream, with the initiating party unverifiable by construction.</p>
+<p><code>binding_message</code> is the answer: a short human-readable value the client supplies, which
+the provider displays <b>on the authentication device</b> while the agent reads the same value aloud
+from the consumption device. If the two do not match, the user is approving somebody else's request.
+It authenticates nothing on its own, which is exactly why it has to be short enough to be read out and
+compared, and why a deployment that omits it has built an approval prompt with no context.</p>
+<p>The rest of the hardening is operational. Keep the <code>auth_req_id</code> alive for a couple of
+minutes rather than ten. Rate-limit how often one client may raise requests against one user, because
+an unbounded prompt generator is a fatigue attack with the provider's own branding on it. And log every
+request with the identity of the client that raised it, since an insider abusing this flow looks like
+ordinary traffic otherwise.</p>
+
+<h4>When to reach for it</h4>
+<p>Only when the consumption device genuinely cannot host or redirect a browser and the provider can
+reach the user on a registered device. If a browser is available, the authorization code flow with PKCE
+is better in every respect. If the user is standing at the constrained device, the device flow is
+simpler. CIBA is the narrow case where the two devices are held by two different people in two
+different places, which is why you meet it in banking, call centers and payment terminals rather than
+in general-purpose applications.</p>`,
+docs:[['OpenID Connect CIBA Core 1.0','https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html'],['FAPI CIBA Profile','https://openid.net/specs/openid-financial-api-ciba-ID1.html'],['RFC 8628, Device Authorization Grant (for contrast)','https://www.rfc-editor.org/rfc/rfc8628']],
+ex:{title:'Validate a CIBA request',lang:'js',
+run:{call:'hintOk',cases:[{name:'exactly one hint, login_hint',args:['ada@example.com',null,null],expect:true},{name:'exactly one hint, login_hint_token',args:[null,'lht-abc',null],expect:true},{name:'exactly one hint, id_token_hint',args:[null,null,'eyJhbGci'],expect:true},{name:'two hints is a rejection',args:['ada@example.com','lht-abc',null],expect:false},{name:'all three is a rejection',args:['ada@example.com','lht-abc','eyJhbGci'],expect:false},{name:'no hint at all is a rejection',args:[null,null,null],expect:false}]},
+prompt:`Write three functions. <code>hintOk(loginHint, loginHintToken, idTokenHint)</code> returns <code>true</code> only when <b>exactly one</b> of the three is non-null: the specification requires one identity hint and forbids more, because two hints naming different people leave the provider guessing which human to wake. <code>notificationTokenRequired(mode)</code> returns <code>true</code> for <code>"ping"</code> and <code>"push"</code>, <code>false</code> for <code>"poll"</code>, and <code>false</code> for anything else including <code>null</code>. <code>bindingMatches(shownOnConsumptionDevice, shownOnAuthDevice)</code> returns <code>true</code> only when both values are non-null and equal, which is the check the human performs out loud.`,
+starter:`function hintOk(loginHint, loginHintToken, idTokenHint) {
+  return false;
+}
+function notificationTokenRequired(mode) {
+  return false;
+}
+function bindingMatches(shownOnConsumptionDevice, shownOnAuthDevice) {
+  return false;
+}`,
+solution:`function hintOk(loginHint, loginHintToken, idTokenHint) {
+  // exactly one: the provider must know which human to reach, unambiguously
+  var supplied = 0;
+  if (loginHint != null) supplied = supplied + 1;
+  if (loginHintToken != null) supplied = supplied + 1;
+  if (idTokenHint != null) supplied = supplied + 1;
+  return supplied === 1;
+}
+function notificationTokenRequired(mode) {
+  // ping and push have the provider call the client back, so the client
+  // needs a value it can recognize that callback by; poll fetches its own
+  return mode === "ping" || mode === "push";
+}
+function bindingMatches(shownOnConsumptionDevice, shownOnAuthDevice) {
+  if (shownOnConsumptionDevice == null || shownOnAuthDevice == null) return false;
+  return shownOnConsumptionDevice === shownOnAuthDevice;
+}`,
+tests:[{d:'exactly one hint is counted, not merely one present',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:supplied\\s*===?\\s*1|1\\s*===?\\s*supplied))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:supplied\\s*===?\\s*1|1\\s*===?\\s*supplied)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:(?<h1>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:supplied\\s*===?\\s*1)[^{]*?return\\s+\\k<h1>\\b)'},{d:'all three hint parameters are inspected',re:'hintOk\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?loginHintToken[\\s\\S]*?idTokenHint'},{d:'ping requires a notification token',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:"ping"|\'ping\'))|(?:case\\s*(?:"ping"|\'ping\')[^;}]*?return\\s+true\\b)|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:"ping"|\'ping\')[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:(?<h2>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:"ping"|\'ping\')[^{]*?return\\s+\\k<h2>\\b)'},{d:'push requires one too',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:"push"|\'push\'))|(?:case\\s*(?:"push"|\'push\')[^;}]*?return\\s+true\\b)|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:"push"|\'push\')[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:(?<h3>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:"push"|\'push\')[^{]*?return\\s+\\k<h3>\\b)'},{d:'poll is not treated as needing one',re:'notificationTokenRequired\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:return\\s+(?!\\s*!)[^;{]*(?:"ping"|\'ping\'|"push"|\'push\')|case\\s*(?:"poll"|\'poll\')[^;}]*?return\\s+false\\b|(?:"poll"|\'poll\')[^;{]*\\)\\s*\\{?\\s*return\\s+false)'},{d:'the two displayed messages are compared, not merely present',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:shownOnConsumptionDevice\\s*===?\\s*shownOnAuthDevice|shownOnAuthDevice\\s*===?\\s*shownOnConsumptionDevice))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:shownOnConsumptionDevice\\s*===?\\s*shownOnAuthDevice)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:(?<h4>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:shownOnConsumptionDevice\\s*===?\\s*shownOnAuthDevice)[^{]*?return\\s+\\k<h4>\\b)'},{d:'a missing binding message is rejected, not merely noticed',re:'bindingMatches\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:(?:==\\s*null|!=\\s*null|===?\\s*undefined)[^;{]*\\)\\s*\\{?\\s*return\\s+false\\b|return\\s+(?!\\s*!)[^;{]*(?:!=\\s*null|!==\\s*undefined)[^;{]*&&)'}],
+behavior:`hintOk is executed six times. One hint of any of the three kinds passes; two or three fail, and so does none, because "exactly one" is the rule and a solution that merely checks whether a hint is present passes the easy cases and fails here. notificationTokenRequired("ping") and ("push") are true, since both modes have the provider call the client back and the client needs a value to recognize that callback by; ("poll") is false because the client fetches the result itself; anything unknown, and null, is false. bindingMatches("A7F2","A7F2") is true and bindingMatches("A7F2","B119") is false, which is the moment the person on the phone discovers they are being asked to approve a transaction somebody else started. Either value being null is false too, since a prompt with no binding message gives the user nothing to compare.`,
+hints:['Count the non-null hints into a variable, then compare that count to one.','Ping and push both have the provider call you back; poll does not.','Guard both binding values against null before comparing them.']}},
 {id:'oa8',title:'Native & mobile apps',body:`
 <p>Phone and desktop apps are <b>public clients</b>: the binary ships to users, so it can't hold a secret. The correct, secure flow is <b>Authorization Code + PKCE</b>, opened in the device's <b>system browser</b>, never an embedded WebView.</p>
 <p><b>Why the system browser (not a WebView)?</b> A WebView is controlled by the app, so it can read the user's password, defeats SSO (no shared cookies), and blocks passkeys/security keys. The system browser keeps the credentials away from the app and reuses the device's login session for true SSO.</p>
@@ -1438,7 +1562,7 @@ public class Introspect {
 
 <h4>Refresh tokens are not a flow</h4>
 <p>Worth stating because the list above puts them side by side: a refresh token is not a way to <i>obtain</i> authorization, it is a way to keep one alive. It is issued by another grant and exchanged at the token endpoint, and its security properties are entirely about what happens if it leaks, which is why public clients must have rotation with reuse detection, and why a refresh token with no rotation, no expiry and no binding is a password that never changes.</p>`,
-docs:[['OAuth 2.0 grant types','https://oauth.net/2/grant-types/'],['OAuth 2.1 (consolidated best practice)','https://oauth.net/2.1/'],['RFC 9126 (CIBA / decoupled)','https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html']],
+docs:[['OAuth 2.0 grant types','https://oauth.net/2/grant-types/'],['OAuth 2.1 (consolidated best practice)','https://oauth.net/2.1/'],['OpenID Connect CIBA Core 1.0 (decoupled authentication)','https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html']],
 ex:{title:'Recommend the right flow',
 prompt:`Write <code>FlowChooser</code> with: <code>static String recommend(String scenario)</code> returning the grant to use: <code>"authorization_code+pkce"</code> for <code>"web-app"</code>, <code>"spa"</code>, or <code>"mobile"</code>; <code>"client_credentials"</code> for <code>"service"</code> or <code>"backend-daemon"</code>; <code>"device_code"</code> for <code>"tv"</code>, <code>"cli"</code>, or <code>"iot"</code>; and <code>"authorization_code+pkce"</code> for anything else (safe default); and <code>static boolean deprecated(String grant)</code> returning true for <code>"implicit"</code> or <code>"password"</code>.`,
 starter:`public class FlowChooser {
@@ -1466,6 +1590,116 @@ solution:`public class FlowChooser {
     }
 }`}}
 ,
+{id:'oascope',title:'Designing a scope model: what to name, how finely, and what a scope must never be',body:`
+<p>Every lesson so far has treated scopes as something the authorization server hands you. If you build
+an API, they are something you <b>design</b>, and the design is unusually unforgiving: scope strings
+appear on consent screens, in every integration guide, in every client registration, and in tokens
+already issued. A scope is close to impossible to remove once anyone depends on it, so the catalog you
+publish in week one is the one you operate for years.</p>
+
+<h4>A scope is a unit of consent, not a unit of code</h4>
+<p>That single sentence settles most granularity arguments. The question is never "how many endpoints do
+I have?" but <b>"would a reasonable person make a different decision about these two things?"</b> If the
+answer is no, they are one scope.</p>
+<div class="codeSample" data-hl>TOO COARSE   scope=api
+             every client that integrates at all holds everything you
+             will ever build. the consent screen says nothing. the
+             blast radius of any one integration is the whole product.
+
+TOO FINE     scope=invoices:line-items:read
+             a consent screen with forty checkboxes is read by nobody,
+             and every new endpoint becomes a client-registration change
+             for every integrator you have.
+
+ABOUT RIGHT  scope=invoices:read  invoices:write  payments:initiate
+             each names something a user would separately agree to,
+             and reading is separated from writing, always.</div>
+<p>Read and write are the one split worth making even when it feels excessive. "See my invoices" and
+"create invoices as me" are different decisions to a human, and the read-only client is the common case,
+so collapsing them means every integration holds write access it never uses.</p>
+
+<h4>Naming, and the three things not to put in the string</h4>
+<p><code>resource:action</code> is the convention that survives contact with a real catalog:
+<code>invoices:read</code>, <code>payments:initiate</code>. It sorts usefully, it reads on a consent
+screen, and it tells an engineer where to enforce it. Three things do not belong in a scope string:</p>
+<ul>
+<li><b>An instance.</b> <code>payment:50:GB29NWBK</code> is a structured object badly encoded. That is
+what <b>RAR</b> exists for; scopes are categories, not particulars.</li>
+<li><b>A tenant or an environment.</b> <code>invoices:read:acme-prod</code> multiplies your catalog by
+your customer list. Tenancy belongs in the token's claims and in the resource server's ownership check.</li>
+<li><b>A wildcard.</b> A scope that matches other scopes has the same problem as a wildcard redirect
+URI: it is a grant nobody reviewed, expressed as a pattern.</li>
+</ul>
+<p>And where the token may be used is a separate question from what it permits. That is what resource
+indicators do, in the threats stream: <b>scope answers what, audience answers where.</b> A catalog that
+tries to encode the target API into the scope name is rebuilding <code>aud</code> badly.</p>
+
+<h4>The rule the resource server must not forget</h4>
+<p>A scope bounds the <i>client's</i> delegation. It says nothing about what the <i>user</i> may do, and
+the effective answer is the intersection of the two:</p>
+<div class="codeSample" data-hl>token scope   invoices:write        the app was granted write
+user          a read-only clerk     the human may not write
+              ------------------------------------------------
+answer        DENY
+
+// an API that checks only the scope has let an application escalate
+// its user's privileges. an API that checks only the user's role has
+// ignored the bounds of the delegation. both checks, every time.</div>
+<p>This is why a scope called <code>admin</code> is a design smell rather than a permission. It invites
+exactly the mistake above, because a resource server that sees it stops asking the second question.</p>
+
+<h4>Ask for less, later</h4>
+<p><b>Incremental authorization</b> is the habit that makes a fine-grained catalog usable: request the
+minimum at first login, and ask for the rest at the moment the user does the thing that needs it, when
+the reason is obvious rather than hypothetical. Consent rates rise and the standing grant shrinks.</p>
+<p>Two mechanics make it safe. Downstream, <b>token exchange</b> narrows a token for the next hop, and
+narrowing is the only legal direction: a service may spend less authority than it holds and never more.
+Upstream, check whether your authorization server <i>adds</i> the new scope to the existing grant or
+<i>replaces</i> it, because a replace can silently drop permissions the user already agreed to. That is
+the problem the Grant Management API in the FAPI lesson exists to make explicit.</p>
+
+<h4>Operating the catalog</h4>
+<p>Give the scope list an owner, review it on a schedule, and record for every scope what it permits,
+which endpoints enforce it, and who consumes it. You cannot delete a scope that clients hold, but you
+can stop issuing it, deprecate it in the documentation and watch the number of tokens carrying it fall
+to zero. That measurement is what tells you when retirement is safe, and a catalog nobody measures is a
+catalog that only ever grows.</p>`,
+docs:[['RFC 6749 §3.3, Access Token Scope','https://www.rfc-editor.org/rfc/rfc6749#section-3.3'],['RFC 9396, Rich Authorization Requests','https://www.rfc-editor.org/rfc/rfc9396'],['RFC 8707, Resource Indicators','https://www.rfc-editor.org/rfc/rfc8707'],['RFC 8693, Token Exchange','https://www.rfc-editor.org/rfc/rfc8693']],
+ex:{title:'Enforce the scope rules a catalog depends on',lang:'js',
+run:{call:'permitted',cases:[{name:'scope granted and the user is entitled',args:[['invoices:read','invoices:write'],'invoices:write',true],expect:true},{name:'scope granted but the user is not entitled',args:[['invoices:read','invoices:write'],'invoices:write',false],expect:false},{name:'user entitled but the scope was never granted',args:[['invoices:read'],'invoices:write',true],expect:false},{name:'neither holds',args:[['invoices:read'],'payments:initiate',false],expect:false},{name:'an empty grant permits nothing',args:[[],'invoices:read',true],expect:false},{name:'a missing grant list permits nothing',args:[null,'invoices:read',true],expect:false}]},
+prompt:`Write three functions. <code>permitted(grantedScopes, requiredScope, userEntitled)</code> returns <code>true</code> only when <code>grantedScopes</code> is a non-null array containing <code>requiredScope</code> <b>and</b> <code>userEntitled</code> is true: the effective answer is the intersection of the delegation and the user's own permissions, never either one alone. <code>downscopeOk(held, requested)</code> returns <code>true</code> only when both are non-null arrays, <code>requested</code> is non-empty, and <b>every</b> requested scope appears in <code>held</code>: a token may be narrowed and never widened. <code>wellFormed(scope)</code> returns <code>true</code> only for a <code>resource:action</code> string with exactly one colon, a non-empty half on each side, and no <code>"*"</code> anywhere.`,
+starter:`function permitted(grantedScopes, requiredScope, userEntitled) {
+  return false;
+}
+function downscopeOk(held, requested) {
+  return false;
+}
+function wellFormed(scope) {
+  return false;
+}`,
+solution:`function permitted(grantedScopes, requiredScope, userEntitled) {
+  // BOTH halves: the scope bounds the app, the entitlement bounds the human
+  return grantedScopes != null
+      && requiredScope != null
+      && grantedScopes.indexOf(requiredScope) >= 0
+      && userEntitled === true;
+}
+function downscopeOk(held, requested) {
+  // narrowing only, and an empty request is not narrowing: it is asking
+  // for a token with no bounds at all
+  return held != null
+      && requested != null
+      && requested.length > 0
+      && requested.every(s => held.indexOf(s) >= 0);
+}
+function wellFormed(scope) {
+  if (scope == null || scope.indexOf("*") >= 0) return false;   // no wildcards
+  var parts = scope.split(":");                                 // resource:action
+  return parts.length === 2 && parts[0].length > 0 && parts[1].length > 0;
+}`,
+tests:[{d:'the granted scope is checked',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:grantedScopes\\s*\\.\\s*(?:indexOf|includes)\\s*\\(\\s*requiredScope))|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:grantedScopes\\s*\\.\\s*(?:indexOf|includes)\\s*\\(\\s*requiredScope)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<p1>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:grantedScopes\\s*\\.\\s*(?:indexOf|includes)\\s*\\(\\s*requiredScope)[^{]*?return\\s+\\k<p1>\\b)'},{d:'and the user entitlement is required as well, in the same decision',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:grantedScopes\\s*\\.\\s*(?:indexOf|includes)\\s*\\(\\s*requiredScope)[^;{]*&&[^;{]*userEntitled)|(?:return\\s+(?!\\s*!)[^;{]*userEntitled[^;{]*&&[^;{]*(?:grantedScopes\\s*\\.\\s*(?:indexOf|includes)\\s*\\(\\s*requiredScope))|(?:if\\s*\\(\\s*!\\s*userEntitled[^;{]*\\)\\s*\\{?\\s*return\\s+false)'},{d:'every requested scope must already be held',re:'(?:return\\s+(?!\\s*!)[^;{]*requested\\s*\\.\\s*(?:every|filter)\\s*\\()|(?:held\\s*\\.\\s*(?:indexOf|includes)\\s*\\([^)]*\\)\\s*(?:<\\s*0|===?\\s*-\\s*1)?\\s*\\)\\s*\\{?\\s*return\\s+false\\b)'},{d:'an empty request is refused rather than trivially satisfied',re:'(?:return\\s+(?!\\s*!)[^;{]*requested\\s*\\.\\s*length\\s*(?:>\\s*0|>=\\s*1|!==?\\s*0))|(?:requested\\s*\\.\\s*length\\s*(?:===?\\s*0|<\\s*1|<=\\s*0)[^;{]*\\)\\s*\\{?\\s*return\\s+false\\b)'},{d:'a wildcard scope is rejected',re:'wellFormed\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:indexOf\\s*\\(\\s*"\\*"\\s*\\)|includes\\s*\\(\\s*"\\*"\\s*\\))[^;{]*\\)?\\s*\\{?\\s*return\\s+false'},{d:'the resource:action shape is enforced with exactly one colon',re:'(?:split\\s*\\(\\s*(?:":"|\\x27:\\x27)\\s*\\)[\\s\\S]{0,200}?return\\s+(?!\\s*!)[^;{]*\\.\\s*length\\s*===?\\s*2)|(?:\\.\\s*length\\s*!==?\\s*2[^;{]*\\)\\s*\\{?\\s*return\\s+false\\b)'},{d:'both halves must be non-empty',re:'(?:return\\s+(?!\\s*!)[^;{]*parts\\s*\\[\\s*0\\s*\\]\\s*\\.\\s*length[^;{]*&&[^;{]*parts\\s*\\[\\s*1\\s*\\]\\s*\\.\\s*length)|(?:if\\s*\\(\\s*[^;{]*parts\\s*\\[\\s*[01]\\s*\\]\\s*\\.\\s*length\\s*(?:===?\\s*0|<\\s*1)[^;{]*\\)\\s*\\{?\\s*return\\s+false)'}],
+behavior:`permitted is executed six times, and the second and third cases are the point of the exercise. In the second, the token carries invoices:write and the human is a read-only clerk: the correct answer is deny, and a resource server that checks only the scope has just let an application escalate its user's privileges. In the third the human may write and the app was never granted it: also deny, and an API that checks only the user's role has ignored the bounds of the delegation. A null or empty grant list permits nothing rather than throwing. downscopeOk(["a","b"],["a"]) is true because narrowing is the legal direction; downscopeOk(["a"],["a","b"]) is false because a service may spend less authority than it holds and never more; an empty request is false rather than vacuously true, since "every element of nothing" is a trap that would let a caller ask for a token with no bounds at all. wellFormed("invoices:read") is true, while "invoices", "invoices:read:eu", ":read", "invoices:" and anything containing an asterisk are false.`,
+hints:['Both conditions belong in one expression: the scope check and the entitlement check.','Narrowing means every requested scope is already held; an empty request is not narrowing.','Split on the colon and count the parts before you look at them.']}},
 {id:'oa3p',title:'Third-party integrations & unsolicited assertions',body:`
 <p>Most OAuth in the wild is <b>integrating with a third party</b>: "Log in with Google," a GitHub App that opens pull requests, a Slack app that posts messages, or an enterprise customer single-signing-on into your SaaS. In every case two independent organizations must establish <b>trust</b> before any token flows.</p>
 <p><b>How trust is established.</b> You register your application with the provider. In OAuth or OIDC you
@@ -1541,7 +1775,7 @@ anchor</b> the verifier already has. A party proves it belongs by presenting the
 // verification: walk the chain to an anchor you hold, checking each
 // signature. this is the PKI chain-of-trust idea, applied to federation
 // metadata rather than to certificates.</div>
-<p>The consequence worth internalising: <b>an RP can accept an OP it has never been configured with</b>,
+<p>The consequence worth internalizing: <b>an RP can accept an OP it has never been configured with</b>,
 because trust is transitive through the anchor rather than pairwise. Onboarding a new participant
 becomes a registration with the authority, not N integrations.</p>
 

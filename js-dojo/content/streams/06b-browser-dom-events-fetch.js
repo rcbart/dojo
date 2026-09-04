@@ -111,6 +111,28 @@ whole lesson: click a <code>&lt;b&gt;</code> inside a button, and <code>target</
 event.stopPropagation()   // stop the climb here (use sparingly - other
                           // code may legitimately be listening above you)</div>
 
+<h4>The half of the trip nobody sees: capture</h4>
+<p>Bubbling is the second half. Every event first travels <b>down</b> from <code>document</code> to the
+target (the <b>capture</b> phase), reaches the target, and only then bubbles back up. Listeners run in
+the bubble phase by default, which is why the downward leg is invisible until you ask for it:</p>
+<div class="codeSample" data-hl>el.addEventListener("click", fn, { capture: true });   // downward leg
+el.addEventListener("click", fn, true);                // the older spelling
+el.addEventListener("click", fn);                       // upward leg (default)
+
+// so with a listener on BOTH ul and li, a click on the li runs:
+//   ul  (capture)  ->  li  (target)  ->  ul  (bubble)
+// an ancestor's capture listener therefore runs BEFORE the target's own,
+// which is the one thing capture is genuinely useful for: intercepting an
+// event before the element that would handle it ever sees it.
+
+// two more options worth knowing:
+el.addEventListener("click", fn, { once: true });   // auto-removed after one
+el.addEventListener("click", fn, { signal });        // AbortController removal
+
+// and a few events do not bubble at all - focus, blur, and load among
+// them - so delegation does not work on those. focusin and focusout are
+// the bubbling versions of the first two.</div>
+
 <h4>Delegation: one listener instead of a hundred</h4>
 <p>Bubbling is not trivia; it is a technique. Instead of a listener per row, put <b>one</b> listener on
 the container and ask <i>which</i> row the event came from:</p>
@@ -239,7 +261,9 @@ run:{call:'outcome',cases:[
  {name:'a 404 is an HTTP error, not a network error',args:[{rejected:false,status:404,contentType:'application/json'}],expect:'http-error'},
  {name:'a 500 is an HTTP error',args:[{rejected:false,status:500,contentType:'text/html'}],expect:'http-error'},
  {name:'a rejected promise means the network failed',args:[{rejected:true}],expect:'network-error'},
- {name:'a 200 that is not JSON must not reach res.json()',args:[{rejected:false,status:200,contentType:'text/html'}],expect:'not-json'}]},
+ {name:'a 200 that is not JSON must not reach res.json()',args:[{rejected:false,status:200,contentType:'text/html'}],expect:'not-json'},
+ {name:'299 is the last ok status, not an error',args:[{rejected:false,status:299,contentType:'application/json'}],expect:'success'},
+ {name:'199 is below the ok range',args:[{rejected:false,status:199,contentType:'application/json'}],expect:'http-error'}]},
 prompt:`Write <code>function outcome(result)</code> for <code>{ rejected, status, contentType }</code>. A rejected promise is <code>"network-error"</code>. Otherwise a status outside 200&ndash;299 is <code>"http-error"</code>; a good status whose <code>contentType</code> does not include <code>"application/json"</code> is <code>"not-json"</code>; the rest are <code>"success"</code>. The order of those checks is the lesson.`,
 starter:`function outcome(result) {
   return null;
@@ -332,7 +356,11 @@ run:{call:'validateSignup',cases:[
  {name:'age zero is invalid, but for the RANGE reason',args:[{email:'a@b.c',age:'0',start:'2026-01-01',end:'2026-02-01'}],expect:{age:'out-of-range'}},
  {name:'the cross-field rule: end must be after start',args:[{email:'a@b.c',age:'36',start:'2026-02-01',end:'2026-01-01'}],expect:{end:'before-start'}},
  {name:'equal dates fail the same rule',args:[{email:'a@b.c',age:'36',start:'2026-01-01',end:'2026-01-01'}],expect:{end:'before-start'}},
- {name:'multiple problems are all reported at once',args:[{email:'',age:'abc',start:'2026-02-01',end:'2026-01-01'}],expect:{email:'required',age:'invalid',end:'before-start'}}]},
+ {name:'multiple problems are all reported at once',args:[{email:'',age:'abc',start:'2026-02-01',end:'2026-01-01'}],expect:{email:'required',age:'invalid',end:'before-start'}},
+ {name:'13 is the youngest accepted age',args:[{email:'a@b.c',age:'13',start:'2026-01-01',end:'2026-02-01'}],expect:{}},
+ {name:'12 is one below the floor',args:[{email:'a@b.c',age:'12',start:'2026-01-01',end:'2026-02-01'}],expect:{age:'out-of-range'}},
+ {name:'120 is the oldest accepted age',args:[{email:'a@b.c',age:'120',start:'2026-01-01',end:'2026-02-01'}],expect:{}},
+ {name:'121 is one above the ceiling',args:[{email:'a@b.c',age:'121',start:'2026-01-01',end:'2026-02-01'}],expect:{age:'out-of-range'}}]},
 prompt:`Write <code>function validateSignup(fields)</code> for <code>{ email, age, start, end }</code>, all strings, as forms deliver them. Return an object with one entry per problem (empty object when valid): <code>email</code> is <code>"required"</code> when blank or <code>"invalid"</code> without an <code>"@"</code>; <code>age</code> is <code>"invalid"</code> when not numeric or <code>"out-of-range"</code> outside 13&ndash;120; <code>end</code> is <code>"before-start"</code> unless it is strictly after <code>start</code> (the dates compare correctly as <code>YYYY-MM-DD</code> strings). Report <b>every</b> problem, not just the first.`,
 starter:`function validateSignup(fields) {
   return {};

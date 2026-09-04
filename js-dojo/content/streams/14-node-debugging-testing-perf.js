@@ -276,7 +276,9 @@ run:{call:'memoryVerdict',cases:[
  {name:'flat',args:[[100,100,100]],expect:'normal growth'},
  {name:'two readings are not enough to judge',args:[[100,200]],expect:'not enough data'},
  {name:'one reading is certainly not enough',args:[[100]],expect:'not enough data'},
- {name:'a single spike that comes back down',args:[[100,500,100,110,100]],expect:'normal growth'}]},
+ {name:'a single spike that comes back down',args:[[100,500,100,110,100]],expect:'normal growth'},
+ {name:'a trough exactly 20% higher is still within tolerance',args:[[100,300,120,320]],expect:'normal growth'},
+ {name:'a trough just past 20% higher is a leak',args:[[100,300,121,320]],expect:'likely leak'}]},
 prompt:`Write <code>function memoryVerdict(readings)</code> judging <code>heapUsed</code> samples. Fewer than 3 readings &rarr; <code>"not enough data"</code>. Otherwise compare the <b>lowest</b> reading in the first half with the lowest in the second half: if the second-half minimum is more than 20% higher, return <code>"likely leak"</code>; otherwise <code>"normal growth"</code>. Split with the first half being the first <code>Math.floor(length / 2)</code> readings.`,
 starter:`function memoryVerdict(readings) {
   return null;
@@ -300,7 +302,10 @@ run:{call:'diagnoseService',cases:[
  {name:'a rising heap with a healthy loop is a leak',args:[{loopLagMs:5,cpuPercent:30,heapTrend:'rising',dependencyLatencyMs:20}],expect:{cause:'memory leak',nextStep:'compare two heap snapshots'}},
  {name:'loop lag wins even when the heap is also rising',args:[{loopLagMs:400,cpuPercent:95,heapTrend:'rising',dependencyLatencyMs:3000}],expect:{cause:'blocked event loop',nextStep:'take a CPU profile'}},
  {name:'a leak is diagnosed before a slow dependency',args:[{loopLagMs:5,cpuPercent:30,heapTrend:'rising',dependencyLatencyMs:3000}],expect:{cause:'memory leak',nextStep:'compare two heap snapshots'}},
- {name:'everything healthy needs more evidence',args:[{loopLagMs:5,cpuPercent:20,heapTrend:'flat',dependencyLatencyMs:20}],expect:{cause:'unknown',nextStep:'add loop lag and dependency latency metrics'}}]},
+ {name:'everything healthy needs more evidence',args:[{loopLagMs:5,cpuPercent:20,heapTrend:'flat',dependencyLatencyMs:20}],expect:{cause:'unknown',nextStep:'add loop lag and dependency latency metrics'}},
+ {name:'lag of exactly 100 has not crossed the threshold',args:[{loopLagMs:100,cpuPercent:40,heapTrend:'flat',dependencyLatencyMs:20}],expect:{cause:'unknown',nextStep:'add loop lag and dependency latency metrics'}},
+ {name:'one millisecond past the threshold is a blocked loop',args:[{loopLagMs:101,cpuPercent:40,heapTrend:'flat',dependencyLatencyMs:20}],expect:{cause:'blocked event loop',nextStep:'take a CPU profile'}},
+ {name:'dependency latency of exactly 1000 is not yet slow',args:[{loopLagMs:5,cpuPercent:20,heapTrend:'flat',dependencyLatencyMs:1000}],expect:{cause:'unknown',nextStep:'add loop lag and dependency latency metrics'}}]},
 prompt:`Write <code>function diagnoseService(signals)</code> returning <code>{ cause, nextStep }</code>, checking in this order. <code>loopLagMs</code> above 100 &rarr; <code>"blocked event loop"</code> / <code>"take a CPU profile"</code>. Then <code>heapTrend</code> of <code>"rising"</code> &rarr; <code>"memory leak"</code> / <code>"compare two heap snapshots"</code>. Then <code>dependencyLatencyMs</code> above 1000 &rarr; <code>"slow dependency"</code> / <code>"add a timeout and check the dependency"</code>. Otherwise <code>"unknown"</code> / <code>"add loop lag and dependency latency metrics"</code>.`,
 starter:`function diagnoseService(signals) {
   return { cause: null, nextStep: null };
@@ -405,7 +410,7 @@ solution:`function reachable(graph, roots) {
 }`,
 tests:[{d:'tracks visited nodes in a Set',re:'new\\s+Set'},{d:'guards against revisiting',re:'\\.has\\('},{d:'follows outgoing references',re:'graph\\[node\\]'},{d:'returns a sorted list',re:'(?:return\\s+(?!!)[^;]{0,160}?\\.sort\\(|\\.sort\\([\\s\\S]{0,180}?return\\s+(?!!))'}],
 behavior:`This is the actual algorithm, executed on six heaps. The cycle case is the argument for the whole design: a and b reference each other, no root references either, and the walk from the roots simply never arrives: the cycle collects itself by being unreachable. The seen-set is what real collectors call the mark bit, and the diamond case proves each object is marked once no matter how many paths lead to it.`,
-hints:['Keep a Set of seen names and a stack of names still to visit.','Pop, skip if seen, mark, push the node\\u2019s references.','Sort the Set\\u2019s contents at the end - the cases expect alphabetical order.']}}
+hints:['Keep a Set of seen names and a stack of names still to visit.','Pop a name, skip it if already seen, mark it, then push everything it references.','Sort the contents of the Set at the end - the cases expect alphabetical order.']}}
 
 ,
 

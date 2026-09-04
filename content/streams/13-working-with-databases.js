@@ -240,7 +240,7 @@ query can be instant on one dataset and catastrophic on another, and why <b>read
 will do with it is the career.</p>
 
 <h4>Why execution order matters in practice</h4>
-<p>The clause order you write is not the order the engine evaluates. Internalising the real order explains
+<p>The clause order you write is not the order the engine evaluates. Internalizing the real order explains
 most beginner errors at a stroke:</p>
 <div class="codeSample" data-hl>FROM -> JOIN -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY -> LIMIT
 
@@ -259,8 +259,10 @@ report entirely. <code>LEFT JOIN</code> keeps it with <code>NULL</code>s on the 
 counts the row that exists.</p>
 <p>The related trap: putting a condition on the right-hand table in <code>WHERE</code> rather than in the
 <code>ON</code> clause quietly converts your <code>LEFT JOIN</code> back into an inner one, because
-<code>NULL &gt;= '2026-01-01'</code> is not true. Conditions on the outer table belong in
-<code>ON</code>.</p>
+<code>NULL &gt;= '2026-01-01'</code> is not true, so the very rows the outer join kept get filtered
+straight back out. Conditions on the <b>optional side</b> (the right-hand table) belong in
+<code>ON</code>; conditions on the preserved side belong in <code>WHERE</code>, where they read as
+they should.</p>
 
 <h4>NULL is not a value</h4>
 <p>It means "unknown", and it propagates. <code>NULL = NULL</code> is not true, it is unknown, so
@@ -404,7 +406,7 @@ SAVEPOINT sp1;   -- a checkpoint you can ROLLBACK TO
 GRANT SELECT ON tags TO reader;   -- give a privilege
 REVOKE SELECT ON tags FROM reader;-- take it back</div>
 <p>Plain-terms cheat sheet: <b>DDL</b> = the building (create/alter/drop the tables). <b>DML</b> = the furniture (put rows in, move them, take them out). <b>TCL</b> = the "undo/commit" bracket around your DML. <b>DCL</b> = the keys to the doors (who may do what).</p>
-<p>Two safety notes worth burning in: <code>TRUNCATE</code> and <code>DROP</code> are DDL and in many databases cannot be rolled back the way DML can; treat them like a shredder. And every <code>UPDATE</code>/<code>DELETE</code> needs a <code>WHERE</code> unless you truly mean "all rows."</p>
+<p>Two safety notes worth burning in. <code>TRUNCATE</code> and <code>DROP</code> throw away data in one statement, so treat them like a shredder; whether a transaction can save you depends entirely on the engine. PostgreSQL has transactional DDL, so a <code>DROP TABLE</code> inside <code>BEGIN</code> really can be rolled back, while Oracle and MySQL commit implicitly around DDL and leave you nothing to roll back to. Know which one you are typing into before you rely on <code>BEGIN</code>. And every <code>UPDATE</code>/<code>DELETE</code> needs a <code>WHERE</code> unless you truly mean "all rows."</p>
 <p>Reading queries, you also lean on these <b>clauses</b> (parts of a SELECT, not standalone commands): <code>WHERE</code> (filter rows) → <code>GROUP BY</code> (bucket rows) → <code>HAVING</code> (filter buckets) → <code>ORDER BY</code> (sort) → <code>LIMIT/OFFSET</code> (paginate), plus <code>DISTINCT</code>, <code>JOIN</code>, and the set operators <code>UNION</code> / <code>INTERSECT</code> / <code>EXCEPT</code> that stack whole result sets.</p>`,
 docs:[['SQL commands (PostgreSQL)','https://www.postgresql.org/docs/current/sql-commands.html'],['GRANT / privileges','https://www.postgresql.org/docs/current/sql-grant.html'],['Transactions','https://www.postgresql.org/docs/current/tutorial-transactions.html']],
 ex:{title:'One command from each family',lang:'sql',
@@ -1044,5 +1046,78 @@ Seq Scan (sequential scan)
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 
 # 6)
-HikariCP`}}
+HikariCP`}},
+{id:'db6',title:'Reading a query plan: EXPLAIN ANALYZE properly',body:`
+<p>The SQL essentials lesson made a claim and then walked away from it: the syntax is a week's work, and understanding what the planner does with it is the career. This is that lesson. A query plan is the database telling you, in order, exactly how it intends to produce your rows, and reading one is the difference between fixing a slow query and guessing at indexes until something changes.</p>
+<div class="codeSample">EXPLAIN                  SELECT ...   -- the plan the planner INTENDS. free, instant.
+EXPLAIN ANALYZE          SELECT ...   -- actually RUNS it and reports what happened
+EXPLAIN (ANALYZE, BUFFERS, VERBOSE)   -- adds pages read, and where from</div>
+<p>Two warnings before you use the second form. <code>EXPLAIN ANALYZE</code> executes the statement, so running it on an <code>UPDATE</code> or a <code>DELETE</code> really does change your data; wrap it in <code>BEGIN ... ROLLBACK</code> if you must. And the timing it reports includes its own instrumentation overhead, which is noticeable on plans with millions of rows and negligible on the ones you are usually debugging.</p>
+
+<h4>How to read the shape</h4>
+<p>A plan is a tree, printed with the root at the top and indentation for depth. Execution runs the other way: <b>the most indented nodes run first</b>, and each one feeds its parent. So read it inside-out, from the deepest node upward, and the story assembles itself.</p>
+<div class="codeSample">Hash Join  (cost=12.4..982.7 rows=520 width=44)
+           (actual time=0.310..48.902 rows=51004 loops=1)
+  Hash Cond: (o.user_id = u.id)
+  -&gt;  Seq Scan on orders o  (cost=0.00..820.0 rows=51004 width=28)
+                            (actual time=0.008..21.4 rows=51004 loops=1)
+  -&gt;  Hash  (cost=8.2..8.2 rows=340 width=20)
+        -&gt;  Seq Scan on users u  (cost=0.00..8.2 rows=340 width=20)</div>
+<p>Read that from the bottom: scan <code>users</code>, build a hash table from it, scan <code>orders</code>, probe the hash for each row, emit the join. Four numbers per node carry the diagnosis.</p>
+<ul>
+<li><b>cost</b> is the planner's own unit, not milliseconds. The two figures are start-up cost and total cost, and they are useful only for comparing nodes with each other.</li>
+<li><b>actual time</b> is milliseconds, and is likewise a pair: time to the first row, then to the last. A large gap between them means the node is streaming rather than materializing.</li>
+<li><b>rows</b> appears twice, estimated and actual, and <b>the ratio between them is the single most useful thing in the output</b>. Here the planner expected 520 and got 51,004: it was wrong by a factor of a hundred, which means every decision above this node was made on bad information. Stale statistics and correlated predicates are the usual causes, and <code>ANALYZE tablename</code> is the first thing to try.</li>
+<li><b>loops</b> multiplies everything. A node showing 0.4ms with loops=20000 cost eight seconds, and the per-row times look innocent until you notice the multiplier.</li>
+</ul>
+
+<h4>The node types worth recognizing on sight</h4>
+<div class="codeSample">Seq Scan          read the whole table. correct and fast for a small
+                  table or a query returning most of it; a disaster on
+                  a large table returning few rows.
+Index Scan        walk the index, then fetch each matching row.
+Index Only Scan   answer entirely from the index. the fastest shape,
+                  and what a covering index buys you.
+Bitmap Heap Scan  index says which pages, then read those pages in
+                  physical order. the planner's answer to "many rows,
+                  but not most of them".
+Nested Loop       for each outer row, look up the inner. superb with
+                  few outer rows and an index inside; catastrophic
+                  when the row estimate above it was wrong.
+Hash Join         build a hash of the smaller side, probe with the
+                  larger. the workhorse for big unsorted joins.
+Merge Join        both sides sorted, walk them together.
+Sort              watch for "external merge Disk: 42MB". that means
+                  work_mem was too small and it spilled to disk.</div>
+
+<h4>What to do with what you find</h4>
+<p><b>A Seq Scan is not automatically wrong.</b> On a table of four hundred rows it is the right plan, and forcing an index would be slower. The finding is a sequential scan over a large table that returns a small fraction of it. <b>An index that exists but is not used</b> usually means one of three things: the column is wrapped in a function so the index does not apply (index the expression instead), the types do not match and a cast is forced, or the planner believes the query returns most of the table and has decided scanning is cheaper. That third case is a statistics problem, not an index problem, and adding indexes will not fix it.</p>
+<p>Work the plan in one direction: find the node with the largest actual time once you have multiplied by <code>loops</code>, check whether its estimate matched reality, and only then decide whether the fix is an index, a rewrite, or fresher statistics. Measure again afterwards on data the size of production, because a plan chosen on ten thousand rows tells you very little about the plan the same query gets on ten million.</p>`,
+docs:[['Using EXPLAIN, PostgreSQL manual','https://www.postgresql.org/docs/current/using-explain.html'],['explain.depesz.com, plan visualizer','https://explain.depesz.com/']],
+ex:{title:'From Seq Scan to Index Only Scan',lang:'sql',
+prompt:`Table <code>orders(id, user_id, status, total_cents, created_at)</code> has ten million rows and no index but the primary key. One statement per numbered line, each ending in a semicolon: (1) the command that shows the plan for <code>SELECT id, total_cents FROM orders WHERE user_id = 42</code> <b>with real timings and page counts</b>, so you can see what actually happened rather than what was intended; (2) an index named <code>idx_orders_user_id</code> on <code>orders(user_id)</code> that turns the Seq Scan into an Index Scan; (3) a <b>covering</b> index named <code>idx_orders_user_covering</code> on the same column that also carries <code>id</code> and <code>total_cents</code>, so the query can be answered from the index alone; (4) the command that refreshes the planner's statistics for the table.`,
+starter:`-- 1) plan with real timings and buffer counts
+
+-- 2) the plain index
+
+-- 3) the covering index
+
+-- 4) refresh the statistics
+`,
+solution:`EXPLAIN (ANALYZE, BUFFERS) SELECT id, total_cents FROM orders WHERE user_id = 42;
+
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+
+CREATE INDEX idx_orders_user_covering ON orders(user_id) INCLUDE (id, total_cents);
+
+ANALYZE orders;`,
+tests:[{d:'EXPLAIN actually runs the query, with ANALYZE',re:'EXPLAIN\\s*\\(\\s*ANALYZE\\b','flags':'is'},
+{d:'BUFFERS is requested alongside it',re:'EXPLAIN\\s*\\([^)]*\\bBUFFERS\\b[^)]*\\)','flags':'is'},
+{d:'The plan is taken of the stated SELECT',re:'EXPLAIN[^;]*SELECT\\s+id\\s*,\\s*total_cents\\s+FROM\\s+orders\\s+WHERE\\s+user_id\\s*=\\s*42','flags':'is'},
+{d:'A plain index on user_id, correctly named',re:'CREATE\\s+INDEX\\s+idx_orders_user_id\\s+ON\\s+orders\\s*\\(\\s*user_id\\s*\\)','flags':'is'},
+{d:'A covering index that carries the selected columns',re:'CREATE\\s+INDEX\\s+idx_orders_user_covering\\s+ON\\s+orders\\s*\\(\\s*user_id\\s*\\)\\s*INCLUDE\\s*\\(\\s*id\\s*,\\s*total_cents\\s*\\)','flags':'is'},
+{d:'Statistics refreshed for the table',re:'\\bANALYZE\\s+orders\\s*;','flags':'is'},
+{d:'No plain EXPLAIN standing in for the timed one',re:'^\\s*EXPLAIN\\s+SELECT','flags':'ism',not:true}],
+behavior:`1. (1) EXPLAIN (ANALYZE, BUFFERS) SELECT ...: ANALYZE runs the query and reports actual times and row counts, BUFFERS reports the pages read, and plain EXPLAIN would have given you only the planner's intention. 2. (2) the plain index turns the Seq Scan into an Index Scan, which still visits the table to fetch total_cents. 3. (3) INCLUDE carries the extra columns in the index leaf without making them part of the key, so the plan becomes an Index Only Scan and never touches the heap. 4. (4) ANALYZE orders refreshes the statistics, which is the fix when the plan is bad because the row estimate was wrong rather than because an index was missing. 5. Remember that EXPLAIN ANALYZE executes the statement: harmless on a SELECT, and something to wrap in a transaction on anything that writes.`,
+hints:['The options go in parentheses after EXPLAIN, comma separated; without ANALYZE nothing is executed and there are no actual timings.','A covering index keeps the extra columns as payload rather than in the key, which is what INCLUDE means.','The last line is one word and a table name; it is what you run when the estimated and actual row counts disagree wildly.']}}
 ]});

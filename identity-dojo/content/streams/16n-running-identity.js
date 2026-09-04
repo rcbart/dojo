@@ -534,7 +534,7 @@ configuration value in an IdP you do not administer, three redirects earlier. Gu
 A method is not.</p>
 
 <h4>Start by locating the failure in the chain</h4>
-<p>Every federated login is the same shape. Before theorising, find out <i>how far it got</i>:</p>
+<p>Every federated login is the same shape. Before theorizing, find out <i>how far it got</i>:</p>
 <div class="codeSample" data-hl>1  app  -> browser: redirect to /authorize
 2  browser -> IdP: the authorization request
 3  IdP: authenticates the user  (MFA here)
@@ -565,7 +565,7 @@ token endpoint "invalid_grant"   code already used, expired, or the
 token validates, user is wrong   keyed on email instead of sub
 403 AFTER a successful login     authorization, not authentication. stop
                                  looking at the IdP.</div>
-<p>That last row is worth internalising. "Login is broken" reported by a user very often means
+<p>That last row is worth internalizing. "Login is broken" reported by a user very often means
 <i>authorization</i> is broken: they authenticated fine and then could not see something. The two
 have entirely different owners and entirely different fixes.</p>
 

@@ -107,7 +107,7 @@ public class M2mToken {
 <ul>
 <li>Each service is issued a <b>client certificate</b> (short-lived, ideally auto-rotated).</li>
 <li>On every call, TLS verifies the peer's cert against the trusted CA; the peer's <b>subject</b> (or a SAN URI) names the workload.</li>
-<li>Authorization is then "is <i>this identity</i> allowed to call me?": an allow-list of subjects, or policy keyed on the identity.</li>
+<li>Authorization is then "is <i>this identity</i> allowed to call me?": an allowlist of subjects, or policy keyed on the identity.</li>
 </ul>
 <p>mTLS is the backbone of <b>service meshes</b> (Istio, Linkerd): the mesh gives every workload a cert and encrypts + authenticates every hop automatically. It pairs naturally with SPIFFE (lesson 4), where the cert's SAN is a <code>spiffe://</code> URI.</p>
 <div class="codeSample">mTLS call
@@ -168,9 +168,9 @@ public class MtlsIdentity {
         return null;
     }
 }`,
-tests:[{d:'null-checks the peer',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:peerSubject\\s*!=\\s*null|null\\s*!=\\s*peerSubject))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:peerSubject\\s*!=\\s*null|null\\s*!=\\s*peerSubject)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:peerSubject\\s*!=\\s*null|null\\s*!=\\s*peerSubject)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:peerSubject\\s*!=\\s*null|null\\s*!=\\s*peerSubject)[^{]*?return\\s+\\k<av>\\b)'},{d:'authorizes by identity allow-list',re:'allowedSubjects\\s*\\.\\s*contains\\s*\\(\\s*peerSubject\\s*\\)'},{d:'recognizes a SPIFFE SAN',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:startsWith\\s*\\(\\s*"spiffe://"\\s*\\)))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:startsWith\\s*\\(\\s*"spiffe://"\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:startsWith\\s*\\(\\s*"spiffe://"\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:startsWith\\s*\\(\\s*"spiffe://"\\s*\\))[^{]*?return\\s+\\k<av>\\b)'}],
+tests:[{d:'null-checks the peer',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:peerSubject\\s*!=\\s*null|null\\s*!=\\s*peerSubject))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:peerSubject\\s*!=\\s*null|null\\s*!=\\s*peerSubject)[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:peerSubject\\s*!=\\s*null|null\\s*!=\\s*peerSubject)[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:peerSubject\\s*!=\\s*null|null\\s*!=\\s*peerSubject)[^{]*?return\\s+\\k<av>\\b)'},{d:'authorizes by identity allowlist',re:'allowedSubjects\\s*\\.\\s*contains\\s*\\(\\s*peerSubject\\s*\\)'},{d:'recognizes a SPIFFE SAN',re:'(?:return\\s+(?!\\s*!)[^;{]*(?:startsWith\\s*\\(\\s*"spiffe://"\\s*\\)))|(?:if\\s*\\(\\s*(?!\\s*!)[^;{]*(?:startsWith\\s*\\(\\s*"spiffe://"\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+true)|(?:if\\s*\\(\\s*!\\s*[^;{]*(?:startsWith\\s*\\(\\s*"spiffe://"\\s*\\))[^;{]*\\)\\s*\\{?\\s*return\\s+false)|(?:(?<av>[A-Za-z_$][\\w$]*)\\s*=(?!=)\\s*(?!\\s*!)[^;{]*(?:startsWith\\s*\\(\\s*"spiffe://"\\s*\\))[^{]*?return\\s+\\k<av>\\b)'}],
 behavior:`allowed("svcA", Set.of("svcA")) is true; an unknown or null subject is false. spiffeFromSan("spiffe://corp/ns/prod/sa/a") returns it; a non-spiffe or null SAN returns null. In mTLS the peer's verified certificate IS the identity; no bearer token can be replayed by a thief who lacks the private key.`,
-hints:['Authorization is an allow-list: <code>peerSubject != null &amp;&amp; allowedSubjects.contains(peerSubject)</code>.','A workload SPIFFE identity travels in the cert SAN as a <code>spiffe://</code> URI.','mTLS binds the call to the holder of the private key; that is what makes it sender-constrained.'],
+hints:['Authorization is an allowlist: <code>peerSubject != null &amp;&amp; allowedSubjects.contains(peerSubject)</code>.','A workload SPIFFE identity travels in the cert SAN as a <code>spiffe://</code> URI.','mTLS binds the call to the holder of the private key; that is what makes it sender-constrained.'],
 solution:`import java.util.*;
 
 public class MtlsIdentity {

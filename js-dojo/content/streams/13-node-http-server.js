@@ -216,7 +216,11 @@ run:{call:'validateUser',cases:[
  {name:'an out-of-range age is reported',args:[{name:'Ada',age:200}],expect:{ok:false,errors:['age must be a whole number between 0 and 150']}},
  {name:'a fractional age is not a whole number',args:[{name:'Ada',age:36.5}],expect:{ok:false,errors:['age must be a whole number between 0 and 150']}},
  {name:'an unknown field is refused, not ignored',args:[{name:'Ada',role:'admin'}],expect:{ok:false,errors:['unknown field: role']}},
- {name:'every problem is reported at once, in a fixed order',args:[{age:'x',role:'admin'}],expect:{ok:false,errors:['name is required','age must be a whole number between 0 and 150','unknown field: role']}}]},
+ {name:'every problem is reported at once, in a fixed order',args:[{age:'x',role:'admin'}],expect:{ok:false,errors:['name is required','age must be a whole number between 0 and 150','unknown field: role']}},
+ {name:'an age of 0 sits on the low boundary and is accepted',args:[{name:'Ada',age:0}],expect:{ok:true,errors:[]}},
+ {name:'an age of 150 sits on the high boundary and is accepted',args:[{name:'Ada',age:150}],expect:{ok:true,errors:[]}},
+ {name:'151 is one past the ceiling',args:[{name:'Ada',age:151}],expect:{ok:false,errors:['age must be a whole number between 0 and 150']}},
+ {name:'a negative age is below the floor',args:[{name:'Ada',age:-1}],expect:{ok:false,errors:['age must be a whole number between 0 and 150']}}]},
 prompt:`Write <code>function validateUser(body)</code> returning <code>{ ok, errors }</code>. <code>name</code> is required and must be a non-blank string (&rarr; <code>"name is required"</code>). <code>age</code> is optional, and when present must be a whole number from 0 to 150 (&rarr; <code>"age must be a whole number between 0 and 150"</code>); the <b>string</b> <code>"36"</code> is not a number. Any key other than <code>name</code> and <code>age</code> is an error (&rarr; <code>"unknown field: KEY"</code>). Report every problem, in that order.`,
 starter:`function validateUser(body) {
   return { ok: true, errors: [] };
@@ -287,7 +291,7 @@ it: <b>your server decides</b>. Echo a specific allowed origin rather than refle
 authentication, because a preflight carries no credentials by design.</p>
 
 <h4>Rate limiting and errors</h4>
-<div class="codeSample" data-hl>// rate limiting is a availability control, and it belongs at the edge:
+<div class="codeSample" data-hl>// rate limiting is an availability control, and it belongs at the edge:
 429 + retry-after: 30 + RateLimit headers, keyed by API key or user,
 falling back to IP only when there is nothing better
 
@@ -335,7 +339,9 @@ run:{call:'respond',cases:[
  {name:'authenticated but not permitted is 403',args:[{auth:'Bearer t',role:'viewer',bodyBytes:100,contentType:'application/json'}],expect:{status:403,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}}},
  {name:'the wrong content type is 415, checked before the body size',args:[{auth:'Bearer t',role:'admin',bodyBytes:99999999,contentType:'text/plain'}],expect:{status:415,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}}},
  {name:'an oversized body is 413',args:[{auth:'Bearer t',role:'admin',bodyBytes:2000000,contentType:'application/json'}],expect:{status:413,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}}},
- {name:'authentication is checked before anything about the body',args:[{auth:undefined,role:'viewer',bodyBytes:99999999,contentType:'text/plain'}],expect:{status:401,headers:{'www-authenticate':'Bearer realm="api"','x-content-type-options':'nosniff'}}}]},
+ {name:'authentication is checked before anything about the body',args:[{auth:undefined,role:'viewer',bodyBytes:99999999,contentType:'text/plain'}],expect:{status:401,headers:{'www-authenticate':'Bearer realm="api"','x-content-type-options':'nosniff'}}},
+ {name:'a body of exactly the limit is still accepted',args:[{auth:'Bearer t',role:'admin',bodyBytes:1000000,contentType:'application/json'}],expect:{status:200,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}}},
+ {name:'one byte over the limit is 413',args:[{auth:'Bearer t',role:'admin',bodyBytes:1000001,contentType:'application/json'}],expect:{status:413,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}}}]},
 prompt:`Write <code>function respond(req)</code> returning <code>{ status, headers }</code> for a write endpoint, applying the checks in this order: no <code>auth</code> &rarr; <code>401</code> with <code>www-authenticate: Bearer realm="api"</code>; <code>role</code> other than <code>"admin"</code> &rarr; <code>403</code>; <code>contentType</code> other than <code>"application/json"</code> &rarr; <code>415</code>; <code>bodyBytes</code> above <code>1000000</code> &rarr; <code>413</code>; otherwise <code>200</code>. Every response carries <code>x-content-type-options: nosniff</code>, and every response <b>except the 401</b> also carries <code>cache-control: no-store</code>.`,
 starter:`function respond(req) {
   return { status: 200, headers: {} };

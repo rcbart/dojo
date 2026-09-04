@@ -1,6 +1,6 @@
 STREAMS.push({icon:'🏆',tournament:true,title:'Coding Challenges: The Tournament',blurb:'Interview-style problems in three ranked rounds: Easy, Medium, Hard. Enter after Fundamentals; return often.',lessons:[
 {id:'ch1',title:'Easy round',body:`
-<p>Warm-up bouts. Easy problems test whether the fundamentals are automatic: hash lookups, pointer discipline, clean loops. In an interview these are the first 10 minutes; the goal is not just solving them but solving them <i>cleanly while talking</i>.</p>
+<p>Warm-up bouts. Easy problems test whether the fundamentals are automatic: hash lookups, pointer discipline, clean loops. In an interview these are the first 10 minutes; the goal is to solve them <i>cleanly while talking</i>.</p>
 <p>Approach ritual (use it on every problem in this tournament): restate the problem in one sentence → name the brute force and its complexity → name the pattern that beats it → code → walk one example and one edge case out loud.</p>
 
 <h4>Why "easy" is misleading</h4>
@@ -31,7 +31,7 @@ CLEAN LOOPS        one job per loop, no mutation you cannot explain, and
 <code>(lo + hi) / 2</code>. That last one is a genuine classic: use
 <code>lo + (hi - lo) / 2</code>.</p>
 <p><b>A note on the ritual.</b> It feels artificial for an easy problem, which is exactly why it is
-worth practising here. Under pressure on a hard problem you will do what you rehearsed, and nobody
+worth practicing here. Under pressure on a hard problem you will do what you rehearsed, and nobody
 invents structured communication for the first time in the final round.</p>`,
 docs:[['Big-O cheat sheet','https://www.bigocheatsheet.com/'],['HashMap (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/HashMap.html']],
 exs:[
@@ -568,7 +568,7 @@ public class MergeK {
 }`,
 tests:[{d:'PriorityQueue ordered by value',re:'new\\s+PriorityQueue<>\\s*\\(\\s*Comparator\\.comparingInt\\s*\\('},{d:'Seeded with each non-empty head',re:'for\\s*\\([\\s\\S]*?isEmpty\\s*\\(\\s*\\)[\\s\\S]*?offer|for\\s*\\([\\s\\S]*?size\\s*\\(\\s*\\)\\s*>\\s*0[\\s\\S]*?offer'},{d:'Poll-then-advance loop',re:'while\\s*\\(\\s*!\\s*\\w+\\.isEmpty\\s*\\(\\s*\\)\\s*\\)[\\s\\S]*?poll\\s*\\(\\s*\\)'},{d:'Pushes the successor from the same list',re:'\\+\\s*1[\\s\\S]*?offer|offer[\\s\\S]*?\\+\\s*1'}],
 behavior:`1. mergeK([[1,4,5],[1,3,4],[2,6]]) == [1,1,2,3,4,4,5,6]. 2. Empty inner lists are skipped safely; mergeK of all-empty == []. 3. The heap never holds more than K entries; that is where O(N log K) comes from (vs O(N log N) for concatenate-and-sort).`,
-hints:['Heap entries: <code>new int[]{value, whichList, indexInList}</code>.','Seed: for each list i with size > 0, offer {list.get(0), i, 0}.','Loop: poll the min into the result; if elementIndex+1 exists in that list, offer the successor.'],
+hints:['Heap entries: <code>new int[]{value, whichList, indexInList}</code>.','Seed: for each list i with size > 0, offer {list.get(0), i, 0}.','Loop: poll the min into the result; if indexInList+1 exists in whichList, offer that successor.'],
 solution:`import java.util.*;
 
 public class MergeK {

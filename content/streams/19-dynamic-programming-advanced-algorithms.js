@@ -1,16 +1,26 @@
 STREAMS.push({icon:'🥷',tournament:true,title:'Dynamic Programming & Advanced Algorithms',blurb:'Memoization, tabulation, 2D DP and the pattern toolbox (sliding window, two pointers): the art behind hard interview problems.',lessons:[
 {id:'dp1',title:'Recursion → memoization',body:`
 <p>DP in one sentence: <b>a problem whose solution reuses solutions to overlapping subproblems</b>. Step one is always the naive recursion; step two is noticing you solve the same subproblem repeatedly; step three is caching it: <b>memoization</b>, or top-down DP:</p>
-<div class="codeSample" data-hl>// naive fib: O(2^n); fib(50) takes minutes because fib(20) is computed 832040 times
+<div class="codeSample" data-hl>// naive fib: O(2^n); fib(50) takes tens of seconds because fib(20) alone
+// is recomputed 1,346,269 times
 long fib(int n) { return n &lt;= 1 ? n : fib(n - 1) + fib(n - 2); }
 
 // memoized: O(n); each subproblem solved ONCE, then looked up
 Map&lt;Integer, Long&gt; memo = new HashMap&lt;&gt;();
 long fib(int n) {
     if (n &lt;= 1) return n;
-    return memo.computeIfAbsent(n, k -&gt; fib(k - 1) + fib(k - 2));
-}</div>
+    if (memo.containsKey(n)) return memo.get(n);     // consult the cache
+    long v = fib(n - 1) + fib(n - 2);                // recurse, THEN store
+    memo.put(n, v);
+    return v;
+}
+
+// NOT this, however tidy it looks:
+//   return memo.computeIfAbsent(n, k -&gt; fib(k - 1) + fib(k - 2));
+// the mapping function recurses back into the same map, and HashMap
+// detects the structural change: ConcurrentModificationException.</div>
 <p>The recipe: (1) define the subproblem precisely: "fib(n) is the nth number"; (2) write the recurrence: <code>f(n) = f(n-1) + f(n-2)</code>; (3) add base cases; (4) cache on the way back up.</p>
+<p>Step four has one Java-specific trap worth taking seriously, because the wrong version compiles and reads beautifully. <code>computeIfAbsent</code> looks like the perfect memo call: it checks the cache and stores the result in one line. But a <i>recursive</i> mapping function reaches back into the same <code>HashMap</code> while that map is mid-update, and since Java 9 the map notices and throws <code>ConcurrentModificationException</code>. On older runtimes it did something worse: it silently corrupted the table. Compute the value first, then <code>put</code> it. The lambda-composition lesson in the Modern Java stream makes the same point from the other direction.</p>
 
 <h4>The two conditions, and how to check them</h4>
 <p>DP applies when both hold. <b>Overlapping subproblems</b>: the same smaller instance is needed more than once; draw two levels of the recursion tree and look for a repeated node. Without overlap, caching stores answers nobody asks for again, which is why merge sort is divide-and-conquer rather than DP. <b>Optimal substructure</b>: an optimal solution is built from optimal solutions of its subproblems. That one is easy to assume and occasionally false: the cheapest flight from A to C is not always the cheapest A-to-B plus cheapest B-to-C when the fare depends on the whole itinerary, and a DP over such a problem returns a confident wrong answer rather than failing.</p>
@@ -25,7 +35,7 @@ long fib(int n) {
 docs:[['Dynamic programming, CP-Algorithms','https://cp-algorithms.com/dynamic_programming/intro-to-dp.html'],['Memoization vs tabulation, Baeldung','https://www.baeldung.com/cs/tabulation-vs-memoization']],
 exs:[
 {title:'Memoized Fibonacci',
-prompt:`Write <code>Fib</code> computing the <b>nth Fibonacci number</b>: fib(0) = 0, fib(1) = 1, fib(n) = fib(n-1) + fib(n-2), so fib(10) == 55. Use a <code>private final java.util.Map&lt;Integer, Long&gt; memo = new java.util.HashMap&lt;&gt;()</code> and method <code>long fib(int n)</code>: base case n &le; 1, otherwise <code>memo.computeIfAbsent</code> with the recursive recurrence. fib(90) must return instantly (naive recursion would outlive the universe).`,
+prompt:`Write <code>Fib</code> computing the <b>nth Fibonacci number</b>: fib(0) = 0, fib(1) = 1, fib(n) = fib(n-1) + fib(n-2), so fib(10) == 55. Use a <code>private final java.util.Map&lt;Integer, Long&gt; memo = new java.util.HashMap&lt;&gt;()</code> and method <code>long fib(int n)</code>: base case n &le; 1, then <b>consult the cache with <code>memo.containsKey(n)</code></b>, otherwise recurse and <code>memo.put</code> the result before returning it. Do not use <code>computeIfAbsent</code> here: a recursive mapping function modifies the map it is computing into, and <code>HashMap</code> throws <code>ConcurrentModificationException</code>. fib(90) must return instantly (naive recursion would outlive the universe).`,
 starter:`import java.util.*;
 
 public class Fib {
@@ -35,9 +45,9 @@ public class Fib {
         return 0;
     }
 }`,
-tests:[{d:'Base case for n <= 1',re:'n\\s*<=\\s*1'},{d:'Caches via computeIfAbsent (or containsKey+put)',re:'computeIfAbsent|containsKey'},{d:'Recursive recurrence f(n-1)+f(n-2)',re:'fib\\s*\\(\\s*\\w+\\s*-\\s*1\\s*\\)\\s*\\+\\s*fib\\s*\\(\\s*\\w+\\s*-\\s*2\\s*\\)'}],
-behavior:`1. fib(0)==0, fib(1)==1, fib(10)==55, fib(50)==12586269025. 2. fib(90) completes instantly (memo makes it O(n)) and returns 2880067194370816120. 3. Each n is computed exactly once; repeated calls are pure lookups.`,
-hints:['Shape: <code>if (n <= 1) return n; return memo.computeIfAbsent(n, k -> fib(k - 1) + fib(k - 2));</code>','computeIfAbsent both checks the cache AND stores the computed value: the whole memo pattern in one call.','Use long: fib(90) overflows int at fib(47).'],
+tests:[{d:'Base case for n <= 1',re:'n\\s*<=\\s*1'},{d:'Consults the cache before recursing',re:'if\\s*\\(\\s*memo\\.containsKey\\s*\\(\\s*n\\s*\\)\\s*\\)\\s*return\\s+memo\\.get\\s*\\(\\s*n\\s*\\)'},{d:'Stores the computed value under n',re:'memo\\.put\\s*\\(\\s*n\\s*,'},{d:'Recursive recurrence f(n-1)+f(n-2)',re:'fib\\s*\\(\\s*\\w+\\s*-\\s*1\\s*\\)\\s*\\+\\s*fib\\s*\\(\\s*\\w+\\s*-\\s*2\\s*\\)'},{d:'No recursive computeIfAbsent',re:'computeIfAbsent',not:true}],
+behavior:`1. fib(0)==0, fib(1)==1, fib(10)==55, fib(50)==12586269025. 2. fib(90) completes instantly (memo makes it O(n)) and returns 2880067194370816120. 3. Each n is computed exactly once; repeated calls are pure lookups. 4. The one-line computeIfAbsent version throws ConcurrentModificationException at runtime, which is why the cache is read and written as two separate steps.`,
+hints:['Four steps in order: base case, cache lookup, recurse, store.','The lookup is <code>if (memo.containsKey(n)) return memo.get(n);</code>; everything below it runs only on a miss.','Use long: fib(90) overflows int at fib(47).'],
 solution:`import java.util.*;
 
 public class Fib {
@@ -45,11 +55,14 @@ public class Fib {
 
     long fib(int n) {
         if (n <= 1) return n;
-        return memo.computeIfAbsent(n, k -> fib(k - 1) + fib(k - 2));
+        if (memo.containsKey(n)) return memo.get(n);
+        long v = fib(n - 1) + fib(n - 2);
+        memo.put(n, v);
+        return v;
     }
 }`},
 {title:'Climbing stairs (count the ways)',
-prompt:`You climb a staircase of n steps taking 1 or 2 steps at a time. Write <code>Stairs</code> with memoized <code>long ways(int n)</code>: ways(n) = ways(n-1) + ways(n-2), base cases ways(0) = 1 (one way: stand still) and ways(1) = 1. Same memo pattern as before; spot that it IS Fibonacci wearing a costume.`,
+prompt:`You climb a staircase of n steps taking 1 or 2 steps at a time. Write <code>Stairs</code> with memoized <code>long ways(int n)</code>: ways(n) = ways(n-1) + ways(n-2), base cases ways(0) = 1 (one way: stand still) and ways(1) = 1. Same lookup-recurse-store memo pattern as before, and the same reason for it; spot that this IS Fibonacci wearing a costume.`,
 starter:`import java.util.*;
 
 public class Stairs {
@@ -59,7 +72,7 @@ public class Stairs {
         return 0;
     }
 }`,
-tests:[{d:'Base cases return 1',re:'n\\s*<=\\s*1[\\s\\S]*?return\\s+1'},{d:'Memoized',re:'computeIfAbsent|containsKey'},{d:'The two-choice recurrence',re:'ways\\s*\\(\\s*\\w+\\s*-\\s*1\\s*\\)\\s*\\+\\s*ways\\s*\\(\\s*\\w+\\s*-\\s*2\\s*\\)'}],
+tests:[{d:'Base cases return 1',re:'n\\s*<=\\s*1[\\s\\S]*?return\\s+1'},{d:'Consults the cache before recursing',re:'if\\s*\\(\\s*memo\\.containsKey\\s*\\(\\s*n\\s*\\)\\s*\\)\\s*return\\s+memo\\.get\\s*\\(\\s*n\\s*\\)'},{d:'Stores the computed value under n',re:'memo\\.put\\s*\\(\\s*n\\s*,'},{d:'The two-choice recurrence',re:'ways\\s*\\(\\s*\\w+\\s*-\\s*1\\s*\\)\\s*\\+\\s*ways\\s*\\(\\s*\\w+\\s*-\\s*2\\s*\\)'}],
 behavior:`1. ways(2)==2 (1+1, 2), ways(3)==3, ways(4)==5, ways(10)==89. 2. ways(80) returns instantly. 3. The recurrence encodes the CHOICE: last move was a 1-step (from n-1) or a 2-step (from n-2); sum the ways to reach each.`,
 hints:['"How many ways" + choices at each step = count-DP; the recurrence sums over the choices for the LAST move.','Base: <code>if (n <= 1) return 1;</code>, one way to be at the bottom, one way to reach step 1.','Identical skeleton to fib: DP problems are families, learn the family not the instance.'],
 solution:`import java.util.*;
@@ -69,7 +82,10 @@ public class Stairs {
 
     long ways(int n) {
         if (n <= 1) return 1;
-        return memo.computeIfAbsent(n, k -> ways(k - 1) + ways(k - 2));
+        if (memo.containsKey(n)) return memo.get(n);
+        long v = ways(n - 1) + ways(n - 2);
+        memo.put(n, v);
+        return v;
     }
 }`},
 {title:'Memoized Fibonacci, executed',lang:'js',diff:'medium',
@@ -108,7 +124,7 @@ int minCoins(int[] coins, int amount) {
 <p>They compute the same recurrence and differ only in direction, so the choice is practical. <b>Memoization</b> is easier to derive (you write the recursion you already understand and add a cache) and it only visits the subproblems the answer actually needs, which wins when the state space is large and sparse. <b>Tabulation</b> has no call overhead and no stack limit, and its fixed iteration order is what makes the space optimization below possible. The usual path is to write the memoized version first, get it correct, and convert it if the depth or the constant factor matters.</p>
 
 <h4>The sentinel, and why it is amount + 1</h4>
-<p>Unreachable amounts need a value that loses every <code>min</code> comparison without overflowing when you add one to it. <code>Integer.MAX_VALUE</code> is the tempting choice and it is wrong: <code>dp[a-c] + 1</code> wraps to a large negative number, which then wins the min and produces an answer that is not merely wrong but nonsensical. Any value above the largest possible real answer works, and the largest possible answer here is <code>amount</code> coins of denomination 1, hence <code>amount + 1</code>.</p>
+<p>Unreachable amounts need a value that loses every <code>min</code> comparison without overflowing when you add one to it. <code>Integer.MAX_VALUE</code> is the tempting choice and it is wrong: <code>dp[a-c] + 1</code> wraps to a large negative number, which then wins the min and produces an answer with no relationship to the question. Any value above the largest possible real answer works, and the largest possible answer here is <code>amount</code> coins of denomination 1, hence <code>amount + 1</code>.</p>
 
 <h4>Rolling the table: O(n) space to O(1)</h4>
 <p>When row <code>i</code> depends only on row <code>i-1</code>, you never need the whole table: keep two rows, or one row updated in the right direction. Fibonacci by tabulation needs two variables, not an array of n. This is the standard follow-up question after you produce a working table, and the answer is always the same: look at which previous entries the recurrence actually reads, and keep only those.</p>`,

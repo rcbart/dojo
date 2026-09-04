@@ -1141,7 +1141,7 @@ commit removes that class of bug entirely.</p>
 fails, the data is committed and the reaction never happened, with nothing to retry it. In-process events
 are therefore fine for cache eviction, metrics and in-app notifications, and not sufficient when another
 system must learn about the change. That is what the outbox pattern in the messaging lesson is for, and the
-distinction is worth making deliberately rather than discovering it in production.`,
+distinction is worth making deliberately rather than discovering it in production.</p>`,
 docs:[['Application events (Spring)','https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events'],['@TransactionalEventListener (API)','https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html'],['@Async (Spring)','https://docs.spring.io/spring-framework/reference/integration/scheduling.html#scheduling-annotation-support-async']],
 ex:{title:'Announce, then react',
 prompt:`Build the pipeline: (1) <code>record UserRegistered(String userId, String email)</code>. (2) <code>@Service class RegistrationService</code> with constructor-injected <code>ApplicationEventPublisher</code> and <code>@Transactional void register(String userId, String email)</code> that calls <code>events.publishEvent(new UserRegistered(...))</code>. (3) <code>@Component class WelcomeListener</code> with an <code>@Async @EventListener</code> method <code>sendEmail(UserRegistered e)</code> and a <code>@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)</code> method <code>provision(UserRegistered e)</code>. (4) <code>@Configuration @EnableAsync class AsyncConfig</code>.`,
@@ -1251,7 +1251,7 @@ tax.</p>
 <p>What remains genuinely reactive territory is <b>streaming</b> and <b>backpressure</b>: server-sent
 events, long-lived subscriptions, and pipelines where a fast producer must be told to slow down. That is
 what Reactor expresses well and what virtual threads do not address at all. The realistic position for 2026:
-choose reactive for streams and demand signaling, not for concurrency.`,
+choose reactive for streams and demand signaling, not for concurrency.</p>`,
 docs:[['Project Reactor reference','https://projectreactor.io/docs/core/release/reference/'],['Spring WebFlux reference','https://docs.spring.io/spring-framework/reference/web/webflux.html'],['Which operator do I need? (Reactor)','https://projectreactor.io/docs/core/release/reference/#which-operator']],
 ex:{title:'A non-blocking user endpoint',
 prompt:`Write <code>UserService</code> with: (1) <code>Flux&lt;String&gt; activeNames(Flux&lt;User&gt; users)</code>: <code>filter</code> active users, <code>map</code> to <code>getName()</code>, <code>take(50)</code>; (2) <code>Mono&lt;User&gt; byId(String id)</code>: call <code>repo.findById(id)</code> (returns <code>Mono&lt;User&gt;</code>) and use <code>switchIfEmpty</code> with <code>Mono.error(new IllegalStateException("not found"))</code>. Do <b>not</b> call <code>subscribe()</code> or <code>block()</code> anywhere; the framework subscribes.`,
@@ -1335,7 +1335,7 @@ different accounts proceed in parallel. Ask for global ordering and you have ask
 means one consumer and no horizontal scale.</p>
 <p>Finally, plan for the message you cannot process: a dead-letter queue plus an alert on its depth. Without
 one, a single malformed message either blocks the partition forever or is silently dropped, and both are
-discovered late.`,
+discovered late.</p>`,
 docs:[['Spring for Apache Kafka reference','https://docs.spring.io/spring-kafka/reference/'],['Kafka introduction','https://kafka.apache.org/intro'],['Transactional outbox (microservices.io)','https://microservices.io/patterns/data/transactional-outbox.html']],
 ex:{title:'Publish & consume order events',
 prompt:`Write <code>OrderEvents</code>: (1) a field <code>KafkaTemplate&lt;String, String&gt; kafka</code>; (2) <code>void publish(String orderId, String payload)</code> that sends to topic <code>"orders"</code> with <code>orderId</code> as the <b>key</b> (ordering per order); (3) a consumer method <code>void onOrder(String payload)</code> annotated <code>@KafkaListener(topics = "orders", groupId = "billing")</code> that skips already-processed payloads using a <code>Set&lt;String&gt; processed</code> (idempotency) before calling <code>handle(payload)</code>.`,

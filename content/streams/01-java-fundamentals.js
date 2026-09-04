@@ -369,7 +369,7 @@ correctness, not style.</p>
 <p><code>==</code> on objects compares references, so comparing strings with it works for literals, which
 are interned and shared, and then fails for a string built at runtime. That is the worst kind of bug: it
 passes every test you wrote by hand and fails on real input. Use <code>equals</code> for content, and
-<code>Objects.equals</code> when either side may be null.`,
+<code>Objects.equals</code> when either side may be null.</p>`,
 docs:[['if-then-else, Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/if.html'],['Switch expressions, dev.java','https://dev.java/learn/language-basics/switch-expression/']],
 exs:[
 {title:'Classic chain: letter grades',
@@ -1550,7 +1550,7 @@ enclosing object, and that difference has produced a great deal of confusion.</p
 <p>Static nested for helpers and data holders. Inner for an object that is genuinely part of its parent:
 an <code>Iterator</code> over its own collection is the canonical example. Local for a class used once
 inside a single method, which is rare. Anonymous for the three cases above, and records for anything that
-is really just data.`,
+is really just data.</p>`,
 docs:[['Nested classes, dev.java','https://dev.java/learn/classes-objects/nested-classes/'],['Anonymous classes, Oracle tutorial','https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html']],
 ex:{title:'Three flavors, one file',
 prompt:`Write <code>Playlist</code>: (1) a <b>static nested</b> class <code>Track</code> (fields <code>String title; int seconds</code>, constructor). (2) A method <code>Comparator&lt;Track&gt; byLength()</code> returning an <b>anonymous class</b> implementing <code>Comparator&lt;Track&gt;</code> comparing by seconds with <code>Integer.compare</code>. (3) A method <code>Comparator&lt;Track&gt; byTitle()</code> returning the same idea as a <b>lambda</b> using <code>compareTo</code> on titles.`,

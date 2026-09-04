@@ -243,7 +243,7 @@ group:eng#member@user:ada             ada is in eng
 used. It is why document and repository products converge on it, and why an ordinary line-of-business
 app usually should not.</p>
 
-<h4>Externalising policy: what you gain and lose</h4>
+<h4>Externalizing policy: what you gain and lose</h4>
 <p><b>Gain:</b> policy stops being scattered <code>if</code> statements across services that drift apart.
 It becomes reviewable, testable, versioned, and consistent, and one place can answer "why was this
 denied?"</p>

@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Skills Rubric &amp; Self-Assessment</title>
+<meta name="description" content="A self-assessment for the cloud-native path: tick only what you could do unaided from a blank terminal, across Docker, Kubernetes, Envoy and Istio. Free, no account, nothing leaves your browser.">
+<link rel="canonical" href="https://roniam.dev/skills-rubric.html">
 <style>
   :root{
     --bg:#0d1117; --panel:#141b23; --panel2:#1b2530; --ink:#e6edf3; --muted:#93a1b1;
@@ -67,7 +69,7 @@
       <div class="bar"><div class="lab">Advanced signals</div><div class="track"><div class="fill" id="f3"></div></div><div class="n" id="n3">0 / 0</div></div>
     </div>
     <div class="controls"><button onclick="clearAll()">Reset</button>
-      <a class="controls" href="./index.html" style="align-self:center">← Back to courses</a></div>
+      <a href="/courses/" style="align-self:center">← Back to the courses</a></div>
   </div>
 
   <section class="t1" data-tier="1">
@@ -78,8 +80,8 @@
   </section>
   <section class="t2" data-tier="2">
     <h2>Tier 2 · Job-ready (mid-level)</h2>
-    <p class="d">The working practitioner toolkit. Most of these checked = genuinely employable on
-    containers/Kubernetes and CKA/CKAD-capable.</p>
+    <p class="d">The working practitioner toolkit. Most of these checked means genuinely employable
+    on containers and Kubernetes, and ready for CKA or CKAD.</p>
     <div class="items"></div>
   </section>
   <section class="t3" data-tier="3">
@@ -123,7 +125,7 @@ const ITEMS = {
     ["Terminate TLS, do canary splits, and reason about resilience at the proxy", "Envoy 3–5"],
     ["Set up a service mesh: mTLS everywhere, canary by traffic weight, authorization", "Istio 4–6"],
     ["Explain sidecar vs ambient mode and when to use each", "Istio 8"],
-    ["Design for HA: PodDisruptionBudgets, anti-affinity, topology spread, capacity planning", "K8s 6, 17"],
+    ["Design for HA: PodDisruptionBudgets, anti-affinity, topology spread, capacity planning", "K8s 6b, 17"],
     ["Pass CKA/CKAD-style timed tasks using kubectl --dry-run generation", "K8s 16"],
     ["Make cost / scale / architecture trade-offs and reason about failure modes", "judgment"],
     ["Have operated a real production cluster through incidents (the part a course can't grant)", "on the job"]
@@ -172,7 +174,7 @@ function updateVerdict(){
   document.getElementById("sub").textContent=sub;
   const note=document.getElementById("note");
   note.textContent="Checked "+totalChecked+" of "+(c1.total+c2.total+c3.total)+
-    " skills. Reminder: a rubric is a mirror, not a certificate, the real proof is doing the challenges and capstone unaided and explaining WHY each choice was made.";
+    " skills. Reminder: a rubric is a mirror, not a certificate. The real proof is doing the challenges and the capstone unaided, and explaining WHY each choice was made.";
 }
 function save(){ try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){} }
 function clearAll(){ state={}; save(); render(); }

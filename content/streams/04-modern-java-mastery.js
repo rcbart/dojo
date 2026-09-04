@@ -151,8 +151,8 @@ Predicate&lt;Order&gt; rule = enabledRules.stream()
 <h4><code>andThen</code> versus <code>compose</code>, and how to never confuse them again</h4>
 <p>Read <code>andThen</code> left to right ("do me, <i>and then</i> the other") and
 <code>compose</code> right to left, matching the mathematical notation f∘g where g runs first.
-<code>andThen</code> is the one you want almost always; <code>compose</code> exists because the maths
-convention does.</p>
+<code>andThen</code> is the one you want almost always; <code>compose</code> exists because the
+mathematical convention does.</p>
 <p>One asymmetry worth knowing: <code>Consumer.andThen</code> runs both consumers on the <i>same</i> input
 rather than chaining outputs, because a consumer has nothing to pass on.</p>
 
@@ -868,7 +868,7 @@ double area = switch (shape) {
 the states of a workflow, the result of a parse. Do <b>not</b> use it where you want third parties to
 extend your abstraction; that is what an ordinary interface is for, and sealing it is a deliberate
 statement that they may not. The choice between an open interface and a sealed one is a statement about who
-owns the set of cases, and it is worth making on purpose.`,
+owns the set of cases, and it is worth making on purpose.</p>`,
 docs:[['Sealed classes (JEP 409)','https://openjdk.org/jeps/409'],['Record patterns (JEP 440)','https://openjdk.org/jeps/440'],['Pattern matching for switch (JEP 441)','https://openjdk.org/jeps/441']],
 ex:{title:'An exhaustive payment switch',
 prompt:`Model payments as a <code>sealed interface Payment permits Card, Cash, Transfer</code> with three <b>records</b>: <code>Card(String last4, double amount)</code>, <code>Cash(double amount)</code>, <code>Transfer(String iban, double amount)</code>. Write <code>static String receipt(Payment p)</code> as a pattern-matching <code>switch</code> using <b>record patterns</b>, with a <b>guarded</b> case first: any Card <code>when</code> amount &gt; 1000 returns <code>"card (verified)"</code>; otherwise Card → <code>"card ****"+last4</code>, Cash → <code>"cash"</code>, Transfer → <code>"transfer to "+iban</code>. No <code>default</code> branch; the sealed hierarchy makes it exhaustive.`,

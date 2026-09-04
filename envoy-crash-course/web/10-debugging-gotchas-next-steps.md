@@ -105,6 +105,6 @@ mesh**. Everything else is detail on top of these nouns.
 
 ---
 
-**You've finished the crash course.** Start at [the README](./README.md) to jump back to any module,
-and keep the labs around: the fastest way to cement any of this is to change a config and watch
-what `curl` and `:9901` tell you.
+**You've finished the crash course.** The sidebar jumps you back to any module, and keep the labs
+around: the fastest way to cement any of this is to change a config and watch what `curl` and
+`:9901` tell you.

@@ -278,7 +278,7 @@ public class Brackets {
 }`,
 tests:[{d:'ArrayDeque as the stack (not java.util.Stack)',re:'new\\s+ArrayDeque<'},{d:'Pushes openers, matched to their closing partner',re:'(\'\\(\'\\s*(->|:)[^;]{0,60}?\\.push\\s*\\(\\s*\'\\)\'|\'\\)\'\\s*(->|:)[^;]{0,60}?\'\\(\'|\'\\)\'\\s*,\\s*\'\\(\'|==\\s*\'\\(\'[^;]{0,140}?\\.push\\s*\\(|\'\\(\'\\s*==[^;]{0,140}?\\.push\\s*\\()'},{d:'Pops and compares on closers',re:'\\.pop\\s*\\(\\s*\\)'},{d:'Empty-stack guard, and the final answer is whether the stack is empty',re:'(?=[\\s\\S]*isEmpty\\s*\\(\\s*\\)\\s*(\\|\\||\\)\\s*\\{?\\s*return\\s+false))(?=[\\s\\S]*return\\s+(?!\\s*!)[^;]{0,60}(isEmpty\\s*\\(\\s*\\)|size\\s*\\(\\s*\\)\\s*==\\s*0)\\s*;)'},{d:'No java.util.Stack',re:'new\\s+Stack<',not:true}],
 behavior:`1. balanced("(a[b]{c})") == true. 2. balanced("(]") == false (mismatch). 3. balanced("((") == false (leftover openers). 4. balanced(")") == false (closer on empty stack: the guard matters). 5. balanced("no brackets") == true.`,
-hints:['Loop chars: <code>for (char c : s.toCharArray())</code>. Push on ( [ {, handle ) ] }, skip the rest.','On a closer: <code>if (stack.isEmpty() || stack.pop() != expectedOpener) return false;</code>','A tidy trick: when you see an opener, push its MATCHING CLOSER; then every closer just needs <code>stack.pop() != c</code> → false.'],
+hints:['Loop chars: <code>for (char c : s.toCharArray())</code>. Push on ( [ {, handle ) ] }, skip the rest.','On a closer, two things can go wrong: the stack is empty, or the opener you pop is not the one that matches this closer. Either is an immediate <code>return false</code>.','A tidy trick: when you see an opener, push its MATCHING CLOSER; then every closer just needs <code>stack.pop() != c</code> → false.'],
 solution:`import java.util.*;
 
 public class Brackets {
@@ -529,7 +529,7 @@ hash entries) to get insertion order without paying for lookup.</p>
 underlies trees, graphs and every intrusive structure you will meet later. The classic interview
 techniques (two pointers to find the middle or detect a cycle, reversing by rewiring rather than copying)
 are all rehearsals for reasoning about references. The data structure is rarely the right answer; the
-skill of manipulating references correctly always is.`,
+skill of manipulating references correctly always is.</p>`,
 docs:[['LinkedList, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/LinkedList.html'],['Collection implementation trade-offs, Oracle','https://docs.oracle.com/javase/tutorial/collections/implementations/list.html']],
 ex:{title:'Your own singly linked list',
 prompt:`Build <code>IntList</code>: inner <code>static class Node</code> (int value, Node next), field <code>Node head</code>; <code>void addFirst(int v)</code>: O(1) head insert; <code>int size()</code>: walk and count; <code>java.util.List&lt;Integer&gt; toList()</code>: walk head→tail collecting values; and <code>void reverse()</code>: the in-place three-pointer re-linking (prev/cur/next), no arrays or collections allowed inside reverse.`,
@@ -638,7 +638,7 @@ in the table, and no lookup will ever find it again.</p>
 
 <h4>Load factor and resizing</h4>
 <p>A <code>HashMap</code> resizes when it is about 75% full, allocating a larger array and redistributing
-every entry. That is amortised O(1), but the individual resize is O(n) and it happens at an unpredictable
+every entry. That is amortized O(1), but the individual resize is O(n) and it happens at an unpredictable
 moment, which matters in a latency-sensitive path. If you know roughly how many entries you will hold,
 sizing the map up front avoids several rounds of rehashing.</p>
 
@@ -647,7 +647,7 @@ sizing the map up front avoids several rounds of rehashing.</p>
 <code>accessOrder = true</code> and every <code>get</code> moves that entry to the end, so the eldest entry
 is always the least recently used, and overriding <code>removeEldestEntry</code> to return true past a
 size limit gives you a bounded LRU cache in a handful of lines. It is a neat demonstration of the general
-point: the interesting structures are usually two simple ones composed, not one clever one.`,
+point: the interesting structures are usually two simple ones composed, not one clever one.</p>`,
 docs:[['equals & hashCode contract, Object API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()'],['LinkedHashMap, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/LinkedHashMap.html']],
 ex:{title:'Build the LRU cache',
 prompt:`Build an <b>LRU (least-recently-used) cache</b>: it holds at most <code>maxEntries</code> entries, and inserting beyond that evicts the entry <b>accessed longest ago</b> (a get counts as an access). Write <code>LruCache&lt;K, V&gt; extends java.util.LinkedHashMap&lt;K, V&gt;</code>: field <code>int maxEntries</code>; constructor <code>LruCache(int maxEntries)</code> calling <code>super(16, 0.75f, true)</code> (the <code>true</code> = access order, the whole trick); override <code>protected boolean removeEldestEntry(java.util.Map.Entry&lt;K, V&gt; eldest)</code> returning <code>size() &gt; maxEntries</code>.`,

@@ -15,7 +15,7 @@ try (var out = new ObjectOutputStream(Files.newOutputStream(path))) {
 try (var in = new ObjectInputStream(Files.newInputStream(path))) {
     Session s = (Session) in.readObject();                  // password field is null now
 }</div>
-<p>What to know cold: <code>Serializable</code> is a marker (no methods); <code>serialVersionUID</code> pins compatibility: omit it and any class change breaks old data with <code>InvalidClassException</code>; <code>transient</code> excludes secrets/caches; the whole reachable object graph gets serialized (a stray reference drags the world in).</p>
+<p>What to know cold: <code>Serializable</code> is a marker (no methods); <code>serialVersionUID</code> pins compatibility: omit it and the JVM computes one from the class structure, so adding a field or a method silently changes it and old data fails with <code>InvalidClassException</code>; <code>transient</code> excludes secrets/caches; the whole reachable object graph gets serialized (a stray reference drags the world in).</p>
 <p><b>The security warning that is now exam material</b>: deserializing untrusted bytes is remote code execution waiting to happen (gadget chains): never <code>readObject</code> external input; use serialization filters (<code>ObjectInputFilter</code>) if you must. Which is why modern systems serialize through explicit formats instead: JSON via Jackson (your api3 lesson), or Protobuf/Avro for compact schema-versioned data. Records + Jackson is the modern default; native serialization survives mainly in caches, session replication, and legacy RPC.</p>
 
 <h4>Why the industry moved away from native serialization</h4>
@@ -142,8 +142,9 @@ Period          calendar amount (years/months/days). "1 month"
 <p><b>Forgetting the return value.</b> Every method returns a new object; <code>d.plusDays(1);</code> as a
 statement does nothing at all and compiles cleanly. It is the most common java.time bug and the easiest to
 miss in review.</p>
-<p><b>Period and Duration disagree, correctly.</b> Adding one month to 31 January gives 28 February;
-month lengths vary. Adding 30 days gives 2 March. Both are right; only one is what you meant. And across a
+<p><b>Period and Duration disagree, correctly.</b> Adding one month to 31 January gives the last day of
+February, 28 or 29 depending on the year, because month lengths vary. Adding 30 days gives 2 March, or
+1 March in a leap year. Both are right; only one is what you meant. And across a
 daylight-saving boundary, adding <code>Period.ofDays(1)</code> keeps the wall-clock time while
 <code>Duration.ofHours(24)</code> shifts it by an hour.</p>
 <p><b>Storing local times.</b> A meeting stored as an <code>Instant</code> is wrong if the government moves
@@ -420,7 +421,7 @@ Role[] roles = Backoffice.class.getAnnotationsByType(Role.class);  // both!</div
 and apply it declaratively. Instead of six lines of audit code repeated in forty methods (which someone
 will eventually forget), there is one annotation and one implementation, and the omission is visible
 because the annotation is missing.</p>
-<p>The composed-annotation pattern is worth internalising because it is exactly how the frameworks are
+<p>The composed-annotation pattern is worth internalizing because it is exactly how the frameworks are
 built, all the way down:</p>
 <div class="codeSample" data-hl>@RestController  IS  @Controller + @ResponseBody
 @SpringBootApplication  IS  @Configuration + @EnableAutoConfiguration

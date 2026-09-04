@@ -1,13 +1,86 @@
 /* Keyword table and glossary: see engine/glossary.js */
 /* ============================== STATE ============================== */
+/* Every course in this repo used to write into ONE localStorage key, 'javadojo',
+   with progress, saved editor code and ratings all filed under a bare lesson id.
+   Dev, JS and Identity Dojo therefore shared a single blob, and nothing collided
+   only because no two courses happened to reuse a lesson id, an invariant no code
+   enforced. Each course now owns a key derived from its name. See migrateStore()
+   below for what happens to progress made before this change. */
+const STORE_LEGACY_KEY='javadojo';
+function storeSlug(name){return String(name==null?'':name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'dev-dojo';}
+const STORE_KEY='dojo:'+storeSlug((typeof DOJO_HOME!=='undefined'&&DOJO_HOME.name)?DOJO_HOME.name:'Dev Dojo');
+/* Published for the signed-in account bridge the site injects (/dojo-bridge.js),
+   which hooks localStorage.setItem on this key to sync progress. It had the old
+   key hardcoded, which also meant all three courses synced into one bucket. */
+if(typeof window!=='undefined'){window.DOJO_STORE_KEY=STORE_KEY;window.DOJO_STORE_LEGACY_KEY=STORE_LEGACY_KEY;}
+/* Storage can stop accepting writes part-way through a course: a full quota, or a
+   browser that revokes permission after the first probe succeeded. The store falls
+   back to memory so nothing crashes, but the learner used to be told nothing and
+   would find an empty course in their next tab. Say it once, plainly. */
+let storageWarned=false;
+function storageLost(){
+  if(storageWarned)return;storageWarned=true;
+  try{toast('\u26a0 <b>Browser storage is not accepting writes.</b> Your progress is kept for this session only, so anything you finish now is gone when you close the tab.');}catch(e){}
+}
 const store={
   mem:{},                     // in-memory fallback if storage is blocked
+  _raw:null,_cache:null,      // last text read from storage, and its parsed form
   persistent:(()=>{try{localStorage.setItem('__jd_t','1');localStorage.removeItem('__jd_t');return true}catch(e){return false}})(),
-  get(){if(!this.persistent)return this.mem;try{return JSON.parse(localStorage.getItem('javadojo')||'{}')}catch(e){return this.mem}},
-  set(d){this.mem=d;if(this.persistent){try{localStorage.setItem('javadojo',JSON.stringify(d))}catch(e){this.persistent=false}}},
+  /* get() re-parsed the whole blob on every single lookup, and the nav bar does
+     about 600 lookups per render (one per lesson, plus srsDeck's one per
+     exercise). At 374 exercises with saved editor code that is a 360KB parse six
+     hundred times for one click, and it got slower the more a learner finished.
+     The parse is now keyed on the stored text, so a value that has not changed is
+     parsed once. Reading the text every time keeps another tab's writes visible,
+     which a plain cache would have hidden. */
+  get(){
+    if(!this.persistent)return this.mem;
+    let raw;
+    try{raw=localStorage.getItem(STORE_KEY)||'{}';}catch(e){return this.mem;}
+    if(raw===this._raw&&this._cache)return this._cache;
+    try{this._cache=JSON.parse(raw);this._raw=raw;}catch(e){return this.mem;}
+    return this._cache;
+  },
+  set(d){this.mem=d;if(this.persistent){try{const raw=JSON.stringify(d);localStorage.setItem(STORE_KEY,raw);this._raw=raw;this._cache=d;}catch(e){this.persistent=false;this._raw=null;this._cache=null;storageLost();}}},
   lesson(id){return this.get()[id]||{}},
   patch(id,p){const d=this.get();d[id]={...(d[id]||{}),...p};this.set(d)}
 };
+/* Every storage key this course owns: its lesson ids, its exercise sub-ids, and
+   the rating/comment entry that sits under each of them. */
+function courseKeys(){
+  const own=new Set();
+  (typeof STREAMS!=='undefined'?STREAMS:[]).forEach(s=>{(s.lessons||[]).forEach(l=>{
+    own.add(l.id);own.add('rating:'+l.id);
+    const exs=lessonExs(l);
+    exs.forEach((x,i)=>{const sid=exSid(l,exs,i);own.add(sid);own.add('rating:'+sid);});
+  });});
+  return own;
+}
+/* Move progress out of the old shared key, once, at boot, after STREAMS exists.
+   Three rules make this safe to ship to people who are part-way through a course:
+     1. It only runs when this course has NO key of its own, so later work is
+        never overwritten by an older copy.
+     2. It copies only the entries this course owns, so a learner who has worked
+        two dojos in one browser gets each course's progress in its own key
+        instead of both courses inheriting the other's.
+     3. It never deletes the old blob. If anything here is wrong, the original
+        data is still on disk and the migration can simply run again.
+   Returns the number of entries carried over. */
+function migrateStore(){
+  if(!store.persistent)return 0;
+  let legacy=null;
+  try{
+    if(localStorage.getItem(STORE_KEY)!==null)return 0;       // already has its own key
+    legacy=JSON.parse(localStorage.getItem(STORE_LEGACY_KEY)||'null');
+  }catch(e){return 0;}
+  if(!legacy||typeof legacy!=='object'||Array.isArray(legacy))return 0;
+  const own=courseKeys();
+  const mine={};let n=0;
+  for(const k of Object.keys(legacy)){if(own.has(k)){mine[k]=legacy[k];n++;}}
+  if(!n)return 0;
+  store.set(mine);
+  return n;
+}
 /* Lesson ratings and comments: see engine/feedback.js */
 function extractJson(raw){
   let s=raw;
@@ -46,6 +119,15 @@ function renderExpected(b){
 }
 /* ============================== NAV / HOME ============================== */
 let cur=null; // {si, li}
+/* A grade can outlive the lesson it was started for: the AI runner awaits a network
+   round trip, the Java runner a real compile, and the JS worker gets up to three
+   seconds. In that window the learner can click another lesson, and a late result
+   used to write into the new lesson's panel and tick off the wrong exercise. Every
+   openLesson bumps this counter; each grader captures it and drops its result if it
+   has moved. Same defect, same shape, as the one fixed in the ML course. */
+let navEpoch=0;
+function gradeEpoch(){return navEpoch;}
+function gradeStale(epoch){return epoch!==navEpoch;}
 function totalLessons(){return STREAMS.reduce((a,s)=>a+((s.tournament||s.project||s.dan)?0:s.lessons.length),0)}
 function doneCount(){const d=store.get();let n=0;STREAMS.forEach(s=>{if(s.tournament||s.project||s.dan)return;s.lessons.forEach(l=>{if(d[l.id]&&d[l.id].done)n++})});return n}
 function streamDone(s){const d=store.get();return s.lessons.filter(l=>d[l.id]&&d[l.id].done).length}
@@ -60,7 +142,12 @@ function lessonsToNextBelt(){
   let next=null;
   for(const[b,n]of BELTS){if(b>pct){next=[b,n];break;}}
   if(!next)return null;                       // already black belt
-  const needDone=Math.ceil(next[0]/100*total);
+  /* The belt is awarded on the ROUNDED percentage, so the lesson that earns it is
+     the first whose rounded percentage reaches the threshold, not the first whose
+     exact percentage does. Taking ceil() of the exact threshold overstated the
+     count by one on almost every course size (by two at 55% of 200 lessons), so
+     the header promised one more lesson than the promotion actually needed. */
+  const needDone=Math.min(total,Math.ceil((next[0]-0.5)*total/100));
   return {count:Math.max(1,needDone-done),name:next[1]};
 }
 function refreshBelt(){
@@ -364,6 +451,7 @@ function alphaBlock(){
 function exSid(l,exs,i){return exs.length>1?l.id+'#'+i:l.id;}
 function lessonExs(l){return l.exs||(l.ex?[l.ex]:[]);}
 function openLesson(si,li,ei){
+  navEpoch++;                 // any grade still in flight belongs to the old lesson
   const s=STREAMS[si],l=s.lessons[li];
   const exs=lessonExs(l);
   if(ei==null){ei=exs.findIndex((x,i)=>!store.lesson(exSid(l,exs,i)).done);if(ei<0)ei=0;}
@@ -551,23 +639,43 @@ function initEditor(l,e,sid,ei,exs,saved){
 }
 /* All five grading paths: see engine/grade.js */
 /* ============================== HINTS ============================== */
+/* Same three failure modes as the AI grading path, and for the same reason: an
+   unbounded await, a DOM lookup afterwards with no guard, and a catch whose
+   parameter shadowed the exercise it was given. Leaving a lesson mid-hint threw
+   here and left the hint spinner turning for good. */
 async function nextStep(e,sid){
   setTab('tests');
   const res=document.getElementById('io-tests');
+  if(!res)return;
   const hints=e.hints||[];
   if(hintIdx<hints.length){
     res.insertAdjacentHTML('beforeend',`<div class="aiBox hint"><h4>💡 Next step ${hintIdx+1}/${hints.length}</h4>${hints[hintIdx]}</div>`);
     hintIdx++;store.patch(sid,{hintIdx});
     return;
   }
+  const epoch=gradeEpoch();
+  const btn=document.getElementById('btnHint');
+  if(btn)btn.disabled=true;                  // one request in flight at a time
   res.insertAdjacentHTML('beforeend',`<div class="aiBox hint" id="aiHint"><span class="spin"></span>Asking Claude for a personalised next step…</div>`);
-  const code=document.getElementById('ed').value;
+  const ed=document.getElementById('ed');
+  const code=ed?ed.value:'';
   try{
     if(!window.cowork||!window.cowork.askClaude)throw new Error('AI hints unavailable in this preview.');
-    const raw=await window.cowork.askClaude(`A student is stuck on this Java exercise. Give ONE short concrete next step (2-3 sentences max) based on their current code. Do not give the full solution.\n\nEXERCISE: ${stripTags(e.prompt)}\n\nTHEIR CODE:\n${code}`,[]);
-    document.getElementById('aiHint').innerHTML='<h4>💡 Claude suggests</h4>'+esc(String(raw));
-  }catch(e){document.getElementById('aiHint').innerHTML=esc(e.message)}
-  document.getElementById('aiHint')?.removeAttribute('id');
+    const raw=await withTimeout(window.cowork.askClaude(`A student is stuck on this ${exLang(e)} exercise. Give ONE short concrete next step (2-3 sentences max) based on their current code. Do not give the full solution.\n\nEXERCISE: ${stripTags(e.prompt)}\n\nTHEIR CODE:\n${code}`,[]),AI_TIMEOUT_MS,'No hint came back in time. Try again, or work from the structural checks above.');
+    if(gradeStale(epoch))return;
+    const box=document.getElementById('aiHint');
+    if(box)box.innerHTML='<h4>💡 Claude suggests</h4>'+esc(String(raw));
+  }catch(err){
+    if(!gradeStale(epoch)){
+      const box=document.getElementById('aiHint');
+      if(box)box.innerHTML=esc((err&&err.message)?err.message:String(err));
+    }
+  }finally{
+    const b=document.getElementById('btnHint')||btn;
+    if(b)b.disabled=false;
+    const box=document.getElementById('aiHint');
+    if(box)box.removeAttribute('id');
+  }
 }
 
 /* ============================== DEPTH: run-locally + dive-deeper ============================== */
@@ -661,8 +769,10 @@ function sqlRunPanel(dsName){
 function runSqlExercise(dsName){
   const out=document.getElementById('sqlResult'); if(!out)return;
   const db=window.SQL_DATASETS[dsName]; if(!db){out.innerHTML='<div class="sqlErr">sample data unavailable</div>';return;}
-  const src=((document.getElementById('ed')||{}).value||'').replace(/\/\*[\s\S]*?\*\//g,' ').replace(/--[^\n]*/g,' ');
-  const stmts=src.split(';').map(s=>s.trim()).filter(Boolean).filter(s=>/^select/i.test(s));
+  /* sqlSelects (engine/grade.js) is the one definition of "which statements in this
+     box are SELECTs". This panel used to carry a second copy, so the query the
+     learner saw run here could drift from the one the grader scored. */
+  const stmts=sqlSelects(((document.getElementById('ed')||{}).value||''));
   if(!stmts.length){out.innerHTML='<div class="sqlMeta">No SELECT found, write one (INSERT/UPDATE/DDL are not executed by the sample runner).</div>';return;}
   let html='';
   stmts.forEach((s,i)=>{
@@ -752,9 +862,9 @@ function srsDue(rec){ return rec.srsDue || (rec.completedAt ? rec.completedAt + 
 function srsDeck(){
   const out=[];
   STREAMS.forEach((s,si)=>{(s.lessons||[]).forEach((l,li)=>{
-    const exs=l.exs||(l.ex?[l.ex]:[]);
+    const exs=lessonExs(l);
     exs.forEach((e,ei)=>{
-      const sid=exs.length>1?l.id+'#'+ei:l.id;
+      const sid=exSid(l,exs,ei);
       const rec=store.lesson(sid);
       if(rec&&rec.done&&rec.completedAt)
         out.push({sid,si,li,ei,lessonTitle:l.title,icon:s.icon,exTitle:e.title||'Exercise',prompt:e.prompt||'',due:srsDue(rec),reps:rec.srsReps||0});
@@ -828,7 +938,7 @@ function exDiff(e,s,l){
   return 'hard';
 }
 function lessonDiff(s,l){
-  const exs=l.exs||(l.ex?[l.ex]:[]);
+  const exs=lessonExs(l);
   const order={easy:0,medium:1,hard:2};
   let d='easy';
   exs.forEach(e=>{const x=exDiff(e,s,l);if(order[x]>order[d])d=x;});
@@ -839,9 +949,9 @@ function renderPractice(filter){
   const m=document.getElementById('main');
   const items=[];
   STREAMS.forEach((s,si)=>{(s.lessons||[]).forEach((l,li)=>{
-    const exs=l.exs||(l.ex?[l.ex]:[]);
+    const exs=lessonExs(l);
     exs.forEach((e,ei)=>{
-      const sid=exs.length>1?l.id+'#'+ei:l.id;
+      const sid=exSid(l,exs,ei);
       items.push({si,li,ei,d:exDiff(e,s,l),title:e.title||l.title,lesson:l.title,icon:s.icon,done:!!store.lesson(sid).done});
     });
   });});

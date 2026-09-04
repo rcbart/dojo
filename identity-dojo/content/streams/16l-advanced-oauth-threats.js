@@ -423,7 +423,7 @@ public class Dpop {
 {id:'ao5',title:'Attack catalog & defenses',body:`
 <p>The OAuth 2.0 Security Best Current Practice catalogs the attacks worth knowing, and each has a standard defense:</p>
 <ul>
-<li><b>CSRF on the redirect</b> → the <code>state</code> parameter (random, checked on return).</li>
+<li><b>CSRF on the redirect</b> → PKCE, the OIDC <code>nonce</code>, or a one-time <code>state</code> bound to the user agent (RFC 9700 accepts any of the three).</li>
 <li><b>Token/code replay</b> → short lifetimes and a one-time <code>nonce</code>.</li>
 <li><b>Authorization-code interception</b> (public clients) → <b>PKCE</b>.</li>
 <li><b>Open redirect / mix-up</b> → register and match <b>exact</b> <code>redirect_uri</code> values, never wildcards.</li>
@@ -433,8 +433,8 @@ public class Dpop {
 <h4>The catalog, and what each one actually exploits</h4>
 <p><b>1. Open redirect.</b> Your app has an endpoint that forwards to a URL from a parameter. An
 attacker registers <code>https://you.example/go?to=https://evil.example</code> as the target, and the
-authorization code lands on their server. The fix is not validation-by-blocklist: it is an
-<b>allow-list of exact redirect URIs</b>, and never reflecting a user-supplied URL into a redirect.</p>
+authorization code lands on their server. The fix is not validation-by-denylist: it is an
+<b>allowlist of exact redirect URIs</b>, and never reflecting a user-supplied URL into a redirect.</p>
 
 <p><b>2. Mix-up attack.</b> An app that supports several IdPs is tricked into sending the code from
 IdP&nbsp;A to IdP&nbsp;B's token endpoint, where B, a legitimate IdP, has no idea it did not issue it, but
@@ -445,7 +445,9 @@ explicit <code>iss</code> parameter to the authorization response.</p>
 <p><b>3. CSRF on the callback.</b> Without <code>state</code>, an attacker completes their own
 authorization, then feeds <i>their</i> code to your callback in the victim's browser. The victim's
 session is now linked to the attacker's account, and anything they upload goes to the attacker. Defense:
-<code>state</code>, bound to the user's session, checked on return.</p>
+a one-time value bound to the user's session and checked on return. Historically that was
+<code>state</code>; RFC 9700 also accepts the protection PKCE or the OIDC <code>nonce</code> already
+provides, so what matters is that <i>one</i> of the three is in place, not which.</p>
 
 <p><b>4. Authorization code injection.</b> Distinct from CSRF: the attacker injects a code obtained
 elsewhere into a legitimate flow. A client secret does not help: the client is genuine. <b>PKCE</b> is
@@ -462,7 +464,7 @@ revoke the whole family, since either the legitimate client or the attacker is r
 
 <p><b>7. Consent phishing.</b> No protocol flaw at all: the attacker registers a plausible app, sends a
 genuine consent link, and the user grants real scopes to a malicious client. Defense is
-organizational: app allow-listing, publisher verification, scope review, and admin consent for
+organizational: app allowlisting, publisher verification, scope review, and admin consent for
 sensitive scopes. <b>This is now a leading enterprise attack, and no amount of protocol hardening
 addresses it.</b></p>
 

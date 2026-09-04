@@ -705,7 +705,7 @@ hints:['Concatenate provider, the literal "|", and subject.','The pipe is just a
 <li><b>Group-to-role mapping</b>: the customer expresses permissions in their directory groups and expects your product to honor them.</li>
 <li><b>Delegated administration and audit</b>: their admins manage their own users, and their auditors want the log.</li>
 </ul>
-<p>Charging extra for SSO is worth a mention because the industry argues about it: the "SSO tax" is common commercially and is criticised on the grounds that it prices a security control out of reach for small customers.</p>
+<p>Charging extra for SSO is worth a mention because the industry argues about it: the "SSO tax" is common commercially and is criticized on the grounds that it prices a security control out of reach for small customers.</p>
 
 <h4>B2B2C: two populations, one system</h4>
 <p>The hardest model, because you serve two kinds of identity at once with different rules: the merchant's staff (enterprise-shaped: SSO, roles, audit) and the merchant's shoppers (consumer-shaped: self-service, social login, privacy rights). They must be isolated from each other, branded per tenant, and often stored so that one tenant's consumers are invisible to another's, including in your support tooling. The mistake that is expensive to undo is modeling both populations in one user table with a flag; the two have different lifecycles, different lawful bases for processing, and different definitions of "delete my account".</p>`,

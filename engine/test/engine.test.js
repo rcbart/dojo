@@ -12,7 +12,13 @@ const { load } = require('./harness.js');
 
 const { localChecks, buildWorkerSrc, exDiff, shuffleQuiz, esc,
         rateAggregate, ratingMarkup, setRating, getRating,
-        saveComment, getComment, commentQuestion, commentMarkup } = load();
+        saveComment, getComment, commentQuestion, commentMarkup,
+        exLang, lineLabel, withTimeout, canonRows, sqlSelects, exSid, lessonExs,
+        storeSlug, STORE_KEY, STORE_LEGACY_KEY, SQLDB, SQL_DATASETS } = load();
+
+// A throwaway copy of a sample database, since the engine mutates nothing but the
+// grader always hands it a fresh one.
+const sql = (name, q) => SQLDB.run(JSON.parse(JSON.stringify(SQL_DATASETS[name])), q);
 
 /* ---------------------------------------------------------------- grading */
 test('localChecks passes a matching regex', () => {
@@ -362,4 +368,345 @@ test('rateAggregate counts comments separately from ratings', () => {
   });
   assert.equal(a.rated, 2);
   assert.equal(a.comments, 2);         // whitespace-only does not count
+});
+
+/* ---------------------------------------------------- the in-browser SQL engine */
+test('MIN and MAX compare text instead of coercing it to a number', () => {
+  // Math.min/Math.max returned NaN for every text and date column, and a NaN
+  // serializes exactly like NULL, so a wrong query could be graded correct.
+  assert.equal(sql('library', 'SELECT MAX(published) FROM books')[0]['MAX(published)'], '2018-01-01');
+  assert.equal(sql('library', 'SELECT MIN(published) FROM books')[0]['MIN(published)'], '1999-07-01');
+  assert.equal(sql('library', 'SELECT MIN(title) FROM books')[0]['MIN(title)'], 'Clean Code');
+  assert.equal(sql('library', 'SELECT MAX(title) FROM books')[0]['MAX(title)'], 'Working Effectively with Legacy Code');
+});
+
+test('MIN and MAX still order numbers numerically, not as strings', () => {
+  // The trap in a comparison-based fix: '900' > '1400' as text.
+  assert.equal(sql('library', 'SELECT MIN(price_cents) FROM books')[0]['MIN(price_cents)'], 1400);
+  assert.equal(sql('library', 'SELECT MAX(price_cents) FROM books')[0]['MAX(price_cents)'], 5600);
+});
+
+test('MIN and MAX skip NULLs and return NULL for an empty group', () => {
+  assert.equal(sql('library', "SELECT MAX(published) FROM books WHERE title = 'nothing'")[0]['MAX(published)'], null);
+  // book 7 and 9 have published NULL; the max must ignore them, not become NULL.
+  assert.equal(sql('library', 'SELECT MAX(published) FROM books')[0]['MAX(published)'], '2018-01-01');
+});
+
+test('no aggregate over the sample data produces a non-finite number', () => {
+  // NaN and Infinity both serialize to null, which is what made a wrong query
+  // indistinguishable from a right one. Nothing in the engine may produce them.
+  for (const q of ['SELECT MIN(published), MAX(published) FROM books',
+                   'SELECT COUNT(*), AVG(price_cents), SUM(price_cents) FROM books']) {
+    for (const row of sql('library', q)) {
+      for (const v of Object.values(row)) {
+        assert.ok(!(typeof v === 'number' && !isFinite(v)), q + ' produced ' + v);
+      }
+    }
+  }
+});
+
+test('COUNT(DISTINCT col) counts distinct values instead of mis-parsing', () => {
+  // This used to return [{")": 0}]: correct standard SQL, nonsense result, no hint
+  // that the syntax was unsupported.
+  const r = sql('library', 'SELECT COUNT(DISTINCT author_id) FROM books');
+  assert.equal(Object.keys(r[0])[0], 'COUNT(DISTINCT author_id)');
+  assert.equal(r[0]['COUNT(DISTINCT author_id)'], 4);
+  assert.equal(sql('library', 'SELECT COUNT(author_id) FROM books')[0]['COUNT(author_id)'], 10);
+});
+
+test('DISTINCT inside an aggregate works with an alias and with GROUP BY', () => {
+  assert.equal(sql('library', 'SELECT COUNT(DISTINCT author_id) AS n FROM books')[0].n, 4);
+  const g = sql('shop', 'SELECT u.name AS who, COUNT(DISTINCT o.total_cents) AS n FROM users u JOIN orders o ON o.user_id = u.id GROUP BY u.name');
+  assert.equal(g.find(r => r.who === 'Ada').n, 3);   // 20000, 40000, 5000
+  assert.equal(g.find(r => r.who === 'Bo').n, 1);
+});
+
+test('an unsupported function says so rather than returning a silent NULL', () => {
+  assert.throws(() => sql('library', 'SELECT UPPER(title) FROM books'), /unsupported function: UPPER/);
+});
+
+test('every shipped SQL exercise reference still parses and runs', () => {
+  // Guards the checkAgg() rejection above against over-reach.
+  for (const q of ['SELECT * FROM books',
+                   "SELECT title FROM books WHERE price_cents < 1500 ORDER BY title ASC",
+                   'SELECT COUNT(*), AVG(price_cents) FROM books']) {
+    assert.ok(Array.isArray(sql('library', q)), q);
+  }
+  assert.ok(Array.isArray(sql('shop', 'SELECT u.name FROM users u JOIN orders o ON o.user_id = u.id GROUP BY u.name HAVING SUM(total_cents) > 50000')));
+  assert.ok(Array.isArray(sql('org', 'SELECT e.name, d.name FROM employees e FULL OUTER JOIN departments d ON d.id = e.dept_id')));
+});
+
+/* --------------------------------------------------------- SQL result compare */
+test('canonRows does not treat a non-finite number as NULL', () => {
+  // JSON.stringify turns NaN into null, so these two used to compare equal and a
+  // query that computed nonsense scored the same as one that returned NULL.
+  assert.notEqual(canonRows([{ a: NaN }], false), canonRows([{ a: null }], false));
+  assert.notEqual(canonRows([{ a: Infinity }], false), canonRows([{ a: null }], false));
+  assert.equal(canonRows([{ a: NaN }], false), canonRows([{ a: NaN }], false));
+});
+
+test('canonRows compares values, and ignores row order unless asked not to', () => {
+  assert.equal(canonRows([{ a: 1 }, { a: 2 }], false), canonRows([{ a: 2 }, { a: 1 }], false));
+  assert.notEqual(canonRows([{ a: 1 }, { a: 2 }], true), canonRows([{ a: 2 }, { a: 1 }], true));
+});
+
+test('sqlSelects is the one definition of which statements get run', () => {
+  const src = "-- a comment\nSELECT 1 FROM t;\n/* block */\nINSERT INTO t VALUES (1);\nselect 2 from t";
+  assert.equal(sqlSelects(src).map(s => s.replace(/\s+/g, ' ')).join(' | '),
+               'SELECT 1 FROM t | select 2 from t');
+});
+
+/* ------------------------------------------------- AI paths: language and safety */
+test('the AI prompts name the exercise language instead of always saying Java', () => {
+  // The hint prompt was hardcoded to "this Java exercise" in a shared engine, so
+  // every shell, SQL, YAML, JSX and text exercise, and all of JS and Identity
+  // Dojo, asked for help with the wrong language.
+  assert.equal(exLang({ lang: 'sql' }), 'SQL');
+  assert.equal(exLang({ lang: 'shell' }), 'shell');
+  assert.equal(exLang({ lang: 'jsx' }), 'React (JSX)');
+  assert.equal(exLang({ lang: 'js' }), 'JavaScript');
+  assert.equal(exLang({ lang: 'text' }), 'short-answer');
+  assert.equal(exLang({}), 'Java');            // absent lang means Java, the default
+  assert.equal(exLang(undefined), 'Java');
+  assert.equal(exLang({ lang: 'zig' }), 'zig'); // unknown, but never called Java
+});
+
+test('a line number quoted back from the runner cannot inject markup', () => {
+  assert.equal(lineLabel('<img src=x onerror=alert(1)>'), '?');
+  assert.equal(lineLabel('12'), '12');
+  assert.equal(lineLabel(12), '12');
+  assert.equal(lineLabel(undefined), '?');
+  assert.equal(lineLabel(0), '?');
+  assert.equal(lineLabel(-3), '?');
+});
+
+test('withTimeout rejects a run that never settles, and clears its timer', async () => {
+  // The AI grading path had no deadline: a runner that never answered left the
+  // Run button disabled for the rest of the session.
+  await assert.rejects(withTimeout(new Promise(() => {}), 20, 'timed out'), /timed out/);
+  assert.equal(await withTimeout(Promise.resolve('ok'), 1000, 'nope'), 'ok');
+  await assert.rejects(withTimeout(Promise.reject(new Error('boom')), 1000, 'nope'), /boom/);
+  // A non-promise value passes straight through, which is what askClaude may return.
+  assert.equal(await withTimeout('plain', 1000, 'nope'), 'plain');
+});
+
+test('withTimeout does not hold the process open after it settles', async () => {
+  // If the loser's timer were left armed, node would sit for the full duration.
+  const t0 = Date.now();
+  await withTimeout(Promise.resolve(1), 60000, 'nope');
+  assert.ok(Date.now() - t0 < 1000);
+});
+
+/* ------------------------------------------------- exercise ids, one definition */
+test('exSid keys a single-exercise lesson by its bare id and numbers the rest', () => {
+  // Three files carried their own inline copy of this expression; they now all
+  // call it, so a change here can never desync a learner's saved progress.
+  assert.equal(exSid({ id: 'l1' }, [{}], 0), 'l1');
+  assert.equal(exSid({ id: 'l1' }, [{}, {}], 0), 'l1#0');
+  assert.equal(exSid({ id: 'l1' }, [{}, {}], 1), 'l1#1');
+});
+
+test('lessonExs accepts either shape a lesson can declare', () => {
+  assert.equal(lessonExs({ ex: { title: 'a' } }).length, 1);
+  assert.equal(lessonExs({ exs: [{}, {}] }).length, 2);
+  assert.equal(lessonExs({}).length, 0);
+});
+
+/* ------------------------------------------------------- per-course storage key */
+test('each course stores its progress under its own key', () => {
+  // All three courses wrote into one 'javadojo' blob keyed by bare lesson id.
+  assert.equal(STORE_KEY, 'dojo:dev-dojo');
+  assert.equal(STORE_LEGACY_KEY, 'javadojo');
+  assert.equal(load({ DOJO_HOME: { name: 'JS Dojo' } }).STORE_KEY, 'dojo:js-dojo');
+  assert.equal(load({ DOJO_HOME: { name: 'Identity Dojo' } }).STORE_KEY, 'dojo:identity-dojo');
+  assert.notEqual(load({ DOJO_HOME: { name: 'JS Dojo' } }).STORE_KEY,
+                  load({ DOJO_HOME: { name: 'Identity Dojo' } }).STORE_KEY);
+});
+
+test('storeSlug always yields a usable key segment', () => {
+  assert.equal(storeSlug('Dev Dojo'), 'dev-dojo');
+  assert.equal(storeSlug('  ML Dojo (beta)!  '), 'ml-dojo-beta');
+  assert.equal(storeSlug(''), 'dev-dojo');
+  assert.equal(storeSlug(null), 'dev-dojo');
+  assert.equal(storeSlug('***'), 'dev-dojo');
+});
+
+test('two courses in one browser no longer share a store', () => {
+  const js = load({ DOJO_HOME: { name: 'JS Dojo' } });
+  const id = load({ DOJO_HOME: { name: 'Identity Dojo' } });
+  js.store.patch('collide', { done: true });
+  id.store.patch('collide', { done: false, code: 'mine' });
+  // Separate sandboxes, so assert on the keys each one writes rather than on one
+  // shared localStorage: an id used by both courses is now two distinct entries.
+  assert.notEqual(js.STORE_KEY, id.STORE_KEY);
+  assert.equal(js.localStorage.getItem(id.STORE_KEY), null);
+  assert.equal(id.localStorage.getItem(js.STORE_KEY), null);
+});
+
+/* --------------------------------------------- migration off the shared key */
+function seeded(courseName, streams, legacy) {
+  const h = load(courseName ? { DOJO_HOME: { name: courseName } } : undefined);
+  streams.forEach(s => h.STREAMS.push(s));
+  if (legacy !== undefined) h.localStorage.setItem('javadojo', JSON.stringify(legacy));
+  return h;
+}
+const JS_STREAM = { title: 'S', lessons: [{ id: 'js1', ex: {} }, { id: 'js2', exs: [{}, {}] }] };
+
+test('migration carries a learner\'s finished lessons to the new key', () => {
+  const h = seeded('JS Dojo', [JS_STREAM], {
+    js1: { done: true, completedAt: 1 }, 'js2#0': { done: true }, 'js2#1': { code: 'draft' },
+    'rating:js1': { v: 1, c: 'good' },
+  });
+  assert.equal(h.migrateStore(), 4);
+  const d = h.store.get();
+  assert.equal(d.js1.done, true);
+  assert.equal(d['js2#0'].done, true);
+  assert.equal(d['js2#1'].code, 'draft');       // unsent editor code survives too
+  assert.equal(d['rating:js1'].c, 'good');
+});
+
+test('migration takes only the entries the course owns', () => {
+  const h = seeded('JS Dojo', [JS_STREAM], {
+    js1: { done: true }, devOnly: { done: true }, 'rating:devOnly': { v: -1 },
+  });
+  assert.equal(h.migrateStore(), 1);
+  assert.equal(Object.keys(h.store.get()).join(','), 'js1');
+});
+
+test('migration never deletes the shared blob it read from', () => {
+  const h = seeded('JS Dojo', [JS_STREAM], { js1: { done: true } });
+  h.migrateStore();
+  assert.equal(h.localStorage.getItem('javadojo'), JSON.stringify({ js1: { done: true } }));
+});
+
+test('migration runs once and never overwrites later work', () => {
+  const h = seeded('JS Dojo', [JS_STREAM], { js1: { done: true }, 'js2#0': { done: true } });
+  assert.equal(h.migrateStore(), 2);
+  h.store.patch('js1', { code: 'written after migrating' });
+  assert.equal(h.migrateStore(), 0);            // the key exists now, so it is left alone
+  assert.equal(h.store.get().js1.code, 'written after migrating');
+});
+
+test('migration is a no-op with nothing to migrate', () => {
+  assert.equal(seeded('JS Dojo', [JS_STREAM], undefined).migrateStore(), 0);
+  assert.equal(seeded('JS Dojo', [JS_STREAM], {}).migrateStore(), 0);
+  assert.equal(seeded('JS Dojo', [JS_STREAM], { devOnly: { done: true } }).migrateStore(), 0);
+  assert.equal(seeded('JS Dojo', [], { js1: { done: true } }).migrateStore(), 0);
+});
+
+test('migration survives a corrupt or hostile legacy value', () => {
+  const bad = h => { h.localStorage.setItem('javadojo', 'not json at all'); return h.migrateStore(); };
+  assert.equal(bad(seeded('JS Dojo', [JS_STREAM])), 0);
+  const arr = seeded('JS Dojo', [JS_STREAM]);
+  arr.localStorage.setItem('javadojo', '[1,2,3]');
+  assert.equal(arr.migrateStore(), 0);
+});
+
+test('courseKeys covers every id a lesson can be stored under', () => {
+  const h = seeded('JS Dojo', [JS_STREAM]);
+  const keys = h.courseKeys();
+  ['js1', 'rating:js1', 'js2#0', 'js2#1', 'rating:js2#0', 'rating:js2#1'].forEach(
+    k => assert.ok(keys.has(k), 'missing ' + k));
+});
+
+/* -------------------------------------------------------- SQL: LIKE and syntax */
+test('LIKE still matches the way it did, with % and _', () => {
+  const titles = q => sql('library', q).map(r => r.title).sort().join('|');
+  assert.equal(titles("SELECT title FROM books WHERE title LIKE 'Java%'"),
+               'Java Concurrency in Practice|Java Puzzlers');
+  assert.equal(titles("SELECT title FROM books WHERE title LIKE '%Java%'"),
+               'Effective Java|Head First Java|Java Concurrency in Practice|Java Puzzlers');
+  assert.equal(titles("SELECT title FROM books WHERE title LIKE '_ffective Java'"), 'Effective Java');
+  assert.equal(titles("SELECT title FROM books WHERE title LIKE 'Clean Code'"), 'Clean Code');
+  assert.equal(titles("SELECT title FROM books WHERE title LIKE 'clean code'"), ''); // case-sensitive, as before
+  assert.equal(titles("SELECT title FROM books WHERE title LIKE '%'").split('|').length, 10);
+});
+
+test('LIKE treats regex metacharacters in the pattern as literal text', () => {
+  // The old implementation escaped them before compiling; the new one never
+  // compiles anything, and must still not match 'C' against '.'.
+  assert.equal(sql('library', "SELECT title FROM books WHERE title LIKE '.lean Code'").length, 0);
+  assert.equal(sql('library', "SELECT title FROM books WHERE title LIKE 'Clean Code'").length, 1);
+});
+
+test('a run of % in a LIKE pattern cannot hang the browser', () => {
+  // Ten of them used to backtrack for 38 seconds on this ten-row table, with no
+  // way for the learner to interrupt a query they typed themselves.
+  const t0 = Date.now();
+  sql('library', "SELECT title FROM books WHERE title LIKE '" + '%'.repeat(40) + "zzz'");
+  const ms = Date.now() - t0;
+  assert.ok(ms < 500, '40 wildcards took ' + ms + 'ms');
+});
+
+test('incomplete SQL says what is missing instead of failing as JavaScript', () => {
+  assert.throws(() => sql('library', 'SELECT * FROM books WHERE price_cents >'),
+                /nothing to compare against after price_cents >/);
+  assert.throws(() => sql('library', 'SELECT * FROM books ORDER BY'), /ORDER BY needs a column/);
+});
+
+test('a LIMIT with no number errors rather than silently returning no rows', () => {
+  // parseInt(undefined) is NaN and slice(0, NaN) is empty, so the learner used to
+  // get a confident "0 rows" for a query that never had a row count at all.
+  assert.throws(() => sql('library', 'SELECT * FROM books LIMIT'), /LIMIT needs a whole number/);
+  assert.throws(() => sql('library', 'SELECT * FROM books LIMIT 3 OFFSET'), /OFFSET needs a whole number/);
+  assert.equal(sql('library', 'SELECT * FROM books LIMIT 3').length, 3);
+  assert.equal(sql('library', 'SELECT * FROM books LIMIT 3 OFFSET 8').length, 2);
+});
+
+/* ------------------------------------------------------------- belt arithmetic */
+// One sandbox, reset per case: a fresh load() per scenario evaluates the whole
+// runtime thousands of times and turns a two-second suite into a slow one.
+const beltBox = load();
+function beltCourse(nLessons, nDone) {
+  beltBox.STREAMS.length = 0;
+  beltBox.STREAMS.push({ title: 'S', lessons: Array.from({ length: nLessons }, (_, i) => ({ id: 'l' + i, ex: {} })) });
+  const d = {};
+  for (let i = 0; i < nDone; i++) d['l' + i] = { done: true, completedAt: 1 };
+  beltBox.store.set(d);
+  return beltBox;
+}
+
+test('the "N to next belt" hint counts the lesson that actually earns the belt', () => {
+  // The belt is awarded on the ROUNDED percentage, so ceil() of the exact
+  // threshold asked for one lesson more than the promotion needs.
+  for (const total of [181, 150, 63, 100, 200]) {
+    for (let done = 0; done < total; done++) {
+      const h = beltCourse(total, done);
+      const hint = h.lessonsToNextBelt();
+      if (!hint) continue;                       // already black belt
+      const before = h.beltName();
+      const after = beltCourse(total, done + hint.count).beltName();
+      assert.equal(after, hint.name,
+        total + ' lessons, ' + done + ' done: hint promised ' + hint.name + ' after ' + hint.count + ', got ' + after);
+      // and one fewer must NOT be enough, or the count is still too high
+      if (hint.count > 1) {
+        const short = beltCourse(total, done + hint.count - 1).beltName();
+        assert.equal(short, before,
+          total + ' lessons, ' + done + ' done: ' + (hint.count - 1) + ' would already have been enough');
+      }
+    }
+  }
+});
+
+/* ----------------------------------------------------------------- store reads */
+test('the store still reflects a write made outside it', () => {
+  // get() caches the parsed blob, keyed on the stored text, so another tab's
+  // write and the account bridge's pull are both still picked up.
+  const h = load();
+  h.store.set({ a: { done: true } });
+  assert.equal(h.store.lesson('a').done, true);
+  h.localStorage.setItem(h.STORE_KEY, JSON.stringify({ b: { done: true } }));
+  assert.equal(h.store.lesson('b').done, true);
+  assert.equal(Object.keys(h.store.lesson('a')).length, 0);
+});
+
+test('the store reads back what patch wrote, repeatedly', () => {
+  const h = load();
+  h.store.patch('x', { done: true });
+  h.store.patch('x', { code: 'hello' });
+  h.store.patch('y', { hintIdx: 2 });
+  assert.equal(h.store.lesson('x').done, true);
+  assert.equal(h.store.lesson('x').code, 'hello');
+  assert.equal(h.store.lesson('y').hintIdx, 2);
+  assert.equal(JSON.parse(h.localStorage.getItem(h.STORE_KEY)).x.code, 'hello');
 });

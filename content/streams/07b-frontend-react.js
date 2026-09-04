@@ -58,7 +58,7 @@ React.createElement("h1", { className: "title" }, "Hello, ", name)
 { type: "h1", props: { className: "title", children: [...] } }</div>
 <p>Once you see that, the rules stop being arbitrary. <b>One root element</b>, because a function returns
 one value. <b>camelCase attributes</b>, because they are JavaScript object keys, and
-<code>class</code> is a reserved word. <b>Capitalised component names</b>, because the compiler uses the
+<code>class</code> is a reserved word. <b>Capitalized component names</b>, because the compiler uses the
 case to decide between the string <code>"div"</code> and the variable <code>Greeting</code>: a
 lowercase component silently becomes an unknown HTML tag that renders nothing.</p>
 

@@ -3,7 +3,7 @@
    sample datasets, fully offline. Wrapped in an IIFE to avoid any global collisions
    (e.g. the app already defines KW). Exposes window.SQLDB.run(db, sql) and the
    window.SQL_DATASETS sample databases. Supports: SELECT [DISTINCT], *, cols,
-   agg(...) AS alias, FROM t [alias], [INNER|LEFT|RIGHT|FULL [OUTER]|CROSS] JOIN ... ON,
+   agg([DISTINCT] ...) AS alias, FROM t [alias], [INNER|LEFT|RIGHT|FULL [OUTER]|CROSS] JOIN ... ON,
    WHERE (AND/OR, = <> < > <= >=, LIKE, IS [NOT] NULL), GROUP BY, HAVING agg,
    ORDER BY ... [ASC|DESC], LIMIT n [OFFSET m]. */
 window.SQLDB=(function(){
@@ -27,7 +27,7 @@ window.SQLDB=(function(){
       let item={};
       if(peek()==='*'){item.star=true;next();}
       else{
-        if(t[i+1]==='('){const fn=low(next());next();let arg=next();if(arg===')'){item={agg:fn,arg:'*'};}else{item={agg:fn,arg:arg};next();}}
+        if(t[i+1]==='('){const fn=low(next());next();let dist=false;if(peek()&&low(peek())==='distinct'){dist=true;next();}let arg=next();if(arg===')'){item={agg:fn,arg:'*',distinct:dist};}else{item={agg:fn,arg:arg,distinct:dist};next();}checkAgg(fn);}
         else item={col:next()};
         if(peek()&&low(peek())==='as'){next();item.alias=next();}
         else if(peek()&&!KW.has(low(peek()))&&peek()!==','&&peek()!=='(')item.alias=next();
@@ -51,22 +51,58 @@ window.SQLDB=(function(){
     if(peek()&&low(peek())==='where'){next();q.where=parseExpr();}
     if(peek()&&low(peek())==='group'){next();if(low(next())!=='by')throw new Error('GROUP BY');while(peek()&&!KW.has(low(peek()))){q.groupBy.push(next());if(peek()===',')next();else break;}}
     if(peek()&&low(peek())==='having'){next();q.having=parseHaving();}
-    if(peek()&&low(peek())==='order'){next();if(low(next())!=='by')throw new Error('ORDER BY');while(peek()){let col=next(),dir='asc';if(peek()&&(low(peek())==='asc'||low(peek())==='desc'))dir=low(next());q.orderBy.push({col,dir});if(peek()===',')next();else break;}}
-    if(peek()&&low(peek())==='limit'){next();q.limit=parseInt(next(),10);if(peek()&&low(peek())==='offset'){next();q.offset=parseInt(next(),10);}}
+    if(peek()&&low(peek())==='order'){next();if(low(next())!=='by')throw new Error('ORDER BY');if(!peek())throw new Error('ORDER BY needs a column');while(peek()){let col=next(),dir='asc';if(peek()&&(low(peek())==='asc'||low(peek())==='desc'))dir=low(next());q.orderBy.push({col,dir});if(peek()===',')next();else break;}}
+    /* A bare LIMIT parsed to NaN, and slice(0,NaN) returns nothing: the learner
+       got a confident "0 rows" for a query that never had a row count at all. */
+    if(peek()&&low(peek())==='limit'){next();q.limit=intArg(next(),'LIMIT');if(peek()&&low(peek())==='offset'){next();q.offset=intArg(next(),'OFFSET');}}
     return q;
+    function intArg(tok,kw){const n=parseInt(tok,10);if(!Number.isFinite(n)||n<0)throw new Error(kw+' needs a whole number, for example '+kw+' 5');return n;}
     function parseExpr(){let preds=[parsePred()],ops=[];while(peek()&&(low(peek())==='and'||low(peek())==='or')){ops.push(low(next()));preds.push(parsePred());}return{preds,ops};}
-    function parsePred(){const left=next();if(peek()&&low(peek())==='is'){next();let neg=false;if(low(peek())==='not'){neg=true;next();}if(low(next())!=='null')throw new Error('IS NULL');return{left,op:neg?'isnotnull':'isnull'};}if(peek()&&low(peek())==='like'){next();return{left,op:'like',right:next()};}const op=next(),right=next();return{left,op,right};}
-    function parseHaving(){const fn=low(next());next();let arg=next();if(arg!==')')next();const op=next(),val=next();return{agg:fn,arg,op,val};}
+    /* An incomplete comparison used to reach evalPred with right undefined and
+       fail there as "Cannot read properties of undefined", which tells a learner
+       nothing about their SQL. Name the operator that is missing its value. */
+    function parsePred(){const left=next();if(peek()&&low(peek())==='is'){next();let neg=false;if(low(peek())==='not'){neg=true;next();}if(low(next())!=='null')throw new Error('IS NULL');return{left,op:neg?'isnotnull':'isnull'};}if(peek()&&low(peek())==='like'){next();const pat=next();if(pat===undefined)throw new Error('LIKE needs a pattern, for example LIKE \'Java%\'');return{left,op:'like',right:pat};}const op=next(),right=next();if(op===undefined)throw new Error('incomplete condition after '+left);if(right===undefined)throw new Error('nothing to compare against after '+left+' '+op);return{left,op,right};}
+    function parseHaving(){const fn=low(next());next();let dist=false;if(peek()&&low(peek())==='distinct'){dist=true;next();}let arg=next();if(arg!==')')next();const op=next(),val=next();checkAgg(fn);return{agg:fn,arg,op,val,distinct:dist};}
   }
   const resolve=(row,ref)=>{if(row[ref]!==undefined)return row[ref];const bare=ref.includes('.')?ref.split('.').pop():ref;if(row[bare]!==undefined)return row[bare];for(const k in row)if(k.split('.').pop()===bare)return row[k];return undefined;};
   const cmp=(a,b)=>{if(a===b)return 0;if(a===null||a===undefined)return -1;if(b===null||b===undefined)return 1;if(typeof a==='number'&&typeof b==='number')return a-b;return String(a)<String(b)?-1:1;};
-  function evalPred(p,row){const l=resolve(row,p.left);if(p.op==='isnull')return l===null||l===undefined;if(p.op==='isnotnull')return !(l===null||l===undefined);if(p.op==='like'){const pat=unq(p.right).replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/%/g,'.*').replace(/_/g,'.');return new RegExp('^'+pat+'$').test(String(l));}let r=isNum(p.right)?parseFloat(p.right):(p.right[0]==="'"?unq(p.right):resolve(row,p.right));const c=cmp(l,r);switch(p.op){case'=':return c===0;case'<>':case'!=':return c!==0;case'<':return c<0;case'>':return c>0;case'<=':return c<=0;case'>=':return c>=0;}return false;}
+  /* LIKE used to compile to a regex, turning each % into '.*'. A pattern with a
+     run of them, LIKE '%%%%%%%%%%zzz', backtracks exponentially: ten of them
+     froze the tab for 38 seconds on a ten-row table, and the learner types the
+     pattern themselves in the "run your query for real" panel with no way to
+     interrupt it. This is the two-pointer wildcard match instead: linear in
+     practice, never worse than O(n*m), case-sensitive exactly as the regex was. */
+  function likeMatch(str,pat){
+    let s=0,p=0,star=-1,ss=0;
+    while(s<str.length){
+      const c=pat[p];
+      if(p<pat.length&&(c===str[s]||c==='_')){s++;p++;continue;}
+      if(p<pat.length&&c==='%'){star=p++;ss=s;continue;}
+      if(star>=0){p=star+1;s=++ss;continue;}
+      return false;
+    }
+    while(p<pat.length&&pat[p]==='%')p++;
+    return p===pat.length;
+  }
+  function evalPred(p,row){const l=resolve(row,p.left);if(p.op==='isnull')return l===null||l===undefined;if(p.op==='isnotnull')return !(l===null||l===undefined);if(p.op==='like'){return likeMatch(String(l),unq(p.right));}let r=isNum(p.right)?parseFloat(p.right):(p.right[0]==="'"?unq(p.right):resolve(row,p.right));const c=cmp(l,r);switch(p.op){case'=':return c===0;case'<>':case'!=':return c!==0;case'<':return c<0;case'>':return c>0;case'<=':return c<=0;case'>=':return c>=0;}return false;}
   function evalWhere(w,row){if(!w)return true;let acc=evalPred(w.preds[0],row);for(let k=0;k<w.ops.length;k++){const nv=evalPred(w.preds[k+1],row);acc=w.ops[k]==='and'?(acc&&nv):(acc||nv);}return acc;}
   const prefixRow=(row,alias)=>{const o={};for(const c in row){o[alias+'.'+c]=row[c];if(o[c]===undefined)o[c]=row[c];}return o;};
   const nullRow=(cols,alias)=>{const o={};for(const c of cols){o[alias+'.'+c]=null;if(o[c]===undefined)o[c]=null;}return o;};
   const resolveByName=(row,name)=>{const bare=name.split('.').pop();for(const k in row){if(k===name||k.split('.').pop()===bare)return row[k];}return undefined;};
   function starRow(r,known){const o={};for(const [al,cols] of known)for(const c of cols)o[c]=r[al+'.'+c]!==undefined?r[al+'.'+c]:r[c];return o;}
-  function agg(f,grp,arg){const vals=grp.map(r=>resolve(r,arg)).filter(v=>v!==null&&v!==undefined);if(f==='count')return arg==='*'?grp.length:vals.length;if(f==='sum')return vals.reduce((a,b)=>a+Number(b),0);if(f==='avg')return vals.length?vals.reduce((a,b)=>a+Number(b),0)/vals.length:null;if(f==='min')return vals.length?Math.min(...vals):null;if(f==='max')return vals.length?Math.max(...vals):null;return null;}
+  /* MIN/MAX used Math.min/Math.max, which coerce to Number: every text and date
+     column came back NaN, and because a grader serializing rows turns both NaN
+     and NULL into null, a wrong query could be marked correct. They now reduce
+     with the same cmp() the engine uses everywhere else, so 'Zoe' > 'Ada' and
+     '2018-01-01' > '2006-05-01' the way SQL says they do. */
+  function extreme(vals,wantMax){let best=vals[0];for(let i=1;i<vals.length;i++){const c=cmp(vals[i],best);if(wantMax?c>0:c<0)best=vals[i];}return best;}
+  const AGGS=new Set(['count','sum','avg','min','max']);
+  /* An unknown function used to fall through and return null, so SELECT UPPER(x)
+     produced a silent NULL column instead of telling the learner it is not
+     supported. Checked at parse time so the message names the function. */
+  function checkAgg(f){if(!AGGS.has(f))throw new Error('unsupported function: '+f.toUpperCase()+'(), this engine supports COUNT, SUM, AVG, MIN and MAX');}
+  function distinctVals(vals){const seen=new Set();return vals.filter(v=>{const k=(v===null?'n':typeof v)+'\u0001'+String(v);if(seen.has(k))return false;seen.add(k);return true;});}
+  function agg(f,grp,arg,distinct){let vals=grp.map(r=>resolve(r,arg)).filter(v=>v!==null&&v!==undefined);if(distinct)vals=distinctVals(vals);if(f==='count')return arg==='*'?grp.length:vals.length;if(f==='sum')return vals.reduce((a,b)=>a+Number(b),0);if(f==='avg')return vals.length?vals.reduce((a,b)=>a+Number(b),0)/vals.length:null;if(f==='min')return vals.length?extreme(vals,false):null;if(f==='max')return vals.length?extreme(vals,true):null;return null;}
   function run(db,sql){
     const q=parse(sql);const t0=db[q.from.table];if(!t0)throw new Error('unknown table: '+q.from.table);
     const a0=q.from.alias||q.from.table;let rows=t0.rows.map(r=>prefixRow(r,a0));const known=[[a0,t0.cols]];
@@ -85,8 +121,8 @@ window.SQLDB=(function(){
       else groups.set('*',rows);
       result=[];
       for(const [,grp] of groups){
-        if(q.having){const av=agg(q.having.agg,grp,q.having.arg),rv=parseFloat(q.having.val);let keep;switch(q.having.op){case'>':keep=av>rv;break;case'<':keep=av<rv;break;case'>=':keep=av>=rv;break;case'<=':keep=av<=rv;break;case'=':keep=av===rv;break;default:keep=true;}if(!keep)continue;}
-        const o={};for(const s of q.select){const name=s.alias||(s.agg?s.agg.toUpperCase()+'('+s.arg+')':s.col);o[name]=s.agg?agg(s.agg,grp,s.arg):resolve(grp[0],s.col);}result.push(o);
+        if(q.having){const av=agg(q.having.agg,grp,q.having.arg,q.having.distinct),rv=parseFloat(q.having.val);let keep;switch(q.having.op){case'>':keep=av>rv;break;case'<':keep=av<rv;break;case'>=':keep=av>=rv;break;case'<=':keep=av<=rv;break;case'=':keep=av===rv;break;default:keep=true;}if(!keep)continue;}
+        const o={};for(const s of q.select){const name=s.alias||(s.agg?s.agg.toUpperCase()+'('+(s.distinct?'DISTINCT ':'')+s.arg+')':s.col);o[name]=s.agg?agg(s.agg,grp,s.arg,s.distinct):resolve(grp[0],s.col);}result.push(o);
       }
     } else {
       result=rows.map(r=>{if(q.select.length===1&&q.select[0].star)return starRow(r,known);const o={};for(const s of q.select){const name=s.alias||s.col;o[name]=resolve(r,s.col);}return o;});

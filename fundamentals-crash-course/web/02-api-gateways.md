@@ -28,7 +28,7 @@ out to whatever services currently implement each path.
 
 Each of these is a thing every service would otherwise have to implement, identically, forever:
 
-- **Authentication at the edge.** Validate the token (OAuth2/OIDC/JWT, Identity Dojo territory)
+- **Authentication at the edge.** Validate the token (OAuth 2.0/OIDC/JWT, Identity Dojo territory)
   once, reject garbage before it touches a backend, and pass verified identity inward as headers
   or a signed token. Services still *authorize* ("may this user delete that order?"), but they
   shouldn't each be parsing tokens.

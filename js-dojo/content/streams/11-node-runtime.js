@@ -257,7 +257,9 @@ run:{call:'readPort',cases:[
  {name:'non-numeric is rejected',args:[{PORT:'abc'}],expect:null},
  {name:'zero is out of range',args:[{PORT:'0'}],expect:null},
  {name:'above 65535 is out of range',args:[{PORT:'70000'}],expect:null},
- {name:'the boundary value is valid',args:[{PORT:'65535'}],expect:65535}]},
+ {name:'the boundary value is valid',args:[{PORT:'65535'}],expect:65535},
+ {name:'1 is the lowest valid port',args:[{PORT:'1'}],expect:1},
+ {name:'65536 is one above the ceiling',args:[{PORT:'65536'}],expect:null}]},
 prompt:`Write <code>function readPort(env)</code> that reads <code>env.PORT</code>. Missing or empty &rarr; the number <code>3000</code>. Present but not a valid port &rarr; <code>null</code>. A valid port is a whole number from <code>1</code> to <code>65535</code> inclusive. Remember that everything in <code>env</code> is a string.`,
 starter:`function readPort(env) {
   return 3000;
@@ -279,7 +281,10 @@ run:{call:'loadConfig',cases:[
  {name:'the string "false" must be false, not truthy',args:[{DATABASE_URL:'postgres://x',DEBUG:'false'}],expect:{ok:true,config:{databaseUrl:'postgres://x',port:3000,debug:false},errors:[]}},
  {name:'a missing required variable is reported',args:[{}],expect:{ok:false,config:null,errors:['DATABASE_URL is required']}},
  {name:'an invalid port is reported',args:[{DATABASE_URL:'postgres://x',PORT:'abc'}],expect:{ok:false,config:null,errors:['PORT must be a number between 1 and 65535']}},
- {name:'every problem is reported at once, in order',args:[{PORT:'0'}],expect:{ok:false,config:null,errors:['DATABASE_URL is required','PORT must be a number between 1 and 65535']}}]},
+ {name:'every problem is reported at once, in order',args:[{PORT:'0'}],expect:{ok:false,config:null,errors:['DATABASE_URL is required','PORT must be a number between 1 and 65535']}},
+ {name:'a port of 1 sits on the low boundary and is accepted',args:[{DATABASE_URL:'postgres://x',PORT:'1'}],expect:{ok:true,config:{databaseUrl:'postgres://x',port:1,debug:false},errors:[]}},
+ {name:'a port of 65535 sits on the high boundary and is accepted',args:[{DATABASE_URL:'postgres://x',PORT:'65535'}],expect:{ok:true,config:{databaseUrl:'postgres://x',port:65535,debug:false},errors:[]}},
+ {name:'65536 is one past the ceiling',args:[{DATABASE_URL:'postgres://x',PORT:'65536'}],expect:{ok:false,config:null,errors:['PORT must be a number between 1 and 65535']}}]},
 prompt:`Write <code>function loadConfig(env)</code> that validates the whole environment at once and returns <code>{ ok, config, errors }</code>. <code>DATABASE_URL</code> is required (missing or empty &rarr; <code>"DATABASE_URL is required"</code>). <code>PORT</code> defaults to <code>3000</code> and must be an integer from 1 to 65535 (&rarr; <code>"PORT must be a number between 1 and 65535"</code>). <code>DEBUG</code> defaults to <code>false</code> and is <code>true</code> <b>only</b> for the exact string <code>"true"</code>. Report <b>every</b> problem, in the order above; when there are any, <code>config</code> is <code>null</code>.`,
 starter:`function loadConfig(env) {
   return { ok: true, config: null, errors: [] };

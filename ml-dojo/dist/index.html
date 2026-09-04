@@ -1117,7 +1117,7 @@ const GLOSS=[
  ]},
 ]},
 
-{domain:'Calculus & Optimisation',icon:'📈',groups:[
+{domain:'Calculus & Optimization',icon:'📈',groups:[
  {h:'Derivatives',terms:[
   ['Derivative','The slope of a function at a point, meaning how fast the output moves when you nudge the input. Everything about training reduces to reading slopes.'],
   ['Partial derivative','The slope with respect to one input while the others are held still. What you compute per weight when there are millions of them.'],
@@ -1132,7 +1132,7 @@ const GLOSS=[
   ['Learning rate','The stride length of each step. Too small and training crawls, too large and it overshoots and diverges. The first hyperparameter to suspect.'],
   ['Local minimum','A point lower than everything nearby but not the lowest overall. Less of a problem in high dimensions than intuition suggests, where saddle points dominate.'],
   ['Convexity','A bowl shape, where any local minimum is the global one. Linear and logistic regression are convex, neural networks are not.'],
-  ['Constrained optimisation','Maximising or minimising subject to a rule you are not allowed to break, such as probabilities summing to one or a vector having unit length.'],
+  ['Constrained optimization','Maximizing or minimizing subject to a rule you are not allowed to break, such as probabilities summing to one or a vector having unit length.'],
   ['Lagrange multiplier','The scalar λ in ∇f = λ∇g. At a constrained optimum the two gradients are parallel, and λ absorbs the difference in their lengths.'],
   ['Lagrangian','The combined function L(x, λ) = f(x) − λ(g(x) − c). Setting every partial derivative to zero recovers both the tangency condition and the constraint itself.'],
   ['Shadow price','The reading of λ as a sensitivity: how much the best achievable value would improve if the constraint were relaxed by one unit. Often the number you actually wanted.'],
@@ -1170,7 +1170,7 @@ const GLOSS=[
   ['Poisson','Counts of events in a fixed interval when they occur independently at a constant rate. Mean and variance are both λ.'],
   ['Uniform','Every value in a range equally likely. The default when you want to express no preference.'],
   ['Exponential','The waiting time until the next event in a Poisson process. Memoryless, meaning how long you have already waited tells you nothing.'],
-  ['Gaussian (normal)','The bell curve, parameterised by mean and variance. Appears everywhere because of the central limit theorem, and because it is the maximum-entropy distribution for a given mean and variance.'],
+  ['Gaussian (normal)','The bell curve, parameterized by mean and variance. Appears everywhere because of the central limit theorem, and because it is the maximum-entropy distribution for a given mean and variance.'],
   ['Multivariate Gaussian','The Gaussian in several dimensions, with a mean vector and a covariance matrix. The covariance sets the orientation and width of the elliptical contours.'],
   ['Central limit theorem','Sums of many independent contributions tend toward a Gaussian regardless of what they were drawn from. Why measurement error is so often bell-shaped.'],
   ['Mahalanobis distance','Distance measured in units of standard deviation per direction, using Σ⁻¹. The right notion of "far" when the variables are correlated.'],
@@ -1181,7 +1181,7 @@ const GLOSS=[
   ['Prior and posterior','What you believed before seeing the data, and what you believe after. Bayes\' theorem is the update rule between them.'],
   ['Latent variable','Something you never observe but which explains what you do observe, such as which component of a mixture produced a point.'],
   ['Mixture model','A distribution built by picking a component at random and then drawing from it. A Gaussian mixture can fit shapes no single Gaussian can.'],
-  ['Expectation maximisation (EM)','Alternating between guessing the latent variables given the parameters, and re-fitting the parameters given those guesses. Each round provably does not decrease the likelihood.'],
+  ['Expectation maximization (EM)','Alternating between guessing the latent variables given the parameters, and re-fitting the parameters given those guesses. Each round provably does not decrease the likelihood.'],
   ['Responsibility','In EM, the soft assignment of a data point to a component, meaning the posterior probability that the component produced it.'],
   ['Monte Carlo estimate','Approximating an expectation by sampling and averaging. Error falls like one over the square root of the number of samples, regardless of dimension.'],
   ['Entropy','The average surprise of a distribution, measured in bits or nats. Maximal when everything is equally likely, zero when one outcome is certain.'],
@@ -1194,7 +1194,7 @@ const GLOSS=[
  {h:'The setup',terms:[
   ['Supervised learning','Learning from examples that come with the right answer attached. Classification when the answer is a category, regression when it is a number.'],
   ['Unsupervised learning','Learning structure from data with no answers attached. Clustering, dimensionality reduction, density estimation.'],
-  ['Semi-supervised learning','Using a small labelled set together with a large unlabelled one. Worth reaching for when labels are the expensive part, which is most of the time.'],
+  ['Semi-supervised learning','Using a small labeled set together with a large unlabeled one. Worth reaching for when labels are the expensive part, which is most of the time.'],
   ['Self-supervised learning','Making labels out of the data itself, such as hiding a word and predicting it. How large language models are pretrained.'],
   ['Feature','One measured input, one column of the data. Feature engineering is choosing and constructing them, and it decides more outcomes than model choice does.'],
   ['Label (target)','The answer you are trying to predict, written y. One per example in supervised learning.'],
@@ -1202,12 +1202,12 @@ const GLOSS=[
   ['Cross-validation','Rotating which slice is held out and averaging the results. Gives a more stable estimate than one split, and is what you use when the dataset is small.'],
   ['Hyperparameter','A setting you choose rather than learn, such as the learning rate, k, or the depth of a tree. Chosen on validation data, never on test.'],
  ]},
- {h:'Fit and generalisation',terms:[
+ {h:'Fit and generalization',terms:[
   ['Overfitting','Learning the noise as well as the signal. Training error keeps falling while validation error turns upward, which is the shape to watch for.'],
   ['Underfitting','The model is too simple to capture the pattern, so both training and validation error stay high. Fixed by more capacity or better features, not more data.'],
   ['Bias-variance trade-off','Error decomposes into bias, systematic wrongness from too simple a model, and variance, sensitivity to which data you happened to get.'],
-  ['Regularisation','Anything that penalises complexity to improve generalisation. L2 shrinks weights toward zero, L1 drives some of them exactly to zero.'],
-  ['Generalisation','Performance on data the model has not seen. The only thing that matters, and the only thing training error does not measure.'],
+  ['Regularization','Anything that penalizes complexity to improve generalization. L2 shrinks weights toward zero, L1 drives some of them exactly to zero.'],
+  ['Generalization','Performance on data the model has not seen. The only thing that matters, and the only thing training error does not measure.'],
   ['Data augmentation','Making more training examples by transforming the ones you have in ways that leave the label unchanged. Cheap capacity against overfitting.'],
   ['Transfer learning','Starting from a model trained on a large dataset and fine-tuning it on your small one. Usually the right first move when data is scarce.'],
   ['Curse of dimensionality','In high dimensions everything is far from everything else and volume concentrates in the corners. Why distance-based methods degrade as features multiply.'],
@@ -1215,7 +1215,7 @@ const GLOSS=[
   ['Leakage','Information from the answer sneaking into the features, or from test into training. Produces results that look excellent and do not survive deployment.'],
  ]},
  {h:'Measuring it',terms:[
-  ['Loss function','The number training minimises. Mean squared error for regression, cross-entropy for classification. It is the specification, so choose it deliberately.'],
+  ['Loss function','The number training minimizes. Mean squared error for regression, cross-entropy for classification. It is the specification, so choose it deliberately.'],
   ['Accuracy','The fraction predicted correctly. Fine on balanced data and actively misleading on imbalanced data.'],
   ['Precision and recall','Precision is how often a positive prediction is right. Recall is how much of the positive class you found. Moving the threshold trades one for the other.'],
   ['F1 score','The harmonic mean of precision and recall, used when you need one number and both matter.'],
@@ -1227,7 +1227,7 @@ const GLOSS=[
 
 {domain:'Classic Models',icon:'🧰',groups:[
  {h:'Regression',terms:[
-  ['Linear regression','Fits a straight line or hyperplane by minimising squared error. Has a closed-form solution and remains the right answer more often than people expect.'],
+  ['Linear regression','Fits a straight line or hyperplane by minimizing squared error. Has a closed-form solution and remains the right answer more often than people expect.'],
   ['Polynomial regression','Linear regression on powers of the features. Still linear in the parameters, which is why the same machinery works, and it overfits quickly as the degree rises.'],
   ['Ridge regression','Linear regression with an L2 penalty on the weights. Shrinks them toward zero, handles correlated features, and always has a unique solution.'],
   ['Lasso','Linear regression with an L1 penalty. The corner geometry of the constraint drives some weights to exactly zero, so it selects features as well as fitting.'],
@@ -1236,7 +1236,7 @@ const GLOSS=[
   ['Softmax regression','Logistic regression for more than two classes. Produces a probability per class, and they sum to one.'],
  ]},
  {h:'Classifiers',terms:[
-  ['k-nearest neighbours (k-NN)','Classify by a vote of the k closest training points. No training phase at all, and it degrades badly as dimensions grow.'],
+  ['k-nearest neighbors (k-NN)','Classify by a vote of the k closest training points. No training phase at all, and it degrades badly as dimensions grow.'],
   ['Naive Bayes','Applies Bayes\' theorem while pretending the features are independent given the class. The assumption is false and it works anyway, especially on text.'],
   ['Decision tree','A sequence of threshold questions ending in a prediction. Readable by a human, and prone to overfitting unless the depth is limited.'],
   ['Random forest','Many trees on bootstrap samples with random feature subsets, averaged. Reduces variance sharply and is a strong default on tabular data.'],
@@ -1246,11 +1246,11 @@ const GLOSS=[
   ['Kernel trick','Computing inner products in a high-dimensional space without ever going there. Buys curved boundaries from a linear algorithm.'],
  ]},
  {h:'Unsupervised',terms:[
-  ['k-means','Alternates assigning points to the nearest centre and moving each centre to the mean of its points. Fast, and it assumes clusters are round and similarly sized.'],
+  ['k-means','Alternates assigning points to the nearest center and moving each center to the mean of its points. Fast, and it assumes clusters are round and similarly sized.'],
   ['Gaussian mixture model (GMM)','Clustering with soft assignments, fitted by EM. Each cluster is a Gaussian with its own shape, so it handles elongated and overlapping clusters that k-means cannot.'],
   ['Hierarchical clustering','Repeatedly merging the closest clusters to build a tree. You choose the number of clusters after seeing the tree rather than before.'],
   ['DBSCAN','Density-based clustering. Finds clusters of any shape, needs no cluster count, and labels sparse points as noise rather than forcing them somewhere.'],
-  ['Principal component analysis (PCA)','Finds the directions of greatest variance, which turn out to be the eigenvectors of the covariance matrix. The constrained-optimisation problem behind it is solved with a Lagrange multiplier.'],
+  ['Principal component analysis (PCA)','Finds the directions of greatest variance, which turn out to be the eigenvectors of the covariance matrix. The constrained-optimization problem behind it is solved with a Lagrange multiplier.'],
   ['Explained variance','The share of the total variance a component captures, equal to its eigenvalue over the sum of all of them. How you decide where to truncate.'],
   ['t-SNE and UMAP','Non-linear methods for projecting to two dimensions for viewing. Distances between well-separated clusters in the picture are not meaningful.'],
  ]},
@@ -1273,12 +1273,12 @@ const GLOSS=[
   ['Epoch, batch, iteration','An epoch is one pass over the data, a batch is the subset used for one update, and an iteration is one update. Batch size trades noise against hardware efficiency.'],
   ['Stochastic gradient descent (SGD)','Gradient descent on a batch rather than the whole dataset. The noise is not only tolerable, it helps escape poor regions.'],
   ['Momentum','Accumulating a running average of past gradients so the step keeps some of its previous direction. Smooths oscillation across narrow valleys.'],
-  ['Adam','Per-parameter step sizes from running averages of the gradient and its square, with a bias correction for the first few steps. The usual default optimiser.'],
-  ['Vanishing and exploding gradients','Gradients shrinking or growing multiplicatively through depth. The reason for ReLU, careful initialisation, normalisation layers and residual connections.'],
-  ['Initialisation','The starting values of the weights. Scaled to keep signal variance stable through depth, and getting it wrong stops training before it starts.'],
-  ['Batch normalisation','Normalising activations within a batch, then rescaling with learned parameters. Speeds up training and adds a little regularisation as a side effect.'],
+  ['Adam','Per-parameter step sizes from running averages of the gradient and its square, with a bias correction for the first few steps. The usual default optimizer.'],
+  ['Vanishing and exploding gradients','Gradients shrinking or growing multiplicatively through depth. The reason for ReLU, careful initialization, normalization layers and residual connections.'],
+  ['Initialization','The starting values of the weights. Scaled to keep signal variance stable through depth, and getting it wrong stops training before it starts.'],
+  ['Batch normalization','Normalizing activations within a batch, then rescaling with learned parameters. Speeds up training and adds a little regularization as a side effect.'],
   ['Dropout','Randomly zeroing units during training so the network cannot depend on any one of them. Off at inference.'],
-  ['Early stopping','Halting when validation error stops improving. The simplest regularisation there is, and often the most effective.'],
+  ['Early stopping','Halting when validation error stops improving. The simplest regularization there is, and often the most effective.'],
  ]},
  {h:'Architectures',terms:[
   ['Perceptron','The 1958 single-layer model. Can only separate linearly separable data, which is what the XOR objection was about and what killed the first wave of the field.'],
@@ -1302,10 +1302,10 @@ const GLOSS=[
   ['State','What the agent can see now. Markov if it is enough to predict what comes next, so that the history adds nothing.'],
   ['Action','What the agent can do. The set may be discrete, continuous, or dependent on the state.'],
   ['Reward','The scalar the environment returns after an action. Evaluative rather than instructive: it scores what you did without saying what you should have done.'],
-  ['Policy','The agent\'s behaviour, a rule from states to actions. Deterministic or a distribution over actions. It is the thing you are actually trying to learn.'],
+  ['Policy','The agent\'s behavior, a rule from states to actions. Deterministic or a distribution over actions. It is the thing you are actually trying to learn.'],
   ['Episode','One run from a start state to a terminal state. Continuing tasks have none, which is why the discount factor is not optional there.'],
-  ['Return','The discounted sum of future rewards from here on. What the agent maximises, and not the same thing as the next reward.'],
-  ['Discount factor (γ)','How much future reward is worth now. Sets the planning horizon at roughly 1/(1−γ) steps, and it is a modelling decision rather than a knob.'],
+  ['Return','The discounted sum of future rewards from here on. What the agent maximizes, and not the same thing as the next reward.'],
+  ['Discount factor (γ)','How much future reward is worth now. Sets the planning horizon at roughly 1/(1−γ) steps, and it is a modeling decision rather than a knob.'],
   ['Markov decision process (MDP)','The formal object: states, actions, transition probabilities, rewards and a discount factor. Every algorithm in the field solves one, exactly or approximately.'],
   ['Credit assignment','Working out which earlier action is responsible for a reward arriving now. Most RL machinery exists to push that signal backwards in time.'],
  ]},
@@ -1325,7 +1325,7 @@ const GLOSS=[
  ]},
  {h:'Modern methods',terms:[
   ['Exploration versus exploitation','Take what looks best, or take what you know less about. Every RL algorithm answers this somehow, and there is no way to have both.'],
-  ['Multi-armed bandit','One state, several actions, no transitions. The cleanest setting for studying exploration, and the right model for a great many problems mislabelled as RL.'],
+  ['Multi-armed bandit','One state, several actions, no transitions. The cleanest setting for studying exploration, and the right model for a great many problems mislabeled as RL.'],
   ['Regret','How much worse you did than always taking the best action. Sublinear regret is the goal, and fixed ε-greedy does not achieve it.'],
   ['ε-greedy','Take the best action most of the time and a random one otherwise. Crude, effective, and usually decayed over training.'],
   ['Upper confidence bound (UCB)','Choose by an optimistic bound rather than the estimate, so uncertainty itself attracts attention. Achieves logarithmic regret, and drives the tree search in AlphaGo.'],
@@ -1333,13 +1333,13 @@ const GLOSS=[
   ['Deadly triad','Function approximation, bootstrapping and off-policy training. Any two are safe, all three together can diverge, and DQN is all three at once.'],
   ['Experience replay','Training on random minibatches from a buffer of past transitions. Decorrelates the data and reuses each transition many times. Only valid off-policy.'],
   ['Target network','A frozen copy of the network used to compute targets, refreshed periodically. Holds the regression target still so each interval is an ordinary supervised problem.'],
-  ['Policy gradient','Optimising the policy parameters directly by gradient ascent on expected return. The score function identity is what makes the gradient estimable by sampling.'],
+  ['Policy gradient','Optimizing the policy parameters directly by gradient ascent on expected return. The score function identity is what makes the gradient estimable by sampling.'],
   ['REINFORCE','If the episode went well make those actions more likely, otherwise less likely. Unbiased and very noisy.'],
   ['Baseline and advantage','Subtracting a state-dependent baseline changes nothing in expectation and cuts variance sharply. With V(s) as the baseline the weight becomes the advantage.'],
   ['Actor-critic','A policy that acts and a value function that evaluates. The TD error serves as the advantage, so the actor can update after one step.'],
   ['PPO','Policy gradient with a clipped probability ratio, so one update cannot move the policy too far. Not the most sample-efficient method, but the most forgiving, which is why it is the default.'],
-  ['RLHF','Learning a reward model from human preference rankings, then optimising the policy against it with PPO and a KL penalty toward the starting model.'],
-  ['Reward hacking','Finding behaviour that scores well under the reward function and is not what anyone meant. The reward function is the specification, and a capable optimiser will find where it comes apart from the intent.'],
+  ['RLHF','Learning a reward model from human preference rankings, then optimizing the policy against it with PPO and a KL penalty toward the starting model.'],
+  ['Reward hacking','Finding behavior that scores well under the reward function and is not what anyone meant. The reward function is the specification, and a capable optimizer will find where it comes apart from the intent.'],
  ]},
 ]},
 
@@ -1669,7 +1669,7 @@ An actual copy is <code>b = a[:]</code>.</p>
 for a slot that does not exist (like <code>nums[10]</code> in a 6-item list). Note the
 asymmetry: <i>indexing</i> past the end is an error, but <i>slicing</i> past the end is
 forgiven (<code>nums[2:100]</code> quietly stops at the end), a deliberate design choice
-that makes slice-based code robust.</div>`,
+that keeps slice-based code from crashing on short input.</div>`,
  docs:[['Python tutorial (lists)','https://docs.python.org/3/tutorial/introduction.html#lists']],
  quiz:{title:'Quick check',questions:[
    {q:'For nums = [10, 20, 30, 40, 50], what is nums[-1] and nums[1:3]?',
@@ -2012,7 +2012,7 @@ print("total =", total, " count =", count)
    tests:[
      {d:'total is 30 (2+4+6+8+10)',expr:'total == 30'},
      {d:'count is 5 (there are five evens)',expr:'count == 5'},
-     {d:'the program prints its results',expr:'"total" in _stdout'}
+     {d:'the program prints both results, 30 and 5',expr:'"total = 30" in _stdout and "count = 5" in _stdout'}
    ],
    hints:[
      'The even test is x % 2 == 0 (the remainder when divided by 2 is zero).',
@@ -2269,7 +2269,7 @@ print(count_positives([1, -2, 3]), first_negative([5, -7, 9]))
      {d:'count_positives counts ALL of a long list (return is after the loop)',expr:'count_positives([1, 2, 3, 4, -5]) == 4'},
      {d:'count_positives([]) is 0',expr:'count_positives([]) == 0'},
      {d:'first_negative([5, -7, 9]) is -7 (early return inside the if)',expr:'first_negative([5, -7, 9]) == -7'},
-     {d:'first_negative returns None when there is no negative',expr:'first_negative([1, 2, 3]) is None'}
+     {d:'first_negative returns None with no negative, and the FIRST negative otherwise',expr:'first_negative([1, 2, 3]) is None and first_negative([1, -2, -3]) == -2'}
    ],
    hints:[
      'Levels in count_positives: def=0, count/for/return=1, if=2, count+=1 at 3. The return de-dents back to level 1 so it runs after the whole loop.',
@@ -2647,7 +2647,7 @@ print(word_count("a b a"))
    tests:[
      {d:'"a b a" tallies to {"a":2,"b":1}',expr:'word_count("a b a") == {"a":2,"b":1}'},
      {d:'counts every distinct word',expr:'word_count("red red red blue") == {"red":3,"blue":1}'},
-     {d:'empty text gives an empty dict',expr:'word_count("") == {}'}
+     {d:'empty text gives an empty dict, and one word gives a tally of one',expr:'word_count("") == {} and word_count("solo") == {"solo": 1}'}
    ],
    hints:[
      'Loop over text.split() to get each word.',
@@ -2680,7 +2680,7 @@ unique_words = set(words)         # the classic one-liner: dedupe anything</div>
 instantly (a list checks item by item; a set jumps straight there, the difference between
 milliseconds and minutes on big data). The two everyday jobs: <b>dedupe</b> (how many
 <i>unique</i> users/words/labels?) and <b>fast membership</b> (is this email in the spam
-list?). Sets also do algebra: <code>a & b</code> (both), <code>a | b</code> (either),
+list?). Sets also do algebra: <code>a &amp; b</code> (both), <code>a | b</code> (either),
 <code>a - b</code> (in a, not b), handy for comparing groups.</p>
 
 <h3>The chooser, in one breath</h3>
@@ -3361,7 +3361,7 @@ builds an <i>object</i> from scikit-learn's <code>LinearRegression</code> <i>cla
 object, as <code>model.coef_</code>); <code>model.predict(...)</code> calls another. The
 fit/predict interface you met is just <b>objects with methods</b>. Understanding classes is
 what turns "magic library incantations" into "oh, it is an object, and these are its
-methods."</p></div>`,
+methods."</div>`,
  docs:[['Python tutorial (classes)','https://docs.python.org/3/tutorial/classes.html']],
  quiz:{title:'Quick check',questions:[
    {q:'When you write list.append(3) or model.predict(X), the dot means:',
@@ -3554,11 +3554,11 @@ readable. You will translate real ML notation into code you already write.</p></
 <p><b><code>f(x)</code></b>, "f of x", is just a machine: put <code>x</code> in, get
 <code>f(x)</code> out (you have been writing these as Python functions). <b>Subscripts</b>
 like <code>x&#8321;, x&#8322;, &#8230;, x&#8345;</code> are just the items of a list -
-<code>x&#8342;</code> is "the i-th x," i.e. <code>x[i]</code> (math counts from 1, Python from
+<code>x&#7522;</code> is "the i-th x," i.e. <code>x[i]</code> (math counts from 1, Python from
 0, the only catch). <code>n</code> almost always means "how many," i.e. <code>len(x)</code>.</p>
 
 <h3>Sigma (&Sigma;): summation: is a for-loop that adds</h3>
-<div class="codeSample">The notation:   &Sigma;&#7522;&#8331;&#8321;&#8319;  x&#7522;      "sum x&#7522; for i from 1 to n"
+<div class="codeSample">The notation:   &Sigma;&#7522;&#8332;&#8321;&#8319;  x&#7522;      "sum x&#7522; for i from 1 to n"
 
 In Python:      total = 0
                 for xi in x:
@@ -3707,7 +3707,7 @@ and functions were the missing vocabulary; now the earlier streams click togethe
 (or flat plane); <i>nonlinear</i> just means "not a straight line", it can bend. The whole
 power of neural networks comes from composing <i>nonlinear</i> functions (like the sigmoid):
 stack only linear ones and you collapse back to a single straight line, no matter how many
-layers.</p></div>`,
+layers.</div>`,
  docs:[['The sigmoid / logistic function','https://en.wikipedia.org/wiki/Logistic_function'],['Function composition (visual intuition)','https://www.mathsisfun.com/sets/functions-composition.html']],
  quiz:{title:'Quick check',questions:[
    {q:'The sigmoid function 1/(1+e^(-x)) is used in ML because it:',
@@ -3949,8 +3949,8 @@ subject is named after.</p>
 
 <h3>The two multiplications: do not confuse them</h3>
 <p>Vectors have <i>two</i> different "multiplications," and mixing them up is the classic bug:</p>
-<div class="codeSample">Element-wise (Hadamard):  [1, 2, 3] * [4, 5, 6] = [3, 10, 18]   # multiply matching entries
-Dot product:              [1, 2, 3] · [4, 5, 6] = 3+10+18 = 31   # ...then ADD → one number</div>
+<div class="codeSample">Element-wise (Hadamard):  [1, 2, 3] * [4, 5, 6] = [4, 10, 18]   # multiply matching entries
+Dot product:              [1, 2, 3] · [4, 5, 6] = 4+10+18 = 32   # ...then ADD → one number</div>
 <p><b>Element-wise</b> multiply keeps a vector (each entry times its partner);
 <b>dot product</b> goes one step further and sums, collapsing to a single number. In NumPy the
 distinction is a single character: <code>a * b</code> is <b>element-wise</b>, while
@@ -4234,9 +4234,9 @@ print(preds, unchanged, first_by_hand)
      {d:'first house by hand is 46, matching preds[0]',expr:'first_by_hand == 46 and preds[0] == 46'}
    ],
    hints:[
-     'The one-shot multiply is X @ w: NumPy lines up each row of X with w.',
-     'np.eye(2) builds the identity; I @ w should print [50. -2.].',
-     'First row dot: 1*50 + 2*(-2) = 50 - 4 = 46. Check it equals preds[0], that is the whole secret of @.'
+     'One prediction is a dot product: sum(row[j] * w[j] for j in range(len(w))). Wrap that in a comprehension over the rows of X.',
+     'The 2\u00d72 identity is a plain list of rows, [[1, 0], [0, 1]]. Apply it to w with the same dot-product line you just wrote.',
+     'Row 1 dotted with w is 1*50 + 2*(-2) = 50 - 4 = 46. Check that it equals preds[0], because that is all a matrix\u2013vector product does: one dot product per row.'
    ]}]},
 
 {id:'latf',
@@ -4599,7 +4599,7 @@ determinant. So "det = 6" literally means <b>this transformation makes every are
 A <b>det of 0</b> means area is crushed to nothing, the square is flattened onto a line, a
 dimension is lost, and (next lesson) that is precisely why the matrix has no inverse. A
 <b>negative</b> determinant means the transformation also <i>flips</i> orientation (a mirror
-image), and its size is still the area factor.</p></div>
+image), and its size is still the area factor.</div>
 
 <h3>Where it is used in the real world (and in ML)</h3>
 <p>Beyond a school exercise, the determinant earns its keep: (1) <b>Can it be reversed?</b>,
@@ -5010,7 +5010,7 @@ you: your columns are secretly redundant, go find the duplicated information.</d
     options:['Its determinant is non-zero, equivalently it has full rank','Every one of its entries is positive, so nothing can cancel out','It is large enough that its rows cannot all be linearly dependent','It is symmetric, so it equals its own transpose'],answer:0,whyWrong:['','Sign has nothing to do with it. Plenty of invertible matrices contain negatives.','Size is the shape. A large matrix can be singular just as easily as a small one.','Symmetric matrices can be singular, and asymmetric ones are often invertible.'],
     why:'One fact, five equivalent tests: det≠0 ⟺ full rank ⟺ independent columns ⟺ unique solution ⟺ no information lost.'},
    {q:'You add "price in euros" to a model that already has "price in dollars" (euros = 1.1 × dollars). The normal equations break because:',
-    options:['Regression cannot be applied to monetary quantities without a transform','The numbers grow large enough that the solver loses precision on them','The two columns are dependent, so XᵀX is singular and has no inverse','Euros are not a supported unit for the feature matrix'],answer:2,whyWrong:['Money is fine. It is the fixed conversion factor between the two columns that breaks it.','Magnitude is not the issue. The same failure occurs with small numbers.','','Euros are just a column of numbers. The currency is not what the maths sees.'],
+    options:['Regression cannot be applied to monetary quantities without a transform','The numbers grow large enough that the solver loses precision on them','The two columns are dependent, so XᵀX is singular and has no inverse','Euros are not a supported unit for the feature matrix'],answer:2,whyWrong:['Money is fine. It is the fixed conversion factor between the two columns that breaks it.','Magnitude is not the issue. The same failure occurs with small numbers.','','Euros are just a column of numbers. The currency is not what the math sees.'],
     why:'Redundant/collinear columns make XᵀX rank-deficient and non-invertible. This is THE classic real-world regression failure.'},
    {q:'How does ridge regression, (XᵀX + λI)⁻¹, help numerically?',
     options:['The λI nudge restores full rank, so the inverse always exists','It has no effect on invertibility, only on the size of the coefficients','It scales the data up, which moves it away from the singular case','It deletes the correlated features before the inverse is attempted'],answer:0,whyWrong:['','It has a decisive effect. It is what guarantees the inverse exists.','Nothing about the data changes. The penalty acts on the matrix being inverted.','Every feature is kept. Their coefficients are shrunk rather than removed.'],
@@ -5385,7 +5385,7 @@ matrix apart into its ranked ingredients: that is the whole thing.</div>`,
     options:['Equal to its number of rows, since every user is represented','0, since one factor cannot span any direction at all','1, since rank counts independent directions rather than size','Equal to its number of columns, since every column is present'],answer:2,whyWrong:['Row count is the shape. A million-row matrix built from one factor still has rank 1.','Rank zero means every entry is zero.','','That would be full rank, meaning every column adds a new direction.'],
     why:'Rank counts how many rank-1 pieces you need. One factor = rank 1, even at Netflix scale.'},
    {q:'SVD is useful in ML because it:',
-    options:['It replaces gradient descent for problems that have a closed form','It works only on square matrices, which is where the theory is cleanest','It rewrites any matrix as importance-ranked rank-1 pieces','It makes matrices larger, so more structure becomes visible in them'],answer:2,whyWrong:['It is a factorisation, not an optimizer. The two solve different problems.','It works on any shape, which is one of its main advantages over eigen-decomposition.','','It is used to make them smaller, by keeping only the leading pieces.'],
+    options:['It replaces gradient descent for problems that have a closed form','It works only on square matrices, which is where the theory is cleanest','It rewrites any matrix as importance-ranked rank-1 pieces','It makes matrices larger, so more structure becomes visible in them'],answer:2,whyWrong:['It is a factorization, not an optimizer. The two solve different problems.','It works on any shape, which is one of its main advantages over eigen-decomposition.','','It is used to make them smaller, by keeping only the leading pieces.'],
     why:'Keep the strongest pieces, drop the weak: recommenders, PCA, denoising, and the low-rank idea behind LoRA.'}
  ]},
  exs:[{title:'Build a rank-1 matrix with the outer product (by hand)',
@@ -6589,7 +6589,7 @@ calculus really has.</div>
     options:[
              'The covariance matrix must be inverted, and eigenvectors make the inverse stable','Eigenvectors of a symmetric matrix happen to be mutually orthogonal',
              'Eigen-decomposition is the numerically cheapest way to factor a covariance matrix',
-             'Maximizing uᵀΣu subject to uᵀu = 1 has exactly that as its stationary condition'],answer:3,whyWrong:['Nothing is inverted in PCA. The covariance matrix is decomposed, not solved.','Orthogonality is a consequence that makes the components independent, and it is not what produces the equation.','There are cheaper factorisations for many purposes. The eigenvectors are what the optimization demands.',''],
+             'Maximizing uᵀΣu subject to uᵀu = 1 has exactly that as its stationary condition'],answer:3,whyWrong:['Nothing is inverted in PCA. The covariance matrix is decomposed, not solved.','Orthogonality is a consequence that makes the components independent, and it is not what produces the equation.','There are cheaper factorizations for many purposes. The eigenvectors are what the optimization demands.',''],
     why:'Differentiate L = uᵀΣu − λ(uᵀu − 1) and the eigenvector equation falls out. Left-multiplying by uᵀ then shows λ is the captured variance.'},
    {q:'Complementary slackness (λ g(x) = 0) says that:',
     options:[
@@ -6652,7 +6652,7 @@ print(lam, sensitivity, area)
      {d:'the multiplier from the equations is 5',expr:'abs(lam - 5) < 1e-6'},
      {d:'the best area at P = 40 is 100',expr:'abs(area - 100) < 1e-6'},
      {d:'the measured sensitivity dA*/dP is about 5',expr:'abs(sensitivity - 5) < 1e-3'},
-     {d:'the multiplier and the sensitivity are the same number, which is the point of the exercise',expr:'abs(lam - sensitivity) < 1e-3'}
+     {d:'the multiplier and the sensitivity are the same number, and that number is 5, which is the point of the exercise',expr:'abs(lam - sensitivity) < 1e-3 and abs(sensitivity - 5) < 1e-3'}
    ],
    hints:[
      'lam = x / 2, and x is already computed for you as P / 4.',
@@ -6785,11 +6785,11 @@ orders of magnitude for a linear scale to show.</p>
 <div class="demystify"><b>Demystify the notation:</b> <code>log</code> and its inverse
 <code>exp</code> (raising e to a power) undo each other, exactly like square and square-root:
 <code>exp(log(x)) = x</code> and <code>log(exp(x)) = x</code>. Whenever a log makes a number
-unrecognizably small or large, <code>exp</code> is the way back.</p></div>
+unrecognizably small or large, <code>exp</code> is the way back.</div>
 
-<div class="notebox"><b>📐 Notation decoder, logs & exponentials</b>:
+<div class="notebox"><b>📐 Notation decoder, logs &amp; exponentials</b>:
 <table>
-<tr><td>logₐ(x)</td><td>"log base b of x", the power you raise b to, to get x</td></tr>
+<tr><td>log_b(x)</td><td>"log base b of x", the power you raise b to, to get x</td></tr>
 <tr><td>ln(x)</td><td>the <b>natural log</b>, base e; in Python this is <code>math.log(x)</code></td></tr>
 <tr><td>log(x)</td><td>in ML, "log" almost always means <b>ln</b> (natural log)</td></tr>
 <tr><td>e</td><td>Euler's number ≈ <b>2.718</b>, the natural base</td></tr>
@@ -6996,7 +6996,7 @@ weapon, and it's how we'll check every formula in this stream.</p></div>
 tomorrow", tomorrow happens once; the 70% describes your confidence, not a repeat count).
 Both are used everywhere in ML; the advanced part of this stream is built on the second.</p>
 
-<div class="notebox"><b>📐 Notation decoder, probability & statistics</b> (met across this
+<div class="notebox"><b>📐 Notation decoder, probability &amp; statistics</b> (met across this
 stream; refer back anytime):
 <table>
 <tr><td>P(A)</td><td>the <b>probability</b> of event A (a number from 0 to 1)</td></tr>
@@ -7256,7 +7256,7 @@ groups of <code>k</code> can I pick from <code>n</code>?", nothing more. Permuta
 arrangements (order matters); combinations count selections (order does not). Mixing them up is
 the classic counting mistake; the tell is the word "arrange/order" (permutation) vs
 "choose/select/group" (combination).</div>`,
- docs:[['Permutations and combinations','https://www.mathsisfun.com/combinatorics/combinations-permutations.html'],['Python math.comb / math.perm','https://docs.python.org/3/library/math.html#math.comb']],
+ docs:[['Permutations and combinations','https://www.mathisfun.com/combinatorics/combinations-permutations.html'],['Python math.comb / math.perm','https://docs.python.org/3/library/math.html#math.comb']],
  quiz:{title:'Quick check',questions:[
    {q:'The fundamental counting principle says that 3 shirts and 4 pants give how many outfits?',
     options:['12, three shirts times four pairs of trousers','1, since you can only wear one outfit at a time','7, adding the two counts together','It depends on which shirts go with which trousers'],answer:0,whyWrong:['','One outfit would mean the choices were fixed rather than free.','Adding counts the garments. Multiplying counts the combinations.','It does not depend on anything here. Every shirt can go with every pair of trousers.'],
@@ -7562,7 +7562,7 @@ the rarity of the disease (the <i>base rate</i>) overwhelms the accuracy of the 
 Because the disease is rare, false positives from the huge healthy crowd swamp the true ones.</p>
 
 <h3>Bayes' rule itself: where it comes from</h3>
-<p>The counting works, but we want the <b>formula</b>, and, crucially, to see it is not
+<p>The counting works, but we want the <b>formula</b>, and we want to see that it is not
 handed down from nowhere. It falls out of the conditional probability you already learned in
 two short steps.</p>
 <p><b>Step 1, conditional probability (from the earlier lesson):</b> the chance of A given B is
@@ -7763,7 +7763,7 @@ probability stream and the ML track are the same subject wearing two outfits.</d
     options:['It is a convention inherited from statistical physics','Logs are computed to higher precision than products are','Taking logs changes the answer to one that generalizes better on new data','Products of thousands of probabilities underflow, and logs give sums'],answer:3,whyWrong:['The reason is numerical, and it applies wherever probabilities are multiplied.','Logs are not more accurate in themselves. They avoid the underflow that destroys accuracy.','The maximizer is identical. The log is monotonic, so it moves nowhere.',''],
     why:'log is order-preserving: same winner, numerically sane. "Negative log likelihood" in ML code is exactly this, flipped to minimize.'},
    {q:'MAP differs from MLE by:',
-    options:['Multiplying in a prior, which is what makes regularisation a prior in disguise','Being defined only for simple models such as a coin flip','Fitting on a different dataset from the one MLE uses','Ignoring the likelihood entirely and using only what you believed before seeing the data'],answer:0,whyWrong:['','It applies to any model. Coins are just the easiest example to write out.','Both use the same data. What differs is what else is brought to it.','MAP keeps the likelihood and multiplies a prior into it.'],
+    options:['Multiplying in a prior, which is what makes regularization a prior in disguise','Being defined only for simple models such as a coin flip','Fitting on a different dataset from the one MLE uses','Ignoring the likelihood entirely and using only what you believed before seeing the data'],answer:0,whyWrong:['','It applies to any model. Coins are just the easiest example to write out.','Both use the same data. What differs is what else is brought to it.','MAP keeps the likelihood and multiplies a prior into it.'],
     why:'MAP = argmax likelihood × prior. L2 regularization = Gaussian prior on weights: the Bayes lesson and the ML track, connected.'}
  ]},
  exs:[{title:'Fit your first model by maximum likelihood',
@@ -8142,7 +8142,7 @@ print(py, cond, cov, gap)
     options:['Conditioning on the most likely value of the other variable','Discarding the least probable outcomes','Summing or integrating the other variable out','Normalizing so the total equals one'],answer:2,whyWrong:['That is conditioning on a value, which keeps the variable rather than removing it.','Nothing is discarded. Every outcome contributes to the sum.','','Normalizing rescales what is there. Marginalizing removes a dimension.'],
     why:'p(x) = Σ_y p(x,y). You remove a variable by summing over everything it could have been.'},
    {q:'Zero covariance between X and Y implies:',
-    options:['The joint distribution factorizes into its two marginals','X and Y must be statistically independent','One of the two has zero variance','No linear relationship, but possibly others'],answer:3,whyWrong:['Factorisation is independence, which is strictly stronger than zero covariance.','A parabola through the origin has zero covariance and total dependence.','Zero variance in one variable does force zero covariance, and it is not the only way to get it.',''],
+    options:['The joint distribution factorizes into its two marginals','X and Y must be statistically independent','One of the two has zero variance','No linear relationship, but possibly others'],answer:3,whyWrong:['Factorization is independence, which is strictly stronger than zero covariance.','A parabola through the origin has zero covariance and total dependence.','Zero variance in one variable does force zero covariance, and it is not the only way to get it.',''],
     why:'Y = X² with X symmetric about zero has zero covariance and total dependence.'},
    {q:'The quantity aᵀΣa represents:',
     options:['The correlation between the first two columns','The determinant of the covariance matrix','The mean of the data along direction a','The variance of the data along direction a'],answer:3,whyWrong:['That is one off-diagonal entry, and it does not involve a at all.','The determinant is a single scalar summarizing the whole matrix, with no direction attached.','The mean along a is aᵀμ, and it is linear rather than quadratic.',''],
@@ -8334,7 +8334,7 @@ print(S, lam_top, var_top, abs(float(top @ u_true)))
     options:['Has the smallest possible magnitude','Is perpendicular to the gradient vector at that point','Points along the first coordinate axis','Points in the same direction as the gradient'],answer:3,whyWrong:['Magnitude scales the whole quantity. The question is about direction, and u is normally taken to be a unit vector.','Perpendicular to the gradient gives exactly zero, which is the flattest direction rather than the steepest.','A coordinate axis is only best when the gradient happens to lie along it.',''],
     why:'∇fᵀu = ‖∇f‖cos θ, maximized at θ = 0. That is why gradient descent steps along −∇E.'},
    {q:'PCA finds eigenvectors of the covariance matrix because:',
-    options:['Maximizing uᵀΣu subject to ‖u‖=1 yields Σu = λu','Eigenvectors are always orthogonal to each other','The covariance matrix is expensive to invert','Eigen-decomposition is numerically the fastest route'],answer:0,whyWrong:['','Orthogonality is a consequence that makes the components independent, and it is not what produces the equation.','Nothing is inverted in PCA. The covariance matrix is decomposed.','There are faster factorisations for other purposes. The eigenvectors are what the constrained optimum demands.'],
+    options:['Maximizing uᵀΣu subject to ‖u‖=1 yields Σu = λu','Eigenvectors are always orthogonal to each other','The covariance matrix is expensive to invert','Eigen-decomposition is numerically the fastest route'],answer:0,whyWrong:['','Orthogonality is a consequence that makes the components independent, and it is not what produces the equation.','Nothing is inverted in PCA. The covariance matrix is decomposed.','There are faster factorizations for other purposes. The eigenvectors are what the constrained optimum demands.'],
     why:'The Lagrange condition for the constrained maximum is exactly the eigenvector equation.'}
  ]}}
 ,
@@ -9792,7 +9792,7 @@ print(np.round(bias2s, 5), np.round(vars_, 5), np.round(totals, 5))
     options:['The bias term of the decomposition','The irreducible noise in the labels','The variance term of the decomposition','The learning rate used during training'],answer:2,whyWrong:['Bias shows up as both errors being high together, not as a gap between them.','Irreducible noise appears in both errors equally and does not show up in the gap.','','The learning rate affects how you got here, and it is not what the gap measures.'],
     why:'Variance is how much the fitted model moves with the training sample, which is exactly what the gap reflects.'},
    {q:'Adding regularization typically:',
-    options:['Reduces variance while raising bias','Reduces both terms simultaneously','Affects only the irreducible error','Reduces bias while raising variance'],answer:0,whyWrong:['','If both fell you would simply have a better model. The trade is that one rises.','Irreducible error is a property of the problem and no model choice can touch it.','That is the trade run backwards. Regularisation constrains the model, which raises bias.'],
+    options:['Reduces variance while raising bias','Reduces both terms simultaneously','Affects only the irreducible error','Reduces bias while raising variance'],answer:0,whyWrong:['','If both fell you would simply have a better model. The trade is that one rises.','Irreducible error is a property of the problem and no model choice can touch it.','That is the trade run backwards. Regularization constrains the model, which raises bias.'],
     why:'It constrains the family, so the average fit moves further from the truth but varies less across samples.'},
    {q:'With a small dataset, the dominant term is usually:',
     options:['Variance, since fits move a lot per sample','Bias, since simple models are forced','Irreducible error, since noise dominates a short sample','All three contribute about equally'],answer:0,whyWrong:['','Simpler models are the response to the problem rather than its cause.','Irreducible error is fixed by the problem and does not grow as the sample shrinks.','They do not. Variance is the term a small sample inflates.'],
@@ -10817,7 +10817,7 @@ best-fit line.</div>
 accident ("regression to the mean"), today it simply means <b>predict a number</b>. And the
 sklearn one-liner <code>LinearRegression().fit(X, y)</code> does exactly the training loop you
 are about to write (via the closed-form normal equations from the linear-algebra stream); the
-from-scratch version is how you <i>understand</i> what that one line does.</p></div>`,
+from-scratch version is how you <i>understand</i> what that one line does.</div>`,
  docs:[['scikit-learn (LinearRegression)','https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html']],
  quiz:{title:'Quick check',questions:[
    {q:'Linear regression finds its weights by:',
@@ -11375,6 +11375,205 @@ print("imbalanced: accuracy", round(acc_imb, 3), "majority baseline", round(majo
     why:'A model that learns nothing scores 90%. Precision, recall and the confusion matrix are informative here.'}
  ]}}
 ,
+
+{id:'mlmetrics',
+ title:'Beyond accuracy: precision, recall, F1, and what each one cannot see',
+ body:`
+<div class="ground"><span class="gTag">🎯 The number everyone reports, and the one most likely to mislead</span>
+<p>The small-data lesson ended with an instruction and no explanation: stop reporting accuracy,
+report precision, recall and the confusion matrix. Here is the explanation. Accuracy is one
+summary of a classifier, it is the crudest one available, and on any problem where one class is
+rarer than the other it can be excellent while the model is useless. Every metric in this lesson
+is built from the same four numbers, and each one is blind to something specific. Knowing what
+each is blind to is the whole skill.</p></div>
+
+<h3>The confusion matrix: four counts, and everything comes from them</h3>
+<p>Fix a threshold, make a prediction for every example, and compare it to the truth. There are
+exactly four possible outcomes, and counting them gives you the <b>confusion matrix</b>:</p>
+<div class="mathblock">                    predicted positive   predicted negative
+actually positive        TP                   FN   (a miss)
+actually negative        FP  (a false alarm)  TN</div>
+<p><b>TP</b> and <b>TN</b> are the two ways to be right. <b>FP</b> is a false alarm: you flagged
+something that was fine. <b>FN</b> is a miss: something real slipped through. Those two mistakes
+are not interchangeable, and almost every argument about which metric to use is really an argument
+about which of them costs more.</p>
+
+<div class="worked">✍️ <b>Worked, a spam filter.</b> 1,000 emails, of which 50 are spam. The
+filter flags 40 emails, and 30 of those really are spam.
+<div class="mathblock">TP = 30      FP = 40 &minus; 30 = 10
+FN = 50 &minus; 30 = 20      TN = 1000 &minus; 50 &minus; 10 = 940
+
+accuracy  = (30 + 940) / 1000 = 0.97
+precision = 30 / (30 + 10)    = 30/40 = 0.75
+recall    = 30 / (30 + 20)    = 30/50 = 0.60</div>
+A 97% accuracy sounds excellent. Now compute the accuracy of a filter that flags nothing at all:
+950/1000 = <b>0.95</b>. Two points of accuracy is the entire contribution of the model, and it is
+letting 20 of the 50 spam emails through. Accuracy hid all of that, because 95% of the answer was
+decided by the majority class before the model said anything.</div>
+
+<h3>Precision and recall, and the exact thing each cannot see</h3>
+<p><b>Precision = TP / (TP + FP)</b>: of the things you flagged, what share were real? It answers
+"can I trust an alert?" It is blind to what you missed: a filter that flags one email
+and gets it right has precision 1.0 and is worthless.</p>
+<p><b>Recall = TP / (TP + FN)</b>, also called sensitivity or the true positive rate: of the
+things that were real, what share did you catch? It answers "am I missing anything?" It is blind
+to false alarms: a filter that flags every email has recall 1.0 and is also worthless.</p>
+<p>Each metric ignores exactly one of the two mistakes, which is why quoting one of them alone is
+the oldest trick in the book. Notice too that neither uses TN at all. In the worked example the
+940 correctly-ignored emails, 94% of the dataset, contribute nothing to either number. That is
+deliberate: on a rare-event problem the true negatives are the part you were never in doubt
+about.</p>
+
+<h3>F1: one number, when you must have one</h3>
+<div class="mathblock">F1 = 2 &middot; (precision &middot; recall) / (precision + recall)</div>
+<p>F1 is the harmonic mean of the two, which is a mean that punishes imbalance: 0.75 and 0.60 give
+F1 = 2(0.45)/1.35 = <b>0.667</b>, but precision 1.0 with recall 0.02 gives F1 = 0.039, not the
+0.51 an ordinary average would report. Score one metric at 1.0 by wrecking the other and F1 does
+not reward you. Its blind spot is that it treats a false alarm and a miss as equally
+expensive, which they almost never are. When they are not, say so with weights (F&beta;) or report
+both numbers and let the reader do the arithmetic.</p>
+
+<h3>The threshold is your decision, not the model's</h3>
+<p>A classifier outputs a probability. The 0.5 cut that turns it into a decision is a convention,
+and moving it walks you along a trade: lower the threshold and recall rises while precision falls,
+because you flag more of everything. The model is unchanged. This is why quoting precision and
+recall without the threshold is meaningless, and why a request for "better recall" is usually
+answered by moving a number rather than by training anything.</p>
+
+<h3>ROC and AUC: the threshold-free summary, and its blind spot</h3>
+<p>Sweep the threshold from high to low, plot the true positive rate against the false positive
+rate <code>FP/(FP+TN)</code>, and you have the <b>ROC curve</b>. The area under it, <b>ROC
+AUC</b>, has an exact reading worth memorizing: it is the probability that a randomly chosen
+positive is scored above a randomly chosen negative. So 0.5 is coin-flipping and 1.0 is a perfect
+ranking, and the number does not depend on any threshold at all.</p>
+<div class="hardidea">🧠 <b>What AUC is blind to: how rare the positives are.</b> The false
+positive rate divides by the number of negatives, so a huge negative class quietly absorbs a huge
+number of false alarms. Take 1,000 negatives and 10 positives. A threshold catching 8 of the 10
+positives at a 5% false positive rate looks superb on a ROC curve. Count the alerts: 8 true and
+0.05 &times; 1000 = 50 false, so precision is 8/58 = <b>0.14</b>. Fifty of the fifty-eight alerts are false,
+and the ROC curve never mentioned it. On heavily imbalanced problems report the
+precision-recall curve and its average precision instead, because both of its axes divide by
+quantities that shrink when you make mistakes.</div>
+
+<div class="demystify">Demystify the vocabulary. Medicine, statistics and machine learning
+each named these independently, so the same four counts arrive under several names.
+<b>Sensitivity = recall = true positive rate</b>. <b>Specificity = TN/(TN+FP)</b>, the recall of
+the negative class. <b>Positive predictive value = precision</b>. <b>Type I error</b> is a false
+positive and <b>Type II error</b> is a false negative. Nothing new is being said; go back to the
+four counts and read off whichever ratio the paper means.</div>
+`,
+ docs:[['scikit-learn: classification metrics','https://scikit-learn.org/stable/modules/model_evaluation.html#classification-metrics']],
+ exs:[{title:'Build every metric from the four counts, then AUC from its definition',
+   lang:'python',
+   packages:['numpy'],
+   prompt:`Twenty emails, six of them spam, already scored by a filter. Build the metrics
+   yourself rather than importing them.
+   <ol>
+   <li>The four counts at threshold 0.5: <code>tp</code>, <code>fp</code>, <code>fn</code>, <code>tn</code>. They should come to 4, 3, 2 and 11.</li>
+   <li><code>precision</code>, <code>recall</code> and <code>f1</code>, from those four counts only.</li>
+   <li>Move the threshold to 0.3 and recompute <code>precision_low</code> and <code>recall_low</code>, to watch the trade move without retraining anything.</li>
+   <li><code>auc</code>, from the definition: over every positive-negative pair, the share in which the positive scores higher. There are 6 &times; 14 = 84 pairs.</li>
+   </ol>`,
+   starter:`import numpy as np
+
+# 20 emails, sorted from most to least suspicious.
+# y is the truth: 1 = spam. p is the model's predicted probability of spam.
+y = np.array([1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0])
+p = np.array([0.95, 0.88, 0.81, 0.74, 0.66, 0.58, 0.52, 0.47, 0.43, 0.39,
+              0.34, 0.30, 0.26, 0.21, 0.17, 0.13, 0.09, 0.06, 0.04, 0.02])
+
+# 1) The four counts at the usual threshold of 0.5.
+pred = (p >= 0.5).astype(int)
+tp =
+fp =
+fn =
+tn =
+
+# 2) The three metrics, built from those four counts alone.
+precision =
+recall =
+f1 =
+
+# 3) The same model at a threshold of 0.3, to see the trade move.
+pred_low = (p >= 0.3).astype(int)
+precision_low =
+recall_low =
+
+# 4) ROC AUC from its definition: over every positive-negative pair,
+#    the share in which the positive scores higher.
+pos = p[y == 1]
+neg = p[y == 0]
+wins = 0.0
+auc = 0.0
+
+print("tp fp fn tn:", tp, fp, fn, tn)
+print("precision", round(precision, 3), "recall", round(recall, 3), "f1", round(f1, 3))
+print("at 0.3: precision", round(precision_low, 3), "recall", round(recall_low, 3))
+print("auc", round(auc, 4))
+`,
+   solution:`import numpy as np
+
+# 20 emails, sorted from most to least suspicious.
+# y is the truth: 1 = spam. p is the model's predicted probability of spam.
+y = np.array([1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0])
+p = np.array([0.95, 0.88, 0.81, 0.74, 0.66, 0.58, 0.52, 0.47, 0.43, 0.39,
+              0.34, 0.30, 0.26, 0.21, 0.17, 0.13, 0.09, 0.06, 0.04, 0.02])
+
+# 1) The four counts at the usual threshold of 0.5.
+pred = (p >= 0.5).astype(int)
+tp = int(((pred == 1) & (y == 1)).sum())
+fp = int(((pred == 1) & (y == 0)).sum())
+fn = int(((pred == 0) & (y == 1)).sum())
+tn = int(((pred == 0) & (y == 0)).sum())
+
+# 2) The three metrics, built from those four counts alone.
+precision = tp / (tp + fp)
+recall = tp / (tp + fn)
+f1 = 2 * precision * recall / (precision + recall)
+
+# 3) The same model at a threshold of 0.3, to see the trade move.
+pred_low = (p >= 0.3).astype(int)
+precision_low = int(((pred_low == 1) & (y == 1)).sum()) / int((pred_low == 1).sum())
+recall_low = int(((pred_low == 1) & (y == 1)).sum()) / int((y == 1).sum())
+
+# 4) ROC AUC from its definition: over every positive-negative pair,
+#    the share in which the positive scores higher.
+pos = p[y == 1]
+neg = p[y == 0]
+wins = float((pos[:, None] > neg[None, :]).sum()) + 0.5 * float((pos[:, None] == neg[None, :]).sum())
+auc = wins / (len(pos) * len(neg))
+
+print("tp fp fn tn:", tp, fp, fn, tn)
+print("precision", round(precision, 3), "recall", round(recall, 3), "f1", round(f1, 3))
+print("at 0.3: precision", round(precision_low, 3), "recall", round(recall_low, 3))
+print("auc", round(auc, 4))
+`,
+   tests:[
+     {d:'the four counts are tp=4, fp=3, fn=2, tn=11, and they add up to all twenty emails',expr:'(tp, fp, fn, tn) == (4, 3, 2, 11) and tp + fp + fn + tn == 20'},
+     {d:'precision is 4/7 and recall is 4/6, so the filter is trusted less often than it is thorough',expr:'abs(precision - 4/7) < 1e-9 and abs(recall - 4/6) < 1e-9'},
+     {d:'F1 is the harmonic mean, 0.6154, which sits below the plain average of the two',expr:'abs(f1 - 2*(4/7)*(4/6)/((4/7)+(4/6))) < 1e-9 and f1 < (precision + recall) / 2'},
+     {d:'dropping the threshold to 0.3 catches every spam email, recall 1.0, and precision falls to 0.5',expr:'abs(recall_low - 1.0) < 1e-9 and abs(precision_low - 0.5) < 1e-9 and recall_low > recall and precision_low < precision'},
+     {d:'the positive scores beat the negative ones in 71 of the 84 pairs, so AUC is 71/84 = 0.845',expr:'abs(wins - 71.0) < 1e-9 and abs(auc - 71/84) < 1e-9'}
+   ],
+   hints:[
+     'A count is a sum over a boolean array: ((pred == 1) & (y == 1)).sum() counts the true positives. The & needs brackets around each comparison.',
+     'precision divides by everything you flagged, tp + fp; recall divides by everything that was real, tp + fn. Reuse those two for f1.',
+     'For the pairs, pos[:, None] > neg[None, :] builds a 6 by 14 grid of comparisons, one per pair. Summing it counts the wins; divide by 6 * 14.'
+   ]}],
+ quiz:{title:'Quick check, classification metrics',questions:[
+   {q:'A model scores 97% accuracy on a dataset where 95% of rows are negative. This tells you:',
+    options:['The model is close to perfect on this task','Almost nothing without the error counts','Recall must be at least 0.97 as well','The classes are close to balanced'],answer:1,
+    whyWrong:['Predicting the majority class every time already scores 95%, so the model contributed two points.','','Accuracy says nothing about recall. All of the errors can be misses of the rare class.','A 95% majority is severe imbalance, and it is what makes accuracy uninformative here.'],
+    why:'Compare against the majority-class baseline first. On a 95/5 split accuracy starts at 0.95 before the model does anything, so the confusion matrix is what carries the information.'},
+   {q:'Precision is 1.0 and recall is 0.02. In plain words, the model:',
+    options:['Flags almost everything, and is right about most of it','Is well calibrated but badly thresholded','Is right whenever it fires, and almost never fires','Has been evaluated on the wrong dataset'],answer:2,
+    whyWrong:['Flagging almost everything gives high recall and low precision, which is the opposite pattern.','Calibration is about whether the probabilities are honest, and neither number here measures it.','','Nothing about the pair of numbers points at the data. It is a description of where the threshold sits.'],
+    why:'Precision only looks at what you flagged; recall only looks at what was real. Perfect precision with recall near zero is a model that fires once, correctly, and misses everything else. F1 = 0.039 reports that honestly.'},
+   {q:'On a dataset with 1,000 negatives and 10 positives, a high ROC AUC can coexist with:',
+    options:['Precision so low that most alerts are false','An accuracy below the majority baseline','A recall of exactly zero at every threshold','A confusion matrix that does not sum to n'],answer:0,
+    whyWrong:['','Accuracy below the baseline would need the ranking to be worse than chance, which a high AUC rules out.','Zero recall at every threshold would mean no positive is ever ranked first, which is an AUC near zero.','The four counts always sum to the number of rows. That is arithmetic, not a property of the model.'],
+    why:'The false positive rate divides by 1,000 negatives, so 5% of them is 50 false alarms against 8 true ones: precision 0.14. Use a precision-recall curve when positives are rare.'}
+ ]}},
 
 {id:'mlzoo',
  title:'The classifier zoo: six ways to draw a boundary',
@@ -12320,10 +12519,380 @@ print("sum of squared coefficients:", round(plain_size, 1), "vs", round(ridge_si
    {q:'Gradient-boosted trees cannot extrapolate because:',
     options:['Their loss is only defined over the training range','They overfit before reaching the boundary','Each leaf returns a constant learned from data','Boosting stops once residuals are small'],answer:2,whyWrong:['The loss is defined anywhere. It is the prediction that cannot leave the range of the leaf values.','Overfitting is a separate risk. Even a perfectly fitted ensemble is flat beyond the data.','','Boosting stops when you tell it to, and small residuals inside the data range say nothing about outside it.'],
     why:'The surface is piecewise constant. Outside the training range you get the nearest leaf’s value, unchanged forever.'}
+ ]}},
+
+{id:'mlprep',
+ title:'Feature scaling and encoding, and the leak that hides inside them',
+ body:`
+<div class="ground"><span class="gTag">🎯 The step before the model, which decides how well the model can do</span>
+<p>Three lessons so far have told you to scale your features and moved on: the classifier zoo
+said distance-based methods fail silently without it, the clustering lesson said an unscaled
+distance is mostly the biggest column, and the regression lesson said a penalty on unscaled
+coefficients penalizes your choice of units. This lesson is the one that says what scaling
+actually is, which models need it, how to encode a column that is not a number, and the rule that
+keeps all of it honest.</p></div>
+
+<h3>Why scale at all</h3>
+<p>Put income in dollars next to age in years. Income runs to five figures and age to two, so any
+squared distance between two people is essentially the income difference with a rounding error
+attached. Nothing about the data said income matters five hundred times more. The units did.</p>
+<p>Three families of model are affected, for three different reasons. <b>Distance-based</b>
+methods (k-NN, k-means, SVMs with an RBF kernel) compare features through a norm, so the biggest
+column wins. <b>Gradient-based</b> methods take one learning rate for every weight, and a
+feature a thousand times larger produces gradients a thousand times larger, so no single rate
+can be right for both. <b>Penalized</b> models (ridge, lasso)
+sum coefficients, and a coefficient's size depends on its feature's units. <b>Trees are the
+exception</b>: a split asks "is this feature above a threshold?", and rescaling the feature
+rescales the threshold with it, so the tree is unchanged. That is one of the reasons
+gradient boosting is so easy to run on messy tabular data.</p>
+
+<h3>The three scalers, on the same column</h3>
+<div class="worked">✍️ <b>Worked, one column with one outlier.</b> Take
+<code>[10, 20, 30, 40, 100]</code>. Its mean is 40 and its standard deviation is
+&radic;1000 = 31.62; its median is 30 and its interquartile range is 40 &minus; 20 = 20.
+<div class="mathblock">standard (z-score)  (x &minus; 40)/31.62   &rarr;  [-0.949, -0.632, -0.316, 0.000, 1.897]
+min-max             (x &minus; 10)/90      &rarr;  [ 0.000,  0.111,  0.222, 0.333, 1.000]
+robust              (x &minus; 30)/20      &rarr;  [-1.000, -0.500,  0.000, 0.500, 3.500]</div>
+Read the three rows. Min-max forces everything into [0, 1], which sounds tidy and here crushes the
+four ordinary values into the bottom third while the outlier takes the whole top. Standardization
+gives mean 0 and spread 1 and leaves the outlier visible at 1.9. Robust scaling divides by the
+IQR, which the outlier barely moves, so the four ordinary values keep their spacing and the
+outlier is reported honestly at 3.5. The choice is not cosmetic: it decides how much of the
+model's attention one weird row gets.</div>
+<p>The defaults worth remembering: <b>standardization</b> unless you have a reason,
+<b>min-max</b> when a bounded range is required (image pixels, some neural network inputs),
+<b>robust</b> when the column has outliers you do not want to delete. And when a column is skewed
+over orders of magnitude, income again, take a log first: the logarithms stream showed that a log
+turns a multiplicative spread into an additive one, which is exactly what these scalers assume.</p>
+
+<h3>Columns that are not numbers</h3>
+<p><b>One-hot encoding</b> turns a category into one 0/1 column per value: red, green, blue
+becomes three columns with a single 1 in each row. Use it whenever the categories have no
+order. <b>Ordinal encoding</b> maps them to 0, 1, 2 instead, and is correct only when they really
+are ordered (small, medium, large), because the model will happily conclude that medium is halfway
+between small and large. Coding unordered categories as integers is the same quiet mistake the
+paradigms lesson flagged with the three doctors.</p>
+<p>One-hot has a trap the linear algebra stream already explained. Encode <code>k</code>
+categories as <code>k</code> columns and include an intercept, and those columns sum to the
+all-ones column: perfectly collinear, XᵀX singular, no unique solution. That is the
+<b>dummy variable trap</b>, and the fix is to drop one category and let it be absorbed into the
+intercept. Regularized models and trees do not care; a plain normal-equations solve does.</p>
+<p><b>Missing values</b> need a decision too. Dropping rows is fine when few and biased when
+many. Imputing with the column mean or median is the usual default. Whatever you choose, add a
+<code>was_missing</code> indicator column, because the fact that a value was absent is often
+itself informative, and imputing without it throws that signal away.</p>
+
+<h3>The rule that keeps all of it honest</h3>
+<p>Every one of these steps <i>learns</i> something from data: a mean, a standard deviation, a
+min and max, a median, a set of categories. Learn it from the training rows only, then
+apply it unchanged to validation and test. Fit the scaler on everything and your test rows have
+contributed their mean to the numbers your model trained on, which is <b>data leakage</b>: the
+score goes up, the deployed model does not.</p>
+<div class="hardidea">🧠 <b>How large is the leak, and why it survives review.</b> It is usually
+small enough to look like a good day. A model scoring 0.86 honestly might score 0.88 with a leaked
+scaler, which is exactly the size of improvement a team celebrates and ships. Nothing crashes,
+no warning is printed, and the gap only appears in production, where there is no test set to
+borrow statistics from. This is why the tool exists: put every learned step in a
+<code>Pipeline</code> and hand the pipeline to cross-validation, so the fitting happens inside
+each fold by construction rather than by your remembering.</div>
+
+<div class="demystify">Demystify "normalize" versus "standardize". The words are used
+inconsistently across fields and libraries, which is why they cause so much confusion.
+<b>Standardize</b> almost always means the z-score, subtract the mean and divide by the standard
+deviation. <b>Normalize</b> sometimes means min-max to [0, 1] and sometimes means scaling each
+<i>row</i> to unit length, which is a different operation on a different axis. When you read
+either word, check which formula is meant rather than which name was used.</div>
+`,
+ docs:[['scikit-learn: preprocessing data','https://scikit-learn.org/stable/modules/preprocessing.html']],
+ exs:[{title:'Scale the right way, then measure the leak',
+   lang:'python',
+   packages:['numpy'],
+   prompt:`One feature, eight training rows and three test rows, one of which is an outlier.
+   <ol>
+   <li>Standardize using the <b>training</b> mean and standard deviation only: <code>mu</code>, <code>sd</code>, <code>z_train</code>, <code>z_test</code>. The training column should end up with mean 0 and spread 1.</li>
+   <li><code>mm_test</code>, the test rows under min-max fitted on the training range. Notice the outlier lands outside [0, 1], which is what min-max does to anything it did not see.</li>
+   <li>Now do it wrong: fit the mean and standard deviation on train and test together, and record <code>leak_shift</code>, the largest amount any training row moves as a result.</li>
+   <li><code>same_split</code>, checking that a threshold rule at 45 puts the training rows in exactly the same two groups before and after scaling, which is why trees do not need any of this.</li>
+   </ol>`,
+   starter:`import numpy as np
+
+train = np.array([10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0])
+test = np.array([25.0, 55.0, 500.0])
+
+# 1) Standardize with the TRAINING statistics only.
+mu =
+sd =
+z_train =
+z_test =
+
+# 2) Min-max on the training range. Where does the outlier land?
+lo, hi = float(train.min()), float(train.max())
+mm_test =
+
+# 3) The leak: fit the same two statistics on train and test together.
+both = np.concatenate([train, test])
+mu_leak, sd_leak = float(both.mean()), float(both.std())
+z_train_leak = (train - mu_leak) / sd_leak
+leak_shift =
+
+# 4) A threshold rule is unchanged by scaling, which is why trees do not care.
+def stump(x, thr):
+    return (x > thr).astype(int)
+
+same_split = False
+
+print("mu", round(mu, 3), "sd", round(sd, 3))
+print("z_test", np.round(z_test, 3))
+print("mm_test", np.round(mm_test, 3))
+print("leaked mean", round(mu_leak, 3), "worst shift", round(leak_shift, 3))
+print("same split after scaling:", same_split)
+`,
+   solution:`import numpy as np
+
+train = np.array([10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0])
+test = np.array([25.0, 55.0, 500.0])
+
+# 1) Standardize with the TRAINING statistics only.
+mu = float(train.mean())
+sd = float(train.std())
+z_train = (train - mu) / sd
+z_test = (test - mu) / sd
+
+# 2) Min-max on the training range. Where does the outlier land?
+lo, hi = float(train.min()), float(train.max())
+mm_test = (test - lo) / (hi - lo)
+
+# 3) The leak: fit the same two statistics on train and test together.
+both = np.concatenate([train, test])
+mu_leak, sd_leak = float(both.mean()), float(both.std())
+z_train_leak = (train - mu_leak) / sd_leak
+leak_shift = float(np.abs(z_train_leak - z_train).max())
+
+# 4) A threshold rule is unchanged by scaling, which is why trees do not care.
+def stump(x, thr):
+    return (x > thr).astype(int)
+
+same_split = bool(np.array_equal(stump(train, 45.0), stump(z_train, (45.0 - mu) / sd)))
+
+print("mu", round(mu, 3), "sd", round(sd, 3))
+print("z_test", np.round(z_test, 3))
+print("mm_test", np.round(mm_test, 3))
+print("leaked mean", round(mu_leak, 3), "worst shift", round(leak_shift, 3))
+print("same split after scaling:", same_split)
+`,
+   tests:[
+     {d:'the training statistics are the training ones: mean 45, standard deviation 22.913',expr:'abs(mu - 45.0) < 1e-9 and abs(sd - 22.9128784748) < 1e-6'},
+     {d:'the standardized training column has mean 0 and spread 1, which is the whole point of the z-score',expr:'abs(float(z_train.mean())) < 1e-12 and abs(float(z_train.std()) - 1.0) < 1e-12'},
+     {d:'the test rows are scaled with the training numbers, so the outlier shows up at about 19.9 standard deviations',expr:'abs(float(z_test[0]) + 0.8729) < 1e-3 and float(z_test[2]) > 19.0'},
+     {d:'min-max sends the outlier to 7.0, far outside [0, 1], because it was never in the training range',expr:'abs(float(mm_test[2]) - 7.0) < 1e-9 and 0.0 <= float(mm_test[0]) <= 1.0'},
+     {d:'fitting the scaler on train and test together moves every training row, by up to 1.57 standard deviations here',expr:'leak_shift > 1.5 and abs(mu_leak - 940/11) < 1e-9'},
+     {d:'the threshold rule splits the rows identically before and after scaling, so a tree is untouched by it',expr:'same_split is True'}
+   ],
+   hints:[
+     'mu and sd come from train alone. Then z_train = (train - mu) / sd and z_test uses the same two numbers, not the test ones.',
+     'leak_shift is the largest absolute difference between z_train_leak and z_train: np.abs(a - b).max().',
+     'For same_split, compare stump(train, 45.0) with stump(z_train, (45.0 - mu) / sd) using np.array_equal. The threshold moves with the data, so the grouping does not.'
+   ]}],
+ quiz:{title:'Quick check, preprocessing',questions:[
+   {q:'Which model is essentially unaffected by rescaling a feature?',
+    options:['k-nearest neighbors','A decision tree','Ridge regression','An RBF-kernel SVM'],answer:1,
+    whyWrong:['Its distances are dominated by whichever column has the largest units.','','The penalty sums coefficients, whose sizes depend on the units of their features.','The kernel is a function of distance, so the largest column dominates it too.'],
+    why:'A split asks whether a feature exceeds a threshold. Rescale the feature and the threshold rescales with it, so the same rows fall on the same side.'},
+   {q:'You fit a StandardScaler on the whole dataset, then cross-validate. The result is:',
+    options:['Correct, since scaling uses no labels','Slower to run, though the reported score is unchanged','Optimistic, because held-out rows shaped the scaler','An error raised by the pipeline'],answer:2,
+    whyWrong:['Leakage does not require labels. A mean computed from the held-out rows is still information from them.','Runtime is not what changed. The estimate is what changed.','','Nothing is raised. That silence is exactly why the mistake survives review.'],
+    why:'Every learned step, including a mean and a standard deviation, belongs inside the fold. Put it in a Pipeline and cross-validate the pipeline, so the fitting happens per fold by construction.'},
+   {q:'A column holds the categories red, green and blue. Encoding them as 0, 1, 2 tells the model:',
+    options:['That green sits between red and blue','That there are exactly three of them','Nothing at all, since the numbers are arbitrary','That the column should be dropped'],answer:0,
+    whyWrong:['','The count is visible either way, and it is not what the encoding asserts.','The numbers are anything but ignored. A linear model reads them as a scale.','Nothing suggests dropping it. One-hot encoding keeps the information without inventing an order.'],
+    why:'Ordinal codes assert an order and a spacing. For unordered categories use one-hot, and drop one column if you are also fitting an intercept, to avoid the dummy variable trap.'}
+ ]}},
+
+{id:'mltune',
+ title:'Hyperparameter search: grid, random, and the score you are not allowed to trust',
+ body:`
+<div class="ground"><span class="gTag">🎯 The knobs training does not turn</span>
+<p>Every model in this stream has two kinds of number. The <b>parameters</b> are what fitting
+finds: the coefficients of a regression, the thresholds in a tree. The <b>hyperparameters</b> are
+what you chose before fitting started: <code>k</code> in k-NN, the depth of a tree, ridge's
+<code>&lambda;</code>, the learning rate, the number of components in a mixture. Training cannot
+touch them, because they are the settings training runs under. The scikit-learn lesson gave you
+the tell: fitted parameters get a trailing underscore, <code>coef_</code>; hyperparameters are the
+plain arguments you passed to the constructor. Choosing them is a search, and this lesson is
+about running that search without lying to yourself about the result.</p></div>
+
+<h3>Grid search, and the arithmetic that stops it</h3>
+<p>List the values you want to try for each hyperparameter, try every combination, keep the best.
+It is exhaustive within the grid and completely predictable, which is its appeal. The cost is a
+product, not a sum:</p>
+<div class="mathblock">fits = (values per hyperparameter, multiplied together) &times; folds
+
+4 depths &times; 5 learning rates &times; 3 subsample rates = 60 configurations
+60 &times; 5-fold cross-validation                          = 300 fits
+300 fits &times; 20 seconds each                            = 100 minutes</div>
+<p>Add one more hyperparameter with three values and it is five hours. That multiplication is why
+grid search stops being usable at about three hyperparameters, and it is the whole reason the
+alternatives exist.</p>
+
+<h3>Why random search usually beats it on the same budget</h3>
+<p>Here is the observation that changed common practice, from Bergstra and Bengio in 2012. In
+almost every real problem, a couple of hyperparameters matter a great deal and the rest barely
+matter at all. You do not know in advance which ones.</p>
+<div class="worked">✍️ <b>Worked, 25 fits spent two ways.</b> Two hyperparameters, one that
+matters and one that does not. A 5 &times; 5 grid spends 25 fits and tries exactly <b>5 distinct
+values</b> of each axis, because every value is repeated five times as the other axis moves.
+Twenty-five independent random draws spend the same 25 fits and try <b>25 distinct values</b> of
+each axis. On the axis that matters, random search sampled five times as finely for the same
+money. The exercise runs both and compares the best score each finds.</div>
+<p>The same point in one line of probability. Suppose the top 5% of the important axis is where
+you need to land. Each independent draw misses it with probability 0.95, so
+<code>n</code> draws all miss with probability 0.95<sup>n</sup>:</p>
+<div class="mathblock">P(at least one of 60 draws lands in the best 5%) = 1 &minus; 0.95&#8310;&#8304; = 1 &minus; 0.046 = 0.954</div>
+<p>Sixty random configurations give you better than a 95% chance of finding the best 5% of
+<i>every</i> hyperparameter you sampled, however many there are, because the argument does not
+mention the dimension. A grid gets exponentially worse as dimensions are added; random search does
+not notice them.</p>
+
+<h3>Sample on the scale the hyperparameter lives on</h3>
+<p>A learning rate is not uniform over [0.00001, 0.1]. Draw uniformly from that range and 99.9% of
+your draws land above 0.0001, so you have searched one decade and ignored three. Rates,
+regularization strengths and anything else spanning orders of magnitude should be sampled
+<b>log-uniformly</b>: draw the exponent uniformly and raise 10 to it, which puts equal effort in
+every decade. This is the logarithms stream cashing out as a practical decision, and it is the
+single most common mistake in a first search.</p>
+<p>Two refinements worth naming. <b>Successive halving</b> (and Hyperband, which wraps it) starts
+many configurations with a small budget, throws away the worst half, and doubles the budget of the
+survivors, so most of the compute goes to candidates that already look good. <b>Bayesian
+optimization</b> fits a cheap model of "score as a function of hyperparameters", usually a
+Gaussian process from the probability stream, and picks the next point to try by balancing a high
+predicted score against high uncertainty. That is a trade between exploring where you are
+uncertain and exploiting where you already score well, and the reinforcement learning stream
+later gives it a lesson of its own.</p>
+
+<div class="hardidea">🧠 <b>The best cross-validation score is biased upward, and by a knowable
+amount.</b> You evaluated 200 configurations, each with noise in its estimate, and then reported
+the maximum. The maximum of many noisy numbers sits above the truth in expectation, and the more
+configurations you try the further above it sits. The same overestimation turns up later in the
+reinforcement learning stream, where Q-learning takes a max over noisy value estimates. The consequence is concrete: the winning
+configuration's cross-validation score is not an estimate of how it will perform, it is an
+estimate plus a selection bonus. Two fixes, both standard. Keep a final test set that no search
+ever touched and report its score once. Or use <b>nested cross-validation</b>, an inner loop that
+selects and an outer loop that scores, so the selection happens inside the thing being
+measured.</div>
+
+<div class="demystify">Demystify "tuning". It sounds like an adjustment to a trained model.
+It is not: every configuration is a <i>separate model, trained from scratch</i>. A search over
+200 configurations with 5-fold cross-validation trains a thousand models and keeps the settings of
+one. That is why the cost is measured in fits, why early stopping and successive halving matter so
+much, and why "we tuned it" is a claim about compute rather than about cleverness.</div>
+`,
+ docs:[['scikit-learn: tuning the hyper-parameters of an estimator','https://scikit-learn.org/stable/modules/grid_search.html']],
+ exs:[{title:'Spend the same budget two ways, and price the search',
+   lang:'python',
+   packages:['numpy'],
+   prompt:`A scoring function that depends sharply on <code>a</code> and barely on <code>b</code>,
+   standing in for the usual situation where one hyperparameter matters and one does not.
+   <ol>
+   <li>Build the 5 &times; 5 grid over <code>axis</code>: <code>grid_fits</code> (25), <code>grid_distinct_a</code>, how many distinct values of <code>a</code> it actually tried, and <code>grid_best</code>, the best score it found.</li>
+   <li>Draw the same number of random configurations and record <code>rand_distinct_a</code> and <code>rand_best</code>.</li>
+   <li><code>hit_prob</code>, the probability that at least one of 60 independent draws lands in the best 5% of an axis.</li>
+   <li><code>share_below</code>, the fraction of log-uniform draws over 10<sup>&minus;5</sup> to 10<sup>&minus;1</sup> that fall below 10<sup>&minus;3</sup>. Half of them should, because that is half the decades.</li>
+   </ol>`,
+   starter:`import numpy as np
+
+# A score that depends strongly on one hyperparameter and barely on the other.
+def score(a, b):
+    return float(np.exp(-((a - 0.37) ** 2) / 0.01) + 0.05 * b)
+
+# 1) Grid search: 5 values per axis.
+axis = np.linspace(0.0, 1.0, 5)
+grid = [(a, b) for a in axis for b in axis]
+grid_fits = len(grid)
+grid_distinct_a = 0
+grid_best = 0.0
+
+# 2) Random search: the same number of fits, drawn independently.
+rng = np.random.default_rng(0)
+rand = [(float(rng.random()), float(rng.random())) for _ in range(grid_fits)]
+rand_distinct_a = 0
+rand_best = 0.0
+
+# 3) The chance that at least one of 60 independent draws lands in the best 5% of an axis.
+n = 60
+hit_prob = 0.0
+
+# 4) Log-uniform sampling, so every decade gets equal effort.
+lr = 10.0 ** rng.uniform(-5, -1, size=20000)
+share_below = 0.0
+
+print("grid:  ", grid_fits, "fits,", grid_distinct_a, "distinct a, best", round(grid_best, 4))
+print("random:", grid_fits, "fits,", rand_distinct_a, "distinct a, best", round(rand_best, 4))
+print("P(one of 60 draws in the top 5%):", round(hit_prob, 4))
+print("share of log-uniform draws below 1e-3:", round(share_below, 3))
+`,
+   solution:`import numpy as np
+
+# A score that depends strongly on one hyperparameter and barely on the other.
+def score(a, b):
+    return float(np.exp(-((a - 0.37) ** 2) / 0.01) + 0.05 * b)
+
+# 1) Grid search: 5 values per axis.
+axis = np.linspace(0.0, 1.0, 5)
+grid = [(a, b) for a in axis for b in axis]
+grid_fits = len(grid)
+grid_distinct_a = len(set(round(a, 12) for a, _ in grid))
+grid_best = max(score(a, b) for a, b in grid)
+
+# 2) Random search: the same number of fits, drawn independently.
+rng = np.random.default_rng(0)
+rand = [(float(rng.random()), float(rng.random())) for _ in range(grid_fits)]
+rand_distinct_a = len(set(round(a, 12) for a, _ in rand))
+rand_best = max(score(a, b) for a, b in rand)
+
+# 3) The chance that at least one of 60 independent draws lands in the best 5% of an axis.
+n = 60
+hit_prob = 1.0 - 0.95 ** n
+
+# 4) Log-uniform sampling, so every decade gets equal effort.
+lr = 10.0 ** rng.uniform(-5, -1, size=20000)
+share_below = float((lr < 1e-3).mean())
+
+print("grid:  ", grid_fits, "fits,", grid_distinct_a, "distinct a, best", round(grid_best, 4))
+print("random:", grid_fits, "fits,", rand_distinct_a, "distinct a, best", round(rand_best, 4))
+print("P(one of 60 draws in the top 5%):", round(hit_prob, 4))
+print("share of log-uniform draws below 1e-3:", round(share_below, 3))
+`,
+   tests:[
+     {d:'the 5 by 5 grid costs 25 fits and tries only 5 distinct values of the axis that matters',expr:'grid_fits == 25 and grid_distinct_a == 5'},
+     {d:'25 random draws cost the same 25 fits and try 25 distinct values of that axis',expr:'rand_distinct_a == 25'},
+     {d:'the grid never gets near the peak, topping out at 0.287, because 0.37 is not on it',expr:'abs(grid_best - 0.2869) < 1e-3'},
+     {d:'random search finds a far better configuration for the identical budget',expr:'rand_best > grid_best + 0.3'},
+     {d:'sixty independent draws reach the best 5% of an axis with probability 0.954, whatever the dimension',expr:'abs(hit_prob - (1 - 0.95 ** 60)) < 1e-12 and abs(hit_prob - 0.9539) < 1e-3'},
+     {d:'log-uniform sampling puts about half the draws below 1e-3, since that is two of the four decades',expr:'0.47 < share_below < 0.53'}
+   ],
+   hints:[
+     'Count distinct values with a set: len(set(round(a, 12) for a, _ in grid)). The rounding just keeps floating point from splitting one value into two.',
+     'grid_best and rand_best are both max(score(a, b) for a, b in ...) over the respective lists.',
+     'The 60 draws all miss with probability 0.95 ** 60, so hit_prob is one minus that. For the last part, (lr < 1e-3).mean() is the share of a boolean array that is True.'
+   ]}],
+ quiz:{title:'Quick check, hyperparameter search',questions:[
+   {q:'Which of these is a hyperparameter rather than a parameter?',
+    options:['A regression coefficient','A split threshold inside a tree','A cluster center found by k-means','The depth limit of a tree'],answer:3,
+    whyWrong:['That is fitted from the data, and scikit-learn writes it coef_ with a trailing underscore.','Thresholds are chosen by the fitting procedure, one per node, from the data.','Centers are what k-means computes. The k it computes them for is the hyperparameter.',''],
+    why:'Hyperparameters are the settings training runs under; parameters are what training finds. The trailing underscore in scikit-learn marks the second kind.'},
+   {q:'Random search usually beats grid search on the same budget because:',
+    options:['It is guaranteed to converge on the global optimum','Its draws are cheaper to evaluate','It tries more distinct values per axis','It needs no cross-validation'],answer:2,
+    whyWrong:['It has no convergence guarantee at all. It samples, it does not optimize.','Each fit costs exactly the same. The budget is the same in both.','','Both need cross-validation, and for the same reason: a single split is too noisy to choose on.'],
+    why:'A 5 by 5 grid spends 25 fits on 5 distinct values per axis. 25 random draws spend the same 25 fits on 25 distinct values per axis, which matters on whichever axis turns out to be the important one.'},
+   {q:'You search 200 configurations and report the best cross-validation score. That number is:',
+    options:['Unbiased, since cross-validation is unbiased','An estimate plus a selection bonus','Too low, because folds train on less data','Meaningless unless the folds were stratified'],answer:1,
+    whyWrong:['Each individual estimate is roughly unbiased. The maximum of 200 of them is not.','','Training on k-1 folds is a small pessimism, and it is swamped by the optimism of taking a maximum.','Stratification matters with imbalanced classes and is a separate issue from selection bias.'],
+    why:'The maximum of many noisy estimates sits above the truth, the same overestimation a max over noisy estimates always produces. Report an untouched test set once, or use nested cross-validation.'}
  ]}}
+
 ]});
 
-STREAMS.push({icon:'🧠',track:'ML & AI Track',title:'Neural Networks: from the perceptron to the transformer',blurb:'Every idea behind modern neural networks, in the order it was invented and in plain English first. One neuron, then many, then how they learn, then convolution, attention, and what these things still cannot do.',lessons:[
+STREAMS.push({icon:'🧠',track:'ML & AI Track',title:'Neural Networks: from the perceptron to the transformer',requires:'mlreg',requiresName:'Classic Machine Learning: Your First Models',blurb:'Every idea behind modern neural networks, in the order it was invented and in plain English first. One neuron, then many, then how they learn, then convolution, attention, and what these things still cannot do.',lessons:[
 
 {id:'nn0',
  title:'What a neuron actually is, and why the brain metaphor misleads you',
@@ -12483,7 +13052,7 @@ print(a, a_aug, per_sqft, a_zero, a_older)
     options:['The order in which the inputs arrive at the network','The programming language it runs in','The values stored in its weights and biases','The number of inputs it accepts'],answer:2,whyWrong:['Input order is a property of your data pipeline. Training never touches it.','The language is a choice you made before training, and nothing about it changes.','','The input count is fixed by the architecture. Changing it would mean a different network.'],
     why:'The structure stays fixed. Training searches for good numbers to put in the weights and biases.'},
    {q:'The bias term exists so that:',
-    options:['Errors are spread evenly across inputs','The network runs faster on a GPU','Weights are kept small enough for training to stay stable','The output can be nonzero when all inputs are zero'],answer:3,whyWrong:['Nothing spreads error evenly. The bias is one more learned parameter, not an error-handling device.','The bias adds one number per neuron and has no bearing on hardware speed.','That is regularisation, which is a separate mechanism entirely.',''],
+    options:['Errors are spread evenly across inputs','The network runs faster on a GPU','Weights are kept small enough for training to stay stable','The output can be nonzero when all inputs are zero'],answer:3,whyWrong:['Nothing spreads error evenly. The bias is one more learned parameter, not an error-handling device.','The bias adds one number per neuron and has no bearing on hardware speed.','That is regularization, which is a separate mechanism entirely.',''],
     why:'Without a bias the model is forced through the origin, which is rarely where the truth sits.'}
  ]}},
 
@@ -13858,6 +14427,240 @@ print(acc_train_reg, acc_test_reg, gap_reg)
  ]}}
 ,
 
+{id:'nndebug',
+ title:'When the network will not learn: an order to check things in',
+ body:`
+<div class="ground"><span class="gTag">🎯 The loss is flat, and you have no idea why</span>
+<p>You have the whole machine now: a forward pass, backpropagation, gradient descent, activation
+functions, and the tricks that stop overfitting. What nobody writes down is what to do when you
+assemble all of it and the loss sits there. The failure is almost never exotic, and it is almost
+never in the mathematics. This lesson is an order to check things in, cheapest and most
+informative first, and every item on it is something you have already met in this stream.</p></div>
+
+<h3>1. Is the loss at step zero the number it has to be?</h3>
+<p>Before any training, a classifier that has learned nothing should spread its probability evenly
+over the classes. Substitute that into cross-entropy from the probability stream and the starting
+loss is forced:</p>
+<div class="mathblock">uniform over K classes  &rarr;  loss = &minus;log(1/K) = log K
+
+K = 2   &rarr;  log 2  = 0.693
+K = 10  &rarr;  log 10 = 2.303
+K = 1000 &rarr; log 1000 = 6.908</div>
+<p>This is a free assertion that catches an enormous number of bugs in one line. If a ten-class
+model starts at 2.3, the labels line up with the inputs, the output layer has the right width and
+the loss is being applied to the right thing. If it starts at 7, something is wrong before
+training even begins: usually the labels are shifted or shuffled, the final layer has the wrong
+number of outputs, or a softmax is being applied twice. No amount of tuning fixes any of those,
+and no amount of training will tell you which one it is.</p>
+
+<h3>2. Can it overfit eight examples?</h3>
+<p>Take a single tiny batch, turn off every regularizer, and train on that batch alone for a few
+hundred steps. A correctly wired network <b>must</b> drive the loss to nearly zero, because it is
+allowed to memorize, and the overfitting lesson established that memorizing is the easy thing for
+a network to do. If it cannot memorize eight examples, no dataset is going to work.</p>
+<p>This is the single most informative test in this lesson, because of how cleanly it splits the
+problem. Loss goes to zero on one batch but not on the full set: the wiring is fine and you have
+an optimization or a capacity or a data problem. Loss will not go to zero even on one batch: the
+wiring is broken, and there is no point looking at the dataset at all.</p>
+
+<h3>3. The learning rate, which is the usual answer</h3>
+<p>The gradient-descent lesson said it plainly and it is worth repeating here as a diagnosis. Loss
+that climbs, oscillates violently, or turns to NaN within a few dozen steps means the rate is too
+large: you are stepping past the valley and landing higher up the far side. Loss that falls
+smoothly and far too slowly means it is too small. Sweep it by factors of ten, from
+10<sup>&minus;1</sup> down to 10<sup>&minus;5</sup>, and take the largest one that does not
+misbehave. Ten minutes of sweeping regularly beats a day of architecture changes.</p>
+
+<h3>4. The inputs, and the activations after them</h3>
+<p>Unscaled inputs are the quiet version of a learning rate that is too large. A feature in the
+thousands produces gradients in the thousands for the weights it touches, while a feature in the
+tenths produces tiny ones, and one learning rate has to serve both. The preprocessing lesson
+covers the fix; the symptom here is a run that either diverges or stalls at a loss well above what
+the same setup reaches on standardized inputs. The exercise measures exactly that gap.</p>
+<p>Then look at what the activations do, because the activation lesson already told you both
+failure modes. <b>Dead ReLUs</b>: if a large share of a layer's outputs are exactly zero for every
+example in the batch, those units have no slope and will never come back. Lower the learning rate
+that killed them, or use a leaky variant. <b>Saturated sigmoids or tanh</b>: if the pre-activations
+sit far from zero, the derivative is near zero, and the vanishing-gradient arithmetic applies from
+the very first layer rather than after ten of them.</p>
+
+<h3>5. Check the data last, and check it properly</h3>
+<p>Print the actual inputs and labels the model receives, after every transformation, and look at
+them. Shuffling the inputs without shuffling the labels alongside them produces a model that
+learns nothing and reports no error. A label column read as a string, or off by one, does the
+same. This check is last only because it is the tedious one; it is first in how often it turns out
+to be the answer.</p>
+
+<div class="hardidea">🧠 <b>The one test that tells you whether learning is possible at all.</b>
+Train the identical setup on <i>shuffled labels</i>. A network with enough capacity will still
+drive the training loss to near zero, because it can memorize noise, and its validation
+performance will sit exactly at chance. Now compare: if your real labels do not train
+appreciably better than random ones, the model is not failing to learn, it is learning that there
+is nothing in your features to learn. That is a data problem wearing a modeling problem's
+clothes, and no architecture change will touch it.</div>
+
+<div class="demystify">Demystify "it is not converging". The phrase covers four different
+situations that need four different responses, and naming which one you have is most of the work.
+The loss is <b>NaN</b>: numerical blow-up, so lower the rate and check for a log of zero or a
+division by a count that can be zero. The loss is <b>flat from step one</b>: no gradient is
+reaching the weights, so check the wiring and the step-zero loss. The loss <b>falls then
+plateaus high</b>: underfitting, so the model or the features are too weak. The loss
+<b>oscillates</b>: the rate is too large for the batch size. Four symptoms, four different
+lessons, and only one of them is about the architecture.</div>
+`,
+ docs:[['A recipe for training neural networks (Karpathy)','https://karpathy.github.io/2019/04/25/recipe/']],
+ exs:[{title:'Run the three diagnostics on one tiny network',
+   lang:'python',
+   packages:['numpy'],
+   prompt:`A two-layer network, ten classes, one batch of eight examples, and a
+   <code>train(lr, steps, scale)</code> helper that returns the loss at every step.
+   <ol>
+   <li><code>expected_start</code>, the loss a ten-class model must start at before it has learned anything, and <code>start_loss</code>, what this one actually starts at. They should agree to about three decimals.</li>
+   <li>The overfit-one-batch test at <code>lr = 0.5</code>: <code>final_loss</code> should reach nearly zero, which is what says the wiring is sound.</li>
+   <li><code>diverged</code>, whether a learning rate of 50 ends higher than it began.</li>
+   <li><code>unscaled_final</code>, the final loss when the identical setup is handed inputs 20 times too large.</li>
+   </ol>`,
+   starter:`import numpy as np
+
+K = 10                                              # ten classes
+X = np.random.default_rng(0).normal(size=(8, 4))    # one batch of eight examples
+y = np.arange(8) % K
+
+def softmax(a):
+    e = np.exp(a - a.max(axis=1, keepdims=True))
+    return e / e.sum(axis=1, keepdims=True)
+
+def train(lr, steps=400, scale=1.0):
+    """The same tiny two-layer net from the same initialization every time."""
+    r = np.random.default_rng(1)
+    W1 = r.normal(size=(4, 32)) * 0.05
+    b1 = np.zeros(32)
+    W2 = r.normal(size=(32, K)) * 0.05
+    b2 = np.zeros(K)
+    Xs = X * scale
+    losses = []
+    for _ in range(steps):
+        a1 = Xs @ W1 + b1
+        z1 = np.maximum(a1, 0.0)
+        p = softmax(z1 @ W2 + b2)
+        losses.append(float(-np.log(p[np.arange(len(y)), y] + 1e-12).mean()))
+        d = p.copy()
+        d[np.arange(len(y)), y] -= 1.0
+        d /= len(y)
+        gW2 = z1.T @ d
+        gb2 = d.sum(axis=0)
+        d1 = (d @ W2.T) * (a1 > 0)
+        gW1 = Xs.T @ d1
+        gb1 = d1.sum(axis=0)
+        W1 -= lr * gW1; b1 -= lr * gb1
+        W2 -= lr * gW2; b2 -= lr * gb2
+    return np.array(losses)
+
+# 1) The loss a ten-class model must start at, before it has learned anything.
+expected_start = 0.0
+
+# 2) The overfit-one-batch test, at a sensible learning rate.
+good = train(0.5)
+start_loss = 0.0
+final_loss = 0.0
+
+# 3) A learning rate a hundred times too large.
+huge = train(50.0)
+diverged = False
+
+# 4) The same rate, with the inputs left on a wild scale.
+unscaled = train(0.5, scale=20.0)
+unscaled_final = 0.0
+
+print("expected start", round(expected_start, 4), "actual start", round(start_loss, 4))
+print("overfit one batch, final loss:", round(final_loss, 6))
+print("lr = 50, first and last:", round(float(huge[0]), 3), round(float(huge[-1]), 3))
+print("inputs x20, final loss:", round(unscaled_final, 4))
+`,
+   solution:`import numpy as np
+
+K = 10                                              # ten classes
+X = np.random.default_rng(0).normal(size=(8, 4))    # one batch of eight examples
+y = np.arange(8) % K
+
+def softmax(a):
+    e = np.exp(a - a.max(axis=1, keepdims=True))
+    return e / e.sum(axis=1, keepdims=True)
+
+def train(lr, steps=400, scale=1.0):
+    """The same tiny two-layer net from the same initialization every time."""
+    r = np.random.default_rng(1)
+    W1 = r.normal(size=(4, 32)) * 0.05
+    b1 = np.zeros(32)
+    W2 = r.normal(size=(32, K)) * 0.05
+    b2 = np.zeros(K)
+    Xs = X * scale
+    losses = []
+    for _ in range(steps):
+        a1 = Xs @ W1 + b1
+        z1 = np.maximum(a1, 0.0)
+        p = softmax(z1 @ W2 + b2)
+        losses.append(float(-np.log(p[np.arange(len(y)), y] + 1e-12).mean()))
+        d = p.copy()
+        d[np.arange(len(y)), y] -= 1.0
+        d /= len(y)
+        gW2 = z1.T @ d
+        gb2 = d.sum(axis=0)
+        d1 = (d @ W2.T) * (a1 > 0)
+        gW1 = Xs.T @ d1
+        gb1 = d1.sum(axis=0)
+        W1 -= lr * gW1; b1 -= lr * gb1
+        W2 -= lr * gW2; b2 -= lr * gb2
+    return np.array(losses)
+
+# 1) The loss a ten-class model must start at, before it has learned anything.
+expected_start = float(np.log(K))
+
+# 2) The overfit-one-batch test, at a sensible learning rate.
+good = train(0.5)
+start_loss = float(good[0])
+final_loss = float(good[-1])
+
+# 3) A learning rate a hundred times too large.
+huge = train(50.0)
+diverged = bool(huge[-1] > huge[0])
+
+# 4) The same rate, with the inputs left on a wild scale.
+unscaled = train(0.5, scale=20.0)
+unscaled_final = float(unscaled[-1])
+
+print("expected start", round(expected_start, 4), "actual start", round(start_loss, 4))
+print("overfit one batch, final loss:", round(final_loss, 6))
+print("lr = 50, first and last:", round(float(huge[0]), 3), round(float(huge[-1]), 3))
+print("inputs x20, final loss:", round(unscaled_final, 4))
+`,
+   tests:[
+     {d:'a ten-class model has to start at log 10 = 2.3026, and this one does, so labels and output width line up',expr:'abs(expected_start - 2.302585092994046) < 1e-9 and abs(start_loss - expected_start) < 0.05'},
+     {d:'the overfit-one-batch test passes: eight examples are driven a hundredfold below the starting loss, so the wiring is sound',expr:'final_loss < 0.05 and final_loss < start_loss / 100'},
+     {d:'a learning rate of 50 sends the loss up rather than down, which is what overshooting looks like',expr:'diverged is True and float(huge[-1]) > 5.0'},
+     {d:'inputs 20 times too large stall the identical setup far above where it should land',expr:'unscaled_final > 0.5 and unscaled_final > 20 * final_loss'},
+     {d:'and the failure is the scale, not the network: the same code with scaled inputs learned fine',expr:'good[-1] < unscaled[-1] and abs(float(good[-1]) - final_loss) < 1e-12 and abs(float(unscaled[-1]) - unscaled_final) < 1e-12'}
+   ],
+   hints:[
+     'A model that has learned nothing spreads its probability evenly, so its cross-entropy is minus the log of one over K: float(np.log(K)).',
+     'good is the array of losses, so start_loss is good[0] and final_loss is good[-1]. Both need float() around them.',
+     'diverged compares the last loss with the first: bool(huge[-1] > huge[0]). unscaled_final is float(unscaled[-1]).'
+   ]}],
+ quiz:{title:'Quick check, debugging a network',questions:[
+   {q:'A ten-class classifier starts training at a loss of 7.0 rather than 2.3. The likeliest cause is:',
+    options:['The learning rate has been set far too small','A bug in the labels or output layer','It needs more training steps','The network is too shallow'],answer:1,
+    whyWrong:['The rate has had no chance to act yet. This is the loss before any step is taken.','','Steps have not started. The very first loss is already wrong.','Depth changes what it can learn, not the loss of an untrained model spreading probability evenly.'],
+    why:'An untrained model spreads probability evenly, forcing the first loss to log K = 2.303 for ten classes. A much larger value means the model is confidently wrong at step zero, which takes a wiring bug.'},
+   {q:'Your network cannot drive the loss to zero on a single batch of eight examples. This says:',
+    options:['You need more training data','Regularization has been set far too weakly','The wiring is broken, not the data','The batch size should be increased'],answer:2,
+    whyWrong:['More data cannot help a model that cannot fit eight rows. The problem is upstream of the dataset.','Weak regularization would make memorizing easier, not harder. Turn it off for this test.','','A larger batch makes the task harder, not easier. The point of the test is to make it trivial.'],
+    why:'Memorizing a tiny batch is the easiest thing a network does. Failing it means the forward pass, the loss or the gradient path is wrong, and no amount of data or tuning will fix that.'},
+   {q:'Training on deliberately shuffled labels reaches near-zero training loss and chance validation accuracy. That result:',
+    options:['Proves the model is broken','Proves the labels are corrupted','Shows the data pipeline is leaking','Is what a healthy setup does'],answer:3,
+    whyWrong:['It shows the opposite. A model that can memorize noise has enough capacity and a working gradient path.','The labels were shuffled on purpose, so their state is known rather than being diagnosed.','Leakage would show up as validation accuracy above chance on shuffled labels, which is not what happened.',''],
+    why:'A network with capacity memorizes noise, so near-zero training loss and chance validation is the expected outcome. The test earns its keep by comparison: real labels that do not beat this are telling you the features carry no signal.'}
+ ]}},
+
 {id:'nn8',
  title:'Convolution in plain English: sliding a stencil across a picture',
  body:`
@@ -14497,7 +15300,7 @@ print(grad_rnn, grad_gate, grad_gate_zero, grad_gate / grad_rnn)
     options:['Sigmoid outputs between 0 and 1, like a valve','Sigmoid avoids saturating at either of its extremes','Sigmoid has a larger maximum derivative','Sigmoid is cheaper to compute than tanh'],answer:0,whyWrong:['','Sigmoid does saturate at both ends. Here that is tolerable, because a gate wants to reach fully open or fully shut.','Tanh has the larger maximum derivative, 1 against sigmoid\'s 0.25.','The cost difference is negligible, and it is not why the choice was made.'],
     why:'A gate needs a fraction to let through. Zero blocks, one passes, and sigmoid produces exactly that range.'},
    {q:'Residual connections in very deep networks share which idea with LSTM gates?',
-    options:['Randomly dropping units during each training step','Reducing the total parameter count','Normalizing activations between layers','Creating a near-identity path for the gradient'],answer:3,whyWrong:['That is dropout, a regularisation technique with a different purpose.','Both add parameters rather than removing them, and gates add several matrices.','Normalization is what batch and layer norm do, and it is a separate mechanism.',''],
+    options:['Randomly dropping units during each training step','Reducing the total parameter count','Normalizing activations between layers','Creating a near-identity path for the gradient'],answer:3,whyWrong:['That is dropout, a regularization technique with a different purpose.','Both add parameters rather than removing them, and gates add several matrices.','Normalization is what batch and layer norm do, and it is a separate mechanism.',''],
     why:'y = F(x) + x has derivative 1 through the addition, so gradient always has a clear route back.'}
  ]}},
 
@@ -15518,7 +16321,7 @@ print(v_M, v_M_from_L, v_M_from_R, gap)
 `,
    tests:[
      {d:'every row of P sums to 1, which is what makes it a set of dynamics rather than a table of numbers',expr:'rows_ok and abs(float(row_sums.sum()) - 3.0) < 1e-12'},
-     {d:'averaged over all episodes, M looks worth about zero',expr:'abs(v_M) < 0.05'},
+     {d:'averaged over all episodes, M looks worth about zero, and that average really is the mean of the rewards',expr:'abs(v_M) < 0.05 and abs(v_M - float(rewards.mean())) < 1e-12'},
      {d:'conditioned on having arrived from L, M is worth exactly +1',expr:'abs(v_M_from_L - 1.0) < 1e-9'},
      {d:'conditioned on having arrived from R, the same state is worth exactly -1',expr:'abs(v_M_from_R + 1.0) < 1e-9'},
      {d:'gap is 2.0, so no single number V(M) is right and the average is wrong in both cases. That is the Markov property failing, and the repair is to fold the history into the state',expr:'abs(gap - 2.0) < 1e-9'}
@@ -15692,7 +16495,7 @@ print(vA, vB, check)
    tests:[
      {d:'V(A) converges to about 19.47',expr:'abs(vA - 19.4737) < 0.01'},
      {d:'V(B) converges to about 20.53',expr:'abs(vB - 20.5263) < 0.01'},
-     {d:'the Bellman residual at A is essentially zero, so this really is the fixed point',expr:'abs(check) < 1e-6'},
+     {d:'check really is the Bellman residual at A, and it is essentially zero, so this is the fixed point',expr:'abs(check) < 1e-6 and abs(check - (vA - (1 + gamma * vB))) < 1e-12'},
      {d:'B is worth more than A, because the larger reward comes sooner from B',expr:'vB > vA'}
    ],
    hints:[
@@ -15928,8 +16731,8 @@ analytic = -(1 - gamma ** 6) / (1 - gamma)
 print(sweeps, delta, V[0, 0], analytic, steps_to_goal)
 `,
    tests:[
-     {d:'it converges in a handful of sweeps, not hundreds, which is the geometric contraction at work',expr:'sweeps < 20'},
-     {d:'the loop stopped because the largest change at any state fell under the tolerance',expr:'delta < tol'},
+     {d:'it takes several sweeps and converges in a handful, not hundreds, which is the geometric contraction at work',expr:'1 < sweeps < 20'},
+     {d:'the loop stopped on the tolerance rather than the safety cap, and the values actually moved off zero',expr:'converged and delta < tol and float(np.abs(V).max()) > 1.0'},
      {d:'the start corner is worth -5.298, exactly the discounted cost of the six steps it takes to get out',expr:'abs(float(V[0, 0]) - analytic) < 1e-9'},
      {d:'following the greedy policy from the top left actually arrives at the goal',expr:'path[-1] == goal'},
      {d:'it gets there in 6 steps, the shortest route there is, so one greedy pass over a converged value function is already the optimal policy',expr:'steps_to_goal == 6'}
@@ -16699,7 +17502,7 @@ print(total, regret, best)
      {d:'the agent identifies arm 2 as the best',expr:'best == 2'},
      {d:'it collected more than 1400, so it is exploiting the good arm most of the time',expr:'total > 1400'},
      {d:'regret is positive, the price paid for the 10% of rounds spent exploring',expr:'regret > 0'},
-     {d:'regret stays under 200, so exploration is costing about what the schedule implies',expr:'regret < 200'}
+     {d:'regret is the best arm\u2019s take minus yours, and it stays under 200, about what the schedule implies',expr:'regret < 200 and abs(regret - (rounds * max(means) - total)) < 1e-9'}
    ],
    hints:[
      'The greedy choice is a = Q.index(max(Q)).',
@@ -17056,8 +17859,8 @@ print(float(stream.std()), float(batch.std()))
 `,
    tests:[
      {d:'consecutive steps of the raw stream are almost the same number, autocorrelation above 0.95',expr:'ac_stream > 0.95'},
-     {d:'the uniformly sampled minibatch is essentially uncorrelated',expr:'abs(ac_batch) < 0.1'},
-     {d:'the buffer kept every transition, so sampling discarded no data',expr:'len(buffer) == n'},
+     {d:'lag1 really measures autocorrelation, and the uniformly sampled minibatch is essentially uncorrelated',expr:'abs(ac_batch) < 0.1 and abs(lag1(batch) - ac_batch) < 1e-9 and lag1(stream) > 0.95'},
+     {d:'the buffer kept every transition, and the minibatch is drawn from right across it',expr:'len(buffer) == n and len(set(idx.tolist())) > 100'},
      {d:'the batch has much the same spread as the stream it came from, so the distribution is intact',expr:'abs(float(batch.std()) - float(stream.std())) < 0.3 * float(stream.std())'},
      {d:'same numbers, different order, and the correlation is gone by more than a factor of ten. Replay does not clean the data, it removes the ordering that broke the independence assumption',expr:'ac_stream > 10 * abs(ac_batch)'}
    ],
@@ -17099,7 +17902,7 @@ print(float(stream.std()), float(batch.std()))
  body:`
 <div class="ground"><span class="gTag">🎯 Skip the value function and adjust the behavior itself</span>
 <p>Everything so far learned a value function and read a policy off it. There is another route:
-parameterise the policy directly as <code>&pi;(a|s;&theta;)</code> and do gradient <i>ascent</i>
+parameterize the policy directly as <code>&pi;(a|s;&theta;)</code> and do gradient <i>ascent</i>
 on expected return. It sounds circular, since the return depends on the environment and you
 cannot differentiate through that. One identity makes it work, and it is the basis of every
 method used on large models today, including the one that fine-tunes chatbots.</p></div>
@@ -17273,7 +18076,7 @@ print(p_start, p_end)
 print(var_raw, var_base, mean_raw, mean_base)
 `,
    tests:[
-     {d:'it starts at 0.5, which is what equal parameters mean under a softmax',expr:'abs(p_start - 0.5) < 1e-12'},
+     {d:'it starts at 0.5, which is what equal parameters mean under a softmax, and training moves it off that',expr:'abs(p_start - 0.5) < 1e-12 and p_end > p_start + 0.01'},
      {d:'the probability of the better arm rises above 0.95 from nothing but sampled rewards',expr:'p_end > 0.95'},
      {d:'the raw gradient estimate has a variance above 20, nearly all of it from the size of the reward rather than the gap between the arms',expr:'var_raw > 20'},
      {d:'subtracting a constant cuts that variance by more than a factor of 100',expr:'var_base < var_raw / 100'},
@@ -17315,7 +18118,7 @@ print(var_raw, var_base, mean_raw, mean_base)
 <div class="ground"><span class="gTag">🎯 Combine the two families, then stop the update from going too far</span>
 <p>Value methods are sample-efficient and awkward with continuous actions. Policy methods handle
 anything but are noisy and throw their data away after one use. Actor-critic takes both: a
-policy that acts, and a value function that criticises. Add one more idea, a limit on how far the
+policy that acts, and a value function that criticizes. Add one more idea, a limit on how far the
 policy may move in a single update, and you have PPO, which is the default in most of the field
 and the algorithm behind RLHF.</p></div>
 
@@ -17440,10 +18243,10 @@ print([round(o, 4) for o in obj_down])
    tests:[
      {d:'V is 1.75, the value of behaving as usual in this state',expr:'abs(V - 1.75) < 1e-12'},
      {d:'action 1 has an advantage of 1.25, meaning it beats acting as usual by that much',expr:'abs(A[1] - 1.25) < 1e-12'},
-     {d:'the advantages average to zero under the policy, which is what makes an advantage a comparison against yourself rather than a score',expr:'abs(mean_A) < 1e-12'},
+     {d:'the bad action scores \u22120.75 and the advantages average to zero under the policy, which is what makes an advantage a comparison against yourself rather than a score',expr:'abs(A[0] + 0.75) < 1e-12 and abs(mean_A) < 1e-12'},
      {d:'inside the trust region the objective still rewards moving toward the good action',expr:'obj_up[3] > obj_up[2] > obj_up[1]'},
-     {d:'past a ratio of 1 + eps it stops improving entirely, so there is nothing left to gain by moving further',expr:'obj_up[4] == obj_up[5] == obj_up[6]'},
-     {d:'and a step in the wrong direction is never clipped: with a negative advantage at a ratio of 1.5 the objective is the full unclipped value, so the gradient still pulls you back',expr:'abs(ppo(1.5, A[0]) - 1.5 * A[0]) < 1e-12'}
+     {d:'past a ratio of 1 + eps it flattens at (1 + eps) times the advantage, so there is nothing left to gain by moving further',expr:'obj_up[4] == obj_up[5] == obj_up[6] and abs(obj_up[6] - (1 + eps) * 1.25) < 1e-12'},
+     {d:'and a step in the wrong direction is never clipped: with a negative advantage at a ratio of 1.5 the objective is the full unclipped value, so the gradient still pulls you back',expr:'abs(ppo(1.5, -0.75) - 1.5 * -0.75) < 1e-12 and abs(A[0] + 0.75) < 1e-12'}
    ],
    hints:[
      'V = sum(p * q for p, q in zip(pi, Q)), and A = [q - V for q in Q].',
@@ -17531,7 +18334,7 @@ being argued.</p>
 of principles. Constitutional AI is the well-known version. The motivation is cost and throughput:
 human preference data is slow and expensive, and it is the bottleneck.</p>
 
-<div class="hardidea">🧠 <b>RLHF optimizes what the labellers rewarded, which is not the same as
+<div class="hardidea">🧠 <b>RLHF optimizes what the labelers rewarded, which is not the same as
 what is true.</b> If annotators mildly prefer confident answers, the model learns to sound
 confident, including when it should not. If they prefer agreement, it learns to agree, which is
 where sycophancy comes from. If they prefer longer answers, everything gets longer, and length
@@ -17676,7 +18479,7 @@ print('learned', proxy_l, true_l)
              'A property of the pretraining corpus rather than the fine-tuning',
              'The model optimizing exactly what annotators rewarded',
              'Evidence that the KL penalty was set too high during training'],answer:2,whyWrong:['The clip constrains how far each update moves. It does not decide what the objective rewards.','Pretraining produces a text predictor, not an agreeable one. The agreeableness is learned in the preference stage.','','A high KL penalty would keep the model closer to where it started, which is the opposite of this drift.'],
-    why:'If labellers mildly prefer agreement, the trained model agrees. The algorithm worked. The specification was the aggregate of what a few thousand tired people clicked.'}
+    why:'If labelers mildly prefer agreement, the trained model agrees. The algorithm worked. The specification was the aggregate of what a few thousand tired people clicked.'}
  ]}}
 ,
 

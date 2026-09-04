@@ -51,7 +51,7 @@ diamond dependency hell: two libraries want incompatible versions of a third, an
 checked at startup: missing dependencies fail immediately rather than at first use, and split packages are
 rejected outright. Most applications still run on the classpath because the ecosystem migration is
 substantial and the payoff is largest for libraries; the JPMS lesson later in the course covers the trade
-in full.`,
+in full.</p>`,
 docs:[['Classpath, Oracle','https://docs.oracle.com/javase/8/docs/technotes/tools/unix/classpath.html'],['Using package members / imports, Oracle','https://docs.oracle.com/javase/tutorial/java/package/usepkgs.html'],['Maven Central search','https://central.sonatype.com/']],
 ex:{title:'Classpath forensics',lang:'shell',
 prompt:`Answer one per numbered line: (1) the command compiling <code>src/App.java</code> into <code>out/</code> with <code>lib/gson-2.11.0.jar</code> on the classpath, (2) the command running class <code>App</code> with both <code>out</code> and that jar on the classpath (macOS/Linux separator), (3) the import statement for <code>com.google.gson.Gson</code>, (4) the error you get at RUNTIME when a class present at compile time is missing from the runtime classpath, (5) the directory where Maven caches downloaded dependencies, (6) the term for dependencies your dependencies pull in.`,
@@ -369,7 +369,7 @@ test {
 {id:'bld4',title:'Maven vs Gradle & multi-module thinking',body:`
 <p>Choosing and scaling:</p>
 <ul>
-<li><b>Maven</b>: rigid lifecycle, XML, enormous ecosystem, effortless onboarding; most enterprises (and most Spring docs) speak Maven.</li>
+<li><b>Maven</b>: rigid lifecycle, XML, enormous ecosystem, very little to learn before your first build; most enterprises (and most Spring docs) speak Maven.</li>
 <li><b>Gradle</b>: programmable, faster (incremental + cache + daemon), first-class for Android/Kotlin; complexity can grow unchecked.</li>
 <li>Both: wrapper scripts commit the build tool version into the repo (<code>mvnw</code>, <code>gradlew</code>); always use the wrapper in CI.</li>
 </ul>

@@ -461,7 +461,7 @@ replay, allow a small clock skew and no more, and enroll a second method at the 
 <p><b>5. HOTP / hardware OTP tokens.</b> Counter-based codes, or a keyfob display.<br>
 <i>Pros:</i> no clock sync; a dedicated device with nothing else on it; works in facilities where phones
 are banned.<br>
-<i>Cons:</i> counter drift needs a resynchronisation window, which is itself an attack surface;
+<i>Cons:</i> counter drift needs a resynchronization window, which is itself an attack surface;
 procurement and distribution costs; still phishable.<br>
 <i>Best practice:</i> keep the look-ahead window small; use where phones are prohibited.</p>
 
@@ -808,7 +808,7 @@ scoped         to one account and one action. it is not a login.</div>
 <h4>The thing nobody plans for</h4>
 <p><b>The helpdesk is a recovery path.</b> If a support agent can reset MFA after a phone call, then social
 engineering that agent is the cheapest route into any account, and it has been the entry point in several
-well-publicised breaches. Identity-verify before the agent can act, require a second approver for privileged
+well-publicized breaches. Identity-verify before the agent can act, require a second approver for privileged
 accounts, and record what was done. A technical control that a phone call bypasses is not a control.</p>`,
 docs:[['Passwordless, FIDO/passkeys','https://fidoalliance.org/passkeys/'],['Forgot-password / recovery, OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html']],
 ex:{title:'A safe reset token & the best method',lang:'js',
@@ -1013,7 +1013,7 @@ origin binding, not from knowing the brand.</p>
 <code>"webauthn.create"</code>.</li>
 <li>Check the <b>challenge</b> equals the one you issued, and that you issued it, from server state,
 never from the request.</li>
-<li>Check the <b>origin</b> is exactly an origin you expect. String equality against an allow-list;
+<li>Check the <b>origin</b> is exactly an origin you expect. String equality against an allowlist;
 never a prefix or a "contains" check.</li>
 <li>Check <code>rpIdHash</code> equals SHA-256 of your RP ID.</li>
 <li>Check the <b>UP</b> flag; check <b>UV</b> if you required it.</li>
@@ -1330,7 +1330,7 @@ almost never measured with the same care).</p>
 entirely, feeding synthetic video into the device through a virtual camera or a modified client. The
 biometric pipeline sees a perfect, well-lit, entirely fabricated human.</p>
 <p>The defenses are layered and none is sufficient alone. Signals that the capture came from a genuine
-device sensor. Challenge-response that is hard to synthesise in real time. Server-side liveness rather than
+device sensor. Challenge-response that is hard to synthesize in real time. Server-side liveness rather than
 a client's word for it. And, strongest by a distance, <b>reading the chip</b> in an ePassport or a mobile
 driving license, where the data is signed by the issuing state and cannot be fabricated at all. The
 direction of travel is away from "look at a picture and judge" and towards "verify a signature", which is

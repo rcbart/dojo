@@ -145,9 +145,9 @@ add   -> 6                          5
                   add   -> 6        5
 write    6                          6
                   write    6        6     <- two increments, one result</div>
-<p>This is not rare or exotic. It is what happens by default, and it is invisible in testing because the
-window is nanoseconds wide, which is precisely what makes concurrency bugs expensive: they appear under
-production load, on a different machine, and cannot be reproduced on demand.</p>
+<p>That interleaving is the default behavior, not an exotic corner case. It stays invisible in testing
+because the window is nanoseconds wide, and that is precisely what makes concurrency bugs expensive: they
+appear under production load, on a different machine, and cannot be reproduced on demand.</p>
 
 <h4>The second problem, which is stranger: visibility</h4>
 <p>Atomicity is only half of it. Even a write that completes may never be <i>seen</i> by another thread,
@@ -383,7 +383,7 @@ public class Async {
 }`,
 tests:[{d:'Two supplyAsync calls, one per value',re:'supplyAsync[\\s\\S]{0,80}?"user:"\\s*\\+[\\s\\S]*?supplyAsync[\\s\\S]{0,80}?"roles:admin"|supplyAsync[\\s\\S]{0,80}?"roles:admin"[\\s\\S]*?supplyAsync[\\s\\S]{0,80}?"user:"\\s*\\+'},{d:'thenCombine joins them with " | "',re:'thenCombine\\s*\\([^;]{0,140}" \\| "'},{d:'exceptionally falls back to "profile unavailable"',re:'exceptionally\\s*\\([^;]{0,100}"profile unavailable"'},{d:'join() at the edge',re:'\\.join\\s*\\(\\s*\\)'},{d:'No Thread.sleep busy-waiting',re:'Thread\\.sleep',not:true}],
 behavior:`1. profile("42") returns "user:42 | roles:admin". 2. If either supplier threw, the result is "profile unavailable" (no exception escapes). 3. Both suppliers run concurrently; combine waits for both. 4. join() is the only blocking call.`,
-hints:['Two futures first: <code>var u = CompletableFuture.supplyAsync(() -> "user:" + id);</code>','Combine: <code>u.thenCombine(r, (a, b) -> a + " | " + b)</code>','Chain <code>.exceptionally(ex -> "profile unavailable")</code> before <code>.join()</code>.'],
+hints:['Two futures first, started before either is joined: <code>var u = CompletableFuture.supplyAsync(() -> "user:" + id);</code> and the same shape again for the roles, named <code>r</code>.','Combine: <code>u.thenCombine(r, (a, b) -> a + " | " + b)</code>','Chain <code>.exceptionally(ex -> "profile unavailable")</code> before <code>.join()</code>.'],
 solution:`import java.util.concurrent.*;
 
 public class Async {
@@ -431,8 +431,8 @@ map.merge(k, 1L, Long::sum);          // atomic increment-or-insert
 // and the same trap with the "synchronized" wrappers:
 List&lt;String&gt; l = Collections.synchronizedList(new ArrayList&lt;&gt;());
 for (String s : l) { ... }            // NOT safe, iteration needs the lock</div>
-<p><code>ConcurrentHashMap</code> beats <code>synchronizedMap</code> not merely on speed but because it
-<i>offers</i> the atomic compound operations (<code>computeIfAbsent</code>, <code>merge</code>,
+<p><code>ConcurrentHashMap</code> beats <code>synchronizedMap</code> on speed, and beats it more
+importantly because it <i>offers</i> the atomic compound operations (<code>computeIfAbsent</code>, <code>merge</code>,
 <code>putIfAbsent</code>, <code>compute</code>) that make correct code expressible. Keep the mapping
 function short and side-effect free; it runs while holding a lock on that bin, and calling back into
 the same map from inside it can deadlock.</p>
@@ -503,6 +503,124 @@ public class HitTracker {
         latch.await();
     }
 }`}},
+{id:'con5b',title:'Explicit locks: ReentrantLock, ReadWriteLock & Condition',body:`
+<p><code>synchronized</code> is a lock you cannot see. There is no object to name, no way to ask whether it is held, no way to give up waiting, and exactly one waiting queue per monitor. That is fine for the common case, and it runs out of road quickly. The <code>java.util.concurrent.locks</code> package gives you the same mutual exclusion as an <i>object with methods</i>, and those extra methods are the entire reason to reach for it.</p>
+<div class="codeSample" data-hl>private final ReentrantLock lock = new ReentrantLock();
+
+lock.lock();
+try {
+    // the guarded work
+} finally {
+    lock.unlock();     // ALWAYS in a finally. this is not a style rule:
+}                      // an exception here would leak the lock forever</div>
+<p>Reentrant means the same thread may acquire it again without deadlocking itself, exactly as <code>synchronized</code> already allowed; the hold count simply has to fall back to zero before anyone else gets in.</p>
+
+<h4>What you get that a monitor cannot give you</h4>
+<div class="codeSample" data-hl>lock.tryLock()                       // take it or return false RIGHT NOW.
+                                     // no waiting, no blocking, no risk.
+lock.tryLock(200, MILLISECONDS)      // wait, but only this long. a bounded
+                                     // wait turns "hung" into "degraded".
+lock.lockInterruptibly()             // a waiting thread can be cancelled.
+                                     // synchronized ignores interrupts.
+new ReentrantLock(true)              // FAIR: longest waiter goes first.
+                                     // correct, and measurably slower; use
+                                     // it only when starvation is real.
+lock.newCondition()                  // as many wait queues as you want</div>
+<p><code>tryLock</code> is the one that changes designs. Deadlock requires a thread to wait indefinitely for a lock somebody else holds, so a timed <code>tryLock</code> with a back-off replaces "wait forever" with "fail, release what I already hold, and try again". That is how you survive a lock-ordering problem you cannot fix by reordering, and it is why bank-transfer code in real systems so rarely uses plain <code>synchronized</code>.</p>
+
+<h4>The rule, and the two ways people break it</h4>
+<p>Acquire <i>outside</i> the <code>try</code>, release <i>inside</i> the <code>finally</code>. Put <code>lock()</code> inside the try and an exception thrown by the acquisition itself sends you to a <code>finally</code> that unlocks a lock you never took; <code>unlock</code> on a lock you do not hold throws <code>IllegalMonitorStateException</code>, which then buries the original failure. The second mistake belongs to <code>tryLock</code>, where the shape changes because you must not release what you failed to acquire:</p>
+<div class="codeSample" data-hl>if (!lock.tryLock(200, MILLISECONDS)) return false;   // did NOT acquire
+try { ... } finally { lock.unlock(); }                // so unlock only here</div>
+
+<h4>ReadWriteLock, and when it actually pays</h4>
+<p>A <code>ReentrantReadWriteLock</code> admits many readers at once and writers alone. That sounds like a free win and usually is not: the extra bookkeeping costs more than a plain lock, so it pays only when reads genuinely dominate <i>and</i> each read holds the lock long enough for the concurrency to matter. For a short read of two fields, a plain <code>ReentrantLock</code>, or an immutable snapshot swapped through an <code>AtomicReference</code>, will beat it. <code>StampedLock</code> goes further with an optimistic read that takes no lock at all, at the price of not being reentrant and of a validate-and-retry protocol you have to write correctly.</p>
+
+<h4>Condition: waiting for a state, not for a lock</h4>
+<p>A lock protects state. A <b>condition</b> lets a thread wait until that state is what it needs. One monitor has one wait set, so <code>wait</code> and <code>notifyAll</code> wake producers and consumers indiscriminately. A lock can hand out as many queues as the problem has:</p>
+<div class="codeSample" data-hl>final Condition notFull  = lock.newCondition();
+final Condition notEmpty = lock.newCondition();
+
+lock.lock();
+try {
+    while (count == items.length) notFull.await();    // WHILE, never if:
+    items[count++] = item;                            // spurious wakeups
+    notEmpty.signal();                                // are permitted, and
+} finally { lock.unlock(); }                          // the state can change
+                                                      // between signal and
+                                                      // your reacquiring</div>
+<p>Two rules carry all of it. Wait in a <code>while</code> loop that re-tests the condition, because a thread may wake with nobody having signaled it, and because another thread can take the slot in the window between the signal and your reacquiring the lock. And signal the queue you mean: a consumer that just removed an item signals <code>notFull</code>, not <code>notEmpty</code>.</p>
+
+<h4>Which to reach for</h4>
+<p>Start with <code>synchronized</code>. It is shorter, it cannot leak, and the JVM optimizes it aggressively. Move to a <code>ReentrantLock</code> when you need a timeout, a non-blocking attempt, interruptible waiting, fairness, or more than one condition. There is now a third reason, which the next lesson develops: blocking inside <code>synchronized</code> can pin a virtual thread to its carrier, while a <code>ReentrantLock</code> lets the JVM unmount cleanly. And before any of that, look one level up: a <code>BlockingQueue</code> is the bounded buffer sketched above, already written, already correct, and already tested by everyone.</p>`,
+docs:[['ReentrantLock (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/locks/ReentrantLock.html'],['Condition (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/locks/Condition.html']],
+ex:{title:'A vault with a bounded wait',
+prompt:`Write <code>Vault</code> guarding <code>private long balanceCents</code> with a <code>private final ReentrantLock lock</code>. <code>void deposit(long cents)</code>: take the lock, add, release in a <code>finally</code>. <code>boolean tryWithdraw(long cents, long timeoutMs) throws InterruptedException</code>: acquire with <code>lock.tryLock(timeoutMs, TimeUnit.MILLISECONDS)</code> and <b>return false immediately, without unlocking, when that acquisition fails</b>; otherwise, inside a try whose finally unlocks, return false if the balance is short and otherwise debit and return true. <code>long balance()</code> reads under the lock. No <code>synchronized</code> anywhere.`,
+starter:`import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class Vault {
+    private final ReentrantLock lock = new ReentrantLock();
+    private long balanceCents;
+
+    void deposit(long cents) {
+    }
+
+    boolean tryWithdraw(long cents, long timeoutMs) throws InterruptedException {
+        return false;
+    }
+
+    long balance() {
+        return 0;
+    }
+}`,
+solution:`import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class Vault {
+    private final ReentrantLock lock = new ReentrantLock();
+    private long balanceCents;
+
+    void deposit(long cents) {
+        lock.lock();
+        try {
+            balanceCents += cents;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    boolean tryWithdraw(long cents, long timeoutMs) throws InterruptedException {
+        if (!lock.tryLock(timeoutMs, TimeUnit.MILLISECONDS)) return false;
+        try {
+            if (balanceCents < cents) return false;
+            balanceCents -= cents;
+            return true;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    long balance() {
+        lock.lock();
+        try {
+            return balanceCents;
+        } finally {
+            lock.unlock();
+        }
+    }
+}`,
+tests:[{d:'Guarded by a ReentrantLock field',re:'private\\s+final\\s+ReentrantLock\\s+lock\\s*=\\s*new\\s+ReentrantLock\\s*\\('},
+{d:'No synchronized keyword anywhere',re:'\\bsynchronized\\b',not:true},
+{d:'deposit takes the lock before touching the balance',re:'deposit\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?lock\\.lock\\s*\\(\\s*\\)'},
+{d:'Releases happen in a finally block',re:'finally\\s*\\{\\s*lock\\.unlock\\s*\\(\\s*\\)\\s*;\\s*\\}'},
+{d:'tryWithdraw waits only for the timeout',re:'lock\\.tryLock\\s*\\(\\s*timeoutMs\\s*,\\s*TimeUnit\\.MILLISECONDS\\s*\\)'},
+{d:'A failed acquisition returns false without unlocking',re:'if\\s*\\(\\s*!\\s*lock\\.tryLock\\s*\\(\\s*timeoutMs\\s*,\\s*TimeUnit\\.MILLISECONDS\\s*\\)\\s*\\)\\s*return\\s+false\\s*;'},
+{d:'An overdraft is refused before anything is debited',re:'if\\s*\\(\\s*balanceCents\\s*<\\s*cents\\s*\\)\\s*return\\s+false\\s*;'},
+{d:'A successful withdrawal debits and reports true',re:'balanceCents\\s*-=\\s*cents\\s*;\\s*return\\s+true\\s*;'},
+{d:'balance() reads under the lock too',re:'balance\\s*\\(\\s*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?lock\\.lock\\s*\\(\\s*\\)'}],
+behavior:`1. deposit(500) then balance() == 500. 2. tryWithdraw(200, 50) returns true and leaves 300. 3. tryWithdraw(900, 50) returns false and the balance is unchanged: the check and the debit happen under one acquisition. 4. If another thread holds the lock for longer than timeoutMs, tryWithdraw returns false after roughly that long instead of blocking forever. 5. Every path that acquired the lock releases it, and the path that did not acquire it does not call unlock, which would throw IllegalMonitorStateException.`,
+hints:['Acquire outside the try, release inside the finally. That ordering is the whole discipline.','The timed acquire belongs in a guard clause: if it comes back false you hold nothing, so return before you open the try.','Refuse the overdraft before you subtract anything, and check that the finally still runs on that path.']}},
 {id:'con6',title:'Virtual threads (Java 21) & modern practice',body:`
 <p>Virtual threads make the thread-per-request model scale: millions of cheap threads multiplexed onto a few OS carriers. Blocking a virtual thread is fine: the JVM parks it and reuses the carrier.</p>
 <div class="codeSample" data-hl>// one virtual thread
@@ -591,6 +709,90 @@ public class VFanout {
         return out;
     }
 }`}},
+{id:'con6b',title:'Structured concurrency & scoped values',body:`
+<p>The previous lesson ended on a promise, so here it is. Virtual threads made blocking cheap, but they did nothing about <b>shape</b>. Fan out to three services with an executor and you have created three tasks that outlive nothing in particular: if the first fails, the other two keep running, spending money and holding connections, and the only thing that will eventually stop them is that nobody is listening. Compare that with an ordinary method call, where a thrown exception unwinds everything below it automatically.</p>
+<p><b>Structured concurrency</b> restores that property. Subtasks are forked inside a <b>scope</b>, and the scope does not exit until every subtask has finished or been cancelled. Concurrency gets a block structure, the same way loops and try-blocks gave control flow one.</p>
+<div class="codeSample" data-hl>// the invariant, stated plainly:
+try (var scope = ...) {
+    fork(taskA);
+    fork(taskB);
+    join();          // <- nothing escapes past this closing brace.
+}                    //    a failure cancels the siblings.
+                     //    the caller's cancellation cancels all of them.
+                     //    the stack trace of a failure names the fork site.</div>
+<p>Three things follow from that one invariant, and each fixes a real complaint about <code>CompletableFuture</code>. <b>No leaks</b>: an orphaned branch cannot exist, because the scope will not close while one is running. <b>Cancellation propagates</b>: it travels down to the subtasks and, on failure, sideways to the siblings, which is what "cancel the other two calls" has always required a lot of bookkeeping to express. And <b>the relationship is visible</b>: a thread dump groups the subtasks under their parent instead of listing forty anonymous pool threads with no indication of what asked for them.</p>
+
+<h4>What the API looks like, and a caveat about it</h4>
+<p><code>StructuredTaskScope</code> lives in <code>java.util.concurrent</code> and has been a <b>preview API</b> across several releases, which means you enable it with <code>--enable-preview</code> and its surface has changed between JDKs: the JDK 21 form used <code>ShutdownOnFailure</code> and <code>ShutdownOnSuccess</code> subclasses, and later releases replaced those with a factory taking a joiner policy. Learn the model rather than the method names, check the API against the JDK you actually run, and expect one migration when it finalizes.</p>
+<div class="codeSample" data-hl>// two policies cover almost everything you will want:
+//
+// ALL must succeed      fan out, need every answer.
+//                       first failure cancels the rest and is rethrown.
+//
+// ANY will do           race several sources, take the first success,
+//                       cancel the losers. mirrors, replicas, fallbacks.
+//
+// and a deadline on the whole scope, not per call:
+//                       join until an instant, then everything unfinished
+//                       is cancelled. this is the timeout budget from the
+//                       distributed-systems stream, enforced by structure.</div>
+
+<h4>Scoped values, and the ThreadLocal problem</h4>
+<p><code>ThreadLocal</code> was the standard way to carry a request id or a user principal down a call stack without threading a parameter through twenty methods. It was tolerable when threads were pooled and few. With a million virtual threads it stops being tolerable: every one carries its own mutable map, nothing forces the value to be cleared, and an inherited thread-local copies the whole map to each child.</p>
+<p><b>Scoped values</b> replace it with a binding that is <i>immutable</i> and has an <i>explicit lifetime</i>. You bind a value, run some code, and the binding is gone when that code returns. Nothing can be set from underneath you, there is nothing to forget to clean up, and a subtask forked inside the binding inherits it by sharing rather than by copying.</p>
+<div class="codeSample" data-hl>ThreadLocal    mutable, unbounded lifetime, must be cleared by hand,
+               inherited by copying. a leak on a pooled thread, and a
+               memory cost per thread when threads are cheap.
+
+ScopedValue    immutable, lifetime is one dynamic scope, nothing to
+               clear, inherited by sharing. also preview.</div>
+
+<h4>What to do with this today</h4>
+<p>Both features are preview, so they do not belong in production code you cannot easily change. What belongs in your head now is the standard they set, because you can meet it without them. When you fan out, use a bounded scope you actually close, cancel the siblings when one fails, give the whole operation a single deadline rather than a timeout per call, and pass request context as a parameter or a single immutable object rather than as ambient mutable state. That is what the exercise below asks for, and writing it by hand once is exactly what makes the one-line version legible when you adopt it.</p>`,
+docs:[['JEP 453: Structured Concurrency','https://openjdk.org/jeps/453'],['JEP 446: Scoped Values','https://openjdk.org/jeps/446']],
+ex:{title:'Fan out, and cancel the siblings',
+prompt:`Structured concurrency by hand. Write <code>Fanout</code> with <code>static java.util.List&lt;String&gt; all(java.util.List&lt;java.util.concurrent.Callable&lt;String&gt;&gt; tasks) throws Exception</code>: open <code>Executors.newVirtualThreadPerTaskExecutor()</code> in a <b>try-with-resources</b>, submit every task collecting the <code>Future</code>s in order, then loop over them calling <code>get()</code> and adding each result to the list. Wrap that loop in a <code>try</code> whose <code>catch (Exception e)</code> <b>cancels every future with <code>f.cancel(true)</code> before rethrowing</b>, so one failure does not leave the siblings running. Return the results in submission order.`,
+starter:`import java.util.*;
+import java.util.concurrent.*;
+
+public class Fanout {
+    static List<String> all(List<Callable<String>> tasks) throws Exception {
+        return List.of();
+    }
+}`,
+solution:`import java.util.*;
+import java.util.concurrent.*;
+
+public class Fanout {
+    static List<String> all(List<Callable<String>> tasks) throws Exception {
+        try (var exec = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<Future<String>> futures = new ArrayList<>();
+            for (Callable<String> task : tasks) {
+                futures.add(exec.submit(task));
+            }
+            List<String> results = new ArrayList<>();
+            try {
+                for (Future<String> f : futures) {
+                    results.add(f.get());
+                }
+            } catch (Exception e) {
+                for (Future<String> f : futures) {
+                    f.cancel(true);
+                }
+                throw e;
+            }
+            return results;
+        }
+    }
+}`,
+tests:[{d:'Virtual-thread executor, opened in try-with-resources',re:'try\\s*\\(\\s*var\\s+\\w+\\s*=\\s*Executors\\.newVirtualThreadPerTaskExecutor\\s*\\(\\s*\\)\\s*\\)'},
+{d:'Every task is submitted and its Future kept in order',re:'futures\\.add\\s*\\(\\s*\\w+\\.submit\\s*\\(\\s*\\w+\\s*\\)\\s*\\)'},
+{d:'Results are collected by calling get on each Future',re:'results\\.add\\s*\\(\\s*\\w+\\.get\\s*\\(\\s*\\)\\s*\\)'},
+{d:'A failure cancels the siblings, interrupting them',re:'catch\\s*\\(\\s*Exception\\s+\\w+\\s*\\)\\s*\\{[^;]{0,120}?\\w+\\.cancel\\s*\\(\\s*true\\s*\\)\\s*;'},
+{d:'The original failure is rethrown, never swallowed',re:'\\w+\\.cancel\\s*\\(\\s*true\\s*\\)\\s*;[\\s\\S]{0,80}?throw\\s+\\w+\\s*;'},
+{d:'No unbounded platform pool is created instead',re:'newFixedThreadPool|newCachedThreadPool',not:true}],
+behavior:`1. all(List.of(() -> "a", () -> "b")) returns ["a","b"] in submission order, whatever order the tasks actually finish in. 2. all(List.of()) returns an empty list and creates no work. 3. If one task throws, the exception reaches the caller and every other future has had cancel(true) called on it, so a sibling blocked on I/O is interrupted rather than left running. 4. The try-with-resources close waits for the executor to finish, so no task outlives the method: that is the invariant a StructuredTaskScope gives you for free. 5. get() is called on the futures in order, which is why the results line up with the inputs.`,
+hints:['Two lists: the futures in submission order, then the results in the same order.','The cancellation belongs in a catch around the collecting loop, not around the submitting loop, because there is nothing to cancel until you have submitted.','cancel(true) is the interrupting form; cancel(false) lets a running task finish, which is not what "the operation failed" means.']}},
 {id:'con7',title:'Diagnosing & debugging race conditions',body:`
 <p>Race conditions are the hardest bugs in the craft because they are <b>non-deterministic</b>: the outcome depends on thread timing, so the same code passes a thousand times and fails once in production. They are the classic <b>heisenbug</b>: attach a debugger or add a log line, the timing shifts, and the bug vanishes. Recognizing the symptoms is half the battle.</p>
 <p><b>Read the symptom:</b> intermittent, unreproducible failures under load usually mean a <b>race condition</b> on shared mutable state; threads frozen forever, making no progress, usually mean a <b>deadlock</b>; a total that is <i>almost</i> right but drifts under concurrency means <b>lost updates</b> from unsynchronized read-modify-write.</p>

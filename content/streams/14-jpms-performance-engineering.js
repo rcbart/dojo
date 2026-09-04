@@ -278,5 +278,108 @@ wall
 The proportion of samples (≈ time) spent in that frame and everything it calls; wide = hot.
 
 # 5)
-False: frames are ordered alphabetically; the x-axis shows proportion, not chronology.`}}
+False: frames are ordered alphabetically; the x-axis shows proportion, not chronology.`}},
+{id:'prf3',title:'Benchmarking with JMH: measuring a change, not a mood',body:`
+<p>Profiling tells you where the time goes. It does not tell you whether the change you just made helped, and that is a different question with a different tool. The temptation is a loop in <code>main</code> around <code>System.nanoTime()</code>. On the JVM that measurement is not merely noisy; it is frequently measuring something other than your code.</p>
+<div class="codeSample" data-hl>long t0 = System.nanoTime();
+for (int i = 0; i &lt; 1_000_000; i++) slugify("Hello World");
+System.out.println((System.nanoTime() - t0) / 1_000_000 + " ms");
+
+// four separate ways this lies:
+// 1. WARM-UP. the first thousands of iterations run interpreted, then
+//    half-optimized. you have timed the JIT, not the method.
+// 2. DEAD CODE. nothing consumes the result, so the JIT is entitled to
+//    delete the call. a "20x speed-up" is often a deleted loop.
+// 3. CONSTANT FOLDING. the argument never changes, so the answer can be
+//    computed once and hoisted out of the loop.
+// 4. ONE JVM, ONE RUN. profile pollution and a single set of JIT
+//    decisions make the number unrepeatable on the next run.</div>
+<p>The order-of-magnitude error this produces goes in both directions, which is what makes it dangerous: sometimes you conclude a change helped when it did nothing, and sometimes you discard a real improvement.</p>
+
+<h4>What JMH does about each of them</h4>
+<p><b>JMH</b> is the OpenJDK harness written by the people who write the JIT, and it exists because those four problems are not avoidable by being careful. It runs warm-up iterations whose timings it discards, runs the measurement in <b>forked JVMs</b> so one run's compilation decisions cannot bias the next, generates code around your method that the optimizer cannot see through, and reports a distribution rather than a number.</p>
+<div class="codeSample" data-hl>@BenchmarkMode(Mode.AverageTime)          // or Throughput, SampleTime
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@State(Scope.Benchmark)                   // where the inputs live
+@Warmup(iterations = 5, time = 1)         // discarded
+@Measurement(iterations = 5, time = 1)    // counted
+@Fork(2)                                  // fresh JVMs, twice
+public class SlugBenchmark {
+
+    private String input = "Hello World";  // not final, not a constant
+
+    @Benchmark
+    public String slugify() {
+        return Slug.of(input);             // RETURN it. that is what stops
+    }                                      // dead-code elimination.
+}</div>
+<p>Two of those lines carry most of the value. <b>Returning the result</b> (or passing it to a <code>Blackhole</code> when there are several) is what tells JMH to consume it, and a benchmark that returns <code>void</code> and computes into a local is the classic way to measure nothing at all. And <b>keeping the input in a non-final field</b> stops the compiler folding the whole call into a constant before the run begins.</p>
+
+<h4>Reading the output</h4>
+<div class="codeSample">Benchmark              Mode  Cnt   Score   Error  Units
+SlugBenchmark.slugify  avgt   10  184.2 ± 6.1   ns/op</div>
+<p><code>Cnt</code> is how many measurement iterations were counted across all forks. <code>Score</code> is the average and <code>Error</code> is the half-width of the confidence interval, and that second number is the one people skip. Two runs at 184 ± 6 and 179 ± 6 have not shown you anything: the intervals overlap, so the difference is inside the noise. If the improvement you are claiming is smaller than the error bar, you have not measured an improvement. Widen the gap, run more forks, or accept that the change is not worth the code.</p>
+<p><code>Mode</code> matters too. <code>Throughput</code> answers "operations per second", which suits a whole request path; <code>AverageTime</code> suits a small method; <code>SampleTime</code> records a distribution and is the only mode that will show you a p99, which for anything latency-sensitive is the number that actually matters.</p>
+
+<h4>The discipline around the tool</h4>
+<p><b>Benchmark the smallest thing you can attribute.</b> A benchmark of an entire service tells you the number moved and nothing about why. <b>Change one thing between runs</b>, on the same machine, with the same JDK, with nothing else running: a laptop on battery, thermally throttling, produces beautiful graphs of its own cooling fan. <b>Write the baseline down before the change</b>, because remembering it afterwards is how a 3% regression becomes a 3% improvement.</p>
+<p>And be clear about what a microbenchmark cannot do. It runs one method with warm caches, a warm branch predictor and no competing load, so it will not reproduce the cost of a cold cache line, a GC pause under real allocation pressure, or contention among sixteen threads. A microbenchmark answers "is this method faster?" A profile of the real system, from the previous two lessons, answers "does it matter?" The two questions need each other, and answering only the first is how teams end up with a heavily optimized method that was never the bottleneck.</p>`,
+docs:[['JMH samples (OpenJDK)','https://github.com/openjdk/jmh/tree/master/jmh-samples/src/main/java/org/openjdk/jmh/samples'],['JMH, Baeldung','https://www.baeldung.com/java-microbenchmark-harness']],
+ex:{title:'A benchmark that measures something',
+prompt:`Write a JMH benchmark class <code>JoinBenchmark</code> annotated <code>@BenchmarkMode(Mode.AverageTime)</code>, <code>@OutputTimeUnit(TimeUnit.NANOSECONDS)</code>, <code>@State(Scope.Benchmark)</code>, <code>@Warmup(iterations = 5)</code>, <code>@Measurement(iterations = 5)</code> and <code>@Fork(2)</code>. Give it a <b>non-final</b> field <code>private java.util.List&lt;String&gt; parts</code> initialized in an <code>@Setup</code> method to a list of a few strings. Add one <code>@Benchmark</code> method <code>public String joinWithBuilder()</code> that concatenates the parts with a <code>StringBuilder</code> and <b>returns the result</b>, so the JIT cannot delete the work.`,
+starter:`import java.util.*;
+import java.util.concurrent.TimeUnit;
+import org.openjdk.jmh.annotations.*;
+
+public class JoinBenchmark {
+
+    private List<String> parts;
+
+    public void setup() {
+    }
+
+    public String joinWithBuilder() {
+        return null;
+    }
+}`,
+solution:`import java.util.*;
+import java.util.concurrent.TimeUnit;
+import org.openjdk.jmh.annotations.*;
+
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@State(Scope.Benchmark)
+@Warmup(iterations = 5)
+@Measurement(iterations = 5)
+@Fork(2)
+public class JoinBenchmark {
+
+    private List<String> parts;
+
+    @Setup
+    public void setup() {
+        parts = new ArrayList<>(List.of("alpha", "beta", "gamma"));
+    }
+
+    @Benchmark
+    public String joinWithBuilder() {
+        StringBuilder sb = new StringBuilder();
+        for (String p : parts) {
+            sb.append(p);
+        }
+        return sb.toString();
+    }
+}`,
+tests:[{d:'Average-time mode in nanoseconds',re:'@BenchmarkMode\\s*\\(\\s*Mode\\.AverageTime\\s*\\)[\\s\\S]{0,120}?@OutputTimeUnit\\s*\\(\\s*TimeUnit\\.NANOSECONDS\\s*\\)'},
+{d:'Benchmark-scoped state holds the inputs',re:'@State\\s*\\(\\s*Scope\\.Benchmark\\s*\\)'},
+{d:'Warm-up iterations are discarded before measuring',re:'@Warmup\\s*\\(\\s*iterations\\s*=\\s*5'},
+{d:'Measurement iterations are declared',re:'@Measurement\\s*\\(\\s*iterations\\s*=\\s*5'},
+{d:'Forked JVMs, so one run cannot bias the next',re:'@Fork\\s*\\(\\s*2\\s*\\)'},
+{d:'The input field is not final, so it cannot be folded to a constant',re:'private\\s+final\\s+List\\s*<\\s*String\\s*>\\s+parts',not:true},
+{d:'@Setup builds the input outside the timed method',re:'@Setup\\s*(?:\\([^)]*\\))?\\s*public\\s+void\\s+setup\\s*\\(\\s*\\)'},
+{d:'The measured method is annotated @Benchmark',re:'@Benchmark\\s*public\\s+String\\s+joinWithBuilder\\s*\\(\\s*\\)'},
+{d:'It builds with a StringBuilder',re:'new\\s+StringBuilder\\s*\\(\\s*\\)'},
+{d:'It RETURNS the result, defeating dead-code elimination',re:'joinWithBuilder\\s*\\(\\s*\\)\\s*\\{[\\s\\S]{0,240}?return\\s+\\w+\\.toString\\s*\\(\\s*\\)\\s*;'}],
+behavior:`1. The class carries all six harness annotations, so JMH knows the mode, the unit, where state lives, how long to warm up, how long to measure, and how many JVMs to fork. 2. parts is populated in @Setup rather than at the declaration, and is not final, so the compiler cannot constant-fold the whole call away before the run starts. 3. joinWithBuilder returns the built string. A version that assigns to a local and returns void measures an empty loop, because the JIT is entitled to delete work whose result nobody consumes. 4. Running it prints a Score with an Error, and a difference smaller than the error bar is not a result. 5. Nothing here is timed by hand; System.nanoTime never appears.`,
+hints:['The six class-level annotations sit above the class declaration, one per line, in any order.','@Setup runs outside the timed region, which is exactly why the input is built there and not inside the benchmark method.','The single most important character in the whole file is the return; without it there is nothing forcing the work to happen.']}}
 ]});

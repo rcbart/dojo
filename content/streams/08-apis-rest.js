@@ -8,7 +8,7 @@ PUT    /accounts/42         → replace (200)
 PATCH  /accounts/42         → partial update (200)
 DELETE /accounts/42         → delete (204)
 GET    /accounts/42/holdings → nested resource</div>
-<p>Rules of thumb: plural nouns, never verbs in paths (<code>/getAccount</code> ✗); GET is safe &amp; cacheable; PUT and DELETE are <b>idempotent</b> (same call twice = same result); statelessness: each request carries its own auth.</p>
+<p>Rules of thumb: plural nouns, never verbs in paths (<code>/getAccount</code> ✗); GET is safe &amp; cacheable; PUT and DELETE are <b>idempotent</b> (making the call twice leaves the same end state as making it once); statelessness: each request carries its own auth.</p>
 <h4>The idea behind the constraint</h4>
 <p>REST's value is not the verbs; it is that <b>the interface is uniform across every API that follows
 it</b>. A developer who has never seen your service can guess that <code>GET /accounts/42</code> reads an
@@ -593,7 +593,7 @@ curl -L ...                                                # follow redirects</d
 want <i>back</i>. Confusing them produces the two most-searched status codes in API work: <b>415
 Unsupported Media Type</b> means the server does not accept what you sent, <b>406 Not Acceptable</b> means
 it cannot produce what you asked for. Neither is about authentication, and both are read as "the API is
-broken" by people who have not internalised the distinction.</p>
+broken" by people who have not internalized the distinction.</p>
 <p><code>Authorization</code> is a request header and never a query parameter: a token in a URL lands in
 browser history, proxy logs and the <code>Referer</code> sent to the next site. If you find yourself
 putting a credential in a query string, that is the signal to stop.</p>

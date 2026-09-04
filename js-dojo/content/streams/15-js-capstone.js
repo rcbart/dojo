@@ -131,7 +131,7 @@ run:{call:'rateLimit',cases:[
  {name:'exactly at the window edge is still inside it',args:[[0,1,2,10],3,10],expect:[true,true,true,false]},
  {name:'a limit of zero refuses everything',args:[[0,1],0,10],expect:[false,false]},
  {name:'no requests',args:[[],3,10],expect:[]}]},
-prompt:`Write <code>function rateLimit(timestamps, limit, windowMs)</code> deciding each request in order. A request at time <code>t</code> is allowed when <b>fewer than</b> <code>limit</code> previously-<b>allowed</b> requests fall inside the window, that is, have a timestamp <code>&gt; t - windowMs</code>. Return an array of booleans. A refused request must <b>not</b> be recorded, or one burst locks a client out far longer than the window.`,
+prompt:`Write <code>function rateLimit(timestamps, limit, windowMs)</code> deciding each request in order. A request at time <code>t</code> is allowed when <b>fewer than</b> <code>limit</code> previously-<b>allowed</b> requests fall inside the window, that is, have a timestamp <code>&gt;= t - windowMs</code>, so a request exactly on the window edge still counts. Return an array of booleans. A refused request must <b>not</b> be recorded, or one burst locks a client out far longer than the window.`,
 starter:`function rateLimit(timestamps, limit, windowMs) {
   return [];
 }`,
@@ -195,7 +195,11 @@ run:{call:'triageService',cases:[
  {name:'mass rejections mean the limit is too tight',args:[{loopLagMs:5,error5xxRate:0.0,heapTrend:'flat',redirectLatencyMs:20,limitRejectRate:0.6}],expect:{cause:'rate limit too tight',action:'raise the limit or widen the window'}},
  {name:'errors without any of the above need the logs',args:[{loopLagMs:5,error5xxRate:0.3,heapTrend:'flat',redirectLatencyMs:20,limitRejectRate:0.1}],expect:{cause:'application errors',action:'read the 5xx logs by request id'}},
  {name:'a leak is diagnosed before mass rejections',args:[{loopLagMs:5,error5xxRate:0.0,heapTrend:'rising',redirectLatencyMs:20,limitRejectRate:0.9}],expect:{cause:'memory leak',action:'compare two heap snapshots'}},
- {name:'everything healthy',args:[{loopLagMs:5,error5xxRate:0.0,heapTrend:'flat',redirectLatencyMs:20,limitRejectRate:0.1}],expect:{cause:'healthy',action:'no action'}}]},
+ {name:'everything healthy',args:[{loopLagMs:5,error5xxRate:0.0,heapTrend:'flat',redirectLatencyMs:20,limitRejectRate:0.1}],expect:{cause:'healthy',action:'no action'}},
+ {name:'lag of exactly 100 has not crossed the threshold',args:[{loopLagMs:100,error5xxRate:0.0,heapTrend:'flat',redirectLatencyMs:20,limitRejectRate:0.1}],expect:{cause:'healthy',action:'no action'}},
+ {name:'a reject rate of exactly 0.5 is still tolerated',args:[{loopLagMs:5,error5xxRate:0.0,heapTrend:'flat',redirectLatencyMs:20,limitRejectRate:0.5}],expect:{cause:'healthy',action:'no action'}},
+ {name:'a 5xx rate of exactly 0.1 is still tolerated',args:[{loopLagMs:5,error5xxRate:0.1,heapTrend:'flat',redirectLatencyMs:20,limitRejectRate:0.1}],expect:{cause:'healthy',action:'no action'}},
+ {name:'just past each threshold, the first check still wins',args:[{loopLagMs:101,error5xxRate:0.11,heapTrend:'flat',redirectLatencyMs:20,limitRejectRate:0.51}],expect:{cause:'blocked event loop',action:'CPU profile the redirect path'}}]},
 prompt:`Write <code>function triageService(m)</code> returning <code>{ cause, action }</code> from live metrics, in this order. <code>loopLagMs</code> above 100 &rarr; <code>"blocked event loop"</code> / <code>"CPU profile the redirect path"</code>. Then <code>heapTrend</code> of <code>"rising"</code> &rarr; <code>"memory leak"</code> / <code>"compare two heap snapshots"</code>. Then <code>limitRejectRate</code> above 0.5 &rarr; <code>"rate limit too tight"</code> / <code>"raise the limit or widen the window"</code>. Then <code>error5xxRate</code> above 0.1 &rarr; <code>"application errors"</code> / <code>"read the 5xx logs by request id"</code>. Otherwise <code>"healthy"</code> / <code>"no action"</code>.`,
 starter:`function triageService(m) {
   return { cause: null, action: null };

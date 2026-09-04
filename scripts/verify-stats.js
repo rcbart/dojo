@@ -165,3 +165,32 @@ if (wrong.length) {
   process.exit(1);
 }
 console.log(`docs/home.html states ${gateCount} CI gates, which is how many the workflow runs.`);
+
+/* The home page deep-links into each course with /course/#fragment. Those
+   fragments are not static ids: engine/boot.js slugifies every stream TITLE
+   and substring-matches the hash against it, so verify-links.py can only
+   report them as unresolved notes. That means retitling a stream silently
+   breaks a front-page link. Resolve them here the same way the router does. */
+const COURSES = { '/identity/': 'identity-dojo', '/dev/': '.', '/js/': 'js-dojo' };
+const slugify = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+let dead = 0, checked = 0;
+for (const [prefix, root] of Object.entries(COURSES)) {
+  const links = [...home.matchAll(new RegExp(`href="${prefix}#([a-z0-9-]+)"`, 'g'))].map(m => m[1]);
+  if (!links.length) continue;
+  let streams;
+  try { streams = fromSource(root); } catch (e) { continue; }
+  const slugs = streams.map(s => slugify(s.title));
+  for (const frag of links) {
+    checked++;
+    if (!slugs.some(s => s.indexOf(frag) !== -1)) {
+      console.error(`  docs/home.html: "${prefix}#${frag}" matches no stream title in ${root}`);
+      dead++;
+    }
+  }
+}
+if (dead) {
+  console.error('\nA stream was retitled, or the link is wrong. engine/boot.js opens the');
+  console.error('stream whose slugified title CONTAINS the fragment.');
+  process.exit(1);
+}
+console.log(`${checked} home-page course deep link(s) resolve to a stream title.`);

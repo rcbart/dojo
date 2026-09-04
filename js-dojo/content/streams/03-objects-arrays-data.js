@@ -133,7 +133,8 @@ rather than the value you meant. Always pass it.</p>
 arr.findIndex(fn)   // its index, or -1
 arr.some(fn)        // true if ANY match      (short-circuits)
 arr.every(fn)       // true if ALL match      (short-circuits; true when empty)
-arr.includes(v)     // membership, using === (and it finds NaN, unlike indexOf)
+arr.includes(v)     // membership. it matches NaN, which indexOf does not,
+                    // because it compares with SameValueZero, not ===
 arr.flat(depth)     // flattens nested arrays
 arr.flatMap(fn)     // map then flatten one level
 arr.at(-1)          // last element - cleaner than arr[arr.length - 1]
@@ -246,7 +247,7 @@ const { missing = "n/a" } = user;         // default for an absent key
 const { address: { city } } = user;       // nested
 
 const [first, second] = [10, 20];         // arrays destructure by POSITION
-const [, third] = [1, 2, 3];              // skip with a hole -> 2? no: 2
+const [, middle] = [1, 2, 3];             // an empty slot skips a position: 2
 const [head, ...tail] = [1, 2, 3];        // head 1, tail [2, 3]
 
 // swapping, with no temporary:
@@ -351,7 +352,8 @@ s.add(4);  s.has(2);  s.delete(1);  s.size;
 
 const unique = [...new Set(arr)];        // the idiomatic dedupe
 
-// uniqueness uses ===, so OBJECTS are compared by reference:
+// uniqueness uses SameValueZero: like === except NaN equals itself,
+// so two NaNs collapse to one. OBJECTS are compared by reference:
 new Set([{a:1}, {a:1}]).size             // 2 - two different objects</div>
 
 <h4>JSON: and what it silently loses</h4>

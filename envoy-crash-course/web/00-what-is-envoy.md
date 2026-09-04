@@ -87,7 +87,7 @@ for modern microservice/cloud-native systems:
 The trade-off: Envoy's configuration is **larger and more verbose** than an nginx config,
 because it exposes so much control. This course's job is to make that verbosity feel logical.
 
-## A tiny taste of the config (don't worry about details yet)
+## A tiny taste of the config (the details come later)
 
 Everything Envoy does is expressed in structured config like this. Skim it; you'll write and
 run exactly this in Module 02:

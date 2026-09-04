@@ -6,9 +6,9 @@
 <title>Ron Bar-Tor · roniam.dev · Engineering Manager, identity &amp; access</title>
 <meta name="description" content="Ron Bar-Tor is an engineering manager specializing in identity and access management, sharing accumulated knowledge through five learning paths, spanning identity, software engineering, JavaScript, machine learning and cloud-native infrastructure, and essays on engineering management. Built to develop engineers, not park them in tutorial hell.">
 <meta property="og:title" content="Ron Bar-Tor · roniam.dev">
-<meta property="og:description" content="roniam = Ron + IAM. Built to develop engineers, not park them in tutorial hell. 612 lessons, every one ends with you doing the work.">
+<meta property="og:description" content="roniam = Ron + IAM. Built to develop engineers, not park them in tutorial hell. 625 lessons, every one ends with you doing the work.">
 <meta property="og:url" content="https://roniam.dev/">
-<meta property="og:image" content="https://roniam.dev/img/og.png?v=612">
+<meta property="og:image" content="https://roniam.dev/img/og.png?v=20260904">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -57,7 +57,7 @@
   .snav.post{font-weight:500;font-size:13px;color:#b9b0e6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .snone{display:block;color:#b9b0e0;font-size:12.5px;padding:4px 9px;font-style:italic}
   .sfoot{margin-top:auto;padding-top:20px}
-  .mailme{display:block;text-align:center;background:var(--grad);color:#130f26;font-weight:800;
+  .mailme{display:block;text-align:center;background:var(--grad);color:#000;font-weight:800;
           font-size:14.5px;padding:12px 14px;border-radius:10px;cursor:pointer}
   .mailme:hover{filter:brightness(1.08);text-decoration:none}
   .slinks{display:flex;gap:14px;justify-content:center;margin-top:12px;font-size:13px}
@@ -96,7 +96,7 @@
   .secdesc b{color:var(--ink)}
 
   .skip{position:absolute;left:-9999px;top:0;z-index:100;background:var(--panel);
-    color:var(--accent);font-weight:700;padding:12px 18px;border:2px solid var(--accent);
+    color:var(--violet-ink);font-weight:700;padding:12px 18px;border:2px solid var(--violet-ink);
     border-radius:0 0 10px 0;text-decoration:none}
   .skip:focus{left:0}
   .tool{margin-top:20px;background:var(--teal-tint,#f0fdfa);border:1px solid var(--teal-line,#99f6e4);
@@ -121,17 +121,17 @@
   .stat{flex:1 1 140px;padding:16px 18px;border-right:1px solid var(--line)}
   .stat:last-child{border-right:0}
   .stat b{display:block;font-family:var(--serif);font-size:29px}
-  .stat:nth-child(1) b{color:var(--amber)} .stat:nth-child(2) b{color:var(--rose)}
-  .stat:nth-child(3) b{color:var(--violet)} .stat:nth-child(4) b{color:var(--teal)}
+  .stat:nth-child(1) b{color:var(--amber-ink)} .stat:nth-child(2) b{color:var(--rose-ink)}
+  .stat:nth-child(3) b{color:var(--violet-ink)} .stat:nth-child(4) b{color:var(--teal-ink)}
   .stat:nth-child(5) b{color:var(--ink)}
   .stat span{font-size:12.5px;color:var(--muted)}
 
   .cta{display:inline-block;font-weight:700;font-size:15px;padding:12px 20px;border-radius:10px;
-       background:var(--violet);color:#fff;text-decoration:none;transition:filter .15s}
+       background:var(--violet-ink);color:#fff;text-decoration:none;transition:filter .15s}
   .cta:hover{filter:brightness(1.08);text-decoration:none}
   .cta:focus-visible{outline:3px solid var(--violet-ink);outline-offset:3px}
 
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:16px}
   .card{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--c,var(--violet));
         border-radius:14px;padding:22px;display:flex;flex-direction:column;
         transition:transform .15s,box-shadow .15s}
@@ -143,7 +143,7 @@
   .card .nums b{color:var(--ink)}
   .card .go{font-weight:700;font-size:14px;color:var(--ci,var(--violet-ink))}
 
-  .prin{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+  .prin{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:16px}
   .p-card{border:1px solid var(--line);border-left:4px solid var(--c,var(--violet));border-radius:14px;
           padding:20px 22px;background:var(--panel)}
   .p-card h3{font-family:var(--serif);font-size:18px;margin:0 0 8px;font-style:italic}
@@ -223,7 +223,7 @@
 </defs></svg>
 
 <aside>
-  <a class="brand" href="/"><svg width="26" height="26" viewBox="0 0 32 32"><defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset=".5" stop-color="#f43f5e"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect x="1" y="1" width="30" height="30" rx="8" fill="#221a44"/><g fill="none" stroke="url(#tg)" stroke-width="2.4" stroke-linecap="round"><path d="M5 10.5 Q16 8 27 10.5" stroke-width="2.8"/><path d="M7.5 14.5 H24.5"/><path d="M10 11 V25"/><path d="M22 11 V25"/></g></svg>
+  <a class="brand" href="/"><svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset=".5" stop-color="#f43f5e"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect x="1" y="1" width="30" height="30" rx="8" fill="#221a44"/><g fill="none" stroke="url(#tg)" stroke-width="2.4" stroke-linecap="round"><path d="M5 10.5 Q16 8 27 10.5" stroke-width="2.8"/><path d="M7.5 14.5 H24.5"/><path d="M10 11 V25"/><path d="M22 11 V25"/></g></svg>
   <span>ron<span class="iam">iam</span>.dev</span></a>
   <button id="menuToggle" aria-label="Show navigation" aria-expanded="false">&#9776;</button>
   <div class="role"><b>Ron Bar-Tor</b><br>Engineering Manager<br>Identity &amp; access management</div>
@@ -277,7 +277,7 @@
     cover to cover, every single night. Sam-I-Am never left me. So here is mine: Ron-I-AM. Identity
     in both senses, the field I work in and who I am.</p>
 
-    <p class="lede">Growing engineers is the part of this job I care most about, and this site is
+    <p class="lede">Developing engineers is what I care most about in this job, and this site is
     that instinct with the volume turned up. Most of what I know arrived slowly, from a handful of
     people who took the time, and in the gaps between them I worked it out myself. I would rather
     hand it over than watch someone spend the same years on it. So everything here is written the
@@ -310,9 +310,9 @@
     time, redirects pointing to the wrong place, federation between companies that don't really know
     how that works, SSO as a protocol rather than an experience, and authentication code that
     worked until it didn't. If you want to know how I actually think about this stuff, take the
-    stream. Every flow is documented and diagrammed. The Identity Dojo is designed with plain
-    English first and technicalities later, and I also dig into the attacks that necessitated these
-    solutions. Start wherever it hurts:
+    Identity Dojo. Every flow is documented and diagrammed, plain English first and the technical
+    detail second, and I dig into the attacks each of these solutions exists to stop.
+    Start wherever it hurts:
     <a href="/identity/#openid-connect">OAuth 2.0 &amp; OIDC</a> · <a href="/identity/#saml">SAML &amp; Web SSO</a> ·
     <a href="/identity/#authentication-methods">WebAuthn &amp; passkeys</a> · <a href="/identity/#enterprise-identity">Kerberos &amp; AD</a> ·
     <a href="/identity/#service-to-service">service-to-service auth &amp; SPIFFE</a> ·
@@ -342,8 +342,8 @@
         <p>The conductor is not the best violinist in the orchestra, but the vision comes to life
         through the musicians. The engineers I work with are at the coal face every day. They're
         experts, or working to become ones, and they're doing what they love. I trust them to do the
-        best job, and that empowers me to unleash them on problems. And if they struggle along the
-        way, we work together to build whatever they need to succeed.</p>
+        best job, and that empowers me to unleash them on problems. And when they hit
+        something hard, we work together to build whatever they need to succeed.</p>
         <a class="receipt" href="/blog/art-of-delegation/" data-needs="art-of-delegation">The long version, written up</a>
       </div>
       <div class="p-card" style="--c:var(--violet);--ci:var(--violet-ink)">
@@ -402,19 +402,18 @@
   <section id="develop">
     <div class="k cyan">Learning by doing</div>
     <h2>Things I've Learned, Written Down</h2>
-    <p class="secdesc">Growing engineers is the part of this job I care most about. Every dojo runs on <b>belts</b>, white to black, and what each belt asks for is
-    written down, not felt. You don't grow because you
-    read the lesson, you do it by doing the work, and then you deep dive. You not only understand
-    the mechanics and the syntax, you understand the <b>intent</b>, and you can apply it over and
-    over again, in the real world. That is the same rule I
-    use with a team: reading about it isn't doing it, and I would rather watch someone struggle
-    through an exercise than watch them watch me solve it.</p>
+    <p class="secdesc">Growing engineers is the basis of every successful leader. Every dojo runs on <b>belts</b>, white to black, and what each belt asks for is
+    written down, not felt. Reading a lesson doesn't move you up one. Doing the work does, and then
+    going further than the work asked for, until you have the <b>intent</b> as well as the mechanics
+    and the syntax. That is the part that survives contact with a problem nobody wrote a lesson
+    about. It is the same rule I use with a team: reading about it isn't doing it, and I would
+    rather watch someone work through an exercise than watch them watch me solve it.</p>
 
 
     <a class="receipt" href="/skills-rubric.html">The skills rubric: where you actually stand</a>
 
     <p style="margin-top:18px">And I hold the material to the same bar I would hold a team to. Every
-    push runs sixteen checks, and one of them takes all <b>2,990 assertions</b> behind the graded
+    push runs sixteen checks, and one of them takes all <b>3,095 assertions</b> behind the graded
     exercises and runs them against their own reference solutions. If a single one fails, the build
     fails. That has stopped my own work more than once, which is the point of it. A bar you can wave
     yourself through isn't a bar.</p>
@@ -447,8 +446,8 @@
     <div class="stats">
       <div class="stat"><b>0</b><span>dependencies</span></div>
       <div class="stat"><b>71</b><span>streams</span></div>
-      <div class="stat"><b>612</b><span>lessons</span></div>
-      <div class="stat"><b>749</b><span>hands-on exercises</span></div>
+      <div class="stat"><b>625</b><span>lessons</span></div>
+      <div class="stat"><b>763</b><span>hands-on exercises</span></div>
     </div>
 
     <p class="secdesc" style="margin-top:18px"><a class="cta" href="/courses/">See all nine courses &rarr;</a></p>
@@ -503,7 +502,7 @@
       <input type="email" name="email" required placeholder="you@example.com" aria-label="Email address"
              style="flex:1;min-width:200px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font:inherit">
       <button type="submit"
-              style="padding:9px 16px;border:0;border-radius:8px;background:var(--violet);color:#fff;font:inherit;font-weight:600;cursor:pointer">Get new posts by email</button>
+              style="padding:9px 16px;border:0;border-radius:8px;background:var(--violet-ink);color:#fff;font:inherit;font-weight:600;cursor:pointer">Get new posts by email</button>
     </form>
     <div style="margin-top:8px;font-size:13px;color:var(--muted)">Monthly-ish, when the writing earns it. No tracking, unsubscribe anytime.</div>
   </div>

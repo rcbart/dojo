@@ -38,7 +38,11 @@ for (const s of STREAMS) {
     lessons++;
     if (ids.has(l.id)) dups.push(l.id);
     ids.add(l.id);
-    if (!s.tournament && !s.project) belt++;
+    // Must match the engine's totalLessons(), which is the denominator of the
+    // belt percentage: tournament, project AND dan streams all carry no belt
+    // credit. This line omitted dan, so the figure it printed was 15 lessons
+    // higher than the number the learner's belt bar is actually measured against.
+    if (!s.tournament && !s.project && !s.dan) belt++;
     const exs = l.exs || (l.ex ? [l.ex] : []);
     if (!exs.length) { console.error('NO EXERCISES', l.id); failures++; }
     exs.forEach((e, i) => {

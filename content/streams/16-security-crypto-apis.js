@@ -9,7 +9,7 @@ String hex = HexFormat.of().formatHex(hash);       // Java 17+
 // PASSWORD storage, must be SLOW and SALTED. Never bare SHA-256!
 byte[] salt = new byte[16];
 new SecureRandom().nextBytes(salt);                 // SecureRandom, never Random
-PBEKeySpec spec = new PBEKeySpec(password, salt, 210_000, 256);  // OWASP-level iterations
+PBEKeySpec spec = new PBEKeySpec(password, salt, 600_000, 256);  // OWASP figure for PBKDF2-HMAC-SHA256
 SecretKeyFactory f = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
 byte[] derived = f.generateSecret(spec).getEncoded();
 // store: salt + iterations + derived, verify by re-deriving and comparing
@@ -17,7 +17,7 @@ byte[] derived = f.generateSecret(spec).getEncoded();
 <p>Why slow &amp; salted: a fast hash lets attackers try billions of guesses per second against a leaked table; the salt kills rainbow tables; iterations make each guess cost real time. In new systems prefer Argon2/bcrypt via a library (Spring Security's <code>PasswordEncoder</code>); PBKDF2 is the built-in JCA option. In CIAM, password storage policy is an audit line item; this is the vocabulary behind it.</p>
 
 <h4>Choosing the work factor</h4>
-<p>Every password hash has a cost parameter: PBKDF2 iterations, bcrypt rounds, Argon2's memory and time. It is not a constant you copy once; it is a <b>budget</b>. Pick the highest cost your login endpoint can absorb at peak, then revisit it as hardware improves. The usual calibration is to target roughly 250 milliseconds per hash on production hardware, which is imperceptible to a user logging in once and ruinous to an attacker trying a leaked list.</p>
+<p>Every password hash has a cost parameter: PBKDF2 iterations, bcrypt rounds, Argon2's memory and time. The iteration count is tied to the <i>hash inside</i> the construction, which is where people go wrong copying a number out of context: OWASP's current figures are 600,000 iterations for PBKDF2-HMAC-SHA256 and 210,000 for PBKDF2-HMAC-SHA512, and using the SHA-512 number with a SHA-256 factory quietly gives you roughly a third of the intended cost. It is not a constant you copy once; it is a <b>budget</b>. Pick the highest cost your login endpoint can absorb at peak, then revisit it as hardware improves. The usual calibration is to target roughly 250 milliseconds per hash on production hardware, which is imperceptible to a user logging in once and ruinous to an attacker trying a leaked list.</p>
 <p>That cost has a direct consequence worth designing for: password verification is now expensive on purpose, so an unauthenticated endpoint that hashes on every request is a denial-of-service surface. Rate-limit before you hash, not after.</p>
 
 <h4>Why Argon2 beats PBKDF2 on modern hardware</h4>
@@ -28,7 +28,7 @@ byte[] derived = f.generateSecret(spec).getEncoded();
 <p>Two more rules that fail quietly. Compare with a <b>constant-time</b> function (<code>MessageDigest.isEqual</code>) so response timing does not leak how much of a value matched. And never truncate or pre-hash into bcrypt without knowing its 72-byte input limit: passwords longer than that are silently ignored past the cut.</p>`,
 docs:[['OWASP Password Storage Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html'],['MessageDigest (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/security/MessageDigest.html']],
 ex:{title:'Hash the right way twice',
-prompt:`Write <code>Hashing</code> with: <code>static String sha256Hex(byte[] data)</code> returning the <b>SHA-256 digest of data as a lowercase hex string</b> (64 chars) using <code>MessageDigest</code> + <code>HexFormat</code>; <code>static byte[] newSalt()</code> returning <b>16 random bytes</b> from <code>SecureRandom</code> (different every call); and <code>static byte[] hashPassword(char[] password, byte[] salt)</code> returning the <b>PBKDF2 hash of the password with that salt</b>: <code>PBKDF2WithHmacSHA256</code>, <b>210_000 iterations</b>, 256-bit key length (same password+salt → same hash; different salt → different hash). Declare <code>throws Exception</code> where needed.`,
+prompt:`Write <code>Hashing</code> with: <code>static String sha256Hex(byte[] data)</code> returning the <b>SHA-256 digest of data as a lowercase hex string</b> (64 chars) using <code>MessageDigest</code> + <code>HexFormat</code>; <code>static byte[] newSalt()</code> returning <b>16 random bytes</b> from <code>SecureRandom</code> (different every call); and <code>static byte[] hashPassword(char[] password, byte[] salt)</code> returning the <b>PBKDF2 hash of the password with that salt</b>: <code>PBKDF2WithHmacSHA256</code>, <b>600_000 iterations</b>, 256-bit key length (same password+salt → same hash; different salt → different hash). Declare <code>throws Exception</code> where needed.`,
 starter:`import java.security.*;
 import java.util.HexFormat;
 import javax.crypto.*;
@@ -47,8 +47,8 @@ public class Hashing {
         return null;
     }
 }`,
-tests:[{d:'SHA-256 MessageDigest',re:'MessageDigest\\.getInstance\\s*\\(\\s*"SHA-256"\\s*\\)'},{d:'Hex via HexFormat',re:'HexFormat\\.of\\s*\\(\\s*\\)\\.formatHex'},{d:'SecureRandom for the salt (not Random)',re:'new\\s+SecureRandom\\s*\\(\\s*\\)'},{d:'PBKDF2WithHmacSHA256 factory',re:'SecretKeyFactory\\.getInstance\\s*\\(\\s*"PBKDF2WithHmacSHA256"\\s*\\)'},{d:'210,000 iterations, 256-bit key',re:'PBEKeySpec\\s*\\(\\s*password\\s*,\\s*salt\\s*,\\s*210_?000\\s*,\\s*256\\s*\\)'},{d:'java.util.Random never used',re:'new\\s+Random\\s*\\(',not:true}],
-behavior:`1. sha256Hex("abc".getBytes()) returns the well-known 64-char hex digest starting "ba7816bf". 2. newSalt() returns 16 bytes, different every call. 3. hashPassword is deterministic for the same password+salt and different for a different salt. 4. Iterations are 210_000; the point of the exercise is that password hashing must be expensive.`,
+tests:[{d:'SHA-256 MessageDigest',re:'MessageDigest\\.getInstance\\s*\\(\\s*"SHA-256"\\s*\\)'},{d:'Hex via HexFormat',re:'HexFormat\\.of\\s*\\(\\s*\\)\\.formatHex'},{d:'SecureRandom for the salt (not Random)',re:'new\\s+SecureRandom\\s*\\(\\s*\\)'},{d:'PBKDF2WithHmacSHA256 factory',re:'SecretKeyFactory\\.getInstance\\s*\\(\\s*"PBKDF2WithHmacSHA256"\\s*\\)'},{d:'600,000 iterations, 256-bit key',re:'PBEKeySpec\\s*\\(\\s*password\\s*,\\s*salt\\s*,\\s*600_?000\\s*,\\s*256\\s*\\)'},{d:'java.util.Random never used',re:'new\\s+Random\\s*\\(',not:true}],
+behavior:`1. sha256Hex("abc".getBytes()) returns the well-known 64-char hex digest starting "ba7816bf". 2. newSalt() returns 16 bytes, different every call. 3. hashPassword is deterministic for the same password+salt and different for a different salt. 4. Iterations are 600_000, the OWASP figure for PBKDF2-HMAC-SHA256; the point of the exercise is that password hashing must be expensive, and that the number belongs to the hash you paired it with.`,
 hints:['sha256Hex is two lines: digest, then <code>HexFormat.of().formatHex(hash)</code>.','newSalt: <code>byte[] s = new byte[16]; new SecureRandom().nextBytes(s); return s;</code>','hashPassword: build the PBEKeySpec, get the PBKDF2WithHmacSHA256 factory, <code>return f.generateSecret(spec).getEncoded();</code>'],
 solution:`import java.security.*;
 import java.util.HexFormat;
@@ -68,7 +68,7 @@ public class Hashing {
     }
 
     static byte[] hashPassword(char[] password, byte[] salt) throws Exception {
-        PBEKeySpec spec = new PBEKeySpec(password, salt, 210_000, 256);
+        PBEKeySpec spec = new PBEKeySpec(password, salt, 600_000, 256);
         SecretKeyFactory f = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
         return f.generateSecret(spec).getEncoded();
     }

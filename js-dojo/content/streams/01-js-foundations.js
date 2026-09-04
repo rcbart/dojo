@@ -1,4 +1,4 @@
-STREAMS.push({icon:'🟨',title:'JavaScript Foundations',blurb:'Assuming nothing: what JavaScript is and where it runs, how a program is a sequence of statements, values and the eight types, variables and the three declaration keywords, operators, and the coercion rules that make so much JavaScript behavior surprising until you know them.',lessons:[
+STREAMS.push({icon:'🟨',title:'JavaScript Foundations',blurb:'Assuming nothing: what JavaScript is and where it runs, how a program is a sequence of statements, values and the eight types, variables and the three declaration keywords, operators, the coercion rules that make so much JavaScript behavior surprising until you know them, and regular expressions for the questions you have to ask about text.',lessons:[
 
 {id:'js1',title:'What JavaScript is, and where it runs',body:`
 <p>🌱 <b>Starting from zero.</b> A <b>program</b> is a list of instructions. A <b>programming language</b> is
@@ -437,7 +437,7 @@ will use constantly, and the conversions that go wrong quietly.</p>
 <h4>Working with strings</h4>
 <div class="codeSample" data-hl>const s = "  Hello, World  ";
 
-s.length              // 17          a property, not a method - no ()
+s.length              // 16          a property, not a method - no ()
 s.trim()              // "Hello, World"
 s.toUpperCase()       // "  HELLO, WORLD  "
 s.includes("World")   // true
@@ -536,6 +536,119 @@ solution:`function greet(name) {
 }`,
 tests:[{d:'uses a template literal',re:'return\\s+(?!!)[^;]{0,160}?`'},{d:'trims the input',re:'\\.trim\\(\\)'},{d:'falls back for an empty name',re:'"stranger"'}],
 behavior:`greet("  Ada  ") is "Hello, Ada!" and greet("   ") is "Hello, stranger!". Note that trim() returns a new string; assigning its result is what makes this work, since strings are immutable.`,
-hints:['Assign the trimmed value; trim() does not modify the original.','A ternary inside the template literal handles the fallback.','Remember the exclamation mark.']}]}
+hints:['Assign the trimmed value; trim() does not modify the original.','A ternary inside the template literal handles the fallback.','Remember the exclamation mark.']}]},
+{id:'jsregex',title:'Regular expressions, and where they stop',body:`
+<p>Nearly every program has to ask questions about the <i>shape</i> of some text. Is this a valid slug?
+Which of these lines are warnings? Where are the numbers in this string? A <b>regular expression</b> is a
+small language for describing that shape, and JavaScript has it built in, with its own literal syntax.</p>
+
+<div class="codeSample" data-hl>const slug = /^[a-z0-9-]+$/;             // a LITERAL, written between slashes
+const dyn  = new RegExp("^" + safe + "$");  // built from a string, when you must
+
+slug.test("hello-world")        // true    the cheapest question: does it match?
+"a1b2".match(/\\d/)              // ["1", ...]  the FIRST match, with details
+"a1b2".match(/\\d/g)             // ["1","2"]   every match, as plain strings
+[..."a1b2".matchAll(/\\d/g)]     // every match WITH its groups and its index
+"a-b".replace(/-/g, "_")        // "a_b"       replace needs /g for all of them
+"a, b,c".split(/,\\s*/)          // ["a","b","c"]</div>
+
+<h4>The pieces you will actually use</h4>
+<div class="codeSample" data-hl>.        any character except a newline
+\\d  digit    \\w  letter/digit/underscore    \\s  whitespace    \\b  word boundary
+[abc]    one of these     [^abc]  none of these     [a-z]  a range
+a?  0 or 1      a*  0 or more      a+  1 or more      a{2,4}  between 2 and 4
+^   start of the input          $   end of the input
+(...)    a CAPTURING group       (?:...)  a group that captures nothing
+(?&lt;year&gt;\\d{4})    a NAMED group, read back as m.groups.year
+a|b      either one
+
+FLAGS   g  find every match     i  ignore case     m  ^ and $ match per line
+        s  let . match newlines too       u  treat the pattern as Unicode</div>
+
+<h4>Anchors are not decoration</h4>
+<p>The most common regex bug by a wide margin is forgetting that a pattern matches <i>anywhere</i> in the
+input unless you say otherwise:</p>
+<div class="codeSample" data-hl>/[a-z]+/.test("Hello!")        // true   - it found "ello" and stopped looking
+/^[a-z]+$/.test("Hello!")      // false  - now the WHOLE input must match
+
+// a validator written without ^ and $ accepts almost anything, and it
+// passes every happy-path test you thought to write.</div>
+
+<h4>Reading a match</h4>
+<div class="codeSample" data-hl>const m = "[10:30] WARN: disk full".match(/^\\[(.+?)\\] (\\w+): (.*)$/);
+m[0]     // the whole matched text
+m[1]     // "10:30"        capture groups are numbered from 1, left to right
+m[2]     // "WARN"
+m[3]     // "disk full"
+
+// match() returns NULL when nothing matched, so check before you index.
+// m[1] on null throws a TypeError, and it throws one line after the
+// mistake, which is the errors stream's point about reading traces.</div>
+
+<h4>Two traps, before you meet them in production</h4>
+<p><b>A global regex carries state.</b> A pattern with <code>/g</code> stored in a variable remembers a
+<code>lastIndex</code> between calls, so calling <code>test</code> on the same object repeatedly returns
+true, then false, then true. Build the regex where you use it, or leave the flag off when you only want a
+yes or no.</p>
+<p><b>Catastrophic backtracking is a denial of service.</b> Nesting quantifiers over overlapping
+alternatives, as in <code>/(a+)+$/</code>, can take exponential time on an input that almost matches. That
+is <b>ReDoS</b>, and it is why the Node lesson lists a regular expression among the things that block the
+event loop for every connected client. Keep patterns flat, do not nest quantifiers, and never build one
+out of user input.</p>
+
+<h4>Where regular expressions stop</h4>
+<p>A regex is the right tool for a small, flat, local pattern. It is the wrong tool for anything nested,
+because a regular expression cannot count: HTML, JSON and source code need a parser, and every attempt to
+match them with a pattern eventually meets an input that breaks it. Prefer a built-in when one exists.
+<code>URL</code> beats a URL pattern, <code>includes</code> beats <code>/x/.test</code>, and
+<code>Number.isFinite</code> beats a numeric pattern, as the previous lesson showed. And a pattern nobody
+can read in six months has a cost of its own, so name it and comment the ones that are not obvious.</p>
+`,
+docs:[['MDN (Regular expressions guide)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions'],['MDN (RegExp)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp'],['OWASP (Regular expression denial of service)','https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS']],
+exs:[
+{title:'Anchor the pattern',diff:'easy',lang:'js',
+run:{call:'slugOk',cases:[
+ {name:'a normal slug',args:['hello-world'],expect:true},
+ {name:'a single character is enough',args:['a'],expect:true},
+ {name:'digits are allowed',args:['123'],expect:true},
+ {name:'an unanchored pattern would wrongly accept this',args:['Hello'],expect:false},
+ {name:'and this: a valid run of characters sitting inside junk',args:['!!hello!!'],expect:false},
+ {name:'spaces are not allowed',args:['hello world'],expect:false},
+ {name:'underscores are not in the character class',args:['hello_world'],expect:false},
+ {name:'the empty string has no characters to match',args:[''],expect:false},
+ {name:'accented letters are outside a-z',args:['café'],expect:false}]},
+prompt:`Write <code>function slugOk(text)</code> returning <code>true</code> only when the whole of <code>text</code> is made of lowercase letters, digits and hyphens, with at least one character. Use a single anchored regular expression and <code>test</code>. The cases include strings that contain a valid run inside other characters, which is what an unanchored pattern gets wrong.`,
+starter:`function slugOk(text) {
+  return false;
+}`,
+solution:`function slugOk(text) {
+  return /^[a-z0-9-]+$/.test(text);   // ^ and $ force the WHOLE string
+}                                      // + means at least one character`,
+tests:[{d:'anchors at the start',re:'/\\^'},{d:'anchors at the end',re:'\\$/'},{d:'allows lowercase letters, digits and hyphens',re:'\\[a-z0-9\\-?\\]'},{d:'requires at least one character',re:'\\]\\+'},{d:'asks the regex the question',re:'return\\s+(?!!)[^;]{0,80}?\\.test\\s*\\('}],
+behavior:`Nine cases are executed. Two of them exist only to catch the missing anchors: "Hello" and "!!hello!!" both contain a perfectly valid run of lowercase letters, so a pattern of /[a-z0-9-]+/ reports true for both and passes every other case in the list. The empty string separates + from *.`,
+hints:['One regular expression literal, anchored with ^ at the front and $ at the end.','The character class is lowercase letters, digits and a hyphen; put the hyphen last so it is not read as a range.','test() returns the boolean directly, so the whole body is one return.']},
+
+{title:'Capture the parts of a log line',diff:'medium',lang:'js',
+run:{call:'parseLogLine',cases:[
+ {name:'a normal line',args:['[2026-03-03T10:00:00Z] WARN: disk full'],expect:{level:'WARN',message:'disk full'}},
+ {name:'a colon inside the message is part of the message',args:['[2026-03-03T10:00:00Z] ERROR: db down: timeout after 30s'],expect:{level:'ERROR',message:'db down: timeout after 30s'}},
+ {name:'an empty message is still a match',args:['[t] INFO: '],expect:{level:'INFO',message:''}},
+ {name:'DEBUG is one of the four levels',args:['[t] DEBUG: entering loop'],expect:{level:'DEBUG',message:'entering loop'}},
+ {name:'an unknown level does not match',args:['[t] TRACE: hello'],expect:null},
+ {name:'a lowercase level does not match either',args:['[t] warn: hello'],expect:null},
+ {name:'a line with no timestamp does not match',args:['WARN: disk full'],expect:null},
+ {name:'the empty string does not match',args:[''],expect:null}]},
+prompt:`Log lines arrive as <code>[TIMESTAMP] LEVEL: message</code>. Write <code>function parseLogLine(line)</code> returning <code>{ level, message }</code>, or <code>null</code> when the line does not have that shape. <code>LEVEL</code> must be exactly one of <code>DEBUG</code>, <code>INFO</code>, <code>WARN</code> or <code>ERROR</code>; the message runs to the end of the line and may contain colons, or be empty. Use capture groups rather than splitting on <code>":"</code>.`,
+starter:`function parseLogLine(line) {
+  return null;
+}`,
+solution:`function parseLogLine(line) {
+  const m = line.match(/^\\[[^\\]]*\\] (DEBUG|INFO|WARN|ERROR): (.*)$/);
+  if (m === null) return null;             // match() returns null, not []
+  return { level: m[1], message: m[2] };   // groups are numbered from 1
+}`,
+tests:[{d:'anchors the whole line',re:'/\\^'},{d:'lists the four levels as alternatives',re:'DEBUG\\|INFO\\|WARN\\|ERROR'},{d:'captures the message to the end of the line',re:'\\(\\.\\*\\)\\$'},{d:'checks for null before indexing the match',re:'(?:===?\\s*null|!\\s*m\\b|m\\s*\\?)'},{d:'returns the captured groups themselves, not a negation of them',re:'return\\s+(?!!)[^;]{0,120}?m\\[1\\][\\s\\S]{0,120}?m\\[2\\]'}],
+behavior:`Eight cases execute. The second is the one that rules out splitting on ":", because the message itself contains one; the greedy (.*) at the end takes everything that is left, which is exactly what you want here. The third pins (.*) rather than (.+), since an empty message is a real log line. And the two rejected levels show what the alternation and the anchors are for: "TRACE" is not in the list and "warn" is the wrong case, so neither matches at all.`,
+hints:['Match the bracketed timestamp with a negated class so it cannot run past the closing bracket.','Put the four level names in an alternation group, and capture it.','Capture the rest with (.*) anchored at $, then check for null before reading m[1] and m[2].']}]}
 
 ]});

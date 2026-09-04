@@ -37,14 +37,14 @@
   .secsub{color:var(--muted);max-width:74ch;margin:0 0 22px}
   h3{margin:56px 0 12px;font-size:15px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted)}
 
-  .why{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+  .why{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:18px}
   .w{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);
      border-radius:10px;padding:20px 22px}
   .w h4{margin:0 0 8px;font-size:16.5px}
   .w p{margin:0;color:var(--muted);font-size:14.5px}
   .w p b{color:var(--fg)}
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin:26px 0 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:20px;margin:26px 0 0}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px;
         display:flex;flex-direction:column;transition:border-color .15s,transform .15s}
   .card:hover{border-color:var(--accent);transform:translateY(-2px)}
@@ -63,7 +63,7 @@
         border-radius:10px;padding:18px 20px;color:var(--muted);font-size:15px}
   .note b{color:var(--fg)}
   .note.amber{border-left-color:var(--amber)}
-  .more{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .more{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:12px}
   .more a{text-decoration:none;color:var(--fg);background:var(--card);border:1px solid var(--line);
           border-radius:10px;padding:14px 16px;font-size:14px;font-weight:600;transition:border-color .15s}
   .more a:hover{border-color:var(--accent)}
@@ -196,7 +196,7 @@
   </div>
 
   <p class="note amber" style="margin-top:22px"><b>151 lessons and modules of it</b>, which is
-  roughly a fifth of everything here. Code is not done when it compiles. It is done when it is
+  roughly a quarter of everything here. Code is not done when it compiles. It is done when it is
   running, observable, and someone other than you can keep it alive.</p>
 
   <h2 class="sec" id="courses">The four dojos</h2>
@@ -209,8 +209,8 @@
       <div class="icon">🛂</div>
       <h2>Identity Dojo</h2>
       <div class="stats">
-        <span class="stat">14 streams</span><span class="stat">150 lessons</span>
-        <span class="stat">160 exercises</span>
+        <span class="stat">14 streams</span><span class="stat">153 lessons</span>
+        <span class="stat">163 exercises</span>
       </div>
       <p>Identity &amp; access management, sequenced so concepts are grounded <em>before</em> the
       protocols that assume them. OAuth 2.0/2.1, OIDC, SAML, WebAuthn/FIDO2 internals, Active
@@ -219,7 +219,7 @@
       I would hand to an engineer joining my team.</p>
       <div class="row">
         <a class="go" href="/identity/">Open Identity Dojo</a>
-        <a class="go alt" href="https://github.com/rcbart/dojo/tree/main/identity-dojo">Source</a>
+        <a class="go alt" href="https://github.com/rcbart/dojo/tree/main/identity-dojo" aria-label="Identity Dojo source on GitHub">Source</a>
       </div>
     </div>
 
@@ -227,8 +227,8 @@
       <div class="icon">🥋</div>
       <h2>Dev Dojo</h2>
       <div class="stats">
-        <span class="stat">29 tracks</span><span class="stat">207 lessons</span>
-        <span class="stat">374 exercises</span>
+        <span class="stat">29 tracks</span><span class="stat">211 lessons</span>
+        <span class="stat">378 exercises</span>
       </div>
       <p>Software engineering end to end: Java &amp; the JVM, data structures &amp; algorithms,
       web &amp; HTTP, React, APIs, Spring, databases &amp; SQL, concurrency, DevOps, and a
@@ -237,7 +237,7 @@
       set of things I actually had to learn, arranged so someone can grow through them in order.</p>
       <div class="row">
         <a class="go" href="/dev/">Open Dev Dojo</a>
-        <a class="go alt" href="https://github.com/rcbart/dojo">Source</a>
+        <a class="go alt" href="https://github.com/rcbart/dojo" aria-label="Dev Dojo source on GitHub">Source</a>
       </div>
     </div>
 
@@ -246,8 +246,8 @@
       <h2>JS Dojo</h2>
       <div class="stats">
         <span class="stat pre">Foundations first</span>
-        <span class="stat">16 streams</span><span class="stat">64 lessons</span>
-        <span class="stat">106 exercises</span><span class="stat">100% real execution</span>
+        <span class="stat">16 streams</span><span class="stat">66 lessons</span>
+        <span class="stat">109 exercises</span><span class="stat">100% real execution</span>
       </div>
       <p><b>This is the foundations course, and it exists so a language gap cannot block you.</b>
       A good part of the graded work in Dev Dojo and Identity Dojo is JavaScript, alongside Java,
@@ -259,10 +259,10 @@
       streams, a secured HTTP server and a capstone. Three streams are devoted to <em>debugging</em>:
       breakpoints and the scope pane, the Network panel, tracing an OAuth redirect end to end,
       <code>node --inspect</code>, heap snapshots and CPU profiles. Every exercise runs for real:
-      618 executed cases.</p>
+      671 executed cases.</p>
       <div class="row">
         <a class="go" href="/js/">Open JS Dojo</a>
-        <a class="go alt" href="https://github.com/rcbart/dojo/tree/main/js-dojo">Source</a>
+        <a class="go alt" href="https://github.com/rcbart/dojo/tree/main/js-dojo" aria-label="JS Dojo source on GitHub">Source</a>
       </div>
     </div>
 
@@ -270,8 +270,8 @@
       <div class="icon">🧮</div>
       <h2>ML Dojo</h2>
       <div class="stats">
-        <span class="stat">12 streams</span><span class="stat">111 lessons</span>
-        <span class="stat">109 exercises</span><span class="stat">real Python in the page</span>
+        <span class="stat">12 streams</span><span class="stat">115 lessons</span>
+        <span class="stat">113 exercises</span><span class="stat">real Python in the page</span>
       </div>
       <p>Machine learning starting from Python itself, on the assumption that you have never written
       a line of it. Arrays and vectors, then the mathematics that models are actually built from:
@@ -285,7 +285,7 @@
       rigor.</b></p>
       <div class="row">
         <a class="go" href="/ml/">Open ML Dojo</a>
-        <a class="go alt" href="https://github.com/rcbart/ml-dojo">Source</a>
+        <a class="go alt" href="https://github.com/rcbart/ml-dojo" aria-label="ML Dojo source on GitHub">Source</a>
       </div>
     </div>
 
@@ -383,7 +383,7 @@
     edges, and I would rather hear about them than have you assume I know.</li>
     <li><b>Written with AI assistance, under my direction.</b> The curriculum, the sequencing and the
     technical judgments are mine; a lot of the typing was not. The
-    <a href="/#dojos">home page explains exactly how</a>, because you deserve to know that before
+    <a href="/#ai">home page explains exactly how</a>, because you deserve to know that before
     you spend forty hours here.</li>
   </ul>
 

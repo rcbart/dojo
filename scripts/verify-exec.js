@@ -12,6 +12,13 @@
 // six of its cases only because JSON.stringify made object key order
 // significant, a defect in the runtime rather than in the content.
 //
+// SQL exercises are the second real-execution path and were covered by no gate at
+// all: an exercise with lang:'sql' and a data set is graded by running the
+// learner's SELECTs and the reference's against the sample database in
+// engine/sqlengine.js, yet nothing here ever ran them. A reference that throws, or
+// names a data set that does not exist, silently downgrades the exercise to the
+// regex path for every learner. Both are checked below.
+//
 // Run: node scripts/verify-exec.js [courseDir ...]     (default: all three)
 const fs = require('fs');
 const path = require('path');
@@ -19,6 +26,15 @@ const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
 const courses = process.argv.slice(2).length ? process.argv.slice(2) : ['.', 'identity-dojo', 'js-dojo'];
+
+// The in-browser SQL engine, loaded exactly as a built page loads it.
+const sqlBox = vm.createContext({ window: {}, console });
+sqlBox.globalThis = sqlBox;
+vm.runInContext(fs.readFileSync(path.join(ROOT, 'engine/sqlengine.js'), 'utf8'), sqlBox);
+const SQLDB = sqlBox.window.SQLDB, SQL_DATASETS = sqlBox.window.SQL_DATASETS;
+// One definition of "which statements are SELECTs", the same one engine/grade.js uses.
+const sqlSelects = text => text.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ')
+  .split(';').map(s => s.trim()).filter(Boolean).filter(s => /^select/i.test(s));
 
 const canon = v => v === null || typeof v !== 'object' ? v
   : Array.isArray(v) ? v.map(canon)
@@ -37,6 +53,38 @@ const eq = (a, b) => JSON.stringify(canon(a)) === JSON.stringify(canon(b));
     for (const s of STREAMS) for (const l of s.lessons || []) {
       const exs = l.exs || (l.ex ? [l.ex] : []);
       for (const [i, e] of exs.entries()) {
+        if (e.lang === 'sql' && e.data) {
+          const id = course + ' ' + l.id + '#' + i;
+          const db = SQL_DATASETS[e.data];
+          if (!db) {
+            console.error('NO SUCH DATASET', id, '-', e.data, '- this exercise silently falls back to regex grading');
+            failures++; continue;
+          }
+          const queries = sqlSelects(e.solution || '');
+          if (!queries.length) {
+            console.error('NO SELECT IN SOLUTION', id, '- the grader has nothing to compare against');
+            failures++; continue;
+          }
+          exercises++;
+          for (const [qi, q] of queries.entries()) {
+            cases++;
+            let rows;
+            try { rows = SQLDB.run(JSON.parse(JSON.stringify(db)), q); }
+            catch (err) {
+              console.error('SQL THREW', id, '- query ' + (qi + 1), '-', err.message);
+              failures++; continue;
+            }
+            // A non-finite cell serializes to null, which the grader cannot tell
+            // apart from a real NULL, so a wrong answer could score as correct.
+            const bad = rows.find(r => Object.values(r).some(v => typeof v === 'number' && !isFinite(v)));
+            if (bad) {
+              console.error('NON-FINITE RESULT', id, '- query ' + (qi + 1), '-', JSON.stringify(bad),
+                            '- indistinguishable from NULL when graded');
+              failures++;
+            }
+          }
+          continue;
+        }
         if (!e.run) continue;
         if (e.run.mock) { skipped++; continue; }          // fetch-shape specs, checked by the worker
         exercises++;
@@ -64,5 +112,6 @@ const eq = (a, b) => JSON.stringify(canon(a)) === JSON.stringify(canon(b));
     }
   }
   console.log(`executed=${exercises} cases=${cases} skipped=${skipped} failures=${failures}`);
+  console.log('(cases counts JS run-spec cases and executed SQL queries)');
   process.exit(failures ? 1 : 0);
 })();

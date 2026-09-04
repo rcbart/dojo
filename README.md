@@ -8,30 +8,30 @@
   <a href="https://roniam.dev/js/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-JS%20Dojo-eab308" alt="JS Dojo live"></a>
   <a href="https://roniam.dev/ml/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-ML%20Dojo-f97316" alt="ML Dojo live"></a>
   <img src="https://img.shields.io/badge/streams-71-8b5cf6" alt="streams across all four dojos">
-  <img src="https://img.shields.io/badge/lessons-609-8b5cf6" alt="lessons across all four dojos">
-  <img src="https://img.shields.io/badge/exercises-702-06b6d4" alt="hands-on exercises across all four dojos">
-  <img src="https://img.shields.io/badge/quiz%20questions-1302-eab308" alt="hand-authored quiz questions across all four dojos">
-  <img src="https://img.shields.io/badge/content%20checks-2990-2ea44f" alt="content integrity assertions across the three engine-based dojos">
-  <img src="https://img.shields.io/badge/engine%20tests-35-2ea44f" alt="engine unit tests">
-  <img src="https://img.shields.io/badge/executed%20exercises-184-06b6d4" alt="exercises graded by real execution">
-  <img src="https://img.shields.io/badge/CI%20gates-13-2ea44f" alt="CI gates">
+  <img src="https://img.shields.io/badge/lessons-625-8b5cf6" alt="lessons across the four dojos plus the cloud-native modules">
+  <img src="https://img.shields.io/badge/exercises-763-06b6d4" alt="hands-on exercises across all four dojos">
+  <img src="https://img.shields.io/badge/quiz%20questions-1351-eab308" alt="hand-authored quiz questions across all four dojos">
+  <img src="https://img.shields.io/badge/content%20checks-3095-2ea44f" alt="content integrity assertions across the three engine-based dojos">
+  <img src="https://img.shields.io/badge/engine%20tests-86-2ea44f" alt="engine unit tests">
+  <img src="https://img.shields.io/badge/executed%20exercises-194-06b6d4" alt="exercises graded by real execution">
+  <img src="https://img.shields.io/badge/CI%20gates-16-2ea44f" alt="CI gates">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
 # Dojo 🥋
 
 Four interactive, self-contained learning platforms plus a five-course cloud-native path, all running
-entirely in the browser. **71 streams, 612 lessons and 749 hands-on exercises**: an in-editor coding
+entirely in the browser. **71 streams, 625 lessons and 763 hands-on exercises**: an in-editor coding
 exercise on every lesson, a belt progression, **spaced-repetition review**, a **difficulty-filtered
 practice hub**, a domain glossary with click-to-explain terms, tournaments, and end-to-end capstone
 projects.
 
 | Course | Streams | Lessons | Exercises | Quiz questions | Content checks |
 |---|--:|--:|--:|--:|--:|
-| [**Dev Dojo**](https://roniam.dev/dev/) | 29 | 207 | 374 | 397 | 1,876 |
-| [**Identity Dojo**](https://roniam.dev/identity/) | 14 | 149 | 159 | 327 | 729 |
-| [**JS Dojo**](https://roniam.dev/js/) | 16 | 64 | 106 | 192 | 385 |
-| [**ML Dojo**](https://roniam.dev/ml/) | 12 | 109 | 63 | 345 | in its own repository |
+| [**Dev Dojo**](https://roniam.dev/dev/) | 29 | 211 | 378 | 450 | 1,911 |
+| [**Identity Dojo**](https://roniam.dev/identity/) | 14 | 153 | 163 | 340 | 777 |
+| [**JS Dojo**](https://roniam.dev/js/) | 16 | 66 | 109 | 198 | 407 |
+| [**ML Dojo**](https://roniam.dev/ml/) | 12 | 115 | 113 | 363 | in its own repository |
 
 It began as a Java course (JavaDojo, which is why this repository was once named for it). **Dev Dojo**
 now spans the full stack: the Java language and JVM, computer science & algorithms, web/HTTP,
@@ -81,7 +81,7 @@ since it is built in its own repository.)*
   exercises, all the Java ones included, are checked by **regex against the shape of your answer**;
   they verify you wrote the right construct, not that your code runs correctly. Real execution is
   available where the environment allows it: **SQL** runs against sample datasets in the built-in
-  engine and **JavaScript** in a sandboxed Web Worker, which covers **184 exercises graded on actual
+  engine and **JavaScript** in a sandboxed Web Worker, which covers **185 exercises graded on actual
   results**. **Java** compiles and runs for real only if you start the optional local runner. Every
   exercise ships a **Run locally** panel with exact commands, which is the ground truth.
 - **Run it for real**: every exercise has a **🖥️ Run locally** panel with exact commands for your own
@@ -93,9 +93,9 @@ since it is built in its own repository.)*
 - **🧠 Quick check**: multiple-choice questions with instant feedback: not just "wrong", but which
   answer was right, why it is right, and why the option you picked is not. **Options are shuffled per
   lesson visit** in all four dojos, so the answer position can never be memorized. The bank is
-  **1,302 hand-authored questions**: 397 in Dev Dojo, 327 in Identity Dojo, 192 in JS Dojo, 345 in ML
+  **1,271 hand-authored questions**: 397 in Dev Dojo, 331 in Identity Dojo, 192 in JS Dojo, 351 in ML
   Dojo. Every one carries a written explanation of why the right answer is right, plus a per-option
-  rebuttal saying why the option you picked is wrong. Dev Dojo adds 9 more auto-generated from the
+  rebuttal saying why the option you picked is wrong. Dev Dojo adds 41 more auto-generated from the
   exercise specs. Extending the hand-authored bank to the remaining lessons is an open item.
 - **📖 Glossary**: 11 domains / 360 terms shared by Dev, Identity and JS Dojo, collapsible and
   searchable, doubling as the in-lesson click-to-explain source. ML Dojo carries its own: 8 domains,
@@ -152,11 +152,11 @@ solutions. Writing them found a third: `esc()` threw on `undefined`, which would
 than render nothing.
 
 **How grading works (honestly).** The headline number to be careful with is the **content checks**
-badge: `scripts/verify.js` runs 1,876 assertions for Dev Dojo, and 2,990 across the three
+badge: `scripts/verify.js` runs 1,911 assertions for Dev Dojo, and 3,095 across the three
 engine-based dojos, proving every exercise's reference solution matches its own regex checks and that
 ids are unique. ML Dojo has its own workflow, which executes all 62 runnable Python reference solutions against the assertions the learner is graded on. A separate gate,
 `scripts/verify-exec.js`, goes further for the exercises that are executed: it loads each reference
-solution and calls it with that exercise's own cases, 1,002 of them across 185 exercises, so a solution
+solution and calls it with that exercise's own cases, 1,089 of them across 194 exercises, so a solution
 that does not actually produce the expected result fails the build. That is a **content integrity
 gate, not a test suite for a running product**; it says the material is internally consistent, not
 that a learner's code is correct.
