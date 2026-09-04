@@ -68,7 +68,7 @@ async function readBody(req, limitBytes = 1_000_000) {
 otherwise write and get subtly wrong. Use one for real work. Write the raw version once so that when the
 framework misbehaves you know what it is doing underneath, which is the same argument as learning
 prototypes before classes.</p>`,
-docs:[['Node (http)','https://nodejs.org/api/http.html'],['MDN (URL)','https://developer.mozilla.org/en-US/docs/Web/API/URL'],['Node (anatomy of an HTTP transaction)','https://nodejs.org/en/learn/modules/anatomy-of-an-http-transaction']],
+docs:[['Node (http)','https://nodejs.org/api/http.html'],['MDN (URL)','https://developer.mozilla.org/en-US/docs/Web/API/URL'],['Node (anatomy of an HTTP transaction)','https://nodejs.org/learn/http/anatomy-of-an-http-transaction']],
 exs:[
 {title:'Parse the request line',diff:'easy',lang:'js',
 run:{call:'routeKey',cases:[

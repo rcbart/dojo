@@ -48,7 +48,7 @@ the ticket stays open until the entitlement is gone) is what separates governanc
 <p>The mature version reviews <b>exceptions rather than everything</b>: a role model defines what each job
 should hold, birthright access is granted automatically from HR data, and the campaign asks only about
 the deviations. That turns 400 rows into 12, and 12 rows get read.`,
-docs:[['Identity governance','https://en.wikipedia.org/wiki/Identity_governance'],['Access certification','https://www.gartner.com/en/information-technology/glossary/identity-governance-and-administration-iga']],
+docs:[['Identity and access management (Wikipedia)','https://en.wikipedia.org/wiki/Identity_and_access_management'],['Access certification','https://www.gartner.com/en/information-technology/glossary/identity-governance-and-administration-iga']],
 ex:{title:'Certify or revoke',lang:'js',
 run:{call:'decision',cases:[{name:'certified access is kept',args:[true],expect:'keep'},{name:'uncertified access is revoked',args:[false],expect:'revoke'}]},
 prompt:`Write <code>function decision(stillNeeded)</code> that returns <code>"keep"</code> when the access is still needed and <code>"revoke"</code> otherwise. Use a single conditional expression.`,

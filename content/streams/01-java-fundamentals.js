@@ -993,7 +993,7 @@ subclass (other package)    ✗          ✗           ✓          ✓
 everyone else               ✗          ✗           ✗          ✓</div>
 <p><b>The impact is bigger than visibility: it's changeability.</b> Everything <code>public</code> is a promise: other code may now depend on it, so renaming or removing it breaks callers (in a library, forever). Everything <code>private</code> is yours to rewrite tonight without telling anyone. That's why BankAccount above works: <code>balanceCents</code> is private, so the <i>only</i> paths to it are deposit's validation and balance's read: no external code can set it to -50, and the class could switch to a different representation tomorrow without any caller noticing. The working rule: <b>start everything private and widen only when a real caller forces you to</b>: you can always open access later; taking it back is a breaking change.</p>
 <p>Validate in constructors and mutators, keep fields <code>final</code> when they never change, and expose the minimum surface. (Money as <code>long</code> cents, never <code>double</code>: floating point can't represent 0.10 exactly.)</p>`,
-docs:[['Access Control, Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/accesscontrol.html'],['Encapsulation, Baeldung','https://www.baeldung.com/java-oop-principles']],
+docs:[['Access Control, Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/accesscontrol.html'],['OOP concepts, Baeldung','https://www.baeldung.com/java-oop']],
 ex:{title:'A safe BankAccount',
 prompt:`Implement <code>BankAccount</code>: private <code>long balanceCents</code>; <code>deposit(long cents)</code> throws <code>IllegalArgumentException</code> for amounts &le; 0; <code>withdraw(long cents)</code> throws <code>IllegalArgumentException</code> for amounts &le; 0 and <code>IllegalStateException</code> if it would overdraw; <code>long balance()</code> returns the current balance.`,
 starter:`public class BankAccount {
@@ -1482,7 +1482,7 @@ String same = String.join(", ", parts);        // the shortcut for exactly this
 String json = """
     { "name": "%s", "score": %.1f }
     """.formatted("Ada", 97.5);</div>`,
-docs:[['String (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html'],['StringBuilder (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/StringBuilder.html'],['Text blocks (dev.java)','https://dev.java/learn/language-basics/text-blocks/']],
+docs:[['String (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html'],['StringBuilder (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/StringBuilder.html'],['Strings and text blocks (dev.java)','https://dev.java/learn/numbers-strings/strings/']],
 ex:{title:'Receipt builder',
 prompt:`Write <code>Receipt</code> with <code>static String render(String[] items, double[] prices)</code>: use a <b>StringBuilder</b> in a loop to append one line per item formatted with <code>String.format("%-10s %8.2f%n", item, price)</code>, then append a separator line of 19 dashes using <code>"-".repeat(19)</code> and a total line with the same numeric format. Compare strings nowhere with <code>==</code>.`,
 starter:`public class Receipt {

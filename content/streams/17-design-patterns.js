@@ -47,7 +47,7 @@ be written. A builder names each value at the call site and lets the object vali
 <p>The modern caveat: for a small immutable value, a <b>record</b> does most of this with no ceremony at
 all. Reach for a builder when there are genuinely many optional fields, defaults to apply, or invariants to
 check across them.</p>`,
-docs:[['Effective Java patterns summary (items 1-5)','https://dev.java/learn/api/'],['Refactoring Guru (Builder)','https://refactoring.guru/design-patterns/builder'],['Refactoring Guru (Singleton)','https://refactoring.guru/design-patterns/singleton']],
+docs:[['Constructors vs static factory methods, Baeldung','https://www.baeldung.com/java-constructors-vs-static-factory-methods'],['Refactoring Guru (Builder)','https://refactoring.guru/design-patterns/builder'],['Refactoring Guru (Singleton)','https://refactoring.guru/design-patterns/singleton']],
 ex:{title:'Build an immutable config',
 prompt:`Write an immutable <code>ServerConfig</code> (fields <code>String host; int port; boolean tls</code>, all <code>final</code>) with a <b>private constructor</b>, a <code>static Builder builder()</code> entry point, and a <b>static nested</b> class <code>Builder</code> whose fluent setters (<code>host(String)</code>, <code>port(int)</code>, <code>tls(boolean)</code>) each <code>return this</code>, finished by <code>ServerConfig build()</code> that calls the private constructor.`,
 starter:`public class ServerConfig {

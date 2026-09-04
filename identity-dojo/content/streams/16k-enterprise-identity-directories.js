@@ -548,7 +548,7 @@ remembered       a cookie from last time - a shortcut, never the only path</div>
 <p>The subtle failure is the <b>shared domain</b>: contractors on gmail.com, or two customers who both
 use a generic domain. Domain-based routing then sends people to the wrong realm, and the fallback has to
 be an explicit choice rather than a guess.</p>`,
-docs:[['JIT provisioning','https://auth0.com/docs/authenticate/identity-providers/enterprise-identity-providers/just-in-time-provisioning'],['Home realm discovery','https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/home-realm-discovery-policy']],
+docs:[['JIT provisioning','https://help.okta.com/en-us/content/topics/users-groups-profiles/usgp-add-users-jit.htm'],['Home realm discovery','https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/home-realm-discovery-policy']],
 ex:{title:'Extract the email domain (the realm)',
 prompt:`Write class <code>Broker</code> with <code>static String realm(String email)</code> that returns the part after the <code>@</code>, the domain used to pick the identity provider. Use <code>substring</code> and <code>indexOf("@")</code>.`,
 starter:`public class Broker {
@@ -586,7 +586,7 @@ hints:['indexOf("@") gives the position of the @ character.','substring from tha
 
 <h4>The three questions that decide the model</h4>
 <p><b>Who is authoritative for the population?</b> If HR or a corporate directory is, pre-provision from it. <b>Do you need the account to exist before first login?</b> Sharing a document with a colleague who has never signed in requires the account to exist, which JIT cannot provide. <b>How predictable is the population?</b> Partners and customers arrive unpredictably and in numbers that make pre-import impractical, which is exactly where JIT earns its place.</p>`,
-docs:[['JIT provisioning (Auth0)','https://auth0.com/docs/authenticate/identity-providers/enterprise-identity-providers/just-in-time-provisioning'],['SCIM (RFC 7644)','https://www.rfc-editor.org/rfc/rfc7644'],['Account takeover via email reuse','https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html']],
+docs:[['JIT provisioning (Okta)','https://help.okta.com/en-us/content/topics/users-groups-profiles/usgp-add-users-jit.htm'],['SCIM (RFC 7644)','https://www.rfc-editor.org/rfc/rfc7644'],['Account takeover via email reuse','https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html']],
 ex:{title:'Choose the provisioning method',
 prompt:`Write class <code>Provisioning</code> with <code>static String method(String scenario)</code>: <code>"workforce-hr-source"</code>→<code>"SCIM"</code>, <code>"large-external-users"</code>→<code>"JIT"</code>, <code>"small-regulated"</code>→<code>"manual"</code>, else <code>"unknown"</code>. Also <code>static boolean jitHandlesDeprovisioning()</code> returning <code>false</code> (JIT creates accounts but does not remove them).`,
 starter:`public class Provisioning {

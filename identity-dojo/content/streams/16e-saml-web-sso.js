@@ -78,7 +78,7 @@ mistake you live with. An email address is the common choice and it <b>changes</
 rebrand, and the SP then sees a brand-new user with no history. Use an opaque, permanent identifier and send
 the email as an <i>attribute</i>. This is exactly the "<code>sub</code> is the only safe identity key" rule
 from the claims lesson, in SAML's clothing.</p>`,
-docs:[['SAML 2.0 Core &sect;2.7 - statement types','https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['SAML 2.0 (OASIS)','https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['Okta (What is SAML?)','https://www.okta.com/integrate/documentation/saml/'],['SAML vs OIDC','https://www.okta.com/identity-101/saml-vs-oidc/']],
+docs:[['SAML 2.0 Core &sect;2.7 - statement types','https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['SAML 2.0 (OASIS)','https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['Okta (What is SAML?)','https://www.okta.com/integrate/documentation/saml/'],['SAML vs OIDC (OpenID Foundation)','https://openid.net/developers/how-connect-works/']],
 ex:{title:'Read the NameID from an assertion',
 prompt:`Write <code>Saml</code> with <code>static String nameId(String xml)</code> that returns the text inside the first <code>&lt;saml:NameID&gt;...&lt;/saml:NameID&gt;</code> element, or <code>null</code> if absent. Find the open tag with <code>indexOf("&lt;saml:NameID&gt;")</code>, the close tag with <code>indexOf("&lt;/saml:NameID&gt;")</code>, and return the <code>substring</code> between them (return null if either is missing).`,
 starter:`public class Saml {
@@ -497,7 +497,7 @@ rotation is a genuine incident-response step rather than hygiene. It also explai
 mitigations that do exist: short assertion lifetimes, monitoring SP-side authentications that have no
 corresponding IdP login event, and not treating "the signature verified" as the end of the
 conversation.`,
-docs:[['Duo Labs - SAML XML signature wrapping','https://duo.com/blog/duo-finds-saml-vulnerabilities-affecting-multiple-implementations'],['CISA AA21-008A - Golden SAML / token-signing key abuse','https://www.cisa.gov/news-events/cybersecurity-advisories/aa21-008a'],['XML Signature / Encryption in SAML','https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['SAML vs OIDC (Auth0)','https://auth0.com/intro-to-iam/saml-vs-oidc']],
+docs:[['Duo Labs - SAML XML signature wrapping','https://duo.com/blog/duo-finds-saml-vulnerabilities-affecting-multiple-implementations'],['CISA AA21-008A - Golden SAML / token-signing key abuse','https://www.cisa.gov/news-events/cybersecurity-advisories/aa21-008a'],['XML Signature / Encryption in SAML','https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['SAML vs OIDC (OpenID Foundation)','https://openid.net/developers/how-connect-works/']],
 ex:{title:'Validate the assertion conditions',
 prompt:`Write <code>Assertion</code> with <code>static boolean acceptable(boolean signatureValid, String audience, long notOnOrAfterEpoch, String myEntityId, long nowEpoch)</code> that returns <code>true</code> only if the signature is valid, <code>myEntityId.equals(audience)</code>, and it is not expired (<code>nowEpoch &lt; notOnOrAfterEpoch</code>).`,
 starter:`public class Assertion {

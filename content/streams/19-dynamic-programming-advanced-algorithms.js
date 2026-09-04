@@ -289,7 +289,7 @@ int[] pairSum(int[] sorted, int target) {
 <li>"Best over every window of size k" points to a deque holding candidate maxima, the sliding window with a data structure inside it.</li>
 </ul>
 <p>Naming the pattern out loud is half of an interview answer, and the other half is stating the precondition it depends on. That is also the practical difference between someone who has memorized solutions and someone who can tell when the solution does not apply.</p>`,
-docs:[['Two pointers, CP-Algorithms adjacent','https://cp-algorithms.com/others/maximum_zero_submatrix.html'],['Sliding window pattern, Baeldung','https://www.baeldung.com/cs/sliding-window-algorithm']],
+docs:[['Two pointers, CP-Algorithms adjacent','https://cp-algorithms.com/dynamic_programming/zero_matrix.html'],['Sliding window pattern, Baeldung','https://www.baeldung.com/cs/sliding-window-algorithm']],
 exs:[
 {title:'Longest unique substring',
 prompt:`Write <code>Windows</code> with <code>static int longestUnique(String s)</code> returning the length of the <b>longest substring with no repeated characters</b>: longestUnique("abcabcbb") == 3 ("abc"), longestUnique("") == 0. Use the sliding window with a <code>Map&lt;Character, Integer&gt;</code> of last-seen positions: advance <code>right</code> every step, jump <code>left</code> past duplicates (only when the duplicate is inside the window!), track the best width.`,

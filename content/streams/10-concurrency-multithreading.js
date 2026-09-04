@@ -91,7 +91,7 @@ code should use <code>ExecutorService</code> to decouple <i>what work exists</i>
 and the concurrent collections and synchronizers in <code>java.util.concurrent</code> rather than
 hand-rolled coordination. The rest of this stream builds up to that; this lesson is the layer underneath
 so the abstractions are not mysterious.</p>`,
-docs:[['Concurrency, dev.java','https://dev.java/learn/multithreading/'],['Thread, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html']],
+docs:[['Concurrency, Oracle tutorial','https://docs.oracle.com/javase/tutorial/essential/concurrency/'],['Thread, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html']],
 ex:{title:'Two workers, one wait',
 prompt:`Write class <code>Workers</code> with <code>static java.util.List&lt;String&gt; runBoth() throws InterruptedException</code>: create a thread-safe list (use <code>java.util.Collections.synchronizedList</code> over an ArrayList), create <b>two</b> threads from <b>Runnable lambdas</b> that each add their thread's name to the list, <code>start()</code> both, <code>join()</code> both, then return the list (it must contain 2 entries).`,
 starter:`import java.util.*;

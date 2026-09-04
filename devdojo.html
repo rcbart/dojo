@@ -3873,7 +3873,7 @@ subclass (other package)    ✗          ✗           ✓          ✓
 everyone else               ✗          ✗           ✗          ✓</div>
 <p><b>The impact is bigger than visibility: it's changeability.</b> Everything <code>public</code> is a promise: other code may now depend on it, so renaming or removing it breaks callers (in a library, forever). Everything <code>private</code> is yours to rewrite tonight without telling anyone. That's why BankAccount above works: <code>balanceCents</code> is private, so the <i>only</i> paths to it are deposit's validation and balance's read: no external code can set it to -50, and the class could switch to a different representation tomorrow without any caller noticing. The working rule: <b>start everything private and widen only when a real caller forces you to</b>: you can always open access later; taking it back is a breaking change.</p>
 <p>Validate in constructors and mutators, keep fields <code>final</code> when they never change, and expose the minimum surface. (Money as <code>long</code> cents, never <code>double</code>: floating point can't represent 0.10 exactly.)</p>`,
-docs:[['Access Control, Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/accesscontrol.html'],['Encapsulation, Baeldung','https://www.baeldung.com/java-oop-principles']],
+docs:[['Access Control, Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/accesscontrol.html'],['OOP concepts, Baeldung','https://www.baeldung.com/java-oop']],
 ex:{title:'A safe BankAccount',
 prompt:`Implement <code>BankAccount</code>: private <code>long balanceCents</code>; <code>deposit(long cents)</code> throws <code>IllegalArgumentException</code> for amounts &le; 0; <code>withdraw(long cents)</code> throws <code>IllegalArgumentException</code> for amounts &le; 0 and <code>IllegalStateException</code> if it would overdraw; <code>long balance()</code> returns the current balance.`,
 starter:`public class BankAccount {
@@ -4362,7 +4362,7 @@ String same = String.join(", ", parts);        // the shortcut for exactly this
 String json = """
     { "name": "%s", "score": %.1f }
     """.formatted("Ada", 97.5);</div>`,
-docs:[['String (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html'],['StringBuilder (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/StringBuilder.html'],['Text blocks (dev.java)','https://dev.java/learn/language-basics/text-blocks/']],
+docs:[['String (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html'],['StringBuilder (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/StringBuilder.html'],['Strings and text blocks (dev.java)','https://dev.java/learn/numbers-strings/strings/']],
 ex:{title:'Receipt builder',
 prompt:`Write <code>Receipt</code> with <code>static String render(String[] items, double[] prices)</code>: use a <b>StringBuilder</b> in a loop to append one line per item formatted with <code>String.format("%-10s %8.2f%n", item, price)</code>, then append a separator line of 19 dashes using <code>"-".repeat(19)</code> and a total line with the same numeric format. Compare strings nowhere with <code>==</code>.`,
 starter:`public class Receipt {
@@ -7246,7 +7246,7 @@ static &lt;T&gt; Supplier&lt;T&gt; memoize(Supplier&lt;T&gt; expensive) {
 <h4>Memoization, and its two traps</h4>
 <p>Wrapping a pure function in a cache is the same technique the DP stream calls memoization, and the same caveats apply with a Java accent. First, <b>the function must be pure</b>: cache a function that reads a database or a clock and you have cached a moment, not a value. Second, <b>an unbounded cache is a memory leak with good intentions</b>: <code>computeIfAbsent</code> on a static map keyed by user input grows forever. Use a bounded cache with an eviction policy (Caffeine, Guava) for anything whose key space you do not control.</p>
 <p>One Java-specific hazard worth knowing: recursively calling <code>computeIfAbsent</code> on a <code>HashMap</code> from inside its own mapping function can corrupt the map or throw <code>ConcurrentModificationException</code>, because you are structurally modifying it mid-computation. Compute the value first, then put it.</p>`,
-docs:[['Writing lambdas, dev.java','https://dev.java/learn/lambdas/writing-lambdas/'],['Currying in Java, Baeldung','https://www.baeldung.com/java-currying']],
+docs:[['Writing lambdas, dev.java','https://dev.java/learn/lambdas/first-lambdas/'],['Currying in Java, Baeldung','https://www.baeldung.com/java-currying']],
 ex:{title:'Function factory',
 prompt:`In class <code>Higher</code>: (1) define <code>static Function&lt;Integer, Function&lt;Integer, Integer&gt;&gt; MULTIPLIER = a -&gt; b -&gt; a * b</code> (curried multiply). (2) Write generic <code>static &lt;T, R&gt; Function&lt;T, R&gt; withDefault(Function&lt;T, R&gt; f, R fallback)</code> returning a function that calls f but returns fallback if f throws <b>any</b> RuntimeException. (3) Write <code>static Supplier&lt;String&gt; once(Supplier&lt;String&gt; s)</code> that calls s at most once and caches the result (a simple non-null field check is fine).`,
 starter:`import java.util.function.*;
@@ -12127,7 +12127,7 @@ code should use <code>ExecutorService</code> to decouple <i>what work exists</i>
 and the concurrent collections and synchronizers in <code>java.util.concurrent</code> rather than
 hand-rolled coordination. The rest of this stream builds up to that; this lesson is the layer underneath
 so the abstractions are not mysterious.</p>`,
-docs:[['Concurrency, dev.java','https://dev.java/learn/multithreading/'],['Thread, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html']],
+docs:[['Concurrency, Oracle tutorial','https://docs.oracle.com/javase/tutorial/essential/concurrency/'],['Thread, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html']],
 ex:{title:'Two workers, one wait',
 prompt:`Write class <code>Workers</code> with <code>static java.util.List&lt;String&gt; runBoth() throws InterruptedException</code>: create a thread-safe list (use <code>java.util.Collections.synchronizedList</code> over an ArrayList), create <b>two</b> threads from <b>Runnable lambdas</b> that each add their thread's name to the list, <code>start()</code> both, <code>join()</code> both, then return the list (it must contain 2 entries).`,
 starter:`import java.util.*;
@@ -13976,7 +13976,7 @@ set -o pipefail                       # without it, a pipeline's status is the L
 <p>The last line deserves the paranoia. By default a pipeline reports only the exit status of its final command, so <code>badcommand | sort | head</code> succeeds (status <code>0</code>) while producing nothing. In a deploy script that is a silent, green-looking failure. <code>set -o pipefail</code> makes the pipeline fail if any stage failed.</p>
 <p><b>Why this design outlived the machines it was written for.</b> Doug McIlroy's 1964 memo asked for a way to "screw programs together like garden hose", and the reason it still works is that the tools agreed on the narrowest possible interface: <b>lines of text</b>. No shared library, no schema, no version negotiation. <code>jq</code> was written forty years after <code>sed</code> and composes with it perfectly, because neither knows the other exists. Every tool does one job, so a new tool adds capability without anyone rewriting the others, and combinations nobody planned are the normal case, not the exception. That is the whole trade: text is a poor data model, and it is the only one everything can agree on.</p>
 <p>The rest of this stream is four filters and one habit: <i>describe the transformation, then build it one stage at a time, checking the output after each</i>.</p>`,
-docs:[['POSIX: shell command language','https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html'],['McIlroy on the origin of pipes','https://www.bell-labs.com/usr/dmr/www/mdmpipe.html'],['GNU coreutils manual','https://www.gnu.org/software/coreutils/manual/coreutils.html']],
+docs:[['POSIX: shell command language','https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html'],['McIlroy on the origin of pipes','https://www.nokia.com/bell-labs/about/dennis-m-ritchie/mdmpipe.html'],['GNU coreutils manual','https://www.gnu.org/software/coreutils/manual/coreutils.html']],
 exs:[{title:'The three streams and the exit code',lang:'shell',diff:'easy',
 prompt:`Name the machinery. One answer per numbered line: (1) the stream a filter reads its input from (one word), (2) the stream results are written to (one word), (3) the separate stream diagnostics and warnings go to, so they don't contaminate the data (one word), (4) the exit code that means success (a number), (5) the exit code <code>grep</code> returns when it ran fine but matched nothing (a number), (6) the redirection that throws stderr away, keeping stdout intact (write it exactly, as in <code>2&gt;/dev/null</code>).`,
 starter:`1.
@@ -16814,7 +16814,7 @@ be written. A builder names each value at the call site and lets the object vali
 <p>The modern caveat: for a small immutable value, a <b>record</b> does most of this with no ceremony at
 all. Reach for a builder when there are genuinely many optional fields, defaults to apply, or invariants to
 check across them.</p>`,
-docs:[['Effective Java patterns summary (items 1-5)','https://dev.java/learn/api/'],['Refactoring Guru (Builder)','https://refactoring.guru/design-patterns/builder'],['Refactoring Guru (Singleton)','https://refactoring.guru/design-patterns/singleton']],
+docs:[['Constructors vs static factory methods, Baeldung','https://www.baeldung.com/java-constructors-vs-static-factory-methods'],['Refactoring Guru (Builder)','https://refactoring.guru/design-patterns/builder'],['Refactoring Guru (Singleton)','https://refactoring.guru/design-patterns/singleton']],
 ex:{title:'Build an immutable config',
 prompt:`Write an immutable <code>ServerConfig</code> (fields <code>String host; int port; boolean tls</code>, all <code>final</code>) with a <b>private constructor</b>, a <code>static Builder builder()</code> entry point, and a <b>static nested</b> class <code>Builder</code> whose fluent setters (<code>host(String)</code>, <code>port(int)</code>, <code>tls(boolean)</code>) each <code>return this</code>, finished by <code>ServerConfig build()</code> that calls the private constructor.`,
 starter:`public class ServerConfig {
@@ -17741,7 +17741,7 @@ Anyone who kubectl-edits production creates drift, and the reconciler either fig
 <li><b>Secrets are not in git</b>, sealed or external, the one thing the declarative model cannot take
 literally.</li>
 </ul>`,
-docs:[['Kustomize (set image)','https://kubectl.docs.kubernetes.io/references/kustomize/cmd/edit/setimage/'],['ArgoCD sync waves & hooks','https://argo-cd.readthedocs.io/en/stable/user_guide/sync-waves/'],['argocd CLI reference','https://argo-cd.readthedocs.io/en/stable/user_guide/commands/argocd_app/']],
+docs:[['Kustomize (set image)','https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/images/'],['ArgoCD sync waves & hooks','https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/'],['argocd CLI reference','https://argo-cd.readthedocs.io/en/stable/user-guide/commands/argocd_app/']],
 ex:{title:'argocd CLI drill',lang:'shell',
 prompt:`One command per numbered line, using the <code>argocd</code> CLI: (1) log in to server <code>argocd.acme.dev</code> (just the login command with the server host), (2) list all applications, (3) show the details/status of app <code>payments</code>, (4) trigger a sync of <code>payments</code>, (5) sync <code>payments</code> but only preview what would change (the diff, no apply; one command, it is not <code>sync</code>), (6) roll <code>payments</code> back to history id <code>7</code>.`,
 starter:`1.
@@ -18054,7 +18054,7 @@ int[] pairSum(int[] sorted, int target) {
 <li>"Best over every window of size k" points to a deque holding candidate maxima, the sliding window with a data structure inside it.</li>
 </ul>
 <p>Naming the pattern out loud is half of an interview answer, and the other half is stating the precondition it depends on. That is also the practical difference between someone who has memorized solutions and someone who can tell when the solution does not apply.</p>`,
-docs:[['Two pointers, CP-Algorithms adjacent','https://cp-algorithms.com/others/maximum_zero_submatrix.html'],['Sliding window pattern, Baeldung','https://www.baeldung.com/cs/sliding-window-algorithm']],
+docs:[['Two pointers, CP-Algorithms adjacent','https://cp-algorithms.com/dynamic_programming/zero_matrix.html'],['Sliding window pattern, Baeldung','https://www.baeldung.com/cs/sliding-window-algorithm']],
 exs:[
 {title:'Longest unique substring',
 prompt:`Write <code>Windows</code> with <code>static int longestUnique(String s)</code> returning the length of the <b>longest substring with no repeated characters</b>: longestUnique("abcabcbb") == 3 ("abc"), longestUnique("") == 0. Use the sliding window with a <code>Map&lt;Character, Integer&gt;</code> of last-seen positions: advance <code>right</code> every step, jump <code>left</code> past duplicates (only when the duplicate is inside the window!), track the best width.`,
@@ -18981,7 +18981,7 @@ psql postgresql://shorty:local@localhost/shorty -c 'select slug, clicks from lin
 <li><b>Option C: Render (zero CLI)</b>: push to GitHub → New Web Service → pick the repo (it reads the Dockerfile) → add a managed Postgres → set the env vars in the dashboard → every push auto-deploys. Easiest, least transferable.</li>
 </ul>
 <p><b>Done when</b> a slug you created redirects on a public URL over HTTPS from your phone, and the click count grows. Extensions when hungry: custom slugs, expiry dates, a QR endpoint, per-slug stats JSON.</p>`,
-docs:[['Spring Initializr','https://start.spring.io'],['HTTP 301 vs 302 (MDN)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/301'],['Fly.io Java guide','https://fly.io/docs/languages-and-frameworks/java/'],['Caddy reverse proxy','https://caddyserver.com/docs/quick-starts/reverse-proxy']],
+docs:[['Spring Initializr','https://start.spring.io'],['HTTP 301 vs 302 (MDN)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/301'],['Fly.io Dockerfile deploys','https://fly.io/docs/languages-and-frameworks/dockerfile/'],['Caddy reverse proxy','https://caddyserver.com/docs/quick-starts/reverse-proxy']],
 exs:[
 {title:'The shorten service',
 prompt:`Write <code>ShortenService</code> (plain class, constructor-injected <code>LinkRepository repo</code> into a private final field): method <code>Link shorten(String url)</code> that (1) <b>validates</b> the url starts with <code>http://</code> or <code>https://</code>, else throws <code>IllegalArgumentException</code>; (2) generates a <b>6-char base62 slug</b> with a private method <code>randomSlug()</code>: pick 6 random chars from the constant <code>"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"</code> using <code>java.security.SecureRandom</code>; (3) retries while <code>repo.findBySlug(slug)</code> is present (collision loop); (4) saves and returns <code>repo.save(new Link(slug, url))</code>.`,
@@ -19756,7 +19756,7 @@ hints:['The ladder to memorize: RAM ~100ns, SSD ~100µs, same-DC ~0.5ms, cross-r
 "traffic spikes break writes"    → queue between accept and process
 "ONE table too big for ONE box"  → sharding, the tool of last resort</div>
 <p>The meta-rule: <b>scale the bottleneck, not the architecture</b>. Measure, find the actual constraint, apply the cheapest tool that moves it, re-measure. Systems that jumped to microservices-plus-sharding on day one carry the tax forever while their traffic would have fit in a cache.</p>`,
-docs:[['Scaling to 11M+ users on AWS','https://aws.amazon.com/blogs/startups/scaling-on-aws-part-1/'],['Cache strategies, AWS builders library','https://aws.amazon.com/builders-library/caching-challenges-and-strategies/'],['Shopify, sharding lessons','https://shopify.engineering/a-pods-architecture-to-allow-shopify-to-scale']],
+docs:[['Scaling to 11M+ users on AWS','https://highscalability.com/a-beginners-guide-to-scaling-to-11-million-users-on-amazons/'],['Cache strategies, AWS builders library','https://aws.amazon.com/builders-library/caching-challenges-and-strategies/'],['Shopify, sharding lessons','https://shopify.engineering/a-pods-architecture-to-allow-shopify-to-scale']],
 exs:[{title:'Bottleneck triage',lang:'text',
 prompt:`Name the cheapest correct tool, one per numbered line: (1) app servers at 95% CPU, database idle: <code>replicas</code>, <code>cache</code> or <code>sharding</code>? (2) the same product page is read 5,000×/s and changes hourly: which tool? (3) users complain "I posted but my post isn't in my feed" right after a write, on a system with read replicas: name the cause (two words), (4) checkout requests spike 50× during a sale and orders are being dropped: which tool absorbs the spike? (5) what property must app servers have BEFORE horizontal scaling works (one word), (6) a single Postgres writer is genuinely saturated after caching, replicas and queues: what's left (one word)?`,
 starter:`1.

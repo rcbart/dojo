@@ -2548,7 +2548,7 @@ solution:`public class TokenCheck {
 <li><b>Identifiers</b>: the app and the IdP must agree on what names the user. A stable subject identifier, not an email.</li>
 <li><b>Attributes</b>: which claims the IdP will release, since an app that needs a department or a group only gets it if the IdP is configured to send it. In enterprise deployments this negotiation is most of the integration work, and it is where "SSO is set up but nobody has the right permissions" comes from.</li>
 </ul>`,
-docs:[['Identity federation (Wikipedia)','https://en.wikipedia.org/wiki/Federated_identity'],['SSO & federation basics','https://www.cloudflare.com/learning/access-management/what-is-federated-identity/']],
+docs:[['Identity federation (Wikipedia)','https://en.wikipedia.org/wiki/Federated_identity'],['SSO & federation basics','https://www.cloudflare.com/learning/access-management/what-is-sso/']],
 ex:{title:'Who plays which role?',
 prompt:`Write class <code>Federation</code> with <code>static String role(String party)</code>: <code>"idp"</code>→<code>"vouches for the user"</code>, <code>"sp"</code>→<code>"relies on the idp"</code>, and <code>"unknown"</code> for anything else.`,
 starter:`public class Federation {

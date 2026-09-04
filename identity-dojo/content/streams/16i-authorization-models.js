@@ -206,7 +206,7 @@ attribute came from: department from the directory (stale by one sync), clearanc
 export), network from the request itself (fresh, and the only one the caller can influence). A decision
 is only as fresh as its stalest attribute and only as trustworthy as its most forgeable one, so write
 the source and the staleness next to every attribute your policies use.</p>`,
-docs:[['ABAC (NIST 800-162)','https://csrc.nist.gov/publications/detail/sp/800-162/final'],['ABAC vs RBAC','https://auth0.com/blog/what-is-abac-attribute-based-access-control/']],
+docs:[['ABAC (NIST 800-162)','https://csrc.nist.gov/publications/detail/sp/800-162/final'],['ABAC vs RBAC (NIST)','https://csrc.nist.gov/pubs/journal/2010/06/adding-attributes-to-rolebased-access-control/final']],
 ex:{title:'Write an attribute policy',
 prompt:`Write class <code>Abac</code> with <code>static boolean permit(String userDept, String resourceDept, boolean isOwner)</code> that allows access when the user is in the same department as the resource <b>or</b> the user owns the resource.`,
 starter:`public class Abac {

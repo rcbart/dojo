@@ -64,7 +64,7 @@ in the program, including every library's, and breaks the day the language adds 
 <p><b>Prototype pollution is a real vulnerability.</b> Merging untrusted JSON into an object can set
 <code>__proto__</code> and thereby add a property to <i>every</i> object in the program. Use
 <code>Object.create(null)</code> for lookup tables built from user input, or a <code>Map</code>.</p>`,
-docs:[['MDN (Inheritance and the prototype chain)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Inheritance_and_the_prototype_chain'],['MDN (Object.create)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create'],['OWASP (prototype pollution)','https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/11-Client-side_Testing/13-Testing_for_Prototype_Pollution']],
+docs:[['MDN (Inheritance and the prototype chain)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Inheritance_and_the_prototype_chain'],['MDN (Object.create)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create'],['OWASP (prototype pollution)','https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/22-Testing_for_Prototype_Pollution']],
 ex:{title:'Own or inherited?',diff:'easy',lang:'js',
 run:{call:'lookup',cases:[
  {name:'found as an own property',args:[['name'],['speak'],'name'],expect:'own'},

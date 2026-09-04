@@ -95,8 +95,15 @@ function collect() {
   for (const f of sourceFiles()) {
     const rel = path.relative(ROOT, f);
     const text = fs.readFileSync(f, 'utf8');
-    for (const m of text.matchAll(/https?:\/\/[^\s"'`)<>\\\]]+/g)) {
-      const url = m[0].replace(/[.,;:]+$/, '').replace(/&amp;/g, '&');
+    // Parentheses are legal in URLs (Wikipedia's Thread_(computing) is the
+    // case that caught this), so they are matched and then balanced: a
+    // trailing ")" is dropped only when it closes nothing.
+    for (const m of text.matchAll(/https?:\/\/[^\s"'`<>\\\]]+/g)) {
+      let url = m[0].replace(/[.,;:]+$/, '').replace(/&amp;/g, '&');
+      while (url.endsWith(')') &&
+             (url.match(/\)/g) || []).length > (url.match(/\(/g) || []).length) {
+        url = url.slice(0, -1);
+      }
       if (NOT_A_LINK.some(re => re.test(url))) continue;
       if (!urls.has(url)) urls.set(url, new Set());
       urls.get(url).add(rel);

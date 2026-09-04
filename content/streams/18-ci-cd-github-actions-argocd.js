@@ -390,7 +390,7 @@ Anyone who kubectl-edits production creates drift, and the reconciler either fig
 <li><b>Secrets are not in git</b>, sealed or external, the one thing the declarative model cannot take
 literally.</li>
 </ul>`,
-docs:[['Kustomize (set image)','https://kubectl.docs.kubernetes.io/references/kustomize/cmd/edit/setimage/'],['ArgoCD sync waves & hooks','https://argo-cd.readthedocs.io/en/stable/user_guide/sync-waves/'],['argocd CLI reference','https://argo-cd.readthedocs.io/en/stable/user_guide/commands/argocd_app/']],
+docs:[['Kustomize (set image)','https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/images/'],['ArgoCD sync waves & hooks','https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/'],['argocd CLI reference','https://argo-cd.readthedocs.io/en/stable/user-guide/commands/argocd_app/']],
 ex:{title:'argocd CLI drill',lang:'shell',
 prompt:`One command per numbered line, using the <code>argocd</code> CLI: (1) log in to server <code>argocd.acme.dev</code> (just the login command with the server host), (2) list all applications, (3) show the details/status of app <code>payments</code>, (4) trigger a sync of <code>payments</code>, (5) sync <code>payments</code> but only preview what would change (the diff, no apply; one command, it is not <code>sync</code>), (6) roll <code>payments</code> back to history id <code>7</code>.`,
 starter:`1.
