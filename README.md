@@ -21,7 +21,7 @@
 # Dojo 🥋
 
 Four interactive, self-contained learning platforms plus a five-course cloud-native path, all running
-entirely in the browser. **71 streams, 610 lessons and 749 hands-on exercises**: an in-editor coding
+entirely in the browser. **71 streams, 612 lessons and 749 hands-on exercises**: an in-editor coding
 exercise on every lesson, a belt progression, **spaced-repetition review**, a **difficulty-filtered
 practice hub**, a domain glossary with click-to-explain terms, tournaments, and end-to-end capstone
 projects.
@@ -55,7 +55,7 @@ maximization, Lagrange multipliers and the bias-variance decomposition. Then the
 the classifier zoo, clustering, neural networks from the perceptron to the transformer, and
 reinforcement learning from the multi-armed bandit through Q-learning and policy gradients to the
 algorithm that fine-tunes language models. Every lesson opens in plain English and ends at textbook
-rigor. Python runs in the browser through Pyodide. 12 streams, 109 lessons, 63 exercises, 345 quiz
+rigor. Python runs in the browser through Pyodide. 12 streams, 111 lessons, 109 exercises, 351 quiz
 questions, and a glossary of 203 terms across 8 domains. It lives in
 [its own repository](https://github.com/rcbart/ml-dojo) and ships here as a tracked build snapshot at
 `ml-dojo/dist/index.html`.

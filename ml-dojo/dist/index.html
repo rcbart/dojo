@@ -11495,7 +11495,71 @@ print("worst curved model:", round(worst_curved, 3), "best overall:", best_name)
      'Every model in the dict takes the same two calls, model.fit(X_tr, y_tr) then model.predict(X_te). That uniformity is the point of the interface.',
      'acc[name] = accuracy_score(y_te, model.predict(X_te)).',
      'worst_curved is the smallest value in acc over the five keys that are not logistic, and best_name = max(acc, key=acc.get).'
-   ]},
+   ]}],
+ quiz:{title:'Quick check, classifiers',questions:[
+   {q:'k-NN requires feature scaling because:',
+    options:['Scaling reduces the number of neighbors needed','Distances are dominated by large-scale features','The vote would otherwise be tied too often','Training would take too long without it'],answer:1,whyWrong:['k is a setting you choose, and scaling does not change how many neighbors you need.','','Ties are handled by choosing an odd k or by a tie-break rule. Scaling addresses something else.','There is no training phase to speed up. k-NN stores the data and does the work at query time.'],
+    why:'A feature in dollars swamps one in years. Distance has no idea the units differ.'},
+   {q:'Random forests and gradient boosting differ mainly in that:',
+    options:['Forests reduce variance, boosting reduces bias','Forests use shallow trees, boosting uses deep ones','Only boosting can handle categorical features','Forests require the data to be scaled first'],answer:0,whyWrong:['','It is usually the reverse. Forests grow deep trees and boosting grows shallow ones.','Both handle categorical features, depending on the implementation rather than the family.','Neither needs scaling. Trees split on thresholds, which are scale-invariant.'],
+    why:'Averaging deep decorrelated trees cuts variance; sequentially fitting residuals with shallow trees cuts bias.'},
+   {q:'The kernel trick works because the SVM dual depends on data only through:',
+    options:['The class labels of the support vectors','The distances to the decision boundary','Inner products between pairs of points','The number of features in the input'],answer:2,whyWrong:['The labels appear in the dual as coefficients, and they are not what the kernel replaces.','Distances to the boundary are what the margin measures, and they come out of the solution rather than going into it.','','The feature count is precisely what the trick lets you ignore, since the space may be infinite-dimensional.'],
+    why:'Replace each inner product with K(xᵢ,xⱼ) and you work in a higher space without ever computing coordinates there.'}
+ ]}},
+{id:'mlline',
+ title:'Linear means straight: measure the boundary yourself',
+ body:`
+<div class="ground"><span class="gTag">🎯 A straight boundary is a promise about shape, not about effort</span>
+<p>Logistic regression is called a <b>linear</b> model. That word says nothing about how hard it
+works, how much data it needs, or how well it is tuned. It says one thing: <b>the line it draws
+between the classes is straight</b>. This lesson makes that line visible and measures it, so the
+limitation stops being a slogan you repeat and becomes something you have checked.</p></div>
+
+<h3>Where the boundary actually is</h3>
+<p>A linear model scores a point by weighting each feature and adding a constant:</p>
+<div class="mathblock">s(x) = w<sub>1</sub>x<sub>1</sub> + w<sub>2</sub>x<sub>2</sub> + b</div>
+<p>Everything after that is a squashing function that turns the score into a probability. The
+predicted class flips exactly where the score changes sign, so the <b>decision boundary</b> is the
+set of points whose score is zero:</p>
+<div class="mathblock">w<sub>1</sub>x<sub>1</sub> + w<sub>2</sub>x<sub>2</sub> + b = 0</div>
+<p>Solve that for x<sub>2</sub> and you are looking at the line equation from school:</p>
+<div class="mathblock">x<sub>2</sub> = &minus;(w<sub>1</sub> / w<sub>2</sub>) x<sub>1</sub> &minus; b / w<sub>2</sub></div>
+<p>Slope <code>-w1/w2</code>, intercept <code>-b/w2</code>. Not roughly a line. A line, with a slope
+you can predict from the fitted weights before you draw anything. In three features it is a flat
+plane; in more, a flat hyperplane. Flat is the whole story.</p>
+
+<h3>What you will see</h3>
+<p>The exercise lays a 100 by 100 grid over the plane and asks the model to classify every grid
+point. Picture the plane painted in two colors, one per class. Then walk each column of the grid
+from top to bottom and note where the color flips. Those flip points are the boundary, sampled
+100 times. For logistic regression they fall on one straight line, and the slope fitted through
+them matches <code>-w1/w2</code> to the resolution of the grid. For a decision tree on the same
+data they trace a staircase, and the best straight line through that staircase recovers only
+part of it. Both facts come out as numbers, which is the point: you are not eyeballing a plot,
+you are testing a claim.</p>
+
+<div class="demystify"><b>"Linear" describes the boundary, not the features.</b> Feed a linear
+model x<sub>1</sub><sup>2</sup> or x<sub>1</sub>x<sub>2</sub> as extra columns and the boundary
+curves in the original two dimensions, because it is straight in the bigger space you built. The
+model did not change; the coordinates did. That is the idea behind polynomial features and,
+taken to its limit, the kernel trick you met in the classifier zoo.</div>
+
+<div class="hardidea">🧠 <b>Why a tree's boundary is a staircase.</b> Every split in a tree asks
+one question of the form "is feature <i>j</i> above threshold <i>t</i>?" Each answer cuts the
+plane with a line parallel to an axis. Stack enough of those cuts and you can box in almost any
+region, but every edge of every box stays parallel to an axis. A tree can approximate a diagonal
+line only by climbing it in steps, which is why a straight-line stand-in fits the tree's boundary
+imperfectly, and why deeper trees make the steps smaller without ever making them disappear.</div>
+
+<h3>Why this matters more than the accuracy number</h3>
+<p>When a linear model scores badly on a ring or a pair of crescents, the temptation is to tune:
+more iterations, a different regularization strength, a different solver. None of it helps,
+because the failure is geometric. The data needs a curve and the model can only draw a line.
+Knowing the boundary's shape tells you <i>which</i> lever to reach for: change the features, or
+change the model family. Tuning the same straight line harder is the one move that cannot work.</p>
+`,
+ exs:[
   {title:'Show that a linear boundary really is a line',
    lang:'python',
    packages:['scikit-learn','numpy'],
@@ -11615,17 +11679,18 @@ print("a straight line reproduces this much of the tree:", round(tree_line_agree
      'np.polyfit(points[:, 0], points[:, 1], 1) returns the slope and intercept of the best line through the crossings.',
      'tree_line_agree = float(np.mean(surrogate.predict(grid) == tree_pred)), the fraction of the grid a linear stand-in gets right.'
    ]}],
- quiz:{title:'Quick check, classifiers',questions:[
-   {q:'k-NN requires feature scaling because:',
-    options:['Scaling reduces the number of neighbors needed','Distances are dominated by large-scale features','The vote would otherwise be tied too often','Training would take too long without it'],answer:1,whyWrong:['k is a setting you choose, and scaling does not change how many neighbors you need.','','Ties are handled by choosing an odd k or by a tie-break rule. Scaling addresses something else.','There is no training phase to speed up. k-NN stores the data and does the work at query time.'],
-    why:'A feature in dollars swamps one in years. Distance has no idea the units differ.'},
-   {q:'Random forests and gradient boosting differ mainly in that:',
-    options:['Forests reduce variance, boosting reduces bias','Forests use shallow trees, boosting uses deep ones','Only boosting can handle categorical features','Forests require the data to be scaled first'],answer:0,whyWrong:['','It is usually the reverse. Forests grow deep trees and boosting grows shallow ones.','Both handle categorical features, depending on the implementation rather than the family.','Neither needs scaling. Trees split on thresholds, which are scale-invariant.'],
-    why:'Averaging deep decorrelated trees cuts variance; sequentially fitting residuals with shallow trees cuts bias.'},
-   {q:'The kernel trick works because the SVM dual depends on data only through:',
-    options:['The class labels of the support vectors','The distances to the decision boundary','Inner products between pairs of points','The number of features in the input'],answer:2,whyWrong:['The labels appear in the dual as coefficients, and they are not what the kernel replaces.','Distances to the boundary are what the margin measures, and they come out of the solution rather than going into it.','','The feature count is precisely what the trick lets you ignore, since the space may be infinite-dimensional.'],
-    why:'Replace each inner product with K(xᵢ,xⱼ) and you work in a higher space without ever computing coordinates there.'}
+ quiz:{title:'Quick check, the straight boundary',questions:[
+   {q:'For a two-feature linear model, the decision boundary is the set of points where:',
+    options:['w1x1 + w2x2 + b is zero','The two features happen to take the same value','The nearest training points all belong to the same class','The training loss stops changing as the weights are updated'],answer:0,whyWrong:['','That is the line x1 = x2, which has nothing to do with the fitted weights.','That is how k-NN decides, and it can bend around any shape.','That is convergence of the fit, not the geometry of the boundary.'],
+    why:'The class flips where the score changes sign, so the boundary is exactly the zero set of the score.'},
+   {q:'You fit a linear model and read off w1 = 2, w2 = -4, b = 1. The boundary has slope:',
+    options:['-0.5','2','0.5','-2'],answer:2,whyWrong:['The sign flips twice, once from the formula and once from the negative w2.','That is w1 on its own, not the ratio the boundary depends on.','','That is -w1, which ignores w2 entirely.'],
+    why:'Solve w1x1 + w2x2 + b = 0 for x2 and the slope is -w1/w2, here -2/(-4) = 0.5.'},
+   {q:'A decision tree on the same data produces a boundary that a straight line can only partly reproduce because:',
+    options:['Trees are trained on bootstrap samples of the data','Every split cuts along one axis','Trees minimize a different loss function than logistic regression does','The tree keeps splitting until each leaf holds a single training point'],answer:1,whyWrong:['That describes a random forest, and the boundary shape is the same for a single tree.','','The loss differs, but a linear model with any loss still draws a line.','Depth changes how fine the staircase is, not the fact that it is a staircase.'],
+    why:'Each split compares one feature to one threshold, so every edge of the boundary is parallel to an axis.'}
  ]}},
+
 
 {id:'mlcluster',
  title:'Cluster analysis: four methods and the question none of them answer',
@@ -11786,7 +11851,77 @@ print("k by inertia:", k_by_inertia, " k by silhouette:", k_by_silhouette)
      'km.inertia_ is the within-cluster sum of squares after fitting. Append it once per k.',
      'silhouette_score(X, km.labels_) takes the data and the assignment, not the fitted model.',
      'k_by_inertia = ks[int(np.argmin(inertias))] and k_by_silhouette = ks[int(np.argmax(sils))]. One of those two will be 8 no matter what data you feed it.'
-   ]},
+   ]}],
+ quiz:{title:'Quick check, clustering',questions:[
+   {q:'k-means cannot find elongated clusters because:',
+    options:['It assigns each point to exactly one cluster','Its objective is squared distance to a center','It converges before reaching them','It requires k to be known beforehand'],answer:1,whyWrong:['Hard assignment is what separates it from a GMM, and a GMM with round components has the same shape limitation.','','It converges to a genuine local optimum of its own objective. The objective is the problem.','Needing k in advance is a real inconvenience, and it has nothing to do with cluster shape.'],
+    why:'Minimizing ‖x − μ‖² makes round, equally sized groups the only thing the objective rewards.'},
+   {q:'DBSCAN differs from k-means most importantly by:',
+    options:['Producing soft rather than hard assignments','Finding arbitrary shapes and labeling noise','Running faster on very large datasets','Guaranteeing the global optimum is found'],answer:1,whyWrong:['DBSCAN assigns hard labels. Soft assignment is what a GMM gives you.','','It is often slower, and speed is not why people reach for it.','Neither guarantees a global optimum. DBSCAN is deterministic given its parameters, which is a different thing.'],
+    why:'Density-connected regions can be any shape, and points in no dense region are explicitly outliers.'},
+   {q:'A high silhouette score tells you:',
+    options:['The data was properly scaled beforehand','The partition is compact and well separated','The clusters correspond to something real','The correct k has definitely been found'],answer:1,whyWrong:['Scaling affects the distances the score is computed from, and the score itself cannot tell you whether you did it.','','Nothing about the geometry says the clusters mean anything. That takes domain knowledge.','It is one signal among several for choosing k, and it can peak at a k that is not the true one.'],
+    why:'It measures the geometry of the partition against the assumptions that produced it. Reality needs outside evidence.'}
+ ]}}
+,
+{id:'mlmoons',
+ title:'Two crescents: when nearest-center clustering is the wrong tool',
+ body:`
+<div class="ground"><span class="gTag">🎯 k-means does not fail on the crescents because it is badly tuned</span>
+<p>k-means has one rule: every point belongs to the nearest center. That rule decides which shapes
+it can find, and two interleaved crescents are the cleanest way to watch it break. On the identical
+points, DBSCAN recovers the crescents almost perfectly, and nobody tells it there are two. The
+difference is not skill or settings. It is what each method means by "a cluster".</p></div>
+
+<h3>What "nearest center" commits you to</h3>
+<p>Once the centers are placed, each cluster is the region of the plane closer to its own center
+than to any other:</p>
+<div class="mathblock">C<sub>k</sub> = { x : ||x &minus; &mu;<sub>k</sub>|| &le; ||x &minus; &mu;<sub>j</sub>|| for every j }</div>
+<p>Regions built that way have straight edges and no dents. Whatever the data looks like, k-means
+carves the plane into blobs with flat sides. A crescent is a curved ribbon that wraps around the
+other crescent, so no blob can hold one without also taking a bite out of its neighbor. That is
+why the k-means clusters here cut <i>across</i> the moons rather than along them, and why even the
+cleaner cluster is about a quarter made of the wrong crescent. Nothing about more iterations or a
+better starting point changes it. The shape is not available.</p>
+
+<h3>What density does instead</h3>
+<p>DBSCAN never asks where a center is. It asks a local question at every point: are there at least
+<code>min_samples</code> other points within a radius <code>eps</code>? Points that pass are
+<b>core points</b>, and a cluster is whatever you can reach by hopping from core point to core point
+without ever hopping farther than <code>eps</code>. A crescent is a chain of nearby points, so the
+hops follow it around the curve. The gap between the two crescents is wider than <code>eps</code>,
+so the hops never cross it. Two clusters fall out, and the number two was never an input.</p>
+
+<h3>What you will see</h3>
+<p>Picture the same two hundred points drawn twice. In the k-means picture, a straight cut divides
+the plane and each half contains the tip of one crescent and the body of the other. In the DBSCAN
+picture, each crescent is one color from end to end, and a single point sits in a third color,
+unassigned. The exercise turns both pictures into a score, the <b>adjusted Rand index</b>, which
+compares a clustering to the true groups: about 0.23 for k-means, about 0.99 for DBSCAN, on the
+same points with the same random seed.</p>
+
+<div class="demystify"><b>The unassigned point is not a mistake.</b> DBSCAN labels a point noise
+when it has too few neighbors to be a core point and is not within reach of one. That is the method
+declining to guess. k-means has no way to say "I do not know", so it forces every point somewhere,
+including the ones it has no business placing. A clustering method that can abstain is telling you
+something about your data that a method that cannot abstain will hide.</div>
+
+<div class="hardidea">🧠 <b>Reading the adjusted Rand index.</b> The Rand index counts pairs of
+points and asks whether each pair is treated the same way by both clusterings: together in both, or
+apart in both. The <i>adjusted</i> version subtracts what a random clustering would score by luck,
+so 0 means no better than chance and 1 means identical partitions. It ignores label names, which
+is what you want: cluster "0" in one method and cluster "1" in the other may be the same crescent,
+and the index does not care. It also means a single noise point barely moves the score.</div>
+
+<h3>Choosing between them</h3>
+<p>Neither method is better. k-means wants round, similar-sized blobs and scales to millions of
+points; DBSCAN wants clusters denser than the space between them and handles any shape at any
+count, but it has no answer for clusters of very different densities, and it needs
+<code>eps</code> chosen in the units of your features. The question to ask before either one is the
+same question from the clustering lesson: what does "a group" mean in this data? The crescents are
+a case where the answer is "a connected ribbon", and only one of the two methods can hear that.</p>
+`,
+ exs:[
   {title:'Break k-means on two crescents',
    lang:'python',
    packages:['scikit-learn','numpy'],
@@ -11869,18 +12004,19 @@ print("purity of the cleanest k-means cluster:", round(worst_purity, 3))
      'adjusted_rand_score(groups, labels) compares two partitions and ignores how each one numbered its clusters: 1.0 is a perfect match, 0.0 is chance.',
      'The k-means call is not wrong and there is nothing to tune. Its objective is squared distance to a center, and a crescent has no useful center.'
    ]}],
- quiz:{title:'Quick check, clustering',questions:[
-   {q:'k-means cannot find elongated clusters because:',
-    options:['It assigns each point to exactly one cluster','Its objective is squared distance to a center','It converges before reaching them','It requires k to be known beforehand'],answer:1,whyWrong:['Hard assignment is what separates it from a GMM, and a GMM with round components has the same shape limitation.','','It converges to a genuine local optimum of its own objective. The objective is the problem.','Needing k in advance is a real inconvenience, and it has nothing to do with cluster shape.'],
-    why:'Minimizing ‖x − μ‖² makes round, equally sized groups the only thing the objective rewards.'},
-   {q:'DBSCAN differs from k-means most importantly by:',
-    options:['Producing soft rather than hard assignments','Finding arbitrary shapes and labeling noise','Running faster on very large datasets','Guaranteeing the global optimum is found'],answer:1,whyWrong:['DBSCAN assigns hard labels. Soft assignment is what a GMM gives you.','','It is often slower, and speed is not why people reach for it.','Neither guarantees a global optimum. DBSCAN is deterministic given its parameters, which is a different thing.'],
-    why:'Density-connected regions can be any shape, and points in no dense region are explicitly outliers.'},
-   {q:'A high silhouette score tells you:',
-    options:['The data was properly scaled beforehand','The partition is compact and well separated','The clusters correspond to something real','The correct k has definitely been found'],answer:1,whyWrong:['Scaling affects the distances the score is computed from, and the score itself cannot tell you whether you did it.','','Nothing about the geometry says the clusters mean anything. That takes domain knowledge.','It is one signal among several for choosing k, and it can peak at a k that is not the true one.'],
-    why:'It measures the geometry of the partition against the assumptions that produced it. Reality needs outside evidence.'}
+ quiz:{title:'Quick check, the two crescents',questions:[
+   {q:'k-means cannot separate the two crescents because:',
+    options:['Every cluster it can form is the region nearest one center','It was not told how many clusters to look for','The crescents overlap too much for any method to separate them','It needs more iterations before the centers settle where they belong'],answer:0,whyWrong:['','It was told k = 2, and that is the right number. The count was never the problem.','DBSCAN separates them almost perfectly on the identical points, so the structure is there.','The centers converge fine. Convergence is not the limit, the shape of the region is.'],
+    why:'Nearest-center regions have straight edges, and a curved ribbon that wraps around another cannot fit inside one.'},
+   {q:'DBSCAN finds two crescents without being told there are two because it:',
+    options:['Tries every value of k and keeps the best one','Grows clusters through neighboring points','Assumes the clusters are the same size and shape as each other','Fits one Gaussian per cluster and compares the likelihoods'],answer:1,whyWrong:['It never searches over k. The count is an output, not an input.','','That assumption belongs to k-means, and it is exactly what breaks on the moons.','That is a Gaussian mixture, a different method with different failure modes.'],
+    why:'Clusters are chains of core points within eps of each other, so they follow whatever shape the density takes.'},
+   {q:'DBSCAN labels one point as noise rather than placing it in a cluster. This is:',
+    options:['A defect that will disappear once eps is tuned correctly','Evidence that the point was recorded incorrectly in the data','The method declining to guess','The reason its adjusted Rand index falls short of a perfect score'],answer:2,whyWrong:['Tuning eps changes how many points are set aside, but the ability to set any aside is the design, not a bug.','Noise means too few neighbors within eps, which says nothing about whether the measurement is right.','','One unlabeled point out of two hundred barely moves the index, which still lands near 0.99.'],
+    why:'A point with too few neighbors is left unassigned instead of forced into the nearest cluster.'}
  ]}}
 ,
+
 
 {id:'mlreg',
  title:'Regression beyond the straight line',
