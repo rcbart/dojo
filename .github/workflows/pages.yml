@@ -32,12 +32,16 @@ jobs:
       # anything is published. A failure here fails the deploy.
       - name: Verify DevDojo content
         run: node scripts/verify.js
+      # Run the ROOT verifier for every course, passing the course directory as
+      # an argument. Using working-directory instead resolved to a course-local
+      # COPY of verify.js, and those copies were stale: they tested each regex
+      # against the raw e.solution, with none of the comment-stripping, inert-code
+      # or t.raw handling the real grader has. Two of three courses were graded by
+      # a verifier that no longer matched production.
       - name: Verify IdentityDojo content
-        run: node scripts/verify.js
-        working-directory: identity-dojo
+        run: node scripts/verify.js identity-dojo
       - name: Verify JSDojo content
-        run: node scripts/verify.js
-        working-directory: js-dojo
+        run: node scripts/verify.js js-dojo
 
       # Third gate: every exercise that ships a run spec is EXECUTED against its
       # own reference solution, exactly as the in-browser worker would. The two
@@ -96,14 +100,6 @@ jobs:
           python3 kubernetes-crash-course/web/build.py
           python3 envoy-crash-course/web/build.py
           python3 istio-crash-course/web/build.py
-
-      # Gate 9. Content gates check what the source says. This one checks that
-      # what we ship can actually run: every inline <script> in every built page
-      # must parse. One invalid escape in a quiz option once shipped a page that
-      # returned 200, weighed the right size, passed all eight gates, and
-      # rendered a header with nothing under it.
-      - name: Verify every built page can run
-        run: node scripts/verify-built.js
 
       # Gate 10. A correct answer that is conspicuously the longest option is
       # answerable without knowing the material. The budget only ever comes down.
@@ -173,7 +169,20 @@ jobs:
           test -s _site/istio/index.html
           test -s _site/ml/index.html
           test -s _site/authlint/index.html
+          test -s _site/authlint/authlint-og.png
           ls -lh _site _site/blog _site/dev _site/identity _site/js
+
+      # Gate 9. Content gates check what the source says. This one checks that
+      # what we ship can actually run: every inline <script> in every built page
+      # must parse. One invalid escape in a quiz option once shipped a page that
+      # returned 200, weighed the right size, passed all eight gates, and
+      # rendered a header with nothing under it.
+      #
+      # It runs AFTER assembly on purpose. Before, it only saw the pre-assembly
+      # course builds - never the substituted home page and never a single built
+      # blog page, all of which carry inline script and are what actually ships.
+      - name: Verify every built page can run
+        run: node scripts/verify-built.js
 
       # Gate 8. Every <loc> the sitemap advertises has to exist in the assembled
       # site, and the feed and robots.txt have to be there. A link the build

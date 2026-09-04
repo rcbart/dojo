@@ -33,8 +33,20 @@ const COURSES = ['.', 'identity-dojo', 'js-dojo'];
 const has = c => { try { cp.execSync(`command -v ${c}`, { stdio: 'ignore' }); return true; } catch { return false; } };
 const MODE = has('javac') ? 'javac' : (has('java') ? 'java-source' : null);
 if (!MODE) {
-  console.log('java-compile: no JDK or JRE on PATH, skipping (CI provides one)');
-  process.exit(0);
+  // This used to exit 0 on "CI provides one", which made the gate depend on a
+  // step in another file staying in place: drop the setup-java step and 331
+  // Java solutions go uncompiled with a green tick. The workflow's
+  // actions/setup-java@v4 puts javac on PATH, so in CI this branch is not
+  // reached; if it ever is, that is the failure worth knowing about.
+  // ALLOW_NO_JDK=1 is the deliberate local opt-out.
+  if (process.env.ALLOW_NO_JDK === '1') {
+    console.log('java-compile: no JDK or JRE on PATH; skipped because ALLOW_NO_JDK=1');
+    process.exit(0);
+  }
+  console.error('java-compile: no JDK or JRE on PATH. The Java compile gate cannot run.');
+  console.error('  CI installs one with actions/setup-java@v4 before this step; check that step still exists.');
+  console.error('  To skip deliberately on a machine without a JDK: ALLOW_NO_JDK=1 node scripts/verify-java.js');
+  process.exit(1);
 }
 const version = (cp.execSync(`${MODE === 'javac' ? 'javac' : 'java'} -version 2>&1`, { encoding: 'utf8' }).match(/\d+/) || ['?'])[0];
 

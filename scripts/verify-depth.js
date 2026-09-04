@@ -34,6 +34,17 @@ const REPORT = process.argv.includes('--report');
 const COURSES = [['DevDojo', '.'], ['IdentityDojo', 'identity-dojo'], ['JSDojo', 'js-dojo']];
 const RATIO = 0.5;
 
+//   v4, the same median rule with an ABSOLUTE floor under it. A relative floor
+//        alone has the v2 fault in a worse form: the median of the set being
+//        judged is itself dragged down by stubs, so ten stub lessons fail while
+//        four hundred of them drag the median to 2 and every one passes. The
+//        check got more lenient the worse the course got. FLOOR_MIN puts a bar
+//        under that. 250 words is chosen from the shipped data: the thinnest
+//        lesson in any course today is DevDojo vtx1 at 253 words, so 250 passes
+//        everything currently published (and is BELOW the relative floor of 252
+//        DevDojo already enforces) while no plausible stub clears it.
+const FLOOR_MIN = 250;
+
 const words = body => body.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
 const median = xs => { const s = [...xs].sort((a, b) => a - b); const m = s.length >> 1;
   return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2); };
@@ -49,7 +60,7 @@ for (const [name, dir] of COURSES) {
   const lessons = [];
   for (const s of S) for (const l of s.lessons || []) lessons.push({ id: l.id, title: l.title, w: words(l.body), stream: s.title });
   const med = median(lessons.map(l => l.w));
-  const floor = Math.round(med * RATIO);
+  const floor = Math.max(FLOOR_MIN, Math.round(med * RATIO));
   const thin = lessons.filter(l => l.w < floor).sort((a, b) => a.w - b.w);
 
   for (const l of thin) console.error(`THIN ${name} ${l.id}, ${l.w}w < ${floor}w, ${l.title}`);

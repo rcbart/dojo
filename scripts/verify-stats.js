@@ -124,9 +124,34 @@ console.log('docs/landing.html cards match the content.');
 
 // The home page states the CI gate count twice. It said nine while thirteen ran,
 // which is the sort of small wrongness a careful reader notices first.
+//
+// This used to count "# Gate N" COMMENTS and take the maximum, which measured
+// nothing: gates 1-7 are worded differently so they never matched, and five real
+// verification STEPS could be deleted while the comments still reported 16.
+// Count what the workflow actually RUNS instead: the distinct verification
+// scripts invoked by run: lines. Comment lines are stripped first so a prose
+// mention of a script can never be mistaken for a step.
 const wf = fs.readFileSync('.github/workflows/pages.yml', 'utf8');
-const gates = new Set([...wf.matchAll(/^\s*#\s*Gate (\d+)\b/gm)].map(m => +m[1]));
-const gateCount = gates.size ? Math.max(...gates) : 0;
+const wfSteps = wf.split('\n').filter(l => !/^\s*#/.test(l)).join('\n');
+const RUNS = /\b(?:node|python3)\b[^\n]*?((?:scripts\/verify[\w.-]*\.(?:js|py))|(?:engine\/test\/[\w.-]+\.js))/g;
+const invocations = [...wfSteps.matchAll(RUNS)].map(m => m[1]);
+if (!invocations.length) { console.error('.github/workflows/pages.yml: no verification steps found'); process.exit(1); }
+const scripts = [...new Set(invocations)];
+const gateCount = scripts.length;
+console.log(`\nworkflow runs ${invocations.length} verification steps across ${gateCount} distinct gates:`);
+for (const s of scripts) {
+  const n = invocations.filter(x => x === s).length;
+  console.log(`  ${s}${n > 1 ? ` (x${n})` : ''}`);
+}
+
+// The course verifier is one gate run once per course. Counting distinct scripts
+// would not notice a course quietly dropping out of the run, so name them.
+const COURSE_RUNS = 3;
+const courseRuns = invocations.filter(s => s === 'scripts/verify.js').length;
+if (courseRuns !== COURSE_RUNS) {
+  console.error(`  scripts/verify.js runs ${courseRuns} times, expected ${COURSE_RUNS} (one per course)`);
+  process.exit(1);
+}
 const WORDS = ['zero','one','two','three','four','five','six','seven','eight','nine','ten',
                'eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen',
                'eighteen','nineteen','twenty'];
@@ -134,7 +159,9 @@ const claims = [...home.matchAll(/(?:runs|by) (\w+) (?:CI )?checks/g)].map(m => 
 if (!claims.length) { console.error('docs/home.html no longer states the gate count'); process.exit(1); }
 const wrong = claims.filter(w => WORDS.indexOf(w) !== gateCount && +w !== gateCount);
 if (wrong.length) {
-  console.error(`  docs/home.html says "${wrong.join('", "')}" checks, the workflow defines ${gateCount} gates`);
+  console.error(`  docs/home.html says "${wrong.join('", "')}" checks, the workflow runs ${gateCount} verification gates:`);
+  for (const s of scripts) console.error(`    ${s}`);
+  console.error('  Either restore the deleted verification step or correct the claim on docs/home.html.');
   process.exit(1);
 }
-console.log(`docs/home.html states ${gateCount} CI gates, which is how many the workflow defines.`);
+console.log(`docs/home.html states ${gateCount} CI gates, which is how many the workflow runs.`);

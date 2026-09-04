@@ -33,6 +33,8 @@ function stripInert(code,opts){
     if(cstyle&&c==='/'&&d==='*'){const e=code.indexOf('*/',i+2);i=e<0?code.length:e+2;out+=' ';continue;}
     if(cstyle&&c==='/'&&d==='/'&&code[i-1]!==':'){while(i<code.length&&code[i]!=='\n')i++;continue;}
     if(hash&&c==='#'){while(i<code.length&&code[i]!=='\n')i++;continue;}
+    if(opts.dash&&c==='-'&&d==='-'){while(i<code.length&&code[i]!=='\n')i++;continue;}
+    if(opts.xml&&c==='<'&&code.substr(i,4)==='<!--'){const e=code.indexOf('-->',i+4);i=e<0?code.length:e+3;out+=' ';continue;}
     if(c==='"'||c==="'"||c==='`'){
       let j=i+1;
       while(j<code.length&&code[j]!==c){j+=code[j]==='\\'?2:1;}
@@ -46,25 +48,30 @@ function stripInert(code,opts){
 function checkOpts(lang){
   if(!lang||lang==='java'||lang==='js'||lang==='jsx'||lang==='groovy')return {cstyle:true,hash:false};
   if(lang==='shell'||lang==='yaml'||lang==='dockerfile')return {cstyle:false,hash:true};
-  return null; // text, sql, http, xml, ...: match raw, other graders own them
+  if(lang==='sql')return {cstyle:true,hash:false,dash:true,markersMatter:true};
+  if(lang==='http'||lang==='xml')return {cstyle:false,hash:false,xml:true};
+  return null; // text and free-form answers: match raw, nothing to strip
 }
 function localChecks(e,code){
   const opts=checkOpts(e.lang);
-  let hay=code,inert=false;
+  let hay=code,bare=code,inert=false;
   if(opts){
-    hay=stripInert(code,{cstyle:opts.cstyle,hash:opts.hash,keepStrings:true});
-    if(opts.cstyle){
-      const bare=stripInert(code,{cstyle:true,hash:false,keepStrings:false});
-      inert=(bare.replace(/[^A-Za-z]/g,'').length<15)&&(code.replace(/[^A-Za-z]/g,'').length>=15);
-    }
+    const p={cstyle:opts.cstyle,hash:opts.hash,dash:opts.dash,xml:opts.xml};
+    // SQL exercises anchor their checks on "-- n)" comment markers, so comments
+    // must survive in the haystack there; the inert tripwire below still strips
+    // them, which is what rejects a wholly commented-out submission.
+    hay=opts.markersMatter?code:stripInert(code,Object.assign({keepStrings:true},p));
+    bare=stripInert(code,Object.assign({keepStrings:false},p));
+    inert=(bare.replace(/[^A-Za-z]/g,'').length<15)&&(code.replace(/[^A-Za-z]/g,'').length>=15);
   }
   return (e.tests||[]).map(t=>{
     let pass;
-    if(inert&&!t.not&&!t.raw){pass=false;}
-    else{
-      try{pass=new RegExp(t.re,t.flags||'s').test(t.raw?code:hay);}catch(err){pass=false}
-      if(t.not)pass=!pass;
-    }
+    // An inert submission (nothing but comments and string literals) is matched
+    // against the string-stripped text, so a short but genuine answer whose
+    // content is mostly a literal still passes on its own merits.
+    const target=t.raw?code:(inert&&!t.not?bare:hay);
+    try{pass=new RegExp(t.re,t.flags||'s').test(target);}catch(err){pass=false}
+    if(t.not)pass=!pass;
     return {desc:t.d,pass};
   });
 }
@@ -113,7 +120,7 @@ Respond with ONLY valid JSON, no markdown fences:
       if(out.compiles===false){
         (out.compileErrors||[]).forEach(er=>{
           ch+=cline('Solution.java:'+(er.line||'?')+': error: '+esc(er.message||''),'err',
-            ' onclick="jumpToLine('+(parseInt(er.line)||1)+')" title="click to jump to line '+(er.line||1)+'"');
+            ' onclick="jumpToLine('+(parseInt(er.line)||1)+')" title="click to jump to line '+(parseInt(er.line)||1)+'"');
         });
         ch+=cline((out.compileErrors||[]).length+' error(s)','err')+cline('BUILD FAILED','err');
       }else{
@@ -214,7 +221,7 @@ function gradeSql(l,e,sid,ei,exs,code){
 }
 /* Grade pure-JS exercises by REAL execution in an isolated Web Worker. The exercise
    supplies e.run = { call:'fnName', cases:[{args,expect,name?}], mock?:'fetch' }. */
-function buildWorkerSrc(code,spec){
+function buildWorkerSrc(code,spec,token){
   const cases=JSON.stringify(spec.cases||[]);
   const mode=spec.mock==='fetch'?'fetch':'call';
   const callLine=mode==='fetch'
@@ -249,14 +256,15 @@ function buildWorkerSrc(code,spec){
     +(mode==='fetch'?'self.fetch=function(u,o){__req={url:u,opts:o||{}};return Promise.resolve({ok:true,status:201,json:function(){return Promise.resolve({});}});};':'')
     +'try{\n'+code+'\nvar cases='+cases+';for(var i=0;i<cases.length;i++){var c=cases[i];try{'+callLine+'}catch(err){results.push({name:c.name||("case "+(i+1)),pass:false,note:(err&&err.message)||String(err)});}}'
     +'}catch(err){results.push({name:"loaded without error",pass:false,note:(err&&err.message)||String(err)});}'
-    +'postMessage(results);})();';
+    +'postMessage({__t:'+JSON.stringify(String(token||''))+',r:results});})();';
 }
 function gradeJs(l,e,sid,ei,exs,code){
   const btn=document.getElementById('btnRun');btn.disabled=true;
   const tests=document.getElementById('io-tests');const con=document.getElementById('io-console');
   tests.innerHTML='<div class="aiBox"><span class="spin"></span>Running your code in a sandboxed Web Worker…</div>';setTab('tests');
-  let w=null;
+  let w=null,settled=false;
   const finish=(results,fatal)=>{
+    if(settled)return;settled=true;
     try{if(w)w.terminate();}catch(_){}
     const allPass=!fatal&&results.length>0&&results.every(r=>r.pass);
     tests.innerHTML='<h4 style="margin:8px 0 4px">Executed in a sandboxed Web Worker</h4>'+
@@ -267,13 +275,18 @@ function gradeJs(l,e,sid,ei,exs,code){
     if(allPass)completeExercise(l,sid,ei,exs);
     btn.disabled=false;
   };
-  let src;try{src=buildWorkerSrc(code,e.run);}catch(x){return finish([],'could not prepare runner: '+x.message);}
+  /* The learner's own code runs inside this worker, so it can call postMessage
+     itself and forge an all-pass result. Each run carries a fresh token that the
+     submitted code never sees before it is inlined; messages without it are
+     ignored, and only the first accepted message settles the run. */
+  const token=Math.random().toString(36).slice(2)+Date.now().toString(36);
+  let src;try{src=buildWorkerSrc(code,e.run,token);}catch(x){return finish([],'could not prepare runner: '+x.message);}
   try{
     const url=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));
     w=new Worker(url);
     URL.revokeObjectURL(url);   // the worker keeps running; the URL stops being resolvable
     const timer=setTimeout(()=>finish([],'timed out after 3s (possible infinite loop)'),3000);
-    w.onmessage=ev=>{clearTimeout(timer);finish(ev.data,null);};
+    w.onmessage=ev=>{const d=ev&&ev.data;if(!d||d.__t!==token)return;clearTimeout(timer);finish(Array.isArray(d.r)?d.r:[],null);};
     w.onerror=ev=>{clearTimeout(timer);finish([],(ev&&ev.message)||'worker error (check for syntax errors)');};
   }catch(x){finish([],'worker unavailable: '+x.message);}
 }

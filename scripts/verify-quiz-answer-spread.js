@@ -9,10 +9,16 @@
 const fs = require('fs');
 const MAX = 0.34;                 // uniform over four slots is 0.25
 const MIN_N = 40;                 // below this a bank is too small for the ratio to mean much
+// Both banks per course. src/quizzes.js is generated but build.js ships it into
+// dist/index.html exactly like the hand-written one, so a slot bias there reaches
+// a reader all the same. It was not listed here, so it was never checked.
 const BANKS = {
-  dev: 'src/quizzes_hand.js',
-  idn: 'identity-dojo/src/quizzes_hand.js',
-  js:  'js-dojo/src/quizzes_hand.js',
+  dev:      'src/quizzes_hand.js',
+  'dev-gen':'src/quizzes.js',
+  idn:      'identity-dojo/src/quizzes_hand.js',
+  'idn-gen':'identity-dojo/src/quizzes.js',
+  js:       'js-dojo/src/quizzes_hand.js',
+  'js-gen': 'js-dojo/src/quizzes.js',
 };
 
 function load(rel) {
@@ -35,6 +41,7 @@ function questions(node, out) {
 let failures = 0;
 for (const [tag, rel] of Object.entries(BANKS)) {
   const qs = questions(load(rel));
+  if (!qs.length) { console.log(`ok   ${tag}: 0 questions (empty bank)`); continue; }
   const counts = {};
   let misaligned = 0;
   for (const q of qs) {

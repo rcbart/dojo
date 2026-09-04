@@ -14,8 +14,10 @@
  * checkable by anyone who cares to look, which is the standard the rest of this
  * repo holds itself to.
  *
- * Posts written before the tally started have no `revisions:` field and are
- * skipped. New posts should carry one. It is one line of front matter:
+ * EVERY published post must carry the field. It used to be optional, which made
+ * the gate opt-out: leave one line out of the front matter and the post was
+ * skipped entirely, so the weakest post was the one the check never saw. A
+ * missing count is now a failure. It is one line of front matter:
  *
  *   revisions: 14
  *
@@ -24,21 +26,37 @@
 const fs = require('fs');
 const path = require('path');
 
+// The claim is "MORE THAN ten", so ten itself does not clear it: the comparison
+// below is n <= FLOOR, not n < FLOOR, which used to accept exactly 10.
 const FLOOR = 10;                       // must match the wording on the home page
 const CLAIM = 'more than ten revisions'; // the sentence this gate stands behind
 
+// sit-the-exam predates the revision tally, so it has no count to state. It is
+// grandfathered by name rather than by silence: every post written since must
+// carry the field, and a new post cannot opt out by leaving it off.
+const PRE_TALLY = new Set(['2026-08-14-sit-the-exam.md']);
+
 const posts = fs.readdirSync('posts').filter(f => f.endsWith('.md'));
-let checked = 0, bad = 0;
+let checked = 0, bad = 0, grandfathered = 0;
 
 for (const f of posts) {
   const src = fs.readFileSync(path.join('posts', f), 'utf8');
   const fm = src.split('---')[1] || '';
   const m = fm.match(/^revisions:\s*(\d+)\s*$/m);
-  if (!m) { console.log(`  ${f.padEnd(48)} no count recorded, skipped`); continue; }
+  if (!m) {
+    if (PRE_TALLY.has(f)) {
+      console.log(`  ${f.padEnd(48)} predates the tally, grandfathered`);
+      grandfathered++;
+      continue;
+    }
+    console.error(`  ${f.padEnd(48)} no revisions: field in the front matter`);
+    bad++;
+    continue;
+  }
   const n = +m[1];
   checked++;
-  if (n < FLOOR) {
-    console.error(`  ${f.padEnd(48)} ${n} revisions, below the ${FLOOR} the home page claims`);
+  if (n <= FLOOR) {
+    console.error(`  ${f.padEnd(48)} ${n} revisions, the home page claims more than ${FLOOR}`);
     bad++;
   } else {
     console.log(`  ${f.padEnd(48)} ${n} revisions`);
@@ -58,5 +76,5 @@ if (bad) {
   process.exit(1);
 }
 
-console.log(`\n${checked} post(s) carry a revision count, all at or above ${FLOOR}.`);
+console.log(`\n${checked} post(s) carry a revision count, all above ${FLOOR}` + (grandfathered ? `, ${grandfathered} grandfathered` : '') + '.');
 console.log(`docs/home.html still makes the claim this gate enforces.`);

@@ -86,6 +86,40 @@ test('localChecks leaves text answers untouched', () => {
   const e = { lang: 'text', tests: [{ d: 'names the race', re: "don't|race" }] };
   assert.equal(localChecks(e, "It's a read-modify-write race, don't do it unlocked.")[0].pass, true);
 });
+/* Sweep of 4 Sep: the inert defense now covers every language the structural
+   checks grade, and the worker grader no longer trusts an unsigned message. */
+test('localChecks rejects a shell solution hidden in a quoted string', () => {
+  const e = { lang: 'shell', tests: [{ d: 'force-with-lease', re: '--force-with-lease' }] };
+  assert.equal(localChecks(e, 'echo "git rebase -i HEAD~3 && git push --force-with-lease"')[0].pass, false);
+});
+test('localChecks still passes a shell answer whose program lives in quotes', () => {
+  const e = { lang: 'shell', tests: [{ d: 'uses awk', re: 'awk' }] };
+  assert.equal(localChecks(e, "cat access.log | awk '{print $1}' | sort | uniq -c")[0].pass, true);
+});
+test('localChecks rejects a wholly commented-out SQL solution', () => {
+  const e = { lang: 'sql', tests: [{ d: 'BIGSERIAL key', re: 'BIGSERIAL' }] };
+  assert.equal(localChecks(e, '-- CREATE TABLE customers (id BIGSERIAL PRIMARY KEY);')[0].pass, false);
+});
+test('localChecks keeps SQL comment markers, which those lessons anchor on', () => {
+  const e = { lang: 'sql', tests: [{ d: 'Q1 joins', re: '1\\)[\\s\\S]*?from\\s+employees' }] };
+  const sol = '-- 1) every employee with a department\nselect e.name from employees e join departments d on d.id = e.dept_id;';
+  assert.equal(localChecks(e, sol)[0].pass, true);
+});
+test('localChecks rejects an XML solution wrapped in an XML comment', () => {
+  const e = { lang: 'xml', tests: [{ d: 'artifactId', re: '<artifactId>' }] };
+  assert.equal(localChecks(e, '<!-- <artifactId>spring-boot-starter-web</artifactId> -->')[0].pass, false);
+});
+test('localChecks passes a short answer whose content is mostly a literal', () => {
+  const e = { lang: 'js', tests: [{ d: 'declares greeting', re: 'const\\s+greeting' }] };
+  assert.equal(localChecks(e, 'const greeting = "Hello, world!";')[0].pass, true);
+});
+test('buildWorkerSrc posts results under the run token so submitted code cannot forge them', () => {
+  const src = buildWorkerSrc('function f(){}', { call: 'f', cases: [] }, 'tok123');
+  assert.ok(src.includes('"tok123"'), 'the token is embedded in the worker source');
+  assert.ok(/postMessage\(\{__t:/.test(src), 'results are posted in the token envelope');
+  assert.ok(!/postMessage\(results\)/.test(src), 'no bare unsigned postMessage remains');
+});
+
 test('localChecks not:true still forbids real code but forgives comments', () => {
   const e = { tests: [{ d: 'no &&', re: '&&', not: true }] };
   assert.equal(localChecks(e, 'return a && b;')[0].pass, false);

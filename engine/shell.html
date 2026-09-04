@@ -7,22 +7,29 @@
      This app runs LEARNER-SUPPLIED CODE in a Web Worker, so the policy is
      written around one goal: that code must not be able to reach the network.
        default-src 'none'   deny everything, then allow only what is needed
-       connect-src 'none'   no fetch / XHR / WebSocket / EventSource, from the
-                            page OR from the worker, which inherits this policy.
-                            THIS is what stops submitted code exfiltrating.
+       connect-src 'self'   same origin only, which is what the shipped UI needs:
+                            the local Java runner (/api/run/java) and the
+                            ratings/comments sync (/api/ratings). Every other
+                            origin is still denied for fetch / XHR / WebSocket /
+                            EventSource, from the page OR from the worker, which
+                            inherits this policy. THAT is what stops submitted
+                            code exfiltrating anywhere off this origin.
        script-src           'unsafe-inline' is unavoidable: the whole course is
                             one offline file with no external origin to load
-                            from. No remote origin is allowed, so nothing can be
-                            pulled in. blob: permits the exercise worker only.
+                            from. 'self' permits the one same-origin script the
+                            server injects for signed-in learners,
+                            /dojo-bridge.js, which draws the account bar. No
+                            remote origin is allowed, so nothing can be pulled
+                            in. blob: permits the exercise worker only.
        worker-src blob:     the sandboxed runner, and nothing else.
        object/frame/base/form-action are all denied outright. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'none';
-  script-src 'unsafe-inline' blob:;
+  script-src 'self' 'unsafe-inline' blob:;
   style-src 'unsafe-inline';
   img-src data:;
   font-src data:;
-  connect-src 'none';
+  connect-src 'self';
   worker-src blob:;
   child-src blob:;
   frame-src 'none';

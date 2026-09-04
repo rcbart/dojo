@@ -32,17 +32,36 @@ def text_of(p):
     s = re.sub(r'<code[^>]*>.*?</code>', ' ', s, flags=re.S|re.I)
     s = re.sub(r'<[^>]+>', ' ', s)
     return s
+def _prose(t):
+    """Strip code, math and SVG out of one prose field."""
+    t = re.sub(r'<pre[^>]*>.*?</pre>', ' ', t, flags=re.S)
+    t = re.sub(r'<code[^>]*>.*?</code>', ' ', t, flags=re.S)
+    t = re.sub(r'<div class="mathblock">.*?</div>', ' ', t, flags=re.S)
+    t = re.sub(r'<svg.*?</svg>', ' ', t, flags=re.S)
+    return re.sub(r'<[^>]+>', ' ', t)
+
+
+# A lesson publishes far more prose than its body. The exercise prompt, the
+# behavior spec, the hints and the titles are all rendered to the reader, and
+# reading only `body:` left every one of them unchecked - which is most of the
+# words on the exercise pane.
+BACKTICK_FIELD = re.compile(r'\b(?:body|prompt|behavior):\s*`(.*?)`,\n', re.S)
+HINTS_FIELD = re.compile(r'\bhints:\s*\[(.*?)\],?\n', re.S)
+SQ_STRING = re.compile(r"'((?:[^'\\]|\\.)*)'", re.S)
+TITLE_FIELD = re.compile(r"\btitle:\s*'((?:[^'\\]|\\.)*)'")
+
+
 def js_prose(p):
-    """Stream files: take only the template-literal bodies, minus code and math."""
+    """Stream files: every template-literal prose field, minus code and math."""
     s = io.open(p, encoding='utf-8', errors='replace').read()
     out = []
-    for m in re.finditer(r'body:\s*`(.*?)`,\n', s, re.S):
-        t = m.group(1)
-        t = re.sub(r'<pre[^>]*>.*?</pre>', ' ', t, flags=re.S)
-        t = re.sub(r'<code[^>]*>.*?</code>', ' ', t, flags=re.S)
-        t = re.sub(r'<div class="mathblock">.*?</div>', ' ', t, flags=re.S)
-        t = re.sub(r'<svg.*?</svg>', ' ', t, flags=re.S)
-        out.append(re.sub(r'<[^>]+>', ' ', t))
+    for m in BACKTICK_FIELD.finditer(s):
+        out.append(_prose(m.group(1)))
+    for m in HINTS_FIELD.finditer(s):
+        for h in SQ_STRING.findall(m.group(1)):
+            out.append(_prose(h.replace("\\'", "'")))
+    for m in TITLE_FIELD.finditer(s):
+        out.append(_prose(m.group(1).replace("\\'", "'")))
     return '\n'.join(out)
 tot = collections.Counter()
 for p in sys.argv[1:]:

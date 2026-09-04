@@ -27,7 +27,7 @@ const BELTS=[[0,'White belt'],[10,'Yellow belt'],[25,'Orange belt'],[40,'Green b
 /* Guard the coercion: esc is called on optional fields (a lesson without docs,
    an exercise without a note), and an undefined there should render as nothing
    rather than throwing and blanking the panel. Found by engine/test. */
-const esc=s=>(s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const esc=s=>(s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 function highlight(src){
   const toks=[];
   const stash=(html)=>{toks.push(html);return '\u0000'+String.fromCharCode(0xE000+toks.length-1);};
@@ -56,7 +56,7 @@ function beltName(){
 }
 function lessonsToNextBelt(){
   const done=doneCount(),total=totalLessons();
-  const pct=100*done/total;
+  const pct=Math.round(100*done/total);   // same rounding as beltName, or the header and the hint disagree
   let next=null;
   for(const[b,n]of BELTS){if(b>pct){next=[b,n];break;}}
   if(!next)return null;                       // already black belt

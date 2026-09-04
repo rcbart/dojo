@@ -64,7 +64,11 @@ const giscusBlock = () => (GISCUS.repoId && GISCUS.categoryId) ? `
   </scr` + `ipt>
 </section>` : '';
 
-const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// Escapes quotes too: esc() output lands inside attributes (content="...",
+// title="..."), where a bare quote in front matter would close the attribute
+// and let the rest of the string become markup.
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 function inline(s) {
   // escape first, then apply spans; code spans protect their contents
@@ -126,7 +130,12 @@ function frontMatter(src) {
   const meta = {};
   for (const line of m[1].split('\n')) {
     const k = line.match(/^(\w+):\s*(.*)$/);
-    if (k) meta[k[1]] = k[2].replace(/^"(.*)"$/, '$1');
+    if (k) {
+      const q = k[2].match(/^"(.*)"$/);
+      // Inside a quoted value, \" and \\ are escapes. Undo them so a title
+      // written title: "the \"quote\" problem" ships without its backslashes.
+      meta[k[1]] = q ? q[1].replace(/\\(["\\])/g, '$1') : k[2];
+    }
   }
   return [meta, src.slice(m[0].length)];
 }

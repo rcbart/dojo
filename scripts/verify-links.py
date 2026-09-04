@@ -103,9 +103,22 @@ for page in sorted(pages()):
         tids = info(target).ids
         if frag in tids:
             continue
-        # Some ids are written by the app at runtime rather than in the file.
+        # An id can be written as a literal attribute the HTMLParser missed
+        # (inside a template literal, say), so look for it in the raw text too.
         raw = io.open(target, encoding='utf-8', errors='replace').read()
-        if ('id="%s"' % frag) in raw or ("id='%s'" % frag) in raw or ("'%s'" % frag) in raw:
+        if ('id="%s"' % frag) in raw or ("id='%s'" % frag) in raw:
+            continue
+        # The looser test - the fragment name appearing anywhere as a quoted
+        # string - used to be applied to EVERY page. That is not a check: any
+        # fragment whose name happens to be a JS string literal passed without
+        # the element existing anywhere. /#click and /#keydown both slipped
+        # through on the home page that way. It is only defensible for the
+        # runtime-rendered courses, which really do mount sections from JS, so
+        # it is now restricted to pages DYNAMIC matches - and even there it only
+        # downgrades the finding to a note, it does not silence it.
+        if DYNAMIC.search(target) and ("'%s'" % frag) in raw:
+            warn.append('%s: "%s" only matches a quoted string in %s (dynamic page)'
+                        % (rel, href, os.path.relpath(target, ROOT)))
             continue
         msg = '%s: "%s" has no matching id in %s' % (rel, href, os.path.relpath(target, ROOT))
         (warn if DYNAMIC.search(target) else bad).append(msg)

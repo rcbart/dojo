@@ -69,7 +69,7 @@ function rateLesson(id,v,fromPrompt){
   const box=document.getElementById('rateBox');
   if(box)box.innerHTML=ratingMarkup(id);
   const ta2=document.getElementById('cmtT-'+id);
-  if(ta2&&typed&&!ta2.value)ta2.value=typed;
+  if(ta2&&typed!=null&&typed!==ta2.value)ta2.value=typed;
   const p=document.getElementById('ratePrompt');
   if(p)p.remove();
   if(fromPrompt&&window.__pendingNav){const n=window.__pendingNav;window.__pendingNav=null;openLesson(n[0],n[1]);}
