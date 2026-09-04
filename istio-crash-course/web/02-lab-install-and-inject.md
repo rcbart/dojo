@@ -102,7 +102,7 @@ You're looking at the exact Envoy stats from the Envoy course, now auto-generate
 
 ## Experiments
 
-1. **Break injection ordering.** Deploy an app to a namespace *before* labelling it, note `1/1`,
+1. **Break injection ordering.** Deploy an app to a namespace *before* labeling it, note `1/1`,
    then label it and `kubectl rollout restart` the deployment: it comes back `2/2`. Injection
    happens at pod *creation*, so existing pods must be recreated.
 2. **Diff two proxies.** Run `istioctl proxy-config clusters` for `productpage` vs `ratings`. They

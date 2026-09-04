@@ -92,7 +92,7 @@ mail is the thing people forget when migrating DNS ("email is down" after a zone
 practically a tradition), and MX targets must be names with A/AAAA records: an MX pointing at a
 CNAME is against spec and breaks some mail software.
 
-**TXT: "here's a string, make of it what you will."** The junk drawer that became load-bearing.
+**TXT: "here's a string, make of it what you will."** The junk drawer that everything came to depend on.
 Domain-ownership verification ("paste this TXT record to prove control") and the email
 authentication trio all live here: **SPF** (which servers may send mail as this domain), **DKIM**
 (the public key mail signatures verify against), **DMARC** (what receivers should do with mail

@@ -27,7 +27,7 @@ of how a pod is configured) and you can resolve the large majority of issues.
 
 ## The gotchas that bite everyone
 
-- **Forgot to label the namespace / labelled it too late.** No sidecar = not in the mesh. Injection
+- **Forgot to label the namespace / labeled it too late.** No sidecar = not in the mesh. Injection
   happens at pod **creation**; label the namespace *then* `kubectl rollout restart` existing
   deployments. Symptom: pod shows `1/1`.
 - **DestinationRule subset missing.** A VirtualService routing to `subset: v2` with no matching
@@ -54,7 +54,7 @@ of how a pod is configured) and you can resolve the large majority of issues.
 ## A debugging method that works
 
 1. **`istioctl analyze`**: fix anything it flags before going deeper.
-2. **Is the workload in the mesh?** `2/2` (sidecar) or namespace ambient-labelled? `istioctl x describe pod`.
+2. **Is the workload in the mesh?** `2/2` (sidecar) or namespace ambient-labeled? `istioctl x describe pod`.
 3. **Is the proxy synced?** `istioctl proxy-status` → SYNCED.
 4. **Does the proxy have the rule?** `istioctl proxy-config routes/clusters <pod>`: verify the
    route/subset/endpoint actually exists there.

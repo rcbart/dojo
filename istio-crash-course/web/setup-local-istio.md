@@ -145,7 +145,7 @@ cluster.
 `istio-*` folder (each new terminal needs it, or copy `istioctl` somewhere on your PATH).
 
 **App pods show `1/2` and never reach `2/2`**
-: The sidecar wasn't injected. Make sure you labelled the namespace (Step 5) *before* deploying the
+: The sidecar wasn't injected. Make sure you labeled the namespace (Step 5) *before* deploying the
 app; if not, `kubectl rollout restart deployment` in `default` re-injects.
 
 **`istioctl dashboard kiali` won't open**
@@ -161,7 +161,7 @@ command holds the terminal open (it's port-forwarding); leave it running and use
    throwaway local cluster.)*
 2. What does `istioctl install --set profile=demo` install? *(The control plane, istiod, plus
    gateways: the demo profile for learning.)*
-3. What does labelling a namespace `istio-injection=enabled` do? *(New pods there automatically get
+3. What does labeling a namespace `istio-injection=enabled` do? *(New pods there automatically get
    an Envoy sidecar injected.)*
 4. Why do the app pods show `2/2` containers? *(Your app container plus the injected sidecar
    proxy.)*

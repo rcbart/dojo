@@ -122,7 +122,7 @@ proxies.
 1. What are ambient's two layers and their jobs? *(ztunnel is per-node, handling mTLS + L4; waypoint is an Envoy,
    per-namespace/service, for L7.)*
 2. What happens to your pods' container count in ambient? *(They stay 1/1: no sidecar.)*
-3. What do you get just by labelling a namespace `istio.io/dataplane-mode=ambient`? *(Automatic
+3. What do you get just by labeling a namespace `istio.io/dataplane-mode=ambient`? *(Automatic
    mTLS/L4 via ztunnel, with no pod restarts.)*
 4. When do you need a waypoint? *(For L7 features: HTTP routing, weighted canaries, L7 authz,
    retries.)*

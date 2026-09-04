@@ -18,8 +18,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
 
@@ -55,7 +55,7 @@ jobs:
       # regex, so a model answer with a syntax error would ship as the answer.
       # Pinned to 21 so records, sealed types and text blocks parse.
       - name: Set up a JDK for the Java compile gate
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
@@ -125,7 +125,10 @@ jobs:
           python3 scripts/verify-voice-content.py \
             docs/home.html docs/landing.html skills-rubric.html \
             content/streams/*.js identity-dojo/content/streams/*.js \
-            js-dojo/content/streams/*.js posts/*.md
+            js-dojo/content/streams/*.js posts/*.md \
+            fundamentals-crash-course/web/*.md docker-crash-course/web/*.md \
+            kubernetes-crash-course/web/*.md envoy-crash-course/web/*.md \
+            istio-crash-course/web/*.md
 
       # One Pages site. The root is the roniam.dev portfolio home plus the blog
       # (both emitted by scripts/build-blog.js from blog/*.md and docs/home.html);

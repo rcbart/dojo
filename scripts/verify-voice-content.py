@@ -26,6 +26,12 @@ HARD = {
 }
 def text_of(p):
     s = io.open(p, encoding='utf-8', errors='replace').read()
+    # Markdown: fenced blocks and inline backtick spans are code, not prose.
+    # Without this the gate flagged shell and YAML comments inside fences,
+    # which is why the crash-course markdown was never in the file list.
+    if p.endswith('.md'):
+        s = re.sub(r'(?ms)^[ \t]*(`{3,}|~{3,}).*?^[ \t]*\1[ \t]*$', ' ', s)
+        s = re.sub(r'`[^`\n]*`', ' ', s)
     s = re.sub(r'<script[^>]*>.*?</script>', ' ', s, flags=re.S|re.I) if p.endswith('.html') else s
     s = re.sub(r'<style[^>]*>.*?</style>', ' ', s, flags=re.S|re.I)
     s = re.sub(r'<pre[^>]*>.*?</pre>', ' ', s, flags=re.S|re.I)

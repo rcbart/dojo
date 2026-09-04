@@ -21,7 +21,7 @@ They work as a team:
 
 ## Defining versions with subsets
 
-Bookinfo's `reviews` pods are labelled `version: v1|v2|v3`. A DestinationRule turns those labels
+Bookinfo's `reviews` pods are labeled `version: v1|v2|v3`. A DestinationRule turns those labels
 into named subsets:
 
 ```yaml
