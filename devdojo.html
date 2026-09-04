@@ -1265,11 +1265,63 @@ function filterGloss(q){
    ARCHITECTURE. Everything here is called at runtime, so load order relative
    to app.js does not matter; it is placed before for readability. */
 /* ============================== TESTS ============================== */
+/* Structural checks and the inert-code defense (issue #3, caught by Seve
+   Zavala): pasting the official solution inside comment syntax or a string
+   literal used to pass every structural check and, with the AI runner
+   unavailable, complete the lesson. Two mechanisms close it:
+   1. Comments are stripped before matching (C-family for Java/JS/Groovy,
+      hash comments for shell/yaml/dockerfile), so commented-out code never
+      satisfies a positive check. "://" is guarded so URLs survive, and the
+      pass is state-tracked so markers inside strings do not confuse it.
+      String contents are KEPT: many checks legitimately target literals
+      (URLs, SQL, header values), and in shell a quoted awk/jq body IS the
+      program. A test may set raw:true to match the unstripped code, for
+      checks that deliberately require a comment.
+   2. The tripwire: if stripping comments AND strings leaves no substantive
+      code, the submission is inert (all comments/strings) and every check
+      fails, which also catches the whole-solution-in-a-string wrap.
+   Languages graded by real execution (run: JS worker, SQL engine, ML
+   Dojo's Pyodide) never depended on this path. */
+function stripInert(code,opts){
+  const cstyle=opts.cstyle,hash=opts.hash,keepStrings=opts.keepStrings;
+  let out='';
+  for(let i=0;i<code.length;){
+    const c=code[i],d=code[i+1];
+    if(cstyle&&c==='/'&&d==='*'){const e=code.indexOf('*/',i+2);i=e<0?code.length:e+2;out+=' ';continue;}
+    if(cstyle&&c==='/'&&d==='/'&&code[i-1]!==':'){while(i<code.length&&code[i]!=='\n')i++;continue;}
+    if(hash&&c==='#'){while(i<code.length&&code[i]!=='\n')i++;continue;}
+    if(c==='"'||c==="'"||c==='`'){
+      let j=i+1;
+      while(j<code.length&&code[j]!==c){j+=code[j]==='\\'?2:1;}
+      out+=keepStrings?code.slice(i,j+1):c+c;
+      i=j+1;continue;
+    }
+    out+=c;i++;
+  }
+  return out;
+}
+function checkOpts(lang){
+  if(!lang||lang==='java'||lang==='js'||lang==='jsx'||lang==='groovy')return {cstyle:true,hash:false};
+  if(lang==='shell'||lang==='yaml'||lang==='dockerfile')return {cstyle:false,hash:true};
+  return null; // text, sql, http, xml, ...: match raw, other graders own them
+}
 function localChecks(e,code){
+  const opts=checkOpts(e.lang);
+  let hay=code,inert=false;
+  if(opts){
+    hay=stripInert(code,{cstyle:opts.cstyle,hash:opts.hash,keepStrings:true});
+    if(opts.cstyle){
+      const bare=stripInert(code,{cstyle:true,hash:false,keepStrings:false});
+      inert=(bare.replace(/[^A-Za-z]/g,'').length<15)&&(code.replace(/[^A-Za-z]/g,'').length>=15);
+    }
+  }
   return (e.tests||[]).map(t=>{
     let pass;
-    try{pass=new RegExp(t.re,t.flags||'s').test(code);}catch(e){pass=false}
-    if(t.not)pass=!pass;
+    if(inert&&!t.not&&!t.raw){pass=false;}
+    else{
+      try{pass=new RegExp(t.re,t.flags||'s').test(t.raw?code:hay);}catch(err){pass=false}
+      if(t.not)pass=!pass;
+    }
     return {desc:t.d,pass};
   });
 }
@@ -11959,7 +12011,7 @@ starter:`public class SafeCounter {
 
     // comment: why can't volatile fix count++?
 }`,
-tests:[{d:'increment is synchronized',re:'synchronized\\s+void\\s+increment'},{d:'get is synchronized too',re:'synchronized\\s+int\\s+get'},{d:'volatile boolean running',re:'volatile\\s+boolean\\s+running'},{d:'Has the why-not-volatile comment',re:'//[^\\n]*(atomic|three|read[^\\n]*write|not atomic)','flags':'is'}],
+tests:[{d:'increment is synchronized',re:'synchronized\\s+void\\s+increment'},{d:'get is synchronized too',re:'synchronized\\s+int\\s+get'},{d:'volatile boolean running',re:'volatile\\s+boolean\\s+running'},{d:'Has the why-not-volatile comment',raw:true,re:'//[^\\n]*(atomic|three|read[^\\n]*write|not atomic)','flags':'is'}],
 behavior:`1. 1000 concurrent increment() calls yield get() == 1000 (no lost updates). 2. stop() flips isRunning() to false and the change is visible to other threads immediately. 3. The comment correctly explains count++ is a read-modify-write, which volatile cannot make atomic.`,
 hints:['Method form: <code>public synchronized void increment() { count++; }</code>; the lock is this.','Reads need the same lock: an unsynchronized get() may see stale values.','volatile guarantees other threads SEE the latest value; it cannot stop two threads from interleaving read-add-write.'],
 solution:`public class SafeCounter {
@@ -20124,7 +20176,7 @@ public class FeeTest {
         assertEquals(0.0, LegacyFees.fee(-2, "gold"), 0.001);
     }
 }`,
-tests:[{d:'Four @Test methods present',re:'@Test[\\s\\S]*?@Test[\\s\\S]*?@Test[\\s\\S]*?@Test'},{d:'Plain tier pinned at 30.0',re:'assertEquals\\s*\\(\\s*30\\.0\\s*,[\\s\\S]*?fee\\s*\\(\\s*3\\s*,\\s*"basic"\\s*\\)'},{d:'Gold discount pinned at 25.0',re:'assertEquals\\s*\\(\\s*25\\.0\\s*,[\\s\\S]*?fee\\s*\\(\\s*3\\s*,\\s*"gold"\\s*\\)'},{d:'The weird zero-qty behavior is pinned, not fixed',re:'zeroQty_pinned[\\s\\S]*?assertEquals\\s*\\(\\s*0\\.0\\s*,[\\s\\S]*?fee\\s*\\(\\s*0\\s*,'},{d:'Comment marks the pin as deliberate',re:'//\\s*pinned:\\s*callers\\s+rely\\s+on\\s+this'},{d:'Every double assertion carries a delta',re:'assertEquals\\s*\\(\\s*[\\d.]+\\s*,[\\s\\S]{0,80}?,\\s*0\\.001\\s*\\)'}],
+tests:[{d:'Four @Test methods present',re:'@Test[\\s\\S]*?@Test[\\s\\S]*?@Test[\\s\\S]*?@Test'},{d:'Plain tier pinned at 30.0',re:'assertEquals\\s*\\(\\s*30\\.0\\s*,[\\s\\S]*?fee\\s*\\(\\s*3\\s*,\\s*"basic"\\s*\\)'},{d:'Gold discount pinned at 25.0',re:'assertEquals\\s*\\(\\s*25\\.0\\s*,[\\s\\S]*?fee\\s*\\(\\s*3\\s*,\\s*"gold"\\s*\\)'},{d:'The weird zero-qty behavior is pinned, not fixed',re:'zeroQty_pinned[\\s\\S]*?assertEquals\\s*\\(\\s*0\\.0\\s*,[\\s\\S]*?fee\\s*\\(\\s*0\\s*,'},{d:'Comment marks the pin as deliberate',raw:true,re:'//\\s*pinned:\\s*callers\\s+rely\\s+on\\s+this'},{d:'Every double assertion carries a delta',re:'assertEquals\\s*\\(\\s*[\\d.]+\\s*,[\\s\\S]{0,80}?,\\s*0\\.001\\s*\\)'}],
 behavior:`1. All four tests pass against the CURRENT code: that is the definition of characterization; a failing one means your model of the code is wrong, which is exactly what you needed to learn. 2. The zero/negative pins encode the surprise as protected behavior, with a comment telling the next reader the weirdness is known and deliberate, not endorsed. 3. Now any refactor that changes ANY of the four behaviors fails a test within seconds; the net exists. 4. When the team later decides qty <= 0 should throw, the pin is deleted consciously in that commit: behavior change as a visible decision, never an accident.`,
 hints:['You are documenting what IS, not what OUGHT: resist the itch to "fix" while pinning; that itch gets its own commit later.','The probing workflow: assert something absurd, run, copy the truth from the failure message into the assertion.','The _pinned suffix and comment are communication: future readers must not "helpfully" delete the weird tests.']},{title:'Characterize a gnarly legacy method',
 prompt:`A real legacy method <code>grade(int score)</code> is in production; probing revealed: 90+ → <code>"A"</code>, 80-89 → <code>"B"</code>, 70-79 → <code>"C"</code>, below 70 → <code>"F"</code> (note: no "D", a known quirk callers rely on), AND <b>score &gt; 100 returns <code>"A"</code></b> (not an error), AND <b>negative scores return <code>"F"</code></b>. Write <code>GradeTest</code> (JUnit: <code>org.junit.jupiter.api.Test</code>, static <code>assertEquals</code>) with FIVE characterization tests pinning CURRENT behavior, bugs and all: (1) <code>normalA()</code> grade(95)=="A"; (2) <code>noDgrade_pinned()</code> grade(65)=="F" with comment <code>// pinned: no D grade, by design</code>; (3) <code>over100_pinned()</code> grade(150)=="A"; (4) <code>negative_pinned()</code> grade(-5)=="F"; (5) <code>boundaryB()</code> grade(80)=="B".`,
@@ -20166,7 +20218,7 @@ public class GradeTest {
         assertEquals("B", Legacy.grade(80));
     }
 }`,
-tests:[{d:'Five @Test methods',re:'@Test[\\s\\S]*?@Test[\\s\\S]*?@Test[\\s\\S]*?@Test[\\s\\S]*?@Test'},{d:'Normal A grade pinned',re:'assertEquals\\s*\\(\\s*"A"\\s*,[\\s\\S]*?grade\\s*\\(\\s*95\\s*\\)'},{d:'The no-D quirk pinned with a marker comment',re:'noDgrade_pinned[\\s\\S]*?//\\s*pinned[\\s\\S]*?assertEquals\\s*\\(\\s*"F"\\s*,[\\s\\S]*?grade\\s*\\(\\s*65'},{d:'Over-100 behavior pinned (not "fixed" to an error)',re:'over100_pinned[\\s\\S]*?assertEquals\\s*\\(\\s*"A"\\s*,[\\s\\S]*?grade\\s*\\(\\s*150'},{d:'Negative-score behavior pinned',re:'negative_pinned[\\s\\S]*?assertEquals\\s*\\(\\s*"F"\\s*,[\\s\\S]*?grade\\s*\\(\\s*-5'},{d:'Boundary at 80 pinned to B',re:'grade\\s*\\(\\s*80\\s*\\)[\\s\\S]*?"B"|assertEquals\\s*\\(\\s*"B"\\s*,[\\s\\S]*?grade\\s*\\(\\s*80'}],
+tests:[{d:'Five @Test methods',re:'@Test[\\s\\S]*?@Test[\\s\\S]*?@Test[\\s\\S]*?@Test[\\s\\S]*?@Test'},{d:'Normal A grade pinned',re:'assertEquals\\s*\\(\\s*"A"\\s*,[\\s\\S]*?grade\\s*\\(\\s*95\\s*\\)'},{d:'The no-D quirk pinned with a marker comment',raw:true,re:'noDgrade_pinned[\\s\\S]*?//\\s*pinned[\\s\\S]*?assertEquals\\s*\\(\\s*"F"\\s*,[\\s\\S]*?grade\\s*\\(\\s*65'},{d:'Over-100 behavior pinned (not "fixed" to an error)',re:'over100_pinned[\\s\\S]*?assertEquals\\s*\\(\\s*"A"\\s*,[\\s\\S]*?grade\\s*\\(\\s*150'},{d:'Negative-score behavior pinned',re:'negative_pinned[\\s\\S]*?assertEquals\\s*\\(\\s*"F"\\s*,[\\s\\S]*?grade\\s*\\(\\s*-5'},{d:'Boundary at 80 pinned to B',re:'grade\\s*\\(\\s*80\\s*\\)[\\s\\S]*?"B"|assertEquals\\s*\\(\\s*"B"\\s*,[\\s\\S]*?grade\\s*\\(\\s*80'}],
 behavior:`1. All five pass against the CURRENT code; that's what makes them characterization tests, not aspiration. 2. The three _pinned tests encode the surprises (no D, >100→A, negatives→F) as protected behavior with comments telling the next reader they're known, not accidents. 3. Now ANY refactor that changes these behaviors fails instantly; the net is under you before you touch a line. 4. When the team later decides >100 should throw, that test is edited in the SAME commit as the behavior change: visible, deliberate, reviewable. This is exactly how you make a five-year-old untested method safe to modify.`,
 hints:['Pin what IS, not what SHOULD BE; the quirks are holding something up until proven otherwise.','The _pinned naming + comment is communication: stop the next dev from "helpfully" deleting the weird test.','Boundary values (80, 90, 70) are where grading bugs hide; pin at least one.']},
 {title:'Break a dependency with a seam',

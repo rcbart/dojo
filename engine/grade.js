@@ -8,11 +8,63 @@
    ARCHITECTURE. Everything here is called at runtime, so load order relative
    to app.js does not matter; it is placed before for readability. */
 /* ============================== TESTS ============================== */
+/* Structural checks and the inert-code defense (issue #3, caught by Seve
+   Zavala): pasting the official solution inside comment syntax or a string
+   literal used to pass every structural check and, with the AI runner
+   unavailable, complete the lesson. Two mechanisms close it:
+   1. Comments are stripped before matching (C-family for Java/JS/Groovy,
+      hash comments for shell/yaml/dockerfile), so commented-out code never
+      satisfies a positive check. "://" is guarded so URLs survive, and the
+      pass is state-tracked so markers inside strings do not confuse it.
+      String contents are KEPT: many checks legitimately target literals
+      (URLs, SQL, header values), and in shell a quoted awk/jq body IS the
+      program. A test may set raw:true to match the unstripped code, for
+      checks that deliberately require a comment.
+   2. The tripwire: if stripping comments AND strings leaves no substantive
+      code, the submission is inert (all comments/strings) and every check
+      fails, which also catches the whole-solution-in-a-string wrap.
+   Languages graded by real execution (run: JS worker, SQL engine, ML
+   Dojo's Pyodide) never depended on this path. */
+function stripInert(code,opts){
+  const cstyle=opts.cstyle,hash=opts.hash,keepStrings=opts.keepStrings;
+  let out='';
+  for(let i=0;i<code.length;){
+    const c=code[i],d=code[i+1];
+    if(cstyle&&c==='/'&&d==='*'){const e=code.indexOf('*/',i+2);i=e<0?code.length:e+2;out+=' ';continue;}
+    if(cstyle&&c==='/'&&d==='/'&&code[i-1]!==':'){while(i<code.length&&code[i]!=='\n')i++;continue;}
+    if(hash&&c==='#'){while(i<code.length&&code[i]!=='\n')i++;continue;}
+    if(c==='"'||c==="'"||c==='`'){
+      let j=i+1;
+      while(j<code.length&&code[j]!==c){j+=code[j]==='\\'?2:1;}
+      out+=keepStrings?code.slice(i,j+1):c+c;
+      i=j+1;continue;
+    }
+    out+=c;i++;
+  }
+  return out;
+}
+function checkOpts(lang){
+  if(!lang||lang==='java'||lang==='js'||lang==='jsx'||lang==='groovy')return {cstyle:true,hash:false};
+  if(lang==='shell'||lang==='yaml'||lang==='dockerfile')return {cstyle:false,hash:true};
+  return null; // text, sql, http, xml, ...: match raw, other graders own them
+}
 function localChecks(e,code){
+  const opts=checkOpts(e.lang);
+  let hay=code,inert=false;
+  if(opts){
+    hay=stripInert(code,{cstyle:opts.cstyle,hash:opts.hash,keepStrings:true});
+    if(opts.cstyle){
+      const bare=stripInert(code,{cstyle:true,hash:false,keepStrings:false});
+      inert=(bare.replace(/[^A-Za-z]/g,'').length<15)&&(code.replace(/[^A-Za-z]/g,'').length>=15);
+    }
+  }
   return (e.tests||[]).map(t=>{
     let pass;
-    try{pass=new RegExp(t.re,t.flags||'s').test(code);}catch(e){pass=false}
-    if(t.not)pass=!pass;
+    if(inert&&!t.not&&!t.raw){pass=false;}
+    else{
+      try{pass=new RegExp(t.re,t.flags||'s').test(t.raw?code:hay);}catch(err){pass=false}
+      if(t.not)pass=!pass;
+    }
     return {desc:t.d,pass};
   });
 }

@@ -17,6 +17,9 @@ if (!ROOT) {
 const dir = p => path.join(ROOT, 'content/streams', p);
 console.log('checking ' + (path.relative(path.join(__dirname, '..'), ROOT) || 'the repo root'));
 
+const { load } = require(path.join(__dirname, '..', 'engine', 'test', 'harness.js'));
+const gradeLocalChecks = load().localChecks;
+
 const manifest = JSON.parse(fs.readFileSync(dir('manifest.json'), 'utf8'));
 const STREAMS = [];
 for (const f of manifest) {
@@ -43,14 +46,17 @@ for (const s of STREAMS) {
       for (const k of ['prompt', 'solution', 'behavior']) {
         if (!e[k]) { console.error('MISSING', k, l.id + '#' + i); failures++; }
       }
-      for (const t of e.tests || []) {
+      // Grade each reference solution through the REAL grader (localChecks),
+      // so the comment/string stripping added for issue #3 is verified against
+      // every solution rather than re-implemented here and left to drift.
+      const results = gradeLocalChecks(e, e.solution || '');
+      (e.tests || []).forEach((t, ti) => {
         tests++;
-        let pass;
-        try { pass = new RegExp(t.re, t.flags || 's').test(e.solution || ''); }
-        catch (err) { console.error('BAD REGEX', l.id + '#' + i, t.d, err.message); failures++; continue; }
-        if (t.not) pass = !pass;
-        if (!pass) { console.error('TEST FAIL', l.id + '#' + i, '-', t.d); failures++; }
-      }
+        let bad = false;
+        try { new RegExp(t.re, t.flags || 's'); } catch (err) { console.error('BAD REGEX', l.id + '#' + i, t.d, err.message); failures++; bad = true; }
+        if (bad) return;
+        if (!results[ti].pass) { console.error('TEST FAIL', l.id + '#' + i, '-', t.d); failures++; }
+      });
     });
   }
 }

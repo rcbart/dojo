@@ -195,7 +195,7 @@ starter:`public class SafeCounter {
 
     // comment: why can't volatile fix count++?
 }`,
-tests:[{d:'increment is synchronized',re:'synchronized\\s+void\\s+increment'},{d:'get is synchronized too',re:'synchronized\\s+int\\s+get'},{d:'volatile boolean running',re:'volatile\\s+boolean\\s+running'},{d:'Has the why-not-volatile comment',re:'//[^\\n]*(atomic|three|read[^\\n]*write|not atomic)','flags':'is'}],
+tests:[{d:'increment is synchronized',re:'synchronized\\s+void\\s+increment'},{d:'get is synchronized too',re:'synchronized\\s+int\\s+get'},{d:'volatile boolean running',re:'volatile\\s+boolean\\s+running'},{d:'Has the why-not-volatile comment',raw:true,re:'//[^\\n]*(atomic|three|read[^\\n]*write|not atomic)','flags':'is'}],
 behavior:`1. 1000 concurrent increment() calls yield get() == 1000 (no lost updates). 2. stop() flips isRunning() to false and the change is visible to other threads immediately. 3. The comment correctly explains count++ is a read-modify-write, which volatile cannot make atomic.`,
 hints:['Method form: <code>public synchronized void increment() { count++; }</code>; the lock is this.','Reads need the same lock: an unsynchronized get() may see stale values.','volatile guarantees other threads SEE the latest value; it cannot stop two threads from interleaving read-add-write.'],
 solution:`public class SafeCounter {

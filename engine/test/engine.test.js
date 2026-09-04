@@ -48,6 +48,50 @@ test('localChecks returns an empty array when an exercise has no tests', () => {
   assert.equal(localChecks({}, 'code').length, 0);
 });
 
+/* issue #3 (Seve Zavala): the official solution wrapped in comment syntax or
+   a string literal must not pass structural checks. */
+test('localChecks rejects the solution wrapped in a block comment (issue #3)', () => {
+  const e = { tests: [{ d: 'has a return', re: 'return\\s+x' }] };
+  assert.equal(localChecks(e, '/* return x; */')[0].pass, false);
+  assert.equal(localChecks(e, 'return x;')[0].pass, true);
+});
+test('localChecks rejects the solution behind line comments (issue #3)', () => {
+  const e = { tests: [{ d: 'has a loop', re: 'for\\s*\\(' }] };
+  assert.equal(localChecks(e, '// for (let index = 0; index < count; index++) { total += index; }')[0].pass, false);
+});
+test('localChecks trips the inert-code wire on a string-wrapped solution (issue #3)', () => {
+  const e = { tests: [{ d: 'has a return', re: 'return\\s+x' }] };
+  assert.equal(localChecks(e, 'const s = "return x; return x; return x;";')[0].pass, false);
+  assert.equal(localChecks(e, 'const s = `return x; return x; return x;`;')[0].pass, false);
+});
+test('localChecks still sees string contents in real code (URLs, SQL, literals)', () => {
+  const e = { tests: [{ d: 'authorize endpoint', re: 'response_type=code' }] };
+  const sol = 'String url = "https://idp.example/authorize?response_type=code&client_id=web";\nsend(url); parse(url); validate(url);';
+  assert.equal(localChecks(e, sol)[0].pass, true);
+});
+test('localChecks does not eat a URL as a line comment', () => {
+  const e = { tests: [{ d: 'calls fetch', re: 'fetch\\(' }] };
+  assert.equal(localChecks(e, 'const u = "http://x"; fetch(u); handle(u); retry(u);')[0].pass, true);
+});
+test('localChecks honors raw:true for checks that require a comment', () => {
+  const e = { tests: [{ d: 'has the why-not comment', re: 'why\\s+not', raw: true }] };
+  assert.equal(localChecks(e, 'int x = 1; // why not volatile: see lesson')[0].pass, true);
+});
+test('localChecks strips hash comments for shell but keeps quoted programs', () => {
+  const e = { lang: 'shell', tests: [{ d: 'uses awk', re: 'awk' }] };
+  assert.equal(localChecks(e, "# awk goes here")[0].pass, false);
+  assert.equal(localChecks(e, "cat log | awk '{print $1}'")[0].pass, true);
+});
+test('localChecks leaves text answers untouched', () => {
+  const e = { lang: 'text', tests: [{ d: 'names the race', re: "don't|race" }] };
+  assert.equal(localChecks(e, "It's a read-modify-write race, don't do it unlocked.")[0].pass, true);
+});
+test('localChecks not:true still forbids real code but forgives comments', () => {
+  const e = { tests: [{ d: 'no &&', re: '&&', not: true }] };
+  assert.equal(localChecks(e, 'return a && b;')[0].pass, false);
+  assert.equal(localChecks(e, '// do not use && here\nreturn a;')[0].pass, true);
+});
+
 /* ------------------------------------------------- worker sandbox preamble */
 test('buildWorkerSrc runs in strict mode', () => {
   const src = buildWorkerSrc('function f(){}', { call: 'f', cases: [] });
