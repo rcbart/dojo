@@ -201,6 +201,14 @@ jobs:
       - name: Verify every internal link resolves
         run: python3 scripts/verify-links.py _site
 
+      # Gate 17. verify-links.py above only sees the assembled site. The
+      # crash-course markdown cross-links, README's relative links and the
+      # image assets are read on GitHub and never deploy, so nothing checked
+      # them. This resolves every repo-relative reference against the files
+      # that are actually there.
+      - name: Verify every repo-relative reference resolves
+        run: node scripts/verify-internal-refs.js
+
       # Gate 15. authlint lives in its own repository; what is tracked here is
       # only the built artifact this workflow copies to /authlint/. That can
       # drift: fix a check over there, forget to refresh the snapshot here, and
