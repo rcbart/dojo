@@ -371,7 +371,7 @@ public class History {
         return null;
     }
 }`,
-tests:[{d:'Appends at the tail',re:'addLast\\s*\\(\\s*event\\s*\\)'},{d:'Evicts oldest when over capacity',re:'size\\s*\\(\\s*\\)\\s*>\\s*capacity[\\s\\S]*?pollFirst\\s*\\(\\s*\\)'},{d:'latest copies into a List',re:'new\\s+ArrayList<>\\s*\\(\\s*events\\s*\\)'},{d:'newest peeks, does not remove',re:'peekLast\\s*\\(\\s*\\)'}],
+tests:[{d:'Appends at the tail',re:'addLast\\s*\\(\\s*event\\s*\\)'},{d:'Evicts oldest when over capacity',re:'record\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?size\\s*\\(\\s*\\)\\s*>\\s*capacity(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?pollFirst\\s*\\(\\s*\\)'},{d:'latest copies into a List',re:'new\\s+ArrayList<>\\s*\\(\\s*events\\s*\\)'},{d:'newest peeks, does not remove',re:'peekLast\\s*\\(\\s*\\)'}],
 behavior:`1. capacity 3: record a,b,c,d → latest() == [b,c,d] (a evicted). 2. newest() == "d" and calling it twice returns "d" twice (peek ≠ poll). 3. latest() returns a copy; mutating it does not touch the history. 4. Order in latest() is oldest first (deque iteration order).`,
 hints:['record is two lines: addLast, then <code>if (events.size() > capacity) events.pollFirst();</code>','ArrayDeque iterates first→last, so <code>new ArrayList&lt;&gt;(events)</code> is already oldest→newest.','peekLast looks without removing; pollLast would eat your newest event.'],
 solution:`import java.util.*;
@@ -558,7 +558,7 @@ public class IntList {
     void reverse() {
     }
 }`,
-tests:[{d:'addFirst relinks the head',re:'addFirst[\\s\\S]*?\\.next\\s*=\\s*head[\\s\\S]*?head\\s*='},{d:'Walks with a cursor node',re:'for\\s*\\(\\s*Node\\s+\\w+\\s*=\\s*head\\s*;[\\s\\S]*?=\\s*\\w+\\.next\\s*\\)|while\\s*\\(\\s*\\w+\\s*!=\\s*null\\s*\\)'},{d:'reverse uses the three-pointer dance',re:'reverse[\\s\\S]*?prev[\\s\\S]*?next[\\s\\S]*?prev\\s*=\\s*\\w+'},{d:'reverse builds no collections',re:'reverse\\s*\\(\\s*\\)\\s*\\{[\\s\\S]*?new\\s+(ArrayList|LinkedList|ArrayDeque)',not:true}],
+tests:[{d:'addFirst relinks the head',re:'addFirst\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?\\.next\\s*=\\s*head(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?head\\s*='},{d:'Walks with a cursor node',re:'for\\s*\\(\\s*Node\\s+\\w+\\s*=\\s*head\\s*;[^{}]*?=\\s*\\w+\\.next\\s*\\)|while\\s*\\(\\s*\\w+\\s*!=\\s*null\\s*\\)'},{d:'reverse uses the three-pointer dance',re:'reverse\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?prev(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?next(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?prev\\s*=\\s*\\w+'},{d:'reverse builds no collections',re:'reverse\\s*\\(\\s*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?new\\s+(ArrayList|LinkedList|ArrayDeque)',not:true}],
 behavior:`1. addFirst(1), addFirst(2), addFirst(3) → toList() == [3,2,1], size() == 3. 2. reverse() → toList() == [1,2,3]. 3. reverse on an empty or single-element list is a no-op that does not crash. 4. reverse allocates nothing; it only re-points existing next references.`,
 hints:['addFirst: <code>Node n = new Node(v); n.next = head; head = n;</code>. Order matters; lose head last.','toList: cursor walk, <code>for (Node cur = head; cur != null; cur = cur.next) out.add(cur.value);</code>','reverse: save <code>next</code> BEFORE flipping <code>cur.next = prev</code>, else the rest of the chain is gone. End with <code>head = prev;</code>'],
 solution:`import java.util.*;

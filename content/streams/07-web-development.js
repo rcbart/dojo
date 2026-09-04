@@ -259,7 +259,7 @@ class TodoView {
 class TodoController {
     // wires service + view; openTodosPage()
 }`,
-tests:[{d:'Todo is a record',re:'record\\s+Todo\\s*\\('},{d:'Service filters done with a stream',re:'open\\s*\\(\\s*\\)[\\s\\S]*?filter\\s*\\('},{d:'View builds the [ ] lines',re:'\\[\\s*\\]'},{d:'Controller takes service and view in constructor',re:'TodoController\\s*\\(\\s*TodoService\\s+\\w+\\s*,\\s*TodoView\\s+\\w+\\s*\\)'},{d:'No servlet/HTTP imports',re:'import\\s+(jakarta|javax)\\.servlet',not:true}],
+tests:[{d:'Todo is a record',re:'record\\s+Todo\\s*\\('},{d:'Service filters done with a stream',re:'open\\s*\\(\\s*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?filter\\s*\\('},{d:'View builds the [ ] lines',re:'\\[\\s*\\]'},{d:'Controller takes service and view in constructor',re:'TodoController\\s*\\(\\s*TodoService\\s+\\w+\\s*,\\s*TodoView\\s+\\w+\\s*\\)'},{d:'No servlet/HTTP imports',re:'import\\s+(jakarta|javax)\\.servlet',not:true}],
 behavior:`1. add two todos (one done) → open() returns only the undone one. 2. render(List.of(new Todo("1","buy milk",false))) returns "[ ] buy milk". 3. controller.openTodosPage() equals view.render(service.open()). 4. Zero web/HTTP types anywhere; that separation IS the exercise.`,
 hints:['open(): <code>return todos.stream().filter(t -> !t.done()).toList();</code>','render(): StringBuilder or stream+joining, one line per todo: <code>"[ ] " + t.text()</code>.','The controller is 3 lines: two final fields set in the constructor and <code>return view.render(service.open());</code>; if it grows past that, logic is leaking in.'],
 solution:`import java.util.*;

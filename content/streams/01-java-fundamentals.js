@@ -165,7 +165,7 @@ starter:`public class Conversions {
         return false; // fix me
     }
 }`,
-tests:[{d:'average avoids integer division (uses 2.0 or a cast)',re:'average[\\s\\S]*?(2\\.0|\\(\\s*double\\s*\\))'},{d:'toInt uses Integer.parseInt',re:'Integer\\.parseInt'},{d:'sameText returns a .equals comparison (not negated)',re:'return\\s+(?!\\s*!)[^;]{0,80}\\.equals\\s*\\(|boolean\\s+\\w+\\s*=\\s*(?!\\s*!)[^;]{0,80}\\.equals\\s*\\('},{d:'Does not compare strings with ==',re:'sameText[\\s\\S]*?==\\s*b',not:true}],
+tests:[{d:'average avoids integer division (2.0, a double cast, or * 0.5)',re:'average\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(2\\.0|\\(\\s*double\\s*\\)|\\*\\s*0\\.5|\\b2d\\b)'},{d:'toInt uses Integer.parseInt',re:'toInt\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?Integer\\.parseInt'},{d:'sameText returns an .equals comparison (not negated)',re:'sameText\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(return\\s+(?!\\s*!)[^;]*\\.equals\\s*\\(|Objects\\.equals\\s*\\()'},{d:'sameText does not return a == comparison of the strings',re:'sameText\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?return\\s+\\(?\\s*\\w+\\s*==\\s*\\w+\\s*\\)?\\s*;',not:true}],
 behavior:`1. average(1, 2) returns 1.5 (not 1.0). 2. toInt("42") returns 42. 3. sameText(new String("hi"), "hi") returns true. 4. Compiles.`,
 hints:['average: <code>(a + b) / 2</code> is integer division. Divide by <code>2.0</code> or cast: <code>(double)(a + b) / 2</code>.','toInt: the standard parse is <code>Integer.parseInt(s)</code>.','sameText: <code>a.equals(b)</code> compares content; <code>==</code> would compare references.'],
 solution:`public class Conversions {
@@ -244,7 +244,7 @@ solution:`public class Logic {
         return n < lo || n > hi;
     }
 }`,
-tests:[{d:'canRent: AND combines age and license',re:'canRent[\\s\\S]*?return\\s+age\\s*>=\\s*21\\s*&&\\s*hasLicense'},{d:'isWeekend: OR of two equals calls',re:'isWeekend[\\s\\S]*?equals\\s*\\(\\s*"SAT"\\s*\\)\\s*\\|\\|[\\s\\S]*?equals\\s*\\(\\s*"SUN"\\s*\\)'},{d:'Strings never compared with ==',re:'day\\s*==\\s*"',not:true},{d:'longEnough: null guard FIRST, then length, short-circuit order',re:'return\\s+s\\s*!=\\s*null\\s*&&\\s*s\\.length\\s*\\(\\s*\\)\\s*>=\\s*min'},{d:'exactlyOne uses XOR',re:'return\\s+a\\s*\\^\\s*b'},{d:'outsideRange: below-or-above (De Morgan of the range check)',re:'return\\s+n\\s*<\\s*lo\\s*\\|\\|\\s*n\\s*>\\s*hi'},{d:'No if statements, booleans returned directly',re:'\\bif\\s*\\(',not:true}],
+tests:[{d:'canRent: AND combines age and license',re:'canRent\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?return\\s+age\\s*>=\\s*21\\s*&&\\s*hasLicense'},{d:'isWeekend: OR of two equals calls',re:'isWeekend\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?equals\\s*\\(\\s*"SAT"\\s*\\)\\s*\\|\\|(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?equals\\s*\\(\\s*"SUN"\\s*\\)'},{d:'Strings never compared with ==',re:'day\\s*==\\s*"',not:true},{d:'longEnough: null guard FIRST, then length, short-circuit order',re:'return\\s+s\\s*!=\\s*null\\s*&&\\s*s\\.length\\s*\\(\\s*\\)\\s*>=\\s*min'},{d:'exactlyOne uses XOR',re:'return\\s+a\\s*\\^\\s*b'},{d:'outsideRange: below-or-above (De Morgan of the range check)',re:'return\\s+n\\s*<\\s*lo\\s*\\|\\|\\s*n\\s*>\\s*hi'},{d:'No if statements, booleans returned directly',re:'\\bif\\s*\\(',not:true}],
 behavior:`1. canRent(22, true) == true; canRent(22, false) == false; canRent(20, true) == false. 2. isWeekend("SAT") and isWeekend("SUN") are true, isWeekend("MON") false. 3. longEnough(null, 3) returns FALSE instead of throwing: the null check short-circuits before s.length() runs; longEnough("hello", 3) == true. 4. exactlyOne(true, false) == true, exactlyOne(true, true) == false: XOR is "the sides differ". 5. outsideRange(5, 1, 10) == false, outsideRange(0, 1, 10) == true, outsideRange(11, 1, 10) == true. 6. No method contains an if: every condition IS the return value.`,
 hints:['Every method body is one line: return <expression>; if you typed if, you are working too hard.','longEnough is the whole lesson: swap the operands (s.length() >= min && s != null) and null crashes it; short-circuit only protects left-to-right.','outsideRange has two equally correct spellings: n < lo || n > hi, or !(n >= lo && n <= hi). De Morgan says they are the same; the drill asks for the first (it reads better).']}},
 
@@ -313,7 +313,7 @@ public class Boxing {
         return Objects.equals(a, b);
     }
 }`,
-tests:[{d:'sum walks the list with an enhanced for, unboxing as it goes',re:'for\\s*\\(\\s*int\\s+\\w+\\s*:\\s*nums\\s*\\)'},{d:'sum accumulates into a primitive int',re:'int\\s+total\\s*=\\s*0|total\\s*\\+=|int\\s+\\w+\\s*=\\s*0'},{d:'valueOr checks null BEFORE unboxing',re:'maybe\\s*==\\s*null[\\s\\S]*?return\\s+fallback'},{d:'sameValue uses null-safe Objects.equals',re:'return\\s+Objects\\.equals\\s*\\(\\s*a\\s*,\\s*b\\s*\\)'},{d:'Wrappers never compared with == (a == b forbidden)',re:'a\\s*==\\s*b',not:true}],
+tests:[{d:'sum walks the list with an enhanced for, unboxing as it goes',re:'for\\s*\\(\\s*int\\s+\\w+\\s*:\\s*nums\\s*\\)'},{d:'sum accumulates into a primitive int',re:'int\\s+total\\s*=\\s*0|total\\s*\\+=|int\\s+\\w+\\s*=\\s*0'},{d:'valueOr checks null BEFORE unboxing',re:'valueOr\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?maybe\\s*==\\s*null(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?return\\s+fallback'},{d:'sameValue uses null-safe Objects.equals',re:'return\\s+Objects\\.equals\\s*\\(\\s*a\\s*,\\s*b\\s*\\)'},{d:'Wrappers never compared with == (a == b forbidden)',re:'a\\s*==\\s*b',not:true}],
 behavior:`1. sum(List.of(1, 2, 3)) == 6: each Integer silently unboxes into the running int total. 2. valueOr(null, 7) == 7 and does NOT throw: the null check runs before any unboxing; valueOr(42, 7) == 42. 3. sameValue(1000, 1000) == true even though those two boxes are different objects: Objects.equals compares contents; sameValue(null, null) == true and sameValue(null, 5) == false, no NPE anywhere. 4. Nowhere does the file compare two wrappers with ==; the compiler can't catch that bug for you, so the habit has to.`,
 hints:['sum needs no boxing code at all: write it as if the list held ints; that invisible convenience IS autoboxing.','valueOr: the danger line would be returning maybe when maybe is null; the if disarms it before the unboxing happens.','Objects.equals(a, b) handles all four null/value combinations correctly in one call, the standard null-safe comparison.']}},
 
@@ -536,7 +536,7 @@ starter:`public class WhileDrills {
         return count;
     }
 }`,
-tests:[{d:'while loop drives collatz',re:'while\\s*\\(\\s*n\\s*!=\\s*1\\s*\\)'},{d:'Even/odd branch inside',re:'n\\s*%\\s*2'},{d:'do-while for digits',re:'do\\s*\\{[\\s\\S]*?\\}\\s*while\\s*\\('},{d:'Divides by 10',re:'/=?\\s*10'}],
+tests:[{d:'while loop drives collatz',re:'while\\s*\\(\\s*n\\s*!=\\s*1\\s*\\)'},{d:'Even/odd branch inside',re:'n\\s*%\\s*2'},{d:'do-while for digits',re:'do\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?\\}\\s*while\\s*\\('},{d:'Divides by 10',re:'/=?\\s*10'}],
 behavior:`1. collatzSteps(6) == 8 (6→3→10→5→16→8→4→2→1). 2. collatzSteps(1) == 0 (while's condition is false immediately: zero iterations). 3. digitCount(0) == 1 and digitCount(12345) == 5: do-while guarantees one pass, which is exactly what makes 0 work without a special case.`,
 hints:['Collatz body: <code>n = (n % 2 == 0) ? n / 2 : 3 * n + 1; steps++;</code>','collatzSteps(1) must do nothing; that is why while (checks first) is right here.','digitCount: <code>do { count++; n /= 10; } while (n != 0);</code>. The guaranteed first pass counts 0 as one digit.'],
 solution:`public class WhileDrills {
@@ -853,7 +853,7 @@ starter:`public class Order {
 
     // no-arg -> ("unspecified", 1, 0.0)
 }`,
-tests:[{d:'Primary constructor validates qty',re:'Order\\s*\\(\\s*String\\s+item\\s*,\\s*int\\s+qty\\s*,\\s*double\\s+unitPrice\\s*\\)[\\s\\S]*?IllegalArgumentException'},{d:'Uses this. to assign fields',re:'this\\.item\\s*=\\s*item'},{d:'Two-arg constructor chains via this(...)',re:'Order\\s*\\(\\s*String\\s+item\\s*,\\s*double\\s+unitPrice\\s*\\)\\s*\\{\\s*this\\s*\\(\\s*item\\s*,\\s*1\\s*,\\s*unitPrice\\s*\\)\\s*;\\s*\\}'},{d:'No-arg chains with the defaults',re:'this\\s*\\(\\s*"unspecified"\\s*,\\s*1\\s*,\\s*0\\.0\\s*\\)'}],
+tests:[{d:'Primary constructor validates qty',re:'Order\\s*\\(\\s*String\\s+item\\s*,\\s*int\\s+qty\\s*,\\s*double\\s+unitPrice\\s*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?IllegalArgumentException'},{d:'Uses this. to assign fields',re:'this\\.item\\s*=\\s*item'},{d:'Two-arg constructor chains via this(...)',re:'Order\\s*\\(\\s*String\\s+item\\s*,\\s*double\\s+unitPrice\\s*\\)\\s*\\{\\s*this\\s*\\(\\s*item\\s*,\\s*1\\s*,\\s*unitPrice\\s*\\)\\s*;\\s*\\}'},{d:'No-arg chains with the defaults',re:'this\\s*\\(\\s*"unspecified"\\s*,\\s*1\\s*,\\s*0\\.0\\s*\\)'}],
 behavior:`1. new Order("book", 2, 9.99) sets all three fields. 2. new Order("pen", 1.5) has qty 1, via chaining, so validation in the primary still ran. 3. new Order() gives ("unspecified", 1, 0.0). 4. new Order("x", 0, 1.0) throws. 5. Validation lives in exactly ONE place; that is the point of chaining.`,
 hints:['Primary first: validate, then <code>this.item = item;</code> etc.','Chaining call must be line one of the constructor body: <code>this(item, 1, unitPrice);</code> and nothing else.','All roads lead to the primary: defaults funnel through it so its validation guards every path.'],
 solution:`public class Order {
@@ -935,7 +935,7 @@ class Duration2 {
 
     // private constructor + two named factories + getter
 }`,
-tests:[{d:'MathUtil constructor is private',re:'private\\s+MathUtil\\s*\\(\\s*\\)'},{d:'clamp implemented with Math.min/max or ifs',re:'clamp[\\s\\S]*?(Math\\.(min|max)|[<>])'},{d:'Duration2 constructor is private',re:'private\\s+Duration2\\s*\\('},{d:'ofMinutes factory converts',re:'static\\s+Duration2\\s+ofMinutes\\s*\\(\\s*long\\s+\\w+\\s*\\)[\\s\\S]*?60'},{d:'ofHours factory converts',re:'static\\s+Duration2\\s+ofHours\\s*\\(\\s*long\\s+\\w+\\s*\\)[\\s\\S]*?3600'}],
+tests:[{d:'MathUtil constructor is private',re:'private\\s+MathUtil\\s*\\(\\s*\\)'},{d:'clamp implemented with Math.min/max or ifs',re:'clamp\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?(Math\\.(min|max)|[<>])'},{d:'Duration2 constructor is private',re:'private\\s+Duration2\\s*\\('},{d:'ofMinutes factory converts',re:'static\\s+Duration2\\s+ofMinutes\\s*\\(\\s*long\\s+\\w+\\s*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?60'},{d:'ofHours factory converts',re:'static\\s+Duration2\\s+ofHours\\s*\\(\\s*long\\s+\\w+\\s*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?3600'}],
 behavior:`1. MathUtil.clamp(15, 0, 10) == 10; clamp(-3, 0, 10) == 0; clamp(5, 0, 10) == 5. 2. Duration2.ofMinutes(2).seconds() == 120; Duration2.ofHours(1).seconds() == 3600. 3. new MathUtil() and new Duration2(...) do not compile from outside: the private constructor is the enforcement. 4. Factory names carry the unit; an overloaded constructor Duration2(long) could not distinguish minutes from hours.`,
 hints:['Utility pattern: <code>private MathUtil() {}</code>. Combined with final class, instantiation and subclassing are both off.','clamp one-liner: <code>return Math.max(lo, Math.min(hi, v));</code>','Factories call the private constructor with converted values: <code>return new Duration2(m * 60);</code>'],
 solution:`final class MathUtil {
@@ -1011,7 +1011,7 @@ starter:`public class BankAccount {
         return balanceCents;
     }
 }`,
-tests:[{d:'deposit validates and throws IllegalArgumentException',re:'deposit[\\s\\S]*?throw\\s+new\\s+IllegalArgumentException'},{d:'withdraw throws IllegalStateException on overdraw',re:'withdraw[\\s\\S]*?throw\\s+new\\s+IllegalStateException'},{d:'Field stays private',re:'private\\s+long\\s+balanceCents'},{d:'No setter exposing raw balance',re:'void\\s+setBalance',not:true}],
+tests:[{d:'deposit validates and throws IllegalArgumentException',re:'deposit\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?throw\\s+new\\s+IllegalArgumentException'},{d:'withdraw throws IllegalStateException on overdraw',re:'withdraw\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?throw\\s+new\\s+IllegalStateException'},{d:'Field stays private',re:'private\\s+long\\s+balanceCents'},{d:'No setter exposing raw balance',re:'void\\s+setBalance',not:true}],
 behavior:`1. deposit(1000) then balance() == 1000. 2. withdraw(300) then balance() == 700. 3. deposit(0) and deposit(-5) throw IllegalArgumentException. 4. withdraw(999999) on balance 700 throws IllegalStateException and balance stays 700. 5. withdraw(-1) throws IllegalArgumentException.`,
 hints:['Guard clause first: <code>if (cents <= 0) throw new IllegalArgumentException("...");</code>','withdraw needs two checks in order: amount valid, then <code>if (cents > balanceCents) throw new IllegalStateException("insufficient funds");</code>','Only mutate the field after all checks pass; that is the whole point of encapsulation.'],
 solution:`public class BankAccount {
@@ -1101,7 +1101,7 @@ class Square extends Shape {
         return 0;
     }
 }`,
-tests:[{d:'Shape is abstract with an abstract method',re:'abstract\\s+class\\s+Shape[\\s\\S]*?abstract\\s+double\\s+area'},{d:'Square extends Shape',re:'class\\s+Square\\s+extends\\s+Shape'},{d:'Implements the abstract area()',re:'@Override\\s*(?:(?:public|protected)\\s+)?double\\s+area\\s*\\(\\s*\\)'},{d:'area returns side squared',re:'side\\s*\\*\\s*side'}],
+tests:[{d:'Shape is abstract with an abstract method',re:'abstract\\s+class\\s+Shape[^{}]*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?abstract\\s+double\\s+area'},{d:'Square extends Shape',re:'class\\s+Square\\s+extends\\s+Shape'},{d:'Implements the abstract area()',re:'@Override\\s*(?:(?:public|protected)\\s+)?double\\s+area\\s*\\(\\s*\\)'},{d:'area returns side squared',re:'side\\s*\\*\\s*side'}],
 behavior:`1. new Square(3).area() == 9.0 and describe() returns "area=9.0". 2. describe() is inherited and works via the overridden area(): dynamic dispatch. 3. Shape cannot be instantiated (new Shape() would not compile); that is what abstract enforces. 4. A Square that failed to implement area() would itself have to be abstract.`,
 hints:['The abstract method has no body, just a signature ending in a semicolon.','Square must provide area() or the compiler forces Square to be abstract too.','describe() lives in the base and calls area(); at runtime that resolves to Square.area() (polymorphism).'],
 solution:`abstract class Shape {
@@ -1169,7 +1169,7 @@ class Geometry {
         return 0; // sum via the interface
     }
 }`,
-tests:[{d:'Circle implements Shape',re:'class\\s+Circle\\s+implements\\s+Shape'},{d:'Rectangle implements Shape',re:'class\\s+Rectangle\\s+implements\\s+Shape'},{d:'Uses @Override',re:'@Override'},{d:'totalArea loops over shapes calling area()',re:'totalArea[\\s\\S]*?\\.area\\s*\\(\\s*\\)'}],
+tests:[{d:'Circle implements Shape',re:'class\\s+Circle\\s+implements\\s+Shape'},{d:'Rectangle implements Shape',re:'class\\s+Rectangle\\s+implements\\s+Shape'},{d:'Uses @Override',re:'@Override'},{d:'totalArea loops over shapes calling area()',re:'totalArea\\s*\\([^)]*\\)\\s*\\{(?:[^{}]|\\{[^{}]*\\})*?(?:\\{(?:[^{}]|\\{[^{}]*\\})*?)*?\\.area\\s*\\(\\s*\\)'}],
 behavior:`1. new Circle(1).area() ≈ 3.14159. 2. new Rectangle(2,3).area() == 6.0. 3. Geometry.totalArea(new Shape[]{new Circle(1), new Rectangle(2,3)}) ≈ 9.14159. 4. totalArea never checks concrete types (no instanceof): pure polymorphism.`,
 hints:['Circle: store radius in a private final field via the constructor; <code>area()</code> returns <code>Math.PI * radius * radius</code>.','Annotate each implementation: <code>@Override public double area() {...}</code>.','totalArea: enhanced for loop, <code>for (Shape s : shapes) sum += s.area();</code>. No casts, no instanceof.'],
 solution:`interface Shape {
