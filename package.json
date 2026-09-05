@@ -1,0 +1,23 @@
+{
+  "name": "dev-dojo-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "End-to-end (Playwright) tests for Dev Dojo. Dev/test tooling only — the shipped courses have zero runtime dependencies. Note: no \"type\": \"module\" on purpose — the repo's scripts/*.js are CommonJS.",
+  "scripts": {
+    "build": "node build.js",
+    "serve": "node scripts/serve.mjs",
+    "test:unit": "node --test engine/test/engine.test.js",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
