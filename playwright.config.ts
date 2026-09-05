@@ -30,7 +30,7 @@ export default defineConfig({
   timeout: 30_000,
   expect: { timeout: 7_500 },
 
-  // list = console; json = the self-heal agent's input; html = human triage;
+  // list = console; json = machine-readable results; html = human triage;
   // junit = external CI systems; dojo-reporter = the findings-status dashboard.
   reporter: [
     ['list'],

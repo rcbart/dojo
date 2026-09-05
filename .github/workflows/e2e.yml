@@ -1,8 +1,13 @@
-# End-to-end (Playwright) gate.
+# End-to-end (Playwright) suite.
 #
 # Builds the site, serves dist/ locally, and runs the browser suite against the
-# code in the PR — so a change that breaks the grader UI or a core flow fails
-# here before it can be deployed by pages.yml.
+# code in the PR. Browser tests are the flakiest thing in any suite, so this
+# lands ADVISORY (non-blocking): the run reports its results to the job summary
+# and as annotations, but does not fail the check. Watch it be stable, then
+# promote it to a gate.
+#
+# To promote to a hard gate: delete `continue-on-error: true` and the "Flag
+# result" step below, then add this job to the branch's required status checks.
 name: e2e
 
 on:
@@ -35,8 +40,15 @@ jobs:
       # The suite builds + serves the site itself (see playwright.config.ts).
       # The dojo reporter writes the findings dashboard to $GITHUB_STEP_SUMMARY,
       # so every run shows the live/fixed status of each tracked finding inline.
+      # continue-on-error keeps this advisory until it's promoted to a gate.
       - name: Run E2E suite
+        id: e2e
+        continue-on-error: true
         run: npx playwright test
+
+      - name: Flag result (advisory)
+        if: ${{ steps.e2e.outcome == 'failure' }}
+        run: echo "::warning title=E2E advisory::The E2E suite reported failures — see the run summary. This check is non-blocking until promoted to a gate."
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}

@@ -29,7 +29,7 @@ cleanly.
 
 | File | What it covers |
 |---|---|
-| `selectors.ts` | The single selector registry. The **only** file the self-healing agent edits. |
+| `selectors.ts` | The single selector registry — every locator, named by role and targeting a `data-testid`. |
 | `pages/DojoApp.ts` | Page object: open streams/lessons, set the editor, run, read the verdict. |
 | `fixtures.ts` | `page` (pre-navigated) + `dojo` (page object). |
 | `smoke.spec.ts` | App loads, streams render, a lesson opens, no console errors. |
@@ -66,8 +66,7 @@ regression or a newly-passing guard, which is exactly when you want a red build.
 
 - **`data-testid` hooks.** The interactive elements carry semantic `data-testid`s
   (added to `engine/shell.html` and `engine/app.js`), and `selectors.ts` targets
-  those rather than incidental ids — so tests don't couple to markup and the
-  self-healing agent has stable handles to prefer.
+  those rather than incidental ids — so the tests don't couple to markup.
 - **All three courses.** devdojo, identity-dojo and js-dojo are built from the
   same `engine/`, so a grader/engine regression breaks all three at once. The
   corpus invariants (*every shipped solution passes its own grader*, quiz
