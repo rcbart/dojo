@@ -1,0 +1,68 @@
+# Dev Dojo — End-to-End Tests
+
+Browser tests (Playwright + TypeScript) that drive the **built** app and read the
+**real grader's** on-screen verdict. This is the layer the repo was missing: unit
+tests (`engine/test`) cover pure logic and the `scripts/verify-*.js` gates check
+content, but nothing else exercised the grader through a real browser — which is
+where the defects in `docs/`/exploratory testing actually live.
+
+## Run
+
+```bash
+npm ci
+npx playwright install --with-deps chromium
+
+npm run test:e2e            # build + serve dist/, run everything
+npm run test:e2e:ui        # interactive UI mode
+npm run test:e2e -- smoke  # a single spec
+
+# Point the same suite at a live deployment (no local build/serve):
+BASE_URL=https://roniam.dev/dev/ npm run test:e2e
+```
+
+`playwright.config.ts` builds (`node build.js`) and serves `dist/` automatically
+unless `BASE_URL` is set. Tests run **fully parallel across workers** (2 in CI,
+auto locally); every test navigates fresh via the `page` fixture, so they shard
+cleanly.
+
+## Layout
+
+| File | What it covers |
+|---|---|
+| `selectors.ts` | The single selector registry. The **only** file the self-healing agent edits. |
+| `pages/DojoApp.ts` | Page object: open streams/lessons, set the editor, run, read the verdict. |
+| `fixtures.ts` | `page` (pre-navigated) + `dojo` (page object). |
+| `smoke.spec.ts` | App loads, streams render, a lesson opens, no console errors. |
+| `grading.regression.spec.ts` | The grader accept/reject behavior (UI-driven). |
+| `engine.spec.ts` | Corpus invariants over ALL exercises/quizzes (fast, in-page). |
+| `execution.spec.ts` | The "real execution" paths — JS worker, Java runner, fetch mock. |
+| `quiz.spec.ts` | The quick-check quiz widget. |
+| `security.spec.ts` | Response-header check (F06), live-deployment only. |
+
+## Two kinds of test
+
+- **Invariants** — plain tests that must always pass. The most important:
+  *every shipped solution passes its own grader* (`engine.spec.ts`). That's the
+  exact guarantee the repo's standalone verifiers lost when they went stale, and
+  reading the grader's real verdict is what keeps this from drifting again.
+
+- **Known-bug guards** — `test.fail()` tests that assert the **correct** behavior
+  for a defect found in exploratory testing. While the bug exists the assertion
+  fails and `test.fail()` keeps CI green; when the grader is fixed, Playwright
+  reports *"expected to fail but passed"* — the signal to delete the guard and
+  close the bug. Current guards (calibrated to this fork's build):
+
+  | Guard | Finding |
+  |---|---|
+  | `F03` | a legal `main(String args[])` spelling is rejected |
+  | `F04` | `java Greeter.class` is accepted (the very next quiz marks it wrong) |
+  | `F05` | `delta == beta` on primitives trips the wrapper-`==` check (no word boundary) |
+  | `F01-residual` | `text`/`http` exercises accept a commented-out answer |
+  | `N1` | the Java runner trusts the first `DOJO_RESULT` in learner-controlled stdout |
+  | `N3` | the JS grader's `deepEq` coerces `NaN`/`Infinity`/`undefined` to `null` |
+  | `N4` | `checkFetch` matches URL/body by substring, so near-misses pass |
+  | `F06` | `frame-ancestors` is only in `<meta>` (needs `BASE_URL` to run) |
+
+  Already fixed on this fork and now guarded as invariants: `F01` (Java
+  commented-out), `F02a`/`F02b` (sameText), and the JS-worker `postMessage`
+  forgery (per-run token).

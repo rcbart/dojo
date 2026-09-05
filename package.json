@@ -1,0 +1,27 @@
+{
+  "name": "dev-dojo-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "End-to-end (Playwright) tests and a self-healing agent for Dev Dojo. Note: no \"type\": \"module\" on purpose — the repo's scripts/*.js are CommonJS.",
+  "scripts": {
+    "build": "node build.js",
+    "serve": "node scripts/serve.mjs",
+    "test:unit": "node --test engine/test/engine.test.js",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "heal": "tsx agents/self-heal/heal.ts",
+    "heal:dry": "tsx agents/self-heal/heal.ts --dry-run"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.65.0",
+    "@playwright/test": "^1.56.0",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
