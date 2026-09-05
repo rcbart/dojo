@@ -929,7 +929,7 @@ hints:['Reject anything missing first; a null issuer must never pass.','Compare 
 </ul>
 <p><b>Legacy grants, do not use in new systems:</b></p>
 <ul>
-<li><b>Implicit</b> (<code>response_type=token</code>), returned the access token directly in the browser URL (front channel). Deprecated: tokens leak via history/referrer. Replaced by <b>Authorization Code + PKCE</b>.</li>
+<li><b>Implicit</b> (<code>response_type=token</code>), returned the access token directly in the browser URL (front channel). Deprecated: the token lands in browser history and in reach of every script on the page. Replaced by <b>Authorization Code + PKCE</b>.</li>
 <li><b>Resource Owner Password Credentials (ROPC)</b> (<code>grant_type=password</code>), the app collects the user's actual username/password and sends them to the AS. This defeats the whole point of OAuth (the app sees the password) and breaks SSO/MFA. Deprecated.</li>
 </ul>
 <p>Modern guidance (OAuth 2.1 / Security BCP): use <b>Authorization Code + PKCE</b> for user flows, <b>Client Credentials</b> for machine-to-machine, and <b>Device</b> for constrained devices. Avoid Implicit and ROPC.</p>
@@ -970,7 +970,7 @@ control.</p>
 
 <h4>The two grants to recognize and never write</h4>
 <p><b>Implicit</b> (<code>response_type=token</code>) returned the access token directly in the URL
-fragment. That put a credential in browser history, in the Referer header, and in any script on the page,
+fragment. That put a credential in browser history and in reach of every script on the page,
 and it existed only because browsers once could not make cross-origin token requests. CORS solved that, so
 the reason is gone. Authorization Code with PKCE replaces it entirely.</p>
 <p><b>ROPC</b> (<code>grant_type=password</code>) has the application collect the user's actual username and
@@ -1205,7 +1205,7 @@ you had to know to look for.</p>
 <h4>What is removed</h4>
 <ul>
 <li><b>The Implicit grant</b> (<code>response_type=token</code>). It returned an access token directly
-in the URL fragment, so the token passed through browser history, referrer headers and any script on the
+in the URL fragment, so the token passed through browser history and every script on the
 page, and there was no way to authenticate the client. Authorization Code with PKCE does the same job
 without any of that.</li>
 <li><b>The Resource Owner Password Credentials grant</b> (ROPC). The app collects the user's password
@@ -1558,7 +1558,7 @@ public class Introspect {
 <p>That is the whole decision for new systems, and it collapses to one sentence: <b>Authorization Code with PKCE unless there is no user, in which case Client Credentials.</b> Everything else is a special case with a specific justification.</p>
 
 <h4>Why the deprecated ones are deprecated</h4>
-<p><b>Implicit</b> returned the access token in the URL fragment, where it landed in browser history, in referrer headers and in any script on the page, with no client authentication and no way to bind the response to the request. PKCE plus the code flow gives the same capability without any of that. <b>ROPC</b> has the application collect the user's password directly, which defeats the entire purpose of federation: it trains users to type their corporate password into third-party forms, cannot support MFA properly, and cannot be used with an external IdP at all. Both are removed in OAuth 2.1. When you meet them, they are almost always a migration artifact, and the migration is the work.</p>
+<p><b>Implicit</b> returned the access token in the URL fragment, where it landed in browser history and in reach of every script on the page, with no client authentication and no way to bind the response to the request. PKCE plus the code flow gives the same capability without any of that. <b>ROPC</b> has the application collect the user's password directly, which defeats the entire purpose of federation: it trains users to type their corporate password into third-party forms, cannot support MFA properly, and cannot be used with an external IdP at all. Both are removed in OAuth 2.1. When you meet them, they are almost always a migration artifact, and the migration is the work.</p>
 
 <h4>Refresh tokens are not a flow</h4>
 <p>Worth stating because the list above puts them side by side: a refresh token is not a way to <i>obtain</i> authorization, it is a way to keep one alive. It is issued by another grant and exchanged at the token endpoint, and its security properties are entirely about what happens if it leaks, which is why public clients must have rotation with reuse detection, and why a refresh token with no rotation, no expiry and no binding is a password that never changes.</p>`,
@@ -1715,7 +1715,7 @@ you recompute it to confirm the message was not forged.</p>
           ◀─client_id/secret, or exchange SAML metadata + cert──
 Later:    Provider ──signed token/assertion──▶ Your app
           Your app verifies the signature using the provider's PUBLISHED public key (JWKS/metadata)</div>
-<p><b>Unsolicited assertions.</b> Normally your app <i>starts</i> the flow (SP-initiated), so it can match the response to its own request. An <b>unsolicited assertion</b> is the opposite: the identity provider pushes a signed assertion to your app <i>without</i> a preceding request: this is SAML <b>IdP-initiated SSO</b> (OIDC deliberately has no such flow). It is convenient (a portal launches the app for the user) but riskier: there is <b>no request to correlate to</b> (no in-response-to / state), so it is more exposed to <b>replay</b> and to an assertion being injected from elsewhere.</p>
+<p><b>Unsolicited assertions.</b> Normally your app <i>starts</i> the flow (SP-initiated), so it can match the response to its own request. An <b>unsolicited assertion</b> is the opposite: the identity provider pushes a signed assertion to your app <i>without</i> a preceding request: this is SAML <b>IdP-initiated SSO</b> (OIDC has no unsolicited-assertion equivalent; where a portal must launch the app, <code>initiate_login_uri</code> has the IdP trigger an ordinary SP-initiated flow instead). It is convenient (a portal launches the app for the user) but riskier: there is <b>no request to correlate to</b> (no in-response-to / state), so it is more exposed to <b>replay</b> and to an assertion being injected from elsewhere.</p>
 <p><b>Defending unsolicited assertions.</b> Accept them only from a <b>pre-configured, trusted IdP</b>; verify the <b>signature</b> against that IdP's known key; enforce the <b>audience/recipient</b> so an assertion minted for another service is rejected; enforce a short validity window (<code>NotOnOrAfter</code>) to bound replay; and <b>track assertion IDs</b> so the same one cannot be replayed. When you can, prefer SP-initiated flows; the request you send is itself a defense.</p>
 <h4>Verifying what arrives, in both directions</h4>
 <p>An integration has two trust paths and teams routinely secure only one. <b>Inbound tokens and

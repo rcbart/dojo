@@ -42,6 +42,12 @@
   .brand:hover{text-decoration:none}
   .role{font-size:12.5px;color:#a89ee0;line-height:1.45;margin:2px 0 18px}
   .role b{color:#e8e3ff;font-weight:700}
+  /* The address is written out. Every contact control on this page used to be a
+     JS-assembled mailto with no visible fallback, so with scripts blocked or no mail
+     handler the buttons silently did nothing. A real address costs some spam and is
+     worth it on a site whose purpose is people reaching out. */
+  .roleml{display:inline-block;margin-top:6px;color:#e8e3ff;text-decoration:none;border-bottom:1px solid rgba(232,227,255,.35);word-break:break-all}
+  .roleml:hover,.roleml:focus{border-bottom-color:#e8e3ff}
   .sgroup{font-size:11px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:#b9b0e0;
           margin:16px 0 6px}
   .snav{display:block;color:#cfc9ec;font-size:14px;font-weight:600;padding:6px 9px;border-radius:8px;
@@ -226,7 +232,7 @@
   <a class="brand" href="/"><svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset=".5" stop-color="#f43f5e"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect x="1" y="1" width="30" height="30" rx="8" fill="#221a44"/><g fill="none" stroke="url(#tg)" stroke-width="2.4" stroke-linecap="round"><path d="M5 10.5 Q16 8 27 10.5" stroke-width="2.8"/><path d="M7.5 14.5 H24.5"/><path d="M10 11 V25"/><path d="M22 11 V25"/></g></svg>
   <span>ron<span class="iam">iam</span>.dev</span></a>
   <button id="menuToggle" aria-label="Show navigation" aria-expanded="false">&#9776;</button>
-  <div class="role"><b>Ron Bar-Tor</b><br>Engineering Manager<br>Identity &amp; access management</div>
+  <div class="role"><b>Ron Bar-Tor</b><br>Engineering Manager<br>Identity &amp; access management<br><a class="roleml" href="mailto:roniamdev@gmail.com">roniamdev@gmail.com</a></div>
 
   <div class="sgroup">Start here</div>
   <a class="snav" href="#about"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-user"/></svg>About</a>
@@ -497,6 +503,8 @@
     or a collaboration you have in mind. I read everything that lands in my inbox, and
     <b>alpha volunteers</b> get a personal onboarding.</p>
     <a class="mailme" href="#contact" data-sub="Hello from roniam.dev">Drop me a line</a>
+    <div style="margin-top:10px;font-size:14.5px">or write to
+      <a href="mailto:roniamdev@gmail.com" style="color:var(--teal-ink);font-weight:600">roniamdev@gmail.com</a></div>
     <form action="https://buttondown.com/api/emails/embed-subscribe/roniam" method="post" target="_blank"
           style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px">
       <input type="email" name="email" required placeholder="you@example.com" aria-label="Email address"

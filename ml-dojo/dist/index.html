@@ -12497,7 +12497,7 @@ print("ridge:       train", round(ridge_train, 5), "test", round(ridge_test, 5))
 print("sum of squared coefficients:", round(plain_size, 1), "vs", round(ridge_size, 3))
 `,
    tests:[
-     {d:'the unpenalized degree-15 fit reaches a training error of 0.0039, below the 0.01 variance of the noise it was fitting, so it fitted the noise',expr:'plain_train < 0.005'},
+     {d:'the unpenalized degree-15 fit drives its training error below the 0.01 variance of the noise it was fitting, so it fitted the noise',expr:'plain_train < 0.01'},
      {d:'and its test error is in the thousands: between the twenty points it oscillates violently',expr:'plain_test > 100'},
      {d:'ridge is worse on the training data, which is what paying for the penalty looks like',expr:'ridge_train > plain_train'},
      {d:'and about 0.004 on the test curve, which is what you get back for paying it',expr:'ridge_test < 0.01'},

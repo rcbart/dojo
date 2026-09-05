@@ -114,7 +114,7 @@ public class M2mToken {
  Service A ──TLS ClientHello + A's client cert──▶ Service B
  Service B verifies A's cert against the trusted CA, reads A's identity from the subject/SAN,
  then checks: is A allowed to call this endpoint?   (identity-based authorization)
- Both directions are encrypted and authenticated; a stolen bearer token alone won't get in.</div>
+ Both directions are encrypted and authenticated; B learns who A is from the certificate, not from a token.</div>
 
 <h4>The property that makes mTLS different</h4>
 <p>A bearer token is a thing you <i>hold</i>. Steal it and you are the caller. An mTLS identity is a thing
