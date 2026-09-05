@@ -34,10 +34,24 @@ cleanly.
 | `fixtures.ts` | `page` (pre-navigated) + `dojo` (page object). |
 | `smoke.spec.ts` | App loads, streams render, a lesson opens, no console errors. |
 | `grading.regression.spec.ts` | The grader accept/reject behavior (UI-driven). |
-| `engine.spec.ts` | Corpus invariants over ALL exercises/quizzes (fast, in-page). |
+| `engine.spec.ts` | Corpus invariants + shuffle, for the served devdojo build. |
+| `courses.invariants.spec.ts` | The corpus invariants across **all three engine courses** (devdojo, identity-dojo, js-dojo), loaded over `file://`. |
+| `invariants.ts` | Shared course list + in-page invariant functions (used by both specs above). |
 | `execution.spec.ts` | The "real execution" paths — JS worker, Java runner, fetch mock. |
 | `quiz.spec.ts` | The quick-check quiz widget. |
 | `security.spec.ts` | Response-header check (F06), live-deployment only. |
+
+### Test hooks and cross-course coverage
+
+- **`data-testid` hooks.** The interactive elements carry semantic `data-testid`s
+  (added to `engine/shell.html` and `engine/app.js`), and `selectors.ts` targets
+  those rather than incidental ids — so tests don't couple to markup and the
+  self-healing agent has stable handles to prefer.
+- **All three courses.** devdojo, identity-dojo and js-dojo are built from the
+  same `engine/`, so a grader/engine regression breaks all three at once. The
+  corpus invariants (*every shipped solution passes its own grader*, quiz
+  soundness) run against each course's built page — the guard the repo's own CI
+  comment says the standalone verifiers lost.
 
 ## Two kinds of test
 

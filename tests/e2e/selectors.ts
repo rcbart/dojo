@@ -13,25 +13,27 @@
  *   - Keep one entry per line, exactly `key: 'selector',` (single quotes).
  *   - Keep all entries between the BEGIN/END markers below.
  * The agent's file editor relies on this shape (see agents/self-heal/tools.ts).
- * These map to real ids in engine/shell.html and engine/app.js.
+ * These target the `data-testid` hooks in engine/shell.html and engine/app.js —
+ * stable, semantic handles that don't couple tests to incidental markup, and
+ * that the healer prefers when proposing a replacement.
  */
 export const selectors = {
   /* @healable:BEGIN */
-  editor: '#ed',
-  runButton: '#btnRun',
-  resetButton: '#btnReset',
-  solutionButton: '#btnSol',
-  hintButton: '#btnHint',
-  testResults: '#io-tests',
-  consoleOutput: '#io-console',
-  nav: '#nav',
-  main: '#main',
-  header: 'header',
-  beltName: '#beltName',
-  beltPct: '#beltPct',
-  beltFill: '#beltFill',
-  doneBanner: '#doneBanner',
-  navToggle: '#navToggle',
+  editor: '[data-testid="editor"]',
+  runButton: '[data-testid="run-button"]',
+  resetButton: '[data-testid="reset-button"]',
+  solutionButton: '[data-testid="solution-button"]',
+  hintButton: '[data-testid="hint-button"]',
+  testResults: '[data-testid="test-results"]',
+  consoleOutput: '[data-testid="console-output"]',
+  nav: '[data-testid="nav"]',
+  main: '[data-testid="main"]',
+  header: '[data-testid="app-header"]',
+  beltName: '[data-testid="belt-name"]',
+  beltPct: '[data-testid="belt-pct"]',
+  beltFill: '[data-testid="belt-fill"]',
+  doneBanner: '[data-testid="done-banner"]',
+  navToggle: '[data-testid="nav-toggle"]',
   /* @healable:END */
 } as const;
 

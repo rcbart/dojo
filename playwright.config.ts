@@ -20,6 +20,9 @@ const isLive = Boolean(process.env.BASE_URL);
 export default defineConfig({
   testDir: './tests/e2e',
   outputDir: './test-results',
+  // Build every engine course once so the cross-course invariant specs can load
+  // each over file://.
+  globalSetup: './tests/e2e/global-setup.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

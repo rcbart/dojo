@@ -1,55 +1,22 @@
 import { test, expect } from './fixtures';
+import { solutionFailuresInPage, quizProblemsInPage } from './invariants';
 
 /**
- * Engine-level guards, run inside the real page against the app's own global
- * functions (localChecks, STREAMS, the quiz data). These are cheap and cover
- * the WHOLE corpus at once, so they catch content/grader drift that a handful
- * of UI cases would miss — directly addressing the verifier-drift the repo's
- * own CI comment describes.
+ * Engine-level guards for the served devdojo build. The corpus invariants
+ * (solutions pass their own grader; quiz soundness) are the shared functions in
+ * invariants.ts — the SAME checks courses.invariants.spec.ts runs across all
+ * three courses — so devdojo is covered both through the served page here and
+ * across courses there.
  */
 
 test.describe('engine · corpus invariants (must pass)', () => {
   test('every shipped exercise solution passes its own structural checks', async ({ page }) => {
-    const failures = await page.evaluate(() => {
-      const out: string[] = [];
-      // @ts-expect-error globals from the built app
-      for (const s of STREAMS as any[]) {
-        for (const l of s.lessons || []) {
-          const list = Array.isArray(l.ex) ? l.ex : l.ex ? [l.ex] : [];
-          for (const e of list) {
-            if (typeof e.solution !== 'string' || !e.solution.trim()) continue;
-            // @ts-expect-error global
-            const res = localChecks(e, e.solution);
-            const bad = res.filter((c: any) => !c.pass);
-            if (bad.length) out.push(`${l.id}: ${bad.map((b: any) => b.desc).join(' | ')}`);
-          }
-        }
-      }
-      return out;
-    });
+    const failures = await page.evaluate(solutionFailuresInPage);
     expect(failures, `these solutions fail their own grader:\n${failures.join('\n')}`).toEqual([]);
   });
 
   test('every quiz is structurally sound (answer index, options, whyWrong alignment)', async ({ page }) => {
-    const problems = await page.evaluate(() => {
-      const out: string[] = [];
-      // @ts-expect-error global
-      for (const s of STREAMS as any[]) {
-        for (const l of s.lessons || []) {
-          (l.quiz || []).forEach((q: any, qi: number) => {
-            const n = (q.options || []).length;
-            const tag = `${l.id} Q${qi + 1}`;
-            if (!Number.isInteger(q.answer) || q.answer < 0 || q.answer >= n) out.push(`${tag}: answer index ${q.answer} out of range`);
-            if (n < 2) out.push(`${tag}: fewer than 2 options`);
-            const norm = (q.options || []).map((o: string) => String(o).trim().toLowerCase());
-            norm.forEach((o: string, i: number) => { if (norm.indexOf(o) !== i) out.push(`${tag}: duplicate option "${q.options[i]}"`); });
-            if (Array.isArray(q.whyWrong) && q.whyWrong.length !== n) out.push(`${tag}: whyWrong length ${q.whyWrong.length} != options ${n}`);
-            if (Array.isArray(q.whyWrong) && String(q.whyWrong[q.answer] || '').trim()) out.push(`${tag}: whyWrong[answer] should be empty`);
-          });
-        }
-      }
-      return out;
-    });
+    const problems = await page.evaluate(quizProblemsInPage);
     expect(problems, `quiz data problems:\n${problems.join('\n')}`).toEqual([]);
   });
 
