@@ -42,10 +42,17 @@
   .brand:hover{text-decoration:none}
   .role{font-size:12.5px;color:#a89ee0;line-height:1.45;margin:2px 0 18px}
   .role b{color:#e8e3ff;font-weight:700}
-  /* The address is written out. Every contact control on this page used to be a
-     JS-assembled mailto with no visible fallback, so with scripts blocked or no mail
-     handler the buttons silently did nothing. A real address costs some spam and is
-     worth it on a site whose purpose is people reaching out. */
+  /* The address is visible and written out, because every contact control here used
+     to be a JS-assembled mailto with no visible fallback: with scripts blocked or no
+     mail handler, the buttons silently did nothing on a site whose whole purpose is
+     people reaching out.
+     It is published as numeric HTML entities. Browsers decode those in text nodes AND
+     in attribute values, so the link clicks, the text copies, and none of it needs
+     JavaScript, while a harvester grepping the raw HTML for "mailto:" or user@host
+     finds neither. That stops scraping-by-regex, which is most of it. A crawler that
+     renders the DOM still wins, which is why the real defense is the subject line:
+     every link here prefills "Hello from roniam.dev", so genuine mail from the site
+     is filterable on arrival and everything else is not. */
   .roleml{display:inline-block;margin-top:6px;color:#e8e3ff;text-decoration:none;border-bottom:1px solid rgba(232,227,255,.35);word-break:break-all}
   .roleml:hover,.roleml:focus{border-bottom-color:#e8e3ff}
   .sgroup{font-size:11px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:#b9b0e0;
@@ -232,7 +239,7 @@
   <a class="brand" href="/"><svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset=".5" stop-color="#f43f5e"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect x="1" y="1" width="30" height="30" rx="8" fill="#221a44"/><g fill="none" stroke="url(#tg)" stroke-width="2.4" stroke-linecap="round"><path d="M5 10.5 Q16 8 27 10.5" stroke-width="2.8"/><path d="M7.5 14.5 H24.5"/><path d="M10 11 V25"/><path d="M22 11 V25"/></g></svg>
   <span>ron<span class="iam">iam</span>.dev</span></a>
   <button id="menuToggle" aria-label="Show navigation" aria-expanded="false">&#9776;</button>
-  <div class="role"><b>Ron Bar-Tor</b><br>Engineering Manager<br>Identity &amp; access management<br><a class="roleml" href="mailto:roniamdev@gmail.com">roniamdev@gmail.com</a></div>
+  <div class="role"><b>Ron Bar-Tor</b><br>Engineering Manager<br>Identity &amp; access management<br><a class="roleml" href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#114;&#111;&#110;&#105;&#97;&#109;&#100;&#101;&#118;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;&#63;&#115;&#117;&#98;&#106;&#101;&#99;&#116;&#61;&#72;&#101;&#108;&#108;&#111;&#37;&#50;&#48;&#102;&#114;&#111;&#109;&#37;&#50;&#48;&#114;&#111;&#110;&#105;&#97;&#109;&#46;&#100;&#101;&#118;">&#114;&#111;&#110;&#105;&#97;&#109;&#100;&#101;&#118;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;</a></div>
 
   <div class="sgroup">Start here</div>
   <a class="snav" href="#about"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-user"/></svg>About</a>
@@ -504,7 +511,7 @@
     <b>alpha volunteers</b> get a personal onboarding.</p>
     <a class="mailme" href="#contact" data-sub="Hello from roniam.dev">Drop me a line</a>
     <div style="margin-top:10px;font-size:14.5px">or write to
-      <a href="mailto:roniamdev@gmail.com" style="color:var(--teal-ink);font-weight:600">roniamdev@gmail.com</a></div>
+      <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#114;&#111;&#110;&#105;&#97;&#109;&#100;&#101;&#118;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;&#63;&#115;&#117;&#98;&#106;&#101;&#99;&#116;&#61;&#72;&#101;&#108;&#108;&#111;&#37;&#50;&#48;&#102;&#114;&#111;&#109;&#37;&#50;&#48;&#114;&#111;&#110;&#105;&#97;&#109;&#46;&#100;&#101;&#118;" style="color:var(--teal-ink);font-weight:600">&#114;&#111;&#110;&#105;&#97;&#109;&#100;&#101;&#118;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;</a></div>
     <form action="https://buttondown.com/api/emails/embed-subscribe/roniam" method="post" target="_blank"
           style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px">
       <input type="email" name="email" required placeholder="you@example.com" aria-label="Email address"
