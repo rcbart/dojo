@@ -155,16 +155,40 @@ if (courseRuns !== COURSE_RUNS) {
 const WORDS = ['zero','one','two','three','four','five','six','seven','eight','nine','ten',
                'eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen',
                'eighteen','nineteen','twenty'];
-const claims = [...home.matchAll(/(?:runs|by) (\w+) (?:CI )?checks/g)].map(m => m[1]);
-if (!claims.length) { console.error('docs/home.html no longer states the gate count'); process.exit(1); }
-const wrong = claims.filter(w => WORDS.indexOf(w) !== gateCount && +w !== gateCount);
-if (wrong.length) {
-  console.error(`  docs/home.html says "${wrong.join('", "')}" checks, the workflow runs ${gateCount} verification gates:`);
+// Every public surface that states the count, not just the home page. On
+// 5 Sep /courses/ still said "Sixteen checks run on every push" while the home
+// page said seventeen and the workflow ran seventeen. The claim went stale on
+// the one page whose whole argument is that a claim should survive being
+// checked, because this gate only ever read docs/home.html. The README is here
+// too: GitHub is where a peer engineer goes to verify any of this.
+// Match any number word or digit standing immediately before "checks" or
+// "gates", in either order of phrasing: home says "runs eighteen checks",
+// /courses/ says "Eighteen checks run on every push", the README says "18
+// gates have to pass". Words that are not numbers ("these checks") are
+// filtered out below rather than matched here.
+const GATE_CLAIM = /(?:(?:runs|by) (\w+) (?:CI )?(?:checks|gates)|(\w+) (?:CI )?(?:checks|gates))/gi;
+const SURFACES = ['docs/home.html', 'docs/landing.html', 'README.md'];
+let stated = 0, gateBad = false;
+for (const name of SURFACES) {
+  const text = name === 'docs/home.html' ? home : fs.readFileSync(name, 'utf8');
+  const claims = [...text.matchAll(GATE_CLAIM)]
+    .map(m => (m[1] || m[2] || '').toLowerCase())
+    .filter(w => WORDS.indexOf(w) >= 0 || /^\d+$/.test(w));
+  if (!claims.length) continue;
+  stated++;
+  const wrong = claims.filter(w => WORDS.indexOf(w) !== gateCount && +w !== gateCount);
+  if (wrong.length) {
+    console.error(`  ${name} says "${wrong.join('", "')}", the workflow runs ${gateCount} verification gates.`);
+    gateBad = true;
+  }
+}
+if (!stated) { console.error('no public surface states the gate count any more'); process.exit(1); }
+if (gateBad) {
   for (const s of scripts) console.error(`    ${s}`);
-  console.error('  Either restore the deleted verification step or correct the claim on docs/home.html.');
+  console.error('  Either restore the deleted verification step or correct the claim.');
   process.exit(1);
 }
-console.log(`docs/home.html states ${gateCount} CI gates, which is how many the workflow runs.`);
+console.log(`${stated} of ${SURFACES.length} public surface(s) state ${gateCount} CI gates, which is how many the workflow runs.`);
 
 /* The home page deep-links into each course with /course/#fragment. Those
    fragments are not static ids: engine/boot.js slugifies every stream TITLE

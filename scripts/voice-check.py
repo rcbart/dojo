@@ -21,6 +21,12 @@ text = re.sub(r'^---.*?---', '', raw, flags=re.S)          # strip front matter
 # an unfilled placeholder, and identifiers are not subject to spelling rules.
 text = re.sub(r'```.*?```', '', text, flags=re.S)
 text = re.sub(r'`[^`\n]+`', '', text)
+# A markdown link label is not a placeholder. The bracket rule below matches any
+# [Bracketed phrase], which made every post carrying a citation fail the gate:
+# the deadline-was-game-one post has shipped since 30 Aug tripping it on its own
+# Edgecast link. A gate that fails on correct input is one people learn to skip,
+# so links collapse to their text before the check.
+text = re.sub(r'\[([^\]]+)\]\([^)]*\)', r'\1', text)
 body = re.sub(r'^(#|>).*$', '', text, flags=re.M)          # strip headings/quotes
 body = re.sub(r'\*\*(.*?)\*\*', r'\1', body)
 

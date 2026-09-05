@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/content%20checks-3095-2ea44f" alt="content integrity assertions across the three engine-based dojos">
   <img src="https://img.shields.io/badge/engine%20tests-86-2ea44f" alt="engine unit tests">
   <img src="https://img.shields.io/badge/executed%20exercises-194-06b6d4" alt="exercises graded by real execution">
-  <img src="https://img.shields.io/badge/CI%20gates-17-2ea44f" alt="CI gates">
+  <img src="https://img.shields.io/badge/CI%20gates-18-2ea44f" alt="CI gates">
   <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
 </p>
 
@@ -237,7 +237,7 @@ node build.js            # produce dist/index.html (+ devdojo.html copy)
 
 The build output is a single, dependency-free HTML file; open `devdojo.html` directly in a browser,
 or host `dist/index.html` on any static host. Generated files are gitignored; only source is
-versioned. In CI, 16 gates have to pass before anything deploys: the engine unit tests, content
+versioned. In CI, 18 gates have to pass before anything deploys: the engine unit tests, content
 verification for each dojo, the execution gate, the Java compile gate, lesson depth, the cloud-native
 check, color contrast, a run check on every built page, two quiz-balance gates, the home-page stats
 check, a prose check, sitemap resolution, internal link resolution including fragments, a check that

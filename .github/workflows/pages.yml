@@ -225,6 +225,16 @@ jobs:
       - name: Verify the revision claim is backed by the posts
         run: node scripts/verify-revisions.js
 
+      # Gate 18. Publishing here is a git mv from blog/ into posts/, and the
+      # drafts carry HTML comment blocks: open [ASK] markers, rulings on which
+      # sentences are the author's, notes on what a named third party has
+      # agreed to, and facts marked never-to-be-published. The builder strips
+      # comments so none of it can reach a rendered page, but a silent strip
+      # would mean a dirty file publishes and nobody finds out. This is the
+      # half that tells you.
+      - name: Verify no editorial apparatus reached a published post
+        run: node scripts/verify-no-editorial.js
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

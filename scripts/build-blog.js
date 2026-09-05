@@ -81,6 +81,13 @@ function inline(s) {
 }
 
 function md(src) {
+  // Editorial apparatus never ships. Drafts under blog/ carry HTML comments
+  // holding open [ASK]s, rulings on which lines are the author's, and facts
+  // explicitly marked never-to-be-published. Publishing is a git mv into
+  // posts/, so without this the whole comment block would land in the page
+  // source of the live post. Stripped here so it cannot leak by accident;
+  // verify-no-editorial.js also fails the build so the author still finds out.
+  src = src.replace(/<!--[\s\S]*?-->/g, '');
   const lines = src.split('\n');
   const out = [];
   let i = 0, para = [];
