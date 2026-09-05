@@ -342,17 +342,27 @@ function gradeJs(l,e,sid,ei,exs,code){
    harness that calls the student's methods and asserts expected values, compiles it
    with their code, runs it, and parses PASS/FAIL. Falls back (returns false) when the
    runner is off, so everyone still gets the regex/AI path. */
-function buildJavaHarness(g){
+function buildJavaHarness(g,nonce){
   const inst=g.static===false, cls=g.class, recv=inst?'_o':cls;
-  const L=['public class DojoTest {','  public static void main(String[] args){','    int p=0,t=0;','    StringBuilder sb=new StringBuilder();'];
+  /* Every line the harness emits is prefixed with a per-run nonce, and the
+     reader below accepts nothing without it. Without this, results came out of
+     learner-controlled stdout: printing "PASS ..." lines and "DOJO_RESULT 8/8"
+     from a static initializer, then System.exit(0) before the harness ran, was
+     enough to paint the panel green on wrong code. Same defence as the JS
+     worker path above, which ignores any message whose __t does not match.
+     The limit, stated honestly: this stops forging by printing. It is not a
+     sandbox. The learner owns the machine and can read the nonce out of the
+     request if they set out to, exactly as they can read the worker token. */
+  const N=JSON.stringify(String(nonce));
+  const L=['public class DojoTest {','  public static void main(String[] args){','    final String N='+N+';','    int p=0,t=0;','    StringBuilder sb=new StringBuilder();'];
   if(inst)L.push('    '+cls+' _o=new '+cls+'();');
   (g.cases||[]).forEach((c,i)=>{
     const args=(c.args||[]).join(', ');
     const name=String(c.name||('case '+(i+1))).replace(/\\/g,'\\\\').replace(/"/g,'\\"');
-    L.push('    t++; try { Object got='+recv+'.'+c.call+'('+args+'); boolean ok=java.util.Objects.equals(got, '+c.expect+'); if(ok)p++; sb.append(ok?"PASS ":"FAIL ").append("'+name+'").append(ok?"":(" (got "+got+")")).append("\\n"); } catch(Throwable ex){ sb.append("FAIL "+"'+name+'"+" (threw "+ex+")\\n"); }');
+    L.push('    t++; try { Object got='+recv+'.'+c.call+'('+args+'); boolean ok=java.util.Objects.equals(got, '+c.expect+'); if(ok)p++; sb.append(N).append(ok?" PASS ":" FAIL ").append("'+name+'").append(ok?"":(" (got "+got+")")).append("\\n"); } catch(Throwable ex){ sb.append(N).append(" FAIL "+"'+name+'"+" (threw "+ex+")\\n"); }');
   });
   L.push('    System.out.print(sb.toString());');
-  L.push('    System.out.println("DOJO_RESULT "+p+"/"+t);');
+  L.push('    System.out.println(N+" DOJO_RESULT "+p+"/"+t);');
   L.push('  }','}');
   return L.join('\n');
 }
@@ -364,8 +374,9 @@ async function gradeJavaViaRunner(l,e,sid,ei,exs,code){
   const prev=tests.innerHTML; if(btn)btn.disabled=true;
   tests.innerHTML='<div class="aiBox"><span class="spin"></span>Compiling &amp; running with the local JDK…</div>';
   let data=null;
+  const nonce='N'+Math.random().toString(36).slice(2)+Date.now().toString(36);
   try{
-    const r=await fetch('/api/run/java',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({code,harness:buildJavaHarness(e.gradeJava)})});
+    const r=await fetch('/api/run/java',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({code,harness:buildJavaHarness(e.gradeJava,nonce)})});
     if(!r.ok){tests.innerHTML=prev;if(btn)btn.disabled=false;return false;} // runner off -> fall back
     data=await r.json();
   }catch(_){tests.innerHTML=prev;if(btn)btn.disabled=false;return false;}
@@ -378,13 +389,27 @@ async function gradeJavaViaRunner(l,e,sid,ei,exs,code){
     tests.innerHTML='<h4 style="margin:8px 0 4px">Compilation (local JDK)</h4><div class="tcase bad">✘ your code did not compile, see the Console tab</div>';
     setTab('console');markTab('tests','#dc2626');if(btn)btn.disabled=false;return true;
   }
-  const caseLines=out.split('\n').filter(x=>/^(PASS|FAIL) /.test(x));
-  const mr=out.match(/DOJO_RESULT\s+(\d+)\/(\d+)/);
-  const p=mr?parseInt(mr[1],10):0,t=mr?parseInt(mr[2],10):0,allPass=t>0&&p===t;
+  /* Only lines the harness signed are read, and the LAST result wins rather
+     than the first, so nothing printed before the harness runs can pre-empt it. */
+  const sig=new RegExp('^'+nonce+' (PASS|FAIL) (.*)$');
+  const caseLines=out.split('\n').map(x=>{const m=sig.exec(x);return m?(m[1]+' '+m[2]):null;}).filter(Boolean);
+  const hits=out.match(new RegExp(nonce+'\\s+DOJO_RESULT\\s+(\\d+)\\/(\\d+)','g'))||[];
+  const mr=hits.length?new RegExp(nonce+'\\s+DOJO_RESULT\\s+(\\d+)\\/(\\d+)').exec(hits[hits.length-1]):null;
+  const shown=out.replace(new RegExp(nonce+' ?','g'),'');
+  /* No signed result means the harness never finished: an early System.exit, a
+     throw in a static initializer, or an attempt to forge the transcript. Fail
+     closed. Nothing is marked complete on output we cannot vouch for. */
+  if(!mr){
+    tests.innerHTML='<h4 style="margin:8px 0 4px">Executed with the local JDK, real compile &amp; run</h4>'+
+      '<div class="tcase bad">\u2718 the grader never reported a result, so nothing was marked complete. Your program ended before the checks ran, most often an early System.exit or a throw during static initialization.</div>';
+    con.innerHTML=cline('$ javac *.java &amp;&amp; java DojoTest','dim')+cline(esc(shown),'err');
+    setTab('tests');markTab('console','#dc2626');if(btn)btn.disabled=false;return true;
+  }
+  const p=parseInt(mr[1],10),t=parseInt(mr[2],10),allPass=t>0&&p===t&&caseLines.length===t;
   tests.innerHTML='<h4 style="margin:8px 0 4px">Executed with the local JDK, real compile &amp; run</h4>'+
     caseLines.map(x=>{const ok=x.indexOf('PASS')===0;return '<div class="tcase '+(ok?'ok':'bad')+'">'+(ok?'✔':'✘')+' '+esc(x.replace(/^(PASS|FAIL) /,''))+'</div>';}).join('')+
     '<div class="aiBox"><h4>▶ Real execution</h4>Compiled and ran on your machine; '+p+'/'+t+' assertions passed.</div>';
-  con.innerHTML=cline('$ javac *.java && java DojoTest','dim')+cline(esc(out),allPass?'ok':'err');
+  con.innerHTML=cline('$ javac *.java && java DojoTest','dim')+cline(esc(shown),allPass?'ok':'err');
   setTab('tests');markTab('console',allPass?'#16a34a':'#dc2626');
   if(allPass)completeExercise(l,sid,ei,exs);
   if(btn)btn.disabled=false;

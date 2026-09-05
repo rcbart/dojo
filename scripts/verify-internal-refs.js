@@ -41,7 +41,16 @@ for(const f of ['docs/home.html','docs/landing.html','skills-rubric.html']){
   const t=fs.readFileSync(src,'utf8');
   for(const m of t.matchAll(/(?:href|src)="(?!https?:|\/\/|#|mailto:|data:)([^"]+)"/g)){
     checked++;
-    const rel=m[1].split(/[?#]/)[0];
+    /* An href may be written as numeric HTML entities. The contact address on
+       the home page is published that way so a harvester grepping the raw HTML
+       finds no "mailto:" and no user@host, while browsers still decode it in
+       the attribute and the link works. Decode before deciding what this is,
+       or the gate reads "&#109;ailto:..." as a relative path and fails on a
+       link that is correct. Same shape as the markdown-link false positive
+       that voice-check.py had. */
+    const href=m[1].replace(/&#(\d+);/g,(_,d)=>String.fromCharCode(+d));
+    if(/^(https?:|\/\/|#|mailto:|tel:|data:)/i.test(href)) continue;
+    const rel=href.split(/[?#]/)[0];
     if(rel.startsWith('/')) continue;            // site-absolute, gated by verify-links
     if(!exists(path.resolve(path.dirname(src),rel))) bad.push(['html-rel',f,m[1]]);
   }
