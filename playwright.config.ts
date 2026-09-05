@@ -30,11 +30,14 @@ export default defineConfig({
   timeout: 30_000,
   expect: { timeout: 7_500 },
 
-  // JSON report is what the self-healing agent parses; the HTML report is for humans.
+  // list = console; json = the self-heal agent's input; html = human triage;
+  // junit = external CI systems; dojo-reporter = the findings-status dashboard.
   reporter: [
     ['list'],
     ['json', { outputFile: 'test-results/results.json' }],
     ['html', { open: 'never', outputFolder: 'playwright-report' }],
+    ['junit', { outputFile: 'test-results/junit.xml' }],
+    ['./tests/reporters/dojo-reporter.ts'],
   ],
 
   use: {

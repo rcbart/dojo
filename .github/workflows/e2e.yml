@@ -33,6 +33,8 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       # The suite builds + serves the site itself (see playwright.config.ts).
+      # The dojo reporter writes the findings dashboard to $GITHUB_STEP_SUMMARY,
+      # so every run shows the live/fixed status of each tracked finding inline.
       - name: Run E2E suite
         run: npx playwright test
 
@@ -43,3 +45,14 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+
+      - name: Upload findings report (dashboard, JUnit, trends)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: findings-report
+          path: |
+            test-results/report.md
+            test-results/findings.json
+            test-results/junit.xml
+          retention-days: 30

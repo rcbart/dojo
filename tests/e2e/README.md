@@ -40,6 +40,27 @@ cleanly.
 | `execution.spec.ts` | The "real execution" paths — JS worker, Java runner, fetch mock. |
 | `quiz.spec.ts` | The quick-check quiz widget. |
 | `security.spec.ts` | Response-header check (F06), live-deployment only. |
+| `../reporters/dojo-reporter.ts` | Findings-status dashboard reporter (see below). |
+
+### Reporting
+
+The suite ships a custom reporter (`tests/reporters/dojo-reporter.ts`) alongside
+the standard `list` / `json` / `html` / `junit` reporters. It reads the finding
+id from each test title and reports the **state of each tracked finding**, which
+the built-in reporters flatten:
+
+| Status | Meaning |
+|---|---|
+| ⚠️ live (guarded) | a known-bug guard failed as expected — the bug is still there |
+| ✅ fixed (guarded) | a fixed-bug invariant passed — protected from regression |
+| 🎉 newly fixed | a guard **unexpectedly passed** — the bug is fixed; delete the `test.fail()` |
+| ❌ regression | a normal test failed |
+
+Outputs (under `test-results/`): `report.md` (also appended to the GitHub
+Actions **run summary**, so each CI run shows the dashboard inline),
+`findings.json` (machine-readable, for trends/badges), and `junit.xml` (external
+CI). The reporter changes no exit codes — Playwright still fails the run on a
+regression or a newly-passing guard, which is exactly when you want a red build.
 
 ### Test hooks and cross-course coverage
 
