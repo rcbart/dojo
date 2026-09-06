@@ -8,8 +8,8 @@
   <a href="https://roniam.dev/js/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-JS%20Dojo-eab308" alt="JS Dojo live"></a>
   <a href="https://roniam.dev/ml/"><img src="https://img.shields.io/badge/%E2%96%B6%20live-ML%20Dojo-f97316" alt="ML Dojo live"></a>
   <img src="https://img.shields.io/badge/streams-71-8b5cf6" alt="streams across all four dojos">
-  <img src="https://img.shields.io/badge/lessons-625-8b5cf6" alt="lessons across the four dojos plus the cloud-native modules">
-  <img src="https://img.shields.io/badge/exercises-763-06b6d4" alt="hands-on exercises across all four dojos">
+  <img src="https://img.shields.io/badge/lessons-628-8b5cf6" alt="lessons across the four dojos plus the cloud-native modules">
+  <img src="https://img.shields.io/badge/exercises-742-06b6d4" alt="hands-on exercises across all four dojos">
   <img src="https://img.shields.io/badge/quiz%20questions-1351-eab308" alt="hand-authored quiz questions across all four dojos">
   <img src="https://img.shields.io/badge/content%20checks-3095-2ea44f" alt="content integrity assertions across the three engine-based dojos">
   <img src="https://img.shields.io/badge/engine%20tests-86-2ea44f" alt="engine unit tests">
@@ -21,7 +21,7 @@
 # Dojo 🥋
 
 Four interactive, self-contained learning platforms plus a five-course cloud-native path, all running
-entirely in the browser. **71 streams, 625 lessons and 763 hands-on exercises**: an in-editor coding
+entirely in the browser. **71 streams, 628 lessons and 742 hands-on exercises**: an in-editor coding
 exercise on every lesson, a belt progression, **spaced-repetition review**, a **difficulty-filtered
 practice hub**, a domain glossary with click-to-explain terms, tournaments, and end-to-end capstone
 projects.

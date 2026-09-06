@@ -90,7 +90,7 @@ document.addEventListener('mouseup',e=>{
       const sel=window.getSelection();
       word=sel?String(sel.toString()).trim():'';
     }
-    if(word&&/^[A-Za-z]{2,14}$/.test(word))showTip(word,e.clientX,e.clientY);
+    if(word&&/^[A-Za-z][A-Za-z0-9-]{1,15}$/.test(word))showTip(word,e.clientX,e.clientY);
     else tip.style.display='none';
   },0);
 });
@@ -113,6 +113,13 @@ const GLOSS_ALL=[
 ['Identity proofing',`Establishing who a person is in the real world, once, before an account exists. Not authentication.`],
 ['Enrollment',`Creating the account and assigning its identifier, after proofing.`],
 ['Credential binding',`Attaching an authenticator to an identifier. The step attackers target, a weak password-reset flow is a binding flaw, not an authentication one.`],
+     ['Identity Assurance Level (IAL)',`NIST SP 800-63 scale, 1 to 3, for how rigorously a person's real-world identity was checked at enrollment. IAL1 is the lightest check, IAL3 is in person with a trained operator. It rates proofing, not the login.`],
+     ['Authenticator Assurance Level (AAL)',`NIST SP 800-63 scale, 1 to 3, for how strong the login is. AAL1 is a single factor, AAL2 needs two, AAL3 needs a hardware-based, phishing-resistant authenticator. It rates the login, not proofing.`],
+     ['Federation Assurance Level (FAL)',`NIST SP 800-63 scale, 1 to 3, for how an assertion is protected between IdP and RP. FAL1 signed, FAL2 signed and encrypted to the RP, FAL3 the user also proves possession of a key bound to the assertion.`],
+     ['Identity and Access Management (IAM)',`The discipline and the tooling covering the whole arc: proofing, accounts, authentication, authorization, governance. Workforce IAM is for employees, CIAM is for customers.`],
+     ['Workforce IAM',`Identity for employees and contractors: HR-driven joiner, mover, leaver, a directory, SSO into SaaS, and access reviews. Tens of thousands of accounts, all of them known in advance.`],
+     ['Customer IAM (CIAM)',`Identity for customers: self-registration, social login, consent, privacy law, and scale in the millions. The same protocols as workforce IAM with the opposite constraints: nobody is known in advance and friction costs revenue.`],
+     ['AAA',`Authentication, authorization and accounting: who you are, what you may do, and the record of what happened. Three systems with three failure modes; the third is the one found missing after an incident.`],
    ]},
    {h:'2 · The actors',terms:[
      ['Resource Owner',`The user who owns the data an app wants to reach.`],
@@ -133,7 +140,7 @@ const GLOSS_ALL=[
      ['Crypto agility',`The ability to change algorithm or key without changing the system, algorithms in a policy list rather than hardcoded, keys selected by kid, rotation as a routine drill. Measured by how long it would take you to stop using an algorithm, not by which one you use today.`],
      ['Post-quantum cryptography (PQC)',`Algorithms designed to resist attack by a quantum computer: NIST's ML-KEM for key establishment, ML-DSA and SLH-DSA for signatures. Confidentiality is the urgent case ("harvest now, decrypt later"); short-lived signatures are far less exposed.`],
      ['ML-KEM',`The NIST-standardized post-quantum key encapsulation mechanism (FIPS 203, formerly Kyber). Used in hybrid TLS key exchange today, because confidentiality is the urgent post-quantum case.`],
-     ['ML-DSA',`The NIST-standardized post-quantum signature algorithm (FIPS 204, formerly Dilithium). Relevant first to long-lived signed artefacts, certificates, firmware, credentials valid for years, rather than to five-minute access tokens.`],
+     ['ML-DSA',`The NIST-standardized post-quantum signature algorithm (FIPS 204, formerly Dilithium). Relevant first to long-lived signed artifacts, certificates, firmware, credentials valid for years, rather than to five-minute access tokens.`],
      ['SLH-DSA',`A NIST-standardized stateless hash-based signature scheme (FIPS 205, formerly SPHINCS+). Conservative and slow, with large signatures; chosen where a very long security lifetime matters more than size.`],
      ['Access token',`The key an app uses to call an API. Represents authorization, not identity.`],
      ['ID token',`OIDC proof of who the user is, issued to the client. A JWT. Not for calling APIs.`],
@@ -155,6 +162,17 @@ const GLOSS_ALL=[
      ['Scope',`A named permission a token grants, such as read invoices.`],
      ['Bearer token',`A token usable by anyone who holds it, like cash. Protect it in transit and at rest.`],
      ['Sender-constrained token',`A token bound to a key only the real client has (mTLS-bound or DPoP), so a stolen copy is useless.`],
+     ['JOSE',`JSON Object Signing and Encryption, the IETF family JWT is built from: JWS (signing), JWE (encryption), JWK (keys) and JWA (the algorithm registry).`],
+     ['JSON Web Key (JWK)',`A JSON object describing one cryptographic key: its type, use, algorithm, id (kid) and the key material. A JWKS is a set of them, which is what the jwks_uri endpoint serves.`],
+     ['RS256',`JWS algorithm: RSA signature (PKCS#1 v1.5) over SHA-256. Asymmetric, so verifiers hold only the public key. The default in most identity providers.`],
+     ['ES256',`JWS algorithm: ECDSA on the P-256 curve with SHA-256. Asymmetric like RS256, with much smaller keys and signatures. Preferred for new deployments.`],
+     ['HS256',`JWS algorithm: HMAC with SHA-256 over a shared secret. Symmetric: anyone who can verify can also forge. Fine inside one service, wrong for anything an IdP issues to others.`],
+     ['Content Encryption Key (CEK)',`In JWE, the per-message symmetric key that encrypts the payload. The CEK is itself encrypted to the recipient (with RSA-OAEP, say) and shipped inside the token.`],
+     ['A256GCM',`JWE content-encryption algorithm: AES-256 in GCM mode, authenticated encryption. Pairs with a key-management algorithm such as RSA-OAEP that protects the CEK.`],
+     ['RSA-OAEP',`JWE key-management algorithm: RSA with OAEP padding, used to encrypt the CEK to the recipient's public key. Never use the older RSA1_5 padding.`],
+     ['SD-JWT',`Selective Disclosure JWT. The issuer signs hashes of the claims; the holder reveals only the claims they choose, with their salts, and the verifier checks them against the hashes. The credential format behind most wallet designs.`],
+     ['Security Token Service (STS)',`Any service that issues, validates or exchanges security tokens. RFC 8693 token exchange, a cloud AssumeRole endpoint and a SAML-to-JWT bridge are all STSs.`],
+     ['JWT-SVID',`A SPIFFE workload identity expressed as a JWT rather than an X.509 certificate, for hops where mTLS is impossible (through a load balancer that terminates TLS, say). Shorter-lived and bearer, so weaker than the X509-SVID.`],
    ]},
    {h:'4 · Protocols & standards',terms:[
      ['Workload identity federation',`Exchanging a platform-issued identity, a CI job's OIDC token, a Kubernetes service account, a mesh workload's SPIFFE identity, for short-lived credentials somewhere else, so no long-lived key is stored anywhere. The security boundary is the relying platform's trust policy, not the signature.`],
@@ -168,6 +186,28 @@ const GLOSS_ALL=[
      ['WebAuthn',`A browser standard for phishing-resistant, origin-bound login (the basis of passkeys).`],
      ['LDAP',`A protocol for querying enterprise directories of users and groups.`],
      ['Kerberos',`A ticket-based enterprise SSO protocol (KDC, TGT, service tickets).`],
+     ['FIDO2',`The umbrella standard behind passkeys and security keys: WebAuthn (the browser API) plus CTAP2 (the protocol to the authenticator). Phishing-resistant because the credential is bound to the origin that registered it.`],
+     ['CTAP',`Client to Authenticator Protocol, the FIDO spec for how a browser or OS talks to a roaming authenticator over USB, NFC or Bluetooth. CTAP2 is FIDO2; CTAP1 is the older U2F wire format.`],
+     ['U2F',`Universal 2nd Factor, FIDO's original security-key standard, second factor only. Superseded by FIDO2 and still supported by it as CTAP1.`],
+     ['FAPI',`Financial-grade API, the OpenID Foundation's hardened profile of OAuth and OIDC: PAR, PKCE, sender-constrained tokens (mTLS or DPoP), signed requests and responses. Mandated in most open-banking regimes.`],
+     ['Pushed Authorization Request (PAR)',`RFC 9126. The client POSTs the authorization parameters to the AS over the back channel first and redirects the browser with only a short request_uri, so nothing in the request can be read or altered in transit.`],
+     ['Rich Authorization Requests (RAR)',`RFC 9396. An authorization_details JSON array instead of flat scope strings, so a grant can say "pay 50 EUR to this account once" rather than "payments".`],
+     ['Best Current Practice (BCP)',`An IETF document class for operational guidance rather than protocol. In OAuth, the Security BCP (RFC 9700) and the Browser-Based Apps BCP are the ones to know.`],
+     ['Decentralized Identifier (DID)',`A W3C identifier, did:method:id, that resolves to a DID document listing public keys and service endpoints. Controlled by the subject rather than by a registry or IdP.`],
+     ['Verifiable Credential (VC)',`A W3C data model: an issuer signs claims about a holder, the holder stores them in a wallet and presents them to a verifier, who checks the signature without contacting the issuer. The three-party model behind digital wallets.`],
+     ['BBS signatures',`A signature scheme that lets a holder prove a subset of signed claims without revealing the rest, and without two presentations being linkable. The cryptography behind some verifiable-credential formats.`],
+     ['SOAP',`The XML messaging protocol over HTTP that SAML's artifact binding and its older profiles use. A large part of why SAML libraries are heavy.`],
+     ['Active Directory (AD)',`Microsoft's directory service: LDAP for lookups, Kerberos for authentication, Group Policy for configuration. The workforce directory in most enterprises, and what Entra ID grew out of.`],
+     ['NTLM',`Microsoft's legacy challenge-response authentication from before Kerberos. Still the fallback in Active Directory, relayable and without mutual authentication. Disable it wherever you can.`],
+     ['RADIUS',`The protocol network gear uses to ask a central server whether to admit a user: VPNs, Wi-Fi (802.1X) and switches. Old, UDP, shared-secret based, still everywhere at the network edge.`],
+     ['SASL',`Simple Authentication and Security Layer, the pluggable framework LDAP, SMTP and IMAP use to negotiate an authentication mechanism (Kerberos via GSSAPI, plain, SCRAM) without each protocol reinventing login.`],
+     ['JARM',`JWT Secured Authorization Response Mode. The AS returns the authorization response (code, state) inside a signed JWT, so the client can verify who issued it and that nothing was altered. Part of FAPI.`],
+     ['CAEP',`Continuous Access Evaluation Profile, an OpenID Shared Signals profile. The IdP pushes session events (revoked, device out of compliance, risk changed) to relying parties as Security Event Tokens, so access ends before the token expires.`],
+     ['RISC',`Risk Incident Sharing and Coordination, the other Shared Signals profile: account-level events such as credential compromise or account disabled, shared between providers so a takeover at one does not spread.`],
+     ['Self-sovereign identity (SSI)',`The model where the person holds their own credentials in a wallet and presents them directly, with no IdP in the loop at presentation time. DIDs and verifiable credentials are its building blocks.`],
+     ['CBOR',`Concise Binary Object Representation, the binary cousin of JSON. WebAuthn attestation objects and the mDL are CBOR, which is why you cannot read them with a JSON parser.`],
+     ['PIV / CAC',`Personal Identity Verification and Common Access Card: the US federal and defense smart cards. A certificate on a chip, PIN-protected, used for both building and system login. High-assurance authentication from before passkeys.`],
+     ['Integrated Windows Authentication (IWA)',`The browser silently authenticates to an intranet site with the user's Kerberos ticket (or NTLM as fallback) via the Negotiate scheme. Silent SSO on a domain-joined machine, and a puzzle everywhere else.`],
    ]},
    {h:'5 · Flows / grant types',terms:[
      ['Authorization Code flow',`The main flow for apps acting for a user: get a short code via the browser, then swap it for tokens on the back channel.`],
@@ -187,6 +227,7 @@ const GLOSS_ALL=[
      ['/revoke',`Where a token is proactively invalidated (RFC 7009).`],
      ['JWKS',`The published set of public keys (jwks_uri) used to verify token signatures.`],
      ['Discovery',`The /.well-known/openid-configuration document listing a provider endpoints and keys.`],
+     ['Assertion Consumer Service (ACS)',`The SP's SAML endpoint that receives the POSTed assertion and starts the session. SAML's equivalent of the OAuth redirect URI, and just as important to lock down.`],
    ]},
    {h:'7 · Core concepts',terms:[
      ['Trust domain',`A group of workloads sharing one set of security controls and policies, invoked only through published interfaces. The unit a transaction token is scoped to, and the boundary at which external authorization is exchanged for internal context.`],
@@ -253,6 +294,30 @@ const GLOSS_ALL=[
      ['nonce',`A one-time value that ties an OIDC ID token to a single login, preventing replay.`],
      ['state',`A random value the client sends on the redirect and re-checks on return, preventing CSRF.`],
      ['Session',`Server- or cookie-tracked state that remembers a logged-in user between requests.`],
+     ['TOTP',`Time-based One-Time Password, RFC 6238. A six-digit code computed as HMAC over a shared secret and the current 30-second window. Something you have, but not phishing-resistant: the code can be relayed.`],
+     ['HOTP',`HMAC-based One-Time Password, RFC 4226. The same construction as TOTP with a counter instead of the clock. TOTP is HOTP with the counter set to the time step.`],
+     ['One-time password (OTP)',`Any code valid for a single use: SMS, email, TOTP, a printed backup code. SMS is the weakest (SIM swap); none of them resist phishing.`],
+     ['Passkey',`A FIDO2/WebAuthn credential: a key pair, the private half held by the device or synced through a platform account, the public half registered with the site. Phishing-resistant, no shared secret on the server.`],
+     ['User presence (UP)',`The WebAuthn flag set when the authenticator confirmed a human was there: a touch on the key. Weaker than user verification (UV), which confirms who the human is with a PIN or biometric.`],
+     ['AAGUID',`Authenticator Attestation GUID, a 128-bit identifier for an authenticator model in a WebAuthn attestation. Shared by every unit of that model, so it names the make, not the device.`],
+     ['S256',`The PKCE code_challenge_method: challenge = BASE64URL(SHA-256(code_verifier)). The only method to use; "plain" sends the verifier itself and defeats the purpose.`],
+     ['DEFLATE',`The compression SAML applies to an AuthnRequest in the HTTP-Redirect binding so the XML fits in a URL. Decompress before you decode.`],
+     ['Time to live (TTL)',`How long a token, cache entry or session stays valid. For a self-contained token it is also the revocation lag: the window between revoking and the token stopping working.`],
+     ['B2B / B2C / B2B2C',`Who the accounts belong to: other businesses, consumers, or a business's own customers reached through it. Decides tenancy, who administers accounts, and whether IdP federation or social login is the norm.`],
+     ['VPN',`Network-level access to a private network. Under zero trust, being on the VPN is no longer a grant of access; every request still carries an identity and is authorized on its own.`],
+     ['Hardware Security Module (HSM)',`A tamper-resistant device that holds keys and performs signing and decryption so the private key never leaves it. Where an IdP's signing keys and a CA's root belong.`],
+     ['Key Management Service (KMS)',`A cloud service that stores keys and performs cryptographic operations by API, usually HSM-backed. Your code asks it to sign; it never sees the key.`],
+     ['Personally identifiable information (PII)',`Data that identifies a person: name, email, government id, and often a stable subject identifier. What privacy law regulates and what claims should carry as little of as possible.`],
+     ['GDPR',`The EU General Data Protection Regulation. Data minimization, a lawful basis for processing, and the right to erasure. Shapes which claims an IdP releases, what a log may keep, and for how long.`],
+     ['SOC 2',`An audit report on a service organization's controls for security, availability, confidentiality and privacy. What an auditor is holding when they ask for your access-review evidence.`],
+     ['Open Policy Agent (OPA)',`A general-purpose policy engine with the Rego language, commonly deployed as a PDP beside the service it protects. The engine is generic; the policy and the data are yours.`],
+     ['Home realm discovery (HRD)',`Working out which IdP a user belongs to before redirecting them, usually from the email domain. The step that turns "sign in" into "sign in with your company".`],
+     ['Machine-to-machine (M2M)',`A synonym for service-to-service: no user in the loop, the client-credentials grant or a workload identity.`],
+     ['SIEM',`Security Information and Event Management, the system that collects logs from everything and correlates them. Where authentication and authorization events must land to be useful in an investigation.`],
+     ['ITDR',`Identity Threat Detection and Response: monitoring identity systems themselves for compromise, such as impossible travel, token replay and privilege changes, and acting on it. SIEM narrowed to identity.`],
+     ['Web Application Firewall (WAF)',`A filter in front of a web application that blocks known-bad requests. Defense in depth for injection and abuse, no substitute for authorization in the application.`],
+     ['HIPAA',`The US health-privacy law. For identity it means access controls, audit logs of who saw which record, and minimum-necessary access.`],
+     ['CCPA',`The California Consumer Privacy Act: the right to know what data is held, to delete it, and to opt out of sale. The US counterpart to GDPR for consumer identity systems.`],
    ]},
    {h:'8 · Threats & defenses',terms:[
      ['Certificate pinning',`Requiring a presented chain to contain a specific pre-configured public key rather than accepting any certificate from any trusted CA. Pin the SubjectPublicKeyInfo hash, prefer an intermediate over the leaf, always hold a backup pin, a failed pin denies service in a way no server-side change can fix.`],
@@ -267,6 +332,13 @@ const GLOSS_ALL=[
      ['Token theft',`Stealing a bearer token to reuse it. Defended with short lifetimes, secure storage, and proof-of-possession.`],
      ['Phishing-resistant authentication',`Login methods that cannot be phished because the secret never leaves the device and is bound to the real site origin (passkeys and WebAuthn).`],
      ['Open redirect',`A flaw where an app forwards users to an attacker URL; abused to steal codes or tokens.`],
+     ['SIM swap',`The attacker convinces a carrier to move the victim's phone number to a SIM they control, then receives the SMS codes. The reason SMS is the weakest second factor.`],
+     ['CAPTCHA',`A challenge meant to tell humans from bots. Rate control and abuse friction, not authentication: it proves nothing about who is there.`],
+     ['MD5 / RC4',`Broken algorithms still met in legacy identity: MD5 hashes, RC4 in old Kerberos encryption types. Recognize them, then disable them.`],
+     ['Account takeover (ATO)',`An attacker gaining control of a legitimate account: phished password, SIM swap, session theft, or a weak recovery flow. The outcome most identity controls exist to prevent.`],
+     ['XML Signature Wrapping (XSW)',`A SAML attack: the attacker moves the signed assertion elsewhere in the document and inserts an unsigned one where the SP looks. The signature still verifies; the SP reads the forgery. Fixed by validating only the signed element.`],
+     ['Resource-based constrained delegation (RBCD)',`Kerberos delegation configured on the target service rather than on the delegating account. Also the mechanism behind a family of Active Directory privilege-escalation attacks when write access to a computer object is loose.`],
+     ['LAPS',`Local Administrator Password Solution: Windows rotates every machine's local admin password and stores it in AD. Closes the shared-local-admin-password problem that let one compromised machine open all of them.`],
    ]},
    {h:'9 · Governance & lifecycle',terms:[
      ['Provisioning',`Creating and configuring user accounts and their access, often automated via SCIM.`],
@@ -277,10 +349,21 @@ const GLOSS_ALL=[
      ['ABAC',`Attribute-Based Access Control, decisions from attributes and policy rules.`],
      ['IGA',`Identity Governance and Administration, access requests, reviews, and certification.`],
      ['PAM',`Privileged Access Management, securing and monitoring high-power accounts.`],
+     ['Access review',`A periodic, recorded check that each account's entitlements are still justified, signed off by a manager or owner. The evidence auditors ask for first.`],
+   ]},
+   {h:'10 · Enterprise directory & Kerberos',terms:[
+     ['Key Distribution Center (KDC)',`The Kerberos server holding every principal's key. Two halves: the Authentication Service, which issues TGTs, and the Ticket Granting Service, which issues service tickets. In Active Directory every domain controller is a KDC.`],
+     ['Ticket Granting Ticket (TGT)',`What the KDC issues after the user proves the password once. It is presented to the TGS to get service tickets, so the password is not used again for the ticket's lifetime, typically ten hours.`],
+     ['Ticket Granting Service (TGS)',`The half of the KDC that trades a valid TGT for a ticket to a specific service. The client never sends a password to the service; the ticket carries the proof.`],
+     ['Service Principal Name (SPN)',`The Kerberos name a service is registered under, such as HTTP/app.corp.example. It is what the client asks the TGS for a ticket to, so a missing or duplicate SPN is the classic Kerberos failure.`],
+     ['Privilege Attribute Certificate (PAC)',`The block inside a Windows Kerberos ticket carrying the user's SID and group SIDs. How Active Directory conveys authorization data along with the authentication.`],
+     ['Security Identifier (SID)',`The immutable identifier for a user, group or computer in Windows and Active Directory. Permissions are stored against SIDs, not names, which is why a renamed account keeps its access.`],
+     ['Group Policy Object (GPO)',`Active Directory's mechanism for pushing configuration to machines and users by organizational unit: password policy, lockout, what may run.`],
    ]},
  ]},
  {domain:'Service-to-Service & Zero Trust',icon:'🔗',groups:[
    {h:'Machine identity',terms:[
+     ['Service-to-service (S2S)',`A call where both ends are software and no user is present, or the user is represented only by a forwarded token. The client-credentials grant, mTLS and SPIFFE are the tools; the confused deputy is the risk.`],
      ['SPIFFE',`A standard for giving workloads verifiable identities (SPIFFE IDs).`],
      ['SPIRE',`The reference implementation that attests workloads and issues SVIDs.`],
      ['SVID',`SPIFFE Verifiable Identity Document, the X.509 cert or JWT a workload uses to prove who it is.`],
@@ -288,6 +371,7 @@ const GLOSS_ALL=[
      ['Workload identity',`A non-human identity for a service or job, used instead of shared secrets.`],
      ['Attestation',`Proving what a workload is, from node or process properties, before issuing it an identity.`],
      ['Zero trust',`Never trust by network location; verify identity and authorize every request.`],
+     ['IRSA',`IAM Roles for Service Accounts: an EKS pod's Kubernetes service-account token is exchanged, through OIDC federation, for short-lived AWS credentials. Workload identity federation, AWS flavor.`],
    ]},
  ]},
  {domain:'PKI & Certificates',icon:'📜',groups:[
@@ -299,6 +383,13 @@ const GLOSS_ALL=[
      ['CRL',`Certificate Revocation List, a published list of revoked certificates.`],
      ['OCSP',`Online Certificate Status Protocol, checks a single certificate revocation status in real time.`],
      ['ACME',`The protocol behind automated certificate issuance, such as Let us Encrypt.`],
+     ['Public Key Infrastructure (PKI)',`The certificate authorities, certificates, revocation and policy that let a public key be trusted as belonging to a name. The trust machinery under TLS, mTLS, code signing and smart cards.`],
+     ['Subject Alternative Name (SAN)',`The X.509 extension listing the DNS names, IP addresses, emails or URIs a certificate is valid for. Browsers ignore the Common Name; the SAN is what gets checked.`],
+     ['PKCS',`Public-Key Cryptography Standards. The ones you will meet: PKCS#1 (RSA), PKCS#8 (private key format), PKCS#10 (the CSR), PKCS#12 (a key and certificate bundle, .p12 or .pfx).`],
+     ['PEM / DER',`The two encodings of certificates and keys. DER is binary ASN.1; PEM is DER in base64 between BEGIN and END lines. Same content, and most tools accept both.`],
+     ['SHA-256',`The hash function used throughout modern identity: PKCE S256, RS256 and ES256 signatures, certificate fingerprints, DPoP thumbprints.`],
+     ['Extended Key Usage (EKU)',`The X.509 extension saying what a certificate may be used for: server auth, client auth, code signing, email. A cert without the right EKU is rejected even when the chain is valid.`],
+     ['SNI',`Server Name Indication: the hostname the client sends in the TLS ClientHello so a server holding many certificates can pick the right one. Sent in the clear unless Encrypted ClientHello is in use.`],
    ]},
  ]},
  {domain:'Java & the JVM',icon:'☕',groups:[
@@ -555,11 +646,17 @@ const GLOSS=(typeof DOJO_GLOSS_DOMAINS!=="undefined"&&Array.isArray(DOJO_GLOSS_D
 (function(){
   GLOSS.forEach(function(d){d.groups.forEach(function(g){g.terms.forEach(function(t){
     var term=t[0], def=t[1], keys=[];
-    var m=term.match(/\(([A-Za-z]{2,14})\)/); if(m)keys.push(m[1]);
-    var first=term.split(/[\s(]/)[0];
-    if(/^[A-Za-z]{2,14}$/.test(first))keys.push(first);
+    var m=term.match(/\(([A-Za-z][A-Za-z0-9-]{1,15})\)/); if(m)keys.push(m[1]);
+    var first=term.split(/[\s(\/]/)[0];
+    if(/^[A-Za-z][A-Za-z0-9-]{1,15}$/.test(first))keys.push(first);
     keys.forEach(function(k){k=k.toLowerCase(); if(!KW[k])KW[k]=[def,'#glossary'];});
   });});});
+  /* Level names and second spellings that lessons use bare. Each points at the
+     term that defines it, so "AAL2" pops the AAL definition. */
+  var ALIAS={ial1:'ial',ial2:'ial',ial3:'ial',aal1:'aal',aal2:'aal',aal3:'aal',fal1:'fal',fal2:'fal',fal3:'fal',
+    oid4vp:'oid4vci',ctap1:'ctap',ctap2:'ctap',b2c:'b2b',b2b2c:'b2b',rc4:'md5',pkcs12:'pkcs',pkcs8:'pkcs',pkcs1:'pkcs',pkcs10:'pkcs',
+    oid4vc:'oid4vci',m2m:'s2s',cac:'piv',der:'pem',x509:'x.509',authn:'authentication',authz:'authorization'};
+  Object.keys(ALIAS).forEach(function(a){if(!KW[a]&&KW[ALIAS[a]])KW[a]=KW[ALIAS[a]];});
 })();
 function renderGlossary(){
   const m=document.getElementById('main');

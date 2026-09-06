@@ -1,41 +1,53 @@
 STREAMS.push({icon:'🏗️',iam:true,sec:'Capstone project',title:'Identity Capstone',blurb:'Put the whole identity domain together: build the core of a secure auth service step by step (registration, token validation, sessions, authorization, refresh rotation, and the end-to-end request flow).',lessons:[
 
 {id:'idcap',title:'Capstone: build a secure auth service',body:`
-<p>This capstone ties the identity domain into one coherent build. You will implement the core pieces
-of a small but real auth service, one component per exercise below, each graded on its own. Together
-they form the request lifecycle every identity system runs:</p>
-<div class="codeSample">register ──▶ hash the password (never store plaintext)
-login    ──▶ verify, then issue tokens (access + refresh)
-request  ──▶ validate the access token (iss / aud / exp), then authorize the action
-refresh  ──▶ rotate the refresh token; detect reuse
-logout   ──▶ revoke the session</div>
-<p>Each step reuses a concept from earlier in the track (password hashing, token validation, sessions,
-RBAC, refresh-token rotation), so finishing all six is a working mental model of a production login
-system. Work through the exercises in order; the final one wires the flow together.</p>
 
-<h4>What you are actually building</h4>
-<p>Each exercise below is one component of the same service, and the reason they are worth building in
-sequence is that <b>the hard parts live in the joins</b>, not in the pieces. Hashing a password is a
-library call. Deciding what happens when a refresh token is replayed, or what "log out" means when the
-access token is self-contained, is design, and those decisions only surface once the pieces sit next to
-each other.</p>
+
+
+
+<p>This capstone ties the identity domain into one build. You'll implement the core pieces of a small
+but real auth service, one component per exercise, each graded on its own. Together they form the
+request lifecycle every identity system runs:</p>
+<ul>
+<li><b>register</b>: hash the password (never store plaintext)</li>
+<li><b>login</b>: verify, then issue tokens (access + refresh)</li>
+<li><b>request</b>: validate the access token (<code>iss</code> / <code>aud</code> / <code>exp</code>), then authorize the action</li>
+<li><b>refresh</b>: rotate the refresh token; detect reuse</li>
+<li><b>logout</b>: revoke the session</li>
+</ul>
+<p>Each step reuses a concept from earlier in the track: password hashing, token validation, sessions,
+<b>RBAC</b>, refresh-token rotation. RBAC is role-based access control: the service decides what you may
+do by the roles you hold ("managers may approve expenses"), not by who you are personally. An
+<b>access token</b> is the short-lived token an app shows an API to prove it may make the call. A
+<b>refresh token</b> is a long-lived token used only to get new short-lived access tokens without
+logging in again. Finishing all six gives you a working mental model of a production login
+system. Work through the exercises in order. The final one wires the flow together.</p>
+
+<h4>What you are building</h4>
+<p>Each exercise is one component of the same service. They're worth building in sequence because
+<b>the hard parts live in the joins</b>, not in the pieces. Hashing a password is a library call.
+Deciding what happens when a refresh token is <b>replayed</b>, meaning someone captured a valid one and
+sent it again later, or what "log out" means when the access token is self-contained, is design. Those
+decisions only surface once the pieces sit next to each other.</p>
 
 <h4>The decisions to make deliberately</h4>
 <ul>
 <li><b>Password storage</b>: a memory-hard algorithm (Argon2id, scrypt, bcrypt), a per-user salt, and
 parameters you can raise later. Never a general-purpose hash, however many rounds.</li>
-<li><b>Token shape</b>: self-contained JWT or opaque reference? The JWT scales and cannot be revoked
-promptly; the opaque token revokes instantly and costs a lookup per request. Pick one and be able to
+<li><b>Token shape</b>: self-contained <b>JWT</b> or opaque reference. A JWT is a JSON Web Token: a
+small signed document, three base64 pieces separated by dots, that carries claims such as who the user
+is and when the token expires. Anyone can read it; only the issuer, whoever made the token, can produce
+a valid signature. An opaque token is the opposite: a random string with nothing readable inside, and
+the server looks up what it means on every request. The JWT scales but can't be revoked
+promptly. The opaque token revokes instantly and costs a lookup per request. Pick one and be able to
 defend it.</li>
 <li><b>Lifetimes</b>: minutes for the access token, longer for the refresh token, and a bound on the
 whole session regardless of activity.</li>
 <li><b>Reuse detection</b>: when a rotated refresh token is presented twice, revoke the entire family.
-That is the part that converts a silent compromise into a detectable one.</li>
-<li><b>Revocation</b>: decide up front how a session dies before its expiry, because retrofitting it is
+That turns a silent compromise into a detectable one.</li>
+<li><b>Revocation</b>: decide up front how a session dies before its expiry. Retrofitting it is
 painful.</li>
-</ul>
-<p>Work through the exercises in order; the final one wires the flow together. If you can explain each
-choice above to someone else, the capstone has done its job better than any grader can measure.`,
+</ul>`,
 docs:[['OAuth 2.0 Security BCP','https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics'],['OWASP Authentication Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html']],
 exs:[
 {title:'1 · Registration',

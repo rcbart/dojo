@@ -1,7 +1,10 @@
 STREAMS.push({icon:'🍪',iam:true,sec:'Sessions, cookies & web login',title:'Sessions, Cookies & Web Login Security',blurb:'How a browser stays logged in, and how that gets attacked. Cookies and their security flags, CSRF defenses, session fixation, where NOT to store tokens, and logout done properly (front- vs back-channel, revocation).',lessons:[
 
 {id:'ss1',title:'Sessions & cookies: staying logged in',body:`
-<p>HTTP is stateless: each request stands alone. A <b>session</b> bridges requests: on login the server creates a session and hands the browser a <b>cookie</b> holding an opaque session id. The browser returns that cookie on every request, and the server looks up who you are. (Token-based auth stores a signed token instead, but the cookie mechanics are the same.)</p>
+
+
+
+<p>HTTP is stateless: each request stands alone. A <b>session</b> bridges requests. On login the server creates a session and hands the browser a <b>cookie</b> holding an opaque session id. The browser returns that cookie on every request, and the server looks up who you are. Token-based auth stores a signed token instead, but the cookie mechanics are the same.</p>
 <!--flow:ss1-session-->
 <h4>Form login and the session cookie: step by step</h4>
 <div class="flowDia"><svg viewBox="0 0 700 344" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Form login and the session cookie"><defs><marker id="ss1-session-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="ss1-session-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="ss1-session-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="ss1-session-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="42" x2="74" y2="312" class="fdLife"/><line x1="350" y1="42" x2="350" y2="312" class="fdLife"/><line x1="626" y1="42" x2="626" y2="312" class="fdLife"/><rect x="34.300000000000004" y="8" width="79.39999999999999" height="34" rx="8" class="fdActor"/><text x="74" y="29.5" class="fdActorT">Browser</text><rect x="311" y="8" width="78" height="34" rx="8" class="fdActor"/><text x="350" y="29.5" class="fdActorT">Server</text><rect x="561.7" y="8" width="128.6" height="34" rx="8" class="fdActor"/><text x="626" y="29.5" class="fdActorT">Session store</text><line x1="77" y1="90" x2="345" y2="90" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss1-session-ah-front)"/><text x="227" y="81" class="fdLabel">POST /login, credentials</text><circle cx="92" cy="90" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="93.5" class="fdNumT" style="fill:var(--accent)">1</text><rect x="191.8" y="107" width="316.4" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="358" y="122" class="fdSelfT">verify password hash; mint random session id</text><circle cx="191.8" cy="118" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="191.8" y="121.5" class="fdNumT" style="fill:var(--muted)">2</text><line x1="353" y1="156" x2="621" y2="156" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ss1-session-ah-back)"/><text x="503" y="147" class="fdLabel">save sid → {user, expiry}</text><circle cx="368" cy="156" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="368" y="159.5" class="fdNumT" style="fill:var(--accent2)">3</text><line x1="347" y1="186" x2="79" y2="186" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#ss1-session-ah-front)"/><text x="197" y="177" class="fdLabel">Set-Cookie: sid=… HttpOnly Secure SameSite</text><circle cx="332" cy="186" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="332" y="189.5" class="fdNumT" style="fill:var(--accent)">4</text><line x1="77" y1="216" x2="345" y2="216" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss1-session-ah-front)"/><text x="227" y="207" class="fdLabel">GET /account, cookie attached automatically</text><circle cx="92" cy="216" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="219.5" class="fdNumT" style="fill:var(--accent)">5</text><line x1="353" y1="246" x2="621" y2="246" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ss1-session-ah-back)"/><text x="503" y="237" class="fdLabel">look up sid</text><circle cx="368" cy="246" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="368" y="249.5" class="fdNumT" style="fill:var(--accent2)">6</text><line x1="347" y1="276" x2="79" y2="276" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#ss1-session-ah-front)"/><text x="197" y="267" class="fdLabel">200, personalized page</text><circle cx="332" cy="276" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="332" y="279.5" class="fdNumT" style="fill:var(--accent)">7</text><text x="350" y="294" class="fdNote">“Automatically” is the superpower AND the flaw; it is what CSRF abuses.</text><line x1="18" y1="330" x2="44" y2="330" stroke="var(--accent)" class="fdArrow"/><text x="50" y="334" class="fdLegend">front channel (via the browser)</text><line x1="271.29999999999995" y1="330" x2="297.29999999999995" y2="330" stroke="var(--accent2)" class="fdArrow"/><text x="303.29999999999995" y="334" class="fdLegend">back channel (server to server)</text></svg></div>
@@ -17,7 +20,7 @@ STREAMS.push({icon:'🍪',iam:true,sec:'Sessions, cookies & web login',title:'Se
 <!--/flow:ss1-session-->
 <div class="codeSample">Set-Cookie: session=abc123        &lt;- server issues it on login
 Cookie: session=abc123            &lt;- browser sends it back automatically</div>
-<p>The session id must be long, random, and unguessable; it is the only thing standing between an attacker and your account. The next lessons harden the cookie that carries it.</p>
+<p>The session id must be long, random, and unguessable. It is the only thing between an attacker and your account.</p>
 
 <h4>What the server has to keep</h4>
 <div class="codeSample" data-hl>SERVER-SIDE SESSION            the cookie holds only an opaque id
@@ -29,22 +32,37 @@ CLIENT-SIDE SESSION            the cookie holds the SIGNED claims themselves
   + no server storage, any node can serve any request
   - cannot revoke before expiry; every claim is readable by the user;
     a 4KB cookie limit arrives sooner than you expect</div>
-<p>This is the sessions-versus-tokens trade from Foundations, appearing again one level down. The
-practical middle ground most teams land on: a server-side session for the browser, short-lived, with the
-store in something shared and fast.</p>
+<p>Concretely, here is what actually sits in the cookie in each style, and what the server keeps.</p>
+<div class="codeSample" data-hl>// 1. OPAQUE ID (server-side session). The cookie value is a random handle.
+Set-Cookie: sid=Gf8s2Kd9vQ1pLzR7; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=1209600
+   the server holds the real session, keyed by that handle:
+   "Gf8s2Kd9vQ1pLzR7" -> { "sub":"u-4817", "authAt":1757199600,
+                           "amr":["pwd","otp"], "csrf":"t9..." }
+   the cookie reveals nothing; revoke by deleting the server row.
+
+// 2. SIGNED COOKIE (client-side session). value.signature, base64url.
+Set-Cookie: sess=eyJzdWIiOiJ1LTQ4MTciLCJhdXRoQXQiOjE3NTcxOTk2MDB9.Q1dExT...; HttpOnly; Secure; SameSite=Lax
+   decoded value (readable by anyone holding the cookie):
+   { "sub":"u-4817", "authAt":1757199600, "amr":["pwd","otp"] }
+   the signature is what stops the user editing sub; there is no server row,
+   so it cannot be revoked before it expires.
+
+// 3. JWT IN A COOKIE. same idea, with standard claims and an expiry inside.
+Set-Cookie: sess=eyJhbGciOiJFUzI1NiIsImtpZCI6IjNhIn0.eyJzdWIiOiJ1LTQ4MTciLCJpc3MiOiJodHRwczovL2xvZ2luLmV4YW1wbGUuY29tIiwiZXhwIjoxNzU3MjAzMjAwfQ.MEUCIQ...; HttpOnly; Secure; SameSite=Lax
+   header:  { "alg":"ES256", "kid":"3a" }
+   payload: { "sub":"u-4817", "iss":"https://login.example.com", "exp":1757203200 }
+   self-contained: any node verifies the signature, no shared session store.</div>
+<p>The flags matter as much as the value. <code>HttpOnly</code> keeps JavaScript from reading it, so an XSS
+bug cannot steal the session. <code>Secure</code> sends it only over TLS. <code>SameSite</code> controls
+whether it rides along on cross-site requests, the first line against CSRF.</p>
+
+<p>This is the sessions-versus-tokens trade from Foundations, one level down. Most teams land on a short-lived server-side session for the browser, with the store in something shared and fast.</p>
 
 <h4>The properties that make a session id safe</h4>
-<p><b>Entropy</b>: at least 128 bits from a cryptographic RNG, never a counter, a hash of the username,
-or anything derived from time. <b>Opacity</b>: it should mean nothing; if an attacker can infer
-structure they can hunt for valid ids. And <b>rotation on privilege change</b>: issue a new id at login
-and at any elevation, which is what defeats fixation in the next lesson.</p>
+<p><b>Entropy</b>: at least 128 bits from a cryptographic <b>RNG</b>. That's a random number generator built for security: even someone who has watched a million of its outputs can't predict the next one. Never a counter, a hash of the username, or anything derived from time. <b>Opacity</b>: it should mean nothing. If an attacker can infer structure they can hunt for valid ids. <b>Rotation on privilege change</b>: issue a new id at login and at any elevation. This defeats <b>session fixation</b>, covered next: an attacker plants a session id in your browser before you log in, waits for you to log in on it, and then uses the id they already know.</p>
 
 <h4>Two lifetimes, not one</h4>
-<p>An <b>idle timeout</b> ends a session after inactivity; an <b>absolute lifetime</b> ends it regardless.
-You want both; idle alone means a session kept warm by a background tab lives forever. And record
-<code>authAt</code>: knowing <i>when</i> the user last actually authenticated is what lets you demand
-re-authentication before something irreversible, rather than trusting a session that began nine hours
-ago.</p>`,
+<p>An <b>idle timeout</b> ends a session after inactivity. An <b>absolute lifetime</b> ends it regardless. You want both. Idle alone means a session kept warm by a background tab lives forever. Record <code>authAt</code> too. Knowing <i>when</i> the user last authenticated lets you demand re-authentication before something irreversible, instead of trusting a session that began nine hours ago.</p>`,
 docs:[['HTTP cookies, MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies'],['Session management, OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html']],
 ex:{title:'Build a Set-Cookie value',
 prompt:`Write class <code>Cookie</code> with <code>static String header(String name, String value)</code> that returns the cookie in the form <code>name=value</code> (name, then an equals sign, then value).`,
@@ -63,15 +81,17 @@ behavior:`header("session","abc123") returns "session=abc123". This is the core 
 hints:['String concatenation with + builds the value.','The literal in the middle is the two-character string "=".','Order is name, then "=", then value.']}},
 
 {id:'ss2',title:'Cookie security flags',body:`
+
+
 <p>A session cookie without flags is a liability. Three flags do most of the defending:</p>
 <ul>
-<li><b>HttpOnly</b>: JavaScript cannot read the cookie, so a cross-site scripting (XSS) bug cannot steal the session.</li>
+<li><b>HttpOnly</b>: JavaScript cannot read the cookie, so an <b>XSS</b> bug cannot steal the session. XSS is cross-site scripting: an attacker gets their JavaScript to run inside a page you trust, at which point it can read anything that page can, including tokens kept in the browser.</li>
 <li><b>Secure</b>: the cookie is sent only over HTTPS, never in cleartext.</li>
-<li><b>SameSite</b>: controls whether the cookie rides along on cross-site requests. <code>Lax</code> is a sensible default; <code>Strict</code> is tightest; <code>None</code> (which requires Secure) is only for deliberate cross-site use. SameSite is a strong CSRF defense.</li>
+<li><b>SameSite</b>: controls whether the cookie rides along on cross-site requests. <code>Lax</code> is a sensible default. <code>Strict</code> is tightest. <code>None</code> (which requires Secure) is only for deliberate cross-site use. SameSite is a strong <b>CSRF</b> defense. CSRF is cross-site request forgery: a malicious page makes your browser send a request to a site you're logged into, and the site can't tell it wasn't you. The browser attaches your cookies automatically, which is the whole problem.</li>
 </ul>
 <div class="codeSample">Set-Cookie: session=abc123; HttpOnly; Secure; SameSite=Lax</div>
 
-<h4>What each flag actually stops</h4>
+<h4>What each flag stops</h4>
 <div class="codeSample" data-hl>HttpOnly     JavaScript cannot read document.cookie for it.
              stops XSS from EXFILTRATING the session. does NOT stop XSS
              from USING it - injected script can still make requests.
@@ -95,18 +115,9 @@ __Host-      a name PREFIX the browser enforces: Secure, Path=/, no Domain.
              the strongest binding available, and free.</div>
 
 <h4>The judgment calls</h4>
-<p><b>Lax versus Strict</b> is a real trade, not a "more secure is better" choice. Strict breaks the
-ordinary case of arriving from an external link and finding yourself logged out, which pushes users
-toward "remember me forever" settings that are worse. Lax is the sensible default; use Strict for
-genuinely sensitive apps where the friction is acceptable.</p>
-<p><b>SameSite is not a complete CSRF defense.</b> It is a strong mitigation that arrived recently, is
-enforced by the browser rather than your server, and does nothing for same-site attacks. Keep the
-synchronizer token as well: defense in depth, and the next lesson covers why.</p>
-<p><b>Domain is the flag that quietly widens blast radius.</b> Setting <code>Domain=example.com</code>
-to share a session between <code>app.</code> and <code>www.</code> also shares it with
-<code>staging.</code>, <code>legacy.</code> and anything else on the domain. An XSS on the least
-important subdomain then reaches the most important session. Prefer host-only cookies and
-<code>__Host-</code> unless sharing is a deliberate requirement.</p>
+<p><b>Lax versus Strict</b> is a real trade. Strict breaks the ordinary case of arriving from an external link: the user finds themselves logged out. That pushes users toward "remember me forever" settings, which are worse. Lax is the sensible default. Use Strict for sensitive apps where the friction is acceptable.</p>
+<p><b>SameSite alone does not cover CSRF.</b> It is a strong mitigation, but it arrived recently, is enforced by the browser rather than your server, and does nothing for same-site attacks. Keep the <b>synchronizer token</b> as well, for defense in depth. That's a random value the server puts into every form and checks when the form comes back; a malicious page can't know it, so its forged request fails. The next lesson covers why.</p>
+<p><b>Domain is the flag that widens blast radius.</b> Setting <code>Domain=example.com</code> to share a session between <code>app.</code> and <code>www.</code> also shares it with <code>staging.</code>, <code>legacy.</code> and anything else on the domain. An XSS on the least important subdomain then reaches the most important session. Prefer host-only cookies and <code>__Host-</code> unless sharing is a deliberate requirement.</p>
 
 <h4>The cookbook: two headers to copy, one command to check</h4>
 <div class="codeSample" data-hl># the session cookie: the default until a requirement forces a flag off
@@ -117,9 +128,7 @@ Set-Cookie: widget=xyz; Secure; SameSite=None; Path=/embed
 
 # see what you actually send today (staging first, then be brave)
 curl -sI https://app.example.com/login | grep -i set-cookie</div>
-<p>Every flag removed from the first recipe should carry a sentence of justification in the code
-review, and the second recipe should exist only next to the document explaining why the embed needs a
-cookie at all.</p>`,
+<p>Every flag removed from the first recipe should carry a sentence of justification in the code review. The second recipe should exist only next to the document explaining why the embed needs a cookie at all.</p>`,
 docs:[['SameSite cookies, MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'],['Secure cookie attributes, OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html#cookies']],
 ex:{title:'Harden the cookie',
 prompt:`Write class <code>SecureCookie</code> with <code>static String build(String sid)</code> that returns <code>session=&lt;sid&gt;; HttpOnly; Secure; SameSite=Lax</code>, the session cookie with all three protective flags.`,
@@ -138,7 +147,9 @@ behavior:`build("abc123") returns "session=abc123; HttpOnly; Secure; SameSite=La
 hints:['Concatenate the flags after the session value, separated by "; ".','The three flags are HttpOnly, Secure, and SameSite=Lax.','Only the session id is dynamic; the flags are fixed text.']}},
 
 {id:'ss3',title:'CSRF: the confused-deputy attack',body:`
-<p><b>CSRF</b> (Cross-Site Request Forgery) abuses the fact that browsers attach your cookies automatically. A malicious page can make <i>your</i> browser POST to your bank, and the bank sees a fully authenticated request it cannot tell apart from a real one. Your browser is the confused deputy.</p>
+
+
+<p><b>CSRF</b> (Cross-Site Request Forgery) abuses the fact that browsers attach your cookies automatically. A malicious page can make <i>your</i> browser POST to your bank. The bank sees a fully authenticated request it cannot tell apart from a real one. Your browser is the <b>confused deputy</b>: a trusted party tricked into using its own authority on behalf of someone who shouldn't have it.</p>
 <!--flow:ss3-csrf-->
 <h4>CSRF: the confused deputy: step by step</h4>
 <div class="flowDia"><svg viewBox="0 0 700 314" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CSRF: the confused deputy"><defs><marker id="ss3-csrf-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="ss3-csrf-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="ss3-csrf-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="ss3-csrf-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="42" x2="74" y2="282" class="fdLife"/><line x1="350" y1="42" x2="350" y2="282" class="fdLife"/><line x1="626" y1="42" x2="626" y2="282" class="fdLife"/><rect x="-2.5999999999999943" y="8" width="153.2" height="34" rx="8" class="fdActor"/><text x="74" y="29.5" class="fdActorT">Victim’s browser</text><rect x="302.1" y="8" width="95.8" height="34" rx="8" class="fdActor"/><text x="350" y="29.5" class="fdActorT">evil.site</text><rect x="582.2" y="8" width="87.6" height="34" rx="8" class="fdActor"/><text x="626" y="29.5" class="fdActorT">bank.com</text><line x1="77" y1="90" x2="621" y2="90" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss3-csrf-ah-front)"/><text x="365" y="81" class="fdLabel">logs in, session cookie set</text><circle cx="92" cy="90" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="93.5" class="fdNumT" style="fill:var(--accent)">1</text><line x1="14" y1="116" x2="686" y2="116" class="fdPhase"/><text x="350" y="120" class="fdPhaseT">later, in another tab</text><line x1="77" y1="150" x2="345" y2="150" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss3-csrf-ah-front)"/><text x="227" y="141" class="fdLabel">visits evil.site</text><circle cx="92" cy="150" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="153.5" class="fdNumT" style="fill:var(--accent)">2</text><line x1="347" y1="180" x2="79" y2="180" stroke="var(--bad)" class="fdArrow" stroke-dasharray="7 4" marker-end="url(#ss3-csrf-ah-attack)"/><text x="197" y="171" class="fdLabel fdLabelBad">page auto-submits a hidden form → bank.com</text><circle cx="332" cy="180" r="9" class="fdNum" style="stroke:var(--bad)"/><text x="332" y="183.5" class="fdNumT" style="fill:var(--bad)">3</text><line x1="77" y1="210" x2="621" y2="210" stroke="var(--bad)" class="fdArrow" stroke-dasharray="7 4" marker-end="url(#ss3-csrf-ah-attack)"/><text x="365" y="201" class="fdLabel fdLabelBad">POST /transfer, cookie attached AUTOMATICALLY</text><circle cx="92" cy="210" r="9" class="fdNum" style="stroke:var(--bad)"/><text x="92" y="213.5" class="fdNumT" style="fill:var(--bad)">4</text><rect x="349.79999999999995" y="227" width="336.2" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="525.9" y="242" class="fdSelfT">valid session, valid request shape… money moves</text><circle cx="349.79999999999995" cy="238" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="349.79999999999995" y="241.5" class="fdNumT" style="fill:var(--muted)">5</text><text x="350" y="264" class="fdNote">The browser was deputized. Defenses: SameSite, CSRF tokens, origin checks.</text><line x1="18" y1="300" x2="44" y2="300" stroke="var(--accent)" class="fdArrow"/><text x="50" y="304" class="fdLegend">front channel (via the browser)</text><line x1="271.29999999999995" y1="300" x2="297.29999999999995" y2="300" stroke="var(--bad)" class="fdArrow" stroke-dasharray="7 4"/><text x="303.29999999999995" y="304" class="fdLegend">attack path</text></svg></div>
@@ -150,13 +161,10 @@ hints:['Concatenate the flags after the session value, separated by "; ".','The 
 <li><b>bank.com:</b> valid session, valid request shape… money moves</li>
 </ol>
 <!--/flow:ss3-csrf-->
-<p>Two defenses, best used together. <b>SameSite</b> cookies stop the cookie from being sent on cross-site requests. The <b>synchronizer token</b> pattern adds a secret, per-session token to each state-changing form; the server accepts the request only if the submitted token matches the one tied to the session. An attacker&#8217;s page cannot read that token, so it cannot forge a valid request.</p>
+<p>Two defenses, best used together. <b>SameSite</b> cookies stop the cookie from being sent on cross-site requests. The <b>synchronizer token</b> pattern adds a secret, per-session token to each state-changing form, and the server accepts the request only if the submitted token matches.</p>
 
 <h4>Why it works at all</h4>
-<p>The mechanism people miss: the browser attaches your cookies to a request <b>based on where the
-request is going, not where it came from</b>. So a form on <code>evil.example</code> that posts to
-<code>bank.example/transfer</code> arrives fully authenticated. The attacker never sees the response and
-never needs to; the side effect is the attack.</p>
+<p>The browser attaches your cookies to a request <b>based on where the request is going, not where it came from</b>. So a form on <code>evil.example</code> that posts to <code>bank.example/transfer</code> arrives fully authenticated. The attacker never sees the response and never needs to. The side effect is the attack.</p>
 <div class="codeSample" data-hl>&lt;!-- on evil.example, auto-submitted --&gt;
 &lt;form action="https://bank.example/transfer" method="POST"&gt;
   &lt;input name="to" value="attacker"&gt;&lt;input name="amount" value="5000"&gt;
@@ -164,29 +172,21 @@ never needs to; the side effect is the attack.</p>
 
 the browser: "a POST to bank.example? here are bank.example's cookies."
 the server:  "valid session, valid user."   <- authenticated, not authorized BY the user</div>
-<p>That is why it is the <b>confused deputy</b>: your server is the deputy, correctly acting on
-credentials it holds, tricked into acting for someone else's intent.</p>
+<p>Hence <b>confused deputy</b>: your server is the deputy, acting correctly on credentials it holds, tricked into acting on someone else's intent.</p>
 
 <h4>The defenses, and what each assumes</h4>
 <ul>
-<li><b>Synchronizer token.</b> A random value in the form and in the session; the server compares them.
-Works because an attacker's page <i>cannot read</i> your token; the same-origin policy forbids it.</li>
-<li><b>Double-submit cookie.</b> Same token in a cookie and a form field, compared without server state.
-Convenient, and weaker: a subdomain you do not control can set cookies on the parent domain.</li>
-<li><b>SameSite.</b> Browser-enforced, and the reason CSRF has receded. But it is a browser default, not
-a guarantee you control.</li>
+<li><b>Synchronizer token.</b> A random value in the form and in the session. The server compares them. It works because an attacker's page <i>cannot read</i> your token: the <b>same-origin policy</b> forbids it. That's the browser rule that script on one site can't read what another site sent back.</li>
+<li><b>Double-submit cookie.</b> Same token in a cookie and a form field, compared without server state. Convenient, and weaker: a subdomain you do not control can set cookies on the parent domain.</li>
+<li><b>SameSite.</b> Browser-enforced, and the reason CSRF has receded. But it is a browser default, not a guarantee you control.</li>
 <li><b>Origin / Referer check.</b> Cheap and effective for JSON APIs.</li>
 </ul>
 
 <h4>Three things that are not defenses</h4>
-<p><b>Requiring POST.</b> A form posts. <b>Checking Content-Type alone.</b> Forms can send
-<code>text/plain</code>. <b>A secret in the URL.</b> It leaks through referrers and history.</p>
+<p><b>Requiring POST.</b> A form posts. <b>Checking Content-Type alone.</b> Forms can send <code>text/plain</code>. <b>A secret in the URL.</b> It leaks through referrers and history.</p>
 
 <h4>When it does not apply</h4>
-<p>CSRF is an attack on <b>ambient credentials</b>: anything the browser attaches automatically. An API
-that authenticates with an <code>Authorization: Bearer</code> header is not vulnerable, because nothing
-attaches that header for you. This is precisely the trade the BFF pattern makes: moving tokens out of
-the browser removes token theft and reintroduces CSRF, because you are back on cookies.</p>`,
+<p>CSRF is an attack on <b>ambient credentials</b>: anything the browser attaches automatically. An API that authenticates with an <code>Authorization: Bearer</code> header is not vulnerable, because nothing attaches that header for you. A <b>bearer token</b> works for whoever holds it, like cash, and your own code has to put it on each request. This is the trade the <b>BFF</b> pattern makes. BFF is backend-for-frontend: a small server that sits between the browser and the APIs and holds the tokens, so the browser only ever has a cookie and never a token that JavaScript could steal. Moving tokens out of the browser removes token theft and reintroduces CSRF, because you are back on cookies.</p>`,
 docs:[['CSRF, OWASP','https://owasp.org/www-community/attacks/csrf'],['CSRF prevention, OWASP','https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html']],
 ex:{title:'Validate a CSRF token',
 prompt:`Write class <code>Csrf</code> with <code>static boolean valid(String cookieToken, String formToken)</code> that returns true only when both tokens are non-null and equal (the synchronizer-token check).`,
@@ -205,14 +205,12 @@ behavior:`valid("t1","t1") is true; valid("t1","t2") is false; valid(null,null) 
 hints:['Check for null before calling equals to avoid a NullPointerException.','Compare the two tokens with equals, not ==.','Both the null guard and the match must hold, so join them with &&.']}},
 
 {id:'ss4',title:'Session fixation & token storage',body:`
-<p>Two classic mistakes. <b>Session fixation</b>: an attacker plants a known session id in your browser before you log in, and if the server keeps that id after authentication, the attacker now shares your session. The fix is one line of discipline: <b>regenerate the session id at login</b> (and at privilege changes), so the pre-login id becomes useless.</p>
-<p><b>Token storage in browsers</b>: it is tempting to keep an access token in <code>localStorage</code>, but anything JavaScript can read, an XSS bug can steal. The safer home for a session credential is an <b>HttpOnly cookie</b>, which script cannot touch. Rule of thumb: never put a bearer token where page JavaScript can read it.</p>
+
+
+<p>Two classic mistakes. <b>Session fixation</b>: an attacker plants a known session id in your browser before you log in, the server keeps it after authentication, and the attacker now shares your session. The fix is one line of discipline: <b>regenerate the session id at login</b> and at privilege changes. <b>Token storage in browsers</b>: it is tempting to keep an <b>access token</b> in <code>localStorage</code>. An access token is the short-lived token an app shows an API to prove it may make the call. But anything JavaScript can read, an <b>XSS</b> bug can steal. XSS is cross-site scripting: an attacker gets their JavaScript to run inside a page you trust, at which point it can read anything that page can. The safer home for a session credential is an <b>HttpOnly cookie</b>. Never put a <b>bearer token</b> where page JavaScript can read it. A bearer token works for whoever holds it, like cash, with no proof of who is presenting it.</p>
 
 <h4>Fixation, precisely</h4>
-<p>The attacker does not steal a session; they <b>supply</b> one. They obtain a valid session id, plant
-it in the victim's browser (a link with the id, a subdomain setting the cookie, an XSS), and wait for the
-victim to log in. If the server keeps the same id across the login, the attacker's pre-known id is now an
-authenticated session.</p>
+<p>The attacker does not steal a session. They <b>supply</b> one. They obtain a valid session id, plant it in the victim's browser (a link with the id, a subdomain setting the cookie, an XSS), and wait for the victim to log in.</p>
 <div class="codeSample" data-hl>// the entire fix, and it is one line in the right place
 onLogin(user) {
     session.invalidate();          // discard whatever id arrived
@@ -227,35 +225,18 @@ onLogin(user) {
 in-memory variable  gone on refresh; readable by injected script while open
 sessionStorage      readable by any script; survives reload
 localStorage        readable by any script; survives restarts. the worst.</div>
-<p>The rule underneath: <b>if your code can read it, injected script can read it.</b> No amount of
-obfuscation changes that, and no framework "secure storage" helper in a browser is meaningfully more
-private than the others.</p>
-<p>The real ranking is of outcomes: an HttpOnly cookie means XSS can <i>act</i> as the user while the page
-is open; localStorage means XSS <i>walks away with</i> a credential usable from anywhere until it
-expires. Same vulnerability, very different blast radius, which is the entire argument for the BFF
-pattern.</p>
+<p>The rule underneath: <b>if your code can read it, injected script can read it.</b> No obfuscation or framework "secure storage" helper in a browser changes that.</p>
+<p>The real ranking is of outcomes. With an HttpOnly cookie, XSS can <i>act</i> as the user while the page is open. With localStorage, XSS <i>walks away with</i> a credential usable from anywhere until it expires. Same vulnerability, different blast radius. That is the argument for the <b>BFF</b> pattern. BFF is backend-for-frontend: a small server that sits between the browser and the APIs and holds the tokens, so the browser only ever has a cookie and never a token that JavaScript could steal.</p>
 
 <h4>The three moments a session id must change</h4>
-<p>Regeneration is not only a login concern. The id should be replaced at <b>authentication</b>, at any
-<b>privilege change</b> (assuming a role, entering an admin area, completing step-up), and the old session
-must be <b>destroyed server-side at logout</b> rather than merely forgotten by the browser.</p>
-<p>That last one is the quiet failure: clearing the cookie ends the session for a cooperative user and does
-nothing to a stolen copy, which continues to work until it expires. Logout has to invalidate state on the
-server or it is a visual effect.</p>
+<p>Replace the id at <b>authentication</b> and at any <b>privilege change</b> (assuming a role, entering an admin area, completing <b>step-up</b>). Step-up is asking for a stronger login, such as a second factor, only when the action warrants it. At logout, the old session must be <b>destroyed server-side</b>, not merely forgotten by the browser.</p>
+<p>That last one is the common failure. Clearing the cookie ends the session for a cooperative user and does nothing to a stolen copy, which keeps working until it expires. Logout has to invalidate state on the server or it is a visual effect.</p>
 
 <h4>Two clocks, not one</h4>
-<p>A session needs an <b>idle timeout</b> (inactive for N minutes) and an <b>absolute lifetime</b> (valid
-for at most N hours regardless of activity). Idle timeout alone means a stolen session that is kept warm by
-the attacker never expires at all; the absolute lifetime is what bounds that, and it is the one people
-omit because it occasionally logs out an active user.</p>
+<p>A session needs an <b>idle timeout</b> (inactive for N minutes) and an <b>absolute lifetime</b> (at most N hours regardless of activity). Idle timeout alone means a stolen session kept warm by the attacker never expires. The absolute lifetime bounds that. It is the one people omit, because it occasionally logs out an active user.</p>
 
 <h4>What none of this fixes</h4>
-<p>Storage choice changes the aftermath of an XSS bug; it does not prevent one, and it does not make a
-session revocable. Both of the timeouts above are still enforced server-side, and a session that must end
-immediately (a password change, a reported theft, an administrator disabling the account) ends because the
-server deletes it, not because a cookie expired. Storage hardening, timeouts and server-side revocation are
-three separate controls, and a system with only the first is relying on the attacker being polite about
-where they look.</p>`,
+<p>Storage choice changes the aftermath of an XSS bug. It does not prevent one, and it does not make a session revocable. Both timeouts above are enforced server-side. A session that must end immediately (a password change, a reported theft, an administrator disabling the account) ends because the server deletes it, not because a cookie expired. Storage hardening, timeouts and server-side revocation are three separate controls.</p>`,
 docs:[['Session fixation, OWASP','https://owasp.org/www-community/attacks/Session_fixation'],['Token storage, OWASP','https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html#local-storage']],
 ex:{title:'Choose safe token storage',lang:'js',
 run:{call:'safe',cases:[{args:['httponly-cookie'],expect:true},{args:['localstorage'],expect:false},{args:['sessionstorage'],expect:false},{name:'a plain variable is still script-readable',args:['jsvariable'],expect:false}]},
@@ -271,12 +252,13 @@ behavior:`Anything JavaScript can read is exposed to XSS, so only the HttpOnly c
 hints:['Only one storage location is acceptable here.','Use === to compare against the single safe value.','Everything not explicitly safe returns false.']}},
 
 {id:'ss5',title:'Logout & session revocation',body:`
-<p>Logging out must actually <b>end</b> the session server-side, not just delete the cookie: a stolen id is worthless only once the server forgets it. Remove the session from the store (or add its token to a denylist) so any further use is rejected.</p>
-<p>In SSO the picture is bigger. <b>Front-channel logout</b> uses the browser to notify each app (hidden iframes/redirects) that the shared session ended; <b>back-channel logout</b> has the identity provider call each app server-to-server, which is more reliable because it does not depend on the browser being open. Either way, the goal is the same: one logout invalidates the sessions everywhere.</p>
+
+
+<p>Logging out must <b>end</b> the session server-side, not just delete the cookie. A stolen id is worthless only once the server forgets it.</p>
+<p>In <b>SSO</b> the picture is bigger. SSO is single sign-on: you log in once, at one place, and every other application accepts that login instead of asking for its own. <b>Front-channel logout</b> uses the browser (hidden iframes or redirects) to notify each app that the shared session ended. An iframe is a page loaded invisibly inside the current page. <b>Back-channel logout</b> has the identity provider call each app server-to-server. The identity provider, or <b>IdP</b>, is the system that holds the accounts and does the actual logging in; it checks your password or passkey and then tells the other applications who you are. The goal is one logout that invalidates the sessions everywhere.</p>
 
 <h4>Logout is three different operations wearing one word</h4>
-<p>Most logout bugs come from a vocabulary problem. When a user clicks "log out" they might mean any of
-these, and a system that implements only the first while implying the third is actively misleading:</p>
+<p>Most logout bugs come from a vocabulary problem. When a user clicks "log out" they might mean any of these:</p>
 <div class="codeSample" data-hl>1. clear the LOCAL session   cookie gone from this browser
 2. revoke the CREDENTIAL     the session/token is dead server-side,
                              so a copy of it stops working too
@@ -288,38 +270,16 @@ these, and a system that implements only the first while implying the third is a
 // which looks broken, and worse, was never actually a logout.</div>
 
 <h4>Why deleting the cookie is not enough</h4>
-<p>The cookie is a <i>copy</i> of a reference, not the session. Anything that captured it (an XSS
-payload, a proxy log, a shared machine's history) still holds a working credential, and the server will
-keep honoring it until it expires. <b>Logout has to change server state</b>: delete the session record,
-or add the token to a denylist keyed by its <code>jti</code> until its own <code>exp</code> passes.</p>
-<p>This is where stateless JWTs bite. A self-contained access token is valid because it verifies, not
-because a server says so, and there is no record to delete. The options are all compromises: keep access
-tokens short (minutes) and accept a revocation lag; maintain a denylist (which reintroduces the state
-JWTs were meant to remove); or check a revocation list at the gateway only. Choose deliberately:
-"logout" that leaves a valid token alive for an hour is a decision, and it should be one you made on
-purpose.</p>
+<p>The cookie is a <i>copy</i> of a reference, not the session. Anything that captured it (an <b>XSS</b> payload, a proxy log, a shared machine's history) still holds a working credential. XSS is cross-site scripting: an attacker gets their JavaScript to run inside a page you trust, at which point it can read anything that page can, including cookies and tokens. Whoever holds the copy has a credential, and the server will keep honoring it until it expires. <b>Logout has to change server state</b>: delete the session record, or add the token to a denylist keyed by its <code>jti</code> until its own <code>exp</code> passes.</p>
+<p>This is where stateless <b>JWTs</b> bite. A JWT is a JSON Web Token: a small signed document, three base64 pieces separated by dots, that carries claims such as who the user is and when the token expires. Anyone can read it; only the issuer can produce a valid signature. A self-contained access token is valid because it verifies, not because a server says so. There is no record to delete. The options are all compromises. Keep access tokens short (minutes) and accept a revocation lag. Maintain a denylist, which reintroduces the state JWTs were meant to remove. Or check a revocation list at the gateway only. A "logout" that leaves a valid token alive for an hour is a decision. Make it on purpose.</p>
 
 <h4>The distributed problem</h4>
-<p>In SSO the session is not one thing. There is the IdP's session, plus one per application, and they
-have no common lifetime. Killing the IdP session stops <i>new</i> logins; it does nothing to the six
-applications already holding their own.</p>
-<p><b>Front-channel logout</b> drives the browser through hidden iframes to each app's logout URL. It is
-simple and it is dying: third-party cookie blocking means those iframes increasingly load without the
-app's cookies, so the logout silently does nothing, and it fails silently, which is the worst property a
-security control can have.</p>
-<p><b>Back-channel logout</b> has the IdP POST a signed <b>logout token</b> to each app server-to-server.
-No browser involvement, works when the tab is closed, and delivery is observable, but every app must
-expose an endpoint, validate the token (including that it carries the <code>events</code> claim and
-<b>no</b> <code>nonce</code>), map <code>sid</code> or <code>sub</code> to its own sessions, and be
-reachable at that moment.</p>
+<p>In SSO the session is not one thing. There is the IdP's session, plus one per application, and they have no common lifetime. Killing the IdP session stops <i>new</i> logins. It does nothing to the six applications already holding their own.</p>
+<p><b>Front-channel logout</b> drives the browser through hidden iframes to each app's logout URL. It is simple and it is dying. Third-party cookie blocking, where the browser refuses to send a site's cookies when that site is loaded inside another site's page, means those iframes increasingly load without the app's cookies, so the logout silently does nothing.</p>
+<p><b>Back-channel logout</b> has the IdP POST a signed <b>logout token</b> to each app server-to-server. No browser involvement, it works when the tab is closed, and delivery is observable. But every app must expose an endpoint, validate the token (including that it carries the <code>events</code> claim and <b>no</b> <code>nonce</code>), map <code>sid</code> or <code>sub</code> to its own sessions, and be reachable at that moment. A <b>claim</b> is one fact inside a token: a name, a session id, an expiry time. A <b>nonce</b> is a random value used once, so a message can't be replayed; a logout token must not carry one, so it can never be passed off as a login token.</p>
 
 <h4>What to do instead of chasing perfect SLO</h4>
-<p>Complete single logout is rarely achieved, because it requires every participant to be correct and
-available simultaneously. The pragmatic posture: short application sessions so failures self-heal,
-back-channel logout where it matters, <b>and a separate, reliable "revoke everything" path</b> for the
-case that actually counts: a compromised account. That path is not the logout button; it is an
-administrative action that invalidates the sessions, revokes the refresh tokens, and forces
-re-authentication everywhere, and it should be tested.</p>`,
+<p>Complete <b>single logout</b>, or SLO, is rarely achieved. Logging out of one application is supposed to log you out of all of them, which is much harder than logging in to all of them. It requires every participant to be correct and available at the same time. The pragmatic posture: short application sessions so failures self-heal, back-channel logout where it matters, <b>and a separate, reliable "revoke everything" path</b> for a compromised account. That path is an administrative action, not the logout button. It invalidates the sessions, revokes the <b>refresh tokens</b>, and forces re-authentication everywhere. A refresh token is a long-lived token used only to get new short-lived access tokens without logging in again. Test it.</p>`,
 docs:[['Logout, OIDC','https://openid.net/specs/openid-connect-rpinitiated-1_0.html'],['Back-channel logout, OIDC','https://openid.net/specs/openid-connect-backchannel-1_0.html']],
 ex:{title:'Revoke a session',
 prompt:`Write class <code>Logout</code> with <code>static boolean revoke(java.util.Set&lt;String&gt; active, String sid)</code> that removes <code>sid</code> from the set of active sessions and returns true when the session is no longer active afterward.`,
@@ -341,9 +301,9 @@ behavior:`Given an active set containing "s1", revoke(active,"s1") removes it an
 hints:['Set has a remove method that deletes the element.','After removing, contains(sid) should be false.','Return the negation of contains to confirm the session is gone.']}},
 
 {id:'ss6',title:'Single Logout: why it is hard and how the mechanisms work',body:`
-<p>Single Sign-On is a pleasant illusion. One login event silently created <i>N</i> independent
-application sessions, and the user has no idea. Logout is where the illusion collapses, because now all
-<i>N</i> must be found and ended, and there is no reliable way to reach them all.</p>
+
+
+<p><b>Single Sign-On</b>, or SSO, is a pleasant illusion. You log in once, at one place, and every other application accepts that login instead of asking for its own. But that one login silently created <i>N</i> independent application sessions, and the user has no idea. At logout all <i>N</i> must be found and ended, and there is no reliable way to reach them all.</p>
 <!--flow:ss6-slo-backchannel-->
 <h4>OIDC back-channel logout: step by step</h4>
 <div class="flowDia"><svg viewBox="0 0 720 290" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OIDC back-channel logout"><defs><marker id="ss6-slo-backchannel-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="ss6-slo-backchannel-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="ss6-slo-backchannel-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="ss6-slo-backchannel-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="42" x2="74" y2="258" class="fdLife"/><line x1="264.66666666666663" y1="42" x2="264.66666666666663" y2="258" class="fdLife"/><line x1="455.3333333333333" y1="42" x2="455.3333333333333" y2="258" class="fdLife"/><line x1="646" y1="42" x2="646" y2="258" class="fdLife"/><rect x="34.300000000000004" y="8" width="79.39999999999999" height="34" rx="8" class="fdActor"/><text x="74" y="29.5" class="fdActorT">Browser</text><rect x="225.66666666666663" y="8" width="78" height="34" rx="8" class="fdActor"/><text x="264.66666666666663" y="29.5" class="fdActorT">App A</text><rect x="411.5333333333333" y="8" width="87.6" height="34" rx="8" class="fdActor"/><text x="455.3333333333333" y="29.5" class="fdActorT">OP (IdP)</text><rect x="607" y="8" width="78" height="34" rx="8" class="fdActor"/><text x="646" y="29.5" class="fdActorT">App B</text><line x1="77" y1="90" x2="450.3333333333333" y2="90" stroke="var(--accent)" class="fdArrow" marker-end="url(#ss6-slo-backchannel-ah-front)"/><text x="279.66666666666663" y="81" class="fdLabel">user logs out at the OP</text><circle cx="92" cy="90" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="93.5" class="fdNumT" style="fill:var(--accent)">1</text><line x1="452.3333333333333" y1="120" x2="269.66666666666663" y2="120" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ss6-slo-backchannel-ah-back)"/><text x="345" y="111" class="fdLabel">POST logout_token (signed JWT: sub, sid)</text><circle cx="437.3333333333333" cy="120" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="437.3333333333333" y="123.5" class="fdNumT" style="fill:var(--accent2)">2</text><line x1="458.3333333333333" y1="150" x2="641" y2="150" stroke="var(--accent2)" class="fdArrow" marker-end="url(#ss6-slo-backchannel-ah-back)"/><text x="565.6666666666666" y="141" class="fdLabel">POST logout_token</text><circle cx="473.3333333333333" cy="150" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="473.3333333333333" y="153.5" class="fdNumT" style="fill:var(--accent2)">3</text><rect x="113.06666666666663" y="167" width="303.2" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="272.66666666666663" y="182" class="fdSelfT">verify token; kill the server-side session</text><circle cx="113.06666666666663" cy="178" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="113.06666666666663" y="181.5" class="fdNumT" style="fill:var(--muted)">4</text><rect x="442.40000000000003" y="203" width="263.6" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="582.2" y="218" class="fdSelfT">same, no browser involvement needed</text><circle cx="442.40000000000003" cy="214" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="442.40000000000003" y="217.5" class="fdNumT" style="fill:var(--muted)">5</text><text x="360" y="240" class="fdNote">The front-channel variant uses hidden iframes, increasingly broken by third-party-cookie blocking.</text><line x1="18" y1="276" x2="44" y2="276" stroke="var(--accent)" class="fdArrow"/><text x="50" y="280" class="fdLegend">front channel (via the browser)</text><line x1="271.29999999999995" y1="276" x2="297.29999999999995" y2="276" stroke="var(--accent2)" class="fdArrow"/><text x="303.29999999999995" y="280" class="fdLegend">back channel (server to server)</text></svg></div>
@@ -355,26 +315,16 @@ application sessions, and the user has no idea. Logout is where the illusion col
 <li><b>App B:</b> same, no browser involvement needed</li>
 </ol>
 <!--/flow:ss6-slo-backchannel-->
-<p>This is not an implementation failing. It is the structural consequence of the thing that made SSO
-valuable: each application keeps its own session so it does not have to consult the IdP on every
-request.</p>
+<p>The cause is structural. The flow above is <b>OIDC</b> back-channel logout. OIDC is OpenID Connect: a thin layer on top of OAuth that adds the missing piece, a signed statement of who logged in, called an ID token. OAuth itself is the standard way one application gets permission to use another on your behalf. Each application keeps its own session so it does not have to consult the <b>IdP</b> on every request. The IdP is the identity provider: the system that holds the accounts and does the actual logging in, which OIDC calls the OP, for OpenID Provider. That is what made SSO valuable, and it is what makes logout unreliable.</p>
 
 <h4>Three different things called "logout"</h4>
 <ul>
-<li><b>Local logout</b>: end the session at <i>this</i> application. Easy, and usually all that
-actually happens. The user is then baffled to find that clicking the app again logs them straight back
-in, because the IdP session is untouched.</li>
-<li><b>IdP logout</b>: end the session at the identity provider, so the <i>next</i> app that redirects
-there prompts for credentials. Apps already logged in stay logged in.</li>
-<li><b>Single Logout (SLO)</b>: end the IdP session <i>and</i> every application session it produced.
-This is the one that is hard.</li>
+<li><b>Local logout</b>: end the session at <i>this</i> application. Easy, and usually all that happens. Click the app again and it logs you straight back in, because the IdP session is untouched.</li>
+<li><b>IdP logout</b>: end the session at the identity provider, so the <i>next</i> app that redirects there prompts for credentials. Apps already logged in stay logged in.</li>
+<li><b>Single Logout (SLO)</b>: end the IdP session <i>and</i> every application session it produced. This is the hard one.</li>
 </ul>
-<p>Most "logout is broken" reports are really a mismatch between what the user expected and which of
-these three the system implemented.</p>
-
 <h4>RP-initiated logout: the redirect</h4>
-<p>The app sends the user to the IdP's <code>end_session_endpoint</code>, which clears its own session
-and redirects back:</p>
+<p>The app is the <b>RP</b>, the relying party: the application that does not log you in itself and instead trusts the identity provider to do it. It sends the user to the IdP's <code>end_session_endpoint</code>, which clears its own session and redirects back:</p>
 <div class="codeSample" data-hl>GET /connect/endsession
   ?id_token_hint=eyJhbGciOi...          proves who is logging out
   &post_logout_redirect_uri=https://app.example.com/bye   must be registered
@@ -382,12 +332,10 @@ and redirects back:</p>
 
 // the id_token_hint matters: without it the IdP cannot tell WHICH session to
 // end, and must either prompt the user or refuse.</div>
-<p>This ends the local session and the IdP session. It does nothing about the other applications; for
-that the IdP has to notify them, and there are two ways to do it.</p>
+<p>This ends the local session and the IdP session. It does nothing about the other applications. For that the IdP has to notify them, and there are two ways to do it.</p>
 
 <h4>Front-channel logout: through the browser</h4>
-<p>The IdP's logout page embeds a hidden iframe per application, each pointing at that app's logout URI.
-The browser loads them, each app sees its own cookie, each clears its session.</p>
+<p>The IdP's logout page embeds a hidden iframe per application, each pointing at that app's logout URI. An iframe is a page loaded invisibly inside the current page. The browser loads them, each app sees its own cookie, each clears its session.</p>
 <div class="codeSample" data-hl>&lt;iframe src="https://app-a.example.com/logout?iss=...&amp;sid=..."&gt;
 &lt;iframe src="https://app-b.example.com/logout?iss=...&amp;sid=..."&gt;
 
@@ -398,13 +346,10 @@ WHY IT BREAKS
   an app is slow or down                               -> silently skipped
   no acknowledgement                                   -> the IdP never learns
     which logouts succeeded</div>
-<p>Third-party cookie restrictions are the decisive problem. The mechanism depends on an app's cookie
-being sent inside a cross-site iframe, which is precisely what browsers now block by default. Front-
-channel logout is, for practical purposes, in terminal decline.</p>
+<p>Third-party cookie restrictions are the decisive problem. The mechanism depends on an app's cookie being sent inside a cross-site iframe, which browsers now block by default. Front-channel logout is in terminal decline.</p>
 
 <h4>Back-channel logout: server to server</h4>
-<p>The IdP POSTs a signed <b>logout token</b> directly to each application's registered endpoint. No
-browser involved, so nothing depends on the user keeping a tab open:</p>
+<p>The IdP POSTs a signed <b>logout token</b> directly to each application's registered endpoint. No browser is involved, so nothing depends on the user keeping a tab open:</p>
 <div class="codeSample" data-hl>POST /backchannel-logout
 Content-Type: application/x-www-form-urlencoded
 
@@ -421,40 +366,25 @@ logout_token=eyJhbGciOiJSUzI1NiIs...
 
 // MUST NOT contain a nonce claim; that would mark it as an ID token,
 // and an attacker could otherwise submit an ID token as a logout token.</div>
-<p>It is more reliable, and it introduces its own problem: <b>the application must be able to find and
-kill the session from the token alone.</b> That means indexing sessions by <code>sid</code> or
-<code>sub</code>, and an app using stateless JWT sessions has nothing to delete. Back-channel logout
-effectively requires server-side session state, or a revocation list the app checks.</p>
-<p>Note the asymmetry with front-channel: back-channel reaches the <i>server</i>, but the user's browser
-may still hold a valid cookie for an app the notification failed to reach.</p>
+<p>It is more reliable, and it brings its own problem: <b>the application must be able to find and kill the session from the token alone.</b> That means indexing sessions by <code>sid</code> or <code>sub</code>. An app using stateless <b>JWT</b> sessions has nothing to delete. A JWT is a JSON Web Token: a small signed document, three base64 pieces separated by dots, that carries claims such as who the user is and when the token expires. It proves itself by its signature, so the server kept no record of it. Back-channel logout requires server-side session state, or a revocation list the app checks.</p>
+<p>Note the asymmetry with front-channel. Back-channel reaches the <i>server</i>, but the user's browser may still hold a valid cookie for an app the notification failed to reach.</p>
 
 <h4>Why full SLO rarely works in practice</h4>
 <ol>
-<li><b>Not every app supports it.</b> One SaaS vendor without a back-channel endpoint means logout is
-incomplete by definition, and you cannot make them implement it.</li>
-<li><b>There is no transaction.</b> Some notifications succeed, some fail, some time out, and there is
-no rollback and usually no retry.</li>
-<li><b>Access tokens outlive the session.</b> Even a perfectly ended session leaves already-issued
-access tokens valid until they expire. Logging out does not un-issue a token.</li>
+<li><b>Not every app supports it.</b> One SaaS vendor without a back-channel endpoint means logout is incomplete by definition, and you cannot make them implement it.</li>
+<li><b>There is no transaction.</b> Some notifications succeed, some fail, some time out. There is no rollback and usually no retry.</li>
+<li><b>Access tokens outlive the session.</b> An access token is the short-lived token an app shows an API to prove it may make the call. Even a cleanly ended session leaves already-issued access tokens valid until they expire. Logging out does not un-issue a token.</li>
 <li><b>Native and mobile apps</b> may not be running to receive anything.</li>
 </ol>
 
 <h4>What to do instead</h4>
-<p>Given that SLO is unreliable, the practical posture is to reduce how much it needs to accomplish:</p>
+<p>Since SLO is unreliable, reduce how much it needs to accomplish:</p>
 <ul>
-<li><b>Short access token lifetimes</b> (five to fifteen minutes), so the post-logout window is
-small.</li>
-<li><b>Revoke the refresh token and the grant</b> at logout. This is the one that actually stops
-continued access, since without it a refresh quietly mints a new access token.</li>
-<li><b>Check session validity on sensitive operations</b> rather than trusting a long-lived local
-session.</li>
-<li><b>Make the UI say only what actually happened.</b> "You have been signed out of this application" is accurate; "You have
-been signed out everywhere" usually is not, and a "sign out of all devices" control that shows what it
-actually ended is better than a claim you cannot keep.</li>
-</ul>
-<p>The deeper point: logout is the mirror of the SSO trade-off. Independent app sessions are what make
-federated login fast, and they are exactly what makes logout unreliable. You cannot have the first
-property without the second.</p>`,
+<li><b>Short access token lifetimes</b> (five to fifteen minutes), so the post-logout window is small.</li>
+<li><b>Revoke the refresh token and the grant</b> at logout. A refresh token is a long-lived token used only to get new short-lived access tokens without logging in again. Without revoking it, a refresh mints a new access token.</li>
+<li><b>Check session validity on sensitive operations</b> rather than trusting a long-lived local session.</li>
+<li><b>Make the UI say only what happened.</b> "You have been signed out of this application" is accurate. "You have been signed out everywhere" usually is not. A "sign out of all devices" control should show what it ended.</li>
+</ul>`,
 docs:[['OpenID Connect RP-Initiated Logout 1.0','https://openid.net/specs/openid-connect-rpinitiated-1_0.html'],['OpenID Connect Back-Channel Logout 1.0','https://openid.net/specs/openid-connect-backchannel-1_0.html'],['OpenID Connect Front-Channel Logout 1.0','https://openid.net/specs/openid-connect-frontchannel-1_0.html'],['RFC 7009 (OAuth 2.0 Token Revocation)','https://www.rfc-editor.org/rfc/rfc7009']],
 ex:{title:'Validate a back-channel logout token',
 prompt:`Write <code>LogoutToken</code> with three methods. <code>static boolean valid(String iss, String expectedIss, String aud, String clientId, boolean hasLogoutEvent, boolean hasNonce)</code> requires the issuer and audience to match the expected values, the logout event to be present, and <code>hasNonce</code> to be <b>false</b>: a nonce marks the JWT as an ID token, and accepting one would let an attacker submit an ID token as a logout token. <code>static boolean notReplayed(java.util.Set&lt;String&gt; seenJtis, String jti)</code> is true only for a non-null jti not already seen. <code>static String sessionKey(String sid, String sub)</code> returns <code>sid</code> when it is non-null, otherwise <code>sub</code>, otherwise null, the key the app uses to find the session it must kill.`,
@@ -499,23 +429,23 @@ public class LogoutToken {
 
 
 {id:'ss7',title:'CORS: the browser\'s other security model',body:`
-<p>Two browser mechanisms decide whether a login works from a single-page app, and people routinely
-confuse them. <b>SameSite</b> decides whether the cookie is <i>attached</i> to a request. <b>CORS</b>
-decides whether JavaScript is allowed to <i>read the response</i>. Different questions, different
-failures, and a debugging session goes badly until you know which one you are looking at.</p>
+
+
+<p>Two browser mechanisms decide whether a login works from a single-page app, or SPA. That's one page of JavaScript that calls APIs instead of loading new pages. <b>SameSite</b>
+decides whether the cookie is <i>attached</i> to a request. <b>CORS</b>, cross-origin resource sharing,
+decides whether JavaScript may <i>read the response</i>.</p>
 
 <h4>The same-origin policy, and the gap it leaves</h4>
 <p>An <b>origin</b> is scheme + host + port. <code>https://app.example.com</code> and
-<code>https://api.example.com</code> are different origins; so are <code>http</code> and
-<code>https</code> versions of the same host. The same-origin policy says script on one origin cannot read
+<code>https://api.example.com</code> are different origins. So are the <code>http</code> and
+<code>https</code> versions of one host. The same-origin policy says script on one origin cannot read
 responses from another.</p>
-<p>Note precisely what it does <i>not</i> say: it does not stop the request being <b>sent</b>, and it does
-not stop cookies riding along. That gap is the whole reason CSRF exists: the attacker's page can cause a
-state-changing request with your cookies attached, it simply cannot read the answer. Which is why the
-defense for CSRF is SameSite and tokens, not CORS.</p>
+<p>It does not stop the request being <b>sent</b>, or cookies riding along. That gap is why <b>CSRF</b>, cross-site request forgery,
+exists: the attacker's page can send a state-changing request with your cookies attached, and your site can't tell it wasn't you. The attacker
+cannot read the answer. So the CSRF defense is SameSite and tokens, not CORS.</p>
 
 <h4>How CORS relaxes it: server opt-in, browser enforcement</h4>
-<p>A cross-origin read is permitted only when the <i>server</i> says so, in response headers the browser
+<p>A cross-origin read is allowed only when the <i>server</i> says so, in response headers the browser
 checks before handing the body to script:</p>
 <div class="codeSample" data-hl>// simple request: sent immediately, response gated on the header
 Access-Control-Allow-Origin: https://app.example.com
@@ -528,29 +458,29 @@ OPTIONS /token                       Access-Control-Request-Method: POST
    Access-Control-Allow-Methods: POST
    Access-Control-Allow-Headers: authorization
    Access-Control-Max-Age: 600       // cache the preflight, or you double every call</div>
-<p>This matters for identity because the endpoints an SPA calls directly (<code>/token</code> for a PKCE
+<p>The endpoints an SPA calls directly (<code>/token</code> for a PKCE
 public client, <code>/.well-known/openid-configuration</code>, <code>jwks_uri</code>, sometimes
-<code>/userinfo</code>) all need CORS headers, and an <code>Authorization</code> header forces a
-preflight on every one of them.</p>
+<code>/userinfo</code>) all need CORS headers. A public client is an app that can't keep a secret, because its code runs in the browser. <b>PKCE</b>, said "pixy", is Proof Key for Code Exchange: the app invents a random secret at the start of a login, sends a hash of it, and reveals the secret only when it collects the token, so an attacker who steals the login code in the middle can't finish without the secret. An <code>Authorization</code> header forces a
+<b>preflight</b> on each: the browser first sends a separate OPTIONS request asking whether the real one is permitted.</p>
 
 <h4>Credentials change the rules</h4>
-<p>If the request carries cookies (<code>credentials: "include"</code>), two extra conditions apply:
+<p>If the request carries cookies (<code>credentials: "include"</code>),
 the server must send <code>Access-Control-Allow-Credentials: true</code>, and
-<code>Access-Control-Allow-Origin</code> <b>may not be <code>*</code></b>. It must name a single origin.</p>
-<p>The dangerous workaround is to reflect whatever <code>Origin</code> arrives back in the header. That
-technically satisfies the browser, and it means <i>every</i> site on the internet can read your API's
-responses with the victim's cookies attached. Reflecting an origin is only safe against an explicit
-allowlist, and "allowlist" must mean exact strings, not a <code>startsWith("https://example")</code> that
+<code>Access-Control-Allow-Origin</code> <b>may not be <code>*</code></b>. It must name one origin.</p>
+<p>The dangerous workaround is to reflect whatever <code>Origin</code> arrives. The
+browser accepts it, and <i>every</i> site on the internet can then read your API's
+responses with the victim's cookies attached. Reflect an origin only after checking it against an
+allowlist of exact strings. A <code>startsWith("https://example")</code> check
 also matches <code>https://example.attacker.com</code>.</p>
 
 <h4>CORS is not authorization</h4>
 <p>The rules are enforced by browsers, for browsers. <code>curl</code>, a mobile app, a server-side proxy
-and an attacker's script all ignore them completely. CORS protects your <i>users</i> from other websites
-reading their data; it does nothing to protect your API from a determined caller. Every endpoint still
-needs real authentication and authorization behind it.</p>
-<p>Which is the underrated argument for the <b>BFF pattern</b> from the OAuth stream. Keep the browser
-talking to its own origin and let a small backend hold the tokens. The entire CORS-plus-credentials
-minefield then stops being your problem, along with token storage in the browser.</p>`,
+and an attacker's script all ignore them. CORS protects your <i>users</i> from other websites
+reading their data, not your API from a determined caller. Every endpoint still
+needs real authentication and authorization.</p>
+<p>Hence the <b>BFF pattern</b> from the OAuth stream. BFF is backend-for-frontend: a small server that sits between the browser and the APIs and holds the tokens, so the browser only ever has a cookie and never a token that JavaScript could steal. Keep the browser on its own origin and let that
+small backend hold the tokens. CORS plus credentials stops being your problem, along with token
+storage in the browser.</p>`,
 docs:[['MDN (Cross-Origin Resource Sharing)','https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS'],['Fetch Standard (CORS protocol)','https://fetch.spec.whatwg.org/#http-cors-protocol'],['OWASP (CORS misconfiguration)','https://owasp.org/www-community/attacks/CORS_OriginHeaderScrutiny']],
 ex:{title:'Decide whether a credentialed read is allowed',lang:'js',
 run:{call:'corsAllowsCredentialedRead',cases:[{name:'an allowlisted origin, echoed exactly, with credentials on',args:[['https://app.example.com'],'https://app.example.com','https://app.example.com',true],expect:true},{name:'wildcard plus credentials is refused by the browser',args:[['https://app.example.com'],'https://app.example.com','*',true],expect:false},{name:'reflecting an origin that is not on the allowlist',args:[['https://app.example.com'],'https://evil.example.com','https://evil.example.com',true],expect:false},{name:'allowlisted, but the server did not allow credentials',args:[['https://app.example.com'],'https://app.example.com','https://app.example.com',false],expect:false},{name:'header names a different origin than the caller',args:[['https://app.example.com'],'https://app.example.com','https://other.example.com',true],expect:false}]},
@@ -569,22 +499,23 @@ behavior:`Five real cases. The wildcard case is the specification's own guard: a
 hints:['Four independent conditions; any one failing is a refusal.','The wildcard has a special rule of its own; check it before comparing strings.','Exact string membership in the allowlist. A prefix test is a vulnerability, not a shortcut.']}}
 ,
 {id:'ss8',title:'FedCM: federation after third-party cookies',body:`
-<p>Two lessons in this stream have described a mechanism failing for the same reason. Front-channel
-logout loads a hidden iframe per application and the iframe arrives without the application's cookie.
-Single-page apps used to renew tokens quietly by loading <code>/authorize?prompt=none</code> in a hidden
-iframe, and that iframe now arrives without the provider's cookie. Both were built on the browser
-sending a cookie to a site inside a frame owned by a different site, and browsers have been withdrawing
+
+
+<p>Earlier in this stream, front-channel logout and silent token renewal failed for the same reason.
+Front-channel logout loads a hidden iframe per application, a page loaded invisibly inside the current page, and the iframe arrives without the
+application's cookie. Single-page apps used to renew tokens by loading
+<code>/authorize?prompt=none</code> in a hidden iframe. That iframe now arrives without the
+provider's cookie. Both relied on the browser
+sending a cookie to a site framed by a different site, which is what a <b>third-party cookie</b> is. Browsers have been withdrawing
 that behavior.</p>
 
-<h4>Why the browser cannot simply exempt identity</h4>
-<p>The awkward part is that the mechanism federation depends on is <i>the same mechanism</i> tracking
-depends on. An identity provider recognizing you inside a relying party's iframe, and an advertising
-network recognizing you inside a publisher's iframe, are the same request with the same headers. The
-browser has no way to tell a legitimate single sign-on from a cross-site profile being built, because
-from the network's point of view there is no difference.</p>
-<p>So the answer was never going to be an exception list. It had to be a <b>purpose-built API</b>, where
-the browser knows the request is a login because the site said so, and can therefore apply login rules
-to it. That API is <b>FedCM</b>, Federated Credential Management.</p>
+<h4>Why the browser cannot exempt identity</h4>
+<p><b>Federation</b>, two organizations agreeing that one will trust the other's logins, depends on <i>the same mechanism</i> tracking depends on. The <b>identity provider</b> is the system that holds the accounts and does the actual logging in. The <b>relying party</b> is the application that does not log you in itself and trusts the identity provider to do it. An identity provider
+recognizing you inside a relying party's iframe, and an advertising network recognizing you inside a
+publisher's iframe, are the same request with the same headers. The browser cannot tell single sign-on
+from a cross-site profile being built.</p>
+<p>So the answer could not be an exception list. It had to be a <b>purpose-built API</b>, where
+the browser knows the request is a login because the site said so. That API is <b>FedCM</b>, Federated Credential Management.</p>
 
 <h4>What the relying party writes</h4>
 <div class="codeSample" data-hl>const credential = await navigator.credentials.get({
@@ -600,12 +531,11 @@ to it. That API is <b>FedCM</b>, Federated Credential Management.</p>
 // note what is absent: no redirect, no popup, no iframe, and no
 // markup of yours drawing an account picker. the BROWSER draws it.</div>
 <p>The provider publishes <code>/.well-known/web-identity</code> at its registrable domain, and a config
-file naming its endpoints: an <b>accounts endpoint</b>, an <b>ID assertion endpoint</b>, a login URL, and
-optionally client metadata and disconnect endpoints. The browser fetches those itself.</p>
+file naming its endpoints. Those are an <b>accounts endpoint</b>, an <b>ID assertion endpoint</b>, a
+login URL, and optionally client metadata and disconnect endpoints. The browser fetches those itself.</p>
 
 <h4>The privacy design is in which request carries what</h4>
-<p>This is the part worth memorizing, because it is where the guarantee lives rather than in the API
-shape:</p>
+<p>The guarantee lives here, not in the API shape:</p>
 <div class="codeSample" data-hl>config file          no cookies, no RP origin
 client metadata      no cookies, no RP origin
 accounts endpoint    the IdP's OWN cookies  ...  but NOT the RP origin
@@ -617,37 +547,36 @@ id assertion         the IdP's own cookies  AND  Origin: the RP
 // relying party only at the moment it is asked to mint a token, which
 // is AFTER the human picked an account in the browser's own dialog.</div>
 <p>Every one of these requests also carries <code>Sec-Fetch-Dest: webidentity</code>, and the provider
-<b>must check it</b>. That header cannot be set by ordinary page script, so the check is what stops any
-other site fetching the accounts endpoint with the user's cookies and harvesting the list of who is
-signed in. It plays the role a CSRF token plays elsewhere: proof that the browser, not a page, made this
-request.</p>
+<b>must check it</b>. Page script cannot set that header, so the check stops another
+site fetching the accounts endpoint with the user's cookies and harvesting who is
+signed in. It is the <b>CSRF</b> token's role: proof that the browser, not a page, made the
+request. CSRF is cross-site request forgery: a malicious page makes your browser send a request to a site you're logged into, and the site can't tell it wasn't you.</p>
 
-<h4>What the user sees, and why that matters</h4>
-<p>The account chooser is <b>browser UI</b>. The relying party cannot style it, cannot read what is in
-it, and is never told which accounts were offered. That is deliberate: the same property that makes
-WebAuthn phishing-resistant is at work here, in that the decision about who is being asked is made by
-software the page cannot lie to. The site learns nothing about the user until they pick an account, at
-which point it receives one token.</p>
+<h4>What the user sees</h4>
+<p>The account chooser is <b>browser UI</b>. The relying party cannot style it, cannot read it,
+and is never told which accounts were offered. This is the property that makes
+<b>WebAuthn</b> phishing-resistant. WebAuthn is the browser standard behind passkeys: the device holds a private key, the site holds the public key, and a login is a signature over a challenge from that exact site. There too, the decision about who is being asked is made by
+software the page cannot lie to. The site learns nothing until the user picks an account.
+Then it receives one token.</p>
 
 <h4>What FedCM is not</h4>
-<p>It is not a replacement for OpenID Connect. The token that comes back is whatever the provider mints,
-usually an ID token, and everything you already know applies unchanged: verify the signature against the
-JWKS, check <code>iss</code>, check <code>aud</code>, check <code>exp</code>, check the nonce. FedCM
-replaces the <i>transport</i>, which used to be a redirect or a cookie-bearing iframe, and leaves the
+<p>It is not a replacement for OpenID Connect, the login protocol that adds a signed statement of who logged in on top of OAuth. The token is whatever the provider mints,
+usually an <b>ID token</b>: that signed statement of who logged in, for the app itself, not for APIs. The usual checks apply: verify the signature against the
+<b>JWKS</b>, check <code>iss</code>, <code>aud</code>, <code>exp</code> and the <b>nonce</b>. The JWKS is the JSON Web Key Set: the provider's public keys, written as JSON and published at a well-known URL so anyone can fetch them and check its signatures. The nonce is a random value used once, so a token can't be replayed. FedCM
+replaces the <i>transport</i>, formerly a redirect or a cookie-bearing iframe, and leaves the
 protocol alone.</p>
-<p>It also does not fix logout. Ending an application session still needs back-channel logout or short
-sessions, for all the reasons the single logout lesson gives. And it is a browser API, so it does nothing
-for native apps, which should be using the system browser and the authorization code flow anyway.</p>
+<p>It does not fix logout. Ending an application session still needs back-channel logout or short
+sessions, for the reasons the single logout lesson gives. It is a browser API, so it does nothing
+for native apps, which should use the system browser and the authorization code flow anyway. In that flow the browser brings back a short code and the app swaps it for tokens server to server.</p>
 
-<h4>What to do about it now</h4>
-<p>The specification and its browser implementations are still moving, so treat details as current rather
-than settled and check the spec before you build. The durable advice does not depend on the details:
-<b>stop building anything new that needs a third-party cookie to work</b>. If your single-page app renews
-tokens through a hidden iframe, that mechanism is on a timer, and the replacements are a backend for
-frontend holding the refresh token, a top-level redirect the user can see, or FedCM where your provider
-supports it. If you operate an identity provider, the well-known file and the four endpoints are a
-contained piece of work, and the alternative is that your customers' embedded sign-in stops working on a
-browser release you do not control.</p>`,
+<h4>What to do now</h4>
+<p>The specification and browser implementations are still moving. Check the spec before you build.
+The durable advice: <b>stop building anything new that needs a third-party cookie</b>. If your
+single-page app renews tokens through a hidden iframe, that mechanism is on a timer. The replacements
+are a backend for frontend holding the refresh token, a top-level redirect the user can see, or FedCM
+where your provider supports it. A refresh token is the long-lived token used only to get new short-lived access tokens without logging in again, which is why it belongs on a backend and not in the browser. If you operate an identity provider, the well-known file and the four
+endpoints are a contained piece of work. The alternative is your customers' embedded sign-in breaking
+on a browser release you do not control.</p>`,
 docs:[['Federated Credential Management API (W3C)','https://w3c-fedid.github.io/FedCM/'],['FedCM API, MDN','https://developer.mozilla.org/en-US/docs/Web/API/FedCM_API'],['Implementing FedCM as an identity provider','https://developer.chrome.com/docs/identity/fedcm/implement/identity-provider']],
 ex:{title:'Who learns what, and when',lang:'js',
 run:{call:'cookiesSent',cases:[{name:'the accounts endpoint gets the IdP cookies',args:['accounts'],expect:true},{name:'the id assertion endpoint gets them too',args:['id_assertion'],expect:true},{name:'so does disconnect',args:['disconnect'],expect:true},{name:'the config file does not',args:['config'],expect:false},{name:'client metadata does not',args:['client_metadata'],expect:false},{name:'an unknown endpoint gets nothing',args:['accounts_v2'],expect:false},{name:'null gets nothing',args:[null],expect:false}]},

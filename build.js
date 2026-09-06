@@ -16,7 +16,8 @@ const data = read('content/streams/_header.js')
   + manifest.map(f => read(path.join('content/streams', f))).join('')
   + read('content/streams/_footer.js');
 
-const script = engine('sqlengine.js')
+const script = read('src/config.js') + '\n'
+  + engine('sqlengine.js')
   + read('src/gradejava.js')
   + read('src/quizzes_hand.js')
   + read('src/quizzes.js')

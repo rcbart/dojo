@@ -710,3 +710,28 @@ test('the store reads back what patch wrote, repeatedly', () => {
   assert.equal(h.store.lesson('y').hintIdx, 2);
   assert.equal(JSON.parse(h.localStorage.getItem(h.STORE_KEY)).x.code, 'hello');
 });
+
+/* Found by an alpha tester (6 Sep): gibberish with the right substrings passed every
+   structural check and, with no runner, completed the lesson. A C-family
+   submission whose braces, parentheses or brackets do not balance now gets
+   one extra failing row; a balanced one gets nothing extra. */
+test('localChecks adds a failing well-formedness row when braces do not balance', () => {
+  const e = { tests: [{ d: 'uses a switch', re: 'switch\\s*\\(' }] };
+  const junk = 'this is totes a public classsss ! {\n  return switch (thing) {{{{{{{{{\n  }}}}\n}';
+  const r = localChecks(e, junk);
+  assert.equal(r[0].pass, true);                       // the regex still matches
+  assert.equal(r.length, 2);
+  assert.equal(r[1].pass, false);
+  assert.match(r[1].desc, /balance/);
+});
+test('localChecks adds no extra row for balanced code, and ignores braces in strings and comments', () => {
+  const e = { tests: [{ d: 'uses a switch', re: 'switch\\s*\\(' }] };
+  const ok = 'class A { String f(String t) { /* { */ String s = "}"; return switch (t) { default -> "x"; }; } }';
+  const r = localChecks(e, ok);
+  assert.equal(r.length, 1);
+  assert.equal(r[0].pass, true);
+});
+test('localChecks well-formedness row does not apply to non C-family languages', () => {
+  const r = localChecks({ lang: 'yaml', tests: [{ d: 'has key', re: 'key:' }] }, 'key: [unbalanced');
+  assert.equal(r.length, 1);
+});

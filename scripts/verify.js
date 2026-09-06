@@ -20,6 +20,19 @@ console.log('checking ' + (path.relative(path.join(__dirname, '..'), ROOT) || 't
 const { load } = require(path.join(__dirname, '..', 'engine', 'test', 'harness.js'));
 const gradeLocalChecks = load().localChecks;
 
+// Lessons may be interactive through a coding exercise OR a multiple-choice
+// quiz. The vocabulary lessons dropped their contrived switch-statement
+// exercises in favour of match-the-term quizzes (Keydan Bruce, alpha), so a
+// lesson with a quiz and no exercise is complete, not a failure.
+const quizIds = new Set();
+for (const qf of ['src/quizzes_hand.js', 'src/quizzes.js']) {
+  const qp = path.join(ROOT, qf);
+  if (!fs.existsSync(qp)) continue;
+  const w = {};
+  try { new Function('window', fs.readFileSync(qp, 'utf8'))(w); } catch (e) { continue; }
+  for (const bank of Object.values(w)) if (bank && typeof bank === 'object')
+    for (const [id, qs] of Object.entries(bank)) if (Array.isArray(qs) && qs.length) quizIds.add(id);
+}
 const manifest = JSON.parse(fs.readFileSync(dir('manifest.json'), 'utf8'));
 const STREAMS = [];
 for (const f of manifest) {
@@ -44,7 +57,7 @@ for (const s of STREAMS) {
     // higher than the number the learner's belt bar is actually measured against.
     if (!s.tournament && !s.project && !s.dan) belt++;
     const exs = l.exs || (l.ex ? [l.ex] : []);
-    if (!exs.length) { console.error('NO EXERCISES', l.id); failures++; }
+    if (!exs.length && !quizIds.has(l.id)) { console.error('NO EXERCISE OR QUIZ', l.id); failures++; }
     exs.forEach((e, i) => {
       exercises++;
       for (const k of ['prompt', 'solution', 'behavior']) {

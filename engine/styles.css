@@ -369,6 +369,20 @@ details.depth[open]>summary::before{content:'▾'}
 .quizWhy{margin-top:8px;font-size:13px;color:var(--muted)}
 
 /* ===== data-structure comparison table ===== */
+/* Highlighted rule box: a single non-negotiable a lesson wants impossible to skim past.
+   Uses the amber tokens the contrast gate already validates. */
+.rule{margin:14px 0;padding:11px 14px;border-left:3px solid var(--amber);border-radius:0 8px 8px 0;
+  background:var(--amber-tint);color:var(--ink);font-size:13.5px;line-height:1.5}
+.rule b{color:var(--amber-ink)}
+/* Comparison table used by lessons that turned a two-column ASCII drawing into real markup.
+   Scrolls horizontally on narrow screens rather than forcing the page to. */
+.cmp{border-collapse:collapse;font-size:13px;margin:12px 0;width:100%;display:table}
+.cmp th,.cmp td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+.cmp th{background:var(--violet-tint);font-weight:700;color:var(--ink)}
+.cmp td{color:var(--ink)}
+.cmp tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+.cmpWrap{overflow-x:auto;margin:12px 0}
+.cmpWrap .cmp{margin:0}
 .dsCompare{border-collapse:collapse;font-size:13px;margin:12px 0;width:100%}
 .dsCompare th,.dsCompare td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
 .dsCompare th{background:var(--violet-tint);font-weight:700}

@@ -1,15 +1,17 @@
 STREAMS.push({iam:true,sec:'SAML & enterprise web SSO',icon:'🎫',title:'SAML 2.0 & Web SSO',blurb:'The enterprise SSO workhorse: SAML assertions, SP- vs IdP-initiated flows, the HTTP bindings (Redirect/POST/Artifact), metadata & trust, signing/encryption and Single Logout, and when to choose SAML vs OIDC.',lessons:[
 
 {id:'sml1',title:'What SAML is & the assertion',body:`
-<p><b>SAML 2.0</b> (Security Assertion Markup Language) is the older, XML-based federation standard that still runs most <b>enterprise web SSO</b>. Same idea as OIDC: an <b>IdP</b> vouches for a user to a <b>Service Provider (SP)</b>, but the message is an XML <b>assertion</b> instead of a JWT.</p>
-<p>SAML 2.0 Core defines exactly <b>three statement types</b>: <code>AuthnStatement</code>, <code>AttributeStatement</code> and <code>AuthzDecisionStatement</code> (the last is rarely used and deprecated in practice). An assertion also carries elements that are <i>not</i> statements but matter just as much. Both, together:</p>
+
+
+<p><b>SAML 2.0</b> (Security Assertion Markup Language) is the older, XML-based federation standard that still runs most <b>enterprise web SSO</b>. <b>Federation</b> means two organizations agree that one will trust the other's logins. <b>SSO</b> is single sign-on: you log in once, at one place, and every other application accepts that login instead of asking for its own. Same idea as OIDC: an <b>IdP</b> vouches for a user to a <b>Service Provider (SP)</b>. The message is an XML <b>assertion</b> instead of a JWT. An assertion is SAML's word for the signed statement about the user, the equivalent of an ID token. A <b>JWT</b> (JSON Web Token) is a small signed document, three base64 pieces separated by dots, that carries claims such as who the user is and when the token expires. Anyone can read it; only the issuer can produce a valid signature.</p>
+<p>SAML 2.0 Core defines <b>three statement types</b>: <code>AuthnStatement</code>, <code>AttributeStatement</code> and <code>AuthzDecisionStatement</code>. The last is rarely used and deprecated in practice. An assertion also carries elements that are <i>not</i> statements but matter as much:</p>
 <ul>
 <li><b>Authentication statement</b>: "this subject authenticated at this time, using this method."</li>
 <li><b>Attribute statement</b>: user attributes (email, groups, department) the SP uses.</li>
-<li><b>NameID</b> <i>(not a statement; it sits in <code>&lt;Subject&gt;</code>)</i>: the subject identifier (the "who"), like OIDC's <code>sub</code>.</li>
-<li><b>Conditions</b> <i>(not a statement, a sibling of them)</i>: validity window (<code>NotBefore</code>/<code>NotOnOrAfter</code>) and <b>Audience</b> (which SP it's for), the SAML equivalents of <code>exp</code>/<code>aud</code>.</li>
+<li><b>NameID</b> <i>(not a statement; it sits in <code>&lt;Subject&gt;</code>)</i>: the subject identifier, like OIDC's <code>sub</code>.</li>
+<li><b>Conditions</b> <i>(not a statement, a sibling)</i>: validity window (<code>NotBefore</code>/<code>NotOnOrAfter</code>) and <b>Audience</b> (which SP it is for), the SAML equivalents of <code>exp</code>/<code>aud</code>.</li>
 </ul>
-<p>The assertion is <b>signed by the IdP</b> (XML Signature) so the SP can trust it. SAML vs OIDC in one line: <b>SAML = XML assertions over browser POST/redirect, enterprise SSO; OIDC = JSON/JWT over OAuth, modern apps &amp; APIs.</b></p>
+<p>The IdP <b>signs the assertion</b> (XML Signature) so the SP can trust it. In one line: <b>SAML = XML assertions over browser POST/redirect, enterprise SSO; OIDC = JSON/JWT over OAuth, modern apps &amp; APIs.</b></p>
 <div class="codeSample" data-hl>&lt;saml:Assertion&gt;
   &lt;saml:Subject&gt;&lt;saml:NameID&gt;jane@corp.com&lt;/saml:NameID&gt;&lt;/saml:Subject&gt;
   &lt;saml:Conditions NotOnOrAfter="2026-01-01T00:05:00Z"&gt;
@@ -19,14 +21,12 @@ STREAMS.push({iam:true,sec:'SAML & enterprise web SSO',icon:'🎫',title:'SAML 2
 &lt;/saml:Assertion&gt;   &lt;!-- signed by the IdP --&gt;</div>
 
 <h4>Why you still need to know this</h4>
-<p>SAML is from 2005 and it is not what you would choose today. It also runs a very large share of
-enterprise SSO, and it is not going anywhere: every HR system, every finance suite, every long-lived
-internal application speaks it. You will meet it not because someone chose it recently but because it was
+<p>SAML is from 2005 and not what you would choose today. But it still runs a very large share of
+enterprise SSO. Every HR system, finance suite and long-lived internal application speaks it. It was
 chosen fifteen years ago and works.</p>
-<p>The good news is that you already know the shape. An IdP vouches for a user to an application, the
-application trusts the IdP's signature, and the user never gives the application their password. That is
-federation, from the Foundations stream. SAML is one encoding of it, <b>signed XML delivered through the
-browser</b>, where OIDC is another.</p>
+<p>You already know the shape from the Foundations stream: federation. The IdP vouches for the user,
+the application trusts the IdP's signature, and the user never gives the application their password.
+SAML encodes that as <b>signed XML delivered through the browser</b>.</p>
 
 <h4>The vocabulary, mapped to what you already know</h4>
 <div class="codeSample" data-hl>SAML                        OIDC / OAuth              what it is
@@ -43,11 +43,11 @@ ACS URL                     redirect_uri              where the response lands
 // introduced the actors ONCE rather than three times.</div>
 
 <h4>The one structural difference that matters</h4>
-<p>An OIDC ID token is compact, JSON, and travels in a header or a small parameter. A SAML assertion is
-<b>signed XML</b>, frequently several kilobytes, and travels <b>through the browser</b> as a form POST.
-Almost every SAML quirk follows from those two facts: XML signing is complicated enough to have its own
-vulnerability class, and going through the browser means URL length limits, form auto-submission, and every
-hop being visible to whatever else is running in that browser.</p>
+<p>An OIDC ID token is compact JSON in a header or a small parameter. A SAML assertion is
+<b>signed XML</b>, often several kilobytes, sent <b>through the browser</b> as a form POST.
+Almost every SAML quirk follows from those two facts. XML signing has its own vulnerability class.
+Going through the browser means URL length limits, form auto-submission, and every hop visible to
+whatever else runs in that browser.</p>
 
 <h4>A concrete assertion, annotated</h4>
 <div class="codeSample" data-hl>&lt;saml:Assertion ID="_a1b2" IssueInstant="2026-01-01T00:00:00Z"&gt;
@@ -67,17 +67,17 @@ hop being visible to whatever else is running in that browser.</p>
   &lt;/saml:AuthnStatement&gt;
   &lt;saml:AttributeStatement&gt; ... groups, department, employeeId ... &lt;/saml:AttributeStatement&gt;
 &lt;/saml:Assertion&gt;</div>
-<p>Two fields there earn their keep later. <b><code>SessionIndex</code></b> is what makes Single Logout even
-theoretically possible: it names <i>this</i> login so it can be ended. And
-<b><code>AuthnContextClassRef</code></b> states <i>how</i> the user authenticated, which is SAML's version
-of <code>acr</code> and the only way an SP can require MFA rather than hope for it.</p>
+<p>Two fields matter later. <b><code>SessionIndex</code></b> names <i>this</i> login so it can be
+ended. Without it Single Logout is impossible.
+<b><code>AuthnContextClassRef</code></b> states <i>how</i> the user authenticated. It is SAML's
+<code>acr</code>, and the only way an SP can require <b>MFA</b> rather than hope for it. MFA is multi-factor authentication: proving who you are with two different kinds of evidence, usually something you know (a password) plus something you have (a phone or a security key). A stolen password alone is then not enough.</p>
 
-<h4>Choosing the NameID is a decision, not a default</h4>
-<p>The <code>NameID</code> is the key the SP will store the user under, so picking a mutable one is a
-mistake you live with. An email address is the common choice and it <b>changes</b>: people marry, companies
-rebrand, and the SP then sees a brand-new user with no history. Use an opaque, permanent identifier and send
-the email as an <i>attribute</i>. This is exactly the "<code>sub</code> is the only safe identity key" rule
-from the claims lesson, in SAML's clothing.</p>`,
+<h4>Choosing the NameID is a decision</h4>
+<p>The <code>NameID</code> is the key the SP stores the user under, so a mutable one is a mistake you
+live with. Email is the common choice and it <b>changes</b>: people marry, companies rebrand, and the SP
+sees a brand-new user with no history. Use an opaque, permanent identifier and send the email as an
+<i>attribute</i>. This is the "<code>sub</code> is the only safe identity key" rule from the claims
+lesson, in SAML's clothing.</p>`,
 docs:[['SAML 2.0 Core &sect;2.7 - statement types','https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['SAML 2.0 (OASIS)','https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['Okta (What is SAML?)','https://www.okta.com/integrate/documentation/saml/'],['SAML vs OIDC (OpenID Foundation)','https://openid.net/developers/how-connect-works/']],
 ex:{title:'Read the NameID from an assertion',
 prompt:`Write <code>Saml</code> with <code>static String nameId(String xml)</code> that returns the text inside the first <code>&lt;saml:NameID&gt;...&lt;/saml:NameID&gt;</code> element, or <code>null</code> if absent. Find the open tag with <code>indexOf("&lt;saml:NameID&gt;")</code>, the close tag with <code>indexOf("&lt;/saml:NameID&gt;")</code>, and return the <code>substring</code> between them (return null if either is missing).`,
@@ -100,7 +100,23 @@ solution:`public class Saml {
 }`}},
 
 {id:'sml2',title:'SP-initiated vs IdP-initiated SSO',body:`
-<p>SAML SSO happens in one of two directions. Knowing which is which is essential:</p>
+
+
+
+
+<p><b>SAML</b> (Security Assertion Markup Language) is the older, XML-based standard for single sign-on between companies. The identity provider sends the application a signed XML document, an assertion, saying who the user is. SAML SSO happens in one of two directions. Knowing which is which matters.</p>
+<h4>What it's for</h4>
+<p>SAML SSO lets an employee log in once, at the company's identity provider, and then get into every web application the company has connected. None of those applications holds a password. Each application accepts a signed XML statement from the IdP instead. Both directions below end in the same place, an assertion posted to the application's <b>ACS</b> URL, the assertion consumer service, the address on the application that receives the login result. They differ in who starts the conversation, and that difference decides what the application can check when the answer arrives.</p>
+
+<h4>When to use it</h4>
+<p>SP-initiated fits almost every case where the user arrives at the application first. Someone opens a bookmarked deep link into a reporting tool. Someone types the app's address into the browser. A session times out mid-task and the app needs to log the user in again and put them back on the same page. IdP-initiated fits one case: a company portal or dashboard with a tile per application. The user's day starts at the IdP, and a click on a tile should land them inside the app.</p>
+
+<h4>When not to</h4>
+<ul>
+<li>IdP-initiated when SP-initiated is available: the SP can't check "did I ask for this?", so prefer the SP-initiated direction and turn the other one off.</li>
+<li>A mobile app or an API: SAML is built on browser redirects and has no refresh token. Use OIDC and OAuth there.</li>
+<li>Carrying application state in RelayState: it's capped at 80 bytes and isn't signed. Put a lookup key or a relative path in it, never the state itself.</li>
+</ul>
 <!--flow:sml2-sp-init-->
 <h4>SP-initiated SAML SSO: step by step</h4>
 <div class="flowDia"><svg viewBox="0 0 680 312" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SP-initiated SAML SSO"><defs><marker id="sml2-sp-init-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="sml2-sp-init-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="sml2-sp-init-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="sml2-sp-init-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="54" x2="74" y2="300" class="fdLife"/><line x1="340" y1="54" x2="340" y2="300" class="fdLife"/><line x1="606" y1="54" x2="606" y2="300" class="fdLife"/><rect x="34.300000000000004" y="8" width="79.39999999999999" height="46" rx="8" class="fdActor"/><text x="74" y="35.5" class="fdActorT">Browser</text><rect x="301" y="8" width="78" height="46" rx="8" class="fdActor"/><text x="340" y="27" class="fdActorT">SP</text><text x="340" y="42" class="fdActorS">the app</text><rect x="567" y="8" width="78" height="46" rx="8" class="fdActor"/><text x="606" y="35.5" class="fdActorT">IdP</text><line x1="77" y1="102" x2="335" y2="102" stroke="var(--accent)" class="fdArrow" marker-end="url(#sml2-sp-init-ah-front)"/><text x="222" y="93" class="fdLabel">GET /app, no session</text><circle cx="92" cy="102" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="105.5" class="fdNumT" style="fill:var(--accent)">1</text><line x1="343" y1="132" x2="601" y2="132" stroke="var(--accent)" class="fdArrow" marker-end="url(#sml2-sp-init-ah-front)"/><text x="488" y="123" class="fdLabel">302: AuthnRequest (Redirect binding)</text><circle cx="358" cy="132" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="358" y="135.5" class="fdNumT" style="fill:var(--accent)">2</text><rect x="310" y="149" width="356" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="496" y="164" class="fdSelfT">user authenticates (or already has an IdP session)</text><circle cx="310" cy="160" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="310" y="163.5" class="fdNumT" style="fill:var(--muted)">3</text><line x1="603" y1="198" x2="345" y2="198" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#sml2-sp-init-ah-front)"/><text x="458" y="189" class="fdLabel">auto-POST: signed Response + Assertion</text><circle cx="588" cy="198" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="588" y="201.5" class="fdNumT" style="fill:var(--accent)">4</text><rect x="168.60000000000002" y="215" width="342.79999999999995" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="348" y="230" class="fdSelfT">verify signature, InResponseTo, audience, window</text><circle cx="168.60000000000002" cy="226" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="168.60000000000002" y="229.5" class="fdNumT" style="fill:var(--muted)">5</text><line x1="337" y1="264" x2="79" y2="264" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#sml2-sp-init-ah-front)"/><text x="192" y="255" class="fdLabel">Set-Cookie: session; 302 → /app</text><circle cx="322" cy="264" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="322" y="267.5" class="fdNumT" style="fill:var(--accent)">6</text><text x="340" y="282" class="fdNote">The SP asked the question, so it can check the answer matches (InResponseTo).</text></svg></div>
@@ -113,6 +129,13 @@ solution:`public class Saml {
 <li><b>SP → Browser:</b> Set-Cookie: session; 302 → /app <i>(front channel)</i></li>
 </ol>
 <!--/flow:sml2-sp-init-->
+<p><b>Step 1.</b> You open the application and it finds no session cookie. It doesn't know who you are and it isn't going to ask for a password itself.</p>
+<p><b>Step 2.</b> The app writes a small XML request, the <code>AuthnRequest</code>, gives it an ID it remembers, and redirects your browser to the IdP with that request in the URL. A <b>binding</b> is the way a SAML message is carried. The Redirect binding means it travels compressed in the query string.</p>
+<p><b>Step 3.</b> The IdP logs you in however it's configured to: password, MFA, or nothing at all if you already have an IdP session from earlier in the day.</p>
+<p><b>Step 4.</b> The IdP builds a signed <code>Response</code> containing the assertion and sends the browser a page that posts it to the app's ACS URL automatically. Your browser carries it. The two servers never talk directly.</p>
+<p><b>Step 5.</b> The app checks the signature and checks that <code>InResponseTo</code> names the request ID it remembered from step 2. It also checks that the assertion is addressed to this app and that the time window is still open.</p>
+<p><b>Step 6.</b> Everything matched, so the app sets its own session cookie and redirects you to the page you wanted. SAML's job is finished.</p>
+
 <!--flow:sml2-idp-init-->
 <h4>IdP-initiated SAML SSO: step by step</h4>
 <div class="flowDia"><svg viewBox="0 0 680 282" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="IdP-initiated SAML SSO"><defs><marker id="sml2-idp-init-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="sml2-idp-init-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="sml2-idp-init-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="sml2-idp-init-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="54" x2="74" y2="270" class="fdLife"/><line x1="340" y1="54" x2="340" y2="270" class="fdLife"/><line x1="606" y1="54" x2="606" y2="270" class="fdLife"/><rect x="34.300000000000004" y="8" width="79.39999999999999" height="46" rx="8" class="fdActor"/><text x="74" y="35.5" class="fdActorT">Browser</text><rect x="301" y="8" width="78" height="46" rx="8" class="fdActor"/><text x="340" y="27" class="fdActorT">SP</text><text x="340" y="42" class="fdActorS">the app</text><rect x="567" y="8" width="78" height="46" rx="8" class="fdActor"/><text x="606" y="27" class="fdActorT">IdP</text><text x="606" y="42" class="fdActorS">portal with app tiles</text><line x1="77" y1="102" x2="601" y2="102" stroke="var(--accent)" class="fdArrow" marker-end="url(#sml2-idp-init-ah-front)"/><text x="355" y="93" class="fdLabel">user clicks the app tile in the IdP portal</text><circle cx="92" cy="102" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="92" y="105.5" class="fdNumT" style="fill:var(--accent)">1</text><rect x="402.40000000000003" y="119" width="263.6" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="542.2" y="134" class="fdSelfT">builds an assertion nobody asked for</text><circle cx="402.40000000000003" cy="130" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="402.40000000000003" y="133.5" class="fdNumT" style="fill:var(--muted)">2</text><line x1="603" y1="168" x2="345" y2="168" stroke="var(--accent)" class="fdArrow" marker-end="url(#sml2-idp-init-ah-front)"/><text x="458" y="159" class="fdLabel">auto-POST: unsolicited signed Assertion</text><circle cx="588" cy="168" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="588" y="171.5" class="fdNumT" style="fill:var(--accent)">3</text><rect x="188.4" y="185" width="303.2" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="348" y="200" class="fdSelfT">no AuthnRequest → no InResponseTo to check</text><circle cx="188.4" cy="196" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="188.4" y="199.5" class="fdNumT" style="fill:var(--muted)">4</text><line x1="337" y1="234" x2="79" y2="234" stroke="var(--accent)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#sml2-idp-init-ah-front)"/><text x="192" y="225" class="fdLabel">session cookie; user lands in the app</text><circle cx="322" cy="234" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="322" y="237.5" class="fdNumT" style="fill:var(--accent)">5</text><text x="340" y="252" class="fdNote">Fewer redirects, weaker guarantees: replay and injection need extra care.</text></svg></div>
@@ -124,24 +147,22 @@ solution:`public class Saml {
 <li><b>SP → Browser:</b> session cookie; user lands in the app <i>(front channel)</i></li>
 </ol>
 <!--/flow:sml2-idp-init-->
+<p><b>Step 1.</b> Your day starts at the IdP's portal, already logged in. You click the tile for an application.</p>
+<p><b>Step 2.</b> The IdP builds a signed assertion for that application on the spot. No request from the application prompted it.</p>
+<p><b>Step 3.</b> The IdP has the browser post the assertion to the application's ACS URL, exactly as in step 4 of the other direction. The word for this is <b>unsolicited</b>: the app didn't ask.</p>
+<p><b>Step 4.</b> The app checks the signature, the audience and the time window, but it has no request ID to match, because there was no request. It can't tell a fresh assertion from one someone captured and is sending again.</p>
+<p><b>Step 5.</b> The app sets its session cookie and you land inside. Fewer redirects than the other direction, and one fewer check.</p>
+
 <ul>
-<li><b>SP-initiated</b> (the common, recommended one): the user starts at the <b>app</b> (SP). The unauthenticated app builds a <b>SAMLRequest</b> (an <code>AuthnRequest</code>) and redirects the browser to the IdP. The user logs in; the IdP posts a signed assertion back to the SP's <b>ACS</b> (Assertion Consumer Service) URL. Because the SP started it, it can carry the user back to exactly where they were.</li>
-<li><b>IdP-initiated</b>: the user starts at the <b>IdP</b> (e.g. an app portal / dashboard) and clicks the app tile. The IdP posts an <b>unsolicited</b> assertion straight to the SP's ACS: there was no AuthnRequest. Convenient, but riskier (no request to correlate against, a known vector for assertion-injection/CSRF-style attacks), so it's often discouraged or hardened.</li>
+<li><b>SP-initiated</b> (the common, recommended one): the user starts at the <b>app</b> (SP). The app builds a <b>SAMLRequest</b> (an <code>AuthnRequest</code>) and redirects the browser to the IdP. After login the IdP posts a signed assertion back to the SP's <b>ACS</b> (Assertion Consumer Service) URL. Because the SP started it, it can carry the user back to where they were.</li>
+<li><b>IdP-initiated</b>: the user starts at the <b>IdP</b> portal or dashboard and clicks the app tile. The IdP posts an <b>unsolicited</b> assertion straight to the SP's ACS, with no AuthnRequest behind it. Convenient, but riskier: nothing to correlate against, and a known vector for assertion-injection and CSRF-style attacks. <b>CSRF</b> is cross-site request forgery: a malicious page makes your browser send a request to a site you're logged into, and the site can't tell it wasn't you. Often discouraged or hardened.</li>
 </ul>
-<p><b>RelayState</b> is the "where to go back to" value: in SP-initiated flow the SP sends it with the request and the IdP echoes it back, so the SP can return the user to the original page. (In IdP-initiated flow it's a target URL the IdP supplies.)</p>
 <div class="codeSample" data-hl>// SP-initiated: app -> IdP  (front channel redirect)
 GET https://idp.example.com/sso?SAMLRequest=...deflated+base64...&RelayState=/dashboard
 // IdP then POSTs a signed assertion to the SP's ACS:
 POST https://app.example.com/saml/acs   (SAMLResponse=..., RelayState=/dashboard)</div>
 
-<h4>The two directions, in plain English</h4>
-<p><b>SP-initiated</b> is the ordinary case: you go to the application, it does not know you, so it sends
-you to the IdP to prove who you are and you come back. You started at the app.</p>
-<p><b>IdP-initiated</b> is the tile: you are already signed in to a company portal, you click the
-application's icon, and the IdP pushes an assertion at the app which has not asked for anything. You started
-at the IdP.</p>
-
-<h4>Why the direction is a security property, not a preference</h4>
+<h4>Why the direction is a security property</h4>
 <div class="codeSample" data-hl>SP-INITIATED
   the SP generates an AuthnRequest with an ID, and remembers it.
   the assertion comes back carrying  InResponseTo="_req99".
@@ -151,19 +172,19 @@ IdP-INITIATED
   there was no request. there is no InResponseTo. nothing to correlate.
   the SP must accept an UNSOLICITED, signed assertion from anyone who
   can obtain one.</div>
-<p>That missing correlation is the whole problem. A captured assertion can be replayed at the SP by anyone
-who has it, and the SP has no request of its own to check it against. It is the same class of gap as an
-OAuth flow with no <code>state</code> and no PKCE, and it is why the OASIS specification itself notes the
-weakness, why the Security BCPs discourage it, and why many products either disable it or require extra
-hardening to switch it on.</p>
-<p>Hardening it, if you must: a short <code>NotOnOrAfter</code> measured in a couple of minutes, a strict
-replay cache keyed on the assertion <code>ID</code>, and a <code>Recipient</code> that must match this SP's
-ACS URL exactly.</p>
+<p>That missing correlation is the whole problem. Anyone who captures an assertion can replay it at the
+SP, which has no request of its own to check it against. A <b>replay</b> is exactly that: capturing a valid message and sending it again later. It is the same class of gap as an OAuth flow
+with no <code>state</code> and no PKCE. <b>PKCE</b> (Proof Key for Code Exchange, said "pixy") is where the app invents a random secret at the start of a login, sends a hash of it, and reveals the secret only when it collects the token. An attacker who steals the login code in the middle can't finish without the secret. The OASIS specification itself notes the weakness, the Security
+BCPs discourage it, and many products disable it or require extra hardening to switch it on.</p>
+<p>If you must harden it, keep <code>NotOnOrAfter</code> to a couple of minutes. Keep a strict replay
+cache keyed on the assertion <code>ID</code>. Require <code>Recipient</code> to match this SP's ACS URL
+exactly.</p>
 
-<h4>RelayState: small, and worth understanding</h4>
-<p>A user clicks a deep link, is bounced to the IdP, logs in, and lands back at the application. How does
-the app know to return them to the page they wanted rather than the home page? <b>RelayState</b>: the SP
-sends an opaque value with its request, and the IdP is obliged to echo it back unchanged.</p>
+<h4>RelayState</h4>
+<p>A user clicks a deep link, is bounced to the IdP, logs in, and lands back at the application.
+<b>RelayState</b> is how the app returns them to that page rather than the home page. The SP sends an
+opaque value with its request, and the IdP must echo it back unchanged. In IdP-initiated flow it is a
+target URL the IdP supplies.</p>
 <div class="codeSample" data-hl>// the SP sends it out and gets it back untouched:
 GET /sso?SAMLRequest=...&amp;RelayState=/reports/q3
 POST /saml/acs   SAMLResponse=...&amp;RelayState=/reports/q3
@@ -176,14 +197,13 @@ POST /saml/acs   SAMLResponse=...&amp;RelayState=/reports/q3
 //    redirect to whatever arrived.</div>
 
 <h4>The flow, end to end</h4>
-<p>The user hits a protected page; the SP builds an <code>AuthnRequest</code>, remembers its ID, and
-redirects the browser to the IdP; the IdP authenticates the user however it likes (password, MFA, an
-existing session) and POSTs a signed <code>Response</code> containing the assertion to the SP's <b>ACS</b>
-(Assertion Consumer Service) URL; the SP validates it, creates its <i>own</i> local session, and sends the
-user to the RelayState target.</p>
-<p>Note that last step: <b>SAML gets the user in the door and then steps out of the way</b>. Everything
-afterwards is an ordinary session cookie at the SP. That is why SAML has no concept of a refresh token and
-why Single Logout is hard: the IdP has no idea how many local sessions its assertions created.</p>`,
+<p>The SP builds an <code>AuthnRequest</code>, remembers its ID, and redirects the browser to the IdP.
+The IdP authenticates the user however it likes (password, MFA, an existing session) and POSTs a signed
+<code>Response</code> containing the assertion to the SP's ACS URL. <b>MFA</b> is multi-factor authentication: proving who you are with two different kinds of evidence, usually something you know (a password) plus something you have (a phone or a security key). The SP validates it, creates its
+<i>own</i> local session, and sends the user to the RelayState target.</p>
+<p>That last step matters. <b>SAML gets the user in the door and then steps out of the way.</b> Everything
+afterwards is an ordinary session cookie at the SP. So SAML has no concept of a <b>refresh token</b>. In OAuth that is a long-lived token used only to get new short-lived access tokens without logging in again; SAML has nothing like it. And Single
+Logout is hard: the IdP has no idea how many local sessions its assertions created.</p>`,
 docs:[['SAML profiles (OASIS)','https://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf'],['IdP-initiated SSO risks','https://www.identityserver.com/articles/the-dangers-of-saml-idp-initiated-sso']],
 ex:{title:'Build the SP-initiated redirect',
 prompt:`Write <code>SamlRedirect</code> with <code>static String ssoUrl(String idpSso, String samlRequest, String relayState)</code> that returns the IdP SSO URL: <code>idpSso + "?SAMLRequest="</code> then the URL-encoded <code>samlRequest</code>, then <code>"&amp;RelayState="</code> then the URL-encoded <code>relayState</code> (use <code>java.net.URLEncoder.encode(v, "UTF-8")</code>). Declare <code>throws Exception</code>.`,
@@ -207,7 +227,9 @@ public class SamlRedirect {
 }`}},
 
 {id:'sml3',title:'Bindings: how the message travels',body:`
-<p>A <b>binding</b> is <i>how</i> a SAML message is carried over HTTP. Three matter:</p>
+
+
+<p><b>SAML</b> (Security Assertion Markup Language) is the older, XML-based standard for single sign-on between companies. The identity provider sends the application a signed XML document, an assertion, saying who the user is. A <b>binding</b> is <i>how</i> a SAML message is carried over HTTP. Three matter:</p>
 <!--flow:sml3-artifact-->
 <h4>SAML Artifact binding: step by step</h4>
 <div class="flowDia"><svg viewBox="0 0 680 254" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SAML Artifact binding"><defs><marker id="sml3-artifact-ah-front" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent)"/></marker><marker id="sml3-artifact-ah-back" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--accent2)"/></marker><marker id="sml3-artifact-ah-attack" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--bad)"/></marker><marker id="sml3-artifact-ah-x" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0 0.8 L9.2 5 L0 9.2 Z" fill="var(--muted)"/></marker></defs><line x1="74" y1="42" x2="74" y2="222" class="fdLife"/><line x1="340" y1="42" x2="340" y2="222" class="fdLife"/><line x1="606" y1="42" x2="606" y2="222" class="fdLife"/><rect x="34.300000000000004" y="8" width="79.39999999999999" height="34" rx="8" class="fdActor"/><text x="74" y="29.5" class="fdActorT">Browser</text><rect x="301" y="8" width="78" height="34" rx="8" class="fdActor"/><text x="340" y="29.5" class="fdActorT">SP</text><rect x="567" y="8" width="78" height="34" rx="8" class="fdActor"/><text x="606" y="29.5" class="fdActorT">IdP</text><line x1="603" y1="90" x2="345" y2="90" stroke="var(--accent)" class="fdArrow" marker-end="url(#sml3-artifact-ah-front)"/><text x="458" y="81" class="fdLabel">redirect carrying a small artifact (a reference)</text><circle cx="588" cy="90" r="9" class="fdNum" style="stroke:var(--accent)"/><text x="588" y="93.5" class="fdNumT" style="fill:var(--accent)">1</text><line x1="343" y1="120" x2="601" y2="120" stroke="var(--accent2)" class="fdArrow" marker-end="url(#sml3-artifact-ah-back)"/><text x="488" y="111" class="fdLabel">ArtifactResolve: SOAP, mutually authenticated</text><circle cx="358" cy="120" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="358" y="123.5" class="fdNumT" style="fill:var(--accent2)">2</text><line x1="603" y1="150" x2="345" y2="150" stroke="var(--accent2)" class="fdArrow" stroke-dasharray="4 4" marker-end="url(#sml3-artifact-ah-back)"/><text x="458" y="141" class="fdLabel">ArtifactResponse: the full Assertion</text><circle cx="588" cy="150" r="9" class="fdNum" style="stroke:var(--accent2)"/><text x="588" y="153.5" class="fdNumT" style="fill:var(--accent2)">3</text><rect x="237.9" y="167" width="204.2" height="22" rx="11" class="fdSelf" style="stroke:var(--muted)"/><text x="348" y="182" class="fdSelfT">verify &amp; create the session</text><circle cx="237.9" cy="178" r="9" class="fdNum" style="stroke:var(--muted)"/><text x="237.9" y="181.5" class="fdNumT" style="fill:var(--muted)">4</text><text x="340" y="204" class="fdNote">The assertion itself never crosses the browser; only a one-time reference does.</text><line x1="18" y1="240" x2="44" y2="240" stroke="var(--accent)" class="fdArrow"/><text x="50" y="244" class="fdLegend">front channel (via the browser)</text><line x1="271.29999999999995" y1="240" x2="297.29999999999995" y2="240" stroke="var(--accent2)" class="fdArrow"/><text x="303.29999999999995" y="244" class="fdLegend">back channel (server to server)</text></svg></div>
@@ -219,24 +241,23 @@ public class SamlRedirect {
 </ol>
 <!--/flow:sml3-artifact-->
 <ul>
-<li><b>HTTP-Redirect</b>: the message is <b>DEFLATE-compressed, base64-encoded, and URL-encoded</b> into a query parameter. Used for the (small) <code>AuthnRequest</code> because URLs have length limits. Signatures go in a separate query param.</li>
-<li><b>HTTP-POST</b>: the message is base64-encoded into a hidden form field and <b>auto-submitted</b> by the browser. Used for the (larger, signed) <code>SAMLResponse</code>/assertion. No length limit; the XML Signature is inside the document.</li>
-<li><b>HTTP-Artifact</b>: only a small <b>artifact</b> (a reference) goes through the browser; the SP then fetches the real assertion from the IdP over a <b>back channel</b>. Keeps the assertion off the front channel entirely.</li>
+<li><b>HTTP-Redirect</b>: the message is <b>DEFLATE-compressed, base64-encoded, and URL-encoded</b> into a query parameter. <b>DEFLATE</b> is the standard compression method behind zip and gzip files. SAML squeezes the XML with it so the request is short enough to fit in a URL. Used for the small <code>AuthnRequest</code>. Signatures go in a separate query param.</li>
+<li><b>HTTP-POST</b>: the message is base64-encoded into a hidden form field and <b>auto-submitted</b> by the browser. Used for the larger, signed <code>SAMLResponse</code>/assertion. No length limit. The XML Signature is inside the document.</li>
+<li><b>HTTP-Artifact</b>: only a small <b>artifact</b> (a reference) goes through the browser. The SP then fetches the real assertion from the IdP over a <b>back channel</b>, as a SOAP call. <b>SOAP</b> is an older way for one program to call another over HTTP by sending an XML envelope. SAML's artifact binding uses it, and it is a large part of why SAML libraries are heavy.</li>
 </ul>
-<p>The Redirect binding's encoding is specific and worth doing once: <b>raw DEFLATE</b> (no zlib header, i.e. <code>nowrap=true</code>) → base64 → URL-encode.</p>
+<p>The Redirect encoding, once: <b>raw DEFLATE</b> (no zlib header, i.e. <code>nowrap=true</code>) → base64 → URL-encode.</p>
 <div class="codeSample" data-hl>Deflater d = new Deflater(Deflater.DEFLATED, true);   // nowrap=true = raw DEFLATE
 d.setInput(xml.getBytes("UTF-8")); d.finish();
 // read deflated bytes -> base64 -> URLEncoder.encode(...)  == the SAMLRequest param</div>
 
 <h4>Why "binding" is a word at all</h4>
-<p>SAML defines <i>what</i> the messages say. A <b>binding</b> defines <i>how</i> they travel. The two are
-separate on purpose, and the separation is why the same assertion can arrive as a URL parameter, a form
-field, or a back-channel fetch without changing its contents.</p>
-<p>There is a practical constraint driving the choice. Everything here goes <b>through the browser</b>, and
-a browser can carry a message two ways: in the URL of a redirect, or in the body of a form it submits. URLs
-have length limits (historically around 2000 characters, and enforced by proxies and servers you do not
-control) while a form body does not. So the small message goes in the URL and the big one goes in a
-form.</p>
+<p>SAML defines <i>what</i> the messages say. A <b>binding</b> defines <i>how</i> they travel. They are
+separate on purpose, so the same assertion can arrive as a URL parameter, a form field, or a back-channel
+fetch without changing its contents.</p>
+<p>Everything here goes <b>through the browser</b>, which can carry a message two ways: in the URL of a
+redirect, or in the body of a form it submits. URLs have length limits, historically around 2000
+characters, enforced by proxies and servers you do not control. Form bodies do not. Small message in the
+URL, big one in a form.</p>
 
 <div class="codeSample" data-hl>HTTP-Redirect   the AuthnRequest (small)
   DEFLATE (raw, no zlib header) -> base64 -> URL-encode -> query param
@@ -252,10 +273,10 @@ HTTP-Artifact   neither - just a reference
   real assertion from the IdP over a back channel it opens itself.
   the assertion never touches the browser at all.</div>
 
-<h4>The compression detail that costs people an afternoon</h4>
+<h4>The compression detail that costs an afternoon</h4>
 <p>The Redirect binding uses <b>raw DEFLATE</b>: the compressed bytes with no zlib header and no checksum.
-Most standard-library helpers add that header by default, and the resulting parameter looks plausible,
-base64-decodes fine, and is rejected by the IdP with an unhelpful error.</p>
+Most standard-library helpers add that header by default. The result looks plausible, base64-decodes
+fine, and the IdP rejects it with an unhelpful error.</p>
 <div class="codeSample" data-hl>// Java: the second argument is what matters
 Deflater d = new Deflater(Deflater.DEFLATED, true);   // nowrap = TRUE
 // Python: a negative window size means "no header"
@@ -264,20 +285,18 @@ zlib.compressobj(9, zlib.DEFLATED, -15)
 zlib.deflateRawSync(xml)     // deflateRaw, not deflate</div>
 
 <h4>Where the signature lives changes what you verify</h4>
-<p>This is the part that actually matters. Under <b>Redirect</b>, the signature covers the
-<i>encoded query string</i>, so it must be verified against exactly the bytes as sent, in the specified
-parameter order, before anything is decoded. Re-encoding first and verifying afterwards is a classic
-implementation bug, because two different encodings of the same XML produce different signatures.</p>
-<p>Under <b>POST</b>, the XML Signature is inside the document, which is where XML Signature Wrapping
+<p>Under <b>Redirect</b>, the signature covers the <i>encoded query string</i>. Verify it against the
+bytes as sent, in the specified parameter order, before decoding anything. Re-encoding first is a classic
+bug: two encodings of the same XML produce different signatures.</p>
+<p>Under <b>POST</b>, the XML Signature is inside the document. That is where XML Signature Wrapping
 becomes possible, the attack the signing lesson takes apart. Different binding, different failure mode,
-same underlying rule: <b>verify the exact thing that was signed</b>.</p>
+same rule: <b>verify the exact thing that was signed</b>.</p>
 
 <h4>Artifact, and why it is rare</h4>
-<p>The Artifact binding is genuinely more secure: nothing sensitive passes through the browser at all, so
-there is no assertion to capture from history, a Referer header, or a compromised extension. It is also
-rarely used, because it requires the SP to make a direct, authenticated back-channel call to the IdP, which
-means network reachability and mutual trust that a browser-only integration does not. Recognize it, expect
-POST.</p>`,
+<p>The Artifact binding is more secure. Nothing sensitive passes through the browser, so there is no
+assertion to capture from history, a Referer header, or a compromised extension. It is rare because the
+SP must make a direct, authenticated back-channel call to the IdP. That needs network reachability and
+mutual trust a browser-only integration does not. Recognize it, expect POST.</p>`,
 docs:[['SAML bindings (OASIS)','https://docs.oasis-open.org/security/saml/v2.0/saml-bindings-2.0-os.pdf'],['java.util.zip.Deflater','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/zip/Deflater.html']],
 ex:{title:'Encode an AuthnRequest for the Redirect binding',
 prompt:`Write <code>Redirect</code> with <code>static String encode(String xml)</code> that produces the HTTP-Redirect value: raw-DEFLATE the UTF-8 XML with <code>new Deflater(Deflater.DEFLATED, true)</code>, base64-encode the compressed bytes with <code>Base64.getEncoder()</code>, then <code>URLEncoder.encode(..., "UTF-8")</code> the result. Declare <code>throws Exception</code>. (Read the deflated bytes into a <code>ByteArrayOutputStream</code>.)`,
@@ -317,13 +336,15 @@ public class Redirect {
 }`}},
 
 {id:'sml4',title:'Metadata & establishing trust',body:`
-<p>Before any SSO works, the SP and IdP must <b>trust</b> each other. They do it by exchanging <b>metadata</b>, an XML document each side publishes describing itself:</p>
+
+
+<p>Before any SSO works, the SP and IdP must <b>trust</b> each other. <b>SSO</b> is single sign-on: you log in once, at one place, and every other application accepts that login instead of asking for its own. The <b>SP</b> is the service provider, the application that doesn't log you in itself and instead trusts the identity provider, the IdP, to do it and to send back a signed statement about the user, which SAML calls an assertion. The two sides establish that trust by exchanging <b>metadata</b>, an XML document each side publishes describing itself:</p>
 <ul>
 <li><b>entityID</b>: the party's unique identifier (usually a URL). The audience/issuer names must match these.</li>
-<li><b>Signing certificate(s)</b>: the IdP's public cert, so the SP can verify assertion signatures. This is the root of trust (PKI, next stream).</li>
+<li><b>Signing certificate(s)</b>: the IdP's public cert, so the SP can verify assertion signatures. This is the root of trust (PKI, next stream). <b>PKI</b> is public key infrastructure: the certificate authorities, certificates and rules that let a public key be trusted as belonging to a particular name. It's what makes the padlock in a browser mean something.</li>
 <li><b>Endpoints</b>: the IdP's <b>SSO</b> URL; the SP's <b>ACS</b> (Assertion Consumer Service) and <b>SLO</b> (Single Logout) URLs; supported bindings.</li>
 </ul>
-<p>Setup = the SP imports the IdP's metadata and vice-versa. From then on, the SP accepts assertions whose <code>Issuer</code> equals the IdP's entityID and whose signature verifies against the metadata cert. <b>Certificate rotation is a common operational task</b>: when the IdP rotates its signing key, its metadata must be re-shared or the SP will reject new assertions (a frequent outage cause; publish both old+new during rollover).</p>
+<p>Setup = the SP imports the IdP's metadata and vice-versa.</p>
 <div class="codeSample" data-hl>&lt;EntityDescriptor entityID="https://idp.example.com/saml"&gt;
   &lt;IDPSSODescriptor&gt;
     &lt;KeyDescriptor use="signing"&gt; ...X.509 cert... &lt;/KeyDescriptor&gt;
@@ -331,13 +352,13 @@ public class Redirect {
   &lt;/IDPSSODescriptor&gt;
 &lt;/EntityDescriptor&gt;</div>
 
-<h4>What "establishing trust" actually means here</h4>
-<p>There is no registry, no discovery protocol and nothing automatic. Two organizations decide to trust each
-other and <b>exchange XML documents describing themselves</b>. That exchange is the entire trust
-establishment, and it is usually done by a human pasting a URL into an admin console.</p>
-<p>Once done, the SP's rule is simple: accept an assertion whose <code>Issuer</code> equals the IdP's
-<code>entityID</code> and whose signature verifies against the certificate in that IdP's metadata. Nothing
-else grants trust, which is what makes the metadata document the most important file in the
+<h4>What "establishing trust" means here</h4>
+<p>There is no registry, no discovery protocol and nothing automatic. Two organizations decide to trust
+each other and <b>exchange XML documents describing themselves</b>. That exchange is the entire trust
+establishment, usually a human pasting a URL into an admin console.</p>
+<p>From then on the SP's rule is simple: accept an assertion whose <code>Issuer</code> equals the IdP's
+<code>entityID</code> and whose signature verifies against the certificate in that IdP's metadata.
+Nothing else grants trust. That makes the metadata document the most important file in the
 integration.</p>
 
 <div class="codeSample" data-hl>&lt;EntityDescriptor entityID="https://idp.corp.com/saml"&gt;   &lt;!-- the NAME --&gt;
@@ -356,13 +377,13 @@ integration.</p>
 // and its certificate if it signs requests or wants encrypted assertions.</div>
 
 <h4>entityID is a name, not an address</h4>
-<p>It looks like a URL and it is an <b>identifier</b>. Nobody fetches it, it does not have to resolve, and
-changing it breaks the integration even if the service is unmoved, because the SP is matching a string.
-Two consequences: pick one at the start and never change it, and do not assume you can reach it.</p>
+<p>It looks like a URL and it is an <b>identifier</b>. Nobody fetches it and it does not have to resolve.
+Changing it breaks the integration even if the service is unmoved, because the SP is matching a string.
+So pick one at the start, never change it, and do not assume you can reach it.</p>
 
 <h4>Certificate rotation: the outage everyone has</h4>
 <p>The IdP's signing certificate expires. Somebody renews it. Every SP still holds the old one in its
-metadata, so every assertion now fails signature verification and <b>all SSO stops at once</b>: for every
+metadata, so every assertion now fails signature verification. <b>All SSO stops at once</b>: every
 application, simultaneously, usually early in the morning.</p>
 <div class="codeSample" data-hl>// what makes rotation survivable: publish BOTH keys during the overlap.
 &lt;KeyDescriptor use="signing"&gt; ... NEW cert ... &lt;/KeyDescriptor&gt;
@@ -374,15 +395,15 @@ application, simultaneously, usually early in the morning.</p>
 //   1. IdP publishes both      2. SPs refresh their metadata
 //   3. IdP switches to signing with the new one
 //   4. after everyone has refreshed, the old one is removed</div>
-<p>The reason this bites so often is that most SPs load metadata <b>once, by hand, at integration time</b>
-and never look again. If a product supports a metadata <i>URL</i> with periodic refresh, use it; that
-single setting converts a coordinated multi-team cutover into something that happens by itself.</p>
+<p>This bites so often because most SPs load metadata <b>once, by hand, at integration time</b> and never
+look again. If a product supports a metadata <i>URL</i> with periodic refresh, use it. That one setting
+turns a coordinated multi-team cutover into something that happens by itself.</p>
 
 <h4>The operational advice</h4>
 <p><b>Track expiry dates as an inventory</b>, with owners and alerts months ahead, not days. <b>Prefer a
 metadata URL over an uploaded file</b> everywhere it is offered. And <b>fetch metadata over HTTPS from a
-host you verified</b>: the document contains the certificate that defines who you trust, so accepting one
-over an unauthenticated channel hands an attacker the ability to become your IdP.</p>`,
+host you verified</b>. The document contains the certificate that defines who you trust, so accepting one
+over an unauthenticated channel lets an attacker become your IdP.</p>`,
 docs:[['SAML metadata (OASIS)','https://docs.oasis-open.org/security/saml/v2.0/saml-metadata-2.0-os.pdf'],['SAML metadata explained','https://www.samltool.com/idp_metadata.php']],
 ex:{title:'Trust: match issuer to the configured IdP',
 prompt:`Write <code>SamlTrust</code> with: <code>static String entityId(String metadataXml)</code> returning the value of the first <code>entityID="..."</code> attribute (find <code>entityID="</code>, then the text up to the next <code>"</code>); and <code>static boolean issuerTrusted(String assertionIssuer, String idpEntityId)</code> returning <code>idpEntityId.equals(assertionIssuer)</code>.`,
@@ -412,6 +433,8 @@ solution:`public class SamlTrust {
 }`}},
 
 {id:'sml5',title:'Signing, encryption, SLO & choosing SAML vs OIDC',body:`
+
+
 <p>Three more essentials, then the decision:</p>
 <!--flow:sml5-slo-->
 <h4>SP-initiated Single Logout: step by step</h4>
@@ -426,28 +449,27 @@ solution:`public class SamlTrust {
 </ol>
 <!--/flow:sml5-slo-->
 <ul>
-<li><b>Signing</b> (always): the IdP signs the assertion/response with <b>XML Signature</b>; the SP verifies with the metadata cert. Without a valid signature the assertion is worthless. The SP must also check the <b>Conditions</b>: <code>NotOnOrAfter</code> (not expired) and <code>Audience</code> (this SP), the SAML <code>exp</code>/<code>aud</code>.</li>
-<li><b>Encryption</b> (optional): the IdP can <b>encrypt</b> the assertion (XML Encryption) to the SP's public key so intermediaries/the browser can't read it. Analogous to JWE vs JWS: sign for integrity, encrypt for confidentiality.</li>
-<li><b>Single Logout (SLO)</b>: log the user out of the IdP <i>and</i> all SPs in one action. Attractive on paper and notoriously fiddly (every SP must be reachable and cooperate), so many deployments rely on short sessions instead.</li>
+<li><b>Signing</b> (always): the IdP signs the assertion/response with <b>XML Signature</b>. The IdP is the identity provider, the system that actually logs the user in; the <b>SP</b> is the service provider, the application that doesn't log you in itself and instead trusts the IdP to do it. The assertion is SAML's signed statement about who the user is. The SP verifies with the metadata cert, then checks the <b>Conditions</b>: <code>NotOnOrAfter</code> (not expired) and <code>Audience</code> (this SP), the SAML <code>exp</code>/<code>aud</code>.</li>
+<li><b>Encryption</b> (optional): the IdP can <b>encrypt</b> the assertion (XML Encryption) to the SP's public key so intermediaries and the browser cannot read it. JWE vs JWS: sign for integrity, encrypt for confidentiality. A <b>JWT</b> (JSON Web Token) is the small signed document OIDC uses where SAML uses an XML assertion: three base64 pieces separated by dots, carrying facts such as who the user is and when it expires. <b>JWS</b> and <b>JWE</b> (JSON Web Signature and JSON Web Encryption) are the two shapes a JWT can take: signed so it can be read by anyone and forged by no one, or encrypted so only the intended recipient can read it.</li>
+<li><b>Single Logout (SLO)</b>: log the user out of the IdP <i>and</i> all SPs in one action. The IdP reaches each SP either through the browser or over a direct SOAP call. <b>SOAP</b> is an older way for one program to call another over HTTP by sending an XML envelope. Fiddly in practice, since every SP must be reachable and cooperate, so many deployments rely on short sessions instead.</li>
 </ul>
 <p><b>SAML or OIDC?</b></p>
 <ul>
-<li><b>SAML</b>: enterprise/workforce web SSO, especially with legacy apps and IdPs that speak it; browser-based, XML.</li>
-<li><b>OIDC</b>: modern web/mobile/SPA and <b>APIs</b>; JSON/JWT, works cleanly with OAuth for API authorization, lighter for native/mobile. Prefer OIDC for new build; use SAML to integrate where it's already the standard.</li>
+<li><b>SAML</b> (Security Assertion Markup Language): the older, XML-based standard for single sign-on between companies, where the IdP sends the application a signed XML assertion. Enterprise/workforce web SSO, especially with legacy apps and IdPs that speak it. <b>SSO</b> is single sign-on: you log in once, at one place, and every other application accepts that login instead of asking for its own. Browser-based, XML.</li>
+<li><b>OIDC</b> (OpenID Connect): a thin layer on top of OAuth that adds a signed statement of who logged in, called an ID token. Modern web/mobile/SPA and <b>APIs</b>. JSON/JWT, works cleanly with OAuth for API authorization, lighter for native/mobile. Prefer OIDC for new build. Use SAML to integrate where it is already the standard.</li>
 </ul>
 <div class="codeSample" data-hl>// the SP's non-negotiable checks on a received assertion:
 // 1) XML Signature verifies against the IdP metadata cert
 // 2) Conditions NotOnOrAfter is in the future   (not expired)
 // 3) AudienceRestriction Audience == this SP's entityID</div>
 
-<h4>"The signature verified" is not the same as "the assertion is valid"</h4>
-<p>This is the single most important thing to understand about SAML security, and it is where real
-implementations have repeatedly failed. XML Signature does not sign a document; it signs a
-<b>reference to an element</b>, identified by ID. Verification therefore answers "was <i>some</i>
-element in this document signed by the IdP?", not "is the element I am about to read the signed
-one?".</p>
-<p><b>XML Signature Wrapping (XSW)</b> exploits exactly that gap. The attacker takes a legitimately
-signed assertion, wraps it somewhere the parser will ignore, and inserts a forged assertion where the
+<h4>"The signature verified" is not "the assertion is valid"</h4>
+<p>This is the most important point in SAML security, and where real implementations keep failing.
+XML Signature does not sign a document. It signs a <b>reference to an element</b>, identified by
+ID. So verification answers "was <i>some</i> element in this document signed by the IdP?", not "is the
+element I am about to read the signed one?".</p>
+<p><b>XML Signature Wrapping (XSW)</b> exploits that gap. The attacker takes a legitimately signed
+assertion, wraps it somewhere the parser will ignore, and inserts a forged assertion where the
 application will look:</p>
 <div class="codeSample" data-hl>&lt;Response&gt;
   &lt;Extensions&gt;
@@ -464,39 +486,36 @@ application will look:</p>
 // the signature library says VALID (it found and checked #_abc)
 // the application says "welcome, admin"
 // two components, two different answers to "which assertion?" - that is the bug</div>
-<p>The 2018 Duo Labs research found this class of flaw in multiple mainstream SAML libraries at once,
-which tells you it is a design trap rather than a series of careless mistakes. The defenses: verify the
-signature and read the claims from <b>the same node reference</b>, reject documents containing more than
-one assertion, resolve IDs strictly, disable DTD processing and entity expansion, and never re-parse the
-document after validating it.</p>
+<p>The 2018 Duo Labs research found this flaw in multiple mainstream SAML libraries at once: a design
+trap, not carelessness. The defenses: verify the signature and read the claims
+from <b>the same node reference</b>. A claim is one fact inside the assertion: a name, an email, a group. Reject documents with more than one assertion. Resolve IDs
+strictly. Disable DTD processing and entity expansion. Never re-parse the document after validating
+it.</p>
 
 <h4>Replay, and what <code>InResponseTo</code> is for</h4>
-<p>A signed assertion stays cryptographically valid until <code>NotOnOrAfter</code> passes. If the SP does
-nothing else, anyone who captures one can present it again inside that window. Three checks close
-this:</p>
+<p>A signed assertion stays valid until <code>NotOnOrAfter</code> passes. Anyone who captures one can
+present it again inside that window unless the SP checks more:</p>
 <ul>
 <li><b><code>InResponseTo</code></b> must equal the <code>ID</code> of the <code>AuthnRequest</code> this
-SP actually sent, and that request must be one this session is waiting on. This is what
-SP-initiated flow buys you and what IdP-initiated flow gives up: an unsolicited assertion has no
-request to correlate against, which is the concrete reason it is discouraged.</li>
+SP sent, and this session must be waiting on that request. IdP-initiated flow gives this up: an
+unsolicited assertion has no request to correlate against.</li>
 <li><b>Replay cache.</b> Record each assertion <code>ID</code> until its <code>NotOnOrAfter</code> passes
 and reject any repeat. The validity window should be minutes, not hours.</li>
 <li><b>Recipient / Destination</b> must match this SP's ACS URL, so an assertion minted for another
-endpoint cannot be redirected here.</li>
+endpoint cannot be redirected here. The <b>ACS</b> is the assertion consumer service: the URL on the application that receives the SAML assertion after login, the SAML equivalent of the OAuth redirect URI.</li>
 </ul>
 
 <h4>Golden SAML</h4>
 <p>One structural weakness has no protocol fix. The IdP's <b>signing private key</b> can mint an assertion
-for any user, for any SP, with any attributes, and the SPs will accept it, because that is precisely
-what they were configured to trust. An attacker who steals that key (the ADFS token-signing certificate
-being the classic target, as seen in the SolarWinds intrusions) can impersonate anyone, indefinitely,
-<b>without touching the IdP again</b>, so there is nothing in the IdP's logs and disabling the account
-does not help.</p>
-<p>That is why the signing key belongs in an HSM, why access to it is a PAM-grade control, and why key
-rotation is a genuine incident-response step rather than hygiene. It also explains the shape of the
-mitigations that do exist: short assertion lifetimes, monitoring SP-side authentications that have no
-corresponding IdP login event, and not treating "the signature verified" as the end of the
-conversation.`,
+for any user, for any SP, with any attributes. The SPs will accept it, because that is what they were
+configured to trust. An attacker who steals that key can impersonate anyone, indefinitely,
+<b>without touching the IdP again</b>. Nothing appears in the IdP's logs and disabling the account does
+not help. The ADFS token-signing certificate is the classic target, as seen in the SolarWinds
+intrusions.</p>
+<p>So the signing key belongs in an HSM, access to it is a PAM-grade control, and key rotation is an
+incident-response step, not hygiene. An <b>HSM</b> is a hardware security module: a locked box, physical or cloud-hosted, that holds private keys and does the signing inside itself, so the key can be used but never copied out. <b>PAM</b> is privileged access management, the extra controls for admin and root accounts: their passwords live in a vault, sessions are recorded, and elevated access is granted for a short window rather than permanently. The mitigations that exist: short assertion lifetimes, monitoring
+SP-side authentications with no matching IdP login event, and not treating "the signature verified" as
+the end of the conversation.</p>`,
 docs:[['Duo Labs - SAML XML signature wrapping','https://duo.com/blog/duo-finds-saml-vulnerabilities-affecting-multiple-implementations'],['CISA AA21-008A - Golden SAML / token-signing key abuse','https://www.cisa.gov/news-events/cybersecurity-advisories/aa21-008a'],['XML Signature / Encryption in SAML','https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['SAML vs OIDC (OpenID Foundation)','https://openid.net/developers/how-connect-works/']],
 ex:{title:'Validate the assertion conditions',
 prompt:`Write <code>Assertion</code> with <code>static boolean acceptable(boolean signatureValid, String audience, long notOnOrAfterEpoch, String myEntityId, long nowEpoch)</code> that returns <code>true</code> only if the signature is valid, <code>myEntityId.equals(audience)</code>, and it is not expired (<code>nowEpoch &lt; notOnOrAfterEpoch</code>).`,
@@ -519,58 +538,56 @@ solution:`public class Assertion {
 }`}},
 
 {id:'sml6',title:'Migrating from SAML to OIDC without a flag day',body:`
-<p>Plenty of working SAML deployments will outlive the people who built them, and that is fine; SAML is
-not broken. But new applications are built against OIDC, mobile and single-page apps fit it badly through
-SAML, and eventually an organization ends up running both. This lesson is about getting from one to the
-other while people keep logging in.</p>
-<p>The first thing to establish is that there is no flag day. Anyone proposing "we switch on Saturday" is
-proposing to discover every undocumented integration at once, at the weekend.</p>
 
-<h4>What actually has to move</h4>
-<p>The protocol swap is the easy part. What makes migrations long is everything attached to it:</p>
+
+<p>SAML is not broken. Plenty of deployments will outlive the people who built them. <b>SAML</b> (Security Assertion Markup Language) is the older, XML-based standard for single sign-on between companies: the identity provider sends the application a signed XML document, an assertion, saying who the user is. But new
+applications are built against OIDC, mobile and single-page apps fit SAML badly, and eventually an
+organization runs both. <b>OIDC</b> (OpenID Connect) is the newer standard, a thin layer on top of OAuth that adds a signed statement of who logged in, called an ID token, in JSON rather than XML.</p>
+<p>There is no flag day. Anyone proposing "we switch on Saturday" is proposing to discover every
+undocumented integration at once, at the weekend.</p>
+
+<h4>What has to move</h4>
+<p>The protocol swap is the easy part. Everything attached to it takes the time:</p>
 <ul>
-<li><b>The identifier.</b> SAML gives you a <code>NameID</code>; OIDC gives you a <code>sub</code>. They
-are usually <i>different values for the same person</i>, and if the application stored the NameID as its
-user key, the OIDC login looks like a brand new user.</li>
+<li><b>The identifier.</b> A SAML <code>NameID</code> and an OIDC <code>sub</code> are usually
+<i>different values for the same person</i>. An application that stored the NameID as its user key sees
+the OIDC login as a new user.</li>
 <li><b>The attribute contract.</b> SAML attribute names are URIs by convention
-(<code>http://schemas.xmlsoap.org/.../emailaddress</code>); OIDC claims are short names
-(<code>email</code>). Every mapping has to be restated, and applications tend to depend on attributes
-nobody documented.</li>
+(<code>http://schemas.xmlsoap.org/.../emailaddress</code>). OIDC claims are short names
+(<code>email</code>). A claim is one fact inside a token: a name, an email, a group. Every mapping has to be restated, and applications depend on attributes nobody
+documented.</li>
 <li><b>Session and logout behavior.</b> SAML single logout and OIDC front- or back-channel logout are not
-equivalent, and a partially migrated estate can leave a user signed out of some applications and not
+equivalent, so a half-migrated estate can leave a user signed out of some applications and not
 others.</li>
 <li><b>The long tail.</b> The applications nobody owns, the service that authenticates through SAML for one
 nightly job, the vendor whose OIDC support is "on the roadmap".</li>
 </ul>
 
-<h4>The strategy that works: run both, migrate per application</h4>
-<p>Support both protocols simultaneously against one user population, and move applications one at a time.
-Two shapes do this well. Either the IdP speaks both (most do) or you put a <b>broker</b> in the middle
-that is a SAML SP upstream and an OIDC provider downstream, which lets applications migrate without the
-IdP changing at all.</p>
-<p>Then, per application: enable OIDC alongside SAML, move a pilot group, verify that the <i>same human</i>
-resolves to the <i>same account</i>, cut the rest over, and only then remove the SAML integration. The
-removal is a separate change, deliberately, so a rollback is a configuration flip rather than a rebuild.</p>
+<h4>Run both, migrate per application</h4>
+<p>Run both protocols against one user population. Either the IdP speaks both (most do), or a
+<b>broker</b> sits in the middle: a SAML SP upstream, an OIDC provider downstream, so applications migrate
+without the IdP changing. An <b>SP</b> is a service provider, the application side of SAML: the party that doesn't log users in itself and trusts an identity provider to do it. The broker plays that role toward the old IdP while acting as the OIDC provider toward the applications.</p>
+<p>Then one application at a time: OIDC alongside SAML, a pilot group, a check that the <i>same human</i>
+resolves to the <i>same account</i>, then everyone, and only then remove SAML. Removal is its own change,
+so a rollback is a configuration flip rather than a rebuild.</p>
 
-<h4>The identity-linking rule, which is where migrations go wrong</h4>
-<p>During the overlap the same person can arrive as a SAML assertion or an OIDC token, and something must
-decide they are one account. The tempting shortcut is to match on email address. Do not.</p>
-<p>Email is mutable, reassignable, and, critically, asserted by whichever side is speaking. Auto-linking
-on it means anyone able to influence an email claim can attach themselves to an existing account. The
-correct approach is an explicit <b>link table</b>: a row per protocol identifier pointing at one internal
-account, populated deliberately: from a directory export, from a first login that was verified another
-way, or from an administrator's action. Unknown identifier means no account, not "probably this one".</p>
-<p>This is also the reason to key applications on an internal account id rather than on whatever the
-protocol handed them. Estates that did that migrate in weeks; estates that stored NameIDs everywhere spend
-a year finding them.</p>
+<h4>Identity linking, where migrations go wrong</h4>
+<p>During the overlap the same person arrives as a SAML assertion or an OIDC token, and something
+must decide they are one account. Do not match on email address.</p>
+<p>Email is mutable, reassignable, and asserted by whichever side is speaking. Auto-link on it and anyone
+who can influence an email claim can attach themselves to an existing account. Use an explicit <b>link
+table</b>: one row per protocol identifier, pointing at one internal account. Populate it from a directory
+export (the directory being the database of people, groups and machines the organization keeps), a first login verified another way, or an administrator's action. Unknown identifier means no
+account, not "probably this one".</p>
+<p>Key applications on an internal account id, not on whatever the protocol handed them. Estates that did
+migrate in weeks. Estates that stored NameIDs everywhere spend a year finding them.</p>
 
-<h4>Knowing when you are finished</h4>
-<p>Instrument the login path by protocol before you start, so "SAML logins last week" is a number rather
-than an opinion. The migration is done when that number reaches zero for an application, and the SAML
-integration is removed <i>after</i> a quiet period rather than at the same moment, because the traffic you
-cannot see is the traffic that will page you.</p>
+<h4>When you are finished</h4>
+<p>Instrument the login path by protocol before you start, so "SAML logins last week" is a number, not an
+opinion. An application is done when that number reaches zero. Remove the SAML integration only <i>after</i> a
+quiet period. The traffic you cannot see is the traffic that will page you.</p>
 
-<h4>The cookbook: the spreadsheet and the per-app cutover</h4>
+<h4>The cookbook</h4>
 <div class="codeSample" data-hl>the inventory, one row per application, BEFORE anything moves:
 app | owner | NameID format | attributes consumed | uses SLO? | vendor OIDC status | logins/week
 
@@ -581,8 +598,7 @@ the cutover, per application:
 [ ] everyone moved; SAML logins/week for this app reads zero
 [ ] one quiet period, long enough to include month-end
 [ ] SAML integration removed as its own change, with its own rollback</div>
-<p>The spreadsheet is the migration. Every column is a question that gets answered either now, calmly,
-or later, at 2am, by whoever is on call: the empty "owner" cells are the long tail finding you first.</p>`,
+<p>The spreadsheet is the migration. The empty "owner" cells are the long tail finding you first.</p>`,
 docs:[['OpenID Connect Core','https://openid.net/specs/openid-connect-core-1_0.html'],['SAML 2.0 core (assertions and NameID)','https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf'],['NIST SP 800-63C (federation assurance)','https://pages.nist.gov/800-63-3/sp800-63c.html']],
 ex:{title:'Resolve one human across two protocols',lang:'js',
 run:{call:'resolveAccount',cases:[{name:'a known SAML identifier',args:[{protocol:'saml',id:'ada@acme.com',email:'ada@acme.com'},[{protocol:'saml',id:'ada@acme.com',accountId:'acct-1'},{protocol:'oidc',id:'sub-9911',accountId:'acct-1'}]],expect:'acct-1'},{name:'a known OIDC subject reaches the same account',args:[{protocol:'oidc',id:'sub-9911',email:'ada@acme.com'},[{protocol:'saml',id:'ada@acme.com',accountId:'acct-1'},{protocol:'oidc',id:'sub-9911',accountId:'acct-1'}]],expect:'acct-1'},{name:'an unknown subject is NOT linked by matching email',args:[{protocol:'oidc',id:'sub-0000',email:'ada@acme.com'},[{protocol:'saml',id:'ada@acme.com',accountId:'acct-1'},{protocol:'oidc',id:'sub-9911',accountId:'acct-1'}]],expect:null},{name:'the same string under the wrong protocol does not match',args:[{protocol:'oidc',id:'ada@acme.com',email:'ada@acme.com'},[{protocol:'saml',id:'ada@acme.com',accountId:'acct-1'}]],expect:null},{name:'no links at all',args:[{protocol:'saml',id:'ada@acme.com',email:'ada@acme.com'},[]],expect:null}]},

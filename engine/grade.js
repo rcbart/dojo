@@ -70,7 +70,7 @@ function localChecks(e,code){
     bare=stripInert(code,Object.assign({keepStrings:false},p));
     inert=(bare.replace(/[^A-Za-z]/g,'').length<15)&&(code.replace(/[^A-Za-z]/g,'').length>=15);
   }
-  return (e.tests||[]).map(t=>{
+  const rows=(e.tests||[]).map(t=>{
     let pass;
     // An inert submission (nothing but comments and string literals) is matched
     // against the string-stripped text, so a short but genuine answer whose
@@ -80,6 +80,27 @@ function localChecks(e,code){
     if(t.not)pass=!pass;
     return {desc:t.d,pass};
   });
+  /* Well-formedness (found by an alpha tester, 6 Sep): a submission that was gibberish
+     with the right substrings in it ("classsssss ! {", nine open braces,
+     four close) passed every structural check, and with no runner available
+     that marked the lesson complete. The regex checks look for the presence
+     of a technique; none of them asks whether the text could be a program.
+     This one does, cheaply: in a C-family language the braces, parentheses
+     and brackets must balance once comments and strings are gone. It is not
+     a parser and does not pretend to be, but it rejects the casual case, and
+     the row is visible so the learner sees why. */
+  if(rows.length&&opts&&opts.cstyle){
+    const pairs={'{':'}','(':')','[':']'},close={'}':'{',')':'(',']':'['},st=[];let ok=true;
+    for(const ch of bare){
+      if(pairs[ch])st.push(ch);
+      else if(close[ch]){if(st.pop()!==close[ch]){ok=false;break;}}
+    }
+    if(st.length)ok=false;
+    // Only ever a failing row. A passing one would be noise on every run and
+    // would shift the indexes every existing test and gate relies on.
+    if(!ok)rows.push({desc:'braces, parentheses and brackets balance (this could not be a program)',pass:false,wellFormed:true});
+  }
+  return rows;
 }
 function cline(txt,cls,attr){return '<div class="cLine'+(cls?' '+cls:'')+'"'+(attr||'')+'>'+txt+'</div>';}
 /* The AI runner is a promise handed to us by the host page. It has no deadline of
@@ -192,7 +213,7 @@ Respond with ONLY valid JSON, no markdown fences:
       const box=document.getElementById('aiOut');
       if(box)box.innerHTML='<h4>🤖 Feedback</h4>'+
         esc(typeof raw==='string'?raw:JSON.stringify(raw))+
-        (allLocal?'<br><br><b>All structural checks pass, lesson marked complete.</b>':'');
+        (allLocal?'<br><br><b>The structural checks pass, so the lesson is marked complete.</b> Nothing compiled or ran it.':'');
       con.innerHTML=cline('Runner returned unstructured feedback, see Test Results tab.','warn');
       setTab('tests');
       if(allLocal)completeExercise(l,sid,ei,exs);
@@ -205,7 +226,9 @@ Respond with ONLY valid JSON, no markdown fences:
       const allLocal=checks.length&&checks.every(c=>c.pass);
       const msg=(err&&err.message)?err.message:String(err);
       const box=document.getElementById('aiOut');
-      if(box)box.innerHTML=esc(msg)+(allLocal?' All structural checks passed, marking complete.':'');
+      if(box)box.innerHTML=esc(msg)+(allLocal
+        ?' The structural checks passed, so the lesson is marked complete. Nothing compiled or ran it: the checks look for the shape of the answer, not its behavior. To have it compiled and tested, run the local Java runner (see the course README).'
+        :'');
       if(con)con.innerHTML=cline(esc(msg),'warn');
       setTab('tests');
       if(allLocal)completeExercise(l,sid,ei,exs);
