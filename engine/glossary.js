@@ -339,6 +339,7 @@ const GLOSS_ALL=[
      ['XML Signature Wrapping (XSW)',`A SAML attack: the attacker moves the signed assertion elsewhere in the document and inserts an unsigned one where the SP looks. The signature still verifies; the SP reads the forgery. Fixed by validating only the signed element.`],
      ['Resource-based constrained delegation (RBCD)',`Kerberos delegation configured on the target service rather than on the delegating account. Also the mechanism behind a family of Active Directory privilege-escalation attacks when write access to a computer object is loose.`],
      ['LAPS',`Local Administrator Password Solution: Windows rotates every machine's local admin password and stores it in AD. Closes the shared-local-admin-password problem that let one compromised machine open all of them.`],
+     ['PBKDF2',`Password-Based Key Derivation Function 2: a deliberately slow hash for passwords that runs HMAC hundreds of thousands of times. In the JDK without a library, which is why the course uses it; Argon2id is the first choice when you can add one.`],
    ]},
    {h:'9 · Governance & lifecycle',terms:[
      ['Provisioning',`Creating and configuring user accounts and their access, often automated via SCIM.`],
@@ -409,6 +410,12 @@ const GLOSS_ALL=[
      ['Optional',`A container that may or may not hold a value; an explicit alternative to null.`],
      ['Checked exception',`An error the compiler forces you to handle or declare.`],
      ['Unchecked exception',`A RuntimeException the compiler does not force you to handle.`],
+     ['Data transfer object (DTO)',`A plain class whose only job is to carry data across a boundary: into or out of an API, between layers. No behavior, no database identity. Keeps your domain model off the wire.`],
+     ['Dependency injection (DI)',`Handing an object the things it depends on (from outside, usually via the constructor) instead of letting it construct them. What makes a class testable in isolation, and what Spring's container does for you.`],
+     ['Aspect-oriented programming (AOP)',`Attaching behavior such as logging, transactions or security to many methods at once, from outside those methods, by wrapping them in a proxy. How @Transactional works without you writing begin and commit.`],
+     ['Java Platform Module System (JPMS)',`Java 9's module system: a module-info.java declares which packages a module exports and which modules it requires, so the compiler and runtime enforce the boundaries. Used heavily inside the JDK, less so by applications.`],
+     ['REPL',`Read, evaluate, print, loop: an interactive prompt that runs one line of code at a time and shows the result. Java's is jshell.`],
+     ['XOR',`Exclusive or: true when exactly one input is true. As a bit operation, a ^ b flips the bits where the two differ, and a ^ b ^ b gets a back, which is why it shows up in checksums, swaps and puzzles.`],
    ]},
    {h:'The JVM',terms:[
      ['JVM',`The Java Virtual Machine that executes bytecode on any platform.`],
@@ -420,6 +427,10 @@ const GLOSS_ALL=[
      ['Stack',`Per-thread memory of call frames holding locals and references; automatic, no GC.`],
      ['Metaspace',`Memory holding class metadata and method bytecode.`],
      ['Garbage collection',`Automatic reclaiming of heap objects nothing references anymore.`],
+     ['Garbage collection (GC)',`The JVM finding objects nothing can reach any more and freeing their memory, automatically. You never call free; you pay instead in pauses, which is why GC choice and heap sizing matter.`],
+     ['Java Flight Recorder (JFR)',`The JVM's built-in, low-overhead profiler. Records what the application was doing (allocations, locks, GC, methods) into a file you open in JDK Mission Control. Safe to leave on in production.`],
+     ['Java Microbenchmark Harness (JMH)',`The standard tool for timing small pieces of Java code. It warms up the JIT and repeats runs so the number means something; a hand-written loop with System.nanoTime measures the wrong thing.`],
+     ['Mapped Diagnostic Context (MDC)',`A per-thread map your logging framework prints on every line: request id, user, tenant. Set it at the start of a request and every log line from that request carries the ids without you passing them around.`],
    ]},
  ]},
  {domain:'Data Structures & Algorithms',icon:'🧠',groups:[
@@ -436,6 +447,8 @@ const GLOSS_ALL=[
      ['Trie',`A prefix tree with one node per character; lookup is O(key length).`],
      ['B-tree',`A wide, shallow tree that minimizes disk reads; the basis of database indexes.`],
      ['Graph',`Nodes connected by edges, possibly with cycles and weights.`],
+     ['Binary search tree (BST)',`A tree where every node's left subtree holds smaller keys and its right subtree larger ones, so lookups halve the search each step. Balanced, that is logarithmic; unbalanced, it degrades to a list.`],
+     ['Least recently used (LRU)',`A cache eviction rule: when full, throw out the entry that has gone longest without being read. In Java, a LinkedHashMap in access order with removeEldestEntry does it in a few lines.`],
    ]},
    {h:'Algorithms & analysis',terms:[
      ['BFS',`Breadth-first search: explore level by level with a queue; shortest path in unweighted graphs.`],
@@ -460,6 +473,8 @@ const GLOSS_ALL=[
      ['Idempotency',`An operation that has the same effect whether done once or many times (safe to retry).`],
      ['Statelessness',`Each request stands alone; the server keeps no per-request memory of the client.`],
      ['CORS',`Cross-Origin Resource Sharing: server opt-in, enforced by browsers, that lets script on another origin read a response. It governs reading the response, not sending the request, and it is not authorization, because only browsers enforce it.`],
+     ['UDP',`User Datagram Protocol: send a packet, no connection, no delivery guarantee, no ordering. Faster than TCP because it promises less; right for DNS, video and games, wrong for anything that must arrive.`],
+     ['JSX',`The HTML-looking syntax inside React components. Not HTML: a compiler turns each tag into a JavaScript function call that builds the element.`],
    ]},
    {h:'API design',terms:[
      ['REST',`An architectural style using HTTP verbs on resource URLs.`],
@@ -482,6 +497,9 @@ const GLOSS_ALL=[
      ['Normalization',`Organizing tables to remove redundancy.`],
      ['Transaction',`A group of statements that commit all-or-nothing.`],
      ['ACID',`Atomicity, Consistency, Isolation, Durability: the guarantees of a transaction.`],
+     ['Foreign key (FK)',`A column whose values must match a primary key in another table. The database refuses an order that points at a customer who doesn't exist.`],
+     ['Java Persistence API (JPA)',`The Java standard for mapping objects to database tables: annotate a class, and the provider (Hibernate, usually) writes the SQL. Spring Data JPA sits on top and generates repositories from method names.`],
+     ['H2',`A small database written in Java that can run in memory inside your test process. The usual choice for fast tests; not what you deploy.`],
    ]},
    {h:'Querying',terms:[
      ['JOIN',`Combining rows from two tables on a matching condition.`],
@@ -495,6 +513,7 @@ const GLOSS_ALL=[
      ['Window function',`A calculation across a set of rows without collapsing them.`],
      ['N+1 problem',`Firing one query per row instead of one query for all; a common performance bug.`],
      ['Connection pool',`A reused set of database connections to avoid per-request setup cost.`],
+     ['EXPLAIN / EXPLAIN ANALYZE',`Ask the database how it plans to run a query (EXPLAIN), or run it and report what it did and how long each step took (EXPLAIN ANALYZE). The first thing to read when a query is slow.`],
    ]},
  ]},
  {domain:'Concurrency',icon:'🧵',groups:[
@@ -542,6 +561,7 @@ const GLOSS_ALL=[
      ['Pod',`The smallest deployable unit in Kubernetes: one or more containers.`],
      ['Helm',`A package manager for Kubernetes applications.`],
      ['IaC',`Infrastructure as Code: provisioning servers from version-controlled files.`],
+     ['Project Object Model (POM)',`Maven's pom.xml: the file that names your project, its dependencies and its build plugins. Gradle's equivalent is build.gradle.`],
    ]},
    {h:'Release & operate',terms:[
      ['Blue-green',`Two identical environments; switch traffic to the new one instantly.`],

@@ -1,27 +1,19 @@
 STREAMS.push({icon:'🚀',title:'Deploying Java to the Web',blurb:'From runnable jar to production: packaging, Docker, configuration & secrets, CI/CD pipelines, and running live.',lessons:[
 {id:'dpl1',title:'Packaging: the runnable jar',body:`
-<p>A deployable Java app is a single <b>executable jar</b>: code, dependencies, and an embedded server. Spring Boot's build plugin "repackages" your jar so <code>java -jar</code> just works:</p>
+<p>A deployable Java app is a single <b>executable jar</b>: code, dependencies, and an embedded server. Spring Boot's build plugin "repackages" your jar so <code>java -jar</code> works:</p>
 <div class="codeSample">./mvnw clean package                # target/app-1.0.0.jar (fat jar via spring-boot-maven-plugin)
 ./gradlew bootJar                   # Gradle equivalent -&gt; build/libs/
 
 java -jar target/app-1.0.0.jar      # runs anywhere with a JRE
 java -Xmx512m -jar app.jar --spring.profiles.active=prod
 java --version                      # deploy target must match your build's release!</div>
-<p>Know the vocabulary: a <b>plain jar</b> has only your classes; a <b>fat/uber jar</b> bundles all dependencies; a <b>war</b> deploys into an external Tomcat (legacy; prefer the embedded model). Pin the Java version with <code>maven.compiler.release</code> and build reproducibly with the wrapper, never a local mvn.</p>
+<p>Vocabulary: a <b>plain jar</b> has only your classes. A <b>fat/uber jar</b> bundles all dependencies. A <b>war</b> deploys into an external Tomcat, the legacy model. Prefer the embedded one.</p>
 <h4>Why the fat jar won</h4>
-<p>The older model was a WAR deployed into an application server someone else installed, configured and
-patched. That meant the runtime your code ran on was <b>not</b> something your build produced: two
-environments could run the same WAR on different Tomcat versions with different JVM flags and behave
-differently, and nobody could say why.</p>
-<p>Inverting it fixed that. The server becomes a library inside your artifact, so <b>one file contains the
-entire runtime contract</b>: your code, your dependencies, and the exact server version you tested
-against. It is also what makes containers straightforward (the image is a JRE plus one file) and what
-makes "build once, promote the same artifact" achievable rather than aspirational.</p>
+<p>The older model was a WAR deployed into an application server someone else installed, configured and patched. The runtime your code ran on was <b>not</b> something your build produced. Two environments could run the same WAR on different Tomcat versions with different JVM flags and behave differently. Nobody could say why.</p>
+<p>Inverting it fixed that. The server becomes a library inside your artifact. <b>One file contains the entire runtime contract</b>: your code, your dependencies, and the exact server version you tested against. Containers become straightforward, since the image is a JRE plus one file. "Build once, promote the same artifact" becomes achievable.</p>
 
-<h4>What repackaging actually does</h4>
-<p>A fat jar is not just a zip of everything. Java's class loader cannot read a jar nested inside a jar, so
-Boot writes a layout with your dependencies kept as intact jars and a small custom loader that knows how
-to read them:</p>
+<h4>What repackaging does</h4>
+<p>Java's class loader cannot read a jar nested inside a jar. So Boot keeps your dependencies as intact jars and adds a small custom loader that knows how to read them:</p>
 <div class="codeSample" data-hl>app.jar
   BOOT-INF/classes/    your compiled code
   BOOT-INF/lib/        every dependency, still a real jar each
@@ -33,23 +25,14 @@ to read them:</p>
 // keeping dependency jars whole matters: shading everything into one
 // flat class tree breaks signed jars and silently drops duplicated
 // resource files - the classic "META-INF/services" merge bug.</div>
-<p>The related feature worth knowing is <b>layered jars</b>, which sort the contents by how often they
-change (dependencies, then snapshot deps, then your classes). In a Docker build that means a code change
-rebuilds only the last, smallest layer instead of shipping 60MB of unchanged libraries every push.</p>
+<p><b>Layered jars</b> sort the contents by how often they change: dependencies, then snapshot deps, then your classes. In a Docker build a code change then rebuilds only the last, smallest layer. You stop shipping 60MB of unchanged libraries every push.</p>
 
 <h4>Versions, and the mistake that gets made once</h4>
-<p><code>maven.compiler.release</code> is not the same as <code>source</code>/<code>target</code>: it also
-checks that you only call APIs that existed in that release, so compiling on JDK 21 for release 17 fails
-fast instead of producing a jar that throws <code>NoSuchMethodError</code> on the older runtime. Set
-<code>release</code> and forget the other two.</p>
-<p>And a jar built for a newer JDK simply will not load on an older one: <code>UnsupportedClassVersion
-Error</code>, at startup, in production. Pin the JDK in your build, in your CI setup step and in your base
-image, from the same value.</p>
+<p><code>maven.compiler.release</code> differs from <code>source</code>/<code>target</code>. It also checks that you only call APIs that existed in that release. Compiling on JDK 21 for release 17 fails fast, instead of producing a jar that throws <code>NoSuchMethodError</code> on the older runtime. Set <code>release</code> and forget the other two.</p>
+<p>A jar built for a newer JDK will not load on an older one: <code>UnsupportedClassVersion Error</code>, at startup, in production. Pin the JDK in your build, in your CI setup step and in your base image, from the same value.</p>
 
 <h4>Reproducibility</h4>
-<p>Use the wrapper (<code>./mvnw</code>, <code>./gradlew</code>) everywhere, including CI. It pins the build
-tool version in the repository, so the build does not depend on what happens to be installed on a machine,
-which is the same argument as the fat jar, applied one level up.</p>`,
+<p>Use the wrapper (<code>./mvnw</code>, <code>./gradlew</code>) everywhere, including CI, never a local mvn. It pins the build tool version in the repository, so the build does not depend on what happens to be installed on a machine. It is the fat jar argument, applied one level up.</p>`,
 docs:[['Spring Boot executable jars','https://docs.spring.io/spring-boot/specification/executable-jar/index.html'],['spring-boot-maven-plugin','https://docs.spring.io/spring-boot/maven-plugin/index.html']],
 ex:{title:'Ship a jar',lang:'shell',
 prompt:`One command per numbered line: (1) build the jar with the Maven wrapper, skipping nothing (clean + package), (2) run it with max heap 512 MB and the <code>prod</code> Spring profile active, (3) the Gradle wrapper equivalent of building a Boot jar, (4) print which Java version the server has (sanity check before deploying).`,
@@ -92,19 +75,11 @@ ENTRYPOINT ["java", "-jar", "app.jar"]</div>
 <div class="codeSample">docker build -t dojo/api:1.0.0 .
 docker run -p 8080:8080 dojo/api:1.0.0
 docker logs -f &lt;container&gt;</div>
-<p>Why multi-stage: the final image has no JDK, no source, no Maven cache: smaller and safer. Use JRE base images, tag images with real versions (never only <code>latest</code>), and let the JVM see container limits (modern JVMs auto-detect cgroup memory).</p>
 <h4>What a container is, in one paragraph</h4>
-<p>Not a virtual machine. There is no guest kernel and no emulated hardware: a container is a normal Linux
-process with a restricted view of the world, assembled from namespaces (its own filesystem, network,
-process tree) and cgroups (its share of CPU and memory). That is why it starts in milliseconds and why
-the image only needs the userland libraries your app touches, not an operating system in the usual
-sense.</p>
+<p>Not a virtual machine. There is no guest kernel and no emulated hardware. A container is a normal Linux process with a restricted view of the world. Namespaces give it its own filesystem, network and process tree. Cgroups give it its share of CPU and memory. That is why it starts in milliseconds, and why the image only needs the userland libraries your app touches.</p>
 
-<h4>Why multi-stage is the professional default</h4>
-<p>Everything present in the final image is attack surface and download size. A single-stage build leaves
-the JDK, the compiler, your source code, the Maven cache and any credentials used during the build sitting
-in the shipped artifact. Multi-stage discards all of it: only what you explicitly <code>COPY</code>
-forward survives.</p>
+<h4>Why multi-stage is the default</h4>
+<p>Everything in the final image is attack surface and download size. A single-stage build leaves the JDK, the compiler, your source code, the Maven cache and any credentials used during the build in the shipped artifact. Multi-stage discards all of it. Only what you <code>COPY</code> forward survives.</p>
 <div class="codeSample" data-hl># the layer-caching fix that matters more than anything else here:
 COPY mvnw pom.xml ./
 COPY .mvn .mvn
@@ -115,31 +90,18 @@ RUN ./mvnw package -DskipTests
 # COPY . . as the first step (as written above) rebuilds EVERY dependency
 # on every one-character source edit. correct, and painfully slow.</div>
 
-<h4>The two settings people forget, and their consequences</h4>
-<p><b>Do not run as root.</b> Containers share the host kernel, so root inside is closer to root outside
-than people assume. One line fixes it. Note that a non-root user cannot bind ports below 1024, which
-is why containerized apps listen on 8080.</p>
+<h4>The two settings people forget</h4>
+<p><b>Do not run as root.</b> Containers share the host kernel, so root inside is closer to root outside than people assume. One line fixes it. A non-root user cannot bind ports below 1024, which is why containerized apps listen on 8080.</p>
 <div class="codeSample" data-hl>RUN useradd -r -u 1001 app
 USER 1001
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]</div>
-<p><b>Give the JVM headroom.</b> Modern JVMs read the cgroup limit, but the default heap of ~25% of it is
-conservative, while setting <code>-Xmx</code> equal to the container limit gets you OOM-killed: the JVM
-also needs metaspace, thread stacks, code cache and direct buffers <i>outside</i> the heap.
-<code>MaxRAMPercentage</code> around 75 is the sane default, and the symptom of getting it wrong is exit
-code 137 with nothing in the application log, because the kernel killed the process without warning.</p>
+<p><b>Give the JVM headroom.</b> Modern JVMs read the cgroup limit, but the default heap of ~25% of it is conservative. Setting <code>-Xmx</code> equal to the container limit gets you OOM-killed, because the JVM also needs metaspace, thread stacks, code cache and direct buffers <i>outside</i> the heap. <code>MaxRAMPercentage</code> around 75 is the sane default. The symptom of getting it wrong is exit code 137 with nothing in the application log: the kernel killed the process without warning.</p>
 
 <h4>Signals, and why <code>ENTRYPOINT</code> form matters</h4>
-<p>The exec form shown runs Java as PID 1, so it receives <code>SIGTERM</code> directly and Spring's
-graceful shutdown works. Write it as a shell string instead and a shell becomes PID 1, swallows the
-signal, and your container is killed hard after the grace period, dropping every in-flight request on
-every deploy.</p>
+<p>The exec form shown runs Java as PID 1, so it receives <code>SIGTERM</code> directly and Spring's graceful shutdown works. Write it as a shell string instead and a shell becomes PID 1 and swallows the signal. Your container is then killed hard after the grace period, dropping every in-flight request on every deploy.</p>
 
 <h4>Tags and provenance</h4>
-<p><code>latest</code> is not a version; it is a mutable pointer, which makes "what is running?"
-unanswerable and rollbacks a guess. Tag with the commit SHA (immutable and traceable) and add a
-human-readable version alongside. Scan images in CI, rebuild them regularly so base-image CVE fixes
-actually reach you, and prefer a slim or distroless base: fewer packages is fewer vulnerabilities to
-triage.</p>`,
+<p><code>latest</code> is a mutable pointer, not a version. It makes "what is running?" unanswerable and rollbacks a guess. Tag with the commit SHA (immutable and traceable) and add a human-readable version alongside. Scan images in CI. Rebuild them regularly so base-image CVE fixes reach you. Prefer a slim or distroless JRE base: fewer packages is fewer vulnerabilities to triage.</p>`,
 docs:[['Dockerize a Spring Boot app (spring.io guide)','https://spring.io/guides/gs/spring-boot-docker'],['eclipse-temurin images','https://hub.docker.com/_/eclipse-temurin']],
 ex:{title:'Write the Dockerfile',lang:'dockerfile',
 prompt:`Write a multi-stage Dockerfile: build stage <code>FROM eclipse-temurin:21-jdk AS build</code> that copies the project and runs <code>./mvnw clean package -DskipTests</code>; run stage <code>FROM eclipse-temurin:21-jre</code> that copies the jar from the build stage as <code>app.jar</code>, EXPOSEs 8080, and uses the exec-form <code>ENTRYPOINT</code> to run it.`,
@@ -164,7 +126,8 @@ COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]`}},
 {id:'dpl3',title:'Config, secrets & environments',body:`
-<p>Twelve-factor rule: <b>config lives in the environment, not in the jar</b>. The same image runs in dev, staging and prod; only the environment differs.</p>
+
+<p>Twelve-factor rule: <b>config lives in the environment, not in the jar</b>. The same image runs in dev, staging and prod. Only the environment differs.</p>
 <div class="codeSample"># application.properties (defaults)
 server.port=8080
 dojo.db.url=jdbc:postgresql://localhost/dojo
@@ -178,19 +141,13 @@ docker run -p 8080:8080 \\
   -e DOJO_DB_URL=jdbc:postgresql://db.internal/dojo \\
   -e DOJO_DB_PASSWORD_FILE=/run/secrets/db_pass \\
   dojo/api:1.0.0</div>
-<p>Secrets never go in the image, git, or plain env listings in CI logs. Use a secret manager (Vault, AWS Secrets Manager, k8s Secrets). Expose health for orchestrators: Spring Boot Actuator's <code>/actuator/health</code> (add <code>spring-boot-starter-actuator</code>); this is what load balancers and Kubernetes probe. In CIAM especially: rotating secrets and separating environments isn't hygiene, it's the job.</p>
-<h4>The principle, and why it is not just tidiness</h4>
-<p>Configuration is everything that differs between deployments of the <i>same</i> code: URLs, credentials,
-feature flags, pool sizes. Keeping it out of the artifact is what makes the artifact promotable: the exact
-bytes you tested in staging are the bytes that reach production, so "it worked in staging" means
-something.</p>
-<p>Build a separate image per environment and you have given up that guarantee, plus you now discover
-production-only configuration errors in production. The test is simple: <b>could you open-source the
-artifact right now without leaking anything?</b> If not, configuration is in the wrong place.</p>
+<p>Secrets never go in the image, git, or plain env listings in CI logs. Use a secret manager (Vault, AWS Secrets Manager, k8s Secrets). Expose health for orchestrators with Spring Boot Actuator's <code>/actuator/health</code> (add <code>spring-boot-starter-actuator</code>). Load balancers and Kubernetes probe it. In CIAM especially, rotating secrets and separating environments is the job. <b>CIAM</b> is customer identity and access management: identity for customers rather than employees. Sign-up forms, "log in with Google", millions of accounts nobody pre-registered, and a leaked secret exposes all of them.</p>
+<h4>The principle</h4>
+<p>Configuration is everything that differs between deployments of the <i>same</i> code: URLs, credentials, feature flags, pool sizes. Keeping it out of the artifact makes the artifact promotable. The exact bytes you tested in staging are the bytes that reach production, so "it worked in staging" means something.</p>
+<p>Build a separate image per environment and you have given up that guarantee, and you now discover production-only configuration errors in production. The test: <b>could you open-source the artifact right now without leaking anything?</b> If not, configuration is in the wrong place.</p>
 
-<h4>How Spring resolves it, and why that order matters</h4>
-<p>Boot layers property sources and the later ones win, which is what lets a base file carry sensible
-defaults while the environment overrides only what it must:</p>
+<h4>How Spring resolves it</h4>
+<p>Boot layers property sources and the later ones win. A base file carries defaults and the environment overrides only what it must:</p>
 <div class="codeSample" data-hl>command line args          highest
 environment variables
 application-{profile}.properties
@@ -199,15 +156,10 @@ application.properties     lowest
 # relaxed binding means these are all the same property:
 dojo.db.url  ==  DOJO_DB_URL  ==  dojo_db_url
 # so an env var can override anything without matching its exact style</div>
-<p>Prefer <b>defaults that fail</b> over defaults that work locally. A missing production database URL
-should stop the application at startup, not silently connect to <code>localhost</code> and appear healthy
-while serving an empty database. Mark required properties as such and let the app refuse to boot.</p>
+<p>Prefer <b>defaults that fail</b> over defaults that work locally. A missing production database URL should stop the application at startup, not connect to <code>localhost</code> and appear healthy while serving an empty database. Mark required properties as such and let the app refuse to boot.</p>
 
 <h4>Secrets are a different class of thing</h4>
-<p>They need more than "not in the image": they need rotation, an audit trail, and revocation. Environment
-variables are the common baseline and they leak in ways people underestimate: they appear in
-<code>/proc</code>, in crash dumps, in <code>docker inspect</code>, in any child process, and in the
-Actuator <code>env</code> endpoint if you exposed it.</p>
+<p>They need rotation, an audit trail, and revocation. Environment variables are the common baseline, and they leak in ways people underestimate. They appear in <code>/proc</code>, crash dumps, <code>docker inspect</code>, any child process, and the Actuator <code>env</code> endpoint if you exposed it.</p>
 <div class="codeSample" data-hl>hardcoded / committed   -> assume permanently compromised. rotate, do not
                            just delete the commit: git history is forever.
 env var                 -> baseline. fine for many things.
@@ -216,14 +168,10 @@ mounted file            -> better: not in the process env, can be rotated
 secret manager at boot  -> access-controlled, audited, revocable
 dynamic credentials     -> minted per workload, expire in minutes.
                            nothing long-lived exists to steal.</div>
-<p>And when one does leak: <b>rotate first, investigate second</b>. The investigation takes days; the
-exposure should not.</p>
+<p>When one leaks: <b>rotate first, investigate second</b>. The investigation takes days. The exposure should not.</p>
 
 <h4>Health endpoints are configuration too</h4>
-<p>Expose <code>liveness</code> and <code>readiness</code> separately and wire them to the right probes:
-liveness must not check the database, or one brief outage restarts every instance simultaneously and turns
-a blip into an incident. Keep management endpoints on a port your cluster can reach and the internet
-cannot, and never expose <code>env</code>, <code>heapdump</code> or <code>loggers</code> publicly.</p>`,
+<p>Expose <code>liveness</code> and <code>readiness</code> separately and wire them to the right probes. Liveness must not check the database, or one brief outage restarts every instance at once and turns a blip into an incident. Keep management endpoints on a port your cluster can reach and the internet cannot. Never expose <code>env</code>, <code>heapdump</code> or <code>loggers</code> publicly.</p>`,
 docs:[['The Twelve-Factor App (Config)','https://12factor.net/config'],['Spring Boot Actuator','https://docs.spring.io/spring-boot/reference/actuator/index.html']],
 ex:{title:'Environment drill',lang:'shell',
 prompt:`(1) Write the <code>docker run</code> command: image <code>dojo/api:1.2.0</code>, publish port 8080, set env vars <code>SPRING_PROFILES_ACTIVE=prod</code> and <code>DOJO_API_KEY=abc123</code>, run detached (<code>-d</code>). (2) On the next numbered line, the env var name Spring maps to the property <code>dojo.rate.limit</code>. (3) The actuator endpoint path a load balancer should probe. (4) One line stating where the API key should REALLY come from in production (mention a secret manager).`,
@@ -250,7 +198,8 @@ DOJO_RATE_LIMIT
 # 4)
 In production the key is injected at runtime from a secret manager (e.g. Vault or AWS Secrets Manager), never hardcoded or committed.`}},
 {id:'dpl4',title:'CI/CD: build, test, ship on every push',body:`
-<p>A pipeline turns "works on my machine" into "shipped": every push builds, tests, packages, and publishes an image. GitHub Actions example:</p>
+
+<p>A pipeline turns "works on my machine" into "shipped". Every push builds, tests, packages, and publishes an image. GitHub Actions example:</p>
 <div class="codeSample">name: ci
 on:
   push:
@@ -269,15 +218,10 @@ jobs:
       - run: ./mvnw clean verify          # build + unit + integration tests
       - run: docker build -t ghcr.io/acme/api:$${'{'}{ github.sha }} .
       - run: docker push ghcr.io/acme/api:$${'{'}{ github.sha }}</div>
-<p>Principles: the pipeline is the only path to production (no laptop deploys); tests gate the build (<code>verify</code>, not <code>package -DskipTests</code>); images are tagged with the commit SHA for perfect traceability; deploy is then "roll the new tag out": a separate job with environment approvals for prod.</p>
-<h4>What a pipeline is really buying you</h4>
-<p>Not automation for its own sake. Three specific properties: <b>every change goes through the same
-process</b>, so quality is not a function of who deployed; <b>the process is fast enough that people run
-it constantly</b>, so problems surface while the change is small and the author remembers it; and
-<b>there is a record</b> of what was built from what, by whom, and what happened.</p>
-<p>The corollary is that the pipeline must be the <i>only</i> path to production. One person with
-credentials and a laptop deploy undoes all three properties at once: the running system no longer
-corresponds to any commit, and the next person to deploy silently reverts it.</p>
+<p>Deploy is then "roll the new tag out": a separate job with environment approvals for prod.</p>
+<h4>What a pipeline buys you</h4>
+<p><b>Every change goes through the same process</b>, so quality is not a function of who deployed. <b>The process is fast enough that people run it constantly</b>, so problems surface while the change is small and the author remembers it. <b>There is a record</b> of what was built from what, by whom, and what happened.</p>
+<p>So the pipeline must be the <i>only</i> path to production. One person with credentials and a laptop deploy undoes all three properties at once. The running system no longer corresponds to any commit, and the next person to deploy silently reverts it.</p>
 
 <h4>The distinction people blur</h4>
 <div class="codeSample" data-hl>CI   every push is built and tested against MAIN, continuously.
@@ -291,26 +235,14 @@ CDeployment  every green build IS deployed, automatically. no decision.
 // that is a legitimate choice, not a failure to reach deployment.</div>
 
 <h4>Making the pipeline trustworthy</h4>
-<p>A pipeline people ignore is worse than none, because it produces green checkmarks that mean nothing. Two
-things destroy trust: <b>flaky tests</b> and <b>slow feedback</b>. Quarantine a flaky test the day it
-appears rather than letting the team learn to re-run failures; one tolerated flake teaches everyone that
-red does not mean broken. And keep the fast checks first so a compile error fails in ninety seconds, not
-after a twenty-minute integration suite.</p>
-<p><code>verify</code> rather than <code>package -DskipTests</code> is the same argument in miniature: a
-pipeline that skips the tests is a build script.</p>
+<p>A pipeline people ignore is worse than none, because it produces green checkmarks that mean nothing. <b>Flaky tests</b> and <b>slow feedback</b> destroy trust. Quarantine a flaky test the day it appears rather than letting the team learn to re-run failures. One tolerated flake teaches everyone that red does not mean broken. Keep the fast checks first, so a compile error fails in ninety seconds, not after a twenty-minute integration suite.</p>
+<p><code>verify</code> rather than <code>package -DskipTests</code> is the same argument in miniature. A pipeline that skips the tests is a build script.</p>
 
 <h4>Build once, promote the artifact</h4>
-<p>The image built from a commit is the image that goes to staging and then to production, never rebuilt
-per environment, because a rebuild is a different artifact and the staging result no longer applies.
-Tagging with the commit SHA is what makes that traceable: given a running container you can name the exact
-source, and given a bad commit you can find every environment carrying it.</p>
+<p>The image built from a commit is the image that goes to staging and then to production, never rebuilt per environment. A rebuild is a different artifact, and the staging result no longer applies. Tagging with the commit SHA makes that traceable. Given a running container you can name the exact source. Given a bad commit you can find every environment carrying it.</p>
 
 <h4>Securing the thing that can deploy anything</h4>
-<p>A CI system holds credentials for your registry and your production cluster, and it runs code from every
-pull request. Treat it accordingly: pin actions to a commit SHA rather than a moving tag, scope tokens to
-the minimum and prefer short-lived OIDC federation over stored registry passwords, do not expose secrets to
-workflows triggered by forks, and require review on the workflow files themselves: a pull request that
-edits the pipeline is a pull request that can exfiltrate every secret it has.</p>`,
+<p>A CI system holds credentials for your registry and your production cluster, and it runs code from every pull request. Pin actions to a commit SHA rather than a moving tag. Scope tokens to the minimum and prefer short-lived OIDC federation over stored registry passwords. <b>OIDC</b> is OpenID Connect: a thin layer on top of OAuth that adds the missing piece, a signed statement of who logged in, called an ID token. OAuth answers "what may this app do"; OIDC answers "who is this person". <b>Federation</b> is one side agreeing to trust the other's logins. Here the "person" is the pipeline job: GitHub signs a statement saying which repository and branch is running, and the registry trades it for a credential that expires in minutes, so nothing long-lived is stored anywhere. Do not expose secrets to workflows triggered by forks. Require review on the workflow files themselves: a pull request that edits the pipeline can exfiltrate every secret it has.</p>`,
 docs:[['GitHub Actions (Java with Maven)','https://docs.github.com/en/actions/use-cases-and-examples/building-and-testing/building-and-testing-java-with-maven'],['setup-java action','https://github.com/actions/setup-java']],
 ex:{title:'Write the workflow',lang:'yaml',
 prompt:`Write a GitHub Actions workflow: name <code>ci</code>, triggered on push to <code>main</code>, one job <code>build</code> on <code>ubuntu-latest</code> with steps: checkout (<code>actions/checkout@v4</code>), <code>actions/setup-java@v4</code> with temurin 21 and maven cache, then <code>./mvnw clean verify</code>, then a docker build step tagging <code>api:test</code> (plain tag is fine for this drill).`,
@@ -342,7 +274,8 @@ jobs:
       - run: ./mvnw clean verify
       - run: docker build -t api:test .`}},
 {id:'dpl5',title:'Running in production: k8s, probes & zero-downtime',body:`
-<p>Where the image actually runs, in ascending order of machinery: a <b>PaaS</b> (Railway, Render, Elastic Beanstalk: push image, get URL), a <b>VM + reverse proxy</b> (nginx/Caddy terminating TLS in front of your jar), or <b>Kubernetes</b>, the enterprise default:</p>
+
+<p>Where the image runs, in ascending order of machinery. A <b>PaaS</b> (Railway, Render, Elastic Beanstalk): push image, get URL. A <b>VM + reverse proxy</b>: nginx or Caddy terminating TLS in front of your jar. Or <b>Kubernetes</b>, the enterprise default:</p>
 <div class="codeSample">apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -361,22 +294,22 @@ spec:
             httpGet: { path: /actuator/health, port: 8080 }
           livenessProbe:           # restart if wedged
             httpGet: { path: /actuator/health, port: 8080 }</div>
-<p><b>Readiness</b> gates traffic, <b>liveness</b> restarts wedged pods; that plus a rolling update strategy is zero-downtime deployment: new pods come up, pass readiness, old pods drain. Round it out with structured JSON logs to stdout, metrics (Micrometer → Prometheus), and graceful shutdown (<code>server.shutdown=graceful</code>) so in-flight auth requests finish before a pod dies. In CIAM, that last one is client-visible.</p>
+<p>Probes plus a rolling update strategy give zero-downtime deployment: new pods come up, pass readiness, old pods drain. Round it out with structured JSON logs to stdout and metrics (Micrometer → Prometheus). Add graceful shutdown (<code>server.shutdown=graceful</code>) so in-flight auth requests finish before a pod dies. In CIAM, that last one is client-visible. <b>CIAM</b> is customer identity and access management: identity for customers rather than employees. Sign-up forms, "log in with Google", millions of accounts nobody pre-registered, so a dropped login request is a customer who saw an error.</p>
 
 <h4>The three probes, and what each one is allowed to do</h4>
-<p>Kubernetes exposes three, and conflating them causes outages. <b>Readiness</b> answers "should this pod receive traffic?" Failing it removes the pod from the service endpoints and nothing else. <b>Liveness</b> answers "is this pod wedged?" Failing it <i>kills the container</i>. <b>Startup</b> answers "has it finished booting?" and suspends the other two until it passes, which is how a slow JVM start avoids being killed by an impatient liveness probe.</p>
-<p>The dangerous mistake is a liveness probe that checks dependencies. If your liveness endpoint touches the database, then a database blip restarts every pod simultaneously, turning a recoverable dependency failure into a full outage, and one that keeps restarting so the service never comes back. <b>Liveness must test only the process itself.</b> Dependencies belong in readiness, where the pod is merely taken out of rotation and returns when the dependency does.</p>
+<p>Conflating them causes outages. <b>Readiness</b> answers "should this pod receive traffic?" Failing it removes the pod from the service endpoints and nothing else. <b>Liveness</b> answers "is this pod wedged?" Failing it <i>kills the container</i>. <b>Startup</b> answers "has it finished booting?" and suspends the other two until it passes. That is how a slow JVM start avoids being killed by an impatient liveness probe.</p>
+<p>The dangerous mistake is a liveness probe that checks dependencies. If your liveness endpoint touches the database, a database blip restarts every pod at once. A recoverable dependency failure becomes a full outage, and one that keeps restarting so the service never comes back. <b>Liveness must test only the process itself.</b> Dependencies belong in readiness, where the pod is taken out of rotation and returns when the dependency does.</p>
 
 <h4>Zero downtime is more than a rolling update</h4>
-<p>A rolling update alone will still drop requests. Three more pieces are required:</p>
+<p>A rolling update alone will still drop requests. It also needs:</p>
 <ul>
 <li><b>Graceful shutdown.</b> On SIGTERM the app must stop accepting new work, finish in-flight requests, then exit: <code>server.shutdown=graceful</code> plus a <code>terminationGracePeriodSeconds</code> longer than your slowest request.</li>
-<li><b>A preStop delay.</b> Endpoint removal and SIGTERM race: a pod can receive requests for a moment after it starts shutting down. A short <code>preStop</code> sleep lets the endpoint change propagate first.</li>
+<li><b>A preStop delay.</b> Endpoint removal and SIGTERM race, so a pod can receive requests for a moment after it starts shutting down. A short <code>preStop</code> sleep lets the endpoint change propagate first.</li>
 <li><b>A PodDisruptionBudget</b>, so a node drain cannot take down every replica at once.</li>
 </ul>
 
 <h4>Requests, limits and the JVM</h4>
-<p>Set memory <b>requests equal to limits</b> for a JVM and size the heap under the limit: a container that exceeds its memory limit is OOM-killed by the kernel with no Java stack trace and no heap dump; it simply dies. Modern JVMs are container-aware and size the heap from the cgroup limit, so <code>-XX:MaxRAMPercentage=70</code> is usually better than a fixed <code>-Xmx</code>. CPU limits deserve more caution: aggressive limits throttle the JVM at exactly the wrong moments (startup, GC), so requests-without-limits is a common and defensible choice for latency-sensitive services.</p>`,
+<p>Set memory <b>requests equal to limits</b> for a JVM and size the heap under the limit. A container that exceeds its memory limit is OOM-killed by the kernel with no Java stack trace and no heap dump. Modern JVMs are container-aware and size the heap from the cgroup limit, so <code>-XX:MaxRAMPercentage=70</code> is usually better than a fixed <code>-Xmx</code>. CPU limits deserve more caution. Aggressive limits throttle the JVM at the wrong moments (startup, GC), so requests-without-limits is a common and defensible choice for latency-sensitive services. <b>GC</b> is garbage collection: the JVM finds objects nothing can reach any more and frees their memory for you. The price is pauses, which is why heap size and collector choice matter under load, and why a CPU throttle during a collection stretches every request in flight.</p>`,
 docs:[['Kubernetes Deployments','https://kubernetes.io/docs/concepts/workloads/controllers/deployment/'],['Liveness & readiness probes','https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/'],['Spring Boot graceful shutdown','https://docs.spring.io/spring-boot/reference/web/graceful-shutdown.html']],
 ex:{title:'Deploy manifest',lang:'yaml',
 prompt:`Write a minimal Kubernetes Deployment: name <code>api</code>, <code>replicas: 3</code>, container image <code>dojo/api:1.0.0</code>, <code>containerPort: 8080</code>, and BOTH a <code>readinessProbe</code> and <code>livenessProbe</code> doing an <code>httpGet</code> against <code>/actuator/health</code> on port 8080. (Selector/labels: app: api.)`,
@@ -418,13 +351,13 @@ spec:
               path: /actuator/health
               port: 8080`}},
 {id:'log1',title:'Logging: SLF4J, Logback & MDC',body:`
-<p>Production Java logs through a <b>facade</b>: your code talks to <b>SLF4J</b> (<code>org.slf4j.Logger</code>), and an implementation, usually <b>Logback</b> (Spring Boot's default) or Log4j2, does the writing. Libraries must only ever depend on the facade; the application picks the backend.</p>
+<p>Production Java logs through a <b>facade</b>. Your code talks to <b>SLF4J</b> (<code>org.slf4j.Logger</code>), and an implementation, usually <b>Logback</b> (Spring Boot's default) or Log4j2, does the writing. Libraries must only ever depend on the facade. The application picks the backend.</p>
 <ul>
-<li><b>The idiom</b>: one logger per class: <code>private static final Logger log = LoggerFactory.getLogger(CheckoutService.class);</code></li>
-<li><b>Parameterized, never concatenated</b>: <code>log.debug("order {} for {}", id, user)</code>. With concatenation the string is built <i>even when DEBUG is off</i>; with <code>{}</code> placeholders, formatting only happens if the level is enabled.</li>
-<li><b>Levels</b>: <code>ERROR</code> = someone should be paged; <code>WARN</code> = suspicious but handled; <code>INFO</code> = business events (order placed); <code>DEBUG</code> = developer detail; <code>TRACE</code> = firehose. Exceptions go in as the <i>last argument</i>, no placeholder: <code>log.error("payment failed for {}", orderId, e)</code>; that prints the stack trace.</li>
-<li><b>MDC</b> (Mapped Diagnostic Context): a per-thread map merged into every log line: put the request id / trace id in once, and every log from that request carries it. Always clean up in <code>finally</code>, or thread pools leak context between requests.</li>
-<li><b>In production</b>: log JSON (one object per line) so the aggregator (ELK, Loki, Datadog) can index fields instead of grepping prose. And never log secrets, tokens or full card numbers.</li>
+<li><b>The idiom</b>, one logger per class: <code>private static final Logger log = LoggerFactory.getLogger(CheckoutService.class);</code></li>
+<li><b>Parameterized, never concatenated</b>: <code>log.debug("order {} for {}", id, user)</code>. With concatenation the string is built <i>even when DEBUG is off</i>. With <code>{}</code> placeholders, formatting only happens if the level is enabled.</li>
+<li><b>Levels</b>: <code>ERROR</code> = someone should be paged. <code>WARN</code> = suspicious but handled. <code>INFO</code> = business events (order placed). <code>DEBUG</code> = developer detail. <code>TRACE</code> = firehose. Exceptions go in as the <i>last argument</i>, no placeholder: <code>log.error("payment failed for {}", orderId, e)</code>. That prints the stack trace.</li>
+<li><b>MDC</b> (Mapped Diagnostic Context): a per-thread map merged into every log line. Put the request id or trace id in once, and every log from that request carries it. Always clean up in <code>finally</code>, or thread pools leak context between requests.</li>
+<li><b>In production</b>: log JSON (one object per line) so the aggregator (ELK, Loki, Datadog) can index fields instead of grepping prose. Never log secrets, tokens or full card numbers.</li>
 </ul>
 <div class="codeSample">private static final Logger log = LoggerFactory.getLogger(CheckoutService.class);
 

@@ -1,13 +1,14 @@
 STREAMS.push({icon:'🔍',title:'Regex from the Ground Up',blurb:'Pattern matching explained like you have never seen a regex: literals, character classes, quantifiers, anchors and groups: one idea at a time, up to real log parsing.',lessons:[
 {id:'rgx0',title:'What a regex is, from zero',body:`
-<p>Forget the punctuation soup for a moment. Imagine handing a highlighter to a very fast, very literal assistant and asking them to mark things in a huge document. You can't point; you have to <b>describe</b> what to mark: "highlight every phone number", "every line that starts with ERROR", "every word ending in -ing". A <b>regular expression</b> (regex) is exactly that: <b>a written description of a text pattern</b>, in a compact language the computer understands. The regex is the description; the engine is the assistant; matches are the highlights.</p>
-<p>The language has one beautifully simple base rule: <b>ordinary characters describe themselves</b>. The regex <code>cat</code> means "a c, then an a, then a t": it matches the letters <i>cat</i> wherever they appear, including inside <i>education</i>. No magic yet: most characters in a regex are just literal text.</p>
-<p>The power comes from a handful of <b>special characters</b> that describe <i>kinds</i> of text instead of exact text. Meet the first two:</p>
+
+<p>Forget the punctuation soup for a moment. Imagine handing a highlighter to a very fast, very literal assistant and asking them to mark things in a huge document. You cannot point. You have to <b>describe</b> what to mark: "highlight every phone number", "every line that starts with ERROR", "every word ending in -ing". A <b>regular expression</b> (regex) is that: <b>a written description of a text pattern</b>, in a compact language the computer understands. The regex is the description, the engine is the assistant, and matches are the highlights.</p>
+<p>The language has one simple base rule: <b>ordinary characters describe themselves</b>. The regex <code>cat</code> means "a c, then an a, then a t". It matches the letters <i>cat</i> wherever they appear, including inside <i>education</i>. Most characters in a regex are literal text.</p>
+<p>The power comes from a handful of <b>special characters</b> that describe <i>kinds</i> of text instead of exact text. The first two:</p>
 <ul>
 <li><b><code>.</code>, "any single character"</b>: the regex <code>c.t</code> matches <i>cat</i>, <i>cot</i>, <i>c9t</i>: c, then <i>anything</i>, then t.</li>
-<li><b><code>\\\\</code>, "the next character is literal"</b>: because <code>.</code> is special, describing a real dot needs an escape: <code>3\\\\.14</code> matches <i>3.14</i> but not <i>3914</i>. (The specials worth escaping when you mean them literally: <code>. ? * + ( ) [ ] { } | ^ $ \\\\</code>.)</li>
+<li><b><code>\\\\</code>, "the next character is literal"</b>: because <code>.</code> is special, describing a real dot needs an escape. <code>3\\\\.14</code> matches <i>3.14</i> but not <i>3914</i>. The specials to escape when you mean them literally: <code>. ? * + ( ) [ ] { } | ^ $ \\\\</code>.</li>
 </ul>
-<p>In Java you'll use patterns two ways, and the difference matters from day one:</p>
+<p>In Java you will use patterns two ways, and the difference matters from day one:</p>
 <div class="codeSample" data-hl>"education".matches("cat")        // false! matches() asks: does the WHOLE string fit?
 "education".contains("cat")       // true, but contains() only does literal text
 "c9t".matches("c.t")              // true, whole string, one pattern
@@ -15,7 +16,7 @@ STREAMS.push({icon:'🔍',title:'Regex from the Ground Up',blurb:'Pattern matchi
 // find-anywhere needs Pattern/Matcher (the deep-dive lesson), or bracket the
 // pattern with "anything before, anything after":
 "education".matches(".*cat.*")    // true, .* means "any characters, any amount"</div>
-<p>One Java wrinkle to absorb now, because it explains every doubled backslash you'll ever see: regex and Java string literals <b>both</b> use backslash as their escape character. The regex <code>\\\\.</code> (a literal dot) must be typed in Java source as <code>"\\\\\\\\."</code>: one layer for the string, one for the regex. When a pattern looks over-slashed, mentally halve them.</p>`,
+<p>One Java wrinkle explains every doubled backslash you will ever see. Regex and Java string literals <b>both</b> use backslash as their escape character. The regex <code>\\\\.</code> (a literal dot) must be typed in Java source as <code>"\\\\\\\\."</code>: one layer for the string, one for the regex. When a pattern looks over-slashed, mentally halve them.</p>`,
 docs:[['Regular expressions (Oracle tutorial)','https://docs.oracle.com/javase/tutorial/essential/regex/'],['String.matches (Javadoc)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#matches(java.lang.String)'],['regex101 (interactive playground)','https://regex101.com/']],
 exs:[{title:'First descriptions',
 prompt:`Write class <code>FirstPatterns</code> with three static methods, each a single <code>return raw.matches(...)</code>. Remember <code>matches()</code> tests the <b>whole</b> string: (1) <code>boolean isCode(String raw)</code>: true for exactly an uppercase <code>A</code>, then any single character, then a digit written as the class <code>[0-9]</code> (pattern: <code>A.[0-9]</code>); (2) <code>boolean isPrice(String raw)</code>: true for exactly one digit, a <b>literal dot</b> (escaped!), then two digits: <code>[0-9]\\\\.[0-9][0-9]</code>, as a Java string that's <code>"[0-9]\\\\\\\\.[0-9][0-9]"</code>; (3) <code>boolean mentionsCat(String raw)</code>: true when <i>cat</i> appears <b>anywhere</b>: bracket it with <code>.*</code> on both sides.`,
@@ -60,7 +61,8 @@ behavior:`Four cases execute. The null case is the one that matters: exec() retu
 hints:['exec() returns an array-like match, or null.','Element 0 of the match is the whole matched text.','Build the pattern with new RegExp(pattern) since it arrives as a string.']}]},
 
 {id:'rgxcls',title:'Character classes & quantifiers: kinds and amounts',body:`
-<p>Two questions describe almost any pattern: <b>what kind</b> of character, and <b>how many</b> of them. Regex has a vocabulary for each.</p>
+
+<p>Almost any pattern comes down to <b>what kind</b> of character, and <b>how many</b> of them. Regex has a vocabulary for each.</p>
 <p><b>Kinds: character classes.</b> Square brackets mean "one character, from this menu":</p>
 <div class="codeSample">[abc]        one character: an a, b or c
 [a-z]        one lowercase letter (a range)
@@ -78,8 +80,8 @@ shorthands for the common menus (memorize these three):
 {3}    exactly three                     \\\\d{3}   → 404
 {2,4}  two to four                       [a-z]{2,4}
 {2,}   two or more</div>
-<p>Reading practice (sound these out before peeking): <code>\\\\d{4}-\\\\d{2}-\\\\d{2}</code> means "4 digits, dash, 2 digits, dash, 2 digits": a date like 2026-07-19. <code>[A-Z]\\\\w+</code> means "one capital, then one or more word chars": a capitalized word. <code>\\\\s*</code> means "any amount of whitespace, including none" (which is why it appears between things in forgiving parsers).</p>
-<p>One caution to file away: quantifiers are <b>greedy</b>: <code>.*</code> grabs as much as it can while still letting the rest of the pattern succeed. It rarely matters at this stage, but when a pattern someday matches "too much", greed is the first suspect (the fix, <code>.*?</code>, means "as little as possible").</p>`,
+<p>Reading practice. Sound these out before peeking. <code>\\\\d{4}-\\\\d{2}-\\\\d{2}</code> means "4 digits, dash, 2 digits, dash, 2 digits": a date like 2026-07-19. <code>[A-Z]\\\\w+</code> means "one capital, then one or more word chars": a capitalized word. <code>\\\\s*</code> means "any amount of whitespace, including none". Forgiving parsers put it between things.</p>
+<p>One caution: quantifiers are <b>greedy</b>. <code>.*</code> grabs as much as it can while still letting the rest of the pattern succeed. It rarely matters at this stage. When a pattern someday matches "too much", greed is the first suspect. The fix, <code>.*?</code>, means "as little as possible".</p>`,
 docs:[['Character classes (Oracle)','https://docs.oracle.com/javase/tutorial/essential/regex/char_classes.html'],['Quantifiers (Oracle)','https://docs.oracle.com/javase/tutorial/essential/regex/quant.html'],['Predefined classes (Oracle)','https://docs.oracle.com/javase/tutorial/essential/regex/pre_char_classes.html']],
 exs:[{title:'Kinds and amounts drill',
 prompt:`Write class <code>Shapes</code> with four static methods, each one <code>return raw.matches(...)</code>: (1) <code>boolean isPin(String raw)</code>, exactly four digits: <code>[0-9]{4}</code>; (2) <code>boolean isHandle(String raw)</code>, an <code>@</code>, then one lowercase letter, then two to fourteen more lowercase letters or digits: <code>@[a-z][a-z0-9]{2,14}</code>; (3) <code>boolean isHexColor(String raw)</code>, a <code>#</code> then exactly six characters from the menu <code>[0-9a-fA-F]</code>; (4) <code>boolean isShout(String raw)</code>, one or more uppercase letters followed by one or more <code>!</code>; remember <code>!</code> is not special, but write the plus signs where they belong: <code>[A-Z]+!+</code>.`,
@@ -132,11 +134,12 @@ behavior:`Cases two and four are the point. "1234" with \\d+ is ONE match, not f
 hints:['Without the g flag, match() returns only the first match plus its groups.','With the g flag it returns an array of matched strings, or null if there were none.','Guard the null before reading .length.']}]},
 
 {id:'rgxgrp',title:'Anchors, groups & alternation: structure',body:`
-<p>Three more ideas complete the core language; after these, everything else in regex is refinement.</p>
+
+<p>Three more ideas complete the core language. After these, everything else in regex is refinement.</p>
 <ul>
-<li><b>Anchors: position, not characters.</b> <code>^</code> matches "at the start", <code>$</code> "at the end"; they consume nothing. Inside Java's <code>matches()</code> they're implicit (whole string already), but with find-anywhere tools they're how you say "the line <i>starts</i> with ERROR": <code>^ERROR</code>. Their little sibling <code>\\\\b</code> is a <b>word boundary</b>: <code>\\\\bcat\\\\b</code> finds <i>cat</i> as a word while refusing <i>education</i>. (Yes: same <code>^</code> symbol as negation-inside-brackets. Position outside <code>[ ]</code>, negation inside; regex reuses its scarce symbols.)</li>
-<li><b>Alternation: or.</b> <code>|</code> separates alternatives: <code>yes|no|maybe</code>. Combine with grouping to scope it: <code>gr(a|e)y</code> matches gray and grey; without the parens, <code>gra|ey</code> would read as "gra, or ey".</li>
-<li><b>Groups: capture the parts you care about.</b> Parentheses do two jobs: they scope (as above), and they <b>capture</b>: the engine remembers what each parenthesized part actually matched, numbered left to right from 1. Given <code>(\\\\d{4})-(\\\\d{2})</code> against <i>2026-07</i>: group 1 holds 2026, group 2 holds 07. Capturing is what upgrades regex from "does it match?" to "<b>pull the pieces out</b>": the year and month are yours to use.</li>
+<li><b>Anchors: position, not characters.</b> <code>^</code> matches "at the start", <code>$</code> "at the end". They consume nothing. Inside Java's <code>matches()</code> they are implicit (whole string already). With find-anywhere tools they are how you say "the line <i>starts</i> with ERROR": <code>^ERROR</code>. Their little sibling <code>\\\\b</code> is a <b>word boundary</b>: <code>\\\\bcat\\\\b</code> finds <i>cat</i> as a word while refusing <i>education</i>. Yes, it is the same <code>^</code> symbol as negation-inside-brackets. Position outside <code>[ ]</code>, negation inside. Regex reuses its scarce symbols.</li>
+<li><b>Alternation: or.</b> <code>|</code> separates alternatives: <code>yes|no|maybe</code>. Combine with grouping to scope it: <code>gr(a|e)y</code> matches gray and grey. Without the parens, <code>gra|ey</code> would read as "gra, or ey".</li>
+<li><b>Groups: capture the parts you care about.</b> Parentheses do two jobs. They scope (as above), and they <b>capture</b>: the engine remembers what each parenthesized part matched, numbered left to right from 1. Given <code>(\\\\d{4})-(\\\\d{2})</code> against <i>2026-07</i>: group 1 holds 2026, group 2 holds 07. Capturing upgrades regex from "does it match?" to "<b>pull the pieces out</b>". The year and month are yours to use.</li>
 </ul>
 <div class="codeSample" data-hl>// Java's find-and-capture workflow (Pattern/Matcher, the next lesson goes deep):
 Pattern p = Pattern.compile("(\\\\w+)@(\\\\w+)\\\\.com");
@@ -146,7 +149,7 @@ if (m.find()) {                       // find(): search anywhere (vs matches(): 
     m.group(2);                       // "dojo", second parens
     m.group(0);                       // "ada@dojo.com", group 0 is always the whole match
 }</div>
-<p>And one replacement superpower while the groups are fresh: <code>replaceAll</code> can refer back to them as <code>$1</code>, <code>$2</code>: <code>"2026-07-19".replaceAll("(\\\\d{4})-(\\\\d{2})-(\\\\d{2})", "$3/$2/$1")</code> → <i>19/07/2026</i>. Describe the structure once, then rearrange it.</p>`,
+<p>One replacement trick while the groups are fresh: <code>replaceAll</code> can refer back to them as <code>$1</code>, <code>$2</code>: <code>"2026-07-19".replaceAll("(\\\\d{4})-(\\\\d{2})-(\\\\d{2})", "$3/$2/$1")</code> → <i>19/07/2026</i>. Describe the structure once, then rearrange it.</p>`,
 docs:[['Boundary matchers (Oracle)','https://docs.oracle.com/javase/tutorial/essential/regex/bounds.html'],['Groups & capturing (Oracle)','https://docs.oracle.com/javase/tutorial/essential/regex/groups.html'],['Matcher (Javadoc)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Matcher.html']],
 exs:[{title:'Capture the pieces',
 prompt:`Write class <code>Pieces</code> with three static methods: (1) <code>boolean isAnswer(String raw)</code>: <code>return raw.matches("yes|no|maybe")</code> (alternation, whole string); (2) <code>String swapDate(String raw)</code>: <code>return raw.replaceAll(...)</code> turning every <code>YYYY-MM-DD</code> into <code>DD/MM/YYYY</code>: pattern <code>([0-9]{4})-([0-9]{2})-([0-9]{2})</code>, replacement <code>"$3/$2/$1"</code>; (3) <code>String firstUser(String raw)</code>: compile <code>@([a-z0-9]+)</code> into a <code>java.util.regex.Pattern</code>, get a <code>Matcher</code>, and return <code>m.group(1)</code> if <code>m.find()</code> else <code>null</code>, the captured name <b>without</b> the @.`,
@@ -202,12 +205,13 @@ behavior:`Cases two and three are the anchoring lesson from the log-reading stre
 hints:['^ and $ pin the pattern to the whole string.','Parentheses capture; m[1] is the first group, m[2] the second.','{4} and {2} say exactly how many digits, unlike + which says one or more.']}]},
 
 {id:'rgx1',title:'Regular expressions: Pattern & Matcher',body:`
-<p>Regex in Java lives in <code>java.util.regex</code>. Two objects matter: <code>Pattern</code> (the compiled expression: compile once, reuse; it's thread-safe) and <code>Matcher</code> (one match attempt over one input, not thread-safe). String's own <code>matches()</code>, <code>replaceAll()</code> and <code>split()</code> recompile the pattern on every call, so hot paths should hold a <code>static final Pattern</code>.</p>
+
+<p>Regex in Java lives in <code>java.util.regex</code>. Two objects matter. <code>Pattern</code> is the compiled expression. <code>Matcher</code> is one match attempt over one input.</p>
 <ul>
-<li><b>find() vs matches()</b>: <code>find()</code> searches for the pattern <i>anywhere</i>; <code>matches()</code> requires the <i>entire</i> input to match. The #1 regex bug in Java is expecting one and getting the other.</li>
-<li><b>Groups</b>: parentheses capture. <code>group(1)</code> is positional; <b>named groups</b> <code>(?&lt;level&gt;...)</code> read as <code>m.group("level")</code> and survive refactors.</li>
-<li><b>Escaping</b>: regex backslashes must be doubled in Java string literals: <code>\\d</code> in source is the regex <code>\d</code>. For matching a literal string verbatim, use <code>Pattern.quote(s)</code>.</li>
-<li><b>Common classes</b>: <code>\d \w \s</code> and negations <code>\D \W \S</code>, <code>.</code> (any, not newline unless DOTALL), quantifiers <code>* + ? {n,m}</code>, reluctant <code>*?</code>, anchors <code>^ $ \b</code>.</li>
+<li><b>find() vs matches()</b>: <code>find()</code> searches for the pattern <i>anywhere</i>. <code>matches()</code> requires the <i>entire</i> input to match. The #1 regex bug in Java is expecting one and getting the other.</li>
+<li><b>Groups</b>: parentheses capture. <code>group(1)</code> is positional. <b>Named groups</b> <code>(?&lt;level&gt;...)</code> read as <code>m.group("level")</code> and survive refactors.</li>
+<li><b>Escaping</b>: regex backslashes must be doubled in Java string literals: <code>\\d</code> in source is the regex <code>d</code>. To match a literal string verbatim, use <code>Pattern.quote(s)</code>.</li>
+<li><b>Common classes</b>: <code>d w s</code> and negations <code>D W S</code>, <code>.</code> (any, newline with DOTALL), quantifiers <code>* + ? {n,m}</code>, reluctant <code>*?</code>, anchors <code>^ $ </code>.</li>
 <li><b>Flags</b>: <code>Pattern.CASE_INSENSITIVE</code>, <code>MULTILINE</code> (^ and $ per line), <code>DOTALL</code> (. crosses newlines).</li>
 </ul>
 <div class="codeSample">private static final Pattern LOG =
@@ -223,31 +227,29 @@ if (m.matches()) {
 Pattern.quote("price (USD)");               // matches those literal chars</div>
 
 <h4>Compile once: the mistake that shows up in profiles</h4>
-<p><code>"…".matches(regex)</code>, <code>replaceAll</code> and <code>split</code> compile the pattern on
-every single call. In a loop over a million log lines that is a million compilations, and it is one of the
+<p>String's own <code>matches(regex)</code>, <code>replaceAll</code> and <code>split</code> compile the pattern on
+every call. In a loop over a million log lines that is a million compilations. It is one of the
 most common findings in a first CPU profile of a text-processing job. Hoist it:</p>
 <div class="codeSample">private static final Pattern TRACE = Pattern.compile("trace=([0-9a-f]+)");
 Matcher m = TRACE.matcher(line);   // cheap; the Pattern is shared and thread-safe</div>
-<p>The split is deliberate: a <code>Pattern</code> is immutable and safe to share across threads, while a
-<code>Matcher</code> holds the position of one attempt over one input and must never be shared. One static
-final Pattern per expression, a fresh Matcher per string.</p>
+<p>A <code>Pattern</code> is immutable and safe to share across threads. A
+<code>Matcher</code> holds the position of one attempt over one input and must never be shared.</p>
 
-<h4>Reading a Matcher without surprising yourself</h4>
+<h4>Reading a Matcher without surprises</h4>
 <p><code>find()</code> advances through the input and can be called repeatedly in a <code>while</code>
-loop; <code>matches()</code> anchors to the whole input and does not advance. Both must be called
-<i>before</i> <code>group()</code>, or you get <code>IllegalStateException: No match found</code>; the
-matcher genuinely has no result yet. <code>group(0)</code> is the whole match; <code>group(1)</code> the
-first capture. A group that did not participate returns <code>null</code>, which is not the same as an
-empty string and is worth checking when a pattern has alternation.</p>
+loop. <code>matches()</code> anchors to the whole input and does not advance. Both must be called
+<i>before</i> <code>group()</code>, or you get <code>IllegalStateException: No match found</code>. <code>group(0)</code> is the whole match, <code>group(1)</code> the
+first capture. A group that did not participate returns <code>null</code>, not an
+empty string. Check for it when a pattern has alternation.</p>
 
 <h4>Where regex stops being the right tool</h4>
-<p>Two limits worth internalizing. <b>Nested structure is out of reach</b>: HTML, JSON and balanced
-brackets are not regular languages, so a pattern that appears to work will fail on the first nested case;
-use a parser. And <b>catastrophic backtracking</b> is a denial-of-service risk when the pattern contains
-nested quantifiers such as <code>(a+)+</code> and the input is attacker-supplied; the engine explores
+<p><b>Nested structure is out of reach.</b> HTML, JSON and balanced
+brackets are not regular languages. A pattern that appears to work will fail on the first nested case.
+Use a parser. <b>Catastrophic backtracking</b> is a denial-of-service risk when the pattern contains
+nested quantifiers such as <code>(a+)+</code> and the input is attacker-supplied. The engine explores
 exponentially many ways to match before giving up. Prefer possessive quantifiers or an anchored, specific
-pattern, and never build a pattern by concatenating untrusted input; <code>Pattern.quote</code> exists for
-exactly that.</p>`,
+pattern. Never build a pattern by concatenating untrusted input; <code>Pattern.quote</code> exists for
+that.</p>`,
 docs:[['Pattern (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Pattern.html'],['Regex (dev.java tutorial)','https://dev.java/learn/regex/'],['Matcher (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Matcher.html']],
 exs:[{title:'Log-line parser',
 prompt:`Write <code>LogParser</code> with a <code>private static final Pattern</code> named <code>LINE</code> using <b>named groups</b> <code>date</code>, <code>level</code>, <code>msg</code> to parse lines like <code>2026-07-17 ERROR disk is full</code> (date <code>\\d{4}-\\d{2}-\\d{2}</code>, level one of INFO/WARN/ERROR). Add <code>static String levelOf(String line)</code> that returns the level via <code>matches()</code> + <code>group("level")</code>, or <code>"UNKNOWN"</code> when the line doesn't match.`,
@@ -290,19 +292,21 @@ behavior:`Four real cases. The trailing-separator case is the behavior to know r
 hints:['split accepts a regex as its separator.','\\s* on both sides absorbs any spaces or tabs around the comma.','Think about what a separator at the very end should produce before you special-case it.']}]},
 
 {id:'rgxwild',title:'Regex in the wild: replace, split & restraint',body:`
-<p>You now read and write the core language. The last lesson is about using it well in Java, and knowing when not to.</p>
+
+
+<p>You now read and write the core language. This lesson is about using it well in Java, and knowing when not to.</p>
 <ul>
-<li><b>Compile once.</b> <code>String.matches()</code> recompiles its pattern on every call: fine in a drill, wasteful in a loop over a million lines. The production shape is the one from the parser lesson: <code>private static final Pattern LINE = Pattern.compile(...)</code>, then <code>LINE.matcher(input)</code> per use. Pattern objects are immutable and thread-safe; compiled-once-shared-forever is free performance.</li>
-<li><b>The split family.</b> <code>s.split("\\\\s*,\\\\s*")</code>: split on commas <i>with optional surrounding spaces</i>: "a, b ,c" → [a, b, c] with no trimming pass. The limit parameter you met in the REPL lesson (<code>split(regex, 2)</code>) caps the pieces.</li>
-<li><b>Replace with judgment.</b> <code>replaceAll</code> takes a regex; <code>replace</code> takes literal text. Reaching for replaceAll to delete a literal dot (and forgetting it's special) is a classic self-inflicted wound. Regex for patterns, replace for text.</li>
-<li><b>Flags.</b> <code>Pattern.CASE_INSENSITIVE</code> (or inline <code>(?i)</code>): "error|ERROR|Error" collapses to one clean pattern. <code>Pattern.MULTILINE</code> makes <code>^</code>/<code>$</code> work per-line instead of per-string, the difference between "the string starts with" and "some line starts with".</li>
+<li><b>Compile once.</b> <code>String.matches()</code> recompiles its pattern on every call: fine in a drill, wasteful in a loop over a million lines. The production shape is the one from the parser lesson: <code>private static final Pattern LINE = Pattern.compile(...)</code>, then <code>LINE.matcher(input)</code> per use. Pattern objects are immutable and thread-safe.</li>
+<li><b>The split family.</b> <code>s.split("\\\\s*,\\\\s*")</code> splits on commas <i>with optional surrounding spaces</i>: "a, b ,c" → [a, b, c] with no trimming pass. The limit parameter from the REPL lesson (<code>split(regex, 2)</code>) caps the pieces. A <b>REPL</b> is read, evaluate, print, loop: a prompt that runs one line at a time and shows the answer. Java's is <code>jshell</code>.</li>
+<li><b>Replace with judgment.</b> <code>replaceAll</code> takes a regex. <code>replace</code> takes literal text. Using replaceAll to delete a literal dot, and forgetting it is special, is a classic self-inflicted wound.</li>
+<li><b>Flags.</b> <code>Pattern.CASE_INSENSITIVE</code> (or inline <code>(?i)</code>) collapses "error|ERROR|Error" to one pattern. <code>Pattern.MULTILINE</code> makes <code>^</code>/<code>$</code> work per-line instead of per-string: "the string starts with" becomes "some line starts with".</li>
 </ul>
-<p><b>And the restraint.</b> Two famous failure modes mark the edge of regex territory:</p>
+<p><b>The restraint.</b> These failure modes mark the edge of regex territory:</p>
 <ul>
-<li><b>Nested or recursive formats are not regex problems.</b> HTML, JSON, matched parentheses (anything where things nest arbitrarily deep) cannot be described by regular expressions (that is a mathematical fact, not a skill issue). Pulling one attribute out of one known tag: fine. "Parsing HTML with regex": the road to the most famous answer on Stack Overflow. Use a real parser (Jackson for JSON; you already do).</li>
-<li><b>Catastrophic backtracking.</b> Patterns with nested quantifiers over overlapping menus (the shape <code>(a+)+b</code>) can take <i>exponential</i> time on input that ALMOST matches: 30 a's with no b freezes the thread. This is a real denial-of-service class (ReDoS). The input stream's rule compounds here: bound the input length before the regex runs, and keep quantified groups from overlapping.</li>
+<li><b>Nested or recursive formats are not regex problems.</b> HTML, JSON, matched parentheses, anything that nests arbitrarily deep, cannot be described by regular expressions. That is a mathematical fact, not a skill issue. Pulling one attribute out of one known tag is fine. Parsing HTML with regex is the road to the most famous answer on Stack Overflow. Use a real parser: Jackson for JSON, as you already do.</li>
+<li><b>Catastrophic backtracking.</b> Patterns with nested quantifiers over overlapping menus (the shape <code>(a+)+b</code>) can take <i>exponential</i> time on input that ALMOST matches. 30 a's with no b freezes the thread. This is a denial-of-service class (ReDoS). The input stream's rule applies here: bound the input length before the regex runs, and keep quantified groups from overlapping.</li>
 </ul>
-<p>The closing principle: a regex is a description, and descriptions should stay <i>readable aloud</i>. When yours stops being sayable, split it into named groups (previous lesson), break the parse into steps, or admit it's a parser's job.</p>`,
+<p>A regex is a description, and descriptions should stay <i>readable aloud</i>. When yours stops being sayable, split it into named groups (previous lesson), break the parse into steps, or admit it is a parser's job.</p>`,
 docs:[['Pattern flags (Javadoc)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Pattern.html#CASE_INSENSITIVE'],['String.split (Javadoc)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#split(java.lang.String)'],['OWASP (ReDoS)','https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS']],
 exs:[{title:'Production habits drill',
 prompt:`Write class <code>Habits</code>: (1) a <code>private static final java.util.regex.Pattern WORD = Pattern.compile("[a-z]+", Pattern.CASE_INSENSITIVE)</code>: compiled once, flagged, shared; (2) <code>static String[] csv(String raw)</code>: <code>return raw.split(...)</code> splitting on commas with optional surrounding whitespace: the pattern <code>\\\\s*,\\\\s*</code> (in Java: <code>"\\\\\\\\s*,\\\\\\\\s*"</code>); (3) <code>static int countWords(String raw)</code>: use <code>WORD.matcher(raw)</code> and a <code>while (m.find())</code> loop incrementing a counter; (4) <code>static String dropDots(String raw)</code>: remove every literal dot using <code>replace(".", "")</code>, the <b>literal</b> method, not replaceAll.`,

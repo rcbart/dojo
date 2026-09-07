@@ -1,14 +1,10 @@
 STREAMS.push({icon:'🏆',tournament:true,title:'Coding Challenges: The Tournament',blurb:'Interview-style problems in three ranked rounds: Easy, Medium, Hard. Enter after Fundamentals; return often.',lessons:[
 {id:'ch1',title:'Easy round',body:`
-<p>Warm-up bouts. Easy problems test whether the fundamentals are automatic: hash lookups, pointer discipline, clean loops. In an interview these are the first 10 minutes; the goal is to solve them <i>cleanly while talking</i>.</p>
-<p>Approach ritual (use it on every problem in this tournament): restate the problem in one sentence → name the brute force and its complexity → name the pattern that beats it → code → walk one example and one edge case out loud.</p>
+<p>Warm-up bouts. Easy problems test whether the fundamentals are automatic: hash lookups, pointer discipline, clean loops. In an interview these are the first 10 minutes. The goal is to solve them <i>cleanly while talking</i>.</p>
+<p>Approach ritual, for every problem in this tournament: restate the problem in one sentence → name the brute force and its complexity → name the pattern that beats it → code → walk one example and one edge case out loud.</p>
 
 <h4>Why "easy" is misleading</h4>
-<p>Easy means the <i>pattern</i> is easy once you see it. It does not mean the interview is easy, because
-easies are where communication habits are established. An interviewer who watches you solve two-sum in
-silence has learned almost nothing about you; one who watches you say "brute force is O(n²) nested
-loops; I can trade space for time with a map of complements, O(n) time and O(n) space" has learned
-the thing they are actually there to find out.</p>
+<p>Easy means the <i>pattern</i> is easy once you see it. The interview is not, because easies are where communication habits are established. An interviewer who watches you solve two-sum in silence has learned almost nothing about you. One who hears "brute force is O(n²) nested loops; I can trade space for time with a map of complements, O(n) time and O(n) space" has learned the thing they are there to find out.</p>
 
 <h4>The fundamentals being tested</h4>
 <div class="codeSample" data-hl>HASH LOOKUP        "have I seen X?" in O(1). the single most valuable
@@ -25,14 +21,8 @@ CLEAN LOOPS        one job per loop, no mutation you cannot explain, and
                    finds off-by-one errors before the interviewer does.</div>
 
 <h4>The edge cases that come up every time</h4>
-<p>Reach for these unprompted (noticing them is worth more than speed): <b>empty</b> input,
-<b>one</b> element, <b>all identical</b> elements, <b>negative</b> numbers where you assumed positive,
-<b>duplicates</b> where you assumed uniqueness, and <b>integer overflow</b> on sums or on
-<code>(lo + hi) / 2</code>. That last one is a genuine classic: use
-<code>lo + (hi - lo) / 2</code>.</p>
-<p><b>A note on the ritual.</b> It feels artificial for an easy problem, which is exactly why it is
-worth practicing here. Under pressure on a hard problem you will do what you rehearsed, and nobody
-invents structured communication for the first time in the final round.</p>`,
+<p>Reach for these unprompted. Noticing them counts for more than speed: <b>empty</b> input, <b>one</b> element, <b>all identical</b> elements, <b>negative</b> numbers where you assumed positive, <b>duplicates</b> where you assumed uniqueness, and <b>integer overflow</b> on sums or on <code>(lo + hi) / 2</code>. That last one is a classic: use <code>lo + (hi - lo) / 2</code>.</p>
+<p><b>A note on the ritual.</b> It feels artificial on an easy problem, and that is the reason to practice it here. Under pressure on a hard problem you will do what you rehearsed. Nobody invents structured communication for the first time in the final round.</p>`,
 docs:[['Big-O cheat sheet','https://www.bigocheatsheet.com/'],['HashMap (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/HashMap.html']],
 exs:[
 {title:'Two Sum',
@@ -232,14 +222,10 @@ solution:`public class WordCount {\n    static int wordCount(String s) {\n      
 
 ]},
 {id:'ch2',title:'Medium round',body:`
-<p>The real interview weight class. Almost every medium is <b>two ideas stacked</b>: a data structure
-plus one insight that collapses the problem. Easies test whether you know the structure; mediums test
-whether you can <i>find the insight under time pressure</i>, which is a different skill and the one
-that is actually being assessed.</p>
+<p>The real interview weight class. Almost every medium is <b>two ideas stacked</b>: a data structure plus one insight that collapses the problem. Easies test whether you know the structure. Mediums test whether you can <i>find the insight under time pressure</i>, a different skill and the one being assessed.</p>
 
 <h4>The pattern-recognition move</h4>
-<p>Strong candidates do not start coding. They spend thirty seconds naming the shape, because naming it
-correctly determines the whole solution:</p>
+<p>Strong candidates do not start coding. They spend thirty seconds naming the shape, because the name determines the whole solution:</p>
 <div class="codeSample" data-hl>PROBLEM SHAPE                        THE PATTERN                      COST
 "group things that are equivalent"   canonical key + map buckets      O(n k log k)
 "sorted-ish array, find something"   binary search with a twist       O(log n)
@@ -248,32 +234,18 @@ correctly determines the whole solution:</p>
 "k largest / smallest so far"        heap of size k                   O(n log k)
 "count pairs summing to T"           complement lookup in a map       O(n)
 "nested structure, undo choices"     backtracking with a path stack   exponential, pruned</div>
-<p>Say the pattern out loud before writing anything. If you cannot name it, you are about to write the
-brute force, which is fine as a stated starting point, and fatal as a silent one.</p>
+<p>Say the pattern out loud before writing anything. If you cannot name it, you are about to write the brute force: fine as a stated starting point, fatal as a silent one.</p>
 
-<h4>The three in this round, and why each is instructive</h4>
+<h4>The three in this round</h4>
 <ul>
-<li><b>Group anagrams</b>: the canonical-key idea. Anagrams are equal <i>after normalization</i>, so
-sorting each word's characters produces a key that collides exactly when you want it to. The general
-lesson: when equality is not literal, invent a key that makes it literal. Sorting costs O(k log k) per
-word; a 26-slot character count is O(k) and faster for long words.</li>
-<li><b>Search in a rotated sorted array</b>: binary search survives a broken invariant. The array is
-not sorted, but at every split <b>one half always is</b>, and you can tell which by comparing the
-endpoints. Recognizing that a weakened invariant still supports the algorithm is the transferable
-insight.</li>
-<li><b>Product of array except self</b>: the constraint (no division) is the hint. Forbidding division
-forces you to see the answer as prefix-product times suffix-product, which is one left pass and one
-right pass. When an interviewer bans the obvious tool, they are telling you the intended structure.</li>
+<li><b>Group anagrams</b>: the canonical-key idea. Anagrams are equal <i>after normalization</i>, so sorting each word's characters produces a key that collides when you want it to. When equality is not literal, invent a key that makes it literal. Sorting costs O(k log k) per word. A 26-slot character count is O(k) and faster for long words.</li>
+<li><b>Search in a rotated sorted array</b>: binary search survives a broken invariant. The array is not sorted, but at every split <b>one half always is</b>, and comparing the endpoints tells you which. The transferable insight: a weakened invariant can still support the algorithm.</li>
+<li><b>Product of array except self</b>: the constraint (no division) is the hint. Forbidding division forces you to see the answer as prefix-product times suffix-product: one left pass and one right pass. When an interviewer bans the obvious tool, they are telling you the intended structure.</li>
 </ul>
 
-<h4>How mediums are actually scored</h4>
-<p>Rarely on whether you finish. The signals are: did you state the approach and its complexity before
-coding, did you notice the edge cases unprompted (empty input, single element, duplicates, integer
-overflow), and did you test your own code rather than announcing it was done. A working solution with
-no stated complexity often scores below a nearly-working one with clear reasoning.</p>
-<p><b>The recovery move.</b> When stuck, say what you know: "brute force is O(n²) because I re-scan
-for every element; I want to avoid re-scanning, so I need something that remembers what I have seen,
-which suggests a map". That sentence is the actual skill, and it frequently produces the answer.</p>`,
+<h4>How mediums are scored</h4>
+<p>Rarely on whether you finish. The signals: did you state the approach and its complexity before coding, did you notice the edge cases unprompted (empty input, single element, duplicates, integer overflow), and did you test your own code rather than announcing it was done. A working solution with no stated complexity often scores below a nearly-working one with clear reasoning.</p>
+<p><b>The recovery move.</b> When stuck, say what you know: "brute force is O(n²) because I re-scan for every element; I want to avoid re-scanning, so I need something that remembers what I have seen, which suggests a map". That sentence is the skill, and it often produces the answer.</p>`,
 docs:[['Binary search, API note on Arrays.binarySearch','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Arrays.html'],['Collectors.groupingBy, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Collectors.html']],
 exs:[
 {title:'Group anagrams',
@@ -479,14 +451,10 @@ solution:`import java.util.*;\n\npublic class SetZeroes {\n    static void setZe
 
 ]},
 {id:'ch3',title:'Hard round',body:`
-<p>The final bracket. Hards stack multiple insights, or demand a data structure assembled from parts.
-Interviewers rarely expect a flawless solve; they expect <b>structured thinking under pressure</b>:
-brute force stated, invariants named, code that stays clean while the problem fights back. Take these
-slowly, use Next Step without shame; a hard solved after two hints teaches more than an easy solved in
-silence.</p>
+<p>The final bracket. Hards stack multiple insights, or demand a data structure assembled from parts. Interviewers rarely expect a flawless solve. They expect <b>structured thinking under pressure</b>: brute force stated, invariants named, code that stays clean while the problem fights back. Take these slowly and use Next Step without shame. A hard solved after two hints teaches more than an easy solved in silence.</p>
 
 <h4>What makes a problem hard</h4>
-<p>Usually one of four things, and naming which one tells you where to push:</p>
+<p>Usually one of four things. Naming which one tells you where to push:</p>
 <div class="codeSample" data-hl>STACKED INSIGHTS      two or three mediums composed. sliding window PLUS a
                       frequency map PLUS a shrink condition. each part is
                       familiar; the composition is not.
@@ -503,30 +471,17 @@ HIDDEN CONSTRAINT     "O(1) space" or "no extra array" is the whole puzzle,
                       pointer reversal, cycle detection.</div>
 
 <h4>The invariant habit</h4>
-<p>Hards are where sloppy loops fall apart, and the cure is stating the invariant before writing the
-loop. "Everything left of <code>i</code> is already in final position." "The window always contains at
-most k distinct characters." "The two heaps differ in size by at most one." An invariant you can say
-out loud makes the loop body almost write itself, and it converts debugging from guessing into
-checking which line broke the promise.</p>
+<p>Hards are where sloppy loops fall apart. The cure is stating the invariant before writing the loop. "Everything left of <code>i</code> is already in final position." "The window always contains at most k distinct characters." "The two heaps differ in size by at most one." An invariant you can say out loud makes the loop body almost write itself, and turns debugging from guessing into checking which line broke the promise.</p>
 
 <h4>How to fail well</h4>
-<p>Not finishing a hard is normal and is not automatically a bad outcome. What distinguishes a strong
-partial from a weak one:</p>
+<p>Not finishing a hard is normal. What distinguishes a strong partial from a weak one:</p>
 <ul>
-<li><b>Get the brute force on the board first.</b> A stated O(n²) with correct logic beats an
-unfinished O(n) with none, and it gives you something to optimize from rather than a blank page.</li>
-<li><b>Say what you are trading.</b> "I can make this O(n) with O(n) extra space" is a design decision,
-not a concession; interviewers want to hear the axis you are moving along.</li>
-<li><b>Test on the smallest failing case.</b> When output is wrong, shrink the input until it fits in
-your head. Two elements, then three. Debugging a ten-element trace by eye is how the remaining time
-disappears.</li>
-<li><b>Keep talking.</b> Silence reads as being stuck even when you are thinking productively. "I am
-trying to see whether the window can ever shrink past the left bound" tells the interviewer where you
-are and often earns exactly the nudge you needed.</li>
+<li><b>Get the brute force on the board first.</b> A stated O(n²) with correct logic beats an unfinished O(n) with none, and gives you something to optimize from.</li>
+<li><b>Say what you are trading.</b> "I can make this O(n) with O(n) extra space" is a design decision, not a concession. Interviewers want to hear the axis you are moving along.</li>
+<li><b>Test on the smallest failing case.</b> When output is wrong, shrink the input until it fits in your head. Two elements, then three. Debugging a ten-element trace by eye is how the remaining time disappears.</li>
+<li><b>Keep talking.</b> Silence reads as being stuck even when you are thinking productively. "I am trying to see whether the window can ever shrink past the left bound" tells the interviewer where you are, and often earns the nudge you needed.</li>
 </ul>
-<p><b>The one habit worth taking from this round:</b> when a hard defeats you, do not just read the
-solution. Identify which of the four categories above it was, and what the one insight that cracked it
-was. That is what transfers: the specific problem almost never reappears, and the category does.</p>`,
+<p><b>The habit to take from this round:</b> when a hard defeats you, do not stop at reading the solution. Identify which of the four categories it was, and the one insight that cracked it. The specific problem almost never reappears. The category does.</p>`,
 docs:[['PriorityQueue, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html'],['Invariant-based reasoning, CP-Algorithms','https://cp-algorithms.com/']],
 exs:[
 {title:'Trapping rain water',

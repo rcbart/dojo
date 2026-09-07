@@ -1,9 +1,10 @@
 STREAMS.push({icon:'🍃',title:'Spring Boot',blurb:'Auto-configuration, dependency injection, REST controllers, data access and configuration.',lessons:[
 {id:'spr1',title:'Why Boot: starters & auto-configuration',body:`
+
 <p>Spring Boot = Spring with the setup automated. Three pillars:</p>
 <ul>
-<li><b>Starters</b>: one dependency pulls a curated, version-compatible set: <code>spring-boot-starter-web</code> gives you Spring MVC + Jackson + embedded Tomcat.</li>
-<li><b>Auto-configuration</b>: Boot inspects the classpath and configures beans accordingly (H2 present → in-memory DataSource, web starter → DispatcherServlet).</li>
+<li><b>Starters</b>: one dependency pulls a curated, version-compatible set: <code>spring-boot-starter-web</code> gives you Spring MVC + Jackson + embedded Tomcat. <b>MVC</b> is model, view, controller: the data and rules (model), what the user sees (view), and the code that takes a request and decides what happens (controller). It's a way of keeping those three from tangling, and Spring MVC is Spring's web framework built on it.</li>
+<li><b>Auto-configuration</b>: Boot inspects the classpath and configures beans to match. H2 present → in-memory DataSource, web starter → DispatcherServlet. <b>H2</b> is a small database written in Java that runs inside your process. Fast for tests, not for production.</li>
 <li><b>Embedded server</b>: your app is a runnable jar: <code>java -jar app.jar</code>, no Tomcat installation.</li>
 </ul>
 <div class="codeSample" data-hl>@SpringBootApplication   // = @Configuration + @EnableAutoConfiguration + @ComponentScan
@@ -12,21 +13,18 @@ public class DojoApplication {
         SpringApplication.run(DojoApplication.class, args);
     }
 }</div>
-<p>Start any project at <a href="https://start.spring.io" target="_blank" rel="noopener">start.spring.io</a>. Component scanning finds your annotated classes in the same package and below; the #1 beginner bug is putting classes outside that package tree.</p>
+<p>Start any project at <a href="https://start.spring.io" target="_blank" rel="noopener">start.spring.io</a>.</p>
 <h4>The problem Boot solved</h4>
-<p>Spring before Boot could do everything and was miserable to start. A web application meant hand-picking a dozen
-mutually-compatible library versions, writing XML or Java configuration for the DispatcherServlet, the
-view resolver, the data source and the transaction manager, then packaging a WAR and deploying it into a
-Tomcat someone had installed and configured separately. Days of work before a single line of business
-logic.</p>
-<p>Boot's insight was that <b>almost every application makes the same choices</b>, so those choices should
-be defaults rather than decisions. Nothing is taken away (you can override any of it), but you only pay
-for the parts you actually want to change.</p>
+<p>Spring before Boot could do everything and was miserable to start. A web application meant hand-picking a
+dozen compatible library versions. Then XML or Java configuration for the DispatcherServlet, the view
+resolver, the data source and the transaction manager. Then a WAR, deployed into a Tomcat someone had
+installed separately. Days of work before a line of business logic.</p>
+<p>Boot's bet: <b>almost every application makes the same choices</b>, so those choices should be defaults.
+You can override any of them.</p>
 
-<h4>How auto-configuration really works</h4>
-<p>It is worth demystifying, because it feels like magic until you see the mechanism, and then it is
-obvious. Auto-configuration classes are ordinary <code>@Configuration</code> classes listed in a file
-Boot reads at startup. Each one is guarded by conditions:</p>
+<h4>How auto-configuration works</h4>
+<p>Auto-configuration classes are ordinary <code>@Configuration</code> classes, listed in a file Boot reads
+at startup. Each is guarded by conditions:</p>
 <div class="codeSample" data-hl>@ConditionalOnClass(DataSource.class)        // is this on the classpath?
 @ConditionalOnMissingBean(DataSource.class)  // did the USER already define one?
 @ConditionalOnProperty("spring.datasource.url")
@@ -34,22 +32,21 @@ Boot reads at startup. Each one is guarded by conditions:</p>
 // that second condition is the important one: every auto-configuration
 // backs off the moment you declare your own bean. "convention over
 // configuration" is implemented as "yours wins, always".</div>
-<p>Which means the debugging tool you need is <code>--debug</code> at startup: Boot prints a
-<b>condition evaluation report</b> listing every auto-configuration that matched, every one that did not,
-and precisely which condition failed. Nearly every "why isn't Boot configuring this?" question is
-answered there in seconds.</p>
+<p>The debugging tool is <code>--debug</code> at startup. Boot prints a <b>condition evaluation report</b>:
+every auto-configuration that matched, every one that didn't, and which condition failed.</p>
 
-<h4>The failure modes worth knowing early</h4>
-<p><b>Package placement.</b> <code>@ComponentScan</code> starts at the package of your
+<h4>Failure modes to know early</h4>
+<p><b>Package placement</b>, the #1 beginner bug. <code>@ComponentScan</code> starts at the package of your
 <code>@SpringBootApplication</code> class and goes downward only. A class in a sibling package is
-invisible, and the symptom is a confusing "no qualifying bean" error rather than anything pointing at
-packages. Keep the main class in the root package of your project.</p>
-<p><b>Fighting the defaults.</b> When Boot configures something you did not want, the fix is usually a
-property or a bean of your own, not <code>exclude</code> on the auto-configuration, which tends to
-remove more than you intended and breaks silently on upgrade.</p>
-<p><b>Starter version drift.</b> The starters work because the parent POM or BOM pins a tested set of
-versions. Overriding one library's version individually is how you reintroduce exactly the dependency
-hell starters exist to prevent.</p>`,
+invisible. The symptom is a "no qualifying bean" error, not anything pointing at packages. Keep the main
+class in the root package.</p>
+<p><b>Fighting the defaults.</b> When Boot configures something you didn't want, the fix is usually a
+property or a bean of your own. <code>exclude</code> on the auto-configuration tends to remove more than
+you intended and breaks silently on upgrade.</p>
+<p><b>Starter version drift.</b> Starters work because the parent POM or BOM pins a tested set of
+versions. The <b>POM</b> is the <code>pom.xml</code>, Maven's project file: name, dependencies, plugins.
+Gradle's equivalent is <code>build.gradle</code>. Override one library's version and you're back in the
+dependency hell starters exist to prevent.</p>`,
 docs:[['Spring Boot reference','https://docs.spring.io/spring-boot/index.html'],['Spring Initializr','https://start.spring.io'],['Building an Application with Spring Boot (guide)','https://spring.io/guides/gs/spring-boot']],
 ex:{title:'Boot entry point',
 prompt:`Write the main class <code>DojoApplication</code> for a Boot app in package <code>com.example.dojo</code>: package declaration, the right annotation, and a main method that launches the application context.`,
@@ -76,27 +73,27 @@ public class DojoApplication {
     }
 }`}},
 {id:'spr1b',title:'The Spring Boot annotation map',body:`
-<p>Spring Boot is programmed almost entirely through annotations. Learn them as <b>families</b>, not a flat list:</p>
+<p>Spring Boot is programmed almost entirely through annotations. Learn them as <b>families</b>:</p>
 <ul>
 <li><b>Stereotypes</b> (make a class a bean via scanning): <code>@Component</code> generic; <code>@Service</code> business logic; <code>@Repository</code> data access (adds exception translation); <code>@Controller</code>/<code>@RestController</code> web.</li>
 <li><b>Configuration</b>: <code>@Configuration</code> + <code>@Bean</code> for manual bean recipes; <code>@Value("$${'{'}dojo.x}")</code> single property; <code>@ConfigurationProperties</code> typed blocks; <code>@Profile("prod")</code> conditional beans; <code>@ConditionalOnProperty</code> and friends, the machinery of auto-configuration itself.</li>
 <li><b>Injection control</b>: <code>@Autowired</code> (skippable on single constructors), <code>@Qualifier("name")</code> to pick between candidates, <code>@Primary</code> to set the default.</li>
 <li><b>Web binding</b>: <code>@GetMapping/@PostMapping…</code>, <code>@PathVariable</code>, <code>@RequestParam</code>, <code>@RequestBody</code>, <code>@ResponseStatus</code>, <code>@RestControllerAdvice</code>/<code>@ExceptionHandler</code>.</li>
-<li><b>Lifecycle & behavior</b>: <code>@PostConstruct</code>/<code>@PreDestroy</code> hooks; <code>@Transactional</code>, <code>@Cacheable</code>, <code>@Scheduled</code>, <code>@Async</code>. These four work via <b>proxies</b>: Spring wraps your bean and intercepts the call, which is why self-invocation (this.method()) bypasses them.</li>
+<li><b>Lifecycle & behavior</b>: <code>@PostConstruct</code>/<code>@PreDestroy</code> hooks; <code>@Transactional</code>, <code>@Cacheable</code>, <code>@Scheduled</code>, <code>@Async</code>. These four work via <b>proxies</b>: Spring wraps your bean and intercepts the call, so self-invocation (this.method()) bypasses them.</li>
 <li><b>Testing</b>: <code>@SpringBootTest</code> full context, <code>@WebMvcTest</code>/<code>@DataJpaTest</code> slices, <code>@MockBean</code> swap a bean for a mock.</li>
 </ul>
-<p><b>How it works under the hood</b>: component scanning finds annotated classes (reflection, your dep4 lesson), auto-configuration applies <code>@Conditional*</code> recipes based on the classpath, and behavior annotations generate runtime proxies. Nothing magic: just the annotation + reflection machinery you already built by hand, industrialized.</p>
+<p><b>Under the hood</b>: component scanning finds annotated classes by reflection (your dep4 lesson), auto-configuration applies <code>@Conditional*</code> recipes based on the classpath, and behavior annotations generate runtime proxies.</p>
 
 <h4>Reading an annotation as a question</h4>
-<p>Each family answers one question, and knowing which question is what stops the list from being memorization. Stereotypes answer <b>"should Spring manage this class?"</b>, and the choice among <code>@Component</code>, <code>@Service</code> and <code>@Repository</code> is documentation plus one behavior: <code>@Repository</code> translates persistence exceptions into Spring's <code>DataAccessException</code> hierarchy. Configuration annotations answer <b>"where does this value or bean come from?"</b>. Injection annotations answer <b>"which of the candidates?"</b>. Web annotations answer <b>"how does an HTTP request become arguments?"</b>. Behavior annotations answer <b>"what should happen around this call?"</b>, and those are the ones with a proxy behind them.</p>
+<p>Each family answers one question. Stereotypes answer <b>"should Spring manage this class?"</b> The choice among <code>@Component</code>, <code>@Service</code> and <code>@Repository</code> is documentation plus one behavior: <code>@Repository</code> translates persistence exceptions into Spring's <code>DataAccessException</code> hierarchy. Configuration annotations answer <b>"where does this value or bean come from?"</b> Injection annotations answer <b>"which of the candidates?"</b> Web annotations answer <b>"how does an HTTP request become arguments?"</b> Behavior annotations answer <b>"what should happen around this call?"</b> Those are the ones with a proxy behind them.</p>
 
 <h4>The two that cause the most confusion</h4>
-<p><code>@Value</code> versus <code>@ConfigurationProperties</code>: the first injects one property and is fine for a handful; the second binds a whole prefix into a typed object with validation, IDE completion and a single place to document the settings. Past three related properties, the typed block is the better answer.</p>
-<p><code>@Autowired</code> on fields versus constructor injection: field injection cannot produce a <code>final</code> field, hides dependencies from anyone constructing the class in a test, and allows an object to exist in a half-initialized state. Constructor injection has none of those problems and needs no annotation at all on a single constructor, which is why modern Spring code has almost no <code>@Autowired</code> in it.</p>
+<p><code>@Value</code> versus <code>@ConfigurationProperties</code>. The first injects one property and is fine for a handful. The second binds a whole prefix into a typed object, with validation, IDE completion and one place to document the settings. Past three related properties, use the typed block.</p>
+<p><code>@Autowired</code> on fields versus constructor injection. Field injection can't produce a <code>final</code> field, hides dependencies from anyone constructing the class in a test, and lets an object exist half-initialized. Constructor injection has none of those problems and needs no annotation on a single constructor. Modern Spring code has almost no <code>@Autowired</code> in it.</p>
 
 <h4>When the wiring goes wrong</h4>
-<p>Three errors cover most of it. <b>"No qualifying bean of type X"</b> means either nothing declares it or the class is outside the component scan; remember scanning starts at the <code>@SpringBootApplication</code> package and searches downward only. <b>"Expected single matching bean but found 2"</b> wants a <code>@Qualifier</code> or a <code>@Primary</code>. And <b>"Requested bean is currently in creation"</b> is a circular dependency, which is a design signal rather than a puzzle: the cycle usually means a responsibility sits in the wrong class, and <code>@Lazy</code> hides it rather than fixing it.</p>
-<p>When a bean you expect is missing, start the app with <code>--debug</code> and read the <b>condition evaluation report</b>: it lists every auto-configuration that matched, every one that did not, and the exact condition that failed. That report is the difference between debugging Spring and guessing at it.</p>`,
+<p><b>"No qualifying bean of type X"</b>: nothing declares it, or the class is outside the component scan. Scanning starts at the <code>@SpringBootApplication</code> package and goes downward only. <b>"Expected single matching bean but found 2"</b> wants a <code>@Qualifier</code> or a <code>@Primary</code>. <b>"Requested bean is currently in creation"</b> is a circular dependency. Treat it as a design signal: the cycle usually means a responsibility sits in the wrong class. <code>@Lazy</code> hides it rather than fixing it.</p>
+<p>When a bean you expect is missing, start with <code>--debug</code> and read the <b>condition evaluation report</b>: every auto-configuration that matched, every one that didn't, and the condition that failed.</p>`,
 docs:[['Spring annotation-based container config','https://docs.spring.io/spring-framework/reference/core/beans/annotation-config.html'],['Spring Boot auto-configuration','https://docs.spring.io/spring-boot/reference/using/auto-configuration.html'],['@Transactional proxying (Spring)','https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html']],
 ex:{title:'Annotate the skeleton',
 prompt:`Fill in the right annotations (marked by comments) on this mini-app: the config class producing a <code>Clock</code> bean; a repository stereotype on <code>LedgerRepo</code>; a service stereotype plus <code>@Transactional</code> on <code>LedgerService.post()</code>; a REST controller mapped to <code>/api/ledger</code> whose <code>create</code> method answers POST, takes the body as a DTO, and returns 201 via <code>@ResponseStatus</code>; and an init hook method annotated to run after construction.`,
@@ -187,16 +184,15 @@ class TimeConfig {
     @Bean Clock clock() { return Clock.systemUTC(); }   // manual bean
 }</div>
 <p>Stereotypes: <code>@Component</code> (generic), <code>@Service</code>, <code>@Repository</code>, <code>@Controller</code>/<code>@RestController</code>: all become beans via scanning. <b>Prefer constructor injection with final fields</b> over field <code>@Autowired</code>: immutable, explicit, unit-testable with plain <code>new</code>.</p>
-<h4>Why inversion of control is worth the indirection</h4>
-<p>The argument is easy to state and easy to miss. When a class constructs its own dependencies, it has
-also decided which implementation to use, when it is created, and how long it lives: permanently, in
-code, at every call site. Swapping the implementation means editing every class that names it, and
-testing means somehow preventing a real database connection from being opened inside a constructor.</p>
+<h4>Why the indirection</h4>
+<p>When a class constructs its own dependencies, it has also decided which implementation to use, when
+it's created and how long it lives. Permanently, in code, at every call site. Swapping the implementation
+means editing every class that names it. Testing means somehow stopping a real database connection from
+opening inside a constructor.</p>
 <p>Injection moves those three decisions out of the class and into one place. The class states
-<i>what it needs</i>; something else decides <i>what it gets</i>. That is the whole idea, and everything
-else (scanning, annotations, contexts) is machinery serving it.</p>
+<i>what it needs</i>. Something else decides <i>what it gets</i>.</p>
 
-<h4>Constructor injection, and why it is not just a style preference</h4>
+<h4>Constructor injection</h4>
 <div class="codeSample" data-hl>// field injection - what it costs you
 @Service class OrderService {
     @Autowired private PaymentClient payments;   // not final: mutable
@@ -210,27 +206,24 @@ new OrderService();       // compiles. object is BROKEN - payments is null.
     OrderService(PaymentClient payments) { this.payments = payments; }
 }
 new OrderService(fake);   // the ONLY way to build it is correctly.</div>
-<p>Three concrete consequences. The object is <b>never in an invalid state</b>: there is no window
-between construction and injection. The dependencies are <b>visible in the signature</b>, so a
-constructor with nine parameters tells you outright that the class does too much, where nine
-<code>@Autowired</code> fields hide it. And tests use plain <code>new</code>, with no Spring context and
-no reflection.</p>
+<p>The object is <b>never in an invalid state</b>: there's no window between construction and injection.
+The dependencies are <b>visible in the signature</b>. A constructor with nine parameters tells you the
+class does too much, where nine <code>@Autowired</code> fields hide it. Tests use plain <code>new</code>,
+with no Spring context and no reflection.</p>
 
 <h4>Scopes and the trap inside them</h4>
-<p>Beans are <b>singletons</b> by default (one instance shared by every caller), which means a singleton
-must be stateless or thread-safe. A mutable field on a <code>@Service</code> is shared across every
-concurrent request, and the resulting bug is intermittent, load-dependent and unpleasant to
-reproduce.</p>
-<p>The subtler version is injecting a shorter-lived bean into a longer-lived one: a request-scoped bean
+<p>Beans are <b>singletons</b> by default: one instance shared by every caller. So a singleton must be
+stateless or thread-safe. A mutable field on a <code>@Service</code> is shared across every concurrent
+request. The resulting bug is intermittent, load-dependent and hard to reproduce.</p>
+<p>The subtler version is injecting a shorter-lived bean into a longer-lived one. A request-scoped bean
 injected into a singleton is resolved once, at startup, and then stays. Spring offers scoped proxies for
-this, but the better instinct is usually to pass the short-lived thing as a method parameter instead.</p>
+this. Usually the better fix is to pass the short-lived thing as a method parameter.</p>
 
 <h4>Circular dependencies are a design signal</h4>
-<p>If A needs B and B needs A, constructor injection cannot build either, and Boot fails at startup, which
-is the correct behavior, not an obstacle. The cycle is telling you the responsibility split is wrong.
-The fix is to extract the shared concern into a third component, or to invert one direction with an event.
-Reaching for <code>@Lazy</code> or setter injection makes the failure go away and leaves the design
-problem in place.</p>`,
+<p>If A needs B and B needs A, constructor injection can't build either, and Boot fails at startup. That's
+the correct behavior: the responsibility split is wrong. Extract the shared concern into a third
+component, or invert one direction with an event. <code>@Lazy</code> or setter
+injection makes the failure go away and leaves the design problem in place.</p>`,
 docs:[['Spring IoC container, reference','https://docs.spring.io/spring-framework/reference/core/beans.html'],['Constructor injection, Baeldung','https://www.baeldung.com/constructor-injection-in-spring']],
 ex:{title:'Wire it the right way',
 prompt:`Create <code>@Service class AuditService</code> with method <code>void log(String event)</code> (print it), and <code>@Service class TransferService</code> that depends on AuditService via <b>constructor injection into a final field</b> (no field @Autowired). TransferService has <code>void transfer(String from, String to, long cents)</code> that calls <code>audit.log(...)</code> with a message containing the three arguments.`,
@@ -276,7 +269,7 @@ class TransferService {
     }
 }`}},
 {id:'spr2b',title:'AOP: aspects, proxies & pointcuts',body:`
-<p>Aspect-Oriented Programming extracts <b>cross-cutting concerns</b> (logging, timing, security, transactions) out of business code and into <b>aspects</b> that Spring weaves in via proxies. You have been using AOP all along: <code>@Transactional</code>, <code>@Cacheable</code> and <code>@PreAuthorize</code> are aspects.</p>
+<p>Aspect-Oriented Programming extracts <b>cross-cutting concerns</b> (logging, timing, security, transactions) out of business code and into <b>aspects</b> that Spring weaves in via proxies. You've been using AOP all along: <code>@Transactional</code>, <code>@Cacheable</code> and <code>@PreAuthorize</code> are aspects.</p>
 <div class="codeSample" data-hl>@Aspect
 @Component
 public class TimingAspect {
@@ -293,21 +286,21 @@ public class TimingAspect {
         }
     }
 }</div>
-<p>Advice types: <code>@Around</code> (full control: can skip, retry, rewrite), <code>@Before</code>, <code>@AfterReturning</code>, <code>@AfterThrowing</code>. Pointcut languages: <code>execution(...)</code> patterns, <code>within(...)</code>, and <code>@annotation(...)</code> (next lesson). <b>Proxy limits you must know</b>: only calls that cross the proxy are advised; self-invocation (<code>this.method()</code>) bypasses aspects entirely, and final methods can't be proxied. Requires <code>spring-boot-starter-aop</code>.</p>
+<p>Advice types: <code>@Around</code> (full control: can skip, retry, rewrite), <code>@Before</code>, <code>@AfterReturning</code>, <code>@AfterThrowing</code>. Pointcut languages: <code>execution(...)</code> patterns, <code>within(...)</code>, and <code>@annotation(...)</code> (next lesson). Requires <code>spring-boot-starter-aop</code>.</p>
 
-<h4>How the magic actually works</h4>
-<p>Spring AOP is not bytecode weaving; it creates a <b>proxy object</b> around your bean and registers the proxy in the context. Everyone who injects your service is holding the proxy; each call passes through the advice chain and then to your instance. Two implementations: a JDK dynamic proxy when the bean implements an interface, or a CGLIB subclass when it does not.</p>
-<p>Every limitation follows from that one fact. <b>Self-invocation is not advised</b>, because <code>this.method()</code> goes straight to your instance and never touches the proxy, which is why a <code>@Transactional</code> method called from another method of the same class runs with no transaction at all, silently. <b>final classes and methods cannot be proxied</b> by CGLIB. <b>Private methods are never advised.</b> And a bean used during startup may be injected before its proxy exists, which is where "the aspect works everywhere except in <code>@PostConstruct</code>" comes from.</p>
-<p>The fixes, in order of preference: move the annotated method to another bean (usually the right modeling answer anyway), inject the bean into itself, or use <code>AopContext.currentProxy()</code> as a last resort.</p>
+<h4>How the proxy works</h4>
+<p>Spring AOP is not bytecode weaving. It creates a <b>proxy object</b> around your bean and registers the proxy in the context. Everyone who injects your service is holding the proxy. <b>Only calls that cross the proxy are advised</b>: each call passes through the advice chain and then to your instance. The proxy is a JDK dynamic proxy when the bean implements an interface, or a CGLIB subclass when it doesn't.</p>
+<p>Every limitation follows from that. <b>Self-invocation is not advised</b>: <code>this.method()</code> goes straight to your instance and never touches the proxy. So a <code>@Transactional</code> method called from another method of the same class runs with no transaction, silently. <b>final classes and methods cannot be proxied</b> by CGLIB. <b>Private methods are never advised.</b> A bean used during startup may be injected before its proxy exists, hence "the aspect works everywhere except in <code>@PostConstruct</code>".</p>
+<p>Fixes, in order of preference: move the annotated method to another bean, inject the bean into itself, or <code>AopContext.currentProxy()</code> as a last resort. The first is usually the right modeling answer anyway.</p>
 
 <h4>Writing an aspect that behaves</h4>
 <ul>
-<li><b><code>@Around</code> must return.</b> Forget to return the result of <code>pjp.proceed()</code> and every advised method silently returns null, a genuinely nasty bug, because nothing throws.</li>
-<li><b>Do not swallow exceptions.</b> An aspect that catches and logs turns a failure into a success for every caller.</li>
-<li><b>Order matters</b> when several aspects apply. <code>@Order</code> makes it explicit; leaving it to chance means transaction and security advice may nest either way round, and "security inside the transaction" is not what you meant.</li>
-<li><b>Keep pointcuts narrow.</b> An <code>execution(* com..*(..))</code> pointcut advises the entire application, including hot paths where the interception cost is now on every call.</li>
+<li><b><code>@Around</code> must return.</b> Forget to return the result of <code>pjp.proceed()</code> and every advised method returns null. Nothing throws.</li>
+<li><b>Don't swallow exceptions.</b> An aspect that catches and logs turns a failure into a success for every caller.</li>
+<li><b>Order matters</b> when several aspects apply. <code>@Order</code> makes it explicit. Left to chance, transaction and security advice may nest either way round, and "security inside the transaction" is not what you meant.</li>
+<li><b>Keep pointcuts narrow.</b> <code>execution(* com..*(..))</code> advises the entire application, including hot paths that now pay the interception cost on every call.</li>
 </ul>
-<p>The judgment call: aspects are invisible at the call site, which is exactly their benefit and exactly their cost. Cross-cutting infrastructure (transactions, security, metrics, retries) earns the indirection. Business rules hidden in an aspect are a debugging session waiting to happen, because nothing in the method you are reading says they exist.</p>`,
+<p>Aspects are invisible at the call site. That is their benefit and their cost. Cross-cutting infrastructure (transactions, security, metrics, retries) earns the indirection. Business rules hidden in an aspect are a debugging session waiting to happen: nothing in the method you're reading says they exist.</p>`,
 docs:[['Spring AOP, reference','https://docs.spring.io/spring-framework/reference/core/aop.html'],['Pointcut expressions, Spring','https://docs.spring.io/spring-framework/reference/core/aop/ataspectj/pointcuts.html']],
 ex:{title:'A timing aspect',
 prompt:`Write <code>@Aspect @Component class TimingAspect</code> with an <code>@Around</code> advice on pointcut <code>execution(* com.example.svc.service..*(..))</code>: method <code>Object time(ProceedingJoinPoint pjp) throws Throwable</code> that records <code>System.nanoTime()</code>, calls <code>pjp.proceed()</code> in a try, and in a <b>finally</b> prints the signature and elapsed milliseconds, so timing is reported even when the method throws.`,
@@ -344,6 +337,7 @@ public class TimingAspect {
     }
 }`}},
 {id:'spr2c',title:'Custom Spring annotations: compose & advise',body:`
+
 <p>Two ways to mint your own Spring annotations:</p>
 <div class="codeSample" data-hl>// 1) COMPOSED annotation: bundle existing ones (how @RestController itself works)
 @Target(ElementType.TYPE)
@@ -370,28 +364,27 @@ class AuditAspect {
         return pjp.proceed();
     }
 }</div>
-<p>Pattern 1 needs no code; Spring reads meta-annotations recursively. Pattern 2 is the full framework move: exactly how <code>@Transactional</code>, <code>@Cacheable</code> and <code>@PreAuthorize</code> are built. In your domain this is how you'd add <code>@RequiresMfa</code> or <code>@RateLimited</code> to endpoints declaratively.</p>
-<h4>Why this is the technique that separates users from builders</h4>
+<p>Pattern 1 needs no code. Spring reads meta-annotations recursively. Pattern 2 is the full framework move: it's how <code>@Transactional</code>, <code>@Cacheable</code> and <code>@PreAuthorize</code> are built. In your domain this is how you'd add <code>@RequiresMfa</code> or <code>@RateLimited</code> to endpoints declaratively.</p>
+<h4>What separates users from builders</h4>
 <p>Everything in Spring that feels magical (<code>@Transactional</code>, <code>@Cacheable</code>,
-<code>@PreAuthorize</code>, <code>@Retryable</code>) is built from the two patterns above. There is no
-privileged framework mechanism they use that is unavailable to you. Recognizing that changes how you
-approach cross-cutting requirements: instead of repeating the same six lines in forty methods, you
-declare the intent once and implement it once.</p>
+<code>@PreAuthorize</code>, <code>@Retryable</code>) is built from these two patterns. There is no
+privileged framework mechanism unavailable to you. Instead of repeating the same six lines in forty
+methods, you declare the intent once and implement it once.</p>
 
-<h4>When each pattern is the right one</h4>
-<p><b>Composed annotations</b> are pure naming: you are giving a recurring combination a domain name.
-The win is that the meaning lives in one place: change what <code>@TransactionalService</code> implies
-and every class using it follows. Spring resolves meta-annotations recursively, so there is nothing to
-implement and nothing to go wrong.</p>
-<p><b>Behavior annotations</b> are for genuine cross-cutting concerns: auditing, rate limiting, metrics,
-authorization checks. The test for whether one is justified: the concern must be <i>orthogonal</i> to the
-business logic. Auditing is: it applies to payments, users and reports identically. If the behavior
-needs to know what the method actually does, an aspect is the wrong tool and you are hiding logic where
-nobody will find it.</p>
+<h4>When to use each</h4>
+<p><b>Composed annotations</b> are pure naming: a recurring combination gets a domain name. The meaning
+lives in one place. Change what <code>@TransactionalService</code> implies and every class using it
+follows. There's nothing to implement and nothing to go wrong.</p>
+<p><b>Behavior annotations</b> are for cross-cutting concerns: auditing, rate limiting, metrics,
+authorization checks. The test: the concern must be <i>orthogonal</i> to the business logic. Auditing is.
+It applies to payments, users and reports identically. If the behavior needs to know what the method does,
+an aspect is the wrong tool. You're hiding logic where nobody will find it.</p>
 
-<h4>The proxy limits that will bite you</h4>
-<p>Spring AOP works by wrapping your bean in a proxy. Calls that never leave the object never pass
-through it:</p>
+<h4>The proxy limits</h4>
+<p>Spring <b>AOP</b> works by wrapping your bean in a proxy. AOP is aspect-oriented programming: wrapping
+many methods with the same behavior (open a transaction, log the call, check a permission) from the
+outside, so the methods don't each repeat it. <code>@Transactional</code> works this way. Calls that never
+leave the object never pass through the proxy:</p>
 <div class="codeSample" data-hl>@Service class ReportService {
     @Audited("run") public void run() { helper(); }
     @Audited("help") public void helper() { }     // NEVER fires when called
@@ -401,15 +394,15 @@ through it:</p>
 // same reason @Transactional does not apply to self-invocation.
 // same reason it does nothing on private, static or final methods.
 // the fix is structural: move the annotated method to another bean.</div>
-<p>This is the single most common source of "my annotation does nothing", and because it fails silently,
-it is worth <b>testing that the aspect actually fires</b> rather than assuming it does.</p>
+<p>This is the most common source of "my annotation does nothing". It fails silently, so <b>test that the
+aspect fires</b> rather than assuming it does.</p>
 
 <h4>Doing it responsibly</h4>
-<p>Aspects are invisible at the call site, which is exactly their value and exactly their risk. Keep the
-pointcut narrow: <code>@annotation(...)</code> rather than a broad package expression, so the behavior
-applies only where someone opted in. Make sure exceptions from the aspect cannot silently swallow the
-business call. And document the annotation itself, because a reader who finds <code>@RequiresMfa</code>
-on a method has no other way to learn what it does.</p>`,
+<p>Aspects are invisible at the call site: their value and their risk. Keep the pointcut narrow,
+<code>@annotation(...)</code> rather than a broad package expression, so the behavior applies only where
+someone opted in. Make sure exceptions from the aspect can't swallow the business call. Document the
+annotation itself. A reader who finds <code>@RequiresMfa</code> on a method has no other way to learn
+what it does.</p>`,
 docs:[['Meta-annotations & composed annotations, Spring','https://docs.spring.io/spring-framework/reference/core/beans/classpath-scanning.html#beans-meta-annotations'],['@annotation pointcut, Spring AOP','https://docs.spring.io/spring-framework/reference/core/aop/ataspectj/pointcuts.html']],
 ex:{title:'Build @Audited end to end',
 prompt:`(1) Declare <code>@interface Audited</code>: <code>@Target(ElementType.METHOD)</code>, <code>@Retention(RetentionPolicy.RUNTIME)</code>, element <code>String value()</code>. (2) Declare a composed <code>@interface TransactionalService</code>: TYPE target, RUNTIME retention, meta-annotated with <code>@Service</code> and <code>@Transactional</code>. (3) Write <code>@Aspect @Component class AuditAspect</code> with <code>@Around("@annotation(audited)")</code> advice <code>Object audit(ProceedingJoinPoint pjp, Audited audited)</code> that prints <code>"[AUDIT] " + audited.value()</code> then proceeds.`,
@@ -457,6 +450,7 @@ class AuditAspect {
     }
 }`}},
 {id:'spr3',title:'REST controllers',body:`
+
 <p><code>@RestController</code> = <code>@Controller</code> + <code>@ResponseBody</code>: return values are serialized straight to JSON by Jackson.</p>
 <div class="codeSample" data-hl>@RestController
 @RequestMapping("/api/users")
@@ -480,10 +474,10 @@ public class UserController {
 }</div>
 <p>Parameter annotations: <code>@PathVariable</code> (from the URL), <code>@RequestParam</code> (?query=), <code>@RequestBody</code> (JSON body). <code>ResponseEntity</code> gives full control of status and headers.</p>
 
-<h4>Return the right status, not just 200</h4>
+<h4>Return the right status</h4>
 <p>The default for a successful method is 200, and that is wrong often enough to matter. A creation
-should answer <b>201 Created</b> with a <code>Location</code> header pointing at the new resource; a
-delete that returns nothing should answer <b>204 No Content</b>; a lookup that finds nothing is
+should answer <b>201 Created</b> with a <code>Location</code> header pointing at the new resource. A
+delete that returns nothing should answer <b>204 No Content</b>. A lookup that finds nothing is
 <b>404</b>, not 200 with a null body.</p>
 <div class="codeSample" data-hl>@PostMapping
 ResponseEntity&lt;OrderDto&gt; create(@Valid @RequestBody CreateOrder cmd) {
@@ -504,8 +498,10 @@ ResponseEntity&lt;OrderDto&gt; get(@PathVariable long id) {
 <h4>Validate at the edge</h4>
 <p><code>@Valid</code> on a <code>@RequestBody</code> triggers Bean Validation
 (<code>@NotBlank</code>, <code>@Positive</code>, <code>@Email</code>) before your method runs, so
-invalid input never reaches your service layer. Without it the annotations on the DTO are decoration,
-a very common bug, because the code looks validated.</p>
+invalid input never reaches your service layer. Without it the annotations on the <b>DTO</b> are decoration.
+A DTO is a data transfer object: a plain class that only carries data across a boundary, such as the JSON an
+API sends or receives. No behavior, no database identity, so your internal model never leaks onto the wire.
+Missing <code>@Valid</code> is a common bug, because the code looks validated.</p>
 
 <h4>Handle errors in one place</h4>
 <p>Try/catch in every controller method produces inconsistent error shapes and a lot of noise. A
@@ -520,17 +516,17 @@ class ApiErrors {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity&lt;Problem&gt; invalid(MethodArgumentNotValidException e) { ... }
 }</div>
-<p>Two rules for the payload: use a consistent structure (RFC 9457 <i>problem details</i> is the
-standard one), and <b>never return the raw exception message or stack trace</b>; it leaks internals
-and sometimes data.</p>
+<p>For the payload, use a consistent structure. RFC 9457 <i>problem details</i> is the standard one. And
+<b>never return the raw exception message or stack trace</b>. It leaks internals and sometimes data.</p>
 
 <h4>Keep controllers thin</h4>
 <p>A controller's job is HTTP: bind, validate, delegate, map the result to a status. Business logic
 belongs in a service, where it can be tested without a web layer. The tell that a controller has grown
-too much is a test that needs <code>MockMvc</code> to verify a business rule.</p>
-<p>And return <b>DTOs, not entities</b>. Serializing a JPA entity exposes your schema, drags lazy
-associations into the response (or throws when the session has closed), and turns a database rename
-into a breaking API change.</p>`,
+too much: a test that needs <code>MockMvc</code> to verify a business rule.</p>
+<p>Return <b>DTOs, not entities</b>. An entity is a class mapped to a database table through <b>JPA</b>, the
+Java Persistence API: you annotate the class and the provider (usually Hibernate) writes the SQL. Serializing
+a JPA entity exposes your schema, drags lazy associations into the response or throws when the session has
+closed, and turns a database rename into a breaking API change.</p>`,
 docs:[['Building a RESTful Web Service (guide)','https://spring.io/guides/gs/rest-service'],['Spring MVC annotated controllers','https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller.html']],
 ex:{title:'A Positions API',
 prompt:`Write <code>PositionController</code>: <code>@RestController</code> mapped to <code>/api/positions</code>, with an in-memory <code>Map&lt;String, String&gt;</code>. Endpoints: <code>GET /{id}</code> returning <code>ResponseEntity&lt;String&gt;</code>: 200 with the value or 404 if absent; and <code>POST</code> taking <code>@RequestParam String id, @RequestParam String symbol</code>, storing it and returning the created value with status <code>201</code> via <code>@ResponseStatus</code>.`,
@@ -574,6 +570,7 @@ public class PositionController {
     }
 }`}},
 {id:'spr4',title:'Data access with Spring Data JPA',body:`
+
 <p>Spring Data generates repository implementations from interface signatures. Entity + repository interface = full CRUD, no SQL written:</p>
 <div class="codeSample" data-hl>@Entity
 public class Account {
@@ -599,12 +596,12 @@ public class AccountService {
         a.setBalanceCents(a.getBalanceCents() + cents);   // dirty-checked & flushed
     }
 }</div>
-<p>Method names become queries: <code>findBy</code> + property + operators (<code>GreaterThan</code>, <code>Containing</code>, <code>OrderBy…Desc</code>). Business operations that touch multiple rows belong in <code>@Transactional</code> service methods.</p>
-<h4>The abstraction, and what it is hiding</h4>
-<p>Spring Data generates the implementation of that interface at runtime by parsing the method name. It
-is a genuine productivity win and it is also the source of most JPA pain, because <b>the SQL still
-exists; you just cannot see it</b>. The single most valuable thing you can do when learning this is turn
-the SQL on:</p>
+<p>Method names become queries: <code>findBy</code> + property + operators (<code>GreaterThan</code>, <code>Containing</code>, <code>OrderBy…Desc</code>).</p>
+<h4>The abstraction, and what it hides</h4>
+<p>Generating queries from method names is a productivity win and the source of most JPA pain. <b>JPA</b> is
+the Java Persistence API, the standard for mapping Java objects to database tables: you annotate a class and
+the provider (usually Hibernate) writes the SQL. Which is the catch: <b>the SQL still exists, you just can't
+see it</b>. When learning this, turn the SQL on:</p>
 <div class="codeSample" data-hl>spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
 logging.level.org.hibernate.orm.jdbc.bind=TRACE   # see the parameter values too
@@ -614,35 +611,36 @@ logging.level.org.hibernate.orm.jdbc.bind=TRACE   # see the parameter values too
 # issues 47 queries where it used to issue 2.</div>
 
 <h4>N+1: the bug this abstraction manufactures</h4>
-<p>It is worth understanding once, because it accounts for a large share of slow Spring applications.
-Load 100 accounts, then touch a lazy association on each one, and you have issued 1 query for the list
-plus 100 more (one per account) without writing anything that looks like a loop over the database.</p>
-<p>The fixes are all about telling JPA your intent up front: a <code>JOIN FETCH</code> in an explicit
-<code>@Query</code>, an <code>@EntityGraph</code> on the repository method, or batch fetching. What does
-<i>not</i> work is switching associations to <code>EAGER</code>; that trades one problem for a worse one,
-where every load of the entity drags its whole object graph along whether you needed it or not.</p>
+<p>N+1 accounts for a large share of slow Spring applications. Load 100 accounts, then touch a lazy
+association on each one. You've issued 1 query for the list plus 100 more, one per account, without
+writing anything that looks like a loop over the database.</p>
+<p>The fixes all tell JPA your intent up front: a <code>JOIN FETCH</code> in an explicit
+<code>@Query</code>, an <code>@EntityGraph</code> on the repository method, or batch fetching. Switching
+associations to <code>EAGER</code> does <i>not</i> work. Every load of the entity then drags its whole
+object graph along whether you needed it or not.</p>
 
 <h4>The persistence context, briefly</h4>
 <p>Inside a transaction, JPA keeps a first-level cache of the entities it has loaded and tracks changes to
-them. That is why <code>credit()</code> above works without a <code>save()</code>: the entity is
-<b>managed</b>, so the modification is detected at flush time and written automatically. It is elegant
-and it surprises people in both directions: modifications you did not intend to persist get persisted,
-and modifications to a <b>detached</b> entity (loaded outside the transaction) silently do not.</p>
-<p>Related: <code>LazyInitializationException</code> means you touched an association after the
-transaction ended. Loading it eagerly is one answer; the better one is usually to map to a DTO inside the
-transaction and return that, which also stops entities leaking into your API contract.</p>
+them. That's why <code>credit()</code> above works without a <code>save()</code>: the entity is
+<b>managed</b>, so the change is detected at flush time and written automatically. This surprises people
+in both directions. Changes you didn't intend to persist get persisted. Changes to a <b>detached</b>
+entity, one loaded outside the transaction, silently don't.</p>
+<p><code>LazyInitializationException</code> means you touched an association after the transaction ended.
+Loading it eagerly is one answer. The better one is usually to map to a <b>DTO</b> inside the transaction and
+return that. A DTO is a data transfer object: a plain class that only carries data across a boundary, such as
+the JSON an API sends back. No behavior, no database identity. It also stops entities leaking into your API
+contract.</p>
 
-<h4>Where <code>@Transactional</code> belongs, and its sharp edges</h4>
-<p>On the <b>service</b> method that represents one business operation, so the whole operation commits or
-rolls back together, not on the repository, where each call is its own transaction and a multi-step
+<h4>Where <code>@Transactional</code> belongs</h4>
+<p>On the <b>service</b> method that represents one business operation, so everything it touches commits
+or rolls back together. Not on the repository, where each call is its own transaction and a multi-step
 operation can half-succeed.</p>
-<p>Two behaviors that catch people out. It rolls back on unchecked exceptions only: a checked exception
-commits unless you say <code>rollbackFor</code>. And it is proxy-based, so calling one
-<code>@Transactional</code> method from another method in the same class does nothing at all.</p>
-<p>Finally, derived query names have a ceiling. When the method name starts encoding three conditions and
-an ordering, it has stopped being readable; write the JPQL in <code>@Query</code>, or drop to a native
-query. Spring Data is at its best for the simple 80% and should be abandoned without guilt for the
-rest.</p>`,
+<p>It rolls back on unchecked exceptions only. A checked exception commits unless you say
+<code>rollbackFor</code>. And it's proxy-based, so calling one <code>@Transactional</code> method from
+another in the same class does nothing.</p>
+<p>Derived query names have a ceiling. Once a method name encodes three conditions and an ordering, it has
+stopped being readable. Write the JPQL in <code>@Query</code>, or drop to a native query. Spring Data is
+at its best for the simple 80%. Abandon it without guilt for the rest.</p>`,
 docs:[['Accessing Data with JPA, guide','https://spring.io/guides/gs/accessing-data-jpa'],['Spring Data JPA, query methods','https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html']],
 ex:{title:'Derive the queries',
 prompt:`Write interface <code>TradeRepository extends JpaRepository&lt;Trade, Long&gt;</code> with three <b>derived query methods</b> (signatures only, no bodies; it's an interface): find all trades by <code>symbol</code>, find trades with <code>amountCents</code> greater than a value, and find trades by symbol ordered by <code>executedAt</code> descending. Assume entity <code>Trade</code> has those properties. Then a <code>@Service TradeService</code> with constructor-injected repository and a <code>@Transactional</code> method <code>void reprice(Long id, long newAmount)</code> that loads via <code>findById(...).orElseThrow()</code> and sets the amount.`,
@@ -688,6 +686,7 @@ class TradeService {
     }
 }`}},
 {id:'spr5',title:'Configuration, profiles & testing',body:`
+
 <p>Externalize everything that differs per environment:</p>
 <div class="codeSample"># application.properties
 server.port=8081
@@ -713,24 +712,25 @@ class PositionControllerTest {
            .andExpect(status().isNotFound());
     }
 }</div>
-<p>Configuration is a contract, not a pile of strings. <code>@Value</code> scatters keys across the
-codebase, so nothing tells you what the application needs and a typo fails at runtime on the first
-request that touches it. A properties record is <b>typed, validated and discoverable</b>: wrong type,
-missing value or failed constraint and the application fails to <i>start</i>, not at 2am.</p>
+<p>Configuration is a contract. <code>@Value</code> scatters keys across the codebase. Nothing tells you
+what the application needs, and a typo fails at runtime on the first request that touches it. A
+properties record is <b>typed, validated and discoverable</b>: wrong type, missing value or failed
+constraint and the application fails to <i>start</i>, not at 2am.</p>
 <p><b>Profiles have a trap.</b> Putting behavior behind <code>@Profile("prod")</code> means the code
 you tested is not the code you run. Keep profiles for configuration (endpoints, pool sizes,
-credentials) and keep behavior identical everywhere; where it genuinely must differ, a feature flag
-you can flip without redeploying is the better tool. Precedence runs defaults → profile files →
-environment variables, which is what makes twelve-factor deployment work and why secrets arrive from
-the environment rather than a committed file.</p>
+credentials) and keep behavior identical everywhere. Where it must differ, a feature flag you can flip
+without redeploying is the better tool. Precedence runs defaults → profile files → environment
+variables. That is what makes twelve-factor deployment work, and why secrets arrive from the
+environment rather than a committed file.</p>
 <p><b>Slice tests are the difference between a fast suite and an abandoned one.</b>
-<code>@SpringBootTest</code> in every class is the biggest cause of slow Spring builds; slices start a
+<code>@SpringBootTest</code> in every class is the biggest cause of slow Spring builds. Slices start a
 fraction of the context. Spring also caches contexts <i>by configuration</i> across a run, so every
-distinct combination of annotations, properties and mock beans builds another one; keeping test
+distinct combination of annotations, properties and mock beans builds another one. Keeping test
 configuration uniform is often a bigger win than any single optimization. And test against the real
-database: H2 accepts SQL that Postgres rejects, so a green suite on H2 still fails in production.
-Testcontainers removes that whole class of surprise.</p>
-<p>Prefer <code>@ConfigurationProperties</code> records over scattered <code>@Value</code>; prefer slice tests (<code>@WebMvcTest</code>, <code>@DataJpaTest</code>): they run in milliseconds, keeping the full <code>@SpringBootTest</code> for wiring smoke tests.</p>`,
+database. <b>H2</b> is a small database written in Java that runs inside your test process: fast tests, not
+production. H2 accepts SQL that Postgres rejects, so a green suite on H2 can still fail in production.
+Testcontainers removes that class of surprise.</p>
+<p>Prefer <code>@ConfigurationProperties</code> records over scattered <code>@Value</code>. Prefer slice tests (<code>@WebMvcTest</code>, <code>@DataJpaTest</code>): they run in milliseconds. Keep the full <code>@SpringBootTest</code> for wiring smoke tests.</p>`,
 docs:[['Externalized configuration','https://docs.spring.io/spring-boot/reference/features/external-config.html'],['Testing Spring Boot apps','https://docs.spring.io/spring-boot/reference/testing/index.html']],
 ex:{title:'Type-safe config + a slice test',
 prompt:`(1) Write <code>record RiskProps(double maxExposure, int alertThreshold)</code> annotated with <code>@ConfigurationProperties(prefix = "dojo.risk")</code>. (2) Write test class <code>HealthControllerTest</code> annotated <code>@WebMvcTest(HealthController.class)</code> with an <code>@Autowired MockMvc mvc</code> field and one <code>@Test</code> method <code>ok()</code> that performs <code>get("/health")</code> and expects <code>status().isOk()</code>.`,
@@ -772,7 +772,8 @@ class HealthControllerTest {
     }
 }`}},
 {id:'spr6',title:'Validation & API error handling',body:`
-<p>Never trust a request body. Bean Validation annotations declare the rules; <code>@Valid</code> enforces them; a <code>@RestControllerAdvice</code> turns violations into your error contract (remember RFC 9457 from the REST stream; Spring 6 ships <code>ProblemDetail</code> natively):</p>
+
+<p>Never trust a request body. Bean Validation annotations declare the rules. <code>@Valid</code> enforces them. A <code>@RestControllerAdvice</code> turns violations into your error contract. Spring 6 ships <code>ProblemDetail</code> natively, the RFC 9457 shape from the REST stream:</p>
 <div class="codeSample" data-hl>record CreateUser(
     @NotBlank String name,
     @Email String email,
@@ -798,17 +799,15 @@ class ApiErrors {
         return ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
     }
 }</div>
-<p>One advice class gives every controller the same error shape: API-platform gold. Common annotations: <code>@NotNull</code>, <code>@NotBlank</code>, <code>@Size</code>, <code>@Min/@Max</code>, <code>@Email</code>, <code>@Pattern</code>.</p>
+<p>Common annotations: <code>@NotNull</code>, <code>@NotBlank</code>, <code>@Size</code>, <code>@Min/@Max</code>, <code>@Email</code>, <code>@Pattern</code>.</p>
 <h4>Validate at the boundary, and only at the boundary</h4>
-<p>The reason validation belongs on the request object rather than scattered through the service is that
-the boundary is <b>the only place where you know the data is untrusted</b>. Past it, everything should be
-able to assume the object is well-formed. Checks repeated deeper down are either redundant or evidence
-that the boundary check is not trusted, and both are worth fixing.</p>
-<p>Which also means being precise about what this is. Bean Validation checks <b>shape</b>: present,
-well-formed, within range. It cannot check <b>state</b>: that the email is not already registered, that
-the account has funds, that the user may perform this action. Those are business rules, they need the
-database or the security context, and they belong in the service. Conflating the two produces annotations
-that quietly do database lookups, which is a bad place for them.</p>
+<p>Validation belongs on the request object, not scattered through the service, because the boundary is
+<b>the only place where you know the data is untrusted</b>. Past it, everything can assume the object is
+well-formed. A check repeated deeper down is redundant, or a sign that the boundary check isn't trusted.</p>
+<p>Bean Validation checks <b>shape</b>: present, well-formed, within range. It can't check <b>state</b>:
+that the email isn't already registered, that the account has funds, that the user may perform this
+action. Those are business rules. They need the database or the security context, and they belong in the
+service. Mixing the two puts database lookups inside annotations.</p>
 
 <h4>Getting the status code right</h4>
 <div class="codeSample" data-hl>malformed JSON, wrong type        -> 400 Bad Request
@@ -821,23 +820,21 @@ conflicts with current state      -> 409     (duplicate email, version clash)
 // 422 means "I understood you perfectly and the answer is no".
 // clients can act on the second and not the first.</div>
 
-<h4>Why one advice class is worth the effort</h4>
-<p>Without it, error shapes are decided ad hoc by whoever wrote each endpoint, and clients end up parsing
-three formats from the same API. A single <code>@RestControllerAdvice</code> makes the error contract a
-deliberate part of the design rather than an accident, and RFC 9457's <code>ProblemDetail</code> gives
-you a standard shape (<code>type</code>, <code>title</code>, <code>status</code>, <code>detail</code>,
-<code>instance</code>) so clients need no bespoke parsing at all.</p>
-<p>Two rules for what goes in it. <b>Never leak internals</b>: stack traces, SQL fragments and class
-names are reconnaissance; log them with a correlation id and return the id, not the detail. And
-<b>always include something the client can act on</b>: which field, what was wrong with it, and where to
-look. An error that says only "Validation failed" has told the caller nothing.</p>
+<h4>Why one advice class</h4>
+<p>Without it, whoever wrote each endpoint decides its error shape, and clients end up parsing three
+formats from the same API. RFC 9457's <code>ProblemDetail</code> gives you a standard shape:
+<code>type</code>, <code>title</code>, <code>status</code>, <code>detail</code>, <code>instance</code>.
+Clients need no bespoke parsing.</p>
+<p><b>Never leak internals.</b> Stack traces, SQL fragments and class names are reconnaissance. Log them
+with a correlation id and return the id, not the detail. <b>Always include something the client can act
+on</b>: which field, what was wrong with it, and where to look.</p>
 
-<h4>The extension that pays for itself</h4>
-<p>Field-level messages are fine until you need a rule spanning two fields: a date range where the end
-must follow the start, a password confirmation. Those need a class-level constraint with a custom
-<code>ConstraintValidator</code>, which is roughly twenty lines and keeps the rule declarative rather than
-buried in a controller. Adding a correlation id to every <code>ProblemDetail</code> is the other
-high-value addition: it turns "the API returned an error" into a single log query.</p>`,
+<h4>Cross-field rules and correlation ids</h4>
+<p>Field-level messages work until a rule spans two fields: a date range where the end must follow the
+start, a password confirmation. Those need a class-level constraint with a custom
+<code>ConstraintValidator</code>: roughly twenty lines, and the rule stays declarative instead of buried
+in a controller. Add a correlation id to every <code>ProblemDetail</code> too. It turns "the API returned
+an error" into a single log query.</p>`,
 docs:[['Spring validation','https://docs.spring.io/spring-framework/reference/core/validation/beanvalidation.html'],['ProblemDetail in Spring','https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-ann-rest-exceptions.html']],
 ex:{title:'Validate and translate',
 prompt:`(1) Write <code>record OpenAccount(@NotBlank String owner, @Min(0) long initialCents)</code>. (2) Write <code>@RestControllerAdvice class ApiErrors</code> with an <code>@ExceptionHandler(MethodArgumentNotValidException.class)</code> method returning a <code>ProblemDetail</code> with status <code>UNPROCESSABLE_ENTITY</code> and title <code>"Validation failed"</code>, and a second handler mapping <code>NoSuchElementException</code> to a 404 ProblemDetail.`,
@@ -878,6 +875,8 @@ class ApiErrors {
     }
 }`}},
 {id:'spr7',title:'Spring Security & JWT, your home turf',body:`
+
+
 <p>Spring Security is a filter chain in front of your controllers. Since Spring Security 6, configuration is a <code>SecurityFilterChain</code> bean:</p>
 <div class="codeSample" data-hl>@Configuration
 @EnableWebSecurity
@@ -896,25 +895,24 @@ class SecurityConfig {
         return http.build();
     }
 }</div>
-<p>As a JWT <b>resource server</b>, Spring validates the token signature against your IdP's JWKS endpoint (<code>spring.security.oauth2.resourceserver.jwt.issuer-uri=...</code>), exactly the CIAM architecture you run: auth server issues tokens, every API validates them statelessly. Method-level rules: <code>@PreAuthorize("hasRole('ADMIN')")</code>. Order matters in the matcher list: first match wins.</p>
-<h4>The mental model: a chain, not a check</h4>
-<p>Spring Security is not a library you call; it is a chain of servlet filters that runs
-<b>before</b> your controller and can end the request without it ever being reached. Almost every
-confusing behavior makes sense once you hold that picture: a 401 with no log line from your code, CORS
-failing before your handler, a <code>@PreAuthorize</code> that never fires because the filter chain
-rejected the request first.</p>
-<p>Two distinct layers matter, and they are often confused. The <b>filter chain</b> makes coarse,
-URL-based decisions and establishes who the caller is. <b>Method security</b>
-(<code>@PreAuthorize</code>) makes fine-grained decisions with the domain objects in hand. Use the chain
-for "this whole area needs authentication" and method security for "this action needs this permission on
-this object"; trying to express the second as URL patterns produces rules that drift out of sync with
-the code the moment someone adds an endpoint.</p>
+<p>As a JWT <b>resource server</b>, Spring validates the token signature against your IdP's <b>JWKS</b> endpoint (<code>spring.security.oauth2.resourceserver.jwt.issuer-uri=...</code>). A JWKS is a JSON Web Key Set: the issuer's public keys written as JSON, published at a well-known URL so anyone can fetch them and check its signatures. That's the <b>CIAM</b> architecture you run: customer identity and access management, identity for customers rather than employees, with sign-up forms, "log in with Google" and millions of accounts nobody pre-registered. The auth server issues tokens, every API validates them statelessly. Method-level rules: <code>@PreAuthorize("hasRole('ADMIN')")</code>.</p>
+<h4>A chain, not a check</h4>
+<p>The chain runs <b>before</b> your controller and can end the request before it's reached. Most confusing behavior makes sense once you hold that picture: a 401 with
+no log line from your code, <b>CORS</b> failing before your handler, a <code>@PreAuthorize</code> that never
+fires because the chain rejected the request first. CORS is cross-origin resource sharing: the browser blocks
+a page from reading responses from another site unless that server explicitly allows it. Only browsers enforce
+it, so it's never a substitute for authorization.</p>
+<p>Two layers are often confused. The <b>filter chain</b> makes coarse, URL-based decisions and
+establishes who the caller is. <b>Method security</b> (<code>@PreAuthorize</code>) makes fine-grained
+decisions with the domain objects in hand. Use the chain for "this whole area needs authentication" and
+method security for "this action needs this permission on this object". Expressing the second as URL
+patterns produces rules that drift out of sync the moment someone adds an endpoint.</p>
 
-<h4>What "resource server" actually means here</h4>
-<p>Setting <code>issuer-uri</code> does more than it appears. On startup Spring fetches
-<code>/.well-known/openid-configuration</code> from that issuer, learns the <code>jwks_uri</code>, and
-from then on validates incoming tokens against the published keys, caching them, and re-fetching when it
-sees an unknown <code>kid</code>. That is what makes key rotation a non-event.</p>
+<h4>What "resource server" means here</h4>
+<p>On startup Spring fetches <code>/.well-known/openid-configuration</code> from the configured
+<code>issuer-uri</code> and learns the <code>jwks_uri</code>.
+From then on it validates incoming tokens against the published keys, caching them and re-fetching when
+it sees an unknown <code>kid</code>. That makes key rotation a non-event.</p>
 <div class="codeSample" data-hl>// what Spring validates by default: signature, iss, exp, nbf
 // what it does NOT validate unless you ask: AUDIENCE
 
@@ -925,19 +923,24 @@ sees an unknown <code>kid</code>. That is what makes key rotation a non-event.</
         new JwtClaimValidator&lt;List&lt;String&gt;&gt;("aud", a -&gt; a != null &amp;&amp; a.contains("orders-api"))));
     return d;                     // without this, a token minted for ANOTHER
 }                                 // service by the same issuer is accepted here</div>
-<p>That gap is the single most common misconfiguration in Spring resource servers, and it is exactly the
-confused-deputy problem from the identity course showing up in a framework default.</p>
+<p>That gap is the most common misconfiguration in Spring resource servers. It's the <b>confused-deputy</b>
+problem from the identity course, showing up as a framework default: a trusted service tricked into using its
+own authority on behalf of someone who should not have it.</p>
 
-<h4>The other two defaults worth understanding</h4>
-<p><b>Disabling CSRF is only correct if you are actually stateless.</b> The reason CSRF protection exists
-is that browsers attach cookies automatically; a token in an <code>Authorization</code> header is not sent
-automatically, so there is nothing to forge. The moment any part of the app authenticates by cookie
-(a server-rendered admin page, a session for the BFF), CSRF protection must come back for those paths.</p>
+<h4>CSRF, scopes and matcher order</h4>
+<p><b>Disabling CSRF is only correct if you're stateless.</b> <b>CSRF</b> is cross-site request forgery: a
+malicious page makes your browser send a request to a site you're logged into, and the site can't tell it
+wasn't you. CSRF protection exists because browsers attach cookies automatically, which is the whole problem.
+A token in an <code>Authorization</code> header isn't sent automatically, so there's nothing to forge. The
+moment any part of the app authenticates by cookie, a server-rendered admin page or a session for the
+<b>BFF</b>, CSRF protection must come back for those paths. A BFF is a backend-for-frontend: a small server
+that sits between the browser and the APIs and holds the tokens, so the browser only ever has a cookie and
+never a token that JavaScript could steal.</p>
 <p><b>Scopes are not roles.</b> Spring maps <code>scope</code> claims to authorities prefixed
 <code>SCOPE_</code> and roles to <code>ROLE_</code>, so <code>hasRole('ADMIN')</code> silently fails
 against a token carrying scopes. Decide which claim carries authorization for your system and configure a
-<code>JwtAuthenticationConverter</code> to match; do not leave it to coincidence.</p>
-<p>And <b>order matters</b>: matchers are evaluated top down, first match wins, so a broad
+<code>JwtAuthenticationConverter</code> to match.</p>
+<p><b>Order matters.</b> Matchers are evaluated top down and the first match wins, so a broad
 <code>anyRequest()</code> placed early makes everything below it dead configuration.</p>`,
 docs:[['Spring Security reference','https://docs.spring.io/spring-security/reference/index.html'],['OAuth2 Resource Server / JWT','https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/jwt.html']],
 ex:{title:'Lock down the API',
@@ -989,6 +992,8 @@ class SecurityConfig {
     }
 }`}},
 {id:'spr8',title:'Production readiness: Actuator, metrics & profiles in anger',body:`
+
+
 <p>What separates a demo from a service:</p>
 <div class="codeSample"># expose operational endpoints deliberately
 management.endpoints.web.exposure.include=health,info,metrics,prometheus
@@ -1006,8 +1011,8 @@ class LoginService {
 
     void onLogin() { logins.increment(); }
 }</div>
-<p>The production checklist: <code>/actuator/health</code> wired to probes (last stream), <code>/actuator/prometheus</code> scraped for dashboards/alerts, JSON logs to stdout, <b>graceful shutdown</b> so in-flight requests finish, and custom Micrometer metrics for the numbers your dashboards actually need (login success rate, token issuance latency; your CIAM SLOs live here). Info endpoint + build info (<code>spring-boot-maven-plugin build-info</code> goal) tells you exactly which commit is running.</p>
-<h4>The distinction that makes health checks useful</h4>
+<p>The production checklist: <code>/actuator/health</code> wired to probes (last stream), <code>/actuator/prometheus</code> scraped for dashboards and alerts, JSON logs to stdout, <b>graceful shutdown</b> so in-flight requests finish, and custom Micrometer metrics for the numbers your dashboards need. Login success rate and token issuance latency go here: your <b>CIAM</b> SLOs. CIAM is customer identity and access management, identity for customers rather than employees: sign-up forms, "log in with Google", millions of accounts nobody pre-registered. An <b>SLO</b> is a service level objective, a target for reliability or latency, such as "99.9% of logins succeed". The info endpoint plus build info (<code>spring-boot-maven-plugin build-info</code> goal) tells you which commit is running.</p>
+<h4>Liveness and readiness</h4>
 <p>Actuator's most valuable feature is the one people configure last. A single <code>/health</code>
 endpoint answers the wrong question, because orchestrators ask two different ones:</p>
 <div class="codeSample" data-hl>/actuator/health/liveness    "is this process broken beyond recovery?"
@@ -1019,35 +1024,32 @@ endpoint answers the wrong question, because orchestrators ask two different one
    -> if it fails, REMOVE FROM THE LOAD BALANCER, do not restart
    -> here you DO check dependencies, because serving without them fails</div>
 <p>Wiring both to the same check is a real outage pattern: a brief database blip fails liveness, every
-instance restarts simultaneously, the cold caches and reconnect storm make the blip permanent.</p>
+instance restarts at once, and the cold caches and reconnect storm make the blip permanent.</p>
 
-<h4>Metrics that are worth having</h4>
-<p>The default Micrometer metrics tell you about the JVM and the HTTP layer. What they cannot tell you is
-whether the <i>product</i> is working, and that is the gap custom metrics fill. The discipline is to
-instrument <b>outcomes rather than actions</b>: not "logins attempted" but logins tagged by result, so
-one query gives you the success rate.</p>
-<p>Two rules that matter more than they sound. <b>Never tag with unbounded values</b>: a user id or a raw
-URL path as a tag creates a new time series per value and will take down your metrics backend before it
-tells you anything. And <b>prefer timers to counters</b> for anything with a duration: a timer gives you
-count, total and distribution together, and percentiles are what SLOs are written against. An average
-latency hides exactly the tail you are being paged about.</p>
+<h4>Metrics that matter</h4>
+<p>The default Micrometer metrics tell you about the JVM and the HTTP layer. They can't tell you whether
+the <i>product</i> is working. Custom metrics fill that gap. Instrument <b>outcomes rather than
+actions</b>: tag logins by result instead of counting attempts, so one query gives you the success
+rate.</p>
+<p><b>Never tag with unbounded values.</b> A user id or a raw URL path as a tag creates a new time series
+per value and will take down your metrics backend before it tells you anything. <b>Prefer timers to
+counters</b> for anything with a duration. A timer gives you count, total and distribution together, and
+percentiles are what SLOs are written against. An average hides the tail you're being paged about.</p>
 
 <h4>Shutting down without dropping requests</h4>
 <p><code>server.shutdown=graceful</code> stops accepting new connections and lets in-flight requests
-finish within the timeout. It is one line and it removes a whole class of deploy-time errors, but only
-if the timeout exceeds your slowest request, and only if the platform's termination grace period exceeds
-the timeout. Get that ordering wrong and the platform kills the process mid-drain anyway.</p>
+finish within the timeout. One line removes a whole class of deploy-time errors, but only if the timeout
+exceeds your slowest request, and only if the platform's termination grace period exceeds the timeout.
+Get that ordering wrong and the platform kills the process mid-drain anyway.</p>
 
 <h4>Configuration and exposure</h4>
-<p>Profiles let one artifact behave correctly in every environment, which is what makes "build once,
-promote the same binary" possible. Keep environment differences in properties, not in code branches, and
-keep secrets out of both; they come from the environment or a secret manager at runtime.</p>
-<p>On exposure: Actuator endpoints are operational surface area. <code>health</code> and
-<code>info</code> are fine to expose; <code>env</code>, <code>heapdump</code>, <code>threaddump</code> and
-<code>loggers</code> are not, since they leak configuration or allow live changes. Put management on a
-separate port that only your cluster can reach, and let <code>show-details=when-authorized</code> do what
-it says. Adding build info via the <code>build-info</code> goal is the small touch that turns "which
-commit is running?" into a single HTTP call during an incident.</p>`,
+<p>Profiles let one artifact behave correctly in every environment, which makes "build once, promote the
+same binary" possible. Keep environment differences in properties, not in code branches. Keep secrets out
+of both: they come from the environment or a secret manager at runtime.</p>
+<p>Actuator endpoints are operational surface area. <code>health</code> and <code>info</code> are fine to
+expose. <code>env</code>, <code>heapdump</code>, <code>threaddump</code> and <code>loggers</code> are not,
+since they leak configuration or allow live changes. Put management on a separate port that only your
+cluster can reach, and let <code>show-details=when-authorized</code> do what it says.</p>`,
 docs:[['Actuator endpoints','https://docs.spring.io/spring-boot/reference/actuator/endpoints.html'],['Micrometer','https://micrometer.io/docs'],['Graceful shutdown','https://docs.spring.io/spring-boot/reference/web/graceful-shutdown.html']],
 ex:{title:'Instrument a service',
 prompt:`Write <code>@Service class TokenService</code> that takes a <code>MeterRegistry</code> by constructor injection and creates two counters in the constructor: <code>issued</code> from <code>registry.counter("ciam.tokens.issued")</code> and <code>rejected</code> from <code>registry.counter("ciam.tokens.rejected")</code>. Method <code>String issue(String userId)</code>: if userId is null or blank, increment rejected and throw <code>IllegalArgumentException</code>; otherwise increment issued and return <code>"tok-" + userId</code>.`,
@@ -1088,7 +1090,8 @@ class TokenService {
     }
 }`}},
 {id:'spr9',title:'Advanced: async events & event-driven Spring',body:`
-<p>Events invert the coupling: instead of <code>RegistrationService</code> calling email, analytics and provisioning directly (and knowing them all), it announces a fact, <i>a user registered</i>, and interested parties react. Spring ships the machinery in-process:</p>
+
+<p>Events invert the coupling. Instead of <code>RegistrationService</code> calling email, analytics and provisioning directly, and knowing them all, it announces a fact, <i>a user registered</i>, and interested parties react. Spring ships the machinery in-process:</p>
 <div class="codeSample" data-hl>// the event: an immutable fact, records are perfect
 public record UserRegistered(String userId, String email) {}
 
@@ -1117,31 +1120,30 @@ public class WelcomeListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     void provisionAccess(UserRegistered e) { ... }   // 3) only after the tx COMMITS
 }</div>
-<p>The traps that separate senior from junior here: plain <code>@EventListener</code> is <b>synchronous</b>: a slow listener slows the publisher, a throwing listener rolls back the publisher's transaction. <code>@Async</code> needs <code>@EnableAsync</code> on a config class (and a sensible executor; virtual threads shine). And the big one: side effects that must only happen if the data is really saved (emails, provisioning, webhooks) belong in <code>@TransactionalEventListener(AFTER_COMMIT)</code>; otherwise a rollback leaves you having emailed about a user that doesn't exist. Beyond one process, the same pattern scales out via Kafka/RabbitMQ (Spring Cloud Stream) with the <b>transactional outbox</b> pattern replacing AFTER_COMMIT.</p>
+<p><code>@Async</code> needs <code>@EnableAsync</code> on a config class and a sensible executor. Virtual threads shine here. Side effects that must only happen if the data is really saved (emails, provisioning, webhooks) belong in <code>@TransactionalEventListener(AFTER_COMMIT)</code>. Beyond one process, the same pattern scales out via Kafka or RabbitMQ (Spring Cloud Stream), with the <b>transactional outbox</b> pattern replacing AFTER_COMMIT.</p>
 
-<h4>What an application event actually decouples</h4>
-<p>The publisher names a fact ("an order was placed") and does not know who reacts. That is the benefit
-and the cost in one sentence. The benefit is that adding a reaction requires no change to the publisher.
-The cost is that reading the publisher no longer tells you what happens next, so the indirection has to
-earn its place: use it for genuine fan-out, not to avoid a method call.</p>
+<h4>What an application event decouples</h4>
+<p>The publisher names a fact ("an order was placed") and doesn't know who reacts. That's the benefit and
+the cost. Adding a reaction requires no change to the publisher. Reading the publisher no longer tells you
+what happens next, so the indirection has to earn its place: use it for real fan-out, not to avoid a
+method call.</p>
 
-<h4>Synchronous by default, and why that surprises people</h4>
+<h4>Synchronous by default</h4>
 <p>An <code>@EventListener</code> runs on the <b>publishing thread</b>, inside the publisher's transaction,
-before <code>publishEvent</code> returns. So a slow listener slows the request that triggered it, and a
-listener that throws propagates back into the publisher, which can roll back the transaction that
-published the event. Neither is wrong, but both are the opposite of what "event" suggests to most people.</p>
+before <code>publishEvent</code> returns. A slow listener slows the request that triggered it. A listener
+that throws propagates back into the publisher and can roll back the transaction that published the
+event. Neither is wrong, but both are the opposite of what "event" suggests.</p>
 <div class="codeSample">@TransactionalEventListener(phase = AFTER_COMMIT)   // only if the data actually committed
 @Async                                              // and on another thread, if it should not block</div>
 
 <h4>The bug this prevents, and the one it introduces</h4>
-<p><code>AFTER_COMMIT</code> exists because of a specific failure: sending a confirmation email for an order
-whose transaction then rolled back. The customer has an email and you have no order. Publishing after
-commit removes that class of bug entirely.</p>
-<p>It introduces the opposite one. After the commit, the event is no longer transactional: if the listener
-fails, the data is committed and the reaction never happened, with nothing to retry it. In-process events
-are therefore fine for cache eviction, metrics and in-app notifications, and not sufficient when another
-system must learn about the change. That is what the outbox pattern in the messaging lesson is for, and the
-distinction is worth making deliberately rather than discovering it in production.</p>`,
+<p><code>AFTER_COMMIT</code> exists because of a specific failure: a confirmation email for an order whose
+transaction then rolled back. The customer has an email and you have no order. Publishing after commit
+removes that bug.</p>
+<p>It introduces the opposite one. After the commit the event is no longer transactional. If the listener
+fails, the data is committed, the reaction never happened, and nothing will retry it. In-process events
+are fine for cache eviction, metrics and in-app notifications. They're not enough when another system must
+learn about the change. That's what the outbox pattern in the messaging lesson is for.</p>`,
 docs:[['Application events (Spring)','https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events'],['@TransactionalEventListener (API)','https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html'],['@Async (Spring)','https://docs.spring.io/spring-framework/reference/integration/scheduling.html#scheduling-annotation-support-async']],
 ex:{title:'Announce, then react',
 prompt:`Build the pipeline: (1) <code>record UserRegistered(String userId, String email)</code>. (2) <code>@Service class RegistrationService</code> with constructor-injected <code>ApplicationEventPublisher</code> and <code>@Transactional void register(String userId, String email)</code> that calls <code>events.publishEvent(new UserRegistered(...))</code>. (3) <code>@Component class WelcomeListener</code> with an <code>@Async @EventListener</code> method <code>sendEmail(UserRegistered e)</code> and a <code>@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)</code> method <code>provision(UserRegistered e)</code>. (4) <code>@Configuration @EnableAsync class AsyncConfig</code>.`,
@@ -1208,13 +1210,14 @@ class WelcomeListener {
 @EnableAsync
 class AsyncConfig {}`}},
 {id:'rct1',title:'Reactive programming: Reactor & WebFlux',body:`
-<p>Everything async you've built so far returns one value later (<code>CompletableFuture</code>). Reactive programming generalizes that to <b>streams of values over time with backpressure</b>. Spring's reactive stack is <b>Project Reactor</b>: <code>Mono&lt;T&gt;</code> (0..1 values) and <code>Flux&lt;T&gt;</code> (0..N), running on <b>WebFlux</b> instead of MVC.</p>
+
+
+<p>Everything async you've built so far returns one value later (<code>CompletableFuture</code>). Reactive programming generalizes that to <b>streams of values over time with backpressure</b>. Spring's reactive stack is <b>Project Reactor</b>: <code>Mono&lt;T&gt;</code> (0..1 values) and <code>Flux&lt;T&gt;</code> (0..N), running on <b>WebFlux</b> instead of MVC. <b>MVC</b> is model, view, controller: the data and rules (model), what the user sees (view), and the code that takes a request and decides what happens (controller). Spring MVC is the ordinary, one-thread-per-request web framework the rest of this stream uses.</p>
 <ul>
-<li><b>Nothing happens until subscribe</b>: a Mono/Flux is a <i>recipe</i>. Building the chain executes nothing; the subscriber triggers it. In WebFlux, <i>the framework subscribes</i> when the HTTP response is written; your code should almost never call <code>subscribe()</code>.</li>
-<li><b>Operators</b>: <code>map</code> (sync transform), <code>flatMap</code> (async transform; returns another publisher), <code>filter</code>, <code>take</code>, <code>zip</code>, <code>switchIfEmpty</code> (the reactive "or else"), <code>onErrorResume</code> (the reactive catch).</li>
-<li><b>Backpressure</b>: the subscriber tells the producer how much it can handle (<code>request(n)</code>); a slow consumer no longer means an exploding queue. This is the actual point of Reactive Streams, the spec Reactor implements.</li>
-<li><b>Never block</b> in a reactive pipeline: <code>block()</code>, JDBC, <code>Thread.sleep</code> on an event-loop thread stalls <i>every</i> request. Blocking work goes to <code>Schedulers.boundedElastic()</code>; databases get R2DBC.</li>
-<li><b>Practical guidance</b>: virtual threads (see the concurrency stream) now cover much of what WebFlux was adopted for. Reach for reactive when you need streaming, composition over many async sources, or backpressure itself.</li>
+<li><b>Nothing happens until subscribe.</b> A Mono/Flux is a <i>recipe</i>. Building the chain executes nothing. The subscriber triggers it. In WebFlux <i>the framework subscribes</i> when the HTTP response is written, so your code should almost never call <code>subscribe()</code>.</li>
+<li><b>Operators</b>: <code>map</code> (sync transform), <code>flatMap</code> (async transform, returns another publisher), <code>filter</code>, <code>take</code>, <code>zip</code>, <code>switchIfEmpty</code> (the reactive "or else"), <code>onErrorResume</code> (the reactive catch).</li>
+<li><b>Backpressure</b>: the subscriber tells the producer how much it can handle (<code>request(n)</code>), so a slow consumer no longer means an exploding queue. This is the point of Reactive Streams, the spec Reactor implements.</li>
+<li><b>Never block</b> in a reactive pipeline. <code>block()</code>, JDBC or <code>Thread.sleep</code> on an event-loop thread stalls <i>every</i> request. Blocking work goes to <code>Schedulers.boundedElastic()</code>. Databases get R2DBC.</li>
 </ul>
 <div class="codeSample">@GetMapping("/users/{id}")
 Mono&lt;UserDto&gt; byId(@PathVariable String id) {
@@ -1229,29 +1232,26 @@ Flux&lt;Long&gt; ticks() {
 }</div>
 
 <h4>The problem it was built for</h4>
-<p>A thread-per-request server holds a whole thread (a megabyte of stack and a scheduler slot) while a
-request waits on a database. Under heavy I/O the threads are nearly all idle and you are out of them
-anyway. Reactive programming removes the waiting: work is expressed as a pipeline of callbacks that the
-runtime resumes when data arrives, so a handful of threads serve thousands of concurrent requests.</p>
-<p><code>Mono</code> is zero or one result, <code>Flux</code> is many, and <b>nothing runs until you
-subscribe</b>: a pipeline you build and never subscribe to simply does nothing, which is the first
-surprise everyone meets.</p>
+<p>A thread-per-request server holds a whole thread, a megabyte of stack and a scheduler slot, while a
+request waits on a database. Under heavy I/O the threads are nearly all idle and you're out of them
+anyway. Reactive programming removes the waiting. Work is a pipeline of callbacks that the runtime resumes
+when data arrives, so a handful of threads serve thousands of concurrent requests.</p>
 
 <h4>What it costs</h4>
-<p>The debugger stops helping. Stack traces show reactor internals rather than your call path, breakpoints
-land in scheduler code, and a blocking call accidentally left in a reactive chain stalls an event loop that
-serves everyone, a failure with no local symptom. Reasoning about the code is a genuinely different skill,
-and it is one every maintainer must also have.</p>
+<p>The debugger stops helping. Stack traces show reactor internals rather than your call path, and
+breakpoints land in scheduler code. A blocking call left in a reactive chain stalls an event loop that
+serves everyone, a failure with no local symptom. Reasoning about the code is a different skill, and
+every maintainer must have it too.</p>
 
 <h4>Why virtual threads changed the argument</h4>
-<p>The cost of blocking I/O was never the syntax; it was the thread. Virtual threads make a blocked thread
-almost free, so ordinary sequential code (real stack traces, working debuggers, plain try/finally) now
-scales the way reactive code does. For most new services that removes the main reason to pay the reactive
-tax.</p>
-<p>What remains genuinely reactive territory is <b>streaming</b> and <b>backpressure</b>: server-sent
-events, long-lived subscriptions, and pipelines where a fast producer must be told to slow down. That is
-what Reactor expresses well and what virtual threads do not address at all. The realistic position for 2026:
-choose reactive for streams and demand signaling, not for concurrency.</p>`,
+<p>The cost of blocking I/O was never the syntax. It was the thread. Virtual threads (see the concurrency stream) make a blocked thread
+almost free, so ordinary sequential code (real stack traces, working debuggers, plain try/finally) scales
+the way reactive code does. For most new services that removes the main reason to pay the reactive tax.</p>
+<p>What remains reactive territory is <b>streaming</b>, composition over many async sources, and
+<b>backpressure</b>: server-sent events, long-lived subscriptions, and pipelines where a fast producer must
+be told to slow down. Reactor expresses
+that well and virtual threads don't address it at all. The position for 2026: choose reactive for streams
+and demand signaling, not for concurrency.</p>`,
 docs:[['Project Reactor reference','https://projectreactor.io/docs/core/release/reference/'],['Spring WebFlux reference','https://docs.spring.io/spring-framework/reference/web/webflux.html'],['Which operator do I need? (Reactor)','https://projectreactor.io/docs/core/release/reference/#which-operator']],
 ex:{title:'A non-blocking user endpoint',
 prompt:`Write <code>UserService</code> with: (1) <code>Flux&lt;String&gt; activeNames(Flux&lt;User&gt; users)</code>: <code>filter</code> active users, <code>map</code> to <code>getName()</code>, <code>take(50)</code>; (2) <code>Mono&lt;User&gt; byId(String id)</code>: call <code>repo.findById(id)</code> (returns <code>Mono&lt;User&gt;</code>) and use <code>switchIfEmpty</code> with <code>Mono.error(new IllegalStateException("not found"))</code>. Do <b>not</b> call <code>subscribe()</code> or <code>block()</code> anywhere; the framework subscribes.`,
@@ -1292,12 +1292,13 @@ public class UserService {
     }
 }`}},
 {id:'msg1',title:'Messaging: Kafka, RabbitMQ & the outbox',body:`
-<p>The events lesson ended with a promise: real systems decouple services with a <b>message broker</b>. Two families dominate: <b>Kafka</b>, a partitioned, replayable <i>log</i> (events stay; consumers track their own offset), and <b>RabbitMQ</b>, a <i>queue</i> (messages are delivered and gone). Kafka for event streams, analytics, multiple independent consumers; Rabbit for classic work queues and routing.</p>
+
+<p>The events lesson ended with a promise: real systems decouple services with a <b>message broker</b>. Two families dominate. <b>Kafka</b> is a partitioned, replayable <i>log</i>: events stay, and consumers track their own offset. <b>RabbitMQ</b> is a <i>queue</i>: messages are delivered and gone. Kafka for event streams, analytics and multiple independent consumers. Rabbit for classic work queues and routing.</p>
 <ul>
-<li><b>Producing</b> (spring-kafka): inject <code>KafkaTemplate&lt;String,String&gt;</code> and <code>send(topic, key, value)</code>. The <b>key</b> picks the partition: same key ⇒ same partition ⇒ <i>ordered</i>. Order events for one aggregate should share a key (the order id).</li>
-<li><b>Consuming</b>: <code>@KafkaListener(topics = "orders", groupId = "billing")</code>. All consumers in one group <i>share</i> the partitions (scaling); different groups each get <i>every</i> message (fan-out).</li>
-<li><b>Delivery is at-least-once</b> in practice: duplicates happen (rebalances, retries). Consumers must be <b>idempotent</b>: track processed event ids, or make the handler naturally re-runnable.</li>
-<li><b>The outbox pattern</b>: "save to DB then publish" can fail between the two: a lost event. Fix: in the <i>same DB transaction</i> as the business change, insert the event into an <code>outbox</code> table; a relay (or Debezium CDC) publishes from that table and marks rows sent. The broker never lies about what the database did.</li>
+<li><b>Producing</b> (spring-kafka): inject <code>KafkaTemplate&lt;String,String&gt;</code> and <code>send(topic, key, value)</code>. The <b>key</b> picks the partition: same key ⇒ same partition ⇒ <i>ordered</i>. Events for one aggregate should share a key (the order id).</li>
+<li><b>Consuming</b>: <code>@KafkaListener(topics = "orders", groupId = "billing")</code>. All consumers in one group <i>share</i> the partitions (scaling). Different groups each get <i>every</i> message (fan-out).</li>
+<li><b>Delivery is at-least-once</b> in practice. Duplicates happen (rebalances, retries), so consumers must be <b>idempotent</b>: track processed event ids, or make the handler re-runnable.</li>
+<li><b>The outbox pattern</b>: "save to DB then publish" can fail between the two, losing the event. Fix: in the <i>same DB transaction</i> as the business change, insert the event into an <code>outbox</code> table. A relay (or Debezium CDC) publishes from that table and marks rows sent.</li>
 </ul>
 <div class="codeSample">// producer, same order ⇒ same key ⇒ ordered partition
 kafka.send("orders", order.id(), toJson(new OrderPlaced(order.id(), order.total())));
@@ -1311,30 +1312,26 @@ void onOrder(String payload) {
     processed.add(evt.eventId());
 }</div>
 
-<h4>The two guarantees, and why exactly-once is not one of them</h4>
-<p>Brokers offer <b>at-most-once</b> (fire and forget, messages can be lost) or <b>at-least-once</b>
-(acknowledged, messages can be duplicated). Everyone wants exactly-once, and end to end it does not exist:
-the acknowledgement can be lost after the work is done, so the sender cannot tell "did not happen" from
+<h4>Why exactly-once is not a guarantee</h4>
+<p>Brokers offer two guarantees. <b>At-most-once</b> is fire and forget: messages can be lost.
+<b>At-least-once</b> is acknowledged: messages can be duplicated. Exactly-once, end to end, doesn't exist.
+The acknowledgement can be lost after the work is done, so the sender can't tell "did not happen" from
 "happened but I did not hear". What you can build is <b>at-least-once delivery with an idempotent
-consumer</b>, which produces an exactly-once <i>effect</i>. That is the real design, and it puts the
-responsibility on the consumer rather than the broker.</p>
+consumer</b>, which produces an exactly-once <i>effect</i>.</p>
 
 <h4>Why the outbox pattern exists</h4>
-<p>The problem it solves is sharp: you must update the database and publish an event, and there is no
-transaction spanning both. Write first and the publish can fail, leaving the world unaware. Publish first
-and the write can fail, leaving an event about something that never happened.</p>
-<p>The outbox removes the second system from the transaction. The event is inserted into an
-<code>outbox</code> table in the <i>same</i> transaction as the data, and a relay reads that table and
-publishes afterwards. Either both are committed or neither is, and the relay's retries are safe because the
-consumer is idempotent.</p>
+<p>You must update the database and publish an event, and no transaction spans both. Write first and the
+publish can fail, leaving the world unaware. Publish first and the write can fail, leaving an event about
+something that never happened. The outbox removes the second system from the transaction: either both are
+committed or neither is, and the relay's retries are safe because the consumer is idempotent.</p>
 
 <h4>Ordering, and what it costs</h4>
-<p>Kafka orders messages within a <b>partition</b>, not within a topic, so ordering is per key, and the
-key you choose is a design decision. Order by account id and events for one account stay ordered while
-different accounts proceed in parallel. Ask for global ordering and you have asked for one partition, which
-means one consumer and no horizontal scale.</p>
-<p>Finally, plan for the message you cannot process: a dead-letter queue plus an alert on its depth. Without
-one, a single malformed message either blocks the partition forever or is silently dropped, and both are
+<p>Kafka orders messages within a <b>partition</b>, not within a topic. Ordering is per key, and the key
+you choose is a design decision. Order by account id and events for one account stay ordered while
+different accounts proceed in parallel. Ask for global ordering and you've asked for one partition: one
+consumer and no horizontal scale.</p>
+<p>Plan for the message you can't process: a dead-letter queue plus an alert on its depth. Without one, a
+single malformed message either blocks the partition forever or is silently dropped, and both are
 discovered late.</p>`,
 docs:[['Spring for Apache Kafka reference','https://docs.spring.io/spring-kafka/reference/'],['Kafka introduction','https://kafka.apache.org/intro'],['Transactional outbox (microservices.io)','https://microservices.io/patterns/data/transactional-outbox.html']],
 ex:{title:'Publish & consume order events',
@@ -1382,9 +1379,11 @@ public class OrderEvents {
     void handle(String payload) { /* provided */ }
 }`}},
 {id:'cch1',title:'Caching: Caffeine, Spring Cache & Redis',body:`
+
+
 <p>The fastest query is the one you don't run. Caching layers, from closest to farthest:</p>
 <ul>
-<li><b>In-process</b>: <b>Caffeine</b>, the standard local cache (a smarter ConcurrentHashMap): bounded size, TTL, near-optimal eviction (W-TinyLFU). Nanosecond reads, but per-instance and gone on restart.</li>
+<li><b>In-process</b>: <b>Caffeine</b>, the standard local cache (a smarter ConcurrentHashMap): bounded size, TTL, near-optimal eviction (W-TinyLFU). <b>TTL</b> is time to live: how long a cached record is good for before it must be refreshed or thrown away. Nanosecond reads, but per-instance and gone on restart.</li>
 <li><b>Distributed</b>: <b>Redis</b>, shared by all instances, survives deploys, adds a network hop (~1ms). The default for session data and anything multiple nodes must agree on.</li>
 <li><b>Spring's abstraction</b>: annotate, don't hand-roll. <code>@EnableCaching</code> once, then <code>@Cacheable</code> (check cache, else run method and store), <code>@CacheEvict</code> (drop on update/delete), <code>@CachePut</code> (refresh). Swap Caffeine ↔ Redis via the configured <code>CacheManager</code>, code unchanged.</li>
 </ul>
@@ -1401,32 +1400,30 @@ void update(User user) { repo.save(user); }          // stale entry dropped
         .expireAfterWrite(Duration.ofMinutes(10)));
     return m;
 }</div>
-<p>The three classic cache bugs: <b>staleness</b> (evict on every write path, the hard part of cache invalidation), <b>unbounded growth</b> (always set <code>maximumSize</code>), and <b>stampede</b> (a hot key expires and a thousand requests hit the DB at once; Caffeine's <code>refreshAfterWrite</code> serves the old value while one thread reloads). And never cache mutable objects you then modify; you'll corrupt the cache in place.</p>
+<p>The three classic cache bugs. <b>Staleness</b>: evict on every write path, the hard part of cache invalidation. <b>Unbounded growth</b>: always set <code>maximumSize</code>. <b>Stampede</b>: a hot key expires and a thousand requests hit the DB at once. Caffeine's <code>refreshAfterWrite</code> serves the old value while one thread reloads. And never cache mutable objects you then modify. You'll corrupt the cache in place.</p>
 
-<h4>The two questions to answer before adding a cache</h4>
-<p><b>What is the correct staleness?</b> Not "is stale data acceptable" (it always is, briefly) but how
-many seconds of wrongness this particular data can carry. A product price and a session token have very
-different answers, and a cache without a stated answer is a bug waiting for a customer to find.</p>
-<p><b>What is the hit rate?</b> A cache below roughly 80% hits is often adding a lookup, a serialization
-and a network hop to buy very little. Measure before and after; "we added caching" without a hit-rate
-number is not an optimization, it is a hope.</p>
+<h4>Before adding a cache</h4>
+<p><b>What is the correct staleness?</b> Stale data is always acceptable, briefly. The question is how many
+seconds of wrongness this particular data can carry. A product price and a session token have very
+different answers.</p>
+<p><b>What is the hit rate?</b> Below roughly 80% hits, a cache is often adding a lookup, a serialization
+and a network hop to buy very little. Measure before and after.</p>
 
-<h4>Invalidation, and why it is the hard half</h4>
-<p>There are only three strategies, and every system uses some mix. <b>TTL</b> is the simplest and the only
-one that needs no discipline: the data is wrong for at most N seconds, by design. <b>Explicit eviction</b>
-on write is correct and requires every write path to remember, including the batch job somebody added last
-month. <b>Versioned keys</b> sidestep invalidation entirely by making the key contain the version, so old
-entries are never read and simply age out.</p>
-<p>The failure mode people underestimate is the <b>cache as a hidden dependency</b>: a 99% hit rate means
-the database is sized for the surviving 1%, so a flush or a restart sends a hundred times its expected load
-at it. Stagger your TTLs so keys do not all expire together, and use request coalescing so one miss does
-not become a thousand identical queries.</p>
+<h4>Invalidation, the hard half</h4>
+<p>Three strategies exist, and every system uses some mix. <b>TTL</b> is the simplest and the only one
+that needs no discipline: the data is wrong for at most N seconds, by design. <b>Explicit eviction</b> on
+write is correct and requires every write path to remember, including the batch job somebody added last
+month. <b>Versioned keys</b> sidestep invalidation by putting the version in the key, so old entries are
+never read and age out.</p>
+<p>The underestimated failure mode is the <b>cache as a hidden dependency</b>. A 99% hit rate means the
+database is sized for the surviving 1%, so a flush or a restart sends a hundred times its expected load at
+it. Stagger TTLs so keys don't all expire together, and use request coalescing so one miss doesn't become
+a thousand identical queries.</p>
 
 <h4>Choosing a layer</h4>
-<p>In-process is nanoseconds and per-instance, so it is right for hot, small, read-mostly data where each
-node disagreeing slightly is harmless: reference data, compiled patterns, feature flags. Distributed costs
-a millisecond and buys agreement, so it is right for anything a user must see consistently across
-instances. Many systems want both: a local cache in front of Redis, with a short local TTL to bound the
+<p>In-process is right for hot, small, read-mostly data where nodes disagreeing slightly is harmless:
+reference data, compiled patterns, feature flags. Distributed buys agreement, so it's right for anything a
+user must see consistently across instances. Many systems want both: a local cache in front of Redis, with a short local TTL to bound the
 disagreement.</p>`,
 docs:[['Caffeine (GitHub)','https://github.com/ben-manes/caffeine'],['Spring cache abstraction','https://docs.spring.io/spring-framework/reference/integration/cache.html'],['Spring Boot caching guide','https://docs.spring.io/spring-boot/reference/io/caching.html']],
 ex:{title:'Cache the user lookups',

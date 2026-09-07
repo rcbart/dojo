@@ -8,15 +8,10 @@ PUT    /accounts/42         → replace (200)
 PATCH  /accounts/42         → partial update (200)
 DELETE /accounts/42         → delete (204)
 GET    /accounts/42/holdings → nested resource</div>
-<p>Rules of thumb: plural nouns, never verbs in paths (<code>/getAccount</code> ✗); GET is safe &amp; cacheable; PUT and DELETE are <b>idempotent</b> (making the call twice leaves the same end state as making it once); statelessness: each request carries its own auth.</p>
+<p>Rules of thumb: plural nouns, never verbs in paths (<code>/getAccount</code> ✗). GET is safe &amp; cacheable. PUT and DELETE are <b>idempotent</b>: making the call twice leaves the same end state as making it once. Statelessness: each request carries its own auth.</p>
 <h4>The idea behind the constraint</h4>
-<p>REST's value is not the verbs; it is that <b>the interface is uniform across every API that follows
-it</b>. A developer who has never seen your service can guess that <code>GET /accounts/42</code> reads an
-account and that <code>DELETE</code> on the same URL removes it. That predictability is the entire return
-on the discipline, which is why the rules are worth following even where a bespoke design would be
-marginally more convenient.</p>
-<p>The mental shift is from <b>procedures to resources</b>. Not "what operations does my service offer?"
-but "what things does it manage, and what are their addresses?" The verbs are already decided.</p>
+<p>REST's value is that <b>the interface is uniform across every API that follows it</b>. A developer who has never seen your service can guess that <code>GET /accounts/42</code> reads an account and that <code>DELETE</code> on the same URL removes it. That predictability is the return on the discipline, so follow the rules even where a bespoke design would be marginally more convenient.</p>
+<p>The mental shift is from <b>procedures to resources</b>. Not "what operations does my service offer?" but "what things does it manage, and what are their addresses?" The verbs are already decided.</p>
 
 <h4>The three properties that make HTTP work</h4>
 <div class="codeSample" data-hl>SAFE        does not change anything.        GET, HEAD, OPTIONS
@@ -30,30 +25,17 @@ IDEMPOTENT  same call N times == same call once.  GET, PUT, DELETE
 
 CACHEABLE   the response may be stored and reused.  GET mostly
             -> ETag / If-None-Match turns a repeat read into a 304.</div>
-<p>Note what idempotent does not mean: it is about the <i>resulting state</i>, not the response. Two
-<code>DELETE</code>s leave the resource equally gone; the second may return 404, and that is fine.</p>
+<p>Idempotent is about the <i>resulting state</i>, not the response. Two <code>DELETE</code>s leave the resource equally gone. The second may return 404, and that's fine.</p>
 
-<h4>PUT vs PATCH, which people get wrong constantly</h4>
-<p><code>PUT</code> <b>replaces</b> the resource with the body you sent, so a field you omitted is a field
-you deleted. That is the semantics, and clients that send partial bodies to <code>PUT</code> are silently
-wiping data. <code>PATCH</code> applies a partial change, and because "partial" needs a format, the careful
-version specifies one (JSON Merge Patch, RFC 7396, is the pragmatic choice).</p>
+<h4>PUT vs PATCH</h4>
+<p><code>PUT</code> <b>replaces</b> the resource with the body you sent. A field you omitted is a field you deleted. Clients that send partial bodies to <code>PUT</code> are silently wiping data. <code>PATCH</code> applies a partial change. "Partial" needs a format, so specify one: JSON Merge Patch, RFC 7396, is the pragmatic choice.</p>
 
 <h4>Status codes as part of the contract</h4>
-<p>They are not decoration; clients branch on them. <code>201</code> with a <code>Location</code> header
-tells the caller where the new thing lives. <code>204</code> means success with nothing to say.
-<code>202</code> means accepted for later processing, which is exactly right for async work.
-<code>409</code> means a conflict with current state, <code>422</code> means understood but unprocessable,
-and <code>4xx</code> versus <code>5xx</code> tells the caller whether retrying could possibly help.</p>
-<p>The cardinal sin is <code>200</code> with an error inside the body: it breaks every client's error
-handling, every monitor, and every cache.</p>
+<p>Clients branch on them. <code>201</code> with a <code>Location</code> header tells the caller where the new thing lives. <code>204</code> means success with nothing to say. <code>202</code> means accepted for later processing, right for async work. <code>409</code> means a conflict with current state. <code>422</code> means understood but unprocessable. <code>4xx</code> versus <code>5xx</code> tells the caller whether retrying could help.</p>
+<p>The cardinal sin is <code>200</code> with an error inside the body. It breaks every client's error handling, every monitor, and every cache.</p>
 
 <h4>Where the purity stops being useful</h4>
-<p>Some operations are genuinely not CRUD on a noun. "Cancel this order" is a real business action with
-rules, and contorting it into <code>PATCH /orders/42 {"status":"cancelled"}</code> hides the fact that
-canceling is not the same as setting a field. Modeling it as a sub-resource,
-<code>POST /orders/42/cancellations</code>, keeps the interface saying what actually happens. And HATEOAS, the level of REST
-almost nobody implements, is worth knowing about so you can say clearly that you have chosen not to.</p>`,
+<p>Some operations aren't CRUD on a noun. "Cancel this order" is a business action with rules. Contorting it into <code>PATCH /orders/42 {"status":"cancelled"}</code> hides the fact that canceling is more than setting a field. Model it as a sub-resource, <code>POST /orders/42/cancellations</code>, and the interface says what happens. HATEOAS, the level of REST almost nobody implements, is one to know about so you can say clearly that you've chosen not to.</p>`,
 docs:[['REST, MDN glossary','https://developer.mozilla.org/en-US/docs/Glossary/REST'],['HTTP methods, MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods']],
 ex:{title:'Design the endpoints',lang:'http',
 prompt:`Design endpoints for a <b>portfolio</b> API (a portfolio has many <b>positions</b>). One per numbered line, format <code>VERB /path → status</code>: (1) list portfolios, (2) create a portfolio, (3) fetch portfolio <code>p1</code>, (4) replace portfolio <code>p1</code> entirely, (5) delete position <code>x9</code> inside portfolio <code>p1</code>, (6) the status for fetching a portfolio that doesn't exist.`,
@@ -90,7 +72,7 @@ DELETE /portfolios/p1/positions/x9 → 204
 # 6)
 GET /portfolios/does-not-exist → 404`}},
 {id:'api2',title:'Consuming APIs: HttpClient',body:`
-<p>Since Java 11 the JDK ships a real HTTP client: no libraries needed for straightforward calls:</p>
+<p>Since Java 11 the JDK ships a real HTTP client. No libraries needed for straightforward calls:</p>
 <div class="codeSample" data-hl>HttpClient client = HttpClient.newHttpClient();
 
 HttpRequest request = HttpRequest.newBuilder()
@@ -109,19 +91,13 @@ if (response.statusCode() == 200) {
 // async variant returns CompletableFuture:
 client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
       .thenApply(HttpResponse::body);</div>
-<p>POST bodies use <code>.POST(HttpRequest.BodyPublishers.ofString(json))</code>. Always check <code>statusCode()</code>: the client does not throw on 4xx/5xx.</p>
+<p>POST bodies use <code>.POST(HttpRequest.BodyPublishers.ofString(json))</code>. Always check <code>statusCode()</code>: the client doesn't throw on 4xx/5xx.</p>
 
 <h4>That last point is the one that bites</h4>
-<p>A 404 or a 500 is a <b>successful HTTP exchange</b> as far as the client is concerned: you asked, the
-server answered. <code>send()</code> throws only for transport-level failures: connection refused,
-DNS failure, timeout, TLS problems. So code that never inspects <code>statusCode()</code> will happily
-parse an error page as if it were data, and the bug surfaces much later as a confusing
-deserialization failure rather than "the API returned 503".</p>
+<p>A 404 or a 500 is a <b>successful HTTP exchange</b> as far as the client is concerned. You asked, the server answered. <code>send()</code> throws only for transport-level failures: connection refused, DNS failure, timeout, TLS problems. Code that never inspects <code>statusCode()</code> will parse an error page as if it were data. The bug surfaces later as a deserialization failure rather than "the API returned 503".</p>
 
-<h4>Reuse the client, always</h4>
-<p><code>HttpClient</code> is immutable, thread-safe, and holds the connection pool. Creating one per
-request throws away connection reuse and leaks threads under load. <b>Build one and share it</b>,
-typically a single instance for the lifetime of the application.</p>
+<h4>Reuse the client</h4>
+<p><code>HttpClient</code> is immutable, thread-safe, and holds the connection pool. Creating one per request throws away connection reuse and leaks threads under load. <b>Build one and share it</b>, typically a single instance for the lifetime of the application.</p>
 <div class="codeSample" data-hl>private static final HttpClient CLIENT = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(5))       // connect only
         .followRedirects(HttpClient.Redirect.NORMAL) // default is NEVER
@@ -132,30 +108,17 @@ HttpRequest req = HttpRequest.newBuilder()
         .timeout(Duration.ofSeconds(10))   // the WHOLE request. set it.
         .header("Accept", "application/json")
         .build();</div>
-<p>Two defaults worth knowing. There is <b>no request timeout unless you set one</b>, so a hung server
-hangs your thread indefinitely, a leading cause of thread-pool exhaustion. And redirects are
-<b>not</b> followed by default, which surprises people migrating from other clients.</p>
+<p>There is <b>no request timeout unless you set one</b>. A hung server hangs your thread indefinitely, a leading cause of thread-pool exhaustion. And redirects are <b>not</b> followed by default, which surprises people migrating from other clients.</p>
 
 <h4>Timeouts are two different things</h4>
-<p><code>connectTimeout</code> on the client caps establishing the connection.
-<code>timeout</code> on the request caps the entire exchange including the response body. You want
-both: a server that accepts your connection and then trickles bytes forever defeats a connect timeout
-entirely.</p>
+<p><code>connectTimeout</code> on the client caps establishing the connection. <code>timeout</code> on the request caps the entire exchange including the response body. You want both. A server that accepts your connection and then trickles bytes forever defeats a connect timeout.</p>
 
 <h4>Sync, async, and back-pressure</h4>
-<p><code>send()</code> blocks. <code>sendAsync()</code> returns a <code>CompletableFuture</code> and is
-the right choice for fan-out: fetching thirty resources concurrently without thirty blocked threads.
-The discipline it demands is <b>bounding the concurrency</b>: firing a thousand async requests at once
-will exhaust the pool or the remote service. Batch them.</p>
-<p><code>BodyHandlers</code> decide how the response is materialized. <code>ofString()</code> is
-convenient and reads everything into memory: fine for JSON, wrong for a large download, where
-<code>ofFile()</code> or <code>ofInputStream()</code> streams instead.</p>
+<p><code>send()</code> blocks. <code>sendAsync()</code> returns a <code>CompletableFuture</code> and is the right choice for fan-out: fetching thirty resources concurrently without thirty blocked threads. It demands <b>bounded concurrency</b>. A thousand async requests at once will exhaust the pool or the remote service. Batch them.</p>
+<p><code>BodyHandlers</code> decide how the response is materialized. <code>ofString()</code> reads everything into memory: fine for JSON, wrong for a large download, where <code>ofFile()</code> or <code>ofInputStream()</code> streams instead.</p>
 
-<h4>What the JDK client deliberately does not do</h4>
-<p>No retries, no circuit breaking, no automatic JSON binding, no rate limiting. Those are your job or a
-library's. Retrying is the one people most often need and most often get wrong: retry only idempotent
-requests (GET, PUT, DELETE; never a bare POST), use exponential backoff with jitter, cap the attempts,
-and honor <code>Retry-After</code> when the server sends it.</p>`,
+<h4>What the JDK client does not do</h4>
+<p>No retries, no circuit breaking, no automatic JSON binding, no rate limiting. Those are your job or a library's. Retrying is the one people most often need and most often get wrong. Retry only idempotent requests (GET, PUT, DELETE, never a bare POST), use exponential backoff with jitter, cap the attempts, and honor <code>Retry-After</code> when the server sends it.</p>`,
 docs:[['HttpClient, API docs','https://docs.oracle.com/en/java/javase/21/docs/api/java.net.http/java/net/http/HttpClient.html'],['Java HTTP Client, Baeldung','https://www.baeldung.com/java-9-http-client']],
 ex:{title:'Call an API',
 prompt:`Write <code>ApiCaller</code> with <code>static String fetchUser(String id) throws Exception</code>: GET <code>https://api.dojo.dev/users/&lt;id&gt;</code> with header <code>Accept: application/json</code>; return the body on status 200, otherwise throw <code>RuntimeException</code> including the status code in the message.`,
@@ -213,9 +176,7 @@ mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);</div
 <p>Field-name mismatches are handled with <code>@JsonProperty("user_name")</code>. In Spring Boot, an ObjectMapper is auto-configured and used behind every <code>@RequestBody</code>/<code>@ResponseBody</code>.</p>
 
 <h4>Reuse the ObjectMapper</h4>
-<p>It is thread-safe once configured, and constructing one is expensive: it builds and caches
-serializers per type. Creating a mapper per request throws that cache away every time. <b>One shared
-instance</b>, configured at startup.</p>
+<p>It's thread-safe once configured, and constructing one is expensive: it builds and caches serializers per type. A mapper per request throws that cache away every time. <b>One shared instance</b>, configured at startup.</p>
 
 <h4>The setting that prevents most breakage</h4>
 <div class="codeSample" data-hl>// default: an unknown field in the JSON throws.
@@ -225,31 +186,16 @@ mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL); // omit nulls
 mapper.registerModule(new JavaTimeModule());  // or Instant/LocalDate FAIL
 mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // ISO-8601</div>
-<p>Tolerating unknown fields is the <b>robustness principle</b> applied to APIs: be liberal in what you
-accept. A provider adding an optional field is a backward-compatible change on their side, and it
-should not be a breaking one on yours.</p>
-<p>The <code>JavaTimeModule</code> omission is the other classic: without it, Jackson cannot handle
-<code>Instant</code> or <code>LocalDate</code> at all, and the failure message rarely points at the
-missing module.</p>
+<p>Tolerating unknown fields is the <b>robustness principle</b> applied to APIs: be liberal in what you accept. A provider adding an optional field is backward-compatible on their side. It shouldn't be breaking on yours.</p>
+<p>The missing <code>JavaTimeModule</code> is the other classic. Without it, Jackson can't handle <code>Instant</code> or <code>LocalDate</code> at all, and the failure message rarely points at the module.</p>
 
-<h4>Records, and why constructors matter</h4>
-<p>Jackson historically needed a no-arg constructor plus setters, which pushed people toward mutable
-DTOs. Modern Jackson deserializes <b>records</b> and other immutable types directly by using the
-canonical constructor, so your DTOs can be immutable, which is what you want for objects crossing a
-boundary. If parameter names are stripped at compile time, you may still need
-<code>@JsonProperty</code> on the components or the <code>-parameters</code> compiler flag.</p>
+<h4>Records and constructors</h4>
+<p>Jackson historically needed a no-arg constructor plus setters, which pushed people toward mutable DTOs. Modern Jackson deserializes <b>records</b> and other immutable types through the canonical constructor. Your DTOs can be immutable, which is what you want for objects crossing a boundary. If parameter names are stripped at compile time, you may still need <code>@JsonProperty</code> on the components or the <code>-parameters</code> compiler flag.</p>
 
-<h4>Treat the DTO as a boundary, not your model</h4>
-<p>Binding JSON straight onto your domain entity couples your internal model to someone else's wire
-format, and the coupling runs both ways: their rename becomes your refactor, and your private field
-becomes their public API. A separate DTO plus an explicit mapping step costs a little code and buys
-independent evolution.</p>
-<p>It also closes a security hole. Deserializing an arbitrary payload onto a domain object lets a caller
-set fields you never intended to expose: the <b>mass assignment</b> problem. If the JSON contains
-<code>"role":"admin"</code> and your entity has a <code>role</code> field, Jackson will happily set it.
-Use <code>@JsonIgnore</code>, or better, a DTO that simply has no such field.</p>
-<p><b>And never enable default typing</b> (<code>enableDefaultTyping()</code>). Letting the payload
-declare its own Java types is a well-known remote-code-execution vector.</p>`,
+<h4>The DTO is a boundary, not your model</h4>
+<p>Binding JSON straight onto your domain entity couples your internal model to someone else's wire format, both ways. Their rename becomes your refactor. Your private field becomes their public API. A separate DTO plus an explicit mapping step costs a little code and buys independent evolution.</p>
+<p>It also closes a security hole. Deserializing an arbitrary payload onto a domain object lets a caller set fields you never meant to expose: the <b>mass assignment</b> problem. If the JSON contains <code>"role":"admin"</code> and your entity has a <code>role</code> field, Jackson will set it. Use <code>@JsonIgnore</code>, or better, a DTO with no such field.</p>
+<p><b>Never enable default typing</b> (<code>enableDefaultTyping()</code>). Letting the payload declare its own Java types is a well-known remote-code-execution vector.</p>`,
 docs:[['Jackson databind, GitHub','https://github.com/FasterXML/jackson-databind'],['Jackson ObjectMapper, Baeldung','https://www.baeldung.com/jackson-object-mapper-tutorial']],
 ex:{title:'Round-trip a record',
 prompt:`Define <code>record Position(String symbol, int quantity, double price)</code>. Write class <code>Json</code> with an ObjectMapper field, <code>Position parse(String json)</code> using <code>readValue</code>, <code>String write(Position p)</code> using <code>writeValueAsString</code>, and <code>double marketValue(String json)</code> that parses and returns quantity × price.`,
@@ -296,7 +242,7 @@ public class Json {
     }
 }`}},
 {id:'api4',title:'Designing good REST: idempotency & error contracts',body:`
-<p>Two things separate professional APIs from amateur ones:</p>
+<p>What separates professional APIs from amateur ones:</p>
 <p><b>Idempotency.</b> GET/PUT/DELETE must be idempotent: retrying is safe. POST isn't, so payment-grade APIs accept an <code>Idempotency-Key</code> header: same key → same result, no double charge. As an API-platform owner this is your bread and butter.</p>
 <p><b>A consistent error contract.</b> Clients should parse one error shape everywhere. RFC 9457 (Problem Details) is the standard:</p>
 <div class="codeSample">HTTP/1.1 422 Unprocessable Entity
@@ -309,15 +255,10 @@ Content-Type: application/problem+json
   "detail": "Balance 30.00 is below requested 100.00",
   "instance": "/accounts/42/withdrawals"
 }</div>
-<p>Never leak stack traces; never return 200 with <code>{"error": ...}</code> inside; use 400 for malformed syntax vs 422 for valid-but-unprocessable semantics.</p>
-<h4>Why idempotency is a networking problem, not a preference</h4>
-<p>The scenario is unavoidable: a client sends a payment request, and the response never arrives. The
-client cannot distinguish "the request never landed" from "it succeeded and the response was lost". Both
-look identical. So it must either retry (and risk charging twice) or not retry, and risk losing a
-payment that never happened.</p>
-<p>An idempotency key resolves it. The client generates a unique key per <i>logical operation</i> and sends
-it with every attempt; the server records the key with the result and returns the stored result for any
-repeat.</p>
+<p>Never leak stack traces. Never return 200 with <code>{"error": ...}</code> inside. Use 400 for malformed syntax and 422 for valid-but-unprocessable semantics.</p>
+<h4>Idempotency is a networking problem</h4>
+<p>A client sends a payment request, and the response never arrives. The client can't distinguish "the request never landed" from "it succeeded and the response was lost". So it must either retry and risk charging twice, or not retry and risk losing a payment that never happened.</p>
+<p>An idempotency key resolves it. The client generates a unique key per <i>logical operation</i> and sends it with every attempt. The server records the key with the result and returns the stored result for any repeat.</p>
 <div class="codeSample" data-hl>POST /charges
 Idempotency-Key: 9f2c1a...        &lt;- generated by the CLIENT, once,
                                      and REUSED for every retry
@@ -333,26 +274,12 @@ Idempotency-Key: 9f2c1a...        &lt;- generated by the CLIENT, once,
 // and hash the request body against the key: same key with a DIFFERENT
 // body is a client bug, and should be a 422, not a silent wrong answer.</div>
 
-<h4>The error contract, and why consistency beats cleverness</h4>
-<p>Without a standard shape, each endpoint invents its own and clients end up with a parser per route. RFC
-9457's <code>application/problem+json</code> gives one shape everywhere:
-<code>type</code> (a URI identifying the error class, the field clients should branch on),
-<code>title</code>, <code>status</code>, <code>detail</code> (human-readable, and safe to change), and
-<code>instance</code>.</p>
-<p>Three rules for what goes in it. <b>Machine-readable first</b>: clients branch on
-<code>type</code> and status, never on the prose in <code>detail</code>. <b>Actionable</b>: say which
-field, and what was wrong with it; add an <code>errors</code> array for validation, since one 422 per
-form field is a poor experience. <b>Nothing internal</b>: stack traces, SQL fragments and class names are
-reconnaissance. Log them against a correlation id and return the id instead, which also turns a customer
-support ticket into a single log query.</p>
+<h4>The error contract</h4>
+<p>Without a standard shape, each endpoint invents its own and clients end up with a parser per route. RFC 9457's <code>application/problem+json</code> gives one shape everywhere: <code>type</code> (a URI identifying the error class, the field clients should branch on), <code>title</code>, <code>status</code>, <code>detail</code> (human-readable, and safe to change), and <code>instance</code>.</p>
+<p><b>Machine-readable first</b>: clients branch on <code>type</code> and status, never on the prose in <code>detail</code>. <b>Actionable</b>: say which field, and what was wrong with it. Add an <code>errors</code> array for validation, since one 422 per form field is a poor experience. <b>Nothing internal</b>: stack traces, SQL fragments and class names are reconnaissance. Log them against a correlation id and return the id instead. That also turns a support ticket into a single log query.</p>
 
 <h4>The rest of what separates a professional API</h4>
-<p><b>Versioning</b> decided before launch, not after the first breaking change. <b>Pagination on every
-collection</b>: an unpaginated list endpoint is an outage waiting for the customer with 50,000 records,
-and cursor pagination beats offset once the data is large or changing. <b>Rate limits that are visible</b>
-via <code>RateLimit</code> headers and a <code>Retry-After</code> on 429, so clients can back off properly
-instead of hammering you. And <b>documentation generated from the code</b> (OpenAPI), because
-hand-maintained docs are wrong within a month.</p>`,
+<p><b>Versioning</b> decided before launch, not after the first breaking change. <b>Pagination on every collection</b>: an unpaginated list endpoint is an outage waiting for the customer with 50,000 records. Cursor pagination beats offset once the data is large or changing. <b>Visible rate limits</b> via <code>RateLimit</code> headers and a <code>Retry-After</code> on 429, so clients can back off instead of hammering you. And <b>documentation generated from the code</b> (OpenAPI), because hand-maintained docs are wrong within a month.</p>`,
 docs:[['RFC 9457 Problem Details','https://www.rfc-editor.org/rfc/rfc9457.html'],['Idempotency (Stripe docs)','https://docs.stripe.com/api/idempotent_requests']],
 exs:[{title:'An error contract in Java',
 prompt:`Write <code>record ProblemDetail(String type, String title, int status, String detail)</code> and class <code>Errors</code> with two factories: <code>static ProblemDetail notFound(String resource, String id)</code> → status 404, title "Not found", detail "&lt;resource&gt; &lt;id&gt; does not exist", type "https://api.dojo.dev/errors/not-found"; and <code>static ProblemDetail validation(String field, String issue)</code> → status 422, title "Validation failed", detail "&lt;field&gt;: &lt;issue&gt;", type ".../validation".`,
@@ -398,8 +325,8 @@ hints:['Six methods are idempotent; two common ones are not.','Normalize the cas
 {id:'api5',title:'Advanced REST: versioning, pagination, rate limits',body:`
 <p>Running an API <i>platform</i> means designing for change and scale:</p>
 <ul>
-<li><b>Versioning</b>: URL (<code>/v2/accounts</code>; visible, cache-friendly) or header (<code>Accept: application/vnd.dojo.v2+json</code>; purist). Pick one, document a deprecation policy with dates, send <code>Sunset</code>/<code>Deprecation</code> headers before removal.</li>
-<li><b>Pagination</b>: offset (<code>?page=2&amp;size=50</code>; simple, drifts under writes) vs cursor (<code>?cursor=abc&amp;limit=50</code>; stable, opaque token). Return total/next metadata.</li>
+<li><b>Versioning</b>: URL (<code>/v2/accounts</code>, visible and cache-friendly) or header (<code>Accept: application/vnd.dojo.v2+json</code>, purist). Pick one, document a deprecation policy with dates, send <code>Sunset</code>/<code>Deprecation</code> headers before removal.</li>
+<li><b>Pagination</b>: offset (<code>?page=2&amp;size=50</code>, simple, drifts under writes) vs cursor (<code>?cursor=abc&amp;limit=50</code>, stable, opaque token). Return total/next metadata.</li>
 <li><b>Rate limiting</b>: answer <code>429 Too Many Requests</code> with <code>Retry-After</code> and <code>X-RateLimit-Remaining</code> style headers.</li>
 <li><b>Caching &amp; concurrency</b>: <code>ETag</code> + <code>If-None-Match</code> (304), and optimistic locking with <code>If-Match</code> → <code>412 Precondition Failed</code>.</li>
 </ul>
@@ -411,14 +338,8 @@ ETag: "33a64df5"
 {"items":[...],"next_cursor":"eyJpZCI6MTk5In0"}</div>
 
 <h4>Why cursors beat offsets</h4>
-<p><code>?page=5&amp;size=20</code> is easy and quietly wrong at scale, for two reasons. It is
-<b>unstable</b>: if a row is inserted while a client pages through, every subsequent page shifts and an
-item is silently skipped or repeated. And it is <b>slow</b>: <code>OFFSET 100000</code> makes the
-database walk and discard a hundred thousand rows on every request.</p>
-<p>A cursor encodes <i>where you stopped</i>, typically the last id or sort key, so the next query is
-an indexed range scan of constant cost, and inserts elsewhere cannot shift your window. The trade is
-that you lose "jump to page 47", which most APIs never genuinely needed. Keep the cursor opaque
-(base64 an internal structure) so you can change what is inside it without breaking clients.</p>
+<p><code>?page=5&amp;size=20</code> is easy and wrong at scale. It's <b>unstable</b>: insert a row while a client pages through and every later page shifts, so an item is skipped or repeated. And it's <b>slow</b>: <code>OFFSET 100000</code> makes the database walk and discard a hundred thousand rows on every request.</p>
+<p>A cursor encodes <i>where you stopped</i>, typically the last id or sort key. The next query is an indexed range scan of constant cost, and inserts elsewhere can't shift your window. You lose "jump to page 47", which most APIs never needed. Keep the cursor opaque (base64 an internal structure) so you can change what's inside without breaking clients.</p>
 
 <h4>Versioning: pick one and mean it</h4>
 <div class="codeSample" data-hl>/v1/orders                        URI, visible, cacheable, easy to route.
@@ -427,21 +348,11 @@ Accept: application/vnd.acme.v2+json   media type, "purer", far more awkward
                                        in browsers, proxies and curl
 ?version=2                        query, easy, but caches and logs treat it
                                        as a different resource inconsistently</div>
-<p>The more important discipline is <b>not needing a new version</b>. Adding an optional field, adding
-an endpoint, adding an enum value a client can ignore: all backward compatible. Removing a field,
-renaming one, tightening validation or changing a default: all breaking. Version when you break, and
-run the old version until the clients you care about have moved, with usage metrics telling you when
-that is.</p>
+<p>The more important discipline is <b>not needing a new version</b>. Adding an optional field, an endpoint, or an enum value a client can ignore: all backward compatible. Removing a field, renaming one, tightening validation or changing a default: all breaking. Version when you break. Run the old version until the clients you care about have moved, and let usage metrics tell you when that is.</p>
 
 <h4>Rate limits should be legible</h4>
-<p>Return <b>429</b> with <code>Retry-After</code>, and expose the budget continuously rather than only
-at the moment of failure: <code>RateLimit-Limit</code>, <code>RateLimit-Remaining</code>,
-<code>RateLimit-Reset</code>. A client that can see its remaining budget can slow down; one that only
-learns at rejection can only retry and make it worse.</p>
-<p>Limit per <i>credential</i>, not per IP: many legitimate users share an IP, and one abusive client
-should not take out a corporate NAT. And prefer a token bucket to a fixed window; a fixed window lets
-a caller spend the whole quota in the last second of one window and again in the first second of the
-next, producing exactly the burst you were trying to prevent.</p>`,
+<p>Return <b>429</b> with <code>Retry-After</code>, and expose the budget continuously, not only at the moment of failure: <code>RateLimit-Limit</code>, <code>RateLimit-Remaining</code>, <code>RateLimit-Reset</code>. A client that can see its remaining budget can slow down. One that only learns at rejection can only retry and make it worse.</p>
+<p>Limit per <i>credential</i>, not per IP. Many legitimate users share an IP, and one abusive client shouldn't take out a corporate NAT. Prefer a token bucket to a fixed window. A fixed window lets a caller spend the whole quota in the last second of one window and again in the first second of the next: the burst you were trying to prevent.</p>`,
 docs:[['API versioning (Postman guide)','https://www.postman.com/api-platform/api-versioning/'],['RFC 6585 (429 status)','https://www.rfc-editor.org/rfc/rfc6585'],['HTTP caching & ETag (MDN)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag']],
 ex:{title:'Platform design drill',lang:'http',
 prompt:`One per numbered line: (1) a URL-versioned request line listing v2 trades with <b>cursor</b> pagination (cursor <code>abc</code>, limit 50), (2) the status line a rate-limited client gets, (3) the response header telling them when to retry (60s), (4) the conditional request header a client sends to revalidate a cached ETag <code>"x1"</code>, (5) the status line when that cache is still fresh.`,
@@ -473,7 +384,7 @@ If-None-Match: "x1"
 # 5)
 HTTP/1.1 304 Not Modified`}},
 {id:'api6',title:'API specs & publishing: OpenAPI',body:`
-<p>An API without a machine-readable spec is folklore. <b>OpenAPI 3</b> is the contract format: one YAML/JSON document describing every path, parameter, schema and response, from which docs, client SDKs, mock servers and contract tests are all generated.</p>
+<p>An API without a machine-readable spec is folklore. <b>OpenAPI 3</b> is the contract format: one YAML/JSON document describing every path, parameter, schema and response. Docs, client SDKs, mock servers and contract tests are all generated from it.</p>
 <div class="codeSample">openapi: 3.0.3
 info: { title: Portfolio API, version: 2.1.0 }
 paths:
@@ -496,23 +407,23 @@ components:
       properties:
         id:   { type: string }
         name: { type: string }</div>
-<p><b>Code-first</b>: add <code>springdoc-openapi-starter-webmvc-ui</code> and your running Boot app self-publishes the spec at <code>/v3/api-docs</code> with interactive docs at <code>/swagger-ui.html</code>; enrich with <code>@Operation</code>/<code>@ApiResponse</code> annotations. <b>Spec-first</b> flips it: design the YAML in review, then generate server stubs and client SDKs with <code>openapi-generator</code>. <b>Publishing as a platform owner</b> means: the spec is versioned in git and diffed in PRs (breaking-change review!), a developer portal hosts per-version docs, SDKs are generated per release, and the deprecation headers you learned in the versioning lesson are documented in the spec itself.</p>
+<p><b>Code-first</b>: add <code>springdoc-openapi-starter-webmvc-ui</code> and your running Boot app publishes the spec at <code>/v3/api-docs</code> with interactive docs at <code>/swagger-ui.html</code>. Enrich with <code>@Operation</code>/<code>@ApiResponse</code> annotations. <b>Spec-first</b> flips it: design the YAML in review, then generate server stubs and client SDKs with <code>openapi-generator</code>. <b>Publishing as a platform owner</b> means the spec is versioned in git and diffed in PRs (breaking-change review!), a developer portal hosts per-version docs, SDKs are generated per release, and the deprecation headers from the versioning lesson are documented in the spec itself.</p>
 
-<h4>Code-first or spec-first, and how to choose</h4>
-<p><b>Code-first</b> keeps the spec in sync automatically, because it is generated from the same annotations that implement the endpoint: no drift, and near-zero effort. Its weakness is that the API is designed by whoever writes the controller, one endpoint at a time, and the document only exists after the code does.</p>
-<p><b>Spec-first</b> makes the contract a reviewable artifact <i>before</i> implementation: consumers can comment, mocks can be generated for parallel front-end work, and server stubs enforce the agreed shape. Its weakness is drift (a spec nobody regenerates from is folklore again within a quarter), so it only works when generation is wired into the build.</p>
-<p>The practical rule: spec-first for public or cross-team APIs where the contract is a negotiation, code-first for internal services where speed matters more and the consumer is down the hall.</p>
+<h4>Code-first or spec-first</h4>
+<p><b>Code-first</b> keeps the spec in sync automatically. It's generated from the same annotations that implement the endpoint: no drift, near-zero effort. Its weakness is that the API is designed by whoever writes the controller, one endpoint at a time, and the document only exists after the code does.</p>
+<p><b>Spec-first</b> makes the contract a reviewable artifact <i>before</i> implementation. Consumers can comment, mocks can be generated for parallel front-end work, and server stubs enforce the agreed shape. Its weakness is drift. A spec nobody regenerates from is folklore again within a quarter, so it only works when generation is wired into the build.</p>
+<p>The rule: spec-first for public or cross-team APIs where the contract is a negotiation. Code-first for internal services where speed matters more and the consumer is down the hall.</p>
 
 <h4>What a good spec carries beyond paths</h4>
 <ul>
-<li><b>Schemas with constraints</b>, not just types: formats, ranges, required fields, enums. Generated clients and validators use them, and they are the difference between documentation and a contract.</li>
-<li><b>Error responses</b>, modeled explicitly, ideally as <code>application/problem+json</code> (RFC 9457), so failures have a defined shape rather than being an undocumented surprise.</li>
-<li><b>Examples</b> on requests and responses. They are what a human actually reads, and they power mock servers.</li>
+<li><b>Schemas with constraints</b>, not only types: formats, ranges, required fields, enums. Generated clients and validators use them. They're the difference between documentation and a contract.</li>
+<li><b>Error responses</b>, modeled explicitly, ideally as <code>application/problem+json</code> (RFC 9457), so failures have a defined shape.</li>
+<li><b>Examples</b> on requests and responses. They're what a human reads, and they power mock servers.</li>
 <li><b>Security schemes</b>, so the spec states which scopes or schemes each operation needs.</li>
 </ul>
 
-<h4>The spec as a change-control mechanism</h4>
-<p>The reason to keep the document in git is that a diff becomes reviewable: adding an optional field is additive, removing a field or tightening a type is breaking, and a reviewer can see which one a pull request contains. Tooling can enforce it (<code>oasdiff</code> and similar will fail a build on a breaking change), which turns "we did not realize anyone used that field" into a conversation before release rather than an incident after it. Pair that with the deprecation headers from the versioning lesson and the whole lifecycle is documented in one place that clients and generators both read.</p>`,
+<h4>The spec as change control</h4>
+<p>Keep the document in git and a diff becomes reviewable. Adding an optional field is additive. Removing a field or tightening a type is breaking. A reviewer can see which one a pull request contains. Tooling can enforce it: <code>oasdiff</code> and similar will fail a build on a breaking change. That turns "we did not realize anyone used that field" into a conversation before release rather than an incident after it. Pair it with the deprecation headers from the versioning lesson and the whole lifecycle is documented in one place that clients and generators both read.</p>`,
 docs:[['OpenAPI specification','https://spec.openapis.org/oas/v3.0.3'],['springdoc-openapi','https://springdoc.org/'],['openapi-generator','https://openapi-generator.tech/']],
 ex:{title:'Write the contract',lang:'yaml',
 prompt:`Write an OpenAPI 3.0.3 snippet: <code>info</code> with title <code>Ledger API</code> version <code>1.0.0</code>; path <code>/entries/{id}</code> with a <code>get</code> operation (<code>operationId: getEntry</code>), a required path parameter <code>id</code> of type string, a <code>"200"</code> response whose <code>application/json</code> content references <code>#/components/schemas/Entry</code>, and a <code>"404"</code>; components schema <code>Entry</code>: object with required <code>[id, amountCents]</code>, properties id (string) and amountCents (integer).`,
@@ -566,11 +477,11 @@ components:
         amountCents:
           type: integer`}},
 {id:'api7',title:'Request headers & curl fluency',body:`
-<p>Headers are the API's control plane. The ones you will set and read daily:</p>
+<p>Headers are the API's control plane. The ones you'll set and read daily:</p>
 <ul>
 <li><b>Auth</b>: <code>Authorization: Bearer &lt;token&gt;</code> (JWTs), <code>Authorization: Basic &lt;base64&gt;</code>, or API keys in <code>X-API-Key</code>.</li>
-<li><b>Content negotiation</b>: <code>Content-Type</code> (what I am SENDING), <code>Accept</code> (what I want BACK); mixing these up is the #1 415/406 generator.</li>
-<li><b>Tracing</b>: <code>X-Request-Id</code> / <code>traceparent</code>. Propagate them; they are how you follow one request across services in logs.</li>
+<li><b>Content negotiation</b>: <code>Content-Type</code> (what I am SENDING), <code>Accept</code> (what I want BACK). Mixing these up is the #1 415/406 generator.</li>
+<li><b>Tracing</b>: <code>X-Request-Id</code> / <code>traceparent</code>. Propagate them. They're how you follow one request across services in logs.</li>
 <li><b>Caching &amp; concurrency</b>: <code>ETag</code>, <code>If-None-Match</code>, <code>If-Match</code>, <code>Cache-Control</code> (your api5 lesson).</li>
 <li><b>Platform ops</b>: <code>Retry-After</code>, <code>X-RateLimit-*</code>, <code>Idempotency-Key</code>, CORS (<code>Origin</code> → <code>Access-Control-Allow-Origin</code>).</li>
 </ul>
@@ -586,33 +497,24 @@ curl -X POST https://api.dojo.dev/users \\
 curl -X PUT ... -d @payload.json                           # body from a file
 curl -o out.json -w "%{http_code}\\n" ...                  # save body, print status
 curl -L ...                                                # follow redirects</div>
-<p>Debugging ritual: reproduce with curl first: it strips away SDKs, retries and frameworks until only the HTTP truth remains. If curl works and your code doesn't, diff the headers with <code>-v</code>.</p>
+<p>Reproduce with curl first. If curl works and your code doesn't, diff the headers with <code>-v</code>.</p>
 
 <h4>The headers that decide whether your request works at all</h4>
-<p><code>Content-Type</code> describes what you are <i>sending</i>; <code>Accept</code> describes what you
-want <i>back</i>. Confusing them produces the two most-searched status codes in API work: <b>415
-Unsupported Media Type</b> means the server does not accept what you sent, <b>406 Not Acceptable</b> means
-it cannot produce what you asked for. Neither is about authentication, and both are read as "the API is
-broken" by people who have not internalized the distinction.</p>
-<p><code>Authorization</code> is a request header and never a query parameter: a token in a URL lands in
-browser history, proxy logs and the <code>Referer</code> sent to the next site. If you find yourself
-putting a credential in a query string, that is the signal to stop.</p>
+<p><code>Content-Type</code> describes what you're <i>sending</i>. <code>Accept</code> describes what you want <i>back</i>. Confusing them produces the two most-searched status codes in API work. <b>415 Unsupported Media Type</b> means the server doesn't accept what you sent. <b>406 Not Acceptable</b> means it can't produce what you asked for. Neither is about authentication, and both get read as "the API is broken" by people who haven't learned the distinction.</p>
+<p><code>Authorization</code> is a request header and never a query parameter. A token in a URL lands in browser history, proxy logs and the <code>Referer</code> sent to the next site. A credential in a query string is the signal to stop.</p>
 
-<h4>curl flags worth knowing by heart</h4>
+<h4>curl flags to know by heart</h4>
 <div class="codeSample">curl -i https://api.example.com/orders          # -i: response headers WITH the body
 curl -v ...                                     # -v: the full exchange, request headers included
 curl -X POST -H 'Content-Type: application/json' -d '{"a":1}' ...
-curl -H 'Accept: application/json' -w '\n%{http_code} %{time_total}s\n' -o /dev/null -s ...
+curl -H 'Accept: application/json' -w '
+%{http_code} %{time_total}s
+' -o /dev/null -s ...
 curl --fail ...            # non-zero exit on 4xx/5xx, the flag that makes curl safe in a script</div>
-<p><code>--fail</code> matters more than it looks: without it curl exits 0 on a 500 and prints the error
-body, so a shell script "succeeds" while receiving an error page. That is the same class of bug as a
-pipeline reporting only its last command's status.</p>
+<p><code>--fail</code> matters more than it looks. Without it curl exits 0 on a 500 and prints the error body, so a shell script "succeeds" while receiving an error page. Same class of bug as a pipeline reporting only its last command's status.</p>
 
-<h4>The debugging ritual, and why it works</h4>
-<p>Reproduce with curl before touching the code. An SDK adds retries, default headers, connection pooling
-and its own serialization, so a failure inside it has half a dozen candidate causes. curl removes all of
-them and leaves the HTTP truth. If curl succeeds and your client does not, run both with headers visible
-and <b>diff them</b>: the difference is nearly always a header you did not know your SDK was setting.</p>`,
+<h4>The debugging ritual</h4>
+<p>Reproduce with curl before touching the code. An SDK adds retries, default headers, connection pooling and its own serialization, so a failure inside it has half a dozen candidate causes. curl removes all of them and leaves the HTTP truth. If curl succeeds and your client doesn't, run both with headers visible and <b>diff them</b>. The difference is nearly always a header you didn't know your SDK was setting.</p>`,
 docs:[['HTTP headers (MDN)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers'],['curl docs','https://curl.se/docs/manpage.html'],['Everything curl (book)','https://everything.curl.dev/']],
 ex:{title:'curl drill',lang:'shell',
 prompt:`One per numbered line: (1) GET <code>https://api.dojo.dev/me</code> with a bearer token from <code>$TOKEN</code> and <code>Accept: application/json</code>, (2) POST <code>{"name": "Ada"}</code> to <code>https://api.dojo.dev/users</code> with the right Content-Type, (3) the same GET as (1) but showing <b>response headers</b> too, (4) fetch <code>https://api.dojo.dev/report</code> saving the body to <code>report.json</code> while printing the status code, (5) which header pair the server/client use for conditional caching (name both, comma-separated).`,

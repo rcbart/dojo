@@ -1,6 +1,8 @@
 STREAMS.push({icon:'📦',title:'JPMS & Performance Engineering',blurb:'The Java module system, and finding real bottlenecks with JFR and async-profiler.',lessons:[
 {id:'jpm1',title:'JPMS: module-info basics',body:`
-<p>Since Java 9 the platform and (optionally) your code are organized as <b>modules</b>: named units that declare what they need and what they expose. A module is a jar with a <code>module-info.java</code> at its root:</p>
+
+
+<p>Since Java 9 the platform and, optionally, your code are organized as <b>modules</b>: named units that declare what they need and what they expose. A module is a jar with a <code>module-info.java</code> at its root:</p>
 <div class="codeSample">module com.dojo.api {
     requires java.net.http;              // I use this module
     requires transitive com.dojo.model;  // my users get this one for free
@@ -9,23 +11,23 @@ STREAMS.push({icon:'📦',title:'JPMS & Performance Engineering',blurb:'The Java
 <div class="codeSample">javac -d out --module-source-path src $(find src -name "*.java")
 java --module-path out -m com.dojo.api/com.dojo.api.client.Main
 jdeps --module-path out out/com.dojo.api      # analyze real dependencies</div>
-<p>The win: <b>strong encapsulation</b>. "public" stops meaning "everyone"; only exported packages are API. <code>requires transitive</code> is for types that appear in your own API signatures. Code without module-info lands on the classpath as the <i>unnamed module</i>, perfectly legal, which is why most apps adopt JPMS gradually or never; the JDK itself, though, is fully modular, and jlink (next lesson) needs it.</p>
+<p>The win is <b>strong encapsulation</b>. "public" stops meaning "everyone". Only exported packages are API. <code>requires transitive</code> is for types that appear in your own API signatures. Code without module-info lands on the classpath as the <i>unnamed module</i>, which is legal, so most apps adopt <b>JPMS</b> gradually or never. JPMS is the Java Platform Module System, the name for all of the above. The JDK itself is fully modular, and jlink (next lesson) needs it.</p>
 
 <h4>Why the module system exists</h4>
-<p>Before Java 9 the classpath was a flat list with two structural problems. <b>Encapsulation stopped at <code>public</code></b>: any class in any jar could reach any public type in any other, so "internal" packages were internal by convention and by nothing else, which is how <code>sun.misc.Unsafe</code> ended up holding half the ecosystem together. And <b>dependencies were unverified</b>: a missing jar produced a <code>NoClassDefFoundError</code> at the moment of first use, potentially in production at 3am, rather than at startup.</p>
-<p>Modules address both. <code>requires</code> is checked when the module graph is resolved, so a missing dependency fails immediately and visibly, and split packages (the same package in two jars) are rejected outright rather than resolved by classpath order.</p>
+<p>Before Java 9 the classpath was a flat list with two structural problems. <b>Encapsulation stopped at <code>public</code></b>. Any class in any jar could reach any public type in any other, so "internal" packages were internal by convention only. That is how <code>sun.misc.Unsafe</code> ended up holding half the ecosystem together. <b>Dependencies were unverified</b>. A missing jar produced a <code>NoClassDefFoundError</code> at first use, possibly in production at 3am, rather than at startup.</p>
+<p>Modules address both. <code>requires</code> is checked when the module graph is resolved, so a missing dependency fails immediately and visibly. Split packages, the same package in two jars, are rejected outright rather than resolved by classpath order.</p>
 
-<h4>The directives worth knowing</h4>
+<h4>The directives to know</h4>
 <ul>
 <li><code>exports p</code>: package <code>p</code> is API. <code>exports p to m</code> is a qualified export, visible only to named modules.</li>
-<li><code>requires transitive m</code>: anyone requiring you also gets <code>m</code>. Use it when <code>m</code>'s types appear in <i>your</i> public signatures; forgetting it means your callers fail to compile against your own API.</li>
-<li><code>opens p</code>: allows deep reflection at runtime without exporting at compile time, which is what frameworks doing dependency injection or ORM need. <code>open module</code> opens everything, and is the pragmatic escape hatch.</li>
+<li><code>requires transitive m</code>: anyone requiring you also gets <code>m</code>. Use it when <code>m</code>'s types appear in <i>your</i> public signatures. Forget it and your callers fail to compile against your own API.</li>
+<li><code>opens p</code>: allows deep reflection at runtime without exporting at compile time, which frameworks doing dependency injection or ORM need. <code>open module</code> opens everything and is the pragmatic escape hatch.</li>
 <li><code>provides X with Y</code> / <code>uses X</code>: the module-aware form of <code>ServiceLoader</code>.</li>
 </ul>
 
 <h4>The real adoption story</h4>
-<p>Most applications never write a <code>module-info.java</code>, and that is a defensible choice: on the classpath your code lives in the unnamed module, which reads everything and exports everything, exactly as before. The value is highest for <b>libraries</b> (where a published module boundary is a real API contract) and for anything that wants <code>jlink</code> to produce a trimmed runtime image, since jlink needs a fully modular graph.</p>
-<p>What everyone does encounter, modules or not, is the JDK's own modularity: <code>InaccessibleObjectException</code> and the "module java.base does not open java.lang" message are the platform enforcing encapsulation on reflection. The correct answer is a targeted <code>--add-opens</code> flag while the library is fixed, not a blanket one, and certainly not staying on an old JDK.</p>`,
+<p>Most applications never write a <code>module-info.java</code>, and that is defensible. On the classpath your code lives in the unnamed module, which reads everything and exports everything, as before. The value is highest for <b>libraries</b>, where a published module boundary is a real API contract. It is also high for anything that wants <code>jlink</code> to produce a trimmed runtime image, since jlink needs a fully modular graph.</p>
+<p>Everyone does meet the JDK's own modularity, modules or not. <code>InaccessibleObjectException</code> and the "module java.base does not open java.lang" message are the platform enforcing encapsulation on reflection. The answer is a targeted <code>--add-opens</code> flag while the library is fixed, not a blanket one, and not staying on an old JDK.</p>`,
 docs:[['Modules, dev.java','https://dev.java/learn/modules/'],['JPMS quick-start, openjdk','https://openjdk.org/projects/jigsaw/quick-start']],
 ex:{title:'Write a module descriptor',
 prompt:`Write the <code>module-info.java</code> for module <code>com.example.tokens</code>: it <code>requires java.net.http</code>, <code>requires transitive com.example.model</code> (model types appear in its public API), and exports exactly two packages: <code>com.example.tokens.api</code> and <code>com.example.tokens.claims</code>. Nothing else is exported.`,
@@ -43,6 +45,8 @@ solution:`module com.example.tokens {
     exports com.example.tokens.claims;
 }`}},
 {id:'jpm2',title:'JPMS advanced: services, opens & jlink',body:`
+
+
 <p>Three power features:</p>
 <div class="codeSample">// SERVICES: decoupled plugins via the module system
 module com.dojo.spi {
@@ -65,26 +69,19 @@ module com.dojo.api {
 }</div>
 <div class="codeSample">jlink --module-path out --add-modules com.dojo.app --output myruntime
 myruntime/bin/java -m com.dojo.app/...        # custom runtime: ~40MB, only YOUR modules</div>
-<p><code>exports</code> = compile-time visibility; <code>opens</code> = deep reflection at runtime (an <i>open module</i> opens everything). <code>jlink</code> assembles a trimmed runtime image from just the modules you use, the JPMS payoff for containers.</p>
+<p><code>exports</code> = compile-time visibility. <code>opens</code> = deep reflection at runtime. An <i>open module</i> opens everything.<code>jlink</code> assembles a trimmed runtime image from just the modules you use, the JPMS payoff for containers.</p>
 <h4>Why services are the interesting part</h4>
-<p><code>requires</code> creates a hard, compile-time dependency: useful, and the opposite of a plugin
-architecture. Services invert it: the consumer depends only on the <b>interface</b> module, and providers
-are discovered at runtime from whatever happens to be on the module path.</p>
+<p><code>requires</code> creates a hard, compile-time dependency: useful, and the opposite of a plugin architecture. Services invert it. The consumer depends only on the <b>interface</b> module, and providers are discovered at runtime from whatever is on the module path.</p>
 <div class="codeSample" data-hl>app --requires--&gt; spi  &lt;--requires-- provider
         uses                        provides ... with ...
 
 // the app has NO reference to the provider. add a provider module to
 // the module path and ServiceLoader finds it; remove it and nothing
 // breaks at compile time. that is a plugin system with no framework.</div>
-<p>The improvement over the old <code>META-INF/services</code> mechanism is that the module system
-<b>verifies it</b>: the compiler checks that the class named in <code>provides ... with ...</code> exists
-and actually implements the interface. The classpath version failed at runtime, on a typo, with a
-confusing error.</p>
-<p><code>ServiceLoader</code> is lazy (it instantiates on iteration), so treat a missing provider as a
-real case and decide what an empty result means. Ordering is not guaranteed either, which matters if you
-were hoping for a priority chain.</p>
+<p>The improvement over the old <code>META-INF/services</code> mechanism is that the module system <b>verifies it</b>. The compiler checks that the class named in <code>provides ... with ...</code> exists and implements the interface. The classpath version failed at runtime, on a typo, with a confusing error.</p>
+<p><code>ServiceLoader</code> is lazy: it instantiates on iteration. Treat a missing provider as a real case and decide what an empty result means. Ordering is not guaranteed either, which matters if you wanted a priority chain.</p>
 
-<h4><code>exports</code> versus <code>opens</code>: the distinction that causes every migration error</h4>
+<h4><code>exports</code> versus <code>opens</code>: the distinction behind every migration error</h4>
 <div class="codeSample" data-hl>exports com.acme.api;         compile-time access to PUBLIC types.
                               reflection into private members still fails.
 
@@ -96,22 +93,11 @@ opens com.acme.dto to com.fasterxml.jackson.databind;   qualified: only
 
 open module com.acme { }      every package open. the pragmatic escape
                               hatch when migrating a large codebase.</div>
-<p>This is why frameworks fail with <code>InaccessibleObjectException</code> on a modular application:
-Jackson needs to reflect into your DTO's private fields, and <code>exports</code> does not grant that.
-Strong encapsulation is the feature: the JDK's own internals became genuinely inaccessible, which is what
-allowed the platform to evolve, and the <code>--add-opens</code> flags you have seen in start-up scripts
-are the same thing being pried open from outside.</p>
+<p>This is why frameworks fail with <code>InaccessibleObjectException</code> on a modular application. Jackson needs to reflect into your <b>DTO</b>'s private fields, and <code>exports</code> does not grant that. A DTO is a data transfer object: a plain class that only carries data across a boundary, such as the JSON an API sends or receives, which is exactly what Jackson reads and writes. Strong encapsulation is the feature. The JDK's own internals became inaccessible, which is what allowed the platform to evolve. The <code>--add-opens</code> flags in start-up scripts are the same thing being pried open from outside.</p>
 
-<h4><code>jlink</code>, and where JPMS actually landed</h4>
-<p><code>jlink</code> is the concrete payoff: a runtime image containing only the modules you actually use.
-A hello-world image is around 40MB against a full JDK's 300MB, which matters for container size and cold
-start. It works only if the whole graph is modular, which is why <code>jdeps</code> exists to find what is
-missing.</p>
-<p>And the assessment worth stating plainly: <b>JPMS did not win in application code.</b> The JDK itself is
-modular and benefits enormously, but most Spring Boot services ship a fat jar on the classpath and use
-Docker for the packaging problem JPMS was partly aimed at. Learn it because you will meet
-<code>--add-opens</code>, because the JDK's structure now depends on it, and because <code>jlink</code> is
-genuinely useful, not because your next service will have a <code>module-info.java</code>.</p>`,
+<h4><code>jlink</code>, and where JPMS landed</h4>
+<p><code>jlink</code> is the concrete payoff: a runtime image containing only the modules you use. A hello-world image is around 40MB against a full JDK's 300MB, which matters for container size and cold start. It works only if the whole graph is modular, so <code>jdeps</code> exists to find what is missing.</p>
+<p>The plain assessment: <b>JPMS did not win in application code.</b> The JDK itself is modular and benefits from it. Most Spring Boot services ship a fat jar on the classpath and use Docker for the packaging problem JPMS was partly aimed at. Learn it because you will meet <code>--add-opens</code>, because the JDK's structure depends on it, and because <code>jlink</code> is useful. Your next service will probably not have a <code>module-info.java</code>.</p>`,
 docs:[['ServiceLoader, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ServiceLoader.html'],['jlink, Oracle','https://docs.oracle.com/en/java/javase/21/docs/specs/man/jlink.html']],
 ex:{title:'Wire a service',
 prompt:`Write two module descriptors in one editor (Java allows one per file; for this drill, stack them): (1) module <code>com.dojo.provider</code>: requires <code>com.dojo.spi</code>, and <code>provides com.dojo.spi.TokenSigner with com.dojo.provider.HmacSigner</code>. (2) module <code>com.dojo.app</code>: requires <code>com.dojo.spi</code>, declares <code>uses com.dojo.spi.TokenSigner</code>, and <code>opens com.dojo.app.dto to com.fasterxml.jackson.databind</code>.`,
@@ -136,7 +122,9 @@ module com.dojo.app {
     opens com.dojo.app.dto to com.fasterxml.jackson.databind;
 }`}},
 {id:'prf1',title:'Java Flight Recorder: always-on profiling',body:`
-<p>JFR is the JDK's built-in event recorder: ~1% overhead, safe in production, which is exactly where the interesting problems live. It records method samples, allocations, GC pauses, lock contention, I/O and thousands more events into a <code>.jfr</code> file you open in JDK Mission Control (JMC).</p>
+
+
+<p>JFR is the JDK's built-in event recorder: ~1% overhead, safe in production, which is where the interesting problems live. It records method samples, allocations, GC pauses, lock contention, I/O and thousands more events into a <code>.jfr</code> file you open in JDK Mission Control (JMC). <b>GC</b> is garbage collection: the JVM finds objects nothing can reach any more and frees their memory for you. The price is pauses, and those pauses are one of the first things you'll look for in a recording.</p>
 <div class="codeSample"># at launch: record for 60s, dump to file
 java -XX:StartFlightRecording=duration=60s,filename=rec.jfr -jar app.jar
 
@@ -147,15 +135,10 @@ jcmd &lt;pid&gt; JFR.stop  name=probe
 
 jfr print --events jdk.GCPhasePause probe.jfr    # CLI peek without JMC
 jfr summary probe.jfr</div>
-<p>Reading it in JMC: start with <b>Automated Analysis</b> (it names suspects), then Method Profiling (hot methods), Memory (allocation pressure → GC pain), and Lock Instances (contention). Rule one of performance work: <b>measure before you optimize</b>: the bottleneck is almost never where intuition points.</p>
-<h4>Why "safe in production" changes everything</h4>
-<p>Most profilers are laboratory tools: they slow the process enough that you must reproduce
-the problem in a test environment first. But the interesting performance problems <b>only exist in
-production</b>: they need real traffic patterns, real data volumes, real concurrency and the one customer
-whose account has 400,000 rows. A profiler you cannot run there is a profiler that cannot see them.</p>
-<p>JFR's roughly 1% overhead is the whole point. It is built into the JDK, it can run continuously, and you
-can attach to a process that is misbehaving <i>right now</i> rather than trying to recreate it
-afterwards.</p>
+<p>In JMC, start with <b>Automated Analysis</b>, then Method Profiling, Memory and Lock Instances. Each is covered below.</p>
+<h4>Why "safe in production" matters</h4>
+<p>Most profilers are laboratory tools. They slow the process enough that you must reproduce the problem in a test environment first. But the interesting performance problems <b>only exist in production</b>. They need real traffic patterns, real data volumes, real concurrency and the one customer whose account has 400,000 rows. A profiler you cannot run there cannot see them.</p>
+<p>JFR's roughly 1% overhead is the whole point. It is built into the JDK, it can run continuously, and you can attach to a process that is misbehaving <i>right now</i> rather than recreating it afterwards.</p>
 
 <h4>The two ways in</h4>
 <div class="codeSample" data-hl># always-on, with a ring buffer you can dump when something happens
@@ -170,32 +153,17 @@ jcmd &lt;pid&gt; JFR.stop  name=probe
 # two settings ship by default:
 #   default = ~1% overhead, safe to leave on forever
 #   profile = ~2%, more allocation and method sampling detail</div>
-<p><code>maxage</code> is the underrated one: with a rolling buffer, when an incident happens you dump the
-<i>last six hours</i>, including the period before anyone noticed. That is the difference between
-investigating the event and investigating its aftermath.</p>
+<p><code>maxage</code> is the underrated one. With a rolling buffer, when an incident happens you dump the <i>last six hours</i>, including the period before anyone noticed. You investigate the event, not its aftermath.</p>
 
 <h4>Reading a recording without getting lost</h4>
-<p>A recording contains thousands of event types, which is overwhelming if you browse. Go in with a
-question and a route:</p>
-<p><b>Automated Analysis</b> first: JMC names its suspects and is right often enough to save an hour.
-<b>Method Profiling</b> for "where is CPU going", remembering these are samples: a method appearing in 40%
-of them is where the time is, but rare-and-slow will not show. <b>Memory</b> for allocation pressure, which
-is the usual real cause of "GC problems": the fix is allocating less, not tuning the collector.
-<b>Lock Instances</b> for contention, where a single hot <code>synchronized</code> block explains a
-throughput ceiling that CPU graphs do not. And <b>Exceptions</b>, because a swallowed exception thrown a
-million times a minute is startlingly expensive and invisible everywhere else.</p>
+<p>A recording contains thousands of event types. Go in with a question and a route.</p>
+<p><b>Automated Analysis</b> first: JMC names its suspects and is right often enough to save an hour. <b>Method Profiling</b> for "where is CPU going". These are samples: a method appearing in 40% of them is where the time is, but rare-and-slow will not show. <b>Memory</b> for allocation pressure, the usual real cause of "GC problems". The fix is allocating less, not tuning the collector. <b>Lock Instances</b> for contention, where a single hot <code>synchronized</code> block explains a throughput ceiling that CPU graphs do not. <b>Exceptions</b>, because a swallowed exception thrown a million times a minute is expensive and invisible everywhere else.</p>
 
 <h4>Beyond the built-in events</h4>
-<p>You can define your own: extend <code>jdk.jfr.Event</code>, annotate it, and emit around a business
-operation. Now "token issuance latency" is in the same timeline as GC pauses and lock contention, and
-correlating a business-level symptom with a JVM-level cause becomes reading one chart rather than joining
-two systems.</p>
+<p>You can define your own: extend <code>jdk.jfr.Event</code>, annotate it, and emit around a business operation. Now "token issuance latency" is in the same timeline as GC pauses and lock contention. Correlating a business-level symptom with a JVM-level cause becomes reading one chart rather than joining two systems.</p>
 
 <h4>The rule this lesson exists to enforce</h4>
-<p><b>Measure first.</b> Intuition about performance is wrong at a rate that should be embarrassing:
-the bottleneck is regularly an N+1 query, a misconfigured pool, a serialization cost or a log statement,
-and almost never the algorithm someone was about to rewrite. Optimizing without a profile is guessing with
-extra steps, and it usually makes the code worse while leaving the problem in place.</p>`,
+<p><b>Measure first.</b> Intuition about performance is wrong at an embarrassing rate. The bottleneck is regularly an N+1 query, a misconfigured pool, a serialization cost or a log statement, and almost never the algorithm someone was about to rewrite. Optimizing without a profile is guessing. It usually makes the code worse while leaving the problem in place.</p>`,
 docs:[['JFR, Oracle docs','https://docs.oracle.com/en/java/javase/21/jfapi/why-use-jfr-api.html'],['JDK Mission Control','https://openjdk.org/projects/jmc/'],['jfr tool, reference','https://docs.oracle.com/en/java/javase/21/docs/specs/man/jfr.html']],
 ex:{title:'Flight recorder drill',lang:'shell',
 prompt:`One per numbered line: (1) launch <code>app.jar</code> with a 60-second recording written to <code>rec.jfr</code>, (2) start a named recording (<code>name=probe</code>, <code>settings=profile</code>) on running pid 4242, (3) dump it to <code>probe.jfr</code>, (4) stop it, (5) print a summary of the file with the <code>jfr</code> CLI tool.`,
@@ -227,28 +195,30 @@ jcmd 4242 JFR.stop name=probe
 # 5)
 jfr summary probe.jfr`}},
 {id:'prf2',title:'async-profiler & flame graphs',body:`
-<p><a href="https://github.com/async-profiler/async-profiler" target="_blank" rel="noopener">async-profiler</a> is the community-standard sampling profiler: low overhead, no safepoint bias (it samples via perf events, so it sees what the JVM's own sampler misses), and it emits <b>flame graphs</b> directly:</p>
+
+
+<p><a href="https://github.com/async-profiler/async-profiler" target="_blank" rel="noopener">async-profiler</a> is the community-standard sampling profiler: low overhead, no safepoint bias, and it emits <b>flame graphs</b> directly:</p>
 <div class="codeSample">./asprof -d 30 -f cpu.html 4242            # 30s CPU profile → interactive flame graph
 ./asprof -e alloc -d 30 -f alloc.html 4242 # who ALLOCATES (GC pressure hunting)
 ./asprof -e lock  -d 30 -f lock.html 4242  # lock contention
 ./asprof -e wall  -d 30 -f wall.html 4242  # wall clock: includes waiting (I/O-bound apps!)</div>
-<p><b>Reading a flame graph</b>: y-axis is stack depth, x-axis is <i>proportion of samples</i>: width = time, and the x-order is alphabetical, NOT chronological. Hunt for wide plateaus: a wide frame with no children doing work is your hotspot. The four modes map to the four classic diagnoses: CPU-bound (cpu), memory-churn (alloc), contention (lock), and waiting-on-I/O (wall, where cpu profiles look deceptively idle).</p>
+<p><b>Reading a flame graph</b>: y-axis is stack depth, x-axis is <i>proportion of samples</i>. Width = time, and the x-order is alphabetical, NOT chronological. Hunt for wide plateaus. A wide frame with no children doing work is your hotspot.</p>
 
 <h4>Sampling, and what it can and cannot tell you</h4>
-<p>A sampling profiler interrupts the process many times a second and records the current stack. It therefore measures <b>where time is spent</b>, in proportion, with an overhead of a percent or two, which is what makes it safe to run in production. What it cannot tell you is anything that happens between samples: a method called ten million times for a microsecond each shows up as a wide plateau with no explanation, and a rare five-second stall may not appear at all. For counts and exact durations you need instrumentation or JFR events, not a profiler.</p>
-<p>The safepoint-bias point matters here. The JVM's built-in sampler can only take a sample at a safepoint, and hot inlined loops may contain none, so it systematically blames the wrong frames. async-profiler samples via OS perf events and sees the true stack, including JIT-compiled and native frames.</p>
+<p>A sampling profiler interrupts the process many times a second and records the current stack. It measures <b>where time is spent</b>, in proportion, with an overhead of a percent or two, which makes it safe in production. It cannot tell you anything that happens between samples. A method called ten million times for a microsecond each shows up as a wide plateau with no explanation, and a rare five-second stall may not appear at all. For counts and exact durations you need instrumentation or <b>JFR</b> events. JFR is Java Flight Recorder, the JVM's built-in low-overhead profiler: it records what the app was doing into a file you open in Mission Control, and it's safe to leave on in production.</p>
+<p>Safepoint bias matters here. The JVM's built-in sampler can only take a sample at a safepoint, and hot inlined loops may contain none, so it systematically blames the wrong frames. async-profiler samples via OS perf events and sees the true stack, including <b>JIT</b>-compiled and native frames. The JIT is the just-in-time compiler: the JVM starts by interpreting bytecode, watches which methods run hot, and compiles those to native machine code while the program runs.</p>
 
 <h4>Which mode answers which question</h4>
 <ul>
 <li><b>cpu</b>: "the machine is busy; what is it computing?" Wide plateaus at the leaves are the hotspots.</li>
-<li><b>alloc</b>: "GC is running constantly." This profiles allocation <i>sites</i>, which is what to fix; tuning the collector is what you do after the churn is gone.</li>
+<li><b>alloc</b>: "GC is running constantly." This profiles allocation <i>sites</i>, which is what to fix. Tune the collector after the churn is gone.</li>
 <li><b>lock</b>: "threads are waiting on each other." Width is time blocked on a monitor, which points at the contended lock rather than the slow method.</li>
-<li><b>wall</b>: "the request takes two seconds but the CPU is idle." Wall-clock sampling includes time blocked on I/O, and it is the mode that finds the sequential downstream call nobody remembered.</li>
+<li><b>wall</b>: "the request takes two seconds but the CPU is idle." Wall-clock sampling includes time blocked on I/O. It is the mode that finds the sequential downstream call nobody remembered.</li>
 </ul>
-<p>Choosing the wrong mode is the most common reason a profiling session finds nothing: a service waiting on a database is invisible in a CPU profile, and its flame graph will look reassuringly flat while the latency is entirely real.</p>
+<p>Choosing the wrong mode is the most common reason a profiling session finds nothing. A service waiting on a database is invisible in a CPU profile. Its flame graph looks flat while the latency is real.</p>
 
 <h4>Method</h4>
-<p>Profile the workload you care about, under load, on hardware that resembles production; a profile of a JVM doing nothing is a picture of the JIT warming up. Take a baseline before the change and a second profile after, and compare like for like; "it feels faster" is not a measurement. And read the graph top-down for width, not bottom-up for familiarity: the frame you recognize is rarely the frame that is costing you.</p>`,
+<p>Profile the workload you care about, under load, on hardware that resembles production. A profile of a JVM doing nothing is a picture of the JIT warming up. Take a baseline before the change and a second profile after, and compare like for like. "It feels faster" is not a measurement. Read the graph top-down for width, not bottom-up for familiarity. The frame you recognize is rarely the frame that is costing you.</p>`,
 docs:[['async-profiler, GitHub','https://github.com/async-profiler/async-profiler'],['Flame graphs, Brendan Gregg','https://www.brendangregg.com/flamegraphs.html']],
 ex:{title:'Profiler triage',lang:'text',
 prompt:`Answer on the numbered lines: (1) the command for a 30s CPU flame graph of pid 4242 into <code>cpu.html</code>, (2) the event mode that shows what is creating GC pressure, (3) the event mode that catches time spent blocked on I/O that a CPU profile misses, (4) in a flame graph, what the WIDTH of a frame means, (5) true or false: left-to-right order in a flame graph is chronological.`,
@@ -280,7 +250,9 @@ The proportion of samples (≈ time) spent in that frame and everything it calls
 # 5)
 False: frames are ordered alphabetically; the x-axis shows proportion, not chronology.`}},
 {id:'prf3',title:'Benchmarking with JMH: measuring a change, not a mood',body:`
-<p>Profiling tells you where the time goes. It does not tell you whether the change you just made helped, and that is a different question with a different tool. The temptation is a loop in <code>main</code> around <code>System.nanoTime()</code>. On the JVM that measurement is not merely noisy; it is frequently measuring something other than your code.</p>
+
+
+<p>Profiling tells you where the time goes. Whether the change you just made helped is a different question, with a different tool. The temptation is a loop in <code>main</code> around <code>System.nanoTime()</code>. On the JVM that measurement is noisy, and often it measures something other than your code.</p>
 <div class="codeSample" data-hl>long t0 = System.nanoTime();
 for (int i = 0; i &lt; 1_000_000; i++) slugify("Hello World");
 System.out.println((System.nanoTime() - t0) / 1_000_000 + " ms");
@@ -294,10 +266,10 @@ System.out.println((System.nanoTime() - t0) / 1_000_000 + " ms");
 //    computed once and hoisted out of the loop.
 // 4. ONE JVM, ONE RUN. profile pollution and a single set of JIT
 //    decisions make the number unrepeatable on the next run.</div>
-<p>The order-of-magnitude error this produces goes in both directions, which is what makes it dangerous: sometimes you conclude a change helped when it did nothing, and sometimes you discard a real improvement.</p>
+<p>The order-of-magnitude error goes in both directions. Sometimes you conclude a change helped when it did nothing. Sometimes you discard a real improvement.</p>
 
 <h4>What JMH does about each of them</h4>
-<p><b>JMH</b> is the OpenJDK harness written by the people who write the JIT, and it exists because those four problems are not avoidable by being careful. It runs warm-up iterations whose timings it discards, runs the measurement in <b>forked JVMs</b> so one run's compilation decisions cannot bias the next, generates code around your method that the optimizer cannot see through, and reports a distribution rather than a number.</p>
+<p><b>JMH</b>, the Java Microbenchmark Harness, is the OpenJDK harness written by the people who write the <b>JIT</b>. The JIT is the just-in-time compiler: the JVM starts by interpreting bytecode, watches which methods run hot, and compiles those to native machine code while the program runs. That's why Java gets faster after warm-up and why the first seconds of a benchmark lie. JMH exists because those four problems cannot be avoided by being careful. It runs warm-up iterations whose timings it discards. It runs the measurement in <b>forked JVMs</b> so one run's compilation decisions cannot bias the next. It generates code around your method that the optimizer cannot see through, and it reports a distribution rather than a number.</p>
 <div class="codeSample" data-hl>@BenchmarkMode(Mode.AverageTime)          // or Throughput, SampleTime
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Benchmark)                   // where the inputs live
@@ -313,17 +285,17 @@ public class SlugBenchmark {
         return Slug.of(input);             // RETURN it. that is what stops
     }                                      // dead-code elimination.
 }</div>
-<p>Two of those lines carry most of the value. <b>Returning the result</b> (or passing it to a <code>Blackhole</code> when there are several) is what tells JMH to consume it, and a benchmark that returns <code>void</code> and computes into a local is the classic way to measure nothing at all. And <b>keeping the input in a non-final field</b> stops the compiler folding the whole call into a constant before the run begins.</p>
+<p>Two of those lines carry most of the value. <b>Returning the result</b>, or passing it to a <code>Blackhole</code> when there are several, tells JMH to consume it. A benchmark that returns <code>void</code> and computes into a local measures nothing at all. <b>Keeping the input in a non-final field</b> stops the compiler folding the whole call into a constant before the run begins.</p>
 
 <h4>Reading the output</h4>
 <div class="codeSample">Benchmark              Mode  Cnt   Score   Error  Units
 SlugBenchmark.slugify  avgt   10  184.2 ± 6.1   ns/op</div>
-<p><code>Cnt</code> is how many measurement iterations were counted across all forks. <code>Score</code> is the average and <code>Error</code> is the half-width of the confidence interval, and that second number is the one people skip. Two runs at 184 ± 6 and 179 ± 6 have not shown you anything: the intervals overlap, so the difference is inside the noise. If the improvement you are claiming is smaller than the error bar, you have not measured an improvement. Widen the gap, run more forks, or accept that the change is not worth the code.</p>
-<p><code>Mode</code> matters too. <code>Throughput</code> answers "operations per second", which suits a whole request path; <code>AverageTime</code> suits a small method; <code>SampleTime</code> records a distribution and is the only mode that will show you a p99, which for anything latency-sensitive is the number that actually matters.</p>
+<p><code>Cnt</code> is how many measurement iterations were counted across all forks. <code>Score</code> is the average. <code>Error</code> is the half-width of the confidence interval, and it is the number people skip. Two runs at 184 ± 6 and 179 ± 6 have shown you nothing: the intervals overlap, so the difference is inside the noise. If the improvement you claim is smaller than the error bar, you have not measured an improvement. Widen the gap, run more forks, or accept that the change is not worth the code.</p>
+<p><code>Mode</code> matters too. <code>Throughput</code> answers "operations per second", which suits a whole request path. <code>AverageTime</code> suits a small method. <code>SampleTime</code> records a distribution and is the only mode that shows a p99, the number that matters for anything latency-sensitive.</p>
 
 <h4>The discipline around the tool</h4>
-<p><b>Benchmark the smallest thing you can attribute.</b> A benchmark of an entire service tells you the number moved and nothing about why. <b>Change one thing between runs</b>, on the same machine, with the same JDK, with nothing else running: a laptop on battery, thermally throttling, produces beautiful graphs of its own cooling fan. <b>Write the baseline down before the change</b>, because remembering it afterwards is how a 3% regression becomes a 3% improvement.</p>
-<p>And be clear about what a microbenchmark cannot do. It runs one method with warm caches, a warm branch predictor and no competing load, so it will not reproduce the cost of a cold cache line, a GC pause under real allocation pressure, or contention among sixteen threads. A microbenchmark answers "is this method faster?" A profile of the real system, from the previous two lessons, answers "does it matter?" The two questions need each other, and answering only the first is how teams end up with a heavily optimized method that was never the bottleneck.</p>`,
+<p><b>Benchmark the smallest thing you can attribute.</b> A benchmark of an entire service tells you the number moved and nothing about why. <b>Change one thing between runs</b>, on the same machine, with the same JDK, with nothing else running. A laptop on battery, thermally throttling, produces beautiful graphs of its own cooling fan. <b>Write the baseline down before the change.</b> Remembering it afterwards is how a 3% regression becomes a 3% improvement.</p>
+<p>Be clear about what a microbenchmark cannot do. It runs one method with warm caches, a warm branch predictor and no competing load. It will not reproduce the cost of a cold cache line, a <b>GC</b> pause under real allocation pressure, or contention among sixteen threads. GC is garbage collection: the JVM finding objects nothing can reach any more and freeing their memory for you, at the price of pauses. A microbenchmark answers "is this method faster?" A profile of the real system, from the previous two lessons, answers "does it matter?" Answering only the first is how teams end up with a heavily optimized method that was never the bottleneck.</p>`,
 docs:[['JMH samples (OpenJDK)','https://github.com/openjdk/jmh/tree/master/jmh-samples/src/main/java/org/openjdk/jmh/samples'],['JMH, Baeldung','https://www.baeldung.com/java-microbenchmark-harness']],
 ex:{title:'A benchmark that measures something',
 prompt:`Write a JMH benchmark class <code>JoinBenchmark</code> annotated <code>@BenchmarkMode(Mode.AverageTime)</code>, <code>@OutputTimeUnit(TimeUnit.NANOSECONDS)</code>, <code>@State(Scope.Benchmark)</code>, <code>@Warmup(iterations = 5)</code>, <code>@Measurement(iterations = 5)</code> and <code>@Fork(2)</code>. Give it a <b>non-final</b> field <code>private java.util.List&lt;String&gt; parts</code> initialized in an <code>@Setup</code> method to a list of a few strings. Add one <code>@Benchmark</code> method <code>public String joinWithBuilder()</code> that concatenates the parts with a <code>StringBuilder</code> and <b>returns the result</b>, so the JIT cannot delete the work.`,

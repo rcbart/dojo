@@ -1,6 +1,6 @@
 STREAMS.push({icon:'🌐',title:'Web Development',blurb:'HTTP from first principles, servlets, the MVC pattern, sessions & web security.',lessons:[
 {id:'web1',title:'HTTP fundamentals',body:`
-<p>Everything on the web is a text conversation: a client sends a <b>request</b> (method, path, headers, optional body), the server answers with a <b>response</b> (status code, headers, body). HTTP is stateless: every request stands alone.</p>
+<p>Everything on the web is a text conversation. A client sends a <b>request</b> (method, path, headers, optional body). The server answers with a <b>response</b> (status code, headers, body). HTTP is stateless: every request stands alone.</p>
 <div class="codeSample">GET /users/42 HTTP/1.1
 Host: api.example.com
 Accept: application/json
@@ -11,8 +11,8 @@ Content-Type: application/json
 {"id": 42, "name": "Ada"}</div>
 <p>Methods: <code>GET</code> (read, safe), <code>POST</code> (create/act), <code>PUT</code> (replace), <code>PATCH</code> (partial update), <code>DELETE</code>. Status families: <b>2xx</b> success, <b>3xx</b> redirect, <b>4xx</b> client's fault (400 bad request, 401 unauthenticated, 403 forbidden, 404 not found, 409 conflict), <b>5xx</b> server's fault. Headers carry metadata: <code>Content-Type</code>, <code>Authorization</code>, <code>Cache-Control</code>.</p>
 
-<h4>Safe and idempotent: the two properties that matter</h4>
-<p>These are not synonyms, and the difference decides what a client, a proxy or a retry may do:</p>
+<h4>Safe and idempotent</h4>
+<p>Not synonyms. The difference decides what a client, a proxy or a retry may do:</p>
 <div class="codeSample" data-hl>            SAFE?   IDEMPOTENT?   meaning
 GET          yes      yes        no side effects at all. cacheable, prefetchable
 HEAD         yes      yes        GET without the body
@@ -21,38 +21,22 @@ DELETE       no       yes        deleting twice leaves it deleted
 POST         no       NO         twice = two orders. this is why the browser
                                  warns before re-submitting a form
 PATCH        no       usually not depends on whether the patch is absolute</div>
-<p>The practical consequence: <b>only idempotent requests are safe to retry automatically</b>. A client
-that retries a POST on timeout may create two orders, because it cannot know whether the first one
-arrived. That is what idempotency keys exist to solve: the client sends a unique key and the server
-recognizes the repeat.</p>
+<p><b>Only idempotent requests are safe to retry automatically.</b> A client that retries a POST on timeout may create two orders. It can't know whether the first one arrived. Idempotency keys fix this: the client sends a unique key and the server recognizes the repeat.</p>
 
-<h4>Statelessness, and what it actually costs</h4>
-<p>HTTP has no memory: each request must carry everything needed to serve it. That is why any server
-can answer any request, which is what makes horizontal scaling straightforward, and it is why
-identity has to be re-established every single request, via a cookie or an
-<code>Authorization</code> header. The whole of session and token design follows from this one
-property.</p>
+<h4>What statelessness costs</h4>
+<p>HTTP has no memory. Each request carries everything needed to serve it, so any server can answer any request and horizontal scaling is straightforward. It also means identity is re-established on every request, via a cookie or an <code>Authorization</code> header. Session and token design follows from this.</p>
 
 <h4>Status codes people get wrong</h4>
 <ul>
-<li><b>401 vs 403.</b> 401 means "I do not know who you are": authenticate and try again. 403 means
-"I know exactly who you are and you still may not." Returning 401 for a permission failure sends
-clients into a pointless re-login loop.</li>
-<li><b>200 with an error body.</b> Popular and wrong: it defeats every client, proxy and monitor that
-reasons about status codes.</li>
-<li><b>404 vs 410.</b> 404 is "not here"; 410 is "deliberately gone, stop asking".</li>
-<li><b>422 vs 400.</b> 400 is malformed syntax; 422 is well-formed but semantically invalid.</li>
-<li><b>429.</b> Rate limited, and it should carry <code>Retry-After</code> so the client knows how
-long to wait rather than guessing.</li>
+<li><b>401 vs 403.</b> 401 means "I do not know who you are": authenticate and try again. 403 means "I know who you are and you still may not." Returning 401 for a permission failure sends clients into a re-login loop.</li>
+<li><b>200 with an error body.</b> Popular and wrong. It defeats every client, proxy and monitor that reads status codes.</li>
+<li><b>404 vs 410.</b> 404 is "not here". 410 is "deliberately gone, stop asking".</li>
+<li><b>422 vs 400.</b> 400 is malformed syntax. 422 is well-formed but semantically invalid.</li>
+<li><b>429.</b> Rate limited. Carry <code>Retry-After</code> so the client knows how long to wait.</li>
 </ul>
 
-<h4>The headers worth knowing beyond the basics</h4>
-<p><code>Accept</code> and <code>Content-Type</code> are a pair that people conflate: <code>Accept</code>
-says what you want back, <code>Content-Type</code> describes what you are sending.
-<code>Cache-Control</code> governs caching, and <code>ETag</code> plus
-<code>If-None-Match</code> turn a repeat request into a cheap <b>304 Not Modified</b> with no body at
-all. On the same mechanism, <code>If-Match</code> gives you optimistic concurrency: the update applies
-only if the resource has not changed since you read it.</p>`,
+<h4>Headers beyond the basics</h4>
+<p><code>Accept</code> says what you want back. <code>Content-Type</code> describes what you're sending. People conflate them. <code>Cache-Control</code> governs caching. <code>ETag</code> plus <code>If-None-Match</code> turn a repeat request into a cheap <b>304 Not Modified</b> with no body. On the same mechanism, <code>If-Match</code> gives you optimistic concurrency: the update applies only if the resource hasn't changed since you read it.</p>`,
 docs:[['HTTP overview, MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview'],['HTTP response status codes, MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status']],
 ex:{title:'Speak raw HTTP',lang:'http',
 prompt:`Write a raw HTTP/1.1 request that creates a user: <code>POST</code> to path <code>/users</code> on host <code>api.dojo.dev</code>, declaring a JSON body (<code>Content-Type</code> header) and sending body <code>{"name": "Ada"}</code>. Then on the lines below it, write the <b>status line only</b> of the ideal response for: (a) success, (b) the same request with a malformed body, (c) missing auth token.`,
@@ -84,7 +68,8 @@ HTTP/1.1 400 Bad Request
 # c) missing auth token:
 HTTP/1.1 401 Unauthorized`}},
 {id:'web2',title:'Servlets: Java meets HTTP',body:`
-<p>A <b>servlet</b> is Java's low-level HTTP handler: the container (Tomcat, Jetty) parses the request and calls your <code>doGet</code>/<code>doPost</code> with request/response objects. Everything else, including Spring MVC, is built on this layer, which is why it's worth knowing even if you rarely write one raw.</p>
+
+<p>A <b>servlet</b> is Java's low-level HTTP handler. The container (Tomcat, Jetty) parses the request and calls your <code>doGet</code>/<code>doPost</code> with request/response objects. Everything else, including Spring MVC, is built on this layer, so learn it even if you rarely write one raw. <b>MVC</b> is model, view, controller: the data and rules (model), what the user sees (view), and the code that takes a request and decides what happens (controller). It's a way of keeping those three from tangling.</p>
 <div class="codeSample" data-hl>@WebServlet("/hello")
 public class HelloServlet extends HttpServlet {
     @Override
@@ -96,12 +81,9 @@ public class HelloServlet extends HttpServlet {
         resp.getWriter().println("&lt;h1&gt;Hello " + name + "&lt;/h1&gt;");
     }
 }</div>
-<p>One servlet instance serves all requests on multiple threads: instance fields are shared state, so keep servlets stateless. Lifecycle: <code>init()</code> once → <code>service()</code> per request (dispatches to doGet/doPost) → <code>destroy()</code>.</p>
-<h4>The contract, and why it shapes everything above it</h4>
-<p>A servlet container owns the socket, the thread pool and the HTTP parsing. Your code is a callback it
-invokes with two objects: one you read the request from, one you write the response to. Every Java web
-framework, Spring MVC included, is ultimately a servlet that dispatches to your code, which is why the
-servlet model's assumptions leak upward into frameworks that seem to have nothing to do with it.</p>
+<p>One servlet instance serves all requests on multiple threads. Instance fields are shared state, so keep servlets stateless. Lifecycle: <code>init()</code> once → <code>service()</code> per request (dispatches to doGet/doPost) → <code>destroy()</code>.</p>
+<h4>The contract</h4>
+<p>The container owns the socket, the thread pool and the HTTP parsing. Your code is a callback it invokes with two objects: one you read the request from, one you write the response to. Every Java web framework, Spring MVC included, is a servlet that dispatches to your code. The servlet model's assumptions leak upward into frameworks that seem to have nothing to do with it.</p>
 <div class="codeSample" data-hl>request arrives
   -> container takes a THREAD from its pool
   -> finds the servlet by URL mapping
@@ -115,21 +97,12 @@ servlet model's assumptions leak upward into frameworks that seem to have nothin
 //    spent waiting on a database - which is why pool exhaustion, not
 //    CPU, is the usual failure mode under load</div>
 
-<h4>Statelessness is not advice, it is a requirement</h4>
-<p>Because there is one instance, an instance field is shared by every concurrent request. Storing the
-current user in a field means two simultaneous requests can see each other's data, a data-leak bug that
-never appears in local testing, appears intermittently in production, and cannot be reproduced on
-demand.</p>
-<p>Keep per-request data in local variables or request attributes. If you truly need per-request state
-reachable from deep in the call stack, that is what <code>ThreadLocal</code> is for, and it must be
-cleared in a <code>finally</code>, because the thread goes back to the pool and the next request inherits
-whatever you left behind.</p>
+<h4>Statelessness is a requirement</h4>
+<p>There is one instance, so an instance field is shared by every concurrent request. Store the current user in a field and two simultaneous requests can see each other's data. That bug never appears in local testing, shows up intermittently in production, and can't be reproduced on demand.</p>
+<p>Keep per-request data in local variables or request attributes. If you need per-request state reachable from deep in the call stack, use <code>ThreadLocal</code>, and clear it in a <code>finally</code>. The thread goes back to the pool and the next request inherits whatever you left behind.</p>
 
-<h4>Filters: the part you will actually use</h4>
-<p>You will rarely write a raw servlet, but you will write filters. A filter wraps the chain and sees
-every request before and after the handler, which is where authentication, logging, correlation ids,
-compression and CORS live. It is exactly the model Spring Security is built on (its "filter chain" is
-literally a chain of servlet filters), so understanding the shape here makes that framework legible.</p>
+<h4>Filters: the part you'll use</h4>
+<p>You'll rarely write a raw servlet, but you will write filters. A filter wraps the chain and sees every request before and after the handler. Authentication, logging, correlation ids, compression and CORS live here. <b>CORS</b> is cross-origin resource sharing. Browsers refuse to let a page read a response from a different site unless that server says, in a response header, that the page's site is allowed. The server opts in; only browsers enforce it, so it is never a substitute for checking who is allowed to do what. Spring Security's "filter chain" is literally a chain of servlet filters, so the shape here makes that framework legible.</p>
 <div class="codeSample" data-hl>public void doFilter(req, resp, chain) {
     long start = System.nanoTime();
     try { chain.doFilter(req, resp); }          // NOT calling this ends
@@ -137,11 +110,7 @@ literally a chain of servlet filters), so understanding the shape here makes tha
 }</div>
 
 <h4>The security point in the code above</h4>
-<p>That example concatenates a request parameter straight into HTML. It is reflected <b>XSS</b>: a crafted
-<code>?name=</code> injects script that runs in the victim's browser with their session. It is included
-here deliberately, because raw servlet code makes it easy and templating engines make it hard: they
-escape by default, which is a large part of why you should use one. Set the content type with a charset,
-escape all output, and prefer a template over string concatenation.</p>`,
+<p>That example concatenates a request parameter straight into HTML. It's reflected <b>XSS</b>: a crafted <code>?name=</code> injects script that runs in the victim's browser with their session. It's included deliberately. Raw servlet code makes this easy and templating engines make it hard, because they escape by default. Set the content type with a charset, escape all output, and prefer a template over string concatenation.</p>`,
 docs:[['Jakarta Servlet spec','https://jakarta.ee/specifications/servlet/'],['Intro to Servlets (Baeldung)','https://www.baeldung.com/intro-to-servlets']],
 ex:{title:'A greeting servlet',
 prompt:`Write <code>GreetServlet extends HttpServlet</code> mapped with <code>@WebServlet("/greet")</code>. In <code>doGet</code>: read parameter <code>name</code>; if it's null or blank respond with status <code>400</code> and text <code>missing name</code>; otherwise status <code>200</code>, content type <code>text/plain</code>, body <code>Hello, &lt;name&gt;!</code>.`,
@@ -181,7 +150,8 @@ public class GreetServlet extends HttpServlet {
     }
 }`}},
 {id:'web3',title:'The MVC pattern',body:`
-<p><b>Model–View–Controller</b> separates the three things web code does: <b>Model</b> = domain data + business rules (knows nothing about HTTP), <b>View</b> = rendering (template/JSON, no logic beyond display), <b>Controller</b> = thin traffic cop: parse input → call model → pick view.</p>
+
+<p><b>Model–View–Controller</b> separates the three things web code does. <b>Model</b> = domain data + business rules (knows nothing about HTTP). <b>View</b> = rendering (template/JSON, no logic beyond display). <b>Controller</b> = thin traffic cop: parse input → call model → pick view.</p>
 <div class="codeSample" data-hl>// Model, pure domain
 record Product(String id, String name, long priceCents) {}
 
@@ -201,14 +171,9 @@ class ProductController {
     }
 }</div>
 <p>The test of good MVC: the model compiles without any web imports, and the controller has no business logic to unit-test. Fat controllers are the most common web anti-pattern.</p>
-<h4>What the separation is actually protecting</h4>
-<p>MVC is easy to recite and easy to implement in name only. The point is not three folders; it is that
-<b>the part of your system that encodes business rules should not know it is on the web</b>.</p>
-<p>When it does not, three things become possible: you can unit-test the rules without HTTP, you can expose
-the same logic through a second entry point (a CLI, a queue consumer, a scheduled job) without touching
-it, and you can change the web layer (REST to GraphQL, one framework to another) without risking the
-rules. When the rules live in controllers, none of that is available, and the framework becomes something
-you can never leave.</p>
+<h4>What the separation protects</h4>
+<p>MVC is easy to recite and easy to implement in name only. The point is that <b>the part of your system that encodes business rules should not know it is on the web</b>.</p>
+<p>When it doesn't, you can unit-test the rules without HTTP. You can expose the same logic through a second entry point (a CLI, a queue consumer, a scheduled job) without touching it. You can change the web layer (REST to GraphQL, one framework to another) without risking the rules. When the rules live in controllers, none of that is available, and you can never leave the framework.</p>
 <div class="codeSample" data-hl>// the test, and it is a real one you can run:
 // does the model package compile with ZERO web imports?
 //   no HttpServletRequest, no @RequestMapping, no ResponseEntity,
@@ -216,28 +181,16 @@ you can never leave.</p>
 
 // if a domain class needs to know about 404, the layers have merged.</div>
 
-<h4>The anti-pattern, and why it happens</h4>
-<p>Fat controllers are not carelessness; they are the path of least resistance. The request object is
-right there, the data is right there, and one <code>if</code> is quicker than a new class. It accumulates:
-a validation here, a calculation there, a database call, and eventually the controller <i>is</i> the
-application, untestable without a web context and unreusable anywhere else.</p>
-<p>The counter-heuristic: a controller method should read as <b>parse, delegate, respond</b>. If there is
-a branch on business meaning rather than on the outcome of a call, it belongs one layer down.</p>
+<h4>Why fat controllers happen</h4>
+<p>They're the path of least resistance, not carelessness. The request object is right there, the data is right there, and one <code>if</code> is quicker than a new class. A validation here, a calculation there, a database call, and eventually the controller <i>is</i> the application: untestable without a web context, unreusable anywhere else.</p>
+<p>The counter-heuristic: a controller method should read as <b>parse, delegate, respond</b>. A branch on business meaning, rather than on the outcome of a call, belongs one layer down.</p>
 
 <h4>Where the layers meet</h4>
-<p>Two boundaries are worth being deliberate about. <b>Do not let domain objects be your API contract</b>:
-serializing an entity straight to JSON means every internal rename is a breaking API change, and every
-new field is accidentally public. Map to a DTO at the edge.</p>
-<p>And <b>translate errors at the boundary</b>: the domain throws meaningful exceptions
-(<code>InsufficientFunds</code>), and the web layer decides that becomes a 409. The domain should not know
-what a status code is, and the controller should not be inventing business meaning.</p>
+<p><b>Don't let domain objects be your API contract.</b> Serializing an entity straight to JSON makes every internal rename a breaking API change and every new field accidentally public. Map to a DTO at the edge. A <b>DTO</b> is a data transfer object: a plain class that only carries data across a boundary, such as the JSON an API sends or receives. No behavior, no database identity, so your internal model never leaks onto the wire.</p>
+<p><b>Translate errors at the boundary.</b> The domain throws meaningful exceptions (<code>InsufficientFunds</code>). The web layer decides that becomes a 409. The domain shouldn't know what a status code is, and the controller shouldn't invent business meaning.</p>
 
-<h4>MVC's shape in modern applications</h4>
-<p>With a JSON API and a JavaScript front end, the View has moved to the browser and the server's "view" is
-the serialized response, but the split survives intact, and the naming in Spring reflects it directly:
-<code>@Controller</code>/<code>@RestController</code> for the traffic cop, <code>@Service</code> for the
-model's behavior, <code>@Repository</code> for its persistence. Those annotations are the pattern with
-labels attached; using them without the separation is decoration.</p>`,
+<h4>MVC in modern applications</h4>
+<p>With a JSON API and a JavaScript front end, the View has moved to the browser and the server's "view" is the serialized response. The split survives. Spring's naming reflects it: <code>@Controller</code>/<code>@RestController</code> for the traffic cop, <code>@Service</code> for the model's behavior, <code>@Repository</code> for its persistence. Those annotations are the pattern with labels attached. Using them without the separation is decoration.</p>`,
 docs:[['MVC, MDN glossary','https://developer.mozilla.org/en-US/docs/Glossary/MVC'],['Spring MVC explained, spring.io','https://docs.spring.io/spring-framework/reference/web/webmvc.html']],
 ex:{title:'Untangle to MVC',
 prompt:`Build a tiny MVC triple for a todo app: (1) Model: <code>record Todo(String id, String text, boolean done)</code> and class <code>TodoService</code> with a private list, <code>void add(Todo t)</code> and <code>java.util.List&lt;Todo&gt; open()</code> returning only not-done todos (stream, no HTTP imports anywhere). (2) View: class <code>TodoView</code> with <code>String render(java.util.List&lt;Todo&gt; todos)</code> returning one line per todo formatted <code>[ ] text</code>. (3) Controller: class <code>TodoController</code> that takes both in its constructor and has <code>String openTodosPage()</code> = render(service.open()).`,
@@ -302,11 +255,12 @@ class TodoController {
     }
 }`}},
 {id:'web4',title:'Sessions, cookies & security basics',body:`
-<p>HTTP is stateless, so state rides in <b>cookies</b>: typically one session-id cookie pointing at server-side session data. This is exactly the machinery CIAM lives on, and where the classic attacks aim:</p>
+
+<p>HTTP is stateless, so state rides in <b>cookies</b>: typically one session-id cookie pointing at server-side session data. This is the machinery CIAM lives on, and where the classic attacks aim. <b>CIAM</b> is customer identity and access management: identity for customers rather than employees. Sign-up forms, "log in with Google", millions of accounts nobody pre-registered. Two of the attacks need naming first. <b>XSS</b> is cross-site scripting: an attacker gets their JavaScript to run inside a page you trust, at which point it can read anything that page can, including tokens kept in the browser. <b>CSRF</b> is cross-site request forgery: a malicious page makes your browser send a request to a site you're logged into, and the site can't tell it wasn't you. The browser attaches your cookies automatically, which is the whole problem. Now the list:</p>
 <ul>
-<li><b>Cookie flags</b>: <code>HttpOnly</code> (JS can't read it; blunts XSS token theft), <code>Secure</code> (HTTPS only), <code>SameSite=Lax/Strict</code> (blunts CSRF).</li>
-<li><b>XSS</b>: never put unescaped user input into HTML. Escape output; set a Content-Security-Policy.</li>
-<li><b>CSRF</b>: state-changing endpoints need a CSRF token or SameSite cookies: a hostile site can make the browser send your cookies, not read them.</li>
+<li><b>Cookie flags</b>: <code>HttpOnly</code> (JS can't read it, which blunts XSS token theft), <code>Secure</code> (HTTPS only), <code>SameSite=Lax/Strict</code> (blunts CSRF).</li>
+<li><b>XSS</b>: never put unescaped user input into HTML. Escape output and set a Content-Security-Policy.</li>
+<li><b>CSRF</b>: state-changing endpoints need a CSRF token or SameSite cookies. A hostile site can make the browser send your cookies, not read them.</li>
 <li><b>Session fixation</b>: rotate the session id at login.</li>
 </ul>
 <div class="codeSample" data-hl>Cookie c = new Cookie("SESSION", id);
@@ -318,14 +272,10 @@ resp.addCookie(c);
 resp.setHeader("Set-Cookie",
     "SESSION=" + id + "; HttpOnly; Secure; SameSite=Lax; Path=/");</div>
 <h4>Why cookies exist and what that costs</h4>
-<p>HTTP has no memory: every request is independent, and the server cannot tell that two of them came from
-the same person. A cookie solves that by having the browser attach a value to every request to the
-domain, <b>automatically</b>, which is both the feature and the entire source of the attacks below.</p>
-<p>That single word explains CSRF completely. A malicious page cannot read your cookies, but it can cause
-your browser to <i>send</i> them, because the browser attaches them to any request to that domain
-regardless of which page triggered it.</p>
+<p>The server can't tell that two requests came from the same person. A cookie fixes that: the browser attaches it to every request to the domain, <b>automatically</b>. That word is the feature and the source of the attacks below.</p>
+<p>It explains CSRF completely. A malicious page can't read your cookies, but it can make your browser <i>send</i> them. The browser attaches them to any request to that domain, whichever page triggered it.</p>
 
-<h4>The flags, and what each one actually stops</h4>
+<h4>The flags, and what each one stops</h4>
 <div class="codeSample" data-hl>HttpOnly   JavaScript cannot read document.cookie for this cookie.
            -> an XSS payload cannot exfiltrate the session id.
            -> it CAN still make authenticated requests from the page.
@@ -346,25 +296,13 @@ SameSite   Lax    not sent on cross-site POSTs / iframes / XHR
 __Host-    prefix: browser enforces Secure, Path=/, and no Domain.
            free defense against a subdomain overwriting your cookie</div>
 
-<h4>The three attacks, stated as one sentence each</h4>
-<p><b>XSS</b>: your page executes attacker-supplied script, so the attacker runs as the user. The defense
-is output encoding, contextual and everywhere, plus a Content-Security-Policy as the second line. Note
-that escaping is context-dependent: what is safe inside HTML text is not safe inside an attribute, a URL
-or a <code>&lt;script&gt;</code> block.</p>
-<p><b>CSRF</b>: the attacker's page causes the browser to send an authenticated request the user did not
-intend. The defense is a token the attacker cannot read (synchronizer or double-submit) and
-<code>SameSite</code> cookies. APIs authenticated by an <code>Authorization</code> header are not
-vulnerable, because that header is not attached automatically, which is why disabling CSRF protection is
-correct for a stateless API and wrong the moment anything authenticates by cookie.</p>
-<p><b>Session fixation</b>: the attacker plants a session id, waits for the victim to authenticate into
-it, and then uses it. The defense is one line: <b>issue a new session id at login</b>, and again on any
-privilege change.</p>
+<h4>The three attacks, one sentence each</h4>
+<p><b>XSS</b>: your page executes attacker-supplied script, so the attacker runs as the user. The defense is output encoding, contextual and everywhere, plus a Content-Security-Policy as the second line. Escaping depends on context: what is safe inside HTML text is not safe inside an attribute, a URL or a <code>&lt;script&gt;</code> block.</p>
+<p><b>CSRF</b>: the attacker's page makes the browser send an authenticated request the user didn't intend. The defense is a token the attacker can't read (synchronizer or double-submit) and <code>SameSite</code> cookies. APIs authenticated by an <code>Authorization</code> header aren't vulnerable, because that header isn't attached automatically. So disabling CSRF protection is correct for a stateless API and wrong the moment anything authenticates by cookie.</p>
+<p><b>Session fixation</b>: the attacker plants a session id, waits for the victim to authenticate into it, then uses it. The defense is one line: <b>issue a new session id at login</b>, and again on any privilege change.</p>
 
 <h4>What the flags cannot do</h4>
-<p>None of this ends a session. Logging out has to change server state (delete the session record or
-denylist the token) because deleting the cookie leaves any captured copy working until it expires.
-Rotate on privilege change, cap absolute session lifetime independently of activity, and make sure there
-is a tested path to revoke every session for a compromised account.</p>`,
+<p>None of this ends a session. Logging out has to change server state (delete the session record or denylist the token). Deleting the cookie leaves any captured copy working until it expires. Rotate on privilege change, cap absolute session lifetime independently of activity, and keep a tested path to revoke every session for a compromised account.</p>`,
 docs:[['HTTP cookies (MDN)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies'],['OWASP Session Management Cheat Sheet','https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html'],['OWASP XSS Prevention','https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html']],
 ex:{title:'Harden the cookie',
 prompt:`Write class <code>SessionIssuer</code> with <code>static String issue(String sessionId)</code> returning a complete <code>Set-Cookie</code> header <b>value</b> for cookie <code>SESSION</code> that is: HttpOnly, Secure, SameSite=Lax, Path=/ . Also add <code>static boolean looksSafe(String headerValue)</code> that returns true only if the value contains all four protections (use contains checks).`,
@@ -394,15 +332,15 @@ solution:`public class SessionIssuer {
     }
 }`}},
 {id:'web8',title:'HTTP status codes: saying what happened',body:`
-<p>The status code is your API&#8217;s one-line summary of what happened. Clients branch on it, caches and proxies obey it, and monitoring counts it, so returning the <i>right</i> code matters as much as the body. Codes come in five families, keyed by the first digit:</p>
+<p>The status code is your API&#8217;s one-line summary of what happened. Clients branch on it, caches and proxies obey it, and monitoring counts it. The <i>right</i> code matters as much as the body. Codes come in five families, keyed by the first digit:</p>
 <ul>
 <li><b>1xx Informational</b>: rare in app code (e.g. <code>100 Continue</code>).</li>
-<li><b>2xx Success</b>: it worked. <code>200 OK</code> (general success), <code>201 Created</code> (a POST made a resource; return its <code>Location</code>), <code>202 Accepted</code> (queued, not done yet), <code>204 No Content</code> (success with nothing to return, e.g. a DELETE).</li>
+<li><b>2xx Success</b>: it worked. <code>200 OK</code> (general success), <code>201 Created</code> (a POST made a resource, return its <code>Location</code>), <code>202 Accepted</code> (queued, not done yet), <code>204 No Content</code> (success with nothing to return, e.g. a DELETE).</li>
 <li><b>3xx Redirection</b>: look elsewhere. <code>301 Moved Permanently</code>, <code>302 Found</code> (temporary), <code>304 Not Modified</code> (the cache/ETag matched, save bandwidth).</li>
-<li><b>4xx Client error</b>: the caller got it wrong. <code>400 Bad Request</code> (malformed), <code>401 Unauthorized</code> (not authenticated; you must log in), <code>403 Forbidden</code> (authenticated but not allowed), <code>404 Not Found</code>, <code>405 Method Not Allowed</code>, <code>409 Conflict</code> (version/duplicate clash), <code>410 Gone</code>, <code>422 Unprocessable Entity</code> (well-formed but semantically invalid), <code>429 Too Many Requests</code> (rate limited; send <code>Retry-After</code>).</li>
+<li><b>4xx Client error</b>: the caller got it wrong. <code>400 Bad Request</code> (malformed), <code>401 Unauthorized</code> (not authenticated, you must log in), <code>403 Forbidden</code> (authenticated but not allowed), <code>404 Not Found</code>, <code>405 Method Not Allowed</code>, <code>409 Conflict</code> (version/duplicate clash), <code>410 Gone</code>, <code>422 Unprocessable Entity</code> (well-formed but semantically invalid), <code>429 Too Many Requests</code> (rate limited, send <code>Retry-After</code>).</li>
 <li><b>5xx Server error</b>: your side broke. <code>500 Internal Server Error</code>, <code>502 Bad Gateway</code>, <code>503 Service Unavailable</code>, <code>504 Gateway Timeout</code>.</li>
 </ul>
-<p>Two distinctions trip people up. <b>401 vs 403</b>: 401 means "I do not know who you are" (authenticate), 403 means "I know who you are and you still cannot" (authorization). <b>400 vs 422</b>: 400 is unparseable, 422 parsed fine but violates a business rule. And never hide failures behind <code>200</code> with an error in the body: clients, caches, and dashboards all trust the code, so a wrong code is a lie the whole system believes.</p>`,
+<p><b>401 vs 403</b>: 401 means "I do not know who you are" (authenticate). 403 means "I know who you are and you still cannot" (authorization). <b>400 vs 422</b>: 400 is unparseable. 422 parsed fine but violates a business rule. Never hide failures behind <code>200</code> with an error in the body. Clients, caches, and dashboards all trust the code, so a wrong code is a lie the whole system believes.</p>`,
 docs:[['HTTP status codes, MDN','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status'],['Status code registry, IANA','https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml']],
 exs:[{title:'Classify and name codes',
 prompt:`Write class <code>Http</code> with two static methods. <code>String category(int code)</code> returns the family: <code>"informational"</code> for 100&#8211;199, <code>"success"</code> for 200&#8211;299, <code>"redirect"</code> for 300&#8211;399, <code>"client error"</code> for 400&#8211;499, <code>"server error"</code> for 500&#8211;599, else <code>"unknown"</code>. <code>String reason(int code)</code> maps common codes: 200→<code>"OK"</code>, 201→<code>"Created"</code>, 204→<code>"No Content"</code>, 400→<code>"Bad Request"</code>, 401→<code>"Unauthorized"</code>, 403→<code>"Forbidden"</code>, 404→<code>"Not Found"</code>, 409→<code>"Conflict"</code>, 429→<code>"Too Many Requests"</code>, 500→<code>"Internal Server Error"</code>, else <code>"unknown"</code>.`,
@@ -453,47 +391,33 @@ hints:['A plain object literal is the lookup table.','?? supplies the fallback f
 {id:'web9',title:'Pagination & building compliant, standardized APIs',body:`
 <p>An endpoint that returns "all the orders" works in a demo and falls over in production. Real collections are paginated. Two styles dominate:</p>
 <ul>
-<li><b>Offset / limit</b> (<code>?page=3&amp;size=20</code> or <code>?offset=40&amp;limit=20</code>): simple and lets you jump to any page, but it gets slow at deep offsets and can skip or duplicate rows when data is inserted between requests.</li>
-<li><b>Cursor / keyset</b> (<code>?after=&lt;opaque-cursor&gt;</code>): the server returns an opaque pointer to "where you left off." Stable under inserts and fast at any depth, which is why large, changing datasets use it. The trade-off is you cannot jump to an arbitrary page.</li>
+<li><b>Offset / limit</b> (<code>?page=3&amp;size=20</code> or <code>?offset=40&amp;limit=20</code>): simple, and you can jump to any page. It gets slow at deep offsets and can skip or duplicate rows when data is inserted between requests.</li>
+<li><b>Cursor / keyset</b> (<code>?after=&lt;opaque-cursor&gt;</code>): the server returns an opaque pointer to "where you left off." Stable under inserts and fast at any depth, so large, changing datasets use it. You can't jump to an arbitrary page.</li>
 </ul>
 <p>Whatever the style, make it <b>discoverable and consistent</b>: return the page of data plus links to the next/previous pages. The standard mechanism is the <b>Link header</b> (RFC 8288) with <code>rel="next"</code> and <code>rel="prev"</code>, or an equivalent envelope in the body.</p>
-<p>"Compliant and standardized" means following the conventions clients already expect, so your API is predictable:</p>
+<p>"Compliant and standardized" means following the conventions clients already expect:</p>
 <ul>
 <li><b>Correct status codes</b> and, for errors, a standard shape: <b>RFC 7807</b> <code>application/problem+json</code> instead of ad-hoc error bodies.</li>
 <li><b>Consistent naming</b> (pick snake_case or camelCase and never mix), <b>ISO 8601</b> timestamps, and stable field names.</li>
 <li><b>Content negotiation</b> via <code>Accept</code>, <b>idempotency keys</b> for safe retries of writes, and <b>rate-limit headers</b> so clients can back off.</li>
 </ul>
 
-<h4>Why deep offsets get slow, precisely</h4>
-<p><code>OFFSET 100000</code> does not skip ahead. The database produces the first hundred thousand rows,
-in order, and discards them, so the last page of a report is the slowest query in the system, and it gets
-slower as the table grows. Keyset pagination replaces the offset with a <code>WHERE</code> on the last key
-you saw, so every page reads exactly one page's worth however deep you are.</p>
-<p>The correctness problem is worse than the speed one. Between page 2 and page 3, someone inserts a row
-near the top: every subsequent row shifts down one, so an item that was going to be first on page 3 is now
-last on page 2: the reader never sees it. Deletes cause the mirror problem and show an item twice. Keyset
-pagination is immune, because it is anchored to a value rather than to a count.</p>
+<h4>Why deep offsets get slow</h4>
+<p><code>OFFSET 100000</code> doesn't skip ahead. The database produces the first hundred thousand rows, in order, and discards them. The last page of a report is the slowest query in the system, and it gets slower as the table grows. Keyset pagination replaces the offset with a <code>WHERE</code> on the last key you saw, so every page reads one page's worth however deep you are.</p>
+<p>The correctness problem is worse. Between page 2 and page 3, someone inserts a row near the top. Every later row shifts down one, so the item that was going to be first on page 3 is now last on page 2, and the reader never sees it. Deletes do the mirror and show an item twice. Keyset pagination is immune because it's anchored to a value, not a count.</p>
 
-<h4>What makes a cursor opaque, and why bother</h4>
-<p>A cursor is usually the sort key of the last row, encoded. Encoding it (base64 of
-<code>{"updated_at":"…","id":123}</code>) is not obfuscation for its own sake. It stops clients parsing
-and constructing cursors, which is what would freeze your sort key into a public contract you can never
-change. Make it opaque and the ordering stays an implementation detail.</p>
-<p>Two rules make cursors work: <b>sort on something unique</b>, or append the primary key as a tie-break,
-because rows sharing a timestamp will otherwise be skipped or repeated at the boundary. And validate the
-cursor server-side, since it arrives from the client like anything else.</p>
+<h4>What makes a cursor opaque</h4>
+<p>A cursor is usually the sort key of the last row, encoded: base64 of <code>{"updated_at":"…","id":123}</code>. Encoding stops clients parsing and constructing cursors, which would freeze your sort key into a public contract you can never change. Opaque cursors keep the ordering an implementation detail.</p>
+<p><b>Sort on something unique</b>, or append the primary key as a tie-break. Rows sharing a timestamp will otherwise be skipped or repeated at the boundary. And validate the cursor server-side. It arrives from the client like anything else.</p>
 
 <h4>The rest of the contract</h4>
 <ul>
-<li><b>Always cap the page size.</b> An unbounded <code>limit</code> is a denial-of-service parameter your
-API is offering to strangers. Clamp it, and document the maximum.</li>
-<li><b>Be careful with totals.</b> An exact <code>COUNT(*)</code> on every page is often the most expensive
-part of the request. Either omit it, or return an estimate labeled as one.</li>
-<li><b>Keep the ordering stable and explicit.</b> Pagination over an unspecified order is undefined
-behavior that happens to work until the query plan changes.</li>
+<li><b>Always cap the page size.</b> An unbounded <code>limit</code> is a denial-of-service parameter you're offering to strangers. Clamp it, and document the maximum.</li>
+<li><b>Be careful with totals.</b> An exact <code>COUNT(*)</code> on every page is often the most expensive part of the request. Omit it, or return an estimate labeled as one.</li>
+<li><b>Keep the ordering stable and explicit.</b> Pagination over an unspecified order is undefined behavior that works until the query plan changes.</li>
 </ul>
 
-<h4>The cookbook: the response, the header, and the query</h4>
+<h4>The cookbook: response, header, query</h4>
 <div class="codeSample" data-hl>GET /orders?after=b3JkZXItMTA0Mg&amp;limit=20
 200 OK
 Link: &lt;/orders?after=b3JkZXItMTA2Mg&amp;limit=20&gt;; rel="next"
@@ -510,11 +434,7 @@ LIMIT  20;
 
 -- the cursor is just (created_at, id) of the last row, base64 wrapped
 -- so clients treat it as opaque and cannot construct their own</div>
-<p>Three details in that recipe carry the correctness. The tuple comparison uses two columns because
-<code>created_at</code> alone is not unique, and a tie at a page boundary would skip or repeat rows.
-The <code>ORDER BY</code> matches the <code>WHERE</code> exactly, which is what lets the index serve
-both. And the cursor is opaque on purpose: the day you change the sort key, clients holding old
-cursors get a clean 400 instead of silently wrong pages.</p>`,
+<p>The tuple comparison uses two columns because <code>created_at</code> alone isn't unique. The <code>ORDER BY</code> matches the <code>WHERE</code>, which lets the index serve both. And the cursor is opaque on purpose: the day you change the sort key, clients holding old cursors get a clean 400 instead of silently wrong pages.</p>`,
 docs:[['Web Linking (RFC 8288)','https://www.rfc-editor.org/rfc/rfc8288'],['Problem Details (RFC 7807)','https://www.rfc-editor.org/rfc/rfc7807'],['API design guide (Google)','https://cloud.google.com/apis/design']],
 exs:[{title:'Pagination choice & error compliance',
 prompt:`Write class <code>Paging</code> with two static methods. <code>String style(String need)</code>: <code>"stable-large-dataset"</code>→<code>"cursor"</code>, <code>"jump-to-page"</code>→<code>"offset"</code>, else <code>"unknown"</code>. <code>boolean compliantErrors(String contentType)</code>: return true only when errors use the standard <code>"application/problem+json"</code> media type.`,
@@ -550,29 +470,29 @@ tests:[{d:'a short page ends pagination',re:'length\\s*<\\s*limit|length\\s*!==\
 behavior:`Four cases run. The last one is the whole idea: the cursor points at where the next page should START AFTER, so it must come from the final row; taking the first row makes every page after the first repeat rows already sent. Returning null on a short page is what lets a client stop without an extra request, and it is why keyset pagination has no "total pages": it never counts what it has not read. Compare with OFFSET, where page 10,000 forces the database to produce and discard 200,000 rows.`,
 hints:['A page shorter than the limit means there is no page after it.','The cursor comes from the last element of the array.','Cursors travel in URLs, so return a string rather than a number.']}]},
 {id:'web10',title:'API versioning',body:`
-<p>Once other people depend on your API, you cannot freely change it: a removed field or renamed route breaks their code overnight. <b>Versioning</b> lets you evolve the API while old clients keep working. There are three common places to put the version:</p>
+<p>Once other people depend on your API, you can't freely change it. A removed field or renamed route breaks their code overnight. <b>Versioning</b> lets you evolve the API while old clients keep working. Three common places to put the version:</p>
 <ul>
-<li><b>URI path</b>: <code>/v1/orders</code>. The most common and most visible; trivial to route and to see in logs. Purists dislike that the "same" resource has multiple URLs.</li>
+<li><b>URI path</b>: <code>/v1/orders</code>. The most common and most visible. Trivial to route and to see in logs. Purists dislike that the "same" resource has multiple URLs.</li>
 <li><b>Header</b>: a custom header like <code>Api-Version: 1</code>. Keeps URLs clean but is invisible in a browser and easy to forget.</li>
-<li><b>Media type</b> (content negotiation): <code>Accept: application/vnd.acme.v1+json</code>. The most "RESTful" option; also the most complex for clients.</li>
+<li><b>Media type</b> (content negotiation): <code>Accept: application/vnd.acme.v1+json</code>. The most "RESTful" option, and the most complex for clients.</li>
 </ul>
-<p>The discipline behind the mechanism matters more than the mechanism. Follow <b>semantic versioning</b> thinking: only a <b>breaking change</b> (removing or renaming a field, changing a type, or altering behavior clients rely on) needs a new major version. <b>Additive</b> changes (a new optional field, a new endpoint) are backward-compatible and should <i>not</i> force a version bump. When you do retire a version, announce it: the <code>Deprecation</code> and <code>Sunset</code> response headers tell clients a version is going away and by when.</p>
+<p>The discipline matters more than the mechanism. Follow <b>semantic versioning</b> thinking: only a <b>breaking change</b> (removing or renaming a field, changing a type, or altering behavior clients rely on) needs a new major version. <b>Additive</b> changes (a new optional field, a new endpoint) are backward-compatible and should <i>not</i> force a version bump. When you retire a version, announce it: the <code>Deprecation</code> and <code>Sunset</code> response headers tell clients a version is going away and by when.</p>
 
-<h4>What actually counts as breaking</h4>
-<p>The version debate is easier once the categories are clear. <b>Safe:</b> adding an optional request field, adding a response field, adding an endpoint, adding an enum value <i>if</i> clients were told to tolerate unknown ones. <b>Breaking:</b> removing or renaming anything, changing a type (<code>"123"</code> to <code>123</code> breaks strict parsers), making an optional field required, tightening validation, changing default behavior, changing an error's shape or status code.</p>
-<p>Two are argued about and both are breaking in practice: <b>adding an enum value</b> when clients switch exhaustively on it, and <b>changing pagination defaults</b>, because a client that assumed twenty items now silently processes fifty. If in doubt, ask what a consumer wrote against your response: the contract is what they can observe, not what you documented.</p>
+<h4>What counts as breaking</h4>
+<p><b>Safe:</b> adding an optional request field, adding a response field, adding an endpoint, adding an enum value <i>if</i> clients were told to tolerate unknown ones. <b>Breaking:</b> removing or renaming anything, changing a type (<code>"123"</code> to <code>123</code> breaks strict parsers), making an optional field required, tightening validation, changing default behavior, changing an error's shape or status code.</p>
+<p>Two get argued about and both break in practice. <b>Adding an enum value</b> when clients switch exhaustively on it. <b>Changing pagination defaults</b>, because a client that assumed twenty items now silently processes fifty. If in doubt, ask what a consumer wrote against your response. The contract is what they can observe, not what you documented.</p>
 
 <h4>The cost of a new version</h4>
-<p>Every live version is code to maintain, tests to run, and a security patch to apply in n places. That cost is why the goal is <b>not to need one</b>: additive change, tolerant readers, and feature flags carry an API a surprisingly long way. When a major version is genuinely necessary, plan the retirement at the same time as the release: a version with no sunset date is a version you will still be running in five years.</p>
+<p>Every live version is code to maintain, tests to run, and a security patch to apply in n places. So the goal is <b>not to need one</b>. Additive change, tolerant readers, and feature flags carry an API a long way. When a major version is necessary, plan the retirement with the release. A version with no sunset date is one you'll still be running in five years.</p>
 
-<h4>Making a migration actually happen</h4>
+<h4>Making a migration happen</h4>
 <ul>
-<li><b>Measure who is on the old version.</b> Log the version and the client identifier per request; without that you are negotiating in the dark and cannot tell whether anyone would notice.</li>
+<li><b>Measure who is on the old version.</b> Log the version and the client identifier per request. Without that you're negotiating in the dark.</li>
 <li><b>Announce with headers, not only email.</b> <code>Deprecation: true</code> and <code>Sunset: &lt;date&gt;</code> travel with the response, and a <code>Link</code> header can point at the migration guide.</li>
 <li><b>Run brownouts.</b> Short, scheduled windows where the old version returns errors surface the clients that missed every announcement, while a rollback is still one config change away.</li>
 <li><b>Give the laggards a name.</b> Migrations complete when someone owns each remaining consumer, not when the deadline passes.</li>
 </ul>
-<p>Internally, the same discipline is what makes expand-and-contract work: add the new field, migrate consumers, remove the old one: three deploys, no version bump, and no flag day.</p>`,
+<p>Internally, the same discipline makes expand-and-contract work: add the new field, migrate consumers, remove the old one. Three deploys, no version bump, no flag day.</p>`,
 docs:[['API versioning (Microsoft REST guidelines)','https://github.com/microsoft/api-guidelines'],['Semantic Versioning','https://semver.org/'],['Sunset header (RFC 8594)','https://www.rfc-editor.org/rfc/rfc8594']],
 ex:{title:'Version placement & breaking changes',
 prompt:`Write class <code>Versioning</code> with two static methods. <code>String location(String strategy)</code>: <code>"uri"</code>→<code>"/v1/orders"</code>, <code>"header"</code>→<code>"Api-Version: 1"</code>, <code>"media-type"</code>→<code>"application/vnd.acme.v1+json"</code>, else <code>"unknown"</code>. <code>boolean breakingChange(String change)</code>: removing or renaming a field breaks clients: return true for <code>"remove-field"</code> or <code>"rename-field"</code>, false otherwise (e.g. adding a field).`,

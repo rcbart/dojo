@@ -1,6 +1,6 @@
 STREAMS.push({icon:'🥷',tournament:true,title:'Dynamic Programming & Advanced Algorithms',blurb:'Memoization, tabulation, 2D DP and the pattern toolbox (sliding window, two pointers): the art behind hard interview problems.',lessons:[
 {id:'dp1',title:'Recursion → memoization',body:`
-<p>DP in one sentence: <b>a problem whose solution reuses solutions to overlapping subproblems</b>. Step one is always the naive recursion; step two is noticing you solve the same subproblem repeatedly; step three is caching it: <b>memoization</b>, or top-down DP:</p>
+<p>DP in one sentence: <b>a problem whose solution reuses solutions to overlapping subproblems</b>. Step one is the naive recursion. Step two is noticing you solve the same subproblem repeatedly. Step three is caching it: <b>memoization</b>, or top-down DP:</p>
 <div class="codeSample" data-hl>// naive fib: O(2^n); fib(50) takes tens of seconds because fib(20) alone
 // is recomputed 1,346,269 times
 long fib(int n) { return n &lt;= 1 ? n : fib(n - 1) + fib(n - 2); }
@@ -19,19 +19,19 @@ long fib(int n) {
 //   return memo.computeIfAbsent(n, k -&gt; fib(k - 1) + fib(k - 2));
 // the mapping function recurses back into the same map, and HashMap
 // detects the structural change: ConcurrentModificationException.</div>
-<p>The recipe: (1) define the subproblem precisely: "fib(n) is the nth number"; (2) write the recurrence: <code>f(n) = f(n-1) + f(n-2)</code>; (3) add base cases; (4) cache on the way back up.</p>
-<p>Step four has one Java-specific trap worth taking seriously, because the wrong version compiles and reads beautifully. <code>computeIfAbsent</code> looks like the perfect memo call: it checks the cache and stores the result in one line. But a <i>recursive</i> mapping function reaches back into the same <code>HashMap</code> while that map is mid-update, and since Java 9 the map notices and throws <code>ConcurrentModificationException</code>. On older runtimes it did something worse: it silently corrupted the table. Compute the value first, then <code>put</code> it. The lambda-composition lesson in the Modern Java stream makes the same point from the other direction.</p>
+<p>The recipe: (1) define the subproblem: "fib(n) is the nth number"; (2) write the recurrence: <code>f(n) = f(n-1) + f(n-2)</code>; (3) add base cases; (4) cache on the way back up.</p>
+<p>Step four has one Java-specific trap, and the wrong version compiles. <code>computeIfAbsent</code> looks like the perfect memo call: it checks the cache and stores the result in one line. But a <i>recursive</i> mapping function reaches back into the same <code>HashMap</code> while that map is mid-update. Since Java 9 the map notices and throws <code>ConcurrentModificationException</code>. Older runtimes did something worse: they silently corrupted the table. Compute the value first, then <code>put</code> it. The Modern Java stream's lambda-composition lesson makes the same point.</p>
 
 <h4>The two conditions, and how to check them</h4>
-<p>DP applies when both hold. <b>Overlapping subproblems</b>: the same smaller instance is needed more than once; draw two levels of the recursion tree and look for a repeated node. Without overlap, caching stores answers nobody asks for again, which is why merge sort is divide-and-conquer rather than DP. <b>Optimal substructure</b>: an optimal solution is built from optimal solutions of its subproblems. That one is easy to assume and occasionally false: the cheapest flight from A to C is not always the cheapest A-to-B plus cheapest B-to-C when the fare depends on the whole itinerary, and a DP over such a problem returns a confident wrong answer rather than failing.</p>
+<p>DP applies when both hold. <b>Overlapping subproblems</b>: the same smaller instance is needed more than once. Draw two levels of the recursion tree and look for a repeated node. Without overlap, caching stores answers nobody asks for again, so merge sort is divide-and-conquer rather than DP. <b>Optimal substructure</b>: an optimal solution is built from optimal solutions of its subproblems. That one is easy to assume and occasionally false. The cheapest flight from A to C is not always the cheapest A-to-B plus the cheapest B-to-C when the fare depends on the whole itinerary. A DP over such a problem returns a confident wrong answer rather than failing.</p>
 
 <h4>Where memoization bites</h4>
 <ul>
-<li><b>The key must capture the entire state.</b> If the answer depends on two indices and a remaining budget, all three belong in the key. A cache keyed on too little is the single most common DP bug: it returns a previously-computed answer for a different situation, and only some inputs expose it.</li>
-<li><b>Recursion depth is bounded.</b> Top-down DP is still recursion, so a chain of 100,000 subproblems overflows the stack; that is the practical reason to switch to the bottom-up table in the next lesson.</li>
-<li><b>The cache must not outlive the inputs.</b> A static memo keyed on user data is a memory leak, and one keyed on mutable objects is a correctness bug.</li>
+<li><b>The key must capture the entire state.</b> If the answer depends on two indices and a remaining budget, all three belong in the key. A cache keyed on too little is the most common DP bug: it returns an answer computed for a different situation, and only some inputs expose it.</li>
+<li><b>Recursion depth is bounded.</b> Top-down DP is still recursion. A chain of 100,000 subproblems overflows the stack. That is the practical reason for the bottom-up table in the next lesson.</li>
+<li><b>The cache must not outlive the inputs.</b> A static memo keyed on user data is a memory leak. One keyed on mutable objects is a correctness bug.</li>
 </ul>
-<p>Recognizing the shape is the interview skill: "how many ways can you…", "minimum cost to…", "longest/best subsequence of…" with a choice at each step. Say the recurrence out loud before writing anything; the code is mechanical once the recurrence is right, and unfixable while it is wrong.</p>`,
+<p>Recognizing the shape is the interview skill: "how many ways can you…", "minimum cost to…", "longest/best subsequence of…" with a choice at each step. Say the recurrence out loud before writing anything. The code is mechanical once the recurrence is right, and unfixable while it is wrong.</p>`,
 docs:[['Dynamic programming, CP-Algorithms','https://cp-algorithms.com/dynamic_programming/intro-to-dp.html'],['Memoization vs tabulation, Baeldung','https://www.baeldung.com/cs/tabulation-vs-memoization']],
 exs:[
 {title:'Memoized Fibonacci',
@@ -103,7 +103,7 @@ tests:[{d:'base cases return n',re:'n\\s*<=\\s*1|n\\s*<\\s*2'},{d:'the cache is 
 behavior:`Five cases execute for real, and the timing is the lesson. fib(50) completes in microseconds memoized; the naive version needs about 4x10^10 calls and would be killed by the worker's three-second cap, so a solution that forgets to consult the cache does not merely score lower, it times out. Case 5 sits just under 2^53, where doubles are still exact; one step further and JavaScript silently loses precision, which is the same class of problem as Java overflowing a long at fib(93). Note the cache is passed down rather than held in a module-level variable: a shared mutable cache across calls is fine for a pure function of n and a correctness bug the moment the function takes anything else.`,
 hints:['Three lines: base case, cache hit, cache miss.','Check for undefined rather than falsy: memo[0] is 0, which is falsy.','Pass memo into both recursive calls or each branch starts an empty cache.']}]},
 {id:'dp2',title:'Tabulation: bottom-up DP',body:`
-<p><b>Tabulation</b> flips memoization: instead of recursing down from the answer, build a table up from the base cases (no recursion, no stack overflow, often less memory):</p>
+<p><b>Tabulation</b> flips memoization. Instead of recursing down from the answer, build a table up from the base cases: no recursion, no stack overflow, often less memory.</p>
 <div class="codeSample" data-hl>// COIN CHANGE: fewest coins to make amount (the canonical 1D table)
 int minCoins(int[] coins, int amount) {
     int[] dp = new int[amount + 1];
@@ -118,16 +118,16 @@ int minCoins(int[] coins, int amount) {
     }
     return dp[amount] &gt; amount ? -1 : dp[amount];          // unreachable -&gt; -1
 }</div>
-<p>Reading the recurrence: to make amount <code>a</code>, try every coin <code>c</code> as the <i>last</i> coin: that costs <code>dp[a-c] + 1</code>; take the minimum. The table order guarantees <code>dp[a-c]</code> is already final when you read it. That ordering of computation is the entire discipline of tabulation.</p>
+<p>Reading the recurrence: to make amount <code>a</code>, try every coin <code>c</code> as the <i>last</i> coin. That costs <code>dp[a-c] + 1</code>. Take the minimum. The table order guarantees <code>dp[a-c]</code> is already final when you read it. That ordering is the whole discipline of tabulation.</p>
 
 <h4>Choosing between top-down and bottom-up</h4>
-<p>They compute the same recurrence and differ only in direction, so the choice is practical. <b>Memoization</b> is easier to derive (you write the recursion you already understand and add a cache) and it only visits the subproblems the answer actually needs, which wins when the state space is large and sparse. <b>Tabulation</b> has no call overhead and no stack limit, and its fixed iteration order is what makes the space optimization below possible. The usual path is to write the memoized version first, get it correct, and convert it if the depth or the constant factor matters.</p>
+<p>They compute the same recurrence and differ only in direction, so the choice is practical. <b>Memoization</b> is easier to derive: write the recursion you already understand and add a cache. It visits only the subproblems the answer needs, which wins when the state space is large and sparse. <b>Tabulation</b> has no call overhead and no stack limit, and its fixed iteration order makes the space optimization below possible. The usual path: write the memoized version first, get it correct, and convert it if depth or the constant factor matters.</p>
 
 <h4>The sentinel, and why it is amount + 1</h4>
-<p>Unreachable amounts need a value that loses every <code>min</code> comparison without overflowing when you add one to it. <code>Integer.MAX_VALUE</code> is the tempting choice and it is wrong: <code>dp[a-c] + 1</code> wraps to a large negative number, which then wins the min and produces an answer with no relationship to the question. Any value above the largest possible real answer works, and the largest possible answer here is <code>amount</code> coins of denomination 1, hence <code>amount + 1</code>.</p>
+<p>Unreachable amounts need a value that loses every <code>min</code> comparison without overflowing when you add one. <code>Integer.MAX_VALUE</code> is tempting and wrong: <code>dp[a-c] + 1</code> wraps to a large negative number, which wins the min and produces an answer unrelated to the question. Any value above the largest possible real answer works. The largest possible answer here is <code>amount</code> coins of denomination 1, hence <code>amount + 1</code>.</p>
 
 <h4>Rolling the table: O(n) space to O(1)</h4>
-<p>When row <code>i</code> depends only on row <code>i-1</code>, you never need the whole table: keep two rows, or one row updated in the right direction. Fibonacci by tabulation needs two variables, not an array of n. This is the standard follow-up question after you produce a working table, and the answer is always the same: look at which previous entries the recurrence actually reads, and keep only those.</p>`,
+<p>When row <code>i</code> depends only on row <code>i-1</code>, you never need the whole table. Keep two rows, or one row updated in the right direction. Fibonacci by tabulation needs two variables, not an array of n. This is the standard follow-up after you produce a working table, and the answer is always the same: look at which previous entries the recurrence reads, and keep only those.</p>`,
 docs:[['Coin change, CP-Algorithms adjacent writeup','https://cp-algorithms.com/dynamic_programming/intro-to-dp.html'],['Bottom-up DP, Baeldung','https://www.baeldung.com/cs/tabulation-vs-memoization']],
 exs:[{title:'Coin change',
 prompt:`Write <code>Coins</code> with <code>static int minCoins(int[] coins, int amount)</code> returning the <b>fewest coins needed to make exactly amount</b>, with unlimited copies of each denomination, minCoins([1,2,5], 11) == 3 (5+5+1), or <b>-1 when the amount cannot be made</b>. Implement it exactly as the tabulation recipe: dp array of size amount+1 filled with the sentinel <code>amount + 1</code>, <code>dp[0] = 0</code>, double loop (amounts outer, coins inner), <code>Math.min</code> relaxation, and the -1 check at the end.`,
@@ -178,7 +178,7 @@ tests:[{d:'a table of size amount + 1 is allocated',re:'amount\\s*\\+\\s*1'},{d:
 behavior:`Five cases run. The fourth is the one worth failing once: a greedy algorithm takes the largest coin that fits (4, then 1, then 1) and answers three, while the optimal answer is 3+3, two coins. Greedy is correct only for certain coin systems, which is why this problem is a DP problem and why "it worked on my examples" is not evidence. The unreachable case checks your sentinel survives the +1 without wrapping, and the zero case checks the base row exists at all: dp[0] = 0 is what every other entry is ultimately built from, so omitting it makes every answer wrong by an unbounded amount.`,
 hints:['dp[a] is the fewest coins making exactly a. dp[0] is 0.','For each amount, try each coin as the LAST coin used.','Compare the final entry against your sentinel to detect unreachable.']}]},
 {id:'dp3',title:'2D DP: longest common subsequence',body:`
-<p>When the state needs TWO indices, the table becomes 2D. The archetype is <b>LCS</b>, the longest subsequence (not substring: gaps allowed, order kept) common to two strings. It powers diff tools, DNA alignment and your git merge:</p>
+<p>When the state needs TWO indices, the table becomes 2D. The archetype is <b>LCS</b>, the longest subsequence common to two strings. Subsequence, not substring: gaps allowed, order kept. It powers diff tools, DNA alignment and your git merge:</p>
 <div class="codeSample" data-hl>// dp[i][j] = LCS length of first i chars of a and first j chars of b
 int lcs(String a, String b) {
     int[][] dp = new int[a.length() + 1][b.length() + 1];   // row/col 0 = empty prefix
@@ -193,16 +193,16 @@ int lcs(String a, String b) {
     }
     return dp[a.length()][b.length()];
 }</div>
-<p>The two-case structure (<i>match means diagonal plus one, mismatch means the better of dropping a character from either side</i>) reappears across the whole 2D family: edit distance, grid paths, knapsack (where the second dimension is remaining capacity).</p>
+<p>The two-case structure (<i>match means diagonal plus one, mismatch means the better of dropping a character from either side</i>) reappears across the whole 2D family: edit distance, grid paths, knapsack, where the second dimension is remaining capacity.</p>
 
-<h4>The off-by-one, stated once so it stops hurting</h4>
-<p>Row 0 and column 0 represent the <b>empty prefix</b>, which is why the table is (m+1) by (n+1) and why <code>dp[i][j]</code> compares <code>a.charAt(i-1)</code> with <code>b.charAt(j-1)</code>. Those extra row and column are not padding; they are the base cases, and they hold zero because the LCS of anything with an empty string is empty. Sizing the table m by n instead forces a special case for every first row and column, which is where most hand-written versions get their bugs.</p>
+<h4>The off-by-one, stated once</h4>
+<p>Row 0 and column 0 represent the <b>empty prefix</b>. That is why the table is (m+1) by (n+1) and why <code>dp[i][j]</code> compares <code>a.charAt(i-1)</code> with <code>b.charAt(j-1)</code>. The extra row and column are the base cases, not padding. They hold zero because the LCS of anything with an empty string is empty. Sizing the table m by n instead forces a special case for every first row and column, and that is where most hand-written versions get their bugs.</p>
 
 <h4>Reading the answer back out</h4>
-<p>The table gives the length; a diff tool needs the actual sequence. Walk backwards from <code>dp[m][n]</code>: if the characters match, that character is part of the answer and you step diagonally; otherwise step to whichever neighbor holds the larger value. This is the second half of the algorithm and it is where the phrase "the diff" comes from: a diff is the complement of the LCS, so what the walk does <i>not</i> take is exactly the added and removed lines.</p>
+<p>The table gives the length. A diff tool needs the sequence itself. Walk backwards from <code>dp[m][n]</code>. If the characters match, that character is part of the answer and you step diagonally. Otherwise step to whichever neighbor holds the larger value. This second half of the algorithm is where the phrase "the diff" comes from: a diff is the complement of the LCS, so what the walk does <i>not</i> take is the added and removed lines.</p>
 
 <h4>Cost, and the family resemblance</h4>
-<p>Time and space are both O(m x n): a megabyte of table for two 1,000-character strings, which is fine, and 10&#185;&#178; entries for two one-megabyte files, which is not. Real diff tools use the rolling trick from the previous lesson (only the previous row is read) plus algorithms tuned for the common case where the inputs are mostly identical. Recognize the family by its signature: two sequences, a decision per pair of positions, and an answer built from the three neighbors above, left and diagonal.</p>`,
+<p>Time and space are both O(m x n): a megabyte of table for two 1,000-character strings, which is fine, and 10&#185;&#178; entries for two one-megabyte files, which is not. Real diff tools use the rolling trick from the previous lesson (only the previous row is read) plus algorithms tuned for inputs that are mostly identical. Recognize the family by its signature: two sequences, a decision per pair of positions, and an answer built from the three neighbors above, left and diagonal.</p>`,
 docs:[['LCS, CP-Algorithms family','https://cp-algorithms.com/dynamic_programming/intro-to-dp.html'],['Edit distance & friends, Baeldung','https://www.baeldung.com/cs/levenshtein-distance-computation']],
 exs:[{title:'LCS table',
 prompt:`Write <code>Lcs</code> with <code>static int length(String a, String b)</code> returning the length of the <b>longest common subsequence</b>, the longest sequence of characters appearing in both strings in the same order, not necessarily contiguously: length("abcde", "ace") == 3 ("ace"). Use the full 2D tabulation: <code>(a.length()+1) × (b.length()+1)</code> table, match case extending the diagonal, mismatch case taking the max of the two neighbors. Mind the index offset: <code>charAt(i - 1)</code>.`,
@@ -250,7 +250,7 @@ tests:[{d:'the table has an extra row and column',re:'length\\s*\\+\\s*1'},{d:'c
 behavior:`Five cases execute. The gapped case separates subsequence from substring: a substring algorithm answers 1 on axbycz versus abc, and both answers look reasonable until you know which question was asked. The empty-string case exercises the base row directly: if your table is sized m by n instead of (m+1) by (n+1), this case either crashes or returns garbage, which is the fastest way to discover the off-by-one. Note how little code the recurrence needs once the table is sized correctly: two branches, three neighbors, no special cases anywhere.`,
 hints:['Allocate (a.length + 1) rows of (b.length + 1) zeros: Array.from with a factory, or the rows all alias one array.','dp[i][j] talks about a[i-1] and b[j-1]. Write that offset down before you start.','Two branches only: characters equal, or not.']}]},
 {id:'dp4',title:'The pattern toolbox: sliding window & two pointers',body:`
-<p>Not everything hard is DP. Two patterns solve an enormous share of "optimal subarray or substring" problems in O(n):</p>
+<p>Not everything hard is DP. Sliding window and two pointers solve a large share of "optimal subarray or substring" problems in O(n):</p>
 <div class="codeSample" data-hl>// SLIDING WINDOW: longest substring without repeating characters
 int longestUnique(String s) {
     Map&lt;Character, Integer&gt; lastSeen = new HashMap&lt;&gt;();
@@ -278,17 +278,17 @@ int[] pairSum(int[] sorted, int target) {
 }</div>
 
 <h4>Why both are linear, and what makes them valid</h4>
-<p>Each pointer only ever moves forward, and each moves at most n times, so the total work is O(n) even though the loops look nested. That is the whole argument, and it is worth being able to state, because "there are two pointers so it must be O(n&#178;)" is a common wrong answer in interviews.</p>
-<p>The correctness argument is different for each. The sliding window works when the property is <b>monotone</b>: if a window is invalid, extending it cannot make it valid, so shrinking from the left is safe. Two pointers works because the array is <b>sorted</b>: when the sum is too small, no smaller left index can help, so discarding it loses nothing. Break either precondition (an unsorted array, a property that can become valid again on extension) and the pattern silently returns a wrong answer rather than failing.</p>
+<p>Each pointer only moves forward, and each moves at most n times, so the total work is O(n) even though the loops look nested. That is the whole argument. Be able to state it, because "there are two pointers so it must be O(n&#178;)" is a common wrong answer in interviews.</p>
+<p>The correctness argument differs for each. The sliding window works when the property is <b>monotone</b>: if a window is invalid, extending it cannot make it valid, so shrinking from the left is safe. Two pointers works because the array is <b>sorted</b>: when the sum is too small, no smaller left index can help, so discarding it loses nothing. Break either precondition (an unsorted array, a property that can become valid again on extension) and the pattern silently returns a wrong answer rather than failing.</p>
 
 <h4>The recognition guide</h4>
 <ul>
-<li>"Longest or shortest <b>contiguous</b> run satisfying X" points to a sliding window. Contiguity is the tell; if the elements need not be adjacent, it is usually DP.</li>
-<li>"A pair, triple or partition in <b>sorted</b> data" points to two pointers; if the input is not sorted, sorting first at O(n log n) is often still cheaper than the O(n&#178;) alternative.</li>
+<li>"Longest or shortest <b>contiguous</b> run satisfying X" points to a sliding window. Contiguity is the tell. If the elements need not be adjacent, it is usually DP.</li>
+<li>"A pair, triple or partition in <b>sorted</b> data" points to two pointers. If the input is not sorted, sorting first at O(n log n) is often still cheaper than the O(n&#178;) alternative.</li>
 <li>"Count the ways" or "minimum cost with a choice at each step" points to DP.</li>
-<li>"Best over every window of size k" points to a deque holding candidate maxima, the sliding window with a data structure inside it.</li>
+<li>"Best over every window of size k" points to a deque holding candidate maxima: the sliding window with a data structure inside it.</li>
 </ul>
-<p>Naming the pattern out loud is half of an interview answer, and the other half is stating the precondition it depends on. That is also the practical difference between someone who has memorized solutions and someone who can tell when the solution does not apply.</p>`,
+<p>Naming the pattern out loud is half of an interview answer. The other half is stating the precondition it depends on. That is the difference between someone who has memorized solutions and someone who can tell when a solution does not apply.</p>`,
 docs:[['Two pointers, CP-Algorithms adjacent','https://cp-algorithms.com/dynamic_programming/zero_matrix.html'],['Sliding window pattern, Baeldung','https://www.baeldung.com/cs/sliding-window-algorithm']],
 exs:[
 {title:'Longest unique substring',

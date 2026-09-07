@@ -1,12 +1,15 @@
 STREAMS.push({icon:'☕',title:'Java Fundamentals',blurb:'Classes, types, methods, OOP, collections & generics, user input and file I/O: a fast track for people who already code.',lessons:[
 {id:'fun0',title:'Setup: Java on your machine',body:`
-<p>Get a working toolchain before anything else. The pieces:</p>
+
+
+
+<p>Get a working toolchain first. The pieces:</p>
 <ul>
-<li><b>JDK vs JRE</b>: the JDK is the full development kit (compiler, tools); a JRE only runs programs. You want a JDK. Grab an LTS release (21) from <a href="https://adoptium.net" target="_blank" rel="noopener">Adoptium (Temurin)</a>.</li>
-<li><b>Install &amp; switch versions</b>: the pro tool is <a href="https://sdkman.io" target="_blank" rel="noopener">SDKMAN!</a> (macOS/Linux): install, list, and switch JDKs per shell or per project. macOS alternative: <code>brew install --cask temurin@21</code>; Windows: winget or the Adoptium installer.</li>
-<li><b>JAVA_HOME</b>: many tools (Maven, Gradle, IDEs) locate Java via this env var. Point it at the JDK folder and put <code>$JAVA_HOME/bin</code> on PATH. SDKMAN manages this for you.</li>
-<li><b>The core commands</b>: <code>javac</code> compiles, <code>java</code> runs (and since Java 11 runs single .java files directly), <code>jshell</code> is the interactive REPL, perfect for trying snippets from this dojo.</li>
-<li><b>IDE</b>: IntelliJ IDEA Community is the de-facto standard; VS Code + the Java extension pack is lighter. Either way, know the CLI too; CI servers don't run IDEs.</li>
+<li><b>JDK vs JRE</b>: the JDK is the full development kit (compiler, tools). A JRE only runs programs. You want a JDK. Take an LTS release (21) from <a href="https://adoptium.net" target="_blank" rel="noopener">Adoptium (Temurin)</a>.</li>
+<li><b>Install &amp; switch versions</b>: on macOS/Linux use <a href="https://sdkman.io" target="_blank" rel="noopener">SDKMAN!</a> to install, list and switch JDKs per shell or per project. macOS alternative: <code>brew install --cask temurin@21</code>. Windows: winget or the Adoptium installer.</li>
+<li><b>JAVA_HOME</b>: Maven, Gradle and IDEs locate Java through this env var. Point it at the JDK folder and put <code>$JAVA_HOME/bin</code> on PATH. SDKMAN manages this for you.</li>
+<li><b>The core commands</b>: <code>javac</code> compiles, <code>java</code> runs (and since Java 11 runs single .java files directly), <code>jshell</code> is the interactive <b>REPL</b>: read, evaluate, print, loop. A prompt that runs one line at a time and shows the answer. Use it for snippets from this dojo.</li>
+<li><b>IDE</b>: IntelliJ IDEA Community is the de-facto standard. VS Code + the Java extension pack is lighter. Know the CLI too. CI servers have no IDE, and "works on my machine" is nearly always a gap between what your IDE configured and what the build does.</li>
 </ul>
 <div class="codeSample">sdk install java 21.0.3-tem      # install Temurin 21 via SDKMAN
 sdk use java 21.0.3-tem          # switch this shell to it
@@ -17,31 +20,27 @@ javac Greeter.java && java Greeter    # compile then run
 java Greeter.java                     # single-file mode: no javac step
 jshell                                # REPL: try Java line by line</div>
 
-<h4>Which JDK, and why the answer is boring on purpose</h4>
+<h4>Which JDK</h4>
 <p>Take an <b>LTS</b> release, 21 today, from a build you can name: Temurin, Corretto, Zulu, Liberica or
-Oracle's. They are all builds of the same OpenJDK source and differ mainly in who supports them and for how
-long. The reason to care is that a non-LTS release stops receiving updates in six months, which is a
-security decision disguised as a version number.</p>
-<p>Have more than one installed and you will eventually build with the wrong one. That is what
-<code>JAVA_HOME</code> decides, not the <code>java</code> on your <code>PATH</code>, which is why a
-project can compile in your terminal and fail in your IDE while both claim to be on 21.</p>
+Oracle's. All are builds of the same OpenJDK source. They differ in who supports them and for how long.
+A non-LTS release stops receiving updates after six months, so the choice is a security decision.</p>
+<p>Have more than one installed and you will eventually build with the wrong one.
+<code>JAVA_HOME</code> decides which, not the <code>java</code> on your <code>PATH</code>. That is how a
+project compiles in your terminal and fails in your IDE while both claim to be on 21.</p>
 
-<h4>Verifying the setup actually works</h4>
+<h4>Verifying the setup</h4>
 <div class="codeSample">java -version      # the runtime you will run on
 javac -version     # the compiler, a JRE-only install has no javac at all
 echo $JAVA_HOME    # what Maven, Gradle and your IDE will actually use
 jshell             # if this opens, the toolchain is genuinely working</div>
-<p>Those four lines catch nearly every setup problem: a JRE where you wanted a JDK, a
-<code>JAVA_HOME</code> pointing at an old version, and a <code>PATH</code> that disagrees with both.</p>
+<p>Those four lines catch nearly every setup problem. A JRE where you wanted a JDK. A
+<code>JAVA_HOME</code> pointing at an old version. A <code>PATH</code> that disagrees with both.</p>
 
 <h4>The errors you will hit in the first hour</h4>
 <p><code>command not found: javac</code> means you have a JRE, or the JDK's <code>bin</code> is not on your
 PATH. <code>UnsupportedClassVersionError</code> means the class was compiled by a newer JDK than the one
-running it, and the numbers in the message are class-file versions, not Java versions (65 is Java 21).
-<code>invalid target release</code> is the same mismatch caught earlier, at compile time.</p>
-<p>Finally, learn the command line even though the IDE is more comfortable. CI servers have no IDE, and
-"works on my machine" is nearly always a difference between what your IDE configured and what the build
-actually does.</p>`,
+running it. The numbers in the message are class-file versions, not Java versions (65 is Java 21).
+<code>invalid target release</code> is the same mismatch caught at compile time.</p>`,
 docs:[['Adoptium Temurin downloads','https://adoptium.net'],['SDKMAN! usage','https://sdkman.io/usage'],['JShell tutorial (Oracle)','https://docs.oracle.com/en/java/javase/21/jshell/introduction-jshell.html']],
 ex:{title:'Toolchain drill',lang:'shell',
 prompt:`One per numbered line: (1) the SDKMAN command to install Temurin 21 (identifier <code>21.0.3-tem</code>), (2) verify the active Java version, (3) compile <code>Greeter.java</code> and, on the same line with <code>&amp;&amp;</code>, run the resulting class, (4) run <code>Greeter.java</code> directly without a compile step, (5) start the Java REPL, (6) print the JAVA_HOME environment variable.`,
@@ -78,31 +77,34 @@ jshell
 # 6)
 echo $JAVA_HOME`}},
 {id:'fun1',title:'Hello, JVM: your first class',body:`
-<p>🌱 <b>Starting from zero:</b> a program is nothing more than a list of instructions a computer follows, written in a language it can be taught to understand: here, Java. You write the instructions in a plain text file, a tool turns them into a form the machine can run, and then it runs them, top to bottom. That is the whole magic trick. This lesson is your first complete round trip: write the smallest possible Java program, run it, and watch it do something.</p>
+
+
+
+<p>🌱 <b>Starting from zero:</b> a program is a list of instructions a computer follows, written in a language it can be taught to understand, here Java. You write them in a plain text file. A tool turns them into a form the machine can run, and the machine runs them top to bottom. This lesson: write the smallest Java program and run it.</p>
 <p>Java source lives in classes. You compile <code>.java</code> to <code>.class</code> bytecode with <code>javac</code>, and the JVM runs it with <code>java</code>. Since Java 11 you can also run a single file directly: <code>java Greeter.java</code>. Execution starts at <code>public static void main(String[] args)</code>.</p>
 <div class="codeSample" data-hl>public class Greeter {
     public static void main(String[] args) {
         System.out.println("Hello, Dojo!");
     }
 }</div>
-<p>Coming from another language, the key differences: everything lives in a class, the file name must match the public class name, every statement ends with <code>;</code>, and Java is statically typed: every variable has a declared (or inferred) type.</p>
+<p>Coming from another language, the differences: everything lives in a class. The file name must match the public class name. Every statement ends with <code>;</code>. Java is statically typed: every variable has a declared (or inferred) type.</p>
 
-<h4>What compilation actually produces</h4>
-<p><code>javac</code> does not produce machine code for your CPU. It produces <b>bytecode</b> (instructions for an imaginary machine, the JVM), which is why the same <code>.class</code> file runs unchanged on a Mac, a Linux server and a phone. At runtime the JVM interprets that bytecode and, for code that runs often, the <b>JIT compiler</b> translates it into native instructions tuned to the actual processor. That two-stage design is the source of Java's portability and of its startup cost: the first execution of a method is slow, the ten-thousandth is not.</p>
+<h4>What compilation produces</h4>
+<p><code>javac</code> does not produce machine code for your CPU. It produces <b>bytecode</b>, instructions for an imaginary machine, the JVM. So the same <code>.class</code> file runs unchanged on a Mac, a Linux server and a phone. At runtime the JVM starts by interpreting that bytecode and watches which methods run hot. The <b>JIT compiler</b>, short for just-in-time, compiles those to native machine code tuned to the processor while the program runs. That two-stage design gives Java its portability and its startup cost: the first execution of a method is slow, the ten-thousandth is not. It's why Java gets faster after warm-up and why the first seconds of a benchmark lie.</p>
 
 <h4>Reading the incantation</h4>
-<p><code>public static void main(String[] args)</code> is four decisions, not one word:</p>
+<p><code>public static void main(String[] args)</code> is four decisions:</p>
 <ul>
 <li><b>public</b>: the JVM, outside your class, must be able to call it.</li>
-<li><b>static</b>: it runs without an instance, because nothing has been constructed yet at startup.</li>
-<li><b>void</b>: it returns nothing; the exit status comes from <code>System.exit</code> or from finishing normally.</li>
-<li><b>String[] args</b>: the command-line arguments, which is why <code>java Greeter Ada</code> arrives as <code>args[0]</code>.</li>
+<li><b>static</b>: it runs without an instance. Nothing has been constructed yet at startup.</li>
+<li><b>void</b>: it returns nothing. The exit status comes from <code>System.exit</code> or from finishing normally.</li>
+<li><b>String[] args</b>: the command-line arguments. <code>java Greeter Ada</code> arrives as <code>args[0]</code>.</li>
 </ul>
-<p>Get any part wrong and the JVM reports <code>Main method not found in class Greeter</code> rather than a compile error, because the class compiled perfectly well; it just has no entry point.</p>
+<p>Get any part wrong and the JVM reports <code>Main method not found in class Greeter</code> at run time, not a compile error. The class compiled. It just has no entry point.</p>
 
 <h4>The errors you will meet in your first hour</h4>
-<p><code>class Greeter is public, should be declared in a file named Greeter.java</code>: the file name must match the public class. <code>Could not find or load main class</code>: you are in the wrong directory, or you typed the file name instead of the class name: <code>java Greeter</code>, not <code>java Greeter.class</code>. And <code>cannot find symbol</code> is Java's phrase for "you used a name I do not know", where the caret under the offending token is the fastest thing to read.</p>
-<p>Since Java 11, <code>java Greeter.java</code> compiles in memory and runs in one step, which is ideal for learning and for single-file scripts. It is not how applications ship (that is the build-tools stream), but it removes a step while you are getting the language into your fingers.</p>`,
+<p><code>class Greeter is public, should be declared in a file named Greeter.java</code>: the file name must match the public class. <code>Could not find or load main class</code>: you are in the wrong directory, or you typed the file name instead of the class name: <code>java Greeter</code>, not <code>java Greeter.class</code>. <code>cannot find symbol</code> means "you used a name I do not know". Read the caret under the offending token first.</p>
+<p>Single-file mode (<code>java Greeter.java</code>) compiles in memory and runs in one step. Good for learning and scripts. Applications do not ship that way (see the build-tools stream).</p>`,
 docs:[['dev.java, Getting Started','https://dev.java/learn/getting-started/'],['Oracle Tutorial, A Closer Look at main','https://docs.oracle.com/javase/tutorial/getStarted/application/index.html']],
 ex:{title:'Your first Greeter',
 prompt:`Write a class <code>Greeter</code> with: (1) a <code>main</code> method that prints exactly <code>Welcome to Dev Dojo!</code>, and (2) a <code>static</code> method <code>String greet(String name)</code> that returns <code>"Hello, " + name + "!"</code>. Have main also print <code>greet("Ada")</code>.`,
@@ -125,11 +127,13 @@ solution:`public class Greeter {
     }
 }`}},
 {id:'fun2',title:'Variables, types, var and conversions',body:`
-<p><b>Variables deserve a slower look: everything else builds on them.</b> A variable is a <i>named piece of storage with a declared type</i>: the name is how your code refers to it, the type is the compiler-enforced promise about what it can hold. Three moments in a variable's life are worth separating: <b>declaration</b> (<code>int count;</code>: the name and type exist), <b>initialization</b> (the <i>first</i> value goes in), and <b>assignment</b> (any later value replaces the current one). <code>final</code> forbids that third step (declare-once, assign-once), and modern Java style uses it liberally: a variable that never changes is one less thing to track while reading.</p>
-<p>⚠️ <b>Always initialize your variables, ideally in the same line that declares them.</b> Java's rules here have a trap-shaped asymmetry:</p>
+
+
+<p><b>Variables deserve a slower look. Everything else builds on them.</b> A variable is a <i>named piece of storage with a declared type</i>. The name is how your code refers to it. The type is the compiler-enforced promise about what it can hold. A variable's life has three moments. <b>Declaration</b>: <code>int count;</code> makes the name and type exist. <b>Initialization</b>: the <i>first</i> value goes in. <b>Assignment</b>: any later value replaces the current one. <code>final</code> forbids that third step: declare once, assign once. Modern Java style uses it liberally. A variable that never changes is one less thing to track while reading.</p>
+<p>⚠️ <b>Always initialize your variables, ideally on the line that declares them.</b> Java's rules here are asymmetric:</p>
 <ul>
-<li><b>Local variables</b> (inside methods) have <b>no default value at all</b>. Using one before it's assigned is a <i>compile error</i> ("variable count might not have been initialized"): the compiler proves <b>definite assignment</b> on every path. Good: the mistake can't reach runtime. But don't fight the checker with a lazy <code>int count = 0;</code>-then-reassign dance when <code>int count = computeCount();</code> says it in one clear line.</li>
-<li><b>Fields</b> (class members) silently get defaults: <code>0</code>, <code>0.0</code>, <code>false</code>, and, the dangerous one, <b><code>null</code> for every reference type</b>. A field you forgot to initialize doesn't fail the build; it waits and throws <code>NullPointerException</code> the first time something calls a method on it, often far from where the real mistake lives. The habit that prevents this: initialize fields at the declaration or in the constructor; those are the only two places a reader looks.</li>
+<li><b>Local variables</b> (inside methods) have <b>no default value at all</b>. Using one before it is assigned is a <i>compile error</i>: "variable count might not have been initialized". The compiler proves <b>definite assignment</b> on every path, so the mistake cannot reach runtime. Do not fight the checker with <code>int count = 0;</code> and a reassignment when <code>int count = computeCount();</code> says it in one line.</li>
+<li><b>Fields</b> (class members) silently get defaults: <code>0</code>, <code>0.0</code>, <code>false</code>, and, the dangerous one, <b><code>null</code> for every reference type</b>. A field you forgot to initialize does not fail the build. It throws <code>NullPointerException</code> the first time something calls a method on it, often far from the real mistake. Initialize fields at the declaration or in the constructor. Those are the only two places a reader looks.</li>
 </ul>
 <div class="codeSample" data-hl>int x;
 // System.out.println(x);     // compile error: x might not have been initialized
@@ -139,8 +143,8 @@ class Session {
     List&lt;String&gt; events;                          // silently null, NPE waiting
     List&lt;String&gt; safe = new ArrayList&lt;&gt;();        // initialized at declaration
 }</div>
-<p>Every variable also has a <b>scope</b>, the region of code where its name exists: the block it was declared in, and nothing more. Declare variables in the <i>smallest scope that works</i> and as close to first use as possible; a variable alive for 300 lines is 300 lines of "what's its value now?".</p>
-<p>Java has 8 primitives (<code>int</code>, <code>long</code>, <code>double</code>, <code>boolean</code>, <code>char</code>, <code>byte</code>, <code>short</code>, <code>float</code>) and reference types (objects). Primitives hold values; references point to heap objects. Each primitive has a wrapper class (<code>Integer</code>, <code>Double</code> …) and Java auto-boxes between them.</p>
+<p>Every variable also has a <b>scope</b>, the region of code where its name exists: the block it was declared in, and nothing more. Declare variables in the <i>smallest scope that works</i>, as close to first use as possible. A variable alive for 300 lines is 300 lines of "what's its value now?".</p>
+<p>Java has 8 primitives (<code>int</code>, <code>long</code>, <code>double</code>, <code>boolean</code>, <code>char</code>, <code>byte</code>, <code>short</code>, <code>float</code>) and reference types (objects). Primitives hold values. References point to heap objects. Each primitive has a wrapper class (<code>Integer</code>, <code>Double</code> …) and Java auto-boxes between them.</p>
 <div class="codeSample" data-hl>int a = 7;
 double d = a;          // widening: automatic
 int b = (int) 3.99;    // narrowing: explicit cast, b == 3 (truncates!)
@@ -148,7 +152,7 @@ var list = "1,2,3";    // var infers String, still static typing
 int n = Integer.parseInt("42");
 double half = 1 / 2;     // 0.0, integer division happens FIRST
 double half2 = 1 / 2.0;  // 0.5</div>
-<p>Two classic traps: integer division truncates, and <code>==</code> on objects compares references; use <code>.equals()</code> for value equality (especially Strings).</p>`,
+<p>Two classic traps: integer division truncates, and <code>==</code> on objects compares references. Use <code>.equals()</code> for value equality, especially on Strings.</p>`,
 docs:[['Primitive Data Types, Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html'],['Using var, dev.java','https://dev.java/learn/language-basics/using-var/']],
 ex:{title:'Conversion toolbox',
 prompt:`Write a class <code>Conversions</code> with three static methods: <code>double average(int a, int b)</code> returning the true average (careful: integer division!), <code>int toInt(String s)</code> parsing a string to int, and <code>boolean sameText(String a, String b)</code> comparing string content, not references.`,
@@ -182,21 +186,23 @@ solution:`public class Conversions {
     }
 }`}},
 {id:'fun2a',title:'Booleans & logical operators',body:`
-<p>Every condition your programs will ever branch on is built from a handful of operators combining <code>boolean</code> values. Master the combinators before the conditionals that use them:</p>
+
+
+<p>Every condition your programs branch on is built from a handful of operators combining <code>boolean</code> values. Learn the combinators before the conditionals that use them:</p>
 <ul>
 <li><b><code>&amp;&amp;</code>, AND</b>: true only when both sides are true.</li>
 <li><b><code>||</code>, OR</b>: true when at least one side is true.</li>
 <li><b><code>!</code>: NOT</b>: flips the value.</li>
 <li><b><code>^</code>: XOR</b>: true when the sides <i>differ</i> (exactly one is true). Rarer, but the cleanest way to say "one or the other, not both".</li>
 </ul>
-<p><b>Short-circuit evaluation</b> is the behavior that makes <code>&amp;&amp;</code> and <code>||</code> more than logic: the right side is <i>not evaluated at all</i> when the left side already decides the answer. <code>false &amp;&amp; anything</code> never looks at anything; <code>true || anything</code> likewise. This is not an optimization footnote; it is the standard null-safety idiom:</p>
+<p><b>Short-circuit evaluation</b>: the right side of <code>&amp;&amp;</code> and <code>||</code> is <i>not evaluated at all</i> when the left side already decides the answer. <code>false &amp;&amp; anything</code> never looks at anything. <code>true || anything</code> likewise. This is the standard null-safety idiom:</p>
 <div class="codeSample">// safe: if s is null the left side is false and s.length() NEVER runs
 if (s != null &amp;&amp; s.length() &gt; 3) { ... }
 
 // crash: both sides always evaluated, &amp; and | are the non-short-circuit twins
 if (s != null &amp; s.length() &gt; 3) { ... }   // NullPointerException when s == null</div>
-<p><b>Precedence</b>: <code>!</code> binds tightest, then <code>&amp;&amp;</code>, then <code>||</code>, so <code>a || b &amp;&amp; c</code> means <code>a || (b &amp;&amp; c)</code>. When a condition needs a re-read, add the parentheses; the compiler doesn't need them, colleagues do.</p>
-<p><b>De Morgan's laws</b> are the rewrite rules for pushing <code>!</code> through: <code>!(a &amp;&amp; b) == !a || !b</code> and <code>!(a || b) == !a &amp;&amp; !b</code>. They turn "not (in range)" into "below or above", often the version that reads like the requirement. And one style rule that separates juniors from seniors: <code>if (x) return true; else return false;</code> is just <code>return x;</code>. Boolean expressions are values; return them directly.</p>`,
+<p><b>Precedence</b>: <code>!</code> binds tightest, then <code>&amp;&amp;</code>, then <code>||</code>, so <code>a || b &amp;&amp; c</code> means <code>a || (b &amp;&amp; c)</code>. When a condition needs a re-read, add the parentheses. The compiler does not need them. Colleagues do.</p>
+<p><b>De Morgan's laws</b> are the rewrite rules for pushing <code>!</code> through: <code>!(a &amp;&amp; b) == !a || !b</code> and <code>!(a || b) == !a &amp;&amp; !b</code>. They turn "not (in range)" into "below or above", often the version that reads like the requirement. One style rule: <code>if (x) return true; else return false;</code> is just <code>return x;</code>. Boolean expressions are values. Return them directly.</p>`,
 docs:[['Operators, Java Tutorials','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/operators.html'],['Equality & relational operators','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/op2.html'],['JLS, conditional operators','https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.23']],
 ex:{title:'Combinator drill',
 prompt:`Write class <code>Logic</code> with five static methods, each a <b>single return of a boolean expression, no if statements anywhere</b>: (1) <code>boolean canRent(int age, boolean hasLicense)</code>: true when age is at least 21 <b>AND</b> the license is there; (2) <code>boolean isWeekend(String day)</code>: true when day equals <code>"SAT"</code> <b>OR</b> <code>"SUN"</code> (use equals, not ==); (3) <code>boolean longEnough(String s, int min)</code>: true when s is <b>not null AND</b> at least min chars (order matters: the null check must short-circuit first); (4) <code>boolean exactlyOne(boolean a, boolean b)</code>: true when exactly one of them is true (one operator does this); (5) <code>boolean outsideRange(int n, int lo, int hi)</code>: true when n is below lo <b>OR</b> above hi.`,
@@ -249,13 +255,15 @@ behavior:`1. canRent(22, true) == true; canRent(22, false) == false; canRent(20,
 hints:['Every method body is one line: return <expression>; if you typed if, you are working too hard.','longEnough is the whole lesson: swap the operands (s.length() >= min && s != null) and null crashes it; short-circuit only protects left-to-right.','outsideRange has two equally correct spellings: n < lo || n > hi, or !(n >= lo && n <= hi). De Morgan says they are the same; the drill asks for the first (it reads better).']}},
 
 {id:'obj1',title:'Objects & autoboxing: the two kinds of values',body:`
-<p>🌱 <b>Starting from zero:</b> Java values come in two kinds, and telling them apart explains half the confusing things beginners hit.</p>
+
+
+<p>🌱 <b>Starting from zero:</b> Java values come in two kinds. Telling them apart explains half the confusing things beginners hit.</p>
 <ul>
-<li><b>Primitives</b> are raw values: just a number or a true/false, nothing more. <code>int</code>, <code>double</code>, <code>boolean</code> and friends. Think of a primitive as a number written directly on a sticky note: the note IS the value.</li>
-<li><b>Objects</b> are smart bundles: data plus abilities, packaged together. A String object holds its characters AND knows how to uppercase itself (<code>name.toUpperCase()</code>). You will build your own object types soon (that is what classes are); for now the key idea is that an object <i>can do things</i>, a primitive just <i>is</i> a thing.</li>
+<li><b>Primitives</b> are raw values: a number or a true/false, nothing more. <code>int</code>, <code>double</code>, <code>boolean</code> and friends.</li>
+<li><b>Objects</b> are bundles of data plus abilities. A String object holds its characters and knows how to uppercase itself (<code>name.toUpperCase()</code>). You will build your own object types soon (that is what classes are). For now: an object <i>can do things</i>, a primitive just <i>is</i> a thing.</li>
 </ul>
-<p>One more difference matters: a variable never holds an object directly; it holds a <b>reference</b>, which works like a TV remote. The TV (the object) sits on the heap; the remote (the reference) is what you pass around, and two remotes can control the SAME TV. Copy a primitive and you get an independent copy; copy a reference and both variables now point at one shared object. This picture is why <code>==</code> on objects compares <i>remotes</i> (same object?) while <code>.equals()</code> compares <i>content</i>, the trap you met in the variables lesson, now explained.</p>
-<p><b>The bridge between the two worlds.</b> Java's containers (like <code>List</code>) and its generics labels can only hold <i>objects</i>: there is no <code>List&lt;int&gt;</code>. So every primitive has an object twin, a <b>wrapper class</b>: <code>int</code>→<code>Integer</code>, <code>double</code>→<code>Double</code>, <code>boolean</code>→<code>Boolean</code>, and so on. A wrapper is literally a small object with one primitive inside: the sticky note placed in a labeled box.</p>
+<p>A variable never holds an object directly. It holds a <b>reference</b>, which works like a TV remote. The TV (the object) sits on the heap. The remote (the reference) is what you pass around, and two remotes can control the same TV. Copy a primitive and you get an independent copy. Copy a reference and both variables point at one shared object. So <code>==</code> on objects compares <i>remotes</i> (same object?) while <code>.equals()</code> compares <i>content</i>. That is the trap from the variables lesson, explained.</p>
+<p><b>The bridge between the two worlds.</b> Java's containers (like <code>List</code>) and generics can only hold <i>objects</i>. There is no <code>List&lt;int&gt;</code>. So every primitive has an object twin, a <b>wrapper class</b>: <code>int</code>→<code>Integer</code>, <code>double</code>→<code>Double</code>, <code>boolean</code>→<code>Boolean</code>, and so on. A wrapper is a small object with one primitive inside.</p>
 <p><b>Autoboxing</b> is Java doing the boxing and unboxing for you, silently:</p>
 <div class="codeSample" data-hl>List&lt;Integer&gt; scores = new ArrayList&lt;&gt;();
 scores.add(97);              // AUTOBOXING: int 97 → new Integer object, automatically
@@ -267,8 +275,8 @@ int boom = maybe;            // ...UNBOXING null → NullPointerException!  trap
 Integer a = 1000, b = 1000;
 a == b;                      // false!, two different boxes (compares remotes)  trap #2
 a.equals(b);                 // true, compares the numbers inside the boxes</div>
-<p>The two traps deserve names. <b>Null unboxing</b>: a wrapper variable can be <code>null</code>, and unwrapping "no box" explodes, so check for null before treating a wrapper as a primitive. <b>Wrapper <code>==</code></b>: it compares references, not values (small values -128..127 are cached and can coincidentally match, which makes the bug worse: it "works" in tests and fails with real data). Rule: <b>wrappers are compared with <code>.equals()</code>, always.</b></p>
-<p>When do you choose which? Primitives for arithmetic, counters, and fields that always have a value; they are faster and can never be null. Wrappers when an object is required: inside collections and generics (<code>List&lt;Integer&gt;</code>, <code>Map&lt;String, Double&gt;</code>), or when "no value yet" is a legitimate state. Autoboxing makes the boundary almost invisible; these two traps are the only places the seam shows.</p>`,
+<p>The two traps have names. <b>Null unboxing</b>: a wrapper variable can be <code>null</code>, and unwrapping "no box" explodes. Check for null before treating a wrapper as a primitive. <b>Wrapper <code>==</code></b>: it compares references, not values. Small values (-128..127) are cached and can coincidentally match, which makes the bug worse: it "works" in tests and fails with real data. Rule: <b>compare wrappers with <code>.equals()</code>, always.</b></p>
+<p>Which to choose? Primitives for arithmetic, counters, and fields that always have a value. They are faster and can never be null. Wrappers when an object is required: inside collections and generics (<code>List&lt;Integer&gt;</code>, <code>Map&lt;String, Double&gt;</code>), or when "no value yet" is a legitimate state. Autoboxing makes the boundary almost invisible. These two traps are the only places the seam shows.</p>`,
 docs:[['Autoboxing (Oracle tutorial)','https://docs.oracle.com/javase/tutorial/java/data/autoboxing.html'],['Numbers classes (wrappers) (Oracle)','https://docs.oracle.com/javase/tutorial/java/data/numberclasses.html'],['Integer cache (JLS 5.1.7)','https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.7']],
 ex:{title:'Boxing without the traps',
 prompt:`Write class <code>Boxing</code> with three static methods: (1) <code>int sum(java.util.List&lt;Integer&gt; nums)</code>: enhanced for over the list, accumulate into an <code>int</code> and return it (unboxing does the unwrapping for you); (2) <code>int valueOr(Integer maybe, int fallback)</code>: return <code>fallback</code> when <code>maybe == null</code>, otherwise return <code>maybe</code> (the null check is what makes the unboxing safe: trap #1 disarmed); (3) <code>boolean sameValue(Integer a, Integer b)</code>: return whether the two hold the same number: null-safe via <code>java.util.Objects.equals(a, b)</code>, and <b>never compare the wrappers with ==</b> (trap #2 disarmed).`,
@@ -318,7 +326,9 @@ behavior:`1. sum(List.of(1, 2, 3)) == 6: each Integer silently unboxes into the 
 hints:['sum needs no boxing code at all: write it as if the list held ints; that invisible convenience IS autoboxing.','valueOr: the danger line would be returning maybe when maybe is null; the if disarms it before the unboxing happens.','Objects.equals(a, b) handles all four null/value combinations correctly in one call, the standard null-safe comparison.']}},
 
 {id:'fun2b',title:'Conditionals: if/else to switch expressions',body:`
-<p>🌱 <b>Starting from zero:</b> so far our instructions run top to bottom, every time, the same way. Real programs make <b>decisions</b>: "IF the password is right, let them in, OTHERWISE show an error." That fork in the road is called a <b>conditional</b>: the program tests a yes/no question (built with the operators from the last lesson) and picks a path. Everything on this page is just increasingly polished ways of writing "if this, then that, otherwise the other."</p>
+
+
+<p>🌱 <b>Starting from zero:</b> so far our instructions run top to bottom, every time, the same way. Real programs make <b>decisions</b>: "IF the password is right, let them in, OTHERWISE show an error." That fork is a <b>conditional</b>. The program tests a yes/no question (built with the operators from the last lesson) and picks a path. Everything on this page is a way of writing "if this, then that, otherwise the other."</p>
 <p>Branching, from classic to modern:</p>
 <div class="codeSample" data-hl>if (score &gt;= 90) grade = "A";
 else if (score &gt;= 80) grade = "B";
@@ -342,11 +352,11 @@ String quarter = switch (month) {
         yield "invalid";
     }
 };</div>
-<p>Style rules that scale: prefer guard clauses over deep nesting; ternaries for tiny picks, never nested; switch <i>expressions</i> (with <code>-&gt;</code>) over statements: the compiler checks exhaustiveness and fall-through bugs vanish.</p>
+<p>Style rules that scale: guard clauses over deep nesting. Ternaries for tiny picks, never nested. Switch <i>expressions</i> (with <code>-&gt;</code>) over statements: the compiler checks exhaustiveness and fall-through bugs vanish.</p>
 
-<h4>Why the arrow form is worth adopting everywhere</h4>
-<p>The classic <code>switch</code> falls through to the next case unless you write <code>break</code>,
-which is almost never what anyone means and is a genuine source of bugs. The arrow form
+<h4>Adopt the arrow form everywhere</h4>
+<p>The classic <code>switch</code> falls through to the next case unless you write <code>break</code>.
+That is almost never what anyone means, and it causes bugs. The arrow form
 (<code>case A -&gt; …</code>) does not fall through, groups labels with a comma, and can be used as an
 <b>expression</b> that produces a value:</p>
 <div class="codeSample">String label = switch (status) {
@@ -355,19 +365,19 @@ which is almost never what anyone means and is a genuine source of bugs. The arr
     case CANCELLED    -&gt; "canceled";
 };   // no break, no fall-through, and the compiler checks every case is covered</div>
 <p>That last property is the valuable one. Over an <code>enum</code> or a sealed type the compiler requires
-exhaustiveness, so adding a new constant turns every switch that does not handle it into a compile error:
-the compiler finds the places you must update instead of your users finding them.</p>
+exhaustiveness. Add a new constant and every switch that does not handle it becomes a compile error.
+The compiler finds the places you must update instead of your users finding them.</p>
 
 <h4>Conditions that read as intent</h4>
-<p>Deeply nested <code>if</code> statements are usually a sign that guard clauses are missing. Returning
-early for the invalid cases leaves the main path unindented and unconditional, which is far easier to read
-than an arrow of nesting. And remember <code>&amp;&amp;</code> and <code>||</code> short-circuit, which is
-what makes <code>obj != null &amp;&amp; obj.isReady()</code> safe: the order of those operands is
+<p>Deeply nested <code>if</code> statements usually mean guard clauses are missing. Returning
+early for the invalid cases leaves the main path unindented and unconditional. Remember that
+<code>&amp;&amp;</code> and <code>||</code> short-circuit. That is what makes
+<code>obj != null &amp;&amp; obj.isReady()</code> safe, so the order of those operands is
 correctness, not style.</p>
 
 <h4>The equality trap</h4>
-<p><code>==</code> on objects compares references, so comparing strings with it works for literals, which
-are interned and shared, and then fails for a string built at runtime. That is the worst kind of bug: it
+<p><code>==</code> on objects compares references. Comparing strings with it works for literals, which
+are interned and shared, then fails for a string built at runtime. That is the worst kind of bug: it
 passes every test you wrote by hand and fails on real input. Use <code>equals</code> for content, and
 <code>Objects.equals</code> when either side may be null.</p>`,
 docs:[['if-then-else, Oracle','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/if.html'],['Switch expressions, dev.java','https://dev.java/learn/language-basics/switch-expression/']],
@@ -450,8 +460,10 @@ solution:`public class Quarters {
 }`}
 ]},
 {id:'fun2c',title:'Loops: for, while, do-while',body:`
-<p>🌱 <b>Starting from zero:</b> the second superpower after deciding is <b>repeating</b>. "Wash a dish. Is the sink empty? No, wash the next one": you loop until a condition says stop. A <b>loop</b> is exactly that: a block of instructions the program runs again and again while some yes/no test stays true. Java has three loop shapes, and the only skill is picking the one that matches how you\u0027d naturally describe the repetition out loud.</p>
-<p>The three classic loops, and when each earns its place:</p>
+
+
+<p>🌱 <b>Starting from zero:</b> the second superpower after deciding is <b>repeating</b>. "Wash a dish. Is the sink empty? No, wash the next one": you loop until a condition says stop. A <b>loop</b> is a block of instructions the program runs again and again while some yes/no test stays true. Java has three loop shapes. The only skill is picking the one that matches how you would describe the repetition out loud.</p>
+<p>The three classic loops, and when each fits:</p>
 <div class="codeSample" data-hl>for (int i = 0; i &lt; 10; i++) { ... }   // known count / need the index
 
 while (queue.hasWork()) { ... }        // unknown count, maybe zero times
@@ -469,34 +481,33 @@ outer:                                  // labeled break: escape nested loops
 for (int r = 0; r &lt; rows; r++)
     for (int c = 0; c &lt; cols; c++)
         if (grid[r][c] == target) break outer;</div>
-<p>Choose by intent: <code>for</code> when the count is known, <code>while</code> when it isn't, <code>do-while</code> when the body must run first (input loops). Off-by-one errors live at the boundaries. Always test first and last iterations mentally. The enhanced for (next lesson) replaces most index loops over collections.</p>
+<p>Off-by-one errors live at the boundaries. Always test the first and last iterations in your head. The enhanced for (next lesson) replaces most index loops over collections.</p>
 
 <h4>The off-by-one, and how to stop making it</h4>
 <p>Nearly every loop bug is a boundary: <code>&lt;</code> where <code>&lt;=</code> was meant, or starting at
-1 where the data starts at 0. Two habits remove most of them. Say the range out loud, "from zero, while
-less than length", and let the collection tell you its own bounds rather than hard-coding a number that
-some later edit will invalidate.</p>
+1 where the data starts at 0. Say the range out loud, "from zero, while
+less than length". Let the collection tell you its own bounds rather than hard-coding a number that
+a later edit will invalidate.</p>
 <p>Better still, avoid the index when you do not need it. <code>for (String s : list)</code> cannot go out
-of bounds, because there is no bound to get wrong. Reach for the counted loop only when the index is part
+of bounds, because there is no bound to get wrong. Use the counted loop only when the index is part
 of the problem.</p>
 
 <h4>break, continue and the loop that will not end</h4>
-<p><code>break</code> leaves the loop; <code>continue</code> skips to the next iteration, and in a
-<code>for</code> it still runs the update expression, while in a <code>while</code> it does not, which is
+<p><code>break</code> leaves the loop. <code>continue</code> skips to the next iteration. In a
+<code>for</code> it still runs the update expression. In a <code>while</code> it does not, which is
 how an infinite loop is written by accident:</p>
 <div class="codeSample">int i = 0;
 while (i &lt; 10) {
     if (skip(i)) continue;   // i is never incremented -> spins forever
     i++;
 }</div>
-<p>A <code>while</code> whose update sits at the bottom of the body is fragile for exactly this reason. If
+<p>A <code>while</code> whose update sits at the bottom of the body is fragile for this reason. If
 you find yourself writing one, a <code>for</code> probably expresses it better.</p>
 
 <h4>Choosing the shape</h4>
 <p><b>for</b> when you know how many times, or need the index. <b>while</b> when the end condition is
 discovered as you go: reading lines, polling, consuming a queue. <b>do-while</b> when the body must run at
-least once, which in practice means prompting for input: ask, validate, ask again. The rarest of the three,
-and when it fits nothing else reads as well.</p>`,
+least once, which in practice means prompting for input: ask, validate, ask again. It is the rarest of the three.</p>`,
 docs:[['The for statement (Oracle)','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/for.html'],['while & do-while (Oracle)','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/while.html'],['Branching statements (Oracle)','https://docs.oracle.com/javase/tutorial/java/nutsandbolts/branch.html']],
 exs:[
 {title:'Classic for: sum the evens',
@@ -588,7 +599,9 @@ solution:`public class Grid {
 }`}
 ]},
 {id:'fun2d',title:'Iterating collections: Iterator → for-each → forEach',body:`
-<p>🌱 <b>Starting from zero:</b> programs constantly work with <b>groups</b> of things: all the players, every line of a file, each item in a cart. Java calls these groups <i>collections</i> (a fuller tour comes in two lessons; for now: a List is simply an ordered bunch of values). The everyday need is to <b>visit every item and do something to it</b>, like going down a checklist. This lesson shows the three ways Java lets you walk a collection, from the old manual way to the modern one-liner.</p>
+
+
+<p>🌱 <b>Starting from zero:</b> programs work with <b>groups</b> of things: all the players, every line of a file, each item in a cart. Java calls these groups <i>collections</i>. A fuller tour comes in two lessons. For now, a List is an ordered bunch of values. The everyday need is to <b>visit every item and do something to it</b>, like going down a checklist. Java has three ways to walk a collection, from the old manual way to the modern one-liner.</p>
 <p>Three generations of the same job:</p>
 <div class="codeSample" data-hl>// 1) explicit Iterator, verbose, but the ONLY safe way to remove while iterating
 Iterator&lt;String&gt; it = names.iterator();
@@ -606,29 +619,29 @@ for (Map.Entry&lt;String, Double&gt; e : prices.entrySet())
 names.forEach(System.out::println);
 names.removeIf(String::isBlank);        // the safe-removal one-liner
 prices.forEach((k, v) -&gt; System.out.println(k + " = " + v));</div>
-<p>The rule that bites everyone once: mutating a collection inside its own enhanced for throws <code>ConcurrentModificationException</code>; use <code>Iterator.remove()</code> or, better, <code>removeIf</code>. The enhanced for works on any <code>Iterable</code> (you built one in the Modern Java stream) and arrays.</p>
+<p>The rule that bites everyone once: mutating a collection inside its own enhanced for throws <code>ConcurrentModificationException</code>. Use <code>Iterator.remove()</code> or, better, <code>removeIf</code>. The enhanced for works on any <code>Iterable</code> (you built one in the Modern Java stream) and on arrays.</p>
 
-<h4>Why there are three ways, and which to reach for</h4>
-<p>Each generation removed a category of mistake rather than merely shortening the code. The explicit
-<code>Iterator</code> exposes <code>hasNext</code> and <code>next</code>, so it is the only form that can
+<h4>Why there are three ways, and which to use</h4>
+<p>Each generation removed a category of mistake. The explicit
+<code>Iterator</code> exposes <code>hasNext</code> and <code>next</code>. It is the only form that can
 remove safely mid-traversal, and the only one where you can get the sequence wrong. The enhanced
-<code>for</code> hides the iterator entirely, which removes the off-by-one and the "called next twice"
-bug in one stroke. <code>forEach</code> with a lambda goes further and hides the loop.</p>
-<p>The default is the enhanced <code>for</code>. Reach for the explicit iterator when you need
-<code>remove</code>, and for <code>forEach</code> when the body is a single action you are handing to
+<code>for</code> hides the iterator, which removes the off-by-one and the "called next twice"
+bug. <code>forEach</code> with a lambda also hides the loop.</p>
+<p>The default is the enhanced <code>for</code>. Use the explicit iterator when you need
+<code>remove</code>. Use <code>forEach</code> when the body is a single action you are handing to
 someone else's code: a stream pipeline, a parallel traversal, a callback.</p>
 
 <h4>What forEach gives up</h4>
-<p>You cannot <code>break</code>, you cannot <code>continue</code>, and a <code>return</code> inside the
-lambda returns from the lambda rather than the enclosing method. So a search loop that stops early stays a
-loop, or becomes a stream with <code>findFirst</code>. Checked exceptions cannot escape either, which is
-why a <code>forEach</code> over IO-throwing code fills with try/catch noise that a plain loop would not
+<p>You cannot <code>break</code> or <code>continue</code>, and a <code>return</code> inside the
+lambda returns from the lambda, not the enclosing method. So a search loop that stops early stays a
+loop, or becomes a stream with <code>findFirst</code>. Checked exceptions cannot escape either, so
+a <code>forEach</code> over IO-throwing code fills with try/catch noise that a plain loop would not
 need.</p>
 
 <h4>The exception everyone meets once</h4>
 <p><code>ConcurrentModificationException</code> is not about threads, despite the name. A single thread
-removing from a list inside its own enhanced <code>for</code> triggers it, because the iterator holds a
-modification count and checks it on every step. It is a <b>fail-fast</b> design: the alternative is
+removing from a list inside its own enhanced <code>for</code> triggers it. The iterator holds a
+modification count and checks it on every step. This is <b>fail-fast</b> design. The alternative is
 undefined behavior that silently skips elements. The fixes, in order of preference:
 <code>list.removeIf(predicate)</code>, an explicit <code>Iterator</code> with
 <code>iterator.remove()</code>, or building a new collection and replacing the old one.</p>`,
@@ -725,7 +738,9 @@ public class Modern {
 }`}
 ]},
 {id:'fun3',title:'Methods, overloading, static vs instance',body:`
-<p>🌱 <b>Starting from zero:</b> a <b>method</b> is a named recipe: a chunk of instructions you write once, give a name, and then run whenever you like by calling that name. Recipes take ingredients (<i>parameters</i>) and hand back a result (the <i>return value</i>): "greet, given a name, gives back a greeting." Naming recipes is how programs stay readable: instead of one endless scroll of instructions, you compose small named steps. This lesson covers writing them, and one Java wrinkle: whether a recipe belongs to the whole class (static) or to one particular object (instance), a distinction that will fully click after the objects lesson.</p>
+
+
+<p>🌱 <b>Starting from zero:</b> a <b>method</b> is a named recipe: a chunk of instructions you write once, give a name, and run whenever you like by calling that name. Recipes take ingredients (<i>parameters</i>) and hand back a result (the <i>return value</i>): "greet, given a name, gives back a greeting." Naming recipes is how programs stay readable. Instead of one endless scroll of instructions, you compose small named steps. This lesson covers writing them, plus one Java wrinkle: whether a recipe belongs to the whole class (static) or to one object (instance). That distinction will click fully after the objects lesson.</p>
 <p><b>Static</b> members belong to the class (one shared copy, no object needed). <b>Instance</b> members belong to each object. <b>Overloading</b> = same method name, different parameter lists, resolved at compile time.</p>
 <div class="codeSample" data-hl>public class Counter {
     private int count;              // instance state
@@ -740,30 +755,30 @@ public class Modern {
     public void add(int n)    { count += n; }
     public void add(int n, int times) { count += n * times; }
 }</div>
-<p>Rule of thumb: if a method uses no instance fields, it can be static. Utility methods (like <code>Math.max</code>) are static; behavior tied to object state is instance.</p>
+<p>Rule of thumb: if a method uses no instance fields, it can be static.</p>
 
 <h4>Overloading is resolved by the compiler, not at runtime</h4>
 <p>When several methods share a name, the compiler picks one from the <i>declared</i> types of the
-arguments, before the program runs. That is why a <code>null</code> argument can be ambiguous (it fits
-several overloads equally), and why widening a parameter type can silently change which method a caller
-ends up in. Overload for genuine convenience, on clearly different types; when the parameters are the same
+arguments, before the program runs. So a <code>null</code> argument can be ambiguous: it fits
+several overloads equally. Widening a parameter type can silently change which method a caller
+ends up in. Overload for convenience, on clearly different types. When the parameters are the same
 shape and only the meaning differs, two well-named methods beat one clever name.</p>
 
-<h4>static versus instance, stated precisely</h4>
-<p>An instance method has a <code>this</code>; a static one does not. Everything else follows. A static
-method cannot read instance fields because there is no instance to read them from, which is why the
+<h4>static versus instance</h4>
+<p>An instance method has a <code>this</code>. A static one does not. Everything else follows. A static
+method cannot read instance fields because there is no instance to read them from, so the
 compiler rejects it rather than guessing. Utility functions that depend only on their arguments are
-naturally static (<code>Math.max</code>, <code>List.of</code>), and anything that expresses the behavior
+naturally static (<code>Math.max</code>, <code>List.of</code>). Anything that expresses the behavior
 of one object should be an instance method.</p>
-<p>The trap is <b>static mutable state</b>: a static field is shared by everything in the process, so it is
-a global variable with better manners, and under concurrency it needs the same care as any other shared
+<p>The trap is <b>static mutable state</b>. A static field is shared by everything in the process, so it is
+a global variable with better manners. Under concurrency it needs the same care as any other shared
 mutable thing.</p>
 
 <h4>Signatures, and what a good one says</h4>
-<p>The signature is the part callers depend on, so it is worth more thought than the body. Name it for what
+<p>The signature is the part callers depend on, so give it more thought than the body. Name it for what
 it does from the caller's side. Keep the parameter list short: more than three or four is usually a
-missing type. Return a value rather than mutating an argument, because a method that quietly changes what
-it was given is one whose call site lies about what happens. And prefer returning an empty collection over
+missing type. Return a value rather than mutating an argument. A method that changes what
+it was given has a call site that lies about what happens. Prefer returning an empty collection over
 <code>null</code>, so no caller has to remember a check.</p>`,
 docs:[['Defining Methods, Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/methods.html'],['Class vs instance members, Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/classvars.html']],
 ex:{title:'Overloaded Temperature',
@@ -803,8 +818,11 @@ solution:`public class Temperature {
     }
 }`}},
 {id:'fun3b',title:'Constructors: every kind and when to use each',body:`
-<p>🌱 <b>Starting from zero:</b> when a new object is created (a new bank account, a new player), someone has to fill in its starting details: no account should exist without an owner. A <b>constructor</b> is the special setup recipe that runs exactly once, at the moment of creation, and its whole job is making sure the object starts life valid and complete. Java gives you several flavors of constructor for different situations; this lesson tours them.</p>
-<p>A constructor runs when <code>new</code> creates an object; its one job is to establish a valid initial state. The kinds:</p>
+
+
+
+<p>🌱 <b>Starting from zero:</b> when a new object is created (a new bank account, a new player), someone has to fill in its starting details. No account should exist without an owner. A <b>constructor</b> is the setup recipe that runs once, when <code>new</code> creates the object. Its one job is to make sure the object starts life valid and complete. Java gives you several kinds of constructor for different situations. This lesson tours them.</p>
+<p>The kinds:</p>
 <div class="codeSample" data-hl>public class Account {
     private final String owner;
     private long cents;
@@ -837,7 +855,7 @@ class Ids {
 }
 Temperature.of(72, "F");                          // ...and static factories (you
                                                   // built these two lessons ago!)</div>
-<p>In a subclass, the first line is implicitly <code>super()</code>; if the parent lacks a no-arg constructor you must call <code>super(args)</code> explicitly, first line. Constructors aren't inherited and can't be abstract, final or static. Frameworks care too: JPA entities need a no-arg constructor; Spring injects through the parameterized one.</p>`,
+<p>In a subclass, the first line is implicitly <code>super()</code>. If the parent lacks a no-arg constructor you must call <code>super(args)</code> explicitly, first line. Constructors are not inherited and cannot be abstract, final or static. Frameworks care too. <b>JPA</b>, the Java Persistence API, is the standard for mapping Java objects to database tables: you annotate a class and the provider (usually Hibernate) writes the SQL. JPA entities need a no-arg constructor, and Spring injects through the parameterized one.</p>`,
 docs:[['Providing constructors (Oracle)','https://docs.oracle.com/javase/tutorial/java/javaOO/constructors.html'],['this(...) chaining (Oracle)','https://docs.oracle.com/javase/tutorial/java/javaOO/thiskey.html'],['Effective Java: static factories (item summary)','https://www.baeldung.com/java-constructors-vs-static-factory-methods']],
 exs:[
 {title:'Overloading & this(...) chaining',
@@ -967,8 +985,10 @@ class Duration2 {
 }`}
 ]},
 {id:'fun4',title:'Encapsulation: classes done right',body:`
-<p>🌱 <b>Starting from zero:</b> think of a vending machine. You interact with buttons and a coin slot; you cannot reach inside and rearrange the cans, and that restriction is exactly why the machine stays reliable. <b>Encapsulation</b> is building your objects the same way: the data inside is off-limits (private), and the only way in is through the buttons the class chooses to offer (its methods), each of which can refuse nonsense. It is the single most important habit in object-oriented programming, and this lesson shows how Java enforces it.</p>
-<p>Encapsulation = fields are <code>private</code>; the class guards its own invariants through methods. Nobody outside can put the object into an invalid state.</p>
+
+
+<p>🌱 <b>Starting from zero:</b> think of a vending machine. You use the buttons and the coin slot. You cannot reach inside and rearrange the cans, and that restriction is why the machine stays reliable. <b>Encapsulation</b> builds objects the same way. The data inside is off-limits (private). The only way in is through the methods the class offers, each of which can refuse nonsense. It is the most important habit in object-oriented programming, and this lesson shows how Java enforces it.</p>
+<p>Encapsulation = fields are <code>private</code>, and the class guards its own invariants through methods. Nobody outside can put the object into an invalid state.</p>
 <div class="codeSample" data-hl>public class BankAccount {
     private long balanceCents;   // never negative, the class enforces it
 
@@ -979,11 +999,11 @@ class Duration2 {
 
     public long balance() { return balanceCents; }
 }</div>
-<p><b>Those keywords (<code>private</code>, <code>public</code>) are access modifiers, and they deserve exact definitions</b>, because they are how a class draws the line between its inside and its outside. Java has four levels, from most to least restrictive:</p>
+<p><b><code>private</code> and <code>public</code> are access modifiers.</b> They are how a class draws the line between its inside and its outside. Java has four levels, from most to least restrictive:</p>
 <ul>
-<li><b><code>private</code></b>: visible only <i>inside this class</i>. Not subclasses, not neighbors, nobody. The default choice for every field, and for any helper method that exists only to serve the class internally.</li>
-<li><b>package-private</b> (no keyword at all): visible to every class <i>in the same package</i>. What you get when you write no modifier. Useful for collaborating classes that ship together and for test access, invisible beyond the package boundary.</li>
-<li><b><code>protected</code></b>: package-private <i>plus subclasses anywhere</i>. You met it on <code>Account</code>'s <code>protected long cents</code> in the inheritance lesson: it invites subclasses to touch state directly. That invitation is real coupling (every subclass now depends on that field existing forever), so treat protected fields as a deliberate design decision, not a reflex.</li>
+<li><b><code>private</code></b>: visible only <i>inside this class</i>. Not subclasses, not neighbors, nobody. The default choice for every field, and for any helper method that serves the class internally.</li>
+<li><b>package-private</b> (no keyword at all): visible to every class <i>in the same package</i>. What you get when you write no modifier. Useful for collaborating classes that ship together and for test access. Invisible beyond the package boundary.</li>
+<li><b><code>protected</code></b>: package-private <i>plus subclasses anywhere</i>. You met it on <code>Account</code>'s <code>protected long cents</code> in the inheritance lesson. It invites subclasses to touch state directly. That is real coupling: every subclass now depends on that field existing forever. Treat protected fields as a deliberate design decision, not a reflex.</li>
 <li><b><code>public</code></b>: visible to <i>all code everywhere</i>. This is your API.</li>
 </ul>
 <div class="codeSample">who can see it?          private   (none)pkg   protected   public
@@ -991,8 +1011,8 @@ same class                  ✓          ✓           ✓          ✓
 same package                ✗          ✓           ✓          ✓
 subclass (other package)    ✗          ✗           ✓          ✓
 everyone else               ✗          ✗           ✗          ✓</div>
-<p><b>The impact is bigger than visibility: it's changeability.</b> Everything <code>public</code> is a promise: other code may now depend on it, so renaming or removing it breaks callers (in a library, forever). Everything <code>private</code> is yours to rewrite tonight without telling anyone. That's why BankAccount above works: <code>balanceCents</code> is private, so the <i>only</i> paths to it are deposit's validation and balance's read: no external code can set it to -50, and the class could switch to a different representation tomorrow without any caller noticing. The working rule: <b>start everything private and widen only when a real caller forces you to</b>: you can always open access later; taking it back is a breaking change.</p>
-<p>Validate in constructors and mutators, keep fields <code>final</code> when they never change, and expose the minimum surface. (Money as <code>long</code> cents, never <code>double</code>: floating point can't represent 0.10 exactly.)</p>`,
+<p><b>Access controls changeability, not only visibility.</b> Everything <code>public</code> is a promise. Other code may depend on it, so renaming or removing it breaks callers (in a library, forever). Everything <code>private</code> is yours to rewrite tonight without telling anyone. That is why BankAccount above works. <code>balanceCents</code> is private, so the <i>only</i> paths to it are deposit's validation and balance's read. No external code can set it to -50, and the class could switch representation tomorrow without any caller noticing. The working rule: <b>start everything private and widen only when a real caller forces you to.</b> You can always open access later. Taking it back is a breaking change.</p>
+<p>Validate in constructors and mutators, keep fields <code>final</code> when they never change, and expose the minimum surface. Money is <code>long</code> cents, never <code>double</code>: floating point cannot represent 0.10 exactly.</p>`,
 docs:[['Access Control, Oracle','https://docs.oracle.com/javase/tutorial/java/javaOO/accesscontrol.html'],['OOP concepts, Baeldung','https://www.baeldung.com/java-oop']],
 ex:{title:'A safe BankAccount',
 prompt:`Implement <code>BankAccount</code>: private <code>long balanceCents</code>; <code>deposit(long cents)</code> throws <code>IllegalArgumentException</code> for amounts &le; 0; <code>withdraw(long cents)</code> throws <code>IllegalArgumentException</code> for amounts &le; 0 and <code>IllegalStateException</code> if it would overdraw; <code>long balance()</code> returns the current balance.`,
@@ -1033,6 +1053,7 @@ solution:`public class BankAccount {
     }
 }`}},
 {id:'fun4b',title:'Inheritance with extends',body:`
+
 <p><code>extends</code> creates an <b>is-a</b> relationship: a subclass inherits every field and method of its superclass, then adds to or specializes it. A <code>SavingsAccount</code> <i>is an</i> <code>Account</code>: it gets deposit/balance for free and adds interest.</p>
 <div class="codeSample" data-hl>class Account {
     protected long cents;                       // protected = visible to subclasses
@@ -1051,8 +1072,8 @@ class SavingsAccount extends Account {          // inherits deposit, balance, ce
         return super.balance() + 1;             // super.x calls the parent version
     }
 }</div>
-<p>✋ <b>Pause: that <code>@Override</code> is the first <i>annotation</i> you've met in the dojo.</b> Anything starting with <code>@</code> is an annotation: a machine-readable label you attach to code. By itself it changes nothing about what the method does; it's metadata that <i>tools</i> read and act on. <code>@Override</code> is read by the <b>compiler</b>, and it means: "I claim this method replaces one inherited from the superclass; fail the build if it doesn't." That claim has teeth: without it, a typo like <code>balence()</code> silently creates a <i>new</i> method and the parent's version keeps running; with it, the same typo is a compile error at the exact line. That's the annotation pattern in general: state your intent so a machine can verify or act on it. ⚠️ <b>Capitalization matters</b>: an annotation is a named type like a class, and Java is case-sensitive: it's <code>@Override</code>, never <code>@override</code> or <code>@OVERRIDE</code>. The lowercase version isn't a milder warning, it's a compile error (<i>cannot find symbol</i>), because no type with that name exists. Annotation names follow the same UpperCamelCase convention as class names: <code>@Override</code>, <code>@Test</code>, <code>@FunctionalInterface</code>. You'll soon meet annotations read by test runners and frameworks instead of the compiler (<code>@Test</code>, <code>@Service</code>, <code>@WebServlet</code>), and when you're ready to see how they really work (retention, targets, reading them via reflection, building your own), the <b>Time, Testing, Reflection &amp; the JVM</b> stream covers exactly that in its <i>Annotations &amp; reflection</i> and <i>Annotation mastery</i> lessons.</p>
-<p>The rules that matter: a class <code>extends</code> <b>exactly one</b> superclass (single inheritance, but it may <code>implements</code> many interfaces); the subclass constructor implicitly calls <code>super()</code> first, or you call <code>super(args)</code> explicitly; <code>@Override</code> replaces a method (the compiler verifies the signature matches); <code>super.method()</code> reaches the parent's version; <code>final</code> on a method or class forbids overriding/extending. An <code>abstract</code> class can't be instantiated and may declare <code>abstract</code> methods subclasses must implement. Prefer shallow hierarchies: deep inheritance chains are a classic maintainability trap ("favor composition over inheritance").</p>`,
+<p>✋ <b>Pause: that <code>@Override</code> is the first <i>annotation</i> you've met in the dojo.</b> Anything starting with <code>@</code> is an annotation: a machine-readable label on code. It changes nothing about what the method does. It's metadata that <i>tools</i> read and act on. The <b>compiler</b> reads <code>@Override</code>, which claims: "this method replaces one inherited from the superclass; fail the build if it doesn't." Without it, a typo like <code>balence()</code> silently creates a <i>new</i> method and the parent's version keeps running. With it, the same typo is a compile error at that line. ⚠️ <b>Capitalization matters.</b> An annotation is a named type like a class, and Java is case-sensitive: <code>@Override</code>, never <code>@override</code> or <code>@OVERRIDE</code>. The lowercase version is a compile error (<i>cannot find symbol</i>) because no such type exists. Annotation names use UpperCamelCase like class names: <code>@Override</code>, <code>@Test</code>, <code>@FunctionalInterface</code>. You'll soon meet annotations read by test runners and frameworks instead of the compiler (<code>@Test</code>, <code>@Service</code>, <code>@WebServlet</code>). How they work underneath (retention, targets, reading them via reflection, building your own) is in the <b>Time, Testing, Reflection &amp; the JVM</b> stream, lessons <i>Annotations &amp; reflection</i> and <i>Annotation mastery</i>.</p>
+<p>The rules: a class <code>extends</code> <b>exactly one</b> superclass (single inheritance), though it may <code>implements</code> many interfaces. The subclass constructor calls <code>super()</code> first, implicitly, unless you call <code>super(args)</code> yourself. <code>@Override</code> replaces a method, and the compiler checks the signature matches. <code>super.method()</code> reaches the parent's version. <code>final</code> on a method or class forbids overriding or extending. An <code>abstract</code> class can't be instantiated and may declare <code>abstract</code> methods that subclasses must implement. Prefer shallow hierarchies. Deep inheritance chains are a classic maintainability trap ("favor composition over inheritance").</p>`,
 docs:[['Inheritance, Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/subclasses.html'],['Overriding & super, Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/super.html'],['Abstract methods & classes','https://docs.oracle.com/javase/tutorial/java/IandI/abstract.html']],
 exs:[
 {title:'Specialize with extends & super',
@@ -1117,7 +1138,8 @@ class Square extends Shape {
 }`}
 ]},
 {id:'fun5',title:'Inheritance, interfaces & polymorphism',body:`
-<p>An <code>interface</code> is a contract; a class <code>implements</code> it. A class <code>extends</code> one superclass but can implement many interfaces. <b>Polymorphism</b>: code written against the interface works with any implementation: the JVM dispatches to the actual object's method at runtime.</p>
+
+<p>An <code>interface</code> is a contract. A class <code>implements</code> it. A class <code>extends</code> one superclass but can implement many interfaces. <b>Polymorphism</b>: code written against the interface works with any implementation, because the JVM dispatches to the actual object's method at runtime.</p>
 <div class="codeSample" data-hl>interface Shape {
     double area();
     default String describe() { return "shape with area " + area(); }
@@ -1131,16 +1153,16 @@ class Circle implements Shape {
 
 Shape s = new Circle(2);   // interface type, concrete object
 s.area();                  // runtime dispatch → Circle.area()</div>
-<p><b>Polymorphism deserves a slower look: it is the core payoff of object orientation.</b> The word means "many forms": <i>one</i> piece of code, written against <i>one</i> type, produces <i>different behavior</i> depending on which concrete object is actually there. Two types are in play in <code>Shape s = new Circle(2)</code>: the <b>declared type</b> (<code>Shape</code>) decides what you're <i>allowed to call</i>: the compiler checks against it; the <b>runtime type</b> (<code>Circle</code>) decides <i>what actually runs</i>: the JVM looks at the real object at the moment of the call and dispatches to its override. That lookup is called <b>dynamic dispatch</b>, and it happens on every non-static, non-final method call in Java.</p>
-<p>Why it matters is best seen in a loop:</p>
+<p><b>Polymorphism is the core payoff of object orientation.</b> The word means "many forms": <i>one</i> piece of code, written against <i>one</i> type, behaves <i>differently</i> depending on the concrete object. Two types are in play in <code>Shape s = new Circle(2)</code>. The <b>declared type</b> (<code>Shape</code>) decides what you're <i>allowed to call</i>; the compiler checks against it. The <b>runtime type</b> (<code>Circle</code>) decides <i>what runs</i>; the JVM looks at the real object at the moment of the call and dispatches to its override. That lookup is <b>dynamic dispatch</b>. It happens on every non-static, non-final method call in Java.</p>
+<p>A loop shows why it matters:</p>
 <div class="codeSample" data-hl>Shape[] shapes = { new Circle(2), new Rectangle(3, 4), new Circle(1) };
 double total = 0;
 for (Shape s : shapes) {
     total += s.area();     // SAME line of code, three different methods run
 }</div>
-<p>That loop knows nothing about circles or rectangles, and that ignorance is the feature. Add a <code>Triangle implements Shape</code> tomorrow and the loop handles it <i>without being touched</i>: behavior was extended without modifying existing code (you'll meet this again as the open/closed principle, and it's why <code>totalArea(Shape[])</code> in the exercise never needs an <code>if (s instanceof Circle)</code> chain: the dispatch IS the branching). The alternative, a switch over types, must be found and edited everywhere, every time a type is added.</p>
-<p>One disambiguation, since the word gets overloaded (pun intended): what this lesson shows is <b>subtype polymorphism</b>, the "real" one people mean by default. Java has two cousins: <b>overloading</b> (same method name, different parameter lists, resolved by the <i>compiler</i> from the declared argument types, no runtime lookup) and <b>generics</b> (<code>List&lt;T&gt;</code>: one class parameterized over many types, coming up in the generics lessons). Keeping the three apart is a classic interview question and an everyday reading skill.</p>
-<p>Prefer interfaces over concrete inheritance for flexibility. Always mark overrides with <code>@Override</code>; the compiler then catches signature typos.</p>`,
+<p>That loop knows nothing about circles or rectangles. Add a <code>Triangle implements Shape</code> tomorrow and the loop handles it <i>without being touched</i>: behavior extended without modifying existing code. You'll meet this again as the open/closed principle. It's also why <code>totalArea(Shape[])</code> in the exercise never needs an <code>if (s instanceof Circle)</code> chain: the dispatch is the branching. The alternative, a switch over types, must be edited everywhere each time a type is added.</p>
+<p>One disambiguation, since the word gets overloaded (pun intended). This lesson shows <b>subtype polymorphism</b>, the one people mean by default. Java has two cousins. <b>Overloading</b>: same method name, different parameter lists, resolved by the <i>compiler</i> from the declared argument types, no runtime lookup. <b>Generics</b>: <code>List&lt;T&gt;</code>, one class parameterized over many types, coming up in the generics lessons. Keeping the three apart is a classic interview question and an everyday reading skill.</p>
+<p>Prefer interfaces over concrete inheritance for flexibility. Always mark overrides with <code>@Override</code> so the compiler catches signature typos.</p>`,
 docs:[['Interfaces, Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/createinterface.html'],['Polymorphism, Oracle','https://docs.oracle.com/javase/tutorial/java/IandI/polymorphism.html']],
 ex:{title:'Shapes, polymorphically',
 prompt:`Define interface <code>Shape</code> with <code>double area()</code>. Implement <code>Circle(double radius)</code> (&pi;r²) and <code>Rectangle(double w, double h)</code> (w×h), both using <code>@Override</code>. Add a class <code>Geometry</code> with <code>static double totalArea(Shape[] shapes)</code> summing areas polymorphically.`,
@@ -1198,7 +1220,8 @@ class Geometry {
     }
 }`}},
 {id:'fun6',title:'Collections & generics',body:`
-<p>🌱 <b>Starting from zero:</b> three containers cover most of programming. A <b>List</b> is a shopping list: items in order, repeats allowed. A <b>Set</b> is a guest list: order optional, but nobody appears twice. A <b>Map</b> is a phone book: look something up by name and get its entry. Java ships all three ready-made, and the angle brackets (like <code>List&lt;String&gt;</code>) are labels declaring what the container holds. Learn to pick the right container for the job and half of everyday coding becomes filling in the other half.</p>
+
+<p>🌱 <b>Starting from zero:</b> three containers cover most of programming. A <b>List</b> is a shopping list: items in order, repeats allowed. A <b>Set</b> is a guest list: order optional, but nobody appears twice. A <b>Map</b> is a phone book: look something up by name and get its entry. Java ships all three, and the angle brackets (like <code>List&lt;String&gt;</code>) declare what the container holds.</p>
 <p>The core interfaces: <code>List</code> (ordered, duplicates), <code>Set</code> (unique), <code>Map</code> (key→value). Generics (<code>List&lt;String&gt;</code>) make them type-safe at compile time. Program to the interface, choose the implementation:</p>
 <div class="codeSample" data-hl>List&lt;String&gt; names = new ArrayList&lt;&gt;();      // fast random access
 Set&lt;String&gt;  seen  = new HashSet&lt;&gt;();        // O(1) contains, no order
@@ -1210,17 +1233,17 @@ for (Map.Entry&lt;String,Integer&gt; e : freq.entrySet())
 
 List.of(1, 2, 3);        // immutable literal (Java 9+)
 new TreeSet&lt;&gt;(names);    // sorted unique</div>
-<p><code>TreeSet</code>/<code>TreeMap</code> keep sorted order; <code>LinkedHashMap</code> keeps insertion order. Generic methods declare their own type parameter: <code>static &lt;T&gt; T first(List&lt;T&gt; list)</code>.</p>
+<p><code>TreeSet</code>/<code>TreeMap</code> keep sorted order. <code>LinkedHashMap</code> keeps insertion order. Generic methods declare their own type parameter: <code>static &lt;T&gt; T first(List&lt;T&gt; list)</code>.</p>
 
 <h4>Choosing the implementation</h4>
-<p>The interface says what it does; the implementation decides what it costs. <b><code>ArrayList</code></b> is a resizable array: O(1) access by index and appending, O(n) inserting or removing in the middle. <b><code>LinkedList</code></b> is O(1) at the ends and O(n) to reach a position, and its per-element node objects make it slower in practice for nearly everything; the practical advice is ArrayList unless you have measured otherwise. <b><code>HashMap</code></b> and <b><code>HashSet</code></b> give O(1) average lookup with no ordering; <b><code>LinkedHashMap</code></b> preserves insertion order for a small cost; <b><code>TreeMap</code></b> and <b><code>TreeSet</code></b> keep keys sorted at O(log n) and add navigation methods like <code>firstKey</code> and <code>headMap</code>.</p>
+<p>The interface says what it does. The implementation decides what it costs. <b><code>ArrayList</code></b> is a resizable array: O(1) access by index and appending, O(n) inserting or removing in the middle. <b><code>LinkedList</code></b> is O(1) at the ends and O(n) to reach a position, and its per-element node objects make it slower in practice for nearly everything. Use ArrayList unless you have measured otherwise. <b><code>HashMap</code></b> and <b><code>HashSet</code></b>: O(1) average lookup, no ordering. <b><code>LinkedHashMap</code></b>: insertion order for a small cost. <b><code>TreeMap</code></b> and <b><code>TreeSet</code></b>: keys sorted at O(log n), plus navigation methods like <code>firstKey</code> and <code>headMap</code>.</p>
 
 <h4>The contract that makes hashing work</h4>
-<p>Anything used as a <code>HashMap</code> key or a <code>HashSet</code> element must implement <code>equals</code> and <code>hashCode</code> together: equal objects must have equal hash codes. Override one and not the other and objects vanish into maps: you put a value in, look it up with an equal key, and get <code>null</code>, because the lookup went to a different bucket. This is the most common silent bug in beginner Java, and records fix it by generating both for you.</p>
-<p>The second half of the contract is that a key must not <b>mutate</b> while it is in the map. Change a field the hash code depends on and the entry is now in the wrong bucket, unreachable by any lookup and still occupying memory. Immutable keys (Strings, records, boxed numbers) avoid the whole category.</p>
+<p>Anything used as a <code>HashMap</code> key or a <code>HashSet</code> element must implement <code>equals</code> and <code>hashCode</code> together: equal objects must have equal hash codes. Override one and not the other and objects vanish into maps. You put a value in, look it up with an equal key, and get <code>null</code>, because the lookup went to a different bucket. This is the most common silent bug in beginner Java. Records generate both for you.</p>
+<p>The second half of the contract: a key must not <b>mutate</b> while it is in the map. Change a field the hash code depends on and the entry is in the wrong bucket, unreachable by any lookup and still occupying memory. Immutable keys (Strings, records, boxed numbers) avoid the problem.</p>
 
-<h4>Modern conveniences worth adopting</h4>
-<p><code>List.of</code>, <code>Set.of</code> and <code>Map.of</code> build compact <b>immutable</b> collections, which is the right default for constants and for anything you return from a method: a caller cannot corrupt what it cannot modify. Note they reject nulls and throw on modification rather than ignoring it. On maps, <code>getOrDefault</code>, <code>computeIfAbsent</code> and <code>merge</code> replace the check-then-act patterns that fill older code: <code>counts.merge(word, 1, Integer::sum)</code> is the whole of a word count. And iterate with the enhanced <code>for</code>; removing during iteration is what <code>Iterator.remove</code> or <code>removeIf</code> is for, and doing it any other way is how you meet <code>ConcurrentModificationException</code>.</p>`,
+<h4>Modern conveniences</h4>
+<p><code>List.of</code>, <code>Set.of</code> and <code>Map.of</code> build compact <b>immutable</b> collections: the right default for constants and for anything you return from a method, since a caller can't corrupt what it can't modify. They reject nulls and throw on modification. On maps, <code>getOrDefault</code>, <code>computeIfAbsent</code> and <code>merge</code> replace the check-then-act patterns in older code. <code>counts.merge(word, 1, Integer::sum)</code> is a whole word count. Iterate with the enhanced <code>for</code>. To remove during iteration, use <code>Iterator.remove</code> or <code>removeIf</code>; any other way gets you <code>ConcurrentModificationException</code>.</p>`,
 docs:[['Collections Trail, Oracle','https://docs.oracle.com/javase/tutorial/collections/index.html'],['Generics, dev.java','https://dev.java/learn/generics/']],
 ex:{title:'Word frequency',
 prompt:`Write class <code>WordStats</code> with <code>static Map&lt;String,Integer&gt; frequencies(List&lt;String&gt; words)</code> returning how often each word appears (case-insensitive: lowercase the keys), and <code>static Set&lt;String&gt; uniqueSorted(List&lt;String&gt; words)</code> returning the distinct lowercased words in alphabetical order.`,
@@ -1259,8 +1282,10 @@ public class WordStats {
 }`}}
 ,
 {id:'enm1',title:'Enums in depth: fields, methods & strategy',body:`
-<p>🌱 <b>Starting from zero:</b> some values come from a short fixed menu: days of the week, sizes S/M/L, shipping speeds. You COULD store them as free text, but then nothing stops "Tuseday" from sneaking in. An <b>enum</b> is Java\u0027s multiple-choice type: you declare the complete list of allowed values once, and the compiler guarantees no other value ever appears. Even better, each choice can carry its own data and behavior, which turns out to matter more than it first looks.</p>
-<p>A Java enum is a full class with a fixed set of instances. Each constant can carry <b>fields</b> (set via a private constructor), expose <b>methods</b>, and even override methods <b>per constant</b>, which turns an enum into a strategy table with exhaustive switch support for free.</p>
+
+
+<p>🌱 <b>Starting from zero:</b> some values come from a short fixed menu: days of the week, sizes S/M/L, shipping speeds. You could store them as free text, but then nothing stops "Tuseday" from sneaking in. An <b>enum</b> is Java's multiple-choice type. You declare the complete list of allowed values once, and the compiler guarantees no other value ever appears. Each choice can also carry its own data and behavior, which matters more than it first looks.</p>
+<p>A Java enum is a full class with a fixed set of instances. Each constant can carry <b>fields</b> (set via a private constructor), expose <b>methods</b>, and override methods <b>per constant</b>. That turns an enum into a strategy table, with exhaustive switch support for free.</p>
 <div class="codeSample">enum Op {
     ADD("+")  { double apply(double a, double b) { return a + b; } },
     MUL("*")  { double apply(double a, double b) { return a * b; } };
@@ -1271,7 +1296,7 @@ public class WordStats {
     abstract double apply(double a, double b);   // each constant must implement
 }</div>
 <ul>
-<li><b>Built-ins</b>: <code>values()</code> (all constants, in declaration order), <code>valueOf("ADD")</code> (throws on unknown names), <code>name()</code>, <code>ordinal()</code>. Never persist <code>ordinal()</code>; reordering constants silently corrupts stored data.</li>
+<li><b>Built-ins</b>: <code>values()</code> (all constants, in declaration order), <code>valueOf("ADD")</code> (throws <code>IllegalArgumentException</code> on unknown names), <code>name()</code>, <code>ordinal()</code>. Never persist <code>ordinal()</code>: reordering constants silently corrupts stored data. Persist <code>name()</code> instead.</li>
 <li><b>EnumMap / EnumSet</b>: specialized, array-backed collections keyed by enum, faster and smaller than HashMap/HashSet. <code>new EnumMap&lt;&gt;(Op.class)</code>, <code>EnumSet.of(Op.ADD)</code>, <code>EnumSet.allOf(Op.class)</code>.</li>
 <li><b>Singleton</b>: a one-constant enum is the hardest-to-break singleton in Java, serialization- and reflection-proof (Effective Java, Item 3).</li>
 </ul>`,
@@ -1309,13 +1334,14 @@ solution:`public enum Shipping {
     }
 }`}},
 {id:'ctr1',title:'The equals / hashCode / toString contracts',body:`
-<p>🌱 <b>Starting from zero:</b> when are two things "the same"? Two printouts of the same photo are equal in content but are not one object; identical twins are equal-looking but different people. Java needs YOUR answer to this question for every class you write, because its containers ask it constantly: "is this key already in the map?", "does the set contain this?". Three small methods are how a class answers: equals (are we the same in content?), hashCode (a quick fingerprint used for fast lookup), toString (how do I describe myself in print?). This lesson teaches the rules that keep the answers consistent.</p>
+
+<p>🌱 <b>Starting from zero:</b> when are two things "the same"? Two printouts of the same photo are equal in content but are not one object. Identical twins are equal-looking but different people. Java needs your answer to this question for every class you write, because its containers keep asking it: "is this key already in the map?", "does the set contain this?". Three small methods are how a class answers: equals (are we the same in content?), hashCode (a quick fingerprint used for fast lookup), toString (how do I describe myself in print?). This lesson covers the rules that keep the answers consistent.</p>
 <p>Half the collections library only works if your classes honor three contracts from <code>Object</code>. Get them wrong and HashMap "loses" your keys, HashSet holds duplicates, and lists can't find elements.</p>
 <ul>
-<li><b>equals</b> must be reflexive, symmetric, transitive, consistent, and return false for null. The signature is <code>equals(Object)</code>; overloading with your own type creates a second, unrelated method the collections never call.</li>
-<li><b>hashCode</b>: if <code>a.equals(b)</code> then <code>a.hashCode() == b.hashCode()</code>; <i>always override them together</i>. Equal objects landing in different hash buckets is the classic "my key disappeared" bug.</li>
+<li><b>equals</b> must be reflexive, symmetric, transitive, consistent, and return false for null. The signature is <code>equals(Object)</code>. Overloading with your own type creates a second, unrelated method the collections never call.</li>
+<li><b>hashCode</b>: if <code>a.equals(b)</code> then <code>a.hashCode() == b.hashCode()</code>. <i>Always override them together.</i> Equal objects landing in different hash buckets is the classic "my key disappeared" bug.</li>
 <li><b>toString</b>: for humans and logs. Make it cheap and unambiguous: <code>Money[amount=12.50, currency=EUR]</code>.</li>
-<li><b>Comparable</b>: <code>compareTo</code> should be <i>consistent with equals</i> (<code>compareTo == 0</code> ⇔ <code>equals</code>): TreeSet/TreeMap use compareTo for equality, so inconsistency changes what "duplicate" means between HashSet and TreeSet.</li>
+<li><b>Comparable</b>: <code>compareTo</code> should be <i>consistent with equals</i> (<code>compareTo == 0</code> ⇔ <code>equals</code>). TreeSet/TreeMap use compareTo for equality, so inconsistency changes what "duplicate" means between HashSet and TreeSet.</li>
 </ul>
 <div class="codeSample">@Override public boolean equals(Object o) {
     if (this == o) return true;                     // fast path
@@ -1324,7 +1350,7 @@ solution:`public enum Shipping {
 }
 @Override public int hashCode() { return Objects.hash(cents, currency); }
 @Override public String toString() { return "Money[" + cents + " " + currency + "]"; }</div>
-<p><b>Records write all of this for you</b>: field-by-field equals, hashCode, toString. Use a record when the type is plain immutable data; write the methods by hand only when identity is more subtle than "all fields equal".</p>`,
+<p><b>Records write all of this for you</b>: field-by-field equals, hashCode, toString. Use a record when the type is plain immutable data. Write the methods by hand only when identity is more subtle than "all fields equal".</p>`,
 docs:[['Object.equals (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)'],['Objects.hash (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Objects.html'],['Comparable (API)','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Comparable.html']],
 ex:{title:'A well-behaved value class',
 prompt:`Write <code>Version</code> (fields <code>int major, minor</code>) implementing <code>Comparable&lt;Version&gt;</code>: (1) <code>equals(Object)</code> using the <code>instanceof</code> pattern with the fast <code>this == o</code> path, (2) <code>hashCode()</code> via <code>Objects.hash</code>, (3) <code>toString()</code> returning like <code>1.4</code>, (4) <code>compareTo</code> by major then minor (use <code>Integer.compare</code>), consistent with equals. Mark all four <code>@Override</code> where applicable.`,
@@ -1381,12 +1407,13 @@ public class Version implements Comparable<Version> {
     }
 }`}},
 {id:'big1',title:'BigDecimal & precise numbers',body:`
-<p><code>0.1 + 0.2 != 0.3</code> in any binary floating-point language: doubles cannot represent most decimal fractions. For money and anything regulatory, Java's answer is <code>BigDecimal</code>: exact decimal arithmetic with explicit rounding. (The lightweight alternative you've seen in this dojo, <code>long</code> cents, is fine inside one service; BigDecimal is the tool when you need scale, division, rates and interop.)</p>
+
+<p><code>0.1 + 0.2 != 0.3</code> in any binary floating-point language: doubles cannot represent most decimal fractions. For money and anything regulatory, Java's answer is <code>BigDecimal</code>: exact decimal arithmetic with explicit rounding. The lighter alternative you've seen in this dojo, <code>long</code> cents, is fine inside one service. BigDecimal is the tool when you need scale, division, rates and interop.</p>
 <ul>
-<li><b>Creation</b>: <code>new BigDecimal("0.1")</code> or <code>BigDecimal.valueOf(0.1)</code>, <b>never</b> <code>new BigDecimal(0.1)</code>, which faithfully preserves the double's error: 0.1000000000000000055511151231257827…</li>
-<li><b>Scale &amp; rounding</b>: every value has a scale (digits after the point). Division must be told how to round: <code>a.divide(b, 2, RoundingMode.HALF_UP)</code>; without it, 1/3 throws <code>ArithmeticException</code>. Finance default is <code>HALF_EVEN</code> ("banker's rounding"); tills usually use <code>HALF_UP</code>.</li>
-<li><b>equals vs compareTo</b>: <code>equals</code> compares scale too: <code>1.0</code> and <code>1.00</code> are <i>not equal</i> but <code>compareTo</code> says 0. Compare money with <code>compareTo</code>, and think twice before using BigDecimal as a HashMap key.</li>
-<li><b>Immutable</b>: every operation returns a new object: <code>total.add(x)</code> alone does nothing; reassign: <code>total = total.add(x)</code>.</li>
+<li><b>Creation</b>: <code>new BigDecimal("0.1")</code> or <code>BigDecimal.valueOf(0.1)</code>, <b>never</b> <code>new BigDecimal(0.1)</code>, which preserves the double's error: 0.1000000000000000055511151231257827…</li>
+<li><b>Scale &amp; rounding</b>: every value has a scale (digits after the point). Division must be told how to round: <code>a.divide(b, 2, RoundingMode.HALF_UP)</code>. Without it, 1/3 throws <code>ArithmeticException</code>. Finance default is <code>HALF_EVEN</code> ("banker's rounding"). Tills usually use <code>HALF_UP</code>.</li>
+<li><b>equals vs compareTo</b>: <code>equals</code> compares scale too. <code>1.0</code> and <code>1.00</code> are <i>not equal</i>, but <code>compareTo</code> says 0. Compare money with <code>compareTo</code>, and think twice before using BigDecimal as a HashMap key.</li>
+<li><b>Immutable</b>: every operation returns a new object. <code>total.add(x)</code> alone does nothing; reassign: <code>total = total.add(x)</code>.</li>
 </ul>
 <div class="codeSample">BigDecimal price = new BigDecimal("19.99");
 BigDecimal qty   = BigDecimal.valueOf(3);
@@ -1398,33 +1425,30 @@ BigDecimal gross = net.add(vat);                                 // 71.36</div>
 
 <h4>Scale is part of the value, and it propagates</h4>
 <p>A <code>BigDecimal</code> is an unscaled integer plus a scale, so <code>1.10</code> is 110 with scale 2.
-That is why <code>equals</code> says <code>1.0</code> and <code>1.00</code> differ (they are different
-values in this representation), and why <b><code>compareTo</code> is the comparison you almost always
-want</b>. The same fact makes <code>BigDecimal</code> a poor <code>HashSet</code> member or map key,
-because two amounts a human would call equal land in different buckets.</p>
-<p>Arithmetic propagates scale in ways worth knowing before they surprise you: addition and subtraction
-take the larger scale, multiplication <i>adds</i> the scales, so a price with scale 2 times a quantity with
-scale 2 gives scale 4. If you want money back out, you must say so (<code>setScale(2,
-RoundingMode.HALF_UP)</code>), and saying so is a decision about rounding, not formatting.</p>
+That is why <code>equals</code> says <code>1.0</code> and <code>1.00</code> differ, why
+<b><code>compareTo</code> is the comparison you almost always want</b>, and why <code>BigDecimal</code> is a
+poor <code>HashSet</code> member or map key: two amounts a human would call equal land in different
+buckets.</p>
+<p>Arithmetic propagates scale. Addition and subtraction take the larger scale. Multiplication <i>adds</i>
+the scales, so a price with scale 2 times a quantity with scale 2 gives scale 4. If you want money back out,
+you must say so (<code>setScale(2, RoundingMode.HALF_UP)</code>), and that is a decision about rounding,
+not formatting.</p>
 
 <h4>Choosing a rounding mode is a business decision</h4>
 <p><code>HALF_UP</code> rounds 2.5 to 3 and is what most people mean by "round". <code>HALF_EVEN</code>,
-banker's rounding, sends 2.5 to 2 and 3.5 to 4, so a long series of roundings does not drift upward, which
-is why it is the finance default and the JDK's default for <code>MathContext.DECIMAL64</code>. Picking one
-is not a style choice: across millions of line items the difference is real money, and auditors ask which
-you used.</p>
-<p><code>RoundingMode.UNNECESSARY</code> is worth knowing as a tool: it throws if rounding would be
-required, which turns "we assumed this divides exactly" into a loud failure rather than a silent
-adjustment.</p>
+banker's rounding, sends 2.5 to 2 and 3.5 to 4, so a long series of roundings does not drift upward. That
+makes it the finance default and the JDK's default for <code>MathContext.DECIMAL64</code>. Across millions
+of line items the difference is real money, and auditors ask which you used.</p>
+<p><code>RoundingMode.UNNECESSARY</code> throws if rounding would be required. It turns "we assumed this
+divides exactly" into a loud failure rather than a silent adjustment.</p>
 
 <h4>Where it costs, and the alternative</h4>
 <p><code>BigDecimal</code> is immutable, so every operation allocates, and it is roughly an order of
-magnitude slower than primitive arithmetic. In a tight loop over millions of amounts that matters; in a
-request handler it never will. The lighter option is <b>integer minor units</b> (store cents as a
-<code>long</code>), which is exact, fast and perfectly adequate while everything stays in one currency and
-divisions are rare. Reach for <code>BigDecimal</code> when you need division, rates, tax, or interoperation
-with systems that speak decimals. And never, in either scheme, let a <code>double</code> touch money on the
-way in or out.</p>`,
+magnitude slower than primitive arithmetic. In a tight loop over millions of amounts that matters. In a
+request handler it never will. The lighter option is <b>integer minor units</b> (cents as a
+<code>long</code>): exact, fast and adequate while everything stays in one currency and divisions are rare.
+Reach for <code>BigDecimal</code> when you need division, rates, tax, or interoperation with systems that
+speak decimals. In either scheme, never let a <code>double</code> touch money on the way in or out.</p>`,
 docs:[['BigDecimal, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html'],['RoundingMode, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/RoundingMode.html']],
 ex:{title:'An exact invoice',
 prompt:`Write <code>Invoice</code> with <code>static BigDecimal gross(String unitPrice, int quantity, String vatRate)</code> returning the <b>gross total: unitPrice × quantity × (1 + vatRate)</b>, e.g. gross("19.99", 3, "0.19") == 71.36. Build the unit price and rate from the <b>String</b> constructor, multiply by quantity (<code>BigDecimal.valueOf(quantity)</code>), add the VAT portion, and return the total scaled to 2 with <code>RoundingMode.HALF_EVEN</code>. Also add <code>static boolean same(BigDecimal a, BigDecimal b)</code> returning true when the two are <b>numerically equal ignoring scale</b> (1.0 vs 1.00 → true). Do <b>not</b> use the double constructor anywhere.`,
@@ -1461,11 +1485,12 @@ public class Invoice {
     }
 }`}},
 {id:'str1',title:'String mastery: pool, builders & formatting',body:`
-<p>🌱 <b>Starting from zero:</b> text in Java (names, messages, file contents) lives in <b>String</b> objects, and Strings have one famous personality trait: they never change. "Modifying" a String actually manufactures a brand-new one, like getting a fresh printout instead of scribbling on the original. That design makes Strings safe to share everywhere, and it means building big text by repeated gluing is wasteful, which is why Java offers a dedicated workbench (StringBuilder) for assembly. This lesson covers both, plus formatting.</p>
-<p>Strings are <b>immutable</b>: every "modification" allocates a new object. That enables the <b>string pool</b> (identical literals share one instance, which is why <code>==</code> sometimes <i>seems</i> to work and then betrays you; always <code>equals()</code>) and makes strings safe as keys and across threads.</p>
+
+<p>🌱 <b>Starting from zero:</b> text in Java (names, messages, file contents) lives in <b>String</b> objects, and Strings never change. "Modifying" a String manufactures a brand-new one, like getting a fresh printout instead of scribbling on the original. That design makes Strings safe to share everywhere. It also means building big text by repeated gluing is wasteful, so Java offers a dedicated workbench (StringBuilder) for assembly. This lesson covers both, plus formatting.</p>
+<p>Strings are <b>immutable</b>: every "modification" allocates a new object. That enables the <b>string pool</b>, where identical literals share one instance. The pool is why <code>==</code> sometimes <i>seems</i> to work and then betrays you. Always use <code>equals()</code>. Immutability also makes strings safe as keys and across threads.</p>
 <ul>
 <li><b>Concatenation</b>: a single expression of <code>+</code> is fine (the compiler optimizes it). Concatenating <i>in a loop</i> is O(n²): each pass copies everything so far. Use <b>StringBuilder</b>: <code>sb.append(x)</code>, then one <code>sb.toString()</code>.</li>
-<li><b>Formatting</b>: <code>String.format("%s costs %.2f", name, price)</code>, or <code>"%.2f".formatted(price)</code>. <code>%s %d %.2f %n</code> cover 95% of use; <code>%,d</code> adds thousands separators.</li>
+<li><b>Formatting</b>: <code>String.format("%s costs %.2f", name, price)</code>, or <code>"%.2f".formatted(price)</code>. <code>%s %d %.2f %n</code> cover 95% of use. <code>%,d</code> adds thousands separators.</li>
 <li><b>Text blocks</b> (Java 15+): <code>"""..."""</code> for multi-line strings (JSON, SQL, HTML) with incidental indentation stripped.</li>
 <li><b>The everyday toolkit</b>: <code>join</code>, <code>split</code> (regex!), <code>strip</code> (Unicode-aware trim), <code>isBlank</code>, <code>repeat</code>, <code>contains</code>, <code>startsWith</code>, <code>lines()</code>, <code>chars()</code>.</li>
 </ul>
@@ -1509,12 +1534,14 @@ solution:`public class Receipt {
     }
 }`}},
 {id:'inr1',title:'Nested, inner & anonymous classes',body:`
+
+
 <p>Classes can live inside classes, in four flavors, each with a job:</p>
 <ul>
-<li><b>Static nested</b>: <code>static class Node</code>. No hidden reference to the outer instance; just a namespaced class. <i>Default choice</i>: helpers, builders, linked-list nodes. (You built these in the data-structures stream.)</li>
-<li><b>Inner (non-static)</b>: carries a hidden <code>Outer.this</code> reference. Use only when the object genuinely needs its parent (an <code>Iterator</code> over its collection). The hidden reference is a classic <b>memory-leak</b> source: an inner class handed to a long-lived listener keeps the whole outer object alive.</li>
-<li><b>Local</b>: declared inside a method; rare, but handy for a named throwaway type.</li>
-<li><b>Anonymous</b>: <code>new Interface() { ... }</code>, declaration + instantiation in one expression. Pre-lambda Java used these everywhere; today, a lambda beats an anonymous class for functional interfaces, but anonymous classes still win when you must override <i>multiple</i> methods or hold state.</li>
+<li><b>Static nested</b>: <code>static class Node</code>. No hidden reference to the outer instance, just a namespaced class. <i>Default choice</i>: helpers, builders, linked-list nodes. You built these in the data-structures stream.</li>
+<li><b>Inner (non-static)</b>: carries a hidden <code>Outer.this</code> reference. Use only when the object needs its parent (an <code>Iterator</code> over its collection). The hidden reference is a classic <b>memory-leak</b> source: an inner class handed to a long-lived listener keeps the whole outer object alive.</li>
+<li><b>Local</b>: declared inside a method. Rare, but handy for a named throwaway type.</li>
+<li><b>Anonymous</b>: <code>new Interface() { ... }</code>, declaration + instantiation in one expression. Pre-lambda Java used these everywhere. Today a lambda beats an anonymous class for functional interfaces, but anonymous classes still win when you must override <i>multiple</i> methods or hold state.</li>
 </ul>
 <div class="codeSample">List&lt;String&gt; names = new ArrayList&lt;&gt;(List.of("Ada", "Al", "Maria"));
 
@@ -1527,30 +1554,30 @@ names.sort(new Comparator&lt;String&gt;() {
 
 // same thing as a lambda, functional interface, one method
 names.sort((a, b) -&gt; Integer.compare(a.length(), b.length()));</div>
-<p><b>Capture rule</b>: local and anonymous classes (and lambdas) can only read local variables that are <i>effectively final</i>, assigned once. The workaround for a mutable counter is a one-element array or <code>AtomicInteger</code>; the better fix is usually restructuring.</p>
+<p><b>Capture rule</b>: local and anonymous classes (and lambdas) can only read local variables that are <i>effectively final</i>, assigned once. The workaround for a mutable counter is a one-element array or <code>AtomicInteger</code>. The better fix is usually restructuring.</p>
 
 <h4>The hidden reference, and the leak it causes</h4>
 <p>A non-static inner class holds an invisible pointer to the instance that created it. That is convenient
-until the inner object outlives its parent: a listener, a callback or a <code>Runnable</code> handed to a
+until the inner object outlives its parent. A listener, a callback or a <code>Runnable</code> handed to a
 long-lived executor keeps the entire outer object, and everything it references, alive for as long as
-the listener is registered. The heap dump shows the outer object retained by something that looks
-unrelated, which is why this is a classic and confusing leak.</p>
-<p>The rule that avoids it: <b>make it <code>static</code> unless it genuinely needs the outer
-instance.</b> A static nested class is just a namespaced class with no hidden state, which is what a
-<code>Node</code>, a <code>Builder</code> or a request DTO almost always wants to be.</p>
+the listener is registered. In the heap dump, the outer object is retained by something that looks
+unrelated.</p>
+<p>The rule that avoids it: <b>make it <code>static</code> unless it needs the outer instance.</b> A static
+nested class has no hidden state, which is what a <code>Node</code>, a <code>Builder</code> or a request
+DTO almost always wants to be. A <b>DTO</b> is a data transfer object: a plain class that only carries data
+across a boundary, such as the JSON an API sends or receives. No behavior, no database identity, so your
+internal model never leaks onto the wire.</p>
 
 <h4>Anonymous classes versus lambdas</h4>
-<p>Since lambdas arrived, an anonymous class is the right choice in exactly three situations: the interface
-has more than one abstract method, you need instance state or an initializer, or you want a real class name
-in the stack trace. Otherwise a lambda is shorter, cheaper and does not shadow <code>this</code>:
-inside an anonymous class <code>this</code> is the anonymous instance, while inside a lambda it is the
-enclosing object, and that difference has produced a great deal of confusion.</p>
+<p>Since lambdas arrived, an anonymous class is the right choice in three situations: the interface has more
+than one abstract method, you need instance state or an initializer, or you want a real class name in the
+stack trace. Otherwise a lambda is shorter, cheaper and does not shadow <code>this</code>. Inside an
+anonymous class <code>this</code> is the anonymous instance. Inside a lambda it is the enclosing object.</p>
 
 <h4>Where each one earns its place</h4>
-<p>Static nested for helpers and data holders. Inner for an object that is genuinely part of its parent:
-an <code>Iterator</code> over its own collection is the canonical example. Local for a class used once
-inside a single method, which is rare. Anonymous for the three cases above, and records for anything that
-is really just data.</p>`,
+<p>Static nested for helpers and data holders. Inner for an object that is part of its parent, like an
+<code>Iterator</code> over its own collection. Local for a class used once inside one method. Anonymous for
+the three cases above. Records for anything that is just data.</p>`,
 docs:[['Nested classes, dev.java','https://dev.java/learn/classes-objects/nested-classes/'],['Anonymous classes, Oracle tutorial','https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html']],
 ex:{title:'Three flavors, one file',
 prompt:`Write <code>Playlist</code>: (1) a <b>static nested</b> class <code>Track</code> (fields <code>String title; int seconds</code>, constructor). (2) A method <code>Comparator&lt;Track&gt; byLength()</code> returning an <b>anonymous class</b> implementing <code>Comparator&lt;Track&gt;</code> comparing by seconds with <code>Integer.compare</code>. (3) A method <code>Comparator&lt;Track&gt; byTitle()</code> returning the same idea as a <b>lambda</b> using <code>compareTo</code> on titles.`,
@@ -1599,6 +1626,7 @@ public class Playlist {
     }
 }`}},
 {id:'fun7',title:'User input & console I/O',body:`
+
 <p>Interactive programs read from <code>System.in</code>, almost always through a <code>Scanner</code>:</p>
 <div class="codeSample" data-hl>Scanner sc = new Scanner(System.in);
 
@@ -1614,46 +1642,50 @@ int age = sc.nextInt();
 sc.nextLine();                        // eat the leftover newline (classic trap)
 
 System.out.printf("Hello %s, age %d (%.1f in dog years)%n", name, age, age / 7.0);</div>
-<p>The two traps everyone hits: (1) <code>nextInt()</code> leaves the newline in the buffer, so a following <code>nextLine()</code> returns "", so consume it; (2) on invalid input you must <code>next()</code> to discard the bad token or the validation loop spins forever. Command-line arguments arrive in <code>main</code>'s <code>String[] args</code>. Don't close a Scanner wrapping System.in, which closes the stream for the whole JVM.</p>
+<p>Two traps everyone hits are in that code: the leftover newline after <code>nextInt()</code>, and the <code>next()</code> that discards a bad token. Both get a section below. Command-line arguments arrive in <code>main</code>'s <code>String[] args</code>.</p>
 <h4>Why <code>Scanner</code> confuses everyone once</h4>
-<p>The trouble is that <code>Scanner</code> has two different reading models and mixes them freely.
+<p><code>Scanner</code> has two different reading models and mixes them freely.
 Token-based methods (<code>nextInt</code>, <code>next</code>, <code>nextDouble</code>) read a value and
-<b>stop</b>, leaving everything after it, including the newline you pressed, sitting in the buffer.
+<b>stop</b>, leaving everything after it, including the newline you pressed, in the buffer.
 Line-based <code>nextLine</code> reads to the next newline and consumes it.</p>
-<div class="codeSample" data-hl>// input typed:  "42\nAda\n"
-int n = sc.nextInt();     // reads 42, leaves "\nAda\n"
+<div class="codeSample" data-hl>// input typed:  "42
+Ada
+"
+int n = sc.nextInt();     // reads 42, leaves "
+Ada
+"
 String s = sc.nextLine(); // reads to the FIRST newline -> returns ""  !!
                           // the name was never read
 
 sc.nextInt(); sc.nextLine();   // the fix: discard the rest of the line
 String s2 = sc.nextLine();     // now this reads "Ada"</div>
-<p>Once you see it as "tokens leave the newline behind, lines consume it", the rule writes itself:
+<p>Tokens leave the newline behind, lines consume it. So:
 <b>after any token-based read, call <code>nextLine()</code> before reading a line.</b></p>
 
 <h4>Validation, and why <code>next()</code> is required</h4>
-<p><code>hasNextInt()</code> only <i>looks</i>; it does not consume. So a loop that checks and prints a
+<p><code>hasNextInt()</code> only <i>looks</i>. It does not consume. A loop that checks and prints a
 message without discarding the offending token examines the same bad input forever. <code>sc.next()</code>
-is what throws it away.</p>
-<p>The alternative shape, which scales better to real programs, is to read the whole line and parse it
-yourself in a <code>try</code>/<code>catch</code> around
-<code>Integer.parseInt</code>: you get the raw input for the error message, and there is no buffer state
-to reason about.</p>
+throws it away.</p>
+<p>The alternative shape, which scales better to real programs: read the whole line and parse it yourself
+in a <code>try</code>/<code>catch</code> around <code>Integer.parseInt</code>. You get the raw input for
+the error message, and there is no buffer state to reason about.</p>
 
 <h4>Do not close a <code>Scanner</code> over <code>System.in</code></h4>
-<p>Closing it closes the underlying stream, and <code>System.in</code> is process-wide, so every later
-read anywhere in the JVM fails with <code>NoSuchElementException</code>. This is one of the rare cases
-where try-with-resources is the wrong instinct: <code>System.in</code> is not yours to close, and the OS
-reclaims it when the process ends.</p>
+<p>Closing it closes the underlying stream. <code>System.in</code> is process-wide, so every later read
+anywhere in the JVM fails with <code>NoSuchElementException</code>. This is one of the rare cases where
+try-with-resources is the wrong instinct. <code>System.in</code> is not yours to close, and the OS reclaims
+it when the process ends.</p>
 
 <h4><code>printf</code>, and where console I/O stops</h4>
-<p><code>printf</code> is worth learning properly: <code>%s</code>, <code>%d</code>, <code>%.2f</code> for
-fixed decimals, <code>%-10s</code> to left-pad a column, and <code>%n</code> rather than <code>\n</code>
+<p><code>printf</code>: <code>%s</code>, <code>%d</code>, <code>%.2f</code> for fixed decimals,
+<code>%-10s</code> to left-pad a column, and <code>%n</code> rather than <code>
+</code>
 because it emits the correct line separator for the platform.</p>
-<p>And the boundary: this is how you learn and prototype, not how programs take input in production. Real
+<p>The boundary: this is how you learn and prototype, not how programs take input in production. Real
 ones read arguments (<code>args</code>, and a library like picocli once there are more than two),
-environment variables for configuration, and files or network for data, largely because none of those
-require a human to be present. Do notice that <code>args</code> is empty, not null, when nothing was
-passed, so <code>args.length</code> is the check.</p>`,
+environment variables for configuration, and files or network for data. None of those require a human to
+be present. <code>args</code> is empty, not null, when nothing was passed, so <code>args.length</code> is
+the check.</p>`,
 docs:[['Scanner, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Scanner.html'],['Formatting output, Oracle','https://docs.oracle.com/javase/tutorial/java/data/numberformat.html']],
 ex:{title:'A prompt that survives bad input',
 prompt:`Write <code>Prompt</code> with two static methods taking a <code>java.util.Scanner</code> parameter (passing it in keeps them testable): <code>static int askAge(java.util.Scanner sc)</code>: loop with <code>hasNextInt()</code>, discarding invalid tokens with <code>sc.next()</code>, then return <code>nextInt()</code>; and <code>static String welcome(java.util.Scanner sc)</code>: read a full name with <code>nextLine()</code> and return it formatted via <code>String.format("Welcome, %s!", name)</code>.`,
@@ -1689,7 +1721,8 @@ public class Prompt {
     }
 }`}},
 {id:'dep1',title:'Files & I/O (NIO.2)',body:`
-<p>🌱 <b>Starting from zero:</b> everything your program keeps in variables evaporates the moment it exits. To make anything survive (a report, a save-game, a log), you write it to a <b>file</b> on disk, and later read it back. This lesson is Java\u0027s modern way of doing exactly that: naming a location on disk, reading what\u0027s there, writing something new.</p>
+
+<p>🌱 <b>Starting from zero:</b> everything your program keeps in variables evaporates the moment it exits. To make anything survive (a report, a save-game, a log), you write it to a <b>file</b> on disk and later read it back. This lesson is Java's modern way of doing that: naming a location on disk, reading what's there, writing something new.</p>
 <p>Modern file I/O lives in <code>java.nio.file</code>: <code>Path</code> addresses files, <code>Files</code> does the work. The old <code>File</code> class is legacy.</p>
 <div class="codeSample" data-hl>Path p = Path.of("reports", "q3.txt");
 
@@ -1708,12 +1741,12 @@ try (Stream&lt;Path&gt; tree = Files.walk(Path.of("src"))) {    // recursive lis
 <p><code>Files.lines</code> and <code>Files.walk</code> hold OS resources: always use try-with-resources. Everything throws <code>IOException</code> (checked).</p>
 <h4><code>Path</code> and <code>Files</code>: why the split</h4>
 <p>The old <code>File</code> class tried to be both the name of a file and the operations on it, and did
-both poorly: failures returned <code>false</code> with no reason, symbolic links were invisible, and there
-was no way to ask the filesystem anything interesting. NIO.2 separates the two: a <b>Path</b> is a name
-(it need not exist; constructing one touches no disk), and <b>Files</b> is where every operation lives.</p>
-<p>The practical gain is error reporting. <code>file.delete()</code> returning <code>false</code> tells you
-nothing; <code>Files.delete(p)</code> throws <code>NoSuchFileException</code> or
-<code>DirectoryNotEmptyException</code> or <code>AccessDeniedException</code>, the actual reason.</p>
+both poorly. Failures returned <code>false</code> with no reason, symbolic links were invisible, and there
+was no way to ask the filesystem anything interesting. NIO.2 separates the two. A <b>Path</b> is a name;
+it need not exist, and constructing one touches no disk. <b>Files</b> is where every operation lives.</p>
+<p>The gain is error reporting. <code>file.delete()</code> returning <code>false</code> tells you
+nothing. <code>Files.delete(p)</code> throws <code>NoSuchFileException</code>,
+<code>DirectoryNotEmptyException</code> or <code>AccessDeniedException</code>: the actual reason.</p>
 
 <h4>Choosing a read method by file size</h4>
 <div class="codeSample" data-hl>Files.readString(p)      loads the WHOLE file into memory. fine for
@@ -1724,18 +1757,18 @@ Files.lines(p)           lazy: one line at a time, constant memory.
                          holds an open file handle -> try-with-resources.
 
 Files.newBufferedReader  explicit control, when you want the loop.</div>
-<p><code>Files.lines</code> and <code>Files.walk</code> return streams backed by an open handle, and a
-stream is not closed by consuming it. Leak enough and you hit the process limit on open files, which
-manifests as unrelated code failing to open anything at all.</p>
+<p><code>Files.lines</code> and <code>Files.walk</code> return streams backed by an open handle, and
+consuming a stream does not close it. Leak enough and you hit the process limit on open files. Unrelated
+code then fails to open anything at all.</p>
 
 <h4>Two silent correctness traps</h4>
 <p><b>Charset.</b> <code>readString</code> and <code>writeString</code> default to UTF-8, which is right.
 The older <code>FileReader</code>/<code>FileWriter</code> default to the <i>platform</i> charset, so a file
-written on one machine can be read as mojibake on another. Always be explicit, or use the
-<code>Files</code> methods that default correctly.</p>
-<p><b>Partial writes.</b> A crash mid-write leaves a truncated file, and for anything that matters (a
-config, a saved document, a data file), that is corruption. The safe pattern is to write a temporary file
-in the same directory and then move it into place atomically:</p>
+written on one machine can read as mojibake on another. Be explicit, or use the <code>Files</code> methods
+that default correctly.</p>
+<p><b>Partial writes.</b> A crash mid-write leaves a truncated file. For a config, a saved document or a
+data file, that is corruption. The safe pattern: write a temporary file in the same directory, then move it
+into place atomically:</p>
 <div class="codeSample" data-hl>Path tmp = Files.createTempFile(target.getParent(), "w", ".tmp");
 Files.writeString(tmp, content);
 Files.move(tmp, target, StandardCopyOption.ATOMIC_MOVE,
@@ -1746,11 +1779,10 @@ Files.move(tmp, target, StandardCopyOption.ATOMIC_MOVE,
 
 <h4>Portability and paths from users</h4>
 <p>Build paths with <code>Path.of("a", "b")</code> or <code>resolve</code> rather than concatenating with
-<code>/</code>, and use <code>Path.getFileName()</code> rather than string splitting. And treat any path
+<code>/</code>, and use <code>Path.getFileName()</code> rather than string splitting. Treat any path
 containing user input as hostile: <code>../../etc/passwd</code> is <b>path traversal</b>, the file-system
-equivalent of SQL injection. Resolve against a known base directory, call
-<code>normalize()</code>, and then verify the result still <code>startsWith</code> the base; checking for
-".." in the string is not sufficient.</p>`,
+equivalent of SQL injection. Resolve against a known base directory, call <code>normalize()</code>, then
+verify the result still <code>startsWith</code> the base. Checking for ".." in the string is not enough.</p>`,
 docs:[['File I/O (NIO.2), Oracle','https://docs.oracle.com/javase/tutorial/essential/io/fileio.html'],['Files, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Files.html']],
 ex:{title:'Line counter',
 prompt:`Write <code>FileStats</code> with <code>static long nonBlankLines(java.nio.file.Path p) throws java.io.IOException</code> using <code>Files.lines</code> in a <b>try-with-resources</b>, filtering out blank lines and counting; and <code>static void saveReport(java.nio.file.Path p, long count) throws java.io.IOException</code> that ensures the parent directory exists (<code>createDirectories</code>) and writes <code>"lines: " + count</code> with <code>writeString</code>.`,
@@ -1788,15 +1820,17 @@ public class FileStats {
     }
 }`}},
 {id:'jvm1',title:'Inside the JVM: heap, stack & how methods run',body:`
-<p>Java code does not run on the CPU directly. <code>javac</code> compiles your <code>.java</code> source into portable <b>bytecode</b> (<code>.class</code> files); the <b>JVM</b> then executes that bytecode, first by interpreting it, and then, for "hot" methods run many times, by <b>JIT</b>-compiling them to native machine code for speed. That two-step is what "write once, run anywhere" actually means: the same bytecode runs on any machine that has a JVM.</p>
+
+
+<p>Java code does not run on the CPU directly. <code>javac</code> compiles your <code>.java</code> source into portable <b>bytecode</b> (<code>.class</code> files). The <b>JVM</b> then executes that bytecode, first by interpreting it, and then, for "hot" methods run many times, by <b>JIT</b>-compiling them to native machine code for speed. JIT is short for just-in-time: the compiler watches which methods run hot and compiles those while the program runs. That's why Java gets faster after warm-up and why the first seconds of a benchmark lie. That two-step is what "write once, run anywhere" means: the same bytecode runs on any machine that has a JVM.</p>
 <p>At run time the JVM divides memory into a few <b>runtime data areas</b>:</p>
 <ul>
-<li><b>Heap</b>: one big shared region where <i>every object and array lives</i>. It is shared across all threads and managed by the <b>garbage collector</b>, which reclaims objects nothing references anymore. Modern GCs are <i>generational</i>: new objects start in a "young" space and, if they survive, are promoted to an "old" space.</li>
-<li><b>Stack</b>: <i>one per thread</i>. It is a pile of <b>frames</b>, one per in-progress method call (details below). Fast, automatic, no GC needed.</li>
+<li><b>Heap</b>: one big shared region where <i>every object and array lives</i>. It is shared across all threads and managed by the <b>garbage collector</b>, or <b>GC</b>, which finds objects nothing can reach any more and frees their memory for you. The price is pauses, which is why heap size and collector choice matter under load. Modern GCs are <i>generational</i>: new objects start in a "young" space and, if they survive, are promoted to an "old" space.</li>
+<li><b>Stack</b>: <i>one per thread</i>. A pile of <b>frames</b>, one per in-progress method call (details below). Fast, automatic, no GC needed.</li>
 <li><b>Metaspace</b>: class metadata (the loaded class definitions, method bytecode, and the constant pool).</li>
 <li><b>PC register &amp; native stack</b>: per-thread bookkeeping for which instruction is executing and for native (non-Java) calls.</li>
 </ul>
-<p><b>How a method call works under the hood.</b> Every time you call a method, the JVM <b>pushes a new frame</b> onto the current thread&#8217;s stack. That frame holds the method&#8217;s <b>local variable array</b> (its parameters and locals) and an <b>operand stack</b> (a scratch workspace the bytecode uses to compute expressions). When the method returns, its frame is <b>popped</b> and its locals vanish instantly. This is why locals are cheap and thread-safe: each call has its own frame.</p>
+<p><b>How a method call works.</b> Every call <b>pushes a new frame</b> onto the current thread&#8217;s stack. The frame holds the method&#8217;s <b>local variable array</b> (its parameters and locals) and an <b>operand stack</b>, a scratch workspace the bytecode uses to compute expressions. When the method returns, its frame is <b>popped</b> and its locals vanish. Each call has its own frame, so locals are cheap and thread-safe.</p>
 <div class="codeSample" data-hl>int total = sum(2, 3);            // pushes a frame for sum(): locals a=2, b=3
 
 static int sum(int a, int b) {    // a, b live in THIS frame, on the stack
@@ -1805,8 +1839,8 @@ static int sum(int a, int b) {    // a, b live in THIS frame, on the stack
                                   // but the array OBJECT it points to lives on the HEAP
     return r;                     // frame pops; 'data' is now unreachable -> GC reclaims it later
 }</div>
-<p>So the split is simple: <b>primitives and references</b> (the arrows) sit in the stack frame; <b>the objects they point to</b> sit on the heap. This also explains Java&#8217;s "pass-by-value": Java copies the <i>value</i> you pass; for an object that copied value is the reference, so caller and callee end up pointing at the <i>same</i> heap object.</p>
-<p>The two classic failure modes fall right out of this design. Recurse too deeply and you keep pushing frames until the thread&#8217;s stack is exhausted: a <b>StackOverflowError</b>. Allocate more live objects than the heap can hold and the GC cannot help: an <b>OutOfMemoryError</b>. Knowing which memory area is involved tells you immediately which one you are looking at.</p>`,
+<p>The split: <b>primitives and references</b> (the arrows) sit in the stack frame; <b>the objects they point to</b> sit on the heap. This also explains Java&#8217;s "pass-by-value". Java copies the <i>value</i> you pass. For an object that value is the reference, so caller and callee point at the <i>same</i> heap object.</p>
+<p>Two classic failure modes fall out of this design. Recurse too deeply and you keep pushing frames until the thread&#8217;s stack is exhausted: a <b>StackOverflowError</b>. Allocate more live objects than the heap can hold and the GC cannot help: an <b>OutOfMemoryError</b>.</p>`,
 docs:[['JVM runtime data areas, JVM spec','https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-2.html#jvms-2.5'],['How the JVM works, Oracle','https://docs.oracle.com/javase/specs/jvms/se21/html/index.html'],['Garbage collection basics','https://docs.oracle.com/en/java/javase/21/gctuning/introduction-garbage-collection-tuning.html']],
 ex:{title:'Where does it live, and what breaks?',
 prompt:`Write class <code>Jvm</code> with two static methods. <code>String location(String what)</code>: <code>"object"</code>→<code>"heap"</code>, <code>"local-primitive"</code>→<code>"stack"</code>, <code>"reference-variable"</code>→<code>"stack"</code>, <code>"class-metadata"</code>→<code>"metaspace"</code>, else <code>"unknown"</code>. <code>String error(String cause)</code>: <code>"deep-recursion"</code>→<code>"StackOverflowError"</code>, <code>"too-many-objects"</code>→<code>"OutOfMemoryError"</code>, else <code>"unknown"</code>.`,

@@ -1,10 +1,10 @@
 STREAMS.push({icon:'🗄️',title:'Working with Databases',blurb:'From your first CREATE TABLE and SELECT to JDBC, transactions, Flyway migrations, and query performance.',lessons:[
 {id:'db0',title:'Databases 101: tables, keys & constraints',body:`
-<p>Before SQL tricks, the mental model. A <b>relational database</b> stores data in <b>tables</b>: named columns with fixed types, one <b>row</b> per fact. The engine (we use <b>PostgreSQL</b> throughout) enforces your rules so bad data physically cannot enter; that enforcement is what separates a database from a spreadsheet.</p>
+<p>First, the mental model. A <b>relational database</b> stores data in <b>tables</b>: named columns with fixed types, one <b>row</b> per fact. The engine (we use <b>PostgreSQL</b> throughout) enforces your rules, so bad data cannot enter. That enforcement is what separates a database from a spreadsheet.</p>
 <ul>
-<li><b>Primary key (PK)</b>: the column that uniquely identifies each row. The modern default: <code>id BIGSERIAL PRIMARY KEY</code> (an auto-incrementing 64-bit int). Every table gets one; no exceptions in this dojo.</li>
-<li><b>Foreign key (FK)</b>: a column pointing at another table's PK: <code>author_id BIGINT REFERENCES authors(id)</code>. The engine rejects orphans: no book can claim author 999 if author 999 doesn't exist. Relationships are data, not conventions.</li>
-<li><b>Column types</b> you'll actually use: <code>TEXT</code> / <code>VARCHAR(n)</code>, <code>BIGINT</code> / <code>INT</code>, <code>NUMERIC(12,2)</code> for money (never float; the BigDecimal lesson's argument, in SQL), <code>BOOLEAN</code>, <code>DATE</code> / <code>TIMESTAMPTZ</code>.</li>
+<li><b>Primary key (PK)</b>: the column that uniquely identifies each row. The modern default is <code>id BIGSERIAL PRIMARY KEY</code>, an auto-incrementing 64-bit int. Every table gets one. No exceptions in this dojo.</li>
+<li><b>Foreign key (FK)</b>: a column pointing at another table's PK: <code>author_id BIGINT REFERENCES authors(id)</code>. The engine rejects orphans. No book can claim author 999 if author 999 does not exist.</li>
+<li><b>Column types</b> you will use: <code>TEXT</code> / <code>VARCHAR(n)</code>, <code>BIGINT</code> / <code>INT</code>, <code>NUMERIC(12,2)</code> for money (never float, for the reasons in the BigDecimal lesson), <code>BOOLEAN</code>, <code>DATE</code> / <code>TIMESTAMPTZ</code>.</li>
 <li><b>Constraints</b> are declared rules: <code>NOT NULL</code> (value required), <code>UNIQUE</code> (no duplicates), <code>CHECK (price_cents &gt;= 0)</code> (arbitrary predicates), <code>DEFAULT now()</code> (fill when omitted).</li>
 </ul>
 <div class="codeSample">CREATE TABLE authors (
@@ -21,7 +21,7 @@ CREATE TABLE books (
   price_cents BIGINT NOT NULL CHECK (price_cents &gt;= 0),
   published   DATE
 );</div>
-<p>Read a schema like a sentence: "a book <i>must</i> have an existing author, a title, and a non-negative price; an email can appear once." Design tip that prevents years of pain: model the <b>one-to-many</b> direction consciously: the FK always lives on the many side (many books → one author).</p>`,
+<p>Read a schema like a sentence: "a book <i>must</i> have an existing author, a title, and a non-negative price; an email can appear once." One design rule prevents years of pain: model the <b>one-to-many</b> direction deliberately. The FK always lives on the many side (many books → one author).</p>`,
 docs:[['PostgreSQL tutorial (tables)','https://www.postgresql.org/docs/current/ddl-basics.html'],['Constraints','https://www.postgresql.org/docs/current/ddl-constraints.html'],['Data types','https://www.postgresql.org/docs/current/datatype.html']],
 ex:{title:'Design a schema',lang:'sql',
 prompt:`Write two CREATE TABLE statements for a tiny store: (1) <code>customers</code>: <code>id BIGSERIAL PRIMARY KEY</code>, <code>email TEXT NOT NULL UNIQUE</code>, <code>name TEXT NOT NULL</code>, <code>created_at TIMESTAMPTZ NOT NULL DEFAULT now()</code>. (2) <code>orders</code>: <code>id BIGSERIAL PRIMARY KEY</code>, a <code>customer_id</code> column that is <code>BIGINT NOT NULL</code> and <b>REFERENCES customers(id)</b>, <code>total_cents BIGINT NOT NULL</code> with a <b>CHECK that it is &gt;= 0</b>, and <code>placed_on DATE NOT NULL</code>.`,
@@ -52,46 +52,31 @@ behavior:`1. INSERT INTO customers(email, name) VALUES ('a@x.dev', 'Ada') succee
 hints:['Column definitions read: name TYPE constraint constraint...; the order of constraints on one line is flexible.','The FK is inline: customer_id BIGINT NOT NULL REFERENCES customers(id); no separate CONSTRAINT clause needed at this scale.','DEFAULT now() means the INSERT simply omits the column; the engine stamps it.']}},
 
 {id:'db0b',title:'SQL basics: reading with SELECT',body:`
-<p>SELECT is 80% of the SQL you will ever run. The clause order is fixed, and the engine applies them in a logical order worth memorizing: <code>FROM</code> → <code>WHERE</code> → <code>SELECT</code> list → <code>ORDER BY</code> → <code>LIMIT</code>.</p>
+<p>SELECT is 80% of the SQL you will ever run. The clause order is fixed, and the engine applies the clauses in a logical order: <code>FROM</code> → <code>WHERE</code> → <code>SELECT</code> list → <code>ORDER BY</code> → <code>LIMIT</code>.</p>
 <div class="codeSample">SELECT title, price_cents          -- which columns (or * for all: fine in psql, sloppy in code)
 FROM books
 WHERE price_cents &lt; 2000           -- rows must pass the predicate
   AND published IS NOT NULL        -- NULL needs IS / IS NOT, never  = NULL
 ORDER BY price_cents DESC, title   -- sort key, then tiebreaker; DESC per key
 LIMIT 10 OFFSET 20;                -- page 3 of 10-per-page</div>
-<p>The WHERE toolbox: <code>=</code> <code>&lt;&gt;</code> <code>&lt;</code> <code>&gt;=</code>; <code>IN ('a','b')</code>; <code>BETWEEN 10 AND 20</code> (inclusive); <code>LIKE 'Effective%'</code> (<code>%</code> any run, <code>_</code> one char; <code>ILIKE</code> = case-insensitive in Postgres); <code>IS NULL</code>. Strings take <b>single quotes</b> in SQL; double quotes mean identifiers.</p>
-<p>Two more first-week essentials:</p>
+<p>The WHERE toolbox: <code>=</code> <code>&lt;&gt;</code> <code>&lt;</code> <code>&gt;=</code>; <code>IN ('a','b')</code>; <code>BETWEEN 10 AND 20</code> (inclusive); <code>LIKE 'Effective%'</code> (<code>%</code> any run, <code>_</code> one char; <code>ILIKE</code> = case-insensitive in Postgres); <code>IS NULL</code>. Strings take <b>single quotes</b> in SQL. Double quotes mean identifiers.</p>
 <ul>
-<li><b>DISTINCT</b>: <code>SELECT DISTINCT author_id FROM books</code>: the unique set, not every row.</li>
-<li><b>Aggregates</b>: <code>COUNT(*)</code>, <code>SUM(x)</code>, <code>AVG(x)</code>, <code>MIN</code>/<code>MAX</code> collapse rows into one answer: <code>SELECT COUNT(*), AVG(price_cents) FROM books WHERE author_id = 3;</code>; grouping per author arrives with GROUP BY in the next lesson's queries.</li>
+<li><b>DISTINCT</b>: <code>SELECT DISTINCT author_id FROM books</code> returns the unique set, not every row.</li>
+<li><b>Aggregates</b>: <code>COUNT(*)</code>, <code>SUM(x)</code>, <code>AVG(x)</code>, <code>MIN</code>/<code>MAX</code> collapse rows into one answer: <code>SELECT COUNT(*), AVG(price_cents) FROM books WHERE author_id = 3;</code>. Grouping per author arrives with GROUP BY in the next lesson.</li>
 </ul>
-<p>Why <code>NULL = NULL</code> is not true: NULL means <i>unknown</i>, and "is unknown equal to unknown?" is itself unknown: three-valued logic. WHERE keeps only rows where the predicate is <i>true</i>, so unknowns silently drop. When a query "loses" rows, check for a NULL comparison first.</p>
 
-<h4>Why the logical order matters more than the written order</h4>
-<p>You write <code>SELECT</code> first and the engine evaluates it fourth. That single fact explains two
-things beginners find arbitrary. An alias defined in the <code>SELECT</code> list cannot be used in
-<code>WHERE</code>, because the alias does not exist yet when the filter runs. And <code>WHERE</code>
-filters rows before grouping while <code>HAVING</code> filters after it, which is why one takes raw
-columns and the other takes aggregates.</p>
+<h4>The logical order matters more than the written order</h4>
+<p>You write <code>SELECT</code> first and the engine evaluates it fourth. So an alias defined in the <code>SELECT</code> list cannot be used in <code>WHERE</code>: it does not exist yet when the filter runs. And <code>WHERE</code> filters rows before grouping while <code>HAVING</code> filters after it, so one takes raw columns and the other takes aggregates.</p>
 
-<h4>NULL is not a value, and it changes comparisons</h4>
-<p><code>NULL</code> means <i>unknown</i>, so any comparison with it is unknown rather than false. That is
-why <code>WHERE email = NULL</code> matches nothing at all and <code>IS NULL</code> is required. The same
-logic bites in negation: <code>WHERE status &lt;&gt; 'shipped'</code> silently excludes rows where status
-is NULL, because unknown is not "different". If those rows should be included, say so:
-<code>OR status IS NULL</code>.</p>
+<h4>NULL changes comparisons</h4>
+<p><code>NULL</code> means <i>unknown</i>, so any comparison with it is unknown rather than false. "Is unknown equal to unknown?" is itself unknown: three-valued logic. WHERE keeps only rows where the predicate is <i>true</i>, so <code>WHERE email = NULL</code> matches nothing and <code>IS NULL</code> is required. <code>WHERE status &lt;&gt; 'shipped'</code> silently excludes rows where status is NULL, because unknown is not "different". If those rows should be included, say so: <code>OR status IS NULL</code>. When a query "loses" rows, check for a NULL comparison first.</p>
 
 <h4>Habits that keep a query well-behaved</h4>
 <ul>
-<li><b>Name your columns.</b> <code>SELECT *</code> in application code means the result shape changes
-whenever the table does, silently.</li>
-<li><b><code>LIMIT</code> while exploring.</b> A stray query against a large table is the easiest way to
-inconvenience a shared database.</li>
-<li><b><code>ORDER BY</code> is not optional if order matters.</b> Without it the engine may return rows
-in any order, and the order it happens to return today is not a promise; it changes when the plan
-changes.</li>
-<li><b><code>DISTINCT</code> is usually a symptom.</b> Duplicates in a result set most often mean a join
-matched more rows than you expected; removing them hides the cause rather than fixing it.</li>
+<li><b>Name your columns.</b> With <code>SELECT *</code> in application code, the result shape changes whenever the table does, silently.</li>
+<li><b><code>LIMIT</code> while exploring.</b> A stray query against a large table is the easiest way to inconvenience a shared database.</li>
+<li><b><code>ORDER BY</code> if order matters.</b> Without it the engine may return rows in any order, and that order changes when the plan changes.</li>
+<li><b><code>DISTINCT</code> is usually a symptom.</b> Duplicates most often mean a join matched more rows than you expected. Removing them hides the cause.</li>
 </ul>`,
 docs:[['PostgreSQL tutorial (queries)','https://www.postgresql.org/docs/current/tutorial-select.html'],['SELECT reference','https://www.postgresql.org/docs/current/sql-select.html'],['Pattern matching (LIKE)','https://www.postgresql.org/docs/current/functions-matching.html']],
 ex:{title:'SELECT drill',lang:'sql',data:'library',
@@ -131,7 +116,7 @@ behavior:`1. Q1 returns every row, every column. 2. Q2 returns one column, cheap
 hints:['Clause order is fixed: SELECT ... FROM ... WHERE ... ORDER BY ... LIMIT; the engine will not accept WHERE after ORDER BY.','SQL string literals use single quotes: LIKE \'Java%\'.','NULL checks are IS NULL / IS NOT NULL; the = operator returns unknown, and WHERE drops unknowns.']}},
 
 {id:'db0c',title:'SQL basics: writing data',body:`
-<p>Four verbs change data. Two of them can destroy a table in one line; respect the WHERE clause.</p>
+<p>Four verbs change data. Two of them can destroy a table in one line. Respect the WHERE clause.</p>
 <div class="codeSample">-- INSERT: single, multi-row, and read-back
 INSERT INTO books (author_id, title, price_cents) VALUES (1, 'Effective Java', 4500);
 INSERT INTO books (author_id, title, price_cents) VALUES
@@ -148,33 +133,21 @@ UPDATE books SET price_cents = price_cents * 0.9   -- expressions read the OLD v
 
 -- DELETE
 DELETE FROM books WHERE id = 7;</div>
-<p><b>The missing-WHERE catastrophe</b>: <code>UPDATE books SET price_cents = 0</code> (no WHERE) updates <b>every row</b>, instantly, no confirmation. Same for DELETE. Professional habits: write the WHERE first; run a <code>SELECT COUNT(*)</code> with the same WHERE to preview the blast radius; do risky writes inside <code>BEGIN; ... ROLLBACK/COMMIT;</code> so you can look before it sticks (transactions get their own lesson soon).</p>
-<p>Omitted columns take their <code>DEFAULT</code> (so <code>id</code> and <code>created_at</code> fill themselves) or NULL if none, and a <code>NOT NULL</code> column without a default makes the INSERT fail, which is the schema doing its job. <code>RETURNING</code> works on UPDATE and DELETE too: change-and-see in one round trip.</p>
+<p><b>The missing-WHERE catastrophe</b>: <code>UPDATE books SET price_cents = 0</code> (no WHERE) updates <b>every row</b>, instantly, with no confirmation. Same for DELETE.</p>
 
 <h4>UPDATE and DELETE are the same statement with a different verb</h4>
-<p>Both take a <code>WHERE</code>, both default to <i>every row</i> when it is missing, and both are
-irreversible outside a transaction. The habit that prevents the accident is mechanical rather than clever:
-<b>write the WHERE clause first</b>, run it as a <code>SELECT</code>, look at the count, then change
-<code>SELECT *</code> into <code>UPDATE … SET …</code>. It costs ten seconds and it is the difference
-between changing four rows and changing four million.</p>
+<p>Both take a <code>WHERE</code>. Both default to <i>every row</i> when it is missing. Both are irreversible outside a transaction. The habit that prevents the accident is mechanical: <b>write the WHERE clause first</b>, run it as a <code>SELECT</code>, look at the count, then change <code>SELECT *</code> into <code>UPDATE … SET …</code>. Do risky writes inside <code>BEGIN; ... ROLLBACK/COMMIT;</code> so you can look before it sticks. Transactions get their own lesson soon. This costs ten seconds and is the difference between changing four rows and changing four million.</p>
 <div class="codeSample">SELECT COUNT(*) FROM books WHERE author_id = 42;   -- 1. how big is the blast radius?
 BEGIN;                                             -- 2. get a safety net
 UPDATE books SET price_cents = 0 WHERE author_id = 42;
 SELECT COUNT(*) FROM books WHERE price_cents = 0;  -- 3. did it do what you meant?
 COMMIT;                                            --    or ROLLBACK;</div>
 
-<h4>What the database does for you when you leave a column out</h4>
-<p>An omitted column takes its <code>DEFAULT</code>, or <code>NULL</code> when there is none, which is why
-<code>id</code> and <code>created_at</code> fill themselves. A <code>NOT NULL</code> column with no default
-makes the insert fail, and that failure is the schema doing its job: it is telling you the row would have
-been meaningless. Resist the urge to make such columns nullable to quiet the error.</p>
+<h4>What happens when you leave a column out</h4>
+<p>An omitted column takes its <code>DEFAULT</code>, or <code>NULL</code> when there is none. That is how <code>id</code> and <code>created_at</code> fill themselves. A <code>NOT NULL</code> column with no default makes the insert fail. That failure is the schema doing its job: the row would have been meaningless. Do not make such columns nullable to quiet the error.</p>
 
 <h4>Getting the row back</h4>
-<p><code>RETURNING</code> gives you the affected rows in the same round trip, and it works on
-<code>INSERT</code>, <code>UPDATE</code> and <code>DELETE</code>. That matters more than convenience:
-fetching a generated id with a second <code>SELECT</code> is a race, because another statement can run in
-between. One statement that both changes and reports has no gap in it, the same reasoning as the upsert
-lesson later in this stream.</p>`,
+<p><code>RETURNING</code> gives you the affected rows in the same round trip. It works on <code>INSERT</code>, <code>UPDATE</code> and <code>DELETE</code>. This is more than convenience. Fetching a generated id with a second <code>SELECT</code> is a race, because another statement can run in between. One statement that both changes and reports has no gap in it. The upsert lesson later in this stream uses the same reasoning.</p>`,
 docs:[['INSERT','https://www.postgresql.org/docs/current/sql-insert.html'],['UPDATE','https://www.postgresql.org/docs/current/sql-update.html'],['DELETE','https://www.postgresql.org/docs/current/sql-delete.html']],
 ex:{title:'Write-path drill',lang:'sql',
 prompt:`Against <code>books(id, author_id, title, price_cents, published)</code>, one statement per numbered comment: (1) insert a book: author 1, title <code>Effective Java</code>, price 4500, naming the three columns; (2) one INSERT adding <b>two</b> books for author 2: <code>Clean Code</code> at 3900 and <code>Refactoring</code> at 4700 (multi-row VALUES); (3) insert author 3's <code>DDIA</code> at 5200 and <b>return the generated id</b> (RETURNING); (4) set the price of book id 7 to 3990; (5) apply a 10% discount to <b>every book by author 1</b> (price = price * 0.9, WHERE required); (6) delete all books priced 0.`,
@@ -216,7 +189,7 @@ hints:['Multi-row insert: VALUES (..., ...), (..., ...): commas between parenthe
 
 
 {id:'db1',title:'SQL essentials',body:`
-<p>Every persistence framework compiles down to SQL; you cannot debug what you cannot read. The core moves:</p>
+<p>Every persistence framework compiles down to SQL. You cannot debug what you cannot read. The core moves:</p>
 <div class="codeSample">SELECT id, owner, balance_cents
 FROM   accounts
 WHERE  balance_cents &gt; 10000
@@ -231,17 +204,12 @@ GROUP  BY a.owner
 HAVING SUM(t.amount_cents) &gt; 100000;             -- HAVING filters groups
 
 LEFT JOIN  -- keep left rows even with no match (NULLs fill the right side)</div>
-<p>Execution order (not writing order!): FROM → JOIN → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT. WHERE filters rows before grouping; HAVING filters after. If you remember one thing: JOIN + GROUP BY answers 80% of real reporting questions.</p>
-<h4>The mental shift: describe the result, not the steps</h4>
-<p>SQL is declarative. You state what you want the answer to look like and the database's planner decides
-how to get it: which index to use, which table to scan, in what order to join. That is why the same
-query can be instant on one dataset and catastrophic on another, and why <b>reading a query plan</b>
-(<code>EXPLAIN</code>) is the actual skill. The syntax is a week's work; understanding what the planner
-will do with it is the career.</p>
+<p>If you remember one thing: JOIN + GROUP BY answers 80% of real reporting questions.</p>
+<h4>Describe the result, not the steps</h4>
+<p>SQL is declarative. You state what the answer should look like and the planner decides how to get it: which index to use, which table to scan, in what order to join. So the same query can be instant on one dataset and catastrophic on another. <b>Reading a query plan</b> (<code>EXPLAIN</code>) is the real skill. The syntax is a week's work. Understanding what the planner will do with it is the career.</p>
 
-<h4>Why execution order matters in practice</h4>
-<p>The clause order you write is not the order the engine evaluates. Internalizing the real order explains
-most beginner errors at a stroke:</p>
+<h4>Execution order</h4>
+<p>The order you write is not the order the engine evaluates. The real order explains most beginner errors:</p>
 <div class="codeSample" data-hl>FROM -> JOIN -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY -> LIMIT
 
 -- WHERE runs BEFORE grouping, so it cannot see SUM()  -> use HAVING
@@ -249,32 +217,17 @@ most beginner errors at a stroke:</p>
 --   visible to WHERE (but IS visible to ORDER BY, which runs later)
 -- and this is why you cannot SELECT a column that is neither grouped
 --   nor aggregated: there would be many values and one row to put them in</div>
-<p>Filter as early as the semantics allow. <code>WHERE</code> discards rows before the expensive grouping;
-<code>HAVING</code> discards them after the work is already done.</p>
+<p>Filter as early as the semantics allow. <code>WHERE</code> discards rows before the expensive grouping. <code>HAVING</code> discards them after the work is done.</p>
 
 <h4>The join distinction that silently changes answers</h4>
-<p><code>INNER JOIN</code> keeps only matching rows, so an account with no transactions vanishes from the
-report entirely. <code>LEFT JOIN</code> keeps it with <code>NULL</code>s on the right, and then
-<code>COUNT(t.id)</code> correctly returns 0 while <code>COUNT(*)</code> wrongly returns 1, because it
-counts the row that exists.</p>
-<p>The related trap: putting a condition on the right-hand table in <code>WHERE</code> rather than in the
-<code>ON</code> clause quietly converts your <code>LEFT JOIN</code> back into an inner one, because
-<code>NULL &gt;= '2026-01-01'</code> is not true, so the very rows the outer join kept get filtered
-straight back out. Conditions on the <b>optional side</b> (the right-hand table) belong in
-<code>ON</code>; conditions on the preserved side belong in <code>WHERE</code>, where they read as
-they should.</p>
+<p><code>INNER JOIN</code> keeps only matching rows, so an account with no transactions vanishes from the report. <code>LEFT JOIN</code> keeps it with <code>NULL</code>s on the right. Then <code>COUNT(t.id)</code> returns 0 while <code>COUNT(*)</code> returns 1, because it counts the row that exists.</p>
+<p>The related trap: a condition on the right-hand table in <code>WHERE</code> rather than in <code>ON</code> turns your <code>LEFT JOIN</code> back into an inner one. <code>NULL &gt;= '2026-01-01'</code> is not true, so the rows the outer join kept get filtered back out. Conditions on the <b>optional side</b> (the right-hand table) belong in <code>ON</code>. Conditions on the preserved side belong in <code>WHERE</code>.</p>
 
-<h4>NULL is not a value</h4>
-<p>It means "unknown", and it propagates. <code>NULL = NULL</code> is not true, it is unknown, so
-comparisons need <code>IS NULL</code>. Aggregates skip it (<code>AVG</code> over 10 rows with 3 nulls
-divides by 7, which may or may not be what you wanted). And <code>NOT IN</code> against a subquery
-containing a single NULL returns no rows at all, which is a genuinely nasty silent bug.</p>
+<h4>NULL means unknown</h4>
+<p>And it propagates. <code>NULL = NULL</code> is unknown, not true, so comparisons need <code>IS NULL</code>. Aggregates skip it: <code>AVG</code> over 10 rows with 3 nulls divides by 7. And <code>NOT IN</code> against a subquery containing a single NULL returns no rows at all. That is a nasty silent bug.</p>
 
-<h4>Two habits worth forming now</h4>
-<p><b>Qualify your columns</b> (<code>a.id</code>, not <code>id</code>) in anything with a join; it is
-self-documenting and it stops a query breaking when someone adds a column with the same name to the other
-table. And <b>never <code>SELECT *</code> in application code</b>: it fetches data you do not need over
-the wire, breaks when the schema changes, and prevents the index-only scans that make queries fast.</p>`,
+<h4>Two habits</h4>
+<p><b>Qualify your columns</b> (<code>a.id</code>, not <code>id</code>) in anything with a join. It is self-documenting, and the query survives someone adding a same-named column to the other table. And <b>never <code>SELECT *</code> in application code</b>. It fetches data you do not need, breaks when the schema changes, and prevents the index-only scans that make queries fast.</p>`,
 docs:[['SQL tutorial, PostgreSQL docs','https://www.postgresql.org/docs/current/tutorial-sql.html'],['SQL joins visualized, Atlassian','https://www.atlassian.com/data/sql/sql-join-types-explained-visually']],
 ex:{title:'Write the queries',lang:'sql',data:'shop',
 prompt:`Given tables <code>users(id, name)</code> and <code>orders(id, user_id, total_cents, created_at)</code>, write: (1) the 5 most recent orders (all columns, newest first), (2) each user's name and their order count, <b>including users with zero orders</b> (which JOIN?), grouped and aliased <code>order_count</code>, (3) names of users whose lifetime total exceeds 50000 cents (JOIN + GROUP BY + HAVING).`,
@@ -322,17 +275,17 @@ LEFT JOIN departments d ON d.id = e.dept_id; -- keeps employees with no dept
 -- FULL [OUTER] JOIN, every row from BOTH; NULLs fill whichever side is missing
 -- CROSS JOIN, every combination (Cartesian product): rows_left x rows_right
 -- SELF JOIN, a table joined to itself, using two aliases</div>
-<p>Simple way to remember them:</p>
+<p>How to remember them:</p>
 <ul>
 <li><b>INNER</b> = "matches only." Rows that exist in both tables.</li>
-<li><b>LEFT</b> = "keep everything on the left." Great for "all X, and their Y if any."</li>
-<li><b>RIGHT</b> = LEFT flipped. Most people just reorder the tables and use LEFT.</li>
+<li><b>LEFT</b> = "keep everything on the left." Good for "all X, and their Y if any."</li>
+<li><b>RIGHT</b> = LEFT flipped. Most people reorder the tables and use LEFT.</li>
 <li><b>FULL OUTER</b> = "keep everything, both sides." Nothing is dropped.</li>
-<li><b>CROSS</b> = "every pairing." No ON clause. Use on purpose (e.g. all sizes x all colors); by accident it explodes row counts.</li>
+<li><b>CROSS</b> = "every pairing." No ON clause. Use on purpose (all sizes x all colors). By accident it explodes row counts.</li>
 <li><b>SELF</b> = same table twice: an employee row joined to its manager row.</li>
 </ul>
 <p><b>Semi-join and anti-join</b> answer "does a match exist?" without duplicating rows. A <b>semi-join</b> keeps left rows that <i>have</i> a match, written with <code>EXISTS</code> or <code>IN</code>. An <b>anti-join</b> keeps left rows with <i>no</i> match, written with <code>NOT EXISTS</code>, or the classic <code>LEFT JOIN ... WHERE right.id IS NULL</code> ("find the orphans").</p>
-<p>One caution: <b>NATURAL JOIN</b> auto-matches every column that shares a name. It reads short but breaks silently when someone adds a same-named column, so most teams avoid it and write the <code>ON</code> explicitly.</p>`,
+<p>One caution. <b>NATURAL JOIN</b> auto-matches every column that shares a name. It reads short but breaks silently when someone adds a same-named column. Most teams avoid it and write the <code>ON</code> explicitly.</p>`,
 docs:[['JOINs visualized (Atlassian)','https://www.atlassian.com/data/sql/sql-join-types-explained-visually'],['SELECT / JOIN reference','https://www.postgresql.org/docs/current/sql-select.html'],['EXISTS & subqueries','https://www.postgresql.org/docs/current/functions-subquery.html']],
 ex:{title:'Join drill',lang:'sql',data:'org',
 prompt:`Tables: <code>employees(id, name, dept_id, manager_id)</code> and <code>departments(id, name)</code>. One query per numbered comment: (1) each employee with their department name, <b>matches only</b> (INNER); (2) <b>every</b> employee including those with no department (LEFT JOIN); (3) departments that have <b>no</b> employees: the anti-join pattern (LEFT JOIN then WHERE the employee id IS NULL); (4) every employee paired with every department (CROSS JOIN); (5) each employee alongside their manager's name, a SELF JOIN of employees to itself on <code>manager_id</code>; (6) everything from both tables, keeping unmatched rows on either side (FULL OUTER JOIN).`,
@@ -384,6 +337,7 @@ behavior:`1. Q1 drops employees with no department and departments with no emplo
 hints:['INNER JOIN keeps only rows that match on both sides; LEFT JOIN keeps every left row and fills NULLs where the right has no match.','The anti-join pattern is LEFT JOIN then WHERE right.id IS NULL, which keeps only the left rows that had no match.','A SELF JOIN lists the same table twice with two aliases (e and m) joined on manager_id.']}},
 
 {id:'db1b',title:'The SQL command map: every command by category',body:`
+
 <p>SQL commands fall into four families. Knowing which family a command belongs to tells you what it does and how careful to be with it.</p>
 <div class="codeSample">-- DDL  (Data Definition), define/change STRUCTURE
 CREATE TABLE tags (id SERIAL PRIMARY KEY, name TEXT NOT NULL);
@@ -405,9 +359,9 @@ SAVEPOINT sp1;   -- a checkpoint you can ROLLBACK TO
 -- DCL  (Data Control), permissions
 GRANT SELECT ON tags TO reader;   -- give a privilege
 REVOKE SELECT ON tags FROM reader;-- take it back</div>
-<p>Plain-terms cheat sheet: <b>DDL</b> = the building (create/alter/drop the tables). <b>DML</b> = the furniture (put rows in, move them, take them out). <b>TCL</b> = the "undo/commit" bracket around your DML. <b>DCL</b> = the keys to the doors (who may do what).</p>
-<p>Two safety notes worth burning in. <code>TRUNCATE</code> and <code>DROP</code> throw away data in one statement, so treat them like a shredder; whether a transaction can save you depends entirely on the engine. PostgreSQL has transactional DDL, so a <code>DROP TABLE</code> inside <code>BEGIN</code> really can be rolled back, while Oracle and MySQL commit implicitly around DDL and leave you nothing to roll back to. Know which one you are typing into before you rely on <code>BEGIN</code>. And every <code>UPDATE</code>/<code>DELETE</code> needs a <code>WHERE</code> unless you truly mean "all rows."</p>
-<p>Reading queries, you also lean on these <b>clauses</b> (parts of a SELECT, not standalone commands): <code>WHERE</code> (filter rows) → <code>GROUP BY</code> (bucket rows) → <code>HAVING</code> (filter buckets) → <code>ORDER BY</code> (sort) → <code>LIMIT/OFFSET</code> (paginate), plus <code>DISTINCT</code>, <code>JOIN</code>, and the set operators <code>UNION</code> / <code>INTERSECT</code> / <code>EXCEPT</code> that stack whole result sets.</p>`,
+<p>Those are the four families of SQL statement. Plain-terms cheat sheet: <b>DDL</b>, data definition language, = the building (create/alter/drop the tables: <code>CREATE</code>, <code>ALTER</code>). <b>DML</b>, data manipulation language, = the furniture (put rows in, move them, take them out: <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>). <b>TCL</b>, transaction control language, = the "undo/commit" bracket around your DML (<code>COMMIT</code>, <code>ROLLBACK</code>). <b>DCL</b>, data control language, = the keys to the doors (who may do what: <code>GRANT</code>, <code>REVOKE</code>).</p>
+<p>Two safety notes. <code>TRUNCATE</code> and <code>DROP</code> throw away data in one statement, so treat them like a shredder. Whether a transaction can save you depends on the engine. PostgreSQL has transactional DDL, so a <code>DROP TABLE</code> inside <code>BEGIN</code> can be rolled back. Oracle and MySQL commit implicitly around DDL and leave you nothing to roll back to. Know which one you are typing into before you rely on <code>BEGIN</code>. And every <code>UPDATE</code>/<code>DELETE</code> needs a <code>WHERE</code> unless you mean "all rows."</p>
+<p>Reading queries, you also lean on these <b>clauses</b> (parts of a SELECT, not standalone commands): <code>WHERE</code> (filter rows) → <code>GROUP BY</code> (bucket rows) → <code>HAVING</code> (filter buckets) → <code>ORDER BY</code> (sort) → <code>LIMIT/OFFSET</code> (paginate). Add <code>DISTINCT</code>, <code>JOIN</code>, and the set operators <code>UNION</code> / <code>INTERSECT</code> / <code>EXCEPT</code> that stack whole result sets.</p>`,
 docs:[['SQL commands (PostgreSQL)','https://www.postgresql.org/docs/current/sql-commands.html'],['GRANT / privileges','https://www.postgresql.org/docs/current/sql-grant.html'],['Transactions','https://www.postgresql.org/docs/current/tutorial-transactions.html']],
 ex:{title:'One command from each family',lang:'sql',
 prompt:`One statement per numbered comment. (1) <b>CREATE</b> a table <code>tags</code> with <code>id SERIAL PRIMARY KEY</code> and <code>name TEXT NOT NULL</code>; (2) <b>ALTER</b> it to add a column <code>slug TEXT</code>; (3) <b>INSERT</b> a row (name and slug both <code>'java'</code>); (4) <b>GRANT</b> the <code>SELECT</code> privilege on <code>tags</code> to role <code>reader</code>; (5) wrap an <code>UPDATE</code> (set slug to <code>'jvm'</code> where name is <code>'java'</code>) inside a transaction using <code>BEGIN;</code> and <code>COMMIT;</code>; (6) <b>TRUNCATE</b> the table (empty it, keep it); (7) <b>DROP</b> the table.`,
@@ -456,7 +410,7 @@ behavior:`1. Q1 defines the structure (DDL). 2. Q2 changes the structure (DDL). 
 hints:['DDL defines structure: CREATE, ALTER, DROP, TRUNCATE. DML changes rows: INSERT, UPDATE, DELETE, SELECT.','TCL groups changes: wrap the UPDATE in BEGIN and COMMIT so it applies all-or-nothing.','DCL controls access: GRANT gives a privilege, REVOKE takes it back.']}},
 
 {id:'db1c',title:'Writing complex queries: CASE, the 1/0 tricks, CTEs & windows',body:`
-<p>Real reporting queries are built from a handful of power tools. The most useful, and most puzzling when you first meet it, is turning a <b>condition into a number</b> so you can add conditions up.</p>
+<p>Real reporting queries are built from a handful of power tools. The most useful, and most puzzling at first, is turning a <b>condition into a number</b> so you can add conditions up.</p>
 <p><b>The 1/0 idiom.</b> SQL cannot <code>SUM</code> a true/false directly, so you convert each row to 1 or 0 with <code>CASE</code>, then sum:</p>
 <div class="codeSample">-- count paid vs unpaid in ONE row (conditional aggregation)
 SELECT
@@ -466,21 +420,21 @@ FROM orders;
 
 -- same idea with COUNT: CASE returns NULL for non-matches, COUNT ignores NULL
 SELECT COUNT(CASE WHEN status = 'paid' THEN 1 END) AS paid FROM orders;</div>
-<p>This "conditional aggregation" is how you pivot rows into columns (paid vs unpaid, by month, by region) in a single pass, far cheaper than one query per bucket.</p>
-<p><b>WHERE 1=1 and WHERE 1=0.</b> These constant conditions look odd but are idioms. <code>WHERE 1=1</code> is always true: a no-op placeholder so code that builds a query can append <code>AND ...</code> filters without worrying whether it is the first one. <code>WHERE 1=0</code> is always false: it returns <b>no rows</b>, handy for <code>CREATE TABLE copy AS SELECT * FROM orders WHERE 1=0</code> to clone just the structure, or as a safe stub while you build a statement.</p>
+<p>This "conditional aggregation" is how you pivot rows into columns (paid vs unpaid, by month, by region) in a single pass. It is far cheaper than one query per bucket.</p>
+<p><b>WHERE 1=1 and WHERE 1=0.</b> These constant conditions look odd but are idioms. <code>WHERE 1=1</code> is always true: a no-op placeholder so code that builds a query can append <code>AND ...</code> filters without checking whether it is the first one. <code>WHERE 1=0</code> is always false: it returns <b>no rows</b>. That is handy for <code>CREATE TABLE copy AS SELECT * FROM orders WHERE 1=0</code> to clone only the structure, or as a safe stub while you build a statement.</p>
 <div class="codeSample">SELECT * FROM orders
 WHERE 1 = 1            -- always-true anchor
   AND status = 'paid'  -- filters appended freely
   AND amount_cents &gt; 1000;</div>
-<p><b>Subqueries</b> nest one query in another: a scalar subquery returns one value, <code>IN (SELECT ...)</code> / <code>EXISTS (SELECT ...)</code> test membership, and a subquery in <code>FROM</code> becomes a derived table. <b>CTEs</b> (<code>WITH name AS (...)</code>) are the readable alternative. Name a result once, then use it like a table:</p>
+<p><b>Subqueries</b> nest one query in another. A scalar subquery returns one value. <code>IN (SELECT ...)</code> / <code>EXISTS (SELECT ...)</code> test membership. A subquery in <code>FROM</code> becomes a derived table. <b>CTEs</b> (<code>WITH name AS (...)</code>) are the readable alternative. Name a result once, then use it like a table:</p>
 <div class="codeSample">WITH totals AS (
   SELECT user_id, SUM(amount_cents) AS spent
   FROM orders
   GROUP BY user_id
 )
 SELECT user_id, spent FROM totals WHERE spent &gt; 100000;</div>
-<p><b>Window functions</b> compute across a set of rows <i>without</i> collapsing them (unlike GROUP BY). <code>ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC)</code> numbers each user's orders newest-first; swap in <code>SUM(...) OVER (...)</code> for running totals, or <code>RANK()</code> / <code>LAG()</code> for rankings and row-to-row comparisons.</p>
-<p>Two more everyday helpers: <code>COALESCE(x, 0)</code> substitutes a value for NULL, and <code>NULLIF(count, 0)</code> turns 0 into NULL so a division becomes NULL instead of a divide-by-zero error, the safe-average trick.</p>`,
+<p><b>Window functions</b> compute across a set of rows <i>without</i> collapsing them (unlike GROUP BY). <code>ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC)</code> numbers each user's orders newest-first. Swap in <code>SUM(...) OVER (...)</code> for running totals, or <code>RANK()</code> / <code>LAG()</code> for rankings and row-to-row comparisons.</p>
+<p>Everyday helpers: <code>COALESCE(x, 0)</code> substitutes a value for NULL. <code>NULLIF(count, 0)</code> turns 0 into NULL so a division becomes NULL instead of a divide-by-zero error, the safe-average trick.</p>`,
 docs:[['CASE expression','https://www.postgresql.org/docs/current/functions-conditional.html'],['WITH / CTEs','https://www.postgresql.org/docs/current/queries-with.html'],['Window functions','https://www.postgresql.org/docs/current/tutorial-window.html']],
 ex:{title:'Complex-query drill',lang:'sql',
 prompt:`Table <code>orders(id, user_id, status, amount_cents, created_at)</code>. One query per numbered comment: (1) in one row, count paid and unpaid orders using <code>SUM(CASE WHEN ... THEN 1 ELSE 0 END)</code> aliased <code>paid</code> and <code>unpaid</code>; (2) count only paid orders using the <code>COUNT(CASE WHEN status = 'paid' THEN 1 END)</code> form; (3) select paid orders using the <code>WHERE 1 = 1 AND ...</code> dynamic-filter idiom; (4) a CTE named <code>totals</code> that sums <code>amount_cents</code> per <code>user_id</code>, then select the users whose <code>spent</code> exceeds 100000; (5) number each user's orders newest-first with <code>ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC)</code> aliased <code>rn</code>; (6) compute a safe average with <code>SUM(amount_cents) / NULLIF(COUNT(*), 0)</code>.`,
@@ -535,16 +489,11 @@ behavior:`1. Q1 returns one row, two counts, in a single scan. 2. Q2 counts paid
 hints:['Turn a condition into a number: CASE WHEN cond THEN 1 ELSE 0 END, then SUM to count matches in one pass.','WHERE 1 = 1 is an always-true anchor so every real filter can be appended as AND ...; WHERE 1 = 0 returns no rows.','A CTE is WITH name AS ( ... ) followed by a SELECT that treats name like a table; window functions add OVER (PARTITION BY ... ORDER BY ...).']}},
 
 {id:'dbups',title:'Upserts: insert-or-update, and the four ways it bites',body:`
-<p>You have a row that may or may not exist. A daily import, a user profile from a partner system, a
-counter. The obvious code is check, then act:</p>
+<p>You have a row that may or may not exist. A daily import, a user profile from a partner system, a counter. The obvious code is check, then act:</p>
 <div class="codeSample">SELECT id FROM contacts WHERE email = 'ada@example.com';   -- exists?
 -- ...application decides...
 INSERT INTO contacts (email, name) VALUES ('ada@example.com', 'Ada');</div>
-<p>That is a <b>race</b>. Two workers run the SELECT at the same moment, both find nothing, both insert,
-and one gets a unique-violation; or worse, there is no unique constraint and you now have two Adas. The
-gap between deciding and doing is where the bug lives, and no amount of application locking closes it as
-cheaply as letting the database do both in one statement.</p>
-<p>That statement is an <b>upsert</b>.</p>
+<p>That is a <b>race</b>. Two workers run the SELECT at the same moment, both find nothing, both insert, and one gets a unique-violation. Or worse, there is no unique constraint and you now have two Adas. The bug lives in the gap between deciding and doing. The cheapest fix is to let the database do both in one statement: an <b>upsert</b>.</p>
 
 <h4>The three dialects</h4>
 <div class="codeSample" data-hl>-- PostgreSQL / SQLite
@@ -559,58 +508,34 @@ ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 -- SQL standard, and several engines
 MERGE INTO contacts USING (...) ON (...) WHEN MATCHED THEN UPDATE ... WHEN NOT MATCHED THEN INSERT ...;</div>
-<p><code>EXCLUDED</code> is the row you <i>tried</i> to insert. That is the whole trick: on conflict you
-still have both versions available, so the update can pick from either side.</p>
+<p><code>EXCLUDED</code> is the row you <i>tried</i> to insert. On conflict both versions are available, so the update can pick from either side.</p>
 
-<h4>Bite 1: it needs a real constraint, and the target must match it exactly</h4>
-<p><code>ON CONFLICT (email)</code> does not mean "if a row with this email exists". It means "if this
-insert violates the unique index on <code>email</code>". No unique constraint, no conflict: the insert
-simply succeeds and you get a duplicate, silently. If the index is partial
-(<code>WHERE deleted_at IS NULL</code>) or on an expression (<code>lower(email)</code>), the conflict
-target must name the same thing, or the database refuses with <i>there is no unique or exclusion
-constraint matching the ON CONFLICT specification</i>. Upsert is not a substitute for designing your keys;
-it is a reward for having designed them.</p>
+<h4>Bite 1: it needs a real constraint that matches the target</h4>
+<p><code>ON CONFLICT (email)</code> means "if this insert violates the unique index on <code>email</code>", not "if a row with this email exists". No unique constraint, no conflict: the insert succeeds and you get a duplicate, silently. If the index is partial (<code>WHERE deleted_at IS NULL</code>) or on an expression (<code>lower(email)</code>), the conflict target must name the same thing. Otherwise the database refuses with <i>there is no unique or exclusion constraint matching the ON CONFLICT specification</i>.</p>
 
 <h4>Bite 2: clobbering, and last-writer-wins</h4>
 <p>The lazy update list overwrites everything:</p>
 <div class="codeSample">ON CONFLICT (email) DO UPDATE SET
   name = EXCLUDED.name, created_at = EXCLUDED.created_at,   -- destroys the original creation time
   owner_id = EXCLUDED.owner_id;                              -- reassigns a row the importer knows nothing about</div>
-<p>Update only the columns this writer is authoritative for, and leave the rest alone. The subtler version
-is <b>ordering</b>: a delayed job carrying older data will happily overwrite newer data, because the
-database has no idea which version is fresher. If your rows carry a timestamp or a version, guard the
-update with it (<code>WHERE contacts.updated_at &lt; EXCLUDED.updated_at</code>), and a stale write
-becomes a no-op instead of data loss.</p>
+<p>Update only the columns this writer is authoritative for. The subtler version is <b>ordering</b>. A delayed job carrying older data will overwrite newer data, because the database cannot tell which version is fresher. If your rows carry a timestamp or a version, guard the update with it (<code>WHERE contacts.updated_at &lt; EXCLUDED.updated_at</code>). A stale write then becomes a no-op.</p>
 
 <h4>Bite 3: the lost update hiding in a counter</h4>
 <div class="codeSample">SET views = 501                        -- read 500 in the app, added one: a LOST UPDATE
 SET views = contacts.views + 1         -- computed inside the statement: atomic, correct</div>
-<p>The first form is the read-modify-write race from the concurrency stream, wearing SQL. Two workers both
-read 500 and both write 501, and one view is gone. Compute from the current row inside the statement and
-the database serializes it for you.</p>
+<p>The first form is the read-modify-write race from the concurrency stream. Two workers both read 500 and both write 501, and one view is gone. Compute from the current row inside the statement and the database serializes it for you.</p>
 
 <h4>Bite 4: DO NOTHING returns nothing</h4>
-<p><code>ON CONFLICT DO NOTHING</code> is the tidy way to ignore duplicates, and it returns <b>no row</b>
-when it does nothing, so <code>RETURNING id</code> gives you an empty result exactly when the row already
-existed. Code that expects an id then fails on the second run and works on the first, which is a delightful
-bug to receive at 3am. If you need the id either way, use <code>DO UPDATE SET id = EXCLUDED.id</code> as a
-no-op touch, or select afterwards.</p>
+<p><code>ON CONFLICT DO NOTHING</code> ignores duplicates, and returns <b>no row</b> when it does so. <code>RETURNING id</code> is then empty whenever the row already existed. Code that expects an id works on the first run and fails on the second. If you need the id either way, use <code>DO UPDATE SET id = EXCLUDED.id</code> as a no-op touch, or select afterwards.</p>
 
-<h4>What else to know before you reach for it</h4>
+<h4>What else to know</h4>
 <ul>
-<li><b>Batch upserts deadlock</b> when two transactions touch the same keys in different orders. Sort the
-batch by key and the deadlock disappears.</li>
-<li><b>Sequence gaps are normal.</b> A failed insert attempt still consumed an identity value; gaps mean
-nothing is wrong.</li>
-<li><b>MERGE is not a drop-in.</b> In several engines it is not concurrency-safe in the way people assume:
-in PostgreSQL, MERGE can still raise a unique violation under concurrent inserts where
-<code>ON CONFLICT</code> would not.</li>
-<li><b>Every conflicting upsert writes a dead row</b>, so a high-churn upsert table needs vacuum attention
-that an insert-only table does not.</li>
+<li><b>Batch upserts deadlock</b> when two transactions touch the same keys in different orders. Sort the batch by key.</li>
+<li><b>Sequence gaps are normal.</b> A failed insert attempt still consumed an identity value.</li>
+<li><b>MERGE is not a drop-in.</b> In PostgreSQL, MERGE can still raise a unique violation under concurrent inserts where <code>ON CONFLICT</code> would not. Several other engines have similar gaps.</li>
+<li><b>Every conflicting upsert writes a dead row</b>, so a high-churn upsert table needs vacuum attention that an insert-only table does not.</li>
 </ul>
-<p>The summary worth carrying: an upsert removes a race you cannot otherwise close, and in exchange it asks
-you to be explicit about <b>which writer owns which column</b> and <b>which version is newer</b>. Those two
-questions were always there; the check-then-insert version just let you avoid answering them.</p>`,
+<p>An upsert removes a race you cannot otherwise close. In exchange you must be explicit about <b>which writer owns which column</b> and <b>which version is newer</b>.</p>`,
 docs:[['PostgreSQL (INSERT ... ON CONFLICT)','https://www.postgresql.org/docs/current/sql-insert.html#SQL-ON-CONFLICT'],['SQLite (UPSERT)','https://www.sqlite.org/lang_upsert.html'],['MySQL (INSERT ... ON DUPLICATE KEY UPDATE)','https://dev.mysql.com/doc/refman/8.4/en/insert-on-duplicate.html']],
 exs:[{title:'Write the upsert',lang:'sql',diff:'medium',
 prompt:`One statement per numbered line, PostgreSQL syntax, table <code>contacts(email UNIQUE, name, views, updated_at)</code>. (1) Insert <code>('ada@example.com','Ada')</code> into <code>(email, name)</code> and on a conflict on <code>email</code> update <code>name</code> from the proposed row: use <code>ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name</code>. (2) The same insert but ignoring duplicates entirely: <code>ON CONFLICT (email) DO NOTHING</code>. (3) Increment <code>views</code> atomically on conflict, computing from the existing row rather than a value from your application: <code>SET views = contacts.views + 1</code>. (4) Guard against a stale write by only updating when the incoming row is newer: add <code>WHERE contacts.updated_at &lt; EXCLUDED.updated_at</code>.`,
@@ -649,8 +574,8 @@ behavior:`Five cases execute. The stale-write case is the one that matters most 
 hints:['Three rules, applied in order: insert, reject, then merge field by field.','Strictly greater: decide what equal timestamps mean and encode it.','Copy into a new object so the caller\'s rows are untouched.']}]},
 
 {id:'dbmig',title:'Migrating data between databases',body:`
-<p>A rite of passage in real jobs: move data from an old schema into a new one: during a rewrite, a merger, or when normalizing a messy legacy table. This is <b>ETL</b> in miniature: <b>Extract</b> from the source, <b>Transform</b> to fit the target, <b>Load</b> into the new tables. SQL does it in one statement with <code>INSERT ... SELECT</code>.</p>
-<p>Here is the synthetic data you will migrate. A denormalized legacy table with real-world mess: a NULL email, a duplicate, and mixed-case addresses:</p>
+<p>A rite of passage in real jobs: move data from an old schema into a new one, during a rewrite, a merger, or when normalizing a messy legacy table. This is <b>ETL</b> in miniature. <b>Extract</b> from the source, <b>Transform</b> to fit the target, <b>Load</b> into the new tables. SQL does it in one statement with <code>INSERT ... SELECT</code>.</p>
+<p>Here is the synthetic data you will migrate. A denormalized legacy table with real-world mess: a NULL email, a duplicate, and mixed-case addresses.</p>
 <div class="codeSample">legacy_customers                                    customers  (new, empty)
 id | full_name    | email_addr        | country     id | name        | email
 ---+--------------+-------------------+--------     ---+-------------+------------------
@@ -659,31 +584,19 @@ id | full_name    | email_addr        | country     id | name        | email
  3 | Cy Young     | NULL              | US          -- rows to migrate: valid emails only,
  4 | Di Ng        | di@example.com    | SG          --   lowercased, de-duplicated
  5 | Bo Diaz      | BO@example.com    | ES          -- (row 5 duplicates row 2 once lowercased)</div>
-<p>The migration has three moves: copy with a <b>transform</b> (rename columns, lowercase the email) while <b>filtering</b> out the NULL; make the load <b>idempotent</b> so re-running it will not create duplicates (Postgres <code>INSERT ... ON CONFLICT ... DO NOTHING</code>, using the target's UNIQUE email); and <b>verify</b> the row count. Idempotency matters: real migrations are run more than once (dry run, retry after a failure), and must be safe to repeat.</p>
+<p>The migration has three moves. Copy with a <b>transform</b> (rename columns, lowercase the email) while <b>filtering</b> out the NULL. Make the load <b>idempotent</b> so re-running it creates no duplicates: Postgres <code>INSERT ... ON CONFLICT ... DO NOTHING</code>, using the target's UNIQUE email. <b>Verify</b> the row count.</p>
 
-<h4>Idempotency is what makes a migration survivable</h4>
-<p>A migration that cannot be re-run is a migration you must get right first time, at 2am, with the old
-system already off. Making the load idempotent (<code>ON CONFLICT DO NOTHING</code>, or a natural key with
-a unique constraint) means a partial failure is fixed by running it again rather than by hand-repairing
-half-loaded tables. That single property changes the risk profile of the whole exercise.</p>
+<h4>Idempotency makes a migration survivable</h4>
+<p>Real migrations run more than once: a dry run, a retry after a failure. A migration that cannot be re-run must be right first time, at 2am, with the old system already off. An idempotent load (<code>ON CONFLICT DO NOTHING</code>, or a natural key with a unique constraint) means a partial failure is fixed by running it again.</p>
 
 <h4>Reconcile, do not assume</h4>
-<p>Every migration needs a check that runs afterwards and compares source with target: row counts per
-table, sums of the money columns, and a spot-check of the rows the transform touched most. Nobody regrets
-writing it, and the alternative is discovering months later that a filter silently dropped four thousand
-records. Write the reconciliation query <i>before</i> the migration, because writing it afterwards tempts
-you to make it agree.</p>
+<p>Every migration needs a check that runs afterwards and compares source with target. Row counts per table. Sums of the money columns. A spot-check of the rows the transform touched most. Otherwise you discover months later that a filter silently dropped four thousand records. Write the reconciliation query <i>before</i> the migration. Writing it afterwards tempts you to make it agree.</p>
 
 <h4>The mess is the job</h4>
-<p>Legacy data carries duplicates that differ only in whitespace, mixed-case emails, NULLs where the new
-schema says NOT NULL, dates as text in three formats, and encodings nobody documented. The decisions those
-force are business decisions, not technical ones: does a NULL email mean drop the row, or invent a
-placeholder? Whoever owns the data must answer, and the answer belongs in a comment beside the query.</p>
+<p>Legacy data carries duplicates that differ only in whitespace, mixed-case emails, NULLs where the new schema says NOT NULL, dates as text in three formats, and encodings nobody documented. The decisions those force are business decisions. Does a NULL email mean drop the row, or invent a placeholder? Whoever owns the data must answer. The answer belongs in a comment beside the query.</p>
 
 <h4>Cutover</h4>
-<p>The safe shape is the same as a schema migration: <b>run both systems</b>, backfill history, then
-dual-write while the new one catches up, verify, and only then switch reads. A big-bang cutover is a plan
-with no rollback, and the moment you need one is the moment you cannot get it.</p>`,
+<p>The safe shape is the same as a schema migration. <b>Run both systems</b>, backfill history, dual-write while the new one catches up, verify, and only then switch reads. A big-bang cutover is a plan with no rollback.</p>`,
 docs:[['INSERT ... SELECT','https://www.postgresql.org/docs/current/sql-insert.html'],['ON CONFLICT (upsert)','https://www.postgresql.org/docs/current/sql-insert.html#SQL-ON-CONFLICT'],['Data migration (overview)','https://en.wikipedia.org/wiki/Data_migration']],
 ex:{title:'Migrate legacy_customers into customers',lang:'sql',
 prompt:`Source <code>legacy_customers(id, full_name, email_addr, country)</code>; target <code>customers(id, name, email)</code> where <code>email</code> is UNIQUE. One statement per numbered comment: (1) copy every row that <b>has</b> an email into <code>customers</code>, mapping <code>full_name</code>→<code>name</code> and <code>LOWER(email_addr)</code>→<code>email</code>, skipping NULL emails (<code>INSERT INTO ... SELECT ... FROM legacy_customers WHERE email_addr IS NOT NULL</code>); (2) make it repeatable by de-duplicating on the unique email with <code>ON CONFLICT (email) DO NOTHING</code>: add it to the same insert; (3) verify the result with <code>SELECT COUNT(*) FROM customers</code>.`,
@@ -706,7 +619,8 @@ tests:[{d:'INSERT ... SELECT from the legacy table',re:'insert\\s+into\\s+custom
 behavior:`After running, customers has 3 rows: Ada (ada@example.com), Bo (bo@example.com), Di (di@example.com). Cy is skipped (NULL email); the second Bo collides on the unique lowercased email and is dropped by ON CONFLICT. Re-running the migration changes nothing; that is idempotency, and it is why the load is safe to repeat.`,
 hints:['INSERT INTO target (cols) SELECT expr, ... FROM source WHERE ... copies and transforms in one shot.','Rename by position: the SELECT list lines up with the target column list, and LOWER() transforms the email.','ON CONFLICT (email) DO NOTHING makes the load idempotent so retries and the lowercased duplicate do not error or double-insert.']}},
 {id:'db2',title:'JDBC & PreparedStatement',body:`
-<p>JDBC is the floor everything stands on (JPA, jOOQ, Spring Data). Three objects: <code>Connection</code> → <code>PreparedStatement</code> → <code>ResultSet</code>, all AutoCloseable:</p>
+
+<p>JDBC is the floor everything stands on (JPA, jOOQ, Spring Data). <b>JPA</b> is the Java Persistence API, the standard for mapping Java objects to database tables: you annotate a class and the provider (usually Hibernate) writes the SQL. Underneath, it still speaks JDBC. Three objects: <code>Connection</code> → <code>PreparedStatement</code> → <code>ResultSet</code>, all AutoCloseable:</p>
 <div class="codeSample" data-hl>String sql = "SELECT id, owner FROM accounts WHERE owner = ?";
 
 try (Connection con = dataSource.getConnection();
@@ -722,12 +636,9 @@ try (Connection con = dataSource.getConnection();
 
 // writes: executeUpdate returns affected row count
 int rows = ps.executeUpdate();</div>
-<p><b>Never concatenate user input into SQL</b>: <code>"WHERE owner = '" + name + "'"</code> is SQL injection, the #1 web vulnerability for two decades. PreparedStatement sends parameters separately from the query text, making injection structurally impossible. In real apps the Connection comes from a pool (HikariCP, Spring Boot's default).</p>
-<h4>Why parameters are not string escaping</h4>
-<p>The usual explanation ("it escapes quotes for you") undersells it and leads people to think a careful
-escaping function is equivalent. It is not. A prepared statement sends the <b>query text</b> and the
-<b>parameter values</b> to the database as separate things. The parser sees the SQL <i>before</i> any
-value exists, so the structure of the statement is fixed and no value can alter it.</p>
+<p><b>Never concatenate user input into SQL.</b> <code>"WHERE owner = '" + name + "'"</code> is SQL injection, the #1 web vulnerability for two decades. In real apps the Connection comes from a pool (HikariCP, Spring Boot's default).</p>
+<h4>Parameters are not string escaping</h4>
+<p>The usual explanation ("it escapes quotes for you") undersells it. A prepared statement sends the <b>query text</b> and the <b>parameter values</b> to the database separately. The parser sees the SQL <i>before</i> any value exists, so the structure of the statement is fixed and no value can alter it.</p>
 <div class="codeSample" data-hl>-- concatenated: the input BECOMES SQL
 "... WHERE owner = '" + name + "'"     name = "x' OR '1'='1"
    -> WHERE owner = 'x' OR '1'='1'     <- the parser sees new logic
@@ -736,13 +647,10 @@ value exists, so the structure of the statement is fixed and no value can alter 
 "... WHERE owner = ?"                  name = "x' OR '1'='1"
    -> looks for a customer literally named  x' OR '1'='1
    -> finds none. there is no injection to prevent - it is not possible.</div>
-<p>The limit worth knowing: only <i>values</i> can be parameters. A table name, a column name or the
-direction of an <code>ORDER BY</code> cannot be, so dynamic sorting must be validated against an
-allowlist you control, never interpolated.</p>
+<p>The limit: only <i>values</i> can be parameters. A table name, a column name or the direction of an <code>ORDER BY</code> cannot be. Validate dynamic sorting against an allowlist you control. Never interpolate it.</p>
 
-<h4>The rest of what <code>PreparedStatement</code> buys</h4>
-<p>The database can parse and plan the statement once and reuse it for every set of parameters, which
-matters in a hot loop. And for bulk work, batching turns N round trips into one:</p>
+<h4>What else <code>PreparedStatement</code> buys</h4>
+<p>The database can parse and plan the statement once and reuse it for every set of parameters, which matters in a hot loop. For bulk work, batching turns N round trips into one:</p>
 <div class="codeSample" data-hl>for (var row : rows) { ps.setString(1, row.name()); ps.addBatch(); }
 int[] counts = ps.executeBatch();     // one network round trip
 
@@ -751,20 +659,10 @@ int[] counts = ps.executeBatch();     // one network round trip
 // a silent failure if you assume success.</div>
 
 <h4>Resources, and why try-with-resources is not optional</h4>
-<p><code>Connection</code>, <code>PreparedStatement</code> and <code>ResultSet</code> all hold resources
-outside the JVM's control: a socket, a server-side cursor, a slot in the pool. A leaked connection is not
-collected by the garbage collector in any useful sense; it is simply gone from the pool, and the
-application dies later with "unable to acquire connection" pointing at innocent code. Nest the
-try-with-resources blocks as shown and the problem cannot occur.</p>
+<p><code>Connection</code>, <code>PreparedStatement</code> and <code>ResultSet</code> hold resources outside the JVM's control: a socket, a server-side cursor, a slot in the pool. The garbage collector does not reclaim a leaked connection in any useful sense. It is gone from the pool, and the application dies later with "unable to acquire connection" pointing at innocent code. Nest the try-with-resources blocks as shown.</p>
 
 <h4>Pooling, in one paragraph</h4>
-<p>Opening a connection means a TCP handshake, authentication and session setup: tens of milliseconds,
-which is often more than the query. A pool keeps them open and hands them out, so
-<code>getConnection()</code> is a borrow and <code>close()</code> is a return, not a real close. The
-counter-intuitive part is sizing: <b>bigger pools are usually slower</b>, because the database has a
-finite number of cores and disks, and queueing at the pool is cheaper than thrashing at the server. Start
-small (roughly a couple of connections per core), measure, and be suspicious of any pool sized in the
-hundreds.</p>`,
+<p>Opening a connection means a TCP handshake, authentication and session setup: tens of milliseconds, often more than the query. A pool keeps connections open and hands them out. <code>getConnection()</code> is a borrow and <code>close()</code> is a return. Sizing is counter-intuitive. <b>Bigger pools are usually slower</b>: the database has a finite number of cores and disks, and queueing at the pool is cheaper than thrashing at the server. Start small (roughly a couple of connections per core), measure, and be suspicious of any pool sized in the hundreds.</p>`,
 docs:[['JDBC basics, Oracle','https://docs.oracle.com/javase/tutorial/jdbc/basics/index.html'],['SQL injection, OWASP','https://owasp.org/www-community/attacks/SQL_Injection']],
 ex:{title:'Query safely',
 prompt:`Write <code>AccountDao</code> with a constructor-injected <code>javax.sql.DataSource</code> and method <code>java.util.List&lt;String&gt; ownersWithBalanceOver(long cents) throws java.sql.SQLException</code>: SQL <code>SELECT owner FROM accounts WHERE balance_cents &gt; ?</code>, everything in try-with-resources, parameter bound with <code>setLong</code>, results collected from the ResultSet. No string concatenation into SQL anywhere.`,
@@ -813,7 +711,7 @@ public class AccountDao {
     }
 }`}},
 {id:'db3',title:'Transactions: all or nothing',body:`
-<p>A transfer that debits one account and fails before crediting the other must undo the debit; that is a <b>transaction</b>: ACID (Atomic, Consistent, Isolated, Durable).</p>
+<p>A transfer that debits one account and fails before crediting the other must undo the debit. That is a <b>transaction</b>: ACID (Atomic, Consistent, Isolated, Durable).</p>
 <div class="codeSample" data-hl>try (Connection con = ds.getConnection()) {
     con.setAutoCommit(false);                    // start the transaction
     try {
@@ -825,27 +723,20 @@ public class AccountDao {
         throw e;
     }
 }</div>
-<p>In Spring, <code>@Transactional</code> wraps this via a proxy, with famous pitfalls: it only works on <b>public methods called from another bean</b> (self-invocation bypasses the proxy), and by default rolls back on unchecked exceptions only. Isolation levels trade correctness for concurrency: READ_COMMITTED (common default) → REPEATABLE_READ → SERIALIZABLE; know that lost updates need locking (<code>SELECT ... FOR UPDATE</code>) or optimistic versioning (<code>@Version</code> in JPA).</p>
+<p>In Spring, <code>@Transactional</code> wraps this via a proxy, with well-known pitfalls. It only works on <b>public methods called from another bean</b> (self-invocation bypasses the proxy). By default it rolls back on unchecked exceptions only. Isolation levels trade correctness for concurrency: READ_COMMITTED (common default) → REPEATABLE_READ → SERIALIZABLE.</p>
 <h4>ACID, one letter at a time</h4>
-<p>The acronym gets recited more than understood, and the useful part is knowing which letter the database
-gives you for free and which you have to ask for.</p>
+<p>The useful part is knowing which letter the database gives you for free and which you have to ask for.</p>
 <div class="codeSample" data-hl>Atomic       all statements commit or none do.        <- given
 Consistent   constraints hold before and after.       <- given (if you
                                                           declare them)
 Isolated     concurrent transactions do not corrupt   <- PARTIAL. this is
              each other's view                            the dial you set
 Durable      once committed, it survives a crash      <- given</div>
-<p>Isolation is the interesting one because it is the only one you trade. Full isolation is correct and
-slow; every database therefore defaults to something weaker, and the anomalies that leak through are your
-responsibility to know about.</p>
+<p>Isolation is the only one you trade. Full isolation is correct and slow, so every database defaults to something weaker. You need to know which anomalies leak through.</p>
 
-<h4>What each level actually permits</h4>
-<p><b>READ COMMITTED</b> (the common default) stops you reading uncommitted data, but two identical
-queries in the same transaction can return different results because someone committed in between: a
-<i>non-repeatable read</i>. <b>REPEATABLE READ</b> fixes that for rows you have read, but new rows
-matching your condition can still appear (<i>phantoms</i>). <b>SERIALIZABLE</b> makes concurrent
-transactions behave as if they ran one at a time, at the cost of blocking or aborting more of them.</p>
-<p>The practical consequence, and the reason this matters even at low traffic:</p>
+<h4>What each level permits</h4>
+<p><b>READ COMMITTED</b> (the common default) stops you reading uncommitted data. But two identical queries in the same transaction can return different results if someone committed in between: a <i>non-repeatable read</i>. <b>REPEATABLE READ</b> fixes that for rows you have read, but new rows matching your condition can still appear (<i>phantoms</i>). <b>SERIALIZABLE</b> makes concurrent transactions behave as if they ran one at a time, at the cost of blocking or aborting more of them.</p>
+<p>The practical consequence, even at low traffic:</p>
 <div class="codeSample" data-hl>-- LOST UPDATE, at READ COMMITTED, with no protection:
 T1: SELECT balance -> 100        T2: SELECT balance -> 100
 T1: UPDATE balance = 100 - 30    T2: UPDATE balance = 100 - 50
@@ -856,19 +747,11 @@ T1: COMMIT  (70)                 T2: COMMIT  (50)   <- T1's debit vanished
 --                      0 rows affected => someone else won => retry
 -- fix 3, best when it applies: do the arithmetic IN the database
 --                      UPDATE accounts SET balance = balance - 30 ...</div>
-<p>Optimistic locking suits low-contention paths and web requests, where holding a lock across a user's
-think-time is unacceptable. Pessimistic suits short, hot, high-contention updates.</p>
+<p>Optimistic locking suits low-contention paths and web requests, where holding a lock across a user's think-time is unacceptable. Pessimistic suits short, hot, high-contention updates.</p>
 
 <h4>Keeping transactions small</h4>
-<p>A transaction holds locks and an undo history for its entire life, so its duration is a direct cost to
-every other writer. The rules follow from that: <b>never do I/O inside one</b> (no HTTP calls, no waiting
-on a queue, certainly no waiting on a human), and open it as late and close it as early as the work
-allows. A transaction that spans a call to a payment provider will, on the day that provider is slow, take
-your database down.</p>
-<p>Which also raises the question this design cannot answer: if the payment succeeds and the commit then
-fails, the database and the provider disagree. Distributed transactions are largely a dead end; the
-practical answers are idempotency keys, an outbox table written in the same transaction, and reconciling
-afterwards.</p>`,
+<p>A transaction holds locks and an undo history for its entire life, so its duration is a cost to every other writer. <b>Never do I/O inside one</b>: no HTTP calls, no waiting on a queue, never waiting on a human. Open it as late and close it as early as the work allows. A transaction that spans a call to a payment provider will, on the day that provider is slow, take your database down.</p>
+<p>One question this design cannot answer: if the payment succeeds and the commit then fails, the database and the provider disagree. Distributed transactions are largely a dead end. The practical answers are idempotency keys, an outbox table written in the same transaction, and reconciling afterwards.</p>`,
 docs:[['JDBC transactions (Oracle)','https://docs.oracle.com/javase/tutorial/jdbc/basics/transactions.html'],['Spring @Transactional','https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative.html']],
 ex:{title:'Atomic transfer',
 prompt:`Write <code>TransferDao</code> with <code>void transfer(javax.sql.DataSource ds, long fromId, long toId, long cents) throws java.sql.SQLException</code>: get a connection in try-with-resources, <code>setAutoCommit(false)</code>, run two <code>PreparedStatement</code> updates (debit: <code>UPDATE accounts SET balance_cents = balance_cents - ? WHERE id = ?</code>, credit: same with +), <code>commit()</code> on success, and in a catch block <code>rollback()</code> then rethrow.`,
@@ -921,21 +804,13 @@ public class TransferDao {
 <div class="codeSample">-- V2__add_status_to_accounts.sql
 ALTER TABLE accounts
   ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE';</div>
-<p>Rules that keep production safe: <b>never edit an applied migration</b> (checksums are verified; write a new V-script instead), naming is <code>V&lt;version&gt;__&lt;description&gt;.sql</code> (two underscores), and destructive changes deploy in phases (add column → backfill → switch reads → drop old) so old and new app versions coexist during a rolling deploy, the zero-downtime discipline from the deployment stream applied to data.</p>
-<h4>Why migrations exist at all</h4>
-<p>Application code is versioned, reviewed and deployed identically everywhere. Schemas, historically, were
-not: someone ran a statement against production, wrote it in a wiki, and the staging database drifted
-until nobody could say what any environment actually contained. Migrations apply the same discipline to
-the schema: <b>every change is a file, in the repository, reviewed, applied in order, and recorded</b>.</p>
-<p>The history table is what makes that work. On startup Flyway compares the scripts on the classpath
-against what it has already applied, runs what is new, and <b>verifies the checksum of what is not</b>,
-which is why editing an applied migration fails the build. That check is a feature: it is the difference
-between a versioned schema and a folder of SQL.</p>
+<p>Naming is <code>V&lt;version&gt;__&lt;description&gt;.sql</code> (two underscores). <b>Never edit an applied migration.</b> Write a new V-script instead. Destructive changes deploy in phases (add column → backfill → switch reads → drop old): the zero-downtime discipline from the deployment stream, applied to data.</p>
+<h4>Why migrations exist</h4>
+<p>Application code is versioned, reviewed and deployed identically everywhere. Schemas, historically, were not. Someone ran a statement against production, wrote it in a wiki, and staging drifted until nobody could say what any environment contained. Migrations apply the same discipline to the schema: <b>every change is a file, in the repository, reviewed, applied in order, and recorded</b>.</p>
+<p>The history table makes that work. On startup Flyway compares the scripts on the classpath against what it has applied, runs what is new, and <b>verifies the checksum of what is not</b>. That is why editing an applied migration fails the build.</p>
 
-<h4>The one that actually causes outages: expand and contract</h4>
-<p>During any rolling deploy, old and new application code run <b>at the same time</b>, against
-<b>one</b> database. So the real constraint is not "does this migration work?" but "is this schema valid
-for both versions of the code simultaneously?", and that rules out most single-step changes.</p>
+<h4>The one that causes outages: expand and contract</h4>
+<p>During a rolling deploy, old and new application code run <b>at the same time</b>, against <b>one</b> database. The real question is "is this schema valid for both versions of the code at once?" That rules out most single-step changes.</p>
 <div class="codeSample" data-hl>-- renaming a column, done safely, over three releases:
 R1  ADD the new column, nullable. code WRITES BOTH, READS the old.
     backfill existing rows in batches.
@@ -946,21 +821,12 @@ R3  DROP the old column.   <- only now, when nothing references it
 ALTER TABLE accounts RENAME COLUMN owner TO owner_name;
 -- every instance of the old code breaks the instant this runs.
 -- this is the single most common self-inflicted deployment outage.</div>
-<p>The same shape applies to dropping a column, tightening a constraint, or changing a type: add, migrate,
-switch, remove (each step deployable and reversible on its own).</p>
+<p>The same shape applies to dropping a column, tightening a constraint, or changing a type: add, migrate, switch, remove. Each step is deployable and reversible on its own.</p>
 
 <h4>The operations people learn the hard way</h4>
-<p><b>Locking.</b> Some statements take a lock that blocks all writes for the duration. Adding a column
-with a default rewrote the whole table on older PostgreSQL and MySQL versions; adding an index without
-<code>CONCURRENTLY</code> blocks writes until it completes. On a large table that is an outage
-announced as a schema change. Know what your engine and version do before running it against production
-volumes.</p>
-<p><b>Backfills belong outside the migration.</b> A single <code>UPDATE</code> touching ten million rows
-holds one enormous transaction, bloats the undo log and may never finish. Backfill in batches, from a job
-you can stop and resume.</p>
-<p><b>Rollback is mostly a myth.</b> A down-script cannot restore data a drop destroyed. Design forward:
-make changes additive, keep the old path alive until the new one is proven, and treat "revert the code"
-rather than "revert the schema" as the recovery plan.</p>`,
+<p><b>Locking.</b> Some statements take a lock that blocks all writes for the duration. Adding a column with a default rewrote the whole table on older PostgreSQL and MySQL versions. Adding an index without <code>CONCURRENTLY</code> blocks writes until it completes. On a large table that is an outage. Know what your engine and version do before running it against production volumes.</p>
+<p><b>Backfills belong outside the migration.</b> A single <code>UPDATE</code> touching ten million rows holds one huge transaction, bloats the undo log and may never finish. Backfill in batches, from a job you can stop and resume.</p>
+<p><b>Rollback is mostly a myth.</b> A down-script cannot restore data a drop destroyed. Design forward: make changes additive, keep the old path alive until the new one is proven, and treat "revert the code" rather than "revert the schema" as the recovery plan.</p>`,
 docs:[['Flyway documentation','https://documentation.red-gate.com/flyway'],['Spring Boot + Flyway','https://docs.spring.io/spring-boot/how-to/data-initialization.html#howto.data-initialization.migration-tool.flyway']],
 ex:{title:'Write the migrations',lang:'sql',
 prompt:`(1) On the first line, write the correct <b>filename</b> for migration number 4 that creates an audit_log table. (2) Below it, write its SQL: <code>CREATE TABLE audit_log</code> with columns <code>id BIGSERIAL PRIMARY KEY</code>, <code>actor VARCHAR(100) NOT NULL</code>, <code>action VARCHAR(50) NOT NULL</code>, <code>created_at TIMESTAMP NOT NULL DEFAULT now()</code>. (3) Then add an index on <code>actor</code> named <code>idx_audit_actor</code>.`,
@@ -989,12 +855,12 @@ CREATE TABLE audit_log (
 -- 3) the index:
 CREATE INDEX idx_audit_actor ON audit_log(actor);`}},
 {id:'db5',title:'Performance: N+1, indexes & pools',body:`
-<p>The four database problems you will actually meet:</p>
+<p>The four database problems you will meet:</p>
 <ul>
 <li><b>N+1 queries</b>: load 100 orders, then lazily fetch each order's user = 101 queries. Tells: page slow, logs full of identical SELECTs. Fix: <code>JOIN FETCH</code> in JPQL, <code>@EntityGraph</code>, or a hand-written join.</li>
-<li><b>Missing indexes</b>: every WHERE/JOIN/ORDER BY column on a big table is an index candidate. Verify with <code>EXPLAIN ANALYZE</code>: "Seq Scan" on millions of rows is your smoking gun. Indexes cost write speed; don't index everything.</li>
-<li><b>Connection pool exhaustion</b>: the pool (HikariCP, default ~10) runs dry when transactions are held too long; keep transactions short, never do HTTP calls inside one.</li>
-<li><b>Unbounded queries</b>: always paginate (<code>LIMIT/OFFSET</code> or keyset <code>WHERE id &gt; ?</code>; remember cursor pagination from the REST stream? Same idea, one layer down).</li>
+<li><b>Missing indexes</b>: every WHERE/JOIN/ORDER BY column on a big table is an index candidate. Verify with <code>EXPLAIN ANALYZE</code>: "Seq Scan" on millions of rows is your smoking gun. Indexes cost write speed, so do not index everything.</li>
+<li><b>Connection pool exhaustion</b>: the pool (HikariCP, default ~10) runs dry when transactions are held too long. Keep transactions short. Never do HTTP calls inside one.</li>
+<li><b>Unbounded queries</b>: always paginate (<code>LIMIT/OFFSET</code> or keyset <code>WHERE id &gt; ?</code>). Cursor pagination from the REST stream is the same idea, one layer down.</li>
 </ul>
 <div class="codeSample">-- JPQL fix for N+1:
 SELECT o FROM Order o JOIN FETCH o.user WHERE o.status = 'OPEN'
@@ -1003,15 +869,15 @@ EXPLAIN ANALYZE SELECT * FROM orders WHERE user_id = 42;
 -- Index Scan using idx_orders_user_id  ← good
 -- Seq Scan on orders (cost=0.00..421337) ← add the index!</div>
 
-<h4>Finding the problem before guessing at it</h4>
-<p>Every item above has a symptom you can look for rather than a habit you adopt on faith. N+1 shows as a burst of identical SELECTs differing only in the id; turn on SQL logging in a test and <b>count the statements</b>, because an assertion on query count is the only regression test that reliably catches it coming back. Missing indexes show as <code>Seq Scan</code> over a large table in <code>EXPLAIN ANALYZE</code>; note the difference between <code>EXPLAIN</code>, which shows the plan the optimizer intends, and <code>EXPLAIN ANALYZE</code>, which runs the query and shows what actually happened, including how far the row estimates were out. Pool exhaustion shows as a timeout waiting for a connection while the database itself is idle: the queue is in your process, not in the database.</p>
+<h4>Find the problem before guessing at it</h4>
+<p>Each item above has a symptom. N+1 shows as a burst of identical SELECTs differing only in the id. Turn on SQL logging in a test and <b>count the statements</b>. An assertion on query count is the only regression test that reliably catches it coming back. Missing indexes show as <code>Seq Scan</code> over a large table in <code>EXPLAIN ANALYZE</code>. <code>EXPLAIN</code> shows the plan the optimizer intends. <code>EXPLAIN ANALYZE</code> runs the query and shows what happened, including how far the row estimates were out. Pool exhaustion shows as a timeout waiting for a connection while the database is idle. The queue is in your process, not in the database.</p>
 
 <h4>What an index costs</h4>
-<p>An index is a second, ordered copy of the columns it covers. Reads get faster; every insert, update and delete must now maintain that copy, and the storage is real. Three refinements are worth knowing: a <b>composite</b> index is usable for a prefix of its columns and not for a suffix, so the column order is a design decision rather than a detail; a <b>covering</b> index that includes the selected columns lets the database answer from the index alone; and a <b>low-selectivity</b> index (a boolean, a status with three values) often will not be used at all, because scanning is cheaper than jumping.</p>
+<p>An index is a second, ordered copy of the columns it covers. Reads get faster. Every insert, update and delete must now maintain that copy, and the storage is real. A <b>composite</b> index is usable for a prefix of its columns and not for a suffix, so the column order is a design decision. A <b>covering</b> index that includes the selected columns lets the database answer from the index alone. A <b>low-selectivity</b> index (a boolean, a status with three values) often will not be used at all, because scanning is cheaper than jumping.</p>
 
 <h4>Transactions, and the calls that must not be inside them</h4>
-<p>A connection is held for the entire transaction, so transaction duration is pool consumption. An HTTP call inside a transaction pins a connection for the remote service's timeout, and a downstream slowdown then drains the pool and takes the whole application with it: a dependency failure converted into an outage by structure. Keep transactions to the database work: do the remote call before or after, and if the two must be consistent, that is a saga or an outbox, not a longer transaction.</p>
-<p>The same logic makes keyset pagination worth the effort. <code>OFFSET 100000</code> makes the database produce and discard a hundred thousand rows on every page, so the last page of a report is the slowest query in the system; <code>WHERE id &gt; ?</code> with a limit reads exactly one page regardless of depth.</p>`,
+<p>A connection is held for the entire transaction, so transaction duration is pool consumption. An HTTP call inside a transaction pins a connection for the remote service's timeout. A downstream slowdown then drains the pool and takes the whole application with it. Do the remote call before or after. If the two must be consistent, that is a saga or an outbox, not a longer transaction.</p>
+<p>The same logic makes keyset pagination worth the effort. <code>OFFSET 100000</code> makes the database produce and discard a hundred thousand rows on every page, so the last page of a report is the slowest query in the system. <code>WHERE id &gt; ?</code> with a limit reads one page regardless of depth.</p>`,
 docs:[['N+1 problem (Vlad Mihalcea)','https://vladmihalcea.com/n-plus-1-query-problem/'],['Postgres EXPLAIN','https://www.postgresql.org/docs/current/using-explain.html'],['HikariCP','https://github.com/brettwooldridge/HikariCP']],
 ex:{title:'Performance triage',lang:'text',
 prompt:`Answer on the numbered lines: (1) the name of the anti-pattern when listing 100 orders fires 101 queries, (2) the JPQL keyword pair that fixes it in one query, (3) the SQL command prefix that shows a query's execution plan with timings, (4) the plan operation that signals a missing index on a large table, (5) the command to create an index named <code>idx_orders_user_id</code> on <code>orders(user_id)</code>, (6) Spring Boot's default connection pool.`,
@@ -1048,14 +914,14 @@ CREATE INDEX idx_orders_user_id ON orders(user_id);
 # 6)
 HikariCP`}},
 {id:'db6',title:'Reading a query plan: EXPLAIN ANALYZE properly',body:`
-<p>The SQL essentials lesson made a claim and then walked away from it: the syntax is a week's work, and understanding what the planner does with it is the career. This is that lesson. A query plan is the database telling you, in order, exactly how it intends to produce your rows, and reading one is the difference between fixing a slow query and guessing at indexes until something changes.</p>
+<p>The SQL essentials lesson said the syntax is a week's work and the planner is the career. This is that lesson. A query plan is the database telling you, in order, how it intends to produce your rows. Reading one is the difference between fixing a slow query and guessing at indexes.</p>
 <div class="codeSample">EXPLAIN                  SELECT ...   -- the plan the planner INTENDS. free, instant.
 EXPLAIN ANALYZE          SELECT ...   -- actually RUNS it and reports what happened
 EXPLAIN (ANALYZE, BUFFERS, VERBOSE)   -- adds pages read, and where from</div>
-<p>Two warnings before you use the second form. <code>EXPLAIN ANALYZE</code> executes the statement, so running it on an <code>UPDATE</code> or a <code>DELETE</code> really does change your data; wrap it in <code>BEGIN ... ROLLBACK</code> if you must. And the timing it reports includes its own instrumentation overhead, which is noticeable on plans with millions of rows and negligible on the ones you are usually debugging.</p>
+<p><code>EXPLAIN ANALYZE</code> executes the statement, so on an <code>UPDATE</code> or a <code>DELETE</code> it changes your data. Wrap it in <code>BEGIN ... ROLLBACK</code> if you must. Its timing includes its own instrumentation overhead: noticeable on plans with millions of rows, negligible on the ones you usually debug.</p>
 
 <h4>How to read the shape</h4>
-<p>A plan is a tree, printed with the root at the top and indentation for depth. Execution runs the other way: <b>the most indented nodes run first</b>, and each one feeds its parent. So read it inside-out, from the deepest node upward, and the story assembles itself.</p>
+<p>A plan is a tree, root at the top, indentation for depth. Execution runs the other way. <b>The most indented nodes run first</b>, and each one feeds its parent. Read it inside-out, from the deepest node upward.</p>
 <div class="codeSample">Hash Join  (cost=12.4..982.7 rows=520 width=44)
            (actual time=0.310..48.902 rows=51004 loops=1)
   Hash Cond: (o.user_id = u.id)
@@ -1063,15 +929,15 @@ EXPLAIN (ANALYZE, BUFFERS, VERBOSE)   -- adds pages read, and where from</div>
                             (actual time=0.008..21.4 rows=51004 loops=1)
   -&gt;  Hash  (cost=8.2..8.2 rows=340 width=20)
         -&gt;  Seq Scan on users u  (cost=0.00..8.2 rows=340 width=20)</div>
-<p>Read that from the bottom: scan <code>users</code>, build a hash table from it, scan <code>orders</code>, probe the hash for each row, emit the join. Four numbers per node carry the diagnosis.</p>
+<p>From the bottom: scan <code>users</code>, build a hash table from it, scan <code>orders</code>, probe the hash for each row, emit the join. Four numbers per node carry the diagnosis.</p>
 <ul>
-<li><b>cost</b> is the planner's own unit, not milliseconds. The two figures are start-up cost and total cost, and they are useful only for comparing nodes with each other.</li>
-<li><b>actual time</b> is milliseconds, and is likewise a pair: time to the first row, then to the last. A large gap between them means the node is streaming rather than materializing.</li>
-<li><b>rows</b> appears twice, estimated and actual, and <b>the ratio between them is the single most useful thing in the output</b>. Here the planner expected 520 and got 51,004: it was wrong by a factor of a hundred, which means every decision above this node was made on bad information. Stale statistics and correlated predicates are the usual causes, and <code>ANALYZE tablename</code> is the first thing to try.</li>
-<li><b>loops</b> multiplies everything. A node showing 0.4ms with loops=20000 cost eight seconds, and the per-row times look innocent until you notice the multiplier.</li>
+<li><b>cost</b> is the planner's own unit, not milliseconds. The pair is start-up cost and total cost, useful only for comparing nodes with each other.</li>
+<li><b>actual time</b> is milliseconds, also a pair: time to the first row, then to the last. A large gap means the node is streaming rather than materializing.</li>
+<li><b>rows</b> appears twice, estimated and actual. <b>The ratio between them is the single most useful thing in the output.</b> Here the planner expected 520 and got 51,004, wrong by a factor of a hundred, so every decision above this node was made on bad information. Stale statistics and correlated predicates are the usual causes. Try <code>ANALYZE tablename</code> first.</li>
+<li><b>loops</b> multiplies everything. A node showing 0.4ms with loops=20000 cost eight seconds.</li>
 </ul>
 
-<h4>The node types worth recognizing on sight</h4>
+<h4>Node types to recognize on sight</h4>
 <div class="codeSample">Seq Scan          read the whole table. correct and fast for a small
                   table or a query returning most of it; a disaster on
                   a large table returning few rows.
@@ -1091,8 +957,8 @@ Sort              watch for "external merge Disk: 42MB". that means
                   work_mem was too small and it spilled to disk.</div>
 
 <h4>What to do with what you find</h4>
-<p><b>A Seq Scan is not automatically wrong.</b> On a table of four hundred rows it is the right plan, and forcing an index would be slower. The finding is a sequential scan over a large table that returns a small fraction of it. <b>An index that exists but is not used</b> usually means one of three things: the column is wrapped in a function so the index does not apply (index the expression instead), the types do not match and a cast is forced, or the planner believes the query returns most of the table and has decided scanning is cheaper. That third case is a statistics problem, not an index problem, and adding indexes will not fix it.</p>
-<p>Work the plan in one direction: find the node with the largest actual time once you have multiplied by <code>loops</code>, check whether its estimate matched reality, and only then decide whether the fix is an index, a rewrite, or fresher statistics. Measure again afterwards on data the size of production, because a plan chosen on ten thousand rows tells you very little about the plan the same query gets on ten million.</p>`,
+<p><b>A Seq Scan is not automatically wrong.</b> On a table of four hundred rows it is the right plan, and forcing an index would be slower. The finding is a sequential scan over a large table that returns a small fraction of it. <b>An index that exists but is not used</b> usually means one of three things. The column is wrapped in a function, so the index does not apply (index the expression instead). The types do not match and a cast is forced. Or the planner believes the query returns most of the table and scanning is cheaper. That third case is a statistics problem. Adding indexes will not fix it.</p>
+<p>Work the plan in one direction. Find the node with the largest actual time after multiplying by <code>loops</code>. Check whether its estimate matched reality. Only then decide whether the fix is an index, a rewrite, or fresher statistics. Measure again on data the size of production. A plan chosen on ten thousand rows says little about the plan the same query gets on ten million.</p>`,
 docs:[['Using EXPLAIN, PostgreSQL manual','https://www.postgresql.org/docs/current/using-explain.html'],['explain.depesz.com, plan visualizer','https://explain.depesz.com/']],
 ex:{title:'From Seq Scan to Index Only Scan',lang:'sql',
 prompt:`Table <code>orders(id, user_id, status, total_cents, created_at)</code> has ten million rows and no index but the primary key. One statement per numbered line, each ending in a semicolon: (1) the command that shows the plan for <code>SELECT id, total_cents FROM orders WHERE user_id = 42</code> <b>with real timings and page counts</b>, so you can see what actually happened rather than what was intended; (2) an index named <code>idx_orders_user_id</code> on <code>orders(user_id)</code> that turns the Seq Scan into an Index Scan; (3) a <b>covering</b> index named <code>idx_orders_user_covering</code> on the same column that also carries <code>id</code> and <code>total_cents</code>, so the query can be answered from the index alone; (4) the command that refreshes the planner's statistics for the table.`,

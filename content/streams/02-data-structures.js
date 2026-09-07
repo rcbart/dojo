@@ -1,6 +1,8 @@
 STREAMS.push({icon:'🧱',title:'Data Structures',blurb:'Lists, sets, maps, sorting, stacks, queues, heaps, linked lists and hashing: the right tool, its Big-O, and building your own.',lessons:[
 {id:'ds00',title:'Data structures in plain English: what, when & why',body:`
-<p>Before any code: a data structure is just <b>a way to organize data so certain operations are cheap</b>. Each one is a deliberate trade: fast at some things, slow at others. Pick the wrong one and simple features crawl; pick the right one and they fly. Here is the whole toolbox in plain terms.</p>
+
+
+<p>A data structure is <b>a way to organize data so certain operations are cheap</b>. Each one is a trade: fast at some things, slow at others. Pick the wrong one and simple features crawl. Here is the whole toolbox in plain terms.</p>
 <table class="dsCompare">
 <thead><tr><th>Structure</th><th>Think of it as…</th><th>Fast operations (Big-O)</th><th>Slow / weak (Big-O)</th><th>When to use / avoid</th></tr></thead>
 <tbody>
@@ -16,8 +18,9 @@ STREAMS.push({icon:'🧱',title:'Data Structures',blurb:'Lists, sets, maps, sort
 <tr><td><b>Graph</b></td><td>cities and roads</td><td>traversal (BFS/DFS) <b>O(V+E)</b></td><td>overkill for simple linear data</td><td><b>Use</b> for relationships / networks. <b>Avoid</b> when a list or tree fits.</td></tr>
 </tbody>
 </table>
-<p>💡 Those <code>O(...)</code> labels are <b>Big-O notation</b>, a shorthand for how the cost grows as the data grows: <code>O(1)</code> constant (instant), <code>O(log n)</code> logarithmic (halving), <code>O(n)</code> linear, <code>O(n log n)</code>, <code>O(n²)</code>. New to it? See the <b>"Big-O, Θ &amp; Ω: measuring cost"</b> lesson in this same Data Structures stream for the full plain-English explanation; it is the vocabulary the whole table is written in.</p>
-<p><b>The one-line difference</b> people ask about most: a <b>queue</b> is a fair line (first in, first out); a <b>stack</b> is a pile (last in, first out); a <b>tree</b> is a hierarchy that keeps data sorted for fast search; a <b>hash map</b> gives instant lookup by key but in no particular order. The rest of this stream builds each one; this table is the map to come back to.</p>`,
+<p>Three abbreviations in that table need unpacking. A <b>BST</b> is a binary search tree: smaller keys go left, larger go right, so each step halves the search. Balanced, that's logarithmic; unbalanced, it's a list. <b>BFS</b> and <b>DFS</b> are breadth-first and depth-first search, the two ways to walk a graph: level by level (shortest path in hops), or as deep as possible before backing up (uses a stack or recursion).</p>
+<p>💡 The <code>O(...)</code> labels are <b>Big-O notation</b>, a shorthand for how cost grows as the data grows: <code>O(1)</code> constant (instant), <code>O(log n)</code> logarithmic (halving), <code>O(n)</code> linear, <code>O(n log n)</code>, <code>O(n²)</code>. New to it? The <b>"Big-O, Θ &amp; Ω: measuring cost"</b> lesson in this stream explains it in plain English. The whole table is written in that vocabulary.</p>
+<p><b>The one-line difference</b> people ask about most. A <b>queue</b> is a fair line (first in, first out). A <b>stack</b> is a pile (last in, first out). A <b>tree</b> is a hierarchy that keeps data sorted for fast search. A <b>hash map</b> gives instant lookup by key but in no particular order. Come back to this table as the map.</p>`,
 docs:[['Choosing a data structure, overview','https://en.wikipedia.org/wiki/Data_structure'],['Java collections, Oracle','https://docs.oracle.com/javase/tutorial/collections/']],
 quiz:[
 {q:'Which data structure is First-In-First-Out (FIFO), like a line at a shop?',options:['Queue','Stack','Array','Heap'],answer:0,why:'A queue serves the oldest item first (FIFO), like a fair line.',whyWrong:['','A stack is LIFO: it serves the newest first, not the oldest.','An array is indexed storage, not an ordering discipline.','A heap serves the min or max first, not the oldest.']},
@@ -59,12 +62,14 @@ tests:[{d:'index access -> array',re:'(["\']index\\-fast\\-access["\']\\s*(->|:)
 behavior:`structure("first-in-first-out") is "queue", structure("last-in-first-out") is "stack", structure("key-value-lookup") is "hash map", structure("sorted-range") is "balanced tree". Matching the need to the structure is the core skill this stream builds.`,
 hints:['FIFO is a queue (a fair line); LIFO is a stack (a pile).','Exact-key lookup wants a hash map; sorted/range wants a balanced tree.','Min/max on demand is a heap; prefixes are a trie; connections are a graph.']}},
 {id:'ds0',title:'Lists, Sets & Maps: choosing the collection',body:`
-<p>🌱 <b>Starting from zero:</b> "data structure" sounds grand but means something homely: <i>the shape you store things in</i>. A shopping list, a guest list and a phone book are three different shapes for three different needs, and choosing the wrong one (looking up phone numbers by reading the whole book top to bottom) is where slow software comes from. This stream is about matching the shape to the need; it starts with Java\u0027s big three.</p>
-<p>Ninety percent of Java data handling is picking the right one of these three interfaces; each answers a different question:</p>
+
+
+<p>🌱 <b>Starting from zero:</b> "data structure" sounds grand but means something homely: <i>the shape you store things in</i>. A shopping list, a guest list and a phone book are three shapes for three needs. Choosing the wrong one, like looking up a phone number by reading the whole book top to bottom, is where slow software comes from. This stream is about matching the shape to the need. It starts with Java's big three.</p>
+<p>Ninety percent of Java data handling is picking the right one of these three interfaces. Each answers a different question:</p>
 <ul>
 <li><b>List</b>: "an <i>ordered sequence</i>, duplicates allowed, I care about position." <code>ArrayList</code>: backed by an array: O(1) get by index, O(1) amortized append, O(n) middle insert. <code>LinkedList</code>: O(1) ends, O(n) index. Default to <code>ArrayList</code>.</li>
 <li><b>Set</b>: "a collection of <i>unique</i> things, does X exist?" <code>HashSet</code>: O(1) add/contains, no order. <code>LinkedHashSet</code>: O(1) + insertion order. <code>TreeSet</code>: O(log n), kept sorted, supports ranges (<code>headSet</code>/<code>ceiling</code>).</li>
-<li><b>Map</b>: "<i>key → value</i> lookups." <code>HashMap</code>: O(1), no order. <code>LinkedHashMap</code>: O(1) + insertion/access order (your LRU). <code>TreeMap</code>: O(log n), sorted by key, range queries.</li>
+<li><b>Map</b>: "<i>key → value</i> lookups." <code>HashMap</code>: O(1), no order. <code>LinkedHashMap</code>: O(1) + insertion/access order (your LRU). <b>LRU</b> is least recently used, a cache rule: when full, evict what has gone longest without being read. <code>TreeMap</code>: O(log n), sorted by key, range queries.</li>
 </ul>
 <div class="codeSample" data-hl>List&lt;String&gt; log = new ArrayList&lt;&gt;();        // ordered, indexable, dup-friendly
 Set&lt;String&gt;  seen = new HashSet&lt;&gt;();         // "have I processed this id?"
@@ -76,7 +81,7 @@ Map&lt;String,Integer&gt; counts = new HashMap&lt;&gt;();// "how many per key?"
 // need lookup by key?    -&gt; Map
 // need it SORTED?        -&gt; TreeSet / TreeMap
 // need INSERTION order?  -&gt; LinkedHashSet / LinkedHashMap</div>
-<p>Golden habit: program to the <i>interface</i> (<code>List&lt;X&gt; xs = new ArrayList&lt;&gt;()</code>), so swapping the implementation is one word. And know why HashSet/HashMap are O(1): they hash the element/key to a bucket, which is why your keys must honor the equals/hashCode contract (later lesson).</p>`,
+<p>Program to the <i>interface</i> (<code>List&lt;X&gt; xs = new ArrayList&lt;&gt;()</code>), so swapping the implementation is one word. Know why HashSet/HashMap are O(1): they hash the element/key to a bucket. That is why your keys must honor the equals/hashCode contract (later lesson).</p>`,
 docs:[['Collections overview, Oracle','https://docs.oracle.com/javase/tutorial/collections/intro/index.html'],['Choosing an implementation, Oracle','https://docs.oracle.com/javase/tutorial/collections/implementations/index.html']],
 exs:[
 {title:'Pick List, Set, Map',
@@ -141,7 +146,8 @@ public class Ordered {
 }`}
 ]},
 {id:'ds0b',title:'Sorting, comparators & merging',body:`
-<p>Sorting is O(n log n) and built in; you rarely write the algorithm, you write the <b>ordering</b>:</p>
+
+<p>Sorting is O(n log n) and built in. You rarely write the algorithm. You write the <b>ordering</b>:</p>
 <div class="codeSample" data-hl>List&lt;String&gt; xs = new ArrayList&lt;&gt;(List.of("bb", "a", "ccc"));
 Collections.sort(xs);                         // natural order (Comparable)
 xs.sort(Comparator.naturalOrder());
@@ -155,20 +161,20 @@ int[] a = {3,1,2};  Arrays.sort(a);            // primitive arrays: dual-pivot q
 record Person(String name, int age) {}
 people.sort(Comparator.comparingInt(Person::age).reversed()
                       .thenComparing(Person::name));</div>
-<p>Under the hood: <code>Arrays.sort</code> on objects uses TimSort (stable, O(n log n)); on primitives, dual-pivot quicksort (not stable, but primitives have no identity so it cannot matter). <b>Comparable</b> is a type's one natural order (<code>implements Comparable&lt;T&gt;</code>, define <code>compareTo</code>); <b>Comparator</b> is any number of external orders, defined outside the type.</p>
+<p><code>Arrays.sort</code> on objects uses TimSort (stable, O(n log n)). On primitives it uses dual-pivot quicksort, not stable, but primitives have no identity so it cannot matter. <b>Comparable</b> is a type's one natural order (<code>implements Comparable&lt;T&gt;</code>, define <code>compareTo</code>). <b>Comparator</b> is any number of external orders, defined outside the type.</p>
 
 <h4>Stability, and why thenComparing works</h4>
-<p>A sort is <b>stable</b> when equal elements keep their original relative order. That is not a detail; it is what makes layered sorting possible. Sort by name, then stably sort by department, and inside each department the names are still in order. Java's object sort is stable, so <code>thenComparing</code> chains and repeated sorts both behave the way you expect. An unstable sort silently scrambles the previous pass.</p>
+<p>A sort is <b>stable</b> when equal elements keep their original relative order. Sort by name, then stably sort by department, and inside each department the names are still in order. Java's object sort is stable, so <code>thenComparing</code> chains and repeated sorts both work. An unstable sort scrambles the previous pass.</p>
 
 <h4>The comparator contract is enforced, and violating it throws</h4>
-<p>A comparator must be consistent: if a &lt; b and b &lt; c then a &lt; c, and <code>compare(a,b)</code> must be the exact negation of <code>compare(b,a)</code>. The classic way to break it is subtraction:</p>
+<p>A comparator must be consistent: if a &lt; b and b &lt; c then a &lt; c, and <code>compare(a,b)</code> must be the negation of <code>compare(b,a)</code>. The classic way to break it is subtraction:</p>
 <div class="codeSample">(a, b) -&gt; a.age() - b.age()        // OVERFLOWS: 2_000_000_000 - (-2_000_000_000)
 (a, b) -&gt; Integer.compare(a.age(), b.age())   // correct, always</div>
-<p>TimSort detects an inconsistent comparator part-way through and throws <code>IllegalArgumentException: Comparison method violates its general contract!</code>, a real production failure that appears only on large inputs, because small arrays take a simpler code path that never notices. Comparators built from <code>comparing</code>, <code>comparingInt</code> and <code>thenComparing</code> are correct by construction, which is the argument for using them rather than hand-writing the lambda.</p>
-<p>Nulls need a decision, not luck: <code>Comparator.nullsFirst(Comparator.naturalOrder())</code> states where they go instead of throwing a <code>NullPointerException</code> mid-sort.</p>
+<p>TimSort detects an inconsistent comparator part-way through and throws <code>IllegalArgumentException: Comparison method violates its general contract!</code>. It appears in production only on large inputs. Small arrays take a simpler code path that never notices. Comparators built from <code>comparing</code>, <code>comparingInt</code> and <code>thenComparing</code> are correct by construction. Use them instead of a hand-written lambda.</p>
+<p>Nulls need a decision: <code>Comparator.nullsFirst(Comparator.naturalOrder())</code> says where they go instead of throwing a <code>NullPointerException</code> mid-sort.</p>
 
 <h4>Merging: the O(n) half of merge sort</h4>
-<p>Two already-sorted sequences combine in a single pass with two pointers: take whichever head is smaller, advance that side. It is the operation underneath merge sort, and the reason a database can combine sorted index ranges, a log tool can merge rotated files by timestamp, and <code>sort -m</code> exists. Sorting the concatenation instead would cost O(n log n) and throw away the ordering you already had.</p>`,
+<p>Two sorted sequences combine in a single pass with two pointers: take whichever head is smaller, advance that side. It is the operation underneath merge sort. It is how a database combines sorted index ranges, how a log tool merges rotated files by timestamp, and why <code>sort -m</code> exists. Sorting the concatenation instead costs O(n log n) and throws away the ordering you already had.</p>`,
 docs:[['Comparator, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Comparator.html'],['Object ordering, Oracle','https://docs.oracle.com/javase/tutorial/collections/interfaces/order.html']],
 exs:[
 {title:'Multi-key comparator',
@@ -238,8 +244,10 @@ tests:[{d:'the input is copied before sorting',re:'\\[\\.\\.\\.|slice\\s*\\(|con
 behavior:`Five cases execute in a worker. The second case is the one that catches real bugs: sort() sorts in place and returns the same array, so a solution that omits the copy passes every ordering case while quietly rewriting its caller's data. The tie-break case shows why thenComparing exists: without it, equal-length words come back in whatever order the sort happened to leave them, which is stable in Java and unspecified in general. Note the comparator returns a NUMBER, not a boolean: returning true/false is the most common JavaScript sorting bug, and it produces almost-sorted output that looks right on small inputs.`,
 hints:['Copy with a spread or slice before sorting.','A comparator returns a negative number, zero, or a positive number, never a boolean.','The || operator chains comparators: if the first is 0 (a tie), the second decides.']}]},
 {id:'ds1',title:'Stacks: LIFO thinking',body:`
-<p>🌱 <b>Starting from zero:</b> picture a stack of plates: you add to the top and take from the top, so the LAST plate added is the FIRST one back. That "last in, first out" shape appears everywhere in computing: the undo history in your editor, the back button, unwinding nested steps.</p>
-<p>A stack is last-in-first-out: <code>push</code>, <code>pop</code>, <code>peek</code>. It models anything nested or reversible: undo history, call stacks, parsing, backtracking.</p>
+
+
+<p>🌱 <b>Starting from zero:</b> picture a stack of plates. You add to the top and take from the top, so the LAST plate added is the FIRST one back. That "last in, first out" shape appears all over computing: undo history, the back button, call stacks, parsing, backtracking.</p>
+<p>A stack is last-in-first-out: <code>push</code>, <code>pop</code>, <code>peek</code>. It models anything nested or reversible.</p>
 <div class="codeSample" data-hl>Deque&lt;String&gt; stack = new ArrayDeque&lt;&gt;();   // THE stack in modern Java
 stack.push("a");                             // add on top
 stack.push("b");
@@ -249,21 +257,21 @@ stack.isEmpty();
 
 // java.util.Stack exists but is LEGACY: it extends Vector (synchronized,
 // slow) and exposes index access that breaks the LIFO contract. Use ArrayDeque.</div>
-<p>All three core operations are O(1), because all of them touch one end of an array and nothing else moves.</p>
+<p>All three core operations are O(1). Each touches one end of an array and nothing else moves.</p>
 
 <h4>The call stack is this data structure</h4>
-<p>Every method call pushes a <b>stack frame</b> holding its parameters, local variables and return address; returning pops it. That is why local variables vanish on return, why a stack trace reads innermost-call-first, and why unbounded recursion produces <code>StackOverflowError</code>: the thread's stack is a fixed-size region, typically around 512KB to 1MB, and frames are pushed until it is full. Reading a stack trace is reading this structure top-down.</p>
+<p>Every method call pushes a <b>stack frame</b> holding its parameters, local variables and return address. Returning pops it. That is why local variables vanish on return, why a stack trace reads innermost-call-first, and why unbounded recursion produces <code>StackOverflowError</code>. The thread's stack is a fixed-size region, typically around 512KB to 1MB, and frames are pushed until it is full.</p>
 
 <h4>Where stacks show up in real code</h4>
 <ul>
-<li><b>Matching and parsing.</b> Brackets, XML/HTML tags, nested JSON: push the opener, pop and compare on the closer. Valid only if the stack ends <i>empty</i>, which is the check people forget.</li>
-<li><b>Undo/redo.</b> Two stacks: undo pops from one and pushes onto the other. Redo is discarded on a new action, which is exactly what popping the redo stack empty means.</li>
-<li><b>Backtracking.</b> Depth-first search, maze solving and constraint solvers push a choice, explore, and pop to try the next; an explicit stack is how you convert a recursive DFS into an iterative one when depth would overflow the call stack.</li>
+<li><b>Matching and parsing.</b> Brackets, XML/HTML tags, nested JSON: push the opener, pop and compare on the closer. Valid only if the stack ends <i>empty</i>. People forget that check.</li>
+<li><b>Undo/redo.</b> Two stacks: undo pops from one and pushes onto the other. A new action discards redo, which is the redo stack popped empty.</li>
+<li><b>Backtracking.</b> <b>DFS</b>, depth-first search, walks a graph as deep as possible before backing up, using a stack or recursion. DFS, maze solving and constraint solvers all push a choice, explore, and pop to try the next. An explicit stack converts a recursive DFS into an iterative one when depth would overflow the call stack.</li>
 <li><b>Expression evaluation.</b> Shunting-yard and every RPN calculator: operands on one stack, operators on another.</li>
 </ul>
 
 <h4>The traps</h4>
-<p><code>ArrayDeque</code> rejects <code>null</code>, deliberately, because <code>poll()</code> returns <code>null</code> to mean "empty", and allowing null elements would make the two indistinguishable. <code>pop()</code> on an empty deque throws <code>NoSuchElementException</code>, while <code>poll()</code> returns null: pick the one whose failure mode you want. And a stack of unbounded size is a memory leak waiting for an adversarial input; parsers that accept untrusted nesting need a depth limit.</p>`,
+<p><code>ArrayDeque</code> rejects <code>null</code> on purpose. <code>poll()</code> returns <code>null</code> to mean "empty", so a null element would be indistinguishable from an empty deque. <code>pop()</code> on an empty deque throws <code>NoSuchElementException</code>. <code>poll()</code> returns null. Pick the failure mode you want. A stack of unbounded size is a memory leak waiting for adversarial input. Parsers that accept untrusted nesting need a depth limit.</p>`,
 docs:[['Deque, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Deque.html'],['ArrayDeque, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ArrayDeque.html']],
 exs:[{title:'Balanced brackets',
 prompt:`Write <code>Brackets</code> with <code>static boolean balanced(String s)</code> using an <code>ArrayDeque&lt;Character&gt;</code> as a stack: push each opener <code>( [ {</code>; on each closer, the stack must be non-empty and its top must be the matching opener (pop and check); ignore all other characters; return true iff the stack is empty at the end.`,
@@ -319,8 +327,10 @@ tests:[{d:'openers are pushed',re:'push\\s*\\('},{d:'closers pop and compare',re
 behavior:`Six cases run for real. Two of them are the ones that separate a working solution from a plausible one: "((" is rejected only if you check that the stack is EMPTY at the end, and ")(" is rejected only if popping an empty stack counts as a mismatch; in JavaScript pop() on an empty array returns undefined, which correctly fails the comparison, but a solution that checks length before popping and then continues would wrongly accept it. The "brackets inside other text" case makes sure you ignore irrelevant characters rather than treating them as errors.`,
 hints:['A plain array is a stack: push() and pop().','Map each closer to the opener it requires, then compare what you popped.','Two ways to fail: the wrong partner comes off the stack, or something is still on it at the end.']}]},
 {id:'ds2',title:'Queues & deques: FIFO and sliding windows',body:`
-<p>🌱 <b>Starting from zero:</b> a queue is the line at a checkout: first come, first served. Where the plate-stack reverses order, the queue preserves it, which makes it the shape of fairness: things are handled in the order they arrived.</p>
-<p>A queue is first-in-first-out: task queues, BFS, buffering. A <b>deque</b> (double-ended queue) does both ends in O(1) and therefore impersonates stacks, queues and sliding windows.</p>
+
+
+<p>🌱 <b>Starting from zero:</b> a queue is the line at a checkout: first come, first served. The plate-stack reverses order. The queue preserves it.</p>
+<p>A queue is first-in-first-out: task queues, BFS, buffering. <b>BFS</b> is breadth-first search: walking a graph level by level, which finds the shortest path in hops. A <b>deque</b> (double-ended queue) does both ends in O(1), so it can act as a stack, a queue or a sliding window.</p>
 <div class="codeSample" data-hl>Queue&lt;Task&gt; q = new ArrayDeque&lt;&gt;();
 q.offer(task);          // enqueue (returns false when full, add() throws)
 q.peek();               // head, or null when empty (element() throws)
@@ -336,15 +346,15 @@ void record(Deque&lt;String&gt; history, String event, int max) {
 }</div>
 
 <h4>Two API families, and why both exist</h4>
-<p>Every queue operation comes in two flavors: <code>offer/poll/peek</code> return a sentinel (<code>false</code> or <code>null</code>) on failure, and <code>add/remove/element</code> throw. Neither is better; they encode whether "empty" is an expected condition or a bug. A worker draining a queue expects empty and uses <code>poll</code>; code that has just checked <code>size()</code> and must find an element uses <code>remove</code> so a violated assumption fails loudly. Mixing them in one class is how a NoSuchElementException reaches production.</p>
+<p>Every queue operation comes in two flavors. <code>offer/poll/peek</code> return a sentinel (<code>false</code> or <code>null</code>) on failure. <code>add/remove/element</code> throw. They encode whether "empty" is expected or a bug. A worker draining a queue expects empty and uses <code>poll</code>. Code that has just checked <code>size()</code> uses <code>remove</code>, so a violated assumption fails loudly. Mixing them in one class is how a NoSuchElementException reaches production.</p>
 
 <h4>ArrayDeque is a circular buffer, and that is why it wins</h4>
-<p>Underneath is an array with a head index and a tail index that wrap around. Adding at either end writes one slot and moves one index: no shifting, no per-element allocation. <code>LinkedList</code> also implements <code>Deque</code>, and it allocates a node object per element with two pointers each: worse memory, worse cache locality, and slower in practice for every operation except splicing in the middle, which you almost never do. The rule of thumb: <b>ArrayDeque unless you have measured a reason.</b></p>
+<p>Underneath is an array with a head index and a tail index that wrap around. Adding at either end writes one slot and moves one index: no shifting, no allocation. <code>LinkedList</code> also implements <code>Deque</code>, but it allocates a node per element with two pointers each. Worse memory, worse cache locality, slower for everything except splicing in the middle, which you almost never do. <b>ArrayDeque unless you have measured a reason.</b></p>
 
 <h4>Where queues are the whole design</h4>
 <ul>
-<li><b>Breadth-first search</b> is DFS with a queue instead of a stack; that one substitution is the difference between "any path" and "shortest path in an unweighted graph".</li>
-<li><b>Producer/consumer.</b> <code>BlockingQueue</code> from the concurrency stream is this interface plus waiting, and it is where a bounded queue becomes <b>backpressure</b>: a full queue blocks the producer, which is the system telling you it cannot keep up. An unbounded queue instead absorbs the overload silently until the heap does not.</li>
+<li><b>Breadth-first search</b> is <b>DFS</b>, depth-first search, with a queue instead of a stack. DFS goes as deep as possible before backing up; BFS goes level by level. That substitution is the difference between "any path" and "shortest path in an unweighted graph".</li>
+<li><b>Producer/consumer.</b> <code>BlockingQueue</code> from the concurrency stream is this interface plus waiting. A bounded queue gives you <b>backpressure</b>: a full queue blocks the producer, which tells you the system cannot keep up. An unbounded queue absorbs the overload until the heap does not.</li>
 <li><b>Sliding windows.</b> A deque holding the last N events, or the indices of candidate maxima, answers "the last minute of traffic" in constant time per event.</li>
 </ul>`,
 docs:[['Queue, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Queue.html'],['Queue implementations, Oracle tutorial','https://docs.oracle.com/javase/tutorial/collections/implementations/queue.html']],
@@ -414,8 +424,9 @@ tests:[{d:'the event is appended',re:'\\.\\.\\.|concat|push'},{d:'the oldest ent
 behavior:`Five real cases. The max=1 case is the one that catches an off-by-one: evicting only when length is strictly greater than max keeps exactly max items, while evicting on >= keeps max-1 and looks almost right. The final case checks you copied rather than mutating, the same discipline as the sorting exercise, and the reason both appear early. Note that shift() on a JavaScript array is O(n), which is fine for a small bounded history and exactly what ArrayDeque avoids in Java by moving an index instead of the elements.`,
 hints:['Copy the history, then append the new event to the copy.','Evict from the FRONT, the oldest entry, until the length fits.','Strictly greater than max, not greater or equal.']}]},
 {id:'ds3',title:'PriorityQueue: heaps & top-K',body:`
-<p>🌱 <b>Starting from zero:</b> an emergency room does not treat patients first-come-first-served; the most urgent case jumps the line. A <b>priority queue</b> is that triage desk as a data structure: whatever you put in, the most important item is always the one that comes out next.</p>
-<p>A <code>PriorityQueue</code> always serves the <i>smallest</i> element first (a binary min-heap): O(log n) insert and remove, O(1) peek. It powers schedulers, Dijkstra, merge-K and the top-K pattern below.</p>
+
+<p>🌱 <b>Starting from zero:</b> an emergency room does not treat patients first-come-first-served. The most urgent case jumps the line. A <b>priority queue</b> is that triage desk as a data structure. Whatever you put in, the most important item comes out next.</p>
+<p>A <code>PriorityQueue</code> serves the <i>smallest</i> element first (a binary min-heap): O(log n) insert and remove, O(1) peek. It powers schedulers, Dijkstra, merge-K and the top-K pattern below.</p>
 <div class="codeSample" data-hl>PriorityQueue&lt;Integer&gt; minHeap = new PriorityQueue&lt;&gt;();
 PriorityQueue&lt;Integer&gt; maxHeap = new PriorityQueue&lt;&gt;(Comparator.reverseOrder());
 PriorityQueue&lt;Trade&gt; byAmount =
@@ -429,18 +440,18 @@ for (int x : stream) {
 }
 // heap now holds the k largest, O(n log k), constant memory</div>
 
-<h4>What a binary heap actually is</h4>
-<p>Not a tree of objects but an <b>array</b> interpreted as a complete binary tree, where the children of index <code>i</code> live at <code>2i+1</code> and <code>2i+2</code>. The only invariant is that a parent is never larger than its children (for a min-heap); siblings are unordered, which is why the structure is cheap to maintain. Insert appends at the end and <i>sifts up</i> while it is smaller than its parent; remove takes the root, moves the last element into its place and <i>sifts down</i>. Both walk one root-to-leaf path, so both are O(log n), and no pointers or allocations are involved.</p>
-<p>That weak invariant is the whole trade. A sorted list gives O(1) access to the minimum but O(n) insertion; a heap gives O(log n) for both, and it never pays to fully order elements you will discard.</p>
+<h4>What a binary heap is</h4>
+<p>Not a tree of objects but an <b>array</b> read as a complete binary tree. The children of index <code>i</code> live at <code>2i+1</code> and <code>2i+2</code>. The only invariant: a parent is never larger than its children (for a min-heap). Siblings are unordered, so the structure is cheap to maintain. Insert appends at the end and <i>sifts up</i> while it is smaller than its parent. Remove takes the root, moves the last element into its place and <i>sifts down</i>. Both walk one root-to-leaf path, so both are O(log n), with no pointers or allocations.</p>
+<p>That weak invariant is the trade. A sorted list gives O(1) access to the minimum but O(n) insertion. A heap gives O(log n) for both. It never pays to fully order elements you will discard.</p>
 
 <h4>Top-K: why the heap is inverted</h4>
-<p>To keep the <b>k largest</b>, you hold a <b>min</b>-heap of size k. The root is then the weakest of your current champions, so each new element is compared against it in O(1) and the loser is evicted. Reaching for a max-heap here is the classic inversion error: it puts the biggest item where you can remove it, which is precisely the item you want to keep. The payoff is memory (O(k) rather than O(n)), which is what lets you take the top 100 of a billion-row stream on a laptop.</p>
+<p>To keep the <b>k largest</b>, hold a <b>min</b>-heap of size k. The root is the weakest of your current champions, so each new element is compared against it in O(1) and the loser is evicted. A max-heap here is the classic inversion error: it puts the biggest item where you can remove it, the one item you want to keep. The payoff is memory, O(k) rather than O(n). That is what lets you take the top 100 of a billion-row stream on a laptop.</p>
 
 <h4>The traps</h4>
 <ul>
 <li><b>Iteration is not sorted.</b> <code>for (x : pq)</code> walks the backing array in heap order. Only repeated <code>poll()</code> yields sorted output, and it empties the queue.</li>
-<li><b>Ties are unspecified.</b> Equal priorities come out in no defined order; if fairness matters, add a sequence number to the comparator as a tie-break.</li>
-<li><b>Unbounded by default.</b> A PriorityQueue grows until the heap does. A scheduler fed faster than it drains needs a cap and a rejection policy, not optimism.</li>
+<li><b>Ties are unspecified.</b> Equal priorities come out in no defined order. If fairness matters, add a sequence number to the comparator as a tie-break.</li>
+<li><b>Unbounded by default.</b> A PriorityQueue grows until the heap does. A scheduler fed faster than it drains needs a cap and a rejection policy.</li>
 <li>It rejects <code>null</code>, for the same reason ArrayDeque does.</li>
 </ul>`,
 docs:[['PriorityQueue, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html'],['Comparator, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Comparator.html']],
@@ -489,8 +500,10 @@ tests:[{d:'a non-positive k returns nothing',re:'k\\s*<=\\s*0|k\\s*<\\s*1'},{d:'
 behavior:`Five cases execute. The duplicates case is the one that catches a Set-based shortcut: distinct values are not the same question as largest values, and deduplicating quietly changes the answer. The negative case catches the other classic: sort() without a comparator compares values as STRINGS, so [-5,-1,-9] sorts to [-1,-5,-9] and the answer is confidently wrong. Note what this implementation gives up: sorting is O(n log n) and holds the whole array, while the size-k min-heap in the lesson is O(n log k) with O(k) memory. For five numbers that is irrelevant; for a billion-row stream it is the difference between running and not.`,
 hints:['Guard k <= 0 first.','sort() compares as text by default; always pass (a, b) => a - b for numbers.','After an ascending sort, the k largest are the last k elements.']}]},
 {id:'ds4',title:'Linked lists: build one, know the trade-offs',body:`
-<p>🌱 <b>Starting from zero:</b> two ways to store a sequence. Numbered shelves: finding slot #57 is instant, but inserting a new shelf in the middle means shifting everything after it. A treasure hunt of notes, each pointing to the next: inserting a note mid-chain is trivial (rewrite one pointer), but reaching item #57 means following 57 clues. That is the ArrayList-versus-LinkedList tradeoff in one image; everything below is the detail.</p>
-<p><code>ArrayList</code> is a growable array: O(1) random access, O(1) amortized append, O(n) inserts in the middle (shifting). A <b>linked list</b> is nodes pointing at nodes: O(1) insert/remove <i>at a known node</i>, but O(n) to find anything and cache-hostile memory jumps. The practical guidance: <code>ArrayList</code> wins ~95% of the time; <code>ArrayDeque</code> beats <code>LinkedList</code> for both stack and queue duty. You study linked lists to master <b>references</b>, and because interviewers love them.</p>
+
+
+<p>🌱 <b>Starting from zero:</b> two ways to store a sequence. Numbered shelves: finding slot #57 is instant, but inserting a new shelf in the middle means shifting everything after it. A treasure hunt of notes, each pointing to the next: inserting a note mid-chain means rewriting one pointer, but reaching item #57 means following 57 clues. That is the ArrayList-versus-LinkedList tradeoff.</p>
+<p><code>ArrayList</code> is a growable array: O(1) random access, O(1) amortized append, O(n) inserts in the middle (shifting). A <b>linked list</b> is nodes pointing at nodes: O(1) insert/remove <i>at a known node</i>, but O(n) to find anything, and cache-hostile memory jumps. <code>ArrayList</code> wins ~95% of the time. <code>ArrayDeque</code> beats <code>LinkedList</code> for both stack and queue duty. You study linked lists to master <b>references</b>, and because interviewers love them.</p>
 <div class="codeSample" data-hl>class Node {
     int value;
     Node next;                    // null = end of the chain
@@ -509,27 +522,14 @@ while (cur != null) {
 head = prev;</div>
 
 <h4>The cost that does not appear in the Big-O</h4>
-<p>On paper a linked list inserts in O(1) and an array list in O(n), which suggests the linked list should
-win. In practice it usually loses, and the reason is memory layout. An <code>ArrayList</code> holds its
-elements contiguously, so walking it streams through cache lines the CPU has already prefetched. A linked
-list holds a node object per element, scattered across the heap, so each step is a pointer chase and
-potentially a cache miss, and a cache miss costs roughly what a hundred arithmetic operations do.</p>
-<p>The O(1) insertion is also conditional: it is O(1) <i>once you are holding the node</i>. Reaching a
-position by index is O(n), so <code>list.get(i)</code> in a loop over a <code>LinkedList</code> is
-accidentally quadratic, a genuinely common performance bug.</p>
+<p>On paper the linked list should win on insertion. In practice it usually loses, because of memory layout. An <code>ArrayList</code> holds its elements contiguously, so walking it streams through cache lines the CPU has already prefetched. A linked list holds a node object per element, scattered across the heap. Each step is a pointer chase and a possible cache miss. A cache miss costs roughly what a hundred arithmetic operations do.</p>
+<p>The O(1) insertion is also conditional: it is O(1) <i>once you are holding the node</i>. Reaching a position by index is O(n), so <code>list.get(i)</code> in a loop over a <code>LinkedList</code> is accidentally quadratic. This is a common performance bug.</p>
 
 <h4>When a linked structure is still right</h4>
-<p>When you hold a reference to the position already, and splice frequently: an LRU cache moving a node to
-the front, a scheduler moving tasks between queues, an intrusive list where the node lives inside the
-element. Note that Java's own <code>LinkedHashMap</code> uses exactly this (a linked list threaded through
-hash entries) to get insertion order without paying for lookup.</p>
+<p>When you already hold a reference to the position and splice often. An <b>LRU</b> cache moving a node to the front. LRU is least recently used, a cache rule: when full, evict what has gone longest without being read. A scheduler moving tasks between queues. An intrusive list where the node lives inside the element. Java's own <code>LinkedHashMap</code> threads a linked list through its hash entries to get insertion order without paying for lookup.</p>
 
 <h4>Why it remains worth building once</h4>
-<p>Writing the node class, the traversal, the insert and the delete teaches the pointer discipline that
-underlies trees, graphs and every intrusive structure you will meet later. The classic interview
-techniques (two pointers to find the middle or detect a cycle, reversing by rewiring rather than copying)
-are all rehearsals for reasoning about references. The data structure is rarely the right answer; the
-skill of manipulating references correctly always is.</p>`,
+<p>Writing the node class, the traversal, the insert and the delete teaches the pointer discipline behind trees, graphs and every intrusive structure you will meet later. The classic interview techniques are rehearsals for reasoning about references: two pointers to find the middle or detect a cycle, reversing by rewiring rather than copying.</p>`,
 docs:[['LinkedList, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/LinkedList.html'],['Collection implementation trade-offs, Oracle','https://docs.oracle.com/javase/tutorial/collections/implementations/list.html']],
 ex:{title:'Your own singly linked list',
 prompt:`Build <code>IntList</code>: inner <code>static class Node</code> (int value, Node next), field <code>Node head</code>; <code>void addFirst(int v)</code>: O(1) head insert; <code>int size()</code>: walk and count; <code>java.util.List&lt;Integer&gt; toList()</code>: walk head→tail collecting values; and <code>void reverse()</code>: the in-place three-pointer re-linking (prev/cur/next), no arrays or collections allowed inside reverse.`,
@@ -606,7 +606,9 @@ public class IntList {
     }
 }`}},
 {id:'ds5',title:'Hash structures: equals/hashCode & an LRU cache',body:`
-<p>🌱 <b>Starting from zero:</b> a coat check hands you ticket #217 and puts your coat on hook 217; returning it later takes seconds regardless of how many coats they hold, because the ticket number says exactly where to look. <b>Hashing</b> gives every object such a ticket number (its hash code), and HashMap/HashSet use it to jump straight to the right hook instead of searching. The catch: YOUR classes must issue their tickets consistently; that is the contract this lesson drills.</p>
+
+
+<p>🌱 <b>Starting from zero:</b> a coat check hands you ticket #217 and puts your coat on hook 217. Returning it takes seconds no matter how many coats they hold, because the ticket number says where to look. <b>Hashing</b> gives every object such a ticket number (its hash code). HashMap/HashSet use it to jump straight to the right hook instead of searching. The catch: YOUR classes must issue their tickets consistently. That is the contract this lesson drills.</p>
 <p>HashMap/HashSet give O(1) average lookups by hashing keys into buckets. That performance rests on a contract YOU uphold:</p>
 <div class="codeSample" data-hl>// THE CONTRACT: equal objects MUST have equal hashCodes.
 // Override both together or hash structures silently break:
@@ -624,30 +626,17 @@ new LinkedHashMap&lt;K, V&gt;(16, 0.75f, true) {     // true = access order!
         return size() &gt; maxEntries;             // evict least-recently-used
     }
 };</div>
-<p>Mutating a field that feeds hashCode while the object sits in a HashSet loses the object; use immutable keys (records). This LRU is real infrastructure: session caches, token caches, JWKS key caches, all using this exact pattern.</p>
+<p>Use immutable keys (records). This LRU is real infrastructure: session caches, token caches, JWKS key caches all use this pattern. A <b>JWKS</b> is a JSON Web Key Set: a list of public keys written as JSON. An issuer publishes its JWKS at a well-known URL so anyone can fetch the keys and check its signatures, and a server that checks many tokens caches those keys rather than fetching them every time.</p>
 
-<h4>How a hash table actually finds things</h4>
-<p><code>hashCode()</code> chooses a bucket; <code>equals()</code> then distinguishes the entries inside
-it. Both steps are needed, which is exactly why the contract exists: equal objects must produce equal hash
-codes, or a lookup goes to the wrong bucket and the entry you stored becomes unreachable while still
-occupying memory.</p>
-<p>Two consequences follow. A <b>bad hash</b>, one that clusters, degrades O(1) to a scan, which is the
-basis of hash-collision denial of service and why Java's <code>HashMap</code> converts long collision
-chains into balanced trees. And a <b>mutable key</b> whose hash changes after insertion is stranded: it is
-in the table, and no lookup will ever find it again.</p>
+<h4>How a hash table finds things</h4>
+<p><code>hashCode()</code> chooses a bucket. <code>equals()</code> then distinguishes the entries inside it. Both steps are needed, so equal objects must produce equal hash codes. Otherwise a lookup goes to the wrong bucket, and the entry you stored becomes unreachable while still occupying memory.</p>
+<p>A <b>bad hash</b>, one that clusters, degrades O(1) to a scan. That is the basis of hash-collision denial of service, and why Java's <code>HashMap</code> converts long collision chains into balanced trees. A <b>mutable key</b> whose hash changes after insertion is stranded: it is in the table, and no lookup will find it again.</p>
 
 <h4>Load factor and resizing</h4>
-<p>A <code>HashMap</code> resizes when it is about 75% full, allocating a larger array and redistributing
-every entry. That is amortized O(1), but the individual resize is O(n) and it happens at an unpredictable
-moment, which matters in a latency-sensitive path. If you know roughly how many entries you will hold,
-sizing the map up front avoids several rounds of rehashing.</p>
+<p>A <code>HashMap</code> resizes when it is about 75% full, allocating a larger array and redistributing every entry. That is amortized O(1), but each resize is O(n) and happens at an unpredictable moment. This matters in a latency-sensitive path. If you know roughly how many entries you will hold, size the map up front and skip several rounds of rehashing.</p>
 
 <h4>Why LinkedHashMap gives you an LRU cache almost free</h4>
-<p><code>LinkedHashMap</code> threads a doubly-linked list through its entries. Construct it with
-<code>accessOrder = true</code> and every <code>get</code> moves that entry to the end, so the eldest entry
-is always the least recently used, and overriding <code>removeEldestEntry</code> to return true past a
-size limit gives you a bounded LRU cache in a handful of lines. It is a neat demonstration of the general
-point: the interesting structures are usually two simple ones composed, not one clever one.</p>`,
+<p><code>LinkedHashMap</code> threads a doubly-linked list through its entries. Construct it with <code>accessOrder = true</code> and every <code>get</code> moves that entry to the end, so the eldest entry is always the least recently used. Override <code>removeEldestEntry</code> to return true past a size limit and you have a bounded LRU cache in a handful of lines. Two simple structures composed, not one clever one.</p>`,
 docs:[['equals & hashCode contract, Object API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()'],['LinkedHashMap, API','https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/LinkedHashMap.html']],
 ex:{title:'Build the LRU cache',
 prompt:`Build an <b>LRU (least-recently-used) cache</b>: it holds at most <code>maxEntries</code> entries, and inserting beyond that evicts the entry <b>accessed longest ago</b> (a get counts as an access). Write <code>LruCache&lt;K, V&gt; extends java.util.LinkedHashMap&lt;K, V&gt;</code>: field <code>int maxEntries</code>; constructor <code>LruCache(int maxEntries)</code> calling <code>super(16, 0.75f, true)</code> (the <code>true</code> = access order, the whole trick); override <code>protected boolean removeEldestEntry(java.util.Map.Entry&lt;K, V&gt; eldest)</code> returning <code>size() &gt; maxEntries</code>.`,
@@ -679,28 +668,29 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
     }
 }`}},
 {id:'ds6',title:'Big-O, Theta & Omega: measuring cost',body:`
-<p>Before choosing a data structure you need a way to compare algorithms that does not depend on your laptop or language. That is <b>asymptotic complexity</b>: how the work grows as the input <code>n</code> grows, ignoring constant factors and small-input noise.</p>
-<p>Three notations describe growth precisely:</p>
+
+<p>To compare algorithms you need a measure independent of your laptop or language. That is <b>asymptotic complexity</b>: how the work grows as the input <code>n</code> grows, ignoring constant factors and small-input noise.</p>
+<p>Three notations describe growth:</p>
 <ul>
 <li><b>Big-O, written O(f),</b> is an <i>upper bound</i>: "grows no faster than f." The usual worst-case promise.</li>
 <li><b>Big-Omega, written &#937;(f),</b> is a <i>lower bound</i>: "grows at least as fast as f." The best-case floor.</li>
 <li><b>Big-Theta, written &#920;(f),</b> is a <i>tight bound</i>: O and &#937; agree, so f describes the growth exactly.</li>
 </ul>
-<p>Separately, name <b>which case</b> you mean: <b>best</b>, <b>average</b> or <b>worst</b>. Quicksort is &#920;(n log n) on average but O(n&#178;) worst case; a hash lookup is O(1) average but O(n) worst case. When people say "O(n log n)" unqualified they almost always mean the worst or expected case.</p>
+<p>Separately, name <b>which case</b> you mean: <b>best</b>, <b>average</b> or <b>worst</b>. Quicksort is &#920;(n log n) on average but O(n&#178;) worst case. A hash lookup is O(1) average but O(n) worst case. An unqualified "O(n log n)" almost always means the worst or expected case.</p>
 <p>The growth classes you meet daily, best to worst: <code>O(1)</code> constant, <code>O(log n)</code> logarithmic, <code>O(n)</code> linear, <code>O(n log n)</code> linearithmic, <code>O(n&#178;)</code> quadratic, <code>O(2&#8319;)</code> exponential.</p>
 
 <h4>Reading complexity off the code</h4>
-<p>Three rules cover most of it. <b>Sequential blocks add</b>, and the sum is dominated by its largest term: O(n) followed by O(n&#178;) is O(n&#178;), so constants and lower-order terms are dropped. <b>Nested loops multiply</b>: a loop over n containing a loop over n is O(n&#178;), but a loop over n containing a loop over a <i>fixed</i> 10 is still O(n). <b>Halving is logarithmic</b>: any step that discards half the remaining input each time runs about log&#8322;n times: 1,000 items in 10 steps, a million in 20. The base of the logarithm is a constant factor, which is why nobody writes it.</p>
+<p><b>Sequential blocks add</b>, and the largest term dominates: O(n) followed by O(n&#178;) is O(n&#178;), so constants and lower-order terms are dropped. <b>Nested loops multiply</b>: a loop over n containing a loop over n is O(n&#178;). A loop over n containing a loop over a <i>fixed</i> 10 is still O(n). <b>Halving is logarithmic</b>: any step that discards half the remaining input runs about log&#8322;n times. 1,000 items in 10 steps, a million in 20. The base of the logarithm is a constant factor, so nobody writes it.</p>
 <div class="codeSample">for (x : list) { ... }                    // O(n)
 for (a : list) for (b : list) { ... }     // O(n^2)  -- nested: multiply
 for (x : list) { ... } sort(list);        // O(n) + O(n log n) = O(n log n)
 while (hi &gt;= lo) { mid = (lo+hi)/2; ... } // O(log n) -- halves each step</div>
 
 <h4>Amortized and space</h4>
-<p><b>Amortized</b> cost averages an occasional expensive step over the many cheap ones that pay for it. <code>ArrayList.add</code> is amortized O(1): when the backing array is full it allocates a larger one and copies everything (O(n)), but because the capacity <i>doubles</i>, that cost is spread over the next n additions. It is a genuine guarantee about a sequence of operations, not a hopeful average, and it is different from "average case", which is about the distribution of inputs. <b>Space complexity</b> is measured the same way and is what stops you from answering every question with a hash map.</p>
+<p><b>Amortized</b> cost averages an occasional expensive step over the many cheap ones that pay for it. <code>ArrayList.add</code> is amortized O(1). When the backing array is full it allocates a larger one and copies everything (O(n)). Because the capacity <i>doubles</i>, that cost is spread over the next n additions. It is a guarantee about a sequence of operations, not a hopeful average. It is also different from "average case", which is about the distribution of inputs. <b>Space complexity</b> is measured the same way. It is what stops you from answering every question with a hash map.</p>
 
 <h4>Where the notation misleads</h4>
-<p>Asymptotics deliberately discard constants, so an O(n) algorithm with a huge constant can lose to an O(n&#178;) one at every size you actually run. Real examples: linear search beats a hash map on ten elements, and insertion sort beats quicksort under about 40 items, which is why real sort implementations switch to it for small partitions. Complexity tells you how something scales; a profiler tells you what it costs. You need both, and the order matters: choose the right growth class first, then measure.</p>`,
+<p>Asymptotics discard constants, so an O(n) algorithm with a huge constant can lose to an O(n&#178;) one at every size you run. Linear search beats a hash map on ten elements. Insertion sort beats quicksort under about 40 items, so real sort implementations switch to it for small partitions. Complexity tells you how something scales. A profiler tells you what it costs. Choose the right growth class first, then measure.</p>`,
 docs:[['Big-O notation, Wikipedia','https://en.wikipedia.org/wiki/Big_O_notation'],['Time complexity, Wikipedia','https://en.wikipedia.org/wiki/Time_complexity']],
 exs:[{title:'Name the bound and the cost',
 prompt:`Write class <code>Complexity</code> with two static methods. <code>String bound(String kind)</code>: <code>"upper"</code>→<code>"Big-O"</code>, <code>"tight"</code>→<code>"Theta"</code>, <code>"lower"</code>→<code>"Omega"</code>, else <code>"unknown"</code>. <code>String of(String algo)</code>: <code>"hash-lookup"</code>→<code>"O(1)"</code>, <code>"binary-search"</code>→<code>"O(log n)"</code>, <code>"linear-scan"</code>→<code>"O(n)"</code>, <code>"bubble-sort"</code>→<code>"O(n^2)"</code>, else <code>"unknown"</code>.`,
@@ -748,15 +738,16 @@ tests:[{d:'an empty range is handled',re:'n\\s*<=\\s*0|n\\s*<\\s*1|n\\s*===\\s*0
 behavior:`Five cases run. The 7-versus-8 pair is the point of the exercise: seven elements take three comparisons and eight take four, because the count steps up exactly at each power of two; that step is what a logarithm is. The n=1000 case is the number worth remembering: a thousand items in ten comparisons, a million in twenty, a billion in thirty. That is why O(log n) is treated as nearly free, and why doubling your data adds one step rather than doubling the work. The n=0 guard matters because Math.log2(0) is -Infinity, and floor(-Infinity) + 1 is not a comparison count.`,
 hints:['Guard the empty case before touching a logarithm.','Math.log2 gives a fractional answer; you need whole comparisons.','Check your formula against n=8: it must give 4, not 3.']}]},
 {id:'ds7',title:'Trees & search optimization',body:`
-<p>A <b>tree</b> stores data in nodes with parent-child links and no cycles. Trees turn linear scans into logarithmic ones by letting each comparison discard a whole branch, the core trick behind fast search.</p>
+
+<p>A <b>tree</b> stores data in nodes with parent-child links and no cycles. Trees turn linear scans into logarithmic ones by letting each comparison discard a whole branch. That is the core trick behind fast search.</p>
 <ul>
-<li><b>Binary Search Tree (BST)</b>: left child smaller, right child larger. Search/insert/delete are O(log n) <i>when balanced</i>; but insert sorted data and it degenerates into a linked list at O(n). That failure mode is why balancing exists.</li>
+<li><b>Binary Search Tree (BST)</b>: left child smaller, right child larger. Search/insert/delete are O(log n) <i>when balanced</i>. Insert sorted data and it degenerates into a linked list at O(n). That failure mode is why balancing exists.</li>
 <li><b>Self-balancing trees (AVL, Red-Black)</b>: rotate on insert/delete to keep height ~log n, guaranteeing O(log n). Java&#8217;s <code>TreeMap</code>/<code>TreeSet</code> are red-black trees, giving sorted keys and range queries.</li>
-<li><b>Heap</b>: a complete binary tree with a parent-vs-child order (not full sorting). O(1) peek at the min/max and O(log n) insert/remove, perfect for priority queues and top-k.</li>
-<li><b>Trie (prefix tree)</b>: one node per character; lookup is O(length of the key), independent of how many keys are stored. Ideal for autocomplete and prefix search.</li>
+<li><b>Heap</b>: a complete binary tree with a parent-vs-child order (not full sorting). O(1) peek at the min/max and O(log n) insert/remove. Built for priority queues and top-k.</li>
+<li><b>Trie (prefix tree)</b>: one node per character. Lookup is O(length of the key), independent of how many keys are stored. Ideal for autocomplete and prefix search.</li>
 <li><b>B-tree / B+ tree</b>: wide, shallow trees with many keys per node to minimize disk reads. They are the backbone of database and filesystem <b>indexes</b>.</li>
 </ul>
-<p><b>Search optimization</b> is really structure selection plus keeping the structure healthy. Match the structure to the query: exact-key lookup wants a hash table (O(1) average); sorted or range queries want a balanced BST or B-tree (O(log n)); prefix queries want a trie; repeatedly pulling the smallest/largest wants a heap. Then keep it fast: balance the tree, add the right index, and remember that an unbalanced tree or a missing index is what silently turns O(log n) back into O(n).</p>`,
+<p><b>Search optimization</b> is structure selection plus keeping the structure healthy. Match the structure to the query. Exact-key lookup wants a hash table (O(1) average). Sorted or range queries want a balanced BST or B-tree (O(log n)). Prefix queries want a trie. Repeatedly pulling the smallest/largest wants a heap. Then keep it fast: balance the tree, add the right index. An unbalanced tree or a missing index turns O(log n) back into O(n).</p>`,
 docs:[['Binary search tree (Wikipedia)','https://en.wikipedia.org/wiki/Binary_search_tree'],['B-tree (Wikipedia)','https://en.wikipedia.org/wiki/B-tree'],['Trie (Wikipedia)','https://en.wikipedia.org/wiki/Trie']],
 ex:{title:'Pick the right tree',
 prompt:`Write class <code>Trees</code> with <code>static String pick(String need)</code> that recommends a structure: <code>"exact-key-lookup"</code>→<code>"hash table"</code>, <code>"sorted-range"</code>→<code>"balanced BST"</code>, <code>"prefix-autocomplete"</code>→<code>"trie"</code>, <code>"top-k"</code>→<code>"heap"</code>, <code>"disk-index"</code>→<code>"B-tree"</code>, and <code>"unknown"</code> for anything else.`,
@@ -781,15 +772,16 @@ tests:[{d:'exact-key lookup picks a hash table',re:'(["\']exact\\-key\\-lookup["
 behavior:`pick("exact-key-lookup") is "hash table", pick("sorted-range") is "balanced BST", pick("prefix-autocomplete") is "trie", pick("top-k") is "heap", pick("disk-index") is "B-tree". Choosing the structure that matches the query is the essence of search optimization.`,
 hints:['Match the access pattern to the structure: exact key to hash, range to balanced BST, prefix to trie, smallest/largest to heap, on-disk to B-tree.','A single switch on need with one case each is all it takes.','Return the exact recommendation strings, and fall through to unknown by default.']}},
 {id:'ds8',title:'Traversal & graph search: BFS, DFS & Dijkstra',body:`
-<p>Trees and graphs are only useful if you can <b>walk</b> them. A handful of traversal algorithms cover the vast majority of real problems, and each is defined by the data structure it uses to decide "where to go next."</p>
+
+<p>Trees and graphs are only useful if you can <b>walk</b> them. A handful of traversal algorithms cover most real problems. Each is defined by the data structure it uses to decide "where to go next."</p>
 <ul>
 <li><b>BFS (Breadth-First Search)</b>: explore level by level, nearest first, using a <b>queue</b> (FIFO). Because it fans out evenly, BFS finds the <b>shortest path in an unweighted graph</b>. O(V+E).</li>
-<li><b>DFS (Depth-First Search)</b>: plunge as deep as possible, then backtrack, using a <b>stack</b> (or recursion, which uses the call stack). DFS powers <b>cycle detection</b>, checking whether a path exists, finding connected components, and topological sort. O(V+E). On a tree, DFS gives the three classic orders: <b>pre-order</b>, <b>in-order</b>, and <b>post-order</b>.</li>
-<li><b>Dijkstra</b>: the <b>shortest path in a weighted graph</b> (non-negative weights). It greedily expands the closest unvisited node using a <b>priority queue</b> (min-heap). This is the exact algorithm the <b>OSPF</b> routing protocol runs; its "SPF" literally stands for Shortest Path First. O(E log V).</li>
-<li><b>Topological sort</b>: order the nodes of a DAG so every edge points forward. The backbone of <b>task scheduling</b> and build-dependency resolution; built on DFS (or Kahn&#8217;s queue-based algorithm).</li>
+<li><b>DFS (Depth-First Search)</b>: plunge as deep as possible, then backtrack, using a <b>stack</b> or recursion, which uses the call stack. DFS powers <b>cycle detection</b>, checking whether a path exists, finding connected components, and topological sort. O(V+E). On a tree, DFS gives the three classic orders: <b>pre-order</b>, <b>in-order</b>, and <b>post-order</b>.</li>
+<li><b>Dijkstra</b>: the <b>shortest path in a weighted graph</b> (non-negative weights). It greedily expands the closest unvisited node using a <b>priority queue</b> (min-heap). This is the algorithm the <b>OSPF</b> routing protocol runs. Its "SPF" stands for Shortest Path First. O(E log V).</li>
+<li><b>Topological sort</b>: order the nodes of a DAG so every edge points forward. The backbone of <b>task scheduling</b> and build-dependency resolution. Built on DFS, or Kahn&#8217;s queue-based algorithm.</li>
 </ul>
-<p>Two more worth naming: <b>A*</b> is Dijkstra plus a heuristic that steers toward the goal (game and map pathfinding), and <b>Bellman-Ford</b> handles graphs with <b>negative</b> edge weights that Dijkstra cannot.</p>
-<p>The quick decision guide: unweighted shortest path is <b>BFS</b>; weighted shortest path is <b>Dijkstra</b>; "does a path or cycle exist" and orderings are <b>DFS</b>; scheduling a DAG is a <b>topological sort</b>. Choosing the right one, and the queue/stack/heap it rides on, is most of the battle.</p>`,
+<p><b>A*</b> is Dijkstra plus a heuristic that steers toward the goal (game and map pathfinding). <b>Bellman-Ford</b> handles graphs with <b>negative</b> edge weights, which Dijkstra cannot.</p>
+<p>The decision guide. Unweighted shortest path is <b>BFS</b>. Weighted shortest path is <b>Dijkstra</b>. "Does a path or cycle exist" and orderings are <b>DFS</b>. Scheduling a DAG is a <b>topological sort</b>. Choosing the right one, and the queue/stack/heap it rides on, is most of the battle.</p>`,
 docs:[['BFS, Wikipedia','https://en.wikipedia.org/wiki/Breadth-first_search'],['DFS, Wikipedia','https://en.wikipedia.org/wiki/Depth-first_search'],['Dijkstra algorithm','https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm'],['Topological sorting','https://en.wikipedia.org/wiki/Topological_sorting']],
 ex:{title:'Pick the traversal',
 prompt:`Write class <code>Traversal</code> with two static methods. <code>String dataStructure(String algo)</code>, the structure each uses: <code>"bfs"</code>→<code>"queue"</code>, <code>"dfs"</code>→<code>"stack"</code>, <code>"dijkstra"</code>→<code>"priority queue"</code>, else <code>"unknown"</code>. <code>String pick(String need)</code>, the right algorithm: <code>"shortest-unweighted"</code>→<code>"bfs"</code>, <code>"shortest-weighted"</code>→<code>"dijkstra"</code>, <code>"path-exists"</code>→<code>"dfs"</code>, <code>"task-ordering"</code>→<code>"topological sort"</code>, else <code>"unknown"</code>.`,
