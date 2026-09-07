@@ -1,11 +1,12 @@
 STREAMS.push({icon:'⏳',title:'The Event Loop & Asynchronous JavaScript',blurb:'The part everyone learns by folklore, done properly: why a single-threaded language can wait for things, the event loop and its queues, callbacks and why they nested, promises and their three states, async/await, running work in parallel, and cancellation.',lessons:[
 
 {id:'js18',title:'The event loop: how single-threaded code waits',body:`
-<p>JavaScript has <b>one call stack</b>. It can do exactly one thing at a time. Yet a browser stays
+
+<p>JavaScript has <b>one call stack</b>: the list of functions currently running, newest on top. It can do one thing at a time. Yet a browser stays
 responsive while downloading, and a Node server handles thousands of connections. Understanding how is
 the foundation for everything else in this stream, and for debugging anything asynchronous.</p>
 
-<h4>The trick: the engine is not the whole runtime</h4>
+<h4>The trick: the engine isn't the whole runtime</h4>
 <div class="codeSample" data-hl>  YOUR CODE                    THE HOST (browser or Node)
   ---------                    --------------------------
   call stack        ────────▶  timers, network, file I/O, ...
@@ -14,15 +15,15 @@ the foundation for everything else in this stream, and for debugging anything as
        │                                    ▼
   EVENT LOOP  ◀──── task queue ◀──── "this finished, run its callback"</div>
 <p>When you call <code>setTimeout</code> or start a network request, the <b>host</b> takes the work. Your
-stack unwinds immediately. When the work completes, the host puts your callback in a <b>queue</b>. The
+stack unwinds immediately. When the work completes, the host puts your <b>callback</b>, the function you handed it to run when the work finishes, in a <b>queue</b>. The
 <b>event loop</b> does one thing: <i>when the stack is empty, take the next callback from the queue and
 push it onto the stack.</i></p>
-<p>So JavaScript is single-threaded but the <b>runtime</b> is not. Nothing in your code runs in parallel;
-the waiting happens elsewhere.</p>
+<p>So JavaScript is single-threaded but the <b>runtime</b> isn't. Nothing in your code runs in parallel.
+The waiting happens elsewhere.</p>
 
 <h4>The consequence: your code is never interrupted</h4>
-<p>A function runs to completion before any callback can start. That is why JavaScript has no data races
-on shared variables (an enormous simplification), and it is also why a slow synchronous function
+<p>A function runs to completion before any callback can start. That's why JavaScript has no data races
+on shared variables, a huge simplification. It's also why a slow synchronous function
 <b>blocks everything</b>:</p>
 <div class="codeSample" data-hl>// in a browser: the page freezes. no clicks, no scrolling, no rendering.
 // in Node: every other request waits.
@@ -48,14 +49,14 @@ console.log("4");
 //   1 and 4 are synchronous - they run now
 //   3 is a microtask - drained as soon as the stack empties
 //   2 is a macrotask - even with a delay of 0, it waits its turn</div>
-<p>Trace that example until it is obvious. It explains promise ordering, why
-<code>setTimeout(fn, 0)</code> is not immediate, and why an infinite chain of microtasks starves the
+<p>A <b>microtask</b> is a promise callback (a <b>promise</b> stands for a value you don't have yet; the next lessons cover it). A <b>macrotask</b> is a timer, an I/O callback or a UI event. Trace that example until it's obvious. It explains promise ordering, why
+<code>setTimeout(fn, 0)</code> isn't immediate, and why an infinite chain of microtasks starves the
 timers completely.</p>
 
 <h4><code>setTimeout(fn, 0)</code> is a minimum, not a promise</h4>
 <p>The delay says "not before this many milliseconds". If the stack is busy, or earlier callbacks are
-queued, it runs later, and browsers clamp nested timeouts to about 4ms. Never use a timer for
-correctness; use it to yield.</p>`,
+queued, it runs later. Browsers clamp nested timeouts to about 4ms. Never use a timer for
+correctness. Use it to yield.</p>`,
 docs:[['MDN (The event loop)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model'],['MDN (Microtask guide)','https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide'],['Node (the event loop)','https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick']],
 ex:{title:'Predict the output order',diff:'easy',lang:'js',
 run:{call:'order',cases:[
@@ -79,8 +80,9 @@ behavior:`The fourth case executes the stability requirement: two timers keep th
 hints:['Three filters, then concatenate in priority order.','filter keeps the original relative order for free.','Synchronous beats microtask beats macrotask, always.']}},
 
 {id:'js19',title:'Callbacks, and the problem they created',body:`
-<p>Before promises, "run this when the work finishes" meant passing a function. The pattern still exists
-everywhere (every event listener is a callback), so it is worth understanding on its own terms, along
+
+<p>A <b>promise</b> is an object that stands for a value you don't have yet; the next lesson covers it. Before promises, "run this when the work finishes" meant passing a function. That function is a <b>callback</b>. The pattern still exists
+everywhere. Every event listener is a callback. So it's worth understanding on its own terms, along
 with the two problems that motivated everything after it.</p>
 
 <div class="codeSample" data-hl>// the Node convention: error FIRST, result second
@@ -88,8 +90,8 @@ fs.readFile("a.txt", "utf8", function (err, data) {
   if (err) return handle(err);     // check err first, ALWAYS
   console.log(data);
 });</div>
-<p>The error-first convention exists because a callback cannot <code>throw</code> to its caller: by the
-time it runs, the caller's stack frame is long gone. That single fact drives the rest of this lesson.</p>
+<p>The error-first convention exists because a callback can't <code>throw</code> to its caller. By the
+time it runs, the caller's <b>stack frame</b>, its entry in the list of functions currently running, is long gone. That single fact drives the rest of this lesson.</p>
 
 <h4>Problem 1: nesting</h4>
 <div class="codeSample" data-hl>getUser(id, (e, user) =&gt; {
@@ -103,10 +105,10 @@ time it runs, the caller's stack frame is long gone. That single fact drives the
   });
 });</div>
 <p>Sequential steps become horizontal nesting. Adding a step means re-indenting the ones below it, and
-the error path is duplicated per level. This is what "callback hell" refers to: not that callbacks are
-bad, but that they compose badly.</p>
+the error path is duplicated per level. This is what "callback hell" refers to. Callbacks aren't
+bad. They compose badly.</p>
 
-<h4>Problem 2: errors do not propagate</h4>
+<h4>Problem 2: errors don't propagate</h4>
 <div class="codeSample" data-hl>try {
   setTimeout(() =&gt; { throw new Error("boom"); }, 0);
 } catch (e) {
@@ -115,7 +117,7 @@ bad, but that they compose badly.</p>
 }
 // the error becomes an uncaught exception instead: it crashes Node
 // or lands in window.onerror in the browser.</div>
-<p>This is the most important idea in the whole stream. <b>You cannot <code>try</code>/<code>catch</code>
+<p>This is the most important idea in the whole stream. <b>You can't <code>try</code>/<code>catch</code>
 across an asynchronous boundary.</b> Promises exist largely to give errors a path back to you, and
 <code>await</code> exists to make <code>try</code>/<code>catch</code> work again.</p>
 
@@ -129,7 +131,7 @@ callbacks are <i>always</i> asynchronous, which removes the whole class.</p>
 
 <h4>Where callbacks are still right</h4>
 <p>For things that happen <b>many times</b>: event listeners, streams, observers. A promise represents
-<i>one</i> future value, so it is the wrong shape for a click handler. The rule: one-shot work becomes a
+<i>one</i> future value, so it's the wrong shape for a click handler. The rule: one-shot work becomes a
 promise, repeated work stays a callback.</p>`,
 docs:[['MDN, Callback function','https://developer.mozilla.org/en-US/docs/Glossary/Callback_function'],['Node, asynchronous flow control','https://nodejs.org/en/learn/asynchronous-work/javascript-asynchronous-programming-and-callbacks']],
 ex:{title:'Handle the error-first convention',diff:'easy',lang:'js',
@@ -152,8 +154,9 @@ behavior:`The third case executes the convention: when both are present the erro
 hints:['Guard on the error before touching the result.','Template literals convert null to the text "null" for you.','Return immediately from the error branch.']}},
 
 {id:'js20',title:'Promises',body:`
-<p>A <b>promise</b> is an object representing a value that is not available yet. It replaces "pass me a
-callback" with "here is a handle you can attach callbacks to", and that inversion is what makes
+
+<p>A <b>promise</b> is an object representing a value that isn't available yet. It replaces "pass me a
+callback" (a function to run when the work finishes) with "here is a handle you can attach callbacks to". That inversion is what makes
 composition and error propagation possible.</p>
 
 <h4>Three states, one transition</h4>
@@ -174,7 +177,7 @@ p.then(value =&gt; { ... })          // on fulfillment
 
 Promise.resolve(1);   // an already-fulfilled promise
 Promise.reject(new Error("x"));   // an already-rejected one</div>
-<p>You rarely write <code>new Promise</code>; it is for wrapping an old callback API. Everything modern
+<p>You rarely write <code>new Promise</code>. It's for wrapping an old callback API. Everything modern
 already returns one.</p>
 
 <h4>Chaining is what solves the nesting</h4>
@@ -189,7 +192,7 @@ already returns one.</p>
 //   a promise      -> the chain WAITS for it, then unwraps it
 //   nothing        -> the next .then receives undefined  <- common bug
 //   a throw        -> skips to the next .catch</div>
-<p><b>Forgetting to return inside a <code>then</code> is the classic promise bug.</b> The chain does not
+<p><b>Forgetting to return inside a <code>then</code> is the classic promise bug.</b> The chain doesn't
 wait, the next step gets <code>undefined</code>, and nothing reports an error.</p>
 
 <h4>Running things at the same time</h4>
@@ -200,8 +203,8 @@ Promise.allSettled([a, b, c])  // waits for all; never rejects. gives
                                // [{status:"fulfilled",value} | {status:"rejected",reason}]
 Promise.race([a, b])           // first to SETTLE, fulfill or reject
 Promise.any([a, b])            // first to FULFIL; rejects only if all do</div>
-<p>Choose by intent: <code>all</code> when you need every result and any failure is fatal;
-<code>allSettled</code> when partial success is useful, which, for a dashboard fetching six widgets, it
+<p>Choose by intent. <code>all</code> when you need every result and any failure is fatal.
+<code>allSettled</code> when partial success is useful. For a dashboard fetching six widgets, it
 usually is.</p>
 
 <h4>The rule that keeps promises safe</h4>
@@ -252,7 +255,8 @@ behavior:`This executes for real: your async function returns a promise, the run
 hints:['Mark the function async so you can use await inside it.','Promise.resolve(n) gives you a promise already carrying n.','Return the doubled value; the async wrapper turns it into a promise.']}]},
 
 {id:'js21',title:'async/await, and the mistakes it invites',body:`
-<p><code>async</code>/<code>await</code> is syntax over promises. Nothing new happens underneath, but
+
+<p><code>async</code>/<code>await</code> is syntax over promises. A <b>promise</b> is an object that stands for a value you don't have yet. Nothing new happens underneath, but
 asynchronous code regains the shape of ordinary code, including <code>try</code>/<code>catch</code>.</p>
 
 <div class="codeSample" data-hl>// the promise chain
@@ -276,7 +280,7 @@ async function load(id) {
 
 <h4>Two rules</h4>
 <p><b>An <code>async</code> function always returns a promise</b>, even when its body returns a number.
-<b><code>await</code> pauses only that function</b>: the stack unwinds, the event loop keeps going, and
+<b><code>await</code> pauses only that function</b>. The stack unwinds, the <b>event loop</b> (the loop that picks up the next waiting callback whenever the stack is empty) keeps going, and
 everything else in the program continues.</p>
 
 <h4>Mistake 1: accidental sequencing</h4>
@@ -309,14 +313,14 @@ user.name;                       // undefined - no error, no clue
 if (await isAdmin(u)) { }        // correct
 if (isAdmin(u)) { }              // ALWAYS true: an object is truthy.
                                  // a security check that never fails.</div>
-<p>That last one is worth pausing on: a forgotten <code>await</code> on a boolean-returning check makes
-the check pass unconditionally, silently. Linters catch it and it still reaches production regularly.</p>
+<p>Look at that last one again. A forgotten <code>await</code> on a boolean-returning check makes
+the check pass unconditionally, silently. Linters catch it and it still reaches production.</p>
 
 <h4>Mistake 4: swallowing errors</h4>
 <p>A rejected promise you never <code>await</code> or <code>catch</code> is an unhandled rejection,
 which crashes Node. Either <code>await</code> it, <code>catch</code> it, or deliberately mark it
 fire-and-forget with an attached <code>.catch()</code>. "I do not care about the result" and "I do not
-care whether it failed" are different statements, and only the second is usually wrong.</p>
+care whether it failed" are different statements. Only the second is usually wrong.</p>
 
 <h4>Timeouts and cancellation</h4>
 <div class="codeSample" data-hl>// promises cannot be canceled. AbortController is how you stop the

@@ -1,6 +1,7 @@
 STREAMS.push({icon:'🔬',title:'Debugging, Testing & Profiling Node',blurb:'Finding problems in a running server: node --inspect and real breakpoints in server code, the built-in test runner, structured logging that survives production, heap snapshots and CPU profiles, and diagnosing a blocked event loop or a memory leak.',lessons:[
 
 {id:'js47',title:'Debugging server code with a real debugger',body:`
+
 <p>Everything from the browser-debugging stream applies here: the same DevTools, the same breakpoints,
 the same Scope pane. The only difference is how you attach.</p>
 
@@ -13,15 +14,16 @@ node --inspect app.js
 # attach to a process that is ALREADY running and misbehaving:
 kill -USR1 &lt;pid&gt;        # opens the inspector on the default port
 # then open  chrome://inspect  and click "inspect"</div>
-<p><code>--inspect-brk</code> is the one you usually want for a script, because a program that finishes in
+<p>The <b>inspector</b> is the debugging port Node opens so DevTools or an editor can attach to the
+running process. <code>--inspect-brk</code> is the one you usually want for a script. A program that finishes in
 40 milliseconds gives you no chance to attach otherwise. For a long-running server either works.</p>
 
 <h4>Attaching from where you already are</h4>
 <p><b>Chrome:</b> open <code>chrome://inspect</code>, and your Node target appears under "Remote Target".
 You get the full Sources panel: breakpoints, stepping, the scope pane, the console evaluating in the
 paused frame.</p>
-<p><b>VS Code:</b> the JavaScript Debug Terminal is the shortest path: open it, run <code>node app.js</code>
-normally, and breakpoints set in the editor just work with no launch configuration to maintain.</p>
+<p><b>VS Code:</b> the JavaScript Debug Terminal is the shortest path. Open it, run <code>node app.js</code>
+normally, and breakpoints set in the editor just work. No launch configuration to maintain.</p>
 
 <h4>The one that matters in a container</h4>
 <div class="codeSample" data-hl># the inspector binds to 127.0.0.1 by default, which is unreachable from
@@ -42,15 +44,15 @@ log.warn({ event: "login_failed", userId: id, reason: "bad_password",
            requestId: req.id });
 // now "every login failure for this user in the last hour" is one query
 // instead of a grep and a guess.</div>
-<p>Three rules. <b>To stdout</b>, one JSON object per line, and let the platform handle collection: a
+<p><b>To stdout</b>, one JSON object per line, and let the platform handle collection. A
 process that manages its own log files is a process that fills a disk. <b>A request id on every line</b>,
 so one request's story can be reassembled from a thousand interleaved ones. And <b>never log
-credentials, tokens or request bodies</b> from authenticated calls: logs are widely readable, retained for
-a long time, and are a genuine source of breaches.</p>
+credentials, tokens or request bodies</b> from authenticated calls. Logs are widely readable, retained for
+a long time, and a real source of breaches.</p>
 
 <h4>Where <code>console.log</code> still wins</h4>
-<p>A breakpoint requires you to be there when it happens. Production, timing-sensitive races, and bugs you
-can reproduce exactly once are all cases where a log line is the only option, which is why the previous
+<p>A breakpoint requires you to be there when it happens. Production, timing-sensitive races, and bugs
+that reproduce once and never again all leave a log line as the only option. That's why the previous
 lesson's structured logging matters, and why the next lessons cover recording rather than pausing.</p>`,
 docs:[['Node (debugging guide)','https://nodejs.org/en/learn/getting-started/debugging'],['Node (inspector security)','https://nodejs.org/en/learn/getting-started/debugging#security-implications'],['VS Code (Node.js debugging)','https://code.visualstudio.com/docs/nodejs/nodejs-debugging']],
 exs:[
@@ -107,8 +109,9 @@ behavior:`Six cases execute. The last requires all four problems at once, in a f
 hints:['Accumulate into a problems array rather than returning at the first issue.','Keep the sensitive names in a list and check each field against it.','Push one problem per offending field, in the order the fields appear.']}]},
 
 {id:'js48',title:'Testing with the built-in runner',body:`
+
 <p>Node ships a test runner. For most projects it removes a dependency, a config file and a whole class of
-version-mismatch problems, and it is enough on its own.</p>
+version-mismatch problems. It's enough on its own.</p>
 
 <div class="codeSample" data-hl>// math.test.js
 import { test, describe, before, after, mock } from "node:test";
@@ -134,23 +137,25 @@ node --test --experimental-test-coverage
 node --test --test-name-pattern="adds"</div>
 
 <h4>What to assert</h4>
-<p><code>node:assert/strict</code> is the import to use; the non-strict version compares with
-<code>==</code>, which will happily tell you <code>"5"</code> equals <code>5</code>. The four you will use
-constantly: <code>equal</code> for primitives, <code>deepEqual</code> for objects and arrays,
-<code>throws</code> and <code>rejects</code> for failures, and testing the failures is the half people
-skip, even though it is where the bugs are.</p>
+<p>Import <code>node:assert/strict</code>. The non-strict version compares with
+<code>==</code>, which will happily tell you <code>"5"</code> equals <code>5</code>. The four you'll use
+most: <code>equal</code> for primitives, <code>deepEqual</code> for objects and arrays,
+<code>throws</code> and <code>rejects</code> for failures. Testing the failures is the half people
+skip, and it's where the bugs are.</p>
 
-<h4>What makes a test worth having</h4>
-<p><b>One behavior per test</b>, named so a failure report reads as a sentence: "rejects a negative
-amount" tells you what broke; "test 3" does not.</p>
-<p><b>Arrange, act, assert</b>, in that order and visibly separated. A test where you cannot see which
+<h4>What makes a good test</h4>
+<p><b>One behavior per test</b>, named so a failure report reads as a sentence. "Rejects a negative
+amount" tells you what broke. "Test 3" doesn't.</p>
+<p><b>Arrange, act, assert</b>, in that order and visibly separated. A test where you can't see which
 line is the action is a test nobody will maintain.</p>
 <p><b>No shared mutable state.</b> Tests that pass alone and fail together, or that depend on running in
-order, are worse than no tests: they train the team to ignore red.</p>
+order, are worse than no tests. They train the team to ignore red.</p>
 <p><b>Test behavior, not implementation.</b> A test that asserts a private method was called breaks on
 every refactor while catching nothing. Assert on what the caller can observe.</p>
 
 <h4>Test doubles, and using them sparingly</h4>
+<p>A <b>test double</b> is a stand-in for something the code under test talks to. A <b>mock</b> is a
+double that also records how it was called.</p>
 <div class="codeSample" data-hl>const fn = mock.fn(() =&gt; 42);
 fn(1); fn(2);
 fn.mock.callCount();          // 2
@@ -166,7 +171,7 @@ fn.mock.calls[0].arguments;   // [1]
 //   in the code under test.</div>
 
 <h4>How much to write</h4>
-<p>Coverage percentage is a poor target: it is easy to reach 90% while asserting nothing meaningful. The
+<p><b>Coverage</b> is the share of your code the tests ran. Its percentage is a poor target. It's easy to reach 90% while asserting nothing meaningful. The
 useful question is <b>"if I broke this, would a test tell me?"</b> Concentrate on the logic with branches
 and edge cases, the code that has broken before, and the paths that are expensive to get wrong. A handful
 of tests that fail for real reasons beats a suite that fails on every refactor.</p>`,
@@ -203,10 +208,13 @@ behavior:`Eight cases execute. Two decide the implementation: the sixth requires
 hints:['Handle the empty suite first and return immediately.','Loop once over the tests, running all four checks inside the loop so the order comes out right.','A meaningless name is the literal word test, a space, and digits, nothing else.']}},
 
 {id:'js49',title:'Profiling, memory and a blocked event loop',body:`
-<p>Two production problems dominate: the process is using more memory than it should, or it has stopped
+
+<p>Two production problems dominate. The process is using more memory than it should, or it has stopped
 responding. Both have a specific diagnostic path, and guessing at either wastes days.</p>
 
 <h4>CPU profiles</h4>
+<p>A <b>profiler</b> samples what the program is doing many times a second. A <b>flame graph</b> draws
+those samples as stacked bars: wide means slow.</p>
 <div class="codeSample" data-hl># the simplest: sample the process and get a flamegraph-ready file
 node --cpu-prof app.js          # writes a .cpuprofile on exit
 # or, from a live process: chrome://inspect -> Profiler -> Start
@@ -214,8 +222,9 @@ node --cpu-prof app.js          # writes a .cpuprofile on exit
 # reading it: look for a WIDE frame, not a deep one. width is time
 # spent. a deep narrow stack is just a call chain; a wide plateau is
 # where the milliseconds actually went.</div>
-<p>The rule from the JVM stream applies unchanged: <b>measure before optimizing</b>. The bottleneck is
-regularly an N+1 query, a synchronous file read, a JSON serialization or a log statement, and almost
+<p>The rule from the <b>JVM</b> (Java Virtual Machine, the runtime Java programs run on) stream applies
+unchanged: <b>measure before optimizing</b>. The bottleneck is
+usually an N+1 query, a synchronous file read, a JSON serialization or a log statement. It's almost
 never the algorithm someone was about to rewrite.</p>
 
 <h4>Memory: growth versus a leak</h4>
@@ -241,8 +250,9 @@ writeHeapSnapshot("/tmp/before.heapsnapshot");   // then again later
 # sort by "delta" - what grew between them - and open the RETAINERS
 # view, which names the exact chain of references keeping it alive.
 # that chain is the answer. it is usually one line of your own code.</div>
-<p>Take snapshots when the process is otherwise idle, and know they are expensive: the process pauses
-while V8 walks the heap.</p>
+<p>The <b>heap</b> is the memory where objects live. A <b>heap snapshot</b> dumps everything in it at one
+moment, with what holds on to what. Take snapshots when the process is otherwise idle. They're
+expensive: the process pauses while V8, Node's JavaScript engine, walks the heap.</p>
 
 <h4>A blocked event loop</h4>
 <div class="codeSample" data-hl>// the symptom: everything is slow, CPU is high, and no single endpoint
@@ -259,13 +269,13 @@ setInterval(() =&gt; {
 
 // perf_hooks gives you this properly:
 //   monitorEventLoopDelay() -> a histogram, with percentiles</div>
-<p>Export loop lag as a metric and alert on it. It is the single most useful number a Node service can
-emit, because it goes bad <i>before</i> latency does and it points at a cause the request logs cannot
+<p>Export loop lag as a metric and alert on it. It's the single most useful number a Node service can
+emit. It goes bad <i>before</i> latency does, and it points at a cause the request logs can't
 show.</p>
 
 <h4>The order to work in</h4>
-<p><b>Reproduce, measure, then change one thing.</b> Reach for the loop-lag metric first (is the loop
-blocked?), then a CPU profile (where is the time?), then heap snapshots (what is being retained?). Going
+<p><b>Reproduce, measure, then change one thing.</b> Check the loop-lag metric first: is the loop
+blocked? Then a CPU profile: where is the time? Then heap snapshots: what is being retained? Going
 straight to optimization without one of those three is guessing with extra confidence.</p>`,
 docs:[['Node (diagnostics: memory)','https://nodejs.org/en/learn/diagnostics/memory'],['Node (perf_hooks)','https://nodejs.org/api/perf_hooks.html'],['Chrome DevTools (memory problems)','https://developer.chrome.com/docs/devtools/memory-problems']],
 exs:[
@@ -330,14 +340,15 @@ hints:['Guard clauses in the stated order: the first match wins.','A blocked loo
 ,
 
 {id:'jsmem',title:'How memory works: reachability, GC and weak references',body:`
+
 <p>The profiling lesson taught you to catch a leak from the outside: heap trends and snapshots. This one
-explains the machine underneath, because once you know the collector's one rule, every leak pattern stops
+explains the machine underneath. Once you know the collector's one rule, every leak pattern stops
 being folklore and becomes obvious.</p>
 
 <h4>The one rule: reachability</h4>
-<p>JavaScript has no <code>free()</code>. The engine keeps an object alive exactly as long as it is
-<b>reachable</b>, findable by following references from the <b>roots</b>: global variables, the current
-call stack, and active closures. Everything unreachable is garbage, collected whenever the engine
+<p>JavaScript has no <code>free()</code>. The engine keeps an object alive as long as it is
+<b>reachable</b>: findable by following references from the <b>roots</b>, which are global variables, the
+current call stack, and active closures. Everything unreachable is garbage, collected whenever the engine
 pleases.</p>
 <div class="codeSample" data-hl>let user = { name: "Ada" };
 user = null;              // the object is now unreachable -> collectable
@@ -347,10 +358,10 @@ a.pal = b; b.pal = a;     // a CYCLE - they point at each other
 a = null; b = null;       // still fine! reachability from ROOTS is what
                           // counts, and no root reaches either. a cycle
                           // of garbage is still garbage.</div>
-<p>That cycle example is why the rule is reachability and not reference counting: a counter would see
-"someone still points at me" and keep both forever. (Mark-and-sweep starts at the roots, marks everything
-it can reach, and sweeps the rest; generational engines like V8 collect young objects far more often than
-old ones, which is why short-lived allocation is cheap.)</p>
+<p>That cycle example is why the rule is reachability and not reference counting. A counter would see
+"someone still points at me" and keep both forever. Mark-and-sweep starts at the roots, marks everything
+it can reach, and sweeps the rest. Generational engines like V8, the one inside Node and Chrome, collect young objects far more
+often than old ones, so short-lived allocation is cheap.</p>
 
 <h4>So a leak is an unwanted reference</h4>
 <div class="codeSample" data-hl>const cache = new Map();                    // module-level = a ROOT
@@ -361,13 +372,13 @@ function render(user) {
 emitter.on("tick", () =&gt; use(bigThing));   // the emitter (alive) holds the
                                             // listener, the listener's closure
                                             // holds bigThing. subscribed = alive.</div>
-<p>Every leak from the profiling lesson's list is this shape: some long-lived object (a module-level
+<p>Every leak from the profiling lesson's list is this shape. Some long-lived object (a module-level
 collection, an emitter, a timer) holds a path to something that should have died. The fix is always the
-same verb: <b>sever the path</b> (delete the entry, remove the listener, clear the timer).</p>
+same verb: <b>sever the path</b>. Delete the entry, remove the listener, clear the timer.</p>
 
 <h4>WeakMap: an entry that does not count</h4>
-<p>Sometimes you want to attach data <i>to</i> an object without keeping the object alive. That is
-precisely what <code>WeakMap</code> is for: its keys are held <b>weakly</b>: a key reachable only through
+<p>Sometimes you want to attach data <i>to</i> an object without keeping the object alive. That's
+what <code>WeakMap</code> is for. Its keys are held <b>weakly</b>: a key reachable only through
 the WeakMap is collectable, and its entry evaporates with it.</p>
 <div class="codeSample" data-hl>const layouts = new WeakMap();          // object -> computed layout
 layouts.set(user, expensiveLayout(user));
@@ -380,9 +391,10 @@ layouts.set(user, expensiveLayout(user));
 // are almost never the right tool in application code.)</div>
 
 <h4>What you cannot do</h4>
-<p>You cannot force a collection, and you should not try to time one; GC is the engine's business, and
+<p>You can't force a collection, and you shouldn't try to time one. <b>GC</b> (garbage collection) is the
+engine's business.
 <code>process.memoryUsage()</code> not dropping the instant you null a reference means nothing. Your job
-is only ever the references: keep the paths you need, sever the ones you do not, and let the collector do
+is only ever the references: keep the paths you need, sever the ones you don't, and let the collector do
 the rest.</p>`,
 docs:[['MDN (Memory management)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Memory_management'],['MDN (WeakMap)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap'],['V8 (Trash talk: the garbage collector)','https://v8.dev/blog/trash-talk']],
 ex:{title:'Implement the mark phase',diff:'medium',lang:'js',
@@ -415,9 +427,11 @@ hints:['Keep a Set of seen names and a stack of names still to visit.','Pop a na
 ,
 
 {id:'jswork',title:'Workers: real parallelism, and when you need it',body:`
+
+
 <p>Everything in this course so far has run on one thread, and the async stream showed how far that goes:
 I/O concurrency without parallelism. The gap is <b>CPU work</b> (parse a huge file, compress an image,
-hash a password), where the loop lesson's rule was blunt: while your code computes, nothing else runs.
+hash a password). The loop lesson's rule was blunt: while your code computes, nothing else runs.
 Workers are the escape hatch: <b>more event loops</b>, not a faster one.</p>
 
 <h4>What a worker is</h4>
@@ -430,10 +444,11 @@ w.on("error", (err) =&gt; log.error({ err }));
 // crunch.js - a separate thread, a separate event loop
 import { parentPort, workerData } from "node:worker_threads";
 parentPort.postMessage(crunch(workerData.file));</div>
-<p>Browsers have the same shape with <code>new Worker(url)</code> and <code>postMessage</code>. And, a
-little poetically, <b>every exercise you have run in this course executed inside one</b>. That is why
-your solutions had to be pure functions: a worker has no DOM and shares no variables with the page. The
-sandbox you have been coding in all along is this lesson's subject.</p>
+<p>Browsers have the same shape with <code>new Worker(url)</code> and <code>postMessage</code>. And
+<b>every exercise you have run in this course executed inside one</b>. That's why
+your solutions had to be pure functions. A worker has no <b>DOM</b> (Document Object Model, the browser's live in-memory tree of the page) and
+shares no variables with the page. The
+sandbox you've been coding in all along is this lesson's subject.</p>
 
 <h4>Messages are copies: structured clone</h4>
 <div class="codeSample" data-hl>w.postMessage({ user, items });   // the OTHER side gets a deep COPY
@@ -442,11 +457,12 @@ sandbox you have been coding in all along is this lesson's subject.</p>
 // Map, Set, RegExp, typed arrays - and survives cycles, which JSON cannot.
 // it REFUSES: functions and DOM nodes (DataCloneError, it throws).
 // and class instances arrive as plain data: own properties, no methods.</div>
-<p>No shared variables means no data races: the whole category of bugs that makes threading notorious
-simply cannot be expressed. The price is copying cost on big payloads. (The escape hatches exist:
+<p>No shared variables means no <b>data races</b>. A data race is where two threads touch the same memory at once and
+the result depends on which got there first. The whole category of bugs that makes threading notorious
+can't be expressed. The price is copying cost on big payloads. The escape hatches exist:
 transfer lists move a buffer instead of copying it, and <code>SharedArrayBuffer</code> +
-<code>Atomics</code> genuinely share memory, at which point the races return, which is why almost
-nobody starts there.)</p>
+<code>Atomics</code> share memory for real. At that point the races return, so almost
+nobody starts there.</p>
 
 <h4>When a worker is the answer</h4>
 <div class="codeSample" data-hl>// I/O-bound?  NEVER a worker. the loop already handles ten thousand
@@ -457,9 +473,8 @@ nobody starts there.)</p>
 // CPU-bound and BIG (tens of ms and up, on a server: per request)?
 // -> a worker, or better, a POOL of them sized near your core count.
 //    spawning is expensive; reuse is the whole game.</div>
-<p>The decision is the event-loop lesson's arithmetic: 50ms of synchronous work on a server handling 100
-requests per second does not slow things down, it <i>stops</i> them. Move that computation to a pool and
-the loop goes back to what it is good at: waiting on everything at once.</p>`,
+<p>The decision is the event-loop lesson's arithmetic. On a server handling 100 requests per second, 50ms of synchronous work doesn't slow things down. It <i>stops</i> them. Move that computation to a pool and
+the loop goes back to what it's good at: waiting on everything at once.</p>`,
 docs:[['Node (worker_threads)','https://nodejs.org/api/worker_threads.html'],['MDN (Web Workers)','https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers'],['MDN (structured clone)','https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm']],
 ex:{title:'Loop or worker?',diff:'medium',lang:'js',
 run:{call:'whereToRun',cases:[

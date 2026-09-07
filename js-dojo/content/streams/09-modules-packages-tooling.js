@@ -1,9 +1,11 @@
 STREAMS.push({icon:'📚',title:'Modules, Packages & Tooling',blurb:'Splitting code across files and depending on other people\'s: ES modules and CommonJS and why both exist, package.json and what each field does, npm and semver, lockfiles and why they are committed, supply-chain risk, and what a bundler actually does.',lessons:[
 
 {id:'js34',title:'ES modules',body:`
+
 <p>Before 2015 JavaScript had no way to split a program across files. Everything shared one global scope,
-load order mattered, and name collisions were a genuine hazard. <b>ES modules</b> (ESM) are the language's
-answer, and they are what all new code uses.</p>
+load order mattered, and name collisions were a real hazard. <b>ES modules</b>, or <b>ESM</b> (ECMAScript
+modules, named for the written standard JavaScript follows), are the language's answer, and all
+new code uses them.</p>
 
 <div class="codeSample" data-hl>// math.js
 export function add(a, b) { return a + b; }      // named export
@@ -19,11 +21,14 @@ import "./setup.js";                              // run it, import nothing</div
 <h4>Four things that are true of every module</h4>
 <p><b>Its own scope.</b> A top-level <code>const</code> is private to the file unless exported. No more
 accidental globals.</p>
-<p><b>Always strict mode.</b> No opt-in required, and no sloppy-mode surprises.</p>
-<p><b>Evaluated once.</b> Importing the same module from ten files runs it once and shares one instance,
-which is what makes a module a natural singleton, for better and worse.</p>
-<p><b>Static structure.</b> Imports are resolved <i>before</i> any code runs, which is what enables
-tree-shaking and lets tools know your dependency graph without executing anything.</p>
+<p><b>Always strict mode.</b> <b>Strict mode</b> is the <code>"use strict"</code> setting that turns silent
+mistakes, such as assigning to an undeclared variable, into errors. No opt-in required,
+and no sloppy-mode surprises.</p>
+<p><b>Evaluated once.</b> Importing the same module from ten files runs it once and shares one instance.
+That makes a module a natural singleton, for better and worse.</p>
+<p><b>Static structure.</b> Imports are resolved <i>before</i> any code runs. That enables <b>tree-shaking</b>,
+where the build tool drops exported code that nothing imports, and lets tools know your dependency
+graph without executing anything.</p>
 
 <h4>The consequence of "static": imports are hoisted</h4>
 <div class="codeSample" data-hl>console.log("first?");
@@ -37,10 +42,10 @@ const mod = await import("./heavy.js");      // returns a PROMISE
 // which is how route-based code splitting works in every framework.</div>
 
 <h4>Named or default?</h4>
-<p><b>Prefer named exports.</b> They are checked at build time (a typo is an error rather than
-<code>undefined</code>), they autocomplete, they are greppable, and every importer uses the same name so
+<p><b>Prefer named exports.</b> They are checked at build time, so a typo is an error rather than
+<code>undefined</code>. They autocomplete, they are greppable, and every importer uses the same name, so
 the codebase stays searchable. A default export can be renamed to anything by each importer, which
-quietly makes a symbol impossible to find.</p>
+makes a symbol impossible to find.</p>
 
 <h4>Extensions and paths</h4>
 <div class="codeSample" data-hl>import { a } from "./a.js";     // relative: MUST start with ./ or ../
@@ -53,10 +58,11 @@ import data from "./d.json" with { type: "json" };   // import attributes
 // bundler breaks the first time it runs natively.</div>
 
 <h4>Circular imports</h4>
-<p>A imports B and B imports A. ESM handles it without crashing (the second import gets a partially
-initialized module), but that usually means reading a binding that is still in its temporal dead zone,
-producing a <code>ReferenceError</code> or, worse, an <code>undefined</code> that flows onward. Treat a
-cycle as a design signal: extract the shared piece into a third module.</p>`,
+<p>A imports B and B imports A. ESM handles it without crashing: the second import gets a partially
+initialized module. That usually means reading a binding still in its <b>temporal dead zone</b>, the stretch before its
+<code>let</code> or <code>const</code> line runs where the variable exists but reading it throws. You get a
+<code>ReferenceError</code> or, worse, an <code>undefined</code> that flows onward. Treat a cycle as a
+design signal and extract the shared piece into a third module.</p>`,
 docs:[['MDN (JavaScript modules)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules'],['MDN (import)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import'],['Node (ECMAScript modules)','https://nodejs.org/api/esm.html']],
 ex:{title:'Resolve a module specifier',diff:'easy',lang:'js',
 run:{call:'specifierKind',cases:[
@@ -83,9 +89,12 @@ behavior:`Order is executed rather than described: "./math.js" does not start wi
 hints:['startsWith answers each of these directly.','Check the two-character relative prefixes before the single-character absolute one.','Everything unrecognised is a bare specifier: a package name.']}},
 
 {id:'js35',title:'CommonJS, and the two-module-system problem',body:`
-<p>Node existed for six years before the language had modules, so it invented its own system:
-<b>CommonJS</b>. Millions of packages use it, so you will read it and occasionally have to interoperate
-with it, which is where the difficulty lives.</p>
+
+<p>Node existed for six years before the language had modules of its own, so it invented its own system:
+<b>CommonJS</b>. The standard system that came later is <b>ESM</b> (ECMAScript modules, the
+<code>import</code> and <code>export</code> syntax from the previous lesson). Millions of packages
+still use CommonJS. You'll read it and sometimes have to interoperate with it,
+and that is where the difficulty lives.</p>
 
 <div class="codeSample" data-hl>// math.js  (CommonJS)
 function add(a, b) { return a + b; }
@@ -95,7 +104,7 @@ module.exports = { add };            // or: exports.add = add;
 const { add } = require("./math");   // note: extension optional
 const fs = require("node:fs");</div>
 
-<h4>The differences that actually matter</h4>
+<h4>The differences that matter</h4>
 <div class="codeSample" data-hl>                ESM                      CommonJS
 syntax          import / export          require / module.exports
 resolution      STATIC, before running   DYNAMIC, at the moment of the call
@@ -106,9 +115,8 @@ top-level await yes                      no
 tree-shaking    yes - the graph is known no - the graph is not
 strict mode     always                   opt-in
 __dirname       no (use import.meta.url) yes</div>
-<p>The static/dynamic split is the root of everything else. Because ESM's graph is known before
-execution, tools can drop unused exports; because CommonJS is a function call that could take any string,
-they cannot.</p>
+<p>The static/dynamic split is the root of everything else. ESM's graph is known before execution, so
+tools can drop unused exports. CommonJS is a function call that could take any string, so they can't.</p>
 
 <h4>Which one is a file? Node's rules</h4>
 <div class="codeSample" data-hl>package.json  "type": "module"     -> .js files are ESM
@@ -124,22 +132,22 @@ package.json  "type": "commonjs"   -> .js files are CJS  (the default)
 
 <h4>Interop, warts and all</h4>
 <p><b>ESM can import CommonJS.</b> It works, and it gives you the whole <code>module.exports</code> object
-as the default export, so named imports may or may not exist depending on whether Node's static analysis
+as the default export. Named imports may or may not exist, depending on whether Node's static analysis
 could detect them.</p>
-<p><b>CommonJS could not <code>require</code> ESM</b> for years, because <code>require</code> is
+<p><b>CommonJS couldn't <code>require</code> ESM</b> for years, because <code>require</code> is
 synchronous and ESM loading is asynchronous. The workaround was dynamic <code>await import()</code>.
-Recent Node versions have added support for requiring synchronous ES modules, which softens this, but the
+Recent Node versions have added support for requiring synchronous ES modules, which softens this. The
 asymmetry is why so many packages still ship both formats.</p>
 
 <h4>Where the pain shows up</h4>
 <p>A package's <code>exports</code> field can offer different entry points per format, per environment
 (browser, node), per condition (import, require, types). Get it wrong and consumers see confusing
-resolution errors, which is why "dual-package" publishing is one of the genuinely fiddly parts of the
-ecosystem, and why new projects should simply be ESM-only unless they must support old consumers.</p>
+resolution errors. "Dual-package" publishing is one of the fiddly parts of the ecosystem, and new
+projects should be ESM-only unless they must support old consumers.</p>
 
 <h4>What to write</h4>
-<p><b>ESM, for anything new.</b> It is the standard, it works in browsers and Node, and it enables
-tree-shaking. Learn CommonJS to read existing code, understand the error messages, and know why a package
+<p><b>ESM, for anything new.</b> It's the standard, it works in browsers and Node, and it enables
+<b>tree-shaking</b>, where the build tool drops exported code that nothing imports. Learn CommonJS to read existing code, understand the error messages, and know why a package
 you depend on behaves oddly.</p>`,
 docs:[['Node (CommonJS modules)','https://nodejs.org/api/modules.html'],['Node (determining module system)','https://nodejs.org/api/packages.html#determining-module-system'],['Node (package entry points)','https://nodejs.org/api/packages.html#package-entry-points']],
 ex:{title:'Which module system is this file?',diff:'easy',lang:'js',
@@ -164,8 +172,11 @@ behavior:`The last case executes the precedence: a .mjs file inside a "type": "m
 hints:['Check the explicit extensions first; they override everything.','Only .js files consult the package type.','The default when there is no type field is CommonJS.']}},
 
 {id:'js36',title:'package.json, npm and semver',body:`
+
 <p><code>package.json</code> is the manifest for a JavaScript project: what it is, what it needs, and how
-to run it. Every field earns its place.</p>
+to run it. <b>npm</b>, Node's package manager and the public registry it installs from, reads it:
+<code>npm install</code> fetches what it lists and fills <code>node_modules</code>. Every field earns its
+place.</p>
 
 <div class="codeSample" data-hl>{
   "name": "my-app",
@@ -184,8 +195,8 @@ to run it. Every field earns its place.</p>
   "devDependencies":  { "eslint": "^9.0.0" },    // build/test only
   "peerDependencies": { "react": ">=18" }        // the HOST must supply it
 }</div>
-<p>The dependency split is not cosmetic: <code>dependencies</code> are installed for anyone who depends on
-you, <code>devDependencies</code> are not. Putting a test framework in the wrong one ships it to every
+<p>The dependency split matters. <code>dependencies</code> are installed for anyone who depends on you.
+<code>devDependencies</code> are not. Putting a test framework in the wrong one ships it to every
 consumer.</p>
 
 <h4>Semantic versioning</h4>
@@ -205,8 +216,8 @@ consumer.</p>
                                   because pre-1.0 packages break freely.</div>
 
 <h4>Lockfiles</h4>
-<p><code>package.json</code> records <b>ranges</b>; <code>package-lock.json</code> records the <b>exact
-version of every package in the tree</b>, including transitive ones. Without it, two installs a week apart
+<p><code>package.json</code> records <b>ranges</b>. <code>package-lock.json</code> records the <b>exact
+version of every package in the tree</b>, including transitive ones (the packages your packages need). Without it, two installs a week apart
 produce different node_modules and "works on my machine" becomes literally true.</p>
 <div class="codeSample" data-hl>npm install    reads package.json, RESOLVES ranges, WRITES the lockfile
 npm ci         reads the LOCKFILE ONLY, deletes node_modules, installs
@@ -218,17 +229,17 @@ npm ci         reads the LOCKFILE ONLY, deletes node_modules, installs
 
 <h4>Scripts</h4>
 <p><code>npm run x</code> executes the <code>x</code> script with <code>node_modules/.bin</code> on the
-PATH, which is why you can write <code>eslint .</code> without a global install. <code>npx</code> runs a
-binary from a package without installing it permanently: convenient, and worth a moment's thought before
-you point it at an unfamiliar package name.</p>
+PATH. That is why you can write <code>eslint .</code> without a global install. <code>npx</code> runs a
+binary from a package without installing it permanently. Convenient, but think for a moment before you
+point it at an unfamiliar package name.</p>
 
 <h4>Supply chain, briefly and seriously</h4>
 <p>Installing a package runs its code on your machine, and its dependencies' code too. A typical app has
-hundreds of transitive packages from hundreds of authors. The practical mitigations: audit what you add
-and prefer fewer, well-maintained dependencies; use <code>npm ci</code> so builds are reproducible;
-<code>npm audit</code> and Dependabot for known vulnerabilities; and <code>--ignore-scripts</code> when
-installing something you have reason to be careful about. <b>Typosquatting is real</b>: check the name
-character by character before installing something you have not used before.</p>`,
+hundreds of transitive packages from hundreds of authors. The mitigations: audit what you add and prefer
+fewer, well-maintained dependencies. Use <code>npm ci</code> so builds are reproducible. Run <code>npm
+audit</code> and Dependabot for known vulnerabilities. Use <code>--ignore-scripts</code> when installing
+something you have reason to be careful about. <b>Typosquatting is real.</b> Check the name character by
+character before installing something you haven't used before.</p>`,
 docs:[['npm, package.json','https://docs.npmjs.com/cli/v10/configuring-npm/package-json'],['Semantic Versioning','https://semver.org/'],['npm, npm ci','https://docs.npmjs.com/cli/v10/commands/npm-ci']],
 exs:[
 {title:'Does this version satisfy the range?',diff:'easy',lang:'js',
@@ -303,7 +314,8 @@ behavior:`Eight comparisons execute. The fourth and fifth are the ones a string 
 hints:['Split on "-" first to separate the version core from any prerelease label.','Map the dot-separated parts through Number so the comparison is numeric.','An empty prerelease means a full release, and a full release outranks any prerelease.']}]},
 
 {id:'js37',title:'Bundlers, transpilers and the rest of the toolchain',body:`
-<p>Modern JavaScript projects sit under a stack of tools. Each exists to solve one problem, and knowing
+
+<p>Modern JavaScript projects sit under a stack of tools. Each exists to solve one problem. Knowing
 which problem is what stops the toolchain feeling arbitrary.</p>
 
 <h4>What each tool is for</h4>
@@ -318,12 +330,15 @@ TYPE CHECKER catches type errors before running. TypeScript.
 TEST RUNNER  Vitest, Jest, node:test.</div>
 
 <h4>Why bundle at all, when browsers support modules?</h4>
-<p>They do, and you could ship raw ESM. Bundling still wins for four reasons: <b>fewer requests</b> (a
-few hundred modules means a few hundred round trips), <b>tree-shaking</b> (unused exports removed,
-only possible because ESM is static), <b>non-JavaScript assets</b> (CSS, images, SVG imported as
-modules), and <b>bare specifiers</b>, which browsers cannot resolve without an import map.</p>
-<p>In development the calculation reverses, which is why Vite serves native ESM unbundled: the browser
-requests only what a page needs and edits appear instantly, with no rebuild.</p>
+<p>They do, and you could ship raw <b>ESM</b> (ECMAScript modules, the <code>import</code> and
+<code>export</code> files from two lessons ago). Bundling still wins for four reasons. <b>Fewer requests</b>: a
+few hundred modules means a few hundred round trips. <b>Tree-shaking</b>: unused exports removed, only
+possible because ESM is static. <b>Non-JavaScript assets</b>: CSS, images, SVG imported as modules.
+<b>Bare specifiers</b>, imports by package name such as <code>"lodash"</code> rather than by path, which
+browsers can't resolve without an import map (a small JSON block in the page saying where each name
+lives).</p>
+<p>In development the calculation reverses, so Vite serves native ESM unbundled. The browser requests
+only what a page needs and edits appear instantly, with no rebuild.</p>
 
 <h4>Tree-shaking, and what defeats it</h4>
 <div class="codeSample" data-hl>import { debounce } from "lodash-es";   // only debounce ends up in the bundle
@@ -335,21 +350,21 @@ requests only what a page needs and edits appear instantly, with no rebuild.</p>
 //     it has none, so the bundler can drop unused modules entirely</div>
 
 <h4>Source maps, again</h4>
-<p>Every transformation above moves your code further from what runs. Source maps are what let DevTools
-show you the original, which is why the debugging stream treats a broken map as a first-class problem
-rather than an inconvenience.</p>
+<p>Every transformation above moves your code further from what runs. Source maps let DevTools show you
+the original. That is why the debugging stream treats a broken map as a first-class problem rather than
+an inconvenience.</p>
 
 <h4>The advice</h4>
 <p><b>Start with a framework's defaults.</b> <code>npm create vite@latest</code> gives you a working,
-sensible toolchain in one command; assembling one by hand teaches you configuration formats rather than
+sensible toolchain in one command. Assembling one by hand teaches you configuration formats rather than
 JavaScript.</p>
-<p><b>Add tools when you feel the problem</b> they solve, not preemptively. Every tool is a dependency,
-a configuration file, a thing that breaks on upgrade, and a thing the next person has to learn.</p>
-<p><b>Let the formatter win.</b> Prettier's value is not its output, it is that it ends the discussion,
-so do not configure it, and never argue with it in review.</p>
+<p><b>Add tools when you feel the problem</b> they solve, not before. Every tool is a dependency, a
+configuration file, a thing that breaks on upgrade, and a thing the next person has to learn.</p>
+<p><b>Let the formatter win.</b> Prettier's value is that it ends the discussion. Don't configure it,
+and never argue with it in review.</p>
 <p><b>Read the errors.</b> Toolchain errors are verbose and usually accurate. "Cannot use import statement
-outside a module" and "Module not found" both mean exactly what they say, and both were covered two
-lessons ago.</p>`,
+outside a module" and "Module not found" both mean what they say, and both were covered two lessons
+ago.</p>`,
 docs:[['Vite','https://vitejs.dev/guide/'],['MDN, Introduction to client-side tooling','https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Client-side_tools/Overview'],['webpack, tree shaking','https://webpack.js.org/guides/tree-shaking/']],
 ex:{title:'Which tool solves this?',diff:'easy',lang:'js',
 run:{call:'toolFor',cases:[

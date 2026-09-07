@@ -1,9 +1,14 @@
 STREAMS.push({icon:'🟩',title:'The Node Runtime',blurb:'JavaScript outside the browser: what Node actually is and what it adds, its event loop phases and how they differ from the browser, the process object and lifecycle, reading configuration from the environment and the command line, and shutting down cleanly.',lessons:[
 
 {id:'js38',title:'What Node is, and what it adds',body:`
+
+
+
 <p><b>Node.js is the V8 engine (the same one inside Chrome) packaged with a set of libraries for things
-a browser deliberately will not let you do.</b> The language is identical. What changes is the
-surroundings: no DOM, no <code>window</code>, and in their place files, sockets, processes and the
+a browser deliberately won't let you do.</b> <b>V8</b> parses your code, runs it, and
+compiles the hot parts to machine code as it goes. The language is identical. What changes
+is the surroundings. There's no <b>DOM</b> (Document Object Model, the browser's live in-memory tree of the
+page) and no <code>window</code>. In their place are files, sockets, processes and the
 operating system.</p>
 
 <div class="codeSample" data-hl>WHAT NODE ADDS              WHAT IT REMOVES
@@ -15,8 +20,8 @@ crypto    hashing, keys     (there is no origin - you ARE the machine)
 process   env, args, exit
 child_process, worker_threads, net, dns, zlib, stream ...</div>
 <p>That last removal matters more than it looks. A browser sandboxes your code because it downloaded that
-code from a stranger. Node does not, because <b>you</b> chose to run it, which is exactly why installing
-an untrusted npm package is a serious act, and why the supply-chain warning in the modules stream is not
+code from a stranger. Node doesn't, because <b>you</b> chose to run it. That is why installing an
+untrusted npm package is a serious act, and why the supply-chain warning in the modules stream isn't
 theoretical.</p>
 
 <h4>Running things</h4>
@@ -30,26 +35,29 @@ node -e "console.log(1+1)"   evaluate an expression
 import fs from "node:fs";    // unambiguous, and cannot be shadowed by
                              // a package called "fs" in node_modules</div>
 
-<h4>The parts of the standard library worth knowing exist</h4>
-<p><b><code>node:path</code></b>, join and resolve paths without concatenating strings, so your code works
+<h4>The standard library, the parts to know exist</h4>
+<p><b><code>node:path</code></b>: join and resolve paths without concatenating strings, so your code works
 on Windows too. <b><code>node:os</code></b>: CPU count, memory, temp directory, platform.
-<b><code>node:crypto</code></b>, <code>randomUUID()</code>, hashing, HMAC, and real key operations,
-unlike the browser it is available everywhere with no secure-context requirement.
-<b><code>node:util</code></b>, <code>promisify</code> for wrapping old callback APIs.
-<b><code>node:test</code></b>, a test runner, built in, no dependency required.</p>
+<b><code>node:crypto</code></b>: <code>randomUUID()</code>, hashing, <b>HMAC</b> and real key
+operations. HMAC is a hash-based message authentication code: a hash mixed
+with a secret key, so anyone with the key can check it wasn't altered.
+Unlike the browser, it's available everywhere with no secure-context requirement.
+<b><code>node:util</code></b>: <code>promisify</code> for wrapping old callback APIs (ones that take a function to call when done, instead
+of returning a promise).
+<b><code>node:test</code></b>: a test runner, built in, no dependency required.</p>
 
 <h4>Versions and LTS</h4>
-<p>Node releases a new major every six months; even-numbered ones become <b>LTS</b> (long-term support) and
-are what you run in production. Odd ones are for trying features. Pin the version in three places that
-must agree: <code>engines</code> in <code>package.json</code>, your CI setup step, and your Docker base
-image. A mismatch surfaces as a syntax error on a feature your laptop supports and the server does
-not.</p>
+<p>Node releases a new major every six months. Even-numbered ones become <b>LTS</b> (long-term support)
+and are what you run in production. Odd ones are for trying features. Pin the version in three places
+that must agree: <code>engines</code> in <code>package.json</code>, your <b>CI</b> (continuous integration, the pipeline
+that builds and tests every change) setup step, and your Docker base image. A mismatch surfaces as a syntax error on a feature your laptop supports and the server
+doesn't.</p>
 
 <h4>Node, Deno and Bun</h4>
-<p>You will see the alternatives mentioned. <b>Deno</b> is by Node's original author and adds
+<p>You'll see the alternatives mentioned. <b>Deno</b> is by Node's original author and adds
 permissions-by-default and built-in TypeScript. <b>Bun</b> is a faster runtime with a bundler and test
-runner included. Both are interesting; Node has the ecosystem, the LTS story and the jobs, so learn Node
-first and the others transfer almost entirely.</p>`,
+runner included. Both are interesting. Node has the ecosystem, the LTS story and the jobs, so learn Node
+first. The others transfer almost entirely.</p>`,
 docs:[['Node (introduction)','https://nodejs.org/en/learn/getting-started/introduction-to-nodejs'],['Node (API documentation)','https://nodejs.org/api/'],['Node (releases and LTS)','https://nodejs.org/en/about/previous-releases']],
 ex:{title:'Where does this API live?',diff:'easy',lang:'js',
 run:{call:'availableIn',cases:[
@@ -88,7 +96,10 @@ behavior:`Nine cases execute. The "both" group is the one that has changed: fetc
 hints:['Group the cases by host and let them fall through to a shared return.','fetch is now in both runtimes, despite what older material says.','Anything you were not told about returns unknown.']}},
 
 {id:'js39',title:'Node’s event loop, and the phases',body:`
-<p>The event loop from the async stream applies here too (one thread, callbacks queued by the host), but
+
+
+<p>The <b>event loop</b> from the async stream applies here too. One thread runs your code one piece at
+a time, with <b>callbacks</b> queued by the host. A callback is a function handed over to be called later, when something finishes. But
 Node's version has <b>named phases</b>, and knowing them explains ordering that otherwise looks
 arbitrary.</p>
 
@@ -105,7 +116,7 @@ arbitrary.</p>
   //    process.nextTick queue    (first - it beats even promises)
   //    microtask queue           (promise callbacks)</div>
 
-<h4>The ordering rules worth remembering</h4>
+<h4>The ordering rules to remember</h4>
 <div class="codeSample" data-hl>console.log("1");
 setTimeout(() =&gt; console.log("timeout"), 0);
 setImmediate(() =&gt; console.log("immediate"));
@@ -118,14 +129,14 @@ console.log("2");
 //   timeout vs immediate at the TOP LEVEL is genuinely non-deterministic
 //   (it depends how long startup took). INSIDE an I/O callback,
 //   setImmediate always wins, because check comes right after poll.</div>
-<p><code>process.nextTick</code> jumping the queue is a Node-specific hazard: a recursive
+<p><code>process.nextTick</code> jumping the queue is a Node-specific hazard. A recursive
 <code>nextTick</code> starves the loop completely, and no I/O will ever be processed. Prefer
-<code>queueMicrotask</code> unless you specifically need to run before promises.</p>
+<code>queueMicrotask</code> unless you need to run before promises.</p>
 
 <h4>Blocking is worse here than in a browser</h4>
 <p>A browser freezing blocks one user. <b>A Node server blocking blocks every connected client.</b> There
-is one loop for all of them, so a synchronous 200ms operation on a server handling 100 requests per second
-is not a slow endpoint; it is an outage.</p>
+is one loop for all of them. A synchronous 200ms operation on a server handling 100 requests per second
+is an outage.</p>
 <div class="codeSample" data-hl>// the usual culprits, all of them synchronous:
 fs.readFileSync(hugeFile)          // use the promises API instead
 JSON.parse(veryLargeString)        // unavoidable - so bound the size
@@ -134,14 +145,13 @@ crypto.pbkdf2Sync(...)             // use the async form: it uses the
 a regex with catastrophic backtracking   // ReDoS - a real DoS vector
 a tight loop over a million rows   // move it to a worker_thread</div>
 <p>Node keeps a small <b>thread pool</b> (four threads by default, set by
-<code>UV_THREADPOOL_SIZE</code>) for file I/O and some crypto, which is why the asynchronous forms of
-those really do run elsewhere. Network I/O does not use the pool at all; it is genuinely
-event-driven.</p>
+<code>UV_THREADPOOL_SIZE</code>) for file I/O and some crypto. The asynchronous forms of those really do
+run elsewhere. Network I/O doesn't use the pool at all. It's event-driven.</p>
 
 <h4>CPU work belongs somewhere else</h4>
-<p>For anything genuinely CPU-bound, use <code>worker_threads</code> (a separate thread with its own event
-loop, message-passing between them) or a separate process. The rule is unchanged from the browser:
-<b>asynchronous does not mean parallel</b>, and no amount of <code>async</code> makes a busy loop stop
+<p>CPU-bound work keeps the processor busy rather than waiting on I/O. For anything CPU-bound, use <code>worker_threads</code> or a separate process. A worker thread is a separate thread with its own event loop,
+with message-passing between the two. The rule is unchanged from the browser:
+<b>asynchronous doesn't mean parallel</b>, and no amount of <code>async</code> makes a busy loop stop
 blocking.</p>`,
 docs:[['Node (the event loop)','https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick'],['Node (do not block the event loop)','https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop'],['Node (worker_threads)','https://nodejs.org/api/worker_threads.html']],
 exs:[
@@ -186,8 +196,9 @@ behavior:`Six cases execute, and two of them are the whole lesson. The 2000ms HT
 hints:['The test is sync OR cpu; the duration is a distraction.','A long await is not blocking; a short busy loop is.','safe is simply whether the offenders list came back empty.']}]},
 
 {id:'js40',title:'process, configuration and the command line',body:`
+
 <p><code>process</code> is Node's window onto the operating system: how the program was started, what
-environment it is in, and how it ends.</p>
+environment it's in, and how it ends.</p>
 
 <div class="codeSample" data-hl>process.argv        ["/path/to/node", "/path/to/app.js", ...your args]
                     // the first TWO entries are always node and the script
@@ -215,13 +226,14 @@ const { values, positionals } = parseArgs({
 // values.port === "8080"   values.verbose === true   positionals === ["file.txt"]</div>
 
 <h4>Environment variables, and the two rules</h4>
-<p><b>They are always strings.</b> <code>process.env.PORT</code> is <code>"3000"</code>, not
+<p>An <b>environment variable</b> is a named value the operating system hands a process when it starts,
+read in Node from <code>process.env</code>. Configuration and secrets live there, not in the code. <b>They are always strings.</b> <code>process.env.PORT</code> is <code>"3000"</code>, not
 <code>3000</code>, and <code>process.env.DEBUG</code> is the string <code>"false"</code>, which is
-<b>truthy</b>. That single confusion turns feature flags on in production more often than any other
+<b>truthy</b> (it counts as true in a condition). That one confusion turns feature flags on in production more often than any other
 mistake in this lesson.</p>
 <p><b>Validate at startup, not at use.</b> Read and check every variable the program needs the moment it
 boots, and exit with a clear message if something is missing. Discovering a missing database URL when the
-first request arrives at 3am is strictly worse than failing to start.</p>
+first request arrives at 3am is worse than failing to start.</p>
 <div class="codeSample" data-hl>function requireEnv(name) {
   const v = process.env[name];
   if (v === undefined || v === "") {
@@ -243,10 +255,9 @@ process.on("SIGINT", ...);               // Ctrl-C
 // process.exit() is IMMEDIATE - pending async work is abandoned, and
 // buffered stdout may be lost. prefer letting the loop drain, and use
 // exit() only after cleanup or on a fatal error.</div>
-<p>And the two last-resort handlers from the errors stream belong here:
-<code>unhandledRejection</code> and <code>uncaughtException</code> should <b>log and exit</b>. After an
-uncaught exception the program's state is unknown, and continuing risks corrupting data in ways worse
-than a restart.</p>`,
+<p>The two last-resort handlers from the errors stream belong here too. <code>unhandledRejection</code>
+and <code>uncaughtException</code> should <b>log and exit</b>. After an uncaught exception the program's
+state is unknown, and continuing risks corrupting data in ways worse than a restart.</p>`,
 docs:[['Node (process)','https://nodejs.org/api/process.html'],['Node (util.parseArgs)','https://nodejs.org/api/util.html#utilparseargsconfig'],['The Twelve-Factor App (config)','https://12factor.net/config']],
 exs:[
 {title:'Read a port from the environment',diff:'medium',lang:'js',
@@ -318,10 +329,13 @@ hints:['Accumulate into an errors array instead of returning early: you want eve
 ,
 
 {id:'jsemit',title:'EventEmitter: the pattern under everything',body:`
+
+
 <p>Nearly every object you meet in Node (servers, sockets, streams, <code>process</code> itself) is an
-<b>EventEmitter</b>. It is the third async shape after callbacks and promises, and it exists because some
-things are not one result but <b>many occurrences</b>: a request arrives, then another, then another. A
-promise can settle once; an emitter can fire forever.</p>
+<b>EventEmitter</b>. It's the third async shape after callbacks (a function handed over to be called later) and promises
+(an object standing for one value you don't have yet). It exists because some
+things are <b>many occurrences</b> rather than one result: a request arrives, then another, then another.
+A promise settles once. An emitter can fire forever.</p>
 
 <h4>The mechanics</h4>
 <div class="codeSample" data-hl>import { EventEmitter } from "node:events";
@@ -335,7 +349,7 @@ bus.emit("order", 42);       // calls BOTH listeners, in registration order,
                              // SYNCHRONOUSLY - emit returns after they ran
 bus.off("order", handler);   // unsubscribe needs the SAME function reference</div>
 <p>Two details there bite people. <code>emit</code> is synchronous: the listeners have all run before the
-next line. And <code>off</code> compares by reference, so an anonymous arrow you did not save cannot be
+next line. And <code>off</code> compares by reference, so an anonymous arrow you didn't save can't be
 removed later.</p>
 
 <h4>The "error" event is special</h4>
@@ -356,15 +370,16 @@ server.on("request", (req, res) =&gt; {
 res.on("close", () =&gt; bus.off("tick", handler));   // remove when done
 bus.once("tick", handler);                          // if once is the truth
 bus.on("tick", handler, { signal });                // AbortController cleanup</div>
-<p>This is the listener leak the profiling lesson's heap snapshots keep finding: the emitter holds a
-reference to every listener, the listener's closure holds whatever it captured, and none of it can be
-collected while the subscription lives. Subscribing is <i>allocating</i>; treat it like something that
+<p>This is the listener leak the profiling lesson's heap snapshots keep finding. A heap snapshot is a dump of everything in memory at one
+moment, showing what holds on to what. The emitter holds a reference to every listener.
+The listener's closure (the variables it remembers from where it was created) holds whatever it
+captured. None of it can be collected (freed by the garbage collector) while the subscription lives. Subscribing is <i>allocating</i>. Treat it like something that
 needs a matching release.</p>
 
 <h4>What it is underneath</h4>
-<p>Strip the class away and an emitter is a map from event names to arrays of functions: <code>on</code>
+<p>Strip the class away and an emitter is a map from event names to arrays of functions. <code>on</code>
 pushes, <code>emit</code> loops, <code>off</code> filters, <code>once</code> removes after the first call.
-The exercise has you build exactly that, because having built one, no emitter behavior will surprise you
+The exercise has you build that, because once you've built one, no emitter behavior will surprise you
 again.</p>`,
 docs:[['Node (events)','https://nodejs.org/api/events.html'],['Node (EventEmitter class)','https://nodejs.org/api/events.html#class-eventemitter'],['Node (events best practices)','https://nodejs.org/en/learn/asynchronous-work/the-nodejs-event-emitter']],
 ex:{title:'Build a tiny emitter',diff:'hard',lang:'js',

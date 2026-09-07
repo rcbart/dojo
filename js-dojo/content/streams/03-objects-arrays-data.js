@@ -1,9 +1,13 @@
 STREAMS.push({icon:'📦',title:'Objects, Arrays & Data',blurb:'The structures every JavaScript program is made of: objects and property access, arrays and the methods that replace most loops, destructuring and spread, reference vs value and the copying trap, Map and Set, and JSON with the things it silently loses.',lessons:[
 
 {id:'js10',title:'Objects: properties, access and references',body:`
-<p>An <b>object</b> is a collection of key/value pairs. Keys are strings (or symbols); values are
-anything. Almost everything in JavaScript that is not a primitive is an object (arrays, functions,
-dates, errors), so this lesson underpins most of the rest.</p>
+
+
+
+<p>An <b>object</b> is a collection of key/value pairs. Keys are strings (or symbols). Values are
+anything. A <b>primitive</b> is a single simple value: a number, a string. Almost everything
+else in JavaScript is an object (arrays, functions, dates, errors), so most of the rest of the course
+rests on this lesson.</p>
 
 <div class="codeSample" data-hl>const user = {
   name: "Ada",
@@ -35,8 +39,8 @@ Object.keys(user)               // ["name", "favorite color", ...]
 Object.values(user)
 Object.entries(user)            // [["name","Ada"], ...] - the one to loop over</div>
 
-<h4>References: the single most important idea here</h4>
-<p>Primitives are copied by <b>value</b>. Objects are copied by <b>reference</b>: the variable holds a
+<h4>References: the most important idea here</h4>
+<p>Primitives are copied by <b>value</b>. Objects are copied by <b>reference</b>. The variable holds a
 pointer, not the object, so two names can refer to the same thing.</p>
 <div class="codeSample" data-hl>let a = 1, b = a;  b = 2;      // a is still 1 - independent copies
 
@@ -50,9 +54,9 @@ o1 === o2                      // true  - same reference
 
 // and it is why passing an object to a function lets it modify yours:
 function rename(u) { u.name = "changed"; }   // mutates the CALLER's object</div>
-<p>This explains a great deal of confusing behavior: why <code>const</code> objects can still change,
-why a function "changed my data", why comparing two objects with <code>===</code> is almost never what
-you want.</p>
+<p>This explains a lot of confusing behavior: why <code>const</code> objects can still change, and why
+a function "changed my data". It's also why comparing two objects with <code>===</code> is almost never
+what you want.</p>
 
 <h4>Copying, and the shallow trap</h4>
 <div class="codeSample" data-hl>const copy = { ...user };                  // SHALLOW copy
@@ -65,6 +69,8 @@ copy.address.city = "Bath"; // MUTATES user.address too! nested objects
 const deep = structuredClone(user);   // a real deep copy (modern, built in)
 // JSON.parse(JSON.stringify(user)) is the old trick - and it silently
 // destroys Dates, undefined, functions, Map, Set and NaN. see the JSON lesson.</div>
+<p>A <b>shallow copy</b> duplicates the top level and shares everything nested. A <b>deep copy</b>
+duplicates all the way down.</p>
 
 <h4>Shorthand and computed keys</h4>
 <div class="codeSample" data-hl>const name = "Ada", age = 36;
@@ -109,7 +115,10 @@ behavior:`Order matters inside the literal: spreading first and overriding after
 hints:['Spread the original into a new object literal.','Put the override AFTER the spread or it will be overwritten.','Never assign to user.name; that would mutate the caller’s object.']}]},
 
 {id:'js11',title:'Arrays and the methods that replace loops',body:`
-<p>An array is an ordered, zero-indexed list, and an object underneath, which is why
+
+
+
+<p>An array is an ordered, zero-indexed list. Underneath it is an object, so
 <code>typeof []</code> is <code>"object"</code>. Its methods are where most real JavaScript data work
 happens.</p>
 
@@ -124,8 +133,9 @@ nums.reduce((acc, n) =&gt; acc + n, 0)   // 10    ONE value out of many
 //   same number of items, different shape   -> map
 //   fewer items, unchanged                  -> filter
 //   collapse to a single value              -> reduce</div>
-<p><code>reduce</code>'s second argument is the <b>initial accumulator</b>, and omitting it is a real bug:
-on an empty array with no initial value it throws, and with mixed types it starts from element zero
+<p><code>reduce</code>'s second argument is the <b>initial accumulator</b>, the starting value of the
+running result. Omitting it is a real bug.
+On an empty array with no initial value it throws. With mixed types it starts from element zero
 rather than the value you meant. Always pass it.</p>
 
 <h4>The rest of the working set</h4>
@@ -165,11 +175,11 @@ function top2(list) { return [...list].sort((a,b) =&gt; b-a)[0]; }  // safe</div
 // the chain grows past three or four steps, one loop is both faster
 // and clearer. clarity first; reach for the loop when it IS clearer.</div>
 
-<h4>Two behaviors worth knowing</h4>
-<p><code>forEach</code> cannot <code>break</code> and ignores return values; if you want to stop early
-use <code>some</code>, <code>find</code> or a <code>for...of</code>. And array "holes" (from
+<h4>Two behaviors to know</h4>
+<p><code>forEach</code> cannot <code>break</code> and ignores return values. To stop early,
+use <code>some</code>, <code>find</code> or a <code>for...of</code>. Array "holes" (from
 <code>new Array(3)</code> or deleting an element) are skipped by <code>map</code> and
-<code>forEach</code> but not by <code>for...of</code>, which is one more reason to avoid creating
+<code>forEach</code> but not by <code>for...of</code>. That is one more reason not to create
 them.</p>`,
 docs:[['MDN (Array)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array'],['MDN (Array.prototype.reduce)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce'],['MDN (Array.prototype.sort)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort']],
 exs:[
@@ -234,8 +244,9 @@ behavior:`Six cases execute and two of them decide the implementation. The tie c
 hints:['A Map accumulates the totals and remembers first-seen order.','Default the running total to 0 with ?? before adding.','Spread the Map into pairs, then sort by the second element descending.']}]},
 
 {id:'js12',title:'Destructuring, spread and rest',body:`
-<p>Three pieces of syntax that appear in almost every modern JavaScript file. They are not new
-capabilities (they are shorter ways to express things you already know), but code that avoids them looks
+
+<p>Three pieces of syntax that appear in almost every modern JavaScript file. They add no new
+capability. They are shorter ways to express things you already know, but code that avoids them looks
 a decade old.</p>
 
 <h4>Destructuring: unpacking into variables</h4>
@@ -265,7 +276,7 @@ draw();                     // the trailing = {} is what makes this legal
 const cloned  = [...arr];                      // shallow copy
 const joined  = [...a, ...b];                  // concatenate
 Math.max(...nums);                             // array -> arguments
-const chars   = [...\"héllo\"];                  // string -> array of chars
+const chars   = [..."héllo"];                  // string -> array of chars
 const unique  = [...new Set(arr)];             // dedupe, idiomatically</div>
 
 <h4>Rest: collecting</h4>
@@ -281,9 +292,9 @@ return safe;</div>
 in a parameter list, it <b>collects</b> (rest). On the <b>right</b>, or inside a literal or a call, it
 <b>expands</b> (spread).</p>
 
-<h4>The limit worth remembering</h4>
+<h4>The limit to remember</h4>
 <p>Spread copies are <b>shallow</b>. <code>{ ...user }</code> gives you a new top-level object whose
-nested objects are still the same references, so mutating <code>copy.address.city</code> changes the
+nested objects are still the same references. Mutating <code>copy.address.city</code> changes the
 original. For a true deep copy use <code>structuredClone</code>.</p>`,
 docs:[['MDN (Destructuring assignment)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment'],['MDN (Spread syntax)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax'],['MDN (Rest parameters)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters']],
 exs:[
@@ -322,8 +333,12 @@ behavior:`The last case executes the trap: spreading gives per-key override by p
 hints:['Both objects spread into one literal.','Whichever is spread LAST wins on conflicting keys.','No per-field logic is needed at all.']}]},
 
 {id:'js13',title:'Map, Set and JSON',body:`
-<p>Plain objects and arrays cover most needs. Three other tools cover the rest, and JSON is how data
-leaves your program, with a short list of things it destroys on the way out.</p>
+
+
+
+<p>Plain objects and arrays cover most needs. Three other tools cover the rest. <b>JSON</b>, JavaScript
+Object Notation, is the plain-text form of objects and arrays that any language can read. It's how data
+leaves your program, and it destroys a short list of things on the way out.</p>
 
 <h4><code>Map</code>: a dictionary with real keys</h4>
 <div class="codeSample" data-hl>const m = new Map();
@@ -340,11 +355,11 @@ for (const [k, v] of m) { }   // iterates in INSERTION order
 // versus a plain object:
 const o = {};
 o[42] = "x";  Object.keys(o);   // ["42"] - the number became a string</div>
-<p>Choose <code>Map</code> when keys are not strings, when you add and remove frequently, when insertion
-order matters, or when the keys come from user input: a plain object inherits from
+<p>Choose <code>Map</code> when keys aren't strings, when you add and remove often, or when insertion
+order matters. Also when the keys come from user input: a plain object inherits from
 <code>Object.prototype</code>, so a key of <code>"constructor"</code> or <code>"__proto__"</code> behaves
-strangely. Choose a plain object for fixed, known-at-write-time shapes, and because it serializes to JSON
-where a <code>Map</code> does not.</p>
+strangely. Choose a plain object for fixed, known-at-write-time shapes. It also <b>serializes</b> to
+JSON, meaning it can be turned into text, where a <code>Map</code> does not.</p>
 
 <h4><code>Set</code>: unique values</h4>
 <div class="codeSample" data-hl>const s = new Set([1, 2, 2, 3]);   // {1, 2, 3} - duplicates dropped
@@ -372,14 +387,14 @@ JSON.stringify({ b: 1n })             // TypeError - bigint is the one that DOES
 
 // and circular references throw:
 const a = {}; a.self = a; JSON.stringify(a);   // TypeError</div>
-<p>This is why <code>JSON.parse(JSON.stringify(x))</code> is a bad deep-copy idiom: it works until the
-object contains a date, and then it fails in a way nobody notices until a comparison goes wrong. Use
+<p>This is why <code>JSON.parse(JSON.stringify(x))</code> is a bad deep-copy idiom. It works until the
+object contains a date. Then it fails in a way nobody notices until a comparison goes wrong. Use
 <code>structuredClone</code>.</p>
 
 <h4><code>JSON.parse</code> throws</h4>
 <p>Unlike most of JavaScript, malformed JSON is an exception, not <code>undefined</code>. Anything parsed
-from a network response, a file, or user input needs a <code>try</code>/<code>catch</code>, a topic the
-errors stream takes properly.</p>`,
+from a network response, a file, or user input needs a <code>try</code>/<code>catch</code>. The
+errors stream covers that properly.</p>`,
 docs:[['MDN (Map)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map'],['MDN (Set)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set'],['MDN (JSON)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON']],
 exs:[
 {title:'Count occurrences with a Map',diff:'easy',lang:'js',
@@ -427,11 +442,14 @@ hints:['Wrap the parse in try/catch.','catch { } without a binding is legal mode
 ,
 
 {id:'jsdate',title:'Dates, times and Intl',body:`
-<p>Dates look easy and are the most reliable source of production bugs in this stream. The reason is that
-a moment in time is one thing, and a human's description of it ("March 3rd, in Sydney") is another, and
-JavaScript's <code>Date</code> mixes the two in ways you have to learn once, properly.</p>
 
-<h4>What a Date actually is</h4>
+
+
+<p>Dates look easy and are the most reliable source of production bugs in this stream. A moment in time
+is one thing. A human's description of it ("March 3rd, in Sydney") is another. JavaScript's
+<code>Date</code> mixes the two in ways you have to learn once, properly.</p>
+
+<h4>What a Date is</h4>
 <div class="codeSample" data-hl>Date.now()               // 1755350400000 - milliseconds since Jan 1 1970 UTC
 new Date()               // now, as an object
 new Date("2026-03-03T10:00:00Z")   // the Z means UTC. ALWAYS send this form.
@@ -440,8 +458,9 @@ new Date("2026-03-03T10:00:00Z")   // the Z means UTC. ALWAYS send this form.
 // inside it - the timezone appears when you FORMAT it:
 d.toISOString()          // "2026-03-03T10:00:00.000Z"  - UTC, for machines
 d.toLocaleString()       // "3/3/2026, 9:00 PM"         - the USER'S zone</div>
-<p>That is the whole model: <b>store and transmit UTC instants, format for humans at the very edge</b>.
-The bug class this prevents (a birthday shifting a day depending on who views it) comes from doing
+<p><b>UTC</b> is Coordinated Universal Time, the one clock everything is stored, logged and compared in.
+Local time is UTC plus an offset. That is the whole model: <b>store and transmit UTC instants, format
+for humans at the edge</b>. The bug class this prevents, a birthday shifting a day depending on who views it, comes from doing
 either job in the wrong place.</p>
 
 <h4>The traps, named</h4>
@@ -458,9 +477,9 @@ const days = (end - start) / (1000 * 60 * 60 * 24);
 // saving makes some days 23 or 25 hours long. calendar math needs a
 // library (Temporal, the replacement API, fixes this properly).</div>
 
-<h4>Intl: formatting you do not have to write</h4>
-<p>Every "format this nicely" function you are tempted to write already exists, localized, in
-<code>Intl</code>:</p>
+<h4>Intl: formatting you don't have to write</h4>
+<p>Every "format this nicely" function you're tempted to write already exists, localized, in
+<code>Intl</code>.</p>
 <div class="codeSample" data-hl>new Intl.DateTimeFormat("en-GB", { dateStyle: "long" }).format(d)
 // "3 March 2026"
 new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(9.99)
@@ -469,9 +488,9 @@ new Intl.RelativeTimeFormat("en").format(-2, "day")
 // "2 days ago"
 new Intl.NumberFormat("en", { notation: "compact" }).format(14500)
 // "15K"</div>
-<p>Reaching for <code>Intl</code> instead of hand-rolled formatting is one of those habits that quietly
-marks experienced code: it handles locales you have never heard of, and it means a French user sees
-French punctuation without anyone writing an if-statement about it.</p>`,
+<p>Reaching for <code>Intl</code> instead of hand-rolled formatting marks experienced code. It handles
+locales you have never heard of. A French user sees French punctuation without anyone writing an
+if-statement about it.</p>`,
 docs:[['MDN (Date)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date'],['MDN (Intl)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl'],['TC39 (Temporal)','https://tc39.es/proposal-temporal/docs/']],
 ex:{title:'Work with instants, not strings',diff:'medium',lang:'js',
 run:{call:'daysBetween',cases:[

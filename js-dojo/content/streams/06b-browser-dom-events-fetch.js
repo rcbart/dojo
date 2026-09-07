@@ -1,9 +1,10 @@
 STREAMS.push({icon:'🌐',title:'The Browser: DOM, Events & fetch',blurb:'Writing for the browser, not just debugging it: the page as a tree of objects you can change, events and the bubbling that makes one listener do the work of a hundred, fetch and the discipline of handling a response properly, and forms, where user input actually comes from.',lessons:[
 
 {id:'jsdom1',title:'The DOM: the page as an object tree',body:`
+
 <p>Everything you see in a browser tab is an object. The HTML you wrote gets parsed into a tree of them,
-the <b>Document Object Model</b>, and JavaScript changes the page by changing that tree. There is no
-other mechanism. Every framework you will ever meet is, underneath, doing what this lesson does.</p>
+the <b>DOM</b> (Document Object Model), and JavaScript changes the page by changing that tree. There's no
+other mechanism. Every framework you'll ever meet is, underneath, doing what this lesson does.</p>
 
 <h4>Finding elements</h4>
 <div class="codeSample" data-hl>document.querySelector("#save")        // FIRST match, or null
@@ -15,9 +16,9 @@ document.querySelector("[data-id='42']")
 
 // older APIs you will read in existing code:
 document.getElementById("save")        // fast, id only, no "#"</div>
-<p>Two habits save hours. First, <code>querySelector</code> returns <code>null</code> when nothing
-matches, and <code>null.textContent</code> throws, so a typo in a selector surfaces as an error one line
-<i>later</i> than the mistake. Second, a <code>NodeList</code> is not an array; it has
+<p><code>querySelector</code> returns <code>null</code> when nothing
+matches, and <code>null.textContent</code> throws. So a typo in a selector surfaces as an error one line
+<i>later</i> than the mistake. And a <code>NodeList</code> isn't an array. It has
 <code>forEach</code>, but for <code>map</code> or <code>filter</code> spread it first:
 <code>[...document.querySelectorAll(".row")]</code>.</p>
 
@@ -32,9 +33,9 @@ el.classList.add("ok");          // add / remove / toggle / contains
 el.style.color = "green";        // inline style - classList usually beats it
 el.getAttribute("href")
 el.dataset.userId                // data-user-id="7"  ->  "7" (a string!)</div>
-<p>The <code>textContent</code> versus <code>innerHTML</code> line is worth a rule: <b>text goes in
+<p>The <code>textContent</code> versus <code>innerHTML</code> line deserves a rule: <b>text goes in
 through <code>textContent</code>, structure gets built with elements</b>. The convenience of assembling
-HTML strings is exactly the vulnerability.</p>
+HTML strings is the vulnerability.</p>
 
 <h4>Creating and removing</h4>
 <div class="codeSample" data-hl>const li = document.createElement("li");
@@ -53,10 +54,10 @@ for (const u of users) {
 list.append(frag);                     // one layout, not N</div>
 
 <h4>Where the mental model connects</h4>
-<p>DOM elements are ordinary objects: references (from the objects stream) explain why two variables
-pointing at the same element see each other's changes, and the event loop (from the async stream)
-explains why the page repaints only <i>after</i> your handler returns. Nothing here is a new language;
-it is the same JavaScript, holding a live page instead of your own data.</p>`,
+<p>DOM elements are ordinary objects. References (from the objects stream) explain why two variables
+pointing at the same element see each other's changes. The event loop (from the async stream)
+explains why the page repaints only <i>after</i> your handler returns. Nothing here is a new language.
+It's the same JavaScript, holding a live page instead of your own data.</p>`,
 docs:[['MDN (Introduction to the DOM)','https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction'],['MDN (querySelector)','https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector'],['MDN (textContent vs innerHTML)','https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent']],
 ex:{title:'Choose the safe DOM operation',diff:'easy',lang:'js',
 run:{call:'domCall',cases:[
@@ -85,9 +86,10 @@ behavior:`Six cases execute. The pair that matters is the first two: textContent
 hints:['A switch over the five tasks plus a default.','User-supplied text is textContent, always.','innerHTML is reserved for markup you authored yourself.']}},
 
 {id:'jsdom2',title:'Events: listening, bubbling and delegation',body:`
+
 <p>A page does nothing until something happens: a click, a keypress, a form submitted. JavaScript's model
-for this is simple and it is everywhere: you register a function, the browser calls it when the event
-occurs. Every listener is a callback, exactly the shape the async stream taught.</p>
+for this is simple and it's everywhere. You register a function. The browser calls it when the event
+occurs. Every listener is a <b>callback</b>, a function you hand over to be called later, the shape the async stream taught.</p>
 
 <div class="codeSample" data-hl>button.addEventListener("click", (event) =&gt; {
   event.target       // the element the event actually happened on
@@ -99,7 +101,7 @@ button.removeEventListener("click", handler);  // needs the SAME function
                                                // reference - an inline arrow
                                                // cannot be removed</div>
 <p>The <code>target</code> / <code>currentTarget</code> distinction looks pedantic and is the key to the
-whole lesson: click a <code>&lt;b&gt;</code> inside a button, and <code>target</code> is the
+whole lesson. Click a <code>&lt;b&gt;</code> inside a button, and <code>target</code> is the
 <code>&lt;b&gt;</code> while <code>currentTarget</code> is the button.</p>
 
 <h4>Bubbling: events travel upward</h4>
@@ -114,7 +116,7 @@ event.stopPropagation()   // stop the climb here (use sparingly - other
 <h4>The half of the trip nobody sees: capture</h4>
 <p>Bubbling is the second half. Every event first travels <b>down</b> from <code>document</code> to the
 target (the <b>capture</b> phase), reaches the target, and only then bubbles back up. Listeners run in
-the bubble phase by default, which is why the downward leg is invisible until you ask for it:</p>
+the bubble phase by default, so the downward leg is invisible until you ask for it:</p>
 <div class="codeSample" data-hl>el.addEventListener("click", fn, { capture: true });   // downward leg
 el.addEventListener("click", fn, true);                // the older spelling
 el.addEventListener("click", fn);                       // upward leg (default)
@@ -134,7 +136,7 @@ el.addEventListener("click", fn, { signal });        // AbortController removal
 // the bubbling versions of the first two.</div>
 
 <h4>Delegation: one listener instead of a hundred</h4>
-<p>Bubbling is not trivia; it is a technique. Instead of a listener per row, put <b>one</b> listener on
+<p>Bubbling is a technique. Instead of a listener per row, put <b>one</b> listener on
 the container and ask <i>which</i> row the event came from:</p>
 <div class="codeSample" data-hl>list.addEventListener("click", (e) =&gt; {
   const li = e.target.closest("li");   // walk UP from the target
@@ -149,7 +151,7 @@ the container and ask <i>which</i> row the event came from:</p>
 <p>Delegation is the pattern behind every data table and menu you have used. When an interviewer asks
 "a list has ten thousand rows, how do you handle clicks?", this is the answer.</p>
 
-<h4>The events worth knowing by name</h4>
+<h4>The events to know by name</h4>
 <div class="codeSample" data-hl>click, dblclick            input      fires per keystroke in a field
 submit    on the FORM      change     fires when the field commits
 keydown   has e.key        DOMContentLoaded   the tree is ready
@@ -200,9 +202,10 @@ behavior:`The third case is the one real delegation code forgets: clicks land on
 hints:['Loop the path in the order given; it is already innermost-first.','Return the id of the first tag match and stop.','No match is a normal outcome: return null.']}]},
 
 {id:'jsdom3',title:'fetch: talking to a server',body:`
+
 <p>The browser-debugging stream taught you to <i>inspect</i> network traffic. This lesson is where you
-learn to <i>create</i> it. <code>fetch</code> is the standard way for page JavaScript to call a server,
-it returns a promise, and everything the async stream taught applies to it directly.</p>
+learn to <i>create</i> it. <code>fetch</code> is the standard way for page JavaScript to call a server.
+It returns a <b>promise</b>, an object that stands for a value you don't have yet, and everything the async stream taught applies to it directly.</p>
 
 <div class="codeSample" data-hl>const res = await fetch("/api/users/7");
 const user = await res.json();      // parsing the body is a SECOND await -
@@ -215,9 +218,9 @@ await fetch("/api/users", {
 });</div>
 
 <h4>The mistake everyone makes once</h4>
-<p><b><code>fetch</code> does not reject on a 404 or a 500.</b> The promise rejects only when no response
-arrived at all: DNS failure, offline, CORS, an aborted request. A 500 with an HTML error page is, to
-<code>fetch</code>, a perfectly good response, and <code>res.json()</code> will then throw a confusing
+<p><b><code>fetch</code> doesn't reject on a 404 or a 500.</b> The promise rejects only when no response
+arrived at all: DNS failure, offline, an aborted request, or <b>CORS</b> (cross-origin resource sharing). By default a browser won't let a page read a response from a different site; CORS is the set of response headers a server sends to say "this other site is allowed to read me". A 500 with an HTML error page is, to
+<code>fetch</code>, a good response. <code>res.json()</code> will then throw a confusing
 parse error far from the real problem.</p>
 <div class="codeSample" data-hl>const res = await fetch(url);
 if (!res.ok) {                           // ok  means  status 200-299
@@ -227,7 +230,7 @@ const data = await res.json();
 
 // res.status   200, 404, 500...      res.ok   status is 200-299
 // res.headers.get("content-type")</div>
-<p>That <code>if (!res.ok) throw</code> line is not boilerplate to skip; it is the difference between
+<p>That <code>if (!res.ok) throw</code> line isn't boilerplate to skip. It's the difference between
 "HTTP 404 for /api/users/7" in your error report and "Unexpected token &lt; in JSON" from somewhere
 inside a rendering function.</p>
 
@@ -247,11 +250,11 @@ try {
 
 <h4>CORS, from the consumer's side</h4>
 <p>When page JavaScript calls a <b>different origin</b> (another scheme, host or port), the browser asks
-that server for permission, and blocks the response unless it grants it via
-<code>Access-Control-Allow-Origin</code>. Two things to internalise: the error appears in the console but
-is deliberately <i>invisible</i> to your code (a generic <code>TypeError</code>, so scripts cannot probe
-where you are logged in), and <b>it is not fetch being broken</b>; the server stream shows the other
-side of this handshake. <code>curl</code> works and the browser refuses: that is CORS, every time.</p>`,
+that server for permission. It blocks the response unless the server grants it via
+<code>Access-Control-Allow-Origin</code>. The error appears in the console but
+is deliberately <i>invisible</i> to your code: a generic <code>TypeError</code>, so scripts can't probe
+where you're logged in. And <b>fetch isn't broken</b>. The server stream shows the other
+side of this handshake. <code>curl</code> works and the browser refuses: that's CORS, every time.</p>`,
 docs:[['MDN (Using the Fetch API)','https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch'],['MDN (Response)','https://developer.mozilla.org/en-US/docs/Web/API/Response'],['MDN (CORS)','https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS']],
 exs:[
 {title:'Classify the outcome of a fetch',diff:'medium',lang:'js',
@@ -298,10 +301,11 @@ behavior:`The comparison is structural, so the body must be the exact JSON text:
 hints:['Three properties: method, headers, body.','The header tells the server how to parse what you sent.','JSON.stringify turns the object into wire-format text.']}]},
 
 {id:'jsdom4',title:'Forms: where user input comes from',body:`
-<p>Forms are the browser's native way to collect input, and they work with no JavaScript at all: a
+
+<p>Forms are the browser's native way to collect input, and they work with no JavaScript at all. A
 <code>submit</code> navigates the page and sends the fields. Modern apps intercept that flow: stop the
-navigation, read the values, validate, and send with <code>fetch</code>. Every piece of that sentence is
-something you have already learned; this lesson assembles them.</p>
+navigation, read the values, validate, and send with <code>fetch</code>. You have already learned every
+piece of that sentence. This lesson assembles them.</p>
 
 <div class="codeSample" data-hl>form.addEventListener("submit", async (e) =&gt; {
   e.preventDefault();                  // stop the full-page navigation
@@ -314,8 +318,8 @@ something you have already learned; this lesson assembles them.</p>
 input.value          // ALWAYS a string - "42" not 42, "" when empty
 checkbox.checked     // boolean
 select.value</div>
-<p><code>input.value</code> being a string is the oldest trap in web development; the foundations
-stream built <code>toNumber</code> for exactly this moment. Convert at the boundary, validate the result,
+<p><code>input.value</code> being a string is the oldest trap in web development. The foundations
+stream built <code>toNumber</code> for this moment. Convert at the boundary, validate the result,
 and only then let the value into your program.</p>
 
 <h4>Validate like you mean it</h4>
@@ -327,13 +331,13 @@ and only then let the value into your program.</p>
 // then JavaScript enforces what HTML cannot express:
 //   "the end date is after the start date"
 //   "this username is not already taken" (async - the server decides)</div>
-<p>The layering matters: HTML validation is instant and free, JavaScript handles cross-field rules, and
-the <b>server validates everything again</b>: the HTTP stream's rule that you never trust input applies
+<p>The layering matters. HTML validation is instant and free. JavaScript handles cross-field rules. And
+the <b>server validates everything again</b>. The HTTP stream's rule that you never trust input applies
 to your own form too, because nothing stops a request skipping your form entirely.</p>
 
 <h4>Tell the user what happened</h4>
-<p>A form that silently fails teaches the user to click twice, and now you have two requests in flight,
-the dashboard double-submits, and the rate limiter from the capstone starts earning its keep. The
+<p>A form that silently fails teaches the user to click twice. Now you have two requests in flight,
+the dashboard double-submits, and the <b>rate limiter</b> from the capstone (the code that refuses requests from one client beyond a set number per period) starts earning its keep. The
 pattern: disable the button while the request is out, re-enable in <code>finally</code>, show the failure
 next to the field it belongs to.</p>
 <div class="codeSample" data-hl>submitBtn.disabled = true;

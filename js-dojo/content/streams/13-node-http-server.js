@@ -1,8 +1,9 @@
 STREAMS.push({icon:'🌐',title:'Building an HTTP Server',blurb:'From the raw http module to a real service: handling a request and writing a response, routing and middleware, reading a JSON body safely, validating input, status codes and error contracts, authentication, and the security headers that belong on every response.',lessons:[
 
 {id:'js44',title:'The http module: request in, response out',body:`
-<p>Node ships a web server in its standard library. Frameworks are convenience on top of it, and seeing
-the raw version once makes every framework legible afterwards.</p>
+
+<p>Node ships a web server in its standard library. Frameworks are convenience on top of it. See the
+raw version once and every framework becomes legible afterwards.</p>
 
 <div class="codeSample" data-hl>import { createServer } from "node:http";
 
@@ -20,13 +21,13 @@ const server = createServer((req, res) =&gt; {
 server.listen(3000, () =&gt; console.log("listening on 3000"));</div>
 
 <h4>Three facts that explain most beginner bugs</h4>
-<p><b>You must call <code>res.end()</code>.</b> Exactly once, on every path. Miss it on an error branch and
-that request hangs until the client times out, and the connection stays open, so enough of them exhaust
-your server. Call it twice and Node throws <code>ERR_STREAM_WRITE_AFTER_END</code>.</p>
+<p><b>You must call <code>res.end()</code>.</b> Once, and only once, on every path. Miss it on an error
+branch and that request hangs until the client times out. The connection stays open too, so enough of
+them exhaust your server. Call it twice and Node throws <code>ERR_STREAM_WRITE_AFTER_END</code>.</p>
 <p><b>Headers must be written before the body.</b> Once any body byte is sent the headers are gone, and
-<code>writeHead</code> throws <code>ERR_HTTP_HEADERS_SENT</code>. This is why error handling has to check
+<code>writeHead</code> throws <code>ERR_HTTP_HEADERS_SENT</code>. So error handling has to check
 <code>res.headersSent</code> before trying to send a 500.</p>
-<p><b><code>req.url</code> is not a full URL.</b> It is the path and query only. Parse it properly rather
+<p><b><code>req.url</code> isn't a full URL.</b> It's the path and query only. Parse it properly rather
 than splitting strings:</p>
 <div class="codeSample" data-hl>const url = new URL(req.url, \`http://\${req.headers.host}\`);
 url.pathname                      // "/users"
@@ -64,9 +65,11 @@ async function readBody(req, limitBytes = 1_000_000) {
 // 6, and a wrong content-length truncates the response.</div>
 
 <h4>When to use a framework</h4>
-<p>Express, Fastify and Hono give you routing, body parsing, middleware and error handling that you would
-otherwise write and get subtly wrong. Use one for real work. Write the raw version once so that when the
-framework misbehaves you know what it is doing underneath, which is the same argument as learning
+<p>Express, Fastify and Hono give you routing, body parsing, middleware and error handling that you'd
+otherwise write and get subtly wrong. <b>Middleware</b> is a function that runs on every request before
+the handler, such as parsing the body, checking a token or logging. Each one calls the next or ends the
+request. Use a framework for real work. Write the raw version once, so that when the
+framework misbehaves you know what it's doing underneath. It's the same argument as learning
 prototypes before classes.</p>`,
 docs:[['Node (http)','https://nodejs.org/api/http.html'],['MDN (URL)','https://developer.mozilla.org/en-US/docs/Web/API/URL'],['Node (anatomy of an HTTP transaction)','https://nodejs.org/learn/http/anatomy-of-an-http-transaction']],
 exs:[
@@ -116,8 +119,10 @@ behavior:`Five cases execute. The fourth is the security point: a client sending
 hints:['Check the total inside the loop, after each addition.','Return as soon as the limit is exceeded; do not finish the loop.','Exactly equal to the limit is still acceptable, so compare with >.']}]},
 
 {id:'js45',title:'Routing, middleware and validation',body:`
-<p>A real server does the same handful of things on every request: work out which handler to run, do the
-cross-cutting work around it, and refuse input that does not meet its contract.</p>
+
+
+<p>A real server does the same handful of things on every request. It works out which handler to run,
+does the cross-cutting work around it, and refuses input that doesn't meet its contract.</p>
 
 <h4>Routing</h4>
 <div class="codeSample" data-hl>const routes = new Map([
@@ -133,11 +138,11 @@ if (!handler) return json(res, 404, { error: "not found" });
 //   path unknown          -> 404 Not Found
 //   path known, method not -> 405 Method Not Allowed, plus an Allow header
 // returning 404 for a wrong method hides a client bug that 405 explains.</div>
-<p>Parameterised routes (<code>/users/:id</code>) are where a hand-rolled router starts costing more than
-it saves. That is the point to adopt a framework.</p>
+<p>Parameterized routes (<code>/users/:id</code>) are where a hand-rolled router starts costing more than
+it saves. That's the point to adopt a framework.</p>
 
 <h4>Middleware</h4>
-<p>Middleware is the chain-of-responsibility pattern applied to requests: each function receives the
+<p>Middleware is the chain-of-responsibility pattern applied to requests. Each function receives the
 request, may act, and either passes control on or ends the response. Order is the whole design.</p>
 <div class="codeSample" data-hl>request
   -> request id        (so every log line can be correlated)
@@ -149,9 +154,12 @@ request, may act, and either passes control on or ends the response. Order is th
   -> authorization     MAY you do this
   -> the route handler
   -> error handler     (LAST, and it catches what everything above threw)</div>
-<p>Two ordering mistakes are common and both are security bugs: putting authentication after the route
-handler (it never runs), and putting CORS after authentication (preflight requests get rejected, so the
-browser never sends the real request and you debug the wrong thing).</p>
+<p>Two ordering mistakes are common, and both are security bugs. Authentication after the route
+handler never runs. <b>CORS</b> (cross-origin resource sharing) is the set of response headers a server
+sends to say "this other site may read me". Without them a browser won't let a page read another site's
+response. A <b>preflight</b> is the <code>OPTIONS</code> request the browser sends first, asking whether
+the real cross-origin request is allowed. CORS after authentication rejects preflight requests, so the
+browser never sends the real request and you debug the wrong thing.</p>
 
 <h4>Validating input</h4>
 <p><b>Validate at the boundary, once, and reject early.</b> Past the handler's first few lines, the rest
@@ -176,8 +184,8 @@ of your code should be able to assume the input is well-formed.</p>
 413 payload too large                    415 wrong content-type
 422 understood but unprocessable         429 rate limited (+ Retry-After)
 500 we broke      503 temporarily unavailable (+ Retry-After)</div>
-<p>The distinctions that carry information: <b>400 vs 422</b> is "I could not parse this" vs "I understood
-you and the answer is no", and <b>401 vs 403</b> is "you are nobody" vs "you are somebody without
+<p>These distinctions carry information. The <b>400 vs 422</b> pair is "I could not parse this" vs "I understood
+you and the answer is no". The <b>401 vs 403</b> pair is "you are nobody" vs "you are somebody without
 permission". Collapsing either pair sends clients on the wrong investigation.</p>`,
 docs:[['MDN (HTTP status codes)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status'],['RFC 9457 (Problem Details)','https://www.rfc-editor.org/rfc/rfc9457'],['OWASP (mass assignment)','https://cheatsheetseries.owasp.org/cheatsheets/Mass_Assignment_Cheat_Sheet.html']],
 exs:[
@@ -251,6 +259,7 @@ behavior:`Eight cases execute and three of them are genuine security or correctn
 hints:['Check the type before the value: typeof "36" is "string", not "number".','An optional field is only validated when it is not undefined.','Walk Object.keys to find fields you did not expect, and push an error for each.']}]},
 
 {id:'js46',title:'Authentication, headers and shipping it safely',body:`
+
 <p>The last layer: proving who is calling, and the response headers that protect the people using your
 service.</p>
 
@@ -265,8 +274,9 @@ const token = auth.slice("Bearer ".length);
 // then, from Identity Dojo: verify the SIGNATURE, and check iss, aud and
 // exp. decoding is not verifying, and a token minted by your own issuer
 // for a DIFFERENT service must be rejected here.</div>
-<p>Timing matters when comparing secrets. An API key checked with <code>===</code> leaks, through response
-timing, how many characters matched; use <code>crypto.timingSafeEqual</code> on equal-length buffers.</p>
+<p>A <b>bearer token</b> works for whoever holds it, like cash.
+Timing matters when comparing secrets. An API key checked with <code>===</code> leaks, through response
+timing, how many characters matched. Use <code>crypto.timingSafeEqual</code> on equal-length buffers.</p>
 
 <h4>The headers that belong on every response</h4>
 <div class="codeSample" data-hl>strict-transport-security: max-age=31536000; includeSubDomains
@@ -284,13 +294,16 @@ res.removeHeader("x-powered-by");            // "Express" tells them what to
 <p>Set these once in middleware, not per route. A header applied by hand is a header someone forgets on
 the endpoint that needed it most. Helmet does this for Express in one line.</p>
 
-<h4>CORS, from the server side</h4>
-<p>From the debugging stream you know CORS cannot be fixed in front-end code. This is the other side of
-it: <b>your server decides</b>. Echo a specific allowed origin rather than reflecting whatever was sent;
-<code>*</code> cannot be combined with credentials; and handle the <code>OPTIONS</code> preflight before
-authentication, because a preflight carries no credentials by design.</p>
+<h4>CORS: from the server side</h4>
+<p>From the debugging stream you know <b>CORS</b> (cross-origin resource sharing), the response headers
+that let another site's page read yours, can't be fixed in front-end code. This is the other side of
+it: <b>your server decides</b>. Echo a specific allowed origin rather than reflecting whatever was sent.
+<code>*</code> can't be combined with credentials. Handle the <code>OPTIONS</code> <b>preflight</b>, the browser's advance request asking whether the real one
+is allowed, before authentication, because a preflight carries no credentials by design.</p>
 
 <h4>Rate limiting and errors</h4>
+<p><b>Rate limiting</b> refuses requests from one client beyond a set number per period, so one caller
+can't take the server down.</p>
 <div class="codeSample" data-hl>// rate limiting is an availability control, and it belongs at the edge:
 429 + retry-after: 30 + RateLimit headers, keyed by API key or user,
 falling back to IP only when there is nothing better
@@ -305,10 +318,10 @@ falling back to IP only when there is nothing better
 
 <h4>Before it goes live</h4>
 <p><b>Graceful shutdown</b> on <code>SIGTERM</code>: stop accepting connections, finish in-flight
-requests, close the database, then exit; otherwise every deploy drops requests.
+requests, close the database, then exit. Otherwise every deploy drops requests.
 <b>Timeouts</b> on everything outbound, because a hung dependency becomes a hung server.
-<b>Health endpoints</b> split into liveness and readiness, with liveness <i>not</i> checking the database
-so a brief outage does not restart every instance at once. <b>Structured JSON logs</b> to stdout with a
+<b>Health endpoints</b> split into liveness and readiness. Liveness must <i>not</i> check the database,
+or a brief outage restarts every instance at once. <b>Structured JSON logs</b> to stdout with a
 request id, and never the request body of an authenticated call.</p>`,
 docs:[['OWASP (REST security cheat sheet)','https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html'],['MDN (HTTP security headers)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers'],['Node (crypto.timingSafeEqual)','https://nodejs.org/api/crypto.html#cryptotimingsafeequala-b']],
 exs:[
@@ -365,9 +378,10 @@ hints:['Build the shared header object once and spread it into each response.','
 ,
 
 {id:'jssec',title:'Security in JavaScript: injection, pollution and the supply chain',body:`
+
 <p>The server lesson covered the headers and the rate limits. This lesson is the layer under that: the
-handful of JavaScript-specific ways applications actually get owned, and the habits that close them. None
-of them require a security team to apply; all of them have appeared in real incident reports.</p>
+handful of JavaScript-specific ways applications get owned, and the habits that close them. None
+of them need a security team to apply. All of them have appeared in real incident reports.</p>
 
 <h4>Injection is one disease with many hosts</h4>
 <p>Every injection attack is the same mistake: <b>user text concatenated into something that gets
@@ -382,11 +396,11 @@ db.query("SELECT * FROM users WHERE name = ?", [name])   // parameterised
 el.textContent = comment                                  // text, never markup
 execFile("convert", [filename])                           // args, not a shell string</div>
 <p>Treat <code>eval</code> and <code>new Function</code> on anything derived from input as disallowed
-outright. There is no real legitimate application use; every appearance in a code review is either
+outright. There's no legitimate application use. Every appearance in a code review is either
 a bug or an incident.</p>
 
 <h4>Prototype pollution: the JavaScript-only one</h4>
-<p>The objects stream showed that every plain object inherits from <code>Object.prototype</code>. So if an
+<p>The objects stream showed that every plain object inherits from <code>Object.prototype</code>. If an
 attacker can write to <i>that</i>, they poison every object in the process. The way in is any code that
 copies user-supplied keys into objects: deep merges, config patchers, query-string parsers.</p>
 <div class="codeSample" data-hl>// attacker sends: {"__proto__": {"isAdmin": true}}
@@ -404,14 +418,18 @@ structuredClone(x)  /* or */ new Map()    // Maps have no such magic keys</div>
 npm install --ignore-scripts     # worth making your default
 npm ci                           # installs EXACTLY the lockfile - no drift
 npm audit                        # known-CVE check; noisy but free</div>
-<p>The lockfile is a security file: it pins the exact bytes you audited. Commit it, install with
-<code>npm ci</code> in CI, and treat a surprise lockfile diff in a pull request with the suspicion you
-would give a binary blob. And the cheapest defense of all is <b>fewer dependencies</b>: every package is
-code you now ship but did not read.</p>
+<p>Your <b>supply chain</b> is every package your code pulls in, and everything those packages pull in.
+The <b>lockfile</b> (<code>package-lock.json</code>, the exact version of every package that was
+installed) is a security file. It pins the exact bytes you audited. Commit it, install with
+<code>npm ci</code> in <b>CI</b> (continuous integration, the automated pipeline that builds and runs the
+tests on every change), and treat a surprise lockfile diff in a pull request with the suspicion you'd
+give a binary blob. The cheapest defense of all is <b>fewer dependencies</b>. Every package is
+code you now ship but didn't read.</p>
 
 <h4>Secrets</h4>
-<p>Secrets live in the environment (<code>process.env</code>, from the runtime lesson), never in code, and
-never in logs; the logging lesson's redaction rules exist mostly for this. A token that reaches a log
+<p>Secrets live in <b>environment variables</b>: named values the operating system hands a process when
+it starts, read from <code>process.env</code> as the runtime lesson showed. Never in code, never in
+logs. The logging lesson's redaction rules exist mostly for this. A token that reaches a log
 file has left your control: logs are copied, shipped to third parties, and kept for years.</p>`,
 docs:[['OWASP (Top 10)','https://owasp.org/www-project-top-ten/'],['OWASP (prototype pollution)','https://cheatsheetseries.owasp.org/cheatsheets/Prototype_Pollution_Prevention_Cheat_Sheet.html'],['npm (audit)','https://docs.npmjs.com/cli/commands/npm-audit']],
 ex:{title:'Vet a patch before merging it',diff:'hard',lang:'js',

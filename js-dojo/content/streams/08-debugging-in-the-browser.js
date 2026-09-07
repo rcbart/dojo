@@ -1,13 +1,14 @@
 STREAMS.push({icon:'🔍',title:'Debugging in the Browser',blurb:'The tools that replace console.log: the Sources panel and every kind of breakpoint, the scope and call-stack panes, blackboxing and source maps, the Network panel and how to read a request, storage and cookies, plus a full walkthrough of tracing an OAuth/OIDC redirect flow end to end.',lessons:[
 
 {id:'js30',title:'The Sources panel and breakpoints',body:`
+
 <p>A breakpoint pauses execution and lets you inspect <b>every variable in scope at that moment</b>. That
-is strictly more information than any <code>console.log</code>, obtained without editing code, without a
-reload, and without deciding in advance what you wanted to see.</p>
+is more than any <code>console.log</code> gives you, with no code edit, no reload, and no need to decide
+in advance what you wanted to see.</p>
 
 <h4>Getting there</h4>
-<p>Open DevTools (F12, or Cmd-Option-I on macOS), choose <b>Sources</b>, find your file in the file tree
-on the left, and click a line number in the gutter. Reload or trigger the code; execution stops on that
+<p>Open DevTools (F12, or Cmd-Option-I on macOS), choose <b>Sources</b>, find your file in the tree on
+the left, and click a line number in the gutter. Reload or trigger the code. Execution stops on that
 line with the whole state available.</p>
 <div class="codeSample" data-hl>// or put the breakpoint in the code itself:
 function calculate(a, b) {
@@ -17,7 +18,7 @@ function calculate(a, b) {
 // useful for code that is hard to find in the file tree, or that only
 // exists briefly. remove it before committing - a linter rule helps.</div>
 
-<h4>The four panes, and what each answers</h4>
+<h4>The four panes</h4>
 <div class="codeSample" data-hl>SCOPE       every variable visible right now, grouped Local / Closure /
             Global. THIS IS THE ONE. it shows you what you did not think
             to log - including closure variables you cannot otherwise reach.
@@ -42,29 +43,32 @@ Step          F9    the next statement, wherever it is
 // afternoon disappears inside library code.</div>
 
 <h4>Breakpoints beyond the plain kind</h4>
-<p>These are the ones that turn debugging from tedious to quick, and most people never use them.</p>
+<p>Most people never use these.</p>
 <p><b>Conditional</b>: right-click a line number, "Add conditional breakpoint", enter an expression such
-as <code>user.id === 4172</code>. It pauses only when that is true. Indispensable inside a loop over ten
+as <code>user.id === 4172</code>. It pauses only when that is true. Use it inside a loop over ten
 thousand rows.</p>
-<p><b>Logpoint</b>: same menu, "Add logpoint". Logs an expression and <b>keeps going</b>: a
-<code>console.log</code> you did not have to add to the source, cannot forget to remove, and can change
+<p><b>Logpoint</b>: same menu, "Add logpoint". Logs an expression and <b>keeps going</b>. It's a
+<code>console.log</code> you didn't add to the source, can't forget to remove, and can change
 without a rebuild.</p>
-<p><b>DOM breakpoint</b>: in Elements, right-click a node: break on subtree modification, attribute
-change, or removal. The answer to "what is changing this element?" when you have no idea which code does
-it.</p>
-<p><b>XHR/fetch breakpoint</b>: in Sources, "XHR/fetch Breakpoints", add a URL fragment. Pauses when a
-matching request is <i>about to be sent</i>, with the call stack showing exactly what triggered it.</p>
+<p>The <b>DOM</b> (Document Object Model) is the browser's live, in-memory tree of the page, and
+JavaScript changes what you see by changing that tree. <b>DOM breakpoint</b>: in Elements, right-click a node:
+break on subtree modification, attribute change, or removal. Use it when you don't know which code is
+changing an element.</p>
+<p><b>XHR/fetch breakpoint</b>: <b>XHR</b> is XMLHttpRequest, the original browser API for making requests
+from JavaScript, and <code>fetch</code> replaced it. In Sources, "XHR/fetch Breakpoints", add a URL
+fragment. Pauses when a matching request is <i>about to be sent</i>, with the call stack showing what
+triggered it.</p>
 <p><b>Event listener breakpoint</b>: break on any <code>click</code>, or any <code>submit</code>, across
 the whole page, without knowing which handler is attached.</p>
-<p><b>Pause on exceptions</b>: the ⏸ icon with the stop sign. Pauses at the moment an error is thrown,
-with the state intact. Tick "Pause on caught exceptions" as well when something is being swallowed by a
-<code>catch</code> and you cannot find where.</p>
+<p><b>Pause on exceptions</b>: the ⏸ icon with the stop sign. Pauses the moment an error is thrown,
+with the state intact. Tick "Pause on caught exceptions" too when a <code>catch</code> is swallowing
+something and you can't find where.</p>
 
 <h4>Why this beats logging</h4>
 <p>A log answers the one question you thought of, after a reload, and only for values you can serialize.
-A breakpoint answers <b>every</b> question about that moment, including ones you only think of once you
-are looking, and lets you walk the call stack to see how you got there. Logging is still useful for
-things you cannot pause on: production, timing-sensitive code, or a bug you can only reproduce once.</p>`,
+A breakpoint answers every question about that moment, including ones you only think of once you are
+looking, and lets you walk the call stack. Logging still has its place where you can't pause:
+production, timing-sensitive code, or a bug you can only reproduce once.</p>`,
 docs:[['Chrome DevTools (debug JavaScript)','https://developer.chrome.com/docs/devtools/javascript'],['Chrome DevTools (breakpoints)','https://developer.chrome.com/docs/devtools/javascript/breakpoints'],['MDN (Firefox Debugger)','https://firefox-source-docs.mozilla.org/devtools-user/debugger/']],
 ex:{title:'Choose the right breakpoint',diff:'easy',lang:'js',
 run:{call:'breakpointFor',cases:[
@@ -95,7 +99,9 @@ behavior:`Seven situations execute. The three worth memorizing are conditional (
 hints:['One case per breakpoint type, with a default.','A logpoint logs and continues; a conditional pauses selectively.','The plain line breakpoint is the fallback for everything else.']}},
 
 {id:'js31',title:'Scope, call stack, blackboxing and source maps',body:`
-<p>Setting a breakpoint is easy. Getting useful information out of the pause is the skill, and four
+
+
+<p>Setting a breakpoint is easy. Getting useful information out of the pause is the skill. Four
 features do most of that work.</p>
 
 <h4>Reading the Scope pane</h4>
@@ -108,35 +114,41 @@ Global     window / globalThis
 // the Closure group is the one you cannot get any other way. it makes
 // the closures stream concrete: you can SEE the captured binding and
 // watch it change between iterations.</div>
-<p>Anything visible here can be typed into the Console while paused: the Console evaluates <b>in the
+<p>A <b>closure</b> is a function that remembers the variables of the place it was created, even after
+that place has returned. The Closure group shows those variables. Anything visible here can
+be typed into the Console while paused. The Console evaluates <b>in the
 paused frame's scope</b>, so you can call functions, read closure variables and test a fix before
 editing anything.</p>
 
 <h4>Walking the call stack</h4>
-<p>Clicking a frame moves you to it and <b>re-populates the Scope pane with that frame's state</b>. So
-when a function receives a bad argument, you do not guess where it came from; you click the caller and
-look at what it passed. Two more items on the right-click menu are worth knowing: <b>Restart frame</b>
-re-runs the current function from the top without reloading the page, and <b>Copy stack trace</b> gets
-you the whole thing for a bug report.</p>
+<p>The <b>call stack</b> is the list of functions currently running, newest on top, and each entry is
+a frame. Clicking a frame moves you to it and <b>re-populates the Scope pane with that frame's state</b>. When
+a function receives a bad argument, you don't guess where it came from. You click the caller and look at
+what it passed. The right-click menu has two more items. <b>Restart frame</b> re-runs the current
+function from the top without reloading the page. <b>Copy stack trace</b> gets you the whole thing
+for a bug report.</p>
 
-<h4>Blackboxing: hiding the code that is not yours</h4>
-<p>An error inside React or lodash gives you fifteen library frames above your own, and stepping walks
-straight into them. Right-click a file in the stack and choose <b>"Add script to ignore list"</b> (or
-match a pattern such as <code>/node_modules/</code> in Settings):</p>
+<h4>Blackboxing: hiding the code that isn't yours</h4>
+<p>An error inside React or lodash gives you fifteen library frames above your own. Stepping walks
+straight into them. Right-click a file in the stack and choose <b>"Add script to ignore list"</b>. Or
+match a pattern such as <code>/node_modules/</code> in Settings:</p>
 <div class="codeSample" data-hl>WITHOUT ignore list        WITH ignore list
   at forEach (lodash)        at renderUser (profile.js:18)   &lt;- your code,
   at map (lodash)            at loadProfile (app.js:203)         at the top
   at invoke (react-dom)
   at renderUser (profile.js:18)   &lt;- buried
 // and stepping now steps THROUGH library code instead of into it.</div>
-<p>This is the single highest-value DevTools setting for anyone working in a framework, and it is off by
+<p>This is the highest-value DevTools setting for anyone working in a framework. It's off by
 default.</p>
 
 <h4>Source maps</h4>
-<p>The JavaScript running in production is bundled, minified and often transpiled, so a stack trace points
-at <code>main.4f2a.js:1:28471</code>. A <b>source map</b> is a separate file mapping those positions back
-to your original files, and DevTools applies it automatically, so you set breakpoints in your real
-source and see your real variable names.</p>
+<p>The JavaScript running in production is bundled, minified and often transpiled. <b>Bundled</b> means a
+build tool joined your files into one. <b>Minified</b> means it stripped whitespace and shortened names
+to save bytes. <b>Transpiled</b> means it rewrote newer JavaScript, or TypeScript, into a form older
+browsers can run. So a stack trace points at
+<code>main.4f2a.js:1:28471</code>. A <b>source map</b> is a separate file mapping those positions back
+to your original files. DevTools applies it automatically, so you set breakpoints in your real source
+and see your real variable names.</p>
 <div class="codeSample" data-hl>// when the map is missing or wrong, the symptoms are recognizable:
 //   breakpoints do not bind, or bind to the wrong line
 //   variable names are single letters
@@ -150,10 +162,10 @@ source and see your real variable names.</p>
 // rather than publishing them alongside the bundle.</div>
 
 <h4>Local overrides and workspaces</h4>
-<p>Two features that turn DevTools into an editing environment. <b>Overrides</b> let you save a modified
-version of a file DevTools serves in place of the real one, so you can test a fix against production
-without deploying. <b>Workspaces</b> map served files to a folder on disk, so edits in the Sources panel
-write straight to your source. Both are enormous time-savers and almost unknown.</p>`,
+<p>Two features that turn DevTools into an editor. <b>Overrides</b> let you save a modified version of a
+file, and DevTools serves it in place of the real one. You can test a fix against production without
+deploying. <b>Workspaces</b> map served files to a folder on disk, so edits in the Sources panel write
+straight to your source. Both save a lot of time and almost nobody knows about them.</p>`,
 docs:[['Chrome DevTools (ignore list)','https://developer.chrome.com/docs/devtools/settings/ignore-list'],['Chrome DevTools (local overrides)','https://developer.chrome.com/docs/devtools/overrides'],['MDN (Source maps)','https://developer.mozilla.org/en-US/docs/Glossary/Source_map']],
 ex:{title:'Diagnose a breakpoint that will not bind',diff:'easy',lang:'js',
 run:{call:'diagnoseSourceMap',cases:[
@@ -176,9 +188,10 @@ behavior:`The guards run in the order you would actually check them: no point te
 hints:['Guard clauses in the order you would check them in real life.','The comment must exist before the file can matter.','All three fine means the source maps are not your problem.']}},
 
 {id:'js32',title:'The Network panel',body:`
+
 <p>Most "JavaScript bugs" in a real application are data problems. Before debugging the code that
-processes a response, confirm what the response actually was, and the Network panel is where that takes
-thirty seconds.</p>
+processes a response, confirm what the response was. The Network panel is where that takes thirty
+seconds.</p>
 
 <h4>Setting it up</h4>
 <div class="codeSample" data-hl>[x] Preserve log      keep entries across navigations. ESSENTIAL for
@@ -212,10 +225,12 @@ Initiator THE UNDERUSED ONE: the call stack that caused this request.
 429                   rate limited. look for Retry-After.
 5xx                   the server. the bug is probably not in your JS.</div>
 
-<h4>CORS, read correctly</h4>
-<p>CORS failures are the most misdiagnosed thing in browser development, so be precise about what they
-are: the request usually <b>succeeded</b> and the <i>browser</i> refused to let your JavaScript read the
-response, because the server did not say it was allowed to.</p>
+<h4>CORS (cross-origin resource sharing), read correctly</h4>
+<p><b>CORS</b> is the set of response headers a server sends to say "this
+other site is allowed to read me". By default a browser won't let a page read a response from a
+different site. CORS failures are the most misdiagnosed thing in browser development, so be precise
+about what they are. The request usually <b>succeeded</b>. The <i>browser</i> refused to let your JavaScript read the
+response, because the server didn't say it was allowed to.</p>
 <div class="codeSample" data-hl>// the tells:
 //   the Console message names CORS explicitly - read it, it says WHICH
 //     header was missing or wrong
@@ -234,10 +249,10 @@ Access-Control-Allow-Headers: authorization, content-type
 
 <h4>Two more habits</h4>
 <p><b>Copy as cURL</b>: right-click any request. You get the exact call, headers and all, to replay in a
-terminal or hand to a backend engineer. It removes every "works for me" argument in one step.</p>
-<p><b>Check the request, not your intention.</b> The panel shows what was actually sent. A surprising
-number of bugs are a stale token, a missing header, or a URL built from an undefined variable that
-stringified into the path.</p>`,
+terminal or hand to a backend engineer. It ends every "works for me" argument in one step.</p>
+<p><b>Check the request, not your intention.</b> The panel shows what was sent. A surprising number of
+bugs are a stale token, a missing header, or a URL built from an undefined variable that stringified
+into the path.</p>`,
 docs:[['Chrome DevTools (Network)','https://developer.chrome.com/docs/devtools/network'],['MDN (CORS)','https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS'],['MDN (HTTP status codes)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status']],
 ex:{title:'Triage from the Network panel',diff:'easy',lang:'js',
 run:{call:'triage',cases:[
@@ -270,8 +285,11 @@ behavior:`Note that the switch mixes a string and numbers, and switch uses ===, 
 hints:['A switch handles both the string and numeric cases.','401 and 403 mean different things and must not share a branch.','The default covers success: the bug is then in the body or your parsing.']}},
 
 {id:'js33',title:'Storage, cookies, and tracing an OAuth flow end to end',body:`
-<p>This lesson puts the whole panel set to work on the flow that most often needs it. If you have worked
-through Identity Dojo, this is the same Authorization Code flow seen from the browser's side.</p>
+
+
+<p>This lesson puts the whole panel set to work on the flow that most often needs it. If you've worked
+through Identity Dojo, this is the same <b>Authorization Code flow</b> seen from the browser's side. The app sends the user to a
+login server and gets a short code back. Then it swaps that code for tokens.</p>
 
 <h4>The Application panel</h4>
 <div class="codeSample" data-hl>Cookies         per origin: name, value, Domain, Path, Expires, HttpOnly,
@@ -281,11 +299,11 @@ Local Storage   persists until cleared. readable by any script on the origin.
 Session Storage cleared when the tab closes. same script exposure.
 Clear storage   the reset button for "it works in a private window".</div>
 <p>"Works in incognito but not normally" almost always means stale storage or a stale cookie. Clear
-storage first; it takes five seconds and settles the question.</p>
+storage first. It takes five seconds and settles the question.</p>
 
 <h4>Tracing the redirect flow</h4>
 <p><b>Turn on Preserve log before you start.</b> Without it every navigation wipes the panel and you see
-only the final hop, which is the reason most people find these flows impossible to debug.</p>
+only the final hop. That is why most people find these flows impossible to debug.</p>
 <div class="codeSample" data-hl>1. GET /authorize?...      to the authorization server (a NAVIGATION)
      check the query: response_type=code, client_id, redirect_uri,
      scope, state, code_challenge, code_challenge_method=S256
@@ -326,14 +344,15 @@ loops back to login     the session cookie is not being set: check
                         SameSite and Secure in Application -> Cookies.</div>
 
 <h4>Two DevTools tricks specific to this</h4>
-<p><b>XHR breakpoint on <code>/token</code></b> pauses right before the exchange, with the call stack
-showing which component triggered it, the fastest way to catch a double redemption.</p>
+<p><b>XHR breakpoint on <code>/token</code></b> pauses right before the exchange. The call stack
+(the list of functions currently running, newest on top) shows which component triggered it.
+<b>XHR</b> is XMLHttpRequest, the old browser API for requests, and the panel still uses the name. That is the fastest way to catch a double redemption.</p>
 <p><b>Decode the tokens.</b> Copy the <code>id_token</code> from the Network response and decode it
-locally: <code>JSON.parse(atob(t.split(".")[1]))</code> in the Console works and, unlike pasting into a
-website, does not hand a live credential to a third party. Check <code>iss</code>, <code>aud</code>,
-<code>exp</code> and <code>nonce</code>. Decoding is not verifying; the signature is the server's job.</p>
-<p>And the security note that belongs here: <b>never paste a real token into an online decoder.</b> It is
-a live credential, and you have just given it away.</p>`,
+locally. <code>JSON.parse(atob(t.split(".")[1]))</code> in the Console works. Unlike pasting into a
+website, it doesn't hand a live credential to a third party. Check <code>iss</code>, <code>aud</code>,
+<code>exp</code> and <code>nonce</code>. Decoding is not verifying. The signature is the server's job.</p>
+<p><b>Never paste a real token into an online decoder.</b> It's a live credential, and you've just given
+it away.</p>`,
 docs:[['Chrome DevTools (Application panel)','https://developer.chrome.com/docs/devtools/storage/localstorage'],['MDN (Set-Cookie)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie'],['RFC 6749 (OAuth 2.0)','https://www.rfc-editor.org/rfc/rfc6749'],['RFC 7636 (PKCE)','https://www.rfc-editor.org/rfc/rfc7636']],
 exs:[
 {title:'Locate the OAuth failure',diff:'easy',lang:'js',

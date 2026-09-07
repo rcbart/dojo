@@ -1,13 +1,17 @@
 STREAMS.push({icon:'⚙️',title:'Functions in Depth: Scope, Closures & this',blurb:'The mechanics underneath: the call stack, the scope chain, closures and why they are not magic once you have seen the stack, the five ways this gets its value, call/apply/bind, and recursion with its limits.',lessons:[
 
 {id:'js14',title:'The call stack and the scope chain',body:`
+
+
+
 <p>Closures, <code>this</code> and hoisting all stop being mysterious once you can picture what the
-engine is actually doing. That picture is two structures: a <b>stack</b> of calls, and a <b>chain</b> of
+engine is doing. A <b>closure</b> is a function that remembers the variables where it was created.
+<b>Hoisting</b> lifts declarations to the top of their scope before the code runs. That picture is two structures: a <b>stack</b> of calls, and a <b>chain</b> of
 scopes.</p>
 
 <h4>The call stack</h4>
 <p>Every function call pushes a <b>frame</b>: the function, its arguments, its local variables and where
-to return to. When the function returns, its frame pops. JavaScript has <b>one</b> stack, which is what
+to return to. When the function returns, its frame pops. JavaScript has <b>one</b> stack. That's what
 "single-threaded" means in practice.</p>
 <div class="codeSample" data-hl>function a() { b(); }
 function b() { c(); }
@@ -21,13 +25,13 @@ a();
 //   at (top level)
 // read a stack trace TOP-DOWN: the top line is where it broke, and each
 // line below it is who called the line above.</div>
-<p>The stack is finite. Recursion that never terminates fills it and throws
-<code>RangeError: Maximum call stack size exceeded</code>, a message that means "infinite recursion"
-far more often than it means "my data was too deep".</p>
+<p>The stack is finite. Recursion that never terminates fills it and
+throws <code>RangeError: Maximum call stack size exceeded</code>. That message means "infinite
+recursion" far more often than it means "my data was too deep".</p>
 
 <h4>The scope chain</h4>
 <p><b>Scope</b> is where a name is visible. When code reads a name, the engine looks in the current
-scope, then the scope that <i>contains it in the source</i>, and outward until it reaches global, then
+scope, then the scope that <i>contains it in the source</i>, and outward until it reaches global. Then it
 throws <code>ReferenceError</code>.</p>
 <div class="codeSample" data-hl>const g = "global";
 function outer() {
@@ -41,8 +45,8 @@ function outer() {
 // inner sees outward. NOTHING sees inward - outer cannot read i.</div>
 
 <h4>Lexical scoping: the rule that makes closures work</h4>
-<p>The chain is decided by <b>where the function is written</b>, not where it is called from. That is
-<b>lexical</b> (or static) scoping, and it is why you can determine what a function can see just by
+<p>The chain is decided by <b>where the function is written</b>, not where it's called from. That's
+<b>lexical</b> (or static) scoping. You can tell what a function can see by
 reading the source:</p>
 <div class="codeSample" data-hl>const x = "module";
 function show() { console.log(x); }     // x resolves where show is WRITTEN
@@ -51,8 +55,8 @@ function run() {
   const x = "local";
   show();                                // prints "module", not "local"
 }</div>
-<p>Contrast with <code>this</code>, which is decided by <b>how a function is called</b>. That single
-difference causes most <code>this</code> confusion, and the lesson after next is about it.</p>
+<p>Contrast <code>this</code>, which is decided by <b>how a function is called</b>. That one
+difference causes most <code>this</code> confusion. The lesson after next is about it.</p>
 
 <h4>Shadowing, and the global object</h4>
 <div class="codeSample" data-hl>const name = "outer";
@@ -64,7 +68,9 @@ function f() {
 // and the one to avoid: assigning without declaring
 function bad() { leaked = 1; }   // creates a GLOBAL in sloppy mode
 // "use strict" (and every module) makes this a ReferenceError instead,
-// which is why modern code never hits it.</div>`,
+// which is why modern code never hits it.</div>
+<p><b>Shadowing</b>: an inner declaration reuses an outer name and hides it inside that scope.
+<b>Strict mode</b>, the <code>"use strict"</code> setting, turns silent mistakes like that into errors.</p>`,
 docs:[['MDN (Scope)','https://developer.mozilla.org/en-US/docs/Glossary/Scope'],['MDN (Call stack)','https://developer.mozilla.org/en-US/docs/Glossary/Call_stack'],['MDN (Strict mode)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode']],
 ex:{title:'Trace the scope chain',diff:'easy',lang:'js',
 run:{call:'lookUp',cases:[
@@ -88,8 +94,11 @@ behavior:`The shadowing case executes the ordering: with the same name in all th
 hints:['Three checks in order, innermost first.','includes() tells you whether a name is in a scope.','Reaching the end of the chain is a ReferenceError, not undefined.']}},
 
 {id:'js15',title:'Closures',body:`
+
+
+
 <p>A <b>closure</b> is a function together with the scope it was created in. The function keeps that scope
-alive after the enclosing call has returned, which sounds exotic and is really just the scope chain plus
+alive after the enclosing call has returned. That sounds exotic. It is the scope chain plus
 one rule: <b>a scope survives as long as something can still reach it.</b></p>
 
 <div class="codeSample" data-hl>function makeCounter() {
@@ -106,9 +115,9 @@ next();   // 2      <- count survived, and it is still the same count
 const other = makeCounter();
 other();  // 1      <- a SEPARATE call, so a separate count</div>
 <p>Every call to <code>makeCounter</code> creates a fresh scope, so each returned function gets its own
-<code>count</code>. That is the mechanism behind almost every practical use.</p>
+<code>count</code>. That mechanism is behind almost every practical use.</p>
 
-<h4>What closures are actually for</h4>
+<h4>What closures are for</h4>
 <div class="codeSample" data-hl>// 1. PRIVATE STATE - the variable is unreachable from outside
 function makeAccount(balance) {
   return {
@@ -135,13 +144,16 @@ for (let i = 0; i &lt; 3; i++) setTimeout(() =&gt; console.log(i));
 // 0, 1, 2 - let creates a NEW BINDING PER ITERATION, so each closure
 //           captured a different i.</div>
 <p>This is the clearest demonstration of what closures capture: <b>a binding, not a value</b>. The
-callbacks did not copy <code>i</code>; they kept a reference to the variable, and read it when they
+<b>callbacks</b>, the functions handed to <code>setTimeout</code> to be called later, didn't copy
+<code>i</code>. They kept a reference to the variable and read it when they
 finally ran.</p>
 
 <h4>The cost</h4>
-<p>A closure keeps its entire enclosing scope alive, not just the variables it uses. That is normally
-irrelevant and occasionally a memory leak: a callback that captures a scope containing a large array, and
-is registered on a long-lived event emitter, keeps that array reachable forever. The fix is to
+<p>A closure keeps its entire enclosing scope alive, not only the variables it uses. That is normally
+irrelevant and occasionally a <b>memory leak</b>: memory the program will never use again but cannot
+free, because something still points at it. A callback that captures a scope containing a large array,
+and is registered on a long-lived <b>event emitter</b>, keeps that array reachable forever. An event
+emitter is an object that calls its registered listeners each time something happens. The fix is to
 unregister the handler, or to extract only what you need before creating the closure.</p>`,
 docs:[['MDN, Closures','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures'],['MDN, let and per-iteration bindings','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let']],
 exs:[
@@ -231,9 +243,11 @@ behavior:`The last case is the one that separates a correct memoiser from a plau
 hints:['Declare the cache and the counter in makeSquarer, before the inner function.','Use Map.has to test for presence; a cached value of 0 is falsy.','Increment the counter only on the path that actually multiplies.']}]},
 
 {id:'js16',title:'this: five rules, in order',body:`
+
+
+
 <p><code>this</code> is decided <b>at call time</b>, by <i>how</i> the function was called, not where it
-was written. Once you know the five rules and their precedence, the behavior becomes entirely
-predictable.</p>
+was written. Once you know the five rules and their precedence, the behavior is predictable.</p>
 
 <div class="codeSample" data-hl>1. new binding        new Fn()          this = the new object
 2. explicit binding   fn.call(o)        this = o
@@ -248,7 +262,7 @@ predictable.</p>
 // checked in that order. new beats bind beats the dot beats nothing.</div>
 
 <h4>Rule 3 is the one that breaks</h4>
-<p>"Whatever is left of the dot" means <code>this</code> is bound by the <i>call</i>, so pulling a method
+<p>"Whatever is left of the dot" means <code>this</code> is bound by the <i>call</i>. Pulling a method
 off its object loses it:</p>
 <div class="codeSample" data-hl>const user = { name: "Ada", greet() { return \`hi \${this.name}\`; } };
 
@@ -259,8 +273,9 @@ g();                             // TypeError: cannot read 'name' of undefined
 setTimeout(user.greet, 100);     // same problem - passed WITHOUT the dot
 setTimeout(() =&gt; user.greet(), 100);        // fixed: the dot survives
 setTimeout(user.greet.bind(user), 100);     // fixed: bound permanently</div>
-<p>This is the single most common <code>this</code> bug, and it appears wherever a method is passed as a
-callback: event listeners, timers, array methods, React class components.</p>
+<p>This is the most common <code>this</code> bug. It appears wherever a method is passed as a
+<b>callback</b>, a function handed to something else to be called later: event listeners, timers,
+array methods, React class components.</p>
 
 <h4>Arrows: the rule that overrides the others</h4>
 <div class="codeSample" data-hl>const timer = {
@@ -279,7 +294,8 @@ callback: event listeners, timers, array methods, React class components.</p>
 const obj = { n: 1, get: () =&gt; this.n };   // arrow at the TOP level
 obj.get();   // undefined - it inherited the module's this, not obj's</div>
 <p>The rule of thumb: <b>arrow for callbacks, regular function for methods.</b> An arrow as an object
-method or a prototype method is almost always wrong.</p>
+method or a prototype method is almost always wrong. The <b>prototype</b> is the shared object every
+instance of a class links to for its methods.</p>
 
 <h4><code>call</code>, <code>apply</code> and <code>bind</code></h4>
 <div class="codeSample" data-hl>fn.call(thisArg, a, b)      // invoke now, arguments listed
@@ -287,8 +303,8 @@ fn.apply(thisArg, [a, b])   // invoke now, arguments as an ARRAY
 fn.bind(thisArg, a)         // returns a NEW function, permanently bound.
                             // does NOT invoke. binding is irreversible -
                             // calling .bind again on the result has no effect.</div>
-<p>You will read these constantly in older code. In new code, spread has largely replaced
-<code>apply</code> and arrows have largely replaced <code>bind</code>, but <code>bind</code> remains the
+<p>You will read these often in older code. In new code, spread has largely replaced
+<code>apply</code> and arrows have largely replaced <code>bind</code>. <code>bind</code> remains the
 right tool when a method must be detached from its object and keep working.</p>`,
 docs:[['MDN (this)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this'],['MDN (Function.prototype.bind)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind'],['MDN (Arrow functions and this)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions#cannot_be_used_as_methods']],
 ex:{title:'Which rule applies?',diff:'easy',lang:'js',
@@ -320,6 +336,9 @@ behavior:`Seven cases execute. The two worth holding on to: a detached plain cal
 hints:['A switch with one case per rule.','call and bind are the same rule and share a return.','Modules are always strict, so a plain call gives undefined rather than the global object.']}},
 
 {id:'js17',title:'Recursion, and knowing when to stop',body:`
+
+
+
 <p>A <b>recursive</b> function calls itself. It is the natural shape for anything defined in terms of
 smaller versions of itself: trees, nested objects, directory walks, parsing.</p>
 
@@ -327,11 +346,11 @@ smaller versions of itself: trees, nested objects, directory walks, parsing.</p>
   if (n &lt;= 1) return 1;        // BASE CASE - stops the recursion
   return n * factorial(n - 1); // RECURSIVE CASE - moves TOWARD the base
 }</div>
-<p>Two parts, and both are mandatory. A missing base case, or a recursive call that does not move toward
-it, gives you <code>RangeError: Maximum call stack size exceeded</code>, which almost always means a
-logic error rather than genuinely deep data.</p>
+<p>Both parts are mandatory. A missing base case, or a recursive call that doesn't move toward
+it, gives you <code>RangeError: Maximum call stack size exceeded</code>. That almost always means a
+logic error rather than deep data.</p>
 
-<h4>Where it genuinely wins</h4>
+<h4>Where it wins</h4>
 <div class="codeSample" data-hl>// walking an arbitrarily nested structure - the iterative version needs
 // an explicit stack, and is longer and harder to read
 function countLeaves(node) {
@@ -347,8 +366,9 @@ function countLeaves(node) {
 proportional to the length, and is harder to read than <code>reduce</code>. Recursion earns its cost when
 the <i>data</i> is recursive.</p>
 <p><b>Naive recursion over overlapping subproblems.</b> The textbook <code>fib(n)</code> recomputes the
-same values exponentially many times: <code>fib(40)</code> makes over 300 million calls. Memoise it with
-a closure, or write the loop.</p>
+same values exponentially many times. <code>fib(40)</code> makes over 300 million calls. <b>Memoize</b> it: cache each result by its
+argument, so the same call twice does the work once. Keep the cache in a <b>closure</b>, a function that
+remembers where it was created, or write the loop.</p>
 <div class="codeSample" data-hl>const fib = (() =&gt; {
   const memo = new Map();                    // private, via closure
   return function f(n) {
@@ -361,11 +381,12 @@ a closure, or write the loop.</p>
 })();</div>
 
 <h4>The depth limit is real</h4>
-<p>JavaScript engines allow somewhere around 10,000 frames; the exact number varies by engine, platform
-and frame size, so never depend on it. Tail-call optimization is in the specification and, in practice,
-implemented only by Safari, so <b>you cannot rely on deep recursion in JavaScript at all</b>. When depth
-is genuinely unbounded (an untrusted directory tree, arbitrary nested JSON), convert to an iterative
-version with an explicit array as the stack.</p>
+<p>JavaScript engines allow somewhere around 10,000 frames. The exact number varies by engine, platform
+and frame size, so never depend on it. <b>Tail-call optimization</b> would let the engine reuse the
+current frame when a function's last act is another call, so recursion stops growing the stack. It's in
+the specification but, in practice, implemented only by Safari, so <b>you cannot rely on deep recursion
+in JavaScript at all</b>. When depth is unbounded (an untrusted directory tree, arbitrary nested JSON),
+convert to an iterative version with an explicit array as the stack.</p>
 <div class="codeSample" data-hl>function countIterative(root) {
   let n = 0;
   const stack = [root];                    // your own stack, on the heap
@@ -426,13 +447,16 @@ hints:['Start at 1: the array you were given is itself one level.','Only recurse
 ,
 
 {id:'jsfp',title:'Pure functions, immutability and composition',body:`
-<p>This lesson is a way of writing functions that makes the rest of the course easier: code that is
-trivial to test, safe to move, and immune to a whole family of bugs. None of it is new syntax; it is a
+
+
+
+<p>This lesson is a way of writing functions that makes the rest of the course easier. The code is
+trivial to test, safe to move, and immune to a whole family of bugs. None of it is new syntax. It is a
 set of decisions about the syntax you already have.</p>
 
 <h4>Pure functions</h4>
 <p>A function is <b>pure</b> when the same arguments always produce the same result, and nothing outside
-the function changes: no mutation of arguments, no writes to shared state, no I/O.</p>
+the function changes. No mutation of arguments, no writes to shared state, no I/O.</p>
 <div class="codeSample" data-hl>// pure - a calculation
 const withTax = (total, rate) =&gt; total * (1 + rate);
 
@@ -441,9 +465,9 @@ let total = 0;
 function addToTotal(x) { total += x; }     // shared state: order now matters
 function stamp(order) { order.date = Date.now(); }  // mutates its INPUT
                                             // and depends on the clock</div>
-<p>The payoff is concrete: a pure function is tested with a call and an assertion: no setup, no mocks,
-no reset between tests. The executable exercises in this course are all pure functions, and that is
-<i>why</i> they can be graded by just calling them.</p>
+<p>A pure function is tested with a call and an assertion: no setup, no <b>mocks</b>, no reset between
+tests. A mock is a stand-in for the database or network a function would otherwise touch. The executable exercises in this course are all pure functions. That is
+<i>why</i> they can be graded by calling them.</p>
 
 <h4>Immutability: update by copy</h4>
 <p>The objects stream showed that assignment copies <i>references</i>, so two owners of one object can
@@ -459,7 +483,7 @@ COPY:     map, filter, slice, concat, toSorted, toReversed
 
 items.sort(byDate)      // reordered the CALLER'S array - surprise at a distance
 items.toSorted(byDate)  // a sorted copy; the original is untouched</div>
-<p>Shallow copies share nested objects: <code>{ ...user }</code> copies one level. That is usually fine,
+<p>Shallow copies share nested objects. <code>{ ...user }</code> copies one level. That is usually fine,
 because the discipline is per-level: copy what you change, at the level you change it.</p>
 
 <h4>Composition: small functions, assembled</h4>
@@ -471,10 +495,11 @@ sorted(names(active(users)))     // reads inside-out, runs left to right
 
 // each piece is testable alone, reusable elsewhere, and replaceable -
 // which is the actual argument for writing them small.</div>
-<p>You do not need a functional-programming library to benefit from this. The habit is smaller: keep
-calculations pure, push mutation and I/O to the edges, and let the impure edge be thin. Most of a
-well-shaped program turns out to be pure functions with a small crust of side effects, and the crust is
-where the debugging streams spend their time, which is no coincidence.</p>`,
+<p>You don't need a functional-programming library for this. The habit is smaller: keep
+calculations pure, push mutation and I/O to the edges, and keep the impure edge thin. Most of a
+well-shaped program turns out to be pure functions with a small crust of <b>side effects</b>, the
+changes a function makes beyond returning a value. The crust is
+where the debugging streams spend their time.</p>`,
 docs:[['MDN (Array.prototype.toSorted)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toSorted'],['MDN (Spread syntax)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax'],['Wikipedia (Pure function)','https://en.wikipedia.org/wiki/Pure_function']],
 ex:{title:'Update without mutating',diff:'medium',lang:'js',
 run:{call:'promoteAll',cases:[

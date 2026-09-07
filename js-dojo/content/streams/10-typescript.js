@@ -16,8 +16,8 @@ function greet(name, times = 1) {
 
 <h4>Erasure is the fact everything else follows from</h4>
 <p>There are <b>no runtime type checks</b>. A value arriving from a network response, a JSON parse, a
-database driver or a form is whatever it actually is, and TypeScript's opinion about it is a comment the
-compiler believed.</p>
+database driver or a form is whatever it is. TypeScript's opinion about it is a comment the compiler
+believed.</p>
 <div class="codeSample" data-hl>const user = await res.json() as User;   // a PROMISE, not a check
 user.name.toUpperCase();                  // TypeError at runtime if the
                                           // server sent something else
@@ -26,23 +26,22 @@ user.name.toUpperCase();                  // TypeError at runtime if the
 // at every boundary - HTTP, files, env, user input - you still need a
 // real runtime check. schema libraries (zod, valibot) do both at once:
 // they validate at runtime AND produce the type.</div>
-<p>This is the single most important thing to understand about TypeScript, and the one that produces the
-most disappointed teams. It is a very good tool for the errors you make while writing code, and it is not
-a substitute for validating what comes in.</p>
+<p>This is the most important thing to understand about TypeScript, and the one that disappoints the
+most teams. It's a very good tool for the errors you make while writing code. It doesn't validate what
+comes in.</p>
 
 <h4>What it buys you</h4>
 <p><b>Errors at write time.</b> A misspelled property, a wrong argument order, a function that returns
 <code>undefined</code> on one branch, all found as you type rather than in production.</p>
 <p><b>Refactoring you can trust.</b> Rename a field and the compiler lists every use. In plain JavaScript
-that is a search-and-hope.</p>
-<p><b>Documentation that cannot rot.</b> A signature states what a function needs and returns, and it is
+that is search-and-hope.</p>
+<p><b>Documentation that can't rot.</b> A signature states what a function needs and returns, and it's
 checked, unlike a comment.</p>
-<p><b>Autocomplete that is actually right.</b> The editor knows the shape rather than guessing from
-usage.</p>
+<p><b>Autocomplete that is right.</b> The editor knows the shape rather than guessing from usage.</p>
 
 <h4>What it costs</h4>
 <p>A build step, compile times on a large codebase, occasional fights with the type system over code that
-is obviously fine, and a real learning curve past the basics. On a script you will run twice, that is not
+is obviously fine, and a real learning curve past the basics. On a script you'll run twice, that isn't
 worth it. On anything with more than one author or more than a few months of life, it usually is.</p>
 
 <h4>Getting started</h4>
@@ -58,10 +57,10 @@ npx tsc --init          # writes tsconfig.json
 # and note: tsc CHECKS. Node 22+ can strip types and run .ts directly,
 # and esbuild/swc compile without checking at all - so type checking is
 # a separate step from building, which surprises people.</div>
-<p><b>Turn on <code>strict</code> from day one.</b> It is a bundle of flags, and the important one is
-<code>strictNullChecks</code>: without it <code>null</code> and <code>undefined</code> are assignable to
-everything and the type system cannot help with the single most common runtime error in JavaScript.
-Adding it to an existing codebase later is genuinely painful.</p>`,
+<p><b>Turn on <code>strict</code> from day one.</b> It's a bundle of flags, and the important one is
+<code>strictNullChecks</code>. Without it <code>null</code> and <code>undefined</code> are assignable to
+everything, and the type system can't help with the most common runtime error in JavaScript. Adding it
+to an existing codebase later is painful.</p>`,
 docs:[['TypeScript (handbook)','https://www.typescriptlang.org/docs/handbook/intro.html'],['TypeScript (tsconfig reference)','https://www.typescriptlang.org/tsconfig'],['TypeScript (strict mode)','https://www.typescriptlang.org/tsconfig#strict']],
 ex:{title:'Compile time or runtime?',diff:'easy',lang:'js',
 run:{call:'caughtBy',cases:[
@@ -95,8 +94,9 @@ behavior:`Seven cases execute, and the split is the whole lesson. Everything in 
 hints:['Group by whether the data crosses a boundary into your program.','Types are erased at compile time, so they cannot check anything arriving at runtime.','Everything unrecognised returns unknown.']}},
 
 {id:'js51',title:'The type system, from primitives to generics',body:`
-<p>The syntax is small. The mental model, <b>structural</b> typing, is the part worth slowing down
-for.</p>
+
+<p>The syntax is small. The mental model, <b>structural</b> typing, is the part to slow down for. It means
+TypeScript checks the shape, not the name: if a value has the right properties, it is the type.</p>
 
 <div class="codeSample" data-hl>let n: number = 42;
 let s: string = "hi";
@@ -118,9 +118,9 @@ interface User {
 type Point = { x: number; y: number };   // type alias - same job, and it
                                           // can also alias unions</div>
 <p><b><code>interface</code> or <code>type</code>?</b> Both describe object shapes. Interfaces can be
-re-opened and merged (useful for extending library types); type aliases can express unions, tuples and
-mapped types. Pick one for object shapes as a house style and use <code>type</code> when you need what
-only it can do.</p>
+re-opened and merged, which is useful for extending library types. Type aliases can express unions,
+tuples and mapped types (a type built by transforming each property of another). Pick one for object shapes as a house style and use <code>type</code> when you
+need what only it can do.</p>
 
 <h4>Structural typing: shape, not name</h4>
 <div class="codeSample" data-hl>interface Named { name: string; }
@@ -221,10 +221,11 @@ behavior:`Seven cases execute and three of them define structural typing precise
 hints:['Filter the REQUIRED list for anything the actual list lacks, not the other way round.','Extras never fail; only absences do.','An empty required list produces an empty missing list for free.']}]},
 
 {id:'js52',title:'Narrowing, unknown, and typing a boundary you can trust',body:`
-<p>Where TypeScript earns its keep is in forcing you to handle the case you would otherwise forget: the
-value that might be missing, or might be one of several shapes.</p>
 
-<h4><code>strictNullChecks</code>, and why it is the flag that matters</h4>
+<p>TypeScript earns its keep by forcing you to handle the case you'd otherwise forget: the value that
+might be missing, or might be one of several shapes.</p>
+
+<h4><code>strictNullChecks</code>, the flag that matters</h4>
 <div class="codeSample" data-hl>function find(id: number): User | undefined { ... }
 
 const u = find(1);
@@ -272,8 +273,8 @@ if (typeof u === "object" && u !== null && "foo" in u) { ... }
 // treat any as a deliberate, commented escape hatch - never a default.</div>
 
 <h4>Typing a boundary you can trust</h4>
-<p>This is where the erasure lesson comes back. <code>as User</code> is an <b>assertion</b>: you are
-telling the compiler to stop checking, and if you are wrong it will not find out.</p>
+<p>This is where the erasure lesson comes back. <code>as User</code> is an <b>assertion</b>. You're
+telling the compiler to stop checking, and if you're wrong it won't find out.</p>
 <div class="codeSample" data-hl>// the assertion - a lie the compiler believes:
 const user = await res.json() as User;
 
@@ -285,14 +286,17 @@ const user = User.parse(await res.json()); // throws if the shape is wrong
 
 // one declaration, validated at runtime AND typed at compile time, with
 // no chance of the two drifting apart.</div>
-<p>The same applies to environment variables, form input, files, message queues and database rows.
-Anywhere data enters, validate; everywhere else, let the types work.</p>
+<p>The same applies to <b>environment variables</b> (the named values the operating system hands a
+process when it starts, read from <code>process.env</code>), form input, files, message queues and
+database rows.
+Anywhere data enters, validate. Everywhere else, let the types work.</p>
 
 <h4>Adding types to existing JavaScript</h4>
-<p>Do it incrementally. Turn on <code>allowJs</code> and <code>checkJs</code> so JSDoc comments are
-type-checked without renaming a single file. Then convert file by file, leaves first, with
-<code>strict</code> on for new files. Do not attempt a whole-codebase rewrite in one branch: it will not
-merge, and the types you write while fighting a rebase are not the types you want.</p>`,
+<p>Do it incrementally. Turn on <code>allowJs</code> and <code>checkJs</code> so JSDoc comments (comments in
+a set format above a function, stating its parameter and return types) are type-checked without renaming
+a single file. Then convert file by file, leaves first, with
+<code>strict</code> on for new files. Don't attempt a whole-codebase rewrite in one branch. It won't
+merge, and the types you write while fighting a rebase aren't the types you want.</p>`,
 docs:[['TypeScript, narrowing','https://www.typescriptlang.org/docs/handbook/2/narrowing.html'],['TypeScript, migrating from JavaScript','https://www.typescriptlang.org/docs/handbook/migrating-from-javascript.html'],['Zod','https://zod.dev/']],
 exs:[
 {title:'What narrows this type?',diff:'medium',lang:'js',

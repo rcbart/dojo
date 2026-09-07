@@ -1,7 +1,7 @@
 STREAMS.push({icon:'🔀',title:'Control Flow & Functions',blurb:'Making decisions and repeating work: if/else and switch, the four loop forms and when each is right, and functions from the ground up: declarations vs expressions vs arrows, parameters and defaults, rest and arguments, return, and why early return beats nesting.',lessons:[
 
 {id:'js6',title:'Making decisions: if, else and switch',body:`
-<p>Every non-trivial program branches. JavaScript gives you three constructs, and choosing well is mostly
+<p>Every non-trivial program branches. JavaScript gives you three constructs. Choosing well is mostly
 about how many outcomes there are and how much each branch does.</p>
 
 <h4><code>if</code> / <code>else if</code> / <code>else</code></h4>
@@ -15,11 +15,12 @@ about how many outcomes there are and how much each branch does.</p>
 
 // order matters: the FIRST true branch wins and the rest are skipped.
 // reversing these so 80 is tested first would give "B" to a score of 95.</div>
-<p>Always use braces, even for a single statement. The braceless form is legal and it is the reason for a
+<p>Always use braces, even for a single statement. The braceless form is legal and it causes a
 famous class of bug: a second line added later looks like it is inside the branch and is not.</p>
-<p>Remember from the previous stream that the condition is <b>coerced</b>. <code>if (count)</code> is
-false when <code>count</code> is legitimately <code>0</code>, which is almost never what you meant. Write
-the comparison you actually mean.</p>
+<p>Remember from the previous stream that the condition is <b>coerced</b>: the engine turns it into a
+boolean on its own. So <code>0</code>, <code>""</code>, <code>null</code> and <code>undefined</code> all
+count as false. <code>if (count)</code> is false when <code>count</code> is legitimately <code>0</code>,
+which is almost never what you meant. Write the comparison you mean.</p>
 
 <h4>The ternary: for values, not for logic</h4>
 <div class="codeSample" data-hl>const label = count === 1 ? "item" : "items";      // good: picks a VALUE
@@ -27,8 +28,9 @@ the comparison you actually mean.</p>
 // bad: a ternary doing work, and nested
 const x = a ? (b ? doThing() : other()) : c ? third() : fourth();
 //   nobody can read this. use if/else.</div>
-<p>The rule that holds up: a ternary should <b>produce a value</b> and fit on one line. The moment it
-contains side effects or nests, it has become an <code>if</code> wearing a disguise.</p>
+<p>The rule: a ternary should <b>produce a value</b> and fit on one line. Once it nests, or once it has
+<b>side effects</b>, meaning it changes something outside itself such as printing or saving, it's an
+<code>if</code> in disguise.</p>
 
 <h4><code>switch</code>, and the fall-through trap</h4>
 <div class="codeSample" data-hl>switch (method) {          // compares with === (strict) - no coercion
@@ -44,13 +46,13 @@ contains side effects or nests, it has become an <code>if</code> wearing a disgu
 // the trap: without return or break, execution CONTINUES into the next
 // case. that is the intended design, and it is also the single most
 // common switch bug.</div>
-<p>Because <code>switch</code> uses <code>===</code>, <code>switch (1)</code> will not match
-<code>case "1"</code>. And a <code>default</code> is not optional in practice: a switch with no default
-silently returns <code>undefined</code> for anything unexpected, which is exactly how a validation
-function fails open.</p>
+<p><code>switch</code> uses <code>===</code>, so <code>switch (1)</code> won't match
+<code>case "1"</code>. A <code>default</code> isn't optional in practice. A switch with no default
+silently returns <code>undefined</code> for anything unexpected. That is how a validation function
+<b>fails open</b>: the case it didn't expect gets through instead of being rejected.</p>
 
 <h4>Short-circuit evaluation</h4>
-<p><code>&&</code> and <code>||</code> do not return booleans; they return <b>one of their operands</b>,
+<p><code>&&</code> and <code>||</code> don't return booleans. They return <b>one of their operands</b>,
 and they stop evaluating as soon as the answer is known:</p>
 <div class="codeSample" data-hl>"a" && "b"        // "b"    both truthy -> the LAST value
 0 && "b"          // 0      stops at the first falsy
@@ -99,7 +101,10 @@ behavior:`Nine cases run, including "BREW" and a lowercase "get". The lowercase 
 hints:['Group cases by letting them fall through to a shared return.','Each group ends with a return, so no break is needed.','The default must exist, or unknown methods return undefined.']}},
 
 {id:'js7',title:'Loops: four forms and when to use each',body:`
-<p>Repetition has four shapes in JavaScript. They are not interchangeable, and picking the wrong one is a
+
+
+
+<p>Repetition has four shapes in JavaScript. They aren't interchangeable, and picking the wrong one is a
 common source of subtle bugs.</p>
 
 <div class="codeSample" data-hl>for (let i = 0; i &lt; n; i++)      classic. use when you need the INDEX.
@@ -108,9 +113,10 @@ for (const k in object)          KEYS of an object. see the warning below.
 while (cond) / do...while        when the count is not known in advance.</div>
 
 <h4><code>for...of</code> is the one you want most of the time</h4>
-<p>It iterates <b>values</b>, works on anything iterable (arrays, strings, <code>Map</code>,
-<code>Set</code>, generators), and supports <code>break</code> and <code>continue</code>, which the
-array method <code>forEach</code> does not.</p>
+<p>It iterates <b>values</b>. It works on anything <b>iterable</b>, anything that hands out its values
+one at a time: arrays, strings, <code>Map</code>, <code>Set</code>. Generators too: functions written
+with <code>function*</code> that produce values on demand. It supports <code>break</code> and
+<code>continue</code>, which the array method <code>forEach</code> doesn't.</p>
 <div class="codeSample" data-hl>for (const ch of "héllo") { }        // iterates CHARACTERS correctly,
                                      // including multi-byte ones
 for (const [k, v] of map) { }        // destructures each entry
@@ -118,7 +124,8 @@ for (const [i, v] of arr.entries()) {}  // index AND value</div>
 
 <h4><code>for...in</code>: the one that surprises people</h4>
 <p>It iterates <b>keys</b>, and on an array those keys are <b>strings</b>, not numbers. It also walks the
-prototype chain, so it can pick up inherited properties you never set:</p>
+<b>prototype chain</b>, so it can pick up inherited properties you never set. Every object has a hidden
+link to another object, its prototype, and so on up the chain. That's how objects share methods:</p>
 <div class="codeSample" data-hl>const arr = ["a", "b"];
 for (const i in arr) { console.log(i, typeof i); }
 // "0" string, "1" string        <- indexes as STRINGS
@@ -147,11 +154,11 @@ for (let i = 0; i &lt; n; i--) { }        // wrong direction
 // execution at 3 seconds and tells you it timed out.</div>
 
 <h4>Choosing</h4>
-<p>Prefer <code>for...of</code>. Reach for the classic <code>for</code> when you genuinely need the index
-or a non-unit step. Use <code>while</code> when the end condition is not a count: reading until an input
-is exhausted, retrying until success. And when you are <i>transforming</i> data rather than performing
-side effects, the array methods in the next stream (<code>map</code>, <code>filter</code>,
-<code>reduce</code>) usually say it better than any loop.</p>`,
+<p>Prefer <code>for...of</code>. Reach for the classic <code>for</code> when you need the index
+or a non-unit step. Use <code>while</code> when the end condition isn't a count: reading until an input
+is exhausted, retrying until success. When you're <i>transforming</i> data rather than causing side
+effects such as printing or saving, reach for the array methods in the next stream. <code>map</code>,
+<code>filter</code> and <code>reduce</code> usually say it better than any loop.</p>`,
 docs:[['MDN (Loops and iteration)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Loops_and_iteration'],['MDN (for...of)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...of'],['MDN (for...in)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...in']],
 exs:[
 {title:'Sum with a loop',diff:'easy',lang:'js',
@@ -198,8 +205,11 @@ behavior:`The last case checks "strictly": with n = 3, "abc" does not qualify bu
 hints:['Return as soon as you find a match; that ends the loop.','The fallback return sits after the loop, not inside it.','Strictly greater means > and not >=.']}]},
 
 {id:'js8',title:'Functions: the three forms',body:`
+
+
+
 <p>A function packages work under a name so it can be reused, tested and reasoned about. JavaScript has
-three ways to write one, and the differences are real, not stylistic.</p>
+three ways to write one. The differences are real, not stylistic.</p>
 
 <div class="codeSample" data-hl>// 1. DECLARATION - hoisted completely; usable before it appears
 function add(a, b) { return a + b; }
@@ -217,18 +227,21 @@ const long = (a, b) => {               // braces mean you must return
 };</div>
 
 <h4>Hoisting, in practice</h4>
-<p>A <b>declaration</b> is fully hoisted, so this works:</p>
+<p><b>Hoisting</b>: JavaScript moves declarations to the top of their scope before running the code. A
+function <b>declaration</b> is hoisted body and all, so this works.</p>
 <div class="codeSample" data-hl>greet();                      // "hi" - fine
 function greet() { console.log("hi"); }
 
 greet2();                     // ReferenceError (temporal dead zone)
 const greet2 = () =&gt; {};      // the CONST is what is hoisted, not the value</div>
-<p>That is genuinely useful: it lets you put the important function at the top of a file and its helpers
-below, in reading order. It is also the only meaningful argument left for declarations.</p>
+<p>The <code>const</code> is hoisted too, but until its line runs it sits in the <b>temporal dead
+zone</b>: the name exists and reading it throws. That's useful. It lets you put the important function
+at the top of a file, helpers below, in reading order. It's also the only meaningful argument left for
+declarations.</p>
 
 <h4>The arrow difference that matters</h4>
-<p>Arrows do not have their own <code>this</code>, <code>arguments</code>, or <code>prototype</code>. The
-first of those has a whole lesson later; for now, the practical rules:</p>
+<p>Arrows don't have their own <code>this</code>, <code>arguments</code>, or <code>prototype</code>. The
+first has a whole lesson later. For now, the rules:</p>
 <div class="codeSample" data-hl>USE AN ARROW for callbacks and short transformations:
   items.map(x =&gt; x.id)
   setTimeout(() =&gt; done(), 100)
@@ -257,12 +270,13 @@ sum(1, 2, 3);             // 6
 function two(a, b) { return [a, b]; }
 two(1);                   // [1, undefined]   - no error
 two(1, 2, 3);             // [1, 2]           - no error</div>
-<p>That last behavior is why calling a function with the wrong number of arguments fails silently in
-JavaScript and loudly in most other languages, and it is a large part of the case for TypeScript.</p>
+<p>So a call with the wrong number of arguments fails silently in JavaScript, and loudly in most other
+languages. It's a large part of the case for <b>TypeScript</b>, JavaScript with types, which checks every
+call before running.</p>
 
 <h4>Return, and the semicolon trap</h4>
-<p>A function with no <code>return</code> returns <code>undefined</code>. And <code>return</code> is one
-of the few places where automatic semicolon insertion actively hurts:</p>
+<p>A function with no <code>return</code> returns <code>undefined</code>. <code>return</code> is one
+of the few places where automatic semicolon insertion hurts:</p>
 <div class="codeSample" data-hl>function broken() {
   return          // a semicolon is inserted HERE
     { ok: true }; // unreachable. the function returns undefined.
@@ -312,11 +326,13 @@ behavior:`The tie case is executed: with > the first of two equal-length words i
 hints:['A rest parameter gathers all arguments into a real array.','Strictly greater keeps the first winner on a tie.','Initializing to "" handles the empty case for free.']}]},
 
 {id:'js9',title:'Writing functions people can read',body:`
+
+
 <p>The language part of functions is done. This lesson is the craft: the handful of habits that separate
 code you can change safely from code you are afraid of.</p>
 
 <h4>Early return beats nesting</h4>
-<p>Deep nesting is the most common readability problem in real JavaScript, and it has a mechanical fix:
+<p>Deep nesting is the most common readability problem in real JavaScript. The fix is mechanical:
 handle the exceptional cases first and return, so the main path stays at the left margin.</p>
 <div class="codeSample" data-hl>// nested: the actual work is four levels deep
 function pay(user, amount) {
@@ -344,11 +360,11 @@ function pay2(user, amount) {
 <p>The test is whether you can name it without using "and". <code>validateAndSaveAndEmail</code> is three
 functions. A function that does one thing can be tested with one set of cases, reused somewhere else, and
 understood without reading its body.</p>
-<p>The related signal is <b>parameter count</b>. Beyond three or four, the call site becomes unreadable
-(<code>f(true, false, true)</code>: which is which?) and it usually means the function is doing too
+<p>The related signal is <b>parameter count</b>. Beyond three or four, the call site becomes unreadable.
+<code>f(true, false, true)</code>: which is which? It usually means the function is doing too
 much. Pass an options object instead, so the call names its arguments.</p>
 
-<h4>Pure functions, and why they are worth preferring</h4>
+<h4>Pure functions</h4>
 <div class="codeSample" data-hl>// PURE: same input -> same output, and it touches nothing outside itself
 const total = items =&gt; items.reduce((s, i) =&gt; s + i.price, 0);
 
@@ -357,20 +373,24 @@ let count = 0;
 function next() { return ++count; }        // depends on external state
 function save(x) { db.write(x); }          // has a side effect
 function now() { return Date.now(); }      // not deterministic</div>
-<p>Impure functions are necessary: a program that touches nothing does nothing. The point is to
-<b>concentrate</b> the impurity: keep the decisions pure and testable, and push the I/O to the edges.
-A pure function needs no mocks, no setup and no teardown to test.</p>
+<p>A <b>pure function</b> is one whose result depends only on its arguments and that changes nothing
+outside itself. Same input, same output, no side effects. Impure functions are necessary. A program that
+touches nothing does nothing. The point is to <b>concentrate</b> the impurity: keep the decisions pure
+and testable, and push the I/O (reading and writing files, the network, the database) to the edges.
+A pure function needs no mocks, no setup and no teardown to test. A <b>mock</b> is a stand-in for the
+database or network a function would otherwise touch during a test.</p>
 
 <h4>Naming</h4>
 <p>Functions do things, so name them with verbs: <code>calculateTotal</code>, <code>isExpired</code>,
 <code>hasPermission</code>, <code>toCents</code>. Booleans read best as questions:
-<code>if (isExpired(token))</code> needs no comment. And avoid names that lie: a function called
+<code>if (isExpired(token))</code> needs no comment. Avoid names that lie. A function called
 <code>getUser</code> that also creates one has misled every future reader.</p>
 
 <h4>Side effects, stated up front</h4>
-<p>If a function mutates its argument, say so in the name (<code>sortInPlace</code>) or do not do it.
-Silently modifying an object the caller passed in is the source of bugs that appear far from their
-cause: the caller's data changed and nothing at the call site suggests it could have.</p>`,
+<p>A <b>side effect</b> is any change a function makes beyond returning a value. If a function
+<b>mutates</b> its argument, that is, changes it in place, say so in the name (<code>sortInPlace</code>) or do not do it.
+Silently modifying an object the caller passed in causes bugs that appear far from their
+cause. The caller's data changed and nothing at the call site suggests it could have.</p>`,
 docs:[['MDN (Functions guide)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions'],['Refactoring: guard clauses','https://refactoring.com/catalog/replaceNestedConditionalWithGuardClauses.html']],
 exs:[
 {title:'Rewrite with guard clauses',diff:'easy',lang:'js',

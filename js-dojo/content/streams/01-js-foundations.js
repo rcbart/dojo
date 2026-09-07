@@ -1,13 +1,14 @@
 STREAMS.push({icon:'🟨',title:'JavaScript Foundations',blurb:'Assuming nothing: what JavaScript is and where it runs, how a program is a sequence of statements, values and the eight types, variables and the three declaration keywords, operators, the coercion rules that make so much JavaScript behavior surprising until you know them, and regular expressions for the questions you have to ask about text.',lessons:[
 
 {id:'js1',title:'What JavaScript is, and where it runs',body:`
+
 <p>🌱 <b>Starting from zero.</b> A <b>program</b> is a list of instructions. A <b>programming language</b> is
 the notation you write them in. Something has to read that notation and carry the instructions out. For
-JavaScript, that something is called an <b>engine</b>, and you almost certainly already have several.</p>
+JavaScript, that is an <b>engine</b>, and you already have several.</p>
 
 <h4>One language, several places to run it</h4>
-<p>JavaScript was created in 1995 to make web pages interactive, and for its first decade the browser was
-the only place it existed. That is no longer true, and the distinction matters constantly:</p>
+<p>JavaScript was created in 1995 to make web pages interactive. For a decade the browser was
+the only place it ran. Not any more:</p>
 <div class="codeSample" data-hl>THE LANGUAGE          variables, functions, objects, loops, promises.
                       identical everywhere. this is what ECMAScript
                       (the standard) actually specifies.
@@ -23,17 +24,17 @@ NODE'S EXTRAS         require, process, fs, __dirname, Buffer.
 <p>Roughly half of all beginner confusion is this boundary. When you look something up, ask first whether
 it belongs to the language or to the host.</p>
 
-<h4>ECMAScript, versions, and why you see "ES6" everywhere</h4>
-<p><b>ECMAScript</b> is the official specification; <b>JavaScript</b> is what everyone calls the language
-that implements it. A new edition ships every year. The one people mention constantly is <b>ES2015</b>
-(also called ES6), because it added <code>let</code>, <code>const</code>, arrow functions, classes,
-promises and modules, enough at once that material written before it looks like a different language.</p>
-<p>Everything in this course is modern JavaScript. Where an older form still appears in real codebases,
-it is called out so you can read it, not so you write it.</p>
+<h4>ECMAScript, versions, and "ES6"</h4>
+<p><b>ECMAScript</b> is the official specification. <b>JavaScript</b> is what everyone calls the language
+that implements it. A new edition ships every year. The one people mention most is <b>ES2015</b>
+(also called ES6). It added <code>let</code>, <code>const</code>, arrow functions, classes,
+promises and modules, so older material looks like a different language.</p>
+<p>This course is modern JavaScript. Older forms that still appear in real codebases
+are called out so you can read them, not write them.</p>
 
 <h4>Running your first program</h4>
-<p>You have three ways to run JavaScript right now, and it is worth trying all three, because knowing
-where your code executes is the beginning of being able to debug it.</p>
+<p>You have three ways to run JavaScript right now. Try all three. Knowing where your code executes is
+the beginning of debugging it.</p>
 <div class="codeSample" data-hl>// 1. THE BROWSER CONSOLE, fastest feedback loop that exists.
 //    Chrome/Edge: F12 or Cmd-Option-J.  Firefox: F12.  Safari: enable
 //    Develop menu first. Type an expression, press Enter, see the value.
@@ -45,28 +46,25 @@ console.log("hello");
 // 3. NODE, interactively, type  node  with no arguments, get a prompt.
 //    Ctrl-D or .exit to leave.</div>
 <p><code>console.log</code> prints a value where you can see it: the browser's console panel, or the
-terminal under Node. It is not part of the language either (both hosts happen to provide it), and it is
-the single most-used debugging tool in existence. A whole stream later in this course is about the tools
-that are better than it.</p>
+terminal under Node. It is not part of the language either. Both hosts provide it, and it is
+the most-used debugging tool there is. A later stream covers the tools that beat it.</p>
 
 <h4>Statements, expressions and semicolons</h4>
-<p>A program is a sequence of <b>statements</b> executed top to bottom. An <b>expression</b> is anything
-that produces a value. <code>2 + 2</code> is an expression; <code>let x = 2 + 2;</code> is a statement
-containing one. The distinction returns repeatedly, because some places in JavaScript accept only one of
-the two.</p>
-<p>Semicolons end statements, and JavaScript will insert them for you if you leave them out, a feature
-called <b>automatic semicolon insertion</b>. It is correct nearly always and wrong in a few specific
-cases, which is why teams pick one convention and let a formatter enforce it. This course uses
+<p>A program is a sequence of <b>statements</b> run top to bottom. An <b>expression</b> is anything
+that produces a value. <code>2 + 2</code> is an expression. <code>let x = 2 + 2;</code> is a statement
+containing one. Some places in JavaScript accept only one of the two.</p>
+<p>Semicolons end statements. Leave them out and JavaScript inserts them:
+<b>automatic semicolon insertion</b>. It is right nearly always and wrong in a few specific
+cases, so teams pick one convention and let a formatter enforce it. This course uses
 semicolons.</p>
 
-<h4>Comments, and one habit worth forming now</h4>
+<h4>Comments</h4>
 <div class="codeSample" data-hl>// everything after two slashes, to the end of the line
 
 /* a block comment,
    spanning lines */</div>
-<p>Write comments that say <b>why</b>, not <b>what</b>. The code already states what it does; what it
-cannot state is the reason it does it that way, and that is the thing the next reader (usually you, in
-six months) actually needs.</p>`,
+<p>Write comments that say <b>why</b>, not <b>what</b>. The code already states what it does. It
+cannot state why, and that is what the next reader (usually you, in six months) needs.</p>`,
 docs:[['MDN (What is JavaScript?)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Introduction'],['Node.js (introduction)','https://nodejs.org/en/learn/getting-started/introduction-to-nodejs'],['TC39 (the ECMAScript standard)','https://tc39.es/ecma262/']],
 ex:{title:'Language, browser, or Node?',diff:'easy',lang:'js',
 run:{call:'provides',cases:[
@@ -103,9 +101,11 @@ behavior:`provides("document") is "browser", provides("process") is "node", prov
 hints:['A switch with fall-through cases groups the names by host neatly.','Three groups plus a default covers every case.','Anything you were not told about returns "unknown".']}},
 
 {id:'js2',title:'Values and the eight types',body:`
+
+
 <p>Everything a JavaScript program manipulates is a <b>value</b>. Every value has a <b>type</b>, and there
-are exactly eight. Learning them now saves an enormous amount of confusion later, because most surprising
-JavaScript behavior is a type behaving exactly as specified in a situation you did not expect.</p>
+are eight. Learn them now. Most surprising JavaScript behavior is a type behaving as specified in a
+situation you did not expect.</p>
 
 <h4>The seven primitives, and the one that is not</h4>
 <div class="codeSample" data-hl>number      42, 3.14, -7, Infinity, NaN     one numeric type for everything
@@ -118,10 +118,11 @@ symbol      Symbol("id")                   unique keys, rarely needed early
 
 object      {}, [], function(){}, new Date()
             EVERYTHING else. arrays and functions are objects too.</div>
-<p>The first seven are <b>primitives</b>: immutable single values, compared by their content. The eighth
-is everything else, compared by <b>identity</b>, which is why <code>{} === {}</code> is <code>false</code>
-even though the two look identical. They are two different objects that happen to have the same
-contents.</p>
+<p>The first seven are <b>primitives</b>: single <b>immutable</b> values, compared by their content.
+Immutable means the value itself can never be changed. Anything that looks like a change hands you
+a new value instead. The eighth
+is everything else, compared by <b>identity</b>. That is why <code>{} === {}</code> is <code>false</code>
+even though the two look identical. They are two different objects with the same contents.</p>
 
 <h4>Numbers: one type, and its consequences</h4>
 <p>JavaScript has no separate integer type. Every <code>number</code> is a 64-bit floating-point value,
@@ -140,8 +141,8 @@ Number.MAX_SAFE_INTEGER   // 9007199254740991 - beyond this, integers
                           // lose precision. that is what bigint is for.</div>
 
 <h4>Strings</h4>
-<p>Single and double quotes are identical in meaning; pick one and be consistent. Backticks create a
-<b>template literal</b>, which is the one you should reach for by default:</p>
+<p>Single and double quotes mean the same thing. Pick one and be consistent. Backticks create a
+<b>template literal</b>, the one to reach for by default:</p>
 <div class="codeSample" data-hl>const name = "Ada";
 \`Hello, \${name}\`        // interpolation - an expression inside \${ }
 \`line one
@@ -153,13 +154,13 @@ s.toUpperCase();        // "HELLO" returned, and DISCARDED
 s;                      // still "hello" - you must assign the result</div>
 
 <h4><code>undefined</code> versus <code>null</code></h4>
-<p>Both mean "nothing", and the distinction is about <i>who decided</i>. <code>undefined</code> is what
+<p>Both mean "nothing". The difference is <i>who decided</i>. <code>undefined</code> is what
 JavaScript gives you when nothing was supplied: an unassigned variable, a missing property, a parameter
 you did not pass, a function with no <code>return</code>. <code>null</code> is what a <i>programmer</i>
 assigns to say "this is deliberately empty".</p>
-<p>Use <code>null</code> for intentional emptiness and let <code>undefined</code> mean absence. And know
-the historical bug you will meet: <code>typeof null</code> returns <code>"object"</code>. It is wrong, it
-has been wrong since 1995, and it cannot be fixed without breaking the web.</p>
+<p>Use <code>null</code> for intentional emptiness and let <code>undefined</code> mean absence. One
+historical bug you will meet: <code>typeof null</code> returns <code>"object"</code>. It has been wrong
+since 1995 and cannot be fixed without breaking the web.</p>
 
 <h4>Checking a type</h4>
 <div class="codeSample" data-hl>typeof 42            // "number"
@@ -199,17 +200,19 @@ behavior:`describe(42) is "number", describe(null) is "null", describe([1,2]) is
 hints:['Check for null with === before using typeof.','Array.isArray is the only reliable array test.','Everything else can just return typeof value.']}},
 
 {id:'js3',title:'Variables: let, const and the one to avoid',body:`
-<p>A <b>variable</b> is a name bound to a value. JavaScript has three ways to create one, and the
-difference between them is not style: it is scope, mutability, and how errors surface.</p>
+
+
+<p>A <b>variable</b> is a name bound to a value. JavaScript has three ways to create one. The
+difference between them is scope, mutability, and how errors surface, not style.</p>
 
 <h4>The rule, stated first</h4>
 <div class="codeSample" data-hl>const   DEFAULT. use this unless you have a reason not to.
 let     when the binding genuinely needs to be reassigned.
 var     legacy. you will read it; do not write it.</div>
-<p>Reaching for <code>const</code> by default is not pedantry. It means that when you see <code>let</code>,
+<p>Reaching for <code>const</code> by default is not pedantry. When you see <code>let</code>,
 you know something reassigns it, and you can find out what. That is real information, and it is free.</p>
 
-<h4>What <code>const</code> actually protects</h4>
+<h4>What <code>const</code> protects</h4>
 <p>This is the most common misunderstanding of the three. <code>const</code> makes the <b>binding</b>
 constant: the name cannot be pointed at a different value. It says nothing about the value itself:</p>
 <div class="codeSample" data-hl>const n = 1;
@@ -228,8 +231,7 @@ Object.freeze(user);      // shallow - nested objects are still mutable</div>
 <h4>Scope: where a name exists</h4>
 <p><b>Scope</b> is the region of the program in which a name is visible. <code>let</code> and
 <code>const</code> are <b>block-scoped</b>: they exist only inside the nearest <code>{ }</code>.
-<code>var</code> is <b>function-scoped</b>, which means it leaks out of blocks in a way that surprises
-everyone:</p>
+<code>var</code> is <b>function-scoped</b>, so it leaks out of blocks. This surprises everyone:</p>
 <div class="codeSample" data-hl>function demo() {
   if (true) {
     var a = 1;
@@ -246,7 +248,7 @@ for (let i = 0; i < 3; i++) { setTimeout(() =&gt; console.log(i)); }
 // prints 0, 1, 2 - a NEW binding per iteration</div>
 
 <h4>Hoisting, and the temporal dead zone</h4>
-<p>Declarations are processed before the code runs, which is called <b>hoisting</b>. The three keywords
+<p>Declarations are processed before the code runs. This is called <b>hoisting</b>. The three keywords
 handle it differently, and the difference is the point:</p>
 <div class="codeSample" data-hl>console.log(x);   // undefined      <- var exists but has no value yet
 var x = 1;
@@ -254,14 +256,16 @@ var x = 1;
 console.log(y);   // ReferenceError: Cannot access 'y' before
 let y = 1;        //   initialization    <- the TEMPORAL DEAD ZONE</div>
 <p><code>var</code>'s silent <code>undefined</code> lets a bug run on and fail somewhere else.
-<code>let</code> and <code>const</code> throw at the point of the mistake. That is the whole argument for
+<code>let</code> and <code>const</code> throw at the point of the mistake. The stretch between the start
+of the block and the <code>let</code> or <code>const</code> line, where the variable exists but reading it
+throws, is the <b>temporal dead zone</b>. That is the whole argument for
 them: <b>errors that arrive where the problem is</b>.</p>
 
 <h4>Naming</h4>
 <p>Names may contain letters, digits, <code>_</code> and <code>$</code>, and may not start with a digit.
 Convention is <code>camelCase</code> for variables and functions, <code>PascalCase</code> for classes, and
-<code>UPPER_SNAKE_CASE</code> for genuine constants. Names are the cheapest documentation available:
-<code>d</code> tells the next reader nothing, and <code>daysUntilExpiry</code> tells them everything.</p>`,
+<code>UPPER_SNAKE_CASE</code> for true constants. Names are the cheapest documentation there is.
+<code>d</code> tells the next reader nothing. <code>daysUntilExpiry</code> tells them everything.</p>`,
 docs:[['MDN (let)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let'],['MDN (const)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const'],['MDN (Hoisting)','https://developer.mozilla.org/en-US/docs/Glossary/Hoisting']],
 ex:{title:'What does const actually prevent?',diff:'easy',lang:'js',
 run:{call:'allowed',cases:[
@@ -290,8 +294,11 @@ behavior:`Six operations are executed against your function, including an unreco
 hints:['Three permitted operations, everything else false.','const controls the binding; the value stays mutable.','The temporal dead zone makes reading before a let declaration a ReferenceError.']}},
 
 {id:'js4',title:'Operators, coercion and equality',body:`
+
+
+
 <p>This lesson explains more surprising JavaScript behavior than any other in the course. JavaScript
-converts values between types automatically (<b>coercion</b>), and the rules are consistent, learnable,
+converts values between types automatically (<b>coercion</b>). The rules are consistent, learnable,
 and occasionally absurd.</p>
 
 <h4>The operators, quickly</h4>
@@ -306,7 +313,7 @@ and occasionally absurd.</p>
 ? :                      ternary conditional</div>
 
 <h4>The one rule that explains <code>+</code></h4>
-<p><code>+</code> is both addition and string concatenation, and <b>if either side is a string, it
+<p><code>+</code> is both addition and string concatenation. <b>If either side is a string, it
 concatenates</b>. Every other arithmetic operator converts to number instead:</p>
 <div class="codeSample" data-hl>1 + "2"      // "12"    string wins - concatenation
 1 - "2"      // -1     no string overload - numeric coercion
@@ -319,7 +326,7 @@ const total = "5" + 3;   // "53", not 8 - form inputs are STRINGS
 const fixed = Number("5") + 3;   // 8</div>
 
 <h4>Truthiness</h4>
-<p>Anywhere a boolean is expected, JavaScript coerces. <b>Exactly eight values are falsy</b> and
+<p>Anywhere a boolean is expected, JavaScript coerces. <b>Eight values are falsy</b> and
 everything else is truthy. Memorize the short list:</p>
 <div class="codeSample" data-hl>FALSY:   false   0   -0   0n   ""   null   undefined   NaN
 TRUTHY:  everything else, including:
@@ -336,7 +343,7 @@ if (count !== undefined) { }   // say what you mean</div>
 
 <h4><code>==</code> versus <code>===</code></h4>
 <p><code>===</code> compares without coercion: different types are never equal. <code>==</code> coerces
-first, and the resulting table has genuinely strange entries:</p>
+first, and the resulting table has strange entries.</p>
 <div class="codeSample" data-hl>1 == "1"          // true    string coerced to number
 0 == ""           // true
 0 == false        // true
@@ -360,7 +367,7 @@ user.address.city       // TypeError if address is undefined
 user.address?.city      // undefined, no throw
 user.getName?.()        // calls it only if it exists</div>
 <p>Reach for <code>??</code> whenever a default is involved and <code>0</code> or <code>""</code> could be
-a legitimate value, which is most of the time.</p>`,
+a legitimate value. That is most of the time.</p>`,
 docs:[['MDN (Equality comparisons)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Equality_comparisons_and_sameness'],['MDN (Falsy)','https://developer.mozilla.org/en-US/docs/Glossary/Falsy'],['MDN (Nullish coalescing)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing']],
 exs:[
 {title:'Which values are falsy?',diff:'easy',lang:'js',
@@ -431,8 +438,11 @@ behavior:`Seven cases execute and three of them fail a naive implementation. Num
 hints:['Handle the missing key with ?? before calling trim.','Check for the empty string BEFORE converting, because Number("") is 0.','Number.isFinite rejects NaN and Infinity in one test, and 0 passes it.']}]},
 
 {id:'js5',title:'Strings and numbers in practice',body:`
+
+
+
 <p>Text and arithmetic are most of what programs do. This lesson is the working knowledge: the methods you
-will use constantly, and the conversions that go wrong quietly.</p>
+will use every day, and the conversions that go wrong without a sound.</p>
 
 <h4>Working with strings</h4>
 <div class="codeSample" data-hl>const s = "  Hello, World  ";
@@ -452,8 +462,9 @@ s[2]                        // "H"   index access
 s.at(-1)                    // " "   negative indexes count from the end
 
 // EVERY one of these returns a NEW string. none modifies s.</div>
-<p>Immutability is the thing to internalise. <code>s.trim()</code> on its own line does nothing at all;
-you must use or assign the result. It compiles, it runs, and it is a real bug.</p>
+<p><b>Immutability</b> is the thing to internalize: a string is never changed in place, every method hands
+you a new one. <code>s.trim()</code> on its own line does nothing.
+You must use or assign the result. It compiles, it runs, and it is a real bug.</p>
 
 <h4>Template literals</h4>
 <p>Prefer them to concatenation. They interpolate any expression, span lines, and read closer to the
@@ -482,12 +493,12 @@ Number.isNaN(x)       // the safe NaN test (the global isNaN coerces first)</div
 
 <h4>The two conversions that bite</h4>
 <p><b>Form input is always a string.</b> Every value read from an HTML input, a URL query parameter, or a
-JSON field typed by a user arrives as text. Convert explicitly at the boundary and validate the result,
-because <code>Number("")</code> is <code>0</code> and <code>Number("abc")</code> is <code>NaN</code>, and
-both will flow silently through arithmetic.</p>
+JSON field typed by a user arrives as text. Convert at the boundary and validate the result.
+<code>Number("")</code> is <code>0</code> and <code>Number("abc")</code> is <code>NaN</code>, and
+both flow silently through arithmetic.</p>
 <p><b>Never use floats for money.</b> <code>0.1 + 0.2</code> is not <code>0.3</code>, and the error
-compounds. Work in the smallest unit (cents, pence) as integers, and format for display only at the
-very edge.</p>
+compounds. Work in the smallest unit (cents, pence) as integers. Format for display only at the
+edge.</p>
 <div class="codeSample" data-hl>// a safe numeric parse, which you will write many times:
 function toNumber(text) {
   const n = Number(text);
@@ -538,9 +549,12 @@ tests:[{d:'uses a template literal',re:'return\\s+(?!!)[^;]{0,160}?`'},{d:'trims
 behavior:`greet("  Ada  ") is "Hello, Ada!" and greet("   ") is "Hello, stranger!". Note that trim() returns a new string; assigning its result is what makes this work, since strings are immutable.`,
 hints:['Assign the trimmed value; trim() does not modify the original.','A ternary inside the template literal handles the fallback.','Remember the exclamation mark.']}]},
 {id:'jsregex',title:'Regular expressions, and where they stop',body:`
-<p>Nearly every program has to ask questions about the <i>shape</i> of some text. Is this a valid slug?
-Which of these lines are warnings? Where are the numbers in this string? A <b>regular expression</b> is a
-small language for describing that shape, and JavaScript has it built in, with its own literal syntax.</p>
+
+
+
+<p>Nearly every program has to ask questions about the <i>shape</i> of some text. Is this a valid slug, the
+hyphenated name at the end of a URL? Where are the numbers in this string? A <b>regular expression</b> is a
+small language for describing that shape. JavaScript has it built in, with its own literal syntax.</p>
 
 <div class="codeSample" data-hl>const slug = /^[a-z0-9-]+$/;             // a LITERAL, written between slashes
 const dyn  = new RegExp("^" + safe + "$");  // built from a string, when you must
@@ -552,7 +566,7 @@ slug.test("hello-world")        // true    the cheapest question: does it match?
 "a-b".replace(/-/g, "_")        // "a_b"       replace needs /g for all of them
 "a, b,c".split(/,\\s*/)          // ["a","b","c"]</div>
 
-<h4>The pieces you will actually use</h4>
+<h4>The pieces you will use</h4>
 <div class="codeSample" data-hl>.        any character except a newline
 \\d  digit    \\w  letter/digit/underscore    \\s  whitespace    \\b  word boundary
 [abc]    one of these     [^abc]  none of these     [a-z]  a range
@@ -566,8 +580,8 @@ FLAGS   g  find every match     i  ignore case     m  ^ and $ match per line
         s  let . match newlines too       u  treat the pattern as Unicode</div>
 
 <h4>Anchors are not decoration</h4>
-<p>The most common regex bug by a wide margin is forgetting that a pattern matches <i>anywhere</i> in the
-input unless you say otherwise:</p>
+<p>The most common regex bug is forgetting that a pattern matches <i>anywhere</i> in the
+input unless you say otherwise.</p>
 <div class="codeSample" data-hl>/[a-z]+/.test("Hello!")        // true   - it found "ello" and stopped looking
 /^[a-z]+$/.test("Hello!")      // false  - now the WHOLE input must match
 
@@ -585,25 +599,26 @@ m[3]     // "disk full"
 // m[1] on null throws a TypeError, and it throws one line after the
 // mistake, which is the errors stream's point about reading traces.</div>
 
-<h4>Two traps, before you meet them in production</h4>
+<h4>Two traps</h4>
 <p><b>A global regex carries state.</b> A pattern with <code>/g</code> stored in a variable remembers a
-<code>lastIndex</code> between calls, so calling <code>test</code> on the same object repeatedly returns
+<code>lastIndex</code> between calls. Calling <code>test</code> on the same object repeatedly returns
 true, then false, then true. Build the regex where you use it, or leave the flag off when you only want a
 yes or no.</p>
-<p><b>Catastrophic backtracking is a denial of service.</b> Nesting quantifiers over overlapping
-alternatives, as in <code>/(a+)+$/</code>, can take exponential time on an input that almost matches. That
-is <b>ReDoS</b>, and it is why the Node lesson lists a regular expression among the things that block the
-event loop for every connected client. Keep patterns flat, do not nest quantifiers, and never build one
-out of user input.</p>
+<p><b>Catastrophic backtracking is a denial of service.</b> When a match fails part way, the engine
+<b>backtracks</b>: it retries every other way of splitting the input across the repeat markers
+(<code>+</code>, <code>*</code>). Nesting those over overlapping alternatives, as in <code>/(a+)+$/</code>,
+can take exponential time on an input that almost matches. That's <b>ReDoS</b>, regular expression denial
+of service: one crafted input keeps the program busy so nobody else gets served. It's why the Node lesson
+lists a regular expression among the things that block the <b>event loop</b> for every connected client.
+The event loop runs your code one piece at a time, nothing else meanwhile. Keep patterns flat, don't nest repeats, and never build
+one out of user input.</p>
 
 <h4>Where regular expressions stop</h4>
-<p>A regex is the right tool for a small, flat, local pattern. It is the wrong tool for anything nested,
-because a regular expression cannot count: HTML, JSON and source code need a parser, and every attempt to
-match them with a pattern eventually meets an input that breaks it. Prefer a built-in when one exists.
-<code>URL</code> beats a URL pattern, <code>includes</code> beats <code>/x/.test</code>, and
-<code>Number.isFinite</code> beats a numeric pattern, as the previous lesson showed. And a pattern nobody
-can read in six months has a cost of its own, so name it and comment the ones that are not obvious.</p>
-`,
+<p>A regex is the right tool for a small, flat, local pattern. It's the wrong tool for anything nested,
+because a regular expression cannot count. HTML, JSON and source code need a parser. Prefer a built-in
+when one exists. <code>URL</code> beats a URL pattern, <code>includes</code> beats <code>/x/.test</code>,
+and <code>Number.isFinite</code> beats a numeric pattern. A pattern nobody can read in six months has a
+cost of its own. Name it, and comment the ones that are not obvious.</p>`,
 docs:[['MDN (Regular expressions guide)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions'],['MDN (RegExp)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp'],['OWASP (Regular expression denial of service)','https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS']],
 exs:[
 {title:'Anchor the pattern',diff:'easy',lang:'js',

@@ -1,10 +1,12 @@
 STREAMS.push({icon:'⛩️',project:true,title:'JavaScript Capstone',blurb:'Build and debug a real service end to end. Every component here uses something from an earlier stream (coercion, closures, the event loop, error handling, validation, HTTP semantics and diagnosis), and each one is graded by running your code against the cases that catch a plausible-but-wrong implementation.',lessons:[
 
 {id:'jscap',title:'Capstone: build a link-shortener service',body:`
+
+
 <p>This capstone builds one service, component by component, and each exercise is graded on its own. The
-brief is deliberately small (a link shortener) because the interesting work is not the feature, it is
-everything around it: validating input you did not write, handling the cases that only appear under load,
-and being able to say what is wrong when it misbehaves.</p>
+brief is deliberately small (a link shortener) because the interesting work is everything around the
+feature. That means validating input you didn't write, handling the cases that only appear under load,
+and being able to say what's wrong when it misbehaves.</p>
 
 <div class="codeSample" data-hl>POST /links   { url }        -> { code, shortUrl }   201
 GET  /:code                 -> 302 to the original URL
@@ -13,22 +15,27 @@ GET  /links/:code/stats     -> { code, url, hits, createdAt }
                             -> 410 when the link has expired</div>
 
 <h4>What you will build</h4>
-<p><b>1. A URL validator.</b> Accept only <code>http</code> and <code>https</code>, reject anything else,
-including <code>javascript:</code>, which is how a link shortener becomes an XSS delivery service.</p>
-<p><b>2. A code generator and store</b>, using a closure so the store cannot be reached from outside.</p>
-<p><b>3. A rate limiter</b> over a sliding window, so one client cannot fill your database.</p>
+<p><b>1. A URL validator.</b> Accept only <code>http</code> and <code>https</code>, and reject anything else,
+including <code>javascript:</code>. That scheme is how a link shortener becomes an <b>XSS</b> (cross-site
+scripting) delivery service. An attacker gets their JavaScript to run inside your page, in your users'
+browsers.</p>
+<p><b>2. A code generator and store</b>, using a closure so the store can't be reached from outside.</p>
+<p><b>3. A rate limiter</b>, which refuses requests from one client beyond a set number per period, so
+one client can't fill your database. Yours counts over a sliding window: the last N seconds, not fixed
+blocks of the clock.</p>
 <p><b>4. A request router</b> returning the right status for every case, including the ones people
 collapse together.</p>
-<p><b>5. A diagnosis routine</b> for when it is slow in production.</p>
+<p><b>5. A diagnosis routine</b> for when it's slow in production.</p>
 
-<h4>The decisions worth making deliberately</h4>
+<h4>The decisions to make deliberately</h4>
 <ul>
-<li><b>What counts as a valid URL.</b> A blocklist of dangerous schemes loses; an allowlist of two
-schemes wins. This is the same argument as path traversal in the files stream.</li>
-<li><b>Where the state lives.</b> A closure gives you real privacy; a module-level variable gives you a
+<li><b>What counts as a valid URL.</b> A blocklist of dangerous schemes loses. An allowlist of two
+schemes wins. It's the same argument as <b>path traversal</b> in the files stream. There, an attacker slips
+parent-directory steps into a file name so the server reads outside the folder it meant to serve.</li>
+<li><b>Where the state lives.</b> A closure gives you real privacy. A module-level variable gives you a
 shared mutable global that every test then has to reset.</li>
 <li><b>What happens under contention.</b> Two requests arriving in the same millisecond, a code that
-collides, a limit hit exactly on its boundary: these are where the off-by-one errors live.</li>
+collides, a limit hit right on its boundary: these are where the off-by-one errors live.</li>
 <li><b>What each failure returns.</b> 404 and 410 are different facts about a link, and a client can act
 on the difference.</li>
 </ul>
@@ -44,9 +51,8 @@ node --test                     # the built-in runner, once you add tests
 node --inspect server.js        # breakpoints in your handlers
 # and the Network panel to watch the 302 actually redirect</div>
 <p>The exercises below give you each piece with its edge cases pinned. Assembling them into a running
-server (with the <code>http</code> module from the HTTP stream, the config validation from the Node
-runtime stream and the structured logging from the testing stream) is the part worth doing on your own
-machine.</p>`,
+server is the part to do on your own machine. That means the <code>http</code> module from the HTTP stream, the
+config validation from the Node runtime stream and the structured logging from the testing stream.</p>`,
 docs:[['Node (http server)','https://nodejs.org/api/http.html'],['MDN (URL)','https://developer.mozilla.org/en-US/docs/Web/API/URL'],['MDN (302 vs 301)','https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/302'],['OWASP (unvalidated redirects)','https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html']],
 exs:[
 {title:'1. Validate a submitted URL',diff:'medium',lang:'js',

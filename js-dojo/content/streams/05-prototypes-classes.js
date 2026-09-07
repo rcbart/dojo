@@ -2,8 +2,8 @@ STREAMS.push({icon:'🧬',title:'Prototypes, Classes & Objects in Depth',blurb:'
 
 {id:'js22',title:'The prototype chain',body:`
 <p>JavaScript has no classes underneath. It has <b>objects that link to other objects</b>, and a lookup
-rule. Learning that first makes <code>class</code> obvious later; learning <code>class</code> first
-leaves you unable to explain anything that goes wrong.</p>
+rule. Learn that first and <code>class</code> is obvious later. Learn <code>class</code> first
+and you can't explain anything that goes wrong.</p>
 
 <h4>The rule</h4>
 <p>Every object has a hidden link to another object, its <b>prototype</b>. When you read a property the
@@ -25,9 +25,9 @@ Object.hasOwn(dog, "speak")               // false - inherited, not own
 "speak" in dog                            // true  - 'in' searches the CHAIN</div>
 <p>The distinction between <b>own</b> and <b>inherited</b> is the one that matters in practice.
 <code>Object.keys</code>, <code>JSON.stringify</code> and spread copy only <b>own</b> properties, so
-inherited methods vanish from a spread copy, a genuinely surprising result until you know the rule.</p>
+inherited methods vanish from a spread copy. That surprises people until they know the rule.</p>
 
-<h4>Writing does not follow the chain</h4>
+<h4>Writing doesn't follow the chain</h4>
 <div class="codeSample" data-hl>dog.speak = () =&gt; "woof";     // creates an OWN property on dog.
                               // animal.speak is untouched.
 delete dog.speak;             // now dog.speak() finds animal's again
@@ -45,7 +45,7 @@ function(){}──▶ Function.prototype  (call, apply, bind)
 // so arr.map is not on your array - it is one link up, shared by EVERY
 // array in the program. that is the memory win prototypes exist for.</div>
 
-<h4>Constructor functions: the old way, still worth reading</h4>
+<h4>Constructor functions: the old way</h4>
 <div class="codeSample" data-hl>function Dog(name) { this.name = name; }        // capitalised by convention
 Dog.prototype.speak = function () { return this.name + " says woof"; };
 
@@ -55,8 +55,8 @@ const rex = new Dog("Rex");
 //   2. link its prototype to Dog.prototype
 //   3. call Dog with \`this\` set to the new object
 //   4. return it (unless the function returns its own object)</div>
-<p>Class syntax does exactly this, with better ergonomics. Nothing new was added to the language, which
-is why a <code>class</code> is still a function, and <code>typeof Dog</code> is <code>"function"</code>.</p>
+<p>Class syntax does this, with better ergonomics. Nothing new was added to the language.
+A <code>class</code> is still a function, and <code>typeof Dog</code> is <code>"function"</code>.</p>
 
 <h4>Two warnings</h4>
 <p><b>Never modify built-in prototypes.</b> Adding <code>Array.prototype.last</code> affects every array
@@ -86,8 +86,9 @@ behavior:`The shadowing case executes the ordering: with the key in both, "own" 
 hints:['Two checks in order, own first.','includes() answers whether a key is present.','Falling off the end gives undefined, not an error.']}},
 
 {id:'js23',title:'Classes',body:`
-<p><code>class</code> is <b>syntax over prototypes</b>. Everything it does could be written with
-constructor functions, and knowing that is what lets you debug it, but the syntax is clearer, and it is
+
+<p><code>class</code> is <b>syntax over prototypes</b>. A <b>prototype</b> is the hidden object another object links to and borrows properties from, the chain the previous lesson covered. Everything it does could be written with
+constructor functions, and knowing that's what lets you debug it. But the syntax is clearer, and it's
 what modern code uses.</p>
 
 <div class="codeSample" data-hl>class Account {
@@ -116,9 +117,9 @@ a.deposit(50).deposit(25);          // chaining works because deposit returns th
 a.balance;                          // 175 - via the getter, no parentheses
 a.#balance;                         // SyntaxError - private outside the class</div>
 
-<h4>What the syntax actually adds</h4>
-<p><b>Private fields</b> (<code>#</code>) are genuinely new: they cannot be reached from outside at all,
-unlike the old underscore convention which was a request rather than a rule. Everything else is
+<h4>What the syntax adds</h4>
+<p><b>Private fields</b> (<code>#</code>) are new: they can't be reached from outside at all.
+The old underscore convention was a request, not a rule. Everything else is
 ergonomics: methods land on the prototype automatically, and <code>new</code> is enforced.</p>
 <div class="codeSample" data-hl>Account("Ada");        // TypeError: cannot be invoked without 'new'
 // a constructor function would have silently run with this = undefined,
@@ -139,7 +140,7 @@ class Foo {}
 // by a subclass in the usual way. its one real use is a handler you must
 // detach from the object and pass elsewhere without losing \`this\`.</div>
 
-<h4>The <code>this</code> problem has not gone away</h4>
+<h4>The <code>this</code> problem hasn't gone away</h4>
 <div class="codeSample" data-hl>const a = new Account("Ada");
 const fn = a.deposit;
 fn(50);                       // TypeError - detached, so \`this\` is undefined
@@ -147,8 +148,8 @@ fn(50);                       // TypeError - detached, so \`this\` is undefined
 
 setTimeout(() =&gt; a.deposit(50), 100);      // the dot survives
 setTimeout(a.deposit.bind(a), 100);        // or bind it</div>
-<p>Class syntax makes this <i>louder</i> (you get a clear <code>TypeError</code> rather than a silent
-write to the global object), but the rule is unchanged: <code>this</code> comes from the call.</p>`,
+<p>Class syntax makes this <i>louder</i>: you get a clear <code>TypeError</code> rather than a silent
+write to the global object. The rule is unchanged: <code>this</code> comes from the call.</p>`,
 docs:[['MDN (Classes)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes'],['MDN (Private properties)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_properties'],['MDN (static)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/static']],
 exs:[
 {title:'A class with private state',diff:'easy',lang:'js',
@@ -254,7 +255,7 @@ hints:['Both the items array and the capacity should be private fields.','add() 
 
 {id:'js24',title:'Inheritance, and when not to use it',body:`
 <p><code>extends</code> links one class's prototype to another's, so instances inherit through the chain
-from the first lesson. The syntax is small; the judgment about <i>whether</i> to inherit is the real
+from the first lesson. The syntax is small. The judgment about <i>whether</i> to inherit is the real
 content here.</p>
 
 <div class="codeSample" data-hl>class Animal {
@@ -274,16 +275,16 @@ class Dog extends Animal {
 
 // rex ──▶ Dog.prototype ──▶ Animal.prototype ──▶ Object.prototype ──▶ null
 new Dog("Rex", "collie") instanceof Animal   // true - instanceof walks the chain</div>
-<p><code>super(...)</code> before <code>this</code> is not a style rule: the parent constructor is what
+<p><code>super(...)</code> before <code>this</code> isn't a style rule. The parent constructor is what
 creates the object, so touching <code>this</code> first is a <code>ReferenceError</code>. Omitting
 <code>super()</code> entirely in a subclass constructor is the same error.</p>
 
 <h4>Overriding, and the substitution rule</h4>
 <p>A subclass may replace a method, but callers holding an <code>Animal</code> reference must not be
 surprised. If <code>Dog.speak()</code> throws where <code>Animal.speak()</code> returned a string, or
-demands arguments the parent did not, you have broken every function that accepts an
-<code>Animal</code>. That constraint (the Liskov substitution principle) is what makes inheritance safe,
-and it is violated more often than it is honored.</p>
+demands arguments the parent didn't, you have broken every function that accepts an
+<code>Animal</code>. This constraint is the Liskov substitution principle. It's what makes inheritance safe,
+and it's violated more often than it's honored.</p>
 
 <h4>The judgment: is-a versus has-a</h4>
 <div class="codeSample" data-hl>INHERIT when the subclass genuinely IS the parent, everywhere the parent
@@ -304,19 +305,19 @@ class Stack {                     // composition: you expose only what you mean
   pop() { return this.#items.pop(); }
   get size() { return this.#items.length; }
 }</div>
-<p><b>Inheritance couples you to everything the parent has, forever.</b> Composition lets you expose a
-deliberate surface. Prefer composition, and reach for inheritance when the hierarchy is genuinely stable
-and the substitution really holds.</p>
+<p><b>Inheritance couples you to everything the parent has.</b> Composition lets you expose a
+deliberate surface. Prefer composition. Reach for inheritance when the hierarchy is stable
+and the substitution holds.</p>
 
 <h4>Deep hierarchies are the failure mode</h4>
-<p>Three or more levels and a change at the top ripples unpredictably, while understanding any single
-class means reading four files. In JavaScript this matters more than in Java, because there is no
+<p>Three or more levels and a change at the top ripples unpredictably. Understanding any single
+class means reading four files. In JavaScript this matters more than in Java: there's no
 compiler-enforced contract to lean on and no interfaces to program against, so the discipline has to
 come from you.</p>
 
 <h4>Extending built-ins</h4>
-<p><code>class MyError extends Error</code> is the one everyone needs, and it has a detail: set
-<code>this.name</code> yourself, because the default is inherited and your subclass will otherwise
+<p><code>class MyError extends Error</code> is the one everyone needs, and it has a detail. Set
+<code>this.name</code> yourself. The default is inherited, and your subclass will otherwise
 identify itself as <code>"Error"</code> in logs. The errors stream covers this properly.</p>`,
 docs:[['MDN (extends)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/extends'],['MDN (super)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/super'],['MDN (instanceof)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof']],
 ex:{title:'Inherit or compose?',diff:'easy',lang:'js',
@@ -339,13 +340,14 @@ behavior:`All five combinations execute, and the fourth is the one worth noticin
 hints:['Three conditions must all hold for inheritance.','The third is negated: deep hierarchies argue against inheriting.','Every other path returns compose.']}},
 
 {id:'js25',title:'Iterators, symbols and making your own objects work',body:`
-<p>Why can you write <code>for (const x of myArray)</code> but not <code>for (const x of myObject)</code>?
-Because iteration is a <b>protocol</b>, and arrays implement it. Once you know the protocol, you can make
+
+<p>You can write <code>for (const x of myArray)</code> but not <code>for (const x of myObject)</code>.
+Iteration is a <b>protocol</b>, and arrays implement it. Once you know the protocol, you can make
 anything work with <code>for...of</code>, spread and destructuring.</p>
 
 <h4>Symbols, briefly</h4>
 <p>A <b>symbol</b> is a unique value usable as a property key. Two symbols are never equal, even with the
-same description, so a symbol key cannot collide with anything, which is why the language uses them for
+same description, so a symbol key can't collide with anything. That's why the language uses them for
 its own hooks.</p>
 <div class="codeSample" data-hl>Symbol("id") === Symbol("id")     // false - always unique
 
@@ -386,11 +388,11 @@ const [a, b] = range;             // and so does destructuring</div>
 // sequence is fine as long as you stop consuming it.
 function* naturals() { let n = 1; while (true) yield n++; }
 const first = naturals().next().value;   // 1, and nothing else computed</div>
-<p>Laziness is the real value: you can express "all the lines in this enormous file" or "every page of
-this API" as a sequence without materializing it, which the Node streams lesson builds on directly.</p>
+<p>A <b>generator</b> is a function written with <code>function*</code> and <code>yield</code> that builds an iterator for you. Laziness is the real value. You can express "all the lines in this huge file" or "every page of
+this API" as a sequence without materializing it. The Node streams lesson builds on this directly.</p>
 
 <h4>Making a plain object iterable</h4>
-<p>Objects are not iterable by default. This is deliberate, since it is ambiguous whether you meant keys,
+<p>Objects aren't iterable by default, on purpose: it's ambiguous whether you meant keys,
 values or entries. Say which:</p>
 <div class="codeSample" data-hl>for (const k of Object.keys(obj)) { }
 for (const [k, v] of Object.entries(obj)) { }
@@ -427,10 +429,10 @@ hints:['A generator method inside the object literal is the shortest correct imp
 ,
 
 {id:'jsgen',title:'Generators in practice, and async iteration',body:`
+
 <p>The last lesson introduced generators as a shortcut for writing iterators. This one is about what they
-are actually <i>for</i>, because a generator is not just less machinery, it is a function that can
-<b>pause</b>, and a function that can pause turns out to solve several problems that nothing else in the
-language solves as cleanly.</p>
+are <i>for</i>. A generator is a function that can <b>pause</b>, and a function that can pause solves
+several problems that nothing else in the language solves as cleanly.</p>
 
 <h4>A generator is a paused machine</h4>
 <div class="codeSample" data-hl>function* steps() {
@@ -443,7 +445,7 @@ g.next()                // logs "one",  returns { value: 1, done: false }
 g.next()                // logs "two",  returns { value: 2, done: false }
 g.next()                // logs "done", returns { value: undefined, done: true }</div>
 <p>Each <code>next()</code> runs the body <i>to the next yield</i> and stops. All the local variables
-survive between calls: the function's whole state is parked, not rebuilt. That is what
+survive between calls. The function's whole state is parked, not rebuilt. That's what
 <code>for...of</code> and spread are driving when they consume one.</p>
 
 <h4>Delegation, and stopping early</h4>
@@ -461,13 +463,13 @@ function* lines() {
 for (const l of lines()) {
   if (l === "b") break;    // break calls the generator's return() -
 }                          // the finally runs. "cleanup" logs here.</div>
-<p>That <code>finally</code> detail is why generators can safely hold resources: a consumer that stops
-early (<code>break</code>, a thrown error, a <code>return</code>) still triggers the cleanup, the same
+<p>That <code>finally</code> detail is why generators can safely hold resources. A consumer that stops
+early (<code>break</code>, a thrown error, a <code>return</code>) still triggers the cleanup. It's the same
 guarantee <code>try/finally</code> gives ordinary code.</p>
 
 <h4>Async iteration: the same idea, awaited</h4>
 <p>A sequence where each item takes time (pages of an API, chunks of a file) combines both machines
-you now know: the iterator protocol and promises.</p>
+you now know: the iterator protocol and promises. A <b>promise</b> is an object that stands for a value you don't have yet, and <code>await</code> picks up the result once it arrives; the async stream covers it properly.</p>
 <div class="codeSample" data-hl>async function* pages(url) {
   while (url) {
     const res = await fetch(url);
@@ -481,14 +483,14 @@ you now know: the iterator protocol and promises.</p>
 for await (const item of pages("/api/items")) {
   if (looksRight(item)) break;       // stop - and NO further pages are fetched
 }</div>
-<p>The consumer reads like a plain loop, but each step awaits a promise, later pages are only requested
-if the loop keeps going, and Node's streams implement exactly this protocol: <code>for await</code>
+<p>The consumer reads like a plain loop, but each step awaits a promise. Later pages are only requested
+if the loop keeps going. Node's streams implement this same protocol: <code>for await</code>
 over a file stream is the reading pattern the Node streams lesson builds on.</p>
 
 <h4>When to reach for one</h4>
 <p>A plain array is still right for a handful of items you already have. Generators earn their place when
-the sequence is <b>large, expensive, or endless</b> (lines of a file, pages of an API, retry delays,
-walks over a tree), because laziness means you only pay for what the consumer actually takes.</p>`,
+the sequence is <b>large, expensive, or endless</b>: lines of a file, pages of an API, retry delays,
+walks over a tree. Laziness means you only pay for what the consumer takes.</p>`,
 docs:[['MDN (function*)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*'],['MDN (for await...of)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of'],['MDN (yield*)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/yield*']],
 ex:{title:'Chunk a list with a generator',diff:'medium',lang:'js',
 run:{call:'chunks',cases:[
@@ -516,9 +518,10 @@ tests:[{d:'declares a generator',re:'function\\s*\\*'},{d:'yields each chunk',re
 behavior:`Five cases execute the whole protocol: the spread in chunks() calls next() until done, and each yield hands out one slice. The generator itself never builds the full result; the same chunkGen could feed a for...of that stops after the first chunk of a million-element list, and would compute exactly one slice.`,
 hints:['Step the index by size, not by one.','slice(i, i + size) is safely clipped at the end of the list.','chunks() just spreads the generator - the exercise is the yield loop.']}},
 {id:'jsproxy',title:'Proxy and Reflect: intercepting the operation itself',body:`
+
 <p>Everything so far has customized what an object <i>holds</i>. A <b>Proxy</b> customizes what happens
 when someone <i>uses</i> it: reading a property, writing one, asking whether a key exists, deleting it,
-listing the keys. You hand the engine a target and a handler, and the handler gets first refusal on each
+listing the keys. You hand the engine a target and a handler. The handler gets first refusal on each
 of those operations.</p>
 
 <div class="codeSample" data-hl>const target = { name: "Ada" };
@@ -540,11 +543,11 @@ p.name = 1;   // TypeError, from your own set trap
 target.name;  // "Ada" - the TARGET is untouched by the refused write</div>
 
 <h4><code>Reflect</code> is the other half</h4>
-<p>Every trap has a matching <code>Reflect</code> method with the same arguments, and it performs exactly
-the operation you intercepted. That gives you a clean way to say "do the normal thing" without
-reimplementing it, and it forwards the <code>receiver</code> so getters on a prototype still see the right
+<p>Each method on the handler is called a <b>trap</b>. Every trap has a matching <code>Reflect</code> method with the same arguments. It performs
+the operation you intercepted, so you can say "do the normal thing" without
+reimplementing it. It also forwards the <code>receiver</code>, so getters on a prototype still see the right
 <code>this</code>. Writing <code>obj[key]</code> inside a <code>get</code> trap works most of the time and
-quietly breaks that case.</p>
+breaks that case.</p>
 <div class="codeSample" data-hl>Reflect.get(obj, key, receiver)      Reflect.set(obj, key, value, receiver)
 Reflect.has(obj, key)                Reflect.ownKeys(obj)
 Reflect.deleteProperty(obj, key)     Reflect.defineProperty(obj, key, desc)
@@ -553,15 +556,15 @@ Reflect.deleteProperty(obj, key)     Reflect.defineProperty(obj, key, desc)
 Reflect.has(o, "x")   // the function form of  "x" in o
 Reflect.ownKeys(o)    // string keys AND symbol keys, unlike Object.keys</div>
 
-<h4>The traps are not allowed to lie</h4>
-<p>A proxy cannot report anything it likes. The specification enforces <b>invariants</b>, and breaking one
-throws a <code>TypeError</code> at the point of the operation rather than silently misleading the caller.
-The two you are most likely to hit: a <code>get</code> trap must return the real value of a
+<h4>The traps can't lie</h4>
+<p>A proxy can't report anything it likes. The specification enforces <b>invariants</b>. Breaking one
+throws a <code>TypeError</code> at the point of the operation rather than misleading the caller.
+The two you're most likely to hit: a <code>get</code> trap must return the real value of a
 non-writable, non-configurable own property of the target, and <code>ownKeys</code> must include every
-non-configurable own key. That is what makes <code>Object.freeze</code> still mean something through a
-proxy, and it is the reason a proxy is a safe thing to hand to code you did not write.</p>
+non-configurable own key. That's what makes <code>Object.freeze</code> still mean something through a
+proxy, and why a proxy is safe to hand to code you didn't write.</p>
 
-<h4>What people actually use them for</h4>
+<h4>What people use them for</h4>
 <div class="codeSample" data-hl>// defaults for missing keys, without touching the stored data
 // negative indexing:  arr.at(-1) as  arr[-1]
 // a read-only view of an object you own, handed to another module
@@ -570,18 +573,17 @@ proxy, and it is the reason a proxy is a safe thing to hand to code you did not 
 // that last one is the big one: Vue's reactivity is a Proxy noticing
 // which properties a render function read, so it knows what to re-run.</div>
 
-<h4>The costs, which are real</h4>
+<h4>The costs</h4>
 <p><b>Identity changes.</b> <code>proxy !== target</code>, so code that compares references, or uses the
-object as a <code>Map</code> key, sees two different objects. <b>Private fields do not pass through.</b>
+object as a <code>Map</code> key, sees two different objects. <b>Private fields don't pass through.</b>
 Calling a method that reads <code>this.#x</code> with the proxy as <code>this</code> throws, because the
-proxy is not the instance the field was installed on; bind the method to the target if you need it.
-<b>It is slower</b>, since every operation goes through a function call rather than an engine fast path.
-And <b>debugging is harder</b>: a value that looks ordinary in a log is running your code on every read,
-which is exactly the kind of surprise the naming lesson warned about.</p>
-<p>So the rule is the same as for inheritance: a proxy is powerful and it earns its place rarely. Reach
-for one when you genuinely need to intercept an operation you do not control. When you own both sides,
-an explicit function is clearer and everybody can read it.</p>
-`,
+proxy isn't the instance the field was installed on. Bind the method to the target if you need it.
+<b>It's slower</b>: every operation goes through a function call rather than an engine fast path.
+And <b>debugging is harder</b>. A value that looks ordinary in a log is running your code on every read,
+the kind of surprise the naming lesson warned about.</p>
+<p>The rule is the same as for inheritance: a proxy is powerful and earns its place rarely. Reach
+for one when you need to intercept an operation you don't control. When you own both sides,
+an explicit function is clearer.</p>`,
 docs:[['MDN (Proxy)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy'],['MDN (Reflect)','https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect'],['TC39 (proxy internal methods and invariants)','https://tc39.es/ecma262/#sec-proxy-object-internal-methods-and-internal-slots']],
 exs:[
 {title:'A default that survives a stored zero',diff:'medium',lang:'js',
