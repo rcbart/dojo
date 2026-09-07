@@ -64,11 +64,13 @@ const giscusBlock = () => (GISCUS.repoId && GISCUS.categoryId) ? `
   </scr` + `ipt>
 </section>` : '';
 
-// Escapes quotes too: esc() output lands inside attributes (content="...",
+// Escapes double quotes too: esc() output lands inside attributes (content="...",
 // title="..."), where a bare quote in front matter would close the attribute
-// and let the rest of the string become markup.
+// and let the rest of the string become markup. Apostrophes are left alone:
+// every attribute here is double-quoted, and encoding them as &#39; put the
+// entity into og:description, which some scrapers show literally.
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  .replace(/"/g, '&quot;');
 
 function inline(s) {
   // escape first, then apply spans; code spans protect their contents
