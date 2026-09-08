@@ -50,6 +50,7 @@ header .tip{font-size:12px;color:var(--muted);max-width:640px}
 nav{width:264px;min-width:264px;background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:12px}
 .trackDivider{margin:12px 4px 6px;padding:6px 9px;font-size:10.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--accent);background:var(--violet-tint);border-radius:7px}
 .streamHd{font-weight:700;padding:8px;border-radius:8px;font-size:13px;display:flex;align-items:center;gap:6px}
+.streamHd .pct{margin-left:auto;font-size:11px;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
 .lessonLink{display:flex;gap:7px;align-items:center;padding:7px 9px;margin-left:8px;border-radius:7px;cursor:pointer;font-size:12.5px;color:var(--muted)}
 .lessonLink:hover{background:var(--teal-tint);color:var(--ink)}
 .lessonLink.active{background:var(--teal-tint);color:var(--accent);font-weight:600}
@@ -630,9 +631,10 @@ function renderNav(){
     const links=s.lessons.map((l,li)=>{
       const done=store.lesson(l.id).done;
       const active=(si===cur.si&&li===cur.li);
-      return `<div class="lessonLink${active?' active':''}" onclick="openLesson(${si},${li})">${done?'✅':'○'} ${esc(l.title)}</div>`;
+      return `<div class="lessonLink${active?' active':''}" onclick="openLesson(${si},${li})">${done?'✅':'○'} ${li+1}. ${esc(l.title)}</div>`;
     }).join('');
-    return `${divider}<div class="streamHd">${ico(s.icon)} ${esc(s.title)}</div>${links}`;
+    const doneN=s.lessons.filter(l=>store.lesson(l.id).done).length;
+    return `${divider}<div class="streamHd">${ico(s.icon)} ${esc(s.title)}<span class="pct" title="${doneN} of ${s.lessons.length} lessons done">${doneN}/${s.lessons.length}</span></div>${links}`;
   }).join('');
 }
 
