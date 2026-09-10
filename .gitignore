@@ -92,3 +92,7 @@ authlint/*
 
 # the FUSE mount leaves these behind for files deleted while still open
 .fuse_hidden*
+/test-results/
+/playwright-report/
+/dist/
+*.tsbuildinfo

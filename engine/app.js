@@ -472,15 +472,15 @@ function openLesson(si,li,ei){
     <div class="editorWrap">
       <div class="scroller" id="scroller">
         <div class="gutter" id="gutter"><div class="gLine cur">1</div></div>
-        <div class="edStack" id="edStack"><pre id="hl"></pre><textarea id="ed" spellcheck="false" aria-label="code editor"></textarea></div>
+        <div class="edStack" id="edStack"><pre id="hl"></pre><textarea id="ed" data-testid="editor" spellcheck="false" aria-label="code editor"></textarea></div>
       </div>
       <div class="statusBar"><span id="lnCol">Ln 1, Col 1</span><span>auto-indent · bracket pairing · Tab / ⇧Tab indent · ⌘/Ctrl+Enter = Run</span></div>
     </div>
     <div class="toolbar">
-      <button class="primary" id="btnRun">▶ Compile & Run Tests</button>
-      <button id="btnHint">💡 Next Step</button>
-      <button id="btnSol">👀 Show me the solution</button>
-      <button id="btnReset">↺ Reset code</button>
+      <button class="primary" id="btnRun" data-testid="run-button">▶ Compile & Run Tests</button>
+      <button id="btnHint" data-testid="hint-button">💡 Next Step</button>
+      <button id="btnSol" data-testid="solution-button">👀 Show me the solution</button>
+      <button id="btnReset" data-testid="reset-button">↺ Reset code</button>
       <span class="tip">your code auto-saves</span>
     </div>
     <div class="ioPanel">
@@ -488,10 +488,10 @@ function openLesson(si,li,ei){
         <div class="ioTab active" id="tab-tests">Test Results<span class="dot" id="dot-tests" style="display:none"></span></div>
         <div class="ioTab" id="tab-console">Console<span class="dot" id="dot-console" style="display:none"></span></div>
       </div>
-      <div class="ioBody" id="io-tests"><span style="color:var(--muted);font-size:12.5px">No runs yet, hit ▶ Compile &amp; Run Tests.</span></div>
-      <div class="ioBody" id="io-console" style="display:none"><div class="cLine dim">— compiler and program output will appear here —</div></div>
+      <div class="ioBody" id="io-tests" data-testid="test-results"><span style="color:var(--muted);font-size:12.5px">No runs yet, hit ▶ Compile &amp; Run Tests.</span></div>
+      <div class="ioBody" id="io-console" data-testid="console-output" style="display:none"><div class="cLine dim">— compiler and program output will appear here —</div></div>
     </div>
-    <div class="doneBanner" id="doneBanner">✅ Lesson complete, nice work! Pick the next lesson in the sidebar.</div>
+    <div class="doneBanner" id="doneBanner" data-testid="done-banner">✅ Lesson complete, nice work! Pick the next lesson in the sidebar.</div>
     <div class="solution" id="solBox" hidden><div class="codeSample">${highlight(e.solution)}</div></div>
     ${depthPanels(s,l,e)}
   </div>`:''}
@@ -992,7 +992,7 @@ function renderQuiz(l){
   const qs=window.__QZ||(l&&l.quiz); if(!qs||!qs.length)return '';
   return `<div class="quizBox"><h3>🧠 Quick check</h3><p class="quizNote">Pick a wrong answer and it tells you what is wrong with <em>that</em> answer, not just which one was right.</p>`+qs.map((q,qi)=>
     `<div class="quizQ"><div class="quizQt">${qi+1}. ${esc(q.q)}</div>`+
-    `<div class="quizOpts">${q.options.map((o,oi)=>`<button class="quizOpt" data-qi="${qi}" data-oi="${oi}" onclick="quizPick(${qi},${oi})">${esc(o)}</button>`).join('')}</div>`+
+    `<div class="quizOpts">${q.options.map((o,oi)=>`<button class="quizOpt" data-testid="quiz-option" data-qi="${qi}" data-oi="${oi}" onclick="quizPick(${qi},${oi})">${esc(o)}</button>`).join('')}</div>`+
     `<div class="quizWhy" id="quizWhy-${qi}" hidden></div></div>`).join('')+`</div>`;
 }
 function quizPick(qi,oi){

@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/engine%20tests-86-2ea44f" alt="engine unit tests">
   <img src="https://img.shields.io/badge/executed%20exercises-194-06b6d4" alt="exercises graded by real execution">
   <img src="https://img.shields.io/badge/CI%20gates-18-2ea44f" alt="CI gates">
-  <img src="https://img.shields.io/badge/deps-zero-111827" alt="zero dependencies">
+  <img src="https://img.shields.io/badge/runtime%20deps-zero-111827" alt="zero runtime dependencies">
 </p>
 
 # Dojo 🥋
