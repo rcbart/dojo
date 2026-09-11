@@ -120,6 +120,12 @@ jobs:
       # Gate 13. The published surface is written under Ron's name, so it holds
       # to the same rules as a blog post: no em dashes, no British spellings, no
       # LLM filler, no leftover placeholders. Prose only, code is exempt.
+      # Nineteenth gate. The guide ships code a reader will paste, and a wrong
+      # snippet fails in their editor rather than in our build, which is the
+      # same invisibility the dogfooding gate was written for.
+      - name: Verify every code block in the guide parses
+        run: python3 scripts/verify-code-blocks.py blog/_mcp-auth-guide/*.md
+
       - name: Verify the published prose reads like Ron wrote it
         run: |
           python3 scripts/verify-voice-content.py \
