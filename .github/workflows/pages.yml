@@ -124,6 +124,7 @@ jobs:
         run: |
           python3 scripts/verify-voice-content.py \
             docs/home.html docs/landing.html skills-rubric.html \
+            blog/_mcp-auth-guide/*.md \
             content/streams/*.js identity-dojo/content/streams/*.js \
             js-dojo/content/streams/*.js posts/*.md \
             fundamentals-crash-course/web/*.md docker-crash-course/web/*.md \

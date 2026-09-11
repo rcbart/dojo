@@ -43,10 +43,12 @@ print()
 
 HARD = {
     'em dash': r'—',
-    'British spelling': r'\b(centre|colour|behaviour|organis|recognis|apologis|'
+    # 'programme' is kept out of the open-ended stem group on purpose: with a
+    # trailing [a-z]* it matches the American 'programmer'. It needs a boundary.
+    'British spelling': r'\b(?:(?:centre|colour|behaviour|organis|recognis|apologis|'
                         r'analyse|labelled|travelled|whilst|learnt|realis|favour|honour|'
                         r'neighbour|flavour|rumour|humour|'
-                        r'prioritis|utilis|defence|licence|programme)[a-z]*',
+                        r'prioritis|utilis|defence|licence)[a-z]*|programmes?\b)',
     'LLM vocabulary': r'\b(delve|leverage|robust|seamless|myriad|pivotal|crucial|'
                       r'tapestry|realm|underscore|testament)\b',
     'unfilled placeholder': r'\[[A-Za-z][^\]]{4,}\]',
