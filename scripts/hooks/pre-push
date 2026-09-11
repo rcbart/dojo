@@ -1,0 +1,30 @@
+#!/bin/sh
+# Safety net: refuse to push any commit whose tree contains private
+# interview / architecture-design notes. These live in the local overlay
+# repo (.git-local, via `git private ...`) and must never reach origin.
+PRIVATE='^(blog/|ARCHITECTURE\.md|ARCHITECTURE_INTERVIEW\.md|INTERVIEW_SENIOR_EM_GUIDE\.md|CLAUDE\.md|DESIGN_AND_TRADEOFFS\.md|DESIGN_AND_TRADEOFFS/|private-do-not-commit/|architecture-designs/|\.git-local)'
+fail=0
+while read local_ref local_sha remote_ref remote_sha; do
+  # deleting a remote ref pushes no content
+  case "$local_sha" in *[!0]*) ;; *) continue ;; esac
+  if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+    range="$local_sha"
+  else
+    range="$remote_sha..$local_sha"
+  fi
+  for c in $(git rev-list "$range" 2>/dev/null); do
+    hits=$(git ls-tree -r --name-only "$c" | grep -E "$PRIVATE")
+    if [ -n "$hits" ]; then
+      echo "PUSH BLOCKED: commit $c contains private local-only files:" >&2
+      echo "$hits" | sed 's/^/    /' >&2
+      fail=1
+    fi
+  done
+done
+if [ "$fail" -eq 1 ]; then
+  echo "" >&2
+  echo "These notes belong in the local overlay repo only (git private ...)." >&2
+  echo "Remove them from the pushed history (git rm --cached + rebase/amend) and retry." >&2
+  exit 1
+fi
+exit 0
