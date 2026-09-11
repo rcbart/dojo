@@ -237,7 +237,7 @@ node build.js            # produce dist/index.html (+ devdojo.html copy)
 
 The build output is a single, dependency-free HTML file; open `devdojo.html` directly in a browser,
 or host `dist/index.html` on any static host. Generated files are gitignored; only source is
-versioned. In CI, 19 gates have to pass before anything deploys: the engine unit tests, content
+versioned. In CI, 18 gates have to pass before anything deploys: the engine unit tests, content
 verification for each dojo, the execution gate, the Java compile gate, lesson depth, the cloud-native
 check, color contrast, a run check on every built page, two quiz-balance gates, the home-page stats
 check, a prose check, sitemap resolution, internal link resolution including fragments, a check that
