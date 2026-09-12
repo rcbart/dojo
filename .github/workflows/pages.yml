@@ -130,6 +130,13 @@ jobs:
             kubernetes-crash-course/web/*.md envoy-crash-course/web/*.md \
             istio-crash-course/web/*.md
 
+      # Scoped to posts/ on purpose. The thresholds are set for narrative prose,
+      # and the crash-course lesson pages are terse by design: short command-led
+      # lines score as low burstiness and read correctly that way. Those are
+      # covered by tells.js and the voice gate instead.
+      - name: Verify the published posts read like prose, not like a machine
+        run: python3 scripts/verify-readability.py posts/*.md
+
       # One Pages site. The root is the roniam.dev portfolio home plus the blog
       # (both emitted by scripts/build-blog.js from blog/*.md and docs/home.html);
       # each course keeps its own path, and the old course landing survives at

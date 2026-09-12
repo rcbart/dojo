@@ -36,9 +36,15 @@ SECTION_H = re.compile(r'^##\s+([0-9]+|[A-Z])\.([0-9a-z]+)\b', re.M)
 # names its document straight after, and the book's own sections are one level
 # deep (12.a, 15.3) while specs go deeper (7.5.1). Both tests are applied.
 REFS = [
-    ('chapter', re.compile(r'\bchapters?\s+(\d+)\b', re.I)),
-    ('chapter', re.compile(r'\(ch\.\s*(\d+)[^)]*\)')),
-    ('section', re.compile(r'\bsections?\s+(\d+\.[0-9a-z]+)(?![0-9a-z.])')),
+    # "(ch. 8, 17)" and "Ch. 9, 21" cite two chapters each. Capturing only the
+    # first number is how a wrong second one survived a renumbering, so the whole
+    # run is captured here and split into numbers below.
+    ('chapter-run', re.compile(r'\bch(?:\.|apters?)\s*'
+                               r'(\d+(?:\s*(?:,|and)\s*\d+)*)', re.I)),
+    # re.I matters: "Section 15.3 covers..." at the start of a sentence was
+    # invisible to a lowercase-only pattern, which is how five references to a
+    # section deleted in a split went on resolving for weeks.
+    ('section', re.compile(r'\bsections?\s+(\d+\.[0-9a-z]+)(?![0-9a-z.])', re.I)),
     ('section', re.compile(r'§\s*([0-9]+\.[0-9a-z]+|[A-Z]\.[0-9a-z]+)(?![0-9a-z.])')),
     ('appendix', re.compile(r'\bAppendix\s+([A-Z])\b')),
 ]
@@ -75,15 +81,22 @@ def main(patterns):
     broken, checked = [], 0
     for path in files:
         for lineno, line in enumerate(open(path, encoding='utf-8'), 1):
-            if line.lstrip().startswith(('<!--', '|')):
-                continue                       # ledger comments and index tables
+            if line.lstrip().startswith('<!--'):
+                continue                       # ledger comments never ship
+            if line.lstrip().startswith('|') and 'diagram-index' in path:
+                continue                       # the diagram index cites by design
             for kind, pattern in REFS:
                 for m in pattern.finditer(line):
                     if EXTERNAL.match(line[m.end():]):
                         continue                   # citing a spec, not this book
                     target = m.group(1)
                     checked += 1
-                    if kind == 'chapter' and target not in chapters:
+                    if kind == 'chapter-run':
+                        checked += len(re.findall(r'\d+', target)) - 1
+                        for one in re.findall(r'\d+', target):
+                            if one not in chapters:
+                                broken.append((path, lineno, f'chapter {one}'))
+                    elif kind == 'chapter' and target not in chapters:
                         broken.append((path, lineno, f'chapter {target}'))
                     elif kind == 'appendix' and target not in appendices:
                         broken.append((path, lineno, f'Appendix {target}'))

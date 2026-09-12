@@ -4,7 +4,7 @@
 # These are not in .github/workflows/pages.yml on purpose. The guide lives in
 # blog/, which is gitignored and never reaches a CI checkout, so a workflow
 # step pointing at it fails on a fresh clone with "no files matched". Run this
-# before handing the guide to anyone, and wire these three into the workflow on
+# before handing the guide to anyone, and wire these four into the workflow on
 # the day the guide moves to a published path.
 #
 #   sh scripts/check-guide.sh
@@ -16,6 +16,9 @@ python3 scripts/verify-cross-refs.py blog/_mcp-auth-guide/*.md
 
 echo "== code blocks"
 python3 scripts/verify-code-blocks.py blog/_mcp-auth-guide/*.md
+
+echo "== readability"
+python3 scripts/verify-readability.py blog/_mcp-auth-guide/*.md
 
 echo "== voice"
 python3 scripts/verify-voice-content.py blog/_mcp-auth-guide/*.md
