@@ -80,14 +80,31 @@ def main(patterns):
 
     broken, checked = [], 0
     for path in files:
-        for lineno, line in enumerate(open(path, encoding='utf-8'), 1):
-            if line.lstrip().startswith('<!--'):
+        lines = open(path, encoding='utf-8').read().split('\n')
+        in_comment = False
+        for lineno, line in enumerate(lines, 1):
+            stripped = line.lstrip()
+            # Ledger comments run to several lines. Skipping only the line that
+            # opens one left every continuation line being checked, which is how
+            # a note *about* another document's section numbering failed a build.
+            if in_comment:
+                if '-->' in line:
+                    in_comment = False
+                continue
+            if stripped.startswith('<!--'):
+                if '-->' not in line:
+                    in_comment = True
                 continue                       # ledger comments never ship
-            if line.lstrip().startswith('|') and 'diagram-index' in path:
+            if stripped.startswith('|') and 'diagram-index' in path:
                 continue                       # the diagram index cites by design
+            # The qualifier that marks a citation as somebody else's document can
+            # wrap: "section 13.15 of the\ndraft". Looking at the rest of this
+            # line only, the gate saw " of the" and called it an internal
+            # reference. So the next line comes along for the test.
+            nxt = lines[lineno] if lineno < len(lines) else ''
             for kind, pattern in REFS:
                 for m in pattern.finditer(line):
-                    if EXTERNAL.match(line[m.end():]):
+                    if EXTERNAL.match(line[m.end():] + ' ' + nxt.strip()):
                         continue                   # citing a spec, not this book
                     target = m.group(1)
                     checked += 1
