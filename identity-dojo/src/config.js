@@ -67,4 +67,5 @@ const DOJO_PATH = [
    card instead. Add a person the day they finish, not later. */
 const DOJO_ALPHA = [
   { name: 'Dima Galat', url: 'https://github.com/dimagalat' },
+  { name: 'Keydan Bruce', url: 'https://www.linkedin.com/in/keydan-bruce' },
 ];
