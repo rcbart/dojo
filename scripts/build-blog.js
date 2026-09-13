@@ -82,7 +82,28 @@ function inline(s) {
   return out;
 }
 
-function md(src) {
+// A ```mermaid fence is SOURCE, not a picture, and the site ships no diagram
+// library. So the fence is replaced at build time by an SVG that
+// scripts/render-diagrams.js produced from that exact source. The renderer
+// writes <n>.svg and <n>.mmd side by side; if the fence no longer matches the
+// .mmd it was rendered from, the build fails rather than shipping a diagram
+// that says something the prose no longer does. Same idea as
+// verify-code-blocks.py: a wrong picture is obvious, a stale one is not.
+function diagramFor(ctx, source, title) {
+  const n = ++ctx.diagrams;
+  const base = ctx.dir === 'posts'
+    ? path.join(ROOT, 'posts', 'diagrams', ctx.slug)
+    : path.join(ROOT, 'blog', '_diagrams', ctx.slug);
+  const svg = path.join(base, `${n}.svg`), mmd = path.join(base, `${n}.mmd`);
+  if (!fs.existsSync(svg) || !fs.existsSync(mmd))
+    throw new Error(`${ctx.slug}: diagram ${n} has no rendered SVG at ${path.relative(ROOT, svg)}. ` +
+      `Run: node scripts/render-diagrams.js ${ctx.dir}/<post>.md`);
+  if (fs.readFileSync(mmd, 'utf8') !== source)
+    throw new Error(`${ctx.slug}: diagram ${n} was edited after it was rendered (fence differs from ${path.relative(ROOT, mmd)}). Re-render it.`);
+  return `<figure class="diagram">${fs.readFileSync(svg, 'utf8')}<figcaption>${inline(title)}</figcaption></figure>`;
+}
+
+function md(src, ctx = { dir: 'posts', slug: '', diagrams: 0 }) {
   // Editorial apparatus never ships. Drafts under blog/ carry HTML comments
   // holding open [ASK]s, rulings on which lines are the author's, and facts
   // explicitly marked never-to-be-published. Publishing is a git mv into
@@ -100,7 +121,15 @@ function md(src) {
       flush();
       const lang = l.slice(3).trim(); const buf = []; i++;
       while (i < lines.length && !lines[i].startsWith('```')) buf.push(lines[i++]);
-      i++; out.push(`<pre class="code"${lang ? ` data-lang="${esc(lang)}"` : ''}><code>${esc(buf.join('\n'))}</code></pre>`);
+      i++;
+      if (lang === 'mermaid' || lang.startsWith('mermaid ')) {
+        // ```mermaid <title>   the title is the figcaption, and it is required:
+        // a diagram a reader cannot name is one they cannot refer back to.
+        const title = lang.slice('mermaid'.length).trim();
+        if (!title) throw new Error(`${ctx.slug}: a mermaid fence has no title. Write it as \`\`\`mermaid <what the diagram shows>`);
+        out.push(diagramFor(ctx, buf.join('\n') + '\n', title)); continue;
+      }
+      out.push(`<pre class="code"${lang ? ` data-lang="${esc(lang)}"` : ''}><code>${esc(buf.join('\n'))}</code></pre>`);
       continue;
     }
     if (/^#{1,4} /.test(l)) { flush(); const d = l.match(/^#+/)[0].length;
@@ -202,6 +231,9 @@ const page = (title, desc, body, root) => `<!doctype html>
   code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;
        background:#ebebf5;border-radius:5px;padding:1.5px 5px}
   pre.code code{background:none;padding:0;font-size:inherit}
+  figure.diagram{margin:22px 0;padding:14px 12px;background:#fff;border:1px solid #e2e0dc;border-radius:10px;overflow-x:auto}
+  figure.diagram svg{display:block;max-width:100%;height:auto;margin:0 auto}
+  figure.diagram figcaption{margin-top:10px;font-size:.92rem;color:#4a5568;text-align:center;line-height:1.45}
   hr{border:0;border-top:1px solid var(--line);margin:30px 0}
   .post{display:block;padding:20px 0;border-bottom:1px solid var(--line);color:inherit}
   .post:hover{text-decoration:none}
@@ -257,7 +289,7 @@ for (const [dir, include, mark] of sources) {
     const [meta, body] = frontMatter(fs.readFileSync(path.join(dp, f), 'utf8'));
     if (mark) meta.title = mark + (meta.title || f);
     const slug = meta.slug || f.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.md$/, '');
-    posts.push({ meta, body, slug, date: meta.date || f.slice(0, 10), draft: Boolean(mark) });
+    posts.push({ meta, body, slug, dir, date: meta.date || f.slice(0, 10), draft: Boolean(mark) });
   }
 }
 posts.sort((a, b) => b.date.localeCompare(a.date));
@@ -269,7 +301,7 @@ for (const p of posts) {
   const html = page(p.meta.title + ' · Ron Bar-Tor', p.meta.description || '',
     `<h1>${esc(p.meta.title)}</h1>` +
     (p.meta.subtitle ? `<p class="psub">${esc(p.meta.subtitle)}</p>` : '') +
-    `<div class="pdate">${fmtDate(p.date)}</div>` + md(p.body) + subscribeBlock() + giscusBlock(), '/');
+    `<div class="pdate">${fmtDate(p.date)}</div>` + md(p.body, { dir: p.dir, slug: p.slug, diagrams: 0 }) + subscribeBlock() + giscusBlock(), '/');
   fs.mkdirSync(path.join(OUT, 'blog', p.slug), { recursive: true });
   fs.writeFileSync(path.join(OUT, 'blog', p.slug, 'index.html'), html);
 }

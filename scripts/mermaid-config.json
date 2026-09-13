@@ -1,0 +1,19 @@
+{
+  "theme": "neutral",
+  "themeVariables": {
+    "noteBkgColor": "#f4f1ea",
+    "noteTextColor": "#1a1a1a",
+    "noteBorderColor": "#c9c3b6",
+    "actorBkg": "#f7f7f7",
+    "actorBorder": "#8a8a8a",
+    "fontSize": "15px"
+  },
+  "sequence": {
+    "wrap": true,
+    "width": 230,
+    "noteMargin": 8,
+    "messageMargin": 40,
+    "boxMargin": 12,
+    "useMaxWidth": true
+  }
+}
