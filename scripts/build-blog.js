@@ -285,7 +285,11 @@ for (const [dir, include, mark] of sources) {
   if (!include) continue;
   const dp = path.join(ROOT, dir);
   if (!fs.existsSync(dp)) continue;
-  for (const f of fs.readdirSync(dp).filter(f => f.endsWith('.md'))) {
+  // Working files in blog/ start with an underscore: archives of earlier
+  // drafts, ledgers, plans, read copies. They are not drafts and a preview
+  // build must not render them (an archived draft can share a slug with the
+  // live one, or carry diagrams that were never rendered).
+  for (const f of fs.readdirSync(dp).filter(f => f.endsWith('.md') && !f.startsWith('_'))) {
     const [meta, body] = frontMatter(fs.readFileSync(path.join(dp, f), 'utf8'));
     if (mark) meta.title = mark + (meta.title || f);
     const slug = meta.slug || f.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.md$/, '');

@@ -48,8 +48,11 @@ while ((m = re.exec(md))) fences.push(m[1]);
 if (!fences.length) { console.log(`${src}: no mermaid fences`); process.exit(0); }
 
 // Puppeteer config: let mmdc find the browser we have, sandbox off for CI-ish
-// containers. Written next to the output so nothing leaks into the repo root.
-const pptr = path.join(base, '.puppeteer.json');
+// containers. Written to the OS temp dir, never into the repo: the repo may be
+// a mount where unlink is not permitted, and a leftover config next to the
+// diagrams would be committed with them.
+const os = require('os');
+const pptr = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'mmdc-')), 'puppeteer.json');
 const exe = process.env.PUPPETEER_EXECUTABLE_PATH;
 fs.writeFileSync(pptr, JSON.stringify({
   ...(exe ? { executablePath: exe } : {}),
@@ -79,5 +82,5 @@ fences.forEach((source, i) => {
   fs.writeFileSync(svg, out);
   rendered++;
 });
-fs.unlinkSync(pptr);
+try { fs.rmSync(path.dirname(pptr), { recursive: true, force: true }); } catch (e) { /* temp dir, best effort */ }
 console.log(`${src}: ${fences.length} diagram(s), ${rendered} rendered, ${skipped} unchanged -> ${base}/`);

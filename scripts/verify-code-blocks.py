@@ -27,7 +27,10 @@ import json
 import re
 import sys
 
-FENCE = re.compile(r'^```([A-Za-z0-9_+-]*)\n(.*?)^```', re.S | re.M)
+# The info string may carry a title after the language (```mermaid <caption>),
+# which build-blog.js turns into the figure's caption. Only the first token is
+# the language; the rest of the line is ignored here.
+FENCE = re.compile(r'^```([A-Za-z0-9_+-]*)[^\n]*\n(.*?)^```', re.S | re.M)
 STATUS = re.compile(r'^HTTP/\d(?:\.\d)? \d{3}\b')
 REQUEST = re.compile(r'^[A-Z]{3,7} \S+ HTTP/\d(?:\.\d)?$')
 
