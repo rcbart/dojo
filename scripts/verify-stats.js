@@ -20,9 +20,12 @@ function fromSource(root) {
 
 function fromSnapshot(rel) {
   // Pull just the STREAMS.push(...) blocks out of the built page and run those.
+  // The data ends at the //__STREAMS__ marker that ml-dojo's stream footer
+  // emits. Cutting at the last '});' in the page is not safe: the boot code
+  // after the marker contains one too, and slicing into it is a syntax error.
   const html = fs.readFileSync(rel, 'utf8');
   const i = html.indexOf('STREAMS.push(');
-  const j = html.lastIndexOf('});') + 3;
+  const j = html.indexOf('//__STREAMS__', i);
   if (i < 0 || j <= i) throw new Error(rel + ': no stream data found');
   return new Function('window', '"use strict";const STREAMS=[];' + html.slice(i, j) + ';return STREAMS;')({});
 }
