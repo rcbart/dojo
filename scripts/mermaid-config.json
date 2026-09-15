@@ -14,6 +14,8 @@
     "noteMargin": 8,
     "messageMargin": 40,
     "boxMargin": 12,
-    "useMaxWidth": true
+    "useMaxWidth": true,
+    "actorMargin": 120,
+    "wrapPadding": 12
   }
 }

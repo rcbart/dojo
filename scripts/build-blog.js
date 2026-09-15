@@ -155,6 +155,20 @@ function md(src, ctx = { dir: 'posts', slug: '', diagrams: 0 }) {
       while (i < lines.length && /^[-*] /.test(lines[i])) buf.push(lines[i++].slice(2));
       out.push(`<ul>${buf.map(b => `<li>${inline(b)}</li>`).join('')}</ul>`); continue;
     }
+    // A numbered list: "1. text", with wrapped continuation lines indented.
+    // The number in the source is ignored; the browser counts. Until this
+    // existed the takeaways on every published post ran together as one
+    // paragraph, which is the kind of thing a reader notices and a gate did
+    // not.
+    if (/^\d+\. /.test(l)) {
+      flush(); const buf = [];
+      while (i < lines.length && /^\d+\. /.test(lines[i])) {
+        let item = lines[i++].replace(/^\d+\. /, '');
+        while (i < lines.length && /^\s+\S/.test(lines[i]) && !/^\s*\d+\. /.test(lines[i])) item += ' ' + lines[i++].trim();
+        buf.push(item);
+      }
+      out.push(`<ol>${buf.map(b => `<li>${inline(b)}</li>`).join('')}</ol>`); continue;
+    }
     if (l.trim() === '') { flush(); i++; continue; }
     para.push(l.trim()); i++;
   }
@@ -224,6 +238,7 @@ const page = (title, desc, body, root) => `<!doctype html>
   .pull::before{content:'';position:absolute;top:-1px;left:50%;transform:translateX(-50%);
         width:64px;height:3px;background:var(--grad, linear-gradient(90deg,#f59e0b,#f43f5e 48%,#8b5cf6))}
   @media(max-width:640px){.pull{max-width:none;margin:32px 0;font-size:20px}}
+  ol,ul{margin:14px 0 18px;padding-left:26px} ol li,ul li{margin:0 0 9px;padding-left:4px}
   blockquote{border-left:4px solid var(--accent);margin:22px 0;padding:4px 0 4px 20px;
              font-family:var(--serif);font-style:italic;font-size:19px;color:var(--ink)}
   pre.code{background:#161b26;color:#e2e8f0;border-radius:10px;padding:14px 16px;overflow-x:auto;
@@ -233,6 +248,7 @@ const page = (title, desc, body, root) => `<!doctype html>
   pre.code code{background:none;padding:0;font-size:inherit}
   figure.diagram{margin:22px 0;padding:14px 12px;background:#fff;border:1px solid #e2e0dc;border-radius:10px;overflow-x:auto}
   figure.diagram svg{display:block;max-width:100%;height:auto;margin:0 auto}
+  @media (max-width:640px){figure.diagram svg{min-width:600px;max-width:none}}
   figure.diagram figcaption{margin-top:10px;font-size:.92rem;color:#4a5568;text-align:center;line-height:1.45}
   hr{border:0;border-top:1px solid var(--line);margin:30px 0}
   .post{display:block;padding:20px 0;border-bottom:1px solid var(--line);color:inherit}
