@@ -39,7 +39,7 @@ const subscribeBlock = () => `
     <input type="email" name="email" required placeholder="you@example.com" aria-label="Email address">
     <button type="submit">Subscribe</button>
   </form>
-  <small>Monthly-ish, when the writing earns it. No tracking, unsubscribe anytime.</small>
+  <small>When the writing earns it. No tracking, unsubscribe anytime.</small>
 </div>`;
 
 const giscusBlock = () => (GISCUS.repoId && GISCUS.categoryId) ? `
