@@ -103,6 +103,17 @@ function diagramFor(ctx, source, title) {
   return `<figure class="diagram">${fs.readFileSync(svg, 'utf8')}<figcaption>${inline(title)}</figcaption></figure>`;
 }
 
+// Heading text -> id: lowercase, markup stripped, runs of anything that is
+// not a letter or digit become one hyphen. "Which one, and when" ->
+// which-one-and-when. Stable, so links to sections survive re-renders.
+function headingId(ctx, text) {
+  const base = text.replace(/[*_`'\u2019]/g, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'section';
+  ctx.ids = ctx.ids || {};
+  const n = (ctx.ids[base] = (ctx.ids[base] || 0) + 1);
+  return n === 1 ? base : `${base}-${n}`;
+}
+
 function md(src, ctx = { dir: 'posts', slug: '', diagrams: 0 }) {
   // Editorial apparatus never ships. Drafts under blog/ carry HTML comments
   // holding open [ASK]s, rulings on which lines are the author's, and facts
@@ -135,7 +146,11 @@ function md(src, ctx = { dir: 'posts', slug: '', diagrams: 0 }) {
     if (/^#{1,4} /.test(l)) { flush(); const d = l.match(/^#+/)[0].length;
       // the post title is the page's h1, so body headings start at h2.
       // '## Section' must render h2: mapping it to h3 skipped a level.
-      const lvl = Math.max(2, d); out.push(`<h${lvl}>${inline(l.slice(d + 1))}</h${lvl}>`); i++; continue; }
+      // Every heading gets an id from its text, so a post can link to its
+      // own sections (the SSO post opens with a map of them) and a reader
+      // can send a link to one. Duplicates within a post get a suffix.
+      const lvl = Math.max(2, d); const text = l.slice(d + 1);
+      out.push(`<h${lvl} id="${headingId(ctx, text)}">${inline(text)}</h${lvl}>`); i++; continue; }
     if (/^---+\s*$/.test(l)) { flush(); out.push('<hr>'); i++; continue; }
     // A pull quote: the one line in the piece worth stopping on. Marked '>> '
     // so it stays distinct from a blockquote, which is a callout or a citation.
@@ -154,6 +169,22 @@ function md(src, ctx = { dir: 'posts', slug: '', diagrams: 0 }) {
       flush(); const buf = [];
       while (i < lines.length && /^[-*] /.test(lines[i])) buf.push(lines[i++].slice(2));
       out.push(`<ul>${buf.map(b => `<li>${inline(b)}</li>`).join('')}</ul>`); continue;
+    }
+    // A pipe table: a header row, a |---| separator, then rows. Cells are
+    // inline markdown. Wrapped in a scrolling div so a wide table never makes
+    // the page scroll sideways on a phone. Until this existed a table shipped
+    // as its own source text, pipes and all.
+    if (/^\|/.test(l)) {
+      flush(); const rows = [];
+      while (i < lines.length && /^\|/.test(lines[i])) rows.push(lines[i++]);
+      const cells = r => r.replace(/^\|/, '').replace(/\|\s*$/, '').split('|').map(c => c.trim());
+      const isSep = r => /^\|\s*:?-{2,}/.test(r);
+      const head = cells(rows[0]);
+      const body = rows.slice(1).filter(r => !isSep(r)).map(cells);
+      out.push('<div class="tablewrap"><table><thead><tr>' +
+        head.map(h => `<th>${inline(h)}</th>`).join('') + '</tr></thead><tbody>' +
+        body.map(r => '<tr>' + r.map((c, k) => k === 0 ? `<th scope="row">${inline(c)}</th>` : `<td>${inline(c)}</td>`).join('') + '</tr>').join('') +
+        '</tbody></table></div>'); continue;
     }
     // A numbered list: "1. text", with wrapped continuation lines indented.
     // The number in the source is ignored; the browser counts. Until this
@@ -226,7 +257,7 @@ const page = (title, desc, body, root) => `<!doctype html>
   .navrow{display:flex;align-items:center;gap:18px;padding:14px 0;font-size:14.5px;font-weight:600}
   .navrow a{color:var(--ink)}
   h1{font-family:var(--serif);font-size:clamp(28px,4.6vw,42px);line-height:1.15;margin:40px 0 8px;font-weight:600;letter-spacing:-.4px}
-  h2{font-family:var(--serif);font-size:26px;margin:36px 0 10px;font-weight:600}
+  h2{font-family:var(--serif);font-size:26px;margin:36px 0 10px;font-weight:600;scroll-margin-top:16px}
   h3{font-size:19px;margin:26px 0 8px}
   .psub{font-family:var(--serif);font-style:italic;font-size:clamp(17px,2.2vw,21px);
         line-height:1.35;color:var(--muted);margin:0 0 14px;max-width:52ch}
@@ -239,6 +270,10 @@ const page = (title, desc, body, root) => `<!doctype html>
         width:64px;height:3px;background:var(--grad, linear-gradient(90deg,#f59e0b,#f43f5e 48%,#8b5cf6))}
   @media(max-width:640px){.pull{max-width:none;margin:32px 0;font-size:20px}}
   ol,ul{margin:14px 0 18px;padding-left:26px} ol li,ul li{margin:0 0 9px;padding-left:4px}
+  .tablewrap{overflow-x:auto;margin:18px 0 22px}
+  table{border-collapse:collapse;font-size:14.5px;line-height:1.4;min-width:560px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  thead th{background:#f4f4f8;font-weight:700} tbody th{font-weight:600;white-space:nowrap}
   blockquote{border-left:4px solid var(--accent);margin:22px 0;padding:4px 0 4px 20px;
              font-family:var(--serif);font-style:italic;font-size:19px;color:var(--ink)}
   pre.code{background:#161b26;color:#e2e8f0;border-radius:10px;padding:14px 16px;overflow-x:auto;
@@ -266,6 +301,7 @@ const page = (title, desc, body, root) => `<!doctype html>
         border-radius:999px;padding:3px 10px;vertical-align:2px;border:1px solid}
   .pill.leadership{color:#9d174d;background:#fff1f2;border-color:#fbcfe8}
   .pill.engineering{color:#115e59;background:#f0fdfa;border-color:#99f6e4}
+  .pill.identity{color:#3730a3;background:#eef2ff;border-color:#c7d2fe}
   .filters{display:flex;gap:8px;margin:6px 0 4px;flex-wrap:wrap}
   .filters button{font:600 13.5px/1 inherit;color:var(--muted);background:var(--panel);
         border:1px solid var(--line);border-radius:999px;padding:8px 15px;cursor:pointer}
@@ -346,12 +382,17 @@ const list = root => posts.map(p =>
 // Two labels, one page. At three posts a filter reads as intent; at thirty it
 // earns its keep; and when it graduates to real sections the metadata is here.
 const filterBar = () => {
-  const cats = [...new Set(posts.flatMap(catsOf))];
+  // One button per category that actually has a post, in a fixed order so
+  // the bar does not reshuffle as posts land. A category with no CSS pill
+  // still gets a button; it just renders in the default pill colors.
+  const order = ['leadership', 'engineering', 'identity'];
+  const present = new Set(posts.flatMap(catsOf));
+  const cats = [...order.filter(c => present.has(c)), ...[...present].filter(c => !order.includes(c)).sort()];
   if (cats.length < 2) return '';
+  const label = c => c.charAt(0).toUpperCase() + c.slice(1);
   return `<div class="filters">
   <button data-f="all" aria-pressed="true">All</button>
-  <button data-f="leadership" aria-pressed="false">Leadership</button>
-  <button data-f="engineering" aria-pressed="false">Engineering</button>
+${cats.map(c => `  <button data-f="${c}" aria-pressed="false">${label(c)}</button>`).join('\n')}
 </div>`;
 };
 const filterScript = () => posts.length ? `
