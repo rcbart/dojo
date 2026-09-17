@@ -160,6 +160,15 @@ function md(src, ctx = { dir: 'posts', slug: '', diagrams: 0 }) {
       while (i < lines.length && /^>> ?/.test(lines[i])) buf.push(lines[i++].replace(/^>> ?/, ''));
       out.push(`<p class="pull">${inline(buf.join(' '))}</p>`); continue;
     }
+    // An informational callout, set apart from the argument: '>! Label: text'.
+    // Rendered as an aside, not a quotation, so it doesn't take the citation style.
+    if (/^>! /.test(l)) {
+      flush(); const buf = [];
+      while (i < lines.length && /^>! ?/.test(lines[i])) buf.push(lines[i++].replace(/^>! ?/, ''));
+      const m = buf.join(' ').match(/^([A-Za-z][^:]{0,24}):\s*(.*)$/s);
+      const label = m ? `<strong>${inline(m[1])}</strong> ` : '';
+      out.push(`<aside class="callout">${label}${inline(m ? m[2] : buf.join(' '))}</aside>`); continue;
+    }
     if (/^> /.test(l)) {
       flush(); const buf = [];
       while (i < lines.length && /^> ?/.test(lines[i])) buf.push(lines[i++].replace(/^> ?/, ''));
@@ -274,6 +283,9 @@ const page = (title, desc, body, root) => `<!doctype html>
   table{border-collapse:collapse;font-size:14.5px;line-height:1.4;min-width:560px}
   th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
   thead th{background:#f4f4f8;font-weight:700} tbody th{font-weight:600;white-space:nowrap}
+  aside.callout{margin:22px 0;padding:12px 16px;border:1px solid var(--line);border-left:4px solid var(--accent);
+               border-radius:8px;background:#f7f7fb;font-size:16px;line-height:1.55}
+  aside.callout strong{margin-right:4px}
   blockquote{border-left:4px solid var(--accent);margin:22px 0;padding:4px 0 4px 20px;
              font-family:var(--serif);font-style:italic;font-size:19px;color:var(--ink)}
   pre.code{background:#161b26;color:#e2e8f0;border-radius:10px;padding:14px 16px;overflow-x:auto;
