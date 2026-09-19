@@ -272,7 +272,7 @@ const page = (title, desc, body, root) => `<!doctype html>
   .skip:focus{left:0}
   .wrap{max-width:760px;margin:0 auto;padding:0 24px 70px}
   nav{border-bottom:1px solid var(--line)}
-  .navrow{display:flex;align-items:center;gap:18px;padding:14px 0;font-size:14.5px;font-weight:600}
+  .navrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:14px 0;font-size:14.5px;font-weight:600}
   .navrow a{color:var(--ink)}
   h1{font-family:var(--serif);font-size:clamp(28px,4.6vw,42px);line-height:1.15;margin:40px 0 8px;font-weight:600;letter-spacing:-.4px}
   h2{font-family:var(--serif);font-size:26px;margin:36px 0 10px;font-weight:600;scroll-margin-top:16px}
@@ -288,10 +288,13 @@ const page = (title, desc, body, root) => `<!doctype html>
         width:64px;height:3px;background:var(--grad, linear-gradient(90deg,#f59e0b,#f43f5e 48%,#8b5cf6))}
   @media(max-width:640px){.pull{max-width:none;margin:32px 0;font-size:20px}}
   ol,ul{margin:14px 0 18px;padding-left:26px} ol li,ul li{margin:0 0 9px;padding-left:4px}
-  .tablewrap{overflow-x:auto;margin:18px 0 22px}
-  table{border-collapse:collapse;font-size:14.5px;line-height:1.4;min-width:560px}
+  /* A wide table steps out of the text column on a wide screen (up to
+     1080px, centered) and scrolls sideways on a narrow one. Row labels
+     wrap; a nowrap label once pushed the SSO table off the page. */
+  .tablewrap{--tw:min(1080px,100vw - 48px);width:var(--tw);margin:18px 0 22px calc(50% - var(--tw)/2);overflow-x:auto}
+  table{border-collapse:collapse;font-size:14.5px;line-height:1.4;min-width:560px;width:100%}
   th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
-  thead th{background:#f4f4f8;font-weight:700} tbody th{font-weight:600;white-space:nowrap}
+  thead th{background:#f4f4f8;font-weight:700} tbody th{font-weight:600;min-width:120px}
   aside.callout{margin:22px 0;padding:12px 16px;border:1px solid var(--line);border-left:4px solid var(--accent);
                border-radius:8px;background:#f7f7fb;font-size:16px;line-height:1.55}
   aside.callout strong{margin-right:4px}
