@@ -5,6 +5,10 @@
 //   OUT/index.html          = docs/home.html with @@POSTS@@ / @@YEAR@@ filled in
 //   OUT/blog/index.html     = the archive
 //   OUT/blog/<slug>/index.html = one page per post
+//   OUT/<slug>/index.html      = one page per PAGE (front matter page: true):
+//                                a reference kept current in place, with no
+//                                date, outside the archive, the feed and the
+//                                home lists; linked from the nav
 //
 // Markdown subset (all this blog uses): # ## ### headings, ``` fences, `code`,
 // **bold**, *italic*, [text](url), > quotes, - lists, --- rules, paragraphs.
@@ -236,6 +240,11 @@ const fmtDate = iso => new Date(iso + 'T12:00:00Z')
   .toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 
 // shared page chrome for blog pages; same brand as home.html, kept tiny
+// Pages (page: true) get a nav link, by their short title (nav_title) or title.
+// Declared before `page` so the template can call it; pages are read below.
+const pages = [];
+const navPages = root => pages.filter(p => !p.draft || process.env.INCLUDE_DRAFTS === '1')
+  .map(p => `<a href="${root}${p.slug}/">${esc(p.meta.nav_title || p.meta.title.replace(/^\[preview\] /, ''))}</a>`).join('');
 const page = (title, desc, body, root) => `<!doctype html>
 <html lang="en">
 <head>
@@ -324,7 +333,7 @@ const page = (title, desc, body, root) => `<!doctype html>
 <body>
 <a class="skip" href="#content">Skip to content</a>
 <nav><div class="wrap navrow" style="padding-bottom:14px">
-  <a href="${root}">← roniam.dev</a><a href="${root}blog/">Writing</a>
+  <a href="${root}">← roniam.dev</a><a href="${root}blog/">Writing</a>${navPages(root)}
   <span style="margin-left:auto"><a href="${root}identity/">Identity Dojo</a></span>
 </div></nav>
 <main id="content" class="wrap">
@@ -357,10 +366,13 @@ for (const [dir, include, mark] of sources) {
     const [meta, body] = frontMatter(fs.readFileSync(path.join(dp, f), 'utf8'));
     if (mark) meta.title = mark + (meta.title || f);
     const slug = meta.slug || f.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.md$/, '');
-    posts.push({ meta, body, slug, dir, date: meta.date || f.slice(0, 10), draft: Boolean(mark) });
+    const entry = { meta, body, slug, dir, date: meta.date || f.slice(0, 10), draft: Boolean(mark) };
+    (String(meta.page) === 'true' ? pages : posts).push(entry);
   }
 }
 posts.sort((a, b) => b.date.localeCompare(a.date));
+// Pages keep the order they declare (nav: 1, 2, ...), then alphabetical.
+pages.sort((a, b) => (Number(a.meta.nav) || 99) - (Number(b.meta.nav) || 99) || a.slug.localeCompare(b.slug));
 
 // ---- emit ----
 fs.mkdirSync(path.join(OUT, 'blog'), { recursive: true });
@@ -372,6 +384,18 @@ for (const p of posts) {
     `<div class="pdate">${fmtDate(p.date)}</div>` + md(p.body, { dir: p.dir, slug: p.slug, diagrams: 0 }) + subscribeBlock() + giscusBlock(), '/');
   fs.mkdirSync(path.join(OUT, 'blog', p.slug), { recursive: true });
   fs.writeFileSync(path.join(OUT, 'blog', p.slug, 'index.html'), html);
+}
+
+// Pages: /<slug>/, no date line, no subscribe block (a reference, not an
+// issue), comments kept. The [preview] mark stays on the title in a draft
+// build, as for posts.
+for (const p of pages) {
+  const html = page(p.meta.title + ' · Ron Bar-Tor', p.meta.description || '',
+    `<h1>${esc(p.meta.title)}</h1>` +
+    (p.meta.subtitle ? `<p class="psub">${esc(p.meta.subtitle)}</p>` : '') +
+    md(p.body, { dir: p.dir, slug: p.slug, diagrams: 0 }) + giscusBlock(), '/');
+  fs.mkdirSync(path.join(OUT, p.slug), { recursive: true });
+  fs.writeFileSync(path.join(OUT, p.slug, 'index.html'), html);
 }
 
 // A post carries one category or two. Front matter accepts either
@@ -442,7 +466,7 @@ const mainPosts = posts.length
 // A link marked data-needs="<slug>" is only real once that post is published,
 // so drop it (and keep the principle) until the post exists. Publishing is a
 // git mv from blog/ to posts/, and the link reappears on the next build.
-const published = new Set(posts.map(p => p.slug));
+const published = new Set([...posts, ...pages].map(p => p.slug));
 const dropUnpublished = html => html.replace(
   /\s*<a class="receipt"[^>]*data-needs="([^"]+)"[^>]*>.*?<\/a>/g,
   (whole, slug) => published.has(slug) ? whole : '');
@@ -459,6 +483,7 @@ fs.writeFileSync(path.join(OUT, 'index.html'), home);
 // subscribe. scripts/verify-sitemap.js checks every URL here resolves to a file.
 const ORIGIN = 'https://roniam.dev';
 const live = posts.filter(p => !p.draft);
+const livePages = pages.filter(p => !p.draft);
 
 // Landing pages that exist because the workflow copies them into the site.
 // Adding a course = one entry here and one cp line in .github/workflows/pages.yml.
@@ -476,6 +501,7 @@ const newest = live.length ? live[0].date : null;
 const urls = [
   ...STATIC_PATHS.map(loc => ({ loc, lastmod: loc === '/' || loc === '/blog/' ? newest : null })),
   ...live.map(p => ({ loc: `/blog/${p.slug}/`, lastmod: p.date })),
+  ...livePages.map(p => ({ loc: `/${p.slug}/`, lastmod: p.date })),
 ];
 fs.writeFileSync(path.join(OUT, 'sitemap.xml'),
   '<?xml version="1.0" encoding="UTF-8"?>\n' +
@@ -508,5 +534,5 @@ fs.writeFileSync(path.join(OUT, 'feed.xml'),
 fs.writeFileSync(path.join(OUT, 'robots.txt'),
   'User-agent: *\nAllow: /\n\nSitemap: ' + ORIGIN + '/sitemap.xml\n');
 
-console.log(`built home + ${posts.length} post(s) + archive into ${OUT}`);
+console.log(`built home + ${posts.length} post(s) + ${pages.length} page(s) + archive into ${OUT}`);
 console.log(`discovery: sitemap ${urls.length} urls, feed ${live.length} item(s), robots.txt`);
