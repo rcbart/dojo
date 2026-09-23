@@ -346,7 +346,7 @@
       artifact from an authentication flow, decode it, and see the errors.</b> A JWT, a SAML response
       or assertion, a discovery document, a JWKS or an authorization URL: it decodes what you give it
       and tells you what is wrong, why that matters and what to change. Paste something it does not
-      recognize and it says so, rather than pretending. About sixty checks, from
+      recognize and it says so, rather than pretending. About 190 findings, from
       <code>alg: none</code> to a SAML response whose assertion is not the thing that got signed.
       One HTML file, no dependencies, and <b>nothing leaves your browser</b>, which is the only way to build something people paste production tokens into.
       <a class="mailme2" href="/authlint/">Open authlint</a>
@@ -392,8 +392,8 @@
         solves the problem. When we hack it together, we call it out and we come back to it. That is
         a promise I keep. The bets themselves run on the most relevant data at the time, and I ask
         my engineers to go and get it: <b>move from I think to I know.</b> What we know may change
-        later, and that's fine, because we build in a way that lets us change quickly. Adding PKCE
-        once we learn a client is public. <b>Very few doors are one-way doors.</b> And the hardest
+        later, and that's fine, because we build in a way that lets us change quickly. Reconciling
+        accounts by hand first, and automating it later. <b>Very few doors are one-way doors.</b> And the hardest
         bet is the one you don't make: I've killed a project I could have shipped.</p>
         <a class="receipt" href="/blog/i-argued-against-the-more-secure-option/" data-needs="i-argued-against-the-more-secure-option">The time I argued against the more secure option</a>
         <a class="receipt" href="/blog/killed-a-project/" data-needs="killed-a-project">We could have shipped it</a>
@@ -537,7 +537,7 @@
     <a href="https://github.com/rcbart">GitHub</a> ·
     <a href="https://www.linkedin.com/in/ron-bar-tor-9085082/">LinkedIn</a> ·
     <a class="mailme2" href="#contact" data-sub="Hello from roniam.dev" style="font-weight:600">email me</a>
-    · Built by hand. Zero dependencies, like everything else here.
+    · Zero dependencies, like everything else here.
   </footer>
 
 </div></main>
