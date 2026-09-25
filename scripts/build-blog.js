@@ -280,6 +280,7 @@ const page = (title, desc, body, root) => `<!doctype html>
   .psub{font-family:var(--serif);font-style:italic;font-size:clamp(17px,2.2vw,21px);
         line-height:1.35;color:var(--muted);margin:0 0 14px;max-width:52ch}
   .pdate{color:var(--muted);font-size:14px;margin-bottom:26px}
+  .disclose{font-size:12.5px;line-height:1.45;color:var(--muted);margin:28px 0 -22px;max-width:72ch}
   .pull{font-family:var(--serif);font-size:clamp(21px,3.1vw,29px);line-height:1.3;
         font-weight:600;letter-spacing:-.3px;color:var(--ink);text-align:center;
         max-width:22ch;margin:44px auto;padding:26px 0;position:relative;
@@ -377,12 +378,35 @@ posts.sort((a, b) => b.date.localeCompare(a.date));
 // Pages keep the order they declare (nav: 1, 2, ...), then alphabetical.
 pages.sort((a, b) => (Number(a.meta.nav) || 99) - (Number(b.meta.nav) || 99) || a.slug.localeCompare(b.slug));
 
+const catsOf = p => String(p.meta.category || 'engineering')
+  .replace(/[[\]"']/g, '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+const pill = c => `<span class="pill ${c}">${c.charAt(0).toUpperCase() + c.slice(1)}</span>`;
+const pills = p => catsOf(p).map(pill).join(' ');
+
+// ---- disclosure ----
+// Every post carries, at the top, a statement of how it was made. Two
+// variants, chosen by front matter `disclosure: story | guide`, defaulting
+// to story for leadership posts and guide for the rest. A post Ron writes
+// from scratch will carry a third wording when that happens. Ruled 25 Sep
+// 2026: at the top, ABOVE the title, in small print, so nobody discards
+// the post before reaching it and it does not interrupt the post itself.
+const DISCLOSE = {
+  story: 'Every idea, every thought and every judgment here is mine, and I have read and reread every line. AI drafted the prose from my notes, checked the facts and made it readable. What you are reading is an account of my history.',
+  guide: 'Every idea, every thought and every judgment here is mine, and I have read and reread every line. AI drafted the prose from my notes, checked the facts and made it readable. What you are reading is how I do this work.',
+};
+const disclosure = p => {
+  const key = String(p.meta.disclosure || (catsOf(p).includes('leadership') ? 'story' : 'guide')).trim();
+  const text = DISCLOSE[key];
+  if (!text) throw new Error(`${p.slug}: unknown disclosure "${key}"`);
+  return `<p class="disclose">${esc(text)}</p>`;
+};
+
 // ---- emit ----
 fs.mkdirSync(path.join(OUT, 'blog'), { recursive: true });
 
 for (const p of posts) {
   const html = page(p.meta.title + ' · Ron Bar-Tor', p.meta.description || '',
-    `<h1>${esc(p.meta.title)}</h1>` +
+    disclosure(p) + `<h1>${esc(p.meta.title)}</h1>` +
     (p.meta.subtitle ? `<p class="psub">${esc(p.meta.subtitle)}</p>` : '') +
     `<div class="pdate">${fmtDate(p.date)}</div>` + md(p.body, { dir: p.dir, slug: p.slug, diagrams: 0 }) + subscribeBlock() + giscusBlock(), '/');
   fs.mkdirSync(path.join(OUT, 'blog', p.slug), { recursive: true });
@@ -408,10 +432,6 @@ for (const p of pages) {
 // mislabels them. Note the front matter parser above takes values as raw
 // strings, so the brackets arrive here as text and are stripped rather than
 // parsed. Everything downstream works on the list.
-const catsOf = p => String(p.meta.category || 'engineering')
-  .replace(/[[\]"']/g, '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-const pill = c => `<span class="pill ${c}">${c.charAt(0).toUpperCase() + c.slice(1)}</span>`;
-const pills = p => catsOf(p).map(pill).join(' ');
 
 const list = root => posts.map(p =>
   `<a class="post" data-cat="${catsOf(p).join(' ')}" href="${root}blog/${p.slug}/">` +

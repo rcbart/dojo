@@ -4,6 +4,7 @@ description: "I built a learning platform with two CI gates and a few thousand a
 date: 2026-08-14
 tags: ["testing", "ci", "quality", "engineering"]
 category: engineering
+disclosure: story
 slug: "sit-the-exam"
 status: published
 ---
