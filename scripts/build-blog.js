@@ -311,6 +311,23 @@ const page = (title, desc, body, root) => `<!doctype html>
   @media (max-width:640px){figure.diagram svg{min-width:600px;max-width:none}}
   figure.diagram figcaption{margin-top:10px;font-size:.92rem;color:#4a5568;text-align:center;line-height:1.45}
   hr{border:0;border-top:1px solid var(--line);margin:30px 0}
+  /* Print. Readers who want a guide as a PDF use the browser's own print
+     dialog (Ron's call, 26 Sep: no export link, people know how). Chrome
+     goes; the article, its tables, code and diagrams stay; nothing is
+     forced onto one page. Links print as text, with the URL after external
+     ones so a printed reference still points somewhere. */
+  @media print{
+    nav,.subscribe,.comments,footer,.navrow{display:none !important}
+    body{background:#fff;color:#000}
+    .wrap{max-width:none;padding:0}
+    a{color:inherit;text-decoration:none}
+    a[href^="http"]:after{content:" (" attr(href) ")";font-size:.85em;color:#444}
+    pre.code,figure.diagram,.tablewrap,table{break-inside:avoid;page-break-inside:avoid}
+    h2,h3{break-after:avoid;page-break-after:avoid}
+    figure.diagram{border:0;padding:0}
+    figure.diagram svg{max-width:100%;min-width:0}
+    .tablewrap{overflow:visible}
+  }
   .post{display:block;padding:20px 0;border-bottom:1px solid var(--line);color:inherit}
   .post:hover{text-decoration:none}
   .post h2{margin:0 0 6px;font-size:23px} .post:hover h2{color:var(--accent-ink)}
