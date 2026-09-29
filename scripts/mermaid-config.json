@@ -6,7 +6,8 @@
     "noteBorderColor": "#c9c3b6",
     "actorBkg": "#f7f7f7",
     "actorBorder": "#8a8a8a",
-    "fontSize": "15px"
+    "fontSize": "15px",
+    "fontFamily": "Arial, 'Liberation Sans', Helvetica, sans-serif"
   },
   "sequence": {
     "wrap": true,
@@ -17,5 +18,14 @@
     "useMaxWidth": true,
     "actorMargin": 120,
     "wrapPadding": 12
+  },
+  "flowchart": {
+    "padding": 18,
+    "nodeSpacing": 40,
+    "rankSpacing": 45,
+    "subGraphTitleMargin": {
+      "top": 6,
+      "bottom": 14
+    }
   }
 }
