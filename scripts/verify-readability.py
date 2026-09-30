@@ -104,7 +104,7 @@ def check(path):
                      f'{MIN_CONTRACTIONS}')
     if longest > MAX_SENTENCE and not entry_shaped:
         fails.append(f'longest sentence {longest} words, over {MAX_SENTENCE}')
-    if parens > MAX_PARENS and words >= 400:
+    if parens > MAX_PARENS and words >= 400 and not entry_shaped:   # a glossary writes (IdP), (SP) at first use
         fails.append(f'parentheticals {parens:.1f} per 1000, over {MAX_PARENS}')
 
     line = (f'{path}: {words}w mean {mean:.1f} burst {burst:.1f} '

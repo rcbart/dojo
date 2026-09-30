@@ -36,6 +36,13 @@ const CLAIM = 'more than ten revisions'; // the sentence this gate stands behind
 // carry the field, and a new post cannot opt out by leaving it off.
 const PRE_TALLY = new Set(['2026-08-14-sit-the-exam.md']);
 
+// Pages (front matter page: true) are reference material, a glossary or a
+// table of fields, not the posts the home page is talking about. They carry
+// the field so the count stays on record, but the floor is a rule for posts.
+// Ruled by Ron, 30 Sep 2026: the glossary and the fields page publish at the
+// revision they are at once his read is done.
+const isPage = fm => /^page:\s*true\s*$/m.test(fm);
+
 const posts = fs.readdirSync('posts').filter(f => f.endsWith('.md'));
 let checked = 0, bad = 0, grandfathered = 0;
 
@@ -43,6 +50,10 @@ for (const f of posts) {
   const src = fs.readFileSync(path.join('posts', f), 'utf8');
   const fm = src.split('---')[1] || '';
   const m = fm.match(/^revisions:\s*(\d+)\s*$/m);
+  if (isPage(fm)) {
+    console.log(`  ${f.padEnd(48)} page, ${m ? m[1] + ' revisions, ' : ''}floor not applied`);
+    continue;
+  }
   if (!m) {
     if (PRE_TALLY.has(f)) {
       console.log(`  ${f.padEnd(48)} predates the tally, grandfathered`);

@@ -144,7 +144,14 @@ function md(src, ctx = { dir: 'posts', slug: '', diagrams: 0 }) {
         if (!title) throw new Error(`${ctx.slug}: a mermaid fence has no title. Write it as \`\`\`mermaid <what the diagram shows>`);
         out.push(diagramFor(ctx, buf.join('\n') + '\n', title)); continue;
       }
-      out.push(`<pre class="code"${lang ? ` data-lang="${esc(lang)}"` : ''}><code>${esc(buf.join('\n'))}</code></pre>`);
+      // ```<lang> <title>   a title after the language makes the block a
+      // numbered listing: a figure with the title as its caption, so prose
+      // can say "Listing 4" and the reader can find it.
+      const sp = lang.indexOf(' ');
+      const language = sp < 0 ? lang : lang.slice(0, sp);
+      const ltitle = sp < 0 ? '' : lang.slice(sp + 1).trim();
+      const pre = `<pre class="code"${language ? ` data-lang="${esc(language)}"` : ''}><code>${esc(buf.join('\n'))}</code></pre>`;
+      out.push(ltitle ? `<figure class="listing"><figcaption>${inline(ltitle)}</figcaption>${pre}</figure>` : pre);
       continue;
     }
     if (/^#{1,4} /.test(l)) { flush(); const d = l.match(/^#+/)[0].length;
@@ -310,6 +317,10 @@ const page = (title, desc, body, root) => `<!doctype html>
   figure.diagram svg{display:block;max-width:100%;height:auto;margin:0 auto}
   @media (max-width:640px){figure.diagram svg{min-width:600px;max-width:none}}
   figure.diagram figcaption{margin-top:10px;font-size:.92rem;color:#4a5568;text-align:center;line-height:1.45}
+  figure.listing{margin:22px 0}
+  figure.listing figcaption{font-size:.88rem;color:#4a5568;margin:0 0 6px 2px;line-height:1.45}
+  figure.listing figcaption code{font-size:.9em}
+  figure.listing pre.code{margin:0}
   hr{border:0;border-top:1px solid var(--line);margin:30px 0}
   /* Print. Readers who want a guide as a PDF use the browser's own print
      dialog (Ron's call, 26 Sep: no export link, people know how). Chrome
@@ -322,7 +333,7 @@ const page = (title, desc, body, root) => `<!doctype html>
     .wrap{max-width:none;padding:0}
     a{color:inherit;text-decoration:none}
     a[href^="http"]:after{content:" (" attr(href) ")";font-size:.85em;color:#444}
-    pre.code,figure.diagram,.tablewrap,table{break-inside:avoid;page-break-inside:avoid}
+    pre.code,figure.diagram,figure.listing,.tablewrap,table{break-inside:avoid;page-break-inside:avoid}
     h2,h3{break-after:avoid;page-break-after:avoid}
     figure.diagram{border:0;padding:0}
     figure.diagram svg{max-width:100%;min-width:0}
