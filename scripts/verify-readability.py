@@ -54,6 +54,10 @@ def prose(text):
     text = re.sub(r'^!\[.*$', '', text, flags=re.M)            # diagram lines
     text = re.sub(r'^#{1,6} .*$', '', text, flags=re.M)        # headings
     text = re.sub(r'`[^`]*`', 'X', text)                       # inline code is one word
+    # A markdown link target is markup, not an aside. '[CA](#g-ca)' was counted
+    # as a parenthetical once the glossary linked first uses, and the SPIFFE post
+    # failed at 13.3 per 1000 with two prose asides in it. Ron, 4 Oct 2026.
+    text = re.sub(r'\]\([^)\s]*\)', ']', text)
     return text
 
 
