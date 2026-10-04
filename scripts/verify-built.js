@@ -79,7 +79,7 @@ for (const [name, rel] of targets) {
   // carry a "[preview] " title prefix; both are made from blog/ drafts and
   // never from posts/, but a page that shows either has been built from the
   // wrong input, and the reader would see the numbers. Ron, 29 Sep 2026.
-  for (const [what, needle] of [['block number', 'class="bn"'], ['preview marker', '[preview] ']]) {
+  for (const [what, needle] of [['block number', 'class="bn"'], ['preview marker', '[preview] '], ['unrendered markdown link', '](#'], ['unrendered markdown link', '](/blog/']]) {
     if (html.includes(needle)) {
       failures++;
       console.log(`  FAIL  ${name}: read-copy ${what} (${needle}) in a shipped page`);

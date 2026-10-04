@@ -83,6 +83,11 @@ function inline(s) {
   out = out.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
   out = out.replace(/\*([^*]+)\*/g, '<i>$1</i>');
   out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  // {#some-id} anywhere in inline text becomes an empty anchor span, so a
+  // glossary row in a table can be the target of [term](#g-term) links from
+  // the body. Raw HTML is escaped above, so this is the only way to put an
+  // id on something that is not a heading.
+  out = out.replace(/\{#([a-z0-9-]+)\}/g, '<span id="$1"></span>');
   return out;
 }
 
@@ -104,7 +109,20 @@ function diagramFor(ctx, source, title) {
       `Run: node scripts/render-diagrams.js ${ctx.dir}/<post>.md`);
   if (fs.readFileSync(mmd, 'utf8') !== source)
     throw new Error(`${ctx.slug}: diagram ${n} was edited after it was rendered (fence differs from ${path.relative(ROOT, mmd)}). Re-render it.`);
-  return `<figure class="diagram">${fs.readFileSync(svg, 'utf8')}<figcaption>${inline(title)}</figcaption></figure>`;
+  // Every diagram is numbered, the way every code block is a numbered Listing,
+  // so prose can say "figure 2" and the reader can find it.
+  const cap = title && title.trim() ? `Figure ${n}. ${inline(title)}` : `Figure ${n}.`;
+  // Every figure fits the column, which leaves a wide one (a 1,700px sequence
+  // diagram in a 700px column) too small to read. So every figure carries an
+  // Expand button that opens it full screen at its drawn size, scrollable,
+  // closed again by the button or Escape. The script ships once per page,
+  // with the first figure.
+  const body = fs.readFileSync(svg, 'utf8');
+  const vb = body.match(/viewBox="[-\d.]+ [-\d.]+ ([\d.]+) /);
+  const w = vb ? Math.round(parseFloat(vb[1])) : 0;
+  const btn = `<button type="button" class="expand" aria-label="Expand figure ${n}">Expand</button>`;
+  const js = n === 1 ? `<script>document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('figure.diagram .expand');if(!b)return;var f=b.closest('figure'),o=f.classList.toggle('open');b.textContent=o?'Close':'Expand';document.body.style.overflow=o?'hidden':''});document.addEventListener('keydown',function(e){if(e.key!=='Escape')return;document.querySelectorAll('figure.diagram.open').forEach(function(f){f.classList.remove('open');f.querySelector('.expand').textContent='Expand'});document.body.style.overflow=''});</scr` + `ipt>` : '';
+  return `<figure class="diagram" style="--w:${w}px">${btn}${body}<figcaption>${cap}</figcaption></figure>${js}`;
 }
 
 // Heading text -> id: lowercase, markup stripped, runs of anything that is
@@ -316,6 +334,12 @@ const page = (title, desc, body, root) => `<!doctype html>
   figure.diagram{margin:22px 0;padding:14px 12px;background:#fff;border:1px solid #e2e0dc;border-radius:10px;overflow-x:auto}
   figure.diagram svg{display:block;max-width:100%;height:auto;margin:0 auto}
   @media (max-width:640px){figure.diagram svg{min-width:600px;max-width:none}}
+  figure.diagram{position:relative}
+  figure.diagram .expand{position:absolute;top:8px;right:8px;z-index:2;font:12px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:4px 10px;border:1px solid #cbd5e0;border-radius:6px;background:#fff;color:#2d3748;cursor:zoom-in}
+  figure.diagram.open{position:fixed !important;inset:0;z-index:1000;margin:0;border:0;border-radius:0;padding:52px 24px 24px;overflow:auto;background:#fff}
+  figure.diagram.open svg{max-width:none !important;width:var(--w) !important;height:auto;margin:0}
+  figure.diagram.open .expand{position:fixed;cursor:zoom-out}
+  figure.diagram.open figcaption{max-width:60em;margin:16px auto 0;text-align:left}
   figure.diagram figcaption{margin-top:10px;font-size:.92rem;color:#4a5568;text-align:center;line-height:1.45}
   figure.listing{margin:22px 0}
   figure.listing figcaption{font-size:.88rem;color:#4a5568;margin:0 0 6px 2px;line-height:1.45}
@@ -336,7 +360,8 @@ const page = (title, desc, body, root) => `<!doctype html>
     pre.code,figure.diagram,figure.listing,.tablewrap,table{break-inside:avoid;page-break-inside:avoid}
     h2,h3{break-after:avoid;page-break-after:avoid}
     figure.diagram{border:0;padding:0}
-    figure.diagram svg{max-width:100%;min-width:0}
+    figure.diagram svg{max-width:100%;min-width:0 !important}
+    figure.diagram .expand{display:none}
     .tablewrap{overflow:visible}
   }
   .post{display:block;padding:20px 0;border-bottom:1px solid var(--line);color:inherit}
