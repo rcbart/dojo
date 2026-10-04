@@ -123,11 +123,13 @@
   .alpha b{color:var(--accent-ink)}
   .alpha .k2{font-size:11.5px;font-weight:800;letter-spacing:.2px;color:var(--amber-ink);display:block;margin-bottom:6px}
   .alpha .mailme2{color:var(--teal-ink);font-weight:700;cursor:pointer}
+  .alpha .golink{color:var(--teal-ink);font-weight:700}
   .alpha .testers{margin:14px 0 4px;line-height:1.9}
   .alpha .alphanote{display:block;color:var(--muted);font-size:14px}
   .mailme:focus-visible,.mailme2:focus-visible{outline:3px solid var(--violet-ink);
     outline-offset:3px;border-radius:4px}
   .alpha .mailme2:hover{text-decoration:underline}
+  .alpha .golink:hover{text-decoration:underline}
 
   .stats{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:14px;
          background:var(--panel);overflow:hidden;margin:6px 0 24px}
@@ -283,11 +285,10 @@
     <div class="domain">ron<b>iam</b>.dev = <b>Ron</b> + <b>IAM</b> · identity &amp; access management</div>
     <h1>Hi, I'm Ron. <span class="iam">I&nbsp;AM</span> what I do.</h1>
     <p class="lede">I'm Ron Bar-Tor, an engineering leader. As a director of engineering I ran a
-    group of more than fifty across three countries, then gave up the title for a team at one of
-    the largest technology companies in the world, because the scale was worth more to me than the
-    org chart. I've run engineering across five countries where no working day overlapped for
-    everyone, which is where most of the stories here come from, and today I lead a team of nine
-    in the US and the UK. My corner of engineering is <b>identity</b>, the machinery
+    group of more than fifty across three countries, and I've led identity engineering at one of
+    the largest technology companies in the world. I've run engineering across five countries where
+    no working day overlapped for everyone, which is where most of the stories here come from, and
+    today I lead a team across the US and the UK. My corner of engineering is <b>identity</b>, the machinery
     that decides who you are
     and what you may touch: the OAuth dance, SAML's enterprise plumbing, passkeys and Kerberos
     tickets, and the thousand ways login can ruin a day.</p>
@@ -327,8 +328,10 @@
     <h2>Where identity meets production.</h2>
     <p class="secdesc">Who you are and what you may do are different questions, and most of the identity
     failures we build ourselves come from a mechanism built to answer one being trusted to answer the
-    other. Everyone in this field can define the difference. Almost nobody builds it. I live that
-    daily, and this site is where I sort it out, one mechanism at a time.</p>
+    other. The one I've made myself is an access token with a user ID in it, read by an API as proof
+    of who was calling. Everyone in this field can define the difference, and the failures live in the
+    gap between defining it and building it. I live that daily, and this site is where I sort it
+    out, one mechanism at a time.</p>
     <p class="secdesc">I've spent years in the identity domain, and I've done it at scale. I've seen tokens that expire at the worst possible
     time, redirects pointing to the wrong place, federation between companies that don't really know
     how that works, SSO as a protocol rather than an experience, and authentication code that
@@ -352,7 +355,7 @@
       recognize and it says so, rather than pretending. About 190 findings, from
       <code>alg: none</code> to a SAML response whose assertion is not the thing that got signed.
       One HTML file, no dependencies, and <b>nothing leaves your browser</b>, which is the only way to build something people paste production tokens into.
-      <a class="mailme2" href="/authlint/">Open authlint</a>
+      <a class="golink" href="/authlint/">Open authlint</a>
     </div>
   </section>
 
@@ -361,7 +364,7 @@
     <h2>How I lead</h2>
     <div class="prin">
       <div class="p-card" style="--c:var(--amber);--ci:var(--amber-ink)">
-        <h3>“Build trust, then unleash.”</h3>
+        <h3>Own the outcome, hand over the how</h3>
         <p class="epi">Never tell people how to do things. Tell them what to do and they will
         surprise you with their ingenuity.<cite>George S. Patton, War As I Knew It, 1947</cite></p>
         <p>At some point I looked at everything my teams owned, identity, the APIs, the platform
@@ -376,7 +379,7 @@
         <a class="receipt" href="/blog/art-of-delegation/" data-needs="art-of-delegation">The long version, written up</a>
       </div>
       <div class="p-card" style="--c:var(--violet);--ci:var(--violet-ink)">
-        <h3>“People first, engineers second.”</h3>
+        <h3>Know the person before the engineer</h3>
         <p>Deliberately in that order. I get to know the person before the engineer, because the
         strengths people undersell only show once you know them. After that, I
         work with them to develop them by finding the right balance between what they want and what
@@ -387,7 +390,7 @@
         <a class="receipt" href="/blog/in-the-critical-path-of-evolution/" data-needs="in-the-critical-path-of-evolution">Leading a platform team through a re-org</a>
       </div>
       <div class="p-card" style="--c:var(--teal);--ci:var(--teal-ink)">
-        <h3>“Smart bets, shipped.”</h3>
+        <h3>Ship the bet, come back for the rest</h3>
         <p>Meticulous engineers are great engineers. They look around corners, find the edge cases,
         and build things that last. Done every time, that same strength becomes analysis paralysis,
         and my job is to ground it in reality. We work in a business that expects results, so I say
@@ -402,7 +405,7 @@
         <a class="receipt" href="/blog/killed-a-project/" data-needs="killed-a-project">Halting a passwordless program over one credential</a>
       </div>
       <div class="p-card" style="--c:var(--cyan);--ci:var(--cyan-ink)">
-        <h3>“Measure it before you manage it.”</h3>
+        <h3>Write down what we only talk about</h3>
         <p>In one job every report I read came back green while the thing that was actually
         wrong stood in plain sight in the same building. I walked past it for months. So now,
         in the first weeks anywhere, I write down what we measure and what we only talk about,
@@ -412,7 +415,7 @@
         <a class="receipt" href="/blog/a-development-center-from-zero/" data-needs="a-development-center-from-zero">The wall of boxes, and what it cost to miss it</a>
       </div>
       <div class="p-card" style="--c:var(--amber);--ci:var(--amber-ink)">
-        <h3>“Hire strong, not good.”</h3>
+        <h3>Hold the bar when the seat is empty</h3>
         <p>The first people through the door set the culture for everyone after them, and the
         pressure to fill a seat is loudest exactly then. Once there are good candidates in front of
         a committee, the committee wants to move. I've held the line through more than one round of
@@ -509,14 +512,12 @@
 
 
   <div class="contact" id="contact">
-    <div class="k amber">Say hello</div>
-    <h2>Let's build something.</h2>
-    <p>I'm always happy to talk shop, identity architecture, engineering management, course feedback.
-    I read everything that lands in my inbox, and
-    <b>alpha volunteers</b> get a personal onboarding.</p>
-    <a class="mailme" href="#contact" data-sub="Hello from roniam.dev">Drop me a line</a>
-    <div style="margin-top:10px;font-size:14.5px">or write to
-      <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#114;&#111;&#110;&#105;&#97;&#109;&#100;&#101;&#118;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;&#63;&#115;&#117;&#98;&#106;&#101;&#99;&#116;&#61;&#72;&#101;&#108;&#108;&#111;&#37;&#50;&#48;&#102;&#114;&#111;&#109;&#37;&#50;&#48;&#114;&#111;&#110;&#105;&#97;&#109;&#46;&#100;&#101;&#118;" style="color:var(--teal-ink);font-weight:600">&#114;&#111;&#110;&#105;&#97;&#109;&#100;&#101;&#118;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;</a></div>
+    <div class="k amber">Corrections and questions</div>
+    <h2>If something here is wrong, tell me.</h2>
+    <p>Every post and lesson on this site can be checked, and I'd rather hear it from you than find it
+    later. Questions about a post, a lesson or a flow get answered, and <b>alpha volunteers</b> get a
+    personal onboarding. The address is in the sidebar.</p>
+    <a class="mailme" href="#contact" data-sub="Hello from roniam.dev">Send an email</a>
     <form action="https://buttondown.com/api/emails/embed-subscribe/roniam" method="post" target="_blank"
           style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px">
       <input type="email" name="email" required placeholder="you@example.com" aria-label="Email address"
@@ -531,15 +532,13 @@
     This site and every dojo are under active development, and readers make them better.
     Spotted a mistake, or have a suggestion?
     <a href="https://github.com/rcbart/dojo/issues/new?template=bug_report.yml">Report an issue</a> ·
-    <a href="https://github.com/rcbart/dojo/issues/new?template=suggestion.yml">Suggest an improvement</a> ·
-    <a class="mailme2" href="#contact" style="color:var(--teal-ink);font-weight:600" data-sub="A suggestion for roniam.dev">or just write to me</a>.
+    <a href="https://github.com/rcbart/dojo/issues/new?template=suggestion.yml">Suggest an improvement</a>.
   </div>
 
   <footer>
     © @@YEAR@@ Ron Bar-Tor · ron<span class="iam">iam</span>.dev ·
     <a href="https://github.com/rcbart">GitHub</a> ·
-    <a href="https://www.linkedin.com/in/ron-bar-tor-9085082/">LinkedIn</a> ·
-    <a class="mailme2" href="#contact" data-sub="Hello from roniam.dev" style="font-weight:600">email me</a>
+    <a href="https://www.linkedin.com/in/ron-bar-tor-9085082/">LinkedIn</a>
     · Built by hand with the assistance of AI. Zero dependencies, like everything else here.
   </footer>
 
