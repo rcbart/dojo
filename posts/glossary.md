@@ -10,7 +10,7 @@ nav_title: "Identity glossary"
 page: true
 nav_blurb: "identity terms, each one a distinction with its long form"
 nav: 1
-revisions: 8
+revisions: 9
 status: published
 ---
 
@@ -106,7 +106,7 @@ request. A response is unsolicited when it arrives at a partner that
 didn't ask for it. The partner can verify who signed it and that it was
 meant for them. What it can't verify is that this browser, right now, set
 out to log in. The response is authentic, but nobody asked for it. Long form:
-[Where the click happens](/blog/sso-for-integrations-the-decision/#which-flow-and-what-it-costs).
+[Which flow, and what it costs](/blog/sso-for-integrations-the-decision/#which-flow-and-what-it-costs).
 
 **SP-initiated and IdP-initiated.** Where the process starts. If it
 starts at the service provider, a landing page or a link deep into the
@@ -117,7 +117,7 @@ issued, with the user already authenticated there, it's IdP-initiated,
 and the response arrives unsolicited. The deciding
 question is never whether the user has a session somewhere. It's whether
 the thing launching them is the identity provider. Long form:
-[Where the click happens](/blog/sso-for-integrations-the-decision/#which-flow-and-what-it-costs).
+[Which flow, and what it costs](/blog/sso-for-integrations-the-decision/#which-flow-and-what-it-costs).
 
 **Identity provider and service provider.** The identity provider (IdP)
 authenticates the user, holds their session, and mints the signed
@@ -147,7 +147,7 @@ consent screen is a pre-authorization at the identity provider, granted
 by an administrator out of band, in the identity provider's own
 configuration, before any user arrives. It is never a branch in code
 that decides at runtime not to ask. Long form:
-[Consent](/blog/sso-for-integrations-the-decision/#who-consents).
+[Who consents](/blog/sso-for-integrations-the-decision/#who-consents).
 
 **Revocation and expiry.** Revocation is ending something on demand, and
 expiry is it ending on schedule. A session can be revoked. A
@@ -222,7 +222,7 @@ over it and the check that reads it. Long form:
 **Scope.** What an OAuth client asks permission to do, and what the
 resulting token may do. Minimize it harder when nobody is going to be
 asked, because nobody is going to be watching either. Long form:
-[Consent](/blog/sso-for-integrations-the-decision/#who-consents).
+[Who consents](/blog/sso-for-integrations-the-decision/#who-consents).
 
 **Client.** In OAuth, the application that wants to act for the user.
 It has a client id per registration, and an ID token's audience names that id. A public client, a native or single-page application, cannot keep a
@@ -297,11 +297,11 @@ a pattern and never a URL followed as given. Long form:
 **Deep link.** A URL to a specific page inside an application. When it
 starts SSO it carries no authority and shouldn't. The partner remembers
 it, sends the user to authenticate, and lands them on it afterward. Long
-form: [Where the click happens](/blog/sso-for-integrations-the-decision/#which-flow-and-what-it-costs).
+form: [Which flow, and what it costs](/blog/sso-for-integrations-the-decision/#which-flow-and-what-it-costs).
 
 **Signed handoff.** A short-lived, single-use, signed token that a
 platform mints and a partner accepts as a login, with no identity
-provider in between. It is the mechanism [the decision post](/blog/sso-for-integrations-the-decision/) calls a trap,
+provider in between. It is the mechanism [the implementer post](/blog/sso-for-integrations/#the-signed-handoff) calls a trap,
 allowed in exactly one situation, when the same organization owns both
 ends, holds both sets of keys and gets paged when either breaks. Long
 form: [The signed handoff](/blog/sso-for-integrations/#the-signed-handoff).
