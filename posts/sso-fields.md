@@ -8,6 +8,7 @@ tags: ["identity", "sso", "saml", "oidc", "reference"]
 category: identity
 slug: "sso-fields"
 page: true
+nav_blurb: "every field in a SAML or OIDC message, and which check refuses it"
 nav: 2
 revisions: 16
 status: published

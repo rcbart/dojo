@@ -6,7 +6,9 @@ date: 2026-10-04
 tags: ["identity", "glossary", "reference"]
 category: identity
 slug: "glossary"
+nav_title: "Identity glossary"
 page: true
+nav_blurb: "identity terms, each one a distinction with its long form"
 nav: 1
 revisions: 8
 status: published

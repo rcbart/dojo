@@ -533,6 +533,12 @@ const navPosts = posts.length
   ? posts.slice(0, 5).map(p =>
       `<a class="snav post" href="/blog/${p.slug}/" title="${esc(p.meta.title)}">${esc(p.meta.title)}</a>`).join('\n  ')
   : '<span class="snone">first post coming soon</span>';
+// The home sidebar lists the reference pages (page: true) under their own
+// heading, with nav_title and nav_blurb from the front matter. Ron, 4 Oct 2026:
+// the fields page and the glossary published without a sidebar link.
+const navPagesHome = pages.filter(p => !p.draft).map(p =>
+  `<a class="snav" href="/${p.slug}/"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-pen"/></svg>${esc(p.meta.nav_title || p.meta.title)}` +
+  (p.meta.nav_blurb ? `<small>${esc(p.meta.nav_blurb)}</small>` : '') + `</a>`).join('\n  ') || '<span class="snone">none yet</span>';
 const mainPosts = posts.length
   ? posts.slice(0, 3).map(p =>
       `<a class="post" data-cat="${catsOf(p).join(' ')}" href="/blog/${p.slug}/"><div class="pdate">${fmtDate(p.date)} ${pills(p)}</div>` +
@@ -550,6 +556,7 @@ const dropUnpublished = html => html.replace(
 const home = dropUnpublished(fs.readFileSync(path.join(ROOT, 'docs', 'home.html'), 'utf8'))
   .replace('@@POSTS@@', mainPosts)
   .replace('@@NAVPOSTS@@', navPosts)
+  .replace('@@NAVPAGES@@', navPagesHome)
   .replace('@@YEAR@@', String(new Date().getFullYear()));
 fs.writeFileSync(path.join(OUT, 'index.html'), home);
 
