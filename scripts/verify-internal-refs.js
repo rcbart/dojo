@@ -11,6 +11,13 @@ const fs=require('fs'),path=require('path');
 const ROOT=path.join(__dirname,'..');
 let checked=0; const bad=[];
 const exists=p=>{try{fs.statSync(p);return true}catch(e){return false}};
+let _slugs=null;
+const siteSlugs=()=>{ if(_slugs)return _slugs; _slugs=new Set();
+  const d=ROOT+'/posts'; if(!exists(d))return _slugs;
+  for(const f of fs.readdirSync(d).filter(x=>x.endsWith('.md'))){
+    const t=fs.readFileSync(path.join(d,f),'utf8'); const m=t.match(/^slug:\s*"?([^"\n]+?)"?\s*$/m);
+    _slugs.add(m?m[1].trim():f.replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/\.md$/,''));
+  } return _slugs; };
 
 // 1. Relative links between markdown files (these resolve on GitHub, where the
 //    crash-course sources are read; they never deploy to the site).
@@ -21,6 +28,21 @@ for(const d of mdDirs){ if(!exists(d))continue;
     const src=path.join(d,f), t=fs.readFileSync(src,'utf8');
     for(const m of t.matchAll(/\]\((?!https?:|#|mailto:)([^)#\s]+)(#[^)\s]*)?\)/g)){
       checked++;
+      // A link that starts with "/" is a site path, not a file next to the
+      // post: /blog/<slug>/, /glossary/. It is real if the assembled site has
+      // it, or (before assembly) if a post or page declares that slug. The
+      // SSO pair cross-link this way and the gate read them as missing files
+      // on publish day, 4 Oct 2026.
+      if(m[1].startsWith('/')){
+        const site=path.join(ROOT,'_site',m[1],'index.html');
+        // Before assembly, a course landing (/identity/, /dev/ ...) is a cp line in
+        // pages.yml, so accept the known course paths alongside post slugs.
+        const COURSES=new Set(['dev','identity','js','ml','authlint','courses','fundamentals','docker','kubernetes','envoy','istio']);
+        const slug=m[1].replace(/^\/blog\//,'/').replace(/\/$/,'').replace(/^\//,'');
+        if(exists(path.join(ROOT,'_site'))? !exists(site) : !(siteSlugs().has(slug)||COURSES.has(slug)))
+          bad.push(['site-path',path.relative(ROOT,src),m[1]]);
+        continue;
+      }
       const target=path.resolve(d,m[1]);
       if(!exists(target)) bad.push(['md-rel',path.relative(ROOT,src),m[1]]);
     }

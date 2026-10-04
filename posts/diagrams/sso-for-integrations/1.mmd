@@ -1,0 +1,14 @@
+flowchart TB
+    U["User, in a browser"]
+    subgraph P["Your platform"]
+        App["Your application<br/>where the user is working"]
+        IdP["Identity provider<br/>authenticated the user, holds the session"]
+    end
+    subgraph S["Partner application"]
+        RP["Service provider / relying party<br/>own sessions, own accounts"]
+    end
+    U -- "signed in, working here" --> App
+    App -. "session from" .- IdP
+    U -- "wants to arrive here" --> RP
+    IdP == "what crosses at runtime" ==> RP
+    IdP -. "trust, set up once, out of band:<br/>signing keys, issuer, endpoints,<br/>what the partner may receive" .- RP

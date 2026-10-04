@@ -1,0 +1,15 @@
+sequenceDiagram
+    autonumber
+    participant U as Browser
+    participant P as Your platform
+    participant A as Partner app
+    participant K as Your JWKS
+    U->>P: click "open in Partner"
+    Note over P: mint launch token (aud=partner, exp≈60s, jti, target)
+    P-->>U: auto-submitting POST form to partner /launch (token in the body)
+    U->>A: POST /launch  token
+    A->>K: fetch signing keys (cached)
+    Note over A: verify signature, iss, aud, exp, jti unseen, target on allow list, then stash the result under a handle
+    A-->>U: result handle in a cookie, 302 to /sso/finish
+    U->>A: GET /sso/finish (top-level, session cookie visible)
+    A-->>U: session cookie, 302 to target

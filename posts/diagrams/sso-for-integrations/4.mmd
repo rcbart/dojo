@@ -1,0 +1,13 @@
+sequenceDiagram
+    autonumber
+    participant U as Browser
+    participant IdP as Identity provider (yours, or the customer's)
+    participant SP as Service provider (the receiving side)
+    U->>IdP: click a tile in the IdP's portal
+    Note over IdP: build Response with signed Assertion, no request to bind to
+    IdP-->>U: auto-submitting POST form + RelayState
+    U->>SP: POST /saml/acs  SAMLResponse + RelayState
+    Note over SP: validate signature, audience, time window, assertion ID unseen, then stash the result under a handle
+    SP-->>U: result handle in a cookie, 302 to /sso/finish
+    U->>SP: GET /sso/finish (top-level, session cookie visible)
+    SP-->>U: session cookie, 302 to RelayState target

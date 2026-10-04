@@ -1,0 +1,14 @@
+sequenceDiagram
+    autonumber
+    participant U as Browser
+    participant SP as Partner app (SP / RP, receiving side)
+    participant IdP as Your IdP
+    U->>SP: GET /reports/42 (deep link, no session)
+    Note over SP: generate request (state, nonce, PKCE) and remember /reports/42
+    SP-->>U: 302 to IdP with the request
+    U->>IdP: authentication request
+    Note over IdP: existing session found, no login page
+    IdP-->>U: 302 back to SP with a response bound to the request
+    U->>SP: response + state
+    Note over SP: verify binding, exchange code, validate ID token
+    SP-->>U: session cookie, 302 to /reports/42

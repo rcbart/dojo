@@ -1,0 +1,14 @@
+sequenceDiagram
+    autonumber
+    participant IdP as Identity provider
+    participant B as Browser
+    participant SP as Partner (/sso/callback, /sso/finish)
+    IdP-->>B: page with an auto-submitting form (SAML POST binding, OIDC form_post)
+    Note over B: cross-site POST to the partner. The browser's cookie rules apply. __Host-pending (SameSite=None, Secure) is sent. The session cookie (SameSite=Lax) is withheld
+    B->>SP: POST /sso/callback  response + __Host-pending
+    Note over SP: verify every check against the pending record. The session cookie is invisible here, so "is someone else already signed in?" cannot be answered
+    SP-->>B: Set-Cookie result=handle (Lax, seconds), 302 to /sso/finish
+    Note over B: same-origin, top-level GET. Lax cookies travel, the session cookie and the result cookie
+    B->>SP: GET /sso/finish  result handle + session cookie
+    Note over SP: pop the result (single use), refuse a subject switch under a live session, start the session
+    SP-->>B: session cookie, 302 to the page the user wanted

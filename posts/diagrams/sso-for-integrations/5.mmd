@@ -1,0 +1,15 @@
+sequenceDiagram
+    autonumber
+    participant U as Browser
+    participant IdP as Your IdP
+    participant RP as Partner app (RP, receiving side)
+    U->>IdP: click a tile in your platform
+    IdP-->>U: 302 to the RP's initiate_login_uri (iss, login_hint, target_link_uri)
+    U->>RP: GET /oidc/initiate?iss=...&login_hint=...&target_link_uri=...
+    Note over RP: iss matches configured issuer, target on allow list
+    RP-->>U: 302 to IdP: normal authentication request (state, nonce, PKCE)
+    U->>IdP: authentication request
+    IdP-->>U: 302 back with code, bound to state
+    U->>RP: code + state
+    Note over RP: exchange code, validate ID token (nonce, aud, iss)
+    RP-->>U: session cookie, 302 to target_link_uri

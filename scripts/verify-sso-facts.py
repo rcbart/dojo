@@ -15,8 +15,8 @@ import re, sys, os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GUARDS = os.path.join(ROOT, 'blog', '_sso-fact-guards.md')
-POSTS = ['blog/2026-10-04-sso-for-integrations-the-decision.md',
-         'blog/2026-10-04-sso-for-integrations.md']
+POSTS = ['posts/2026-10-04-sso-for-integrations-the-decision.md',
+         'posts/2026-10-04-sso-for-integrations.md']
 
 def body(path):
     """The post as a reader sees it: no front matter, no working notes."""
