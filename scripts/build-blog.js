@@ -221,7 +221,9 @@ function md(src, ctx = { dir: 'posts', slug: '', diagrams: 0 }) {
       const body = rows.slice(1).filter(r => !isSep(r)).map(cells);
       out.push('<div class="tablewrap"><table><thead><tr>' +
         head.map(h => `<th>${inline(h)}</th>`).join('') + '</tr></thead><tbody>' +
-        body.map(r => '<tr>' + r.map((c, k) => k === 0 ? `<th scope="row">${inline(c)}</th>` : `<td>${inline(c)}</td>`).join('') + '</tr>').join('') +
+        // Each body cell carries its column label (data-l), so a phone can
+        // stack the row as a card and still say which column a cell is.
+        body.map(r => '<tr>' + r.map((c, k) => k === 0 ? `<th scope="row">${inline(c)}</th>` : `<td data-l="${esc(head[k] || '').replace(/<[^>]+>/g, '').replace(/"/g, '&quot;')}">${inline(c)}</td>`).join('') + '</tr>').join('') +
         '</tbody></table></div>'); continue;
     }
     // A numbered list: "1. text", with wrapped continuation lines indented.
@@ -321,6 +323,20 @@ const page = (title, desc, body, root) => `<!doctype html>
   table{border-collapse:collapse;font-size:14.5px;line-height:1.4;min-width:560px;width:100%}
   th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
   thead th{background:#f4f4f8;font-weight:700} tbody th{font-weight:600;min-width:120px}
+  td code,th code{white-space:normal;overflow-wrap:anywhere}
+  /* On a phone a four-column table squeezed the prose column to two or three
+     words a line (Ron, 4 Oct 2026, the SSO fields page). Below 640px each row
+     becomes a card: cells stack full width, each under its column label. */
+  @media (max-width:640px){
+    .tablewrap{overflow:visible;--tw:100%;margin-left:0}
+    table,tbody,tr,th,td{display:block;width:100%;min-width:0}
+    thead{display:none}
+    tr{border:1px solid var(--line);border-radius:8px;padding:4px 12px 8px;margin:0 0 12px}
+    th,td{border:0;border-bottom:1px solid var(--line);padding:8px 0}
+    tr>:last-child{border-bottom:0}
+    tbody th{font-size:15px}
+    td::before{content:attr(data-l);display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:2px}
+  }
   aside.callout{margin:22px 0;padding:12px 16px;border:1px solid var(--line);border-left:4px solid var(--accent);
                border-radius:8px;background:#f7f7fb;font-size:16px;line-height:1.55}
   aside.callout strong{margin-right:4px}
