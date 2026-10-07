@@ -82,7 +82,7 @@ function inline(s) {
   out = out.replace(/`([^`]+)`/g, (_, c) => `<code>${c}</code>`);
   out = out.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
   out = out.replace(/\*([^*]+)\*/g, '<i>$1</i>');
-  out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, t, h) => `<a href="${h}"${h.startsWith('#g-') ? ' class="g"' : ''}>${t}</a>`);
   // {#some-id} anywhere in inline text becomes an empty anchor span, so a
   // glossary row in a table can be the target of [term](#g-term) links from
   // the body. Raw HTML is escaped above, so this is the only way to put an
