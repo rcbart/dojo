@@ -10,7 +10,7 @@ slug: "sso-fields"
 page: true
 nav_blurb: "every field in a SAML or OIDC message, and which check refuses it"
 nav: 2
-revisions: 16
+revisions: 17
 status: published
 ---
 
@@ -180,7 +180,8 @@ on purpose.
 | `AttributeStatement` | Facts about the user the identity provider chose to share: name, email, groups. | `<saml:Attribute Name="mail"><saml:AttributeValue>ada@customer-a.example</saml:AttributeValue></saml:Attribute>` | Not checked by the handler. Read after the session starts, from the verified element only. |
 
 The Response issuer rule and the bearer confirmation's end-and-no-start
-are Web Browser SSO Profile section 4.1.4.2. Every assertion delivered
+are Web Browser SSO Profile section 4.1.4.2, the issuer rule as amended by
+erratum E17. Every assertion delivered
 by POST must be covered by a signature, its own or the Response's,
 profile 4.1.4.5 as amended by erratum E26. Every audience restriction is
 evaluated on its own, Core 2.5.1.4. An unevaluable condition makes the
@@ -287,16 +288,16 @@ with the tenant's keys, then read claim by claim at step 6.
 header     eyJhbGciOiJSUzI1NiIsImtpZCI6IjIwMjYtMDkiLCJ0eXAiOiJKV1QifQ
            {"alg": "RS256", "kid": "2026-09", "typ": "JWT"}
 
-payload    eyJpc3MiOiJodHRwczovL2lkcC5jdXN0b21lci1hLmV4YW1wbGUiLCJhdWQiOiJwYXJ0bmVyLWFwcCIsInN1YiI6IjBhN2UuLi4iLCJub25jZSI6IjdmQTJrelI4Li4uIiwiYXV0aF90aW1lIjoxNzkwMTUwMDAwLCJhY3IiOiJodHRwczovL2lkcC5jdXN0b21lci1hLmV4YW1wbGUvYWNyL21mYSIsImlhdCI6MTc5MDE1MDEwMCwiZXhwIjoxNzkwMTUzNzAwLCJzaWQiOiJzLTc3IiwiZW1haWwiOiJhZGFAY3VzdG9tZXItYS5leGFtcGxlIiwiZW1haWxfdmVyaWZpZWQiOnRydWV9
+payload    eyJpc3MiOiJodHRwczovL2lkcC5jdXN0b21lci1hLmV4YW1wbGUiLCJhdWQiOiJwYXJ0bmVyLWFwcCIsInN1YiI6IjBhN2UuLi4iLCJub25jZSI6IjdmQTJrelI4Li4uIiwiYXV0aF90aW1lIjoxNzkwNTI0NzEwLCJhY3IiOiJodHRwczovL2lkcC5jdXN0b21lci1hLmV4YW1wbGUvYWNyL21mYSIsImlhdCI6MTc5MDUyNDgwMCwiZXhwIjoxNzkwNTI4NDAwLCJzaWQiOiJzLTc3IiwiZW1haWwiOiJhZGFAY3VzdG9tZXItYS5leGFtcGxlIiwiZW1haWxfdmVyaWZpZWQiOnRydWV9
            {
              "iss": "https://idp.customer-a.example",
              "aud": "partner-app",
              "sub": "0a7e...",
              "nonce": "7fA2kzR8...",
-             "auth_time": 1790150000,
+             "auth_time": 1790524710,
              "acr": "https://idp.customer-a.example/acr/mfa",
-             "iat": 1790150100,
-             "exp": 1790153700,
+             "iat": 1790524800,
+             "exp": 1790528400,
              "sid": "s-77",
              "email": "ada@customer-a.example",
              "email_verified": true
@@ -320,10 +321,10 @@ and the two tokens below use it to say what they are.
 | `azp` | The authorized party, the client the token was issued to. Core errata set 2 reduced it to that definition and says a client not using an extension that needs it can ignore it. | `"azp": "partner-app"` | Step 6, when present must equal our client id. Its role was softened by Core errata set 2, so the trusted-audience line carries the weight. |
 | `nonce` | The random value the partner put in its request, copied into the signed token so the token can only answer that request. | `"nonce": "7fA2kzR8..."` | Step 6, must equal the pending request's nonce, which must itself be set. |
 | `sub` | The user's identifier, stable for that user at that identity provider. | `"sub": "0a7e..."` | Step 6, required, and carried as the subject with its issuer. Never email. |
-| `iat` | The time the token was made, in seconds since 1970. | `"iat": 1790150100` | Step 6, required, and `now` must be at or after `iat` minus skew. |
-| `exp` | The time after which the token is no longer valid. | `"exp": 1790153700` | Step 6, required, and `now` must be before `exp` plus skew. |
-| `nbf` | The time before which the token is not yet valid. Optional in an ID token. | `"nbf": 1790150100` | Step 6, binding when present, RFC 7519 section 4.1.5. |
-| `auth_time` | The time the user actually logged in, which may be well before the token was made. Required when the request sent `max_age`. | `"auth_time": 1790150000` | Step 6, must be present and recent enough when the pending request carried `max_age`. |
+| `iat` | The time the token was made, in seconds since 1970. | `"iat": 1790524800` | Step 6, required, and `now` must be at or after `iat` minus skew. |
+| `exp` | The time after which the token is no longer valid. | `"exp": 1790528400` | Step 6, required, and `now` must be before `exp` plus skew. |
+| `nbf` | The time before which the token is not yet valid. Optional in an ID token. | `"nbf": 1790524800` | Step 6, binding when present, RFC 7519 section 4.1.5. |
+| `auth_time` | The time the user actually logged in, which may be well before the token was made. Required when the request sent `max_age`. | `"auth_time": 1790524710` | Step 6, must be present and recent enough when the pending request carried `max_age`. |
 | `acr` | How strongly the user was authenticated, as a named level the identity provider and the partner agreed on. A password alone, a password plus a second factor, and a hardware key each have a name. This claim says which one the login met. | `"acr": "https://idp.customer-a.example/acr/mfa"` | Step 6, must be in the requested `acr_values` when the request carried any. |
 | `sid` | The identity provider's name for the user's session there, quoted back in a logout token. | `"sid": "s-77"` | Carried into `LoginResult.sid`. Not a refusal. An identity provider may include it whenever it likes, but registering `backchannel_logout_session_required` is what makes it required. |
 | `email`, `email_verified`, profile claims, and anything else | Facts about the user. OpenID Connect defines a standard set (name, picture, locale, phone, address, under the `profile`, `email`, `phone` and `address` scopes) and leaves the set open, so an identity provider can add any claim it likes, and does: groups, roles, tenant, employee IDs. What arrives is decided at the identity provider, by the scopes the partner asked for and by its own release policy for that client. | `"email": "ada@customer-a.example", "email_verified": true, "groups": ["analysts"]` | Not checked by the handler. `email_verified` matters once, at the single first-login match [the account contract](/blog/sso-for-integrations/#the-account-contract) allows. |
@@ -363,17 +364,17 @@ POST /oidc/backchannel-logout HTTP/1.1
 Host: app.partner.example
 Content-Type: application/x-www-form-urlencoded
 
-logout_token=eyJhbGciOiJSUzI1NiIsImtpZCI6IjIwMjYtMDkiLCJ0eXAiOiJsb2dvdXQrand0In0.eyJpc3MiOiJodHRwczovL2lkcC5leGFtcGxlLmNvbSIsImF1ZCI6ImNsaWVudC04ZjJhIiwiaWF0IjoxNzkwNTI0ODAwLCJleHAiOjE3OTA1MjQ5MjAsImp0aSI6ImxvLTRkMWUiLCJzaWQiOiJzLTc3IiwiZXZlbnRzIjp7Imh0dHA6Ly9zY2hlbWFzLm9wZW5pZC5uZXQvZXZlbnQvYmFja2NoYW5uZWwtbG9nb3V0Ijp7fX19.signature-omitted
+logout_token=eyJhbGciOiJSUzI1NiIsImtpZCI6IjIwMjYtMDkiLCJ0eXAiOiJsb2dvdXQrand0In0.eyJpc3MiOiJodHRwczovL2lkcC5jdXN0b21lci1hLmV4YW1wbGUiLCJhdWQiOiJwYXJ0bmVyLWFwcCIsImlhdCI6MTc5MDUyNDgwMCwiZXhwIjoxNzkwNTI0OTIwLCJqdGkiOiJsby00ZDFlIiwic2lkIjoicy03NyIsImV2ZW50cyI6eyJodHRwOi8vc2NoZW1hcy5vcGVuaWQubmV0L2V2ZW50L2JhY2tjaGFubmVsLWxvZ291dCI6e319fQ.signature-omitted
 ```
 
 ```text Listing 9: the logout token in Listing 8, split at the two dots and decoded
 header     eyJhbGciOiJSUzI1NiIsImtpZCI6IjIwMjYtMDkiLCJ0eXAiOiJsb2dvdXQrand0In0
            {"alg": "RS256", "kid": "2026-09", "typ": "logout+jwt"}
 
-payload    eyJpc3MiOiJodHRwczovL2lkcC5leGFtcGxlLmNvbSIsImF1ZCI6ImNsaWVudC04ZjJhIiwiaWF0IjoxNzkwNTI0ODAwLCJleHAiOjE3OTA1MjQ5MjAsImp0aSI6ImxvLTRkMWUiLCJzaWQiOiJzLTc3IiwiZXZlbnRzIjp7Imh0dHA6Ly9zY2hlbWFzLm9wZW5pZC5uZXQvZXZlbnQvYmFja2NoYW5uZWwtbG9nb3V0Ijp7fX19
+payload    eyJpc3MiOiJodHRwczovL2lkcC5jdXN0b21lci1hLmV4YW1wbGUiLCJhdWQiOiJwYXJ0bmVyLWFwcCIsImlhdCI6MTc5MDUyNDgwMCwiZXhwIjoxNzkwNTI0OTIwLCJqdGkiOiJsby00ZDFlIiwic2lkIjoicy03NyIsImV2ZW50cyI6eyJodHRwOi8vc2NoZW1hcy5vcGVuaWQubmV0L2V2ZW50L2JhY2tjaGFubmVsLWxvZ291dCI6e319fQ
            {
-             "iss": "https://idp.example.com",
-             "aud": "client-8f2a",
+             "iss": "https://idp.customer-a.example",
+             "aud": "partner-app",
              "iat": 1790524800,
              "exp": 1790524920,
              "jti": "lo-4d1e",
@@ -387,8 +388,8 @@ signature  the RS256 signature over header.payload, base64url
 | Claim | What it is | Example | Refused by |
 |---|---|---|---|
 | `typ` (header) | A label saying what kind of token this is, so it cannot be mistaken for an ID token. Recommended. | `"typ": "logout+jwt"` | Step 1, when present must equal `logout+jwt` as a media type. |
-| `iss` | The identity provider that made the token. Selects the tenant's keys before verification, re-read after. | `"iss": "https://idp.example.com"` | Step 2, must equal the tenant's issuer. |
-| `aud` | Which client the token is for. | `"aud": "client-8f2a"` | Step 2, must contain our client id and no untrusted audience, and `azp` when present must equal our client id. |
+| `iss` | The identity provider that made the token. Selects the tenant's keys before verification, re-read after. | `"iss": "https://idp.customer-a.example"` | Step 2, must equal the tenant's issuer. |
+| `aud` | Which client the token is for. | `"aud": "partner-app"` | Step 2, must contain our client id and no untrusted audience, and `azp` when present must equal our client id. |
 | `iat` | The time the token was made. | `"iat": 1790524800` | Step 2, required, within skew. |
 | `exp` | The time after which it is no longer valid. | `"exp": 1790524920` | Step 2, required, within skew. |
 | `jti` | A unique name for this token. It is the replay key, the value remembered so the same token is refused a second time. | `"jti": "lo-4d1e"` | Step 3, `seen_jti.add_if_absent`, kept until `exp` plus skew. |

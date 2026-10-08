@@ -10,7 +10,7 @@ nav_title: "Identity glossary"
 page: true
 nav_blurb: "identity terms, each one a distinction with its long form"
 nav: 1
-revisions: 9
+revisions: 10
 status: published
 ---
 
@@ -49,8 +49,9 @@ Long form: [Accounts exist at both ends](/blog/sso-for-integrations-the-decision
 administrator, read-only. An identity provider can assert it and a
 partner can act on it. A permission is what a role may do inside one
 application, and it belongs to that application alone. Roles cross, and
-permissions don't. A launch or a token exchange may narrow what a user
-may do and must never widen it. Long form:
+permissions don't. A launch into an account that already exists, or a token exchange,
+may narrow what a user may do and must never widen it. Provisioning,
+including a just-in-time first login, is where entitlements are set. Long form:
 [Accounts exist at both ends](/blog/sso-for-integrations-the-decision/#accounts-exist-at-both-ends);
 the token post, when it publishes.
 
@@ -109,14 +110,18 @@ out to log in. The response is authentic, but nobody asked for it. Long form:
 [Which flow, and what it costs](/blog/sso-for-integrations-the-decision/#which-flow-and-what-it-costs).
 
 **SP-initiated and IdP-initiated.** Where the process starts. If it
-starts at the service provider, a landing page or a link deep into the
-application that has to work out where to send the user to authenticate,
-it's SP-initiated, and the response comes back bound to a request. If it
-starts at the identity provider, a tile on its portal or a link it
-issued, with the user already authenticated there, it's IdP-initiated,
-and the response arrives unsolicited. The deciding
+begins with a request from the service provider, because a landing page
+or a deep link made the application work out where to send the user to
+authenticate, it's SP-initiated, and the response comes back bound to
+that request. If it begins with a response the service provider never
+asked for, from a portal tile, a launcher, or any system that holds the
+signing key and sends one, it's IdP-initiated and the response arrives
+unsolicited. The user doesn't have to start at the identity provider for
+that, and the receiver classifies the flow by the message, not by where
+the user began. The deciding
 question is never whether the user has a session somewhere. It's whether
-the thing launching them is the identity provider. Long form:
+the message that arrives at the service provider answers a request the
+service provider sent. Long form:
 [Which flow, and what it costs](/blog/sso-for-integrations-the-decision/#which-flow-and-what-it-costs).
 
 **Identity provider and service provider.** The identity provider (IdP)
@@ -127,16 +132,19 @@ issues the access token as well. The service provider (SP, or relying
 party in OpenID Connect's vocabulary) accepts that statement instead of
 authenticating the user itself. Which
 side you are on changes with the integration. Your platform is the
-identity provider when it launches users into a partner, and the service
-provider when a customer's portal launches their users into you. Long
+identity provider when it launches users into a partner that registered
+against you, only the launching side when the partner registered against
+the customer's provider, and the service provider when a customer's
+portal launches their users into you. Long
 form: [The parties](/blog/sso-for-integrations/#the-parties-and-the-shape-they-all-share).
 
 **Subject and identifier.** The subject is the person an assertion is
 about. The identifier is the value that names them, and it is unique only
 within the issuer that minted it. So the thing an account is linked to is
-the pair, issuer and identifier, never the identifier alone, and never an
-email address, which changes, gets reused, and is the first thing an
-attacker will try to set. Long form:
+the pair, issuer and identifier, never the identifier alone, and an
+email address only when the issuer sends nothing else, with its changes,
+its reuse and attacker-set values written down, because it is the first
+thing an attacker will try to set. Long form:
 [The account contract](/blog/sso-for-integrations/#the-account-contract).
 
 **Consent and pre-authorization.** Consent is a person saying yes at the
@@ -282,7 +290,8 @@ statement about who the user is. Long form:
 [SP-initiated: the baseline](/blog/sso-for-integrations/#sp-initiated-the-baseline).
 
 **Third-party-initiated login.** Section 4 of OpenID Connect Core, where an
-identity provider sends the user to a URL the relying party registered,
+identity provider, or any other party such as your own platform, sends
+the user to a URL the relying party registered,
 with the issuer and a hint, and the relying party starts an ordinary
 solicited request of its own. The unsolicited arrival becomes a solicited
 response, at the cost of one redirect the user never sees. Long form:

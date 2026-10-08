@@ -6,7 +6,7 @@ date: 2026-10-04
 tags: ["identity", "sso", "saml", "oidc", "oauth", "federation", "engineering"]
 category: identity
 slug: "sso-for-integrations"
-revisions: 61
+revisions: 62
 status: published
 ---
 This is the builder's half of two posts. [The decision
@@ -19,7 +19,7 @@ within what the other side can do. The receiving side builds, and this
 post holds the checks behind each choice. The choices, for reference.
 
 - SP-initiated with a deep link by default, in whichever protocol both sides speak, SAML or OIDC.
-- OIDC third-party-initiated login when the launch has to start at the identity provider and both sides speak OIDC.
+- OIDC third-party-initiated login when the launch comes from the identity provider's side and both sides speak OIDC.
 - SAML IdP-initiated only when the partner cannot start a flow at all, which in practice means a SAML-only partner with no SP-initiated endpoint, and then with the receiving side hardened.
 - A signed handoff only inside your own trust boundary, one organization holding the keys and the on-call at both ends. The test is in that section.
 - The deep link survives only if the partner carries `RelayState` or `state` through its own login, and a partner that can start a flow but drops the target is, for your purposes, one that cannot start it.
@@ -44,7 +44,7 @@ Here is where each mechanism lives.
 - The one distinction the four flows turn on: [Solicited and unsolicited](#solicited-and-unsolicited).
 - The four flows side by side, one property per row, with the sentence of the specification behind each one: [The four flows, cell by cell](#the-four-flows-cell-by-cell).
 - The flow the standards were designed around, and the handler every other flow reuses: [SP-initiated: the baseline](#sp-initiated-the-baseline).
-- The launch has to start at the identity provider and the partner speaks only SAML: [SAML, IdP-initiated](#saml-idp-initiated).
+- The launch comes from the identity provider's side and the partner speaks only SAML: [SAML, IdP-initiated](#saml-idp-initiated).
 - The same, when both sides speak OIDC: [OIDC, third-party-initiated login](#oidc-third-party-initiated-login).
 - A partner inside your own trust boundary: [The signed handoff](#the-signed-handoff).
 - Where consent lives in each protocol, and why it is a record rather than code: [Consent, in the protocol](#consent-in-the-protocol).
@@ -128,9 +128,11 @@ validity window, the single use and the binding to a request, which
 are what the rest of this post is about, the partner starts its own
 session and lands the user on the page they wanted.
 
-Two distinctions run through the decision post and this one. Where the
-flow starts, at the identity provider or at the service provider,
-which is the IdP-initiated versus SP-initiated distinction. And
+Two distinctions run through the decision post and this one. Which
+side sends the first message, a request from the service provider or a
+response from the identity provider that nobody asked for, which is
+the SP-initiated versus IdP-initiated distinction, and it's decided by
+the message, not by where the user began. And
 whether what arrives answers a request the receiver made, which is
 solicited versus unsolicited, and is the one that decides what the
 receiving side can verify. [The decision
@@ -645,7 +647,8 @@ attacker got there first and the legitimate client is now the second
 presenter. In both cases the tokens from the first exchange may be in
 the wrong hands, so the identity provider revokes them rather than
 trusting the first exchange because it came first. RFC 6749 section
-4.1.2 says exactly that.
+4.1.2 says the server must deny the second request and should revoke
+the tokens where it can.
 
 The fourth is which identity provider. The one the request went to,
 and the `iss` lines hold it. The mix-up attack, a response from one
@@ -822,14 +825,14 @@ Nothing in the protocol does, short of making the arrival solicited
 again. So if there's any way to turn the unsolicited arrival back into
 a request, take it. That's the whole of what the [OIDC flow described
 below](#oidc-third-party-initiated-login) does, and it's why it's the
-default for launches that start at the identity provider when both
+default for launches that come from the identity provider's side when both
 sides speak OIDC. The three sections that follow are the arrival that
 can't be turned back into a request, the arrival that can, and the
 handoff, where there was never a request to begin with.
 
 ## SAML, IdP-initiated
 
-Use this only when the launch has to start at the identity provider
+Use this only when the launch comes from the identity provider's side
 and the partner speaks only SAML, and harden the receiving side,
 whichever side that is.
 
@@ -1540,8 +1543,8 @@ Listing 15.
 
 ```json Listing 15: a back-channel logout token
 {
-  "iss": "https://idp.example.com",
-  "aud": "client-8f2a",
+  "iss": "https://idp.customer-a.example",
+  "aud": "partner-app",
   "iat": 1790524800,
   "exp": 1790524920,
   "jti": "lo-4d1e",
@@ -1563,7 +1566,7 @@ POST /oidc/backchannel-logout HTTP/1.1
 Host: app.partner.example
 Content-Type: application/x-www-form-urlencoded
 
-logout_token=eyJhbGciOiJSUzI1NiIsImtpZCI6IjIwMjYtMDkifQ.eyJpc3MiOiJodHRwczovL2lkcC5leGFtcGxlLmNvbSIsImF1ZCI6ImNsaWVudC04ZjJhIiwiaWF0IjoxNzkwNTI0ODAwLCJleHAiOjE3OTA1MjQ5MjAsImp0aSI6ImxvLTRkMWUiLCJzaWQiOiJzLTc3IiwiZXZlbnRzIjp7Imh0dHA6Ly9zY2hlbWFzLm9wZW5pZC5uZXQvZXZlbnQvYmFja2NoYW5uZWwtbG9nb3V0Ijp7fX19.signature-omitted
+logout_token=eyJhbGciOiJSUzI1NiIsImtpZCI6IjIwMjYtMDkiLCJ0eXAiOiJsb2dvdXQrand0In0.eyJpc3MiOiJodHRwczovL2lkcC5jdXN0b21lci1hLmV4YW1wbGUiLCJhdWQiOiJwYXJ0bmVyLWFwcCIsImlhdCI6MTc5MDUyNDgwMCwiZXhwIjoxNzkwNTI0OTIwLCJqdGkiOiJsby00ZDFlIiwic2lkIjoicy03NyIsImV2ZW50cyI6eyJodHRwOi8vc2NoZW1hcy5vcGVuaWQubmV0L2V2ZW50L2JhY2tjaGFubmVsLWxvZ291dCI6e319fQ.signature-omitted
 ```
 
 The partner treats the token like an ID token before it goes looking
@@ -1632,9 +1635,12 @@ def backchannel_logout(form, tenants, now, seen_jti):
 Validating the token the way an ID token is validated is Back-Channel
 Logout section 2.6. The response codes and the `Cache-Control` header
 are section 2.8. The spec tolerates the 204 some frameworks substitute for the 200.
-The 2022 text answered a failed logout with 501. Errata set 1
-(December 2023) folded that case into 400, so a partner still sending
-501 is reading the older text. One registration detail
+Drafts through April 2022 answered a failed logout with 501. Draft 08
+of May 2022 folded that case into 400 and the Final of September 2022
+kept it, so a partner still sending 501 is reading a draft. What errata
+set 1 (December 2023) added here was `exp`, now required in the token and
+validated alongside `iss`, `aud` and `iat`, so an IdP built to the 2022
+Final may omit it and Listing 17 refuses that token. One registration detail
 the whole mechanism rests on. The partner only has a `sid` to match if
 the IdP put one in the ID token at login, and the partner asks for that
 with `backchannel_logout_session_required`. A partner that never

@@ -6,7 +6,7 @@ date: 2026-10-04
 tags: ["identity", "sso", "saml", "oidc", "oauth", "federation", "engineering"]
 category: identity
 slug: "sso-for-integrations-the-decision"
-revisions: 63
+revisions: 64
 status: published
 ---
 
@@ -77,15 +77,15 @@ Every SSO integration is a set of turns at the same seven signposts, and the dec
 
 **Delegation.** A user lets an application do some things on their behalf, against some resource, for a while, without handing over a password and without the application becoming them. What crosses is a permission, not an identity. Nothing in it says who the user is in a form anyone else can rely on, and nothing in it says the user is present. OAuth is a delegation protocol, whatever it ends up being used for, and it is the other thing an integration may need, after the identity question is answered.
 
-**SP-initiated.** The application the user is arriving at starts the login, by sending a request to the identity provider and waiting for the answer. SP is service provider, SAML's word for the receiving application. When your link lands at the partner and the partner sends the request, the flow is also SP-initiated.
+**SP-initiated.** The application the user is arriving at starts the login, by sending a request to the identity provider and waiting for the answer. SP is service provider, SAML's word for the receiving application. How the user reached that application doesn't matter, a bookmark, a partner's link, a launcher somewhere else. What makes the flow SP-initiated is that the receiving application sent the request and the response answers it. When your link lands at the partner and the partner sends the request, the flow is also SP-initiated.
 
-**IdP-initiated.** The identity provider starts it, by sending a login response to an application that never asked. IdP is identity provider. A portal tile that drops the user into the partner already signed in is the usual example. It is common in workforce identity, where an application launcher is the whole point, and in general it is not recommended for integrations, for the reason under the next term but one.
+**IdP-initiated.** The identity provider starts it, by sending a login response to an application that never asked. IdP is identity provider. A portal tile that drops the user into the partner already signed in is the usual example, but the user doesn't have to begin at the identity provider itself. A portal, a launcher or an application of your own can ask the identity provider to send that response, or send one itself if it holds the signing key the receiver trusts, and whatever sends an unsolicited response is the identity provider for that login. The receiving side classifies the flow by the message it gets, never by where the user began. It is common in workforce identity, where an application launcher is the whole point, and in general it is not recommended for integrations, for the reason under the next term but one.
 
 **Solicited.** The response that arrives at the receiving application is the answer to a request that application sent, and it can match the two. Every SP-initiated flow is solicited.
 
 **Unsolicited.** The response arrives at an application that did not ask for it, so there is nothing to match it against. Every IdP-initiated flow is unsolicited, and that is the property that costs, because the receiver cannot tell whether this browser set out to log in.
 
-One more, because OIDC has it and SAML does not. **Third-party-initiated login** is OIDC's way of starting at the identity provider and still ending up solicited. The provider tells the receiving application to start the login itself, so the response that comes back is an answer to that application's own request.
+One more, because OIDC has it and SAML does not. **Third-party-initiated login** is OIDC's way of launching from the identity provider's side and still ending up solicited. The provider tells the receiving application to start the login itself, so the response that comes back is an answer to that application's own request.
 
 ## The decisions to carry
 
@@ -98,7 +98,7 @@ Two product policies come first, one for each case, because they decide what you
 
 | The decision | Who has to be in the room | Can it take a no | The cheap answer | The expensive answer | Decided in |
 |---|---|---|---|---|---|
-| **The flow.** SP-initiated with a deep link by default, in whichever protocol both sides speak, SAML included. Third-party-initiated login when the launch has to start at the identity provider and both sides speak OIDC. SAML IdP-initiated only when the partner cannot start a flow at all, which in practice means a SAML-only partner with no SP-initiated endpoint, and then with the receiving side hardened. A signed handoff only inside your own trust boundary. Never bare OAuth | The partner, for what it can start and what it speaks, and the customer if its provider has to issue the unsolicited response | No. The flow decides every row below it | The partner has a login your link can point at | The partner cannot start a flow, so you are in an unsolicited flow and everything in the next row follows | [Which flow, and what it costs](#which-flow-and-what-it-costs) |
+| **The flow.** SP-initiated with a deep link by default, in whichever protocol both sides speak, SAML included. Third-party-initiated login when the launch comes from the identity provider's side and both sides speak OIDC. SAML IdP-initiated only when the partner cannot start a flow at all, which in practice means a SAML-only partner with no SP-initiated endpoint, and then with the receiving side hardened. A signed handoff only inside your own trust boundary. Never bare OAuth | The partner, for what it can start and what it speaks, and the customer if its provider has to issue the unsolicited response | No. The flow decides every row below it | The partner has a login your link can point at | The partner cannot start a flow, so you are in an unsolicited flow and everything in the next row follows | [Which flow, and what it costs](#which-flow-and-what-it-costs) |
 | **Hardening the receiving side**, in an unsolicited flow. The replay window, where the response came from, where a launch may land, a confirmation screen, and beyond the setup form the two sides exchange, what the partner has to build to receive at all | The partner when it receives, and nobody outside your team when you do | No. Skipping it in an unsolicited flow is skipping the flow | You receive, so at least you can schedule it | The partner receives, so you cannot schedule it, only ask, and a partner that declines leaves every unsolicited flow unhardened | [Who hardens the receiving side](#who-hardens-the-receiving-side) |
 | **The sign-out direction.** What happens at the partner when a user signs out with you, the reverse, what failure looks like, and what turning the integration off does to open sessions | The partner, and the customer if you federate | Yes, if the partner's session is short | Nothing reaches the partner, and that is recorded | Sign-out must reach the partner. If you broker, reaching it is your build. If you federate, it is a request to the customer, which you cannot schedule | [The sign-out direction](#the-sign-out-direction) |
 | **The partner's session.** How long it may live after a launch, whether it may outlive the authentication behind it, and what a second launch does to the clock | The partner | Yes, if you have logout instead | The partner commits to a number | The partner won't commit, so you are buying logout, and logout is the harder of the two | [The partner's session](#the-partners-session) |
@@ -169,10 +169,12 @@ question is answered.
 ## Which flow, and what it costs
 
 Whether the request was also tied to this browser is what closes login
-CSRF. OIDC Core recommends that rather
-than requiring it, and the OAuth security best current practice, RFC
-9700, makes it a must, which is why the table below says to verify it
-rather than assume it.
+CSRF. OIDC Core only recommends the `state` parameter that usually
+carries it, though it points the client at RFC 6749's rule that CSRF
+protection on the redirect endpoint is a must, and the OAuth security
+best current practice, RFC 9700, removes the ambiguity, a `state` value
+bound to the browser, or PKCE or the OIDC nonce, is required. The table
+below says to verify it rather than assume it.
 
 The receiving side is whoever the response arrives at, which is the
 partner when you own the launch and your own application when the
@@ -212,13 +214,13 @@ known. Here is what separates them.
 | | SP-initiated | IdP-initiated, SAML | Third-party, OIDC |
 |---|---|---|---|
 | What it costs you | Least of the three. A launch link, and one more partner configured at whichever identity provider issues for these users, yours or the customer's | A security exposure you carry for the life of the integration, and hardening work on whichever side receives | Nothing beyond SP-initiated, plus the explaining, because the flow is rarely seen outside the education sector |
-| What you ask the other side for | A login your launch can point at, a guarantee it checks every answer against the request it made, and in SAML the refusal to accept the same answer twice, which every SAML receiver owes and not only the ones taking unsolicited ones. You build the link | The single-use check, plus acceptance of a response nobody asked for, and the hardening that goes with it, including a confirmation screen if you want login CSRF closed | One endpoint registered at their end, checks on what arrives at it, and a list of the issuers they will accept there. You build the launch that calls it |
+| What you ask the other side for | A login your launch can point at, a guarantee it checks every answer against the request it made, and in SAML the refusal to accept the same answer twice, which every SAML receiver of POST-bound responses owes and not only the ones taking unsolicited ones. You build the link | The single-use check, plus acceptance of a response nobody asked for, and the hardening that goes with it, including a confirmation screen if you want login CSRF closed | One endpoint registered at their end, checks on what arrives at it, and a list of the issuers they will accept there. You build the launch that calls it |
 | What it leaves exposed | Nothing from the response itself, provided the receiver ties its request to this browser and keeps the single-use check in the row above. OIDC Core recommends the first and RFC 9700 requires it, so it is something to verify rather than assume. What the binding does not prove is that the user chose the identity provider. A link that names the tenant is the receiver's to refuse, and [the mechanics post](/blog/sso-for-integrations/#which-identity-provider-is-this-users) shows where | Login CSRF. A confirmation screen closes it, at the cost of the silent launch | Nothing, on the same condition as SP-initiated, plus a public endpoint anyone who can reach it can fire, which is why the issuer allow list matters there |
 
 Every cell of that, row by row, with the signed handoff as a fourth column and the sentence of the standard each one rests on, is in [the mechanics post](/blog/sso-for-integrations/#the-four-flows-cell-by-cell).
 
-The default is SP-initiated, wherever the flow can start at the
-service provider, in either protocol. When the launch has to start at the identity provider and both sides
+The default is SP-initiated, wherever the receiving side can send
+the request, in either protocol. When the launch comes from the identity provider's side and both sides
 speak OIDC, use third-party-initiated login.
 
 When the partner says it has never heard of that flow, the precedent
@@ -228,7 +230,7 @@ third-party-initiated login, step one of the [1EdTech security
 framework](https://www.imsglobal.org/spec/security/v1p0/), and it has
 been running at scale across the education sector for years.
 
-When the launch has to start at the identity provider and the partner
+When the launch comes from the identity provider's side and the partner
 only speaks SAML, use IdP-initiated, harden the receiving side, and
 accept the login CSRF cost with eyes open. There is no third option in
 that one situation. SAML is solicited like anything else when the
@@ -302,8 +304,9 @@ lists the stolen assertion first among the threats to browser SSO
 an assertion copied on its way through the browser and posted again by
 somebody else. The countermeasures it and
 [OWASP](https://cheatsheetseries.owasp.org/cheatsheets/SAML_Security_Cheat_Sheet.html)
-name are the ones above, a short lifetime, single use, and a receiver
-that remembers what it has already accepted. A solicited flow makes
+name are the ones above, a short lifetime (6.4.1), one-time use (6.4.4
+and 6.4.5), and, from the Profiles document, a receiver that keeps the
+set of IDs it has already accepted. A solicited flow makes
 the copy harder to use, because the receiver can check it against a
 request this browser made. It does not make the store optional.
 
