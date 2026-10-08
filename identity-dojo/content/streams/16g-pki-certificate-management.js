@@ -277,7 +277,7 @@ public class KeyUsage {
 openssl x509 -in cert.pem -noout -dates -ext subjectAltName
   # the two things you check most: when it expires, and which names.</div>
 <p><b>Most TLS problems are configuration, not cryptography</b>: a missing intermediate, a skewed clock, a name not in the SAN, or a certificate nobody renewed.</p>`,
-docs:[['RFC 8446, TLS 1.3','https://www.rfc-editor.org/rfc/rfc8446'],['RFC 6125, hostname verification','https://www.rfc-editor.org/rfc/rfc6125']],
+docs:[['RFC 9846, TLS 1.3 (obsoletes 8446)','https://www.rfc-editor.org/rfc/rfc9846'],['RFC 6125, hostname verification','https://www.rfc-editor.org/rfc/rfc6125']],
 ex:{title:'Validate a server certificate',
 prompt:`Write <code>TlsValidate</code> with <code>static boolean serverCertOk(boolean chainValid, String certHost, String requestedHost, long notAfterEpoch, long now)</code> returning true only if the chain is valid, the requested host matches the cert's host (<code>requestedHost.equals(certHost)</code>), and it is not expired (<code>now &lt; notAfterEpoch</code>).`,
 starter:`public class TlsValidate {
