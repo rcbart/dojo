@@ -308,6 +308,8 @@ const page = (title, desc, body, root) => `<!doctype html>
         line-height:1.35;color:var(--muted);margin:0 0 14px;max-width:52ch}
   .pdate{color:var(--muted);font-size:14px;margin-bottom:26px}
   .disclose{font-size:12.5px;line-height:1.45;color:var(--muted);margin:28px 0 -22px;max-width:72ch}
+  .disclose a{color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;text-decoration-color:rgba(128,128,128,.45)}
+  .disclose a:hover,.disclose a:focus{text-decoration-color:currentColor}
   .pull{font-family:var(--serif);font-size:clamp(21px,3.1vw,29px);line-height:1.3;
         font-weight:600;letter-spacing:-.3px;color:var(--ink);text-align:center;
         max-width:22ch;margin:44px auto;padding:26px 0;position:relative;
@@ -467,7 +469,12 @@ const disclosure = p => {
   const key = String(p.meta.disclosure || (catsOf(p).includes('leadership') ? 'story' : 'guide')).trim();
   const text = DISCLOSE[key];
   if (!text) throw new Error(`${p.slug}: unknown disclosure "${key}"`);
-  return `<p class="disclose">${esc(text)}</p>`;
+  // Ron, 9 Oct 2026: the line itself is the link to the page that shows the
+  // method (a second line under it made the disclosure too long). It is a
+  // link only once that page is in the build, so it can never point at a
+  // page that has not published.
+  const how = pages.find(q => q.slug === 'how-these-posts-are-made' && (!q.draft || process.env.INCLUDE_DRAFTS === '1'));
+  return `<p class="disclose">${how ? `<a href="/${how.slug}/" title="How these posts are made">${esc(text)}</a>` : esc(text)}</p>`;
 };
 
 // ---- emit ----
