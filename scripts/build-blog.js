@@ -9,6 +9,13 @@
 //                                a reference kept current in place, with no
 //                                date, outside the archive, the feed and the
 //                                home lists; linked from the nav
+//   OUT/primers/index.html     = the list of primers (pages that also carry
+//                                primer: true); they stay out of the nav and
+//                                are reached through this one link
+//
+// A series (front matter series: <id> and part: N on each post, with
+// series_title and series_description on part 1) shows as ONE entry in the
+// archive, on the home page and in the feed, with its parts listed inside it.
 //
 // Markdown subset (all this blog uses): # ## ### headings, ``` fences, `code`,
 // **bold**, *italic*, [text](url), > quotes, - lists, --- rules, paragraphs.
@@ -270,8 +277,15 @@ const fmtDate = iso => new Date(iso + 'T12:00:00Z')
 // Pages (page: true) get a nav link, by their short title (nav_title) or title.
 // Declared before `page` so the template can call it; pages are read below.
 const pages = [];
-const navPages = root => pages.filter(p => !p.draft || process.env.INCLUDE_DRAFTS === '1')
-  .map(p => `<a href="${root}${p.slug}/">${esc(p.meta.nav_title || p.meta.title.replace(/^\[preview\] /, ''))}</a>`).join('');
+// A primer (page: true and primer: true) is a page, but it does not take a
+// nav link of its own. Ron, 12 Oct 2026: the basics publish as undated
+// primers under one Primers section, so the nav holds one link however many
+// there are.
+const isPrimer = p => String(p.meta.primer) === 'true';
+const inBuild = p => !p.draft || process.env.INCLUDE_DRAFTS === '1';
+const navPages = root => pages.filter(p => inBuild(p) && !isPrimer(p))
+  .map(p => `<a href="${root}${p.slug}/">${esc(p.meta.nav_title || p.meta.title.replace(/^\[preview\] /, ''))}</a>`).join('') +
+  (pages.some(p => inBuild(p) && isPrimer(p)) ? `<a href="${root}primers/">Primers</a>` : '');
 const page = (title, desc, body, root) => `<!doctype html>
 <html lang="en">
 <head>
@@ -386,6 +400,10 @@ const page = (title, desc, body, root) => `<!doctype html>
   .post:hover{text-decoration:none}
   .post h2{margin:0 0 6px;font-size:23px} .post:hover h2{color:var(--accent-ink)}
   .post p{color:var(--muted);margin:6px 0 0;font-size:15.5px}
+  .post.series h2 a{color:inherit} .post.series h2 a:hover{text-decoration:none}
+  .parts{list-style:none;margin:10px 0 0;padding:0;font-size:15.5px}
+  .parts li{margin:4px 0}
+  .parts span{display:inline-block;min-width:52px;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase}
   footer{border-top:1px solid var(--line);margin-top:50px;padding-top:20px;color:var(--muted);font-size:14px}
   .subscribe{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-top:42px;background:var(--panel,#fff)}
   .subscribe p{margin:0 0 10px}
@@ -449,6 +467,44 @@ posts.sort((a, b) => b.date.localeCompare(a.date));
 // Pages keep the order they declare (nav: 1, 2, ...), then alphabetical.
 pages.sort((a, b) => (Number(a.meta.nav) || 99) - (Number(b.meta.nav) || 99) || a.slug.localeCompare(b.slug));
 
+// ---- series ----
+// Ron, 12 Oct 2026: parts that publish together show as one entry, so a
+// three-part series is one dated line in the archive and not three. Each part
+// keeps its own page and URL. A series with only one part in the build is
+// listed as an ordinary post.
+const entriesOf = list => {
+  const groups = new Map();
+  for (const p of list) {
+    if (!p.meta.series) continue;
+    if (!/^[1-9]\d*$/.test(String(p.meta.part || ''))) throw new Error(`${p.slug}: series "${p.meta.series}" needs part: N`);
+    if (!groups.has(p.meta.series)) groups.set(p.meta.series, []);
+    groups.get(p.meta.series).push(p);
+  }
+  const done = new Set(), out = [];
+  for (const p of list) {
+    const g = p.meta.series ? groups.get(p.meta.series) : null;
+    if (!g || g.length < 2) { out.push({ post: p }); continue; }
+    if (done.has(p.meta.series)) continue;
+    done.add(p.meta.series);
+    const parts = [...g].sort((a, b) => Number(a.meta.part) - Number(b.meta.part));
+    parts.forEach((q, i) => {
+      if (i && Number(q.meta.part) === Number(parts[i - 1].meta.part)) throw new Error(`series "${p.meta.series}": two posts claim part ${q.meta.part}`);
+    });
+    const head = parts[0];
+    out.push({ series: {
+      parts, date: p.date,
+      title: head.meta.series_title ? (head.draft ? '[preview] ' : '') + head.meta.series_title : head.meta.title,
+      desc: head.meta.series_description || head.meta.description || '',
+      cats: [...new Set(parts.flatMap(q => catsOf(q)))],
+    } });
+  }
+  return out;
+};
+const COUNT = ['', 'one', 'two', 'three', 'four', 'five', 'six'];
+const partCount = s => `A series in ${COUNT[s.parts.length] || s.parts.length} parts`;
+const partsList = (s, root) => '<ol class="parts">' + s.parts.map(q =>
+  `<li><span>Part ${Number(q.meta.part)}</span> <a href="${root}blog/${q.slug}/">${esc(q.meta.title)}</a></li>`).join('') + '</ol>';
+
 const catsOf = p => String(p.meta.category || 'engineering')
   .replace(/[[\]"']/g, '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
 const pill = c => `<span class="pill ${c}">${c.charAt(0).toUpperCase() + c.slice(1)}</span>`;
@@ -462,7 +518,7 @@ const pills = p => catsOf(p).map(pill).join(' ');
 // 2026: at the top, ABOVE the title, in small print, so nobody discards
 // the post before reaching it and it does not interrupt the post itself.
 const DISCLOSE = {
-  story: 'Every idea, every thought and every judgment here is mine, and I have read and reread every line. AI drafted the prose from my notes, checked the facts and made it readable. What you are reading is an account of my history.',
+  story: 'Every idea, every thought and every judgment here is mine, and I have read and reread every line. AI drafted the prose from my notes and my own sentences, checked the facts and made it readable. What you are reading is an account of my history.',
   guide: 'Every idea, every thought and every judgment here is mine, and I have read and reread every line. AI drafted the prose from my notes, checked the facts and made it readable. What you are reading is how I do this work.',
 };
 const disclosure = p => {
@@ -494,7 +550,7 @@ for (const p of posts) {
 // build, as for posts.
 for (const p of pages) {
   const html = page(p.meta.title + ' · Ron Bar-Tor', p.meta.description || '',
-    `<h1>${esc(p.meta.title)}</h1>` +
+    (isPrimer(p) ? disclosure(p) : '') + `<h1>${esc(p.meta.title)}</h1>` +
     (p.meta.subtitle ? `<p class="psub">${esc(p.meta.subtitle)}</p>` : '') +
     md(p.body, { dir: p.dir, slug: p.slug, diagrams: 0 }) + giscusBlock(), '/');
   fs.mkdirSync(path.join(OUT, p.slug), { recursive: true });
@@ -509,10 +565,28 @@ for (const p of pages) {
 // strings, so the brackets arrive here as text and are stripped rather than
 // parsed. Everything downstream works on the list.
 
-const list = root => posts.map(p =>
-  `<a class="post" data-cat="${catsOf(p).join(' ')}" href="${root}blog/${p.slug}/">` +
-  `<h2>${esc(p.meta.title)} ${pills(p)}</h2>` +
-  `<div class="pdate">${fmtDate(p.date)}</div><p>${esc(p.meta.description || '')}</p></a>`).join('\n');
+// Primers: /primers/, the one list of them, in the order they declare (nav).
+// No dates, as for every page. Written only when a primer is in the build.
+const PRIMERS_LEDE = 'Short explainers for the basics the longer posts assume. Read one when a post uses something you haven\'t met yet.';
+const primers = pages.filter(isPrimer);
+if (primers.length) {
+  fs.mkdirSync(path.join(OUT, 'primers'), { recursive: true });
+  fs.writeFileSync(path.join(OUT, 'primers', 'index.html'),
+    page('Primers · Ron Bar-Tor', PRIMERS_LEDE,
+      `<h1>Primers</h1><div class="pdate">${esc(PRIMERS_LEDE)}</div>` +
+      primers.map(p => `<a class="post" href="/${p.slug}/"><h2>${esc(p.meta.title)}</h2>` +
+        `<p>${esc(p.meta.description || '')}</p></a>`).join('\n'), '/'));
+}
+
+const entries = entriesOf(posts);
+const list = root => entries.map(e => e.series
+  ? `<div class="post series" data-cat="${e.series.cats.join(' ')}">` +
+    `<h2><a href="${root}blog/${e.series.parts[0].slug}/">${esc(e.series.title)}</a> ${e.series.cats.map(pill).join(' ')}</h2>` +
+    `<div class="pdate">${fmtDate(e.series.date)} · ${partCount(e.series)}</div><p>${esc(e.series.desc)}</p>` +
+    partsList(e.series, root) + `</div>`
+  : `<a class="post" data-cat="${catsOf(e.post).join(' ')}" href="${root}blog/${e.post.slug}/">` +
+    `<h2>${esc(e.post.meta.title)} ${pills(e.post)}</h2>` +
+    `<div class="pdate">${fmtDate(e.post.date)}</div><p>${esc(e.post.meta.description || '')}</p></a>`).join('\n');
 
 // Two labels, one page. At three posts a filter reads as intent; at thirty it
 // earns its keep; and when it graduates to real sections the metadata is here.
@@ -553,19 +627,25 @@ fs.writeFileSync(path.join(OUT, 'blog', 'index.html'),
 // home page: fill @@POSTS@@ (latest 3, home-styled), @@NAVPOSTS@@ (sidebar
 // links, latest 5, title only) and @@YEAR@@
 const navPosts = posts.length
-  ? posts.slice(0, 5).map(p =>
-      `<a class="snav post" href="/blog/${p.slug}/" title="${esc(p.meta.title)}">${esc(p.meta.title)}</a>`).join('\n  ')
+  ? entries.slice(0, 5).map(e => e.series
+      ? { slug: e.series.parts[0].slug, title: e.series.title } : { slug: e.post.slug, title: e.post.meta.title }).map(p =>
+      `<a class="snav post" href="/blog/${p.slug}/" title="${esc(p.title)}">${esc(p.title)}</a>`).join('\n  ')
   : '<span class="snone">first post coming soon</span>';
 // The home sidebar lists the reference pages (page: true) under their own
 // heading, with nav_title and nav_blurb from the front matter. Ron, 4 Oct 2026:
 // the fields page and the glossary published without a sidebar link.
-const navPagesHome = pages.filter(p => !p.draft).map(p =>
+const navPagesHome = (pages.filter(p => !p.draft && !isPrimer(p)).map(p =>
   `<a class="snav" href="/${p.slug}/"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-pen"/></svg>${esc(p.meta.nav_title || p.meta.title)}` +
-  (p.meta.nav_blurb ? `<small>${esc(p.meta.nav_blurb)}</small>` : '') + `</a>`).join('\n  ') || '<span class="snone">none yet</span>';
+  (p.meta.nav_blurb ? `<small>${esc(p.meta.nav_blurb)}</small>` : '') + `</a>`)
+  .concat(pages.some(p => !p.draft && isPrimer(p))
+    ? [`<a class="snav" href="/primers/"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-pen"/></svg>Primers<small>the basics the longer posts assume, in plain English</small></a>`] : [])
+  .join('\n  ')) || '<span class="snone">none yet</span>';
 const mainPosts = posts.length
-  ? posts.slice(0, 3).map(p =>
-      `<a class="post" data-cat="${catsOf(p).join(' ')}" href="/blog/${p.slug}/"><div class="pdate">${fmtDate(p.date)} ${pills(p)}</div>` +
-      `<h3>${esc(p.meta.title)}</h3><p>${esc(p.meta.description || '')}</p></a>`).join('\n')
+  ? entries.slice(0, 3).map(e => e.series
+      ? `<div class="post series" data-cat="${e.series.cats.join(' ')}"><div class="pdate">${fmtDate(e.series.date)} · ${partCount(e.series)} ${e.series.cats.map(pill).join(' ')}</div>` +
+        `<h3><a href="/blog/${e.series.parts[0].slug}/">${esc(e.series.title)}</a></h3><p>${esc(e.series.desc)}</p>` + partsList(e.series, '/') + `</div>`
+      : `<a class="post" data-cat="${catsOf(e.post).join(' ')}" href="/blog/${e.post.slug}/"><div class="pdate">${fmtDate(e.post.date)} ${pills(e.post)}</div>` +
+        `<h3>${esc(e.post.meta.title)}</h3><p>${esc(e.post.meta.description || '')}</p></a>`).join('\n')
   : '<p class="secdesc">First post coming soon.</p>';
 // The home page links each leadership principle to the post that proves it.
 // A link marked data-needs="<slug>" is only real once that post is published,
@@ -608,6 +688,7 @@ const urls = [
   ...STATIC_PATHS.map(loc => ({ loc, lastmod: loc === '/' || loc === '/blog/' ? newest : null })),
   ...live.map(p => ({ loc: `/blog/${p.slug}/`, lastmod: p.date })),
   ...livePages.map(p => ({ loc: `/${p.slug}/`, lastmod: p.date })),
+  ...(livePages.some(isPrimer) ? [{ loc: '/primers/', lastmod: null }] : []),
 ];
 fs.writeFileSync(path.join(OUT, 'sitemap.xml'),
   '<?xml version="1.0" encoding="UTF-8"?>\n' +
@@ -618,6 +699,9 @@ fs.writeFileSync(path.join(OUT, 'sitemap.xml'),
   '\n</urlset>\n');
 
 const rfc822 = iso => new Date(iso + 'T12:00:00Z').toUTCString();
+const feedItems = entriesOf(live).map(e => e.series
+  ? { slug: e.series.parts[0].slug, title: e.series.title, date: e.series.date, desc: e.series.desc }
+  : { slug: e.post.slug, title: e.post.meta.title, date: e.post.date, desc: e.post.meta.description || '' });
 fs.writeFileSync(path.join(OUT, 'feed.xml'),
   '<?xml version="1.0" encoding="UTF-8"?>\n' +
   '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n<channel>\n' +
@@ -627,13 +711,14 @@ fs.writeFileSync(path.join(OUT, 'feed.xml'),
   '  <language>en</language>\n' +
   `  <atom:link href="${ORIGIN}/feed.xml" rel="self" type="application/rss+xml"/>\n` +
   (newest ? `  <lastBuildDate>${rfc822(newest)}</lastBuildDate>\n` : '') +
-  live.map(p =>
+  // A series is one item, linked to its first part, which links to the rest.
+  feedItems.map(p =>
     '  <item>\n' +
-    `    <title>${xmlEsc(p.meta.title)}</title>\n` +
+    `    <title>${xmlEsc(p.title)}</title>\n` +
     `    <link>${ORIGIN}/blog/${p.slug}/</link>\n` +
     `    <guid isPermaLink="true">${ORIGIN}/blog/${p.slug}/</guid>\n` +
     `    <pubDate>${rfc822(p.date)}</pubDate>\n` +
-    `    <description>${xmlEsc(p.meta.description || '')}</description>\n` +
+    `    <description>${xmlEsc(p.desc)}</description>\n` +
     '  </item>').join('\n') +
   '\n</channel>\n</rss>\n');
 
@@ -641,4 +726,4 @@ fs.writeFileSync(path.join(OUT, 'robots.txt'),
   'User-agent: *\nAllow: /\n\nSitemap: ' + ORIGIN + '/sitemap.xml\n');
 
 console.log(`built home + ${posts.length} post(s) + ${pages.length} page(s) + archive into ${OUT}`);
-console.log(`discovery: sitemap ${urls.length} urls, feed ${live.length} item(s), robots.txt`);
+console.log(`discovery: sitemap ${urls.length} urls, feed ${feedItems.length} item(s), robots.txt`);

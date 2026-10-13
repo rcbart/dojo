@@ -10,7 +10,7 @@ slug: "sso-fields"
 page: true
 nav_blurb: "every field in a SAML or OIDC message, and which check refuses it"
 nav: 2
-revisions: 17
+revisions: 18
 status: published
 ---
 
@@ -224,7 +224,7 @@ identity provider returns a small page whose form auto-submits a POST
 to the callback, the same shape as SAML's HTTP-POST binding, and the
 handler accepts both. A top-level GET carries the partner's `Lax`
 cookies and a cross-site POST does not, which is why the pending cookie
-is `SameSite=None` and why the SAML path needs the [stash and bounce](/blog/sso-for-integrations/#saml-idp-initiated), the extra hop the mechanics post adds so a cross-site POST ends in a top-level GET that carries the cookie.
+is `SameSite=None` and why the SAML path needs the [stash and bounce](/blog/sso-for-integrations/#sp-initiated-the-baseline), the extra hop the mechanics post adds so a cross-site POST ends in a top-level GET that carries the cookie.
 
 The error form of the same arrival replaces `code` with
 `error=login_required` and keeps `state`, so the handler can still find
@@ -326,7 +326,7 @@ and the two tokens below use it to say what they are.
 | `nbf` | The time before which the token is not yet valid. Optional in an ID token. | `"nbf": 1790524800` | Step 6, binding when present, RFC 7519 section 4.1.5. |
 | `auth_time` | The time the user actually logged in, which may be well before the token was made. Required when the request sent `max_age`. | `"auth_time": 1790524710` | Step 6, must be present and recent enough when the pending request carried `max_age`. |
 | `acr` | How strongly the user was authenticated, as a named level the identity provider and the partner agreed on. A password alone, a password plus a second factor, and a hardware key each have a name. This claim says which one the login met. | `"acr": "https://idp.customer-a.example/acr/mfa"` | Step 6, must be in the requested `acr_values` when the request carried any. |
-| `sid` | The identity provider's name for the user's session there, quoted back in a logout token. | `"sid": "s-77"` | Carried into `LoginResult.sid`. Not a refusal. An identity provider may include it whenever it likes, but registering `backchannel_logout_session_required` is what makes it required. |
+| `sid` | The identity provider's name for the user's session there, quoted back in a logout token. | `"sid": "s-77"` | Carried into `LoginResult.sid`. Not a refusal. An identity provider that advertises `backchannel_logout_session_supported` includes it, and registering `backchannel_logout_session_required` is what requires it in the logout token too. |
 | `email`, `email_verified`, profile claims, and anything else | Facts about the user. OpenID Connect defines a standard set (name, picture, locale, phone, address, under the `profile`, `email`, `phone` and `address` scopes) and leaves the set open, so an identity provider can add any claim it likes, and does: groups, roles, tenant, employee IDs. What arrives is decided at the identity provider, by the scopes the partner asked for and by its own release policy for that client. | `"email": "ada@customer-a.example", "email_verified": true, "groups": ["analysts"]` | Not checked by the handler. `email_verified` matters once, at the single first-login match [the account contract](/blog/sso-for-integrations/#the-account-contract) allows. |
 
 Everything in those claims is personal data, and an ID token is a
@@ -401,9 +401,11 @@ signature  the RS256 signature over header.payload, base64url
 Validating the token as an ID token is Back-Channel Logout section
 2.6. The response is section 2.8, `200` when the session is gone
 (`204` tolerated), `400` when the request was invalid or the logout
-failed, with `Cache-Control: no-store`. The `sid` at login is optional
-for the identity provider until the client registers
-`backchannel_logout_session_required`, which makes it required.
+failed, with `Cache-Control: no-store`. An identity provider that advertises
+`backchannel_logout_session_supported` puts `sid` in the ID token at
+login, section 2.1, and the client registers
+`backchannel_logout_session_required` to require it in the logout
+token, section 2.2.
 
 ## The launch token
 

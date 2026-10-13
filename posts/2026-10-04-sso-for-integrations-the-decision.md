@@ -6,7 +6,7 @@ date: 2026-10-04
 tags: ["identity", "sso", "saml", "oidc", "oauth", "federation", "engineering"]
 category: identity
 slug: "sso-for-integrations-the-decision"
-revisions: 64
+revisions: 65
 status: published
 ---
 
@@ -85,7 +85,7 @@ Every SSO integration is a set of turns at the same seven signposts, and the dec
 
 **Unsolicited.** The response arrives at an application that did not ask for it, so there is nothing to match it against. Every IdP-initiated flow is unsolicited, and that is the property that costs, because the receiver cannot tell whether this browser set out to log in.
 
-One more, because OIDC has it and SAML does not. **Third-party-initiated login** is OIDC's way of launching from the identity provider's side and still ending up solicited. The provider tells the receiving application to start the login itself, so the response that comes back is an answer to that application's own request.
+One more, because OIDC has it and SAML does not. **Third-party-initiated login** is OIDC's way of launching from the identity provider's side and still ending up solicited. The provider, or another party, tells the receiving application to start the login itself, so the response that comes back is an answer to that application's own request.
 
 ## The decisions to carry
 
@@ -168,14 +168,6 @@ question is answered.
 
 ## Which flow, and what it costs
 
-Whether the request was also tied to this browser is what closes login
-CSRF. OIDC Core only recommends the `state` parameter that usually
-carries it, though it points the client at RFC 6749's rule that CSRF
-protection on the redirect endpoint is a must, and the OAuth security
-best current practice, RFC 9700, removes the ambiguity, a `state` value
-bound to the browser, or PKCE or the OIDC nonce, is required. The table
-below says to verify it rather than assume it.
-
 The receiving side is whoever the response arrives at, which is the
 partner when you own the launch and your own application when the
 partner launches into it, and what it can verify turns on solicited or
@@ -185,7 +177,8 @@ unsolicited.
 
 An unsolicited response can be verified in almost every way. The receiver can check who signed it, that it was meant for it, that it hasn't expired, and what it says about how the user
 authenticated. Two things it can't do. It can't tell whether this
-browser, right now, set out to log in, which is what login CSRF
+browser, right now, set out to log in, which is what login CSRF,
+cross-site request forgery aimed at the login,
 exploits. An attacker gets a response for their own account, delivers
 it to a victim's browser, and has the victim work inside the
 attacker's session. And it can't ask for a stronger or fresher
@@ -218,6 +211,19 @@ known. Here is what separates them.
 | What it leaves exposed | Nothing from the response itself, provided the receiver ties its request to this browser and keeps the single-use check in the row above. OIDC Core recommends the first and RFC 9700 requires it, so it is something to verify rather than assume. What the binding does not prove is that the user chose the identity provider. A link that names the tenant is the receiver's to refuse, and [the mechanics post](/blog/sso-for-integrations/#which-identity-provider-is-this-users) shows where | Login CSRF. A confirmation screen closes it, at the cost of the silent launch | Nothing, on the same condition as SP-initiated, plus a public endpoint anyone who can reach it can fire, which is why the issuer allow list matters there |
 
 Every cell of that, row by row, with the signed handoff as a fourth column and the sentence of the standard each one rests on, is in [the mechanics post](/blog/sso-for-integrations/#the-four-flows-cell-by-cell).
+
+A solicited response answers a request the receiving side made.
+Whether the request was also tied to this browser is what closes login
+CSRF. OIDC Core only recommends the `state` parameter that usually
+carries it, though it points the client at RFC 6749's rule that CSRF
+protection on the redirect endpoint is a must, and the OAuth security
+best current practice, RFC 9700, removes the ambiguity, a `state` value
+bound to the browser, or PKCE or the OIDC nonce, is required. The table
+above says to verify it rather than assume it. In plain words, `state`
+is a random value the receiving side puts in its request and expects
+back unchanged, the nonce is a random value it expects back inside the
+signed token, and PKCE is a secret it keeps until it collects the
+result.
 
 The default is SP-initiated, wherever the receiving side can send
 the request, in either protocol. When the launch comes from the identity provider's side and both sides
@@ -707,7 +713,7 @@ mechanics, the clock-skew tolerances and the full logging list are in
 
 ## What I'd want you to take away
 
-1. **Don't use OAuth for this.** Whatever you build on OAuth for this
+1. **Don't use bare OAuth for this.** Whatever you build on OAuth alone
    will be a hack, and hacks in authentication get found.
 2. **Decide what sign-out does.** Logout has to be discussed, and the
    discussion may lead to single logout. Either way it's part of the

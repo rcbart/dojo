@@ -6,7 +6,7 @@ date: 2026-08-23
 tags: ["management", "leadership", "platform-teams", "identity", "org-design"]
 category: leadership
 slug: "in-the-critical-path-of-evolution"
-revisions: 21
+revisions: 22
 status: published
 ---
 
@@ -64,11 +64,12 @@ customer experience is pressing, it's close to product, because the login
 experience is one of the most product-facing surfaces a company has. When
 scale is pressing, it's close to infrastructure. And when AI arrives, get
 close to the AI group, because whatever they build will need identities before
-anyone thinks to ask for them.
+anyone thinks to ask for them. AI groups all over the world are working on
+these exact problems right now.
 
-I've sat in all four: security, infrastructure, product, and the AI group as I
-write this. Infrastructure and product are the two worth putting side by side,
-because they pulled hardest in opposite directions.
+I've sat in security, in infrastructure and in product. Infrastructure and
+product are the two worth putting side by side, because they pulled hardest
+in opposite directions.
 
 Infrastructure is where the team evolves into a platform.
 

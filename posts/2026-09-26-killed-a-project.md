@@ -6,7 +6,7 @@ date: 2026-09-26
 tags: ["management", "leadership", "identity", "decision-making", "engineering", "passwordless"]
 category: leadership
 slug: "killed-a-project"
-revisions: 48
+revisions: 49
 status: published
 ---
 
@@ -133,9 +133,8 @@ if the company chose to lower the bar, not a way to keep it, and by the time I
 left there was no wide deployment of them, though that may have changed since.
 So the path that could meet the bar had to run on the machine itself, every
 path on the machine went through the enclave, and that is where the credential
-lived, inside the operating system's internals. Those internals were exactly
-what the security team had already shown they could reach, which is why the
-bar had been written the way it was. So the judgment was not that a user was
+lived, inside the operating system's internals. The bar had been written with
+exactly that layer in mind. So the judgment was not that a user was
 exposed. It was that our claim would be false in the one place the bar cared
 about most.
 
@@ -203,9 +202,8 @@ future attached.
 I was naturally nervous before and during the meeting, and I held my breath
 and made the recommendation to senior leadership. One question came early. How
 serious is the problem? It was the room asking whether we could live with it,
-and that is where the principal stepped in and made the security case. I
-remember his line, or something close to it. "I could show you how far we
-could get into a laptop, and how quickly." A room that hears that sentence has
+and that is where the principal stepped in and made the security case, in a
+few sentences and from his own testing. A room that hears it from him has
 nothing left to relitigate about whether the bar is too high. The rest of the
 answer is in the preparation. Nobody in that room was surprised, because the
 meeting had not been set as "we want to talk about the recommendation." It had

@@ -6,7 +6,7 @@ date: 2026-10-04
 tags: ["identity", "sso", "saml", "oidc", "oauth", "federation", "engineering"]
 category: identity
 slug: "sso-for-integrations"
-revisions: 62
+revisions: 63
 status: published
 ---
 This is the builder's half of two posts. [The decision
@@ -160,7 +160,8 @@ checked.
 
 That gap opens two vulnerabilities. Replay, where a valid response stays
 valid until its clock runs out, so anyone who captures one can present
-it again. Login CSRF, where an attacker gets a response for their own
+it again. Login CSRF, cross-site request forgery aimed at the login,
+where an attacker gets a response for their own
 account, delivers it to a victim's browser, and the victim proceeds
 inside the attacker's session, entering data the attacker reads later.
 The partner can't tell a user who clicked from a user who was sent,
@@ -254,7 +255,7 @@ types an identifier and the partner works out which identity provider
 to send them to. From the redirect on, it's the same flow. The diagram shows
 OIDC. In SAML, the `AuthnRequest` ID and `InResponseTo` stand in for
 `state`. Nothing stands in for the code exchange, which is why the
-assertion ID cache carries the replay defense alone. In the POST
+assertion ID cache is the only replay defense behind `InResponseTo`. In the POST
 binding, which is the one you'll meet, nothing is fetched server to
 server. The signed assertion itself comes back through the browser in the POST, to the partner's assertion consumer service, the ACS, so
 everything the partner will ever know about this login is in that one
@@ -272,8 +273,8 @@ issuer, their users, and the settings they chose, kept apart from
 every other customer's. Every check that says "the tenant's" is a
 check against that one slice and no other.
 
-Nobody should write their own SAML consumer or OIDC relying party,
-because of a class of bug called signature wrapping. The element that was signed and the element the
+Nobody should write their own SAML consumer or OIDC relying party.
+In SAML the reason is a class of bug called signature wrapping. The element that was signed and the element the
 parser reads the subject from turn out to be different ones. A 2012
 study (Somorovsky and others, "On Breaking SAML", USENIX Security
 2012) found it in 11 of the 14 SAML frameworks it tested, and it has
@@ -281,7 +282,9 @@ been rediscovered since. A maintained library has been through that. A
 parser written for one integration hasn't. For SAML, take exactly one
 Assertion, verify every signature present and require one whose
 reference covers that element, and read the claims from that same
-element.
+element. The JWT counterpart is algorithm confusion, where the token's
+own header picks the algorithm it is verified with, which is why step
+5 of Listing 2 checks `alg` against a pinned list first.
 
 The Response and the Assertion are two different elements. The
 Response is the envelope the identity provider sends. The Assertion is
@@ -312,7 +315,10 @@ signing pair so the two rotate on their own schedules.
 Verifying the Response's signature before decrypting is stricter than
 the profile, which is satisfied by a signed Assertion inside an
 unsigned Response, and some identity providers send exactly that when
-encryption is on. The rule here is a policy, that ciphertext nobody has signed never
+encryption is on. What it defends against is the chosen-ciphertext
+attack on XML Encryption, where an attacker sends altered ciphertext
+and learns the plaintext from how the decryptor
+responds. The rule here is a policy, that ciphertext nobody has signed never
 reaches the decryptor, and it is a per-tenant switch. Turn it on for a
 tenant whose identity provider sends the assertion signed inside an
 unsigned Response and every login from that tenant fails. So find out
@@ -349,10 +355,10 @@ def start_login(request, tenants, target, silent=False):
     # against is written here, into a cookie only this browser holds.
     require(request.headers.get("Sec-Fetch-Dest", "document") == "document", "top_level")   # a top-level navigation, not a frame; the cookies paragraph below says why
     tenant = tenants.for_user(request)                      # the which-identity-provider section: by identifier, never by guess
-    target = path_of(target or DEFAULT_LANDING)
+    target = path_of(target or DEFAULT_LANDING)             # the path only, where Listing 11 takes a URL parameter and refuses a foreign origin first
     require(route_of(target) in ALLOWED_ROUTES, "target_route")   # the deep link is ours to check, not the IdP's
     pending = PendingLogin(tenant=tenant.id, after_login=target, silent=silent,
-                           max_age=tenant.max_age, acr_values=tenant.acr_values)   # what the callback checks the answer against
+                           max_age=tenant.max_age, acr_values=tenant.acr_values)   # what the callback checks the answer against, with acr_values kept as a list and space-joined in the request
     if tenant.protocol == OIDC:
         pending.state, pending.nonce = random_token(), random_token()
         pending.pkce_verifier = random_token(64)
@@ -605,7 +611,7 @@ confidential ones in RFC 9700, the best current practice in force. The
 OAuth 2.1 draft, which folds that practice into the core, requires it
 of every client except a confidential one whose OpenID Connect nonce
 the authorization server has reason to trust, where it stays
-recommended (section 7.5.1.1 of the draft), and that is where the
+recommended (section 7.5.1.1 of draft 16), and that is where the
 standard is going. A relying party holding its own
 client secret is a confidential client, and Listings 1 and 2 use PKCE
 regardless, because it costs nothing and closes authorization code
@@ -764,8 +770,8 @@ more. The service provider asks with `RequestedAuthnContext` in the
 `acr`, the authentication context class reference, a claim in the ID
 token whose value is a string the two sides agree on. OpenID Connect
 Core defines only one value itself, `0`, meaning an authentication
-that meets no assurance level at all, a long-lived cookie for
-instance. Every other value comes from a profile the deployment
+that meets no assurance level at all, with no confidence the same
+person is there. Every other value comes from a profile the deployment
 adopts, the SAML class URIs reused as strings, an assurance level from
 NIST 800-63 or eIDAS, or a provider's own names, such as `phr` for
 phishing-resistant. The relying party asks with `acr_values`
@@ -1642,9 +1648,11 @@ set 1 (December 2023) added here was `exp`, now required in the token and
 validated alongside `iss`, `aud` and `iat`, so an IdP built to the 2022
 Final may omit it and Listing 17 refuses that token. One registration detail
 the whole mechanism rests on. The partner only has a `sid` to match if
-the IdP put one in the ID token at login, and the partner asks for that
-with `backchannel_logout_session_required`. A partner that never
-registered it will be looking for a session by a `sid` it never
+the IdP put one in the ID token at login, which an IdP that advertises
+`backchannel_logout_session_supported` does. The logout token is only
+required to carry it when the partner registered
+`backchannel_logout_session_required`. A partner that never
+registered it may be looking for a session by a `sid` it never
 received.
 
 OIDC RP-Initiated Logout is the reverse direction. The partner asks
@@ -2145,8 +2153,8 @@ half that has to be scheduled on purpose.
 
 [The decision
 post](/blog/sso-for-integrations-the-decision/#the-decisions-to-carry)
-carries the seven decisions that need people who are not your team in
-the room, on one screen, and the two product policies you set alone
+carries the seven decisions, six of which need people who are not your
+team in the room, on one screen, and the two product policies you set alone
 before it. These are the rest, the ones your own people answer while
 the work is under way. Each of them changes what gets built.
 
