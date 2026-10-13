@@ -10,7 +10,7 @@ nav_title: "Identity glossary"
 page: true
 nav_blurb: "identity terms, each one a distinction with its long form"
 nav: 1
-revisions: 11
+revisions: 12
 status: published
 ---
 
@@ -390,6 +390,106 @@ usually their email address, and configuration made when the customer was
 set up. Never by asking them, and never in a way that tells a stranger
 who your customers are. Long form:
 [Which identity provider is this user's?](/blog/sso-for-integrations/#which-identity-provider-is-this-users).
+
+{#oauth}**OAuth.** The standard way for software to get a token that lets
+it call an API without being handed anyone's password. It answers what a
+caller may do. It doesn't say who the user is, which is the job OpenID
+Connect was added to do. Long form: Client credentials, a primer, when it
+publishes.
+
+{#authorization-server}**Authorization server.** The system that checks
+who is asking and issues tokens. Often written AS, and also called the
+issuer. It can be the same product as the identity provider that logs
+users in, but it's a different job. Long form: Client credentials, a
+primer, when it publishes.
+
+{#token}**Token.** A piece of data a caller presents so it doesn't have to
+prove itself again on every call. Every token says something about
+someone, to some receiver, for a limited time. The kinds differ in what
+they say and who they're for. Long form: [The identity zoo and four
+questions about any token](/blog/four-questions-about-any-token/).
+
+{#jwt}**JWT.** JSON Web Token, said "jot". A format and not a kind of
+token. It's a short piece of signed data that carries a set of claims, and
+anyone holding the signer's public key can check it. An access token, an
+ID token and a client's signed statement can all be JWTs. Long form: [What
+the format
+decides](/blog/four-questions-about-any-token/#what-the-format-decides).
+
+{#grant-type}**Grant type.** The kind of reason a client gives the
+authorization server for wanting a token. A user's approval is one. The
+client's own credentials are another. A token the client already holds is
+a third. It's named in the `grant_type` field of every token request. Long
+form: Client credentials, a primer, when it publishes.
+
+{#token-endpoint}**Token endpoint.** The authorization server's address
+for token requests. Every grant type ends in a call to it.
+
+{#client-credentials}**Client credentials.** Two things with one name. The
+secret, key or certificate a client holds to prove which client it is, and
+the grant type in which that proof is the whole reason for the token, with
+no user involved. Long form: Client credentials, a primer, when it
+publishes.
+
+{#token-exchange}**Token exchange.** Trading a token you hold for a new
+one addressed to a different receiver, about the same subject, usually
+with less privilege and a record of who is acting. RFC 8693. Long form:
+RFC 8693 token exchange, from first principles, when it publishes.
+
+{#transaction-token}**Transaction token.** A short-lived token made once
+at the edge of a system. It carries who the request is for and what it's
+doing through every internal call that follows. Long form: Transaction
+tokens, from first principles, when it publishes.
+
+{#workload-and-workload-identity}**Workload and workload identity.** A
+workload is a running piece of software, a service instance or a job.
+Workload identity is how it proves which software it is, with a credential
+the platform issues and replaces by itself. Long form: mTLS, SPIFFE and
+SPIRE, from first principles, when it publishes.
+
+{#certificate}**Certificate.** A signed statement that binds a public key
+to a name. It isn't a secret. Long form: Certificates and mTLS, a primer,
+when it publishes.
+
+{#tls-and-mutual-tls}**TLS and mutual TLS.** TLS is the encryption that
+protects a connection, the S in HTTPS. The server proves who it is with a
+certificate. In mutual TLS, written mTLS, the client presents a
+certificate too, so each side knows the other. Long form: Certificates and
+mTLS, a primer, when it publishes.
+
+{#sender-constrained-token}**Sender-constrained token.** A token tied to a
+key. The caller has to prove it holds that key each time it uses the
+token, so a stolen copy is no use. DPoP does it with a signature on each
+request, and a certificate-bound token does it over mutual TLS. The
+opposite is a bearer token.
+
+{#saml-and-openid-connect}**SAML and OpenID Connect.** The two standards
+for carrying a login from one system to another. SAML is the older one and
+speaks XML. OpenID Connect, written OIDC, is built on OAuth and speaks
+JSON. Long form: [the decision
+guide](/blog/sso-for-integrations-the-decision/).
+
+{#opaque-token}**Opaque token.** A real token, reduced to a single random
+string with nothing readable in it. It's carried in the `Authorization`
+header like any other token. The receiver has to ask the authorization
+server what it means, which is called introspection. The opposite is a
+self-contained token such as a JWT.
+
+{#thumbprint}**Thumbprint.** A short hash of a key or a certificate, used
+to name it. A token that carries the thumbprint of the caller's key can be
+checked against the key the caller actually presents.
+
+{#must-should-and-may}**MUST, SHOULD and MAY.** The words standards use
+for what's required, what's advised and what's allowed. When a post here
+prints them in capitals, it's quoting a standard. A statement with that
+force is called normative.
+
+{#sidecar-and-mesh}**Sidecar and mesh.** A sidecar is a helper proxy
+deployed beside a service that handles its connections for it. A service
+mesh is a fleet of them under central control.
+
+{#principal}**Principal.** Any party with an identity, a user or a
+service. Standards use the word when it doesn't matter which.
 
 ## The failures
 
