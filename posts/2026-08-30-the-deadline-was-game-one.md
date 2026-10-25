@@ -6,7 +6,8 @@ date: 2026-08-30
 tags: ["leadership", "delivery", "scale", "video"]
 category: leadership
 slug: "deadline-was-game-one"
-revisions: 24
+revisions: 25
+# 25 (Sun 25 Oct 2026.) RENDERING FIX, no text change: six wrapped bullet continuation lines in the takeaways list rendered live as broken list items with literal ** (found by the site-wide projection readers); each bullet is now one source line. Checked live before the fix.
 status: published
 ---
 
@@ -269,15 +270,9 @@ have a high-performing team, **you have attrition on a delay**, and nobody
 will connect the resignation six months later to the thing they're
 congratulating themselves about today.
 
-- An immovable external date, with a visible end, is a legitimate reason to
-  ask a lot of people. Those dates will keep coming; that's the business.
-- The danger isn't the date. It's when the organization starts **operating on
-  heroics**: when the plan quietly assumes the exception as capacity. That's a
-  planning failure upstream being paid for downstream by engineers, in a
-  currency nobody is measuring.
-- Recovery is part of the cost of the work, not a gift afterwards. If you can't
-  afford the recovery, you couldn't afford the project. You deferred the
-  invoice.
+- An immovable external date, with a visible end, is a legitimate reason to ask a lot of people. Those dates will keep coming; that's the business.
+- The danger isn't the date. It's when the organization starts **operating on heroics**: when the plan quietly assumes the exception as capacity. That's a planning failure upstream being paid for downstream by engineers, in a currency nobody is measuring.
+- Recovery is part of the cost of the work, not a gift afterwards. If you can't afford the recovery, you couldn't afford the project. You deferred the invoice.
 
 Here is my own evidence, and it's why I'm confident enough to say all that.
 

@@ -10,7 +10,8 @@ slug: "sso-fields"
 page: true
 nav_blurb: "every field in a SAML or OIDC message, and which check refuses it"
 nav: 2
-revisions: 18
+revisions: 19
+# 19 (Sun 25 Oct 2026.) RENDERING FIX, no text change: two sentences wrapped so that 'Listing\n3.' and 'errata set\n2.' began a line and rendered as ordered lists, cutting the sentences in two (found by the projection readers). Joined onto one line each.
 status: published
 ---
 
@@ -56,8 +57,7 @@ without them.
 The form that carried it had two fields, `SAMLResponse` holding the
 base64 of the document above and `RelayState=orders` beside it. This is
 the solicited case, answering the request in Listing 13, so
-`InResponseTo` is present here and on the bearer confirmation in Listing
-3. The unsolicited case is the same document without those two
+`InResponseTo` is present here and on the bearer confirmation in Listing 3. The unsolicited case is the same document without those two
 attributes. When the Assertion is encrypted, the `Assertion` element is
 replaced by the one in Listing 2.
 
@@ -345,8 +345,7 @@ encrypted (a JWE), which is OpenID Connect's version of the encrypted
 Assertion in Listing 2. SAML's `AttributeStatement` has the same
 exposure and the same remedy.
 
-The audience and `azp` rules are Core 3.1.3.7 incorporating errata set
-2. The client must reject an ID token that does not list it as an
+The audience and `azp` rules are Core 3.1.3.7 incorporating errata set 2. The client must reject an ID token that does not list it as an
 audience or that lists an audience it does not trust. `azp`, when
 present, is validated as the extension that put it there specifies.
 The standard claims and the open set are Core 5.1 and 5.1.2.

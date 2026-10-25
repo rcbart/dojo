@@ -6,7 +6,8 @@ date: 2026-08-23
 tags: ["management", "leadership", "platform-teams", "identity", "org-design"]
 category: leadership
 slug: "in-the-critical-path-of-evolution"
-revisions: 22
+revisions: 23
+# 23 (Sun 25 Oct 2026, Ron's rulings, same push as The org I redrew.) Four sentences reconciled with the org post: the release train (two weeks to four while the teams learned to size work, back to two), 'about forty-five minutes', the QA group got a lead and a mandate (it existed), 'I vetted every Ukraine engineer myself, starting from the first, to make sure they met our highest bar' (his words). Found by the 25 Oct site projection readers. Archive blog/_archive-critical-path-rev22.md.
 status: published
 ---
 
@@ -92,16 +93,11 @@ that changes, the shape should change with it.
 
 I can say that because I've been the one drawing the boxes. As a director of
 engineering I built the reorganization from the ground up for a group of more
-than fifty engineers across the US, India and Ukraine, and I hired the Ukraine
-team myself, starting from the first engineer.
+than fifty engineers across the US, India and Ukraine, and I vetted every Ukraine engineer myself, starting from the first, to make sure they met our highest bar.
 
-The things I was watching all moved. A group with no release cadence at all
-got a release train, shipping every four weeks because four weeks was what the
-org could actually hold. Standups went from forty minutes for everyone to
-fifteen minutes per team, with a parking lot for the rest. Product review
+The things I was watching all moved. A group on a two-week train nobody could explain got a four-week one while the teams learned to size work, and went back to two when they had. Standups went from about forty-five minutes for everyone to fifteen minutes per team, with a parking lot for the rest. Product review
 stopped being a major rewrite every cycle and became a demo and a few small
-adjustments, once we broke the PRDs down into initiatives. That restructure is
-also where I stood up a dedicated QA group.
+adjustments, once we broke the PRDs down into initiatives. That restructure is also where the QA group got a lead and a mandate.
 
 When you're on that side, you're not looking for somewhere to file an
 inconvenient team. You're looking at what the business has to get right in the
