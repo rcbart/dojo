@@ -1,0 +1,12 @@
+sequenceDiagram
+  autonumber
+  participant C as Reconciliation job (the client)
+  participant AS as Authorization server
+  participant API as Ledger API
+  C->>C: Starts on its schedule, nobody signed in
+  C->>AS: Token request, with its own credentials
+  AS->>AS: Checks the credentials
+  AS-->>C: Access token, issued to the job
+  C->>API: Request, with the access token
+  API->>API: Checks the token
+  API-->>C: The day's entries

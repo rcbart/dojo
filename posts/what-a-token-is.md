@@ -10,11 +10,12 @@ slug: "what-a-token-is"
 page: true
 primer: true
 nav: 4
-revisions: 14
+revisions: 15
+# 15 (Sun 25 Oct 2026, same push as the client credentials primer.) The three links to /client-credentials/ held at publish are restored. No sentence changed.
 status: published
 ---
 
->! Series: This is a primer, not a numbered part, and it comes before the other primers. Client credentials, a primer and Certificates and mTLS, a primer assume you know what a token is and how one is checked. If you do, skip this and go there. [Four questions about any token](/blog/four-questions-about-any-token/) is the post that asks what a token means once you have one.
+>! Series: This is a primer, not a numbered part, and it comes before the other primers. [Client credentials, a primer](/client-credentials/) and Certificates and mTLS, a primer assume you know what a token is and how one is checked. If you do, skip this and go there. [Four questions about any token](/blog/four-questions-about-any-token/) is the post that asks what a token means once you have one.
 
 >! Currency: Correct as of the date at the top. The JOSE family is RFC 7515 to RFC 7519 (May 2015), unchanged apart from the updates RFC 7797 and RFC 8725 make to RFC 7519. The best practices are RFC 8725 (February 2020). The JWT access token profile is RFC 9068 (October 2021). Sections 5, 8 and 9 name the newer documents that build on these.
 
@@ -313,7 +314,7 @@ These are the tokens you'll meet in OAuth and OpenID Connect work, and most are 
 | [Access token](#g-access-token) | RFC 6749, with the JWT profile in RFC 9068 | The authorization server issues it, the API reads it. It says who, which API, what's allowed and until when. RFC 9068 requires `iss`, `exp`, `aud`, `sub`, `client_id`, `iat` and `jti`. |
 | [ID token](#g-id-token) | OpenID Connect Core | The identity provider issues it, the application that asked for login reads it. It says who signed in and how. It's for the application, never for an API. |
 | [Refresh token](#g-refresh-token) | RFC 6749, section 6 | The authorization server issues it to the client, and only the authorization server ever reads it. The client trades it for a new access token. Usually opaque. |
-| Client assertion | RFC 7523 | The client signs it to prove who it is at the token endpoint. A JWT the client makes about itself. Client credentials, a primer covers it. |
+| Client assertion | RFC 7523 | The client signs it to prove who it is at the token endpoint. A JWT the client makes about itself. [Client credentials, a primer](/client-credentials/) covers it. |
 | Exchanged token | RFC 8693 | A client holding one token asks for another, for a different audience. RFC 8693 token exchange. |
 | Transaction token | draft, OAuth working group | A short-lived JWT that carries the user and the request context across services inside one call. Transaction tokens. |
 | SAML assertion | SAML 2.0 | The older federation format, XML and signed. The same job as an ID token, from before JSON. |
@@ -351,7 +352,7 @@ A clock skew allowance that grew. Someone's test failed on a slow machine, the a
 
 ## 12. Where this leads
 
-With this in hand, the rest of the primer set reads in order. Client credentials, a primer is how a service with no user gets a token for itself and what that token says. Certificates and mTLS, a primer is the other way a party proves who it is, and the basis for sender-constrained tokens. [Four questions about any token](/blog/four-questions-about-any-token/) asks what a token means once you've verified it, and RFC 8693 token exchange is what happens when one token has to become another.
+With this in hand, the rest of the primer set reads in order. [Client credentials, a primer](/client-credentials/) is how a service with no user gets a token for itself and what that token says. Certificates and mTLS, a primer is the other way a party proves who it is, and the basis for sender-constrained tokens. [Four questions about any token](/blog/four-questions-about-any-token/) asks what a token means once you've verified it, and RFC 8693 token exchange is what happens when one token has to become another.
 
 ## Glossary
 
