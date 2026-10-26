@@ -1,0 +1,14 @@
+sequenceDiagram
+  autonumber
+  participant U as Person
+  participant C as App (the client)
+  participant AS as Authorization server (the issuer)
+  participant API as API (the resource server)
+  U->>C: Opens the app
+  C->>AS: Sends the person to sign in
+  U->>AS: Proves who they are, once
+  AS-->>C: Issues a token to the app
+  C->>API: Request, with the token
+  API->>API: Checks the token
+  API-->>C: Acts on it and answers
+  C-->>U: Shows the result
