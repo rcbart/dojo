@@ -1,0 +1,18 @@
+flowchart TB
+  subgraph OWN["The owner (a workload or a server)"]
+    PRIV["Owner's private key<br/>never sent, used to sign handshakes"]
+  end
+  subgraph CERT["The certificate (public, sent to anyone who connects)"]
+    PK["Owner's public key"]
+    NM["Name: subject, and SAN<br/>(a DNS name, or a SPIFFE ID as a URI)"]
+    VW["Validity window: not before, not after"]
+    EX["Extensions: key usage, extended key usage,<br/>basic constraints (cA)"]
+    IS["Issuer name: which CA vouches for this"]
+    SG["Signature over everything above"]
+    PK --- NM --- VW --- EX --- IS --- SG
+  end
+  subgraph CA["The issuer (the certificate authority)"]
+    CAK["CA's private key<br/>never leaves the CA, used to sign certificates"]
+  end
+  PRIV -. "is the pair of" .- PK
+  CAK -- "made this signature" --> SG

@@ -10,12 +10,13 @@ slug: "client-credentials"
 page: true
 primer: true
 nav: 5
-revisions: 18
+revisions: 19
+# 19 (Sun 1 Nov 2026, at the certificates primer publish.) The two links to /certificates-and-mtls/ held at publish are restored. No sentence changed.
 # 18 (Sun 25 Oct 2026, at publish.) Two links to the live token primer, in the Series box and in section 2. nav 4 -> 5 so the token primer lists first. No sentence changed.
 status: published
 ---
 
->! Series: This is a primer, not a numbered part. Read [What a token is](/what-a-token-is/) first if tokens themselves are new to you. It sits in front of RFC 8693 token exchange, part 1 of the identity series, which measures itself against client credentials and assumes you know what they are. If you do, skip this and go there. Certificates and mTLS, a primer is the other companion, and section 4 here leans on it.
+>! Series: This is a primer, not a numbered part. Read [What a token is](/what-a-token-is/) first if tokens themselves are new to you. It sits in front of RFC 8693 token exchange, part 1 of the identity series, which measures itself against client credentials and assumes you know what they are. If you do, skip this and go there. [Certificates and mTLS, a primer](/certificates-and-mtls/) is the other companion, and section 4 here leans on it.
 
 >! Currency: Correct as of the date at the top. The grant is section 4.4 of RFC 6749 (October 2012) and hasn't changed since. The ways a client authenticates come from RFC 6749, RFC 7523, RFC 8705 and OpenID Connect Core. An update to RFC 7523 is in the RFC Editor's queue as draft-ietf-oauth-rfc7523bis-11, and section 4 says what it changes.
 
@@ -164,7 +165,7 @@ There are four common ways, and the [authorization server](#g-authorization-serv
 
 The first two send the secret itself, and that's what makes them the weaker pair. In Listing 1 the `Authorization` header holds the client ID and the secret joined by a colon and base64-encoded, and base64 is an encoding, not a protection. Anyone who sees the header reverses it in one line. `client_secret_post` skips even that and puts the two values in the request body as plain form fields. [TLS](#g-tls) hides both from the network in between, and nothing else. The secret is in the clear at the service that sends it, in the configuration file it reads it from, at any proxy that terminates TLS on the way, and in whatever logs the request. The [authorization server](#g-authorization-server) keeps only a hash, as section 2 says, and that protects its store, not the request. It's the same value on every request, so one capture anywhere on that path is a credential that works until someone rotates it. RFC 6749 calls putting it in the body "NOT RECOMMENDED", and for either one it requires [TLS](#g-tls), the encryption that protects the connection, and protection against repeated guessing.
 
-The last two never send the key, and a captured request gives an attacker far less to reuse. The signed statement lives for a minute, a server that records the one-time IDs it has seen refuses a second use inside that minute, and the TLS proof can't be lifted out of the handshake it was made in. With [`private_key_jwt`](#g-private-key-jwt) the service signs a small [JWT](#g-jwt), a short piece of signed data in a standard format, that says who it is and who the statement is for, and the [authorization server](#g-authorization-server) checks the signature against a public key it already has. With `tls_client_auth` the proof happens in the mutual TLS handshake, which is what the certificates primer walks through. RFC 9700, the current security guidance for OAuth, comes down on this side. It says "It is RECOMMENDED to use asymmetric cryptography for client authentication", and it names these two methods.
+The last two never send the key, and a captured request gives an attacker far less to reuse. The signed statement lives for a minute, a server that records the one-time IDs it has seen refuses a second use inside that minute, and the TLS proof can't be lifted out of the handshake it was made in. With [`private_key_jwt`](#g-private-key-jwt) the service signs a small [JWT](#g-jwt), a short piece of signed data in a standard format, that says who it is and who the statement is for, and the [authorization server](#g-authorization-server) checks the signature against a public key it already has. With `tls_client_auth` the proof happens in the mutual TLS handshake, which is what [the certificates primer](/certificates-and-mtls/) walks through. RFC 9700, the current security guidance for OAuth, comes down on this side. It says "It is RECOMMENDED to use asymmetric cryptography for client authentication", and it names these two methods.
 
 Listing 4 is the same request as Listing 1 with a signed statement in place of the secret, and Listing 5 is what's inside the statement.
 

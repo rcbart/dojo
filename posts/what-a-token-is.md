@@ -10,12 +10,13 @@ slug: "what-a-token-is"
 page: true
 primer: true
 nav: 4
-revisions: 15
+revisions: 16
+# 16 (Sun 1 Nov 2026, at the certificates primer publish.) The three links to /certificates-and-mtls/ held at publish are restored. No sentence changed.
 # 15 (Sun 25 Oct 2026, same push as the client credentials primer.) The three links to /client-credentials/ held at publish are restored. No sentence changed.
 status: published
 ---
 
->! Series: This is a primer, not a numbered part, and it comes before the other primers. [Client credentials, a primer](/client-credentials/) and Certificates and mTLS, a primer assume you know what a token is and how one is checked. If you do, skip this and go there. [Four questions about any token](/blog/four-questions-about-any-token/) is the post that asks what a token means once you have one.
+>! Series: This is a primer, not a numbered part, and it comes before the other primers. [Client credentials, a primer](/client-credentials/) and [Certificates and mTLS, a primer](/certificates-and-mtls/) assume you know what a token is and how one is checked. If you do, skip this and go there. [Four questions about any token](/blog/four-questions-about-any-token/) is the post that asks what a token means once you have one.
 
 >! Currency: Correct as of the date at the top. The JOSE family is RFC 7515 to RFC 7519 (May 2015), unchanged apart from the updates RFC 7797 and RFC 8725 make to RFC 7519. The best practices are RFC 8725 (February 2020). The JWT access token profile is RFC 9068 (October 2021). Sections 5, 8 and 9 name the newer documents that build on these.
 
@@ -132,7 +133,7 @@ The header is called `Authorization`, and the name trips people up, because sect
 
 Everything about handling a bearer token follows from the definition. Send it only over TLS, because anyone who reads it can use it. Keep it short-lived, because anyone who steals it can use it until it expires. Don't log it. Don't put it in a URL, because URLs end up in logs.
 
-The alternative is a [sender-constrained](#g-sender-constrained) token. The token is tied to a key the client holds, and the API checks that whoever is presenting the token also holds the key. A stolen token is then useless on its own. Two standards do this. RFC 8705 ties the token to the client's TLS certificate, and RFC 9449, called DPoP, ties it to a key the client proves with a signed header on each request. Both record the binding in the token as a `cnf` claim, from RFC 7800. Certificates and mTLS, a primer covers the certificate side.
+The alternative is a [sender-constrained](#g-sender-constrained) token. The token is tied to a key the client holds, and the API checks that whoever is presenting the token also holds the key. A stolen token is then useless on its own. Two standards do this. RFC 8705 ties the token to the client's TLS certificate, and RFC 9449, called DPoP, ties it to a key the client proves with a signed header on each request. Both record the binding in the token as a `cnf` claim, from RFC 7800. [Certificates and mTLS, a primer](/certificates-and-mtls/) covers the certificate side.
 
 The question to ask of any token is how bad it is if this one is stolen. If the answer is bad enough, constrain it.
 
@@ -352,7 +353,7 @@ A clock skew allowance that grew. Someone's test failed on a slow machine, the a
 
 ## 12. Where this leads
 
-With this in hand, the rest of the primer set reads in order. [Client credentials, a primer](/client-credentials/) is how a service with no user gets a token for itself and what that token says. Certificates and mTLS, a primer is the other way a party proves who it is, and the basis for sender-constrained tokens. [Four questions about any token](/blog/four-questions-about-any-token/) asks what a token means once you've verified it, and RFC 8693 token exchange is what happens when one token has to become another.
+With this in hand, the rest of the primer set reads in order. [Client credentials, a primer](/client-credentials/) is how a service with no user gets a token for itself and what that token says. [Certificates and mTLS, a primer](/certificates-and-mtls/) is the other way a party proves who it is, and the basis for sender-constrained tokens. [Four questions about any token](/blog/four-questions-about-any-token/) asks what a token means once you've verified it, and RFC 8693 token exchange is what happens when one token has to become another.
 
 ## Glossary
 

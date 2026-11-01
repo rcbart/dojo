@@ -1,0 +1,14 @@
+sequenceDiagram
+  autonumber
+  participant C as Client
+  participant S as Server
+  C->>S: ClientHello, with the client's key share
+  S-->>C: ServerHello, with the server's key share
+  Note over C,S: Each side combines its own one-time private key with the other's share. Same secret on both sides, never sent. Session keys are derived from it, and everything below is encrypted
+  S-->>C: EncryptedExtensions, CertificateRequest, Certificate (server chain), CertificateVerify, Finished
+  C->>C: Chain to an anchor I chose. Validity window. Name in the SAN is the peer I meant. CertificateVerify checks with the public key in the leaf
+  C->>S: Certificate (client chain), CertificateVerify, Finished
+  S->>S: Same four checks on the client's chain. Now I know which identity connected
+  C->>S: Application request, encrypted with the session keys
+  S-->>C: Response
+  Note over C,S: Nothing in TLS re-checks either certificate for the life of the connection
